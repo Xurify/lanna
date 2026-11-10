@@ -33,6 +33,7 @@ import { SettingsLink } from "@/components/settings/settings-link";
 import { PRON_CLEAR, PRON_GOOD, praiseFor, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakSceneEntry, type SpeakSession, type SpeakTurn } from "@/src/core";
 import { QIcon } from "@/components/quiet/icon";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { useServerValue } from "@/components/use-server-value";
 
 type SttEngine = "elevenlabs" | "deepgram" | "groq";
 
@@ -58,7 +59,7 @@ type Phase = "pick" | "starting" | "scene" | "ending" | "done";
 export function SpeakPlayer({ initialState, sceneId = null, typed = false, sceneLang = { id: "slovak", tag: "sk-SK" } }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean; sceneLang?: { id: string; tag: string } }) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
-	const [state, setState] = useState<SpeakState | null>(initialState);
+	const [state, setState] = useServerValue<SpeakState | null>(initialState);
 	const [phase, setPhase] = useState<Phase>("pick");
 	const [session, setSession] = useState<SpeakSession | null>(null);
 	const [error, setError] = useState<string | null>(null);

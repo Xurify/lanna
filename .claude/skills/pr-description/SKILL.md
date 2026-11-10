@@ -15,7 +15,8 @@ The rule is `docs/DECISIONS.md` → **W5**; the shape is `.github/pull_request_t
    - Start a sandbox: `npm run dev:sandbox -- --seed` (never the real profile, E6). It prints the URL.
    - `MSYS_NO_PATHCONV=1 node scripts/pr-shots.mjs <url> <dir> "name=/route" "name=/route@.css-selector"` writes `<name>-<theme>-<width>.png` for Day and Night at 1280 and 390 px (`--themes`, `--widths` change that). Use the selector to crop a long page to the part the PR changed. Get to the state the PR is about (after an answer, after a miss, an empty list) through the route or a seeded profile; if a state needs clicks, take it in the browser tool and name the file the same way.
    - **Open every image** before it goes in. A screenshot nobody looked at is not a check.
-   - Push them to the `pr-assets` branch, which holds only screenshots (see below), and embed them in a Day | Night table.
+- Push them to the `pr-assets` branch, which holds only screenshots (see below), and embed them in a Day | Night table.
+   - **Always include images and screenshots of the changed thing**: A PR is not ready for review until the screenshots are live on `pr-assets` and embedded in the PR body. If using `gh pr create`, immediately push the assets to `pr-assets` under `pr-<number>/` and update the body with `gh pr edit <number> --body-file`. Never hand back a PR to the user without embedded screenshots.
 4. **Try it**: one checkbox per thing to check: the route in the sandbox, what to do, what to see.
 5. **Where**: one link per part of the diff, `https://github.com/Xurify/langharness/blob/<head SHA>/<path>#L<from>-L<to>`, the part the learner sees first, then the logic, the tests, the docs and skills. Re-pin the SHA and the lines after the last push (`git rev-parse HEAD`).
 6. **Removed**: anything a learner has now that the PR takes away. The owner signs that off.

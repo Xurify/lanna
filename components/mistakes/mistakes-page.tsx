@@ -18,6 +18,7 @@ import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { ListeningSection } from "@/components/mistakes/listening-section";
 import { useActiveLanguage } from "@/components/speech";
+import { useServerValue } from "@/components/use-server-value";
 
 const TREND: Record<Trend, { label: string; ink: string }> = {
 	better: { label: "Getting better", ink: "text-teal-2" },
@@ -29,7 +30,7 @@ const TREND: Record<Trend, { label: string; ink: string }> = {
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
-	const [report, setReport] = useState<MistakesReport | null>(initial);
+	const [report, setReport] = useServerValue<MistakesReport | null>(initial);
 	const [busy, setBusy] = useState<"analyze" | "guide" | "listen-guide" | null>(null);
 	const [error, setError] = useState<string | null>(null);
 

@@ -4,11 +4,19 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 10 November: Estonian pairs in the ear gym, and the open points closed (branch `feat/ear-gym-estonian`)
 
-- **Why:** the owner: "why does Estonian have no pairs?" and "You can also fix the other issues you found as well". Rule E89.
+- **Why:** the owner: "why does Estonian have no pairs?" and "You can also fix the other issues you found as well". Rule E90.
 - **What changed:** the ear gym has 41 Estonian pairs in six groups (short and long vowels, short and long consonants, and the vowels õ, ü, ä, ö). The line under the question says what to listen for ("Listen for u and ü"), the tiles say "Played" and "Your pick" after an answer, the sound menu is a quiet text control, and the screen says "sounds" where it said "contrasts". At 320 px the card no longer changes height on an answer. The Slovak sound notes on the Speak end screen no longer appear under another language.
 - **Fixed underneath:** a stopped sound clip no longer logs a failed request in the console; the test that failed on main passes.
 - **Checked:** `tsc`, `eslint`, `next build`; the whole suite (2,201 tests: 2,198 pass, 3 skipped, none failing). In the sandbox, after adding Estonian and Russian to the throwaway profile and switching to each for real: 18 rounds by keyboard (three languages; 320, 390, 640 and 1280 px; Day and Night at 390 and 1280), 180 answers. No console errors, no failed requests, no sideways scroll, and the card at the same place and height before and after every answer. Reduced motion checked by emulation: no transitions and no entrance animation. Every Estonian word and sentence checked against Sõnaveeb and ÕS 2018 by a second agent.
 - **Unverified:** the owner's own machine and phone; the sound of any pair; a native speaker's eye on the words; 200% zoom was checked as a 640 px window, not with the browser's zoom; a screen reader.
+
+## 9 November: a chat exports sentences for Clozemaster, and its Markdown reads right outside the app (branch `feat/clozemaster-export`)
+
+- **Why:** the owner asked whether the exports are formatted correctly, and uses Clozemaster, not Anki. Rule E89.
+- **What changed:** "Anki cards" in the Export menu is now "Clozemaster": a `.tsv` of sentence, translation and the word to blank, in the layout Clozemaster's upload reads (no header, no braces). The blank is a word the tutor sent to Review in that chat (matching inflected stems like *tvoje* or *svojimi* for *tvoj* / *svoj*), or the longest word if no words were sent to Review. The Markdown file keeps the tutor's line breaks, puts a reply's headings under the speaker's, writes an answered quiz with its options and your choice, writes drawings, and turns links to the app's lessons into plain text.
+- **Checked:** the exports were run on three real chats copied read-only from the profile (possessives, demonstratives, a short one): possessives export includes all relevant sentences with inflected stems, and demonstratives falls back to content words. `tests/chat-export.test.ts`: 10 pass. Typecheck and lint clean.
+- **Unverified:** an upload to Clozemaster itself (its file layout is taken from forum posts, not from a written spec); print, which was not opened in a browser this round; the full test suite.
+
 ## 9 November: the ear gym uses the language you are learning, with Russian pairs (branch `feat/ear-gym-per-language`)
 
 - **Why:** with Russian active, `/phonology` showed Slovak pairs read by the Russian voice. The owner: "Should we implement this with Russian as well?" and then "Let's fix all of these issues." Rule E87.
@@ -35,6 +43,20 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Export, audited:** Esc and a click outside now close the menu (before, only the Export button did), and Esc puts focus back on the button. The Anki file held only the glossed words: question cards were promised but never made, because a posed question carries no question text; the item now counts the cards and is off when there are none. The Markdown file shows a word to hear as the bold word, not as `say:` code. Printing from Night printed light text on white and faded the bottom of the page; print now uses the Day colors and no fade. A failed copy says so. Labels: "Download as Markdown", "Anki cards", "Print or save as PDF", "Full session data", no all-caps heading. In a chat the Export button is a quiet text button, like the rest of the page; lessons keep the outlined chip beside "Show working".
 - **Checked:** production build in the sandbox on a copy of the profile, a live lesson with two misses: Night and Day at 1280 px, Night at 390 px, while the tutor writes and at rest. Fonts compared on the same Slovak, Estonian and Russian sample. Suite: 2138 pass, 1 fail (`tests/provider-tracing.test.ts`, which fails on `main` too).
 - **Unverified:** the owner's machine and phone; a reply long enough to stream in several pieces (in every run the text arrived in one piece after the thinking).
+
+## 9 November: pages that are there before the click (branch `feat/instant-navigation`)
+
+- **Why:** the owner: "Make our desktop app also feel more instant when switching between the different tabs and sections. Any and every interaction should feel fast", learning from [Vercel's work on v0](https://nextjs.org/blog/making-v0-navigations-instant). Rule E86, [research/instant-navigation.md](research/instant-navigation.md).
+- **Navigation:** when the pointer comes over a link to any of the sixteen sidebar pages, the server renders that page, so the click shows the page and not the skeleton. Focus, a touch, the jump palette's selected row and an end screen's way back do the same.
+- **Sidebar:** a row goes when the mouse button goes down. Touch and the keyboard are unchanged.
+- **Read, Listen, Watch:** their pages started work when they rendered. Read's shelf top-up and Watch's refresh of the picks now start when the screen is open. Listen asked a model for close wrong meanings and waited up to 6 s for them, and has not shown them since it became typing-only; the call is gone.
+- **Lessons:** a unit's lesson is the same twelve reps until the unit is practiced or the day turns, and Today has the close meanings for the first lesson still to do written ahead, so opening it from Today does not wait on a model. A lesson left half way comes back the same that day.
+- **Log and Words** arrive with their first list.
+- **Freshness:** a page rendered more than 2 s before the click is shown and then refreshed; Milestones, Mistakes, Speak and Watch now take that refresh, until something is changed on the page.
+- **Measured** on a build with every request held (`scripts/instant-check.mjs`): before, all 16 rows showed the skeleton 100 to 123 ms after the button went down; after, all 16 show the page, fifteen at 18 to 47 ms and Review at 53 to 145 ms.
+- **Chat:** the mark after an answer ("Almost, check the spelling") sat about 8 px above the answer's baseline, because the check icon, not the words, was aligned to it. The words are on the baseline now.
+- **Not changed:** `npm run desktop:dev`. Next.js does not use prefetched pages in development, so there a click still waits for the server. `npm run desktop:prod` is the one to feel this on. Also not changed: a lesson opened from the Curriculum, chat pages, and saves, which wait for the server before the screen changes.
+- **Checked:** see the pull request. **Unverified:** the PC and the Electron window; a lesson's close meanings with a real model.
 
 ## 9 November: the Study as one figure, and the study's files kept out of the real data folder (branch `t3/pronunciation-principles-review`)
 

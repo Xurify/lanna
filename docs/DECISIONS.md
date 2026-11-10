@@ -1081,6 +1081,21 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Writing looks like writing.** In place of the spinner and "Thinking…", a pen stroke draws itself over a faint trace beside "Writing…" (`TutorWriting`), and everything above the learner's current line steps back to 65 % (body text still passes 4.5:1) until the turn ends (`.lh-recede`, full again on hover). A reply that streams in pieces ends in a short teal pen stroke (`.lh-writing`). All of it is still under reduced motion.
 - No rule between the tutor's steps in a chat; the replies under the text are the app's quiet buttons.
 - Lessons and practice sessions are unchanged.
+### E86. A page is rendered while the pointer rests on its link, and "instant" is a check (2026-11-09, branch `feat/instant-navigation`)
+
+**Why:** the owner asked for tab and section switches that feel instant, and pointed at how Vercel made v0's navigations instant. On a build the clicks were already 19 to 45 ms; what was left was the wait for the mouse button to come up, the skeleton before every page, and a wait of up to 6 s on a model when a lesson or Listen opened. Research note: [research/instant-navigation.md](research/instant-navigation.md).
+
+**How to apply:**
+- Instant means the page is on screen while the server cannot answer. `node scripts/instant-check.mjs --check` (after `npm run build`) holds every request, clicks each sidebar row and says what shows: `page`, `shell` or `blocked`. Run it after a change to the layout, the sidebar, `next.config.ts` or the Next.js version. It is this app's version of `instant()` from `@next/playwright`, which needs Cache Components (not adopted, E36).
+- A link to a sidebar page (`rendersAhead` in `lib/nav.ts`: the pages of `NAV`, by exact path, with no query string) is rendered by the server when the pointer comes over it, it takes focus, or a finger or button goes down on it (`components/instant-navigation.tsx`). No call site opts in: the listener is on the document. Code that navigates without a link calls `renderAhead(path)` first, as the jump palette and the end screens do.
+- **A sidebar page's render starts no paid or network work.** It would otherwise run because a pointer passed by. Work of that kind belongs in the screen, asked for when it is really open: the reader tops up the shelf and the Watch shelf refreshes the picks on mount. `tests/render-ahead.test.ts` fails when a sidebar page file calls one of the known starters; it reads page files only, so a new starter has to be added to its list. A first-visit write of a local file (Mistakes' first snapshot, Study's schedule) is accepted.
+- A page shown from a render older than 2 s is refreshed on arrival, so a component that keeps server data in state takes it with `useServerValue` (`components/use-server-value.ts`), not `useState`: a plain `useState(initial)` ignores the refresh and can stay up to 35 s behind. `useServerValue` stops following the server once the learner changes the value on the page, so a refresh that left before a save cannot undo it. A plan drawn at random for one sitting (Speed, Listen) stays in `useState` on purpose.
+- **Nothing a learner opens waits on a model inside a page render.** A unit's lesson is the same twelve reps until the unit is practiced or the day turns (`lessonSeed`, `unitLesson`), so its close meanings can be written before it is opened: Today asks for them (`/api/lesson?unit=…&warm`) for the first lesson still to do. Listen asks for none; it shows none (E38).
+- A page that fetches its list after mounting shows an empty frame first. Read the first list with the page and pass it in (Log, Words), then read again in the browser.
+- `experimental.staleTimes.static` in `next.config.ts` is 30, the lowest Next.js takes, and `lib/render-ahead.ts` counts on it. Change them together.
+- Sidebar rows go when the mouse button goes down. Touch and the keyboard go on the click.
+- None of this works under `next dev`, which does not use prefetched pages. Judge it on `npm run desktop:prod` (E36).
+
 
 ### E86. The ear gym is a task screen like the others, and length is drawn one way (2026-11-09, branch `feat/rhythmic-law-suprasegmentals`)
 
@@ -1109,7 +1124,7 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **A contrast is named by its letters** ("т and ть", "и and ы") and the cue is one or two plain sentences, as in E86. A form that is not the dictionary form says so in full words ("he ate (past tense of есть)"). Each example sentence holds the word in exactly that form (checked by script when the files were written).
 - **Russian has 21 pairs:** ten for hard and soft consonants at the end of a word, six for и and ы, five for ш and щ. In the и and ы pairs the consonant before the vowel differs too (soft before и, hard before ы); the two cannot be separated in Russian, and the cue says so.
 - **How it was made:** Gemini 3.8 Flash wrote the code and the Russian file from a brief; Claude read the whole diff. Corrected in review: language names and codes written into the screen as fallbacks, two unused aliases, a reset effect (the page key does it), two example sentences that held another form of the word, *щёлк* used as a noun, and cues full of phonetics terms.
-- **Still open:** (Estonian got its pairs in E89.) Russian stress pairs need audio that can be told where the stress is; nobody has listened to the Russian pairs; the words were checked against Wiktionary by Gemini and read by Claude, not by a Russian speaker; the sound notes on the Speak end screen (`ARTICULATORY_CUES`) are still Slovak only.
+- **Still open:** (Estonian got its pairs in E90.) Russian stress pairs need audio that can be told where the stress is; nobody has listened to the Russian pairs; the words were checked against Wiktionary by Gemini and read by Claude, not by a Russian speaker; the sound notes on the Speak end screen (`ARTICULATORY_CUES`) are still Slovak only.
 
 ### E88. In the ear gym the two words are the largest thing on the screen, and the letters that differ are marked (2026-11-09, branch `feat/ear-gym-per-language`)
 
@@ -1117,14 +1132,28 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 
 **How to apply:**
 - **The pair is the stage.** Each answer is a large tile with its word at 40 px (28 px on a phone, where the two tiles sit one above the other), the meaning under it, and its key in the corner. The letters the contrast names are underlined in both words (`contrastSpans` in `src/core/phonology.ts`, tested over every pair of every language). The underline is grey before an answer, because teal and red mean right and wrong here and nowhere else.
-- **The top band is the round.** Ten segments in place of one bar: filled teal for a pair heard right, a hollow red ring for a miss, grey for the pair on screen (pale teal until E89: it read as one already right). A miss differs in shape as well as color. The same marks are the strip under the result on the end screen and the marks in its rows.
+- **The top band is the round.** Ten segments in place of one bar: filled teal for a pair heard right, a hollow red ring for a miss, grey for the pair on screen (pale teal until E90: it read as one already right). A miss differs in shape as well as color. The same marks are the strip under the result on the end screen and the marks in its rows.
 - **The play button shows that sound is playing:** the speaker turns into the waveform while the word plays and back when it ends; after an answer the speaker on a tile does the same. The two icons cross-fade in 200 ms, and not at all with reduced motion.
 - **The end screen says what to train next.** Under the result, a row per contrast that came up in the round, the weakest first, with its marks and "2 of 4"; a row starts a round of that contrast. It is shown only after a round of all contrasts.
 - **The rhythm page shows the result above the field,** like the display over the keys of a calculator: the syllables with their marks first, then the field, the example words, and the letter keys last. The result always carries one line of explanation, also for a word that follows the rule, and keeps one height on a desktop while you type. The list of forms has two column headings (short stem, long ending; long stem, short ending) in place of the same note under each of ten words; on a phone the note stays under each word.
 - **Kept from E86:** the frame, the dock, the tokens, one height for the card before and after an answer, and the card a little above the middle.
 - **Removed from the shared frame:** the `lead` slot of `TaskTop` and the `trail` of `OptionTile`, added in E86 for this screen and no longer used.
 - **Not changed, on purpose:** the press scale stays the app's 0.97 (`.lh-press`); a reviewer's rule asks for 0.96, and the value is one token for the whole app.
-### E89. Estonian pairs, sound notes that stay in their language, and what two blind readers changed (2026-11-10, branch `feat/ear-gym-estonian`)
+
+### E89. A chat exports sentences for Clozemaster, not Anki cards, and its Markdown reads the same outside the app (2026-11-09, branch `feat/clozemaster-export`)
+
+**Why:** the owner: "make sure these exports are actually formatted correctly", and "I don't really use Anki, but I do use Clozemaster". The Anki file cannot be uploaded to Clozemaster: its `#separator` header lines would be read as sentences, and its third column (tags) as the word to blank. Run on the owner's real chats, the exports also had these faults: lines the app shows apart ran together in any other Markdown reader, since the app breaks at every line end (`remark-breaks`) and CommonMark does not; a reply's own `##` heading outranked the `### Tutor` label above it; links to the app's lessons (`/lesson?unit=…`) led nowhere; an answered quiz was missing, so "Wrong: you chose *tú*" followed nothing; a drawing kept in a `draw` tool result was never written, because tool results were skipped; one card was wrong (`naše` = "our car", from an aside in brackets).
+
+**How to apply:**
+
+- **Clozemaster file** (`exportChatClozemasterTsv`): one row per glossed phrase, tab-separated `Sentence`, `Translation`, `Cloze`, with no header row, no `{{braces}}` (those are for a sentence typed in by hand) and no line break after the last row. This layout comes from Clozemaster's forum, since its help page lists no columns: see the links above the function. The owner uploads the file by hand (language dashboard, Collections, upload a CSV or TSV), so nothing here reaches Clozemaster by itself and the rule under "Dropped or deferred" stands.
+- **The word to blank** (`pickClozeWord`) is a word the tutor sent to Review in that chat (`add_to_review`), as the sentence writes it (exact match first, then stem matches like *tvoja*, *tvoje*, *svojimi* for taught words *tvoj*, *svoj*). If the chat has taught words, sentences without one are left out. If the chat sent no words to Review at all (such as free or grammar chats), the longest word in the sentence is blanked so the chat can still be exported. A phrase of one word is always left out: blanking it leaves nothing to read.
+- **A sentence that ends in a full stop gets one on its translation**, so both sides of a row are punctuated alike.
+- **Markdown** (`exportChatMarkdown`): `## Learner` and `## Tutor`, written once per run of the same speaker; headings inside a reply are moved down so the highest is `###`; a line followed by another line of the same paragraph ends in two spaces (a hard break); a link to an app address becomes its label, a web link stays; an answered question is written as the question, its options with "(correct)" on the right ones, and the learner's choice; a drawing is a `svg` code fence, from a view part or from the tool result. Code fences are left as written.
+- **Not changed:** the chat board still reads glosses in brackets its own way (`boardPhrases`), so "naše = our car" can still show there. Print and the JSON file are as before; the JSON holds the messages, not the turns or settings.
+
+
+### E90. Estonian pairs, sound notes that stay in their language, and what two blind readers changed (2026-11-10, branch `feat/ear-gym-estonian`)
 
 **Why:** the owner: "why does Estonian have no pairs?", then "You can also fix the other issues you found as well", with the standing rule not to be consulted until the PR is ready. Estonian is studied to understand speech, like Russian. The other issues are the open points of E86 to E88 and the things the PR descriptions listed as not looked at.
 
@@ -1141,7 +1170,7 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Still open:** Russian stress pairs (the voice cannot be told where the stress is); no Slovak pair for `l` and `ĺ`; nobody has listened to any pair; no native speaker has read the words; the rhythm checker's exceptions are a short list. Seen while testing and not part of this work: the app's notices ("Language added") cover the bar at the bottom of a task screen on a phone.
 ## Dropped or deferred
 
-- **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
+- **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it. A file the owner uploads by hand is not automated access: see E89.
 - **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
 - **Windows installer and sync:** not built; data is local only.
