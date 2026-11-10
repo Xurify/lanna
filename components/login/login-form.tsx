@@ -1,7 +1,6 @@
 "use client";
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { LhMark } from "@/components/lh-mark";
 
 function waitText(seconds: number): string {
 	const minutes = Math.max(1, Math.ceil(seconds / 60));
@@ -10,6 +9,7 @@ function waitText(seconds: number): string {
 
 export function LoginForm({ next }: { next: string }) {
 	const [password, setPassword] = useState("");
+	const [revealed, setRevealed] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -42,32 +42,58 @@ export function LoginForm({ next }: { next: string }) {
 
 	return (
 		<main className="flex min-h-dvh w-full items-center justify-center px-4 py-10 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-			<div className="w-full max-w-sm">
-				<h1 className="font-ui text-2xl font-semibold tracking-tight text-foreground">Sign in</h1>
-				<p className="mt-2 text-sm leading-relaxed text-muted-foreground">Enter the password for this LangHarness. This browser stays signed in for 180 days.</p>
-				<form onSubmit={signIn} className="relative mt-6 flex flex-col gap-4" data-testid="login-form">
-					<label className="flex flex-col gap-1.5">
-						<span className="font-ui text-xs font-semibold text-foreground">Password</span>
-						<Input
-							type="password"
-							name="password"
-							autoComplete="current-password"
-							autoFocus
-							value={password}
-							onChange={(event) => setPassword(event.target.value)}
-							maxLength={200}
-							// Safari zooms into any text field under 16 px, and the app's text-base is 14 px.
-							className="h-11 text-[16px] md:text-[16px] focus-visible:ring-1"
-							data-testid="login-password"
-						/>
-					</label>
-					<Button type="submit" className="h-11 cursor-pointer" disabled={busy || password.length === 0} aria-busy={busy} data-testid="login-submit">
-						{busy ? "Signing in…" : "Sign in"}
-					</Button>
-					<p role="alert" className="absolute inset-x-0 top-full mt-3 text-sm leading-relaxed text-destructive" data-testid="login-error">
-						{error ?? ""}
-					</p>
-				</form>
+			<div className="w-full max-w-[400px]">
+				<div className="flex items-center gap-3" data-testid="login-brand">
+					<LhMark className="size-10" />
+					<span className="font-ui text-[26px] font-extrabold tracking-tight text-foreground">
+						Lang<span className="text-sun">Harness</span>
+					</span>
+				</div>
+				<div className="q-card mt-8 p-6 min-[420px]:p-8">
+					<h1 className="font-ui text-[22px] font-semibold tracking-tight text-foreground">Sign in</h1>
+					<p className="mt-1.5 text-[15px] leading-snug text-[var(--q-ink-2)]">Enter your password to continue.</p>
+					<form onSubmit={signIn} className="mt-6 flex flex-col" data-testid="login-form">
+						<label htmlFor="login-password" className="font-ui text-[13px] font-medium text-[var(--q-ink-2)]">
+							Password
+						</label>
+						<div className="relative mt-1.5">
+							<input
+								id="login-password"
+								type={revealed ? "text" : "password"}
+								name="password"
+								autoComplete="current-password"
+								autoCapitalize="none"
+								autoCorrect="off"
+								spellCheck={false}
+								autoFocus
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
+								maxLength={200}
+								aria-describedby="login-error"
+								// Safari zooms into any text field under 16 px, and the app's text-base is 14 px.
+								className="q-field h-11 w-full pr-[4.75rem] pl-3.5 font-ui text-[16px] md:text-[16px]"
+								data-testid="login-password"
+							/>
+							<button
+								type="button"
+								onClick={() => setRevealed((value) => !value)}
+								aria-pressed={revealed}
+								aria-label={revealed ? "Hide password" : "Show password"}
+								className="absolute inset-y-0 right-0 flex cursor-pointer items-center rounded-r-[var(--radius-md)] px-3.5 font-ui text-[13px] font-medium text-[var(--q-ink-3)] hover:text-[var(--q-ink-2)] focus-visible:text-[var(--q-ink-2)] focus-visible:outline-none"
+								data-testid="login-reveal"
+							>
+								{revealed ? "Hide" : "Show"}
+							</button>
+						</div>
+						<button type="submit" className="q-btn primary wide mt-5 cursor-pointer" disabled={busy || password.length === 0} aria-busy={busy} data-testid="login-submit">
+							{busy ? "Signing in…" : "Sign in"}
+						</button>
+						<p id="login-error" role="alert" className="mt-3 min-h-10 text-[13.5px] leading-snug text-[var(--q-miss)]" data-testid="login-error">
+							{error ?? ""}
+						</p>
+					</form>
+					<p className="border-t border-[var(--q-line)] pt-4 text-[13px] leading-snug text-[var(--q-ink-3)]">This browser stays signed in for 180 days.</p>
+				</div>
 			</div>
 		</main>
 	);

@@ -113,6 +113,8 @@ For a server that is always on, such as a VPS: the app at `https://learn.example
 
 **Turn it off.** Settings → Devices, or `npm run remote:off` on the server. Every browser is signed out and the address answers 403.
 
+**Both ways in at once.** Tailscale and the public address can be used together. A request addressed by a tailnet name is handled as before (pairing code, `tailscale serve`), whether or not `LH_PUBLIC_HOST` is set. Both share one switch: the first `npm run web:password` turns remote access on, and turning it off in Settings or with `npm run remote:off` signs out the public sign-ins and the paired Tailscale devices alike.
+
 **A machine with no screen** cannot make a pairing code in Settings. `npm run remote:code` prints one (`npm run remote:code -- --enable` turns remote access on first); it is for pairing a tailnet device, not for the public address.
 
 **Troubleshooting.** The refusal says what is wrong: "answers only through its reverse proxy" is a missing or wrong secret, "Use the public address" is a wrong `Host`, "needs HTTPS" is a missing `X-Forwarded-Proto https`, "not set up" is a missing or short variable, and "Web access is off" means run `npm run web:password` or turn it on in Settings.
