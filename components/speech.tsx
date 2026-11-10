@@ -245,9 +245,14 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 			URL.revokeObjectURL(src);
 			resolve();
 		};
+		let stopped = false;
 		const stop = () => {
+			stopped = true;
+			audio.onerror = null;
 			audio.pause();
-			audio.currentTime = 0;
+			// Chromium logs ERR_FILE_NOT_FOUND for a blob URL revoked while the element is still fetching it; dropping the source first aborts that fetch.
+			audio.removeAttribute("src");
+			audio.load();
 			finish();
 		};
 		stopCurrent = stop;
@@ -258,7 +263,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 			finish();
 		};
 		audio.play().catch((err) => {
-			console.warn("[Speech] audio play rejected:", err);
+			if (!stopped) console.warn("[Speech] audio play rejected:", err);
 			finish();
 		});
 	});

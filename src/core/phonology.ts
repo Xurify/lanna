@@ -13,6 +13,7 @@
 
 import slovakPairsJson from "../../curriculum/slovak/phonology-pairs.json";
 import russianPairsJson from "../../curriculum/russian/phonology-pairs.json";
+import estonianPairsJson from "../../curriculum/estonian/phonology-pairs.json";
 import type { LanguageId } from "./language.ts";
 import { rng, shuffle } from "./lesson.ts";
 
@@ -262,9 +263,13 @@ export const ARTICULATORY_CUES: Record<string, ArticulatoryCue> = {
 /**
  * Retrieve articulatory motor cues for a given phoneme, letter, or digraph.
  */
-export function getArticulatoryCue(target: string): ArticulatoryCue | null {
-	const clean = target.trim().toLowerCase().normalize("NFC");
-	return ARTICULATORY_CUES[clean] ?? null;
+const CUES_BY_LANGUAGE: Record<string, Record<string, ArticulatoryCue>> = {
+	[slovakPairsJson.language]: ARTICULATORY_CUES,
+};
+
+export function getArticulatoryCue(target: string, languageId: string | undefined): ArticulatoryCue | null {
+	const cues = languageId ? CUES_BY_LANGUAGE[languageId] : undefined;
+	return cues?.[target.trim().toLowerCase().normalize("NFC")] ?? null;
 }
 
 // ─── Functional Load Scoring ───────────────────────────────────────────
@@ -277,8 +282,8 @@ export function getArticulatoryCue(target: string): ArticulatoryCue | null {
  * - Low FL (0.3): Allophonic or dialectally neutralized contrasts (e.g. soft ľ -> l,
  *   which is standard in Western Slovak and causes zero communicative breakdown).
  */
-export function getFunctionalWeight(phoneme: string): number {
-	const cue = getArticulatoryCue(phoneme);
+export function getFunctionalWeight(phoneme: string, languageId: string | undefined): number {
+	const cue = getArticulatoryCue(phoneme, languageId);
 	const load = cue?.functionalLoad ?? "medium";
 	switch (load) {
 		case "high":
@@ -297,13 +302,14 @@ export function getFunctionalWeight(phoneme: string): number {
  */
 export function functionalLoadWeightedScore(
 	phonemes: ReadonlyArray<{ p: string; score: number }>,
+	languageId: string | undefined,
 ): number {
 	if (!phonemes.length) return 0;
 	let weightedSum = 0;
 	let totalWeight = 0;
 
 	for (const p of phonemes) {
-		const w = getFunctionalWeight(p.p);
+		const w = getFunctionalWeight(p.p, languageId);
 		weightedSum += p.score * w;
 		totalWeight += w;
 	}
@@ -472,6 +478,7 @@ export function getVoicingAssimilationNotes(word: string): AssimilationRule | nu
 const BUNDLED_DATASETS: Record<string, PhonologyDataset> = {
 	[slovakPairsJson.language]: slovakPairsJson as unknown as PhonologyDataset,
 	[russianPairsJson.language]: russianPairsJson as unknown as PhonologyDataset,
+	[estonianPairsJson.language]: estonianPairsJson as unknown as PhonologyDataset,
 };
 
 export function getPhonologyData(languageId: string | undefined): PhonologyDataset | null {
