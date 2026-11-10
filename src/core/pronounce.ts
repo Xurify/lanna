@@ -173,7 +173,7 @@ const WEAK_WORD = 60;
 
 /** What to work on, across many scored lines: the sounds and the words
  *  that stay low. A sound counts once it was heard at least twice. */
-export function pronReport(scores: readonly PronScore[], opts: { sounds?: number; words?: number } = {}): PronReport {
+export function pronReport(scores: readonly PronScore[], opts: { sounds?: number; words?: number; languageId?: string } = {}): PronReport {
 	const sounds = new Map<string, { sum: number; n: number; in: Set<string> }>();
 	const words = new Map<string, { sum: number; n: number }>();
 	let sum = 0;
@@ -199,7 +199,7 @@ export function pronReport(scores: readonly PronScore[], opts: { sounds?: number
 		average: scores.length ? Math.round(sum / scores.length) : null,
 		sounds: [...sounds.entries()]
 			.map(([p, o]) => {
-				const cueInfo = getArticulatoryCue(p);
+				const cueInfo = getArticulatoryCue(p, opts.languageId);
 				return {
 					p,
 					score: Math.round(o.sum / o.n),

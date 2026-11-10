@@ -128,5 +128,5 @@ function recentScores(opts: { rounds?: number; scenes?: number } = {}): PronScor
 
 /** The sounds and words to work on, from the recent scored lines. */
 export function pronunciationReport(): PronReport {
-	return pronReport(recentScores());
+	return pronReport(recentScores(), { languageId: activeLanguage().id });
 }
