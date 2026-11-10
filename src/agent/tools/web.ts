@@ -1,5 +1,6 @@
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
+import { safeFetch } from "../safe-fetch.ts";
 import { serverExecute } from "../tool-execute.ts";
 // The search-hit shape lives in the core port since the search wave
 // (2026-09-20); this alias keeps callers churn-free.
@@ -80,13 +81,14 @@ function htmlToMarkdown(html: string): { title: string; content: string } | null
 }
 
 async function fetchAndExtract(url: string): Promise<string> {
-	const resp = await fetch(url, {
+	const resp = await safeFetch(url, {
 		headers: {
 			"User-Agent": USER_AGENT,
 			Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 			"Accept-Language": "en-US,en;q=0.9",
 		},
-		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+		timeoutMs: FETCH_TIMEOUT_MS,
+		maxBytes: MAX_RESPONSE_BYTES,
 	});
 	if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
 

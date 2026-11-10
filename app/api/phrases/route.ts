@@ -4,7 +4,7 @@
  * DELETE /api/phrases — removes a saved phrase by id or text
  */
 
-import { savedPhraseStore } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, savedPhraseStore } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as {
 		text?: unknown;
 		translation?: unknown;
@@ -45,6 +47,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const url = new URL(req.url);
 	let id = url.searchParams.get("id");
 	let text = url.searchParams.get("text");

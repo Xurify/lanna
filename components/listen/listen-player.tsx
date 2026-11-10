@@ -80,7 +80,6 @@ const SHEET_GONE = "It was removed, or it belongs to another language.";
 
 const TOUCH_TALL = "pointer-coarse:h-11";
 const ENTER_KEY = "q-kbd hidden pointer-fine:inline-flex";
-const CHIP = "lh-press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 font-ui text-[13px] font-[550]";
 
 // Browsers move focus on mousedown, so a tap on Play would blur the answer field and close a phone's keyboard.
 const keepFieldFocus = (e: React.MouseEvent) => e.preventDefault();
@@ -426,39 +425,32 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-1 sm:pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
 					<PracticeCard icon="listen" title="Listen" sub={sourceOf(item)} phone="flat">
-						<div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 sm:gap-x-4">
 							<button
 								type="button"
 								onMouseDown={keepFieldFocus}
 								onClick={() => replay()}
 								aria-label={`Play the ${unit}`}
-								className="lh-press row-span-2 flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2 sm:row-span-1"
+								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 								data-testid="listen-play"
 							>
 								<Volume2Icon className="size-6" strokeWidth={1.6} />
 							</button>
-							<h2 className="font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
+							<h2 className="min-w-0 font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
 								{!current ? "Type what you hear" : current.verdict === "exact" ? <span lang={praise.lang}>{praise.text}</span> : current.verdict === "accents" ? "So close" : "It says…"}
 							</h2>
-							<div className="col-start-2 flex flex-wrap items-center gap-2 sm:col-start-auto">
-								<button type="button" onMouseDown={keepFieldFocus} onClick={() => replay(true)} aria-label="Play slowly" title="Play slowly" className={cn(CHIP, "bg-teal-wash text-teal-2 hover:bg-well-2")}>
-									<SnailIcon className="size-[18px]" strokeWidth={1.6} />
-									Slowly
-								</button>
-								{!current && !peeked && (
-									<button
-										type="button"
-										onMouseDown={keepFieldFocus}
-										onClick={() => setPeeked(true)}
-										disabled={!canPeek}
-										className={cn(CHIP, "font-medium shadow-[inset_0_0_0_1px_var(--q-line-2)]", canPeek ? "text-ink-2 hover:bg-well" : "text-ink-4")}
-										data-testid="listen-peek"
-									>
-										<EyeIcon className="size-4" strokeWidth={1.6} />
-										Show the text
-									</button>
-								)}
-							</div>
+							<button
+								type="button"
+								onMouseDown={keepFieldFocus}
+								onClick={() => replay(true)}
+								aria-label="Play slowly"
+								title="Play slowly"
+								className="lh-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
+								data-testid="listen-slow"
+							>
+								<SnailIcon className="size-5" strokeWidth={1.6} />
+								<span className="hidden min-[360px]:inline">Slowly</span>
+							</button>
 						</div>
 
 						{(current || peeked) && (
@@ -518,13 +510,26 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 									data-testid="listen-input"
 								/>
 								<DiacriticBar variant="keys" className="mt-4" />
-								<p className="mt-4 max-w-prose font-ui text-[13px] leading-relaxed text-ink-3 sm:min-h-[2.75rem]" data-testid="listen-hint">
-									{peeked
-										? `The text is shown, so this ${unit} is not counted.`
-										: canPeek
-											? `You can show the text now. Then this ${unit} is not counted.`
-											: `The text stays hidden until you have typed it. After one more listen you can show it, and then this ${unit} is not counted.`}
-								</p>
+								<div className="mt-4 flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 font-ui text-[13px] text-ink-3">
+									{peeked ? (
+										<p data-testid="listen-hint">The text is shown, so this {unit} is not counted.</p>
+									) : (
+										<>
+											<button
+												type="button"
+												onMouseDown={keepFieldFocus}
+												onClick={() => setPeeked(true)}
+												disabled={!canPeek}
+												className={cn("lh-press inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 font-medium shadow-[inset_0_0_0_1px_var(--q-line-2)] pointer-coarse:h-11", canPeek ? "text-ink-2 hover:bg-well" : "text-ink-4")}
+												data-testid="listen-peek"
+											>
+												<EyeIcon className="size-4" strokeWidth={1.6} />
+												{canPeek ? "Show the text (not counted)" : "Show the text"}
+											</button>
+											{!canPeek && <p data-testid="listen-hint">after one more listen</p>}
+										</>
+									)}
+								</div>
 							</div>
 						)}
 					</PracticeCard>

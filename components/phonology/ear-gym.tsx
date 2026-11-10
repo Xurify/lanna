@@ -14,20 +14,19 @@ import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, PracticeCar
 import { sfx } from "@/components/lesson/sound";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { speak, stopSpeaking } from "@/components/speech";
-import { contrastSpans, earGymRound, getPhonologyData, getPhonologyPairs, hasRhythmPage, praiseFor, type EarGymExercise, type PhonologyFamily } from "@/src/core";
+import { contrastSpans, earGymRound, getPhonologyData, getPhonologyPairs, getSoundNotes, hasRhythmPage, praiseFor, soundNotesForPairs, type EarGymExercise, type PhonologyFamily } from "@/src/core";
 import { RhythmicVisualizer } from "./rhythmic-visualizer";
+import { SoundGuide } from "./sound-guide";
 
-type View = "pairs" | "rhythm";
+export type PhonologyView = "pairs" | "sounds" | "rhythm";
+type View = PhonologyView;
 type FamilyChoice = PhonologyFamily | "all";
 type Answer = string | null;
 type Span = [start: number, end: number];
 type TileState = "idle" | "right" | "wrong";
 type Outcome = "right" | "miss" | "now" | "ahead";
 
-const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
-	{ id: "pairs", label: "Pairs" },
-	{ id: "rhythm", label: "Rhythm" },
-];
+const VIEW_LABELS: Record<View, string> = { pairs: "Pairs", sounds: "Sounds", rhythm: "Rhythm" };
 
 interface Side {
 	word: string;
@@ -52,12 +51,29 @@ function sides(trial: EarGymExercise): [Side, Side] {
 	];
 }
 
-export function EarGym({ seed, languageId, languageName, languageCode }: { seed: number; languageId: string; languageName: string; languageCode: string }) {
+export function EarGym({
+	seed,
+	languageId,
+	languageName,
+	languageCode,
+	initialView,
+	initialSound,
+}: {
+	seed: number;
+	languageId: string;
+	languageName: string;
+	languageCode: string;
+	initialView?: PhonologyView;
+	initialSound?: string;
+}) {
 	const router = useRouter();
 	const hasRhythm = hasRhythmPage(languageId);
+	const hasSounds = (getSoundNotes(languageId)?.sounds.length ?? 0) > 0;
 	const dataset = getPhonologyData(languageId);
+	const views: View[] = ["pairs", ...(hasSounds ? (["sounds"] as const) : []), ...(hasRhythm ? (["rhythm"] as const) : [])];
 
-	const [view, setView] = useState<View>("pairs");
+	const [view, setView] = useState<View>(initialView && views.includes(initialView) ? initialView : "pairs");
+	const [guideSound, setGuideSound] = useState(initialSound);
 	const [family, setFamily] = useState<FamilyChoice>("all");
 	const [round, setRound] = useState(0);
 	const [index, setIndex] = useState(0);
@@ -66,8 +82,7 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 	const playSeq = useRef(0);
 
 	const contrasts = dataset?.families ?? [];
-	const menu: ReadonlyArray<{ value: FamilyChoice; label: string }> = [{ value: "all", label: "All contrasts" }, ...contrasts.map((f) => ({ value: f.id, label: f.label }))];
-	const familyLabel = (id: PhonologyFamily): string => contrasts.find((f) => f.id === id)?.label ?? id;
+	const menu: ReadonlyArray<{ value: FamilyChoice; label: string }> = [{ value: "all", label: "All sounds" }, ...contrasts.map((f) => ({ value: f.id, label: f.label }))];
 
 	const trials = useMemo(() => earGymRound(getPhonologyPairs(languageId, family === "all" ? {} : { family }), seed + round), [languageId, family, seed, round]);
 
@@ -162,7 +177,29 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const switcher = hasRhythm ? <ViewSwitch view={view} onChange={setView} /> : undefined;
+	const switcher = views.length > 1 ? <ViewSwitch views={views} view={view} onChange={setView} /> : undefined;
+
+	if (hasSounds && view === "sounds") {
+		return (
+			<TaskFrame strip={false}>
+				<TaskBar>{switcher}</TaskBar>
+				<div className="flex-1 overflow-y-auto pb-16 pt-[2vh]">
+					<div className={cn(COLUMN, "q-rise")}>
+						<SoundGuide
+							key={guideSound ?? ""}
+							languageId={languageId}
+							languageCode={languageCode}
+							initialSound={guideSound}
+							onTrain={(id) => {
+								startRound(id);
+								setView("pairs");
+							}}
+						/>
+					</div>
+				</div>
+			</TaskFrame>
+		);
+	}
 
 	if (!dataset || dataset.pairs.length === 0) {
 		return (
@@ -199,9 +236,26 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 	}
 
 	if (finished) {
+		const weakest = trials.find((t, i) => answers[i] !== t.targetWord) ?? trials[0];
+		const guide = weakest ? soundNotesForPairs(weakest.family, languageId)[0] : undefined;
 		return (
 			<TaskFrame>
-				<RoundEnd trials={trials} answers={answers} contrasts={family === "all" ? contrasts : []} onAgain={() => startRound()} onTrain={(id) => startRound(id)} langCode={languageCode} />
+				<RoundEnd
+					trials={trials}
+					answers={answers}
+					contrasts={family === "all" ? contrasts : []}
+					onAgain={() => startRound()}
+					onTrain={(id) => startRound(id)}
+					onGuide={
+						guide
+							? () => {
+									setGuideSound(guide.symbol);
+									setView("sounds");
+								}
+							: undefined
+					}
+					langCode={languageCode}
+				/>
 			</TaskFrame>
 		);
 	}
@@ -213,14 +267,14 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 				<div className={cn(COLUMN, "pt-[8vh]")}>
 					<EmptyState
 						testid="ear-gym-empty"
-						title="No pairs for this contrast yet"
+						title="No pairs for this sound yet"
 						action={
 							<button type="button" onClick={() => startRound("all")} className="q-btn primary">
-								Practice all contrasts
+								Practice all sounds
 							</button>
 						}
 					>
-						<p>The ear gym plays one word of a pair and asks which one it was. This contrast has no pairs to play.</p>
+						<p>The ear gym plays one word of a pair and asks which one it was. This sound has no pairs to play.</p>
 					</EmptyState>
 				</div>
 			</TaskFrame>
@@ -249,7 +303,7 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 						<Pip key={i} className="flex-1" outcome={i < answers.length ? (answers[i] === t.targetWord ? "right" : "miss") : i === index ? "now" : "ahead"} />
 					))}
 				</div>
-				<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
+				<span className={cn("font-ui text-[12.5px] font-[450] tabular-nums text-ink-3", switcher && "hidden sm:inline")} data-testid="task-count">
 					{index + 1}/{total}
 				</span>
 			</TaskBar>
@@ -260,9 +314,9 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 					<PracticeCard
 						icon="ear"
 						title="Ear gym"
-						right={<ChoiceMenu value={family} options={menu} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Contrast" className="w-52 [&>button]:h-8 [&>button]:text-[13px]" />}
+						right={<ChoiceMenu quiet align="end" value={family} options={menu} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Sounds" className="-me-2" />}
 					>
-						<div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:gap-x-4">
 							<button
 								type="button"
 								onClick={() => replay()}
@@ -273,12 +327,12 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 							>
 								<SoundIcon on={!!playing?.hidden} className="size-6" />
 							</button>
-							<div>
+							<div className="min-w-0">
 								<h2 className="font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
-									{!answered ? "Which word was it?" : right ? <span lang={praise.lang}>{praise.text}</span> : "Not this time"}
+									{!answered ? "Which word?" : right ? <span lang={praise.lang}>{praise.text}</span> : "Not this time"}
 								</h2>
 								<p className="mt-1 font-ui text-[13px] text-ink-3" data-testid="ear-gym-contrast">
-									{familyLabel(trial.family) === trial.contrast ? trial.contrast : `${familyLabel(trial.family)} · ${trial.contrast}`}
+									Listen for {trial.contrast}
 								</p>
 							</div>
 							<button
@@ -286,10 +340,11 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 								onClick={() => replay(true)}
 								aria-label="Play slowly"
 								title="Play slowly"
-								className="lh-press col-start-2 flex h-11 shrink-0 items-center justify-center gap-2 justify-self-start rounded-xl bg-teal-wash px-3.5 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:col-start-auto"
+								className="lh-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
+								data-testid="ear-gym-slow"
 							>
 								<SnailIcon className="size-5" strokeWidth={1.6} />
-								Slowly
+								<span className="hidden min-[360px]:inline">Slowly</span>
 							</button>
 						</div>
 
@@ -308,11 +363,11 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 							))}
 						</div>
 
-						<div className="mt-4 flex min-h-[4.75rem] items-center sm:min-h-[3.25rem]" data-testid="ear-gym-cue">
+						<div className="mt-4 flex min-h-[6.25rem] items-center min-[380px]:min-h-[4.75rem] sm:min-h-[3.25rem]" data-testid="ear-gym-cue">
 							{answered ? (
 								<p className="lh-rise font-prose text-[15px] leading-relaxed text-ink-2">{trial.cue}</p>
 							) : (
-								<p className="font-ui text-[13px] leading-relaxed text-ink-3">The underlined letters are where the two words differ. After you pick, each word plays when you tap it.</p>
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">The underlined letters differ. After you pick, tap a word to hear it.</p>
 							)}
 						</div>
 					</PracticeCard>
@@ -363,15 +418,19 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 	);
 }
 
-function ViewSwitch({ view, onChange }: { view: View; onChange: (next: View) => void }) {
+function ViewSwitch({ views, view, onChange }: { views: readonly View[]; view: View; onChange: (next: View) => void }) {
+	const crowded = views.length > 2;
 	return (
-		<div className="q-segc shrink-0 pointer-coarse:[&>button]:h-10" role="group" aria-label="View">
-			{VIEWS.map((v) => (
-				<button key={v.id} type="button" aria-pressed={view === v.id} className={cn(view === v.id && "on")} onClick={() => onChange(v.id)}>
-					{v.label}
-				</button>
-			))}
-		</div>
+		<>
+			<div className={cn("q-segc shrink-0 pointer-coarse:[&>button]:h-10", crowded && "hidden sm:inline-flex")} role="group" aria-label="View" data-testid="phonology-views">
+				{views.map((v) => (
+					<button key={v} type="button" aria-pressed={view === v} className={cn(view === v && "on")} onClick={() => onChange(v)}>
+						{VIEW_LABELS[v]}
+					</button>
+				))}
+			</div>
+			{crowded && <ChoiceMenu quiet value={view} options={views.map((v) => ({ value: v, label: VIEW_LABELS[v] }))} onChange={(next) => onChange(next as View)} ariaLabel="View" className="-ms-2 shrink-0 sm:hidden" />}
+		</>
 	);
 }
 
@@ -383,7 +442,7 @@ function Pip({ outcome, className }: { outcome: Outcome; className?: string }) {
 				"h-1.5 rounded-full transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
 				outcome === "right" && "bg-teal",
 				outcome === "miss" && "shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
-				outcome === "now" && "bg-teal-line",
+				outcome === "now" && "bg-ink-4",
 				outcome === "ahead" && "bg-well-2",
 				className,
 			)}
@@ -439,7 +498,10 @@ function WordTile({ n, side, state, answered, sounding, langCode, onClick }: { n
 					<span className={cn("ms-2 hidden whitespace-nowrap sm:inline", !answered && "sm:invisible")}>[{side.ipa}]</span>
 				</span>
 			</span>
-			<SoundIcon on={sounding} className={cn("size-[18px] text-ink-3 sm:absolute sm:end-5 sm:top-5", !answered && "invisible")} />
+			<span className={cn("flex shrink-0 items-center gap-2.5 sm:absolute sm:end-5 sm:top-5", !answered && "invisible")}>
+				<span className={cn("hidden font-ui text-[12.5px] font-[550] sm:inline", state === "right" ? "text-teal-2" : state === "wrong" ? "text-miss" : "invisible")}>{state === "right" ? "Played" : "Your pick"}</span>
+				<SoundIcon on={sounding} className="size-[18px] text-ink-3" />
+			</span>
 		</button>
 	);
 }
@@ -471,6 +533,7 @@ function RoundEnd({
 	contrasts,
 	onAgain,
 	onTrain,
+	onGuide,
 	langCode,
 }: {
 	trials: EarGymExercise[];
@@ -478,6 +541,7 @@ function RoundEnd({
 	contrasts: ReadonlyArray<{ id: string; label: string }>;
 	onAgain: () => void;
 	onTrain: (family: PhonologyFamily) => void;
+	onGuide?: () => void;
 	langCode: string;
 }) {
 	const heard: Heard[] = trials.map((trial, i) => ({ trial, answer: answers[i] ?? null }));
@@ -522,7 +586,7 @@ function RoundEnd({
 			{byContrast.length > 1 && (
 				<div className="mt-8" data-testid="ear-gym-by-contrast">
 					<h2 className="q-sh">
-						By contrast<small>Pick one to train it</small>
+						Sounds in this round<small>Pick one to train it</small>
 					</h2>
 					<ul className="divide-y divide-[var(--q-line)]">
 						{byContrast.map((c) => (
@@ -554,6 +618,20 @@ function RoundEnd({
 					<h2 className="q-sh">Missed</h2>
 					<HeardRows rows={missed} langCode={langCode} />
 				</div>
+			)}
+			{onGuide && (
+				<button
+					type="button"
+					onClick={onGuide}
+					className="group -mx-2 mt-4 flex min-h-12 w-[calc(100%+1rem)] items-center gap-4 rounded-lg px-2 py-2.5 text-start transition-colors duration-150 hover:bg-well motion-reduce:transition-none"
+					data-testid="ear-gym-guide"
+				>
+					<span className="min-w-0 flex-1">
+						<span className="block font-ui text-[14.5px] font-medium tracking-[-0.006em] text-foreground">How these sounds are made</span>
+						<span className="block font-ui text-[13px] text-ink-3">Where the tongue and the lips go, with a drawing</span>
+					</span>
+					<QIcon name="chev" className="shrink-0 text-ink-4 group-hover:text-ink-2" />
+				</button>
 			)}
 			{right.length > 0 && (
 				<details className="group mt-6" data-testid="ear-gym-right">

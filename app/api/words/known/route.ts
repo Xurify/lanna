@@ -5,7 +5,7 @@
  * {slug, lemma, known}. 404 for a slug the dictionary does not have.
  */
 
-import { knownWordStore, loadLexicon } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, knownWordStore, loadLexicon } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { slug?: unknown; known?: unknown } | null;
 	if (!body || typeof body.slug !== "string" || !body.slug.trim()) return Response.json({ message: "slug is required" }, { status: 400 });
 	const slug = body.slug.trim();

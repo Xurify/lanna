@@ -5,7 +5,7 @@
  */
 
 import { CheatsheetParseError, CHEATSHEET_MAX_CHARS, REPO_PREFIX } from "@/src/core";
-import { cheatsheetReviewState, cheatsheetStore, sheetListenState } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, cheatsheetReviewState, cheatsheetStore, sheetListenState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.cheatsheet);
+	if (oversized) return oversized;
 	const { id } = await ctx.params;
 	const body = (await req.json().catch(() => null)) as { title?: unknown; text?: unknown } | null;
 	if (typeof body?.text !== "string" || !body.text.trim()) return Response.json({ message: "Add at least one phrase." }, { status: 400 });

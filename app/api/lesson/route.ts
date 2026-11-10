@@ -15,7 +15,7 @@
  */
 
 import { isAtlasGender, isUnitId, type FirstAnswer } from "@/src/core";
-import { blitzFor, mixupsFor, personalFor, recordLesson, unitLesson, type RepResult } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, blitzFor, mixupsFor, personalFor, recordLesson, unitLesson, type RepResult } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +71,8 @@ function firstOf(v: unknown): FirstAnswer | undefined {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as {
 		unit?: unknown;
 		mode?: unknown;

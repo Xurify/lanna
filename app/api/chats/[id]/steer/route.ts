@@ -11,9 +11,11 @@
 // registry copy survives a question termination or abort and rides the
 // chat's next run.
 import { ChatInputError, newUserSteer, parseUserSteerInput } from "@/src/core";
-import { getChat, steerLiveChat } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, getChat, steerLiveChat } from "@/src/server";
 
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }): Promise<Response> {
+	const oversized = bodyTooLarge(request, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const { id } = await ctx.params;
 	if (!getChat(id)) return Response.json({ error: "unknown chat" }, { status: 404 });
 	let input;

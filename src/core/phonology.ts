@@ -2,7 +2,7 @@
  * Phonological Acquisition & Articulatory Diagnostics (LangHarness, 2026-11).
  *
  * Implements research-grounded phonological training:
- * 1. Articulatory motor cues & diagnostic guidance (Pillars 3 & 4; Ngo et al. 2024; Neri et al. 2008).
+ * 1. Articulatory motor cues & diagnostic guidance (Pillars 3 & 4; Ngo et al. 2024; Neri et al. 2008): sound-notes.ts.
  * 2. Functional Load weighting in pronunciation scoring (Pillar 5; Catford 1987; Munro & Derwing 2006).
  * 3. Cross-linguistic contrast prioritization via PAM-L2 (Pillar 2; Best 1995; Best & Tyler 2007).
  * 4. Slovak voicing assimilation & orthographic de-biasing (Bassetti 2006; Nimz 2016).
@@ -13,8 +13,10 @@
 
 import slovakPairsJson from "../../curriculum/slovak/phonology-pairs.json";
 import russianPairsJson from "../../curriculum/russian/phonology-pairs.json";
+import estonianPairsJson from "../../curriculum/estonian/phonology-pairs.json";
 import type { LanguageId } from "./language.ts";
 import { rng, shuffle } from "./lesson.ts";
+import { getSoundNote } from "./sound-notes.ts";
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -33,16 +35,6 @@ export interface PhonologyDataset {
 }
 
 export type FunctionalLoadLevel = "high" | "medium" | "low";
-
-export interface ArticulatoryCue {
-	symbol: string;
-	ipa: string;
-	name: string;
-	motor: string;
-	commonPitfall: string;
-	functionalLoad: FunctionalLoadLevel;
-	drillWord: string;
-}
 
 export interface PhonologyPair {
 	id: string;
@@ -83,190 +75,6 @@ export interface EarGymExercise {
 	genderPrompt: "female" | "male";
 }
 
-// ─── Curated Articulatory Guidance Catalog ──────────────────────────────
-
-export const ARTICULATORY_CUES: Record<string, ArticulatoryCue> = {
-	"ť": {
-		symbol: "ť",
-		ipa: "c",
-		name: "Voiceless palatal stop",
-		motor: "Press the broad body/blade of your tongue flat against the hard palate (roof of the mouth). The tip stays down behind your lower front teeth.",
-		commonPitfall: "English speakers often say 'ty' (/tj/) or standard alveolar [t]. Keep it a single unified palatal closure without a glide.",
-		functionalLoad: "high",
-		drillWord: "byť",
-	},
-	"ď": {
-		symbol: "ď",
-		ipa: "ɟ",
-		name: "Voiced palatal stop",
-		motor: "Same position as ť (tongue blade pressed flat against hard palate), but vibrate your vocal cords during the closure.",
-		commonPitfall: "Avoid substituting English 'dy' (/dj/) or English 'j' (/dʒ/). Contact must be palatal, not affricated.",
-		functionalLoad: "high",
-		drillWord: "deň",
-	},
-	"ň": {
-		symbol: "ň",
-		ipa: "ɲ",
-		name: "Palatal nasal",
-		motor: "Broad tongue body against the hard palate with air flowing through your nose. Similar to Spanish 'ñ' or French/Italian 'gn'.",
-		commonPitfall: "Do not divide into two sounds 'n + y'; execute it as a single palatal nasal gesture.",
-		functionalLoad: "high",
-		drillWord: "kôň",
-	},
-	"ľ": {
-		symbol: "ľ",
-		ipa: "ʎ",
-		name: "Palatal lateral approximant",
-		motor: "Tongue blade against the hard palate with air flowing along the sides. Soft, liquid /l/.",
-		commonPitfall: "Merged with standard hard [l] in Western Slovak without loss of comprehension. Low priority for intelligibility.",
-		functionalLoad: "low",
-		drillWord: "ľudia",
-	},
-	"ô": {
-		symbol: "ô",
-		ipa: "uɔ",
-		name: "Rising diphthong uo",
-		motor: "Start with lips tightly rounded in a brief /u/, then immediately glide into an open /ɔ/ in a single syllable beat.",
-		commonPitfall: "Do not pronounce as English 'oh' (/oʊ/) or long 'oo'. It is a rising diphthong ending in an open 'o'.",
-		functionalLoad: "high",
-		drillWord: "stôl",
-	},
-	"ä": {
-		symbol: "ä",
-		ipa: "ɛ",
-		name: "Open-mid front vowel (široké e)",
-		motor: "In standard contemporary Slovak, pronounced as a broad, open [ɛ] (like 'e' in 'pet').",
-		commonPitfall: "Learners often overthink it as German ä (/ɛː/) or /æ/. Pronouncing it as standard Slovak [e/ɛ] is completely accepted.",
-		functionalLoad: "low",
-		drillWord: "mäso",
-	},
-	"ŕ": {
-		symbol: "ŕ",
-		ipa: "r̩ː",
-		name: "Long syllabic trill",
-		motor: "Tap the tongue tip against the alveolar ridge multiple times. Hold the trill for two full beats as the syllable nucleus.",
-		commonPitfall: "Do not insert an epenthetic vowel before or after. The trill itself carries the syllable.",
-		functionalLoad: "high",
-		drillWord: "vŕba",
-	},
-	"ĺ": {
-		symbol: "ĺ",
-		ipa: "l̩ː",
-		name: "Long syllabic lateral",
-		motor: "Firm tongue tip on alveolar ridge with sustained vocal fold vibration for two beats.",
-		commonPitfall: "Sustaining a consonant as a vowel feels unnatural to English speakers. Treat /l/ as the vowel core.",
-		functionalLoad: "high",
-		drillWord: "stĺp",
-	},
-	"r": {
-		symbol: "r",
-		ipa: "r",
-		name: "Alveolar trill",
-		motor: "Flutter the tip of your tongue against the ridge just behind your upper front teeth (1–3 taps).",
-		commonPitfall: "Avoid the American bunched/retroflex /ɹ/. Tongue tip must make contact.",
-		functionalLoad: "high",
-		drillWord: "ruka",
-	},
-	"ch": {
-		symbol: "ch",
-		ipa: "x",
-		name: "Voiceless velar fricative",
-		motor: "Raise the back of your tongue toward the soft palate (velum) to create gentle friction, like Scottish 'loch' or German 'Bach'.",
-		commonPitfall: "Do not pronounce as English /k/ or English /tʃ/ ('cheese'). Never stop the airflow.",
-		functionalLoad: "high",
-		drillWord: "chlieb",
-	},
-	"h": {
-		symbol: "h",
-		ipa: "ɦ",
-		name: "Voiced glottal fricative",
-		motor: "Unlike English voiceless 'h' (whispered air), Slovak 'h' is voiced: vibrate your vocal cords while exhaling.",
-		commonPitfall: "English speakers produce a voiceless /h/. Feel your larynx buzz for Slovak /ɦ/.",
-		functionalLoad: "medium",
-		drillWord: "hrad",
-	},
-	"v": {
-		symbol: "v",
-		ipa: "v / ʋ",
-		name: "Labiodental fricative / approximant",
-		motor: "Upper teeth lightly touch lower lip. At word ends or before voiceless consonants, vocalizes to [w] or assimilates to [f].",
-		commonPitfall: "Don't confuse with German 'v' (/f/) or Spanish bilabial.",
-		functionalLoad: "medium",
-		drillWord: "voda",
-	},
-	"á": {
-		symbol: "á",
-		ipa: "aː",
-		name: "Long open central vowel",
-		motor: "Open jaw, flat relaxed tongue. Hold duration for double the time of short /a/.",
-		commonPitfall: "Do not shift quality into an English diphthong. Keep acoustic purity throughout.",
-		functionalLoad: "high",
-		drillWord: "pás",
-	},
-	"í": {
-		symbol: "í",
-		ipa: "iː",
-		name: "Long close front vowel",
-		motor: "Tongue arched high toward the front roof of mouth, lips spread. Double length of short /i/.",
-		commonPitfall: "Note that Slovak 'í' and 'ý' have identical acoustic quality ([iː]); spelling reflects historical softness.",
-		functionalLoad: "high",
-		drillWord: "víno",
-	},
-	"ú": {
-		symbol: "ú",
-		ipa: "uː",
-		name: "Long close back rounded vowel",
-		motor: "Lips firmly rounded, tongue drawn back. Pure long tone.",
-		commonPitfall: "Do not diphthongize as English 'oo' (/uːw/). Hold steady.",
-		functionalLoad: "high",
-		drillWord: "súd",
-	},
-	"é": {
-		symbol: "é",
-		ipa: "ɛː",
-		name: "Long open-mid front vowel",
-		motor: "Keep mouth mid-open, hold duration.",
-		commonPitfall: "Never glide into English /eɪ/ ('say'). Pure monophthong.",
-		functionalLoad: "high",
-		drillWord: "dnes",
-	},
-	"ó": {
-		symbol: "ó",
-		ipa: "ɔː",
-		name: "Long open-mid back rounded vowel",
-		motor: "Rounded lips, open throat. Found mostly in loanwords.",
-		commonPitfall: "Avoid English /oʊ/ glide.",
-		functionalLoad: "medium",
-		drillWord: "móda",
-	},
-	"dz": {
-		symbol: "dz",
-		ipa: "dz",
-		name: "Voiced alveolar affricate",
-		motor: "Tongue tip touches alveolar ridge for /d/, then immediately releases into /z/ with continuous vocal fold vibration.",
-		commonPitfall: "Do not divide into two separate syllables or letters.",
-		functionalLoad: "medium",
-		drillWord: "medza",
-	},
-	"dž": {
-		symbol: "dž",
-		ipa: "dʒ",
-		name: "Voiced postalveolar affricate",
-		motor: "Tongue tip behind alveolar ridge, like English 'j' in 'jam'.",
-		commonPitfall: "Keep lips slightly rounded and tongue firm.",
-		functionalLoad: "medium",
-		drillWord: "džús",
-	},
-};
-
-/**
- * Retrieve articulatory motor cues for a given phoneme, letter, or digraph.
- */
-export function getArticulatoryCue(target: string): ArticulatoryCue | null {
-	const clean = target.trim().toLowerCase().normalize("NFC");
-	return ARTICULATORY_CUES[clean] ?? null;
-}
-
 // ─── Functional Load Scoring ───────────────────────────────────────────
 
 /**
@@ -277,9 +85,8 @@ export function getArticulatoryCue(target: string): ArticulatoryCue | null {
  * - Low FL (0.3): Allophonic or dialectally neutralized contrasts (e.g. soft ľ -> l,
  *   which is standard in Western Slovak and causes zero communicative breakdown).
  */
-export function getFunctionalWeight(phoneme: string): number {
-	const cue = getArticulatoryCue(phoneme);
-	const load = cue?.functionalLoad ?? "medium";
+export function getFunctionalWeight(phoneme: string, languageId: string | undefined): number {
+	const load = getSoundNote(phoneme, languageId)?.functionalLoad ?? "medium";
 	switch (load) {
 		case "high":
 			return 1.5;
@@ -297,13 +104,14 @@ export function getFunctionalWeight(phoneme: string): number {
  */
 export function functionalLoadWeightedScore(
 	phonemes: ReadonlyArray<{ p: string; score: number }>,
+	languageId: string | undefined,
 ): number {
 	if (!phonemes.length) return 0;
 	let weightedSum = 0;
 	let totalWeight = 0;
 
 	for (const p of phonemes) {
-		const w = getFunctionalWeight(p.p);
+		const w = getFunctionalWeight(p.p, languageId);
 		weightedSum += p.score * w;
 		totalWeight += w;
 	}
@@ -472,6 +280,7 @@ export function getVoicingAssimilationNotes(word: string): AssimilationRule | nu
 const BUNDLED_DATASETS: Record<string, PhonologyDataset> = {
 	[slovakPairsJson.language]: slovakPairsJson as unknown as PhonologyDataset,
 	[russianPairsJson.language]: russianPairsJson as unknown as PhonologyDataset,
+	[estonianPairsJson.language]: estonianPairsJson as unknown as PhonologyDataset,
 };
 
 export function getPhonologyData(languageId: string | undefined): PhonologyDataset | null {

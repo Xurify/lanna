@@ -17,7 +17,7 @@
  * an unknown var held in the file (2026-11-06), so a stray one can be
  * removed from Settings → API keys instead of by hand-editing auth.json.
  */
-import { isWritableAuthKey, keyStatuses } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, isWritableAuthKey, keyStatuses } from "@/src/server";
 import { deleteKey, saveKey } from "@/src/server";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +25,8 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(req: Request, { params }: Params) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const { id } = await params;
 	if (!isWritableAuthKey(id)) {
 		return Response.json({ error: `unknown key "${id}"` }, { status: 404 });

@@ -16,9 +16,11 @@
  * A task (background-tasks wave, 2026-11-05) aborts by its task id: not
  * running -> 409, aborted -> 200.
  */
-import { abortJob, abortTask, abortTurn } from "@/src/server";
+import { abortJob, abortTask, abortTurn, BODY_LIMITS, bodyTooLarge } from "@/src/server";
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	let body: unknown;
 	try {
 		body = await req.json();

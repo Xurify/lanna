@@ -6,9 +6,11 @@
  * A running task is left alone (stop it with /api/activity/abort). The list
  * itself rides GET /api/activity.
  */
-import { clearFinishedTasks, dismissTask, removeTask } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, clearFinishedTasks, dismissTask, removeTask } from "@/src/server";
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { action?: unknown; id?: unknown } | null;
 	if (body?.action === "clear") return Response.json({ ok: true, removed: clearFinishedTasks() });
 	if ((body?.action !== "dismiss" && body?.action !== "remove") || typeof body.id !== "string" || !/^[A-Za-z0-9:_-]+$/.test(body.id)) {

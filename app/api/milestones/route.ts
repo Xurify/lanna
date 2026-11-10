@@ -7,7 +7,7 @@
  * DELETE /api/milestones?id= — hide a custom milestone (kept on disk).
  */
 
-import { addCustomMilestone, milestonesReport, removeCustomMilestone } from "@/src/server";
+import { addCustomMilestone, BODY_LIMITS, bodyTooLarge, milestonesReport, removeCustomMilestone } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { text?: unknown } | null;
 	if (!body || typeof body.text !== "string") return Response.json({ message: "text must be a string" }, { status: 400 });
 	try {
@@ -32,6 +34,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const id = new URL(req.url).searchParams.get("id") ?? "";
 	if (!id.startsWith("custom-")) return Response.json({ message: "only custom milestones can be removed" }, { status: 400 });
 	const removed = removeCustomMilestone(id);

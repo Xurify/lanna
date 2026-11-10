@@ -1,0 +1,49 @@
+name: langharness
+
+services:
+  langharness:
+    image: ${LH_IMAGE:-langharness:local}
+    build:
+      context: .
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:26-bookworm-slim}
+    init: true
+    restart: unless-stopped
+    user: "${LH_UID:-10001}:${LH_GID:-10001}"
+    # Docker writes its own firewall rules and skips ufw, so a port published
+    # without 127.0.0.1 is open to the internet whatever ufw says.
+    ports:
+      - "127.0.0.1:${LH_PORT:-3010}:3010"
+    environment:
+      HOSTNAME: 0.0.0.0
+      TZ: ${TZ:-UTC}
+      LH_UPDATE_YTDLP: ${LH_UPDATE_YTDLP:-0}
+      LH_PUBLIC_HOST: ${LH_PUBLIC_HOST:-}
+      LH_PROXY_SECRET: ${LH_PROXY_SECRET:-}
+    volumes:
+      - ${LH_HOME:?set LH_HOME in .env to the folder that holds data/, keys/ and sheets/}/data:/data
+      - ${LH_HOME}/keys:/keys
+      - ${LH_HOME}/sheets:/sheets
+    read_only: true
+    # Docker mounts a tmpfs noexec unless told otherwise, and yt-dlp unpacks its
+    # libraries into /tmp and runs them from there.
+    tmpfs:
+      - /tmp:exec,mode=1777
+      - /app/.next/cache:mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${LH_MEM_LIMIT:-2g}
+    pids_limit: 512
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('node:net').connect(3010,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

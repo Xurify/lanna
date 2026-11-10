@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureExperimentInitialized, recordWeeklyCheckResults } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, ensureExperimentInitialized, recordWeeklyCheckResults } from "@/src/server";
 import type { CheckItemRecord } from "@/src/core";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	try {
 		const body = await req.json();
 		const items = body.items as CheckItemRecord[];

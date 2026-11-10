@@ -7,7 +7,7 @@
  *        (progress.json's exams), nothing gated yet.
  */
 
-import { examFor, recordExam } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, examFor, recordExam } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { chapter?: unknown; seed?: unknown; answers?: unknown } | null;
 	if (!body || typeof body.chapter !== "string") return Response.json({ message: "chapter is required" }, { status: 400 });
 	if (typeof body.seed !== "number" || !Number.isFinite(body.seed)) return Response.json({ message: "seed is required" }, { status: 400 });

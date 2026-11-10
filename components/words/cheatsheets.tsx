@@ -123,7 +123,7 @@ export function CheatsheetsTab({ initialSheet, onCount, onOpenChange }: { initia
 
 			<div className="min-h-[120px]">
 				{shownSheets && shownSheets.length > 0 && (
-					<ul className="q-card divide-y divide-border/70 overflow-hidden" data-testid="cheatsheet-list">
+					<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden" data-testid="cheatsheet-list">
 						{shownSheets.map((s) => (
 							<li key={s.id}>
 								<button type="button" onClick={() => open(s.id)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-well">
@@ -921,7 +921,7 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 										Listen
 									</Link>
 								</h2>
-								<ul className="q-card divide-y divide-border/70 overflow-hidden">
+								<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden">
 									{section.rows.map((row, i) => {
 										const key = `${section.id}:${i}`;
 										return <CheatRowItem key={key} row={row} tag={lang?.tag} hidden={cover && !shown.has(key)} onReveal={() => setShown((prev) => new Set(prev).add(key))} />;

@@ -27,6 +27,8 @@
 
 import {
 	allSegmentPaths,
+	BODY_LIMITS,
+	bodyTooLarge,
 	isValidSegmentPath,
 	promptOverrides,
 	readSettingsRecord,
@@ -43,6 +45,8 @@ function segmentPathFrom(segments: string[]): string | null {
 }
 
 export async function PUT(request: Request, ctx: { params: Promise<{ segment: string[] }> }) {
+	const oversized = bodyTooLarge(request, BODY_LIMITS.prompt);
+	if (oversized) return oversized;
 	const { segment } = await ctx.params;
 	const path = segmentPathFrom(segment);
 	if (!path) return Response.json({ error: "invalid segment path" }, { status: 400 });
