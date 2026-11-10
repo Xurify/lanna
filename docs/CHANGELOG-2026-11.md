@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 10 November: the study keeps the app's local day (main)
+
+- **Why:** the owner asked whether the study should run on the local date. It should: the protocol says the app's local days, and the lesson logs, progress and the scheduled arm already use the local `dayKey`.
+- **What changed:** the study took "today" from the UTC date, so from 7 pm local it read the next day and the daily sync looked for a lesson log that evening practice had not written yet. The reset default start date, the daily sync and the state read now use `dayKey`, and a weekly check stamps its answers with the local date. Day 1 is Monday 9 November again; the 42 days, the switch on 23 November and the Sunday checks are unchanged.
+- **Checked:** the state reads 2026-11-09 as day 1 of 42, baseline; `tests/experiment.test.ts` 8/8; `tsc --noEmit` clean.
+- **Unverified:** the owner's screen (no dev server was running); a session that crosses local midnight.
+
 ## 9 November: a security pass before the app gets a public address (branch `chore/web-security-pass`)
 
 - **Why:** the plan for a web version ([plans/always-on-server.md](plans/always-on-server.md)) puts the app on the internet behind a sign-in. The review is [research/web-security-review.md](research/web-security-review.md); the rules are E92.
