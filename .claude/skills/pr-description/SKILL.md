@@ -15,26 +15,36 @@ The rule is `docs/DECISIONS.md` → **W5**; the shape is `.github/pull_request_t
    - Start a sandbox: `npm run dev:sandbox -- --seed` (never the real profile, E6). It prints the URL.
    - `MSYS_NO_PATHCONV=1 node scripts/pr-shots.mjs <url> <dir> "name=/route" "name=/route@.css-selector"` writes `<name>-<theme>-<width>.png` for Day and Night at 1280 and 390 px (`--themes`, `--widths` change that). Use the selector to crop a long page to the part the PR changed. Get to the state the PR is about (after an answer, after a miss, an empty list) through the route or a seeded profile; if a state needs clicks, take it in the browser tool and name the file the same way.
    - **Open every image** before it goes in. A screenshot nobody looked at is not a check.
-- Push them to the `pr-assets` branch, which holds only screenshots (see below), and embed them in a Day | Night table.
-   - **Always include images and screenshots of the changed thing**: A PR is not ready for review until the screenshots are live on `pr-assets` and embedded in the PR body. If using `gh pr create`, immediately push the assets to `pr-assets` under `pr-<number>/` and update the body with `gh pr edit <number> --body-file`. Never hand back a PR to the user without embedded screenshots.
+   - Reference the local screenshot paths directly in the Day | Night table of the PR body:
+     ```markdown
+     | Day | Night |
+     | --- | --- |
+     | ![Day Desktop](./shots/page-day-1280.png) | ![Night Desktop](./shots/page-night-1280.png) |
+     | ![Day Mobile](./shots/page-day-390.png) | ![Night Mobile](./shots/page-night-390.png) |
+     ```
+   - Pass each screenshot via `--attach` when running `gh pr create` (or `gh pr edit`):
+     ```bash
+     gh pr create --title "..." --body-file pr-body.md \
+       --attach ./shots/page-day-1280.png \
+       --attach ./shots/page-night-1280.png \
+       --attach ./shots/page-day-390.png \
+       --attach ./shots/page-night-390.png
+     ```
+     `gh` automatically uploads each file to GitHub user-attachments and rewrites the local Markdown image paths in the PR description to `https://github.com/user-attachments/assets/<uuid>`.
+   - **Always include images and screenshots of the changed thing**: A PR is not ready for review until the screenshots are attached and rendered in the PR body. Never hand back a PR to the user without embedded screenshots.
 4. **Try it**: one checkbox per thing to check: the route in the sandbox, what to do, what to see.
 5. **Where**: one link per part of the diff, `https://github.com/Xurify/langharness/blob/<head SHA>/<path>#L<from>-L<to>`, the part the learner sees first, then the logic, the tests, the docs and skills. Re-pin the SHA and the lines after the last push (`git rev-parse HEAD`).
 6. **Removed**: anything a learner has now that the PR takes away. The owner signs that off.
 7. **Checked**: the real counts (`npm test`, `npm run typecheck`, `npm run lint`), then what was looked at (page, theme, width) and **Not looked at:**. Never "should work".
 8. A PR that adds or changes a drawn explanation says how it was reviewed: the blind review in the `ink-drawing` skill, and the limits that remain.
 
-## The `pr-assets` branch
+## Uploading screenshots via `gh --attach`
 
-An orphan branch of screenshots, one folder per PR: `pr-<number>/<name>-<theme>-<width>.png`. The repo is private, so the link has the form `https://github.com/Xurify/langharness/blob/pr-assets/pr-<number>/<file>.png?raw=true`; it renders for anyone who can open the repo. Create it once, from an empty folder:
-
-```
-git init -b pr-assets
-git remote add origin https://github.com/Xurify/langharness.git
-mkdir pr-<number> && cp <dir>/*.png pr-<number>/
-git add -A && git commit -m "Screenshots for PR <number>" && git push origin pr-assets
-```
-
-Later: clone with `git clone --branch pr-assets --single-branch <url> <folder>`, add `pr-<number>/`, commit and push. The PR number is known after `gh pr create`, so open the PR with a short body, push the shots, then `gh pr edit <number> --body-file`. Pictures that document a decision stay in `docs/assets/` (S5), not here.
+GitHub CLI natively supports media attachments for pull requests via `--attach`:
+- Any local image referenced in the Markdown body (e.g. `![Day Desktop](./shots/page-day-1280.png)`) will be uploaded to GitHub's user-attachments storage (`https://github.com/user-attachments/assets/...`) and rewritten in-place by `gh` to point to the uploaded asset URL.
+- This avoids storing binary images in Git or maintaining an orphan `pr-assets` branch.
+- You can attach up to 50 files in a single `gh pr create` or `gh pr edit` invocation.
+- Pictures that document a permanent architectural decision stay in `docs/assets/` (S5), not in PR attachments.
 
 ## Writing the body
 

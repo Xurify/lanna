@@ -11,7 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # Rules in short
 
 - **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule under **Code style → Comments** below.
-- **Pull requests**: every PR description MUST show the changed thing with images/screenshots before asking for a review (Day and Night screenshots embedded via `pr-assets`). Include: what changes for the learner, Day and Night screenshots, how to try it, commit-pinned links to the code, what was and was not checked. Template `.github/pull_request_template.md`, rule W5 in `docs/DECISIONS.md`, steps in the `pr-description` skill. Never open or hand back a PR without embedded screenshots of the change.
+- **Pull requests**: every PR description MUST show the changed thing with images/screenshots before asking for a review (Day and Night screenshots attached via `gh pr create/edit --attach`). Include: what changes for the learner, Day and Night screenshots, how to try it, commit-pinned links to the code, what was and was not checked. Template `.github/pull_request_template.md`, rule W5 in `docs/DECISIONS.md`, steps in the `pr-description` skill. Never open or hand back a PR without embedded screenshots of the change.
 
 # Code style
 
