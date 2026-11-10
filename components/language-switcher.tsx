@@ -237,12 +237,29 @@ export function LanguageSwitcher() {
 			<nav className="flex flex-col gap-3" aria-label="Main">
 				{NAV.map((group) => (
 					<div key={group.id} className="flex flex-col gap-0.5" role={group.label ? "group" : undefined} aria-label={group.label ?? undefined} data-testid={`nav-group-${group.id}`}>
+						{group.id === "trial" && <div className="mb-2 border-t border-border/40" />}
 						{group.label && <p className="px-2.5 pb-0.5 pt-1 text-xs font-bold text-muted-foreground">{group.label}</p>}
 						{group.items.map((item) => {
 							const Icon = NAV_ICONS[item.id];
 							return (
-								<NavItem key={item.id} href={item.href} testid={`${item.id}-door`} active={lit === item.id} onPress={() => setPressed({ id: item.id, from: pathname })} icon={<Icon className="size-[18px]" />}>
+								<NavItem
+									key={item.id}
+									href={item.href}
+									testid={`${item.id}-door`}
+									active={lit === item.id}
+									accent={item.id === "experiment" ? "teal" : "sun"}
+									onPress={() => setPressed({ id: item.id, from: pathname })}
+									icon={<Icon className="size-[18px]" />}
+								>
 									{item.label}
+									{item.badge && (
+										<span
+											className="ml-auto rounded-full border border-teal/30 bg-teal-wash px-1.5 py-0.5 text-[10px] font-semibold text-teal tabular-nums"
+											data-testid={`${item.id}-badge`}
+										>
+											{item.badge}
+										</span>
+									)}
 									{item.id === "review" && counts && (reviewDue > 0 || reviewNew > 0) && (
 										<span
 											className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums", reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground")}
@@ -287,6 +304,7 @@ function NavItem({
 	href,
 	testid,
 	active,
+	accent = "sun",
 	onPress,
 	icon,
 	children,
@@ -294,6 +312,7 @@ function NavItem({
 	href: string;
 	testid: string;
 	active: boolean;
+	accent?: "sun" | "teal";
 	onPress?: () => void;
 	icon: React.ReactNode;
 	children: React.ReactNode;
@@ -335,8 +354,13 @@ function NavItem({
 				active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
 			)}
 		>
-			{active && <span className="absolute -left-3 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-sun" aria-hidden="true" />}
-			<span className={cn("shrink-0", active ? "text-sun" : "")}>{icon}</span>
+			{active && (
+				<span
+					className={cn("absolute -left-3 top-1.5 bottom-1.5 w-[3px] rounded-r-full", accent === "teal" ? "bg-teal" : "bg-sun")}
+					aria-hidden="true"
+				/>
+			)}
+			<span className={cn("shrink-0", active ? (accent === "teal" ? "text-teal" : "text-sun") : "")}>{icon}</span>
 			{children}
 		</Link>
 	);
