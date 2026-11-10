@@ -103,7 +103,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					{weeklyCheckDue && !weeklyCheckCompleted ? (
 						<Link
 							href="/experiments/input-first/check"
-							className="lh-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 text-xs font-semibold text-white shadow-xs hover:bg-amber-600 sm:h-8 sm:w-auto"
+							className="q-btn primary h-11 w-full sm:h-9 sm:w-auto"
 							data-testid="study-quick-check"
 						>
 							<span>Take Week {weekNumber} Check</span>
@@ -112,7 +112,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					) : !validDay ? (
 						<Link
 							href="/listen"
-							className="lh-press inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-teal px-3 text-xs font-semibold text-white shadow-xs hover:bg-teal-2 sm:h-8 sm:w-auto"
+							className="q-btn primary h-11 w-full sm:h-9 sm:w-auto"
 							data-testid="study-quick-listen"
 						>
 							<span>Do {needed} in Listen</span>
@@ -121,7 +121,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					) : (
 						<Link
 							href="/experiments/input-first"
-							className="lh-press inline-flex h-10 w-full items-center justify-center gap-1 rounded-lg bg-well-2 px-2.5 text-xs font-medium text-ink-2 hover:text-foreground sm:h-8 sm:w-auto"
+							className="q-btn sec h-11 w-full sm:h-9 sm:w-auto"
 						>
 							<span>View Study</span>
 							<QIcon name="chev" className="size-3.5 text-ink-4" />
