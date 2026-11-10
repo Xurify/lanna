@@ -16,10 +16,14 @@ interface FakeAudio {
 	onerror?: () => void;
 	play(): Promise<void>;
 	pause(): void;
+	removeAttribute(name: string): void;
+	load(): void;
 }
 
 const store = new Map<string, string>();
 const made: FakeAudio[] = [];
+const loads: string[] = [];
+const revoked: string[] = [];
 let voiceCalls = 0;
 let holdVoice = false;
 let releases: Array<() => void> = [];
@@ -51,10 +55,16 @@ class FakeAudioElement implements FakeAudio {
 	pause(): void {
 		this.paused = true;
 	}
+	removeAttribute(name: string): void {
+		if (name === "src") this.src = "";
+	}
+	load(): void {
+		loads.push(this.src);
+	}
 }
 Object.defineProperty(globalThis, "Audio", { configurable: true, value: FakeAudioElement });
 URL.createObjectURL = () => "blob:test";
-URL.revokeObjectURL = () => {};
+URL.revokeObjectURL = (url: string) => void revoked.push(`${url} while the element held "${made.at(-1)?.src ?? ""}"`);
 
 globalThis.fetch = (async (input: string | URL | Request) => {
 	const url = String(input);
@@ -72,6 +82,8 @@ async function waitFor(check: () => boolean): Promise<void> {
 beforeEach(() => {
 	store.clear();
 	made.length = 0;
+	loads.length = 0;
+	revoked.length = 0;
 	voiceCalls = 0;
 	holdVoice = false;
 	releases = [];
@@ -103,6 +115,17 @@ test("stopping a clip mid-sentence silences it and settles the caller", async ()
 	stopSpeaking();
 	await pending;
 	assert.equal(made[0]!.paused, true);
+});
+
+test("a stopped clip lets go of its source before the blob address is revoked", async () => {
+	setSoundOn(true);
+	const pending = speak("Ahoj");
+	await waitFor(() => made.length === 1);
+	stopSpeaking();
+	await pending;
+	assert.equal(made[0]!.src, "");
+	assert.deepEqual(loads, [""]);
+	assert.deepEqual(revoked, ['blob:test while the element held ""']);
 });
 
 test("a newer sentence stops the one before it", async () => {

@@ -34,7 +34,7 @@ describe("Articulatory motor guidance catalog", () => {
 	test("provides explicit motor positioning for core Slovak target sounds", () => {
 		const targetSounds = ["ť", "ď", "ň", "ľ", "ô", "ä", "ŕ", "ĺ", "ch", "á", "í", "ú"];
 		for (const s of targetSounds) {
-			const cue = getArticulatoryCue(s);
+			const cue = getArticulatoryCue(s, "slovak");
 			assert.ok(cue, `Cue exists for ${s}`);
 			assert.ok(cue.motor.length > 20, `Motor description is detailed for ${s}`);
 			assert.ok(cue.ipa.length > 0, `IPA symbol exists for ${s}`);
@@ -43,28 +43,28 @@ describe("Articulatory motor guidance catalog", () => {
 	});
 
 	test("handles case-insensitivity and requires exact NFC match without plain consonant fallback", () => {
-		const upper = getArticulatoryCue("Ť");
+		const upper = getArticulatoryCue("Ť", "slovak");
 		assert.ok(upper, "Finds uppercase Ť");
 		assert.equal(upper.symbol, "ť");
 
-		assert.equal(getArticulatoryCue("t"), null, "Plain 't' returns null");
-		assert.equal(getArticulatoryCue("d"), null, "Plain 'd' returns null");
-		assert.notEqual(getArticulatoryCue("ť"), null, "Palatal 'ť' returns cue");
-		assert.notEqual(getArticulatoryCue("ď"), null, "Palatal 'ď' returns cue");
+		assert.equal(getArticulatoryCue("t", "slovak"), null, "Plain 't' returns null");
+		assert.equal(getArticulatoryCue("d", "slovak"), null, "Plain 'd' returns null");
+		assert.notEqual(getArticulatoryCue("ť", "slovak"), null, "Palatal 'ť' returns cue");
+		assert.notEqual(getArticulatoryCue("ď", "slovak"), null, "Palatal 'ď' returns cue");
 	});
 });
 
 describe("Functional Load (FL) weighting in pronunciation scoring", () => {
 	test("assigns weights based on communicative impact", () => {
 		// Vowel length and palatals alter word meanings and noun cases (High FL)
-		assert.equal(getFunctionalWeight("á"), 1.5, "Long vowel á is high FL");
-		assert.equal(getFunctionalWeight("ť"), 1.5, "Palatal stop ť is high FL");
+		assert.equal(getFunctionalWeight("á", "slovak"), 1.5, "Long vowel á is high FL");
+		assert.equal(getFunctionalWeight("ť", "slovak"), 1.5, "Palatal stop ť is high FL");
 
 		// Standard consonants have medium FL
-		assert.equal(getFunctionalWeight("v"), 1.0, "Consonant v is medium FL");
+		assert.equal(getFunctionalWeight("v", "slovak"), 1.0, "Consonant v is medium FL");
 
 		// Soft ľ is merged in Western Slovak without communicative breakdown (Low FL)
-		assert.equal(getFunctionalWeight("ľ"), 0.3, "Soft ľ is low FL");
+		assert.equal(getFunctionalWeight("ľ", "slovak"), 0.3, "Soft ľ is low FL");
 	});
 
 	test("functionalLoadWeightedScore prevents over-penalizing benign mergers", () => {
@@ -76,7 +76,7 @@ describe("Functional Load (FL) weighting in pronunciation scoring", () => {
 		];
 		// Unweighted average would be 60.
 		// Weighted: (20 * 0.3 + 100 * 1.5) / (0.3 + 1.5) = 156 / 1.8 ≈ 87!
-		const weightedA = functionalLoadWeightedScore(caseA);
+		const weightedA = functionalLoadWeightedScore(caseA, "slovak");
 		assert.ok(weightedA > 80, `Soft ľ miss only drops score to ${weightedA}, preserving communicative credit`);
 
 		// Case B: misses vowel length on á (score 20), but gets consonant right (score 100)
@@ -85,12 +85,12 @@ describe("Functional Load (FL) weighting in pronunciation scoring", () => {
 			{ p: "á", score: 20 },
 		];
 		// Weighted: (100 * 1.0 + 20 * 1.5) / (1.0 + 1.5) = 130 / 2.5 = 52.
-		const weightedB = functionalLoadWeightedScore(caseB);
+		const weightedB = functionalLoadWeightedScore(caseB, "slovak");
 		assert.ok(weightedB <= 55, `Vowel length miss severely drops score to ${weightedB} due to high communicative impact`);
 	});
 
 	test("returns 0 for empty phoneme array", () => {
-		assert.equal(functionalLoadWeightedScore([]), 0);
+		assert.equal(functionalLoadWeightedScore([], "slovak"), 0);
 	});
 });
 
@@ -147,7 +147,7 @@ describe("Slovak voicing assimilation (*spodobovanie*) & orthographic rules", ()
 });
 
 describe("Bundled phonology datasets validation", () => {
-	const bundledLangs = ["slovak", "russian"];
+	const bundledLangs = ["slovak", "russian", "estonian"];
 
 	for (const lang of bundledLangs) {
 		describe(`${lang} dataset`, () => {
@@ -223,17 +223,24 @@ describe("Bundled phonology datasets validation", () => {
 
 	test("returns null for unknown language id", () => {
 		assert.equal(getPhonologyData("unknown"), null);
-		assert.equal(getPhonologyData("estonian"), null);
 		assert.equal(getPhonologyData(""), null);
 		assert.equal(getPhonologyData(undefined), null);
 		assert.equal(getPhonologyData("sk"), null);
-		assert.deepEqual(getPhonologyPairs("estonian"), []);
+		assert.deepEqual(getPhonologyPairs("unknown"), []);
 	});
 
 	test("hasRhythmPage is true for Slovak and false for Russian and other languages", () => {
 		assert.equal(hasRhythmPage("slovak"), true);
 		assert.equal(hasRhythmPage("russian"), false);
 		assert.equal(hasRhythmPage("estonian"), false);
+	});
+
+	test("sound notes belong to one language and never show for another", () => {
+		assert.notEqual(getArticulatoryCue("ť", "slovak"), null);
+		assert.equal(getArticulatoryCue("ť", "russian"), null);
+		assert.equal(getArticulatoryCue("ť", "estonian"), null);
+		assert.equal(getArticulatoryCue("ť", undefined), null);
+		assert.equal(getFunctionalWeight("ť", "russian"), 1.0);
 		assert.equal(hasRhythmPage(undefined), false);
 	});
 });
