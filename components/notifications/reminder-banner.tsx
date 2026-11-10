@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { BellIcon, SparklesIcon, XIcon, ArrowRightIcon } from "lucide-react";
 import type { ScheduledNudge } from "@/src/core";
+import { CountryFlag } from "@/components/ui/country-flag";
+import { switchLanguage } from "@/components/switch-language";
 import { subscribeToBannerAlerts } from "./notification-dispatcher.ts";
 
 export function ReminderBanner() {
@@ -28,6 +30,21 @@ export function ReminderBanner() {
 	const isSmart = activeNudge.source === "smart_trend";
 	const isUrgent = activeNudge.urgent;
 
+	const handleAction = async () => {
+		const nudge = activeNudge;
+		setActiveNudge(null);
+		const targetPath = `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`;
+		if (nudge.languageId) {
+			try {
+				await switchLanguage(nudge.languageId, nudge.languageName ?? nudge.languageId, targetPath);
+			} catch {
+				window.location.assign(targetPath);
+			}
+		} else {
+			window.location.assign(targetPath);
+		}
+	};
+
 	return (
 		<aside
 			role="status"
@@ -48,7 +65,12 @@ export function ReminderBanner() {
 
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center justify-between gap-2">
-					<h3 className="text-sm font-medium text-foreground">{activeNudge.title}</h3>
+					<div className="flex items-center gap-1.5 min-w-0">
+						{activeNudge.languageId && (
+							<CountryFlag lang={activeNudge.languageId} className="h-3.5 w-3.5 shrink-0 rounded-sm" />
+						)}
+						<h3 className="text-sm font-medium text-foreground truncate">{activeNudge.title}</h3>
+					</div>
 					<button
 						type="button"
 						onClick={() => setActiveNudge(null)}
@@ -61,14 +83,14 @@ export function ReminderBanner() {
 				<p className="mt-1 text-xs text-muted-foreground leading-relaxed">{activeNudge.message}</p>
 				{activeNudge.taskTitle && (
 					<div className="mt-2.5">
-						<a
-							href={`/#task-${encodeURIComponent(activeNudge.taskKind ?? "")}`}
-							onClick={() => setActiveNudge(null)}
+						<button
+							type="button"
+							onClick={() => void handleAction()}
 							className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
 						>
 							<span>Start {activeNudge.taskTitle}</span>
 							<ArrowRightIcon className="h-3 w-3" />
-						</a>
+						</button>
 					</div>
 				)}
 			</div>

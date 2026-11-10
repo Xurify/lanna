@@ -277,3 +277,81 @@ test("parseNotificationSettingsBody accepts valid partial and full bodies", asyn
 	assert.equal(parseNotificationSettingsBody({ times: "not-an-array" }).ok, false);
 	assert.equal(parseNotificationSettingsBody({ soundPreset: "invalid-preset" }).ok, false);
 });
+
+test("buildDailyNudges handles multi-language day split across all languages", () => {
+	const settings = {
+		enabled: true,
+		times: ["09:00", "14:00", "18:30"],
+		soundPreset: "chime" as const,
+		inAppBanner: true,
+		systemNotification: true,
+		smartAutoNudge: false,
+		autoScheduleTasks: true,
+		aiAssisted: false,
+	};
+
+	// Mimics the user's "Split the day": 210 min total across Slovak (90m), Estonian (61m), Russian (59m)
+	const languages = [
+		{
+			id: "slovak",
+			english: "Slovak",
+			endonym: "Slovenčina",
+			running: true,
+			minutes: 90,
+			practiced: 1, // 89 min remaining
+			setUp: true,
+			tasks: [{ id: "slovak-review", kind: "review", title: "Review", durationMinutes: 8, done: false }],
+		},
+		{
+			id: "estonian",
+			english: "Estonian",
+			endonym: "Eesti",
+			running: false,
+			minutes: 61,
+			practiced: 0, // 61 min remaining
+			setUp: true,
+			tasks: [{ id: "eesti-words", kind: "words", title: "Word Bank", durationMinutes: 10, done: false }],
+		},
+		{
+			id: "russian",
+			english: "Russian",
+			endonym: "Русский",
+			running: false,
+			minutes: 59,
+			practiced: 0, // 59 min remaining
+			setUp: true,
+			tasks: [{ id: "russian-lesson", kind: "lesson", title: "Grammar Unit", durationMinutes: 15, done: false }],
+		},
+	];
+
+	const nudges = buildDailyNudges({
+		settings,
+		languages,
+	});
+
+	// Should generate scheduled slots + evening deadline warning
+	assert.ok(nudges.length >= 3);
+
+	// The slots should distribute across the unmet languages
+	const languageIds = nudges.map((n) => n.languageId).filter(Boolean);
+	assert.ok(languageIds.includes("slovak"));
+	assert.ok(languageIds.includes("estonian"));
+	assert.ok(languageIds.includes("russian"));
+
+	// Deadline alert at 20:30 should break down all unmet languages
+	const deadlineNudge = nudges.find((n) => n.source === "deadline_warning");
+	assert.ok(deadlineNudge);
+	assert.ok(deadlineNudge.urgent);
+	assert.match(deadlineNudge.title, /209 min needed across 3 languages/);
+	assert.match(deadlineNudge.message, /Slovenčina \(89m\)/);
+	assert.match(deadlineNudge.message, /Eesti \(61m\)/);
+	assert.match(deadlineNudge.message, /Русский \(59m\)/);
+
+	// If all languages complete their goals, nudges are completely suppressed
+	const completedLanguages = languages.map((l) => ({ ...l, practiced: l.minutes }));
+	const completedNudges = buildDailyNudges({
+		settings,
+		languages: completedLanguages,
+	});
+	assert.equal(completedNudges.length, 0);
+});

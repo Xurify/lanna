@@ -13,11 +13,20 @@ import {
 	analyzeStudyTrends,
 	buildDailyNudges,
 	DEFAULT_NOTIFICATION_SETTINGS,
+	type DayLanguage,
+	type DayLog,
 	type NotificationSettings,
 	type ScheduledNudge,
 	type StudyTrendInsights,
 } from "@/src/core";
-import { dayLogDays, progressSummary, readSettingsRecord } from "@/src/server";
+import {
+	dayLogDays,
+	languageDay,
+	progressSummary,
+	readSettingsRecord,
+	shownProfiles,
+	withProfile,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +42,7 @@ export interface ReminderScheduleResponse {
 	todayMinutes: number;
 	dailyGoal: number;
 	streak: number;
+	languages?: DayLanguage[];
 }
 
 export async function GET(req: Request) {
@@ -46,32 +56,38 @@ export async function GET(req: Request) {
 		...(settingsRecord.notifications ?? {}),
 	};
 
-	// 2. Read recent activity logs to analyze habitual windows
-	const recentDays = dayLogDays(todayIso, tz, 30);
-	const trends = analyzeStudyTrends(recentDays);
+	// 2. Read recent activity logs across all profiles to analyze habitual windows
+	const profiles = shownProfiles();
+	const allDays: DayLog[] = [];
+	for (const pid of profiles) {
+		const days = withProfile(pid, () => dayLogDays(todayIso, tz, 30));
+		allDays.push(...days);
+	}
+	const trends = analyzeStudyTrends(allDays);
 
-	// 3. Read current progress, goal, and daily plan
-	const summary = progressSummary(tz);
-	const dailyGoal = summary.dailyGoal ?? 20;
-	const todayMinutes = summary.todayMinutes ?? 0;
-	const tasks = summary.plan?.tasks ?? [];
+	// 3. Read today across every language in the list (the split of the day)
+	const dayPlan = languageDay(tz);
+	const activeSummary = progressSummary(tz);
 
-	// 4. Build schedule
+	// 4. Build schedule taking into account all languages and their task plans
 	const schedule = buildDailyNudges({
 		settings,
 		trends,
-		dailyGoal,
-		todayMinutes,
-		tasks,
+		dailyGoal: dayPlan.minutes,
+		todayMinutes: dayPlan.practiced,
+		tasks: activeSummary.plan?.tasks ?? [],
+		languageName: dayPlan.languages.find((l) => l.running)?.english ?? "your language",
+		languages: dayPlan.languages,
 	});
 
 	const response: ReminderScheduleResponse = {
 		settings,
 		trends,
 		schedule,
-		todayMinutes,
-		dailyGoal,
-		streak: summary.streak?.current ?? 0,
+		todayMinutes: dayPlan.practiced,
+		dailyGoal: dayPlan.minutes,
+		streak: activeSummary.streak?.current ?? 0,
+		languages: dayPlan.languages,
 	};
 
 	return Response.json(response);
