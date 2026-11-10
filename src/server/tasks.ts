@@ -56,6 +56,16 @@ function state(): TaskState {
 /** Finished tasks kept for the notice; the oldest go first. */
 export const TASKS_KEPT = 20;
 
+const TERMINAL_CODES = /\x1b\[[0-9;?]*[A-Za-z]/g;
+const ERROR_CHARS = 240;
+
+/** What a Tasks row shows for a failure: the last line, with terminal codes removed and a length cap. */
+export function briefError(message: string): string {
+	const lines = message.replace(TERMINAL_CODES, "").split(/\r\n|\r|\n/).map((line) => line.trim()).filter(Boolean);
+	const last = lines.length ? lines[lines.length - 1]! : "Something went wrong";
+	return last.length > ERROR_CHARS ? `${last.slice(0, ERROR_CHARS - 3)}...` : last;
+}
+
 const changed = () => emit("activity-changed", {});
 
 /** Start a task. One task per id: starting a running id returns it with
@@ -84,7 +94,8 @@ function end(id: string, patch: Partial<TaskRecord> & { status: "done" | "error"
 	const s = state();
 	const task = s.tasks.get(id);
 	if (!task || task.status !== "running") return;
-	Object.assign(task, patch, { finishedAt: Date.now() });
+	const shown = patch.error === undefined ? patch : { ...patch, error: briefError(patch.error) };
+	Object.assign(task, shown, { finishedAt: Date.now() });
 	s.aborts.delete(id);
 	const finished = [...s.tasks.values()].filter((t) => t.status !== "running").sort((a, b) => (a.finishedAt ?? 0) - (b.finishedAt ?? 0));
 	for (const old of finished.slice(0, Math.max(0, finished.length - TASKS_KEPT))) s.tasks.delete(old.id);
