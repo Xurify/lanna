@@ -4,13 +4,20 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 ## 9 November: a cheatsheet can be practiced by ear (branch `feat/cheatsheet-listen-practice`)
 
-- **Why:** the owner wants to play a co-op game with a friend in Russian only, at A1, and asked whether a 3D scene tool (Spline, Hana, Omma) would help and whether the phrase PDFs belong in the app. The phrases were already a cheatsheet; nothing trained hearing them at speed. Rule E89, research note `docs/research/situation-practice.md`.
+- **Why:** the owner wants to play a co-op game with a friend in Russian only, at A1, and asked whether a 3D scene tool (Spline, Hana, Omma) would help and whether the phrase PDFs belong in the app. The phrases were already a cheatsheet; nothing trained hearing them at speed. Rule E90, research note `docs/research/situation-practice.md`.
 - **What changed:** an open cheatsheet has **Listen and type**, and each section has **Listen**. Both open Listen on the sheet's own phrases: ten at a time, heard with the text hidden, typed as heard, then shown with the meaning and the note. Missed phrases come back first in the next session, then phrases not heard yet in the sheet's order. The sheet says how many phrases were caught by ear.
 - **Kept apart:** the phrases are the learner's own and unchecked, so this practice earns no XP, adds nothing to Review and is not in the lesson log. The listening speed, the listening trends and the Russian study do not read it. It counts as listening minutes.
 - **Data:** `cheatsheets/practice/<sheet id>.json` and `practice/log.jsonl`; the corpus export writes `cheatsheet-practice.json`.
 - **Not built:** saying the phrases with a score and a role-play of the situation (both are spoken Russian, which the study drops from 23 November; they wait for 20 December), the workbook's four dialogues, PDF import, any 3D scene.
 - **Checked:** `tsc`, `eslint .`, the full test run (2,201 pass, 3 skipped, 1 fail: `tests/provider-tracing.test.ts`, which fails on `main` too), and a sandbox switched to Russian with the shipped Animal Hospital sheet: a whole session clicked through by a script (a right answer, a wrong one, "I didn't catch it"), the end screen, the sheet before and after, one section's session, a phrase with a note, a sheet that is not there and a section with nothing to play, in Day and Night at 1280 and 390 px. The sandbox wrote the practice files and listening minutes, and no XP, lesson log or Review card.
 - **Unverified:** the owner's machine and phone; how the Russian clips sound (the sandbox made them with the free Edge voice, and nobody listened); typing Cyrillic on a phone keyboard.
+
+## 9 November: a chat exports sentences for Clozemaster, and its Markdown reads right outside the app (branch `feat/clozemaster-export`)
+
+- **Why:** the owner asked whether the exports are formatted correctly, and uses Clozemaster, not Anki. Rule E89.
+- **What changed:** "Anki cards" in the Export menu is now "Clozemaster": a `.tsv` of sentence, translation and the word to blank, in the layout Clozemaster's upload reads (no header, no braces). The blank is a word the tutor sent to Review in that chat (matching inflected stems like *tvoje* or *svojimi* for *tvoj* / *svoj*), or the longest word if no words were sent to Review. The Markdown file keeps the tutor's line breaks, puts a reply's headings under the speaker's, writes an answered quiz with its options and your choice, writes drawings, and turns links to the app's lessons into plain text.
+- **Checked:** the exports were run on three real chats copied read-only from the profile (possessives, demonstratives, a short one): possessives export includes all relevant sentences with inflected stems, and demonstratives falls back to content words. `tests/chat-export.test.ts`: 10 pass. Typecheck and lint clean.
+- **Unverified:** an upload to Clozemaster itself (its file layout is taken from forum posts, not from a written spec); print, which was not opened in a browser this round; the full test suite.
 ## 9 November: the ear gym uses the language you are learning, with Russian pairs (branch `feat/ear-gym-per-language`)
 
 - **Why:** with Russian active, `/phonology` showed Slovak pairs read by the Russian voice. The owner: "Should we implement this with Russian as well?" and then "Let's fix all of these issues." Rule E87.
@@ -37,6 +44,20 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Export, audited:** Esc and a click outside now close the menu (before, only the Export button did), and Esc puts focus back on the button. The Anki file held only the glossed words: question cards were promised but never made, because a posed question carries no question text; the item now counts the cards and is off when there are none. The Markdown file shows a word to hear as the bold word, not as `say:` code. Printing from Night printed light text on white and faded the bottom of the page; print now uses the Day colors and no fade. A failed copy says so. Labels: "Download as Markdown", "Anki cards", "Print or save as PDF", "Full session data", no all-caps heading. In a chat the Export button is a quiet text button, like the rest of the page; lessons keep the outlined chip beside "Show working".
 - **Checked:** production build in the sandbox on a copy of the profile, a live lesson with two misses: Night and Day at 1280 px, Night at 390 px, while the tutor writes and at rest. Fonts compared on the same Slovak, Estonian and Russian sample. Suite: 2138 pass, 1 fail (`tests/provider-tracing.test.ts`, which fails on `main` too).
 - **Unverified:** the owner's machine and phone; a reply long enough to stream in several pieces (in every run the text arrived in one piece after the thinking).
+
+## 9 November: pages that are there before the click (branch `feat/instant-navigation`)
+
+- **Why:** the owner: "Make our desktop app also feel more instant when switching between the different tabs and sections. Any and every interaction should feel fast", learning from [Vercel's work on v0](https://nextjs.org/blog/making-v0-navigations-instant). Rule E86, [research/instant-navigation.md](research/instant-navigation.md).
+- **Navigation:** when the pointer comes over a link to any of the sixteen sidebar pages, the server renders that page, so the click shows the page and not the skeleton. Focus, a touch, the jump palette's selected row and an end screen's way back do the same.
+- **Sidebar:** a row goes when the mouse button goes down. Touch and the keyboard are unchanged.
+- **Read, Listen, Watch:** their pages started work when they rendered. Read's shelf top-up and Watch's refresh of the picks now start when the screen is open. Listen asked a model for close wrong meanings and waited up to 6 s for them, and has not shown them since it became typing-only; the call is gone.
+- **Lessons:** a unit's lesson is the same twelve reps until the unit is practiced or the day turns, and Today has the close meanings for the first lesson still to do written ahead, so opening it from Today does not wait on a model. A lesson left half way comes back the same that day.
+- **Log and Words** arrive with their first list.
+- **Freshness:** a page rendered more than 2 s before the click is shown and then refreshed; Milestones, Mistakes, Speak and Watch now take that refresh, until something is changed on the page.
+- **Measured** on a build with every request held (`scripts/instant-check.mjs`): before, all 16 rows showed the skeleton 100 to 123 ms after the button went down; after, all 16 show the page, fifteen at 18 to 47 ms and Review at 53 to 145 ms.
+- **Chat:** the mark after an answer ("Almost, check the spelling") sat about 8 px above the answer's baseline, because the check icon, not the words, was aligned to it. The words are on the baseline now.
+- **Not changed:** `npm run desktop:dev`. Next.js does not use prefetched pages in development, so there a click still waits for the server. `npm run desktop:prod` is the one to feel this on. Also not changed: a lesson opened from the Curriculum, chat pages, and saves, which wait for the server before the screen changes.
+- **Checked:** see the pull request. **Unverified:** the PC and the Electron window; a lesson's close meanings with a real model.
 
 ## 9 November: the Study as one figure, and the study's files kept out of the real data folder (branch `t3/pronunciation-principles-review`)
 

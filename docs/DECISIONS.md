@@ -1081,6 +1081,21 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Writing looks like writing.** In place of the spinner and "Thinking…", a pen stroke draws itself over a faint trace beside "Writing…" (`TutorWriting`), and everything above the learner's current line steps back to 65 % (body text still passes 4.5:1) until the turn ends (`.lh-recede`, full again on hover). A reply that streams in pieces ends in a short teal pen stroke (`.lh-writing`). All of it is still under reduced motion.
 - No rule between the tutor's steps in a chat; the replies under the text are the app's quiet buttons.
 - Lessons and practice sessions are unchanged.
+### E86. A page is rendered while the pointer rests on its link, and "instant" is a check (2026-11-09, branch `feat/instant-navigation`)
+
+**Why:** the owner asked for tab and section switches that feel instant, and pointed at how Vercel made v0's navigations instant. On a build the clicks were already 19 to 45 ms; what was left was the wait for the mouse button to come up, the skeleton before every page, and a wait of up to 6 s on a model when a lesson or Listen opened. Research note: [research/instant-navigation.md](research/instant-navigation.md).
+
+**How to apply:**
+- Instant means the page is on screen while the server cannot answer. `node scripts/instant-check.mjs --check` (after `npm run build`) holds every request, clicks each sidebar row and says what shows: `page`, `shell` or `blocked`. Run it after a change to the layout, the sidebar, `next.config.ts` or the Next.js version. It is this app's version of `instant()` from `@next/playwright`, which needs Cache Components (not adopted, E36).
+- A link to a sidebar page (`rendersAhead` in `lib/nav.ts`: the pages of `NAV`, by exact path, with no query string) is rendered by the server when the pointer comes over it, it takes focus, or a finger or button goes down on it (`components/instant-navigation.tsx`). No call site opts in: the listener is on the document. Code that navigates without a link calls `renderAhead(path)` first, as the jump palette and the end screens do.
+- **A sidebar page's render starts no paid or network work.** It would otherwise run because a pointer passed by. Work of that kind belongs in the screen, asked for when it is really open: the reader tops up the shelf and the Watch shelf refreshes the picks on mount. `tests/render-ahead.test.ts` fails when a sidebar page file calls one of the known starters; it reads page files only, so a new starter has to be added to its list. A first-visit write of a local file (Mistakes' first snapshot, Study's schedule) is accepted.
+- A page shown from a render older than 2 s is refreshed on arrival, so a component that keeps server data in state takes it with `useServerValue` (`components/use-server-value.ts`), not `useState`: a plain `useState(initial)` ignores the refresh and can stay up to 35 s behind. `useServerValue` stops following the server once the learner changes the value on the page, so a refresh that left before a save cannot undo it. A plan drawn at random for one sitting (Speed, Listen) stays in `useState` on purpose.
+- **Nothing a learner opens waits on a model inside a page render.** A unit's lesson is the same twelve reps until the unit is practiced or the day turns (`lessonSeed`, `unitLesson`), so its close meanings can be written before it is opened: Today asks for them (`/api/lesson?unit=…&warm`) for the first lesson still to do. Listen asks for none; it shows none (E38).
+- A page that fetches its list after mounting shows an empty frame first. Read the first list with the page and pass it in (Log, Words), then read again in the browser.
+- `experimental.staleTimes.static` in `next.config.ts` is 30, the lowest Next.js takes, and `lib/render-ahead.ts` counts on it. Change them together.
+- Sidebar rows go when the mouse button goes down. Touch and the keyboard go on the click.
+- None of this works under `next dev`, which does not use prefetched pages. Judge it on `npm run desktop:prod` (E36).
+
 
 ### E86. The ear gym is a task screen like the others, and length is drawn one way (2026-11-09, branch `feat/rhythmic-law-suprasegmentals`)
 
@@ -1125,7 +1140,19 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Removed from the shared frame:** the `lead` slot of `TaskTop` and the `trail` of `OptionTile`, added in E86 for this screen and no longer used.
 - **Not changed, on purpose:** the press scale stays the app's 0.97 (`.lh-press`); a reviewer's rule asks for 0.96, and the value is one token for the whole app.
 
-### E89. A cheatsheet's own lines can be practiced by ear, and that practice is kept apart from everything measured (2026-11-09, branch `feat/cheatsheet-listen-practice`)
+### E89. A chat exports sentences for Clozemaster, not Anki cards, and its Markdown reads the same outside the app (2026-11-09, branch `feat/clozemaster-export`)
+
+**Why:** the owner: "make sure these exports are actually formatted correctly", and "I don't really use Anki, but I do use Clozemaster". The Anki file cannot be uploaded to Clozemaster: its `#separator` header lines would be read as sentences, and its third column (tags) as the word to blank. Run on the owner's real chats, the exports also had these faults: lines the app shows apart ran together in any other Markdown reader, since the app breaks at every line end (`remark-breaks`) and CommonMark does not; a reply's own `##` heading outranked the `### Tutor` label above it; links to the app's lessons (`/lesson?unit=…`) led nowhere; an answered quiz was missing, so "Wrong: you chose *tú*" followed nothing; a drawing kept in a `draw` tool result was never written, because tool results were skipped; one card was wrong (`naše` = "our car", from an aside in brackets).
+
+**How to apply:**
+
+- **Clozemaster file** (`exportChatClozemasterTsv`): one row per glossed phrase, tab-separated `Sentence`, `Translation`, `Cloze`, with no header row, no `{{braces}}` (those are for a sentence typed in by hand) and no line break after the last row. This layout comes from Clozemaster's forum, since its help page lists no columns: see the links above the function. The owner uploads the file by hand (language dashboard, Collections, upload a CSV or TSV), so nothing here reaches Clozemaster by itself and the rule under "Dropped or deferred" stands.
+- **The word to blank** (`pickClozeWord`) is a word the tutor sent to Review in that chat (`add_to_review`), as the sentence writes it (exact match first, then stem matches like *tvoja*, *tvoje*, *svojimi* for taught words *tvoj*, *svoj*). If the chat has taught words, sentences without one are left out. If the chat sent no words to Review at all (such as free or grammar chats), the longest word in the sentence is blanked so the chat can still be exported. A phrase of one word is always left out: blanking it leaves nothing to read.
+- **A sentence that ends in a full stop gets one on its translation**, so both sides of a row are punctuated alike.
+- **Markdown** (`exportChatMarkdown`): `## Learner` and `## Tutor`, written once per run of the same speaker; headings inside a reply are moved down so the highest is `###`; a line followed by another line of the same paragraph ends in two spaces (a hard break); a link to an app address becomes its label, a web link stays; an answered question is written as the question, its options with "(correct)" on the right ones, and the learner's choice; a drawing is a `svg` code fence, from a view part or from the tool result. Code fences are left as written.
+- **Not changed:** the chat board still reads glosses in brackets its own way (`boardPhrases`), so "naše = our car" can still show there. Print and the JSON file are as before; the JSON holds the messages, not the turns or settings.
+
+### E90. A cheatsheet's own lines can be practiced by ear, and that practice is kept apart from everything measured (2026-11-09, branch `feat/cheatsheet-listen-practice`)
 
 **Why:** the owner is at A1 in Russian and wants to play a co-op game with a friend in Russian only: "I need to be able to understand and say whatever comes up." The phrases for it are already a cheatsheet (E50), but a sheet could only be read, played one phrase at a time, or covered. The gap that matters in a game is the ear at speed (learner.md: "I can't put them together into meaning fast enough"). The owner asked whether a 3D scene tool would help and then said to build what makes the most sense. Research note: [research/situation-practice.md](research/situation-practice.md).
 
@@ -1141,7 +1168,7 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 
 ## Dropped or deferred
 
-- **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it.
+- **Clozemaster integration (dropped 2026-10-28).** Its terms forbid automated access; the official CLI's MCP server only edits collections. The in-app Review deck is the replacement, and the aim is to be better than it. A file the owner uploads by hand is not automated access: see E89.
 - **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
 - **Windows installer and sync:** not built; data is local only.

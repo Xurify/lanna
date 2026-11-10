@@ -72,3 +72,7 @@ const NAV_ITEMS: readonly NavItemDef[] = NAV.flatMap((g) => g.items);
 export function navItemFor(pathname: string): NavItemDef | undefined {
 	return NAV_ITEMS.find((i) => (i.href === "/" ? pathname === "/" : pathname === i.href || pathname.startsWith(`${i.href}/`) || i.also?.some((a) => pathname === a || pathname.startsWith(`${a}/`))));
 }
+
+export function rendersAhead(pathname: string): boolean {
+	return NAV_ITEMS.some((i) => i.href === pathname);
+}
