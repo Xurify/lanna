@@ -36,6 +36,20 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Checked:** production build in the sandbox on a copy of the profile, a live lesson with two misses: Night and Day at 1280 px, Night at 390 px, while the tutor writes and at rest. Fonts compared on the same Slovak, Estonian and Russian sample. Suite: 2138 pass, 1 fail (`tests/provider-tracing.test.ts`, which fails on `main` too).
 - **Unverified:** the owner's machine and phone; a reply long enough to stream in several pieces (in every run the text arrived in one piece after the thinking).
 
+## 9 November: pages that are there before the click (branch `feat/instant-navigation`)
+
+- **Why:** the owner: "Make our desktop app also feel more instant when switching between the different tabs and sections. Any and every interaction should feel fast", learning from [Vercel's work on v0](https://nextjs.org/blog/making-v0-navigations-instant). Rule E86, [research/instant-navigation.md](research/instant-navigation.md).
+- **Navigation:** when the pointer comes over a link to any of the sixteen sidebar pages, the server renders that page, so the click shows the page and not the skeleton. Focus, a touch, the jump palette's selected row and an end screen's way back do the same.
+- **Sidebar:** a row goes when the mouse button goes down. Touch and the keyboard are unchanged.
+- **Read, Listen, Watch:** their pages started work when they rendered. Read's shelf top-up and Watch's refresh of the picks now start when the screen is open. Listen asked a model for close wrong meanings and waited up to 6 s for them, and has not shown them since it became typing-only; the call is gone.
+- **Lessons:** a unit's lesson is the same twelve reps until the unit is practiced or the day turns, and Today has the close meanings for the first lesson still to do written ahead, so opening it from Today does not wait on a model. A lesson left half way comes back the same that day.
+- **Log and Words** arrive with their first list.
+- **Freshness:** a page rendered more than 2 s before the click is shown and then refreshed; Milestones, Mistakes, Speak and Watch now take that refresh, until something is changed on the page.
+- **Measured** on a build with every request held (`scripts/instant-check.mjs`): before, all 16 rows showed the skeleton 100 to 123 ms after the button went down; after, all 16 show the page, fifteen at 18 to 47 ms and Review at 53 to 145 ms.
+- **Chat:** the mark after an answer ("Almost, check the spelling") sat about 8 px above the answer's baseline, because the check icon, not the words, was aligned to it. The words are on the baseline now.
+- **Not changed:** `npm run desktop:dev`. Next.js does not use prefetched pages in development, so there a click still waits for the server. `npm run desktop:prod` is the one to feel this on. Also not changed: a lesson opened from the Curriculum, chat pages, and saves, which wait for the server before the screen changes.
+- **Checked:** see the pull request. **Unverified:** the PC and the Electron window; a lesson's close meanings with a real model.
+
 ## 9 November: the Study as one figure, and the study's files kept out of the real data folder (branch `t3/pronunciation-principles-review`)
 
 - **Why:** the owner, on the Study views: "Get more creative with it. Don't be afraid to change the layout entirely." Rule E84.

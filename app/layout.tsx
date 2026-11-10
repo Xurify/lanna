@@ -20,6 +20,7 @@ import { KeyboardFocusMode } from "@/components/keyboard-focus-mode";
 import { OriginStamp } from "@/components/origin";
 import { OutboxFlush } from "@/components/lesson/outbox-flush";
 import { LanguageGoneNotice } from "@/components/language-gone-notice";
+import { InstantNavigation } from "@/components/instant-navigation";
 
 // Quiet tool (2026-11-02): one family, Geist, for the chrome and the prose;
 // JetBrains Mono stays for code. latin-ext carries Slovak (ľ ĺ ŕ ť ď ô ä),
@@ -89,6 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				</AppearanceProvider>
 			</ServerEventsProvider>
 			<ThemeSync />
+			<InstantNavigation />
 				<KeyboardFocusMode />
 			<OriginStamp />
 			{/* Lessons finished but not yet recorded are sent again (components/lesson/outbox.ts). */}

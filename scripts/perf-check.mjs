@@ -10,14 +10,9 @@
  *   node scripts/perf-check.mjs --cpu 4         # emulate a CPU four times slower (laptop on battery, phone)
  *
  * Dev mode is not representative (no minification, on-demand compile), so this
- * serves `next start` from the existing build. It never uses your own data:
- * LH_DATA_DIR is a new folder under the OS temp dir, seeded with the demo week
- * (scripts/demo-measured-minutes.ts, as `npm run dev:sandbox -- --seed` does),
- * with keys hidden and a free port. Nothing is deleted afterwards.
- *
- * It drives headless Edge through puppeteer-core. Where to find them:
- *   PUPPETEER_CORE  folder holding node_modules/puppeteer-core (default: this checkout, then ../langharness-learning-ui)
- *   BROWSER_PATH    the browser executable (default: Edge on Windows)
+ * serves `next start` from the existing build, on a seeded scratch profile and
+ * in headless Edge (scripts/perf-harness.mjs). Whether a page is on screen before
+ * the server answers is instant-check.mjs.
  *
  * What it measures
  *   nav    click on a sidebar link -> the URL changes (url) and -> the DOM stops changing (stable)
@@ -27,15 +22,9 @@
  *          pointerdown -> the result is on screen (done)
  */
 
-import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
-import { createRequire } from "node:module";
-import net from "node:net";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { BROWSER_ARGS, findBrowser, loadPuppeteer, sleep, startServer, table } from "./perf-harness.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
@@ -61,12 +50,12 @@ export const BUDGETS = {
 
 const ROUTES = [
 	{ path: "/", door: "today-door", name: "Today" },
-	{ path: "/curriculum", door: "path-door", name: "Climb" },
+	{ path: "/curriculum", door: "curriculum-door", name: "Curriculum" },
 	{ path: "/review", door: "review-door", name: "Review" },
-	{ path: "/read", door: "stories-door", name: "Stories" },
+	{ path: "/read", door: "read-door", name: "Read" },
 	{ path: "/speak", door: "speak-door", name: "Speak" },
 	{ path: "/words", door: "words-door", name: "Words" },
-	{ path: "/plan", door: "plan-door", name: "Progress" },
+	{ path: "/progress", door: "progress-door", name: "Progress" },
 	{ path: "/milestones", name: "Milestones" },
 	{ path: "/mistakes", name: "Mistakes" },
 	{ path: "/grammar", name: "Grammar" },
@@ -78,71 +67,6 @@ const median = (xs) => {
 	return v.length ? v[Math.floor((v.length - 1) / 2)] : null;
 };
 const r0 = (x) => (x == null ? "-" : String(Math.round(x)));
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function freePort() {
-	return new Promise((resolve, reject) => {
-		const s = net.createServer();
-		s.once("error", reject);
-		s.listen(0, "127.0.0.1", () => {
-			const { port } = s.address();
-			s.close(() => resolve(port));
-		});
-	});
-}
-
-function loadPuppeteer() {
-	const roots = [process.env.PUPPETEER_CORE, ROOT, path.resolve(ROOT, "..", "langharness-learning-ui"), "C:/Users/Stream/Projects/langharness-learning-ui"].filter(Boolean);
-	for (const r of roots) {
-		try {
-			return createRequire(path.join(r, "package.json"))("puppeteer-core");
-		} catch {
-			/* try the next one */
-		}
-	}
-	throw new Error("puppeteer-core not found; set PUPPETEER_CORE to a folder that has node_modules/puppeteer-core");
-}
-
-function findBrowser() {
-	const cands = [process.env.BROWSER_PATH, "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe"].filter(Boolean);
-	const hit = cands.find((p) => fs.existsSync(p));
-	if (!hit) throw new Error("no browser found; set BROWSER_PATH");
-	return hit;
-}
-
-/** Start `next start` on a seeded scratch profile. */
-async function startServer() {
-	if (!fs.existsSync(path.join(ROOT, ".next", "BUILD_ID"))) throw new Error("no production build; run `npm run build` first");
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-perf-"));
-	const env = { ...process.env, LH_DATA_DIR: dir, LH_AUTH_FILE: path.join(dir, "auth.json"), LH_IGNORE_ENV_KEYS: "1", NODE_ENV: "production" };
-	delete env.LH_DESKTOP_SERVER;
-	delete env.LH_DESKTOP_API_SECRET;
-	const seed = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "demo-measured-minutes.ts")], { cwd: ROOT, env: { ...env, NODE_ENV: "development" }, encoding: "utf8" });
-	if (seed.status !== 0) throw new Error(`seed failed: ${seed.stderr || seed.stdout}`);
-	if (!flag("--light")) {
-		const heavy = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "perf-seed.ts")], { cwd: ROOT, env: { ...env, NODE_ENV: "development" }, encoding: "utf8" });
-		if (heavy.status !== 0) throw new Error(`heavy seed failed: ${heavy.stderr || heavy.stdout}`);
-		console.log(heavy.stdout.trim());
-	}
-	const port = await freePort();
-	const next = createRequire(path.join(ROOT, "package.json")).resolve("next/dist/bin/next");
-	const child = spawn(process.execPath, [next, "start", "-H", "127.0.0.1", "-p", String(port)], { cwd: ROOT, env, stdio: ["ignore", "pipe", "pipe"] });
-	let log = "";
-	child.stdout.on("data", (c) => (log += c));
-	child.stderr.on("data", (c) => (log += c));
-	const base = `http://127.0.0.1:${port}`;
-	for (let i = 0; i < 100; i++) {
-		try {
-			const r = await fetch(`${base}/api/progress`);
-			if (r.ok) return { base, dir, stop: () => (process.platform === "win32" ? spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore" }) : child.kill()) };
-		} catch {
-			/* not up yet */
-		}
-		await sleep(300);
-	}
-	throw new Error(`server did not start:\n${log}`);
-}
-
 /** Runs in every page before its scripts: long tasks, and a pointer/keyboard -> next-paint probe. */
 const PROBE = () => {
 	window.__lh = { long: [], acts: [], mut: 0 };
@@ -416,17 +340,11 @@ async function interactions(browser, base) {
 	return out;
 }
 
-function table(rows, head) {
-	const w = head.map((h, i) => Math.max(h.length, ...rows.map((r) => String(r[i]).length)));
-	const line = (r) => r.map((c, i) => (i === 0 ? String(c).padEnd(w[i]) : String(c).padStart(w[i]))).join("  ");
-	return [line(head), w.map((x) => "-".repeat(x)).join("  "), ...rows.map(line)].join("\n");
-}
-
 async function main() {
 	const puppeteer = loadPuppeteer();
-	const srv = await startServer();
+	const srv = await startServer({ heavy: !flag("--light") });
 	console.log(`CPU x${CPU}; production build on ${srv.base}, scratch data ${srv.dir} (seeded demo week${flag("--light") ? "" : " + a year of reviews"})`);
-	const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true, args: ["--no-sandbox", "--no-first-run", "--disable-extensions", "--disable-background-timer-throttling", "--disable-renderer-backgrounding"] });
+	const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true, args: BROWSER_ARGS });
 	const result = { navs: [], colds: [], acts: [] };
 	try {
 		// warm the server so first-compile of a route is not counted against it

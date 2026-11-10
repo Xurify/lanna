@@ -1,6 +1,7 @@
 /**
- * GET /api/lesson?unit=<id> — a fresh 12-rep lesson for one unit, built
- * locally from the lexicon (no model call). ?mode=blitz — a choose-only
+ * GET /api/lesson?unit=<id> — the 12-rep lesson for one unit, built
+ * locally from the lexicon (no model call); the same twelve until the unit is practiced or the day turns.
+ * &warm — start the lesson's close options being written and answer at once. ?mode=blitz — a choose-only
  * sprint across the units you have started. ?mode=mixups — the Mix-ups
  * lesson: the pairs of words you confuse and the pairs predicted from them.
  * ?mode=personal — the lesson built from the guide's targets (src/core/personal.ts).
@@ -14,7 +15,7 @@
  */
 
 import { isAtlasGender, isUnitId, type FirstAnswer } from "@/src/core";
-import { blitzFor, lessonFor, lessonWithBetterOptions, mixupsFor, personalFor, recordLesson, type RepResult } from "@/src/server";
+import { blitzFor, mixupsFor, personalFor, recordLesson, unitLesson, type RepResult } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,11 @@ export async function GET(req: Request) {
 	if (!isUnitId(unit)) return Response.json({ message: "unknown unit" }, { status: 400 });
 	const rawGender = url.searchParams.get("gender");
 	const gender = isAtlasGender(rawGender) ? rawGender : undefined;
-	return Response.json(await lessonWithBetterOptions(lessonFor(unit, Date.now(), { gender })));
+	if (url.searchParams.get("warm") !== null) {
+		void unitLesson(unit, { gender }).catch(() => {});
+		return new Response(null, { status: 204 });
+	}
+	return Response.json(await unitLesson(unit, { gender }));
 }
 
 const KINDS = new Set(["meaning", "choose", "type", "build", "listen"]);
