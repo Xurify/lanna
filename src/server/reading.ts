@@ -840,14 +840,13 @@ function pickNext(lexicon: Lexicon | null = loadLexicon()): { story: StoryRecord
 	return pickStory(unreadStories(), { level: k.level, known: k.known, recentGenres: recent.genres, recentTopics: recent.topics, chapter: k.chapter });
 }
 
-export function readingState(tz?: number, now = new Date()): ReadingState {
+export function readingState(tz?: number, now = new Date(), opts: { topUpShelf?: boolean } = {}): ReadingState {
 	const lib = library();
 	const today = dayKey(now, tz);
 	const readToday = storyStore.reads().filter((r) => r.day === today).length;
 	const canWrite = storyEngine() !== null;
 	const pick = pickNext();
-	// The shelf is topped up whenever the reader looks at it.
-	if (canWrite) kickShelf();
+	if (canWrite && opts.topUpShelf !== false) kickShelf();
 	return {
 		current: pick?.story ?? null,
 		library: lib,

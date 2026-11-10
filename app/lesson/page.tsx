@@ -1,6 +1,6 @@
 import { LessonPlayer } from "@/components/lesson/lesson-player";
 import { isAtlasGender, isUnitId, type LessonPlan } from "@/src/core";
-import { blitzFor, lessonFor, lessonWithBetterOptions, mixupsFor, personalFor } from "@/src/server";
+import { blitzFor, mixupsFor, personalFor, unitLesson } from "@/src/server";
 
 export const metadata = { title: "Lesson" };
 
@@ -17,7 +17,7 @@ export default async function LessonPage({ searchParams }: { searchParams: Promi
 	const gen = isAtlasGender(gender) ? gender : undefined;
 	let plan: LessonPlan | null = null;
 	try {
-		plan = mode === "blitz" ? blitzFor() : mode === "mixups" ? mixupsFor() : mode === "personal" ? personalFor() : await lessonWithBetterOptions(lessonFor(id, Date.now(), { gender: gen }));
+		plan = mode === "blitz" ? blitzFor() : mode === "mixups" ? mixupsFor() : mode === "personal" ? personalFor() : await unitLesson(id, { gender: gen });
 		if (plan.items.length === 0) plan = null;
 	} catch {
 		plan = null;

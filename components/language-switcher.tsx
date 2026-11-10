@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
 	BookAIcon,
 	BookOpenIcon,
@@ -296,12 +296,36 @@ function NavItem({
 	icon: React.ReactNode;
 	children: React.ReactNode;
 }) {
+	const router = useRouter();
+	const wentOnMouseDown = useRef(false);
+	const plain = (e: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; button: number }) => !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0;
 	return (
 		<Link
 			href={href}
 			data-testid={testid}
+			onPointerDown={(e) => {
+				wentOnMouseDown.current = e.pointerType === "mouse" && plain(e);
+				if (!wentOnMouseDown.current) return;
+				// UI Events: the click, when there is one, is dispatched right after pointerup, before a timer set in it runs. A press let go off the row has no click to clear the mark.
+				const pressEnded = new AbortController();
+				const forget = () => {
+					pressEnded.abort();
+					window.setTimeout(() => (wentOnMouseDown.current = false), 0);
+				};
+				window.addEventListener("pointerup", forget, { signal: pressEnded.signal });
+				window.addEventListener("pointercancel", forget, { signal: pressEnded.signal });
+				onPress?.();
+				router.push(href);
+			}}
 			onClick={(e) => {
-				if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) onPress?.();
+				if (!plain(e)) return;
+				// UI Events: `detail` is the click count for a pointer click and 0 for a click made by Enter, which no mouse-down came before.
+				if (wentOnMouseDown.current && e.detail > 0) {
+					wentOnMouseDown.current = false;
+					e.preventDefault();
+					return;
+				}
+				onPress?.();
 			}}
 			aria-current={active ? "page" : undefined}
 			className={cn(

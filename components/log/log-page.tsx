@@ -29,10 +29,10 @@ function shortDay(day: string): string {
 	return `${WEEKDAY[d.getDay()]!.slice(0, 3)} ${d.getDate()}`;
 }
 
-export function LogPage() {
+export function LogPage({ initial = null }: { initial?: { today: string; days: DayLog[] } | null }) {
 	const lang = useActiveLanguage();
-	const [days, setDays] = useState<DayLog[] | null>(null);
-	const [today, setToday] = useState("");
+	const [days, setDays] = useState<DayLog[] | null>(initial?.days ?? null);
+	const [today, setToday] = useState(initial?.today ?? "");
 	const [failed, setFailed] = useState(false);
 	useEffect(() => {
 		void fetch(`/api/daylog?list=60&tz=${new Date().getTimezoneOffset()}`)
