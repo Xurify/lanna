@@ -1,8 +1,29 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+import time
+
+ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+ERROR_CHARS = 240
+DOWNLOAD_WAIT_SECONDS = 180
+FAILED_EXIT_WAIT_SECONDS = 5
+STABLE_SECONDS = 2.0
+
+
+def brief(text: str) -> str:
+    lines = [ANSI.sub("", line).strip() for line in text.replace("\r", "\n").split("\n")]
+    lines = [line for line in lines if line]
+    if not lines:
+        return "no output"
+    recent = lines[-6:]
+    pick = next(
+        (line for line in reversed(recent) if re.search(r"error|failed|exception|unable|not found", line, re.I)),
+        lines[-1],
+    )
+    return pick if len(pick) <= ERROR_CHARS else pick[: ERROR_CHARS - 3] + "..."
 
 
 def find_spotdl() -> list[str]:
@@ -59,35 +80,72 @@ def extract_metadata(mp3_path: str, out_jpg: str) -> dict:
     }
 
 
+def find_mp3s(folder: str) -> list[str]:
+    return [
+        os.path.join(root, name)
+        for root, _dirs, names in os.walk(folder)
+        for name in names
+        if name.lower().endswith(".mp3")
+    ]
+
+
+def wait_for_mp3(folder: str, seconds: float) -> str | None:
+    """spotdl can exit before the file is fully written, so the newest MP3 counts once its size stops changing."""
+    deadline = time.monotonic() + seconds
+    last_size = -1
+    stable_since = time.monotonic()
+    while time.monotonic() < deadline:
+        mp3s = find_mp3s(folder)
+        if mp3s:
+            newest = max(mp3s, key=os.path.getmtime)
+            size = os.path.getsize(newest)
+            if size != last_size:
+                last_size = size
+                stable_since = time.monotonic()
+            elif size > 0 and time.monotonic() - stable_since >= STABLE_SECONDS:
+                return newest
+        time.sleep(0.5)
+    return None
+
+
+def remove_tree(folder: str) -> None:
+    for _ in range(10):
+        if not os.path.exists(folder):
+            return
+        try:
+            shutil.rmtree(folder)
+            return
+        except OSError:
+            time.sleep(1)
+
+
 def cmd_download(spotify_url: str, out_mp3: str, out_jpg: str) -> None:
     os.makedirs(os.path.dirname(os.path.abspath(out_mp3)), exist_ok=True)
-    if not os.path.isfile(out_mp3) or os.path.getsize(out_mp3) < 1024:
-        tmp_dir = os.path.join(
-            os.path.dirname(os.path.abspath(out_mp3)),
-            f".tmp_{os.path.splitext(os.path.basename(out_mp3))[0]}",
+    if os.path.isfile(out_mp3) and os.path.getsize(out_mp3) >= 1024:
+        print(json.dumps(extract_metadata(out_mp3, out_jpg), ensure_ascii=False))
+        return
+    stem = os.path.splitext(os.path.basename(out_mp3))[0]
+    tmp_dir = os.path.join(os.path.dirname(os.path.abspath(out_mp3)), f"tmp_{stem}")
+    os.makedirs(tmp_dir, exist_ok=True)
+    try:
+        # spotdl reads --output as a file name template; with {output-ext} the file gets a known name.
+        template = os.path.join(tmp_dir, "track.{output-ext}")
+        proc = subprocess.run(
+            [*find_spotdl(), "download", spotify_url, "--output", template],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
         )
-        os.makedirs(tmp_dir, exist_ok=True)
-        try:
-            cmd = [*find_spotdl(), "download", spotify_url, "--output", tmp_dir]
-            proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
-            mp3s = [
-                os.path.join(tmp_dir, f)
-                for f in os.listdir(tmp_dir)
-                if f.lower().endswith(".mp3")
-            ]
-            if not mp3s:
-                raise RuntimeError(
-                    f"spotdl did not produce an MP3 file (exit {proc.returncode}): {(proc.stderr or proc.stdout).strip()[-400:]}"
-                )
-            downloaded = max(mp3s, key=os.path.getmtime)
-            meta = extract_metadata(downloaded, out_jpg)
-            shutil.move(downloaded, out_mp3)
-            print(json.dumps(meta, ensure_ascii=False))
-            return
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-    meta = extract_metadata(out_mp3, out_jpg)
-    print(json.dumps(meta, ensure_ascii=False))
+        wait = DOWNLOAD_WAIT_SECONDS if proc.returncode == 0 else FAILED_EXIT_WAIT_SECONDS
+        downloaded = wait_for_mp3(tmp_dir, wait)
+        if downloaded is None:
+            raise RuntimeError(f"spotdl wrote no MP3 (exit {proc.returncode}): {brief(proc.stderr or proc.stdout or '')}")
+        meta = extract_metadata(downloaded, out_jpg)
+        shutil.move(downloaded, out_mp3)
+        print(json.dumps(meta, ensure_ascii=False))
+    finally:
+        remove_tree(tmp_dir)
 
 
 def cmd_transcribe(audio_path: str, lang: str, model_size: str = "large-v3-turbo") -> None:
@@ -155,4 +213,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as err:
+        print(f"error: {brief(str(err))}", file=sys.stderr)
+        sys.exit(1)
