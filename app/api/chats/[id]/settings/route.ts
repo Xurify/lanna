@@ -1,4 +1,6 @@
 import {
+	BODY_LIMITS,
+	bodyTooLarge,
 	clampChatLevel,
 	effectiveSettings,
 	getChat,
@@ -24,6 +26,8 @@ import {
  * (src/server/settings-body.ts, default-settings wave 2026-09-18).
  */
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const { id } = await params;
 	if (!getChat(id)) return Response.json({ error: "Not found" }, { status: 404 });
 

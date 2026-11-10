@@ -18,7 +18,7 @@ import { matchScore, parseAzure, pronReport, type AzureResult, type PronEngine, 
 
 export type { PronReport };
 import { fluencyStore, speakStore } from "../store/speak.ts";
-import { keyValue } from "./keys.ts";
+import { keyValue, redactSecrets } from "./keys.ts";
 import { sttEngine, transcribe } from "./speak.ts";
 
 /** Azure's locale for the active language. */
@@ -104,7 +104,7 @@ async function assessAzure(audio: Uint8Array, reference: string, locale: string)
 		},
 		body: audio as BodyInit,
 	});
-	if (!res.ok) throw new Error(`Azure Speech failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+	if (!res.ok) throw new Error(`Azure Speech failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`);
 	return parseAzure((await res.json()) as AzureResult);
 }
 
@@ -128,5 +128,5 @@ function recentScores(opts: { rounds?: number; scenes?: number } = {}): PronScor
 
 /** The sounds and words to work on, from the recent scored lines. */
 export function pronunciationReport(): PronReport {
-	return pronReport(recentScores());
+	return pronReport(recentScores(), { languageId: activeLanguage().id });
 }

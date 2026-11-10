@@ -60,7 +60,7 @@ export const CREDITS: Credit[] = [
 	{ id: "svgl", name: "SVGL", url: "https://svgl.app", group: "art", use: "the logos of AI providers and services", fetchedHosts: ["svgl.app"] },
 ];
 
-export const HOSTS_THAT_ARE_NOT_SOURCES = new Set(["api.openai.com", "chatgpt.com", "auth.openai.com", "api.x.ai", "api.individual.githubcopilot.com", "doi.org", "www.w3.org"]);
+export const HOSTS_THAT_ARE_NOT_SOURCES = new Set(["api.openai.com", "chatgpt.com", "auth.openai.com", "api.x.ai", "api.individual.githubcopilot.com", "doi.org", "www.w3.org", "forum.clozemaster.com"]);
 
 export function creditsFor(codes: readonly string[]): Credit[] {
 	return CREDITS.filter((c) => !c.onlyForLanguage || codes.includes(c.onlyForLanguage));

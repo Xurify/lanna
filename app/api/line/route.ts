@@ -6,7 +6,7 @@
  * on the page counts as listening minutes.
  */
 
-import { lineState, recordLine } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, lineState, recordLine } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { phase?: unknown; itemId?: unknown; typed?: unknown; plays?: unknown; activeMs?: unknown } | null;
 	if (!body || (body.phase !== "morning" && body.phase !== "evening") || typeof body.itemId !== "string") {
 		return Response.json({ message: "phase and itemId are required" }, { status: 400 });

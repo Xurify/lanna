@@ -8,7 +8,7 @@
  * The stages in between: /api/placement/answer, /probe, /words.
  */
 
-import { finishPlacement, startPlacement } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, finishPlacement, startPlacement } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { id?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown } | null;
 	if (!body || typeof body.id !== "string") return Response.json({ message: "id is required" }, { status: 400 });
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;

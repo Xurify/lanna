@@ -14,7 +14,7 @@
  */
 
 import { isPronScore, type PronScore } from "@/src/core";
-import { speakDrop, speakEnd, speakStart, speakState, speakStore, speakTurn, STT_MAX_BYTES } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, speakDrop, speakEnd, speakStart, speakState, speakStore, speakTurn, STT_MAX_BYTES } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +48,8 @@ const str = (v: unknown, max = 600) => (typeof v === "string" ? v.slice(0, max) 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v !== "" && Number.isFinite(Number(v)) ? Number(v) : undefined);
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.recording);
+	if (oversized) return oversized;
 	let body: Body = {};
 	let audio: { data: Uint8Array } | undefined;
 	const type = req.headers.get("content-type") ?? "";

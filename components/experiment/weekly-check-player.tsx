@@ -11,7 +11,7 @@ import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
 import { CheckTrack, CLEAR_SCORE, markOf, PARTIAL_SCORE, TrackLegend } from "@/components/experiment/check-track";
 import { STUDY_ROUTE, studyLanguage, type StudyLanguage } from "@/components/experiment/study-language";
-import { EXPERIMENT_CONSTANTS, judgeTyped, wordMatch, type CheckItemRecord, type ProbeItem } from "@/src/core";
+import { dayKey, EXPERIMENT_CONSTANTS, judgeTyped, wordMatch, type CheckItemRecord, type ProbeItem } from "@/src/core";
 
 type Step = "intro" | "probes" | "production" | "end";
 type SaveState = "saving" | "saved" | "failed";
@@ -131,7 +131,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 
 	const answerWith = (response: string) => {
 		if (!item || answer) return;
-		const base = { date: new Date().toISOString().slice(0, 10), week, dayNumber: week * 7, language: languageId, itemId: item.id, expected: item.targetSentence, response };
+		const base = { date: dayKey(new Date()), week, dayNumber: week * 7, language: languageId, itemId: item.id, expected: item.targetSentence, response };
 		if (step === "probes") {
 			const verdict = response ? judgeTyped(response, item.targetSentence, language.tag) : "wrong";
 			setAnswer({ record: { ...base, type: "probe", prompt: "Listening Dictation (single play)", score: verdict === "wrong" ? 0 : 1, verdict }, missing: [], extra: [] });

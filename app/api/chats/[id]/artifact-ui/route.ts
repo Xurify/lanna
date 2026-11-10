@@ -10,9 +10,11 @@
  * { input: { messageId, inverted } } or targets no figure steer.
  */
 import { setSteerUiInverted, type SteerDetails } from "@/src/core";
-import { getChat, stores } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, getChat, stores } from "@/src/server";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }): Promise<Response> {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const { id } = await ctx.params;
 	const chat = getChat(id);
 	if (!chat) return Response.json({ error: "Unknown chat" }, { status: 404 });

@@ -9,7 +9,7 @@
  * hidden. The learner's progress in it stays. Adding a hidden built-in puts
  * it back.
  */
-import { addEstimates, languageCatalog, removeLanguage, restoreLanguage, startLanguageAdd } from "@/src/server";
+import { addEstimates, BODY_LIMITS, bodyTooLarge, languageCatalog, removeLanguage, restoreLanguage, startLanguageAdd } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { action?: unknown; id?: unknown; slot?: unknown } | null;
 	if ((body?.action !== "add" && body?.action !== "remove") || typeof body.id !== "string") {
 		return Response.json({ message: 'body must be {action: "add" | "remove", id}' }, { status: 400 });

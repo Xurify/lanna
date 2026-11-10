@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resetExperiment, getExperimentState } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, resetExperiment, getExperimentState } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	try {
 		let startDate: string | undefined;
 		try {

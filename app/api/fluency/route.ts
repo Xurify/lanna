@@ -9,7 +9,7 @@
  */
 
 import { isPronScore, type FastRep } from "@/src/core";
-import { fastFor, recordFast, recordReread, rereadFor } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, fastFor, recordFast, recordReread, rereadFor } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
 	if (!body) return Response.json({ message: "bad request" }, { status: 400 });
 	const tz = Number(body.tz);

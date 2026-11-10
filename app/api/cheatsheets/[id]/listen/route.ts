@@ -1,4 +1,4 @@
-import { cheatsheetStore, recordOnce, recordSheetListen, sessionClientId, sheetListenFor, type SheetListenRep } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, cheatsheetStore, recordOnce, recordSheetListen, sessionClientId, sheetListenFor, type SheetListenRep } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const { id } = await ctx.params;
 	const sheet = cheatsheetStore.get(id);
 	if (!sheet) return NOT_FOUND();

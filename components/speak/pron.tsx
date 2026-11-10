@@ -12,7 +12,7 @@ import { ChevronDownIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { speak, useActiveLanguage } from "@/components/speech";
-import { PRON_CLEAR, PRON_GOOD, getArticulatoryCue, pronLabel, type PronReport, type PronScore } from "@/src/core";
+import { PRON_CLEAR, PRON_GOOD, getArticulatoryCue, getPhonologyData, pronLabel, type PronReport, type PronScore } from "@/src/core";
 
 function pronInk(overall: number): string {
 	return overall >= PRON_GOOD ? "text-teal-2" : overall >= PRON_CLEAR ? "text-teal-2" : "text-miss";
@@ -47,7 +47,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 
 	if (!report || (report.sounds.length === 0 && report.words.length === 0)) return null;
 
-	const selectedCue = activeSound ? getArticulatoryCue(activeSound) : null;
+	const selectedCue = activeSound ? getArticulatoryCue(activeSound, lang?.id) : null;
 
 	return (
 		<div className={cn("mt-8", className)} data-testid="pron-workon">
@@ -59,16 +59,18 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 							? "Sounds to work on"
 							: "Words to work on"}
 				</p>
-				<Link href="/phonology" className="shrink-0 font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2 pointer-coarse:py-3">
-					Train in the ear gym
-				</Link>
+				{getPhonologyData(lang?.id) && (
+					<Link href="/phonology" className="shrink-0 font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2 pointer-coarse:py-3">
+						Train in the ear gym
+					</Link>
+				)}
 			</div>
 
 			{report.sounds.length > 0 && (
 				<div className="mt-2">
 					<ul className="flex flex-wrap gap-2">
 						{report.sounds.map((s) => {
-							const cue = getArticulatoryCue(s.p);
+							const cue = getArticulatoryCue(s.p, lang?.id);
 							const isExpanded = activeSound === s.p;
 							const changesMeaning = s.functionalLoad === "high" || cue?.functionalLoad === "high";
 							const title = `${s.score} on average over ${s.n} ${s.n === 1 ? "time" : "times"}${s.in.length ? ` · in ${s.in.join(", ")}` : ""}`;
