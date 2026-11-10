@@ -10,6 +10,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QIcon } from "@/components/quiet/icon";
+import { renderAhead } from "@/components/instant-navigation";
 import { insertAtCaret } from "@/components/diacritic-bar";
 import { useSidebar } from "@/components/sidebar";
 import { useSettingsDialog } from "@/components/settings/settings-context";
@@ -40,6 +41,7 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Read", hint: "Stories, every word tappable", href: "/read", icon: "read", words: "stories episode library" },
 	{ title: "Watch", hint: "A video with both subtitles", href: "/watch", icon: "play", words: "youtube video" },
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
+	{ title: "Ear gym", hint: "Which of two close words did you hear", href: "/phonology", icon: "listen", words: "phonology minimal pairs sound contrast ear hvpt" },
 	{ title: "Talk in writing", hint: "A role-play in writing", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },
 	{ title: "Speed", hint: "Known sentences, said faster", href: "/speed?mode=fast", icon: "fast", words: "say it faster speed" },
 	{ title: "Blitz", hint: "60 seconds: answer as many as you can", href: "/lesson?mode=blitz", icon: "fast", words: "speed" },
@@ -128,6 +130,11 @@ function JumpPalette({ letters: lettersOpen, onClose }: { letters: boolean; onCl
 			.slice(0, 12)
 			.map((x) => x.p);
 	}, [places, q]);
+
+	const aimedAt = shown[sel]?.id;
+	useEffect(() => {
+		if (aimedAt?.startsWith("/")) renderAhead(aimedAt);
+	}, [aimedAt]);
 
 	const run = (p: Place | undefined) => {
 		if (!p) return;

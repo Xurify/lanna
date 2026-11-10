@@ -1,18 +1,16 @@
 /**
  * GET /api/listen — a Listen session: ten dictionary sentences of mostly
- * known words, each with its stretch words glossed (src/server/listen.ts). Built locally; the wrong meanings are
- * close ones (src/server/distractors.ts), and a cheap-model near-miss is
- * asked for only when the dictionary has none close, then kept.
+ * known words, each with its stretch words glossed (src/server/listen.ts). Built locally, with no model call.
  * POST /api/listen {reps, ms?, activeMs?, tz?} — a finished session: XP, the day's
  * listening, the stretch words sent to the review deck, a fresh summary.
  */
 
-import { listenFor, listenWithBetterOptions, recordListen, recordOnce, sessionClientId, type ListenRep } from "@/src/server";
+import { listenFor, recordListen, recordOnce, sessionClientId, type ListenRep } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-	return Response.json(await listenWithBetterOptions(listenFor()));
+	return Response.json(listenFor());
 }
 
 export async function POST(req: Request) {

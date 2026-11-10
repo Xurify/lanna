@@ -2,8 +2,7 @@
  * WATCH LINES IN LISTEN (LangHarness, 2026-11-05; proposal 7 in
  * docs/research/creator-hooks.md): the scheduling table, the store round trip,
  * the lines a Watch save queues, the Listen session that serves the due ones,
- * and what a Listen answer does to them. No network and no model: the
- * better-options check counts calls on a scripted engine.
+ * and what a Listen answer does to them. No network and no model.
  *
  * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
  */
@@ -13,7 +12,6 @@ import fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, test } from "node:test";
-import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-watch-reps-"));
 process.env.LH_DATA_DIR = TMP_DATA;
@@ -28,7 +26,6 @@ const { PATHS } = await import("../config.ts");
 const reps = await import("../src/core/watch-reps.ts");
 const { LISTEN_COUNT } = await import("../src/core/listen.ts");
 const { listenFor, recordListen } = await import("../src/server/listen.ts");
-const { listenWithBetterOptions } = await import("../src/server/distractors.ts");
 const { recordWatch } = await import("../src/server/watch.ts");
 const { watchRepStore } = await import("../src/store/watch-reps.ts");
 const { videoStore } = await import("../src/store/videos.ts");
@@ -352,40 +349,5 @@ describe("a Listen answer moves its watch line", () => {
 		const r = watchRepStore.read().lines[0]!;
 		assert.equal(r.step, 0);
 		assert.equal(r.retiredAt, undefined);
-	});
-});
-
-describe("a watch line gets no near-miss call", () => {
-	test("listenWithBetterOptions leaves a watch line's options empty and never calls the model", async () => {
-		let calls = 0;
-		const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-		faux.setResponses([fauxAssistantMessage(JSON.stringify({ near: [["a", "b"]] }))]);
-		const engine = {
-			model: faux.getModel(),
-			streamFn: (...args: Parameters<typeof faux.streamSimple>) => {
-				calls++;
-				return faux.streamSimple(...args);
-			},
-		};
-		const plan = { items: [reps.watchListenItem(line({ id: "vid00000008:0", text: "Nemám čas.", en: "I have no time." }))], known: 0, coverage: 1 };
-		await listenWithBetterOptions(plan, { engine, model: "faux:watch", waitMs: 50 });
-		assert.equal(calls, 0);
-		assert.deepEqual(plan.items[0]!.options, []);
-	});
-
-	test("the same call on a sentence with no close neighbor does reach the model", async () => {
-		let calls = 0;
-		const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-		faux.setResponses([fauxAssistantMessage(JSON.stringify({ near: [["A zebra ate the moon.", "The moon ate a zebra."]] }))]);
-		const engine = {
-			model: faux.getModel(),
-			streamFn: (...args: Parameters<typeof faux.streamSimple>) => {
-				calls++;
-				return faux.streamSimple(...args);
-			},
-		};
-		const sentence: ListenItem = { id: "x#0", slug: "x", lemma: "x", gloss: "x", sentence: "Nemám čas.", translation: "A zebra ate the moon last Tuesday.", options: ["a", "b", "c"], stretch: [], coverage: 1, words: 2 };
-		await listenWithBetterOptions({ items: [sentence], known: 0, coverage: 1 }, { engine, model: "faux:watch", waitMs: 2000, seed: 4 });
-		assert.ok(calls >= 1, "the check can see a call");
 	});
 });

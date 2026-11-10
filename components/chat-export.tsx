@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { CheckIcon, CodeIcon, CopyIcon, DownloadIcon, FileTextIcon, LayersIcon, PrinterIcon } from "lucide-react";
+import { CheckIcon, CodeIcon, CopyIcon, DownloadIcon, FileTextIcon, PrinterIcon } from "lucide-react";
 import {
 	copyTextToClipboard,
-	exportChatAnkiTsv,
+	chatClozeSentences,
+	exportChatClozemasterTsv,
 	exportChatJson,
 	exportChatMarkdown,
-	extractChatAnkiCards,
 	slugifyTitle,
 	triggerFileDownload,
 	type LhMessage,
@@ -17,6 +17,24 @@ import { MenuShell } from "@/components/menu-shell";
 import { Hint } from "@/components/ui/hint";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
 import { cn } from "@/lib/utils";
+
+function ClozemasterIcon({ className }: { className?: string }) {
+	return (
+		<svg
+			viewBox="0 0 14 14"
+			width="14"
+			height="14"
+			fill="currentColor"
+			className={className}
+			aria-hidden="true"
+		>
+			<path
+				fillRule="evenodd"
+				d="M0 0h4v2h2v2h2V2h2V0h4v14h-4v-4H4v4H0V0Zm4 8h2v2H4V8Zm4 0h2v2H8V8Z"
+			/>
+		</svg>
+	);
+}
 
 export interface ChatExportMenuProps {
 	chatId: string;
@@ -28,9 +46,9 @@ export interface ChatExportMenuProps {
 
 type CopyState = "idle" | "copied" | "failed";
 
-const COPY_LABEL: Record<CopyState, string> = {
+const COPY_LABEL: Record<"idle" | "copied" | "failed", string> = {
 	idle: "Copy as Markdown",
-	copied: "Copied",
+	copied: "Copied to clipboard",
 	failed: "Could not copy",
 };
 
@@ -42,11 +60,13 @@ function ExportItem({ icon, label, detail, disabled, testid, onSelect }: { icon:
 			data-testid={testid}
 			disabled={disabled}
 			onClick={onSelect}
-			className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-foreground transition-colors hover:bg-accent focus-visible:bg-accent disabled:text-ink-3 disabled:hover:bg-transparent"
+			className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-accent focus-visible:bg-accent disabled:text-ink-3 disabled:hover:bg-transparent"
 		>
-			<span className="text-ink-3">{icon}</span>
+			<span className="flex size-4 shrink-0 items-center justify-center text-ink-3" aria-hidden="true">
+				{icon}
+			</span>
 			<span className="flex-1 font-medium">{label}</span>
-			<span className="text-ink-3 tabular-nums">{detail}</span>
+			{detail ? <span className="shrink-0 text-ink-3 tabular-nums">{detail}</span> : null}
 		</button>
 	);
 }
@@ -59,7 +79,7 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 
 	const sourceMessages = useMemo(() => (nativeMessages && nativeMessages.length > 0 ? nativeMessages : messages), [nativeMessages, messages]);
 	const slug = useMemo(() => slugifyTitle(title), [title]);
-	const cardCount = useMemo(() => extractChatAnkiCards(sourceMessages, { title }).length, [sourceMessages, title]);
+	const sentenceCount = useMemo(() => chatClozeSentences(sourceMessages).length, [sourceMessages]);
 
 	useEffect(() => () => clearTimeout(copyTimeoutRef.current), []);
 
@@ -136,26 +156,26 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 			</Hint>
 
 			{open && (
-				<MenuShell anchorRef={triggerRef} testid="export-chat-menu" preferredSide="down" align="right" menuClass="flex w-64 flex-col gap-0.5 rounded-xl border border-border/80 bg-card p-1.5 text-xs shadow-xl">
+				<MenuShell anchorRef={triggerRef} testid="export-chat-menu" preferredSide="down" align="right" menuClass="flex w-72 flex-col gap-0.5 rounded-xl border border-border/80 bg-card p-1.5 text-xs shadow-xl">
 					<div role="menu" aria-label="Export this chat" className="flex flex-col gap-0.5">
 						<ExportItem
 							testid="export-copy-markdown"
-							icon={copy === "copied" ? <CheckIcon className="size-3.5 text-teal" aria-hidden /> : <CopyIcon className="size-3.5" aria-hidden />}
+							icon={copy === "copied" ? <CheckIcon className="size-3.5 shrink-0 text-teal" aria-hidden /> : <CopyIcon className="size-3.5 shrink-0" aria-hidden />}
 							label={COPY_LABEL[copy]}
 							onSelect={copyMarkdown}
 						/>
-						<ExportItem testid="export-download-markdown" icon={<FileTextIcon className="size-3.5" aria-hidden />} label="Download as Markdown" detail=".md" onSelect={(e) => download(e, `${slug}.md`, exportChatMarkdown(sourceMessages, { title, chatId }), "text/markdown;charset=utf-8")} />
+						<ExportItem testid="export-download-markdown" icon={<FileTextIcon className="size-3.5 shrink-0" aria-hidden />} label="Download as Markdown" detail=".md" onSelect={(e) => download(e, `${slug}.md`, exportChatMarkdown(sourceMessages, { title, chatId }), "text/markdown;charset=utf-8")} />
 						<ExportItem
-							testid="export-download-anki"
-							icon={<LayersIcon className="size-3.5" aria-hidden />}
-							label="Anki cards"
-							detail={cardCount === 0 ? "none yet" : cardCount === 1 ? "1 card" : `${cardCount} cards`}
-							disabled={cardCount === 0}
-							onSelect={(e) => download(e, `${slug}-anki.tsv`, exportChatAnkiTsv(sourceMessages, { title }), "text/tab-separated-values;charset=utf-8")}
+							testid="export-download-clozemaster"
+							icon={<ClozemasterIcon className="size-3.5 shrink-0" aria-hidden />}
+							label="Export to Clozemaster"
+							detail={sentenceCount === 0 ? "none yet" : sentenceCount === 1 ? "1 sentence" : `${sentenceCount} sentences`}
+							disabled={sentenceCount === 0}
+							onSelect={(e) => download(e, `${slug}-clozemaster.tsv`, exportChatClozemasterTsv(sourceMessages), "text/tab-separated-values;charset=utf-8")}
 						/>
-						<ExportItem testid="export-print-pdf" icon={<PrinterIcon className="size-3.5" aria-hidden />} label="Print or save as PDF" detail="PDF" onSelect={print} />
+						<ExportItem testid="export-print-pdf" icon={<PrinterIcon className="size-3.5 shrink-0" aria-hidden />} label="Print or save as PDF" detail="PDF" onSelect={print} />
 						<div role="separator" className="mx-2.5 my-1 h-px bg-border" />
-						<ExportItem testid="export-download-json" icon={<CodeIcon className="size-3.5" aria-hidden />} label="Full session data" detail=".json" onSelect={(e) => download(e, `${slug}-session.json`, exportChatJson(chatId, title, sourceMessages), "application/json;charset=utf-8")} />
+						<ExportItem testid="export-download-json" icon={<CodeIcon className="size-3.5 shrink-0" aria-hidden />} label="Full session data" detail=".json" onSelect={(e) => download(e, `${slug}-session.json`, exportChatJson(chatId, title, sourceMessages), "application/json;charset=utf-8")} />
 					</div>
 					<span role="status" className="sr-only">
 						{copy === "idle" ? "" : copy === "copied" ? "Copied the chat as Markdown" : "Could not copy the chat"}

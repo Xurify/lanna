@@ -64,7 +64,7 @@ Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's h
 
 ## At a public address (a server with a domain)
 
-For a server that is always on, such as a VPS: the app at `https://learn.example.com`, a password instead of a pairing code, and no Tailscale app on the phone. The rules are in [DECISIONS.md, E86](DECISIONS.md). Everything below was run locally against nginx 1.24 on plain HTTP; a real domain, certificate and phone have not been tried.
+For a server that is always on, such as a VPS: the app at `https://learn.example.com`, a password instead of a pairing code, and no Tailscale app on the phone. The rules are in [DECISIONS.md, E90](DECISIONS.md). Everything below was run locally against nginx 1.24 on plain HTTP; a real domain, certificate and phone have not been tried.
 
 1. **Keep the app on the server's own loopback.** It listens on `127.0.0.1:3010`; only the reverse proxy reaches it. Do not publish the port.
 2. **Make a secret for the proxy** and set both variables where the app starts (the environment, or `.env.local` beside it). The secret is at least 32 characters, and only the proxy and the app know it:

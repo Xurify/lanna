@@ -117,6 +117,8 @@ export * from "./saved-phrases.ts";
 export * from "./cheatsheets.ts";
 export * from "./word-search.ts";
 export * from "./pronounce.ts";
+export * from "./phonology.ts";
+export * from "./rhythm.ts";
 export * from "./watch.ts";
 export * from "./watch-sentences.ts";
 export * from "./discover.ts";

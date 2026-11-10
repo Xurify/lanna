@@ -17,6 +17,8 @@ import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { fillStyle } from "@/components/ui/fill";
 import { KBD } from "@/components/ui/learn-buttons";
+import { renderAhead } from "@/components/instant-navigation";
+import { readOrigin } from "@/components/origin";
 
 export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
@@ -39,6 +41,19 @@ const LEAVE = "-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 
  *  teal of work done; only a clock running low turns it red (`ink` is kept for older callers). */
 export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave }: { progress: number; label: string; count: string; tone?: string; ink?: string; href?: string; onLeave?: () => void }) {
 	return (
+		<TaskBar href={href} onLeave={onLeave}>
+			<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2" aria-label={label}>
+				<div className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))} style={fillStyle(Math.max(0.03, progress))} />
+			</div>
+			<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
+				{count}
+			</span>
+		</TaskBar>
+	);
+}
+
+export function TaskBar({ href = "/", onLeave, children }: { href?: string; onLeave?: () => void; children?: React.ReactNode }) {
+	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 				{onLeave ? (
@@ -50,12 +65,7 @@ export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave
 						<XIcon className="size-5" strokeWidth={1.6} />
 					</Link>
 				)}
-				<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2" aria-label={label}>
-					<div className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))} style={fillStyle(Math.max(0.03, progress))} />
-				</div>
-				<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
-					{count}
-				</span>
+				{children}
 			</div>
 		</div>
 	);
@@ -119,6 +129,7 @@ export function TaskEnd({ children, actions, hint, wide = false, label = "Your r
 	const column = cn("mx-auto w-full max-w-2xl px-6", wide && "lg:max-w-5xl");
 	const body = useRef<HTMLDivElement>(null);
 	useEffect(() => {
+		renderAhead(readOrigin());
 		endOpenedAt = performance.now();
 		if (document.activeElement === null || document.activeElement === document.body) body.current?.focus({ preventScroll: true });
 	}, []);
@@ -130,14 +141,16 @@ export function TaskEnd({ children, actions, hint, wide = false, label = "Your r
 			<Dock>
 				<div className={cn(column, "flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4")}>
 					{hint}
-					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">{actions}</div>
+					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2" onPointerOver={() => renderAhead(readOrigin())} onFocus={() => renderAhead(readOrigin())}>
+						{actions}
+					</div>
 				</div>
 			</Dock>
 		</>
 	);
 }
 
-const PLAY_ROW = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
+export const PLAY_ROW = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
 
 export function SentenceRows({ children, className, "data-testid": testId }: { children: React.ReactNode; className?: string; "data-testid"?: string }) {
 	return (
