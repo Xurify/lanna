@@ -1235,3 +1235,16 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 
 **Unverified:** a real VPS, a real certificate and domain, Caddy (only nginx was run, locally, on plain HTTP with `X-Forwarded-Proto` set by the config), Cloudflare or another CDN in front, a phone or an iPad, and the password manager on iOS. Streaming pages (server events) through nginx were not run with `proxy_buffering off` under load. The cookie is not `__Host-` prefixed.
 
+
+### E94. Sound guide, mouth cross-section drawings, and articulatory contrast notes grounded in phonological research (2026-11-10, branch `feat/sound-guide`)
+
+**Why:** Grounding sound contrasts in phonological acquisition research (Saito 2013; Kissling 2013, 2015; Lin et al. 2019; Lee et al. 2015; Massaro & Light 2003; Massaro et al. 2008) and user request for articulatory explanations, visual sagittal cross-sections, and a dedicated sound guide view integrated with the ear gym and pronunciation scoring.
+
+**How to apply:**
+- **Research grounding & curriculum catalog:** Added curated sound notes for Slovak, Russian, and Estonian in `curriculum/<lang>/sound-notes.json`. Each entry defines `symbol`, `ipa`, `name`, `how` (motor placement), `slip` (common L1 pitfall), `functionalLoad` ("high" | "medium" | "low"), `word`, `meaning`, `pairs` (linking to ear gym families), and `picture`.
+- **Sagittal mouth cross-section drawings (`mouth.tsx`, `mouth-paths.ts`):** Rendered in the app's minimal ink line-and-wash language. A light gray filled tongue body (`fill-foreground/[0.05]`) articulates against the palate with contact patches highlighted in pale teal (`fill-teal/20`), with distinct alveolar gum bumps, teeth, palate, velum, uvula, and pharyngeal wall. Airflow streaks indicate fricative turbulence without stop closure, ripple marks depict trill vibration, and vocal fold lines depict glottal friction. Accent focus (`"tongue" | "lips" | "throat"`) directs attention to the differentiating articulator.
+- **Length distinction visualizer:** Renders sound duration differences via undulating sinusoidal waves for short vs. long sounds.
+- **Sound guide view (`sound-guide.tsx`):** Available via `/phonology?view=sounds` with sticky side navigation chips grouped by natural classes. Supports keyboard arrow keys and space-to-listen, direct training button to launch ear gym on that sound family, and deep links from weak phoneme cards on the Speak end screen (`components/speak/pron.tsx`).
+- **Blind visual review:** 15 minimal-pair cross-sections were evaluated blind by Gemini 3.8 Flash to ensure visual differentiability without reading labels; adjustments made to contrast airflow against closure, improve retroflex curling, and isolate lip protrusions.
+
+

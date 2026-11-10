@@ -11,8 +11,9 @@ import Link from "next/link";
 import { ChevronDownIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
+import { SoundPictures } from "@/components/phonology/sound-pictures";
 import { speak, useActiveLanguage } from "@/components/speech";
-import { PRON_CLEAR, PRON_GOOD, getArticulatoryCue, getPhonologyData, pronLabel, type PronReport, type PronScore } from "@/src/core";
+import { PRON_CLEAR, PRON_GOOD, getPhonologyData, getSoundNote, pronLabel, type PronReport, type PronScore } from "@/src/core";
 
 function pronInk(overall: number): string {
 	return overall >= PRON_GOOD ? "text-teal-2" : overall >= PRON_CLEAR ? "text-teal-2" : "text-miss";
@@ -47,7 +48,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 
 	if (!report || (report.sounds.length === 0 && report.words.length === 0)) return null;
 
-	const selectedCue = activeSound ? getArticulatoryCue(activeSound, lang?.id) : null;
+	const note = activeSound ? getSoundNote(activeSound, lang?.id) : null;
 
 	return (
 		<div className={cn("mt-8", className)} data-testid="pron-workon">
@@ -70,7 +71,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 				<div className="mt-2">
 					<ul className="flex flex-wrap gap-2">
 						{report.sounds.map((s) => {
-							const cue = getArticulatoryCue(s.p, lang?.id);
+							const cue = getSoundNote(s.p, lang?.id);
 							const isExpanded = activeSound === s.p;
 							const changesMeaning = s.functionalLoad === "high" || cue?.functionalLoad === "high";
 							const title = `${s.score} on average over ${s.n} ${s.n === 1 ? "time" : "times"}${s.in.length ? ` · in ${s.in.join(", ")}` : ""}`;
@@ -111,26 +112,31 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 						})}
 					</ul>
 
-					{selectedCue && (
-						<div className="lh-rise mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 rounded-lg bg-well p-4" data-testid="pron-cue">
-							<div className="min-w-0 flex-1 basis-64">
+					{note && (
+						<div className="lh-rise mt-2 rounded-lg bg-well p-4" data-testid="pron-cue">
+							<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 								<p className="flex flex-wrap items-baseline gap-x-2 font-ui text-[13px] text-ink-3">
 									<span className="font-prose text-[19px] font-semibold text-foreground" lang={lang?.code}>
-										{selectedCue.symbol}
+										{note.symbol}
 									</span>
-									<span>[{selectedCue.ipa}]</span>
-									<span>{selectedCue.name}</span>
+									<span>[{note.ipa}]</span>
 								</p>
-								<p className="mt-2 font-prose text-[15px] leading-relaxed text-ink-2">{selectedCue.motor}</p>
-								{selectedCue.commonPitfall && <p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Watch out: {selectedCue.commonPitfall}</p>}
-								{selectedCue.functionalLoad === "high" && <p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Mixing this sound up can change what a word means.</p>}
+								<div className="flex shrink-0 items-center gap-2">
+									<button type="button" onClick={() => void speak(note.word).catch(() => {})} className={cn(SECONDARY, SMALL)}>
+										<Volume2Icon className="size-3.5 text-ink-3" strokeWidth={1.6} />
+										<span>
+											Hear <span lang={lang?.code}>{note.word}</span>
+										</span>
+									</button>
+									<Link href={`/phonology?view=sounds&sound=${encodeURIComponent(note.symbol)}`} className={cn(SECONDARY, SMALL)}>
+										All sounds
+									</Link>
+								</div>
 							</div>
-							<button type="button" onClick={() => void speak(selectedCue.drillWord).catch(() => {})} className={cn(SECONDARY, SMALL, "shrink-0")}>
-								<Volume2Icon className="size-3.5 text-ink-3" strokeWidth={1.6} />
-								<span>
-									Hear <span lang={lang?.code}>{selectedCue.drillWord}</span>
-								</span>
-							</button>
+							<p className="mt-2 font-prose text-[15px] leading-relaxed text-ink-2">{note.how}</p>
+							<p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Common slip: {note.slip}</p>
+							{note.functionalLoad === "high" && <p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Mixing this sound up can change what a word means.</p>}
+							{lang && <SoundPictures note={note} langCode={lang.code} className="mt-3 max-w-md [&_button]:bg-card" />}
 						</div>
 					)}
 				</div>

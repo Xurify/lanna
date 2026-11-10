@@ -9,6 +9,13 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Checked:** the state reads 2026-11-09 as day 1 of 42, baseline; `tests/experiment.test.ts` 8/8; `tsc --noEmit` clean.
 - **Unverified:** the owner's screen (no dev server was running); a session that crosses local midnight.
 
+## 10 November: sound guide, articulatory mouth drawings, and phonology research grounding (branch `feat/sound-guide`)
+
+- **What changes for the learner:** `/phonology` gains a "Sounds" view alongside "Pairs" and "Rhythm", presenting comprehensive articulatory notes and side-by-side sagittal mouth cross-sections for Slovak, Russian, and Estonian sounds.
+- **Why:** Grounded in phonological acquisition research (Saito 2013; Kissling 2013, 2015; Lin et al. 2019; Lee et al. 2015). Visual articulatory models and motor instructions accelerate contrast mastery and prevent fossilized L1 substitutions.
+- **Articulatory drawings:** Line-and-wash ink sagittal cross-sections showing precise tongue body contours, palate contact patches, lip posture, velopharyngeal port gating, airflow turbulence for fricatives, and ripple markers for trills.
+- **Checked:** 26 new unit tests in `tests/sound-notes.test.tsx` verifying curriculum data integrity, uniqueness of tongue shapes, and SVG path rendering; 39 tests passing in `tests/phonology.test.ts`. Full test suite of 2,238 tests passing. Typecheck and lint pass cleanly. Blind visual review conducted on 15 contrast pairs with Gemini 3.8 Flash.
+
 ## 9 November: a security pass before the app gets a public address (branch `chore/web-security-pass`)
 
 - **Why:** the plan for a web version ([plans/always-on-server.md](plans/always-on-server.md)) puts the app on the internet behind a sign-in. The review is [research/web-security-review.md](research/web-security-review.md); the rules are E92.
