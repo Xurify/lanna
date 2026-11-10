@@ -1037,6 +1037,7 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
   - Weekly checks on Sundays (10 listening dictation probes + 5 spoken production prompts) are served via `/experiments/input-first/check` (with API `/api/experiments/input-first/check`) and saved to `checks.jsonl`.
   - Dashboard at `/experiments/input-first` (linked in sidebar navigation under Track with `FlaskConicalIcon`) displays timeline, current phase, regression level shift $b_2$, permutation randomization $p$-value, weekly checks, and a reset endpoint (`POST /api/experiments/input-first/reset`). Backward-compatible redirects maintained from `/experiment` and `/experiments`.
 - Protocol provenance (commit `8e767a9f`, SHA-256 `1c9f0bd5e4fb093c8beae59e1207a6db9edf5572b9d1889f146f70e7dd7829d1`) and decision rules are fixed in `experiment.json`. Final `verdict.json` written after Day 42.
+- **The study's day is the app's local day** (`dayKey`), the same key the lesson logs, progress and the scheduled arm already use. The reset default start date, the daily sync and the state read all take the local day; a UTC day cut every local evening's practice away from the day it belonged to.
 
 
 ### E83. Krashen SLA-aligned Roadmap: CI tuning, silent period, and conversational recasting (2026-11-09, branch `t3/pronunciation-principles-review`)

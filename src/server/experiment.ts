@@ -36,6 +36,7 @@ import {
 	type ProbeItem,
 	type ProbePoolData,
 } from "../core/experiment.ts";
+import { dayKey } from "../core/review.ts";
 
 export const EXPERIMENT_SEED = 20261108;
 
@@ -264,7 +265,7 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 export function resetExperiment(newStartDate?: string): { config: ExperimentConfig; schedule: DaySchedule[]; pool: ProbePoolData } {
 	const dir = experimentDir();
 	ensureDir(dir);
-	const startDate = newStartDate || new Date().toISOString().slice(0, 10);
+	const startDate = newStartDate || dayKey(new Date());
 	const onsetDay = drawOnsetDay(EXPERIMENT_SEED);
 	const onsetDate = dateForDayNumber(startDate, onsetDay);
 	const endDate = dateForDayNumber(startDate, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
@@ -369,7 +370,7 @@ function readDayLessonLogs(profile: string, day: string): any[] {
  */
 export function syncDailyExperimentData(now = new Date()): { daily: DailyExperimentRecord[]; summary: string } {
 	const { config, schedule } = ensureExperimentInitialized();
-	const todayDateStr = now.toISOString().slice(0, 10);
+	const todayDateStr = dayKey(now);
 	const currentDayNumber = dayNumberForDate(config.startDate, todayDateStr);
 
 	const existingDaily = readJsonl<DailyExperimentRecord>(path.join(experimentDir(), "daily.jsonl"));
@@ -477,7 +478,7 @@ export function getExperimentState(now = new Date()) {
 	const { config, schedule, pool } = ensureExperimentInitialized();
 	const { daily, summary } = syncDailyExperimentData(now);
 	const checks = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
-	const todayDateStr = now.toISOString().slice(0, 10);
+	const todayDateStr = dayKey(now);
 	const currentDayNumber = dayNumberForDate(config.startDate, todayDateStr);
 	const todaySchedule = schedule.find((s) => s.date === todayDateStr) || {
 		dayNumber: currentDayNumber,
