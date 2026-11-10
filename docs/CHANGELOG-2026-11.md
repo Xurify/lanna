@@ -2,6 +2,17 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 10 November: a Spotify track is heard in the language it is spoken in (branch `fix/spotify-track-language`, PR #182)
+
+- **Why:** a Russian Spotify track added to the Slovak profile came back as Slovak-spelled text, because Whisper was forced to Slovak. Read then spoke that text in a Slovak voice, so it did not sound like the recording.
+- **What changed:**
+  - The helper detects the spoken language and stops before writing any text when the profile does not take it (Slovak, or its Czech fallback).
+  - A track in another language is refused, and the notice names the profile it belongs in when that profile is ready. A YouTube video in another language already followed this rule.
+  - An accepted track keeps the language it was spoken in, so a Czech track stays Czech. The ElevenLabs and Deepgram paths still take the profile's language; they were not run with a key here.
+  - A language in the catalog is named (Russian, not `ru`) even when no profile has it yet.
+- **Checked:** `tests/watch.test.ts` (the refusal wording and the catalog name), the full suite (2,575 tests, 2,572 pass, 3 skipped), typecheck, ESLint. The helper on the real Russian track: detected `ru`, and 284 Cyrillic lines when transcribed as Russian. The notice, Day and Night, 1280 and 390 px, in the sandbox.
+- **Unverified:** adding the track into a Russian profile in the app; the switch offer; ElevenLabs and Deepgram; Read playback of a Russian episode.
+
 ## 10 November: trial section in navigation and study realignment (branch `t3/add-features-to-navigation`)
 
 - **Why:** The owner requested: "Since it's kinda a feature we are testing I feel like we should make it different from the rest. Also I we should start 10.11.2026 (tomorrow) as the first day of the study instead of Monday (or was that Sunday) and make sure everything else aligns".
@@ -628,6 +639,5 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Whisper is checked, not assumed:** the availability check asks the helper whether faster-whisper imports, once per run.
 - **Add to Read:** a prepared video or track, from its preview or its card under My videos, becomes an episode in Read (its lines, questions and words) and opens there. Asking again opens the same episode.
 - **Media:** the page, the sidebar, the jump palette, the day plan and the Today button say Media; the URL stays `/watch`. A track shows its cover (a headphones icon when Spotify has none) and says Play, not Watch.
-- **Spoken language is detected:** Whisper used to be forced to the profile's language, so a Russian track came back as Slovak-spelled text. Now the helper detects the language and stops before writing any text if it is not one the profile takes (Slovak, or its Czech fallback); the page then says which language it is and names the profile it belongs in when that profile is ready. An accepted track keeps the language it was spoken in, so a Czech track stays Czech. The ElevenLabs and Deepgram paths still take the profile's language: they were not run with a key here.
 - **Checked:** typecheck, ESLint on the changed files, 31 watch tests (the Spotify URL forms, the Read import, the same episode asked twice), and the audio route on a fake MP3 (whole file, byte ranges, cover, a non-Spotify id, a missing track). The full suite passes (2,551 tests, 3 skipped). Settings → Sources credits Spotify and spotdl. **Unverified:** a real Spotify download and a real Whisper run end to end in the app; the audio player and Add to Read in a browser; ElevenLabs (no key on this machine); how the Media label fits on a phone.
 - **Left for later:** `scripts/spotify_transcribe.py` is a separate command line that repeats the helper's download and transcription; `src/server/watch.ts` still looks for Python in `C:\Python313`.
