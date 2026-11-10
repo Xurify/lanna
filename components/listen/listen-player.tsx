@@ -30,7 +30,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, heardPieces, praiseFor, scoreLine, understood, type LineMark, type ListenItem, type ListenPlan, type ListenVerdict, type SheetProgress } from "@/src/core";
+import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, heardPieces, praiseFor, scoreLine, understood, type LineMark, type ListenItem, type ListenPlan, type ListenVerdict, type SheetProgress, type TodayExperimentStatus } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { SheetProgressBar } from "@/components/words/sheet-progress";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
@@ -99,7 +99,15 @@ function sourceOf(item: ListenItem): string {
 	return item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`;
 }
 
-export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: ListenPlan | null; sheet?: ListenSheet }) {
+export function ListenPlayer({
+	initialPlan = null,
+	sheet,
+	initialExperiment = null,
+}: {
+	initialPlan?: ListenPlan | null;
+	sheet?: ListenSheet;
+	initialExperiment?: TodayExperimentStatus | null;
+}) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [plan, setPlan] = useState<ListenPlan | null>(initialPlan);
@@ -418,12 +426,35 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 	const outcomes = plan.items.map((_, i): PipOutcome => (i < reps.length ? pipOf(reps[i]!) : i > index ? "ahead" : current ? pipOf(current) : "now"));
 	const stretch = item.stretch.map((w) => w.text);
 
+	const sessionStudyReps = reps.length + (current ? 1 : 0);
+	const baseStudyReps = lang?.code === "ru" ? (initialExperiment?.russian.dictationReps ?? 0) : (initialExperiment?.slovak.dictationReps ?? 0);
+	const liveStudyReps = baseStudyReps + sessionStudyReps;
+	const studyActive = !sheet && initialExperiment?.active;
+
 	return (
 		<Frame strip={false}>
 			<TaskRound outcomes={outcomes} label={`${unit} ${index + 1} of ${total}`} count={`${index + 1}/${total}`} href={sheet ? sheetHref(sheet) : "/"} />
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-1 sm:pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
+					{studyActive && (
+						<div
+							className={cn(
+								"mb-3 flex items-center justify-between gap-2 rounded-lg border px-3 py-1.5 font-ui text-xs transition-colors",
+								liveStudyReps >= 5
+									? "border-teal/30 bg-teal/10 text-teal"
+									: "border-border bg-well text-ink-2",
+							)}
+							data-testid="listen-study-banner"
+						>
+							<span className="font-medium">
+								Study Day {initialExperiment.dayNumber} · {lang?.code === "ru" ? "Russian" : "Slovak"} trial progress
+							</span>
+							<span className="font-semibold tabular-nums">
+								{liveStudyReps >= 5 ? `✓ ${liveStudyReps}/5 reps (Day Validated)` : `${liveStudyReps} of 5 reps toward valid day`}
+							</span>
+						</div>
+					)}
 					<PracticeCard icon="listen" title="Listen" sub={sourceOf(item)} phone="flat">
 						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 sm:gap-x-4">
 							<button
