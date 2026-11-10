@@ -1174,3 +1174,16 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Russian profile (closed 2026-11-05).** The built-in Russian profile, which shipped prompts and no words, is gone: Russian is added from the app like any other language, and keeps its hand-written tutor doctrine.
 - **Folder rename** langharness-2 → langharness: wanted, deferred until the app can be closed.
 - **Windows installer and sync:** not built; data is local only.
+
+### E91. The server runs as a container on an always-on machine; it updates only to a build that checks itself, and its data is backed up and read back (2026-11-09, branch `feat/server-container`)
+
+**Why:** the owner studies on a phone and an iPad and cannot always be at the PC. The phone app already exists (E20, E21); what was missing was a server that runs while the PC is off. Plan: [plans/always-on-server.md](plans/always-on-server.md). Guide: [server.md](server.md). Evidence and prices: [research/always-on-server.md](research/always-on-server.md).
+
+**How to apply:**
+- The image is built from `Dockerfile` (Node 26, the version CI runs): the production build, Chromium and a pinned yt-dlp with its checksum. It runs as user 10001 with a read-only filesystem and no capabilities. Data, keys and cheatsheets are three mounted folders (`/data`, `/keys`, `/sheets`, set through `LH_DATA_DIR`, `LH_AUTH_FILE` and `LH_REPO_CHEATSHEETS_DIR`). Nothing of the dev machine goes into the image: `.dockerignore` and `scripts/build-server.mjs` both refuse it.
+- `compose.yaml` publishes the port on the host's loopback only. Docker writes its own firewall rules, so a port published on all addresses would be open whatever ufw says.
+- The app decides who is "this computer" from the `Host` header and proxy headers, never from the sender's address (inside the container that is always Docker's bridge). A reverse proxy must therefore set `Host` to the public name and set `X-Real-IP`; an nginx that leaves `Host` at its default presents the whole internet as this computer. `scripts/boot-check.mjs` proves that requests for a public name, and loopback requests carrying proxy headers, are turned away; `update-server.sh` will not switch to an image that fails it.
+- `scripts/update-server.sh` builds the newest commit of a branch, boot-checks the image with no network, switches only when it passes, waits for the container to be healthy and goes back if it is not. It keeps three images for `rollback`, does not retry a commit that failed until a newer one arrives, and never force-pushes. Cheatsheets edited on the server are pushed to a `sheets/<date>` branch for the owner to merge; the main branch is not touched.
+- `scripts/backup-data.sh` keeps 14 dated snapshots of data, keys and sheets (unchanged files are hard links), reads every JSON file back, and fails only for damage that is new since the night before, because the app tolerates old unreadable lines. Restore goes into an empty scratch folder, never into the live data.
+- Not decided here: the public address and the sign-in page (work items W1 and W2 in the plan), and the reversal of E7 and E21 that a public address means. Record that when it ships.
+

@@ -2,6 +2,8 @@
 
 This guide is for the owner. It turns on the app for your own phone and iPad while LangHarness runs on this PC. Your keys and your learning data stay on this PC. Nothing is published to the internet.
 
+To keep the server running while the PC is off, see [server.md](server.md).
+
 The rules behind it are in [DECISIONS.md, E21](DECISIONS.md) and the research in [research/remote-access.md](research/remote-access.md).
 
 ## Before you start (once)
