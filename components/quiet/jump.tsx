@@ -41,7 +41,7 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Read", hint: "Stories, every word tappable", href: "/read", icon: "read", words: "stories episode library" },
 	{ title: "Watch", hint: "A video with both subtitles", href: "/watch", icon: "play", words: "youtube video" },
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
-	{ title: "Ear gym", hint: "Which of two close words did you hear", href: "/phonology", icon: "listen", words: "phonology minimal pairs sound contrast ear hvpt" },
+	{ title: "Ear gym", hint: "Which of two close words did you hear", href: "/phonology", icon: "listen", words: "phonology minimal pairs sound contrast ear hvpt sounds sound guide rhythm mouth articulation" },
 	{ title: "Talk in writing", hint: "A role-play in writing", href: "/speak?mode=typed", icon: "tutor", words: "chat typed" },
 	{ title: "Speed", hint: "Known sentences, said faster", href: "/speed?mode=fast", icon: "fast", words: "say it faster speed" },
 	{ title: "Blitz", hint: "60 seconds: answer as many as you can", href: "/lesson?mode=blitz", icon: "fast", words: "speed" },
@@ -52,6 +52,8 @@ const ROUTES: Array<{ title: string; hint: string; href: string; icon: React.Com
 	{ title: "Curriculum", hint: "Your climb, level by level and chapter by chapter", href: "/curriculum", icon: "arrow", words: "climb path levels chapters" },
 	{ title: "Progress", hint: "Hours, stamps, the plan's pace", href: "/progress", icon: "chart", words: "plan stamps hours" },
 	{ title: "Milestones", hint: "When you can handle real situations", href: "/milestones", icon: "flag", words: "level exam" },
+	{ title: "Log", hint: "What you did, day by day", href: "/log", icon: "review", words: "history sessions journal activity" },
+	{ title: "Study", hint: "Russian input-first study vs Slovak control", href: "/experiments/input-first", icon: "chart", words: "experiment input first sced trial" },
 	{ title: "Sources", hint: "The research behind each task", href: "/sources", icon: "read", words: "research studies evidence papers references" },
 	{ title: "Ask the tutor", hint: "Any question about the language", href: "/chat/new", icon: "tutor", words: "chat" },
 ];
