@@ -5,7 +5,7 @@
  * app/ is missing here or a title and a label differ.
  */
 
-export type NavId = "today" | "ask" | "curriculum" | "review" | "read" | "listen" | "watch" | "speak" | "fluency" | "words" | "grammar" | "progress" | "milestones" | "mistakes" | "log" | "experiment";
+export type NavId = "today" | "ask" | "curriculum" | "review" | "read" | "listen" | "watch" | "speak" | "eargym" | "fluency" | "words" | "grammar" | "progress" | "milestones" | "mistakes" | "log" | "experiment";
 
 interface NavItemDef {
 	id: NavId;
@@ -16,10 +16,11 @@ interface NavItemDef {
 	hint: string;
 	/** Other routes that light this item (the pages reached from inside it). */
 	also?: readonly string[];
+	badge?: string;
 }
 
 interface NavGroupDef {
-	id: "main" | "practice" | "understand" | "track";
+	id: "main" | "practice" | "understand" | "track" | "trial";
 	/** Null for the short primary group, which has no heading. */
 	label: string | null;
 	items: readonly NavItemDef[];
@@ -44,6 +45,7 @@ export const NAV: readonly NavGroupDef[] = [
 			{ id: "listen", href: "/listen", label: "Listen", hint: "Ten sentences you can follow" },
 			{ id: "watch", href: "/watch", label: "Watch", hint: "A video with both subtitles" },
 			{ id: "speak", href: "/speak", label: "Speak", hint: "A scene said out loud" },
+			{ id: "eargym", href: "/phonology", label: "Ear gym", hint: "Which of two close words did you hear", also: ["/sound"] },
 			{ id: "fluency", href: "/speed", label: "Speed", hint: "Known sentences, said faster" },
 		],
 	},
@@ -63,7 +65,13 @@ export const NAV: readonly NavGroupDef[] = [
 			{ id: "milestones", href: "/milestones", label: "Milestones", hint: "When you can handle real situations" },
 			{ id: "mistakes", href: "/mistakes", label: "Mistakes", hint: "What goes wrong and whether it is getting better" },
 			{ id: "log", href: "/log", label: "Log", hint: "What you did, day by day" },
-			{ id: "experiment", href: "/experiments/input-first", label: "Study", hint: "Russian input-first study vs Slovak control", also: ["/experiments", "/experiments/input-first/check", "/experiment", "/experiment/check"] },
+		],
+	},
+	{
+		id: "trial",
+		label: "Trial",
+		items: [
+			{ id: "experiment", href: "/experiments/input-first", label: "Study", hint: "Russian input-first study vs Slovak control", also: ["/experiments", "/experiments/input-first/check", "/experiment", "/experiment/check"], badge: "42d" },
 		],
 	},
 ];

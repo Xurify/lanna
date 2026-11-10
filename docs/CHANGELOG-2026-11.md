@@ -2,6 +2,15 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 10 November: trial section in navigation and study realignment (branch `t3/add-features-to-navigation`)
+
+- **Why:** The owner requested: "Since it's kinda a feature we are testing I feel like we should make it different from the rest. Also I we should start 10.11.2026 (tomorrow) as the first day of the study instead of Monday (or was that Sunday) and make sure everything else aligns".
+- **What changed:**
+  - **Navigation differentiation:** Moved Study from the Track group into its own dedicated `trial` navigation group with heading "Trial", a divider line separating it from permanent tracking tools, a `42d` pill badge (`border-teal/30 bg-teal-wash text-teal`), and a dedicated `teal` active indicator bar and icon illumination matching the study's design tokens (E84).
+  - **Study realignment:** Updated `EXPERIMENT_CONSTANTS.START_DATE` to `2026-11-10` (Tuesday), running 42 days through `2026-12-21` (Monday). Deterministic PRNG seed `20261108` continues drawing Day 15 (`2026-11-24`) as onset. Baseline spans Days 1–14, intervention Days 15–42. Weekly check days align to Mondays (Days 7, 14, 21, 28, 35, 42).
+  - **Server guards:** Guarded `syncDailyExperimentData` so pre-study dates do not attempt to sync non-existent day 1 logs, ensured `ensureExperimentInitialized` reinitializes if the start date changes, and prevented `weeklyCheckDue` triggering on Day 0.
+- **Checked:** `tests/experiment.test.ts` (8/8 pass), `tests/render-ahead.test.ts` (8/8 pass), `tsc --noEmit` clean, `eslint` clean.
+
 ## 10 November: the study keeps the app's local day (main)
 
 - **Why:** the owner asked whether the study should run on the local date. It should: the protocol says the app's local days, and the lesson logs, progress and the scheduled arm already use the local `dayKey`.

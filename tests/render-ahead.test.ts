@@ -20,6 +20,7 @@ describe("which pages render before the click", () => {
 	it("is only the sidebar's own pages, by their exact path", () => {
 		assert.equal(rendersAhead("/"), true);
 		assert.equal(rendersAhead("/progress"), true);
+		assert.equal(rendersAhead("/phonology"), true);
 		assert.equal(rendersAhead("/lesson"), false);
 		assert.equal(rendersAhead("/chat/abc"), false);
 		assert.equal(rendersAhead("/progress/"), false);
