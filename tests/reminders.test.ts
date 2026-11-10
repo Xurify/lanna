@@ -354,7 +354,7 @@ test("buildDailyNudges handles multi-language day split across all languages", (
 	assert.match(deadlineNudge.message, /Eesti \(61m\)/);
 	assert.match(deadlineNudge.message, /Русский \(59m\)/);
 
-	// If all languages complete their goals, nudges are completely suppressed
+	// If all languages complete their goals, nudges are completely suppressed (unless study tasks remain)
 	const completedLanguages = languages.map((l) => ({ ...l, practiced: l.minutes }));
 	const completedNudges = buildDailyNudges({
 		settings,
@@ -362,3 +362,107 @@ test("buildDailyNudges handles multi-language day split across all languages", (
 	});
 	assert.equal(completedNudges.length, 0);
 });
+
+test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks even if minutes goal is met", () => {
+	const settings = {
+		enabled: true,
+		times: ["09:00", "18:30"],
+		soundPreset: "chime" as const,
+		inAppBanner: true,
+		systemNotification: true,
+		smartAutoNudge: false,
+		autoScheduleTasks: true,
+		aiAssisted: false,
+	};
+
+	// Mock active experiment where today is Day 1, 0 of 5 dictation reps done
+	const experimentStatus = {
+		active: true,
+		startDate: "2026-11-10",
+		endDate: "2026-12-21",
+		dayNumber: 1,
+		totalDays: 42,
+		phase: "baseline" as const,
+		russianArm: "normal" as const,
+		slovakArm: "normal" as const,
+		weeklyCheckDue: false,
+		weeklyCheckCompleted: false,
+		weekNumber: 1,
+		validDay: false, // Incomplete!
+		russian: {
+			dictationReps: 2,
+			understoodReps: 1,
+			validDay: false,
+			firstPlayShare: null,
+		},
+		slovak: {
+			dictationReps: 0,
+			understoodReps: 0,
+			validDay: false,
+			firstPlayShare: null,
+		},
+	};
+
+	// 1. Even when todayMinutes >= dailyGoal (e.g. 30 of 20 min done), experiment nudge still generated
+	const nudges = buildDailyNudges({
+		settings,
+		dailyGoal: 20,
+		todayMinutes: 30,
+		experiment: experimentStatus,
+	});
+
+	assert.ok(nudges.length > 0, "Should generate study alert despite goal minutes being met");
+	const studyNudge = nudges.find((n) => n.source === "experiment");
+	assert.ok(studyNudge, "Should contain an experiment source nudge");
+	assert.equal(studyNudge?.taskKind, "listen");
+	assert.match(studyNudge?.title ?? "", /Study Alert: 3 dictation reps needed/);
+	assert.match(studyNudge?.message ?? "", /Day 1 of 42/);
+
+	// 2. Weekly check alert when check is due and uncompleted
+	const checkDueStatus = {
+		...experimentStatus,
+		dayNumber: 7,
+		weekNumber: 1,
+		weeklyCheckDue: true,
+		weeklyCheckCompleted: false,
+		validDay: true, // Reps done, but check pending
+	};
+	const checkNudges = buildDailyNudges({
+		settings,
+		dailyGoal: 20,
+		todayMinutes: 20,
+		experiment: checkDueStatus,
+	});
+	const checkNudge = checkNudges.find((n) => n.taskKind === "experiment");
+	assert.ok(checkNudge, "Should contain weekly check alert");
+	assert.match(checkNudge?.title ?? "", /Week 1 Check Due/);
+
+	// 3. shouldTriggerNudge fires study alert when experimentPending is true even if todayMinutes >= dailyGoal
+	const testTime = new Date("2026-11-10T20:30:00");
+	const triggered = shouldTriggerNudge({
+		nudges,
+		firedKeys: [],
+		now: testTime,
+		dailyGoal: 20,
+		todayMinutes: 30,
+		experimentPending: true,
+	});
+	assert.ok(triggered, "shouldTriggerNudge should fire experiment nudge when goal minutes are met");
+	assert.equal(triggered?.source, "experiment");
+
+	// 4. When study day is valid and weekly check is completed, no nudges generated if minutes met
+	const allDoneStatus = {
+		...experimentStatus,
+		validDay: true,
+		weeklyCheckDue: false,
+		weeklyCheckCompleted: true,
+	};
+	const allDoneNudges = buildDailyNudges({
+		settings,
+		dailyGoal: 20,
+		todayMinutes: 20,
+		experiment: allDoneStatus,
+	});
+	assert.equal(allDoneNudges.length, 0, "No nudges when both goal minutes and study requirements are done");
+});
+

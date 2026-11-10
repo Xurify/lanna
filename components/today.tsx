@@ -34,6 +34,7 @@ import { switchLanguage } from "@/components/switch-language";
 import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
 import type { AfterPlan, DatedSceneView, DayLanguage, LanguageDay, LineState, PlanTask, StageView, UnitState } from "@/src/core";
 import { TodayLineRow } from "@/components/today-line-row";
+import { StudyEntryRow } from "@/components/study-entry-row";
 import { WhereYouAre } from "@/components/where-you-are";
 import { OutsideListening } from "@/components/outside-listening";
 import { useActiveLanguage } from "@/components/speech";
@@ -283,6 +284,13 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 										<TodayLineRow line={line} />
 									</div>
 								)}
+
+							{s?.experiment?.active && (
+								<div className="mt-5 q-rise" style={{ animationDelay: ".045s" }} data-testid="study-entry">
+									<StudyEntryRow status={s.experiment} />
+								</div>
+							)}
+
 								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Today's plan">
 								<h2 className="q-sh">
 									<QIcon name="arrow" />

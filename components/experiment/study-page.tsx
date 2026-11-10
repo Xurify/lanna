@@ -59,6 +59,10 @@ export function StudyPage({ config, schedule, daily, checks, analysis, today }: 
 	const earlier = newestFirst.slice(DAYS_LISTED);
 	const daysNeeded = EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE;
 
+	const todayRussian = daily.find((d) => d.date === today.date && d.language === config.languages.treatment);
+	const russianReps = todayRussian?.dictationReps ?? 0;
+	const russianValid = russianReps >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
+
 	return (
 		<div className="relative min-h-dvh bg-background">
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
@@ -76,10 +80,16 @@ export function StudyPage({ config, schedule, daily, checks, analysis, today }: 
 					{whereItStands(config, today.dayNumber, treatment.name)} {control.name} keeps the normal plan the whole time, so the two can be compared.
 				</p>
 
-				{openCheck && (
-					<section className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-xl bg-teal-wash px-4 py-3.5" data-testid="study-check-due">
-						<div className="min-w-0">
-							<h2 className="font-ui text-sm font-semibold text-foreground">
+				{openCheck ? (
+					<section className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 shadow-xs" data-testid="study-check-due">
+						<div className="min-w-0 flex-1">
+							<div className="flex items-center gap-2">
+								<span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-white">
+									Weekly Check Due Today
+								</span>
+								<span className="text-xs font-semibold text-ink-3">Day {today.dayNumber} of {config.days}</span>
+							</div>
+							<h2 className="mt-1.5 font-ui text-base font-semibold text-foreground">
 								The week {openCheck.week} check in {studyLanguage(openCheck.language).name} is open
 							</h2>
 							<p className="mt-0.5 font-prose text-sm text-ink-2">
@@ -87,10 +97,75 @@ export function StudyPage({ config, schedule, daily, checks, analysis, today }: 
 							</p>
 						</div>
 						<Link href={`${CHECK_ROUTE}?week=${openCheck.week}&lang=${openCheck.language}`} className={PRIMARY} data-testid="study-check-start">
-							Start the check
+							Start the check →
 						</Link>
 					</section>
-				)}
+				) : running ? (
+					<section
+						className={cn(
+							"mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-xl border p-4 sm:p-5 shadow-xs transition-colors",
+							russianValid
+								? "border-teal/30 bg-teal-wash/60"
+								: "border-teal/40 bg-card ring-1 ring-teal/20",
+						)}
+						data-testid="study-action-card"
+					>
+						<div className="min-w-0 w-full sm:w-auto sm:flex-1">
+							<div className="flex items-center gap-2">
+								<span
+									className={cn(
+										"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider",
+										russianValid
+											? "bg-teal text-white"
+											: "bg-teal/15 text-teal",
+									)}
+								>
+									{russianValid ? "✓ Today Validated" : "Action Needed Today"}
+								</span>
+								<span className="text-xs font-semibold text-ink-3">
+									Day {today.dayNumber} of {config.days}
+								</span>
+							</div>
+							<h2 className="mt-2 text-base font-semibold text-foreground sm:text-[17px]">
+								{russianValid
+									? `Today's trial data is recorded (${russianReps} of 5 Listen sentences completed)`
+									: `Complete 5 typed sentences in Russian Listen today (${russianReps} of 5 done)`}
+							</h2>
+							<p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-2">
+								{russianValid
+									? `First-play comprehension: ${todayRussian?.firstPlayShare !== null ? Math.round((todayRussian?.firstPlayShare ?? 0) * 100) : 0}%. Your Day ${today.dayNumber} data is safely logged!`
+									: `To record today's baseline comprehension, open Russian Listen and type each sentence without peeking or replaying. At least 5 dictation sentences are required for Day ${today.dayNumber}.`}
+							</p>
+							<div className="mt-3 flex items-center gap-3">
+								<div className="flex items-center gap-1.5" aria-label={`${russianReps} of 5 sentences`}>
+									{[0, 1, 2, 3, 4].map((i) => (
+										<span
+											key={i}
+											className={cn(
+												"size-2.5 rounded-full transition-colors",
+												i < russianReps ? "bg-teal" : "bg-ink-4/30",
+											)}
+										/>
+									))}
+								</div>
+								<span className="text-xs font-medium text-ink-3">
+									{russianReps >= 5 ? "5 of 5 reps complete" : `${Math.max(0, 5 - russianReps)} reps remaining`}
+								</span>
+							</div>
+						</div>
+						<div className="shrink-0">
+							{russianValid ? (
+								<Link href="/listen" className={SECONDARY} data-testid="study-action-btn">
+									Open Listen
+								</Link>
+							) : (
+								<Link href="/listen" className={PRIMARY} data-testid="study-action-btn">
+									Start Russian Listen ({Math.max(0, 5 - russianReps)} more) →
+								</Link>
+							)}
+						</div>
+					</section>
+				) : null}
 
 				<div className="mt-6">
 					<StudyChart

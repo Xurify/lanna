@@ -33,7 +33,12 @@ export function ReminderBanner() {
 	const handleAction = async () => {
 		const nudge = activeNudge;
 		setActiveNudge(null);
-		const targetPath = `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`;
+		let targetPath = `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`;
+		if (nudge.taskKind === "experiment") {
+			targetPath = "/experiments/input-first/check";
+		} else if (nudge.taskKind === "listen") {
+			targetPath = "/listen";
+		}
 		if (nudge.languageId) {
 			try {
 				await switchLanguage(nudge.languageId, nudge.languageName ?? nudge.languageId, targetPath);

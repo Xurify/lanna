@@ -32,6 +32,7 @@ export const NAV: readonly NavGroupDef[] = [
 		label: null,
 		items: [
 			{ id: "today", href: "/", label: "Today", hint: "The plan for today" },
+			{ id: "experiment", href: "/experiments/input-first", label: "Study", hint: "Russian input-first study vs Slovak control", also: ["/experiments", "/experiments/input-first/check", "/experiment", "/experiment/check"], badge: "42d" },
 			{ id: "ask", href: "/chat/new", label: "Ask", hint: "Any question about the language, answered with a drawing", also: ["/chat"] },
 			{ id: "curriculum", href: "/curriculum", label: "Curriculum", hint: "Your climb, level by level and chapter by chapter", also: ["/exam"] },
 			{ id: "review", href: "/review", label: "Review", hint: "Your word deck" },
@@ -65,13 +66,6 @@ export const NAV: readonly NavGroupDef[] = [
 			{ id: "milestones", href: "/milestones", label: "Milestones", hint: "When you can handle real situations" },
 			{ id: "mistakes", href: "/mistakes", label: "Mistakes", hint: "What goes wrong and whether it is getting better" },
 			{ id: "log", href: "/log", label: "Log", hint: "What you did, day by day" },
-		],
-	},
-	{
-		id: "trial",
-		label: "Trial",
-		items: [
-			{ id: "experiment", href: "/experiments/input-first", label: "Study", hint: "Russian input-first study vs Slovak control", also: ["/experiments", "/experiments/input-first/check", "/experiment", "/experiment/check"], badge: "42d" },
 		],
 	},
 ];

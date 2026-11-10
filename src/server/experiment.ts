@@ -28,6 +28,7 @@ import {
 	generateSummaryMarkdown,
 	isFirstPlayUnderstood,
 	runRandomizationTest,
+	weeklyCheckRows,
 	type CheckItemRecord,
 	type DailyExperimentRecord,
 	type DaySchedule,
@@ -35,6 +36,7 @@ import {
 	type LanguagePools,
 	type ProbeItem,
 	type ProbePoolData,
+	type TodayExperimentStatus,
 } from "../core/experiment.ts";
 import { dayKey } from "../core/review.ts";
 
@@ -510,4 +512,71 @@ export function getExperimentState(now = new Date()) {
 			schedule: todaySchedule,
 		},
 	};
+}
+
+/** Returns real-time today status for experiment (used by Today view and reminders). */
+export function getTodayExperimentStatus(now = new Date(), targetLanguage = "russian"): TodayExperimentStatus | null {
+	try {
+		const { config, schedule } = ensureExperimentInitialized();
+		const todayDateStr = dayKey(now);
+		const dayNumber = dayNumberForDate(config.startDate, todayDateStr);
+		const active = dayNumber >= 1 && dayNumber <= config.days;
+		if (!active) return null;
+
+		const todaySchedule = schedule.find((s) => s.date === todayDateStr) || {
+			dayNumber,
+			date: todayDateStr,
+			phase: (dayNumber >= config.onsetDay ? "intervention" : "baseline") as "baseline" | "intervention",
+			russianArm: (dayNumber >= config.onsetDay ? "input-first" : "normal") as "normal" | "input-first",
+			slovakArm: "normal" as const,
+			weeklyCheckDue: dayNumber > 0 && dayNumber % 7 === 0,
+		};
+
+		const countReps = (lang: string) => {
+			const logs = readDayLessonLogs(lang, todayDateStr);
+			const listenLessons = logs.filter((l: any) => l.mode === "listen");
+			const allReps = listenLessons.flatMap((l: any) => l.reps || []);
+			const dictationReps = allReps.filter((r: any) => r.kind === "dictation" || r.answer === "type");
+			const understoodReps = dictationReps.filter(isFirstPlayUnderstood);
+			const repCount = dictationReps.length;
+			const understoodCount = understoodReps.length;
+			return {
+				dictationReps: repCount,
+				understoodReps: understoodCount,
+				validDay: repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY,
+				firstPlayShare: repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY ? Math.round((understoodCount / repCount) * 1000) / 1000 : null,
+			};
+		};
+
+		const ru = countReps("russian");
+		const sk = countReps("slovak");
+
+		const checks = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
+		const checkRows = weeklyCheckRows(config, checks, dayNumber);
+		const weekNumber = Math.min(6, Math.max(1, Math.ceil(dayNumber / 7)));
+		const currentWeekRows = checkRows.filter((r) => r.week === weekNumber);
+		const weeklyCheckCompleted = currentWeekRows.length > 0 && currentWeekRows.every((r) => r.state === "done");
+		const weeklyCheckDue = Boolean(todaySchedule.weeklyCheckDue || (dayNumber > 0 && dayNumber % 7 === 0));
+
+		const targetStatus = targetLanguage === "slovak" ? sk : ru;
+
+		return {
+			active: true,
+			startDate: config.startDate,
+			endDate: config.endDate,
+			dayNumber,
+			totalDays: config.days,
+			phase: todaySchedule.phase,
+			russianArm: todaySchedule.russianArm,
+			slovakArm: todaySchedule.slovakArm,
+			weeklyCheckDue,
+			weeklyCheckCompleted,
+			weekNumber,
+			validDay: targetStatus.validDay,
+			russian: ru,
+			slovak: sk,
+		};
+	} catch {
+		return null;
+	}
 }
