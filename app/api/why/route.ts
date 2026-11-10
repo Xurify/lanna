@@ -5,13 +5,15 @@
  * must NOT send the prompt again.
  */
 
-import { openWhy } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, openWhy } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
 const str = (v: unknown, max = 600) => (typeof v === "string" ? v.slice(0, max) : "");
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
 	const sentence = str(body?.sentence);
 	const answer = str(body?.answer, 120);

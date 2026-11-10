@@ -271,6 +271,16 @@ export const PREPARE_STAGE_LINE: Record<PrepareStage, string> = {
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
+/** Whether a caption track's address is one YouTube served, so a player response cannot point the server at another host. */
+export function isYouTubeCaptionUrl(raw: string): boolean {
+	try {
+		const url = new URL(raw);
+		return url.protocol === "https:" && !url.username && !url.password && (url.hostname === "youtube.com" || url.hostname.endsWith(".youtube.com")) && url.pathname.startsWith("/api/timedtext");
+	} catch {
+		return false;
+	}
+}
+
 /** The video id in a pasted YouTube link (watch, youtu.be, shorts, embed,
  *  live, a bare id), or null. */
 export function parseVideoUrl(input: string): string | null {

@@ -3,7 +3,7 @@
  * GET /api/words/favorite?slug=<slug> — check favorite status for a word slug
  */
 
-import { savedPhraseStore } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, savedPhraseStore } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as {
 		slug?: unknown;
 		favorite?: unknown;

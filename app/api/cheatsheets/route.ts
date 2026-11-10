@@ -4,7 +4,7 @@
  */
 
 import { CheatsheetParseError, CHEATSHEET_MAX_CHARS } from "@/src/core";
-import { activeLanguage, cheatsheetStore } from "@/src/server";
+import { activeLanguage, BODY_LIMITS, bodyTooLarge, cheatsheetStore } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.cheatsheet);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { title?: unknown; text?: unknown } | null;
 	if (typeof body?.text !== "string" || !body.text.trim()) return Response.json({ message: "Add at least one phrase." }, { status: 400 });
 	if (body.text.length > CHEATSHEET_MAX_CHARS) return Response.json({ message: "The text is too long for one cheatsheet." }, { status: 413 });

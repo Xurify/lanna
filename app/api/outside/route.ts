@@ -5,7 +5,7 @@
  * DELETE /api/outside?id=&tz= — remove one.
  */
 
-import { logOutside, outsideState, removeOutside } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, logOutside, outsideState, removeOutside } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { minutes?: unknown; attention?: unknown; what?: unknown; day?: unknown } | null;
 	const out = logOutside(body, new Date(), tzOf(req));
 	if (!out.ok) return Response.json({ message: out.message }, { status: out.status });
@@ -27,6 +29,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const id = new URL(req.url).searchParams.get("id");
 	if (!id) return Response.json({ message: "id is required" }, { status: 400 });
 	const out = removeOutside(id.slice(0, 64), new Date(), tzOf(req));

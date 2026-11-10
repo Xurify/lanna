@@ -140,6 +140,19 @@ export function keyValue(id: string): string | undefined {
 	return process.env[id] ?? authStore.authVars()[id];
 }
 
+const MIN_SECRET_LENGTH = 8;
+
+/** Text with every key this server holds taken out, for a provider's error body that is passed on to the page. */
+export function redactSecrets(text: string): string {
+	const ids = new Set<string>([...AUTH_KEYS.map((key) => key.id), ...AUTH_PROVIDER_ENV_VARS, ...Object.keys(authStore.authVars())]);
+	let out = text;
+	for (const id of ids) {
+		const value = keyValue(id)?.trim();
+		if (value && value.length >= MIN_SECRET_LENGTH && !isPlainAuthSetting(id)) out = out.split(value).join("[key hidden]");
+	}
+	return out;
+}
+
 /**
  * Would this provider's key be present at request time? Uses the same env-first lookup as pi-ai,
  * so an env-shadowed key counts. Providers with no key entry are present by definition.

@@ -6,7 +6,7 @@
  * each named language's minutes a day, which its plan and estimates follow.
  */
 
-import { languageDay, setLanguageMinutes } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, languageDay, setLanguageMinutes } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,8 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { minutes?: unknown } | null;
 	const minutes = body?.minutes;
 	if (!minutes || typeof minutes !== "object" || Array.isArray(minutes)) {

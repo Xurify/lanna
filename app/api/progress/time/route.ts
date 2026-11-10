@@ -7,7 +7,7 @@
  */
 
 import { isTimedActivity } from "@/src/core";
-import { recordActiveTime } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, recordActiveTime } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,8 @@ export const dynamic = "force-dynamic";
 const MAX_MS = 6 * 3_600_000;
 
 export async function POST(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { activity?: unknown; ms?: unknown; tz?: unknown } | null;
 	if (!body || !isTimedActivity(body.activity)) return Response.json({ message: "activity must be a timed activity" }, { status: 400 });
 	if (typeof body.ms !== "number" || !Number.isFinite(body.ms) || body.ms < 0) return Response.json({ message: "ms must be a non-negative number" }, { status: 400 });
