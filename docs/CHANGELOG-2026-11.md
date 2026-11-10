@@ -2,6 +2,13 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 10 November: Estonian pairs in the ear gym, and the open points closed (branch `feat/ear-gym-estonian`)
+
+- **Why:** the owner: "why does Estonian have no pairs?" and "You can also fix the other issues you found as well". Rule E89.
+- **What changed:** the ear gym has 41 Estonian pairs in six groups (short and long vowels, short and long consonants, and the vowels õ, ü, ä, ö). The line under the question says what to listen for ("Listen for u and ü"), the tiles say "Played" and "Your pick" after an answer, the sound menu is a quiet text control, and the screen says "sounds" where it said "contrasts". At 320 px the card no longer changes height on an answer. The Slovak sound notes on the Speak end screen no longer appear under another language.
+- **Fixed underneath:** a stopped sound clip no longer logs a failed request in the console; the test that failed on main passes.
+- **Checked:** `tsc`, `eslint`, `next build`; the whole suite (2,201 tests: 2,198 pass, 3 skipped, none failing). In the sandbox, after adding Estonian and Russian to the throwaway profile and switching to each for real: 18 rounds by keyboard (three languages; 320, 390, 640 and 1280 px; Day and Night at 390 and 1280), 180 answers. No console errors, no failed requests, no sideways scroll, and the card at the same place and height before and after every answer. Reduced motion checked by emulation: no transitions and no entrance animation. Every Estonian word and sentence checked against Sõnaveeb and ÕS 2018 by a second agent.
+- **Unverified:** the owner's own machine and phone; the sound of any pair; a native speaker's eye on the words; 200% zoom was checked as a 640 px window, not with the browser's zoom; a screen reader.
 ## 9 November: the ear gym uses the language you are learning, with Russian pairs (branch `feat/ear-gym-per-language`)
 
 - **Why:** with Russian active, `/phonology` showed Slovak pairs read by the Russian voice. The owner: "Should we implement this with Russian as well?" and then "Let's fix all of these issues." Rule E87.

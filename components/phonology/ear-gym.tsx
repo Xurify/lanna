@@ -66,8 +66,7 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 	const playSeq = useRef(0);
 
 	const contrasts = dataset?.families ?? [];
-	const menu: ReadonlyArray<{ value: FamilyChoice; label: string }> = [{ value: "all", label: "All contrasts" }, ...contrasts.map((f) => ({ value: f.id, label: f.label }))];
-	const familyLabel = (id: PhonologyFamily): string => contrasts.find((f) => f.id === id)?.label ?? id;
+	const menu: ReadonlyArray<{ value: FamilyChoice; label: string }> = [{ value: "all", label: "All sounds" }, ...contrasts.map((f) => ({ value: f.id, label: f.label }))];
 
 	const trials = useMemo(() => earGymRound(getPhonologyPairs(languageId, family === "all" ? {} : { family }), seed + round), [languageId, family, seed, round]);
 
@@ -213,14 +212,14 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 				<div className={cn(COLUMN, "pt-[8vh]")}>
 					<EmptyState
 						testid="ear-gym-empty"
-						title="No pairs for this contrast yet"
+						title="No pairs for this sound yet"
 						action={
 							<button type="button" onClick={() => startRound("all")} className="q-btn primary">
-								Practice all contrasts
+								Practice all sounds
 							</button>
 						}
 					>
-						<p>The ear gym plays one word of a pair and asks which one it was. This contrast has no pairs to play.</p>
+						<p>The ear gym plays one word of a pair and asks which one it was. This sound has no pairs to play.</p>
 					</EmptyState>
 				</div>
 			</TaskFrame>
@@ -249,7 +248,7 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 						<Pip key={i} className="flex-1" outcome={i < answers.length ? (answers[i] === t.targetWord ? "right" : "miss") : i === index ? "now" : "ahead"} />
 					))}
 				</div>
-				<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
+				<span className={cn("font-ui text-[12.5px] font-[450] tabular-nums text-ink-3", hasRhythm && "hidden sm:inline")} data-testid="task-count">
 					{index + 1}/{total}
 				</span>
 			</TaskBar>
@@ -260,7 +259,7 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 					<PracticeCard
 						icon="ear"
 						title="Ear gym"
-						right={<ChoiceMenu value={family} options={menu} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Contrast" className="w-52 [&>button]:h-8 [&>button]:text-[13px]" />}
+						right={<ChoiceMenu quiet align="end" value={family} options={menu} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Sounds" className="-me-2" />}
 					>
 						<div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
 							<button
@@ -275,10 +274,10 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 							</button>
 							<div>
 								<h2 className="font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
-									{!answered ? "Which word was it?" : right ? <span lang={praise.lang}>{praise.text}</span> : "Not this time"}
+									{!answered ? "Which word?" : right ? <span lang={praise.lang}>{praise.text}</span> : "Not this time"}
 								</h2>
 								<p className="mt-1 font-ui text-[13px] text-ink-3" data-testid="ear-gym-contrast">
-									{familyLabel(trial.family) === trial.contrast ? trial.contrast : `${familyLabel(trial.family)} · ${trial.contrast}`}
+									Listen for {trial.contrast}
 								</p>
 							</div>
 							<button
@@ -308,11 +307,11 @@ export function EarGym({ seed, languageId, languageName, languageCode }: { seed:
 							))}
 						</div>
 
-						<div className="mt-4 flex min-h-[4.75rem] items-center sm:min-h-[3.25rem]" data-testid="ear-gym-cue">
+						<div className="mt-4 flex min-h-[6.25rem] items-center min-[380px]:min-h-[4.75rem] sm:min-h-[3.25rem]" data-testid="ear-gym-cue">
 							{answered ? (
 								<p className="lh-rise font-prose text-[15px] leading-relaxed text-ink-2">{trial.cue}</p>
 							) : (
-								<p className="font-ui text-[13px] leading-relaxed text-ink-3">The underlined letters are where the two words differ. After you pick, each word plays when you tap it.</p>
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">The underlined letters differ. After you pick, tap a word to hear it.</p>
 							)}
 						</div>
 					</PracticeCard>
@@ -383,7 +382,7 @@ function Pip({ outcome, className }: { outcome: Outcome; className?: string }) {
 				"h-1.5 rounded-full transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
 				outcome === "right" && "bg-teal",
 				outcome === "miss" && "shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
-				outcome === "now" && "bg-teal-line",
+				outcome === "now" && "bg-ink-4",
 				outcome === "ahead" && "bg-well-2",
 				className,
 			)}
@@ -439,7 +438,10 @@ function WordTile({ n, side, state, answered, sounding, langCode, onClick }: { n
 					<span className={cn("ms-2 hidden whitespace-nowrap sm:inline", !answered && "sm:invisible")}>[{side.ipa}]</span>
 				</span>
 			</span>
-			<SoundIcon on={sounding} className={cn("size-[18px] text-ink-3 sm:absolute sm:end-5 sm:top-5", !answered && "invisible")} />
+			<span className={cn("flex shrink-0 items-center gap-2.5 sm:absolute sm:end-5 sm:top-5", !answered && "invisible")}>
+				<span className={cn("hidden font-ui text-[12.5px] font-[550] sm:inline", state === "right" ? "text-teal-2" : state === "wrong" ? "text-miss" : "invisible")}>{state === "right" ? "Played" : "Your pick"}</span>
+				<SoundIcon on={sounding} className="size-[18px] text-ink-3" />
+			</span>
 		</button>
 	);
 }
@@ -522,7 +524,7 @@ function RoundEnd({
 			{byContrast.length > 1 && (
 				<div className="mt-8" data-testid="ear-gym-by-contrast">
 					<h2 className="q-sh">
-						By contrast<small>Pick one to train it</small>
+						Sounds in this round<small>Pick one to train it</small>
 					</h2>
 					<ul className="divide-y divide-[var(--q-line)]">
 						{byContrast.map((c) => (
