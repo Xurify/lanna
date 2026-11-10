@@ -16,8 +16,8 @@ import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 // ─── The active language (fetched once per page load) ──────────────────────
 
 let profilePromise: Promise<LanguageInfo> | null = null;
-// Set once the language arrives, so later mounts render it on the first frame.
 let knownLanguage: LanguageInfo | null = null;
+const languageListeners = new Set<() => void>();
 
 function activeLanguage(): Promise<LanguageInfo> {
 	profilePromise ??= sharedJson<{ active?: string; language?: LanguageInfo }>("/api/profile")
@@ -25,21 +25,27 @@ function activeLanguage(): Promise<LanguageInfo> {
 		.catch(() => LANGUAGES.slovak)
 		.then((l) => {
 			knownLanguage = l;
+			languageListeners.forEach((notify) => notify());
 			return l;
 		});
 	return profilePromise;
 }
 
+function subscribeLanguage(onChange: () => void): () => void {
+	languageListeners.add(onChange);
+	void activeLanguage();
+	return () => {
+		languageListeners.delete(onChange);
+	};
+}
+
+// React hydrates with the server snapshot (no language) and only then reads the client one. With useState(knownLanguage), a component that hydrated after the fetch had landed started with a language the server HTML did not have, and React threw the tree away ("Hydration failed").
 export function useActiveLanguage(): LanguageInfo | null {
-	const [lang, setLang] = useState<LanguageInfo | null>(() => knownLanguage);
-	useEffect(() => {
-		let live = true;
-		void activeLanguage().then((l) => live && setLang(l));
-		return () => {
-			live = false;
-		};
-	}, []);
-	return lang;
+	return useSyncExternalStore(
+		subscribeLanguage,
+		() => knownLanguage,
+		() => null,
+	);
 }
 
 // ─── Playback speed (per-viewer preference) ────────────────────────────────
