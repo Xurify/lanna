@@ -3,7 +3,7 @@
  *
  * Verifies:
  * - Deterministic PRNG and onset day draw from candidate set [12..22].
- * - Full 42-day schedule generation (Day 1 Mon 9 Nov to Day 42 Sun 20 Dec 2026).
+ * - Full 42-day schedule generation (Day 1 Wed 11 Nov to Day 42 Tue 22 Dec 2026).
  * - Weekly check scheduled on every Sunday (days 7, 14, 21, 28, 35, 42).
  * - First-play understood rule accuracy.
  * - Compliance calculation for input-first arm.
@@ -40,7 +40,7 @@ test("PRNG is deterministic and draws onset within candidate range [12..22]", ()
 
 	const onset = drawOnsetDay(20261108);
 	assert.ok(EXPERIMENT_CONSTANTS.CANDIDATE_ONSETS.includes(onset as any), `Onset ${onset} not in candidate set`);
-	assert.equal(onset, 15, "Seed 20261108 draws Day 15 (2026-11-24)");
+	assert.equal(onset, 15, "Seed 20261108 draws Day 15 (2026-11-25)");
 });
 
 test("Date and day number arithmetic handles 42-day span correctly", () => {

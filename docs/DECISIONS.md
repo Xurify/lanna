@@ -1035,11 +1035,11 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 
 ### E82. An automated single-case experiment arm: input-first Russian vs Slovak control (2026-11-08, branch `t3/pronunciation-principles-review`)
 
-**Why:** the owner asked to test whether listening-first improves listening faster than the normal plan ("take me out of the loop"), comparing Russian on the input-first arm against Slovak on the normal control over a 42-day study (2026-11-10 to 2026-12-21). Single-case interrupted time-series design (SCED v3, [docs/experiments/input-first-russian.md](experiments/input-first-russian.md)) with randomized onset (uniform draw between days 12 and 22).
+**Why:** the owner asked to test whether listening-first improves listening faster than the normal plan ("take me out of the loop"), comparing Russian on the input-first arm against Slovak on the normal control over a 42-day study (2026-11-11 to 2026-12-22). Single-case interrupted time-series design (SCED v3, [docs/experiments/input-first-russian.md](experiments/input-first-russian.md)) with randomized onset (uniform draw between days 12 and 22).
 
 **How to apply:**
 - `INPUT_FIRST_TASKS = ["review", "listen", "words", "read", "watch"]` (`src/core/curriculum.ts`). Drops `lesson`, `strengthen`, `blitz`, `speak`, and `fluency` (which records mic output).
-- Deterministic PRNG (`mulberry32` with seed `20261108`) draws Day 15 (2026-11-24) as onset day. Baseline runs Days 1–14; intervention runs Days 15–42.
+- Deterministic PRNG (`mulberry32` with seed `20261108`) draws Day 15 (2026-11-25) as onset day. Baseline runs Days 1–14; intervention runs Days 15–42.
 - Automation engine (`src/core/experiment.ts`, `src/server/experiment.ts`):
   - In `src/server/lesson.ts`, `progressSummary` automatically assigns `arm: "input-first"` on and after the onset day for Russian without manual settings changes.
   - Automatically logs daily first-play understanding share, dictation reps, minutes, covariates, and task compliance to `daily.jsonl`, regenerating `summary.md`.
