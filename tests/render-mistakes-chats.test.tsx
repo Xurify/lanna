@@ -22,7 +22,7 @@ describe("From your chats on the Mistakes page", () => {
 		assert.ok(!html.includes('data-testid="mistakes-empty"'));
 		assert.match(html, /data-testid="mistakes-chats"/);
 		assert.match(html, /3 graded answers in 2 chats: 1 right with no hint, 2 missed/);
-		assert.match(html, /Objects: -a → -u/);
+		assert.match(html, /Feminine accusative/);
 		assert.match(html, /href="\/lesson\?unit=acc-fem"/);
 		assert.match(html, /feminine this/);
 		assert.match(html, /you gave up/);

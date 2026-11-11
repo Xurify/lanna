@@ -29,7 +29,7 @@ export interface ChatToolContext {
 const poseInput = Type.Object({
 	answer: Type.String({ minLength: 1, description: "The exact answer you expect, in the target language, committed before the learner answers. Check any form you are not sure of before you write the question." }),
 	accept: Type.Optional(Type.String({ description: "Other answers that are also fully correct, in quotes like every value, separated by \" | \"." })),
-	focus: Type.String({ minLength: 1, description: "What the question tests, in a few plain words (\"feminine this\", \"locative after v\")." }),
+	focus: Type.String({ minLength: 1, description: "What the question tests, in a few plain words with grammar in full words, never abbreviated (\"the feminine accusative of this\", \"the locative after v\")." }),
 });
 
 function gradeInputFor(units: readonly { id: string; title: string }[]) {

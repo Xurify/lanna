@@ -64,6 +64,17 @@ describe("what the chat answers say", () => {
 		assert.equal(a.topics[1]!.unit, undefined, "vocabulary names no unit");
 	});
 
+	it("pairs what was written with what was wanted at the same miss, not at a later right answer", () => {
+		const a = analyzeChats(
+			[
+				answer({ at: day(2), focus: "locative after v", given: "bývam v Bratislava", expected: "bývam v Bratislave", unit: "loc" }),
+				answer({ at: day(1), focus: "locative after v", verdict: "right", given: "pracujem v škole", expected: "pracujem v škole", unit: "loc" }),
+			],
+			now,
+		);
+		assert.deepEqual([a.topics[0]!.lastGiven, a.topics[0]!.lastExpected], ["bývam v Bratislava", "bývam v Bratislave"]);
+	});
+
 	it("lists the latest misses first, with what was written and what was wanted", () => {
 		const a = analyzeChats(answers, now);
 		assert.deepEqual(a.samples.map((s) => [s.verdict, s.given, s.expected]), [["dont_know", "", "táto kniha"], ["wrong", "tá kniha", "táto kniha"], ["wrong", "chleba", "chlieb"]]);
@@ -78,7 +89,7 @@ describe("what the chat answers say", () => {
 	it("gives the guide the chat evidence and counts it toward having enough", () => {
 		const facts = guideFacts({ ...analyzeNowShape(), chat: analyzeChats(answers, now) });
 		assert.match(facts, /In chats with the tutor: 6 graded answers, 2 right with no hint, 3 wrong or given up/);
-		assert.match(facts, /In chats, unit Objects: -a → -u \[acc-fem\]: 2 wrong of 4/);
+		assert.match(facts, /In chats, unit Feminine accusative \[acc-fem\]: 2 wrong of 4/);
 		assert.match(facts, /In chats, missed 1× on "word for bread" \(last wrote "chleba", wanted "chlieb"\)/);
 		assert.deepEqual(guideReadiness({ reps: 28, wrong: 4, chat: { ...analyzeChats(answers, now), answers: 6, misses: 3 } }).ready, true);
 		assert.deepEqual(guideReadiness({ reps: 28, wrong: 4 }).ready, false);
@@ -157,6 +168,6 @@ describe("recording a graded answer", () => {
 		await tools.grade!.execute("t2", { ...base, unit: "not-a-unit" }, undefined as never, undefined as never);
 		await tools.grade!.execute("t3", base, undefined as never, undefined as never);
 		assert.deepEqual(recorded.map((r) => r.unit), ["acc-fem", undefined, undefined]);
-		assert.match(String(tools.grade!.parameters.properties.unit.description), /acc-fem: Objects/);
+		assert.match(String(tools.grade!.parameters.properties.unit.description), /acc-fem: Objects: -a → -u/);
 	});
 });

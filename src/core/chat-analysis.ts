@@ -68,7 +68,7 @@ export function chatMissesOnUnit(answers: readonly ChatAnswer[], unit: string, n
 
 type Window = { reps: number; right: number };
 type UnitTally = { answers: number; right: number; misses: number; recent: Window; earlier: Window };
-type TopicTally = ChatTopicStat & { chatIds: Set<string> };
+type TopicTally = ChatTopicStat & { chatIds: Set<string>; lastMissAt: string };
 
 export function analyzeChats(answers: readonly ChatAnswer[], now: Date): ChatAnalysis {
 	const cut = now.getTime() - TREND_DAYS * DAY_MS;
@@ -108,18 +108,21 @@ export function analyzeChats(answers: readonly ChatAnswer[], now: Date): ChatAna
 			units.set(unit, u);
 		}
 		const key = focus.toLowerCase();
-		const t = topics.get(key) ?? { focus, answers: 0, misses: 0, chats: 0, lastGiven: "", lastExpected: "", lastAt: "", chatIds: new Set<string>() };
+		const t = topics.get(key) ?? { focus, answers: 0, misses: 0, chats: 0, lastGiven: "", lastExpected: "", lastAt: "", lastMissAt: "", chatIds: new Set<string>() };
 		t.answers++;
 		t.chatIds.add(a.chatId);
 		if (!t.lastAt || a.at >= t.lastAt) {
 			t.focus = focus;
 			t.lastAt = a.at;
-			t.lastExpected = a.expected;
 			if (unit) t.unit = unit;
 		}
 		if (miss) {
 			t.misses++;
-			t.lastGiven = a.given.trim();
+			if (a.at >= t.lastMissAt) {
+				t.lastMissAt = a.at;
+				t.lastGiven = a.given.trim();
+				t.lastExpected = a.expected;
+			}
 			samples.push({ at: a.at, chatId: a.chatId, focus, ...(unit ? { unit } : {}), given: a.given.trim(), expected: a.expected, verdict: a.verdict as ChatMiss["verdict"] });
 		}
 		topics.set(key, t);
@@ -129,7 +132,7 @@ export function analyzeChats(answers: readonly ChatAnswer[], now: Date): ChatAna
 			const { low, high } = wilson(u.right, u.answers);
 			return {
 				unit,
-				title: unitInfo(unit).title,
+				title: unitInfo(unit).grammarTerm ?? unitInfo(unit).title,
 				answers: u.answers,
 				right: u.right,
 				misses: u.misses,
@@ -148,7 +151,7 @@ export function analyzeChats(answers: readonly ChatAnswer[], now: Date): ChatAna
 		.filter((t) => t.misses > 0)
 		.sort((a, b) => b.misses - a.misses || b.lastAt.localeCompare(a.lastAt))
 		.slice(0, TOPICS_SHOWN)
-		.map(({ chatIds: ids, ...t }) => ({ ...t, chats: ids.size }));
+		.map(({ chatIds: ids, lastMissAt: _lastMissAt, ...t }) => ({ ...t, chats: ids.size }));
 	return {
 		answers: answers.length,
 		firstTryRight,
