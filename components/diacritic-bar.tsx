@@ -51,7 +51,7 @@ function setFieldValue(field: Field, value: string, caret: number): void {
 function KeyGrid({ letters, english, tag, live, press, className }: { letters: string[]; english: string; tag: string; live: string | null; press: (letter: string, shift: boolean) => void; className?: string }) {
 	const families = useMemo(() => letterFamilies(letters, tag), [letters, tag]);
 	return (
-		<div data-testid="diacritic-bar" role="group" aria-label={`${english} letters`} className={cn("flex min-w-0 flex-wrap gap-2 font-prose", className)}>
+		<div data-testid="diacritic-bar" role="group" aria-label={`${english} letters`} className={cn("flex min-w-0 flex-wrap gap-1.5 font-prose", className)}>
 			{families.map((family) => {
 				const on = family.base === live;
 				return (
@@ -69,7 +69,7 @@ function KeyGrid({ letters, english, tag, live, press, className }: { letters: s
 								onClick={(e) => press(letter, e.shiftKey)}
 								title={on ? `Change ${family.base} to ${letter}` : `Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`}
 								className={cn(
-									"lh-press flex h-10 min-w-10 items-center justify-center px-2 text-[17px] font-medium first:rounded-l-[10px] last:rounded-r-[10px] pointer-coarse:h-11 pointer-coarse:min-w-11",
+									"lh-press flex h-10 min-w-9 items-center justify-center px-1.5 text-[17px] font-medium first:rounded-l-[10px] last:rounded-r-[10px] pointer-coarse:h-11 pointer-coarse:min-w-[42px]",
 									i > 0 && "shadow-[inset_1px_0_0_var(--q-line-2)]",
 									on ? "text-teal-2 hover:bg-[var(--q-teal-line)]" : "text-foreground hover:bg-well-2",
 								)}

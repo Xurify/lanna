@@ -18,18 +18,28 @@ export function letterFamilies(letters: readonly string[], tag: string): LetterF
 	return families;
 }
 
-export function liveFamily(families: readonly LetterFamily[], value: string, start: number, end: number, tag: string): string | null {
-	if (start !== end || start === 0) return null;
+function letterBefore(value: string, start: number, end: number): string {
+	if (start !== end || start === 0) return "";
 	const before = [...value.slice(0, start)].at(-1) ?? "";
-	if (!/\p{L}/u.test(before)) return null;
-	const base = baseLetter(before, tag);
-	return families.some((f) => f.base === base) ? base : null;
+	return /\p{L}/u.test(before) ? before : "";
+}
+
+/** Cyrillic letters with a mark are letters of their own: е and ё, и and й follow each other in everyday words (её, русский). */
+function changes(before: string, letter: string, tag: string): boolean {
+	if (!before || /\p{Script=Cyrillic}/u.test(letter)) return false;
+	return before.toLocaleLowerCase(tag) !== letter.toLocaleLowerCase(tag) && baseLetter(before, tag) === baseLetter(letter, tag);
+}
+
+export function liveFamily(families: readonly LetterFamily[], value: string, start: number, end: number, tag: string): string | null {
+	const before = letterBefore(value, start, end);
+	if (!before) return null;
+	const family = families.find((f) => f.base === baseLetter(before, tag));
+	return family && family.letters.some((letter) => changes(before, letter, tag)) ? family.base : null;
 }
 
 export function pressLetter(value: string, start: number, end: number, letter: string, shift: boolean, tag: string): { value: string; caret: number } {
-	const before = start === end && start > 0 ? ([...value.slice(0, start)].at(-1) ?? "") : "";
-	const sameFamily = before !== "" && /\p{L}/u.test(before) && baseLetter(before, tag) === baseLetter(letter, tag);
-	if (sameFamily) {
+	const before = letterBefore(value, start, end);
+	if (changes(before, letter, tag)) {
 		const upper = shift || (before !== before.toLocaleLowerCase(tag) && before === before.toLocaleUpperCase(tag));
 		const typed = upper ? letter.toLocaleUpperCase(tag) : letter;
 		const from = start - before.length;
