@@ -748,7 +748,7 @@ export function ReviewSession() {
 												{hint === 0 && !picks && !lettersOpen && (
 													<span className="q-sub !mt-0 hidden items-center gap-1.5 pointer-fine:flex">
 														<KeyboardIcon className="size-4 shrink-0" aria-hidden="true" />
-														Press <kbd className="q-kbd">`</kbd> (left of 1) for letters such as {lang.specialLetters.slice(0, 3).join(" ")}
+														Hold a letter for its accents, or press <kbd className="q-kbd">`</kbd> (left of 1) for the keyboard
 													</span>
 												)}
 												{hint > 0 && (
@@ -779,7 +779,7 @@ export function ReviewSession() {
 
 											{!picks && (
 												<div className="relative" data-testid="review-letters" data-open={lettersOpen}>
-													<div className={cn(!lettersOpen && "pointer-fine:invisible")}>
+													<div className={cn(!lettersOpen && "pointer-fine:invisible pointer-fine:h-0")}>
 														<DiacriticBar variant="keys" />
 													</div>
 												</div>

@@ -14,7 +14,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpeedToggle, useActiveLanguage } from "@/components/speech";
-import { letterFamilies, liveFamily, pressLetter } from "@/src/core";
+import { baseLetter, letterFamilies, liveFamily, pressLetter } from "@/src/core";
+import { AccentKeyboard, accentsOf, type AccentMenu } from "@/components/accent-keyboard";
 
 type Field = HTMLTextAreaElement | HTMLInputElement;
 
@@ -95,6 +96,52 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	const [open, setOpen] = useState(true);
 	const [live, setLive] = useState<string | null>(null);
 	const families = useMemo(() => (lang ? letterFamilies(lang.specialLetters, lang.tag) : []), [lang]);
+	const [menu, setMenu] = useState<AccentMenu | null>(null);
+	const pickRef = useRef<(letter: string) => void>(() => {});
+
+	useEffect(() => {
+		if (variant !== "keys" || !lang) return;
+		const byBase = new Map(families.map((f) => [f.base, f]));
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
+			if (menu) {
+				const accents = accentsOf(byBase.get(menu.base));
+				const n = Number(e.key);
+				if (Number.isInteger(n) && n >= 1 && n <= accents.length) {
+					e.preventDefault();
+					e.stopPropagation();
+					pickRef.current(accents[n - 1]!);
+					return;
+				}
+				if (e.key === "Escape") {
+					e.preventDefault();
+					e.stopPropagation();
+					setMenu(null);
+					return;
+				}
+				if (e.repeat && e.key.toLocaleLowerCase(lang.tag) === menu.base) {
+					e.preventDefault();
+					return;
+				}
+				setMenu(null);
+				return;
+			}
+			if (!e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1 || !isTextField(e.target)) return;
+			const base = e.key.toLocaleLowerCase(lang.tag);
+			if (byBase.get(base)?.base !== base || accentsOf(byBase.get(base)).length === 0) return;
+			e.preventDefault();
+			setMenu({ base, held: true });
+		};
+		const onPointerDown = (e: PointerEvent) => {
+			if (menu && !(e.target instanceof Element && e.target.closest("[data-testid=accent-keyboard]"))) setMenu(null);
+		};
+		document.addEventListener("keydown", onKeyDown, true);
+		document.addEventListener("pointerdown", onPointerDown, true);
+		return () => {
+			document.removeEventListener("keydown", onKeyDown, true);
+			document.removeEventListener("pointerdown", onPointerDown, true);
+		};
+	}, [variant, lang, families, menu]);
 
 	useEffect(() => {
 		if (variant !== "keys" || !lang) return;
@@ -134,12 +181,6 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		});
 	};
 
-	if (!lang) return null;
-	const type = (letter: string, upper: boolean) => {
-		const target = fieldInUse(lastField.current);
-		if (!target) return;
-		insertAtCaret(target, upper ? letter.toLocaleUpperCase(lang.tag) : letter);
-	};
 	// A tap moves the caret of an input to its start between pointerdown and click in Chrome on touch screens, so the caret is read on pointerdown.
 	const grab = () => {
 		const field = fieldInUse(lastField.current);
@@ -147,7 +188,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	};
 	const press = (letter: string, shift: boolean) => {
 		const target = fieldInUse(lastField.current);
-		if (!target) return;
+		if (!target || !lang) return;
 		const held = grabbed.current?.field === target ? grabbed.current : null;
 		grabbed.current = null;
 		const start = held?.start ?? target.selectionStart ?? target.value.length;
@@ -156,8 +197,45 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		setFieldValue(target, next.value, next.caret);
 	};
 
+	const pick = (letter: string) => {
+		const held = menu?.held ? menu.base : null;
+		setMenu(null);
+		if (!held || !lang) return press(letter, false);
+		grabbed.current = null;
+		const field = fieldInUse(lastField.current);
+		if (!field) return;
+		const start = field.selectionStart ?? field.value.length;
+		const before = start > 0 ? ([...field.value.slice(0, start)].at(-1) ?? "") : "";
+		if (!before || baseLetter(before, lang.tag) !== held) return insertAtCaret(field, letter);
+		const typed = before === before.toLocaleLowerCase(lang.tag) ? letter : letter.toLocaleUpperCase(lang.tag);
+		setFieldValue(field, field.value.slice(0, start - before.length) + typed + field.value.slice(start), start - before.length + typed.length);
+	};
+	useEffect(() => {
+		pickRef.current = pick;
+	});
+
+	if (!lang) return null;
+	const type = (letter: string, upper: boolean) => {
+		const target = fieldInUse(lastField.current);
+		if (!target) return;
+		insertAtCaret(target, upper ? letter.toLocaleUpperCase(lang.tag) : letter);
+	};
 	if (variant === "keys") {
-		return <KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} grab={grab} press={press} className={className} />;
+		const onKey = (key: string) => {
+			const family = families.find((f) => f.base === key);
+			if (accentsOf(family).length) setMenu((m) => (m?.base === key && !m.held ? null : { base: key, held: false }));
+			else press(key, false);
+		};
+		return (
+			<div className={className}>
+				<div className="hidden pointer-fine:block">
+					<AccentKeyboard letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} menu={menu} onKey={onKey} onPick={pick} grab={grab} />
+				</div>
+				<div className="pointer-fine:hidden">
+					<KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} grab={grab} press={press} />
+				</div>
+			</div>
+		);
 	}
 
 	return (
