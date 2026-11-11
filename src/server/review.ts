@@ -13,7 +13,7 @@ import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts"
 import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
 import { knownForms } from "../core/form-slip.ts";
 import { missReason, type MissReason, type MissWord } from "../core/review-miss.ts";
-import { MAX_BLANK_WORDS, blankAround, blankWordsFor, clozeParts, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
+import { MAX_BLANK_WORDS, blankAround, blankFromSpans, blankWordsFor, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings, type Span } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
@@ -55,9 +55,11 @@ function mintNext(cards: Record<string, ReviewCard>, now: Date, preferSlugs: str
 
 interface ReviewPrompt {
 	card: ReviewCard;
-	before: string;
-	after: string;
-	/** What the blank hides: the card's word, with its neighbors when the card hides several. */
+	/** The sentence around and between the gaps (one more piece than gaps). */
+	pieces: string[];
+	/** The hidden words in sentence order: the card's word, and other words of the sentence when the card hides several. */
+	gaps: string[];
+	/** What is graded: the gaps joined by spaces. */
 	answer: string;
 	/** Words the blank hides, and which of them is the card's word. */
 	words: number;
@@ -77,9 +79,8 @@ interface ReviewPrompt {
 export interface AnsweredLine {
 	cardId: string;
 	reviewedAt: string;
-	before: string;
-	answer: string;
-	after: string;
+	pieces: string[];
+	gaps: string[];
 	translation: string;
 	rating: Rating;
 	verdict: ReviewLogEntry["verdict"];
@@ -149,9 +150,17 @@ function hash(s: string): number {
 	return h >>> 0;
 }
 
-function blankOf(card: ReviewCard, max: number, words?: number): Blank {
+export function blankOf(card: ReviewCard, max: number, words?: number): Blank {
 	const seed = hash(`${card.id}:${card.reps}`);
 	return blankAround(card, card.state === "new" ? 1 : (words ?? blankWordsFor(card.state, max, seed)), seed);
+}
+
+/** The blank an answer in the log was given to. A line logged before spans were kept, or one whose sentence has changed since, shows the card's word alone. */
+function loggedBlank(card: ReviewCard, spans: Span[] | undefined): Blank {
+	const own: Span = [card.at, card.at + card.answer.length];
+	const target = spans?.findIndex(([from, to]) => from === own[0] && to === own[1]) ?? -1;
+	const ordered = !!spans && spans.every(([from, to], i) => from < to && to <= card.sentence.length && (i === 0 || spans[i - 1]![1] <= from));
+	return target >= 0 && ordered ? blankFromSpans(card.sentence, spans!, target) : blankFromSpans(card.sentence, [own], 0);
 }
 
 function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPrompt {
@@ -163,8 +172,8 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 	const blank = blankOf(card, settings.blankWords);
 	return {
 		card,
-		before: blank.before,
-		after: blank.after,
+		pieces: blank.pieces,
+		gaps: blank.gaps,
 		answer: blank.answer,
 		words: blank.words,
 		target: blank.target,
@@ -195,8 +204,8 @@ function reviewedOn(today: string, now: Date, deck: Record<string, ReviewCard>, 
 		cards.add(entry.cardId);
 		const card = deck[entry.cardId];
 		if (card && lines.length < ANSWERED_LINES) {
-			const { before, after } = clozeParts(card);
-			lines.push({ cardId: card.id, reviewedAt: entry.reviewedAt, before, answer: card.answer, after, translation: card.translation, rating: entry.rating, verdict: entry.verdict, helped: !!entry.hints || !!entry.picked });
+			const { pieces, gaps } = loggedBlank(card, entry.spans);
+			lines.push({ cardId: card.id, reviewedAt: entry.reviewedAt, pieces, gaps, translation: card.translation, rating: entry.rating, verdict: entry.verdict, helped: !!entry.hints || !!entry.picked });
 		}
 	}
 	return { answers, cards, lines };
@@ -310,7 +319,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		...(input.ms !== undefined ? { ms: input.ms } : {}),
 		...(input.hints ? { hints: input.hints } : {}),
 		...(input.picked ? { picked: true } : {}),
-		...(blank.words > 1 ? { words: blank.words } : {}),
+		...(blank.words > 1 ? { words: blank.words, spans: blank.spans } : {}),
 		...form,
 	});
 	return { verdict, rating, card: updated };

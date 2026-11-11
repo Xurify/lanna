@@ -103,6 +103,8 @@ export interface ReviewLogEntry {
 	picked?: boolean;
 	/** Words the blank hid, when more than one. */
 	words?: number;
+	/** Where those words sit in the sentence, so the day's list marks the same words. */
+	spans?: Span[];
 	/** A form card (2026-10-31, first tries): the drill its sentence
 	 *  practices, the word's lexicon gender, and the slip a counted wrong
 	 *  first try got (src/core/form-slip.ts). */
@@ -176,48 +178,80 @@ export function clozeParts(card: Pick<ReviewCard, "sentence" | "answer" | "at">)
 	return { before: card.sentence.slice(0, card.at), after: card.sentence.slice(card.at + card.answer.length) };
 }
 
+/** Where a hidden word sits in the sentence: [from, to). */
+export type Span = [number, number];
+
 export interface Blank {
-	before: string;
+	/** The sentence around and between the gaps: always one more piece than gaps. */
+	pieces: string[];
+	/** The hidden words, in sentence order. */
+	gaps: string[];
+	spans: Span[];
+	/** What is graded: the gaps joined by single spaces. */
 	answer: string;
-	after: string;
 	words: number;
+	/** Which gap is the card's own word. */
 	target: number;
 }
 
-const CLAUSE_END = /[,;:.!?…—–]["'”“»)]*$/u;
-const HAS_WORD = /[\p{L}\p{N}]/u;
-const LEADING_NON_WORD = /^[^\p{L}\p{N}]*/u;
-const TRAILING_NON_WORD = /[^\p{L}\p{N}]*$/u;
+const WORD = /[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*/gu;
+const HAS_LETTER = /\p{L}/u;
 
 export function blankWordsFor(state: CardState, max: number, seed: number): number {
 	const cap = Math.max(1, Math.min(MAX_BLANK_WORDS, Math.floor(max)));
 	return state === "new" ? 1 : 1 + (seed % cap);
 }
 
-export function blankAround(card: Pick<ReviewCard, "sentence" | "answer" | "at">, words: number, seed = 0): Blank {
-	const { sentence, answer, at } = card;
-	const tokens = [...sentence.matchAll(/\S+/g)].map((m) => ({ start: m.index, end: m.index + m[0].length, text: m[0] }));
-	const found = tokens.findIndex((t) => at >= t.start && at < t.end);
-	const single = (): Blank => ({ ...clozeParts(card), answer, words: 1, target: 0 });
-	if (words <= 1 || found < 0) return single();
+function nextSeed(seed: number): number {
+	const s = Math.imul(seed ^ (seed >>> 15), 2246822507) >>> 0;
+	return Math.imul(s ^ (s >>> 13), 3266489909) >>> 0;
+}
 
-	let first = found;
-	let last = found;
-	const canGrowRight = () => last + 1 < tokens.length && !CLAUSE_END.test(tokens[last]!.text) && HAS_WORD.test(tokens[last + 1]!.text);
-	const canGrowLeft = () => first > 0 && !CLAUSE_END.test(tokens[first - 1]!.text) && HAS_WORD.test(tokens[first - 1]!.text);
-	let right = seed % 2 === 0;
-	for (let n = 1; n < Math.min(words, MAX_BLANK_WORDS); n++) {
-		const grow = right ? (canGrowRight() ? "right" : canGrowLeft() ? "left" : null) : canGrowLeft() ? "left" : canGrowRight() ? "right" : null;
-		if (!grow) break;
-		if (grow === "right") last++;
-		else first--;
-		right = !right;
+/** The sentence cut at the given spans, the card's own word at `target`. */
+export function blankFromSpans(sentence: string, spans: Span[], target: number): Blank {
+	const pieces = [sentence.slice(0, spans[0]?.[0] ?? sentence.length)];
+	const gaps: string[] = [];
+	spans.forEach(([from, to], i) => {
+		gaps.push(sentence.slice(from, to));
+		pieces.push(sentence.slice(to, spans[i + 1]?.[0] ?? sentence.length));
+	});
+	return { pieces, gaps, spans, answer: gaps.join(" "), words: gaps.length, target };
+}
+
+/** The words of a text, lowercased, to compare whole words. */
+export function wordsOf(text: string): string[] {
+	return [...text.matchAll(WORD)].map((m) => m[0].toLocaleLowerCase());
+}
+
+/** `text` cut so that every whole word in `hidden` (lowercased) is its own part. */
+export function splitOnWords(text: string, hidden: ReadonlySet<string>): Array<{ text: string; hidden: boolean }> {
+	const parts: Array<{ text: string; hidden: boolean }> = [];
+	let last = 0;
+	for (const m of text.matchAll(WORD)) {
+		if (!hidden.has(m[0].toLocaleLowerCase())) continue;
+		if (m.index > last) parts.push({ text: text.slice(last, m.index), hidden: false });
+		parts.push({ text: m[0], hidden: true });
+		last = m.index + m[0].length;
 	}
-	if (first === last) return single();
+	if (last < text.length) parts.push({ text: text.slice(last), hidden: false });
+	return parts;
+}
 
-	const from = first === found ? at : tokens[first]!.start + (LEADING_NON_WORD.exec(tokens[first]!.text)?.[0].length ?? 0);
-	const to = last === found ? at + answer.length : tokens[last]!.end - (TRAILING_NON_WORD.exec(tokens[last]!.text)?.[0].length ?? 0);
-	return { before: sentence.slice(0, from), answer: sentence.slice(from, to), after: sentence.slice(to), words: last - first + 1, target: found - first };
+/** The card's word plus up to `words - 1` other words of the sentence, anywhere in it, picked by the seed. */
+export function blankAround(card: Pick<ReviewCard, "sentence" | "answer" | "at">, words: number, seed = 0): Blank {
+	const own: Span = [card.at, card.at + card.answer.length];
+	const others: Span[] = [...card.sentence.matchAll(WORD)]
+		.filter((m) => HAS_LETTER.test(m[0]))
+		.map((m): Span => [m.index, m.index + m[0].length])
+		.filter(([from, to]) => to <= own[0] || from >= own[1]);
+	const spans: Span[] = [own];
+	let s = seed;
+	for (let n = 1; n < Math.min(words, MAX_BLANK_WORDS) && others.length > 0; n++) {
+		s = nextSeed(s);
+		spans.push(others.splice(s % others.length, 1)[0]!);
+	}
+	spans.sort((a, b) => a[0] - b[0]);
+	return blankFromSpans(card.sentence, spans, spans.indexOf(own));
 }
 
 export function targetWordOf(blank: Pick<Blank, "words" | "target">, given: string): string {
