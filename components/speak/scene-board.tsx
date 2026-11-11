@@ -116,8 +116,8 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 					)}
 
 					{state && (
-						<div className="mt-7 grid items-start gap-x-8 gap-y-6 @3xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] @5xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
-							<div className="flex flex-col gap-6" data-testid="speak-scenes">
+						<div className="mt-7 grid grid-cols-[minmax(0,1fr)] items-start gap-x-8 gap-y-6 @3xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] @5xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+							<div className="flex min-w-0 flex-col gap-6" data-testid="speak-scenes">
 								{groups.map((g) => (
 									<section key={g.label} aria-label={grouped ? g.label : "Scenes"}>
 										{grouped && <h2 className="q-sh !mb-1.5 px-3">{g.label}</h2>}
