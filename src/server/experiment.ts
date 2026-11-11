@@ -166,7 +166,7 @@ function findRussianLexiconPath(): string {
 		path.join(PATHS.root, "curriculum", "russian", "lexicon.json"),
 	];
 	for (const p of candidates) {
-		if (fs.existsSync(p)) return p;
+		if (fs.existsSync(/*turbopackIgnore: true*/ p)) return p;
 	}
 	return candidates[0]!;
 }
@@ -178,7 +178,7 @@ function findSlovakLexiconPath(): string {
 		path.join(PATHS.base, "languages", "slovak", "lexicon.json"),
 	];
 	for (const p of candidates) {
-		if (fs.existsSync(p)) return p;
+		if (fs.existsSync(/*turbopackIgnore: true*/ p)) return p;
 	}
 	return candidates[0]!;
 }
