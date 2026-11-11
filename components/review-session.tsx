@@ -19,6 +19,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
+import { MissWhy } from "@/components/miss-why";
 import { compareAnswer, diacriticSlips, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, splitOnWords, targetWordOf, wordsOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
@@ -134,56 +135,6 @@ function stillToDo(counts: Status["counts"]): string {
 	const toRepeat = counts.due + counts.learning;
 	if (left === 0) return toRepeat > 0 ? `Every card seen once today. ${toRepeat} to repeat.` : later > 0 ? `Done for now. ${later} more ${later === 1 ? "card comes" : "cards come"} due later today.` : "All done for today.";
 	return `Still to do: ${counts.dueUntouched} due, ${newLeft} new${toRepeat > counts.dueUntouched ? `, ${toRepeat - counts.dueUntouched} to repeat` : ""}${later > 0 ? `, ${later} more due later today` : ""}.`;
-}
-
-function MissWhy({ reason, given, code, className }: { reason: MissReason; given: string; code?: string; className?: string }) {
-	const w = (text: string) => (
-		<b className="font-semibold" lang={code}>
-			{text}
-		</b>
-	);
-	const yours = <span lang={code}>“{given.trim()}”</span>;
-	const here = (
-		<>
-			This one is {w(reason.lemma)}, {reason.gloss}.
-		</>
-	);
-	const what =
-		reason.slip === "other" && reason.other ? (
-			<>
-				{yours} {reason.other.isLemma ? <>means {reason.other.gloss}</> : <>is a form of {w(reason.other.lemma)}, {reason.other.gloss}</>}: a different word. {here}
-			</>
-		) : reason.slip === "other" ? (
-			<>
-				{yours} is not a form of {w(reason.lemma)} ({reason.gloss}).
-			</>
-		) : reason.slip === "base" ? (
-			<>{yours} is the dictionary form. The sentence needs an ending on it.</>
-		) : reason.slip === "same-word" ? (
-			<>
-				{yours} is {w(reason.lemma)} with another ending.
-			</>
-		) : (
-			<>
-				The word is {w(reason.lemma)}, {reason.gloss}.
-			</>
-		);
-	const need = reason.trigger ? (
-		<>
-			<span className="rounded-[5px] bg-well px-1.5 font-semibold text-teal-2" lang={code}>
-				{reason.trigger}
-			</span>{" "}
-			decides the case{reason.form ? <>: {w(`${reason.form}`)}</> : null}.
-		</>
-	) : reason.form ? (
-		<>The sentence needs the {w(reason.form)}.</>
-	) : null;
-	return (
-		<div className={cn("lh-fade flex flex-col gap-1.5 text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
-			{what && <p>{what}</p>}
-			{need && <p>{need}</p>}
-		</div>
-	);
 }
 
 function Note({ label, children, lang }: { label: string; children: React.ReactNode; lang?: string }) {

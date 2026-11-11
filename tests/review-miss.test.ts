@@ -10,7 +10,7 @@ process.env.LH_PROFILE = "slovak";
 
 // ESM evaluates static imports before this module's body, so the app modules are imported after the env is set.
 
-const { missReason } = await import("../src/core/review-miss.ts");
+const { contrastExample, missReason, sharedMeaning } = await import("../src/core/review-miss.ts");
 const { reviewMiss } = await import("../src/server/review.ts");
 const { reviewStore } = await import("../src/store/review.ts");
 type ReviewCard = import("../src/core/review.ts").ReviewCard;
@@ -41,7 +41,8 @@ reviewStore.writeCards({
 test("another dictionary word is named with its meaning, even when it shares the stem", () => {
 	const r = reviewMiss("vecera#2", "večer")!;
 	assert.equal(r.slip, "other");
-	assert.deepEqual(r.other, { lemma: "večer", gloss: "evening", isLemma: true });
+	assert.deepEqual({ ...r.other, example: undefined }, { lemma: "večer", gloss: "evening", isLemma: true, example: undefined });
+	assert.match(r.other?.example?.text ?? "", /večer/i);
 	assert.equal(r.lemma, "večera");
 	assert.equal(r.gloss, "dinner");
 	assert.equal(r.trigger, "po");
@@ -51,7 +52,14 @@ test("another dictionary word is named with its meaning, even when it shares the
 test("a form of another word says so", () => {
 	const r = reviewMiss("vecera#2", "večerom")!;
 	assert.equal(r.slip, "other");
-	assert.deepEqual(r.other, { lemma: "večer", gloss: "evening", isLemma: false });
+	assert.equal(r.other?.lemma, "večer");
+	assert.equal(r.other?.isLemma, false);
+});
+
+test("another word typed without its accents is still its dictionary form", () => {
+	const r = reviewMiss("vecera#2", "vecer")!;
+	assert.equal(r.other?.lemma, "večer");
+	assert.equal(r.other?.isLemma, true);
 });
 
 test("the card word's own forms are endings, even when another word shares them (večera is večer's genitive)", () => {
@@ -79,4 +87,32 @@ test("missReason keeps the stem guess when the dictionary knows no other word", 
 	const o = missReason({ answer: "stanice", lemma: "stanica", gloss: "station", given: "xyz" })!;
 	assert.equal(o.slip, "other");
 	assert.equal(o.other, undefined);
+});
+
+test("a word that never takes an ending gets no stem guess", () => {
+	const r = missReason({ answer: "potom", lemma: "potom", gloss: "then", given: "potomx", inflects: false })!;
+	assert.equal(r.slip, "other");
+	assert.equal(r.inflects, false);
+});
+
+test("sharedMeaning finds a sense both glosses have, ignoring notes in brackets", () => {
+	assert.equal(sharedMeaning("when", "when (conjunction); if"), "when");
+	assert.equal(sharedMeaning("only", "only; just"), "only");
+	assert.equal(sharedMeaning("here (to)", "here (location — for motion use sem)"), "here");
+	assert.equal(sharedMeaning("where to", "where"), undefined);
+	assert.equal(sharedMeaning("evening", "dinner"), undefined);
+});
+
+test("contrastExample prefers a sentence with the typed word, then the shortest, and skips rejected or untranslated ones", () => {
+	const examples = [
+		{ text: "Dobrý večer!", en: "Good evening." },
+		{ text: "Večer pozerám televíziu.", en: "In the evening I watch TV." },
+		{ text: "Stretneme sa večerom.", en: "We meet in the evening." },
+		{ text: "Bez prekladu.", en: "" },
+		{ text: "Večer.", en: "Evening.", rejected: true },
+	];
+	assert.equal(contrastExample(examples, "vecerom")?.text, "Stretneme sa večerom.");
+	assert.equal(contrastExample(examples, "večer")?.text, "Dobrý večer!");
+	assert.equal(contrastExample(examples, "xyz")?.text, "Dobrý večer!");
+	assert.equal(contrastExample([{ text: "Bez prekladu.", en: "" }], "bez"), undefined);
 });

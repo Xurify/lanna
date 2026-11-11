@@ -678,3 +678,10 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **My mistakes → From your chats:** graded answers, how many were right with no hint, units and topics missed (what you wrote, what was wanted, how many chats), with trend. The written guide reads them too.
 - **Checked:** typecheck, ESLint and the full suite (2591 tests, 2588 pass, 3 skipped, 0 fail), 16 of them new (analysis, the flag rule and its mending, the recorder against a scratch data folder, the tool, the page render), and the running app in a sandbox seeded through the real recorder: the Mistakes section and Today's Strengthen row, Day and Night, 1280 and 390 px.
 - **Not verified yet:** the tutor actually passing a sensible `unit` in a live chat. Old chats have no unit and only feed the topic list.
+
+## 11 November: a miss on another word shows how that word is used (`fix/review-miss-contrast`)
+
+- **Why:** the owner, on "Kedy" typed for *keď*: "Is this a good explanation?" The card said "“Kedy” means when: a different word. This one is keď, when (conjunction)." It gave the same meaning twice.
+- **What changed:** after a miss on another dictionary word, the card says what the two words share ("“Kedy” also means when, but it is another word."), shows one sentence with the learner's word from the lexicon (*Kedy prídeš?* When will you come?), then names the word the sentence needs. Fixed on the way: an answer without accents is no longer called "a form of" its own dictionary form, glosses no longer sit inside nested brackets, and words that never take an ending (keď, potom) are no longer described by endings. E103.
+- **Checked:** `npm test` (2634 tests, 0 failed), typecheck, lint on the changed files; the card in a sandbox in Day and Night at 1280 and 390 px for "Kedy" on *keď* and "večerom" on *večera*.
+- **Unverified:** the owner's own deck.

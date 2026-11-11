@@ -12,7 +12,7 @@ import { activeLanguage } from "./active-language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
 import { knownForms } from "../core/form-slip.ts";
-import { missReason, type MissReason, type MissWord } from "../core/review-miss.ts";
+import { contrastExample, missReason, sharedMeaning, type MissReason, type MissWord } from "../core/review-miss.ts";
 import { MAX_BLANK_WORDS, blankAround, blankFromSpans, blankWordsFor, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings, type Span } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
@@ -21,6 +21,7 @@ import { firstTryOf, recordFirstTry } from "../core/first-try.ts";
 import { noteReviewMixup } from "./mixups.ts";
 
 const DAY_MS = 86_400_000;
+const INFLECTING_CATEGORIES = new Set(["Nouns", "Verbs", "Adjectives"]);
 const tag = () => activeLanguage().tag;
 
 let ordered: { profile: string; list: LexiconEntry[] } | null = null;
@@ -338,14 +339,19 @@ export function reviewMiss(cardId: string, givenAnswer: string, words?: number):
 	const commonerFirst = (a: LexiconEntry, b: LexiconEntry) => (a.rank ?? Infinity) - (b.rank ?? Infinity);
 	const rankedEntriesOfGiven: MissWord[] = matches
 		.filter((e) => e.slug !== card.slug)
-		.map((e) => ({ e, isLemma: entryLemma(e).toLocaleLowerCase(tag()) === word }))
+		.map((e) => ({ e, isLemma: foldDiacritics(entryLemma(e).toLocaleLowerCase(tag())) === foldDiacritics(word) }))
 		.sort((a, b) => samePartOfSpeechFirst(a.e, b.e) || Number(b.isLemma) - Number(a.isLemma) || commonerFirst(a.e, b.e))
-		.map(({ e, isLemma }) => ({ lemma: entryLemma(e), gloss: shortGloss(e.en), isLemma }));
+		.map(({ e, isLemma }) => {
+			const alsoMeans = entry ? sharedMeaning(e.en, entry.en) : undefined;
+			const example = contrastExample(e.examples, word, tag());
+			return { lemma: entryLemma(e), gloss: shortGloss(e.en), isLemma, ...(alsoMeans ? { alsoMeans } : {}), ...(example ? { example } : {}) };
+		});
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const trigger = unit && unit !== "words" ? triggerOf(card.sentence, card.at, unit) : undefined;
+	const forms = entry ? knownForms(entry) : [];
 	return (
 		missReason(
-			{ answer: card.answer, lemma: card.lemma, gloss: entry ? shortGloss(entry.en) : card.gloss, given, forms: entry ? knownForms(entry) : [], form, trigger, rankedEntriesOfGiven },
+			{ answer: card.answer, lemma: card.lemma, gloss: entry ? shortGloss(entry.en) : card.gloss, given, forms, inflects: !entry || forms.length > 0 || INFLECTING_CATEGORIES.has(entry.cat), form, trigger, rankedEntriesOfGiven },
 			tag(),
 		) ?? null
 	);
