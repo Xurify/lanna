@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookmarkIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, EyeOffIcon, KeyboardIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
@@ -18,7 +18,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, targetWordOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -27,6 +27,9 @@ interface Prompt {
 	card: ReviewCard;
 	before: string;
 	after: string;
+	answer: string;
+	words: number;
+	target: number;
 	intervals: Record<Rating, number>;
 	options: string[];
 	rank?: number;
@@ -42,13 +45,14 @@ interface Status {
 	profile: string;
 	available: boolean;
 	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
-	settings: { newPerDay: number; retention: number };
+	settings: { newPerDay: number; retention: number; blankWords: number };
 	next: Prompt | null;
 	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number }>;
 }
 
 type Mode = "type" | "choice";
 const MODE_KEY = "lh-review-mode";
+const LETTERS_KEY = "lh-review-letters";
 /** How long the loading skeleton waits before it shows, so a deck that
  *  lands inside this window never flashes one. */
 const SKELETON_DELAY_MS = 300;
@@ -146,6 +150,7 @@ export function ReviewSession() {
 	const [hint, setHint] = useState(0);
 	// Read on first render, so the card never paints the default and then flips.
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
+	const [lettersOpen, setLettersOpen] = useState(() => readPref(LETTERS_KEY, "closed") === "open");
 	const [saving, setSaving] = useState(false);
 	// Cards whose sentence went to the saved phrases from this page.
 	const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set());
@@ -228,7 +233,7 @@ export function ReviewSession() {
 
 	const check = (answer: string) => {
 		if (!prompt || verdict) return;
-		const v = compareAnswer(prompt.card.answer, answer, tag);
+		const v = compareAnswer(prompt.answer, answer, tag);
 		setGiven(answer);
 		setVerdict(v);
 		setSuggested(ratingFor(v, Date.now() - shownAt.current, help));
@@ -238,7 +243,7 @@ export function ReviewSession() {
 			sfx.wrong();
 			shake(sentenceRef.current);
 			const id = prompt.card.id;
-			void fetch(`/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}`)
+			void fetch(`/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}&words=${prompt.words}`)
 				.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
 				.then((body) => {
 					if (body?.reason && knownStatus?.next?.card.id === id) setReason(body.reason);
@@ -255,9 +260,9 @@ export function ReviewSession() {
 			const res = await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, cap), hints: hint, picked: picks, tz: new Date().getTimezoneOffset() }),
+				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, cap), hints: hint, picked: picks, words: prompt.words, tz: new Date().getTimezoneOffset() }),
 			});
-			setLast({ before: around.before + around.lead, answer: prompt.card.answer, after: around.tail + around.after, translation: prompt.card.translation, label: `${RATING_LABELS[Math.min(rating, cap) as Rating]}${help.hints > 0 || help.picked ? ", with help" : ", no help"}` });
+			setLast({ before: around.before + around.lead, answer: prompt.answer, after: around.tail + around.after, translation: prompt.card.translation, label: `${RATING_LABELS[Math.min(rating, cap) as Rating]}${help.hints > 0 || help.picked ? ", with help" : ", no help"}` });
 			// The answer's response carries the deck as it stands now: one round trip, not two.
 			const after = res.ok ? ((await res.json().catch(() => null)) as { status?: Status } | null)?.status : undefined;
 			if (after) show(after);
@@ -295,6 +300,13 @@ export function ReviewSession() {
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (!verdict) {
+				// The physical key left of 1, whatever the layout types there: `, ; or a dead key.
+				if (e.code === "Backquote" && !picks && !e.metaKey && !e.ctrlKey && !e.altKey) {
+					e.preventDefault();
+					setLettersOpen(!lettersOpen);
+					writePref(LETTERS_KEY, lettersOpen ? "closed" : "open");
+					return;
+				}
 				const opt = picks ? prompt?.options[Number(e.key) - 1] : undefined;
 				if (opt && !e.metaKey && !e.ctrlKey && !e.altKey) {
 					e.preventDefault();
@@ -313,7 +325,7 @@ export function ReviewSession() {
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const slips = useMemo(() => (prompt && verdict === "accents" ? new Set(diacriticSlips(prompt.card.answer, given, tag)) : new Set<number>()), [prompt, verdict, given, tag]);
+	const slips = useMemo(() => (prompt && verdict === "accents" ? new Set(diacriticSlips(prompt.answer, given, tag)) : new Set<number>()), [prompt, verdict, given, tag]);
 
 	const saveNewPerDay = async (n: number) => {
 		const res = await fetch("/api/review/settings", {
@@ -325,6 +337,16 @@ export function ReviewSession() {
 	};
 	// The stepper shows the new value at once; the save lands behind it.
 	const [newPerDay, setNewPerDay] = useState<number | null>(null);
+	const [blankWords, setBlankWords] = useState<number | null>(null);
+	const blankWordsNow = blankWords ?? status?.settings.blankWords ?? 1;
+	const chooseBlankWords = (n: number) => {
+		setBlankWords(n);
+		void fetch("/api/review/settings", {
+			method: "PUT",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ blankWords: n }),
+		});
+	};
 	const stepNewPerDay = (delta: number) => {
 		const from = newPerDay ?? status?.settings.newPerDay ?? 0;
 		const next = Math.max(0, Math.min(100, from + delta));
@@ -498,24 +520,24 @@ export function ReviewSession() {
 												data-word-lookup-enabled={verdict !== null ? "true" : "false"}
 											>
 												<span>{around.before}</span>
-												<span className="whitespace-nowrap">
+												<span className={cn(prompt.words === 1 && "whitespace-nowrap")}>
 													{around.lead}
 													<span
 														className={cn(
-															"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1",
+															"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1 max-w-full",
 															!verdict && "q-write !text-foreground",
 															verdict === "wrong" && "!text-miss",
 															verdict === "accents" && "!text-foreground",
 														)}
 														style={{ display: "inline-grid", gridTemplateColumns: "auto" }}
 													>
-														<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre">
-															{!verdict && !picks && given.length > prompt.card.answer.length ? given : prompt.card.answer}
+														<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre-wrap">
+															{!verdict && !picks && given.length > prompt.answer.length ? given : prompt.answer}
 														</span>
 														{verdict ? (
 															<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
 																<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
-																	{[...prompt.card.answer].map((ch, i) => (
+																	{[...prompt.answer].map((ch, i) => (
 																		<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
 																			{ch}
 																		</span>
@@ -529,7 +551,7 @@ export function ReviewSession() {
 																ref={inputRef}
 																value={given}
 																onChange={(e) => setGiven(e.target.value)}
-																aria-label="Missing word"
+																aria-label={prompt.words > 1 ? "Missing words" : "Missing word"}
 																autoComplete="off"
 																autoCorrect="off"
 																spellCheck={false}
@@ -579,7 +601,19 @@ export function ReviewSession() {
 														</div>
 													)}
 
-													{!picks && <DiacriticBar variant="keys" />}
+													{!picks && (
+														<div className="relative" data-testid="review-letters" data-open={lettersOpen}>
+															{!lettersOpen && (
+																<p className="q-sub absolute inset-x-0 top-0 !mt-0 hidden items-center gap-1.5 pointer-fine:flex">
+																	<KeyboardIcon className="size-4 shrink-0" aria-hidden="true" />
+																	Press <kbd className="q-kbd">`</kbd> (left of 1) for letters such as {lang.specialLetters.slice(0, 3).join(" ")}
+																</p>
+															)}
+															<div className={cn(!lettersOpen && "pointer-fine:invisible")}>
+																<DiacriticBar variant="keys" />
+															</div>
+														</div>
+													)}
 												</div>
 
 												{verdict && (
@@ -592,7 +626,7 @@ export function ReviewSession() {
 															</span>
 															{!exact && (
 																<span>
-																	Correct answer: <b className="font-[550] text-ink-2" lang={lang?.code}>{prompt.card.answer}</b>
+																	Correct answer: <b className="font-[550] text-ink-2" lang={lang?.code}>{prompt.answer}</b>
 																	{given && (
 																		<>
 																			{" "}
@@ -602,7 +636,7 @@ export function ReviewSession() {
 																</span>
 															)}
 														</p>
-														{verdict === "wrong" && reason && <MissWhy reason={reason} given={given} code={lang?.code} className="mt-2.5" />}
+														{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} code={lang?.code} className="mt-2.5" />}
 														{verdict !== "wrong" && (
 															<p className="mt-3 flex flex-wrap gap-2" data-testid="review-facts">
 																<span className="q-ex">
@@ -698,8 +732,18 @@ export function ReviewSession() {
 												</button>
 											</div>
 										)}
-										<div className="mt-3 flex items-center justify-between gap-3">
-										<p className="text-[12px] text-ink-3 pointer-coarse:hidden">{!verdict ? "Press Enter to check." : "Press 1 to 4 to rate, Enter to continue."}</p>
+										<div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+										<p className="whitespace-nowrap text-[12px] text-ink-3 pointer-coarse:hidden">{!verdict ? "Press Enter to check." : "Press 1 to 4 to rate, Enter to continue."}</p>
+										<div className="flex items-center gap-2 text-[12px] text-ink-3" data-testid="review-blank" title="How many words a card can hide. A new word always hides one. Applies from the next card.">
+											<span id="review-blank-label">Blank</span>
+											<span className="q-segc" role="radiogroup" aria-labelledby="review-blank-label">
+												{[1, 2, 3].map((n) => (
+													<button key={n} type="button" role="radio" aria-checked={blankWordsNow === n} className={cn("!h-6 !px-2 !text-[12px] whitespace-nowrap", blankWordsNow === n && "on")} onClick={() => chooseBlankWords(n)} data-testid={`review-blank-${n}`}>
+														{n === 1 ? "1 word" : `1–${n}`}
+													</button>
+												))}
+											</span>
+										</div>
 										<button type="button" onClick={() => void suspend()} className="q-btn ghost ml-auto" title="Never show this word again" data-testid="review-suspend">
 											<EyeOffIcon className="size-3.5" aria-hidden="true" />
 											Hide this word

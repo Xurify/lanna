@@ -1272,3 +1272,17 @@ The owner, after the case walk-throughs: a letter list had come from memory, thr
 - **Words has no stat cards.** The four counts are one line under the title ("0 can recall at 80%+ · 0 in progress · 0 favorites · 5 saved phrases"); the anti-slop skill names a row of identical cards with a number each. The selected tab is marked by an inset teal line: the border it had was hidden by the app's unlayered `* { border-color }` rule, so no tab looked selected.
 - **The language arrives without a mismatch.** `useActiveLanguage` (`components/speech.tsx`) reads the language through `useSyncExternalStore` with an empty server snapshot. Before, a component that hydrated after the language had been fetched began with it while the server HTML had none, and React threw the tree away and drew it again (seen on Listen in 2 of 6 loads): a flash, and the answer line lost its focus.
 - **Not changed:** the letter keys (E66), the dock, the other task screens (they keep the card on a phone until someone looks at each), the Words and Saved phrases tabs below the header.
+
+### E98. A review card can hide up to three words, once the word has been answered (2026-11-11, branch `feat/review-longer-blank`)
+
+The owner: the blank is only one word; make it one to three words as a harder option, where the sentence has them.
+
+**Why:** a blank of one word tests the ending. A blank of "od stanice" also tests the preposition that decides the case, and a phrase cannot be answered by recognizing one familiar form. It is desirable difficulty (P3) that the learner chooses, and it costs nothing, because the sentences are already in the deck.
+
+**How to apply:**
+- **Setting:** Review's dock has Blank: 1 word, 1–2, 1–3 (`blankWords` in the deck's settings, default 1, so nothing changes until it is turned up). It applies from the next card.
+- **Length per rep:** a card that is new always hides one word (it is met before it is tested, and may be answered by choosing). After that each rep hides between 1 and the limit words, picked from the card id and its rep count, so the same rep always shows the same blank and the next rep may differ.
+- **Which words:** the card's word plus neighbors, left or right alternating, never across a comma or other clause end; a short sentence or a word beside a comma gets a shorter blank (`blankAround`, `src/core/review.ts`). The card still stores one word; the blank is computed from it, so no card changes.
+- **Grading:** the whole blank is graded as one answer, rated and scheduled as before. The grammar bookkeeping (first tries, mix-ups, weak spots, the "why" under a miss) looks only at the card's own word, found by position in what was typed; a wrong neighbor misses the card but does not count against the drill. The log line carries `words` when more than one.
+- **Letter keys open on a key (owner, 2026-11-11):** on Review the row of special letters is closed by default where a keyboard is the main input, and the key left of 1 (`Backquote`, whatever it types on the layout) opens and closes it; the choice is kept in this browser (`lh-review-letters`). The row's space stays reserved, with a line saying which key opens it, so opening it moves nothing. Under a finger (`pointer-coarse`) the row is always shown. The other screens that type (lessons, Listen, placement) keep their always-shown row.
+- **Not changed:** Choosing, the hints, FSRS, the daily budget.

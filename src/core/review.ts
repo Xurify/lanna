@@ -101,6 +101,8 @@ export interface ReviewLogEntry {
 	hints?: number;
 	/** The answer was picked from four, not typed. */
 	picked?: boolean;
+	/** Words the blank hid, when more than one. */
+	words?: number;
 	/** A form card (2026-10-31, first tries): the drill its sentence
 	 *  practices, the word's lexicon gender, and the slip a counted wrong
 	 *  first try got (src/core/form-slip.ts). */
@@ -109,12 +111,15 @@ export interface ReviewLogEntry {
 	slip?: FormSlip;
 }
 
+export const MAX_BLANK_WORDS = 3;
+
 export interface ReviewSettings {
 	newPerDay: number;
 	retention: number;
+	blankWords: number;
 }
 
-export const DEFAULT_REVIEW_SETTINGS: ReviewSettings = { newPerDay: 10, retention: 0.9 };
+export const DEFAULT_REVIEW_SETTINGS: ReviewSettings = { newPerDay: 10, retention: 0.9, blankWords: 1 };
 
 /** Rank order for minting new cards: curated beginner words first, then by
  *  frequency rank, then by slug for determinism. */
@@ -169,6 +174,56 @@ export function mintCard(entry: LexiconEntry, exampleIndex: number, now: Date): 
 /** The sentence split around its blank. */
 export function clozeParts(card: Pick<ReviewCard, "sentence" | "answer" | "at">): { before: string; after: string } {
 	return { before: card.sentence.slice(0, card.at), after: card.sentence.slice(card.at + card.answer.length) };
+}
+
+export interface Blank {
+	before: string;
+	answer: string;
+	after: string;
+	words: number;
+	target: number;
+}
+
+const CLAUSE_END = /[,;:.!?…—–]["'”“»)]*$/u;
+const HAS_WORD = /[\p{L}\p{N}]/u;
+const LEADING_NON_WORD = /^[^\p{L}\p{N}]*/u;
+const TRAILING_NON_WORD = /[^\p{L}\p{N}]*$/u;
+
+export function blankWordsFor(state: CardState, max: number, seed: number): number {
+	const cap = Math.max(1, Math.min(MAX_BLANK_WORDS, Math.floor(max)));
+	return state === "new" ? 1 : 1 + (seed % cap);
+}
+
+export function blankAround(card: Pick<ReviewCard, "sentence" | "answer" | "at">, words: number, seed = 0): Blank {
+	const { sentence, answer, at } = card;
+	const tokens = [...sentence.matchAll(/\S+/g)].map((m) => ({ start: m.index, end: m.index + m[0].length, text: m[0] }));
+	const found = tokens.findIndex((t) => at >= t.start && at < t.end);
+	const single = (): Blank => ({ ...clozeParts(card), answer, words: 1, target: 0 });
+	if (words <= 1 || found < 0) return single();
+
+	let first = found;
+	let last = found;
+	const canGrowRight = () => last + 1 < tokens.length && !CLAUSE_END.test(tokens[last]!.text) && HAS_WORD.test(tokens[last + 1]!.text);
+	const canGrowLeft = () => first > 0 && !CLAUSE_END.test(tokens[first - 1]!.text) && HAS_WORD.test(tokens[first - 1]!.text);
+	let right = seed % 2 === 0;
+	for (let n = 1; n < Math.min(words, MAX_BLANK_WORDS); n++) {
+		const grow = right ? (canGrowRight() ? "right" : canGrowLeft() ? "left" : null) : canGrowLeft() ? "left" : canGrowRight() ? "right" : null;
+		if (!grow) break;
+		if (grow === "right") last++;
+		else first--;
+		right = !right;
+	}
+	if (first === last) return single();
+
+	const from = first === found ? at : tokens[first]!.start + (LEADING_NON_WORD.exec(tokens[first]!.text)?.[0].length ?? 0);
+	const to = last === found ? at + answer.length : tokens[last]!.end - (TRAILING_NON_WORD.exec(tokens[last]!.text)?.[0].length ?? 0);
+	return { before: sentence.slice(0, from), answer: sentence.slice(from, to), after: sentence.slice(to), words: last - first + 1, target: found - first };
+}
+
+export function targetWordOf(blank: Pick<Blank, "words" | "target">, given: string): string {
+	if (blank.words <= 1) return given;
+	const typed = given.trim().split(/\s+/);
+	return typed.length === blank.words ? typed[blank.target]! : given;
 }
 
 /** Local-day key ("2026-10-26") for the new-cards-per-day budget. */
