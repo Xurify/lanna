@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookmarkIcon, EyeOffIcon, KeyboardIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
@@ -69,7 +69,6 @@ interface Status {
 
 type Mode = "type" | "choice";
 const MODE_KEY = "lh-review-mode";
-const LETTERS_KEY = "lh-review-letters";
 /** How long the loading skeleton waits before it shows, so a deck that
  *  lands inside this window never flashes one. */
 const SKELETON_DELAY_MS = 300;
@@ -277,7 +276,6 @@ export function ReviewSession() {
 	const [hint, setHint] = useState(0);
 	// Read on first render, so the card never paints the default and then flips.
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
-	const [lettersOpen, setLettersOpen] = useState(() => readPref(LETTERS_KEY, "closed") === "open");
 	const [saving, setSaving] = useState(false);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const bandRef = useRef<HTMLDivElement>(null);
@@ -444,13 +442,6 @@ export function ReviewSession() {
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (!verdict) {
-				// The physical key left of 1, whatever the layout types there: `, ; or a dead key.
-				if (e.code === "Backquote" && !picks && !e.metaKey && !e.ctrlKey && !e.altKey) {
-					e.preventDefault();
-					setLettersOpen(!lettersOpen);
-					writePref(LETTERS_KEY, lettersOpen ? "closed" : "open");
-					return;
-				}
 				const opt = picks ? prompt?.options[Number(e.key) - 1] : undefined;
 				if (opt && !e.metaKey && !e.ctrlKey && !e.altKey) {
 					e.preventDefault();
@@ -745,12 +736,6 @@ export function ReviewSession() {
 									<div className="mt-6 grid grid-cols-[minmax(0,1fr)] @2xl:min-h-[112px]">
 										<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
 											<p className="mb-3 flex min-h-6 flex-wrap gap-x-6 gap-y-1" data-testid="review-hints">
-												{hint === 0 && !picks && !lettersOpen && (
-													<span className="q-sub !mt-0 hidden items-center gap-1.5 pointer-fine:flex">
-														<KeyboardIcon className="size-4 shrink-0" aria-hidden="true" />
-														Hold a letter for its accents, or press <kbd className="q-kbd">`</kbd> (left of 1) for the keyboard
-													</span>
-												)}
 												{hint > 0 && (
 													<span className="lh-fade">
 														<Note label="means">{prompt.card.gloss}</Note>
@@ -778,11 +763,7 @@ export function ReviewSession() {
 											)}
 
 											{!picks && (
-												<div className="relative" data-testid="review-letters" data-open={lettersOpen}>
-													<div className={cn(!lettersOpen && "pointer-fine:invisible pointer-fine:h-0")}>
-														<DiacriticBar variant="keys" />
-													</div>
-												</div>
+												<DiacriticBar variant="keys" />
 											)}
 										</div>
 

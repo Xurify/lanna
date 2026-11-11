@@ -16,6 +16,27 @@ export function accentsOf(family: LetterFamily | undefined): string[] {
 	return family ? family.letters.filter((letter) => letter !== family.base) : [];
 }
 
+export function AccentChoices({ accents, onPick, grab, className }: { accents: string[]; onPick: (letter: string) => void; grab: () => void; className?: string }) {
+	return (
+		<span role="menu" aria-label="Accents" className={cn("flex gap-1", className)} data-testid="accent-menu">
+			{accents.map((letter, n) => (
+				<button
+					key={letter}
+					type="button"
+					role="menuitem"
+					onPointerDown={grab}
+					onMouseDown={(e) => e.preventDefault()}
+					onClick={() => onPick(letter)}
+					className={cn("relative grid h-11 min-w-11 place-items-center rounded-lg px-2 text-[20px] font-semibold", n === 0 ? "bg-teal text-[var(--q-on-teal)]" : "text-foreground hover:bg-well")}
+				>
+					<span className={cn("absolute left-1.5 top-0.5 font-ui text-[12px] font-[550]", n === 0 ? "text-[var(--q-on-teal)] opacity-80" : "text-ink-3")}>{n + 1}</span>
+					{letter}
+				</button>
+			))}
+		</span>
+	);
+}
+
 export function AccentKeyboard({
 	letters,
 	english,
@@ -73,21 +94,8 @@ export function AccentKeyboard({
 									{accents.length > 0 && <span className={cn("absolute right-1 top-0.5 text-[12px] leading-none tracking-[-0.02em]", isLive || open ? "text-teal-2" : "text-teal")}>{accents.join("")}</span>}
 								</button>
 								{open && (
-									<div role="menu" aria-label={`Accents for ${key}`} className="lh-menu-in visible absolute bottom-full left-1/2 z-20 mb-1.5 flex origin-bottom -translate-x-1/2 gap-1 rounded-xl bg-card p-1.5 shadow-[var(--q-raise-hi)]" data-testid="accent-menu">
-										{accents.map((letter, n) => (
-											<button
-												key={letter}
-												type="button"
-												role="menuitem"
-												onPointerDown={grab}
-												onMouseDown={(e) => e.preventDefault()}
-												onClick={() => onPick(letter)}
-												className={cn("relative grid h-11 min-w-11 place-items-center rounded-lg px-2 text-[20px] font-semibold", n === 0 ? "bg-teal text-[var(--q-on-teal)]" : "text-foreground hover:bg-well")}
-											>
-												<span className={cn("absolute left-1.5 top-0.5 font-ui text-[12px] font-[550]", n === 0 ? "text-[var(--q-on-teal)] opacity-80" : "text-ink-3")}>{n + 1}</span>
-												{letter}
-											</button>
-										))}
+									<div className="lh-menu-in absolute bottom-full left-1/2 z-20 mb-1.5 origin-bottom -translate-x-1/2 rounded-xl bg-card p-1.5 shadow-[var(--q-raise-hi)]">
+										<AccentChoices accents={accents} onPick={onPick} grab={grab} />
 									</div>
 								)}
 							</div>

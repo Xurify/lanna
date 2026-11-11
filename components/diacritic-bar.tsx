@@ -10,16 +10,25 @@
  * in this browser.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDownIcon, ChevronUpIcon, KeyboardIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpeedToggle, useActiveLanguage } from "@/components/speech";
 import { baseLetter, letterFamilies, liveFamily, pressLetter } from "@/src/core";
-import { AccentKeyboard, accentsOf, type AccentMenu } from "@/components/accent-keyboard";
+import { AccentChoices, AccentKeyboard, accentsOf, type AccentMenu } from "@/components/accent-keyboard";
 
 type Field = HTMLTextAreaElement | HTMLInputElement;
 
 const OPEN_KEY = "lh-diacritics-open";
+const KEYBOARD_KEY = "lh-keyboard";
+
+function keyboardWasOpen(): boolean {
+	try {
+		return localStorage.getItem(KEYBOARD_KEY) === "open";
+	} catch {
+		return false;
+	}
+}
 
 function isTextField(el: EventTarget | null): el is Field {
 	return (
@@ -97,6 +106,29 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	const [live, setLive] = useState<string | null>(null);
 	const families = useMemo(() => (lang ? letterFamilies(lang.specialLetters, lang.tag) : []), [lang]);
 	const [menu, setMenu] = useState<AccentMenu | null>(null);
+	const [keyboardOpen, setKeyboardOpen] = useState(keyboardWasOpen);
+	const toggleKeyboard = useCallback(() => {
+		setKeyboardOpen((was) => {
+			try {
+				localStorage.setItem(KEYBOARD_KEY, was ? "closed" : "open");
+			} catch {
+				// not remembered
+			}
+			return !was;
+		});
+	}, []);
+
+	useEffect(() => {
+		if (variant !== "keys") return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			// The physical key left of 1, whatever the layout types there: `, ; or a dead key.
+			if (e.code !== "Backquote" || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
+			e.preventDefault();
+			toggleKeyboard();
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [variant, toggleKeyboard]);
 	const pickRef = useRef<(letter: string) => void>(() => {});
 
 	useEffect(() => {
@@ -133,7 +165,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 			setMenu({ base, held: true });
 		};
 		const onPointerDown = (e: PointerEvent) => {
-			if (menu && !(e.target instanceof Element && e.target.closest("[data-testid=accent-keyboard]"))) setMenu(null);
+			if (menu && !(e.target instanceof Element && e.target.closest("[data-testid=keyboard]"))) setMenu(null);
 		};
 		document.addEventListener("keydown", onKeyDown, true);
 		document.addEventListener("pointerdown", onPointerDown, true);
@@ -228,8 +260,29 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		};
 		return (
 			<div className={className}>
-				<div className="hidden pointer-fine:block">
-					<AccentKeyboard letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} menu={menu} onKey={onKey} onPick={pick} grab={grab} />
+				<div className="hidden pointer-fine:block" data-testid="keyboard" data-open={keyboardOpen}>
+					<div className="flex min-h-8 items-center gap-2 text-[13px] text-ink-3">
+						<button
+							type="button"
+							onMouseDown={(e) => e.preventDefault()}
+							onClick={toggleKeyboard}
+							aria-expanded={keyboardOpen}
+							className="q-btn ghost -ml-2.5 !h-8 !gap-1.5 !px-2.5 !text-[13px]"
+							data-testid="keyboard-toggle"
+						>
+							<KeyboardIcon className="size-4" aria-hidden="true" />
+							{keyboardOpen ? "Hide keyboard" : "Keyboard"}
+							<kbd className="q-kbd">`</kbd>
+						</button>
+						{menu && !keyboardOpen ? (
+							<AccentChoices accents={accentsOf(families.find((f) => f.base === menu.base))} onPick={pick} grab={grab} className="lh-menu-in origin-left -my-1.5" />
+						) : (
+							<span>Hold a letter for its accents</span>
+						)}
+					</div>
+					<div className={cn(keyboardOpen ? "mt-2" : "invisible h-0")}>
+						<AccentKeyboard letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} menu={keyboardOpen ? menu : null} onKey={onKey} onPick={pick} grab={grab} />
+					</div>
 				</div>
 				<div className="pointer-fine:hidden">
 					<KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} grab={grab} press={press} />
