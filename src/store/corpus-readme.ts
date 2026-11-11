@@ -158,6 +158,11 @@ One JSON file per tutor session, named by its id. Fields:
   at read time.
 - \`tree\`: the lesson plan for a Learn course, when there is one.
 
+\`answers.jsonl\` has one line per graded answer in a chat: \`at\`, \`chatId\`,
+\`verdict\` (\`right\`, \`slip\`, \`wrong\`, \`dont_know\`), \`given\`, \`expected\`,
+\`focus\`, \`hinted\` and, when the question tested a course unit, \`unit\`. My
+mistakes and the weak spots read it.
+
 \`trash/\` holds sessions deleted in the app, unchanged. Move a file back up
 one level to restore it.
 `;

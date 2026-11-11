@@ -36,6 +36,7 @@ const WEAK_SOURCE_NAMES: Record<string, string> = {
 	check: "Level check",
 	lesson: "Lessons",
 	review: "Review",
+	chat: "Chats",
 };
 
 function WeakSpotHover({ unit, weak }: { unit: UnitState; weak: WeakSpotSummary }) {

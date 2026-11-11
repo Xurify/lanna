@@ -28,6 +28,7 @@ export * from "./sketch.ts";
 export * from "./chat-replies.ts";
 export * from "./chat-board.ts";
 export * from "./chat-answers.ts";
+export * from "./chat-analysis.ts";
 export * from "./chat-lines.ts";
 export * from "./chat-export.ts";
 export * from "./app-content.ts";

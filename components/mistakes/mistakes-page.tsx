@@ -13,7 +13,7 @@ import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CompassIcon, LoaderCircleIcon
 import { EmptyState } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
-import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BAR, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
+import { FORM_SLIPS, FORM_SLIP_LABEL, guideReadiness, RANGE_SHOWN_UNDER, WEAK_BAR, WEAK_CHAT_DAYS, WEAK_CHAT_MISSES, type ChatAnalysis, type GuideData, type MistakeAnalysis, type MistakesReport, type Trend, type UnitTrend } from "@/src/core";
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { ListeningSection } from "@/components/mistakes/listening-section";
@@ -94,7 +94,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 					</p>
 				)}
 
-				{a && a.reps === 0 ? (
+				{a && a.reps === 0 && !a.chat?.answers ? (
 					<EmptyState
 						className="mt-8"
 						testid="mistakes-empty"
@@ -114,6 +114,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 							<NextSteps a={a} />
 							<GuideCard report={report!} busy={busy === "guide"} onWrite={(force) => void run("guide", force)} />
 							<MixupsSection a={a} />
+							{a.chat && <ChatSection chat={a.chat} />}
 							<UnitsSection units={a.units} />
 							<WordsSection a={a} />
 							<WeeksSection a={a} />
@@ -390,6 +391,54 @@ function MixupsSection({ a }: { a: MistakeAnalysis }) {
 				Practice them
 				<ArrowRightIcon className="q-ico" />
 			</Link>
+		</Section>
+	);
+}
+
+function ChatSection({ chat }: { chat: ChatAnalysis }) {
+	const lang = useActiveLanguage();
+	if (!chat.misses) return null;
+	return (
+		<Section id="mistakes-chats" title="From your chats" line={`${chat.answers} graded ${chat.answers === 1 ? "answer" : "answers"} in ${chat.chats} ${chat.chats === 1 ? "chat" : "chats"}: ${chat.firstTryRight} right with no hint, ${chat.misses} missed${chat.hinted ? `, ${chat.hinted} right after a hint` : ""}. A unit missed ${WEAK_CHAT_MISSES} times in ${WEAK_CHAT_DAYS} days goes on Today as a weak spot.`}>
+			{chat.units.length > 0 && (
+				<ul className="q-card flex flex-col divide-y divide-border" data-testid="mistakes-chat-units">
+					{chat.units.slice(0, 6).map((u) => (
+						<li key={u.unit}>
+							<Link href={`/lesson?unit=${u.unit}`} className="group flex items-center justify-between gap-4 px-4 py-3 hover:bg-well">
+								<div className="min-w-0">
+									<span className="text-sm font-semibold text-foreground group-hover:text-teal-2">{u.title}</span>
+									<p className="text-xs text-ink-3">
+										{u.misses} missed of {u.answers} in chats
+									</p>
+									{u.trend !== "new" && (
+										<p className={cn("text-xs", TREND[u.trend].ink)}>
+											{TREND[u.trend].label}
+											{u.recent !== null && u.earlier !== null ? ` · ${pct(u.earlier)} before, ${pct(u.recent)} lately` : ""}
+										</p>
+									)}
+								</div>
+								<span className="q-num shrink-0 text-[15px] font-semibold text-foreground">{pct(u.accuracy)}</span>
+							</Link>
+						</li>
+					))}
+				</ul>
+			)}
+			<ul className={cn("q-card flex flex-col divide-y divide-border", chat.units.length > 0 && "mt-3")} data-testid="mistakes-chat-topics">
+				{chat.topics.map((t) => (
+					<li key={t.focus.toLowerCase()} className="px-4 py-3">
+						<p className="text-sm font-semibold text-foreground">{t.focus}</p>
+						<p className="mt-0.5 text-xs text-ink-3" lang={lang?.code}>
+							{t.lastGiven ? `you wrote “${t.lastGiven}”` : "you gave up"}
+							<span lang="en"> · wanted </span>
+							“{t.lastExpected}”
+						</p>
+						<p className="text-xs text-ink-3">
+							missed {t.misses} of {t.answers}
+							{t.chats > 1 ? ` · in ${t.chats} chats` : ""}
+						</p>
+					</li>
+				))}
+			</ul>
 		</Section>
 	);
 }

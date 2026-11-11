@@ -9,6 +9,7 @@ import { jobTools, type JobToolContext } from "./jobs.ts";
 import { healToolRecord } from "./heal.ts";
 import { languageTools, type ReviewSeam } from "./language.ts";
 import type { ChatAnswer } from "../../core/chat-answers.ts";
+import { allUnits, isUnitId } from "../../core/lesson.ts";
 
 export interface ChatAnswerSeam {
 	record(answer: Omit<ChatAnswer, "at" | "chatId">): void;
@@ -31,15 +32,22 @@ const poseInput = Type.Object({
 	focus: Type.String({ minLength: 1, description: "What the question tests, in a few plain words (\"feminine this\", \"locative after v\")." }),
 });
 
-const gradeInput = Type.Object({
-	verdict: Type.Union([Type.Literal("right"), Type.Literal("slip"), Type.Literal("wrong"), Type.Literal("dont_know")], {
-		description: "right: the committed answer or an accepted one. slip: the right form with a spelling or accent slip. wrong: another form or word. dont_know: the learner gave up or asked for the answer.",
-	}),
-	given: Type.String({ description: "What the learner wrote, verbatim." }),
-	expected: Type.String({ minLength: 1, description: "The committed answer from the pose." }),
-	focus: Type.String({ minLength: 1, description: "The pose's focus." }),
-	hinted: Type.Optional(Type.Boolean({ description: "True when a hint was given before this answer." })),
-});
+function gradeInputFor(units: readonly { id: string; title: string }[]) {
+	return Type.Object({
+		verdict: Type.Union([Type.Literal("right"), Type.Literal("slip"), Type.Literal("wrong"), Type.Literal("dont_know")], {
+			description: "right: the committed answer or an accepted one. slip: the right form with a spelling or accent slip. wrong: another form or word. dont_know: the learner gave up or asked for the answer.",
+		}),
+		given: Type.String({ description: "What the learner wrote, verbatim." }),
+		expected: Type.String({ minLength: 1, description: "The committed answer from the pose." }),
+		focus: Type.String({ minLength: 1, description: "The pose's focus." }),
+		hinted: Type.Optional(Type.Boolean({ description: "True when a hint was given before this answer." })),
+		unit: Type.Optional(
+			Type.String({
+				description: `The id of the course unit the question tested, when it tested one of these (id: title): ${units.map((u) => `${u.id}: ${u.title}`).join("; ")}. Leave it out for vocabulary, meaning, or anything else.`,
+			}),
+		),
+	});
+}
 
 const poseTool: AgentTool<typeof poseInput> = {
 	name: "pose",
@@ -51,7 +59,8 @@ const poseTool: AgentTool<typeof poseInput> = {
 	execute: serverExecute("pose", poseInput, async () => "Committed."),
 };
 
-function gradeTool(seam: ChatAnswerSeam | undefined): AgentTool<typeof gradeInput> {
+function gradeTool(seam: ChatAnswerSeam | undefined): AgentTool<ReturnType<typeof gradeInputFor>> {
+	const gradeInput = gradeInputFor(allUnits());
 	return {
 		name: "grade",
 		label: "grade",
@@ -60,7 +69,14 @@ function gradeTool(seam: ChatAnswerSeam | undefined): AgentTool<typeof gradeInpu
 		parameters: gradeInput,
 		executionMode: "sequential",
 		execute: serverExecute("grade", gradeInput, async (input) => {
-			seam?.record({ verdict: input.verdict, given: input.given, expected: input.expected, focus: input.focus, hinted: input.hinted === true });
+			seam?.record({
+				verdict: input.verdict,
+				given: input.given,
+				expected: input.expected,
+				focus: input.focus,
+				hinted: input.hinted === true,
+				...(isUnitId(input.unit) ? { unit: input.unit } : {}),
+			});
 			return "Recorded.";
 		}),
 	};
