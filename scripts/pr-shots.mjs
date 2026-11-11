@@ -3,19 +3,20 @@ import path from "node:path";
 import puppeteer from "puppeteer-core";
 
 const args = process.argv.slice(2);
-const options = { themes: ["day", "night"], widths: [1280, 390], chrome: process.env.CHROME_PATH };
+const options = { themes: ["day", "night"], widths: [1280, 390], chrome: process.env.CHROME_PATH, height: 0 };
 const positional = [];
 for (let i = 0; i < args.length; i += 1) {
 	const arg = args[i];
 	if (arg === "--themes") options.themes = (args[++i] ?? "").split(",");
 	else if (arg === "--widths") options.widths = (args[++i] ?? "").split(",").map(Number);
 	else if (arg === "--chrome") options.chrome = args[++i];
+	else if (arg === "--height") options.height = Number(args[++i]);
 	else positional.push(arg);
 }
 
 const [baseUrl, outDir, ...shots] = positional;
 if (!baseUrl || !outDir || shots.length === 0) {
-	console.error("usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path]");
+	console.error("usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path] [--height px]");
 	process.exit(1);
 }
 
@@ -38,11 +39,13 @@ const page = await browser.newPage();
 const written = [];
 
 for (const shot of shots) {
-	const [name, target = ""] = shot.split("=");
+	const separator = shot.indexOf("=");
+	const name = shot.slice(0, separator);
+	const target = shot.slice(separator + 1);
 	const [route, selector] = target.split("@");
 	if (/^[A-Za-z]:[\/]/.test(route)) throw new Error(`${name}: Git Bash rewrote the route to ${route}; set MSYS_NO_PATHCONV=1`);
 	for (const width of options.widths) {
-		await page.setViewport({ width, height: width > 600 ? 860 : 844, deviceScaleFactor: 2 });
+		await page.setViewport({ width, height: options.height || (width > 600 ? 860 : 844), deviceScaleFactor: 2 });
 		for (const theme of options.themes) {
 			await page.setCookie({ name: "lh-theme", value: theme, url: baseUrl });
 			await page.goto(new URL(route || "/", baseUrl).href, { waitUntil: "load", timeout: 90000 });

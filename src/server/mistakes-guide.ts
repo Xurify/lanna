@@ -30,6 +30,7 @@ Rules:
 - "next" are guesses about what may trip them next, from pairs marked not tested yet and units whose trend is worse. Say they are guesses.
 - "plan" is up to four steps the app can open: kind "mixups" (the Mix-ups lesson), "unit" (a lesson; put the unit's id, the word in [brackets] in the facts, in "unit"), "review", or "other".
 - "practice" is what the learner's personal lesson will drill. The app builds it from its own checked sentences, so name targets, never sentences: "words" are up to 6 dictionary forms (lemmas) taken from the facts, "units" up to 3 unit ids from the [brackets], "pairs" up to 3 pairs of dictionary forms the learner confuses or is likely to confuse. Pick what the patterns point at, most useful first.
+- Lines that start "In chats" come from the learner's talks with the tutor: the question the tutor asked is not in the facts, so quote only what is there, and treat them as evidence for the same patterns.
 - Plain English, short sentences. Say what improved, if a trend says so.
 - In every text field, name grammar in full words (feminine accusative, locative, 1st person singular) and units by their name. The ids in [brackets] go only in "unit" and "practice.units", never in a sentence.
 

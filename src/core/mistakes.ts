@@ -13,6 +13,7 @@
  */
 
 import type { AiStatus } from "./ai-status.ts";
+import type { ChatAnalysis } from "./chat-analysis.ts";
 import type { ListenAnalysis } from "./listen-analysis.ts";
 import type { ListenGuideRecord } from "./listen-guide.ts";
 import type { PersonalPractice } from "./personal.ts";
@@ -107,6 +108,7 @@ export interface MistakeAnalysis {
 	samples?: WrongSample[];
 	/** What the Listen task says about hearing (src/core/listen-analysis.ts). Absent in snapshots from before it was kept. */
 	listening?: ListenAnalysis;
+	chat?: ChatAnalysis;
 }
 
 /** The guide as saved: the model's reply, its structured read, and what it was written from. */
@@ -201,8 +203,10 @@ export function trendOf(recent: { reps: number; right: number }, earlier: { reps
 }
 
 /** Whether there is enough evidence to write the guide, and how far off. */
-export function guideReadiness(a: Pick<MistakeAnalysis, "reps" | "wrong">): { ready: boolean; reps: number; wrong: number; needReps: number; needWrong: number } {
-	return { ready: a.reps >= GUIDE_MIN_REPS && a.wrong >= GUIDE_MIN_WRONG, reps: a.reps, wrong: a.wrong, needReps: GUIDE_MIN_REPS, needWrong: GUIDE_MIN_WRONG };
+export function guideReadiness(a: Pick<MistakeAnalysis, "reps" | "wrong" | "chat">): { ready: boolean; reps: number; wrong: number; needReps: number; needWrong: number } {
+	const reps = a.reps + (a.chat?.answers ?? 0);
+	const wrong = a.wrong + (a.chat?.misses ?? 0);
+	return { ready: reps >= GUIDE_MIN_REPS && wrong >= GUIDE_MIN_WRONG, reps, wrong, needReps: GUIDE_MIN_REPS, needWrong: GUIDE_MIN_WRONG };
 }
 
 export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupRecord | undefined, now: Date): MistakeAnalysis {
@@ -309,6 +313,11 @@ export function guideFacts(a: MistakeAnalysis): string {
 	for (const x of a.samples ?? []) lines.push(`Wrong: "${x.sentence}" wanted "${x.answer}", wrote "${x.given || "nothing"}" (${x.unit}${x.slip ? `, ${x.slip}` : ""}).`);
 	for (const w of a.words) lines.push(`Missed ${w.misses}×: ${w.lemma} (wanted "${w.answer}", last wrote "${w.lastGiven}").`);
 	for (const m of a.mixups.slice(0, 8)) lines.push(m.status === "active" ? `Mixes up ${m.words.join(" / ")} (${m.misses} misses).` : `Not tested yet but the same pattern: ${m.words.join(" / ")}.`);
+	if (a.chat?.answers) {
+		lines.push(`In chats with the tutor: ${a.chat.answers} graded answers, ${a.chat.firstTryRight} right with no hint, ${a.chat.misses} wrong or given up.`);
+		for (const u of a.chat.units.slice(0, 4)) lines.push(`In chats, unit ${u.title} [${u.unit}]: ${u.misses} wrong of ${u.answers}.`);
+		for (const t of a.chat.topics.slice(0, 5)) lines.push(`In chats, missed ${t.misses}× on "${t.focus}" (last wrote "${t.lastGiven || "nothing"}", wanted "${t.lastExpected}"${t.unit ? `, unit [${t.unit}]` : ""}).`);
+	}
 	return lines.join("\n");
 }
 

@@ -654,3 +654,11 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **Media:** the page, the sidebar, the jump palette, the day plan and the Today button say Media; the URL stays `/watch`. A track shows its cover (a headphones icon when Spotify has none) and says Play, not Watch.
 - **Checked:** typecheck, ESLint on the changed files, 31 watch tests (the Spotify URL forms, the Read import, the same episode asked twice), and the audio route on a fake MP3 (whole file, byte ranges, cover, a non-Spotify id, a missing track). The full suite passes (2,551 tests, 3 skipped). Settings → Sources credits Spotify and spotdl. **Unverified:** a real Spotify download and a real Whisper run end to end in the app; the audio player and Add to Read in a browser; ElevenLabs (no key on this machine); how the Media label fits on a phone.
 - **Left for later:** `scripts/spotify_transcribe.py` is a separate command line that repeats the helper's download and transcription; `src/server/watch.ts` still looks for Python in `C:\Python313`.
+
+## 11 November: what you miss in chats now counts (`feat/chat-evidence-in-plan`)
+
+- **The question:** do the Ask chats decide what to study? They did not: every graded answer was saved and nothing read it.
+- **Weak spots from chats:** the tutor names the course unit a question tested when it tested one (`grade.unit`). Two misses on a unit within 21 days flag it as a weak spot ("from your chats"), which Strengthen, Today, the map and the tutor already read. Right answers tally against it and can mend it. Decision E99.
+- **My mistakes → From your chats:** graded answers, how many were right with no hint, units and topics missed (what you wrote, what was wanted, how many chats), with trend. The written guide reads them too.
+- **Checked:** typecheck, ESLint and the full suite (2591 tests, 2588 pass, 3 skipped, 0 fail), 16 of them new (analysis, the flag rule and its mending, the recorder against a scratch data folder, the tool, the page render), and the running app in a sandbox seeded through the real recorder: the Mistakes section and Today's Strengthen row, Day and Night, 1280 and 390 px.
+- **Not verified yet:** the tutor actually passing a sensible `unit` in a live chat. Old chats have no unit and only feed the topic list.
