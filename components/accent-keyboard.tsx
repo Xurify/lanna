@@ -27,9 +27,9 @@ export function AccentChoices({ accents, onPick, grab, className }: { accents: s
 					onPointerDown={grab}
 					onMouseDown={(e) => e.preventDefault()}
 					onClick={() => onPick(letter)}
-					className={cn("relative grid h-11 min-w-11 place-items-center rounded-lg px-2 text-[20px] font-semibold", n === 0 ? "bg-teal text-[var(--q-on-teal)]" : "text-foreground hover:bg-well")}
+					className="relative grid h-10 min-w-11 place-items-center rounded-[9px] bg-well px-2 text-[19px] font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well-2"
 				>
-					<span className={cn("absolute left-1.5 top-0.5 font-ui text-[12px] font-[550]", n === 0 ? "text-[var(--q-on-teal)] opacity-80" : "text-ink-3")}>{n + 1}</span>
+					<span className="absolute left-1.5 top-0.5 font-ui text-[12px] font-[550] text-ink-3">{n + 1}</span>
 					{letter}
 				</button>
 			))}
@@ -44,7 +44,6 @@ export function AccentKeyboard({
 	live,
 	menu,
 	onKey,
-	onPick,
 	grab,
 }: {
 	letters: string[];
@@ -53,7 +52,6 @@ export function AccentKeyboard({
 	live: string | null;
 	menu: AccentMenu | null;
 	onKey: (key: string) => void;
-	onPick: (letter: string) => void;
 	grab: () => void;
 }) {
 	const families = useMemo(() => new Map(letterFamilies(letters, tag).map((f) => [f.base, f])), [letters, tag]);
@@ -93,11 +91,6 @@ export function AccentKeyboard({
 									{key}
 									{accents.length > 0 && <span className={cn("absolute right-1 top-0.5 text-[12px] leading-none tracking-[-0.02em]", isLive || open ? "text-teal-2" : "text-teal")}>{accents.join("")}</span>}
 								</button>
-								{open && (
-									<div className="lh-menu-in absolute bottom-full left-1/2 z-20 mb-1.5 origin-bottom -translate-x-1/2 rounded-xl bg-card p-1.5 shadow-[var(--q-raise-hi)]">
-										<AccentChoices accents={accents} onPick={onPick} grab={grab} />
-									</div>
-								)}
 							</div>
 						);
 					})}

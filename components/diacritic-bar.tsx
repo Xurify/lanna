@@ -107,6 +107,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	const families = useMemo(() => (lang ? letterFamilies(lang.specialLetters, lang.tag) : []), [lang]);
 	const [menu, setMenu] = useState<AccentMenu | null>(null);
 	const [keyboardOpen, setKeyboardOpen] = useState(keyboardWasOpen);
+	const keyboardRef = useRef<HTMLDivElement>(null);
 	const toggleKeyboard = useCallback(() => {
 		setKeyboardOpen((was) => {
 			try {
@@ -123,6 +124,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		const onKeyDown = (e: KeyboardEvent) => {
 			// The physical key left of 1, whatever the layout types there: `, ; or a dead key.
 			if (e.code !== "Backquote" || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
+			if (!keyboardRef.current?.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return;
 			e.preventDefault();
 			toggleKeyboard();
 		};
@@ -138,8 +140,8 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 			if (e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
 			if (menu) {
 				const accents = accentsOf(byBase.get(menu.base));
-				const n = Number(e.key);
-				if (Number.isInteger(n) && n >= 1 && n <= accents.length) {
+				const n = Number(/^(?:Digit|Numpad)([1-9])$/.exec(e.code)?.[1] ?? 0);
+				if (n >= 1 && n <= accents.length) {
 					e.preventDefault();
 					e.stopPropagation();
 					pickRef.current(accents[n - 1]!);
@@ -255,12 +257,12 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	if (variant === "keys") {
 		const onKey = (key: string) => {
 			const family = families.find((f) => f.base === key);
-			if (accentsOf(family).length) setMenu((m) => (m?.base === key && !m.held ? null : { base: key, held: false }));
-			else press(key, false);
+			press(key, false);
+			if (accentsOf(family).length) setMenu({ base: key, held: true });
 		};
 		return (
 			<div className={className}>
-				<div className="hidden pointer-fine:block" data-testid="keyboard" data-open={keyboardOpen}>
+				<div ref={keyboardRef} className="hidden pointer-fine:block" data-testid="keyboard" data-open={keyboardOpen}>
 					<div className="flex min-h-8 items-center gap-2 text-[13px] text-ink-3">
 						<button
 							type="button"
@@ -274,14 +276,14 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 							{keyboardOpen ? "Hide keyboard" : "Keyboard"}
 							<kbd className="q-kbd">`</kbd>
 						</button>
-						{menu && !keyboardOpen ? (
+						{menu ? (
 							<AccentChoices accents={accentsOf(families.find((f) => f.base === menu.base))} onPick={pick} grab={grab} className="lh-menu-in origin-left -my-1.5" />
 						) : (
 							<span>Hold a letter for its accents</span>
 						)}
 					</div>
 					<div className={cn(keyboardOpen ? "mt-2" : "invisible h-0")}>
-						<AccentKeyboard letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} menu={keyboardOpen ? menu : null} onKey={onKey} onPick={pick} grab={grab} />
+						<AccentKeyboard letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} menu={menu} onKey={onKey} grab={grab} />
 					</div>
 				</div>
 				<div className="pointer-fine:hidden">
