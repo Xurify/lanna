@@ -48,7 +48,7 @@ function setFieldValue(field: Field, value: string, caret: number): void {
 	field.setSelectionRange(caret, caret);
 }
 
-function KeyGrid({ letters, english, tag, live, press, className }: { letters: string[]; english: string; tag: string; live: string | null; press: (letter: string, shift: boolean) => void; className?: string }) {
+function KeyGrid({ letters, english, tag, live, grab, press, className }: { letters: string[]; english: string; tag: string; live: string | null; grab: () => void; press: (letter: string, shift: boolean) => void; className?: string }) {
 	const families = useMemo(() => letterFamilies(letters, tag), [letters, tag]);
 	return (
 		<div data-testid="diacritic-bar" role="group" aria-label={`${english} letters`} className={cn("flex min-w-0 flex-wrap gap-1.5 font-prose", className)}>
@@ -65,6 +65,7 @@ function KeyGrid({ letters, english, tag, live, press, className }: { letters: s
 							<button
 								key={letter}
 								type="button"
+								onPointerDown={grab}
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={(e) => press(letter, e.shiftKey)}
 								title={on ? `Change ${family.base} to ${letter}` : `Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`}
@@ -90,6 +91,7 @@ function KeyGrid({ letters, english, tag, live, press, className }: { letters: s
 export function DiacriticBar({ className, variant = "bar" }: { className?: string; variant?: "bar" | "keys" }) {
 	const lang = useActiveLanguage();
 	const lastField = useRef<Field | null>(null);
+	const grabbed = useRef<{ field: Field; start: number; end: number } | null>(null);
 	const [open, setOpen] = useState(true);
 	const [live, setLive] = useState<string | null>(null);
 	const families = useMemo(() => (lang ? letterFamilies(lang.specialLetters, lang.tag) : []), [lang]);
@@ -138,16 +140,24 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		if (!target) return;
 		insertAtCaret(target, upper ? letter.toLocaleUpperCase(lang.tag) : letter);
 	};
+	// A tap moves the caret of an input to its start between pointerdown and click in Chrome on touch screens, so the caret is read on pointerdown.
+	const grab = () => {
+		const field = fieldInUse(lastField.current);
+		grabbed.current = field ? { field, start: field.selectionStart ?? field.value.length, end: field.selectionEnd ?? field.value.length } : null;
+	};
 	const press = (letter: string, shift: boolean) => {
 		const target = fieldInUse(lastField.current);
 		if (!target) return;
-		const start = target.selectionStart ?? target.value.length;
-		const next = pressLetter(target.value, start, target.selectionEnd ?? start, letter, shift, lang.tag);
+		const held = grabbed.current?.field === target ? grabbed.current : null;
+		grabbed.current = null;
+		const start = held?.start ?? target.selectionStart ?? target.value.length;
+		const end = held?.end ?? target.selectionEnd ?? start;
+		const next = pressLetter(target.value, start, end, letter, shift, lang.tag);
 		setFieldValue(target, next.value, next.caret);
 	};
 
 	if (variant === "keys") {
-		return <KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} press={press} className={className} />;
+		return <KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} grab={grab} press={press} className={className} />;
 	}
 
 	return (

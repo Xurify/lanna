@@ -22,7 +22,7 @@ import { readOrigin } from "@/components/origin";
 
 export { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 
-export const COLUMN = "mx-auto w-full max-w-3xl px-6";
+export const COLUMN = "mx-auto w-full max-w-3xl px-4 sm:px-6";
 
 export function TaskFrame({ children, strip = true }: { children: React.ReactNode; strip?: boolean }) {
 	return (
