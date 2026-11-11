@@ -233,7 +233,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 							<i className="size-[9px] rounded-[3px] bg-teal" aria-hidden="true" />
 							{streak} {streak === 1 ? "day" : "days"}
 						</span>
-						<span className="inline-flex h-7 items-center whitespace-nowrap rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)]">Level {s?.level.level ?? 1}</span>
+						<span className="inline-flex h-7 items-center whitespace-nowrap rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)] @max-sm:hidden">Level {s?.level.level ?? 1}</span>
 					</div>
 				</header>
 

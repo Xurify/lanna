@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume2Icon } from "lucide-react";
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
+import { QUIET } from "@/components/ui/learn-buttons";
 import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, Pips, PracticeCard, PRIMARY, Pulse, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskRound, VerdictDisc, type PipOutcome } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
@@ -437,25 +438,18 @@ export function ListenPlayer({
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-1 sm:pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
-					{studyActive && (
-						<div
-							className={cn(
-								"mb-3 flex items-center justify-between gap-2 rounded-lg border px-3 py-1.5 font-ui text-xs transition-colors",
-								liveStudyReps >= 5
-									? "border-teal/30 bg-teal/10 text-teal"
-									: "border-border bg-well text-ink-2",
-							)}
-							data-testid="listen-study-banner"
-						>
-							<span className="font-medium">
-								Study Day {initialExperiment.dayNumber} · {lang?.code === "ru" ? "Russian" : "Slovak"} trial progress
-							</span>
-							<span className="font-semibold tabular-nums">
-								{liveStudyReps >= 5 ? `✓ ${liveStudyReps}/5 reps (Day Validated)` : `${liveStudyReps} of 5 reps toward valid day`}
-							</span>
-						</div>
-					)}
-					<PracticeCard icon="listen" title="Listen" sub={sourceOf(item)}>
+					<PracticeCard
+						icon="listen"
+						title="Listen"
+						sub={sourceOf(item)}
+						right={
+							studyActive ? (
+								<span className={cn("tabular-nums", liveStudyReps >= 5 && "text-teal-2")} title={`Study day ${initialExperiment?.dayNumber}: ${liveStudyReps} of 5 sentences toward a day that counts`} data-testid="listen-study-banner">
+									Study day {initialExperiment?.dayNumber} · {Math.min(liveStudyReps, 5)} of 5
+								</span>
+							) : undefined
+						}
+					>
 						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 sm:gap-x-4">
 							<button
 								type="button"
@@ -590,7 +584,7 @@ export function ListenPlayer({
 						</>
 					) : (
 						<>
-							<button type="button" onClick={giveUp} className={cn(SECONDARY, TOUCH_TALL)} data-testid="listen-give-up">
+							<button type="button" onClick={giveUp} className={cn(QUIET, TOUCH_TALL)} data-testid="listen-give-up">
 								I didn&apos;t catch it
 							</button>
 							<button type="button" onClick={submit} disabled={!draft.trim()} className={cn(PRIMARY, TOUCH_TALL)} data-testid="listen-check">

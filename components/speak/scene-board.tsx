@@ -149,7 +149,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 																</span>
 															) : null}
 														</button>
-														{on && <div className="mt-2 mb-4 ml-3 @3xl:hidden">{sheet(true)}</div>}
+														{on && <div className="mt-2 mb-4 @3xl:hidden">{sheet(true)}</div>}
 													</li>
 												);
 											})}
@@ -246,7 +246,7 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 	}
 
 	return (
-		<article className={cn(inline ? "border-l border-[var(--q-line-2)] pl-4" : "lh-rise border-l border-[var(--q-line)] pl-8")} data-testid={tid("speak-sheet")} aria-label={scene.title}>
+		<article className={cn(inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lh-rise border-l border-[var(--q-line)] pl-8")} data-testid={tid("speak-sheet")} aria-label={scene.title}>
 			<div className={cn(inline ? "py-2" : "pt-1 pb-2")}>
 				{/* Opened under its row, the row already names the scene. */}
 				{!inline && (

@@ -252,9 +252,9 @@ export function LinePage({ initial }: { initial: LineState }) {
 							<button type="button" className={QUIET} disabled={busy} onClick={() => void submit("")} data-testid="line-miss">
 								I didn&apos;t catch it
 							</button>
-							<button type="button" className={PRIMARY} disabled={busy} onClick={() => void submit(typed.trim())} data-testid="line-check">
+							<button type="button" className={PRIMARY} disabled={busy || !typed.trim()} onClick={() => void submit(typed.trim())} data-testid="line-check">
 								Check
-								<span className="q-kbd">
+								<span className="q-kbd pointer-coarse:hidden">
 									<QIcon name="enter" />
 								</span>
 							</button>
@@ -363,8 +363,9 @@ function Frame({ children }: { children: React.ReactNode }) {
 }
 
 function LineCard({ icon, title, sub, right, children }: { icon: QIconName; title: string; sub?: string; right?: string; children: React.ReactNode }) {
+	const note = right ? <span className="max-sm:hidden">{right}</span> : undefined;
 	return (
-		<PracticeCard icon={icon} title={title} sub={sub} right={right}>
+		<PracticeCard icon={icon} title={title} sub={sub} right={note}>
 			{children}
 		</PracticeCard>
 	);
