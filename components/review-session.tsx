@@ -557,10 +557,11 @@ export function ReviewSession() {
 							>
 								<div className="lh-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
 							</div>
-							<span className="min-w-[88px] whitespace-nowrap text-right text-[12.5px] text-ink-3" data-testid="review-counts">
+							<span className="min-w-[52px] whitespace-nowrap text-right @sm:min-w-[88px] text-[12.5px] text-ink-3" data-testid="review-counts">
 								{counts && lang ? (
 									<>
-										<b className="q-num font-semibold text-ink-2">{done}</b> of <b className="q-num font-semibold text-ink-2">{total}</b> today
+										<b className="q-num font-semibold text-ink-2">{done}</b> of <b className="q-num font-semibold text-ink-2">{total}</b>
+										<span className="hidden @sm:inline"> today</span>
 									</>
 								) : null}
 							</span>
@@ -570,13 +571,13 @@ export function ReviewSession() {
 								aria-expanded={settingsOpen}
 								aria-controls="review-settings"
 								title="Review settings: answer by typing or choosing, and how many words a blank hides"
-								className={cn("grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-10", settingsOpen && "bg-well text-ink-2")}
+								className={cn("grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-10", settingsOpen && "bg-well text-ink-2")}
 								data-testid="review-settings-toggle"
 							>
 								<SlidersHorizontalIcon className="size-4" aria-hidden="true" />
 								<span className="sr-only">Review settings</span>
 							</button>
-							<SoundControl className="-mr-1.5 flex items-center transition-colors" iconClass="size-4" testid="review-sound" />
+							<SoundControl className="-mr-1.5 flex shrink-0 items-center justify-center transition-colors pointer-coarse:size-10" iconClass="size-4" testid="review-sound" />
 						</div>
 						{settingsOpen && (
 							<div id="review-settings" role="group" aria-label="Review settings" className="lh-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8">
@@ -744,6 +745,12 @@ export function ReviewSession() {
 									<div className="mt-6 grid grid-cols-[minmax(0,1fr)] @2xl:min-h-[112px]">
 										<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
 											<p className="mb-3 flex min-h-6 flex-wrap gap-x-6 gap-y-1" data-testid="review-hints">
+												{hint === 0 && !picks && !lettersOpen && (
+													<span className="q-sub !mt-0 hidden items-center gap-1.5 pointer-fine:flex">
+														<KeyboardIcon className="size-4 shrink-0" aria-hidden="true" />
+														Press <kbd className="q-kbd">`</kbd> (left of 1) for letters such as {lang.specialLetters.slice(0, 3).join(" ")}
+													</span>
+												)}
 												{hint > 0 && (
 													<span className="lh-fade">
 														<Note label="means">{prompt.card.gloss}</Note>
@@ -772,12 +779,6 @@ export function ReviewSession() {
 
 											{!picks && (
 												<div className="relative" data-testid="review-letters" data-open={lettersOpen}>
-													{!lettersOpen && (
-														<p className="q-sub absolute inset-x-0 top-0 !mt-0 hidden items-center gap-1.5 pointer-fine:flex">
-															<KeyboardIcon className="size-4 shrink-0" aria-hidden="true" />
-															Press <kbd className="q-kbd">`</kbd> (left of 1) for letters such as {lang.specialLetters.slice(0, 3).join(" ")}
-														</p>
-													)}
 													<div className={cn(!lettersOpen && "pointer-fine:invisible")}>
 														<DiacriticBar variant="keys" />
 													</div>
@@ -918,7 +919,7 @@ export function ReviewSession() {
 															r === shownSuggested && "rounded-[10px] bg-card text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
 														)}
 													>
-														<kbd className="absolute left-1.5 top-1.5 hidden font-ui text-[10.5px] font-[550] text-ink-4 pointer-fine:block">{r}</kbd>
+														<kbd className="absolute left-1.5 top-1.5 hidden font-ui text-[12px] font-[550] text-ink-4 pointer-fine:block">{r}</kbd>
 														{RATING_LABELS[r]}
 														<span className="q-num text-[12px] font-[450] text-ink-3">{comesBack(prompt.intervals[r])}</span>
 													</button>
