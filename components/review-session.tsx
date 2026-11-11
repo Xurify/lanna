@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookmarkIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, EyeOffIcon, KeyboardIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
@@ -52,6 +52,7 @@ interface Status {
 
 type Mode = "type" | "choice";
 const MODE_KEY = "lh-review-mode";
+const LETTERS_KEY = "lh-review-letters";
 /** How long the loading skeleton waits before it shows, so a deck that
  *  lands inside this window never flashes one. */
 const SKELETON_DELAY_MS = 300;
@@ -149,6 +150,7 @@ export function ReviewSession() {
 	const [hint, setHint] = useState(0);
 	// Read on first render, so the card never paints the default and then flips.
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
+	const [lettersOpen, setLettersOpen] = useState(() => readPref(LETTERS_KEY, "closed") === "open");
 	const [saving, setSaving] = useState(false);
 	// Cards whose sentence went to the saved phrases from this page.
 	const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set());
@@ -298,6 +300,13 @@ export function ReviewSession() {
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (!verdict) {
+				// The physical key left of 1, whatever the layout types there: `, ; or a dead key.
+				if (e.code === "Backquote" && !picks && !e.metaKey && !e.ctrlKey && !e.altKey) {
+					e.preventDefault();
+					setLettersOpen(!lettersOpen);
+					writePref(LETTERS_KEY, lettersOpen ? "closed" : "open");
+					return;
+				}
 				const opt = picks ? prompt?.options[Number(e.key) - 1] : undefined;
 				if (opt && !e.metaKey && !e.ctrlKey && !e.altKey) {
 					e.preventDefault();
@@ -592,7 +601,19 @@ export function ReviewSession() {
 														</div>
 													)}
 
-													{!picks && <DiacriticBar variant="keys" />}
+													{!picks && (
+														<div className="relative" data-testid="review-letters" data-open={lettersOpen}>
+															{!lettersOpen && (
+																<p className="q-sub absolute inset-x-0 top-0 !mt-0 hidden items-center gap-1.5 pointer-fine:flex">
+																	<KeyboardIcon className="size-4 shrink-0" aria-hidden="true" />
+																	Press <kbd className="q-kbd">`</kbd> (left of 1) for letters such as {lang.specialLetters.slice(0, 3).join(" ")}
+																</p>
+															)}
+															<div className={cn(!lettersOpen && "pointer-fine:invisible")}>
+																<DiacriticBar variant="keys" />
+															</div>
+														</div>
+													)}
 												</div>
 
 												{verdict && (
