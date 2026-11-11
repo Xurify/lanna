@@ -221,7 +221,7 @@ interface ExportResult {
 export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportResult {
 	const now = opts.now ?? new Date();
 	const stamp = opts.stamp ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
-	const dir = path.join(PATHS.exports, stamp);
+	const dir = path.join(/*turbopackIgnore: true*/ PATHS.exports, stamp);
 	fs.mkdirSync(dir, { recursive: true });
 
 	const audio = listAudioClips().sort((a, b) => (a.text ?? "").localeCompare(b.text ?? "", "sk"));
@@ -328,7 +328,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		usage,
 	};
 
-	const write = (name: string, value: unknown) => fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, "\t"), "utf-8");
+	const write = (name: string, value: unknown) => fs.writeFileSync(path.join(/*turbopackIgnore: true*/ dir, name), JSON.stringify(value, null, "\t"), "utf-8");
 	write("summary.json", summary);
 	write("audio.json", audio);
 	write("sentences.json", sentences);

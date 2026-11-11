@@ -261,7 +261,7 @@ function extraPathEntries(): string[] {
 		"C:\\Python313\\Scripts",
 	].filter((d) => {
 		try {
-			return fs.statSync(d).isDirectory();
+			return fs.statSync(/*turbopackIgnore: true*/ d).isDirectory();
 		} catch {
 			return false;
 		}
@@ -287,7 +287,7 @@ function pythonPath(): string | null {
 	for (const c of candidates) {
 		if (path.isAbsolute(c)) {
 			try {
-				if (fs.statSync(c).isFile()) return c;
+				if (fs.statSync(/*turbopackIgnore: true*/ c).isFile()) return c;
 			} catch {
 				// continue
 			}
@@ -295,7 +295,7 @@ function pythonPath(): string | null {
 		}
 		for (const dir of searchDirs) {
 			if (!dir) continue;
-			const file = path.join(dir, c);
+			const file = path.join(/*turbopackIgnore: true*/ dir, c);
 			try {
 				if (fs.statSync(file).isFile()) return file;
 			} catch {
@@ -316,7 +316,7 @@ function hasFasterWhisper(): boolean {
 	cachedWhisperAvailable = false;
 	if (py && fs.existsSync(helper)) {
 		try {
-			const out = execFileSync(py, [helper, "check"], { encoding: "utf8", timeout: 60_000, windowsHide: true, env: subprocessEnv() });
+			const out = execFileSync(/*turbopackIgnore: true*/ py, [helper, "check"], { encoding: "utf8", timeout: 60_000, windowsHide: true, env: subprocessEnv() });
 			cachedWhisperAvailable = (JSON.parse(out.trim().split("\n").pop() ?? "{}") as { whisper?: boolean }).whisper === true;
 		} catch {
 			cachedWhisperAvailable = false;
@@ -332,7 +332,7 @@ function ytDlpPath(): string | null {
 	const exts = process.platform === "win32" ? ["yt-dlp.exe", "yt-dlp"] : ["yt-dlp"];
 	for (const dir of (process.env.PATH ?? "").split(path.delimiter)) {
 		for (const name of exts) {
-			const file = path.join(dir, name);
+			const file = path.join(/*turbopackIgnore: true*/ dir, name);
 			try {
 				if (fs.statSync(file).isFile()) return file;
 			} catch {
