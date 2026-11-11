@@ -13,7 +13,7 @@ import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts"
 import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
 import { knownForms } from "../core/form-slip.ts";
 import { missReason, type MissReason, type MissWord } from "../core/review-miss.ts";
-import { MAX_BLANK_WORDS, blankAround, blankWordsFor, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
+import { MAX_BLANK_WORDS, blankAround, blankWordsFor, clozeParts, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
@@ -74,12 +74,27 @@ interface ReviewPrompt {
 	sentenceSource?: string;
 }
 
+export interface AnsweredLine {
+	cardId: string;
+	reviewedAt: string;
+	before: string;
+	answer: string;
+	after: string;
+	translation: string;
+	rating: Rating;
+	verdict: ReviewLogEntry["verdict"];
+	helped: boolean;
+}
+
+export const ANSWERED_LINES = 30;
+
 interface ReviewStatus {
 	profile: string;
 	available: boolean;
 	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
 	settings: ReviewSettings;
 	next: ReviewPrompt | null;
+	answered: AnsweredLine[];
 	leeches: Array<Pick<ReviewCard, "id" | "lemma" | "gloss" | "lapses">>;
 }
 
@@ -164,21 +179,27 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 
 /** Reviews logged on a local day. The log is chronological, so walk back from the newest line and
  *  stop two days short of now (no time zone is further off than 14 hours): the whole log is not scanned. */
-function reviewedOn(today: string, now: Date, tzOffset?: number): { answers: number; cards: Set<string> } {
+function reviewedOn(today: string, now: Date, deck: Record<string, ReviewCard>, tzOffset?: number): { answers: number; cards: Set<string>; lines: AnsweredLine[] } {
 	const log = reviewStore.readLog();
 	const floor = now.getTime() - 2 * DAY_MS;
 	let answers = 0;
 	const cards = new Set<string>();
+	const lines: AnsweredLine[] = [];
 	for (let i = log.length - 1; i >= 0; i--) {
-		const at = Date.parse(log[i]?.reviewedAt ?? "");
+		const entry = log[i]!;
+		const at = Date.parse(entry.reviewedAt ?? "");
 		if (Number.isNaN(at)) continue;
 		if (at < floor) break;
-		if (dayKey(new Date(at), tzOffset) === today) {
-			answers++;
-			cards.add(log[i]!.cardId);
+		if (dayKey(new Date(at), tzOffset) !== today) continue;
+		answers++;
+		cards.add(entry.cardId);
+		const card = deck[entry.cardId];
+		if (card && lines.length < ANSWERED_LINES) {
+			const { before, after } = clozeParts(card);
+			lines.push({ cardId: card.id, reviewedAt: entry.reviewedAt, before, answer: card.answer, after, translation: card.translation, rating: entry.rating, verdict: entry.verdict, helped: !!entry.hints || !!entry.picked });
 		}
 	}
-	return { answers, cards };
+	return { answers, cards, lines };
 }
 
 export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?: boolean } = {}): ReviewStatus {
@@ -188,7 +209,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 	const introduced = meta.introduced[today] ?? 0;
 	const list = Object.values(cards);
 	const due = dueCards(list, now);
-	const answeredToday = reviewedOn(today, now, tzOffset);
+	const answeredToday = reviewedOn(today, now, cards, tzOffset);
 	const endOfDay = Date.parse(`${today}T00:00:00Z`) + (tzOffset ?? now.getTimezoneOffset()) * 60_000 + DAY_MS;
 	const reviewedToday = answeredToday.answers;
 	let next: ReviewCard | undefined = due[0];
@@ -224,6 +245,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		},
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings) : null,
+		answered: answeredToday.lines,
 		leeches: leeches(list)
 			.slice(0, 10)
 			.map(({ id, lemma, gloss, lapses }) => ({ id, lemma, gloss, lapses })),
