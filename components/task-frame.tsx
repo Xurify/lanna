@@ -115,19 +115,16 @@ export function TaskBar({ href = "/", onLeave, children }: { href?: string; onLe
 	);
 }
 
-/** The practice card (the mockup's `.q-cloze`): a head with what this is, a
- *  body for the question. `right` is the quiet note in the head's far corner. */
-export function PracticeCard({ icon, title, sub, right, children, className, phone }: { icon?: QIconName; title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode; className?: string; phone?: "flat" }) {
-	const flat = phone === "flat";
+export function PracticeCard({ icon, title, sub, right, children, className }: { icon?: QIconName; title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode; className?: string }) {
 	return (
-		<div className={cn("q-cloze", flat && "max-sm:rounded-none max-sm:bg-transparent max-sm:shadow-none", className)}>
-			<div className={cn("q-card-head", flat && "max-sm:h-auto max-sm:border-b-0 max-sm:px-0")}>
-				{icon && <QIcon name={icon} />}
+		<div className={className}>
+			<div className="flex min-h-8 items-center gap-2 text-[13px] font-[550] text-ink-2" data-testid="practice-head">
+				{icon && <QIcon name={icon} className="text-ink-3" />}
 				<span className="shrink-0 text-ink first-letter:uppercase">{title}</span>
 				{sub && <span className="min-w-0 truncate font-[450] text-ink-3">{sub}</span>}
-				{right !== undefined && <span className="mins shrink-0">{right}</span>}
+				{right !== undefined && <span className="ml-auto shrink-0 font-[450] text-ink-3">{right}</span>}
 			</div>
-			<div className={cn("px-5 py-6 sm:px-7 sm:pb-6 sm:pt-7", flat && "max-sm:px-0 max-sm:pb-0 max-sm:pt-5")}>{children}</div>
+			<div className="pt-5 sm:pt-6">{children}</div>
 		</div>
 	);
 }

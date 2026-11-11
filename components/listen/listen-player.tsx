@@ -455,7 +455,7 @@ export function ListenPlayer({
 							</span>
 						</div>
 					)}
-					<PracticeCard icon="listen" title="Listen" sub={sourceOf(item)} phone="flat">
+					<PracticeCard icon="listen" title="Listen" sub={sourceOf(item)}>
 						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 sm:gap-x-4">
 							<button
 								type="button"
