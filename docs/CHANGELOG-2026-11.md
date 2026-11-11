@@ -2,6 +2,24 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 11 November: Review is written on the page (branch `feat/review-on-the-page`)
+
+- **Why:** the owner asked what Review would look like with less of a card, and for a new layout, not a restyle.
+- **What changed:**
+  - The sentence sits on the page with no card or card head; the kind of card and Hide this word are one line above it.
+  - One band at the top says the count once: the heading's rule is the progress bar.
+  - The buttons are in a dock at the foot of the page, tinted after an answer; the ratings say when the word comes back in words.
+  - **Answered today** under the sentence lists each answer given today, newest first, with the word marked; the server sends the latest 30 with the deck (`answered`).
+  - Answer by and Blank sit at the foot of the dock on a computer and under the card on a phone.
+  - The caught-up screen keeps the page: "All caught up.", the new words per day, and today's answers.
+  - After two rounds of review by Fable 5.2: the hint button keeps its slot, the chosen rating is lifted, a miss shows one Again line, Answer by and Blank moved to a settings popover, and Hide this word can be undone.
+  - Every task screen loses its card (lessons, Listen, the ear gym, Speed, the exam, Today's line, the Speak sheet); the ear gym starts at the top; Today's line answers on a writing line.
+  - Letter keys come in groups by plain letter, and a key changes the letter before the cursor (c then č gives č), except for a double letter (Estonian töö) and in Cyrillic.
+  - On a computer: hold a letter for its accents (hold c, press 1: č), or open the on-screen Keyboard (button or the key left of 1), closed by default and remembered.
+  - Flags fill their box with a hairline ring; Today's plan uses 27 by 18 px flags.
+- **Checked:** `tests/review-log-cache.test.ts` (today's lines, newest first, split at the card's word, capped at 30), the full suite, typecheck, ESLint, `scripts/cls-check.mjs --routes /review --interact` on the sandbox (loads 0; show meaning 0.002, a miss 0, choosing 0, a miss on a phone 0). Day and Night at 1280 and 390 px, 320 px and 1500 px with the day rail, in the sandbox: a card, a hint, choosing, right, a miss, caught up.
+- **Unverified:** the owner's real deck with a long day of answers; an iPad; the desktop window.
+
 ## 10 November: a Spotify track is heard in the language it is spoken in (branch `fix/spotify-track-language`, PR #182)
 
 - **Why:** a Russian Spotify track added to the Slovak profile came back as Slovak-spelled text, because Whisper was forced to Slovak. Read then spoke that text in a Slovak voice, so it did not sound like the recording.

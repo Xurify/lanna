@@ -116,8 +116,8 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 					)}
 
 					{state && (
-						<div className="mt-7 grid items-start gap-x-8 gap-y-6 @3xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] @5xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
-							<div className="flex flex-col gap-6" data-testid="speak-scenes">
+						<div className="mt-7 grid grid-cols-[minmax(0,1fr)] items-start gap-x-8 gap-y-6 @3xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] @5xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+							<div className="flex min-w-0 flex-col gap-6" data-testid="speak-scenes">
 								{groups.map((g) => (
 									<section key={g.label} aria-label={grouped ? g.label : "Scenes"}>
 										{grouped && <h2 className="q-sh !mb-1.5 px-3">{g.label}</h2>}
@@ -133,7 +133,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 															aria-current={on ? "true" : undefined}
 															data-scene-row={s.id}
 															data-testid={`scene-${s.id}`}
-															className={cn("lh-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors", on ? "bg-card shadow-[var(--q-raise)]" : "hover:bg-well")}
+															className={cn("lh-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors", on ? "bg-well" : "hover:bg-well")}
 														>
 															<span className="min-w-0 flex-1">
 																<span className={cn("block truncate font-ui text-[15px] font-[600] tracking-[-0.01em]", on ? "text-foreground" : "text-ink-2")} lang={lang.tag}>
@@ -149,7 +149,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 																</span>
 															) : null}
 														</button>
-														{on && <div className="mt-2 mb-3 @3xl:hidden">{sheet(true)}</div>}
+														{on && <div className="mt-2 mb-4 @3xl:hidden">{sheet(true)}</div>}
 													</li>
 												);
 											})}
@@ -246,8 +246,8 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 	}
 
 	return (
-		<article className={cn("q-card overflow-hidden", !inline && "lh-rise")} data-testid={tid("speak-sheet")} aria-label={scene.title}>
-			<div className={cn("px-5 pt-5 pb-6", !inline && "@4xl:px-8 @4xl:pt-7")}>
+		<article className={cn(inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lh-rise border-l border-[var(--q-line)] pl-8")} data-testid={tid("speak-sheet")} aria-label={scene.title}>
+			<div className={cn(inline ? "py-2" : "pt-1 pb-2")}>
 				{/* Opened under its row, the row already names the scene. */}
 				{!inline && (
 					<>
@@ -296,7 +296,7 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 				</p>
 			</div>
 			{canSpeak && (
-				<p className="border-t border-border bg-well/60 px-5 py-3 font-prose text-[13px] text-ink-3 @4xl:px-8">
+				<p className="mt-5 border-t border-border pt-4 pb-1 font-prose text-[13px] text-ink-3">
 					{keyboardFirst ? "Type each line and press Enter." : "Press the mic, speak, press again."} A slip in an ending comes back for you to fix; the rest waits for the end.
 				</p>
 			)}

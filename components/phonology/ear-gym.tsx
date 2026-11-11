@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { QIcon } from "@/components/quiet/icon";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { KBD } from "@/components/ui/learn-buttons";
+import { QUIET } from "@/components/ui/learn-buttons";
 import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, PracticeCard, PRIMARY, SECONDARY, TaskBar, TaskEnd, TaskFrame, VerdictDisc } from "@/components/task-frame";
 import { sfx } from "@/components/lesson/sound";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -309,8 +310,7 @@ export function EarGym({
 			</TaskBar>
 
 			<div className="flex flex-1 flex-col overflow-y-auto" data-testid="ear-gym">
-				<div className="min-h-6 flex-[2]" />
-				<div key={`${round}:${index}`} className={cn(COLUMN, "lh-rise shrink-0")}>
+				<div key={`${round}:${index}`} className={cn(COLUMN, "lh-rise shrink-0 pt-8 sm:pt-12")}>
 					<PracticeCard
 						icon="ear"
 						title="Ear gym"
@@ -372,7 +372,7 @@ export function EarGym({
 						</div>
 					</PracticeCard>
 				</div>
-				<div className="min-h-8 flex-[3]" />
+				<div className="min-h-8 flex-1" />
 			</div>
 
 			<Dock tone={!answered ? "plain" : right ? "right" : "miss"} live>
@@ -404,7 +404,7 @@ export function EarGym({
 						</>
 					) : (
 						<>
-							<button type="button" onClick={() => answer(null)} className={SECONDARY} data-testid="ear-gym-cannot-tell">
+							<button type="button" onClick={() => answer(null)} className={QUIET} data-testid="ear-gym-cannot-tell">
 								I can&apos;t tell
 							</button>
 							<p className="hidden items-center gap-1.5 font-ui text-[13px] text-ink-3 sm:pointer-fine:flex">

@@ -249,7 +249,7 @@ interface CountryFlagProps {
 	title?: string;
 }
 
-type FlagComponent = React.ComponentType<{ className?: string; title?: string }>;
+type FlagComponent = React.ComponentType<{ className?: string; title?: string; preserveAspectRatio?: string }>;
 
 /** The flag set (about 250 flags, 350 kB of script) loads on first use instead of riding in every
  *  page's bundle. Until it arrives the box is empty and the same size, so nothing moves. */
@@ -278,12 +278,12 @@ export function CountryFlag({ lang, code, className, title }: CountryFlagProps) 
 			title={title ?? `${c} flag`}
 			data-country-code={c}
 			className={cn(
-				"relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[3px] select-none bg-muted/20 shadow-2xs w-6 h-4",
+				"relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[3px] select-none bg-well w-6 h-4",
 				className,
 			)}
 		>
 			{Flag ? (
-				<Flag className="block h-full w-full object-cover" />
+				<Flag className="block h-full w-full" preserveAspectRatio="xMidYMid slice" />
 			) : ready ? (
 				<span className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground select-none">
 					{c}
@@ -291,7 +291,7 @@ export function CountryFlag({ lang, code, className, title }: CountryFlagProps) 
 			) : null}
 			<span
 				aria-hidden="true"
-				className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-black/10 dark:ring-white/15"
+				className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-[rgb(var(--q-shadow-rgb)/0.14)] dark:ring-white/[0.12]"
 			/>
 		</span>
 	);

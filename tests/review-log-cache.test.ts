@@ -86,3 +86,27 @@ test("the day's total holds still: unanswered new cards and cards due later toda
 	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 300, { mint: false }).counts.dueLater, 1);
 	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 0, { mint: false }).counts.dueLater, 0);
 });
+
+test("today's answers come back newest first, each sentence split at the card's word, and the list stops at its cap", async () => {
+	const { ANSWERED_LINES } = await import("../src/server/review.ts");
+	fs.writeFileSync(LOG(), "", "utf-8");
+	const card = (id: string, sentence: string, answer: string) => ({ id, slug: id, lemma: id, gloss: "", sentence, translation: `${id} in English`, answer, at: sentence.indexOf(answer), state: "review", due: "2026-11-09T00:00:00Z", reps: 1, lapses: 0, createdAt: "2026-11-01T00:00:00Z" });
+	reviewStore.writeCards({ stanica: card("stanica", "Je to od stanice ďaleko?", "stanice"), dom: card("dom", "Som doma.", "doma") } as never);
+	reviewStore.appendLog({ ...entry("2026-11-01T22:00:00Z"), cardId: "stanica" });
+	reviewStore.appendLog({ ...entry("2026-11-02T08:00:00Z"), cardId: "stanica", rating: 1, verdict: "wrong", hints: 1 });
+	reviewStore.appendLog({ ...entry("2026-11-02T09:00:00Z"), cardId: "dom" });
+	reviewStore.appendLog({ ...entry("2026-11-02T09:30:00Z"), cardId: "gone" });
+	const { answered } = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false });
+	assert.deepEqual(
+		answered.map(({ cardId, before, answer, after, rating, verdict, helped }) => ({ cardId, before, answer, after, rating, verdict, helped })),
+		[
+			{ cardId: "dom", before: "Som ", answer: "doma", after: ".", rating: 3, verdict: "exact", helped: false },
+			{ cardId: "stanica", before: "Je to od ", answer: "stanice", after: " ďaleko?", rating: 1, verdict: "wrong", helped: true },
+		],
+		"yesterday's line and a card no longer in the deck are left out",
+	);
+	for (let i = 0; i < ANSWERED_LINES + 5; i++) reviewStore.appendLog({ ...entry(`2026-11-02T09:40:${String(i).padStart(2, "0")}Z`), cardId: "dom" });
+	const full = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false });
+	assert.equal(full.answered.length, ANSWERED_LINES);
+	assert.equal(full.counts.reviewedToday, ANSWERED_LINES + 5 + 3);
+});

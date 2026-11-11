@@ -233,7 +233,7 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 							<i className="size-[9px] rounded-[3px] bg-teal" aria-hidden="true" />
 							{streak} {streak === 1 ? "day" : "days"}
 						</span>
-						<span className="inline-flex h-7 items-center whitespace-nowrap rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)]">Level {s?.level.level ?? 1}</span>
+						<span className="inline-flex h-7 items-center whitespace-nowrap rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)] @max-sm:hidden">Level {s?.level.level ?? 1}</span>
 					</div>
 				</header>
 
@@ -334,8 +334,8 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 									total > 0 &&
 									groups?.map((g, i) => (
 										<div key={g.lang.id} className={cn(i > 0 && "mt-5")} data-testid={`plan-lang-${g.lang.id}`}>
-											<h3 className="mb-2 flex items-center gap-2 px-1 text-[14px] font-[550] text-foreground">
-												<CountryFlag lang={g.lang.id} className="h-[13px] w-[20px] rounded-[3px]" />
+											<h3 className="mb-2.5 flex items-center gap-2.5 px-1 text-[15px] font-[550] text-foreground">
+												<CountryFlag lang={g.lang.id} className="h-[18px] w-[27px] rounded-[4px]" />
 												{g.lang.endonym}
 												{g.lang.english !== g.lang.endonym && <span className="font-[450] text-ink-3">{g.lang.english}</span>}
 												<span className="q-num ml-auto text-[12.5px] font-[450] text-ink-3">

@@ -76,6 +76,7 @@ export * from "./course.ts";
 export * from "./variants.ts";
 export * from "./fsrs.ts";
 export * from "./review.ts";
+export * from "./accent-keys.ts";
 export * from "./lesson.ts";
 export * from "./reference-pages.ts";
 export * from "./grammar.ts";

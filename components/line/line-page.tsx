@@ -21,7 +21,7 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { useActiveTime } from "@/components/use-active-time";
-import { COLUMN, Dock, PRIMARY, SECONDARY, TaskTop } from "@/components/task-frame";
+import { COLUMN, Dock, PracticeCard, PRIMARY, SECONDARY, TaskTop } from "@/components/task-frame";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { QUIET } from "@/components/ui/learn-buttons";
 import { LineHistory } from "@/components/line/line-history";
@@ -38,7 +38,7 @@ function phaseOf(view: LineState): Phase {
 }
 
 const INPUT =
-	"w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-4 focus-visible:shadow-[inset_0_0_0_1.5px_var(--q-teal)]";
+	"q-write mt-2 h-12 w-full px-0.5 font-prose text-[22px] font-[550] tracking-[-0.02em] text-foreground outline-none sm:text-[26px] disabled:opacity-60";
 
 export function LinePage({ initial }: { initial: LineState }) {
 	const lang = useActiveLanguage();
@@ -222,7 +222,6 @@ export function LinePage({ initial }: { initial: LineState }) {
 										onChange={(e) => setTyped(e.target.value)}
 										disabled={busy}
 										aria-label="Type the sentence you heard"
-										placeholder="Type what you hear"
 										className={INPUT}
 										data-testid="line-input"
 									/>
@@ -253,9 +252,9 @@ export function LinePage({ initial }: { initial: LineState }) {
 							<button type="button" className={QUIET} disabled={busy} onClick={() => void submit("")} data-testid="line-miss">
 								I didn&apos;t catch it
 							</button>
-							<button type="button" className={PRIMARY} disabled={busy} onClick={() => void submit(typed.trim())} data-testid="line-check">
+							<button type="button" className={PRIMARY} disabled={busy || !typed.trim()} onClick={() => void submit(typed.trim())} data-testid="line-check">
 								Check
-								<span className="q-kbd">
+								<span className="q-kbd pointer-coarse:hidden">
 									<QIcon name="enter" />
 								</span>
 							</button>
@@ -363,18 +362,11 @@ function Frame({ children }: { children: React.ReactNode }) {
 	);
 }
 
-/** The practice card. Its content uses the same 18 px inset as the heading,
- *  so the icon, the text and the controls share one left edge. */
 function LineCard({ icon, title, sub, right, children }: { icon: QIconName; title: string; sub?: string; right?: string; children: React.ReactNode }) {
+	const note = right ? <span className="max-sm:hidden">{right}</span> : undefined;
 	return (
-		<div className="q-cloze">
-			<div className="q-card-head">
-				<QIcon name={icon} />
-				<span className="text-ink">{title}</span>
-				{sub && <span className="font-[450] text-ink-3">{sub}</span>}
-				{right && <span className="mins">{right}</span>}
-			</div>
-			<div className="px-[18px] py-5">{children}</div>
-		</div>
+		<PracticeCard icon={icon} title={title} sub={sub} right={note}>
+			{children}
+		</PracticeCard>
 	);
 }

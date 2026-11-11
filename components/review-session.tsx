@@ -8,20 +8,22 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookmarkIcon, EyeOffIcon, KeyboardIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
+import { QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
 import { DayRail, useDaySummary } from "@/components/quiet/day-rail";
 import { DiacriticBar } from "@/components/diacritic-bar";
+import { OptionTile } from "@/components/task-frame";
 import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { compareAnswer, diacriticSlips, formatInterval, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, targetWordOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, targetWordOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { usePopoverDismiss } from "@/components/popover-dismiss";
 
 interface Prompt {
 	card: ReviewCard;
@@ -38,7 +40,21 @@ interface Prompt {
 	sentenceSource?: string;
 }
 
+interface AnsweredLine {
+	cardId: string;
+	reviewedAt: string;
+	before: string;
+	answer: string;
+	after: string;
+	translation: string;
+	rating: Rating;
+	verdict: AnswerVerdict;
+	helped: boolean;
+}
+
 /** How the lexicon's `src` reads on the card. */
+const HELP_BUTTON = "q-btn sec !h-auto min-h-14 flex-col !items-start !gap-0 py-1.5 text-left !whitespace-normal disabled:!opacity-60 @2xl:min-h-12 @2xl:!h-12 @2xl:flex-row @2xl:!items-center @2xl:!gap-2 @2xl:!whitespace-nowrap";
+
 const SENTENCE_SOURCES: Record<string, string> = { curated: "slovak.wiki", tatoeba: "Tatoeba" };
 
 interface Status {
@@ -47,17 +63,19 @@ interface Status {
 	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
 	settings: { newPerDay: number; retention: number; blankWords: number };
 	next: Prompt | null;
+	answered?: AnsweredLine[];
 	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number }>;
 }
 
 type Mode = "type" | "choice";
 const MODE_KEY = "lh-review-mode";
-const LETTERS_KEY = "lh-review-letters";
 /** How long the loading skeleton waits before it shows, so a deck that
  *  lands inside this window never flashes one. */
 const SKELETON_DELAY_MS = 300;
 /** The deck as it last loaded, so a return visit starts with a card on screen. */
 let knownStatus: Status | null = null;
+
+const COLUMN = "mx-auto w-full max-w-[760px] px-4 @xl:px-8";
 
 function readPref(key: string, fallback: string): string {
 	try {
@@ -85,6 +103,15 @@ function clozeAround(before: string, after: string) {
 	const lead = /[^\s\p{L}\p{N}]*$/u.exec(before)?.[0] ?? "";
 	const tail = /^[^\s\p{L}\p{N}]*/u.exec(after)?.[0] ?? "";
 	return { before: before.slice(0, before.length - lead.length), lead, tail, after: after.slice(tail.length) };
+}
+
+function stillToDo(counts: Status["counts"]): string {
+	const newLeft = counts.newLeft + counts.pendingNew;
+	const left = counts.dueUntouched + newLeft;
+	const later = counts.dueLater;
+	const toRepeat = counts.due + counts.learning;
+	if (left === 0) return toRepeat > 0 ? `Every card seen once today. ${toRepeat} to repeat.` : later > 0 ? `Done for now. ${later} more ${later === 1 ? "card comes" : "cards come"} due later today.` : "All done for today.";
+	return `Still to do: ${counts.dueUntouched} due, ${newLeft} new${toRepeat > counts.dueUntouched ? `, ${toRepeat - counts.dueUntouched} to repeat` : ""}${later > 0 ? `, ${later} more due later today` : ""}.`;
 }
 
 function MissWhy({ reason, given, code, className }: { reason: MissReason; given: string; code?: string; className?: string }) {
@@ -137,6 +164,105 @@ function MissWhy({ reason, given, code, className }: { reason: MissReason; given
 	);
 }
 
+function Note({ label, children, lang }: { label: string; children: React.ReactNode; lang?: string }) {
+	return (
+		<span className="inline-flex items-baseline gap-1.5 text-[15px] font-[500] text-foreground">
+			<span className="text-[12px] font-semibold text-ink-3">{label}</span>
+			<span lang={lang}>{children}</span>
+		</span>
+	);
+}
+
+function VerdictMark({ verdict }: { verdict: AnswerVerdict }) {
+	return (
+		<span
+			aria-hidden="true"
+			className={cn(
+				"grid size-4 place-items-center rounded-full",
+				verdict === "exact" && "bg-teal text-[var(--q-on-teal)]",
+				verdict === "accents" && "bg-teal-line text-teal-2",
+				verdict === "wrong" && "text-miss shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
+			)}
+		>
+			<svg viewBox="0 0 24 24" className="size-2.5 fill-none stroke-current" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+				{verdict === "wrong" ? <path d="M7 7l10 10M17 7L7 17" /> : <path d="M5.5 12.5l4 4L18.5 7.5" />}
+			</svg>
+		</span>
+	);
+}
+
+const VERDICT_WORD: Record<AnswerVerdict, string> = { exact: "right", accents: "an accent off", wrong: "missed" };
+
+function comesBack(days: number): string {
+	const minutes = Math.round(days * 1440);
+	if (minutes < 60) return `${Math.max(1, minutes)} min`;
+	if (days < 1) return `${Math.round(minutes / 60)} h`;
+	if (days < 30) return Math.round(days) === 1 ? "1 day" : `${Math.round(days)} days`;
+	if (days < 365) return `${Math.round(days / 30)} mo`;
+	return `${(days / 365).toFixed(1).replace(/\.0$/, "")} yr`;
+}
+
+function DeckSettings({ mode, onMode, blankWords, onBlankWords, className }: { mode: Mode; onMode: (m: Mode) => void; blankWords: number; onBlankWords: (n: number) => void; className?: string }) {
+	return (
+		<div className={cn("grid grid-cols-[auto_auto] items-center justify-start gap-x-4 gap-y-3 text-[13px] text-ink-3", className)}>
+			<div className="contents">
+				<span id="review-mode-label">Answer by</span>
+				<span className="q-segc" role="radiogroup" aria-labelledby="review-mode-label">
+					{(["type", "choice"] as const).map((m) => (
+						<button key={m} type="button" role="radio" aria-checked={mode === m} className={cn("!h-8 !px-3 !text-[13px] pointer-coarse:!h-10", mode === m && "on")} onClick={() => onMode(m)} data-testid={`review-mode-${m}`}>
+							{m === "type" ? "Typing" : "Choosing"}
+						</button>
+					))}
+				</span>
+			</div>
+			<div className="contents" data-testid="review-blank" title="How many words a card can hide. A new word always hides one. Applies from the next card.">
+				<span id="review-blank-label">Blank</span>
+				<span className="q-segc" role="radiogroup" aria-labelledby="review-blank-label">
+					{[1, 2, 3].map((n) => (
+						<button key={n} type="button" role="radio" aria-checked={blankWords === n} className={cn("!h-8 !px-3 !text-[13px] whitespace-nowrap pointer-coarse:!h-10", blankWords === n && "on")} onClick={() => onBlankWords(n)} data-testid={`review-blank-${n}`}>
+							{n === 1 ? "1 word" : `1–${n}`}
+						</button>
+					))}
+				</span>
+			</div>
+		</div>
+	);
+}
+
+function AnsweredRow({ line, code, fresh }: { line: AnsweredLine; code?: string; fresh: boolean }) {
+	return (
+		<li className={cn("relative grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-x-3 py-3 @xl:grid-cols-[minmax(0,1fr)_auto]", fresh && "lh-fade")}>
+			<span className="mt-[3px] @xl:absolute @xl:-left-7 @xl:top-3">
+				<VerdictMark verdict={line.verdict} />
+			</span>
+			<span className="min-w-0">
+				<span className="sr-only">{VERDICT_WORD[line.verdict]}: </span>
+				<span className="block text-[16px] leading-snug text-ink-2" lang={code}>
+					{line.before}
+					<b
+						className={cn(
+							"font-semibold text-foreground underline decoration-2 underline-offset-[5px]",
+							line.verdict === "exact" && "decoration-teal",
+							line.verdict === "accents" && "decoration-teal-line",
+							line.verdict === "wrong" && "decoration-miss",
+						)}
+					>
+						{line.answer}
+					</b>
+					{line.after}
+				</span>
+				<span className="mt-0.5 block truncate text-[13px] text-ink-3" data-no-word-lookup="true">
+					{line.translation}
+				</span>
+			</span>
+			<span className="text-[12.5px] leading-[22px] whitespace-nowrap text-ink-3">
+				{RATING_LABELS[line.rating]}
+				{line.helped && " · help"}
+			</span>
+		</li>
+	);
+}
+
 export function ReviewSession() {
 	const lang = useActiveLanguage();
 	const [status, setStatus] = useState<Status | null>(() => knownStatus);
@@ -150,19 +276,22 @@ export function ReviewSession() {
 	const [hint, setHint] = useState(0);
 	// Read on first render, so the card never paints the default and then flips.
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
-	const [lettersOpen, setLettersOpen] = useState(() => readPref(LETTERS_KEY, "closed") === "open");
 	const [saving, setSaving] = useState(false);
-	// Cards whose sentence went to the saved phrases from this page.
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const bandRef = useRef<HTMLDivElement>(null);
+	const closeSettings = useCallback(() => setSettingsOpen(false), []);
+	usePopoverDismiss(bandRef, settingsOpen, closeSettings);
+	const [hidden, setHidden] = useState<{ id: string; lemma: string } | null>(null);
+// Cards whose sentence went to the saved phrases from this page.
 	const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set());
-	// The rep just before this one, kept on screen as a collapsed line.
-	const [last, setLast] = useState<{ before: string; answer: string; after: string; translation: string; label: string } | null>(null);
+	const [newestLineAtOpen, setNewestLineAtOpen] = useState<string | undefined>(() => (knownStatus ? (knownStatus.answered?.[0]?.reviewedAt ?? "") : undefined));
 	const shownAt = useRef(Date.now());
 	// One card at a time: its active time (the gaps between actions, each
 	// capped) is what the day's minutes count; `ms` stays the card's wall-clock.
 	const activeTime = useActiveTime("review", "interactive");
 	const inputRef = useRef<HTMLInputElement>(null);
 	const sentenceRef = useRef<HTMLFormElement>(null);
-	const bodyRef = useRef<HTMLDivElement>(null);
+	const bodyRef = useRef<HTMLElement>(null);
 
 	// The skeleton waits a beat, so a deck that lands at once never flashes one.
 	const [slow, setSlow] = useState(false);
@@ -177,6 +306,7 @@ export function ReviewSession() {
 		(next: Status, keepCard = false) => {
 			const sameCard = keepCard && !!next.next && next.next.card.id === knownStatus?.next?.card.id;
 			knownStatus = next;
+			setNewestLineAtOpen((seen) => seen ?? next.answered?.[0]?.reviewedAt ?? "");
 			setStatus(next);
 			if (!sameCard) {
 				setGiven("");
@@ -256,13 +386,13 @@ export function ReviewSession() {
 	const rate = async (rating: Rating) => {
 		if (!prompt || !verdict || saving) return;
 		setSaving(true);
+		setHidden(null);
 		try {
 			const res = await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, cap), hints: hint, picked: picks, words: prompt.words, tz: new Date().getTimezoneOffset() }),
 			});
-			setLast({ before: around.before + around.lead, answer: prompt.answer, after: around.tail + around.after, translation: prompt.card.translation, label: `${RATING_LABELS[Math.min(rating, cap) as Rating]}${help.hints > 0 || help.picked ? ", with help" : ", no help"}` });
 			// The answer's response carries the deck as it stands now: one round trip, not two.
 			const after = res.ok ? ((await res.json().catch(() => null)) as { status?: Status } | null)?.status : undefined;
 			if (after) show(after);
@@ -287,11 +417,23 @@ export function ReviewSession() {
 
 	const suspend = async () => {
 		if (!prompt) return;
+		const card = { id: prompt.card.id, lemma: prompt.card.lemma };
 		await fetch("/api/review/suspend", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ cardId: prompt.card.id }),
+			body: JSON.stringify({ cardId: card.id }),
 		});
+		await load();
+		setHidden(card);
+	};
+	const unhide = async () => {
+		if (!hidden) return;
+		await fetch("/api/review/suspend", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ cardId: hidden.id, suspended: false }),
+		});
+		setHidden(null);
 		await load();
 	};
 
@@ -300,13 +442,6 @@ export function ReviewSession() {
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (!verdict) {
-				// The physical key left of 1, whatever the layout types there: `, ; or a dead key.
-				if (e.code === "Backquote" && !picks && !e.metaKey && !e.ctrlKey && !e.altKey) {
-					e.preventDefault();
-					setLettersOpen(!lettersOpen);
-					writePref(LETTERS_KEY, lettersOpen ? "closed" : "open");
-					return;
-				}
 				const opt = picks ? prompt?.options[Number(e.key) - 1] : undefined;
 				if (opt && !e.metaKey && !e.ctrlKey && !e.altKey) {
 					e.preventDefault();
@@ -347,6 +482,10 @@ export function ReviewSession() {
 			body: JSON.stringify({ blankWords: n }),
 		});
 	};
+	const chooseMode = (m: Mode) => {
+		setMode(m);
+		writePref(MODE_KEY, m);
+	};
 	const stepNewPerDay = (delta: number) => {
 		const from = newPerDay ?? status?.settings.newPerDay ?? 0;
 		const next = Math.max(0, Math.min(100, from + delta));
@@ -369,6 +508,8 @@ export function ReviewSession() {
 	const exact = verdict === "exact";
 	const helped = hint > 0 || picks;
 	const shownSuggested = Math.min(suggested, cap) as Rating;
+	const answered = status?.answered ?? [];
+	const caughtUp = !!status?.available && !prompt;
 
 	return (
 		<div className="@container h-dvh" data-testid="review-session">
@@ -380,7 +521,7 @@ export function ReviewSession() {
 						<b className="q-num text-[15px] font-semibold tracking-[-0.01em]">
 							{day.s?.todayXp ?? 0} <span className="text-[13px] font-[450] text-ink-3">/ {day.s?.dailyGoal ?? 50} XP</span>
 						</b>
-						<small className="text-xs text-ink-3">{day.s ? `${Math.max(0, day.s.dailyGoal - day.s.todayXp)} to today's goal` : " "}</small>
+						<small className="text-xs text-ink-3">{day.s ? (day.s.todayXp < day.s.dailyGoal ? `${day.s.dailyGoal - day.s.todayXp} to today's goal` : "Today's goal is met") : " "}</small>
 					</div>
 					<Link href="/" className="q-btn ghost ml-auto">
 						Today
@@ -388,407 +529,410 @@ export function ReviewSession() {
 				</header>
 
 				<main className="flex min-h-0 flex-col">
-					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 @6xl:px-0">
-						<div className="mx-auto w-full max-w-[720px] pb-10 pt-6 @6xl:pt-12">
-							<section>
-								<h2 className="q-sh">
-									<QIcon name="review" />
-									Review
-									{counts && lang && (
-										<small data-testid="review-counts">
-											<b className="font-semibold text-ink-2 q-num">{done}</b> of <b className="font-semibold text-ink-2 q-num">{total}</b> cards today
-										</small>
-									)}
-								</h2>
-								<div role="progressbar" aria-label="Reviews done today" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} className="h-1.5 overflow-hidden rounded-full bg-well-2" data-testid="review-progress">
-									<div className="lh-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
+					<div className={cn(COLUMN, "relative z-10 shrink-0 pt-4 @6xl:pt-9")} ref={bandRef}>
+						<div className="flex h-9 items-center gap-3">
+							<span className="flex items-center gap-2 text-[13px] font-semibold text-ink-2">
+								<QIcon name="review" className="text-teal" />
+								Review
+							</span>
+							<div
+								role="progressbar"
+								aria-label="Cards done today"
+								aria-valuemin={0}
+								aria-valuemax={total}
+								aria-valuenow={done}
+								aria-valuetext={counts ? `${done} of ${total} cards today. ${stillToDo(counts)}` : undefined}
+								title={counts ? stillToDo(counts) : undefined}
+								className="relative h-[3px] min-w-8 flex-1 overflow-hidden rounded-full bg-well-2"
+								data-testid="review-progress"
+							>
+								<div className="lh-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
+							</div>
+							<span className="min-w-[52px] whitespace-nowrap text-right @sm:min-w-[88px] text-[12.5px] text-ink-3" data-testid="review-counts">
+								{counts && lang ? (
+									<>
+										<b className="q-num font-semibold text-ink-2">{done}</b> of <b className="q-num font-semibold text-ink-2">{total}</b>
+										<span className="hidden @sm:inline"> today</span>
+									</>
+								) : null}
+							</span>
+							<button
+								type="button"
+								onClick={() => setSettingsOpen((o) => !o)}
+								aria-expanded={settingsOpen}
+								aria-controls="review-settings"
+								title="Review settings: answer by typing or choosing, and how many words a blank hides"
+								className={cn("grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-10", settingsOpen && "bg-well text-ink-2")}
+								data-testid="review-settings-toggle"
+							>
+								<SlidersHorizontalIcon className="size-4" aria-hidden="true" />
+								<span className="sr-only">Review settings</span>
+							</button>
+							<SoundControl className="-mr-1.5 flex shrink-0 items-center justify-center transition-colors pointer-coarse:size-10" iconClass="size-4" testid="review-sound" />
+						</div>
+						{settingsOpen && (
+							<div id="review-settings" role="group" aria-label="Review settings" className="lh-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8">
+								<DeckSettings mode={mode} onMode={chooseMode} blankWords={blankWordsNow} onBlankWords={chooseBlankWords} />
+							</div>
+						)}
+					</div>
+
+					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
+						<div className={cn(COLUMN, "pb-12")}>
+							{loadError && (
+								<div role="alert" className="mt-8 flex flex-wrap items-center gap-3 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground">
+									<p>Couldn&apos;t load your review deck. {loadError}</p>
+									<button type="button" onClick={() => void load()} className="q-btn sec ml-auto">
+										Try again
+									</button>
 								</div>
-								{counts && lang && (
-									<p className="mt-2 text-[12.5px] text-ink-3" data-testid="review-left">
-										{left === 0 ? (counts.due + counts.learning > 0 ? `Every card seen once today. ${counts.due + counts.learning} to repeat.` : later > 0 ? `Done for now. ${later} more ${later === 1 ? "card comes" : "cards come"} due later today.` : "All done for today.") : `Still to do: ${counts.dueUntouched} due, ${newLeft} new${counts.due + counts.learning > counts.dueUntouched ? `, ${counts.due + counts.learning - counts.dueUntouched} to repeat` : ""}${later > 0 ? `, ${later} more due later today` : ""}.`}
+							)}
+
+							{/* A card that arrives late must not push the page: its space is held from the first frame, drawn only after the skeleton delay. */}
+							{!loadError && (!status || (prompt && !lang)) && (
+								<div className={cn("min-h-[300px] pt-8 @xl:pt-12", !slow && "invisible")} aria-busy="true" aria-label="Loading your review deck" data-testid="review-loading">
+									<div className="h-3 w-24 animate-pulse rounded bg-well-2" />
+									<div className="mt-5 h-10 w-full animate-pulse rounded-lg bg-well-2 @xl:h-12" />
+									<div className="mt-4 h-10 w-2/3 animate-pulse rounded-lg bg-well-2 @xl:h-12" />
+									<div className="mt-5 h-4 w-1/2 animate-pulse rounded bg-well-2" />
+								</div>
+							)}
+
+							{status && !status.available && (
+								<p className="pt-8 text-[17px] leading-relaxed text-ink-2 @xl:pt-12" data-testid="review-unavailable">
+									This language has no words yet, so there is nothing to review. Add its words from the language menu at the top of the sidebar (Add a language…).
+								</p>
+							)}
+
+							{caughtUp && (
+								<section className="lh-fade pt-8 @xl:pt-12" data-testid="review-done">
+																		<h1 className="text-[34px] leading-[44px] font-semibold tracking-[-0.032em] text-foreground @xl:text-[44px] @xl:leading-[60px]">{done > 0 ? "All caught up." : "Nothing is due right now."}</h1>
+									<p className="q-line dim mt-3 max-w-lg" data-testid="review-left">
+										{counts && stillToDo(counts) !== "All done for today." ? `${stillToDo(counts)} ` : ""}Words come back on the day they are due, and new ones arrive tomorrow.
 									</p>
-								)}
-							</section>
-
-							<section className="mt-6">
-								{loadError && (
-									<div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground">
-										<p>Couldn&apos;t load your review deck. {loadError}</p>
-										<button type="button" onClick={() => void load()} className="q-btn sec ml-auto">
-											Try again
-										</button>
-									</div>
-								)}
-
-								{/* A card that arrives late must not push the page: its space is held from the first frame, drawn only after the skeleton delay. */}
-								{!loadError && (!status || (prompt && !lang)) && (
-									<div className={cn("q-cloze min-h-[300px] p-7", !slow && "invisible")} aria-busy="true" aria-label="Loading your review deck" data-testid="review-loading">
-										<div className="h-3 w-20 animate-pulse rounded bg-well-2" />
-										<div className="mt-7 h-12 w-full animate-pulse rounded-lg bg-well-2" />
-										<div className="mt-3 h-12 w-2/3 animate-pulse rounded-lg bg-well-2" />
-									</div>
-								)}
-
-								{status && !status.available && (
-									<div className="q-card p-6 text-[15px] text-ink-3" data-testid="review-unavailable">
-										This language has no words yet, so there is nothing to review. Add its words from the language menu at the top of the sidebar (Add a language…).
-									</div>
-								)}
-
-								{status?.available && !prompt && (
-									<div className="q-card p-8" data-testid="review-done">
-										<div className="flex items-center gap-3">
-											<span className="grid size-8 place-items-center rounded-full bg-teal text-sun-ink">
-												<QIcon name="check" className="size-4" />
+									<div className="mt-6 flex items-center gap-3" data-testid="review-new-per-day">
+										<span className="text-[13px] text-ink-3" id="review-new-per-day-label">
+											New words per day
+										</span>
+										<div className="q-segc" role="group" aria-labelledby="review-new-per-day-label">
+											<button type="button" onClick={() => stepNewPerDay(-5)} disabled={(newPerDay ?? status.settings.newPerDay) <= 0} aria-label="Five fewer new words per day" className="disabled:opacity-40">
+												<MinusIcon className="size-3.5" />
+											</button>
+											<span className="q-num grid w-10 place-items-center text-[13px] font-semibold" aria-live="polite">
+												{newPerDay ?? status.settings.newPerDay}
 											</span>
-											<p className="text-[24px] font-semibold tracking-[-0.02em]">{done > 0 ? "All caught up" : "Nothing is due right now"}</p>
+											<button type="button" onClick={() => stepNewPerDay(5)} disabled={(newPerDay ?? status.settings.newPerDay) >= 100} aria-label="Five more new words per day" className="disabled:opacity-40">
+												<PlusIcon className="size-3.5" />
+											</button>
 										</div>
-										<p className="q-line dim mt-2 max-w-md">
-											{done > 0 ? `${done === 1 ? "1 review" : `${done} reviews`} done today. ` : ""}Words come back on the day they are due, and new ones arrive tomorrow.
-										</p>
-										<div className="mt-5 flex items-center gap-3" data-testid="review-new-per-day">
-											<span className="text-[13px] text-ink-3" id="review-new-per-day-label">
-												New words per day
+									</div>
+									<SourcesNote feature="review" className="mt-6" />
+								</section>
+							)}
+
+							{prompt && lang && (
+								<article ref={bodyRef} className="pt-5 @xl:pt-12" data-testid="review-card" aria-label={`Review, ${isNew ? "new word" : "card"}`}>
+									<div className="flex h-8 items-center gap-3 text-[13px] text-ink-3">
+										<span className="whitespace-nowrap font-[450]" data-testid="review-kind">
+											{isNew ? (newTotal > 0 ? `New word ${position} of ${newTotal}` : "New word") : prompt.card.state === "learning" ? "Relearning" : "Review"}
+										</span>
+										{prompt.sentenceSource && (
+											<span className="-ml-1.5 hidden min-w-0 truncate @lg:inline" data-testid="review-source">
+												· sentence from {SENTENCE_SOURCES[prompt.sentenceSource] ?? prompt.sentenceSource}
 											</span>
-											<div className="q-segc" role="group" aria-labelledby="review-new-per-day-label">
-												<button type="button" onClick={() => stepNewPerDay(-5)} disabled={(newPerDay ?? status.settings.newPerDay) <= 0} aria-label="Five fewer new words per day" className="disabled:opacity-40">
-													<MinusIcon className="size-3.5" />
+										)}
+										{hidden ? (
+											<span className="ml-auto flex items-center gap-1 whitespace-nowrap" role="status" data-testid="review-hidden">
+												Hidden: <span lang={lang?.code}>{hidden.lemma}</span>
+												<button type="button" onClick={() => void unhide()} className="q-btn ghost -mr-2.5 !h-8 !px-2 !text-[13px] !text-teal-2" data-testid="review-unhide">
+													Undo
 												</button>
-												<span className="q-num grid w-10 place-items-center text-[13px] font-semibold" aria-live="polite">
-													{newPerDay ?? status.settings.newPerDay}
-												</span>
-												<button type="button" onClick={() => stepNewPerDay(5)} disabled={(newPerDay ?? status.settings.newPerDay) >= 100} aria-label="Five more new words per day" className="disabled:opacity-40">
-													<PlusIcon className="size-3.5" />
-												</button>
-											</div>
-										</div>
-										<div className="q-acts">
-											<Link href="/" className="q-btn primary">
-												Back to Today
-											</Link>
-											<Link href="/lesson" className="q-btn ghost">
-												Do a lesson
-											</Link>
-										</div>
-										<SourcesNote feature="review" className="mt-6" />
-									</div>
-								)}
-
-								{prompt && lang && (
-									<article className="q-cloze" data-testid="review-card" aria-label={`Review, ${isNew ? "new word" : "card"}`}>
-										<header className="q-card-head">
-											<QIcon name="review" />
-											<span className="whitespace-nowrap font-[450] text-ink-3">{isNew ? (newTotal > 0 ? `New word ${position} of ${newTotal}` : "New word") : prompt.card.state === "learning" ? "Relearning" : "Review"}</span>
-											{isNew && newTotal > 0 && newTotal <= 24 && (
-												<span className="q-dots hidden @xl:flex" aria-hidden="true">
-													{Array.from({ length: newTotal }, (_, i) => (
-														<i key={i} className={i < position - 1 ? "d" : i === position - 1 ? "c" : undefined} />
-													))}
-												</span>
-											)}
-											<span className="mins flex items-center gap-2">
-												<span className="q-segc" role="radiogroup" aria-label="Answer by">
-													{(["type", "choice"] as const).map((m) => (
-														<button
-															key={m}
-															type="button"
-															role="radio"
-															aria-checked={mode === m}
-															className={cn("!h-6 !px-2 !text-[12px]", mode === m && "on")}
-															onClick={() => {
-																setMode(m);
-																writePref(MODE_KEY, m);
-															}}
-															data-testid={`review-mode-${m}`}
-														>
-															{m === "type" ? "Typing" : "Choosing"}
-														</button>
-													))}
-												</span>
-												<SoundControl className="flex items-center transition-colors" iconClass="size-4" testid="review-sound" />
 											</span>
-										</header>
-										<div ref={bodyRef} className="q-c-body !px-4 @xl:!px-7">
-											<form
-												ref={sentenceRef}
-												onSubmit={(e) => {
-													e.preventDefault();
-													if (given.trim()) check(given);
-												}}
-												className="q-sent !text-[28px] !leading-[44px] @xl:!text-[44px] @xl:!leading-[64px]"
-												lang={lang?.code}
-												data-word-lookup-enabled={verdict !== null ? "true" : "false"}
-											>
-												<span>{around.before}</span>
-												<span className={cn(prompt.words === 1 && "whitespace-nowrap")}>
-													{around.lead}
-													<span
-														className={cn(
-															"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1 max-w-full",
-															!verdict && "q-write !text-foreground",
-															verdict === "wrong" && "!text-miss",
-															verdict === "accents" && "!text-foreground",
-														)}
-														style={{ display: "inline-grid", gridTemplateColumns: "auto" }}
-													>
-														<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre-wrap">
-															{!verdict && !picks && given.length > prompt.answer.length ? given : prompt.answer}
-														</span>
-														{verdict ? (
-															<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
-																<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
-																	{[...prompt.answer].map((ch, i) => (
-																		<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
-																			{ch}
-																		</span>
-																	))}
-																</span>
-															</span>
-														) : picks ? (
-															<span className="col-start-1 row-start-1" aria-label="blank" />
-														) : (
-															<input
-																ref={inputRef}
-																value={given}
-																onChange={(e) => setGiven(e.target.value)}
-																aria-label={prompt.words > 1 ? "Missing words" : "Missing word"}
-																autoComplete="off"
-																autoCorrect="off"
-																spellCheck={false}
-																size={1}
-																data-testid="review-input"
-																className="col-start-1 row-start-1 w-px min-w-full bg-transparent text-center outline-none caret-teal selection:bg-teal-line"
-															/>
-														)}
-													</span>
-													{around.tail}
-												</span>
-												<span>{around.after}</span>
-											</form>
+										) : (
+											<button type="button" onClick={() => void suspend()} className="q-btn ghost -mr-2.5 ml-auto !h-8 !text-[13px] !font-[450]" title="Never show this word again" data-testid="review-suspend">
+												<EyeOffIcon className="size-3.5" aria-hidden="true" />
+												Hide this word
+											</button>
+										)}
+									</div>
 
-											<div className="q-en">
-												<div className="flex min-h-8 items-center gap-2">
-													<p data-no-word-lookup="true">{prompt.card.translation}</p>
-													{verdict && <PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />}
-													{verdict && (
-														<button
-															type="button"
-															onClick={() => void saveSentence()}
-															aria-pressed={savedIds.has(prompt.card.id)}
-															aria-label={savedIds.has(prompt.card.id) ? "Sentence saved to your phrases" : "Save the sentence to your phrases"}
-															title={savedIds.has(prompt.card.id) ? "Saved to your phrases" : "Save the sentence to your phrases"}
-															data-testid="review-save-phrase"
-															className={cn("grid size-8 shrink-0 place-items-center rounded-full bg-well text-ink-2 hover:bg-well-2", savedIds.has(prompt.card.id) && "text-teal-2")}
-														>
-															<BookmarkIcon className="size-4" fill={savedIds.has(prompt.card.id) ? "currentColor" : "none"} aria-hidden="true" />
-														</button>
-													)}
-												</div>
-											</div>
-
-											<div className="mt-4 grid grid-cols-[minmax(0,1fr)]">
-												<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
-													{!verdict && mode === "choice" && !picks && <p className="q-sub !mt-0 mb-3">You have met this word before, so this time you type it.</p>}
-
-													{picks && (
-														<div className="grid gap-2 @xl:grid-cols-2" data-testid="review-options">
-															{prompt.options.map((o, i) => (
-																<button key={o} type="button" onClick={() => check(o)} disabled={!!verdict} lang={lang?.code} className="flex h-12 items-center gap-3 rounded-lg bg-well px-3.5 text-left text-[20px] font-[500] hover:bg-well-2">
-																	<kbd className="q-kbd pointer-coarse:hidden">{i + 1}</kbd>
-																	{o}
-																</button>
-															))}
-														</div>
-													)}
-
-													{!picks && (
-														<div className="relative" data-testid="review-letters" data-open={lettersOpen}>
-															{!lettersOpen && (
-																<p className="q-sub absolute inset-x-0 top-0 !mt-0 hidden items-center gap-1.5 pointer-fine:flex">
-																	<KeyboardIcon className="size-4 shrink-0" aria-hidden="true" />
-																	Press <kbd className="q-kbd">`</kbd> (left of 1) for letters such as {lang.specialLetters.slice(0, 3).join(" ")}
-																</p>
-															)}
-															<div className={cn(!lettersOpen && "pointer-fine:invisible")}>
-																<DiacriticBar variant="keys" />
-															</div>
-														</div>
-													)}
-												</div>
-
-												{verdict && (
-													<div className="lh-fade col-start-1 row-start-1" data-testid="review-feedback">
-														<p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-ink-3">
-															<span className={cn("q-result", verdict === "wrong" && "miss")} data-testid="review-verdict">
-																{verdict === "wrong" ? <XIcon className="size-[15px]" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
-																{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
-																{exact && <span>· {helped ? "help used" : "no help used"}</span>}
-															</span>
-															{!exact && (
-																<span>
-																	Correct answer: <b className="font-[550] text-ink-2" lang={lang?.code}>{prompt.answer}</b>
-																	{given && (
-																		<>
-																			{" "}
-																			· You wrote “<span lang={lang?.code}>{given}</span>”
-																		</>
-																	)}
-																</span>
-															)}
-														</p>
-														{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} code={lang?.code} className="mt-2.5" />}
-														{verdict !== "wrong" && (
-															<p className="mt-3 flex flex-wrap gap-2" data-testid="review-facts">
-																<span className="q-ex">
-																	<span className="mr-1.5 text-[12px] font-semibold text-ink-3">word</span>
-																	<Link href={`/words?search=${encodeURIComponent(prompt.card.lemma)}`} lang={lang?.code} className="underline decoration-line-2 underline-offset-2 hover:text-ink">
-																		{prompt.card.lemma}
-																	</Link>
-																	<span className="ml-1.5 font-[450] text-ink-2">{shortGloss(prompt.card.gloss)}</span>
-																</span>
-																{prompt.form && (
-																	<span className="q-ex">
-																		<span className="mr-1.5 text-[12px] font-semibold text-ink-3">form</span>
-																		{prompt.form}
-																	</span>
-																)}
-															</p>
-														)}
-														{prompt.sentenceSource && (
-															<p className="mt-3 text-[14px] text-ink-3" data-testid="review-source">
-																Sentence from {SENTENCE_SOURCES[prompt.sentenceSource] ?? prompt.sentenceSource}
-															</p>
-														)}
-													</div>
+									<form
+										ref={sentenceRef}
+										onSubmit={(e) => {
+											e.preventDefault();
+											if (given.trim()) check(given);
+										}}
+										className="q-sent mt-2 !text-[30px] !leading-[44px] [text-wrap:pretty] @xl:!text-[46px] @xl:!leading-[64px]"
+										lang={lang?.code}
+										data-word-lookup-enabled={verdict !== null ? "true" : "false"}
+									>
+										<span>{around.before}</span>
+										<span className={cn(prompt.words === 1 && "whitespace-nowrap")}>
+											{around.lead}
+											<span
+												className={cn(
+													"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1 max-w-full",
+													!verdict && "q-write !text-foreground",
+													verdict === "wrong" && "!text-miss",
+													verdict === "accents" && "!text-foreground",
 												)}
-											</div>
-										</div>
-									</article>
-								)}
+												style={{ display: "inline-grid", gridTemplateColumns: "auto" }}
+											>
+												<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre-wrap">
+													{!verdict && !picks && given.length > prompt.answer.length ? given : prompt.answer}
+												</span>
+												{verdict ? (
+													<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
+														<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
+															{[...prompt.answer].map((ch, i) => (
+																<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
+																	{ch}
+																</span>
+															))}
+														</span>
+													</span>
+												) : picks ? (
+													<span className="col-start-1 row-start-1" aria-label="blank" />
+												) : (
+													<input
+														ref={inputRef}
+														value={given}
+														onChange={(e) => setGiven(e.target.value)}
+														aria-label={prompt.words > 1 ? "Missing words" : "Missing word"}
+														autoComplete="off"
+														autoCorrect="off"
+														spellCheck={false}
+														size={1}
+														data-testid="review-input"
+														className="col-start-1 row-start-1 w-px min-w-full bg-transparent text-center outline-none caret-teal selection:bg-teal-line"
+													/>
+												)}
+											</span>
+											{around.tail}
+										</span>
+										<span>{around.after}</span>
+									</form>
 
-								{prompt && lang && (
-									<div className="mt-4 min-h-[184px] @xl:min-h-[152px]" data-testid="review-dock">
-										{!verdict ? (
-											<div className="flex flex-wrap items-center gap-2">
+									<div className="mt-3 flex min-h-8 items-center gap-2">
+										<p className="text-[17px] leading-snug text-ink-2" data-no-word-lookup="true">
+											{prompt.card.translation}
+										</p>
+										<span className={cn("flex shrink-0 gap-2", !verdict && "invisible")} aria-hidden={!verdict}>
+											<PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />
+											<button
+												type="button"
+												onClick={() => void saveSentence()}
+												aria-pressed={savedIds.has(prompt.card.id)}
+												aria-label={savedIds.has(prompt.card.id) ? "Sentence saved to your phrases" : "Save the sentence to your phrases"}
+												title={savedIds.has(prompt.card.id) ? "Saved to your phrases" : "Save the sentence to your phrases"}
+												data-testid="review-save-phrase"
+												className={cn("grid size-8 shrink-0 place-items-center rounded-full bg-well text-ink-2 hover:bg-well-2", savedIds.has(prompt.card.id) && "text-teal-2")}
+											>
+												<BookmarkIcon className="size-4" fill={savedIds.has(prompt.card.id) ? "currentColor" : "none"} aria-hidden="true" />
+											</button>
+										</span>
+									</div>
+
+									<div className="mt-6 grid grid-cols-[minmax(0,1fr)] @2xl:min-h-[112px]">
+										<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
+											<p className="mb-3 flex min-h-6 flex-wrap gap-x-6 gap-y-1" data-testid="review-hints">
 												{hint > 0 && (
-													<span className="q-ex h-12 !items-center rounded-lg bg-well px-3.5" data-testid="review-hints">
-														<span className="mr-1.5 text-[12px] font-semibold text-ink-3">means</span>
-														{prompt.card.gloss}
+													<span className="lh-fade">
+														<Note label="means">{prompt.card.gloss}</Note>
 													</span>
 												)}
 												{hint > 1 && (
-													<span className="q-ex h-12 !items-center rounded-lg bg-well px-3.5">
-														<span className="mr-1.5 text-[12px] font-semibold text-ink-3">base form</span>
-														<span lang={lang?.code}>{prompt.card.lemma}</span>
+													<span className="lh-fade">
+														<Note label="base form" lang={lang?.code}>
+															{prompt.card.lemma}
+														</Note>
 													</span>
 												)}
-												{hint < 2 && (
-													<button
-														type="button"
-														onClick={() => {
-															setHint((h) => Math.min(2, h + 1));
-															inputRef.current?.focus();
-														}}
-														className="q-btn sec"
-														data-testid="review-hint"
-													>
-														<LightbulbIcon className="size-3.5" aria-hidden="true" />
-														{hint === 0 ? "Show meaning" : "Show base form"}
-														<span className="font-[450] text-ink-3">· rating up to {hint === 0 ? "Good" : "Hard"}</span>
-													</button>
-												)}
-												<button type="button" onClick={() => check("")} className="q-btn sec" data-testid="review-dont-know">
-													I don&apos;t know
-													<span className="font-[450] text-ink-3">· counts as Again</span>
-												</button>
-												{!picks && (
-													<button type="button" onClick={() => check(given)} disabled={!given.trim()} className="q-btn primary ml-auto" data-testid="review-check">
-														Check
-													</button>
-												)}
-											</div>
-										) : (
-											<div className="flex flex-col gap-3">
-												<div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Rate it yourself" data-testid="review-ratings">
-													{([1, 2, 3, 4] as Rating[]).map((r) => (
-														<button
-															key={r}
-															type="button"
-															role="radio"
-															aria-checked={r === shownSuggested}
-															disabled={saving || r > cap}
-															onClick={() => setSuggested(r)}
-															title={r > cap ? `${RATING_LABELS[r]} is off: ${verdict === "wrong" ? "a miss counts as Again" : "you had help on this card"}` : undefined}
-															className={cn("flex h-14 min-w-0 flex-col items-center justify-center rounded-lg text-[14px] font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well disabled:opacity-35 disabled:line-through", r === shownSuggested && "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)] hover:bg-teal-wash")}
-																>
-															{RATING_LABELS[r]}
-															<span className="q-num text-[12px] font-[450] text-ink-3">{formatInterval(prompt.intervals[r])}</span>
-														</button>
+											</p>
+
+											{!verdict && mode === "choice" && !picks && <p className="q-sub !mt-0 mb-3">You have met this word before, so this time you type it.</p>}
+
+											{picks && (
+												<div className="grid gap-2 @xl:grid-cols-2" data-testid="review-options">
+													{prompt.options.map((o, i) => (
+														<OptionTile key={o} n={i + 1} onClick={() => check(o)} disabled={!!verdict} lang={lang?.code}>
+															{o}
+														</OptionTile>
 													))}
 												</div>
-												<button type="button" autoFocus disabled={saving} onClick={() => void rate(shownSuggested)} data-testid="review-continue" className="q-btn primary w-full justify-center">
-													{saving && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
-													Continue · {RATING_LABELS[shownSuggested]}
-												</button>
-											</div>
-										)}
-										<div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-										<p className="whitespace-nowrap text-[12px] text-ink-3 pointer-coarse:hidden">{!verdict ? "Press Enter to check." : "Press 1 to 4 to rate, Enter to continue."}</p>
-										<div className="flex items-center gap-2 text-[12px] text-ink-3" data-testid="review-blank" title="How many words a card can hide. A new word always hides one. Applies from the next card.">
-											<span id="review-blank-label">Blank</span>
-											<span className="q-segc" role="radiogroup" aria-labelledby="review-blank-label">
-												{[1, 2, 3].map((n) => (
-													<button key={n} type="button" role="radio" aria-checked={blankWordsNow === n} className={cn("!h-6 !px-2 !text-[12px] whitespace-nowrap", blankWordsNow === n && "on")} onClick={() => chooseBlankWords(n)} data-testid={`review-blank-${n}`}>
-														{n === 1 ? "1 word" : `1–${n}`}
-													</button>
-												))}
-											</span>
+											)}
+
+											{!picks && (
+												<DiacriticBar variant="keys" />
+											)}
 										</div>
-										<button type="button" onClick={() => void suspend()} className="q-btn ghost ml-auto" title="Never show this word again" data-testid="review-suspend">
-											<EyeOffIcon className="size-3.5" aria-hidden="true" />
-											Hide this word
-										</button>
-									</div>
-									</div>
-								)}
 
-								{last && prompt && (
-									<div className="q-rep mt-3 opacity-75" data-testid="review-last">
-										<span className="cb">
-											<QCheck />
-										</span>
-										<span className="s" lang={lang?.code}>
-											{last.before}
-											<em>{last.answer}</em>
-											{last.after}
-										</span>
-										<span className="e" title={last.translation}>{last.translation}</span>
-										<span className="r">{last.label}</span>
+										{verdict && (
+											<div className="lh-fade col-start-1 row-start-1" data-testid="review-feedback">
+												<p className={cn("q-result !text-[15px]", verdict === "wrong" && "miss")} data-testid="review-verdict">
+													{verdict === "wrong" ? <XIcon className="size-4" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
+													{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
+													{exact && <span>· {helped ? "help used" : "no help used"}</span>}
+													{!exact && given.trim() && (
+														<span className="min-w-0 truncate">
+															· you wrote “<span lang={lang?.code}>{given.trim()}</span>”
+														</span>
+													)}
+												</p>
+												{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} code={lang?.code} className="mt-2.5" />}
+												{verdict !== "wrong" && (
+													<p className="mt-3 flex flex-wrap gap-x-6 gap-y-1" data-testid="review-facts">
+														<Note label="word">
+															<Link href={`/words?search=${encodeURIComponent(prompt.card.lemma)}`} lang={lang?.code} className="underline decoration-line-2 underline-offset-2 hover:text-ink">
+																{prompt.card.lemma}
+															</Link>
+															<span className="ml-1.5 font-[450] text-ink-2">{shortGloss(prompt.card.gloss)}</span>
+														</Note>
+														{prompt.form && <Note label="form">{prompt.form}</Note>}
+													</p>
+												)}
+</div>
+										)}
 									</div>
-								)}
+								</article>
+							)}
 
-																{status && lang && status.leeches.length > 0 && (
-									<div className="mt-6" data-testid="review-leeches">
-										<h2 className="q-sh">Words that keep slipping</h2>
-										<p className="q-sub" style={{ marginTop: 0 }}>
-											Missed again and again. A lesson on them, or a sentence of your own, often helps more than another review.
-										</p>
-										<ul className="mt-3 flex flex-wrap gap-2">
-											{status.leeches.map((l) => (
-												<li key={l.id} className="q-ex" title={`Missed ${l.lapses} times`}>
-													<span lang={lang?.code}>{l.lemma}</span>
-													<span className="ml-1.5 font-[450] text-ink-3">{l.gloss}</span>
-													<span className="ml-1.5 text-[12px] text-ink-3">×{l.lapses}</span>
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
 
-							</section>
+							{lang && status?.available && answered.length > 0 && (prompt || caughtUp) && (
+								<section className="mt-8" aria-labelledby="review-answered-title" data-testid="review-answered">
+									<h2 className="q-sh !mb-0" id="review-answered-title">
+										Answered today
+										{counts && counts.reviewedToday > answered.length && <small>latest {answered.length} of {counts.reviewedToday}</small>}
+									</h2>
+									<ol className="divide-y divide-[var(--q-line)]">
+										{answered.map((line) => (
+											<AnsweredRow key={`${line.cardId}@${line.reviewedAt}`} line={line} code={lang.code} fresh={newestLineAtOpen !== undefined && line.reviewedAt > newestLineAtOpen} />
+										))}
+									</ol>
+								</section>
+							)}
+
+							{status && lang && status.leeches.length > 0 && (
+								<section className="mt-12" data-testid="review-leeches">
+									<h2 className="q-sh">Words that keep slipping</h2>
+									<p className="q-sub" style={{ marginTop: 0 }}>
+										Missed again and again. A lesson on them, or a sentence of your own, often helps more than another review.
+									</p>
+									<ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+										{status.leeches.map((l) => (
+											<li key={l.id} className="q-ex" title={`Missed ${l.lapses} times`}>
+												<span lang={lang?.code}>{l.lemma}</span>
+												<span className="ml-1.5 font-[450] text-ink-3">{l.gloss}</span>
+												<span className="ml-1.5 text-[12px] text-ink-3">×{l.lapses}</span>
+											</li>
+										))}
+									</ul>
+								</section>
+							)}
 						</div>
 					</div>
 
+					{prompt && lang && (
+						<div
+							className={cn("shrink-0 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--q-line)] transition-colors", verdict === "wrong" ? "bg-miss-soft" : verdict ? "bg-teal-wash" : "bg-background")}
+							data-testid="review-dock"
+						>
+							<div className={cn(COLUMN, "py-4")}>
+								<div className={cn("@2xl:min-h-14", picks ? "min-h-14" : "min-h-[120px]")}>
+									{!verdict ? (
+										<div key="ask" className="grid grid-cols-2 gap-2 @2xl:flex @2xl:h-14 @2xl:items-center">
+											<button
+												type="button"
+												onClick={() => {
+													setHint((h) => Math.min(2, h + 1));
+													inputRef.current?.focus();
+												}}
+												disabled={hint >= 2}
+												className={HELP_BUTTON}
+												data-testid="review-hint"
+											>
+												<span className="flex items-center gap-2">
+													<LightbulbIcon className="hidden size-3.5 shrink-0 text-ink-3 @2xl:block" aria-hidden="true" />
+													{hint === 0 ? "Show meaning" : hint === 1 ? "Show base form" : "Both hints shown"}
+												</span>
+												<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
+													<span className="hidden @2xl:inline">· </span>
+													{hint === 0 ? "at most Good" : "at most Hard"}
+												</span>
+											</button>
+											<button type="button" onClick={() => check("")} className={HELP_BUTTON} data-testid="review-dont-know">
+												I don&apos;t know
+												<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
+													<span className="hidden @2xl:inline">· </span>counts as Again
+												</span>
+											</button>
+											{!picks && (
+												<button type="button" onClick={() => check(given)} disabled={!given.trim()}	className="q-btn primary col-span-2 !h-12 @2xl:ml-auto @2xl:min-w-44" data-testid="review-check">
+													Check
+													<span className="q-kbd pointer-coarse:hidden">
+														<QIcon name="enter" />
+													</span>
+												</button>
+											)}
+										</div>
+									) : (
+										<div key="rate" className="grid gap-2 @2xl:flex @2xl:h-14 @2xl:items-center">
+											{cap === 1 ? (
+												<p className="flex h-14 items-center gap-2 text-[15px] text-ink-2 @2xl:w-[440px]" data-testid="review-ratings">
+													<b className="font-semibold text-foreground">Again</b>
+													<span className="text-ink-3">· comes back in {comesBack(prompt.intervals[1])}</span>
+												</p>
+											) : (
+											<div className="grid h-14 grid-cols-4 rounded-[10px] bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)] @2xl:w-[440px]" role="radiogroup" aria-label="Rate it yourself: when the word comes back" data-testid="review-ratings">
+												{([1, 2, 3, 4] as Rating[]).map((r) => (
+													<button
+														key={r}
+														type="button"
+														role="radio"
+														aria-checked={r === shownSuggested}
+														disabled={saving || r > cap}
+														onClick={() => setSuggested(r)}
+														title={r > cap ? `${RATING_LABELS[r]} is off: ${verdict === "wrong" ? "a miss counts as Again" : "you had help on this card"}` : undefined}
+														className={cn(
+															"relative flex min-w-0 flex-col items-center justify-center text-[14px] font-semibold text-foreground transition-colors first:rounded-l-[10px] last:rounded-r-[10px]",
+															r > 1 && "shadow-[inset_1px_0_0_var(--q-line)]",
+															r !== shownSuggested && "hover:bg-well-2 disabled:text-ink-4 disabled:hover:bg-transparent",
+															r === shownSuggested && "rounded-[10px] bg-card text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
+														)}
+													>
+														<kbd className="absolute left-1.5 top-1.5 hidden font-ui text-[12px] font-[550] text-ink-4 pointer-fine:block">{r}</kbd>
+														{RATING_LABELS[r]}
+														<span className="q-num text-[12px] font-[450] text-ink-3">{comesBack(prompt.intervals[r])}</span>
+													</button>
+												))}
+											</div>
+											)}
+											<button type="button" autoFocus disabled={saving} onClick={() => void rate(shownSuggested)} data-testid="review-continue" className="q-btn primary !h-12 @2xl:ml-auto @2xl:min-w-44">
+												{saving && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
+												Continue · {RATING_LABELS[shownSuggested]}
+												<span className="q-kbd pointer-coarse:hidden">
+													<QIcon name="enter" />
+												</span>
+											</button>
+										</div>
+									)}
+								</div>
+</div>
+						</div>
+					)}
+
+					{caughtUp && (
+						<div className="shrink-0 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--q-line)]">
+							<div className={cn(COLUMN, "flex min-h-20 flex-wrap items-center justify-end gap-2 py-4")}>
+								<Link href="/lesson" className="q-btn ghost">
+									Do a lesson
+								</Link>
+								<Link href="/" className="q-btn primary !h-12">
+									Back to Today
+								</Link>
+							</div>
+						</div>
+					)}
 				</main>
 
 				<DayRail s={day.s} />
