@@ -521,7 +521,7 @@ export function ReviewSession() {
 						<b className="q-num text-[15px] font-semibold tracking-[-0.01em]">
 							{day.s?.todayXp ?? 0} <span className="text-[13px] font-[450] text-ink-3">/ {day.s?.dailyGoal ?? 50} XP</span>
 						</b>
-						<small className="text-xs text-ink-3">{day.s ? `${Math.max(0, day.s.dailyGoal - day.s.todayXp)} to today's goal` : " "}</small>
+						<small className="text-xs text-ink-3">{day.s ? (day.s.todayXp < day.s.dailyGoal ? `${day.s.dailyGoal - day.s.todayXp} to today's goal` : "Today's goal is met") : " "}</small>
 					</div>
 					<Link href="/" className="q-btn ghost ml-auto">
 						Today
