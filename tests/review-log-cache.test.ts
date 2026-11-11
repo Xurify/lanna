@@ -98,10 +98,10 @@ test("today's answers come back newest first, each sentence split at the card's 
 	reviewStore.appendLog({ ...entry("2026-11-02T09:30:00Z"), cardId: "gone" });
 	const { answered } = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false });
 	assert.deepEqual(
-		answered.map(({ cardId, before, answer, after, rating, verdict, helped }) => ({ cardId, before, answer, after, rating, verdict, helped })),
+		answered.map(({ cardId, pieces, gaps, rating, verdict, helped }) => ({ cardId, pieces, gaps, rating, verdict, helped })),
 		[
-			{ cardId: "dom", before: "Som ", answer: "doma", after: ".", rating: 3, verdict: "exact", helped: false },
-			{ cardId: "stanica", before: "Je to od ", answer: "stanice", after: " ďaleko?", rating: 1, verdict: "wrong", helped: true },
+			{ cardId: "dom", pieces: ["Som ", "."], gaps: ["doma"], rating: 3, verdict: "exact", helped: false },
+			{ cardId: "stanica", pieces: ["Je to od ", " ďaleko?"], gaps: ["stanice"], rating: 1, verdict: "wrong", helped: true },
 		],
 		"yesterday's line and a card no longer in the deck are left out",
 	);
@@ -109,4 +109,17 @@ test("today's answers come back newest first, each sentence split at the card's 
 	const full = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false });
 	assert.equal(full.answered.length, ANSWERED_LINES);
 	assert.equal(full.counts.reviewedToday, ANSWERED_LINES + 5 + 3);
+});
+
+test("a line that hid several words marks every word it hid, and one whose spans no longer fit marks the card's word alone", () => {
+	fs.writeFileSync(LOG(), "", "utf-8");
+	const sentence = "O kurz je veľký záujem medzi študentmi.";
+	const at = sentence.indexOf("záujem");
+	reviewStore.writeCards({ zaujem: { id: "zaujem", slug: "zaujem", lemma: "záujem", gloss: "interest", sentence, translation: "", answer: "záujem", at, state: "review", due: "2026-11-09T00:00:00Z", reps: 3, lapses: 0, createdAt: "2026-11-01T00:00:00Z" } } as never);
+	reviewStore.appendLog({ ...entry("2026-11-02T08:00:00Z"), cardId: "zaujem", words: 2, spans: [[at, at + 6], [at + 7, at + 12]] });
+	reviewStore.appendLog({ ...entry("2026-11-02T08:10:00Z"), cardId: "zaujem", words: 2, spans: [[2, 6], [90, 99]] });
+	const [stale, kept] = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false }).answered;
+	assert.deepEqual(kept!.gaps, ["záujem", "medzi"]);
+	assert.deepEqual(kept!.pieces, ["O kurz je veľký ", " ", " študentmi."]);
+	assert.deepEqual(stale!.gaps, ["záujem"]);
 });

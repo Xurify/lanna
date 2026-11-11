@@ -2,6 +2,17 @@
 
 Times are UTC. "Unverified" means the owner has not yet used it in the live app; the sandbox checks and the tests were run in the cloud.
 
+## 11 November: Review's blanks are scattered, and the day's list stops giving the answer away (branch `fix/review-answered-hides-blank`)
+
+- **Why:** the owner saw a relearning card's answer in Answered today right under its blank, a two-word miss listed as one word, and asked for blanks that are "more random and not always the same" (E102).
+- **What changed:**
+  - A longer blank hides the card's word and other words from anywhere in the sentence, picked anew each rep, each in its own field (Space moves on).
+  - After the answer each hidden word is colored on its own.
+  - The log keeps where the hidden words were, and Answered today marks all of them.
+  - While a card is open, its words are shaded out in Answered today until the answer is checked.
+- **Checked:** `tests/review-blank.test.ts` and `tests/review-log-cache.test.ts`, the full suite, typecheck, ESLint.
+- **Unverified:** the owner's real deck; lines answered before this change still mark the card's word alone.
+
 ## 11 November: Review is written on the page (branch `feat/review-on-the-page`)
 
 - **Why:** the owner asked what Review would look like with less of a card, and for a new layout, not a restyle.

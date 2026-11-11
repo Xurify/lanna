@@ -6,7 +6,7 @@
  * (core/language.ts compareAnswer); the confirmed rating goes to POST /api/review.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { BookmarkIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { compareAnswer, diacriticSlips, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, targetWordOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
+import { compareAnswer, diacriticSlips, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, splitOnWords, targetWordOf, wordsOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -27,8 +27,8 @@ import { usePopoverDismiss } from "@/components/popover-dismiss";
 
 interface Prompt {
 	card: ReviewCard;
-	before: string;
-	after: string;
+	pieces: string[];
+	gaps: string[];
 	answer: string;
 	words: number;
 	target: number;
@@ -43,9 +43,8 @@ interface Prompt {
 interface AnsweredLine {
 	cardId: string;
 	reviewedAt: string;
-	before: string;
-	answer: string;
-	after: string;
+	pieces: string[];
+	gaps: string[];
 	translation: string;
 	rating: Rating;
 	verdict: AnswerVerdict;
@@ -94,15 +93,38 @@ function writePref(key: string, value: string) {
 
 
 /**
- * Splits the sentence around the blank. Punctuation that touches the blank
- * ("." after it, "„" before it) comes out as lead and tail, so it renders in
- * the same nowrap run as the highlight box. The box is an atomic inline, and
+ * Splits each piece of the sentence around the gaps. Punctuation that touches
+ * a gap ("." after it, "„" before it) comes out as head and foot, so it renders
+ * in the same nowrap run as the gap's box. The box is an atomic inline, and
  * a browser may break the line right after it, stranding the period below it.
  */
-function clozeAround(before: string, after: string) {
-	const lead = /[^\s\p{L}\p{N}]*$/u.exec(before)?.[0] ?? "";
-	const tail = /^[^\s\p{L}\p{N}]*/u.exec(after)?.[0] ?? "";
-	return { before: before.slice(0, before.length - lead.length), lead, tail, after: after.slice(tail.length) };
+function clozeRuns(pieces: string[]) {
+	return pieces.map((piece, i) => {
+		const head = i > 0 ? (/^[^\s\p{L}\p{N}]*/u.exec(piece)?.[0] ?? "") : "";
+		const rest = piece.slice(head.length);
+		const foot = i < pieces.length - 1 ? (/[^\s\p{L}\p{N}]*$/u.exec(rest)?.[0] ?? "") : "";
+		return { head, body: rest.slice(0, rest.length - foot.length), foot };
+	});
+}
+
+const NO_WORDS: ReadonlySet<string> = new Set();
+
+function Masked({ text, hide }: { text: string; hide: ReadonlySet<string> }) {
+	if (hide.size === 0) return <>{text}</>;
+	return (
+		<>
+			{splitOnWords(text, hide).map((part, i) =>
+				part.hidden ? (
+					<span key={i} className="rounded-[3px] bg-well-2 text-transparent select-none">
+						<span aria-hidden="true">{part.text}</span>
+						<span className="sr-only">hidden</span>
+					</span>
+				) : (
+					part.text
+				),
+			)}
+		</>
+	);
 }
 
 function stillToDo(counts: Status["counts"]): string {
@@ -229,7 +251,7 @@ function DeckSettings({ mode, onMode, blankWords, onBlankWords, className }: { m
 	);
 }
 
-function AnsweredRow({ line, code, fresh }: { line: AnsweredLine; code?: string; fresh: boolean }) {
+function AnsweredRow({ line, code, fresh, hide }: { line: AnsweredLine; code?: string; fresh: boolean; hide: ReadonlySet<string> }) {
 	return (
 		<li className={cn("relative grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-x-3 py-3 @xl:grid-cols-[minmax(0,1fr)_auto]", fresh && "lh-fade")}>
 			<span className="mt-[3px] @xl:absolute @xl:-left-7 @xl:top-3">
@@ -238,18 +260,23 @@ function AnsweredRow({ line, code, fresh }: { line: AnsweredLine; code?: string;
 			<span className="min-w-0">
 				<span className="sr-only">{VERDICT_WORD[line.verdict]}: </span>
 				<span className="block text-[16px] leading-snug text-ink-2" lang={code}>
-					{line.before}
-					<b
-						className={cn(
-							"font-semibold text-foreground underline decoration-2 underline-offset-[5px]",
-							line.verdict === "exact" && "decoration-teal",
-							line.verdict === "accents" && "decoration-teal-line",
-							line.verdict === "wrong" && "decoration-miss",
-						)}
-					>
-						{line.answer}
-					</b>
-					{line.after}
+					{line.pieces.map((piece, i) => (
+						<Fragment key={i}>
+							<Masked text={piece} hide={hide} />
+							{i < line.gaps.length && (
+								<b
+									className={cn(
+										"font-semibold text-foreground underline decoration-2 underline-offset-[5px]",
+										line.verdict === "exact" && "decoration-teal",
+										line.verdict === "accents" && "decoration-teal-line",
+										line.verdict === "wrong" && "decoration-miss",
+									)}
+								>
+									<Masked text={line.gaps[i]!} hide={hide} />
+								</b>
+							)}
+						</Fragment>
+					))}
 				</span>
 				<span className="mt-0.5 block truncate text-[13px] text-ink-3" data-no-word-lookup="true">
 					{line.translation}
@@ -267,7 +294,8 @@ export function ReviewSession() {
 	const lang = useActiveLanguage();
 	const [status, setStatus] = useState<Status | null>(() => knownStatus);
 	const [loadError, setLoadError] = useState<string | null>(null);
-	const [given, setGiven] = useState("");
+	const [fields, setFields] = useState<string[]>([]);
+	const [givenParts, setGivenParts] = useState<string[]>([]);
 	const [verdict, setVerdict] = useState<AnswerVerdict | null>(null);
 	const [reason, setReason] = useState<MissReason | null>(null);
 	const [suggested, setSuggested] = useState<Rating>(3);
@@ -289,7 +317,7 @@ export function ReviewSession() {
 	// One card at a time: its active time (the gaps between actions, each
 	// capped) is what the day's minutes count; `ms` stays the card's wall-clock.
 	const activeTime = useActiveTime("review", "interactive");
-	const inputRef = useRef<HTMLInputElement>(null);
+	const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 	const sentenceRef = useRef<HTMLFormElement>(null);
 	const bodyRef = useRef<HTMLElement>(null);
 
@@ -309,7 +337,8 @@ export function ReviewSession() {
 			setNewestLineAtOpen((seen) => seen ?? next.answered?.[0]?.reviewedAt ?? "");
 			setStatus(next);
 			if (!sameCard) {
-				setGiven("");
+				setFields([]);
+				setGivenParts([]);
 				setVerdict(null);
 				setReason(null);
 				setHint(0);
@@ -344,7 +373,12 @@ export function ReviewSession() {
 	useEffect(() => {
 		if (cardId) settle(bodyRef.current);
 	}, [cardId]);
-	const around = clozeAround(prompt?.before ?? "", prompt?.after ?? "");
+	const runs = clozeRuns(prompt?.pieces ?? [""]);
+	const gaps = prompt?.gaps ?? [];
+	const typed = gaps.map((_, i) => (fields[i] ?? "").trim());
+	const given = givenParts.join(" ");
+	const focusGap = (i: number) => inputRefs.current[i]?.focus();
+	const focusOpenGap = () => focusGap(Math.max(0, typed.findIndex((t) => !t)));
 	const tag = lang?.tag ?? "sk-SK";
 	// A card already retrieved once is always typed: recall beats recognition (docs/research/desirable-difficulties.md).
 	// The sentence is spoken when the answer is checked: have its audio ready by then.
@@ -358,13 +392,14 @@ export function ReviewSession() {
 	const cap = ratingCeiling(verdict ?? "exact", help);
 
 	useEffect(() => {
-		if (status?.next && !verdict && !picks) inputRef.current?.focus();
+		if (status?.next && !verdict && !picks) inputRefs.current[0]?.focus();
 	}, [status?.next, verdict, picks]);
 
-	const check = (answer: string) => {
+	const check = (parts: string[]) => {
 		if (!prompt || verdict) return;
+		const answer = parts.join(" ");
 		const v = compareAnswer(prompt.answer, answer, tag);
-		setGiven(answer);
+		setGivenParts(parts);
 		setVerdict(v);
 		setSuggested(ratingFor(v, Date.now() - shownAt.current, help));
 		if (v === "exact") sfx.right();
@@ -445,7 +480,7 @@ export function ReviewSession() {
 				const opt = picks ? prompt?.options[Number(e.key) - 1] : undefined;
 				if (opt && !e.metaKey && !e.ctrlKey && !e.altKey) {
 					e.preventDefault();
-					check(opt);
+					check([opt]);
 				}
 				return;
 			}
@@ -460,7 +495,20 @@ export function ReviewSession() {
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const slips = useMemo(() => (prompt && verdict === "accents" ? new Set(diacriticSlips(prompt.answer, given, tag)) : new Set<number>()), [prompt, verdict, given, tag]);
+	const gapVerdicts = useMemo(() => (verdict ? gaps.map((gap, i) => compareAnswer(gap, givenParts[i] ?? "", tag)) : []), [verdict, gaps, givenParts, tag]);
+	const gapSlips = useMemo(() => gapVerdicts.map((v, i) => (v === "accents" ? new Set(diacriticSlips(gaps[i]!, givenParts[i] ?? "", tag)) : new Set<number>())), [gapVerdicts, gaps, givenParts, tag]);
+	const hideInHistory = useMemo(() => (prompt && !verdict ? new Set(wordsOf(prompt.answer)) : NO_WORDS), [prompt, verdict]);
+	const typeInGap = (i: number, value: string) => {
+		const [head, ...rest] = value.split(/\s+/);
+		const spill = i < gaps.length - 1 && rest.length > 0;
+		setFields((now) => {
+			const next = gaps.map((_, k) => now[k] ?? "");
+			next[i] = spill ? head! : value;
+			if (spill && rest.join(" ")) next[i + 1] = rest.join(" ");
+			return next;
+		});
+		if (spill) focusGap(i + 1);
+	};
 
 	const saveNewPerDay = async (n: number) => {
 		const res = await fetch("/api/review/settings", {
@@ -660,57 +708,85 @@ export function ReviewSession() {
 										ref={sentenceRef}
 										onSubmit={(e) => {
 											e.preventDefault();
-											if (given.trim()) check(given);
+											if (typed.some(Boolean)) check(typed);
 										}}
 										className="q-sent mt-2 !text-[30px] !leading-[44px] [text-wrap:pretty] @xl:!text-[46px] @xl:!leading-[64px]"
 										lang={lang?.code}
 										data-word-lookup-enabled={verdict !== null ? "true" : "false"}
 									>
-										<span>{around.before}</span>
-										<span className={cn(prompt.words === 1 && "whitespace-nowrap")}>
-											{around.lead}
-											<span
-												className={cn(
-													"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1 max-w-full",
-													!verdict && "q-write !text-foreground",
-													verdict === "wrong" && "!text-miss",
-													verdict === "accents" && "!text-foreground",
-												)}
-												style={{ display: "inline-grid", gridTemplateColumns: "auto" }}
-											>
-												<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre-wrap">
-													{!verdict && !picks && given.length > prompt.answer.length ? given : prompt.answer}
-												</span>
-												{verdict ? (
-													<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
-														<span className={cn(verdict === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", verdict === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
-															{[...prompt.answer].map((ch, i) => (
-																<span key={i} className={slips.has(i) ? "underline decoration-2 underline-offset-4" : undefined}>
-																	{ch}
+										{runs.map((run, i) => {
+											const gap = gaps[i];
+											const v = gapVerdicts[i];
+											return (
+												<Fragment key={i}>
+													<span>{run.body}</span>
+													{gap !== undefined && (
+														<span className="whitespace-nowrap">
+															{run.foot}
+															<span
+																className={cn(
+																	"q-slot !mx-0 !h-[44px] !px-0.5 @xl:!h-[58px] @xl:!px-1 max-w-full",
+																	!verdict && "q-write !text-foreground",
+																	v === "wrong" && "!text-miss",
+																	v === "accents" && "!text-foreground",
+																)}
+																style={{ display: "inline-grid", gridTemplateColumns: "auto" }}
+															>
+																<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre">
+																	{!verdict && !picks && (fields[i]?.length ?? 0) > gap.length ? fields[i] : gap}
 																</span>
-															))}
+																{verdict ? (
+																	<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
+																		<span className={cn(v === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", v === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
+																			{[...gap].map((ch, k) => (
+																				<span key={k} className={gapSlips[i]?.has(k) ? "underline decoration-2 underline-offset-4" : undefined}>
+																					{ch}
+																				</span>
+																			))}
+																		</span>
+																	</span>
+																) : picks ? (
+																	<span className="col-start-1 row-start-1" aria-label="blank" />
+																) : (
+																	<input
+																		ref={(el) => {
+																			inputRefs.current[i] = el;
+																		}}
+																		value={fields[i] ?? ""}
+																		onChange={(e) => typeInGap(i, e.target.value)}
+																		onKeyDown={(e) => {
+																			const el = e.currentTarget;
+																			const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+																			const atEnd = el.selectionStart === el.value.length;
+																			// HTML's implicit submission skips a form with more than one text field and no submit button, so Enter is handled here.
+																			if (e.key === "Enter" && gaps.length > 1) {
+																				e.preventDefault();
+																				e.stopPropagation();
+																				if (typed.some(Boolean)) check(typed);
+																			} else if (i > 0 && ((e.key === "Backspace" && !el.value) || (e.key === "ArrowLeft" && atStart))) {
+																				e.preventDefault();
+																				focusGap(i - 1);
+																			} else if (i < gaps.length - 1 && e.key === "ArrowRight" && atEnd) {
+																				e.preventDefault();
+																				focusGap(i + 1);
+																			}
+																		}}
+																		aria-label={gaps.length > 1 ? `Missing word ${i + 1} of ${gaps.length}` : "Missing word"}
+																		autoComplete="off"
+																		autoCorrect="off"
+																		spellCheck={false}
+																		size={1}
+																		data-testid="review-input"
+																		className="col-start-1 row-start-1 w-px min-w-full bg-transparent text-center outline-none caret-teal selection:bg-teal-line"
+																	/>
+																)}
+															</span>
+															{runs[i + 1]?.head}
 														</span>
-													</span>
-												) : picks ? (
-													<span className="col-start-1 row-start-1" aria-label="blank" />
-												) : (
-													<input
-														ref={inputRef}
-														value={given}
-														onChange={(e) => setGiven(e.target.value)}
-														aria-label={prompt.words > 1 ? "Missing words" : "Missing word"}
-														autoComplete="off"
-														autoCorrect="off"
-														spellCheck={false}
-														size={1}
-														data-testid="review-input"
-														className="col-start-1 row-start-1 w-px min-w-full bg-transparent text-center outline-none caret-teal selection:bg-teal-line"
-													/>
-												)}
-											</span>
-											{around.tail}
-										</span>
-										<span>{around.after}</span>
+													)}
+												</Fragment>
+											);
+										})}
 									</form>
 
 									<div className="mt-3 flex min-h-8 items-center gap-2">
@@ -755,7 +831,7 @@ export function ReviewSession() {
 											{picks && (
 												<div className="grid gap-2 @xl:grid-cols-2" data-testid="review-options">
 													{prompt.options.map((o, i) => (
-														<OptionTile key={o} n={i + 1} onClick={() => check(o)} disabled={!!verdict} lang={lang?.code}>
+														<OptionTile key={o} n={i + 1} onClick={() => check([o])} disabled={!!verdict} lang={lang?.code}>
 															{o}
 														</OptionTile>
 													))}
@@ -775,7 +851,7 @@ export function ReviewSession() {
 													{exact && <span>· {helped ? "help used" : "no help used"}</span>}
 													{!exact && given.trim() && (
 														<span className="min-w-0 truncate">
-															· you wrote “<span lang={lang?.code}>{given.trim()}</span>”
+															· you wrote “<span lang={lang?.code}>{givenParts.filter(Boolean).join(" … ")}</span>”
 														</span>
 													)}
 												</p>
@@ -806,7 +882,7 @@ export function ReviewSession() {
 									</h2>
 									<ol className="divide-y divide-[var(--q-line)]">
 										{answered.map((line) => (
-											<AnsweredRow key={`${line.cardId}@${line.reviewedAt}`} line={line} code={lang.code} fresh={newestLineAtOpen !== undefined && line.reviewedAt > newestLineAtOpen} />
+											<AnsweredRow key={`${line.cardId}@${line.reviewedAt}`} line={line} code={lang.code} hide={hideInHistory} fresh={newestLineAtOpen !== undefined && line.reviewedAt > newestLineAtOpen} />
 										))}
 									</ol>
 								</section>
@@ -845,7 +921,7 @@ export function ReviewSession() {
 												type="button"
 												onClick={() => {
 													setHint((h) => Math.min(2, h + 1));
-													inputRef.current?.focus();
+													focusOpenGap();
 												}}
 												disabled={hint >= 2}
 												className={HELP_BUTTON}
@@ -860,14 +936,14 @@ export function ReviewSession() {
 													{hint === 0 ? "at most Good" : "at most Hard"}
 												</span>
 											</button>
-											<button type="button" onClick={() => check("")} className={HELP_BUTTON} data-testid="review-dont-know">
+											<button type="button" onClick={() => check(gaps.map(() => ""))} className={HELP_BUTTON} data-testid="review-dont-know">
 												I don&apos;t know
 												<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
 													<span className="hidden @2xl:inline">· </span>counts as Again
 												</span>
 											</button>
 											{!picks && (
-												<button type="button" onClick={() => check(given)} disabled={!given.trim()}	className="q-btn primary col-span-2 !h-12 @2xl:ml-auto @2xl:min-w-44" data-testid="review-check">
+												<button type="button" onClick={() => check(typed)} disabled={!typed.some(Boolean)}	className="q-btn primary col-span-2 !h-12 @2xl:ml-auto @2xl:min-w-44" data-testid="review-check">
 													Check
 													<span className="q-kbd pointer-coarse:hidden">
 														<QIcon name="enter" />
