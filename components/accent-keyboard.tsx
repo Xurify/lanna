@@ -51,7 +51,7 @@ export function AccentKeyboard({
 	tag: string;
 	live: string | null;
 	menu: AccentMenu | null;
-	onKey: (key: string) => void;
+	onKey: (key: string, shift: boolean) => void;
 	grab: () => void;
 }) {
 	const families = useMemo(() => new Map(letterFamilies(letters, tag).map((f) => [f.base, f])), [letters, tag]);
@@ -77,7 +77,7 @@ export function AccentKeyboard({
 									type="button"
 									onPointerDown={grab}
 									onMouseDown={(e) => e.preventDefault()}
-									onClick={() => onKey(key)}
+									onClick={(e) => onKey(key, e.shiftKey)}
 									title={accents.length ? `${key}: ${accents.join(" ")}. Hold ${key} on your keyboard, or click here` : `Type ${key}`}
 									aria-expanded={accents.length ? open : undefined}
 									data-key={key}

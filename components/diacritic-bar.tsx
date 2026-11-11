@@ -255,9 +255,9 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		insertAtCaret(target, upper ? letter.toLocaleUpperCase(lang.tag) : letter);
 	};
 	if (variant === "keys") {
-		const onKey = (key: string) => {
+		const onKey = (key: string, shift: boolean) => {
 			const family = families.find((f) => f.base === key);
-			press(key, false);
+			press(key, shift);
 			if (accentsOf(family).length) setMenu({ base: key, held: true });
 		};
 		return (
