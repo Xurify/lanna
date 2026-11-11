@@ -5,10 +5,12 @@
  * refresh it without pulling the model code in.
  */
 
+import { analyzeChats } from "../core/chat-analysis.ts";
 import { analyzeListening } from "../core/listen-analysis.ts";
 import { listenGuideFacts, type ListenGuideRecord } from "../core/listen-guide.ts";
 import { analyzeMistakes, digest, guideFacts, type MistakeAnalysis, type MistakesReport } from "../core/mistakes.ts";
 import type { UnitId } from "../core/lesson.ts";
+import { readChatAnswers } from "../store/chat-answers.ts";
 import { readLessonLog } from "../store/corpus.ts";
 import { analysisStore, type GuideRecord } from "../store/analysis.ts";
 import { progressStore } from "../store/progress.ts";
@@ -40,10 +42,16 @@ export function mistakesReport(now = new Date()): MistakesReport {
 /** Read the log again and save the snapshot with its time, keeping the guide. */
 export function analyzeNow(now = new Date()): MistakesReport {
 	const log = readLessonLog();
-	const analysis = { ...analyzeMistakes(log, progressStore.read().mixups, now), listening: analyzeListening(log, now) };
+	const analysis = { ...analyzeMistakes(log, progressStore.read().mixups, now), listening: analyzeListening(log, now), chat: analyzeChats(readChatAnswers(), now) };
 	const { guide, listenGuide } = analysisStore.read();
 	analysisStore.write({ analysis, guide, listenGuide });
 	return mistakesReportOf(analysis, guide, listenGuide ?? null);
+}
+
+export function refreshChatSnapshot(now = new Date()): void {
+	const saved = analysisStore.read();
+	if (!saved.analysis) return;
+	analysisStore.write({ ...saved, analysis: { ...saved.analysis, chat: analyzeChats(readChatAnswers(), now) } });
 }
 
 /** After a lesson: take a new snapshot when the saved one is old, so the

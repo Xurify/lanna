@@ -17,9 +17,11 @@
  * Browser-safe: pure functions over plain records.
  */
 
+import type { ChatAnswer } from "./chat-answers.ts";
+import { isChatMiss, WEAK_CHAT_MISSES } from "./chat-analysis.ts";
 import { unitInfo, allUnits, type UnitId } from "./lesson.ts";
 
-export type WeakSource = "check" | "lesson" | "review";
+export type WeakSource = "check" | "lesson" | "review" | "chat";
 
 export interface WeakSpot {
 	/** When it was first flagged. */
@@ -60,7 +62,7 @@ export function weakFamily(unit: UnitId): (typeof WEAK_FAMILIES)[number] | undef
 	return WEAK_FAMILIES.find((f) => f.units.includes(unit));
 }
 
-const SOURCE_LABEL: Record<WeakSource, string> = { check: "from the level check", lesson: "from your lessons", review: "from review" };
+const SOURCE_LABEL: Record<WeakSource, string> = { check: "from the level check", lesson: "from your lessons", review: "from review", chat: "from your chats" };
 
 function isUnit(id: string): id is UnitId {
 	return allUnits().some((u) => u.id === id);
@@ -98,6 +100,20 @@ export function tallyWeak(weak: WeakRecord, unit: string, hits: number, misses: 
 	return { weak: { ...weak, [unit]: next }, mended: false };
 }
 
+export function noteChatAnswer(weak: WeakRecord, answer: ChatAnswer, recentMisses: number, now: Date): WeakRecord {
+	const unit = answer.unit;
+	if (!unit || !isUnit(unit)) return weak;
+	const miss = isChatMiss(answer);
+	const hit = !miss && !answer.hinted;
+	let next = weak;
+	if (miss || hit) next = tallyWeak(next, unit, hit ? 1 : 0, miss ? 1 : 0, now).weak;
+	if (miss && !next[unit] && recentMisses >= WEAK_CHAT_MISSES) {
+		const note = answer.verdict === "dont_know" ? `did not know “${answer.expected}” in a chat` : `wrote “${answer.given}” for “${answer.expected}” in a chat`;
+		next = flagWeak(next, unit, "chat", note, now);
+	}
+	return next;
+}
+
 /** The lesson rule: a unit with enough reps under the bar is a weak spot
  *  even when nothing else flagged it. */
 export function lessonFlagsWeak(reps: number, correct: number): boolean {
@@ -129,7 +145,7 @@ export function weakSpotList(weak: WeakRecord | undefined): WeakSpotSummary[] {
 		const since = s.hits + s.misses > 0 ? ` · since then ${s.hits}/${s.hits + s.misses} right` : "";
 		out.push({ unit, title: info.title, tagline: info.tagline, source: s.source, since: s.since, ...(s.note ? { note: s.note } : {}), hits: s.hits, misses: s.misses, line: `${SOURCE_LABEL[s.source]}${s.note ? `: ${s.note}` : ""}${since}` });
 	}
-	const order: Record<WeakSource, number> = { check: 0, review: 1, lesson: 2 };
+	const order: Record<WeakSource, number> = { check: 0, chat: 1, review: 1, lesson: 2 };
 	return out.sort((a, b) => order[a.source] - order[b.source] || b.misses - a.misses || a.since.localeCompare(b.since));
 }
 

@@ -8,6 +8,8 @@ export interface ChatAnswer {
 	expected: string;
 	focus: string;
 	hinted: boolean;
+	/** The course unit the question tested, when it tested one (a UnitId). */
+	unit?: string;
 }
 
 export interface ChatScore {

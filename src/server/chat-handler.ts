@@ -50,7 +50,7 @@ import {
 import { steerDelivered } from "../core/contracts.ts";
 import type {CallUsage} from "../core/contracts.ts";
 import type { ChatRecord } from "../core/contracts/chat.ts";
-import { appendChatAnswer } from "../store/chat-answers.ts";
+import { recordChatAnswer } from "./chat-evidence.ts";
 import { enqueueWords, reviewDigest } from "./review.ts";
 import { appContentNow } from "./app-content.ts";
 import { drawForReply, latestReplyText } from "./drawing.ts";
@@ -431,7 +431,7 @@ export async function handleChatInput(
 			? createChatAgent(
 					{
 						review: reviewSeam,
-						answers: { record: (answer) => appendChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
+						answers: { record: (answer) => recordChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
 						drawing: { draw: (brief, signal) => drawForReply({ engine, reply: latestReplyText(turnMessages()), brief, signal, onUsage: collectUsage, chatId }) },
 						jobs: {
 							chatId,
