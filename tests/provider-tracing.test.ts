@@ -1,6 +1,8 @@
 /** JS matcher + config-policy regressions; native Turbopack needs the real payload gate. */
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { createRequire } from "node:module";
+import path from "node:path";
 import { describe, it } from "node:test";
 import nextConfig from "../next.config.ts";
 
@@ -43,6 +45,9 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 		assert.deepEqual(nextConfig.outputFileTracingIncludes!["*"], [
 			"curriculum/**/*",
 			"src/agent/prompts/**/*",
+			"scripts/spotify_helper.py",
+			"docs/experiments/input-first-russian.md",
+			".claude/skills/slovak-language/references/*.md",
 			"node_modules/@puppeteer/browsers/lib/browser-data/**/*.js",
 			"node_modules/pdfjs-dist/legacy/**/*",
 			"node_modules/pdfjs-dist/standard_fonts/**/*",
@@ -56,6 +61,16 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 			"node_modules/json-bigint/**/*",
 			"node_modules/bignumber.js/**/*",
 		]);
+	});
+	it("every repo file the server reads at runtime is matched by an include", () => {
+		const repoIncludes = nextConfig.outputFileTracingIncludes!["*"]!.filter((pattern) => !pattern.startsWith("node_modules/"));
+		const included = picomatch(repoIncludes, { dot: true });
+		const referenceChapters = fs.readdirSync(path.join(process.cwd(), ".claude", "skills", "slovak-language", "references")).map((name) => `.claude/skills/slovak-language/references/${name}`);
+		assert.ok(referenceChapters.length > 0);
+		for (const file of ["scripts/spotify_helper.py", "docs/experiments/input-first-russian.md", ...referenceChapters]) {
+			assert.equal(fs.existsSync(path.join(process.cwd(), file)), true, file);
+			assert.equal(included(file), true, file);
+		}
 	});
 	it("limits the workaround to its three packages, never learner data or unrelated dependencies", () => {
 		const closure = nextConfig.outputFileTracingIncludes!["*"]!.slice(-3);
