@@ -10,10 +10,11 @@
  * in this browser.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpeedToggle, useActiveLanguage } from "@/components/speech";
+import { letterFamilies, liveFamily, pressLetter } from "@/src/core";
 
 type Field = HTMLTextAreaElement | HTMLInputElement;
 
@@ -26,72 +27,59 @@ function isTextField(el: EventTarget | null): el is Field {
 	);
 }
 
+function fieldInUse(last: Field | null): Field | null {
+	if (last?.isConnected) return last;
+	return isTextField(document.activeElement) ? document.activeElement : null;
+}
+
 /** Insert text at the caret of a React-controlled field: set the value
  *  through the native setter and fire `input`, so React's onChange runs. */
 export function insertAtCaret(field: Field, text: string): void {
 	const start = field.selectionStart ?? field.value.length;
 	const end = field.selectionEnd ?? start;
-	const next = field.value.slice(0, start) + text + field.value.slice(end);
+	setFieldValue(field, field.value.slice(0, start) + text + field.value.slice(end), start + text.length);
+}
+
+function setFieldValue(field: Field, value: string, caret: number): void {
 	const proto = field instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-	Object.getOwnPropertyDescriptor(proto, "value")?.set?.call(field, next);
+	Object.getOwnPropertyDescriptor(proto, "value")?.set?.call(field, value);
 	field.dispatchEvent(new Event("input", { bubbles: true }));
-	const caret = start + text.length;
 	field.focus();
 	field.setSelectionRange(caret, caret);
 }
 
-// A key is a keycap, not a slab: a fixed 40 px square (44 px under a finger),
-// never stretched to the card's width. 44 is used for the fit so a touch
-// screen's bigger keys still fit the measured row.
-const KEY_PX = 44;
-const KEY_GAP_PX = 6; // gap-1.5
-
-const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
-
-/** The fewest even rows whose keys all fit `width`: never a lone key on a
- *  last row, never wider than the card. Measured on the grid itself because
- *  the card is narrower than the page, so a viewport breakpoint overflows. */
-function columnsFor(count: number, width: number): number {
-	const fit = Math.max(1, Math.floor((width + KEY_GAP_PX) / (KEY_PX + KEY_GAP_PX)));
-	return Math.ceil(count / Math.ceil(count / fit));
-}
-
-function KeyGrid({ letters, english, tag, type, className }: { letters: string[]; english: string; tag: string; type: (letter: string, upper: boolean) => void; className?: string }) {
-	const ref = useRef<HTMLDivElement>(null);
-	const [cols, setCols] = useState(() => Math.ceil(letters.length / 2));
-
-	useIsoLayoutEffect(() => {
-		const el = ref.current;
-		if (!el) return;
-		const measure = () => setCols(columnsFor(letters.length, el.clientWidth));
-		measure();
-		if (typeof ResizeObserver === "undefined") return;
-		const ro = new ResizeObserver(measure);
-		ro.observe(el);
-		return () => ro.disconnect();
-	}, [letters.length]);
-
+function KeyGrid({ letters, english, tag, live, press, className }: { letters: string[]; english: string; tag: string; live: string | null; press: (letter: string, shift: boolean) => void; className?: string }) {
+	const families = useMemo(() => letterFamilies(letters, tag), [letters, tag]);
 	return (
-		<div
-			ref={ref}
-			data-testid="diacritic-bar"
-			// min-w-0: beside a button in a flex row, the keys' own minimum must not stop the grid shrinking.
-			className={cn("grid min-w-0 justify-start gap-1.5 font-prose", className)}
-			style={{ gridTemplateColumns: `repeat(${cols}, auto)` }}
-			aria-label={`${english} letters`}
-		>
-			{letters.map((letter) => (
-				<button
-					key={letter}
-					type="button"
-					onMouseDown={(e) => e.preventDefault()}
-					onClick={(e) => type(letter, e.shiftKey)}
-					title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`}
-					className="lh-press flex size-10 items-center justify-center rounded-md bg-well text-base font-medium text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well-2 pointer-coarse:size-11"
-				>
-					{letter}
-				</button>
-			))}
+		<div data-testid="diacritic-bar" role="group" aria-label={`${english} letters`} className={cn("flex min-w-0 flex-wrap gap-2 font-prose", className)}>
+			{families.map((family) => {
+				const on = family.base === live;
+				return (
+					<div
+						key={family.base}
+						data-family={family.base}
+						data-live={on ? "true" : undefined}
+						className={cn("flex rounded-[10px] transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none", on ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)]")}
+					>
+						{family.letters.map((letter, i) => (
+							<button
+								key={letter}
+								type="button"
+								onMouseDown={(e) => e.preventDefault()}
+								onClick={(e) => press(letter, e.shiftKey)}
+								title={on ? `Change ${family.base} to ${letter}` : `Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`}
+								className={cn(
+									"lh-press flex h-10 min-w-10 items-center justify-center px-2 text-[17px] font-medium first:rounded-l-[10px] last:rounded-r-[10px] pointer-coarse:h-11 pointer-coarse:min-w-11",
+									i > 0 && "shadow-[inset_1px_0_0_var(--q-line-2)]",
+									on ? "text-teal-2 hover:bg-[var(--q-teal-line)]" : "text-foreground hover:bg-well-2",
+								)}
+							>
+								{letter}
+							</button>
+						))}
+					</div>
+				);
+			})}
 		</div>
 	);
 }
@@ -103,6 +91,22 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	const lang = useActiveLanguage();
 	const lastField = useRef<Field | null>(null);
 	const [open, setOpen] = useState(true);
+	const [live, setLive] = useState<string | null>(null);
+	const families = useMemo(() => (lang ? letterFamilies(lang.specialLetters, lang.tag) : []), [lang]);
+
+	useEffect(() => {
+		if (variant !== "keys" || !lang) return;
+		const update = () => {
+			const field = fieldInUse(lastField.current);
+			setLive(field ? liveFamily(families, field.value, field.selectionStart ?? 0, field.selectionEnd ?? 0, lang.tag) : null);
+		};
+		update();
+		const events = ["selectionchange", "input", "keyup", "pointerup", "focusin"] as const;
+		for (const name of events) document.addEventListener(name, update, true);
+		return () => {
+			for (const name of events) document.removeEventListener(name, update, true);
+		};
+	}, [variant, lang, families]);
 
 	useEffect(() => {
 		try {
@@ -130,14 +134,20 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 
 	if (!lang) return null;
 	const type = (letter: string, upper: boolean) => {
-		const field = lastField.current?.isConnected ? lastField.current : null;
-		const target = field ?? (isTextField(document.activeElement) ? document.activeElement : null);
+		const target = fieldInUse(lastField.current);
 		if (!target) return;
 		insertAtCaret(target, upper ? letter.toLocaleUpperCase(lang.tag) : letter);
 	};
+	const press = (letter: string, shift: boolean) => {
+		const target = fieldInUse(lastField.current);
+		if (!target) return;
+		const start = target.selectionStart ?? target.value.length;
+		const next = pressLetter(target.value, start, target.selectionEnd ?? start, letter, shift, lang.tag);
+		setFieldValue(target, next.value, next.caret);
+	};
 
 	if (variant === "keys") {
-		return <KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} type={type} className={className} />;
+		return <KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} press={press} className={className} />;
 	}
 
 	return (
