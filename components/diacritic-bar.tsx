@@ -248,7 +248,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		pickRef.current = pick;
 	});
 
-	if (!lang) return null;
+	if (!lang) return variant === "keys" ? <div aria-hidden="true" className={cn("h-[144px] pointer-fine:h-8", className)} /> : null;
 	const type = (letter: string, upper: boolean) => {
 		const target = fieldInUse(lastField.current);
 		if (!target) return;
