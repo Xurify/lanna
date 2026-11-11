@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookmarkIcon, EyeOffIcon, KeyboardIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, EyeOffIcon, KeyboardIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
@@ -23,6 +23,7 @@ import { compareAnswer, diacriticSlips, ratingCeiling, ratingFor, RATING_LABELS,
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { usePopoverDismiss } from "@/components/popover-dismiss";
 
 interface Prompt {
 	card: ReviewCard;
@@ -52,6 +53,8 @@ interface AnsweredLine {
 }
 
 /** How the lexicon's `src` reads on the card. */
+const HELP_BUTTON = "q-btn sec !h-auto min-h-14 flex-col !items-start !gap-0 py-1.5 text-left !whitespace-normal disabled:!opacity-60 @2xl:min-h-12 @2xl:!h-12 @2xl:flex-row @2xl:!items-center @2xl:!gap-2 @2xl:!whitespace-nowrap";
+
 const SENTENCE_SOURCES: Record<string, string> = { curated: "slovak.wiki", tatoeba: "Tatoeba" };
 
 interface Status {
@@ -200,25 +203,24 @@ function comesBack(days: number): string {
 	return `${(days / 365).toFixed(1).replace(/\.0$/, "")} yr`;
 }
 
-function DeckSettings({ mode, onMode, blankWords, onBlankWords, place, className }: { mode: Mode; onMode: (m: Mode) => void; blankWords: number; onBlankWords: (n: number) => void; place: "dock" | "page"; className?: string }) {
-	const testid = (id: string) => (place === "dock" ? id : undefined);
+function DeckSettings({ mode, onMode, blankWords, onBlankWords, className }: { mode: Mode; onMode: (m: Mode) => void; blankWords: number; onBlankWords: (n: number) => void; className?: string }) {
 	return (
-		<div className={cn("flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-ink-3", className)}>
-			<div className="flex items-center gap-2">
-				<span id={`review-mode-label-${place}`}>Answer by</span>
-				<span className="q-segc" role="radiogroup" aria-labelledby={`review-mode-label-${place}`}>
+		<div className={cn("grid grid-cols-[auto_auto] items-center justify-start gap-x-4 gap-y-3 text-[13px] text-ink-3", className)}>
+			<div className="contents">
+				<span id="review-mode-label">Answer by</span>
+				<span className="q-segc" role="radiogroup" aria-labelledby="review-mode-label">
 					{(["type", "choice"] as const).map((m) => (
-						<button key={m} type="button" role="radio" aria-checked={mode === m} className={cn("!h-6 !px-2 !text-[12px]", mode === m && "on")} onClick={() => onMode(m)} data-testid={testid(`review-mode-${m}`)}>
+						<button key={m} type="button" role="radio" aria-checked={mode === m} className={cn("!h-8 !px-3 !text-[13px] pointer-coarse:!h-10", mode === m && "on")} onClick={() => onMode(m)} data-testid={`review-mode-${m}`}>
 							{m === "type" ? "Typing" : "Choosing"}
 						</button>
 					))}
 				</span>
 			</div>
-			<div className="flex items-center gap-2" data-testid={testid("review-blank")} title="How many words a card can hide. A new word always hides one. Applies from the next card.">
-				<span id={`review-blank-label-${place}`}>Blank</span>
-				<span className="q-segc" role="radiogroup" aria-labelledby={`review-blank-label-${place}`}>
+			<div className="contents" data-testid="review-blank" title="How many words a card can hide. A new word always hides one. Applies from the next card.">
+				<span id="review-blank-label">Blank</span>
+				<span className="q-segc" role="radiogroup" aria-labelledby="review-blank-label">
 					{[1, 2, 3].map((n) => (
-						<button key={n} type="button" role="radio" aria-checked={blankWords === n} className={cn("!h-6 !px-2 !text-[12px] whitespace-nowrap", blankWords === n && "on")} onClick={() => onBlankWords(n)} data-testid={testid(`review-blank-${n}`)}>
+						<button key={n} type="button" role="radio" aria-checked={blankWords === n} className={cn("!h-8 !px-3 !text-[13px] whitespace-nowrap pointer-coarse:!h-10", blankWords === n && "on")} onClick={() => onBlankWords(n)} data-testid={`review-blank-${n}`}>
 							{n === 1 ? "1 word" : `1–${n}`}
 						</button>
 					))}
@@ -277,7 +279,12 @@ export function ReviewSession() {
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
 	const [lettersOpen, setLettersOpen] = useState(() => readPref(LETTERS_KEY, "closed") === "open");
 	const [saving, setSaving] = useState(false);
-	// Cards whose sentence went to the saved phrases from this page.
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const bandRef = useRef<HTMLDivElement>(null);
+	const closeSettings = useCallback(() => setSettingsOpen(false), []);
+	usePopoverDismiss(bandRef, settingsOpen, closeSettings);
+	const [hidden, setHidden] = useState<{ id: string; lemma: string } | null>(null);
+// Cards whose sentence went to the saved phrases from this page.
 	const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set());
 	const [newestLineAtOpen, setNewestLineAtOpen] = useState<string | undefined>(() => (knownStatus ? (knownStatus.answered?.[0]?.reviewedAt ?? "") : undefined));
 	const shownAt = useRef(Date.now());
@@ -381,6 +388,7 @@ export function ReviewSession() {
 	const rate = async (rating: Rating) => {
 		if (!prompt || !verdict || saving) return;
 		setSaving(true);
+		setHidden(null);
 		try {
 			const res = await fetch("/api/review", {
 				method: "POST",
@@ -411,11 +419,23 @@ export function ReviewSession() {
 
 	const suspend = async () => {
 		if (!prompt) return;
+		const card = { id: prompt.card.id, lemma: prompt.card.lemma };
 		await fetch("/api/review/suspend", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ cardId: prompt.card.id }),
+			body: JSON.stringify({ cardId: card.id }),
 		});
+		await load();
+		setHidden(card);
+	};
+	const unhide = async () => {
+		if (!hidden) return;
+		await fetch("/api/review/suspend", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ cardId: hidden.id, suspended: false }),
+		});
+		setHidden(null);
 		await load();
 	};
 
@@ -518,7 +538,7 @@ export function ReviewSession() {
 				</header>
 
 				<main className="flex min-h-0 flex-col">
-					<div className={cn(COLUMN, "shrink-0 pt-4 @6xl:pt-9")}>
+					<div className={cn(COLUMN, "relative z-10 shrink-0 pt-4 @6xl:pt-9")} ref={bandRef}>
 						<div className="flex h-9 items-center gap-3">
 							<span className="flex items-center gap-2 text-[13px] font-semibold text-ink-2">
 								<QIcon name="review" className="text-teal" />
@@ -544,8 +564,25 @@ export function ReviewSession() {
 									</>
 								) : null}
 							</span>
+							<button
+								type="button"
+								onClick={() => setSettingsOpen((o) => !o)}
+								aria-expanded={settingsOpen}
+								aria-controls="review-settings"
+								title="Review settings: answer by typing or choosing, and how many words a blank hides"
+								className={cn("grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-10", settingsOpen && "bg-well text-ink-2")}
+								data-testid="review-settings-toggle"
+							>
+								<SlidersHorizontalIcon className="size-4" aria-hidden="true" />
+								<span className="sr-only">Review settings</span>
+							</button>
 							<SoundControl className="-mr-1.5 flex items-center transition-colors" iconClass="size-4" testid="review-sound" />
 						</div>
+						{settingsOpen && (
+							<div id="review-settings" role="group" aria-label="Review settings" className="lh-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8">
+								<DeckSettings mode={mode} onMode={chooseMode} blankWords={blankWordsNow} onBlankWords={chooseBlankWords} />
+							</div>
+						)}
 					</div>
 
 					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
@@ -577,15 +614,9 @@ export function ReviewSession() {
 
 							{caughtUp && (
 								<section className="lh-fade pt-8 @xl:pt-12" data-testid="review-done">
-									<p className="flex h-8 items-center gap-2 text-[13px] text-ink-3">
-										<span className="grid size-4 place-items-center rounded-full bg-teal text-[var(--q-on-teal)]">
-											<QIcon name="check" className="size-2.5 [stroke-width:3]" />
-										</span>
-										{done > 0 ? `${done === 1 ? "1 card" : `${done} cards`} today` : "Nothing due"}
-									</p>
-									<h1 className="mt-2 text-[34px] leading-[44px] font-semibold tracking-[-0.032em] text-foreground @xl:text-[44px] @xl:leading-[60px]">{done > 0 ? "All caught up." : "Nothing is due right now."}</h1>
+																		<h1 className="text-[34px] leading-[44px] font-semibold tracking-[-0.032em] text-foreground @xl:text-[44px] @xl:leading-[60px]">{done > 0 ? "All caught up." : "Nothing is due right now."}</h1>
 									<p className="q-line dim mt-3 max-w-lg" data-testid="review-left">
-										{counts ? `${stillToDo(counts)} ` : ""}Words come back on the day they are due, and new ones arrive tomorrow.
+										{counts && stillToDo(counts) !== "All done for today." ? `${stillToDo(counts)} ` : ""}Words come back on the day they are due, and new ones arrive tomorrow.
 									</p>
 									<div className="mt-6 flex items-center gap-3" data-testid="review-new-per-day">
 										<span className="text-[13px] text-ink-3" id="review-new-per-day-label">
@@ -608,15 +639,29 @@ export function ReviewSession() {
 							)}
 
 							{prompt && lang && (
-								<article ref={bodyRef} className="pt-8 @xl:pt-12" data-testid="review-card" aria-label={`Review, ${isNew ? "new word" : "card"}`}>
+								<article ref={bodyRef} className="pt-5 @xl:pt-12" data-testid="review-card" aria-label={`Review, ${isNew ? "new word" : "card"}`}>
 									<div className="flex h-8 items-center gap-3 text-[13px] text-ink-3">
 										<span className="whitespace-nowrap font-[450]" data-testid="review-kind">
 											{isNew ? (newTotal > 0 ? `New word ${position} of ${newTotal}` : "New word") : prompt.card.state === "learning" ? "Relearning" : "Review"}
 										</span>
-										<button type="button" onClick={() => void suspend()} className="q-btn ghost -mr-2.5 ml-auto !h-8 !text-[13px]" title="Never show this word again" data-testid="review-suspend">
-											<EyeOffIcon className="size-3.5" aria-hidden="true" />
-											Hide this word
-										</button>
+										{prompt.sentenceSource && (
+											<span className="-ml-1.5 hidden min-w-0 truncate @lg:inline" data-testid="review-source">
+												· sentence from {SENTENCE_SOURCES[prompt.sentenceSource] ?? prompt.sentenceSource}
+											</span>
+										)}
+										{hidden ? (
+											<span className="ml-auto flex items-center gap-1 whitespace-nowrap" role="status" data-testid="review-hidden">
+												Hidden: <span lang={lang?.code}>{hidden.lemma}</span>
+												<button type="button" onClick={() => void unhide()} className="q-btn ghost -mr-2.5 !h-8 !px-2 !text-[13px] !text-teal-2" data-testid="review-unhide">
+													Undo
+												</button>
+											</span>
+										) : (
+											<button type="button" onClick={() => void suspend()} className="q-btn ghost -mr-2.5 ml-auto !h-8 !text-[13px] !font-[450]" title="Never show this word again" data-testid="review-suspend">
+												<EyeOffIcon className="size-3.5" aria-hidden="true" />
+												Hide this word
+											</button>
+										)}
 									</div>
 
 									<form
@@ -696,18 +741,22 @@ export function ReviewSession() {
 										</span>
 									</div>
 
-									<div className="mt-6 grid grid-cols-[minmax(0,1fr)] @2xl:min-h-[168px]">
+									<div className="mt-6 grid grid-cols-[minmax(0,1fr)] @2xl:min-h-[112px]">
 										<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
-											{hint > 0 && (
-												<p className="lh-fade mb-4 flex flex-wrap gap-x-6 gap-y-1" data-testid="review-hints">
-													<Note label="means">{prompt.card.gloss}</Note>
-													{hint > 1 && (
+											<p className="mb-3 flex min-h-6 flex-wrap gap-x-6 gap-y-1" data-testid="review-hints">
+												{hint > 0 && (
+													<span className="lh-fade">
+														<Note label="means">{prompt.card.gloss}</Note>
+													</span>
+												)}
+												{hint > 1 && (
+													<span className="lh-fade">
 														<Note label="base form" lang={lang?.code}>
 															{prompt.card.lemma}
 														</Note>
-													)}
-												</p>
-											)}
+													</span>
+												)}
+											</p>
 
 											{!verdict && mode === "choice" && !picks && <p className="q-sub !mt-0 mb-3">You have met this word before, so this time you type it.</p>}
 
@@ -742,12 +791,12 @@ export function ReviewSession() {
 													{verdict === "wrong" ? <XIcon className="size-4" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
 													{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
 													{exact && <span>· {helped ? "help used" : "no help used"}</span>}
+													{!exact && given.trim() && (
+														<span className="min-w-0 truncate">
+															· you wrote “<span lang={lang?.code}>{given.trim()}</span>”
+														</span>
+													)}
 												</p>
-												{!exact && given.trim() && (
-													<p className="mt-2 text-[15px] text-ink-3">
-														You wrote “<span className="text-ink-2" lang={lang?.code}>{given.trim()}</span>”.
-													</p>
-												)}
 												{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} code={lang?.code} className="mt-2.5" />}
 												{verdict !== "wrong" && (
 													<p className="mt-3 flex flex-wrap gap-x-6 gap-y-1" data-testid="review-facts">
@@ -760,18 +809,12 @@ export function ReviewSession() {
 														{prompt.form && <Note label="form">{prompt.form}</Note>}
 													</p>
 												)}
-												{prompt.sentenceSource && (
-													<p className="mt-3 text-[13px] text-ink-3" data-testid="review-source">
-														Sentence from {SENTENCE_SOURCES[prompt.sentenceSource] ?? prompt.sentenceSource}
-													</p>
-												)}
-											</div>
+</div>
 										)}
 									</div>
 								</article>
 							)}
 
-							{prompt && lang && <DeckSettings mode={mode} onMode={chooseMode} blankWords={blankWordsNow} onBlankWords={chooseBlankWords} place="page" className="mt-10 @2xl:hidden" />}
 
 							{lang && status?.available && answered.length > 0 && (prompt || caughtUp) && (
 								<section className="mt-8" aria-labelledby="review-answered-title" data-testid="review-answered">
@@ -812,37 +855,37 @@ export function ReviewSession() {
 							className={cn("shrink-0 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--q-line)] transition-colors", verdict === "wrong" ? "bg-miss-soft" : verdict ? "bg-teal-wash" : "bg-background")}
 							data-testid="review-dock"
 						>
-							<div className={cn(COLUMN, "pt-4 pb-3")}>
-								<div className="min-h-[120px] @2xl:min-h-14">
+							<div className={cn(COLUMN, "py-4")}>
+								<div className={cn("@2xl:min-h-14", picks ? "min-h-14" : "min-h-[120px]")}>
 									{!verdict ? (
 										<div key="ask" className="grid grid-cols-2 gap-2 @2xl:flex @2xl:h-14 @2xl:items-center">
-											{hint < 2 && (
-												<button
-													type="button"
-													onClick={() => {
-														setHint((h) => Math.min(2, h + 1));
-														inputRef.current?.focus();
-													}}
-													className="q-btn sec !h-auto min-h-14 flex-col !items-start !gap-0 py-1.5 text-left !whitespace-normal @2xl:!h-12 @2xl:flex-row @2xl:!items-center @2xl:!gap-2 @2xl:!whitespace-nowrap"
-													data-testid="review-hint"
-												>
-													<span className="flex items-center gap-2">
-														<LightbulbIcon className="hidden size-3.5 shrink-0 text-ink-3 @2xl:block" aria-hidden="true" />
-														{hint === 0 ? "Show meaning" : "Show base form"}
-													</span>
-													<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
-														<span className="hidden @2xl:inline">· </span>rating up to {hint === 0 ? "Good" : "Hard"}
-													</span>
-												</button>
-											)}
-											<button type="button" onClick={() => check("")} className="q-btn sec !h-auto min-h-14 flex-col !items-start !gap-0 py-1.5 text-left !whitespace-normal @2xl:!h-12 @2xl:flex-row @2xl:!items-center @2xl:!gap-2 @2xl:!whitespace-nowrap" data-testid="review-dont-know">
+											<button
+												type="button"
+												onClick={() => {
+													setHint((h) => Math.min(2, h + 1));
+													inputRef.current?.focus();
+												}}
+												disabled={hint >= 2}
+												className={HELP_BUTTON}
+												data-testid="review-hint"
+											>
+												<span className="flex items-center gap-2">
+													<LightbulbIcon className="hidden size-3.5 shrink-0 text-ink-3 @2xl:block" aria-hidden="true" />
+													{hint === 0 ? "Show meaning" : hint === 1 ? "Show base form" : "Both hints shown"}
+												</span>
+												<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
+													<span className="hidden @2xl:inline">· </span>
+													{hint === 0 ? "at most Good" : "at most Hard"}
+												</span>
+											</button>
+											<button type="button" onClick={() => check("")} className={HELP_BUTTON} data-testid="review-dont-know">
 												I don&apos;t know
 												<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
 													<span className="hidden @2xl:inline">· </span>counts as Again
 												</span>
 											</button>
 											{!picks && (
-												<button type="button" onClick={() => check(given)} disabled={!given.trim()} className="q-btn primary col-span-2 !h-12 @2xl:ml-auto @2xl:min-w-32" data-testid="review-check">
+												<button type="button" onClick={() => check(given)} disabled={!given.trim()}	className="q-btn primary col-span-2 !h-12 @2xl:ml-auto @2xl:min-w-44" data-testid="review-check">
 													Check
 													<span className="q-kbd pointer-coarse:hidden">
 														<QIcon name="enter" />
@@ -852,7 +895,13 @@ export function ReviewSession() {
 										</div>
 									) : (
 										<div key="rate" className="grid gap-2 @2xl:flex @2xl:h-14 @2xl:items-center">
-											<div className="grid h-14 grid-cols-4 rounded-[10px] bg-card shadow-[0_0_0_1px_var(--q-line-2)] @2xl:w-[440px]" role="radiogroup" aria-label="Rate it yourself: when the word comes back" data-testid="review-ratings">
+											{cap === 1 ? (
+												<p className="flex h-14 items-center gap-2 text-[15px] text-ink-2 @2xl:w-[440px]" data-testid="review-ratings">
+													<b className="font-semibold text-foreground">Again</b>
+													<span className="text-ink-3">· comes back in {comesBack(prompt.intervals[1])}</span>
+												</p>
+											) : (
+											<div className="grid h-14 grid-cols-4 rounded-[10px] bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)] @2xl:w-[440px]" role="radiogroup" aria-label="Rate it yourself: when the word comes back" data-testid="review-ratings">
 												{([1, 2, 3, 4] as Rating[]).map((r) => (
 													<button
 														key={r}
@@ -865,15 +914,17 @@ export function ReviewSession() {
 														className={cn(
 															"relative flex min-w-0 flex-col items-center justify-center text-[14px] font-semibold text-foreground transition-colors first:rounded-l-[10px] last:rounded-r-[10px]",
 															r > 1 && "shadow-[inset_1px_0_0_var(--q-line)]",
-															r !== shownSuggested && "hover:bg-well disabled:text-ink-4 disabled:line-through disabled:hover:bg-transparent",
-															r === shownSuggested && "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
+															r !== shownSuggested && "hover:bg-well-2 disabled:text-ink-4 disabled:hover:bg-transparent",
+															r === shownSuggested && "rounded-[10px] bg-card text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
 														)}
 													>
+														<kbd className="absolute left-1.5 top-1.5 hidden font-ui text-[10.5px] font-[550] text-ink-4 pointer-fine:block">{r}</kbd>
 														{RATING_LABELS[r]}
 														<span className="q-num text-[12px] font-[450] text-ink-3">{comesBack(prompt.intervals[r])}</span>
 													</button>
 												))}
 											</div>
+											)}
 											<button type="button" autoFocus disabled={saving} onClick={() => void rate(shownSuggested)} data-testid="review-continue" className="q-btn primary !h-12 @2xl:ml-auto @2xl:min-w-44">
 												{saving && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
 												Continue · {RATING_LABELS[shownSuggested]}
@@ -884,15 +935,7 @@ export function ReviewSession() {
 										</div>
 									)}
 								</div>
-								<div className="mt-3 hidden items-center @2xl:flex">
-									<DeckSettings mode={mode} onMode={chooseMode} blankWords={blankWordsNow} onBlankWords={chooseBlankWords} place="dock" />
-									{verdict && cap > 1 && (
-										<p className="ml-auto hidden items-center gap-1 whitespace-nowrap text-[12px] text-ink-3 pointer-fine:flex">
-											<kbd className="q-kbd">1</kbd>–<kbd className="q-kbd">{cap}</kbd> to rate
-										</p>
-									)}
-								</div>
-							</div>
+</div>
 						</div>
 					)}
 

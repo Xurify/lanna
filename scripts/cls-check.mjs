@@ -47,7 +47,7 @@ const click = async (page, sel) => {
 const INTERACTIONS = [
 	["review: show meaning", "/review", [1440, 900], async (p) => click(p, '[data-testid="review-hint"]')],
 	["review: wrong answer, verdict", "/review", [1440, 900], async (p) => { await click(p, '[data-testid="review-input"]'); await p.keyboard.type("zzz"); await p.keyboard.press("Enter"); }],
-	["review: choosing mode", "/review", [1440, 900], async (p) => click(p, '[data-testid="review-mode-choice"]')],
+	["review: choosing mode", "/review", [1440, 900], async (p) => { await click(p, '[data-testid="review-settings-toggle"]'); await click(p, '[data-testid="review-mode-choice"]'); }],
 	["review (phone): wrong answer", "/review", [390, 844], async (p) => { await click(p, '[data-testid="review-input"]'); await p.keyboard.type("zzz"); await p.keyboard.press("Enter"); }],
 	["log: switch to the previous day", "/log", [1440, 900], async (p) => { await p.waitForSelector('[role="tab"]'); const tabs = await p.$$('[role="tab"]'); if (tabs[1]) await tabs[1].click(); }],
 	["jump bar: open and type", "/", [1440, 900], async (p) => { await click(p, '[data-testid="jump-bar"]'); await p.keyboard.type("rev"); }],
