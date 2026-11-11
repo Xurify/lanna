@@ -1,7 +1,7 @@
 /**
  * GET /api/review[?tz=<minutes>][&peek] — the deck's counts and the next card
  * (minting today's new cards as needed; ?peek never mints).
- * POST /api/review {cardId, given, ms?, activeMs?, rating?, hints?, picked?, tz?} — grade one answer and
+ * POST /api/review {cardId, given, ms?, activeMs?, rating?, hints?, picked?, words?, tz?} — grade one answer and
  * schedule the card (FSRS). Returns the verdict, the rating used and the
  * updated card, the XP the answer earned and `status`, the deck as GET returns it.
  */
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; activeMs?: unknown; rating?: unknown; hints?: unknown; picked?: unknown; tz?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; activeMs?: unknown; rating?: unknown; hints?: unknown; picked?: unknown; words?: unknown; tz?: unknown } | null;
 	if (typeof body?.cardId !== "string" || typeof body.given !== "string") {
 		return Response.json({ message: "cardId and given are required strings" }, { status: 400 });
 	}
@@ -32,7 +32,8 @@ export async function POST(req: Request) {
 	const ms = typeof body.ms === "number" && Number.isFinite(body.ms) ? body.ms : undefined;
 	try {
 		const hints = typeof body.hints === "number" && body.hints > 0 ? Math.min(2, Math.floor(body.hints)) : undefined;
-		const outcome = answerReview({ cardId: body.cardId, given: body.given, ms, rating, hints, picked: body.picked === true });
+		const words = typeof body.words === "number" && body.words >= 1 ? Math.floor(body.words) : undefined;
+		const outcome = answerReview({ cardId: body.cardId, given: body.given, ms, rating, hints, picked: body.picked === true, words });
 		// Reviews count toward the day's XP and the streak (Today screen).
 		const activeMs = typeof body.activeMs === "number" && Number.isFinite(body.activeMs) ? body.activeMs : undefined;
 		const xp = recordReviewXp(outcome.verdict, tzOf(req), new Date(), ms, activeMs);
