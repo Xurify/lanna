@@ -72,7 +72,7 @@ export function ReminderBanner() {
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-1.5 min-w-0">
 						{activeNudge.languageId && (
-							<CountryFlag lang={activeNudge.languageId} className="h-3.5 w-3.5 shrink-0 rounded-sm" />
+							<CountryFlag lang={activeNudge.languageId} className="h-3 w-[18px] rounded-[2px]" />
 						)}
 						<h3 className="text-sm font-medium text-foreground truncate">{activeNudge.title}</h3>
 					</div>
