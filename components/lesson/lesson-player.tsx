@@ -1398,18 +1398,18 @@ function FeedbackSheet({
 	const tone =
 		verdict === "exact"
 			? {
-						bg: "bg-teal-wash",
+						bg: "bg-teal-wash shadow-[0_-1px_0_var(--q-teal-line)]",
 						ink: "text-teal-2",
 						title: rep.assisted ? "Got it, with help" : praise.text,
 					}
 			: verdict === "accents"
 				? {
-							bg: "bg-well",
+							bg: "bg-well shadow-[0_-1px_0_var(--q-line)]",
 							ink: "text-ink-2",
 							title: "Almost! Check the accents",
 						}
 				: {
-							bg: "bg-miss-soft",
+							bg: "bg-miss-soft shadow-[0_-1px_0_color-mix(in_srgb,var(--q-miss)_45%,transparent)]",
 							ink: "text-miss",
 							title: "Not quite",
 						};
@@ -1429,7 +1429,7 @@ function FeedbackSheet({
 	};
 	const inDeck = marked || (item.known !== null && item.known !== undefined);
 	return (
-		<div className={cn("lh-rise shadow-[0_-1px_0_var(--q-line)]", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} data-word-lookup-enabled="true" role="status" aria-live="polite">
+		<div className={cn("lh-rise", tone.bg)} data-testid="lesson-feedback" data-verdict={verdict} data-word-lookup-enabled="true" role="status" aria-live="polite">
 			<div className={cn(COLUMN, "py-4")}>
 				{/* Header row: verdict on the left, actions on the right, on one line. */}
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">

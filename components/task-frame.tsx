@@ -160,7 +160,7 @@ export function OptionTile({ n, state = "idle", disabled, onClick, children, tes
 export function Dock({ tone = "plain", children, testId, live }: { tone?: "plain" | "right" | "miss" | "wait"; children: React.ReactNode; testId?: string; live?: boolean }) {
 	return (
 		<div
-			className={cn("shrink-0 shadow-[0_-1px_0_var(--q-line)] pb-[env(safe-area-inset-bottom)]", tone === "right" && "bg-teal-wash", tone === "miss" && "bg-miss-soft", tone === "wait" && "bg-well")}
+			className={cn("shrink-0 shadow-[0_-1px_0_var(--q-line)] pb-[env(safe-area-inset-bottom)]", tone === "right" && "bg-teal-wash shadow-[0_-1px_0_var(--q-teal-line)]", tone === "miss" && "bg-miss-soft shadow-[0_-1px_0_color-mix(in_srgb,var(--q-miss)_45%,transparent)]", tone === "wait" && "bg-well")}
 			data-testid={testId}
 			aria-live={live ? "polite" : undefined}
 		>
