@@ -33,6 +33,6 @@ There is no decisions file and no changelog. Why something was built, what was c
 
 ## Engineering rules
 
-Every task is retrieval-first with graded, priced help; cache every model or TTS output to `data/` before calling an API; custom UI with no native widgets and no layout shift; full grammar words (accusative, not acc.); test with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile.
+Every task is retrieval-first with graded, priced help; cache every model or TTS output to `data/` before calling an API; custom UI with no native widgets and no layout shift; full grammar words (accusative, not acc.); test with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile. A keydown handler on a typing field that calls `preventDefault()` lets a dead key (`key: "Dead"`) and IME composition through (`belongsToLayoutAccent`, `src/core/accent-keys.ts`): preventing them cancels the accent the learner's own keyboard layout is typing.
 
 - **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule in [AGENTS.md](AGENTS.md) under **Code style → Comments**.
