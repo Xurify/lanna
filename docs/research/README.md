@@ -1,6 +1,6 @@
 # Research notes
 
-Every task in LangHarness is meant to start from evidence: published language-learning research and the learner's own logs. The notes here say what was read, what was concluded, and what changed in the app. Rule [W4](../decisions/W4-research-notes-live-in-the-repo.md): new research goes here, in Markdown, with sources, and this index is updated.
+Every task in LangHarness is meant to start from evidence: published language-learning research and the learner's own logs. The notes here say what was read, what was concluded, and what changed in the app. Rule W4: new research goes here, in Markdown, with sources, and this index is updated.
 
 | Note | Question | Date | What it changed |
 |---|---|---|---|
@@ -44,6 +44,6 @@ Every task in LangHarness is meant to start from evidence: published language-le
 | [target-language-ui.md](target-language-ui.md) | Should some of the app's own text be in the language being learned? | 2026-11-08 | E78: the praise and the lesson end heading in the learner's language, from one checked table (Slovak, Estonian, Russian), with an English gloss on the heading; everything that instructs or counts stays in English. |
 | [situation-practice.md](situation-practice.md) | Would a 3D or 2D scene tool (Spline, Hana, Omma) help a learner get ready to play a game in Russian only, and what should the app build for one situation? | 2026-11-09 | E95: Listen on a cheatsheet's own phrases, ten at a time, missed ones first, kept out of XP, Review and every listening measure. No scene tool: the game is the scene, and a clickable scene is recognition. Saying the phrases and a role-play wait for the end of the Russian study |
 
-Earlier design write-ups that lived only as pages: the UX audit of 2026-10-27 ("why it doesn't feel like a language app") and "built for what works" (hint-and-retry, mixed units, Estonian bridges, answer-first). Their conclusions are folded into [decisions](../decisions/README.md) and [../learner.md](../learner.md); the screenshots are in the project's audit folder, not in the repo.
+Earlier design write-ups that lived only as pages: the UX audit of 2026-10-27 ("why it doesn't feel like a language app") and "built for what works" (hint-and-retry, mixed units, Estonian bridges, answer-first). Their conclusions are folded into `CLAUDE.md` and [../learner.md](../learner.md); the screenshots are in the project's audit folder, not in the repo.
 
 Upstream LearnHarness has its own methodology note at [../teaching-methodology.md](../teaching-methodology.md); it describes the chat tutor, not the task-based layer.

@@ -2,7 +2,7 @@
 
 **Question:** the first redesign made LangHarness feel like a language app, but in the best-known app's own forms (a winding road of round icons, a flame, a chunky green button, confetti). The owner wanted a direction of its own that still keeps what works: one next step, a visible path, streaks and XP, feedback in a fixed place, and a pathway that is clear and beautiful. What should that direction be, and why would it work for a learner of Slovak?
 
-**Outcome:** the trail design, on branch `feat/trail-design` (one PR). Rule [E30](../decisions/E30-the-trail-design-four-marks-one-gold.md). It replaces the look built on `feat/language-app-redesign` (PR #79, left open and untouched for comparison).
+**Outcome:** the trail design, on branch `feat/trail-design` (one PR). Rule E30. It replaces the look built on `feat/language-app-redesign` (PR #79, left open and untouched for comparison).
 
 ## The idea
 
@@ -19,7 +19,7 @@ The sun (gold) is the one action color: Start, Check, Continue. It is also the s
 ## Why this should work for the learner
 
 - **Visible progress toward a near goal raises effort.** The goal-gradient effect (Kivetz, Urminsky & Zheng 2006) and endowed progress (Nunes & Drèze 2006): people work harder when they can see how far they have come and how close the next stop is. The climb puts the walked stretch in gold under the learner's feet and the next stop one turn away. The ridge does the same for the whole way to B2.
-- **Streaks and XP stay**, as the owner asked, because they work for them; the streak keeps its one forgiven rest day (a choice made in the app, documented in LANGHARNESS.md; P8, honest numbers, is why the count says what it counts). They are shown in the design's own words: days in a row with a flag, XP in gold.
+- **Streaks and XP stay**, as the owner asked, because they work for them; the streak keeps its one forgiven rest day (a choice made in the app; P8, honest numbers, is why the count says what it counts). They are shown in the design's own words: days in a row with a flag, XP in gold.
 - **Four strands made visible.** The research base of the app ([comprehensible-input.md](comprehensible-input.md)) says a balanced week gives a quarter to each strand. The trail marks make the strand of every task legible at a glance, so the learner sees the balance as they pick, not only in the week card.
 - **A familiar sign for the learner's real life.** Anyone who walks in Slovakia meets these marks; the app's chrome becomes something they will recognise outside it. This is a reason to use the marks, and also a reason to keep them small and exact: a kitsch mountain would undo it.
 - **Desirable difficulty is untouched** ([desirable-difficulties.md](desirable-difficulties.md)): nothing here changes what a rep asks for or what help costs. The lesson's progress bar became a trail of marks, one per question, colored by how it went (gold right, red missed, half gold for accents), so the bar is also the lesson's record.

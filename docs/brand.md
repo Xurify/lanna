@@ -2,7 +2,7 @@
 
 LangHarness is a language tutor for any language: you add a language from the app, and every task asks you to produce the answer before it helps (P3). The brand says that and nothing more.
 
-Rule: [E59](decisions/E59-the-mark-is-a-cursor-at-an.md). Sheet: [assets/brand/logo-sheet.png](assets/brand/logo-sheet.png); in the app: [assets/brand/sidebar-mark.png](assets/brand/sidebar-mark.png).
+Rule: E59. Sheet: [assets/brand/logo-sheet.png](assets/brand/logo-sheet.png); in the app: [assets/brand/sidebar-mark.png](assets/brand/sidebar-mark.png).
 
 ## The mark: your turn
 

@@ -4,7 +4,7 @@
 
 ## Screenshots
 
-<!-- Learner-facing UI only; delete the section when no learner sees a difference. Day and Night, 1280 and 390 px, of the state the PR is about. Taken with scripts/pr-shots.mjs from `npm run dev:sandbox -- --seed`, looked at, and attached via `gh pr create/edit --attach <path>`. Rule: W5 (docs/decisions/W5-a-pull-request-shows-the-change-before.md). -->
+<!-- Learner-facing UI only; delete the section when no learner sees a difference. Day and Night, 1280 and 390 px, of the state the PR is about. Taken with scripts/pr-shots.mjs from `npm run dev:sandbox -- --seed`, looked at, and attached via `gh pr create/edit --attach <path>`. Rule: W5 in CLAUDE.md. -->
 
 | Day | Night |
 | --- | --- |

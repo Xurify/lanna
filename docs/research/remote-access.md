@@ -1,6 +1,6 @@
 # Remote access: how a phone reaches LangHarness without exposing this PC
 
-Date: 2026-11-01. Rule: [E21](../decisions/E21-remote-access-is-off-by-default-and.md). Owner steps: [remote-access.md](../remote-access.md).
+Date: 2026-11-01. Rule: E21. Owner steps: [remote-access.md](../remote-access.md).
 
 ## The question
 

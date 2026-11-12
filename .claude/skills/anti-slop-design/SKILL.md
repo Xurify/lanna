@@ -5,7 +5,7 @@ description: "Checklist of the visual tells that make a UI look AI-generated (In
 
 # Anti-slop design
 
-A page an agent builds from defaults looks like every other page an agent built from defaults. The learner notices, even without a name for it, and reads it as "nobody decided this". LangHarness already has a direction of its own (the trail design, rule E30 (`docs/decisions/E30-the-trail-design-four-marks-one-gold.md`)). This skill keeps new work on it.
+A page an agent builds from defaults looks like every other page an agent built from defaults. The learner notices, even without a name for it, and reads it as "nobody decided this". LangHarness already has a direction of its own (the trail design, rule E30). This skill keeps new work on it.
 
 Use it twice: once **before** you write markup (pick from the "Do instead" column), and once **after** (run the checks at the bottom on your diff).
 
@@ -34,7 +34,7 @@ Use it twice: once **before** you write markup (pick from the "Do instead" colum
 
 - **One bold choice per screen, and only one.** In LangHarness that is usually the climb or the sun-colored main button. Everything around it stays quiet.
 - **A decision you can name beats a default you cannot.** If you cannot say why a color, font, radius or shadow is there, take it out or replace it with a token.
-- **Write the decision down.** A new visual rule goes into a new file in `docs/decisions/` in the same PR, so the next agent does not fall back to defaults.
+- **Write the decision down.** A new visual rule that every later screen must follow goes into `CLAUDE.md` in the same PR, so the next agent does not fall back to defaults.
 
 ## Checks to run on your diff
 

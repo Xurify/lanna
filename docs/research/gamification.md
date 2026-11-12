@@ -2,7 +2,7 @@
 
 **Question:** the owner asked for the app to be "drastically gamified in ways that make sense", with research behind it and an agent skill installed to help build it, and to settle which indicators belong at the top of Today. What does the evidence say gamification does for learning, which mechanics help and which harm, and what should a serious Slovak course with the trail design ([trail-design.md](trail-design.md), E30) take from it?
 
-**Outcome:** the stamp book (*turistické známky*), today's minutes ring, words known at the top of Today, a week target on the This week card, a stamp reveal on the lesson end screen and a trail log on Progress, on branch `feat/trail-stamps`. Rule [E31](../decisions/E31-stamps-mark-outcomes-carry-no-xp-and.md). The `gamification-loops` skill is installed under `.claude/skills/gamification-loops/` (its `SOURCE.md` says where it came from and why). What was deliberately not built is listed below, with the reason.
+**Outcome:** the stamp book (*turistické známky*), today's minutes ring, words known at the top of Today, a week target on the This week card, a stamp reveal on the lesson end screen and a trail log on Progress, on branch `feat/trail-stamps`. Rule E31. The `gamification-loops` skill is installed under `.claude/skills/gamification-loops/` (its `SOURCE.md` says where it came from and why). What was deliberately not built is listed below, with the reason.
 
 ## What the evidence says
 
