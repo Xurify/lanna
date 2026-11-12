@@ -182,7 +182,7 @@ export function ListenPlayer({
 
 	// Each sentence plays as it arrives: the ear meets it before the eye.
 	useEffect(() => {
-		if (!item || current) return;
+		if (!item || current || outcome) return;
 		const t0 = Date.now();
 		timing.current = { shownAt: t0, replays: 0 };
 		setReplays(0);
@@ -194,7 +194,7 @@ export function ListenPlayer({
 		return () => {
 			stopSpeaking();
 		};
-	}, [item, current]);
+	}, [item, current, outcome]);
 
 	const replay = (slow = false) => {
 		if (!item) return;
@@ -212,6 +212,8 @@ export function ListenPlayer({
 			// A right answer with the text shown first is not counted.
 			const correct = understood(all);
 			const almost = almostCount(all);
+			const tally: Outcome = { xp: sheet ? 0 : listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] };
+			setOutcome(tally);
 			try {
 				const timed = { ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() };
 				lastSave.current = sheet
@@ -245,7 +247,7 @@ export function ListenPlayer({
 			} catch (err) {
 				setSaveFailed(true);
 				setSaveRefused(err instanceof RefusedError);
-				setOutcome({ xp: sheet ? 0 : listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] });
+				setOutcome(tally);
 			} finally {
 				setSaving(false);
 			}
