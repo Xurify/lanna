@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 import { Readability } from "@mozilla/readability";
 import { parseHTML } from "linkedom";
 import { safeFetch } from "../agent/safe-fetch.ts";
-import { MAX_SOURCE_WORDS, MIN_SOURCE_WORDS, ownStoryId, splitIntoSections, storyId, type ReadingDifficulty, type StoryRecord } from "../core/reading.ts";
+import { MAX_LINKS_PER_ADD, MAX_SOURCE_WORDS, MIN_SOURCE_WORDS, ownStoryId, splitIntoSections, storyId, type ReadingDifficulty, type StoryRecord } from "../core/reading.ts";
 import { readingSourceStore, type ReadingSource } from "../store/reading-sources.ts";
 import { storyStore } from "../store/stories.ts";
-import { kickSourceParts, knownWords, sourcePart, storyEngine, type GenerateOptions } from "./reading.ts";
+import { kickSourceParts, knownWords, sourcePart, storyEngine, writeFirstParts, type GenerateOptions } from "./reading.ts";
 
 export class ReadImportError extends Error {
 	constructor(message: string) {
@@ -222,6 +222,36 @@ export async function importReading(input: AddSourceInput, opts: GenerateOptions
 	const story = await sourcePart(source.id, part, generate);
 	if (!opts.engine) kickSourceParts(source.id, part + 1);
 	return { source, story };
+}
+
+const LINKS_READ_AT_ONCE = 3;
+
+export interface LinksImport {
+	added: string[];
+	failed: Array<{ url: string; message: string }>;
+	firstParts: Promise<void>;
+}
+
+export async function importLinks(urls: readonly string[], difficulty: ReadingDifficulty = "level", opts: GenerateOptions & { fetchPage?: FetchPage } = {}): Promise<LinksImport> {
+	if (!opts.engine && !storyEngine()) throw new Error("No model is configured. Pick one in Settings → AI models.");
+	const { fetchPage, ...generate } = opts;
+	const links = [...new Set(urls.map((url) => url.trim()).filter(Boolean))].slice(0, MAX_LINKS_PER_ADD);
+	const added: string[] = [];
+	const failed: LinksImport["failed"] = [];
+	const waiting = [...links];
+	const readNext = async (): Promise<void> => {
+		for (let url = waiting.shift(); url !== undefined; url = waiting.shift()) {
+			try {
+				added.push((await addSource({ url, difficulty }, { now: opts.now, fetchPage })).id);
+			} catch (err) {
+				if (!(err instanceof ReadImportError)) throw err;
+				failed.push({ url, message: err.message });
+			}
+		}
+	};
+	await Promise.all(Array.from({ length: LINKS_READ_AT_ONCE }, readNext));
+	const inOrder = (a: { url: string }, b: { url: string }) => links.indexOf(a.url) - links.indexOf(b.url);
+	return { added: [...new Set(added)], failed: failed.sort(inOrder), firstParts: writeFirstParts([...new Set(added)], generate) };
 }
 
 export function removeSource(id: string, now = new Date()): void {

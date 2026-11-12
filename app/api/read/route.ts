@@ -13,12 +13,15 @@
  * POST /api/read {action: "import", url? | text?, title?, difficulty?} — a
  * text of the learner's own: kept, cut into parts, and its first unread
  * part written (src/server/read-import.ts).
+ * POST /api/read {action: "import", urls, difficulty?} — several links
+ * at once: each is read and kept, the answer says how many were added and
+ * which could not be read, and their first parts are written afterwards.
  * POST /api/read {action: "part", sourceId, part} — that part, written now
  * when it is not yet. {action: "remove-source", sourceId} hides a text.
  */
 
-import { isReadingDifficulty, MAX_SOURCE_PARTS } from "@/src/core";
-import { BODY_LIMITS, bodyTooLarge, generating, importReading, nextStory, ReadImportError, readingState, recordOnce, recordRead, removeSource, sessionClientId, sourcePart, storyStore, UNKNOWN_TEXT } from "@/src/server";
+import { isReadingDifficulty, MAX_LINKS_PER_ADD, MAX_SOURCE_PARTS } from "@/src/core";
+import { BODY_LIMITS, bodyTooLarge, generating, importLinks, importReading, nextStory, ReadImportError, readingState, recordOnce, recordRead, removeSource, sessionClientId, sourcePart, storyStore, UNKNOWN_TEXT } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +55,7 @@ export async function POST(req: Request) {
 		clientId?: unknown;
 		text?: unknown;
 		url?: unknown;
+		urls?: unknown;
 		title?: unknown;
 		difficulty?: unknown;
 		sourceId?: unknown;
@@ -75,6 +79,16 @@ export async function POST(req: Request) {
 			return Response.json(recordOnce("read", sessionClientId(body.clientId), () => recordRead({ storyId, answers, tapped, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: tzOf(body.tz) })));
 		} catch (err) {
 			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
+		}
+	}
+	if (body.action === "import" && Array.isArray(body.urls)) {
+		const urls = body.urls.filter((u): u is string => typeof u === "string" && u.length <= MAX_URL_CHARS).slice(0, MAX_LINKS_PER_ADD);
+		const difficulty = isReadingDifficulty(body.difficulty) ? body.difficulty : undefined;
+		try {
+			const { added, failed } = await importLinks(urls, difficulty);
+			return Response.json({ added: added.length, failed });
+		} catch (err) {
+			return modelFailure(err);
 		}
 	}
 	if (body.action === "import") {

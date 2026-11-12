@@ -37,6 +37,7 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 - **The learner chooses how hard.** Three settings per text: at my level (the default), a step up (written for the next CEFR level), and not simplified (the section kept as written when it is already in the language, else translated in full; no coverage redraft, and only the words the learner taps go to Review). The share of words the app counts as known is shown either way.
 - **Parts, not one summary.** The text is cut at paragraph ends into sections (about 250 source words a part at A1 up to 550 at C1, at most 8 parts), and each part is one Read story: the same length, known-word brief, coverage floor with one redraft, new words used three times, questions by level, and review queue as an episode. Earlier parts' recaps go into the next part's brief. Over 8 parts the sections grow instead, and the library says the version is shorter.
 - **Written as it is read.** Adding a text writes part 1. Finishing a part writes the one after the next in the background, so the next part is ready and at most two unread parts exist per text. The spend follows the reading.
+- **Several links at once, in the background.** Up to 20 links, one on each line, are read three at a time and each becomes a book at once; the links that could not be read stay in the field with the reason. Their first parts are then written one after another in the background (one model call a link, no more), the shelf shows which are being written, and a first part the model failed on is not tried again until the learner opens the book.
 - **The original after the effort.** The part's own section of the original shows on the end screen, beside the score, with the link. Reading it after the questions is the check on what was understood, and it is how the whole text gets read.
 - **The library is a shelf.** Every story and every text of the learner's is a book: taller for a harder level, thicker for a longer text, grey once read. The next one to read is the teal one and stands open, with its Read button on the cover; tapping another spine turns that book to its cover. A book's size carries data, so the shelf is not decoration.
 - **The learner's texts come first in the pick.** A text in progress, then the oldest one added, before the chapter's episode. The learner chose it; that is the interest the studies above measured.
@@ -45,7 +46,7 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 ## Known gaps
 
 - No measure yet of how faithful a retelling is to its section.
-- One text per add; no reading list of several links, no share target from the phone, no mailbox.
+- Several links can be added at once (up to 20, one on each line); pasted text is still one text per add. No share target from the phone, no mailbox.
 - Sponsor blocks and a newsletter's own promotion are left to the model to skip; nothing in code removes them, so a last part can hold little but those.
 - A link to a site's home page is read as if it were an article.
 - Under "not simplified", a text already in the language is kept as written, so a poor machine translation is shown as it is. The retold settings rewrite it, but they start from the same poor text; the original-language link is the better source.

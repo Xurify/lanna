@@ -224,6 +224,7 @@ export interface SourceEntry {
 	difficulty: ReadingDifficulty;
 	level: Cefr;
 	wordCount: number;
+	preparing: boolean;
 }
 
 export interface StoryRecord {
@@ -405,6 +406,7 @@ export const SOURCE_WORDS_PER_PART: Record<Cefr, number> = { A1: 250, A2: 300, B
 export const MAX_SOURCE_PARTS = 8;
 export const MIN_SOURCE_WORDS = 40;
 export const MAX_SOURCE_WORDS = 6000;
+export const MAX_LINKS_PER_ADD = 20;
 const UNSIMPLIFIED_WORDS_PER_PART = 200;
 
 export const READING_DIFFICULTIES = ["level", "harder", "full"] as const;

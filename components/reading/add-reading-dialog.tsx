@@ -6,7 +6,7 @@ import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { useActiveLanguage } from "@/components/speech";
-import { READING_DIFFICULTIES, type ReadingDifficulty } from "@/src/core";
+import { MAX_LINKS_PER_ADD, READING_DIFFICULTIES, type ReadingDifficulty } from "@/src/core";
 
 export interface ReadingDraft {
 	value: string;
@@ -18,8 +18,12 @@ export const EMPTY_READING_DRAFT: ReadingDraft = { value: "", title: "", difficu
 
 const SINGLE_LINK = /^https?:\/\/\S+$/i;
 
-export function isSingleLink(value: string): boolean {
-	return SINGLE_LINK.test(value.trim());
+export function linksIn(value: string): string[] {
+	const lines = value
+		.split(/\s*\n\s*/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+	return lines.length > 0 && lines.every((line) => SINGLE_LINK.test(line)) ? [...new Set(lines)] : [];
 }
 
 export function difficultyInfo(difficulty: ReadingDifficulty, language: string): { label: string; line: string } {
@@ -32,8 +36,9 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 	const language = useActiveLanguage()?.english ?? "the language you are learning";
 	const [draft, setDraft] = useState<ReadingDraft>(initial);
 	const dismiss = useBackdropDismiss(onClose);
-	const isLink = isSingleLink(draft.value);
+	const links = linksIn(draft.value);
 	const empty = draft.value.trim() === "";
+	const tooManyLinks = links.length > MAX_LINKS_PER_ADD;
 
 	useEffect(() => {
 		// Capture phase: the reader's own Escape handler leaves the page, and this dialog must close first.
@@ -57,7 +62,7 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 				className="flex max-h-[min(44rem,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-y-auto rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
 				onSubmit={(e) => {
 					e.preventDefault();
-					if (!empty) onSubmit(draft);
+					if (!empty && !tooManyLinks) onSubmit(draft);
 				}}
 			>
 				<div className="flex items-start justify-between gap-3">
@@ -73,7 +78,7 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 				</div>
 
 				<label htmlFor="add-reading-input" className="mt-4 text-[13px] font-[550] text-ink-2">
-					A link, or the text itself
+					A link, several links (one on each line), or the text itself
 				</label>
 				<textarea
 					id="add-reading-input"
@@ -85,7 +90,13 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 					data-testid="add-reading-input"
 				/>
 
-				{!isLink && !empty && (
+				{links.length > 1 && (
+					<p className="mt-2 text-[13px] leading-relaxed text-ink-3" data-testid="add-reading-links">
+						{tooManyLinks ? `That is ${links.length} links. Add at most ${MAX_LINKS_PER_ADD} at a time.` : `${links.length} links. Each becomes a book on your shelf, and their first parts are written in the background while you do something else.`}
+					</p>
+				)}
+
+				{links.length === 0 && !empty && (
 					<>
 						<label htmlFor="add-reading-name" className="mt-3 text-[13px] font-[550] text-ink-2">
 							Title (optional)
@@ -116,8 +127,8 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 					<button type="button" onClick={onClose} className="q-btn ghost">
 						Cancel
 					</button>
-					<button type="submit" disabled={empty} className="q-btn primary" data-testid="add-reading-submit">
-						Add to my reading
+					<button type="submit" disabled={empty || tooManyLinks} className="q-btn primary" data-testid="add-reading-submit">
+						{links.length > 1 ? `Add ${links.length} texts` : "Add to my reading"}
 					</button>
 				</div>
 			</form>

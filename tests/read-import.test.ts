@@ -352,6 +352,47 @@ describe("reading a text of your own", () => {
 	});
 });
 
+describe("adding several links at once", () => {
+	const pageFor = (url: string) => ARTICLE_PAGE.replace("Bratislava", `Mesto ${new URL(url).pathname.slice(1)}`);
+
+	it("keeps every link it can read, names the ones it cannot, and writes each first part afterwards", async () => {
+		const fetchPage = async (url: string) => (url.includes("broken") ? htmlPage("<html><body></body></html>")(url) : htmlPage(pageFor(url))(url));
+		const draftAndRedraftForEach = Array.from({ length: 4 }, () => fauxAssistantMessage(JSON.stringify(RETOLD_DRAFT)));
+		const engine = fauxEngine(draftAndRedraftForEach);
+		const links =["https://example.org/kosice", "https://example.org/broken", "https://example.org/zilina", "https://example.org/kosice"];
+		const result = await readImport.importLinks(links, "level", { engine, model: "faux:retell", fetchPage });
+
+		assert.equal(result.added.length, 2);
+		assert.deepEqual(result.failed, [{ url: "https://example.org/broken", message: "That page could not be read. Paste its text instead." }]);
+		const beforeWriting = reading.sourceEntries().filter((s) => result.added.includes(s.id));
+		assert.deepEqual(
+			beforeWriting.map((s) => ({ written: s.written, preparing: s.preparing })),
+			[
+				{ written: 0, preparing: true },
+				{ written: 0, preparing: true },
+			],
+		);
+
+		await result.firstParts;
+		for (const id of result.added) assert.equal(storyStore.get(core.ownStoryId(id, 1))?.source?.part, 1);
+		assert.ok(reading.sourceEntries().filter((s) => result.added.includes(s.id)).every((s) => s.written === 1 && !s.preparing));
+	});
+
+	it("does not try a first part again in the same run once the model failed on it", async () => {
+		const fetchPage = async (url: string) => htmlPage(pageFor(url))(url);
+		const failing = await readImport.importLinks(["https://example.org/nitra"], "level", { engine: fauxEngine([]), model: "faux:retell", fetchPage });
+		await failing.firstParts;
+		const [id] = failing.added;
+		assert.equal(storyStore.get(core.ownStoryId(id!, 1)), null);
+
+		const working = fauxEngine([fauxAssistantMessage(JSON.stringify(RETOLD_DRAFT))]);
+		await reading.writeFirstParts([id!], { engine: working, model: "faux:retell" });
+		assert.equal(storyStore.get(core.ownStoryId(id!, 1)), null, "left for the learner to open, which writes it on demand");
+		const opened = await reading.sourcePart(id!, 1, { engine: working, model: "faux:retell" });
+		assert.equal(opened.source?.part, 1);
+	});
+});
+
 describe("parseStoryDraft", () => {
 	it("keeps the paragraph marks", () => {
 		const draft = core.parseStoryDraft(JSON.stringify(RETOLD_DRAFT));

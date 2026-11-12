@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, LoaderCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type BookState = "next" | "unread" | "read";
@@ -15,6 +15,7 @@ export interface ShelfBook {
 	words: number;
 	state: BookState;
 	tone: BookTone;
+	beingWritten?: boolean;
 	kind: string;
 	title: string;
 	meta: string;
@@ -62,14 +63,14 @@ export function Bookshelf({ books, slot, openId, onOpen, label, testId }: { book
 				const next = book.state === "next";
 				return (
 					<li key={book.id} className={cn("q-book", book.tone, next && "next", open && "open")} style={{ "--spine-w": `${size.width}px`, "--spine-h": `${size.height}px` } as React.CSSProperties} data-testid="read-book">
-						<button type="button" className="q-spine" aria-expanded={open} aria-controls={open ? coverId : undefined} aria-label={`${book.title}, ${book.spineLabel}, ${STATE_WORDS[book.state]}`} onClick={() => onOpen(open ? null : book.id)} data-testid="read-spine">
+						<button type="button" className="q-spine" aria-expanded={open} aria-controls={open ? coverId : undefined} aria-label={`${book.title}, ${book.spineLabel}, ${book.beingWritten ? "being written" : STATE_WORDS[book.state]}`} onClick={() => onOpen(open ? null : book.id)} data-testid="read-spine">
 							<span className="q-spine-label" aria-hidden="true">
 								{book.spineLabel}
 							</span>
 							<span className="q-spine-title" lang={book.titleLang} aria-hidden="true">
 								{book.spineTitle}
 							</span>
-							{book.state === "read" && <CheckIcon className="q-spine-mark" strokeWidth={2.4} aria-hidden="true" />}
+							{book.beingWritten ? <LoaderCircleIcon className="q-spine-mark animate-spin motion-reduce:animate-none" aria-hidden="true" /> : book.state === "read" && <CheckIcon className="q-spine-mark" strokeWidth={2.4} aria-hidden="true" />}
 						</button>
 						{open && (
 							<div id={coverId} className="q-cover" role="group" aria-label={book.title} data-testid="read-cover">

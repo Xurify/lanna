@@ -33,7 +33,7 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { Bookshelf, type BookState, type ShelfBook, type ShelfSlot } from "@/components/reading/bookshelf";
-import { AddReadingDialog, difficultyInfo, EMPTY_READING_DRAFT, isSingleLink, type ReadingDraft } from "@/components/reading/add-reading-dialog";
+import { AddReadingDialog, difficultyInfo, EMPTY_READING_DRAFT, linksIn, type ReadingDraft } from "@/components/reading/add-reading-dialog";
 import { cheersFor, genreInfo, gradeAnswers, readXp, type LibraryEntry, type ReadingState, type SourceEntry, type StoryRecord, type StorySource, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -61,6 +61,7 @@ interface Outcome {
 }
 
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
+const LIBRARY_REFRESH_MS = 4000;
 
 export function Reader({ initial, initialStory }: { initial: ReadingState | null; initialStory?: StoryRecord | null }) {
 	const lang = useActiveLanguage();
@@ -70,6 +71,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	const [stage, setStage] = useState<Stage>(initialStory ? "reading" : "shelf");
 	const [adding, setAdding] = useState<{ draft: ReadingDraft; error: string | null } | null>(null);
 	const [waitingForOwnText, setWaitingForOwnText] = useState(false);
+	const [linksBeingRead, setLinksBeingRead] = useState(0);
 	const [error, setError] = useState<string | null>(null);
 	const [tapped, setTapped] = useState<string[]>([]);
 	const [answers, setAnswers] = useState<number[]>([]);
@@ -118,6 +120,13 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	useEffect(() => {
 		void load();
 	}, [load]);
+
+	const firstPartsBeingWritten = stage === "shelf" && (state?.sources ?? []).some((s) => s.preparing);
+	useEffect(() => {
+		if (!firstPartsBeingWritten) return;
+		const timer = setInterval(() => void load(), LIBRARY_REFRESH_MS);
+		return () => clearInterval(timer);
+	}, [firstPartsBeingWritten, load]);
 
 	const open = (id: string) => {
 		void fetch(`/api/read?id=${encodeURIComponent(id)}`)
@@ -168,12 +177,30 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 			});
 	};
 
+	const importLinks = (links: string[], draft: ReadingDraft) => {
+		setLinksBeingRead(links.length);
+		postRead<{ added: number; failed: Array<{ url: string; message: string }> }>({ action: "import", urls: links, difficulty: draft.difficulty })
+			.then(({ added, failed }) => {
+				if (failed.length === 0) return;
+				const one = failed.length === 1;
+				const could = added === 0 ? "None of these could be read" : `${added} added. ${one ? "This one" : `These ${failed.length}`} could not be read`;
+				setAdding({ draft: { ...draft, value: failed.map((f) => f.url).join("\n") }, error: `${could}. Open ${one ? "the page and paste its text" : "each page and paste its text, one at a time,"} instead.` });
+			})
+			.catch((err: Error) => setAdding({ draft, error: err.message }))
+			.finally(() => {
+				setLinksBeingRead(0);
+				void load();
+			});
+	};
+
 	const importText = (draft: ReadingDraft) => {
 		setAdding(null);
+		const links = linksIn(draft.value);
+		if (links.length > 1) return importLinks(links, draft);
 		setWaitingForOwnText(true);
 		setStage("writing");
 		const value = draft.value.trim();
-		postRead<{ story: StoryRecord }>({ action: "import", difficulty: draft.difficulty, ...(isSingleLink(value) ? { url: value } : { text: value, title: draft.title }) })
+		postRead<{ story: StoryRecord }>({ action: "import", difficulty: draft.difficulty, ...(links.length === 1 ? { url: links[0] } : { text: value, title: draft.title }) })
 			.then((imported) => show(imported.story))
 			.catch((err: Error) => {
 				setStage("shelf");
@@ -285,7 +312,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "shelf" || !story) {
 		return (
 			<Frame>
-				<Shelf state={state} onOpen={open} onWrite={writeNext} onAdd={() => setAdding({ draft: EMPTY_READING_DRAFT, error: null })} onOpenPart={openPart} onRemoveSource={removeText} />
+				<Shelf state={state} linksBeingRead={linksBeingRead} onOpen={open} onWrite={writeNext} onAdd={() => setAdding({ draft: EMPTY_READING_DRAFT, error: null })} onOpenPart={openPart} onRemoveSource={removeText} />
 				{adding && <AddReadingDialog initial={adding.draft} error={adding.error} onClose={() => setAdding(null)} onSubmit={importText} />}
 			</Frame>
 		);
@@ -888,7 +915,8 @@ export function storyMeta(s: { level: string; wordCount: number; coverage: numbe
 const partsWord = (parts: number) => `${parts} ${parts === 1 ? "part" : "parts"}`;
 
 export function sourceMeta(entry: SourceEntry): string {
-	const progress = entry.finished ? `read · ${partsWord(entry.parts)}` : entry.read === 0 ? `${partsWord(entry.parts)} · not started` : `part ${entry.nextPart} of ${entry.parts} is next`;
+	const notStarted = entry.written > 0 ? "not started" : entry.preparing ? "part 1 is being written" : "not written yet";
+	const progress = entry.finished ? `read · ${partsWord(entry.parts)}` : entry.read === 0 ? `${partsWord(entry.parts)} · ${notStarted}` : `part ${entry.nextPart} of ${entry.parts} is next`;
 	return [entry.site, progress, entry.difficulty === "level" ? null : difficultyInfo(entry.difficulty, "").label.toLowerCase(), entry.shortened ? "a shorter version" : null].filter(Boolean).join(" · ");
 }
 
@@ -925,7 +953,7 @@ export function storyBookMeta(s: Pick<LibraryEntry, "wordCount" | "coverage" | "
 	return parts.join(" · ");
 }
 
-function Shelf({ state, onOpen, onWrite, onAdd, onOpenPart, onRemoveSource }: { state: ReadingState | null; onOpen: (id: string) => void; onWrite: () => void; onAdd: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; onRemoveSource: (sourceId: string) => void }) {
+function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRemoveSource }: { state: ReadingState | null; linksBeingRead: number; onOpen: (id: string) => void; onWrite: () => void; onAdd: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; onRemoveSource: (sourceId: string) => void }) {
 	const lang = useActiveLanguage();
 	const library = useMemo(() => state?.library ?? [], [state]);
 	const stories = useMemo(() => library.filter((s) => !s.source), [library]);
@@ -978,6 +1006,7 @@ function Shelf({ state, onOpen, onWrite, onAdd, onOpenPart, onRemoveSource }: { 
 			words: entry.wordCount,
 			state: entry.id === nextBookId ? "next" : entry.finished ? "read" : "unread",
 			tone: "own",
+			beingWritten: entry.preparing,
 			kind: entry.site ?? "Your text",
 			title: entry.title,
 			meta: sourceMeta({ ...entry, site: undefined }),
@@ -1000,6 +1029,12 @@ function Shelf({ state, onOpen, onWrite, onAdd, onOpenPart, onRemoveSource }: { 
 			{sources.length === 0 && (
 				<p className="q-line dim mb-2" data-testid="read-sources-empty">
 					An article or a newsletter you mean to read? Add its link or paste the text, and read it here, as easy or as hard as you choose.
+				</p>
+			)}
+			{linksBeingRead > 0 && (
+				<p className="mb-2 flex items-center gap-2 text-[14px] text-ink-2" role="status" data-testid="read-links-being-read">
+					<LoaderCircleIcon className="size-4 animate-spin motion-reduce:animate-none" />
+					Reading {linksBeingRead} links. They come onto the shelf as they are read.
 				</p>
 			)}
 			{(sources.length > 0 || addSlot) && <Bookshelf books={sourceBooks} slot={addSlot} openId={openBookId} onOpen={setChosenBook} label="Your reading" testId="read-sources" />}

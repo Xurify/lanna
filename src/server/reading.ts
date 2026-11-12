@@ -780,9 +780,14 @@ interface Writing {
 	queue: Promise<unknown>;
 	progress: WritingProgress | null;
 	shelfRunning: boolean;
+	firstPartsBeingWritten: Set<string>;
+	firstPartsGivenUp: Set<string>;
 }
 const g = globalThis as unknown as { __lhStoryWriting?: Writing };
-const writing: Writing = (g.__lhStoryWriting ??= { queue: Promise.resolve(), progress: null, shelfRunning: false });
+const writing: Writing = (g.__lhStoryWriting ??= { queue: Promise.resolve(), progress: null, shelfRunning: false, firstPartsBeingWritten: new Set(), firstPartsGivenUp: new Set() });
+// Next dev keeps this object across module reloads, so one made before these fields existed has none.
+writing.firstPartsBeingWritten ??= new Set();
+writing.firstPartsGivenUp ??= new Set();
 
 /** What is being written right now, if anything. */
 export function generating(): WritingProgress | null {
@@ -972,6 +977,20 @@ export async function writeSourceParts(sourceId: string, upTo: number, opts: Gen
 	}
 }
 
+export function writeFirstParts(sourceIds: readonly string[], opts: GenerateOptions = {}): Promise<void> {
+	const waiting = sourceIds.filter((id) => !writing.firstPartsBeingWritten.has(id) && !writing.firstPartsGivenUp.has(id) && !storyStore.get(ownStoryId(id, 1)));
+	const jobs = waiting.map((id) => {
+		writing.firstPartsBeingWritten.add(id);
+		return generateStory({ ...opts, source: { id, part: 1 }, wanted: false })
+			.catch((err) => {
+				writing.firstPartsGivenUp.add(id);
+				console.warn("[read] own part:", err instanceof Error ? err.message : err);
+			})
+			.finally(() => writing.firstPartsBeingWritten.delete(id));
+	});
+	return Promise.all(jobs).then(() => undefined);
+}
+
 export function kickSourceParts(sourceId: string, upTo: number, opts: GenerateOptions = {}): void {
 	void writeSourceParts(sourceId, upTo, opts).catch((err) => console.warn("[read] own part:", err instanceof Error ? err.message : err));
 }
@@ -1029,6 +1048,7 @@ export function sourceEntries(): SourceEntry[] {
 				difficulty,
 				level: s.level,
 				wordCount: s.wordCount,
+				preparing: writing.firstPartsBeingWritten.has(s.id),
 			};
 		});
 }
@@ -1055,14 +1075,18 @@ export function readingState(tz?: number, now = new Date(), opts: { topUpShelf?:
 	const readToday = storyStore.reads().filter((r) => r.day === today).length;
 	const canWrite = storyEngine() !== null;
 	const pick = pickNext();
-	if (canWrite && opts.topUpShelf !== false) kickShelf();
+	const sources = sourceEntries();
+	if (canWrite && opts.topUpShelf !== false) {
+		kickShelf();
+		void writeFirstParts(sources.filter((s) => s.written === 0).map((s) => s.id));
+	}
 	return {
 		current: pick?.story ?? null,
 		library: lib,
 		canWrite,
 		generating: generating(),
 		readToday,
-		sources: sourceEntries(),
+		sources: canWrite && opts.topUpShelf !== false ? sourceEntries() : sources,
 		...(pick ? { pick: pick.reason } : {}),
 	};
 }

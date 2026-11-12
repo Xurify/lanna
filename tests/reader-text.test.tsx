@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { groupTokens, kindOf, sourceMeta, storyBookMeta, storyMeta } from "@/components/reading/reader";
 import { shelfRowHeight, spineSize } from "@/components/reading/bookshelf";
+import { linksIn } from "@/components/reading/add-reading-dialog";
 import { ROBO_EPISODES } from "../scripts/fixtures/series-episodes.ts";
 
 const tok = (text: string, word = /\p{L}/u.test(text)) => ({ text, word });
@@ -40,9 +41,11 @@ describe("the reader's text", () => {
 	});
 
 	it("a text of your own says where it is from, how far it is read and how hard it is", () => {
-		const entry = { id: "s1", title: "Test", parts: 3, written: 1, read: 0, nextPart: 1, addedAt: "2026-11-01T10:00:00Z", finished: false, shortened: false, difficulty: "level" as const, level: "A1" as const, wordCount: 600 };
+		const entry = { id: "s1", title: "Test", parts: 3, written: 1, read: 0, nextPart: 1, addedAt: "2026-11-01T10:00:00Z", finished: false, shortened: false, difficulty: "level" as const, level: "A1" as const, wordCount: 600, preparing: false };
 		assert.equal(sourceMeta({ ...entry, site: "example.com" }), "example.com · 3 parts · not started");
 		assert.equal(sourceMeta({ ...entry, read: 1, nextPart: 2 }), "part 2 of 3 is next");
+		assert.equal(sourceMeta({ ...entry, written: 0, preparing: true }), "3 parts · part 1 is being written");
+		assert.equal(sourceMeta({ ...entry, written: 0 }), "3 parts · not written yet");
 		assert.equal(sourceMeta({ ...entry, read: 3, finished: true, difficulty: "full" }), "read · 3 parts · not simplified");
 		assert.equal(sourceMeta({ ...entry, parts: 1, shortened: true, difficulty: "harder" }), "1 part · not started · a step up · a shorter version");
 	});
@@ -59,6 +62,13 @@ describe("the reader's text", () => {
 	it("a story's cover says how long it is, how much is counted as known, and the last score", () => {
 		assert.equal(storyBookMeta({ wordCount: 160, coverage: 0.92 }), "about 2 min · 92% counted as known");
 		assert.equal(storyBookMeta({ wordCount: 40, coverage: 0, lastScore: { correct: 2, total: 3 } }), "about 1 min · 2 of 3 right");
+	});
+
+	it("several links, one on each line, are told from one link and from a text", () => {
+		assert.deepEqual(linksIn(" https://a.example/1 \n\nhttps://b.example/2\nhttps://a.example/1"), ["https://a.example/1", "https://b.example/2"]);
+		assert.deepEqual(linksIn("https://a.example/1"), ["https://a.example/1"]);
+		assert.deepEqual(linksIn("Read this: https://a.example/1\nhttps://b.example/2"), []);
+		assert.deepEqual(linksIn("   "), []);
 	});
 
 	it("a part of your own text is named by its number", () => {
