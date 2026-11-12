@@ -1027,6 +1027,8 @@ export function sourceEntries(): SourceEntry[] {
 				finished: firstUnread < 0,
 				shortened: sourceIsShortened(s.wordCount, partIds.length, s.level, difficulty),
 				difficulty,
+				level: s.level,
+				wordCount: s.wordCount,
 			};
 		});
 }

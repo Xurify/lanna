@@ -222,6 +222,8 @@ export interface SourceEntry {
 	finished: boolean;
 	shortened: boolean;
 	difficulty: ReadingDifficulty;
+	level: Cefr;
+	wordCount: number;
 }
 
 export interface StoryRecord {

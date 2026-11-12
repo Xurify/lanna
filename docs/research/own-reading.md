@@ -1,6 +1,6 @@
 # Your own reading: articles and newsletters, retold at the learner's level
 
-*LangHarness, 2026-11-11. Thread "Read opens the library; import articles, links and emails". Code: `src/core/reading.ts`, `src/server/read-import.ts`, `src/store/reading-sources.ts`, `components/reading/`.*
+*LangHarness, 2026-11-11. Thread "Read opens the library; import articles, links and emails". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/server/read-import.ts`, `src/store/reading-sources.ts`, `components/reading/`.*
 
 ## The question
 
@@ -25,8 +25,8 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 
 | Option | What it is | Verdict |
 |---|---|---|
-| Not simplified, every word tappable | The text in the language as written (or translated in full when it is in another language), glossed by the lexicon, with the share of known words shown | Not built yet, and it should be the learner's choice, not the app's: the owner does not accept that a text under 95% is not worth reading, and the evidence above does not say it is |
-| Retold at the learner's level | The Cheap slot rewrites each section in the language with the learner's known words, the same rules as an episode | **Built first.** The easy end of the choice: fluent reading on a text the learner picked |
+| Not simplified, every word tappable | The text in the language as written (or translated in full when it is in another language), glossed by the lexicon, with the share of known words shown | **Built, as the learner's choice.** The owner does not accept that a text under 95% is not worth reading, and the evidence above does not say it is |
+| Retold at the learner's level, or one level up | The Cheap slot rewrites each section in the language with the learner's known words, the same rules as an episode | **Built, the default.** The easy end of the choice: fluent reading on a text the learner picked |
 | Weave (words of the language inside the original text) | The text stays in its own language and more and more words are swapped | Not built. The learner reads the other language's sentences, so it is not input in the language, and P2 keeps input at the word level |
 | Pull emails from the mailbox | Gmail or IMAP access, a label to read from | Not built. It needs mail credentials held by the app and a security review of its own; paste and links cover the first use, and show whether the habit holds |
 
@@ -34,9 +34,11 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 
 - **Read opens the library.** With the learner's own texts beside the app's stories there is a choice to make, so the page starts on it. The day's pick is the first card.
 - **Add a link or paste the text.** A link is fetched through the same guard as every other URL the app fetches for someone (`safeFetch`, [web-security-review.md](web-security-review.md)) and reduced to its article text; a page that cannot be read says so and asks for the text. Nothing is sent to a third-party reader service. The text as received is kept on disk before any model call.
+- **The learner chooses how hard.** Three settings per text: at my level (the default), a step up (written for the next CEFR level), and not simplified (the section kept as written when it is already in the language, else translated in full; no coverage redraft, and only the words the learner taps go to Review). The share of words the app counts as known is shown either way.
 - **Parts, not one summary.** The text is cut at paragraph ends into sections (about 250 source words a part at A1 up to 550 at C1, at most 8 parts), and each part is one Read story: the same length, known-word brief, coverage floor with one redraft, new words used three times, questions by level, and review queue as an episode. Earlier parts' recaps go into the next part's brief. Over 8 parts the sections grow instead, and the library says the version is shorter.
 - **Written as it is read.** Adding a text writes part 1. Finishing a part writes the one after the next in the background, so the next part is ready and at most two unread parts exist per text. The spend follows the reading.
-- **The original after the effort.** The part's own section of the original shows on the end screen behind one button, with the link. Reading it after the questions is the check on what was understood, and it is how the whole text gets read.
+- **The original after the effort.** The part's own section of the original shows on the end screen, beside the score, with the link. Reading it after the questions is the check on what was understood, and it is how the whole text gets read.
+- **The library is a shelf.** Every story and every text of the learner's is a book: taller for a harder level, thicker for a longer text, grey once read. The next one to read is the teal one and stands open, with its Read button on the cover; tapping another spine turns that book to its cover. A book's size carries data, so the shelf is not decoration.
 - **The learner's texts come first in the pick.** A text in progress, then the oldest one added, before the chapter's episode. The learner chose it; that is the interest the studies above measured.
 - **Remove hides, never deletes.** A removed text leaves the library and the pick; its parts and their cost stay on disk and in Spending. Adding the same text again brings it back with no model call.
 
@@ -44,8 +46,13 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 
 - No measure yet of how faithful a retelling is to its section.
 - One text per add; no reading list of several links, no share target from the phone, no mailbox.
-- The learner cannot yet choose how hard a text is: every text is retold at their level, even one they would rather read as written.
+- Sponsor blocks and a newsletter's own promotion are left to the model to skip; nothing in code removes them, so a last part can hold little but those.
+- A link to a site's home page is read as if it were an article.
 - Real generation on the PC with a live model has not been verified by the owner.
+
+## Tried on the owner's links
+
+Ten links from the owner's newsletters, 2026-11-11, through `addSource` with no model call: all ten were fetched and reduced to text (482 to 5,971 words, 2 to 7 parts). One was a podcast transcript over the word limit and was cut at 6,000 words. One was a site's home page, which came back as 442 words of marketing copy. Seven carried a sponsor block or a subscribe footer inside the extracted text. Mailchimp's archive link opened without the reader's id (`e`), which the import now drops along with `utm_*` and click ids.
 
 ## Sources
 
