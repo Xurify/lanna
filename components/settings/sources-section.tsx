@@ -35,6 +35,11 @@ export function SourcesSection({ onNavigate }: { onNavigate?: () => void }) {
 						Open Sources
 					</Link>
 				</SettingsRow>
+				<SettingsRow label="Learning methodologies & mentors" hint="The polyglot frameworks, linguists, and practical mentors that shape the app (Lýdia Machová, Stephen Krashen, Paul Nation).">
+					<Link href="/methodologies" onClick={onNavigate} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="sources-methodologies-link">
+						Open Methodologies
+					</Link>
+				</SettingsRow>
 			</SettingsGroup>
 		</>
 	);

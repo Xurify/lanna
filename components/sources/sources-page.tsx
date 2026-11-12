@@ -20,10 +20,15 @@ export function SourcesPage() {
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="sources">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
-					Today
-				</Link>
+				<div className="flex items-center justify-between">
+					<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
+						<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
+						Today
+					</Link>
+					<Link href="/methodologies" className="text-[13px] text-ink-3 underline decoration-line-2 underline-offset-[3px] hover:text-ink-2">
+						Learning methodologies & mentors
+					</Link>
+				</div>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Sources</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Each task here is built from published research, and each says so on its own page. This is the whole list: what the studies found, what they did not show, and the numbers that are our own choice.
