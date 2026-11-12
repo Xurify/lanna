@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon, KeyboardIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpeedToggle, useActiveLanguage } from "@/components/speech";
-import { baseLetter, letterFamilies, liveFamily, pressLetter } from "@/src/core";
+import { baseLetter, belongsToLayoutAccent, letterFamilies, liveFamily, pressLetter } from "@/src/core";
 import { AccentChoices, AccentKeyboard, accentsOf, type AccentMenu } from "@/components/accent-keyboard";
 
 type Field = HTMLTextAreaElement | HTMLInputElement;
@@ -122,8 +122,8 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	useEffect(() => {
 		if (variant !== "keys") return;
 		const onKeyDown = (e: KeyboardEvent) => {
-			// The physical key left of 1, whatever the layout types there: `, ; or a dead key.
-			if (e.code !== "Backquote" || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
+			// The physical key left of 1, whatever the layout types there (` or ;). Chrome on Windows cancels a dead key's pending accent when its keydown is prevented, and the cancel can take earlier letters with it.
+			if (e.code !== "Backquote" || belongsToLayoutAccent(e) || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
 			if (!keyboardRef.current?.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return;
 			e.preventDefault();
 			toggleKeyboard();
@@ -138,6 +138,10 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		const byBase = new Map(families.map((f) => [f.base, f]));
 		const onKeyDown = (e: KeyboardEvent) => {
 			if (e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
+			if (belongsToLayoutAccent(e)) {
+				if (menu) setMenu(null);
+				return;
+			}
 			if (menu) {
 				const accents = accentsOf(byBase.get(menu.base));
 				const n = Number(/^(?:Digit|Numpad)([1-9])$/.exec(e.code)?.[1] ?? 0);

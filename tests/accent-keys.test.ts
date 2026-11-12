@@ -6,7 +6,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { letterFamilies, liveFamily, pressLetter } from "../src/core/accent-keys.ts";
+import { belongsToLayoutAccent, letterFamilies, liveFamily, pressLetter } from "../src/core/accent-keys.ts";
 
 const SLOVAK = ["á", "ä", "č", "ď", "é", "í", "ĺ", "ľ", "ň", "ó", "ô", "ŕ", "š", "ť", "ú", "ý", "ž"];
 const RUSSIAN = ["ё", "й", "ъ", "ы", "ь", "э"];
@@ -67,4 +67,12 @@ test("a family lights up only when one of its keys would change the letter", () 
 	assert.equal(liveFamily(families, "o", 1, 1, "et-EE"), "o");
 	assert.equal(liveFamily(families, "ö", 1, 1, "et-EE"), "o", "õ would change it");
 	assert.equal(liveFamily(families, "ä", 1, 1, "et-EE"), null, "ä is the family's only letter");
+});
+
+test("a dead key or a key inside a composition belongs to the learner's layout", () => {
+	assert.equal(belongsToLayoutAccent({ key: "Dead", isComposing: false, keyCode: 192 }), true, "Estonian ˇ left of 1");
+	assert.equal(belongsToLayoutAccent({ key: "c", isComposing: true, keyCode: 67 }), true, "the letter after it");
+	assert.equal(belongsToLayoutAccent({ key: "Process", isComposing: false, keyCode: 229 }), true);
+	assert.equal(belongsToLayoutAccent({ key: "`", isComposing: false, keyCode: 192 }), false, "US ` still opens the Keyboard");
+	assert.equal(belongsToLayoutAccent({ key: ";", isComposing: false, keyCode: 192 }), false, "Slovak ; still opens the Keyboard");
 });
