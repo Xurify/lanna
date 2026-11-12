@@ -134,13 +134,25 @@ describe("the note is written once per pair and kept", () => {
 		assert.equal(missNoteStore.get("od~z")?.raw, RECORDED.zOd, "the reply is kept as it came");
 	});
 
-	it("a note the judge does not support is kept as rejected with its reason, and not asked again", async () => {
-		const s = scripted(RECORDED.istChodit, '{"supported": false, "problem": "walk is not shown"}');
+	it("a note the judge does not support is kept as rejected with its reason, written once more on a later miss, then never again", async () => {
+		const s = scripted(RECORDED.istChodit, '{"supported": false, "problem": "walk is not shown"}', RECORDED.istChodit, '{"supported": false, "problem": "still not shown"}');
 		const note = await ensureMissNote(entry("ist"), entry("chodit"), { engine: s.engine, now: AT });
 		assert.equal(note?.status, "rejected");
 		assert.equal(note?.reason, "judge: walk is not shown");
+		assert.equal(note?.attempts, 1);
+		const second = await ensureMissNote(entry("ist"), entry("chodit"), { engine: s.engine, now: AT });
+		assert.equal(second?.attempts, 2);
+		assert.equal(s.calls(), 4);
 		await ensureMissNote(entry("ist"), entry("chodit"), { engine: s.engine, now: AT });
-		assert.equal(s.calls(), 2);
+		assert.equal(s.calls(), 4, "two attempts at most");
+	});
+
+	it("a rejected note saved before attempts were counted is its first attempt", async () => {
+		missNoteStore.put({ key: "od~z", words: ["od", "z"], status: "rejected", reason: "judge: x", raw: "", model: "faux", created: AT.toISOString() });
+		const s = scripted(RECORDED.zOd, '{"supported": true, "problem": ""}');
+		const rewritten = await ensureMissNote(entry("od"), entry("z"), { engine: s.engine, now: AT });
+		assert.equal(rewritten?.status, "kept");
+		assert.equal(rewritten?.attempts, 2);
 	});
 
 	it("'no clear difference' asks no judge", async () => {

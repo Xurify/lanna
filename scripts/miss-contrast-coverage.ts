@@ -15,7 +15,8 @@
 import { activeProfile } from "../config.ts";
 import { loadLexicon } from "../src/agent/lexicon.ts";
 import { profileLanguage } from "../src/agent/profile-language.ts";
-import { contrastExample, contrastSource, missWordOf, startsQuestion, type ContrastSource } from "../src/core/review-miss.ts";
+import { contrastExample, contrastSource, missWordOf, startsQuestion, wantsAiNote, type ContrastSource } from "../src/core/review-miss.ts";
+import { enoughEvidence, missNoteEvidence } from "../src/core/miss-note.ts";
 import { entryLemma, type LexiconEntry } from "../src/core/review.ts";
 import { isVariantMatch } from "../src/core/variants.ts";
 import { languageReference } from "../src/agent/language-reference.ts";
@@ -58,11 +59,12 @@ const rows: Array<[LexiconEntry, LexiconEntry, ContrastSource]> = [...pairs.valu
 	const lemma = entryLemma(card);
 	const word = missWordOf({ slug: card.slug, lemma, entry: card }, other, { typed: entryLemma(other), isLemma: true, language: language.id, reference }, tag);
 	const own = contrastExample(card.examples, lemma, tag);
-	return [card, other, contrastSource(word, own ? startsQuestion(own.text, lemma, tag) : false)];
+	const aiNoteOnFirstMiss = wantsAiNote(word) && enoughEvidence(missNoteEvidence(card, other, tag));
+	return [card, other, aiNoteOnFirstMiss ? "ai note" : contrastSource(word, own ? startsQuestion(own.text, lemma, tag) : false)];
 });
 const common = rows.filter(([a, b]) => isCommon(a) && isCommon(b));
 
-console.log(`${profile}: what a miss on another word can say, beyond an example sentence`);
+console.log(`${profile}: what a miss on another word can say, beyond an example sentence ("ai note": written on the pair's first miss when an AI key is set)`);
 console.log(`  every pair sharing a meaning   ${tally(rows)}`);
 console.log(`  both words common              ${tally(common)}`);
 

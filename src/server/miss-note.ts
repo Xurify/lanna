@@ -7,6 +7,7 @@ import {
 	missNoteBrief,
 	missNoteEvidence,
 	missNoteRecord,
+	missNoteSettled,
 	MISS_NOTE_JUDGE_SYSTEM,
 	MISS_NOTE_SYSTEM,
 	parseJudgement,
@@ -29,7 +30,8 @@ interface MissNoteOptions {
 const inFlight = new Map<string, Promise<MissNote | null>>();
 
 export function cachedMissNote(a: Pick<LexiconEntry, "slug">, b: Pick<LexiconEntry, "slug">): MissNote | undefined {
-	return missNoteStore.get(mixupKey(a.slug, b.slug));
+	const note = missNoteStore.get(mixupKey(a.slug, b.slug));
+	return note && missNoteSettled(note) ? note : undefined;
 }
 
 export function ensureMissNote(a: LexiconEntry, b: LexiconEntry, opts: MissNoteOptions = {}): Promise<MissNote | null> {
@@ -75,7 +77,8 @@ async function writeMissNote(a: LexiconEntry, b: LexiconEntry, opts: MissNoteOpt
 			return null;
 		}
 	}
-	note = { ...note, ms: Date.now() - started };
+	const previous = missNoteStore.get(note.key);
+	note = { ...note, ms: Date.now() - started, attempts: (previous ? (previous.attempts ?? 1) : 0) + 1 };
 	missNoteStore.put(note);
 	return note;
 }

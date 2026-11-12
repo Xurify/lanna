@@ -54,6 +54,13 @@ export interface MissNote {
 	created: string;
 	cost?: number;
 	ms?: number;
+	attempts?: number;
+}
+
+export const MISS_NOTE_ATTEMPTS = 2;
+
+export function missNoteSettled(note: Pick<MissNote, "status" | "attempts">): boolean {
+	return note.status !== "rejected" || (note.attempts ?? 1) >= MISS_NOTE_ATTEMPTS;
 }
 
 const PART_OF_SPEECH: Readonly<Record<string, string>> = { Nouns: "noun", Verbs: "verb", Adjectives: "adjective", Adverbs: "adverb" };

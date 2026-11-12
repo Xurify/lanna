@@ -693,3 +693,12 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **New:** `npm run miss:coverage` measures how many word pairs get each kind of line and lists the uncovered common pairs, the queue for new curated rules.
 - **Checked:** `npm test` (2642 tests, 0 failed), typecheck, lint; the card in a sandbox in Day and Night at 1280 and 390 px for chodím on *ísť*, vodný on *voda* and Kedy on *keď*.
 - **Unverified:** the owner's own deck.
+
+## 11 November: a miss on another word is explained for almost every pair (`fix/review-miss-contrast`)
+
+- **Why:** the owner asked for coverage "for almost everything", decided on evidence: AI, no AI, or a compromise. Two tracks ran side by side, one without a model and one with.
+- **From the reference (no model, E105):** the card now shows the passage of the Slovak reference that sets the two words side by side, one clause per line with the chapter named ("be inside/at a place: v/vo + locative — Som v škole." / "be on/at an event/institution: na + locative — Som na stanici."), or, for 84 aspect pairs, which verb is the imperfective and which the perfective, with the curated aspect rule.
+- **An AI note (E106):** for a pair that nothing above explains, the first real miss writes one note from the dictionary's own sentences. It is checked in code and by a second call, cached per pair, and labeled "AI note from the dictionary's sentences, not checked by a person." The card shows "Comparing the two words in the dictionary's sentences…" until it arrives. Graded on 42 pairs by a second agent: 27 of 30 shown notes right, none invented. In the app: krajina/štát took 6.6 s and $0.009, and every later miss of the pair read it from the cache.
+- **Coverage:** `npm run miss:coverage`: with a model set, 99.6% of the common pairs get a line beyond an example; without one, 42.5%.
+- **Checked:** `npm test`, typecheck, lint; the card in the app with a real model (scratch data folder, the dev key file read-only) in Day and Night at 1280 and 390 px for krajina/štát, dostať/dostávam and v/na.
+- **Unverified:** the owner's own deck; run-to-run variance of the notes beyond the one pair seen twice.

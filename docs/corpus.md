@@ -24,7 +24,7 @@ Rule E1 in [DECISIONS.md](DECISIONS.md): anything the app pays for (audio, tutor
 | `data/profiles/<lang>/outside-listening.json` | Listening logged by hand outside the app: day, minutes, focused or background, what it was. Never part of the measured minutes | `src/store/outside.ts` |
 | `data/profiles/<lang>/milestones.json` | Custom "When can I…?" situations mapped once by the cheap slot | `src/server/milestones.ts` |
 | `data/profiles/<lang>/known.json` | Words the learner marked as known (slug, dictionary form, when), counted as met wherever "known" is measured (E71) | `src/store/known-words.ts` |
-| `data/profiles/<lang>/miss-notes.json` | AI notes on what tells two words apart, one per pair of lexicon entries, written by the cheap slot from the dictionary's glosses and sentences on the first Review miss of the pair: the reply as it came, the check's verdict (kept, none, rejected and why), the judge's verdict, cost and time. A rejected or "no clear difference" pair is never asked again | `src/store/miss-notes.ts` |
+| `data/profiles/<lang>/miss-notes.json` | AI notes on what tells two words apart, one per pair of lexicon entries, written by the cheap slot from the dictionary's glosses and sentences on the first Review miss of the pair: the reply as it came, the check's verdict (kept, none, rejected and why), the judge's verdict, cost and time. A kept note or "no clear difference" is final; a rejected note is written once more on the pair's next miss, then never again (attempts) | `src/store/miss-notes.ts` |
 | `data/export/<stamp>/` | `npm run corpus:export`: summary, audio, sentences, lessons, dialogues, explanations, review, stories, spoken, with a README | `src/server/corpus-export.ts` |
 
 ## Rules for new features

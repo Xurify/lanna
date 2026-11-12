@@ -59,9 +59,9 @@ const CASES: { why: string; slug: string; sentence: string; given: string; says:
 		slug: "v",
 		sentence: "Som v meste.",
 		given: "na",
-		says: ["be inside/at a place: v/vo + loc. — Som v škole.", "be on/at an event/institution: na + loc. — Som na stanici.", "From the reference: Valency and Prepositions."],
+		says: ["be inside/at a place: v/vo + locative — Som v škole.", "be on/at an event/institution: na + locative — Som na stanici.", "From the reference: Valency and Prepositions."],
 	},
-	{ why: "a reference row sets two verbs of living side by side", slug: "byvat", sentence: "Bývam v hoteli.", given: "žijem", says: ["live: reside at an address bývať (Bývam v Košiciach.); live a life, exist žiť (Žije v zahraničí.)", "From the reference: Lexical Choice and Interference."] },
+	{ why: "a reference row sets two verbs of living side by side", slug: "byvat", sentence: "Bývam v hoteli.", given: "žijem", says: ["live: reside at an address bývať (Bývam v Košiciach.) live a life, exist žiť (Žije v zahraničí.)", "From the reference: Lexical Choice and Interference."] },
 	{ why: "a noun and an adjective with one meaning are named as such", slug: "voda", sentence: "Pijem veľa vody.", given: "vodný", says: ["“vodný” is an adjective, which also means water, but it is another word.", "This one is the noun voda, water."] },
 	{ why: "the shared meaning comes from any sense, not only the first", slug: "iba", sentence: "Máme iba čaj.", given: "len", says: ["“len” also means only"] },
 	{ why: "a form of another word names its dictionary form", slug: "vecera", sentence: "Večera je o šiestej.", given: "večerom", says: ["“večerom” is a form of večer, evening. It is another word.", "Dobrý večer!", "This one is večera, dinner."] },
@@ -78,7 +78,7 @@ reviewStore.writeCards(cards);
 
 const textOf = (html: string) =>
 	html
-		.replace(/<\/p>/g, " ")
+		.replace(/<\/p>|<span class="block">/g, " ")
 		.replace(/<[^>]+>/g, "")
 		.replace(/&#x27;/g, "'")
 		.replace(/\s+/g, " ")

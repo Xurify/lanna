@@ -15,7 +15,7 @@ export interface ReferenceUnit {
 
 export interface ReferenceContrast {
 	chapter: string;
-	line: string;
+	lines: string[];
 }
 
 const MAX_CLAUSES = 3;
@@ -24,6 +24,22 @@ const MAX_ROWS_TO_PAIR_ACROSS = 10;
 const NO_WORDS: ReadonlySet<string> = new Set();
 
 const fold = (word: string, tag: string) => foldDiacritics(word.toLocaleLowerCase(tag));
+const CASE_NAMES: Readonly<Record<string, string>> = {
+	nom: "nominative",
+	gen: "genitive",
+	dat: "dative",
+	acc: "accusative",
+	loc: "locative",
+	instr: "instrumental",
+	N: "nominative",
+	G: "genitive",
+	D: "dative",
+	A: "accusative",
+	L: "locative",
+	I: "instrumental",
+};
+const withCaseNames = (text: string) =>
+	text.replace(/\+\s*(nom|gen|dat|acc|loc|instr)\.|\+\s*([NGDALI])\b/g, (_, short: string | undefined, letter: string | undefined) => `+ ${CASE_NAMES[(short ?? letter)!]}`);
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const lettersOf = (text: string) => text.split(/[^\p{L}]+/u).filter(Boolean);
 const plain = (text: string) =>
@@ -174,7 +190,7 @@ export function aspectPairOf<P extends AspectPair>(pairs: readonly P[], a: strin
 export function referenceContrast(units: readonly ReferenceUnit[], a: string, b: string, tag = "sk-SK"): ReferenceContrast | undefined {
 	const fa = fold(a, tag);
 	const fb = fold(b, tag);
-	let best: (ReferenceContrast & { sideBySide: boolean }) | undefined;
+	let best: (ReferenceContrast & { sideBySide: boolean; length: number }) | undefined;
 	const namesBoth = (cs: readonly ReferenceClause[]) => cs.some((c) => c.words.has(fa)) && cs.some((c) => c.words.has(fb));
 	for (const unit of units) {
 		const naming = unit.clauses.filter((c) => c.words.has(fa) || c.words.has(fb));
@@ -190,9 +206,10 @@ export function referenceContrast(units: readonly ReferenceUnit[], a: string, b:
 		const sideBySide = clauses.every((c) => c.words.has(fa) !== c.words.has(fb));
 		const byHead = new Map<string, string[]>();
 		for (const c of clauses) byHead.set(c.head, [...(byHead.get(c.head) ?? []), c.text]);
-		const line = [...byHead].map(([head, texts]) => (head ? `${head}: ${texts.join("; ")}` : texts.join("; "))).join("; ");
-		const better = !best || (sideBySide && !best.sideBySide) || (sideBySide === best.sideBySide && line.length < best.line.length);
-		if (better) best = { chapter: unit.chapter, line, sideBySide };
+		const lines = [...byHead].flatMap(([head, texts]) => (head && texts.length === 1 ? [`${head}: ${texts[0]}`] : head ? [`${head}:`, ...texts] : texts)).map(withCaseNames);
+		const length = lines.join(" ").length;
+		const better = !best || (sideBySide && !best.sideBySide) || (sideBySide === best.sideBySide && length < best.length);
+		if (better) best = { chapter: unit.chapter, lines, sideBySide, length };
 	}
-	return best && { chapter: best.chapter, line: best.line };
+	return best && { chapter: best.chapter, lines: best.lines };
 }

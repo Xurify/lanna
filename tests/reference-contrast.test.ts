@@ -13,7 +13,7 @@ const SPATIAL = `
 test("a small table pairs two words from different rows, with the rows' situations and examples", () => {
 	const c = referenceContrast(referenceUnits(SPATIAL, "Prepositions"), "v", "na");
 	assert.equal(c?.chapter, "Prepositions");
-	assert.equal(c?.line, "be inside/at a place: v/vo + loc. — Som v škole.; be on/at an event: na + loc. — Som na stanici.");
+	assert.deepEqual(c?.lines, ["be inside/at a place: v/vo + locative — Som v škole.", "be on/at an event: na + locative — Som na stanici."]);
 });
 
 test("a word inside an example sentence is not a match", () => {
@@ -24,7 +24,7 @@ test("a big table pairs only within one row", () => {
 	const rows = Array.from({ length: 11 }, (_, i) => `| sense ${i} | \`slovo${i}\` |`).join("\n");
 	const big = `| English | Slovak |\n| --- | --- |\n${rows}\n| live | reside \`bývať\`; live a life \`žiť\` |\n| visit | \`navštíviť\` |`;
 	const units = referenceUnits(big, "Lexical choice");
-	assert.equal(referenceContrast(units, "bývať", "žiť")?.line, "live: reside bývať; live a life žiť");
+	assert.deepEqual(referenceContrast(units, "bývať", "žiť")?.lines, ["live:", "reside bývať", "live a life žiť"]);
 	assert.equal(referenceContrast(units, "bývať", "navštíviť"), undefined);
 });
 
@@ -42,8 +42,13 @@ test("a word that only opens a longer phrase is not the word", () => {
 
 test("a reflexive verb and an explicit 'vs.' row still name their word", () => {
 	const units = referenceUnits("| happen | `stať sa` (`Čo sa stalo?`); be going on `diať sa` |\n| --- | --- |\n| `čakať na` vs. `očakávať` | wait / expect |", "Lexical choice");
-	assert.match(referenceContrast(units, "stať", "diať")?.line ?? "", /^happen: stať sa/);
-	assert.match(referenceContrast(units, "čakať", "očakávať")?.line ?? "", /^čakať na vs\. očakávať/);
+	assert.deepEqual(referenceContrast(units, "stať", "diať")?.lines, ["happen:", "stať sa (Čo sa stalo?)", "be going on diať sa"]);
+	assert.match(referenceContrast(units, "čakať", "očakávať")?.lines[0] ?? "", /^čakať na vs\. očakávať/);
+});
+
+test("case abbreviations are spelled out, as the app names cases in full", () => {
+	const units = referenceUnits("| at home | `doma` — `v/vo + loc.` |\n| --- | --- |\n| homeward | `domov` — `do + G` |", "Place");
+	assert.deepEqual(referenceContrast(units, "doma", "domov")?.lines, ["at home: doma — v/vo + locative", "homeward: domov — do + genitive"]);
 });
 
 test("two spellings of one word written as alternants are not contrasted", () => {

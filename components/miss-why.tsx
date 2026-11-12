@@ -63,7 +63,7 @@ export function MissWhy({ reason, given, code, className }: { reason: MissReason
 			{yours} is {w(reason.lemma)} with another ending.
 		</>
 	) : null;
-	const example = other && !other.rule && !other.aspect && !other.reference ? other.example : undefined;
+	const example = other && !other.rule && !other.aspect && !other.reference && !other.note ? other.example : undefined;
 	const source = (chapter: string) => <span className="text-[13px] text-ink-3"> From the reference: {chapter}.</span>;
 	const onlyOneAsks = Boolean(example?.asks) !== Boolean(reason.asks);
 	const here = other ? (
@@ -98,7 +98,11 @@ export function MissWhy({ reason, given, code, className }: { reason: MissReason
 			)}
 			{other?.reference && (
 				<p data-testid="review-why-reference">
-					{other.reference.line}
+					{other.reference.lines.map((line, i) => (
+						<span key={i} className="block">
+							{line}
+						</span>
+					))}
 					{source(other.reference.chapter)}
 				</p>
 			)}
