@@ -25,13 +25,11 @@
  * Pure and browser-safe: the family file is bundled, no fs.
  */
 
-import { MIXUP_FAMILIES, mixupKey, parallelForm, type MixupFamily, type MixupProbe } from "./mixups.ts";
+import { ASPECT_FAMILY_ID, MIXUP_FAMILIES, mixupKey, parallelForm, type MixupFamily, type MixupProbe } from "./mixups.ts";
 import { buildPairsLesson, rng, shuffle, type LessonExplain, type LessonItem, type LessonPlan, type LessonTask, type UnitId } from "./lesson.ts";
 import { chapterPairs, pairMembers, type PairDef } from "./pairs.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
 
-/** The family whose pairs are aspect pairs (curriculum/slovak/mixups.json). */
-const ASPECT_FAMILY_ID = "aspect";
 
 const CELL_ROWS = ["imperfective", "perfective"];
 const CELL_COLS = ["past", "present", "future"];

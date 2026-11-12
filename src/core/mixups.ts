@@ -94,6 +94,9 @@ export interface MixupProbe {
 	cueKeepBy?: string;
 }
 
+/** The family whose pairs are aspect pairs (curriculum/slovak/mixups.json). */
+export const ASPECT_FAMILY_ID = "aspect";
+
 export const MIXUP_FAMILIES: MixupFamily[] = (mixupsJson as unknown as { families: MixupFamily[] }).families;
 
 /** One miss kept as evidence: the sentence, what it wanted, what was given. */
@@ -544,6 +547,10 @@ export function mixupRule(m: Pick<Mixup, "a" | "b" | "family">, lex: MixupLexico
 	const pair = PAIRS.find((p) => mixupKey(p.a, p.b) === mixupKey(la, lb));
 	if (pair) return { rule: pair.rule, bridge: pair.bridge };
 	return { rule: `${la} = ${ea ? shortGloss(ea.en) : "?"} · ${lb} = ${eb ? shortGloss(eb.en) : "?"}`, bridge: "" };
+}
+
+export function aspectRule(language: string): string | undefined {
+	return (mixupsJson as { language?: string }).language === language ? MIXUP_FAMILIES.find((f) => f.id === ASPECT_FAMILY_ID)?.rule : undefined;
 }
 
 export function pairContrastRule(language: string, a: { slug: string; lemma: string }, b: { slug: string; lemma: string }): string | undefined {

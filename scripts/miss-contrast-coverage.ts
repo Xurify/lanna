@@ -2,8 +2,9 @@
  * How much a Review miss on another word can explain, from data alone
  * (E104). Every pair of lexicon words that share a meaning, unless grading
  * accepts one for the other (src/core/variants.ts), is a miss that can
- * happen; for each, the card's best line comes from a curated rule, the parts
- * of speech, a note in the gloss, a question, or only an example sentence.
+ * happen; for each, the card's best line comes from a curated rule, an aspect
+ * pair or a passage of the language reference, the parts of speech, a note in
+ * the gloss, a question, or only an example sentence.
  * The uncovered common pairs are the queue for curated rules
  * (curriculum/<language>/pairs.json).
  *
@@ -17,6 +18,7 @@ import { profileLanguage } from "../src/agent/profile-language.ts";
 import { contrastExample, contrastSource, missWordOf, startsQuestion, type ContrastSource } from "../src/core/review-miss.ts";
 import { entryLemma, type LexiconEntry } from "../src/core/review.ts";
 import { isVariantMatch } from "../src/core/variants.ts";
+import { languageReference } from "../src/agent/language-reference.ts";
 
 const profile = process.argv[2] ?? activeProfile();
 const listed = Number(process.argv[3] ?? 30);
@@ -27,6 +29,7 @@ if (!lexicon || !language) {
 	process.exit(1);
 }
 const tag = language.tag;
+const reference = languageReference(language.id, tag);
 
 const COMMON_RANK = 300;
 const isCommon = (e: LexiconEntry) => e.cat === "Phrases" || (e.rank ?? Infinity) <= COMMON_RANK;
@@ -44,7 +47,7 @@ const pairs = new Map<string, [LexiconEntry, LexiconEntry]>();
 const gradedRight = (card: LexiconEntry, other: LexiconEntry) => isVariantMatch(entryLemma(card), entryLemma(other), tag);
 for (const list of bySense.values()) for (const card of list) for (const other of list) if (card !== other && !gradedRight(card, other)) pairs.set(`${card.slug}>${other.slug}`, [card, other]);
 
-const SOURCES: ContrastSource[] = ["rule", "part of speech", "meaning note", "question", "example", "none"];
+const SOURCES: ContrastSource[] = ["rule", "aspect pair", "reference", "part of speech", "meaning note", "question", "example", "none"];
 const tally = (rows: Array<[LexiconEntry, LexiconEntry, ContrastSource]>) => {
 	const counts = new Map(SOURCES.map((s) => [s, 0]));
 	for (const [, , s] of rows) counts.set(s, counts.get(s)! + 1);
@@ -53,7 +56,7 @@ const tally = (rows: Array<[LexiconEntry, LexiconEntry, ContrastSource]>) => {
 
 const rows: Array<[LexiconEntry, LexiconEntry, ContrastSource]> = [...pairs.values()].map(([card, other]) => {
 	const lemma = entryLemma(card);
-	const word = missWordOf({ slug: card.slug, lemma, entry: card }, other, { typed: entryLemma(other), isLemma: true, language: language.id }, tag);
+	const word = missWordOf({ slug: card.slug, lemma, entry: card }, other, { typed: entryLemma(other), isLemma: true, language: language.id, reference }, tag);
 	const own = contrastExample(card.examples, lemma, tag);
 	return [card, other, contrastSource(word, own ? startsQuestion(own.text, lemma, tag) : false)];
 });

@@ -63,7 +63,8 @@ export function MissWhy({ reason, given, code, className }: { reason: MissReason
 			{yours} is {w(reason.lemma)} with another ending.
 		</>
 	) : null;
-	const example = other && !other.rule ? other.example : undefined;
+	const example = other && !other.rule && !other.aspect && !other.reference ? other.example : undefined;
+	const source = (chapter: string) => <span className="text-[13px] text-ink-3"> From the reference: {chapter}.</span>;
 	const onlyOneAsks = Boolean(example?.asks) !== Boolean(reason.asks);
 	const here = other ? (
 		<>
@@ -89,6 +90,18 @@ export function MissWhy({ reason, given, code, className }: { reason: MissReason
 		<div className={cn("lh-fade flex flex-col gap-1.5 text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
 			{what && <p>{what}</p>}
 			{other?.rule && <p data-testid="review-why-rule">{other.rule}</p>}
+			{other?.aspect && (
+				<p data-testid="review-why-aspect">
+					{w(other.aspect.imperfective)} is the imperfective and {w(other.aspect.perfective)} the perfective of one verb.{other.aspect.rule ? ` ${other.aspect.rule}` : null}
+					{source(other.aspect.chapter)}
+				</p>
+			)}
+			{other?.reference && (
+				<p data-testid="review-why-reference">
+					{other.reference.line}
+					{source(other.reference.chapter)}
+				</p>
+			)}
 			{example && (
 				<p data-testid="review-why-example">
 					{example.asks && onlyOneAsks ? <>{yours} asks a question: </> : null}

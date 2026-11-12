@@ -1,7 +1,8 @@
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
 import { formSlip, type FormSlip } from "./form-slip.ts";
 import { shortGloss } from "./lesson.ts";
-import { pairContrastRule } from "./mixups.ts";
+import { aspectRule, pairContrastRule } from "./mixups.ts";
+import { aspectPairOf, referenceContrast, type AspectPair, type ReferenceContrast, type ReferenceUnit } from "./reference-contrast.ts";
 import { entryLemma, exampleText, type LexiconEntry, type LexiconExample } from "./review.ts";
 
 export interface MissExample {
@@ -19,6 +20,8 @@ export interface MissWord {
 	partOfSpeech?: string;
 	herePartOfSpeech?: string;
 	rule?: string;
+	aspect?: { perfective: string; imperfective: string; chapter: string; rule?: string };
+	reference?: ReferenceContrast;
 	example?: MissExample;
 }
 
@@ -89,30 +92,44 @@ export function contrastExample(examples: readonly Pick<LexiconExample, "text" |
 export function missWordOf(
 	card: { slug: string; lemma: string; entry?: Pick<LexiconEntry, "en" | "cat"> },
 	other: LexiconEntry,
-	opts: { typed: string; isLemma: boolean; language: string },
+	opts: {
+		typed: string;
+		isLemma: boolean;
+		language: string;
+		reference?: { units: readonly ReferenceUnit[]; aspectPairs: ReadonlyArray<AspectPair & { chapter: string }> } | null;
+	},
 	tag = "sk-SK",
 ): MissWord {
+	const otherLemma = entryLemma(other);
 	const alsoMeans = card.entry ? sharedMeaning(other.en, card.entry.en) : undefined;
 	const hereMeans = card.entry ? sharedMeaning(card.entry.en, other.en) : undefined;
 	const pos = card.entry ? partsOfSpeechIfDifferent(other.cat, card.entry.cat) : undefined;
-	const rule = pairContrastRule(opts.language, { slug: card.slug, lemma: card.lemma }, { slug: other.slug, lemma: entryLemma(other) });
+	const rule = pairContrastRule(opts.language, { slug: card.slug, lemma: card.lemma }, { slug: other.slug, lemma: otherLemma });
+	const pair = !rule && opts.reference ? aspectPairOf(opts.reference.aspectPairs, card.lemma, otherLemma, tag) : undefined;
+	const theAspectRule = pair ? aspectRule(opts.language) : undefined;
+	const aspect = pair && { perfective: pair.perfective, imperfective: pair.imperfective, chapter: pair.chapter, ...(theAspectRule ? { rule: theAspectRule } : {}) };
+	const reference = !rule && !aspect && opts.reference ? referenceContrast(opts.reference.units, card.lemma, otherLemma, tag) : undefined;
 	const example = contrastExample(other.examples, opts.typed, tag);
 	return {
-		lemma: entryLemma(other),
+		lemma: otherLemma,
 		gloss: shortGloss(other.en),
 		isLemma: opts.isLemma,
 		...(alsoMeans ? { alsoMeans } : {}),
 		...(hereMeans ? { hereMeans } : {}),
 		...(pos ? { partOfSpeech: pos[0], herePartOfSpeech: pos[1] } : {}),
 		...(rule ? { rule } : {}),
+		...(aspect ? { aspect } : {}),
+		...(reference ? { reference } : {}),
 		...(example ? { example } : {}),
 	};
 }
 
-export type ContrastSource = "rule" | "part of speech" | "meaning note" | "question" | "example" | "none";
+export type ContrastSource = "rule" | "aspect pair" | "reference" | "part of speech" | "meaning note" | "question" | "example" | "none";
 
 export function contrastSource(word: MissWord, cardAsks: boolean): ContrastSource {
 	if (word.rule) return "rule";
+	if (word.aspect) return "aspect pair";
+	if (word.reference) return "reference";
 	if (word.partOfSpeech) return "part of speech";
 	if (word.alsoMeans && word.hereMeans && word.alsoMeans !== word.hereMeans && /\(/.test(word.alsoMeans + word.hereMeans)) return "meaning note";
 	if (word.example && Boolean(word.example.asks) !== cardAsks) return "question";

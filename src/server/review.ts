@@ -13,6 +13,7 @@ import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts"
 import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
 import { knownForms } from "../core/form-slip.ts";
 import { missReason, missWordOf, startsQuestion, type MissReason, type MissWord } from "../core/review-miss.ts";
+import { languageReference } from "../agent/language-reference.ts";
 import { MAX_BLANK_WORDS, blankAround, blankFromSpans, blankWordsFor, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings, type Span } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
@@ -341,7 +342,7 @@ export function reviewMiss(cardId: string, givenAnswer: string, words?: number):
 		.filter((e) => e.slug !== card.slug)
 		.map((e) => ({ e, isLemma: foldDiacritics(entryLemma(e).toLocaleLowerCase(tag())) === foldDiacritics(word) }))
 		.sort((a, b) => samePartOfSpeechFirst(a.e, b.e) || Number(b.isLemma) - Number(a.isLemma) || commonerFirst(a.e, b.e))
-		.map(({ e, isLemma }) => missWordOf({ slug: card.slug, lemma: card.lemma, entry }, e, { typed: word, isLemma, language: activeLanguage().id }, tag()));
+		.map(({ e, isLemma }) => missWordOf({ slug: card.slug, lemma: card.lemma, entry }, e, { typed: word, isLemma, language: activeLanguage().id, reference: languageReference(activeLanguage().id, tag()) }, tag()));
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const trigger = unit && unit !== "words" ? triggerOf(card.sentence, card.at, unit) : undefined;
 	const forms = entry ? knownForms(entry) : [];
