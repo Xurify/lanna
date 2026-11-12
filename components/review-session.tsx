@@ -25,6 +25,7 @@ import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { usePopoverDismiss } from "@/components/popover-dismiss";
+import { useFieldCycle } from "@/components/field-cycle";
 
 interface Prompt {
 	card: ReviewCard;
@@ -345,6 +346,10 @@ export function ReviewSession() {
 	useEffect(() => {
 		if (status?.next && !verdict && !picks) inputRefs.current[0]?.focus();
 	}, [status?.next, verdict, picks]);
+	// Tab moves through the blanks in sentence order and wraps. Refs are null for
+	// blanks that are not on screen, so the filter keeps only the live ones.
+	const cycleBlanks = useCallback(() => inputRefs.current.filter((el): el is HTMLInputElement => el !== null), []);
+	useFieldCycle(cycleBlanks);
 
 	const check = (parts: string[]) => {
 		if (!prompt || verdict) return;
@@ -665,6 +670,7 @@ export function ReviewSession() {
 										onSubmit={(e) => {
 											e.preventDefault();
 											if (typed.some(Boolean)) check(typed);
+											else focusOpenGap();
 										}}
 										className="q-sent mt-2 !text-[30px] !leading-[44px] [text-wrap:pretty] @xl:!text-[46px] @xl:!leading-[64px]"
 										lang={lang?.code}
@@ -719,6 +725,7 @@ export function ReviewSession() {
 																				e.preventDefault();
 																				e.stopPropagation();
 																				if (typed.some(Boolean)) check(typed);
+																				else focusOpenGap();
 																			} else if (i > 0 && ((e.key === "Backspace" && !el.value) || (e.key === "ArrowLeft" && atStart))) {
 																				e.preventDefault();
 																				focusGap(i - 1);

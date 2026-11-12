@@ -2,6 +2,12 @@
 
 import { useEffect } from "react";
 
+export function nextField(list: readonly HTMLElement[], active: Element | null): HTMLElement | undefined {
+	if (list.length === 0) return undefined;
+	const idx = active ? list.findIndex((el) => el === active || el.contains(active)) : -1;
+	return list[(idx + 1) % list.length];
+}
+
 /**
  * TAB CYCLES THE ACTIVE SURFACE'S TEXT FIELDS (owner, keyboard round
  * 2026-10-06): forward-only, wrapping; Tab from outside the chain
@@ -21,14 +27,7 @@ export function useFieldCycle(fields: () => readonly HTMLElement[]) {
 	useEffect(() => {
 		const onCycle = () => {
 			const list = fields().filter((el) => el.isConnected);
-			if (list.length === 0) return;
-			const active = document.activeElement;
-			const idx = active ? list.findIndex((el) => el === active || el.contains(active)) : -1;
-			if (idx < 0) {
-				list[0]!.focus();
-				return;
-			}
-			list[(idx + 1) % list.length]!.focus();
+			nextField(list, document.activeElement)?.focus();
 		};
 		window.addEventListener("lh:kbd-cycle-fields", onCycle);
 		return () => window.removeEventListener("lh:kbd-cycle-fields", onCycle);
