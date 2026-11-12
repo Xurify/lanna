@@ -710,9 +710,9 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 						{all ? <PauseIcon className="size-4 fill-current" /> : <PlayIcon className="size-4 fill-current" />}
 						{all ? "Pause" : "Play all"}
 					</button>
-					<button type="button" onClick={() => setShowTranslation((v) => !v)} aria-pressed={showTranslation} className="q-btn sec" title="Show or hide the English (T)">
+					<button type="button" onClick={() => setShowTranslation((v) => !v)} aria-pressed={showTranslation} className={cn("q-btn sec max-sm:!px-3", showTranslation && "t")} title="Show or hide the English (T)">
 						<LanguagesIcon className="size-4" />
-						Translation {showTranslation ? "on" : "off"}
+						<span className="max-sm:sr-only">Translation {showTranslation ? "on" : "off"}</span>
 					</button>
 					<button type="button" onClick={onDone} className="q-btn primary" data-testid="read-done">
 						{story.questions.length ? `Answer ${story.questions.length} ${story.questions.length === 1 ? "question" : "questions"}` : "Done"}
@@ -1131,7 +1131,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 						}}
 						className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-center"
 					>
-						<input id="story-topic" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Buying train tickets, meeting a neighbor, finding a flat" className="q-field h-10 w-full flex-1 px-3.5 text-[14px]" autoFocus maxLength={150} />
+						<input id="story-topic" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Buying train tickets, meeting a neighbor, finding a flat" className="q-field h-10 w-full shrink-0 px-3.5 text-[14px] sm:flex-1 sm:shrink" autoFocus maxLength={150} />
 						<button type="submit" className="q-btn primary shrink-0" data-testid="read-write-submit">
 							<SparklesIcon className="size-4" />
 							Write episode
