@@ -33,44 +33,44 @@ const cardFor = (slug: string, sentence: string): string => {
 
 const CASES: { why: string; slug: string; sentence: string; given: string; says: string[]; never?: string[] }[] = [
 	{
-		why: "two words for the same meaning: the question word is shown asking, in its own sentence",
+		why: "two words for the same meaning: the two are set side by side, and the question word is shown asking",
 		slug: "ked",
 		sentence: "Keď bolo pekne, išli sme von.",
 		given: "Kedy",
-		says: ["“Kedy” also means when, but it is another word.", "“Kedy” asks a question: Kedy prídeš? When will you come?", "This one is keď, when (conjunction)."],
-		never: ["a different word", "means when:", "Here it asks"],
+		says: ["You wrote Kedy when", "Needed here keď when (conjunction)", "Both can mean when.", "Kedy asks a question: Kedy prídeš? When will you come?"],
+		never: ["a different word", "Here keď asks"],
 	},
-	{ why: "the same pair the other way round: the gloss's note and the card's question are named", slug: "kedy", sentence: "Kedy prídeš?", given: "Keď", says: ["“Keď” also means when (conjunction), but it is another word.", "This one is kedy, when. Here it asks a question."], never: ["“Keď” asks"] },
-	{ why: "a missing háček names the word the app read", slug: "kedy", sentence: "Kedy prídeš?", given: "Ked", says: ["“Ked” is keď, which also means when (conjunction)"], never: ["a form of"] },
-	{ why: "two question words: neither is said to ask", slug: "kto", sentence: "Kto je to?", given: "čo", says: ["“čo” means what. It is another word.", "Čo robíš?"], never: ["asks a question"] },
-	{ why: "a curated pair rule replaces the example", slug: "kde", sentence: "Kde bývaš?", given: "Kam", says: ["“Kam” means where to. It is another word.", "kam asks where TO (a destination: Kam ideš?); kde asks where AT (a place: Kde bývaš?).", "This one is kde, where."] },
-	{ why: "a family rule covers a pair the pair list does not", slug: "tu", sentence: "Som tu.", given: "sem", says: ["“sem” also means here (to), but it is another word.", "After a verb of motion the word says where to", "This one is tu, here (location — for motion use sem)."] },
-	{ why: "a curated rule for two verbs of going, with the gloss's note", slug: "ist", sentence: "Idem do školy.", given: "chodím", says: ["“chodím” is a form of chodiť, which also means to go (habitually)", "ísť is one trip, now or planned; chodiť is repeated, a habit.", "This one is ísť, to go."], never: ["Chodím do školy."] },
+	{ why: "the same pair the other way round: the card's own question is named", slug: "kedy", sentence: "Kedy prídeš?", given: "Keď", says: ["You wrote Keď when (conjunction)", "Needed here kedy when", "Here kedy asks a question."], never: ["Keď asks"] },
+	{ why: "a missing háček names the word the app read", slug: "kedy", sentence: "Kedy prídeš?", given: "Ked", says: ["You wrote Ked keď, when (conjunction)"], never: ["a form of"] },
+	{ why: "two question words: neither is said to ask", slug: "kto", sentence: "Kto je to?", given: "čo", says: ["You wrote čo what", "Needed here kto who", "Čo robíš?"], never: ["asks a question", "Both can mean"] },
+	{ why: "a curated pair rule replaces the example", slug: "kde", sentence: "Kde bývaš?", given: "Kam", says: ["You wrote Kam where to", "kam asks where TO (a destination: Kam ideš?); kde asks where AT (a place: Kde bývaš?).", "From Mix-ups, the app's word pairs."], never: ["Kam ideš? Where are you going?"] },
+	{ why: "a family rule covers a pair the pair list does not", slug: "tu", sentence: "Som tu.", given: "sem", says: ["You wrote sem here (to)", "Needed here tu here (location — for motion use sem)", "Both can mean here.", "After a verb of motion the word says where to"] },
+	{ why: "a curated rule for two verbs of going, with the meaning they share", slug: "ist", sentence: "Idem do školy.", given: "chodím", says: ["You wrote chodím a form of chodiť, to go (habitually)", "Needed here idem ísť, to go I form", "ísť is one trip, now or planned; chodiť is repeated, a habit."], never: ["Chodím do školy."] },
 	{
 		why: "an aspect pair from the reference says which is which, with the curated aspect rule",
 		slug: "dostat",
 		sentence: "Dostanem knihu.",
 		given: "dostávam",
-		says: ["“dostávam” is a form of dostávať, which also means to get (imperfective)", "dostávať is the imperfective and dostať the perfective of one verb. The imperfective", "From the reference: Aspect and Motion Verbs.", "This one is dostať, to get."],
-		never: ["Každý mesiac"],
+		says: ["You wrote dostávam a form of dostávať, to get Needed here", "Needed here dostanem dostať, to get I form", "dostávať · imperfective: the process, a habit or the act itself", "dostať · perfective: one act seen as finished, with a result", "From the reference: Aspect and Motion Verbs."],
+		never: ["Každý mesiac", "(imperfective)", "The English tense", "The sentence needs the"],
 	},
 	{
-		why: "a reference table sets two prepositions side by side",
+		why: "a reference table sets two prepositions side by side, one line each",
 		slug: "v",
 		sentence: "Som v meste.",
 		given: "na",
-		says: ["be inside/at a place: v/vo + locative — Som v škole.", "be on/at an event/institution: na + locative — Som na stanici.", "From the reference: Valency and Prepositions."],
+		says: ["You wrote na on", "Needed here v at", "be inside/at a place: v/vo + locative — Som v škole.", "be on/at an event/institution: na + locative — Som na stanici.", "From the reference: Valency and Prepositions."],
 	},
-	{ why: "a reference row sets two verbs of living side by side", slug: "byvat", sentence: "Bývam v hoteli.", given: "žijem", says: ["live: reside at an address bývať (Bývam v Košiciach.) live a life, exist žiť (Žije v zahraničí.)", "From the reference: Lexical Choice and Interference."] },
-	{ why: "a noun and an adjective with one meaning are named as such", slug: "voda", sentence: "Pijem veľa vody.", given: "vodný", says: ["“vodný” is an adjective, which also means water, but it is another word.", "This one is the noun voda, water."] },
-	{ why: "the shared meaning comes from any sense, not only the first", slug: "iba", sentence: "Máme iba čaj.", given: "len", says: ["“len” also means only"] },
-	{ why: "a form of another word names its dictionary form", slug: "vecera", sentence: "Večera je o šiestej.", given: "večerom", says: ["“večerom” is a form of večer, evening. It is another word.", "Dobrý večer!", "This one is večera, dinner."] },
-	{ why: "a missing accent on another word's dictionary form is not 'a form of' it", slug: "vecera", sentence: "Večera je o šiestej.", given: "vecer", says: ["“vecer” is večer, evening."], never: ["a form of"] },
-	{ why: "an unknown word for a word that never takes an ending says which word it is", slug: "ked", sentence: "Keď bolo pekne, išli sme von.", given: "kedž", says: ["The word here is keď, when (conjunction)."], never: ["not a form", "(when (conjunction))"] },
-	{ why: "an extra ending on a word that never takes one is not 'another ending'", slug: "potom", sentence: "Tomáš nalial mlieko do pohára a potom ho podal Márii.", given: "potomx", says: ["The word here is potom, then."], never: ["another ending"] },
-	{ why: "an unknown word for a word with endings says it is not one of them", slug: "vecera", sentence: "Večera je o šiestej.", given: "xyz", says: ["“xyz” is not a form of večera, dinner."] },
-	{ why: "another form of the card's own word is about the ending", slug: "vecera", sentence: "Večera je o šiestej.", given: "večeru", says: ["“večeru” is večera with another ending."], never: ["another word"] },
-	{ why: "no answer names the word", slug: "vecera", sentence: "Večera je o šiestej.", given: "", says: ["The word here is večera, dinner."] },
+	{ why: "a reference row sets two verbs of living side by side", slug: "byvat", sentence: "Bývam v hoteli.", given: "žijem", says: ["live: reside at an address bývať (Bývam v Košiciach.)", "live: live a life, exist žiť (Žije v zahraničí.)", "From the reference: Lexical Choice and Interference."] },
+	{ why: "a noun and an adjective with one meaning are named as such", slug: "voda", sentence: "Pijem veľa vody.", given: "vodný", says: ["You wrote vodný adjective · water", "Needed here vody noun · voda, water", "Both can mean water."] },
+	{ why: "the shared meaning comes from any sense, not only the first", slug: "iba", sentence: "Máme iba čaj.", given: "len", says: ["Both can mean only."] },
+	{ why: "a form of another word names its dictionary form", slug: "vecera", sentence: "Večera je o šiestej.", given: "večerom", says: ["You wrote večerom a form of večer, evening", "Needed here večera dinner", "Dobrý večer!"] },
+	{ why: "a missing accent on another word's dictionary form is not 'a form of' it", slug: "vecera", sentence: "Večera je o šiestej.", given: "vecer", says: ["You wrote vecer večer, evening"], never: ["a form of"] },
+	{ why: "an unknown word for a word that never takes an ending says which word it is", slug: "ked", sentence: "Keď bolo pekne, išli sme von.", given: "kedž", says: ["You wrote kedž not a word the dictionary knows", "Needed here keď when (conjunction)"], never: ["not a form", "(when (conjunction))"] },
+	{ why: "an extra ending on a word that never takes one is not 'another ending'", slug: "potom", sentence: "Tomáš nalial mlieko do pohára a potom ho podal Márii.", given: "potomx", says: ["You wrote potomx not a word the dictionary knows", "Needed here potom then"], never: ["another ending"] },
+	{ why: "an unknown word for a word with endings says it is not one of them", slug: "vecera", sentence: "Večera je o šiestej.", given: "xyz", says: ["You wrote xyz not a form of večera"] },
+	{ why: "another form of the card's own word is about the ending", slug: "vecera", sentence: "Večera je o šiestej.", given: "večeru", says: ["You wrote večeru večera with another ending", "Needed here večera dinner"], never: ["another word"] },
+	{ why: "no answer shows only the word the sentence needs", slug: "vecera", sentence: "Večera je o šiestej.", given: "", says: ["The word here večera dinner"], never: ["You wrote"] },
 ];
 
 const ids = CASES.map((c) => cardFor(c.slug, c.sentence));
@@ -78,7 +78,7 @@ reviewStore.writeCards(cards);
 
 const textOf = (html: string) =>
 	html
-		.replace(/<\/p>|<span class="block">/g, " ")
+		.replace(/<\/(p|div)>|<[a-z]+ [^>]*class="[^"]*\bblock\b[^"]*"[^>]*>/g, " ")
 		.replace(/<[^>]+>/g, "")
 		.replace(/&#x27;/g, "'")
 		.replace(/\s+/g, " ")
@@ -88,7 +88,7 @@ CASES.forEach((c, i) => {
 	test(c.why, () => {
 		const reason = reviewMiss(ids[i]!, c.given);
 		assert.ok(reason, `a wrong answer "${c.given}" has a reason`);
-		const text = textOf(renderToStaticMarkup(<MissWhy reason={reason} given={c.given} />));
+		const text = textOf(renderToStaticMarkup(<MissWhy reason={reason} given={c.given} answer={cards[ids[i]!]!.answer} />));
 		for (const s of c.says) assert.ok(text.includes(s), `"${s}" in: ${text}`);
 		for (const s of c.never ?? []) assert.ok(!text.includes(s), `no "${s}" in: ${text}`);
 	});

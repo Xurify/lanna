@@ -1,7 +1,7 @@
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
 import { formSlip, type FormSlip } from "./form-slip.ts";
 import { shortGloss } from "./lesson.ts";
-import { aspectRule, pairContrastRule } from "./mixups.ts";
+import { aspectRoles, pairContrastRule } from "./mixups.ts";
 import { aspectPairOf, referenceContrast, type AspectPair, type ReferenceContrast, type ReferenceUnit } from "./reference-contrast.ts";
 import { entryLemma, exampleText, type LexiconEntry, type LexiconExample } from "./review.ts";
 
@@ -20,7 +20,7 @@ export interface MissWord {
 	partOfSpeech?: string;
 	herePartOfSpeech?: string;
 	rule?: string;
-	aspect?: { perfective: string; imperfective: string; chapter: string; rule?: string };
+	aspect?: { perfective: string; imperfective: string; chapter: string; roles?: { imperfective: string; perfective: string } };
 	reference?: ReferenceContrast;
 	note?: string;
 	notePending?: boolean;
@@ -110,8 +110,8 @@ export function missWordOf(
 	const pos = card.entry ? partsOfSpeechIfDifferent(other.cat, card.entry.cat) : undefined;
 	const rule = pairContrastRule(opts.language, { slug: card.slug, lemma: card.lemma }, { slug: other.slug, lemma: otherLemma });
 	const pair = !rule && opts.reference ? aspectPairOf(opts.reference.aspectPairs, card.lemma, otherLemma, tag) : undefined;
-	const theAspectRule = pair ? aspectRule(opts.language) : undefined;
-	const aspect = pair && { perfective: pair.perfective, imperfective: pair.imperfective, chapter: pair.chapter, ...(theAspectRule ? { rule: theAspectRule } : {}) };
+	const roles = pair ? aspectRoles(opts.language) : undefined;
+	const aspect = pair && { perfective: pair.perfective, imperfective: pair.imperfective, chapter: pair.chapter, ...(roles ? { roles } : {}) };
 	const reference = !rule && !aspect && opts.reference ? referenceContrast(opts.reference.units, card.lemma, otherLemma, tag) : undefined;
 	const example = contrastExample(other.examples, opts.typed, tag);
 	const word: MissWord = {

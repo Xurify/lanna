@@ -707,3 +707,9 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **What changed:** after a missed sentence, each wrong word sits on a soft red patch with what you typed in its place written small under it. A word with only an accent off keeps its teal line and shows your spelling under it in grey. The "You typed ·" line under the sentence is gone, here and in the end screen's rows. In the band at the top, the end screen's strip, the ear gym and the cheatsheet bar, a miss is now solid red, in place of the hollow red ring (the owner's pick of six drawn options). Decision E103.
 - **Checked:** typecheck, ESLint, the line and listen-analysis tests (one new: a missed word carries what was typed in its place, as typed), and the running app in a seeded sandbox: the answer in Day and Night at 1280 and 390 px, the end screen in Day at 1280 and Night at 1280 and 390 px.
 - **Not verified yet:** a screen reader reading the note; the desktop app's window (the sandbox ran in Chrome).
+
+## 11 November: a miss is shown as two words side by side (`fix/review-miss-contrast`)
+
+- **Why:** the owner asked for the explanation area to look better and read shorter.
+- **What changed:** the area is one comparison, "You wrote" next to "Needed here", each word underlined in its color (miss red, teal), with its meaning, and the form and the word that decides it under the needed one. Below a hairline: "Both can mean …", then one short explanation with its source. Lines about one word carry that word's color. An aspect miss went from five sentences to two lines; an AI note is asked for in 30 words. The dock's top line is red after a miss and teal after a right answer, and the space around the dot in "Again · comes back in 10 min" is even. E108.
+- **Checked:** the miss tests (63), typecheck, lint; the card in the app with a real model in Day and Night at 1280 and 390 px, and at 320 px.

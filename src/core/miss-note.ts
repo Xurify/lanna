@@ -5,7 +5,7 @@ import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
 
 export const NOTE_SENTENCES = 5;
 export const NOTE_MIN_SENTENCES = 2;
-export const NOTE_ASKED_WORDS = 50;
+export const NOTE_ASKED_WORDS = 30;
 export const NOTE_MAX_WORDS = 60;
 
 export interface NoteSentence {

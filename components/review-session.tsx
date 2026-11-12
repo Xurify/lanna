@@ -812,13 +812,13 @@ export function ReviewSession() {
 													{verdict === "wrong" ? <XIcon className="size-4" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
 													{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
 													{exact && <span>· {helped ? "help used" : "no help used"}</span>}
-													{!exact && given.trim() && (
+													{!exact && given.trim() && !(verdict === "wrong" && reason) && (
 														<span className="min-w-0 truncate">
 															· you wrote “<span lang={lang?.code}>{givenParts.filter(Boolean).join(" … ")}</span>”
 														</span>
 													)}
 												</p>
-												{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} code={lang?.code} className="mt-2.5" />}
+												{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} answer={prompt.card.answer} code={lang?.code} className="mt-3" />}
 												{verdict !== "wrong" && (
 													<p className="mt-3 flex flex-wrap gap-x-6 gap-y-1" data-testid="review-facts">
 														<Note label="word">
@@ -873,7 +873,14 @@ export function ReviewSession() {
 
 					{prompt && lang && (
 						<div
-							className={cn("shrink-0 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--q-line)] transition-colors", verdict === "wrong" ? "bg-miss-soft" : verdict ? "bg-teal-wash" : "bg-background")}
+							className={cn(
+								"shrink-0 pb-[env(safe-area-inset-bottom)] transition-colors",
+								verdict === "wrong"
+									? "bg-miss-soft shadow-[0_-1px_0_color-mix(in_srgb,var(--q-miss)_45%,transparent)]"
+									: verdict
+										? "bg-teal-wash shadow-[0_-1px_0_var(--q-teal-line)]"
+										: "bg-background shadow-[0_-1px_0_var(--q-line)]",
+							)}
 							data-testid="review-dock"
 						>
 							<div className={cn(COLUMN, "py-4")}>
@@ -917,9 +924,12 @@ export function ReviewSession() {
 									) : (
 										<div key="rate" className="grid gap-2 @2xl:flex @2xl:h-14 @2xl:items-center">
 											{cap === 1 ? (
-												<p className="flex h-14 items-center gap-2 text-[15px] text-ink-2 @2xl:w-[440px]" data-testid="review-ratings">
+												<p className="flex h-14 items-center text-[15px] text-ink-2 @2xl:w-[440px]" data-testid="review-ratings">
 													<b className="font-semibold text-foreground">Again</b>
-													<span className="text-ink-3">· comes back in {comesBack(prompt.intervals[1])}</span>
+													<span aria-hidden="true" className="mx-2 text-ink-3">
+														·
+													</span>
+													<span className="text-ink-3">comes back in {comesBack(prompt.intervals[1])}</span>
 												</p>
 											) : (
 											<div className="grid h-14 grid-cols-4 rounded-[10px] bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)] @2xl:w-[440px]" role="radiogroup" aria-label="Rate it yourself: when the word comes back" data-testid="review-ratings">

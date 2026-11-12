@@ -13,9 +13,14 @@ export interface ReferenceUnit {
 	clauses: ReferenceClause[];
 }
 
+export interface ReferenceLine {
+	text: string;
+	about: "a" | "b" | "both";
+}
+
 export interface ReferenceContrast {
 	chapter: string;
-	lines: string[];
+	lines: ReferenceLine[];
 }
 
 const MAX_CLAUSES = 3;
@@ -204,10 +209,11 @@ export function referenceContrast(units: readonly ReferenceUnit[], a: string, b:
 		if (clauses.length > MAX_CLAUSES || clauses.some((c) => c.words.size > MAX_WORDS_PER_CLAUSE)) continue;
 		if (clauses.some((c) => c.headWords.size > 0 && !c.headWords.has(fa) && !c.headWords.has(fb))) continue;
 		const sideBySide = clauses.every((c) => c.words.has(fa) !== c.words.has(fb));
-		const byHead = new Map<string, string[]>();
-		for (const c of clauses) byHead.set(c.head, [...(byHead.get(c.head) ?? []), c.text]);
-		const lines = [...byHead].flatMap(([head, texts]) => (head && texts.length === 1 ? [`${head}: ${texts[0]}`] : head ? [`${head}:`, ...texts] : texts)).map(withCaseNames);
-		const length = lines.join(" ").length;
+		const lines: ReferenceLine[] = clauses.map((c) => ({
+			text: withCaseNames(c.head ? `${c.head}: ${c.text}` : c.text),
+			about: c.words.has(fa) && c.words.has(fb) ? "both" : c.words.has(fa) ? "a" : "b",
+		}));
+		const length = lines.map((l) => l.text).join(" ").length;
 		const better = !best || (sideBySide && !best.sideBySide) || (sideBySide === best.sideBySide && length < best.length);
 		if (better) best = { chapter: unit.chapter, lines, sideBySide, length };
 	}

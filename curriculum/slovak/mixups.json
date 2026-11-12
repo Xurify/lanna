@@ -71,6 +71,7 @@
 			"title": "Aspect: one act, or the process",
 			"rule": "The imperfective (robiť, písať, čítať, kupovať) is the process, a habit or the act itself; the perfective (urobiť, napísať, prečítať, kúpiť) is one act seen as finished, with a result. The English tense does not decide it.",
 			"bridge": "Estonian shows it with the object: lugesin raamatut (partial, still going) ≈ čítal som knihu; lugesin raamatu läbi (total, finished) ≈ prečítal som knihu.",
+			"roles": { "imperfective": "the process, a habit or the act itself", "perfective": "one act seen as finished, with a result" },
 			"cue": "What decided the form: a result, or a process?",
 			"pairs": [
 				[

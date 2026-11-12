@@ -172,6 +172,7 @@ describe("the Review card", () => {
 		reviewStore.writeCards({ ...reviewStore.readCards(), [id]: { id, slug, lemma: e.sk ?? "", gloss: "", sentence, translation: example.en, answer: example.cloze!.answer, at: example.cloze!.at, state: "new", due: NOW, reps: 0, lapses: 0, createdAt: NOW } as ReviewCard });
 		return id;
 	};
+	const cardAnswer = (id: string) => reviewStore.readCards()[id]!.answer;
 	const textOf = (html: string) => html.replace(/<\/p>/g, " ").replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/\s+/g, " ").trim();
 
 	it("shows a kept note in place of the example, labeled as an unchecked AI note", () => {
@@ -179,11 +180,13 @@ describe("the Review card", () => {
 		const reason = reviewMiss(id, "od")!;
 		assert.equal(reason.other?.note, missNoteStore.get("od~z")?.note);
 		assert.equal(contrastSource(reason.other!, false), "ai note");
-		const html = renderToStaticMarkup(<MissWhy reason={reason} given="od" />);
+		const html = renderToStaticMarkup(<MissWhy reason={reason} given="od" answer={cardAnswer(id)} />);
 		const text = textOf(html);
 		assert.ok(text.includes("is used for a person as the source (od mamy)"), text);
 		assert.ok(text.includes("AI note from the dictionary's sentences, not checked by a person."), text);
-		assert.match(html, /<b class="font-semibold">od mamy<\/b>/);
+		assert.match(html, /<b class="font-semibold text-ink-2">od mamy<\/b>/);
+		assert.match(html, /decoration-miss">od<\/b>/, "the word typed carries the miss color in the note");
+		assert.match(html, /decoration-teal">z<\/b>/, "the word needed carries the right color in the note");
 	});
 
 	it("shows no note for a pair the model saw no difference in, and is not pending", () => {
@@ -205,7 +208,7 @@ describe("the Review card", () => {
 
 	it("says a note is on its way while it is written", () => {
 		const other = missWordOf({ slug: "krajina", lemma: "krajina", entry: entry("krajina") }, entry("stat-n"), { typed: "štát", isLemma: true, language: "slovak", noteCanBeWritten: true });
-		const text = textOf(renderToStaticMarkup(<MissWhy reason={{ slip: "other", lemma: "krajina", gloss: "country", inflects: true, other }} given="štát" />));
+		const text = textOf(renderToStaticMarkup(<MissWhy reason={{ slip: "other", lemma: "krajina", gloss: "country", inflects: true, other }} given="štát" answer="krajina" />));
 		assert.ok(text.includes("Comparing the two words in the dictionary's sentences…"), text);
 	});
 });

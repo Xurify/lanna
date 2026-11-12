@@ -40,6 +40,7 @@ export interface MixupFamily {
 	/** One question shown after a miss, naming the cue that decides the form
 	 *  (deterministic, no model). Optional: a family without one shows its rule. */
 	cue?: string;
+	roles?: { imperfective: string; perfective: string };
 	/** The verified sentences a probe may use, each with the cue that forces
 	 *  its form. When listed, only these are drilled (the aspect and
 	 *  demonstrative families); a family without the list drills every
@@ -549,8 +550,8 @@ export function mixupRule(m: Pick<Mixup, "a" | "b" | "family">, lex: MixupLexico
 	return { rule: `${la} = ${ea ? shortGloss(ea.en) : "?"} · ${lb} = ${eb ? shortGloss(eb.en) : "?"}`, bridge: "" };
 }
 
-export function aspectRule(language: string): string | undefined {
-	return (mixupsJson as { language?: string }).language === language ? MIXUP_FAMILIES.find((f) => f.id === ASPECT_FAMILY_ID)?.rule : undefined;
+export function aspectRoles(language: string): { imperfective: string; perfective: string } | undefined {
+	return (mixupsJson as { language?: string }).language === language ? MIXUP_FAMILIES.find((f) => f.id === ASPECT_FAMILY_ID)?.roles : undefined;
 }
 
 export function pairContrastRule(language: string, a: { slug: string; lemma: string }, b: { slug: string; lemma: string }): string | undefined {
