@@ -130,3 +130,4 @@ export * from "./daylog.ts";
 export * from "./line.ts";
 export * from "./stage.ts";
 export * from "./body-limit.ts";
+export * from "./self-talk.ts";
