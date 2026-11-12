@@ -263,11 +263,13 @@ export interface HeardPiece {
 	text: string;
 	newWord: boolean;
 	mark?: "missed" | "almost";
+	/** What was typed in place of a marked word. */
+	given?: string;
 }
 
 const HYPHENATED_WORD = /\p{L}+(?:[-'’]\p{L}+)*/gu;
 
-export function heardPieces(sentence: string, opts: { newWords?: readonly string[]; marks?: ReadonlyArray<{ caught: boolean; almost: boolean }>; tag?: string } = {}): HeardPiece[] {
+export function heardPieces(sentence: string, opts: { newWords?: readonly string[]; marks?: ReadonlyArray<{ caught: boolean; almost: boolean; given?: string }>; tag?: string } = {}): HeardPiece[] {
 	const text = sentence.normalize("NFC");
 	const wanted = new Set((opts.newWords ?? []).map((w) => w.normalize("NFC").toLocaleLowerCase(opts.tag)));
 	const newRanges = [...text.matchAll(HYPHENATED_WORD)].filter((m) => wanted.has(m[0].toLocaleLowerCase(opts.tag))).map((m) => [m.index, m.index + m[0].length] as const);
@@ -277,7 +279,7 @@ export function heardPieces(sentence: string, opts: { newWords?: readonly string
 	[...text.matchAll(WORD_SPAN)].forEach((m, i) => {
 		if (m.index > at) pieces.push({ text: text.slice(at, m.index), newWord: isNew(at) });
 		const mark = opts.marks?.[i];
-		pieces.push({ text: m[0], newWord: isNew(m.index), ...(mark && !mark.caught ? { mark: mark.almost ? ("almost" as const) : ("missed" as const) } : {}) });
+		pieces.push({ text: m[0], newWord: isNew(m.index), ...(mark && !mark.caught ? { mark: mark.almost ? ("almost" as const) : ("missed" as const), ...(mark.given ? { given: mark.given } : {}) } : {}) });
 		at = m.index + m[0].length;
 	});
 	if (at < text.length) pieces.push({ text: text.slice(at), newWord: false });

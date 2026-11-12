@@ -678,3 +678,9 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **My mistakes → From your chats:** graded answers, how many were right with no hint, units and topics missed (what you wrote, what was wanted, how many chats), with trend. The written guide reads them too.
 - **Checked:** typecheck, ESLint and the full suite (2591 tests, 2588 pass, 3 skipped, 0 fail), 16 of them new (analysis, the flag rule and its mending, the recorder against a scratch data folder, the tool, the page render), and the running app in a sandbox seeded through the real recorder: the Mistakes section and Today's Strengthen row, Day and Night, 1280 and 390 px.
 - **Not verified yet:** the tutor actually passing a sensible `unit` in a live chat. Old chats have no unit and only feed the topic list.
+
+## 11 November: a missed word in Listen shows what you typed (`fix/listen-miss-marks`)
+
+- **What changed:** after a missed sentence, each wrong word sits on a soft red patch with what you typed in its place written small under it. A word with only an accent off keeps its teal line and shows your spelling under it in grey. The "You typed ·" line under the sentence is gone, here and in the end screen's rows. In the band at the top, the end screen's strip, the ear gym and the cheatsheet bar, a miss is now solid red, in place of the hollow red ring (the owner's pick of six drawn options). Decision E103.
+- **Checked:** typecheck, ESLint, the line and listen-analysis tests (one new: a missed word carries what was typed in its place, as typed), and the running app in a seeded sandbox: the answer in Day and Night at 1280 and 390 px, the end screen in Day at 1280 and Night at 1280 and 390 px.
+- **Not verified yet:** a screen reader reading the note; the desktop app's window (the sandbox ran in Chrome).

@@ -51,6 +51,19 @@ test("scoreLine: a word typed without its accent is marked almost and is not cau
 	assert.equal(extra.marks.length, 1);
 });
 
+test("scoreLine: a missed word carries what was typed in its place, as typed, and a skipped word carries nothing", () => {
+	const { marks } = scoreLine("Lekár sa opatrne dotkol zraneného miesta.", "Lekar sa opýtrnie zhraju miesta");
+	assert.deepEqual(
+		marks.filter((m) => !m.caught).map((m) => [m.word, m.given]),
+		[
+			["lekár", "Lekar"],
+			["opatrne", "opýtrnie"],
+			["dotkol", undefined],
+			["zraneného", "zhraju"],
+		],
+	);
+});
+
 test("scoreLine: nothing typed catches nothing, and the words are still counted", () => {
 	const none = scoreLine("Pes prejavuje radosť.", "");
 	assert.equal(none.words, 3);
