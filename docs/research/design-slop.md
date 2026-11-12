@@ -4,7 +4,7 @@
 
 **Date:** 2026-11-02
 
-**Outcome:** the `anti-slop-design` skill in `.claude/skills/anti-slop-design/`, a "Design: no AI slop" section in `AGENTS.md` so every agent sees it, and rule E32 in [../DECISIONS.md](../DECISIONS.md).
+**Outcome:** the `anti-slop-design` skill in `.claude/skills/anti-slop-design/`, a "Design: no AI slop" section in `AGENTS.md` so every agent sees it, and rule [E32](../decisions/E32-no-ai-slop-defaults.md).
 
 ## Source
 

@@ -6,7 +6,7 @@
  * with a prepared first message, the same way the old home composer did
  * (POST /api/chats, then /chat/<id>?prompt=…, whose page delivers the
  * message as turn 1). Talk and Story are not chats any more: they are the
- * Speak and Read screens (docs/DECISIONS.md, E8).
+ * Speak and Read screens (decision E8).
  *
  * These run as practice-kind sessions: those skip the placement probe and
  * the plan, and the practice prompt's language section says how to answer.

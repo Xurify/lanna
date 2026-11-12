@@ -61,7 +61,7 @@ html[data-keyboard] :focus-visible {
    ground. One accent, teal, is the action color, "done" and "right". The four
    kinds of practice are told apart by their icons, not by color, so the trail
    colors further down are neutral greys. A miss keeps a muted red (the
-   mockups have no wrong answer to copy; see CHANGELOG-2026-11.md). */
+   mockups have no wrong answer to copy; the owner chose it on 2026-11-02). */
 :root {
 	color-scheme: light;
 	--q-bg: #ffffff;

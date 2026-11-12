@@ -87,7 +87,7 @@ One run per config on the base set, and a handful of errors in each. A differenc
 
 ## Recommendation: what rarely misleads
 
-Points 1–3 and 5 were built the same day ([../DECISIONS.md](../DECISIONS.md) E29). The checker runs on every Slovak practice answer, and the tutor has `check_slovak` and `slovak_reference`. Every verdict now says whether a tool checked it.
+Points 1–3 and 5 were built the same day ([E29](../decisions/E29-certain-rules-are-checked-in-code-and.md)). The checker runs on every Slovak practice answer, and the tutor has `check_slovak` and `slovak_reference`. Every verdict now says whether a tool checked it.
 
 The model is not the main lever. Eight configs made no auto-graded error on the base set: Haiku high, xhigh and max; Haiku xhigh + skill and max + skill; Sonnet high + skill; Sonnet max; and Sonnet max + skill on the 43 items it reached. Of those also run on the hard set, only Sonnet high + skill had no error there. But both models invented rules in other runs, and the skill was ignored on a mechanical rule. A learner app should not rely on any one answer being right.
 

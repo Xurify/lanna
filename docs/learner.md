@@ -5,7 +5,7 @@ What the app assumes about the person using it, where those assumptions came fro
 ## What the app assumes
 
 - **Several languages known, with levels.** The learner picks every language they know and rates each on the CEFR. Every grammar unit bridges from the best-known ones, and the tutor explains in up to two of them. Estonian is the first bridge the app was built around, because Estonian cases make Slavic morphology intuitive.
-- **Reading ahead of production is normal.** A learner can read at B1 and still produce A1 to A2 endings by pattern memory rather than rule. The app therefore keeps explicit instruction and typed production rather than relying on input alone (see [DECISIONS.md](DECISIONS.md) P2).
+- **Reading ahead of production is normal.** A learner can read at B1 and still produce A1 to A2 endings by pattern memory rather than rule. The app therefore keeps explicit instruction and typed production rather than relying on input alone (see [P2](decisions/P2-four-strands-not-pure-comprehensible-input.md)).
 - **Parsing speed is its own gap.** Knowing the words and assembling meaning fast enough are measured apart: the milestones page reports words (coverage) and speed (words a minute of understanding from Listen and Watch) separately and says which one is binding. The fluency strand and the Listen and Watch tasks exist for the speed gap. The first learner put it as "I get a lot of words, but I can't put them together into meaning fast enough."
 - **Time varies a lot.** Minutes a day go up to 600; the hours sheet shows what any pace reaches and when.
 - **Struggle is wanted.** Help is graded and priced, never free (P3).

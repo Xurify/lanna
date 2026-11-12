@@ -2,7 +2,7 @@
 
 **Question:** the first redesign made LangHarness feel like a language app, but in the best-known app's own forms (a winding road of round icons, a flame, a chunky green button, confetti). The owner wanted a direction of its own that still keeps what works: one next step, a visible path, streaks and XP, feedback in a fixed place, and a pathway that is clear and beautiful. What should that direction be, and why would it work for a learner of Slovak?
 
-**Outcome:** the trail design, on branch `feat/trail-design` (one PR). Rule E30 in [../DECISIONS.md](../DECISIONS.md). It replaces the look built on `feat/language-app-redesign` (PR #79, left open and untouched for comparison).
+**Outcome:** the trail design, on branch `feat/trail-design` (one PR). Rule [E30](../decisions/E30-the-trail-design-four-marks-one-gold.md). It replaces the look built on `feat/language-app-redesign` (PR #79, left open and untouched for comparison).
 
 ## The idea
 

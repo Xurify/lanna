@@ -1,6 +1,6 @@
 # Should some of the app's own text be in the language being learned?
 
-Date: 2026-11-08. Branch `fix/lesson-end-layout`. Rule: E78 in [../DECISIONS.md](../DECISIONS.md).
+Date: 2026-11-08. Branch `fix/lesson-end-layout`. Rule: [E78](../decisions/E78-exclamations-are-said-in-the-language-being.md).
 
 ## The question
 

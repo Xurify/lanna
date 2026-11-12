@@ -1,6 +1,6 @@
 # Phone and iPad: which route, and what the first slice does
 
-Date: 2026-11-01. Decision: [E20 in DECISIONS.md](../DECISIONS.md). Owner's question: "I'm thinking of turning our app into a mobile app and tablet (iPad) app."
+Date: 2026-11-01. Decision: [E20](../decisions/E20-phone-and-ipad-a-responsive-installable-web.md). Owner's question: "I'm thinking of turning our app into a mobile app and tablet (iPad) app."
 
 ## Answer
 

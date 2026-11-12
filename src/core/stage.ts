@@ -4,7 +4,7 @@
  * in the app's own numbers. The words gap and the speed gap are already
  * measured by the milestones (src/core/milestones.ts); this only says which
  * one binds and how far it is, and when a number is an estimate instead of a
- * measure it says so (docs/DECISIONS.md P8). The two meters under the line
+ * measure it says so (decision P8). The two meters under the line
  * carry the same numbers, so the eye can read the gap without the sentence.
  *
  * Pure and browser-safe.
