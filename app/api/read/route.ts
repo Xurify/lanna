@@ -7,12 +7,14 @@
  * POST /api/read {action: "next"} — the next episode: the newest unread
  * one, or a new one written on the cheap model slot and kept under
  * data/profiles/<language>/stories/ (src/server/reading.ts).
+ * POST /api/read {action: "write"} — write a new episode on the cheap
+ * model slot and keep it on disk, even if unread stories exist.
  * POST /api/read {action: "finish", storyId, answers, tapped, ms?, tz?} —
  * a finished reading: the comprehension score, XP, the words sent to the
  * review deck, and a fresh summary.
  */
 
-import { BODY_LIMITS, bodyTooLarge, generating, nextStory, readingState, recordOnce, recordRead, sessionClientId, storyStore } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, generating, nextStory, readingState, recordOnce, recordRead, sessionClientId, storyStore, writeNewStory } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,14 @@ export async function POST(req: Request) {
 			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : 502 });
 		}
 	}
+	if (body.action === "write") {
+		try {
+			return Response.json(await writeNewStory());
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : 502 });
+		}
+	}
 	if (body.action === "finish") {
 		if (typeof body.storyId !== "string") return Response.json({ message: "storyId is required" }, { status: 400 });
 		const storyId = body.storyId;
@@ -58,5 +68,5 @@ export async function POST(req: Request) {
 			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 		}
 	}
-	return Response.json({ message: "action must be next or finish" }, { status: 400 });
+	return Response.json({ message: "action must be next, write or finish" }, { status: 400 });
 }

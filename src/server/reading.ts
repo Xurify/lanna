@@ -864,13 +864,7 @@ export function readingState(tz?: number, now = new Date(), opts: { topUpShelf?:
 	};
 }
 
-/** The story to read: an unread episode of the current chapter first (the
- *  arc's story step), else the shelf's best fit, else a new one written
- *  now — the chapter's episode when it has none yet, else a series episode
- *  or the genre the shelf lacks most. */
-export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
-	const pick = pickNext();
-	if (pick) return pick.story;
+export async function writeNewStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
 	const k = knownWords(loadLexicon());
 	if (!library().some((s) => s.chapter === k.chapter)) {
 		const chapterStory = await generateStory({ ...opts, wanted: true });
@@ -881,6 +875,16 @@ export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord
 	const story = await generateStory({ ...opts, level: need?.level ?? k.level, genre: need?.genre ?? "robo", wanted: true });
 	if (!opts.engine) kickShelf();
 	return story;
+}
+
+/** The story to read: an unread episode of the current chapter first (the
+ *  arc's story step), else the shelf's best fit, else a new one written
+ *  now — the chapter's episode when it has none yet, else a series episode
+ *  or the genre the shelf lacks most. */
+export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
+	const pick = pickNext();
+	if (pick) return pick.story;
+	return writeNewStory(opts);
 }
 
 // ─── Recording a reading ────────────────────────────────────────────────────

@@ -94,35 +94,44 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 		}
 	}, []);
 
-	/** The next episode: the newest unread one, or a new one written now. */
-	const next = useCallback(async () => {
-		setStage("writing");
-		setError(null);
-		try {
-			const res = await fetch("/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "next" }) });
-			const body = (await res.json()) as StoryRecord | { message: string };
-			if (!res.ok || !("sentences" in body)) throw new Error("message" in body ? body.message : `HTTP ${res.status}`);
-			setStory(body);
-			setTapped([]);
-			setAnswers([]);
-			setOutcome(null);
-			startedAt.current = Date.now();
-			activeTime.restart();
-			setStage("reading");
-			void load();
-		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
-			setStage("error");
-		}
-	}, [load, activeTime]);
+	const lastAction = useRef<"next" | "write">("next");
+
+	const requestStory = useCallback(
+		async (action: "next" | "write") => {
+			lastAction.current = action;
+			setStage("writing");
+			setError(null);
+			try {
+				const res = await fetch("/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
+				const body = (await res.json()) as StoryRecord | { message: string };
+				if (!res.ok || !("sentences" in body)) throw new Error("message" in body ? body.message : `HTTP ${res.status}`);
+				setStory(body);
+				setTapped([]);
+				setAnswers([]);
+				setOutcome(null);
+				startedAt.current = Date.now();
+				activeTime.restart();
+				setStage("reading");
+				void load();
+			} catch (err) {
+				setError(err instanceof Error ? err.message : String(err));
+				setStage("error");
+			}
+		},
+		[load, activeTime],
+	);
+
+	const next = useCallback(() => requestStory("next"), [requestStory]);
+	const write = useCallback(() => requestStory("write"), [requestStory]);
 
 	// Opened with nothing to read and nothing read today: write the episode.
-	const kicked = useRef(false);
+	const bootedInWriting = useRef(stage === "writing");
 	useEffect(() => {
-		if (kicked.current || stage !== "writing") return;
-		kicked.current = true;
-		void next();
-	}, [stage, next]);
+		if (bootedInWriting.current) {
+			bootedInWriting.current = false;
+			void next();
+		}
+	}, [next]);
 
 	useEffect(() => {
 		void load();
@@ -218,7 +227,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 						testid="read-error"
 						title="The episode could not be written"
 						action={
-							<button type="button" onClick={() => void next()} className="q-btn primary">
+							<button type="button" onClick={() => void requestStory(lastAction.current)} className="q-btn primary">
 								Try again
 							</button>
 						}
@@ -239,7 +248,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	if (stage === "shelf" || !story) {
 		return (
 			<Frame>
-				<Shelf state={state} onOpen={open} onWrite={() => void next()} />
+				<Shelf state={state} onOpen={open} onWrite={() => void write()} />
 			</Frame>
 		);
 	}

@@ -451,3 +451,35 @@ describe("a language other than Slovak", () => {
 		assert.equal(reading.episodeTheme(["curious"], 2, null), "a day in the mountains");
 	});
 });
+
+describe("writeNewStory and POST /api/read actions", () => {
+	it("writeNewStory writes a fresh episode even when unread stories exist", async () => {
+		const unreadBefore = storyStore.list().filter((s) => !storyStore.reads().some((r) => r.storyId === s.id));
+		assert.ok(unreadBefore.length > 0, "unread stories already exist on the shelf");
+		const pickedBefore = reading.nextStory({ engine: fauxEngine([]) });
+		assert.ok((await pickedBefore).id, "nextStory reuses unread stories without calling model");
+
+		const countBefore = storyStore.list().length;
+		const ep = {
+			...EPISODE,
+			title: "Nové dobrodružstvo",
+		};
+		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify(ep))]);
+		const fresh = await reading.writeNewStory({ engine, model: "faux:story", now: new Date("2026-11-01T12:00:00Z") });
+		assert.equal(fresh.title, "Nové dobrodružstvo");
+		assert.equal(storyStore.list().length, countBefore + 1);
+	});
+
+	it("validates action and rejects invalid actions", async () => {
+		const { POST } = await import("../app/api/read/route.ts");
+		const bad = await POST(new Request("http://localhost/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "bogus" }) }));
+		assert.equal(bad.status, 400);
+		const err = (await bad.json()) as { message: string };
+		assert.match(err.message, /action must be next, write or finish/);
+
+		const nextRes = await POST(new Request("http://localhost/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "next" }) }));
+		assert.equal(nextRes.status, 200);
+		const nextBody = (await nextRes.json()) as StoryRecord;
+		assert.ok(nextBody.id);
+	});
+});
