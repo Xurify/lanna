@@ -705,7 +705,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		wordsKnown: log.wordsKnown,
 		stamps: stamps.report,
 		log,
-		experiment: getTodayExperimentStatus(now, activeProfile()),
+		experiment: getTodayExperimentStatus(now),
 	};
 }
 

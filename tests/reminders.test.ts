@@ -388,7 +388,12 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 		weeklyCheckDue: false,
 		weeklyCheckCompleted: false,
 		weekNumber: 1,
+		checkLastDate: null,
 		validDay: false, // Incomplete!
+		languages: [
+			{ id: "russian", dictationReps: 2, understoodReps: 1, validDay: false, firstPlayShare: null },
+			{ id: "slovak", dictationReps: 5, understoodReps: 2, validDay: true, firstPlayShare: 0.4 },
+		],
 		russian: {
 			dictationReps: 2,
 			understoodReps: 1,
@@ -415,7 +420,7 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	const studyNudge = nudges.find((n) => n.source === "experiment");
 	assert.ok(studyNudge, "Should contain an experiment source nudge");
 	assert.equal(studyNudge?.taskKind, "listen");
-	assert.match(studyNudge?.title ?? "", /Study Alert: 3 dictation reps needed/);
+	assert.equal(studyNudge?.title, "Study: 3 in Russian to go in Listen", "only the language still short is named");
 	assert.match(studyNudge?.message ?? "", /Day 1 of 42/);
 
 	// 2. Weekly check alert when check is due and uncompleted
@@ -426,6 +431,7 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 		weeklyCheckDue: true,
 		weeklyCheckCompleted: false,
 		validDay: true, // Reps done, but check pending
+		languages: experimentStatus.languages.map((l) => ({ ...l, dictationReps: 5, validDay: true })),
 	};
 	const checkNudges = buildDailyNudges({
 		settings,
@@ -435,7 +441,8 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	});
 	const checkNudge = checkNudges.find((n) => n.taskKind === "experiment");
 	assert.ok(checkNudge, "Should contain weekly check alert");
-	assert.match(checkNudge?.title ?? "", /Week 1 Check Due/);
+	assert.match(checkNudge?.title ?? "", /week 1 check is open/);
+	assert.equal(checkNudges.filter((n) => n.source === "experiment").length, 1, "a day that counts in both languages gets no Listen nudge");
 
 	// 3. shouldTriggerNudge fires study alert when experimentPending is true even if todayMinutes >= dailyGoal
 	const testTime = new Date("2026-11-10T20:30:00");
@@ -454,6 +461,7 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	const allDoneStatus = {
 		...experimentStatus,
 		validDay: true,
+		languages: experimentStatus.languages.map((l) => ({ ...l, dictationReps: 5, validDay: true })),
 		weeklyCheckDue: false,
 		weeklyCheckCompleted: true,
 	};

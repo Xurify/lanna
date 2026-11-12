@@ -11,7 +11,10 @@
  */
 
 import type { DayLog } from "./daylog.ts";
-import type { TodayExperimentStatus } from "./experiment.ts";
+import { EXPERIMENT_CONSTANTS, type TodayExperimentStatus } from "./experiment.ts";
+import { catalogLanguage, languageById } from "./language.ts";
+
+const studyLanguageName = (id: string) => languageById(id)?.english ?? catalogLanguage(id)?.english ?? id;
 
 export const NOTIFICATION_SOUND_PRESETS = [
 	"chime",
@@ -408,19 +411,22 @@ export function buildDailyNudges(options: {
 	// 4. Study experiment alerts (if study is active and reps or weekly check pending)
 	if (exp?.active) {
 		// Daily 5 Listen dictation reps alert
-		if (!exp.validDay) {
-			const remainingReps = Math.max(0, 5 - exp.russian.dictationReps);
+		const short = exp.languages.filter((l) => !l.validDay);
+		if (short.length > 0) {
+			const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
+			const first = short[0]!;
+			const left = short.map((l) => `${need - l.dictationReps} in ${studyLanguageName(l.id)}`).join(" and ");
 			const deadlineTime = "20:30";
 			timeMap.set(deadlineTime, {
 				id: `nudge-study-daily-${deadlineTime}`,
 				time: deadlineTime,
 				source: "experiment",
-				languageId: "russian",
-				languageName: "Russian",
+				languageId: first.id,
+				languageName: studyLanguageName(first.id),
 				taskKind: "listen",
-				taskTitle: "5 Listen dictation reps",
-				title: `Study Alert: ${remainingReps} dictation rep${remainingReps === 1 ? "" : "s"} needed`,
-				message: `Day ${exp.dayNumber} of ${exp.totalDays}: complete 5 Listen dictation reps (${exp.russian.dictationReps}/5 done) to validate today's study data.`,
+				taskTitle: `${need} Listen sentences`,
+				title: `Study: ${left} to go in Listen`,
+				message: `Day ${exp.dayNumber} of ${exp.totalDays} counts once each language has ${need} typed Listen sentences.`,
 				urgent: true,
 			});
 		}
@@ -428,16 +434,17 @@ export function buildDailyNudges(options: {
 		// Weekly check alert (due on days 7, 14, 21, 28, 35, 42)
 		if (exp.weeklyCheckDue && !exp.weeklyCheckCompleted) {
 			const checkTime = "19:00";
+			const treatment = exp.languages[0]?.id ?? "russian";
 			timeMap.set(checkTime, {
 				id: `nudge-study-check-${checkTime}`,
 				time: checkTime,
 				source: "experiment",
-				languageId: "russian",
-				languageName: "Russian",
+				languageId: treatment,
+				languageName: studyLanguageName(treatment),
 				taskKind: "experiment",
-				taskTitle: "Weekly Check",
-				title: `Study Alert: Week ${exp.weekNumber} Check Due`,
-				message: "Complete your 10 listening probe sentences and 5 spoken production prompts today.",
+				taskTitle: "Weekly check",
+				title: `Study: the week ${exp.weekNumber} check is open`,
+				message: `${EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK} sentences to hear and ${EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK} to say, in each language${exp.checkLastDate ? `, by ${exp.checkLastDate}` : ""}.`,
 				urgent: true,
 			});
 		}

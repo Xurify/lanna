@@ -1,134 +1,59 @@
 /**
- * Study entry row on Today page (LangHarness, 2026-11-10).
- * Displays current day progress for the 42-day interrupted time-series experiment:
- * - Active study day and phase (e.g. Day 1 of 42 · Input-First Study)
- * - Required 5 Listen dictation reps progress (e.g. 0/5 reps or Valid day)
- * - Weekly check alert banner on days 7, 14, 21, 28, 35, 42
+ * The Study on Today: a row with the same anatomy as Today's line, so the
+ * plan keeps the one Start on the page (E4a). It says whether today counts
+ * in each study language, or that a weekly check is open, and opens it.
  */
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
-import type { TodayExperimentStatus } from "@/src/core";
+import { CHECK_ROUTE, STUDY_ROUTE, studyLanguage } from "@/components/experiment/study-language";
+import { EXPERIMENT_CONSTANTS, type TodayExperimentStatus } from "@/src/core";
+
+const ROW = "flex w-full items-center gap-3 rounded-[10px] bg-well px-3.5 py-2.5 text-left hover:bg-well-2";
+
+function shortDate(iso: string): string {
+	return new Date(`${iso}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
 
 export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null | undefined }) {
 	if (!status || !status.active) return null;
 
-	const { dayNumber, totalDays, russianArm, weeklyCheckDue, weeklyCheckCompleted, weekNumber, validDay, russian } = status;
-	const reps = russian.dictationReps;
-	const needed = Math.max(0, 5 - reps);
-
-	const subtitle = weeklyCheckDue && !weeklyCheckCompleted
-		? `Week ${weekNumber} check due today · ${reps >= 5 ? "Daily reps validated" : `${needed} more dictation rep${needed === 1 ? "" : "s"} needed`}`
-		: validDay
-			? `Day ${dayNumber} validated · ${reps} dictation reps (${russian.firstPlayShare !== null ? Math.round(russian.firstPlayShare * 100) : 0}% 1st-play understood)`
-			: `Need ${needed} more Russian Listen sentence${needed === 1 ? "" : "s"} today (no replay/peek for 1st-play score)`;
-
-	const pillText = weeklyCheckDue && !weeklyCheckCompleted
-		? "Check due"
-		: validDay
-			? "✓ Validated"
-			: `${reps}/5 reps`;
-
-	const pillTone = weeklyCheckDue && !weeklyCheckCompleted
-		? "amber"
-		: validDay
-			? "teal"
-			: "sun";
+	const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
+	const checkOpen = status.weeklyCheckDue && !status.weeklyCheckCompleted;
+	const left = status.languages.reduce((sum, l) => sum + Math.max(0, need - l.dictationReps), 0);
+	const pill = checkOpen ? "check open" : status.validDay ? "counts" : `${left} to go`;
+	const href = checkOpen ? `${CHECK_ROUTE}?week=${status.weekNumber}&lang=${status.languages[0]?.id ?? ""}` : STUDY_ROUTE;
 
 	return (
-		<div
-			className={cn(
-				"flex flex-col gap-2 rounded-xl border p-3.5 transition-colors",
-				weeklyCheckDue && !weeklyCheckCompleted
-					? "border-amber-500/40 bg-amber-500/10"
-					: validDay
-						? "border-teal/30 bg-well"
-						: "border-sun/40 bg-well ring-1 ring-sun/20",
-			)}
-			data-testid="study-entry-container"
-		>
-			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-				<Link
-					href="/experiments/input-first"
-					className="group flex min-w-0 flex-1 items-start gap-3 text-left sm:items-center"
-					data-testid="study-entry-row"
-					aria-label={`Study: Day ${dayNumber} of ${totalDays}, ${pillText}`}
-				>
-					<QIcon
-						name="chart"
-						className={cn(
-							"shrink-0",
-							validDay ? "text-teal" : weeklyCheckDue && !weeklyCheckCompleted ? "text-amber-500" : "text-sun",
-						)}
-					/>
-					<span className="min-w-0 flex-1">
-						<span className="flex flex-wrap items-center gap-2">
-							<span className="text-[15px] font-[600] tracking-[-0.006em] text-foreground group-hover:underline">
-								Study · Day {dayNumber} of {totalDays}
-							</span>
-							<span className="rounded-md bg-well-2 px-1.5 py-0.5 text-[11px] font-medium text-ink-3">
-								{russianArm === "input-first" ? "Input-First Phase" : "Baseline Phase"}
-							</span>
-							<span
-								className={cn(
-									"inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
-									pillTone === "teal" && "bg-teal/15 text-teal",
-									pillTone === "amber" && "bg-amber-500 text-white",
-									pillTone === "sun" && "bg-sun text-sun-ink",
-								)}
-							>
-								{pillText}
-							</span>
-						</span>
-						<span className="mt-0.5 block text-[13px] text-ink-2">{subtitle}</span>
+		<Link href={href} className={ROW} data-testid="study-entry-row" aria-label={`Study, day ${status.dayNumber} of ${status.totalDays}: ${pill}`}>
+			<QIcon name="chart" className={cn("shrink-0", status.validDay && !checkOpen ? "text-ink-3" : "text-teal")} />
+			<span className="min-w-0 flex-1">
+				<span className="block text-[15px] font-[550] tracking-[-0.006em] text-foreground">
+					Study <span className="font-[450] text-ink-3">· day {status.dayNumber} of {status.totalDays}</span>
+				</span>
+				{checkOpen ? (
+					<span className="block truncate text-[13px] text-ink-3">
+						The week {status.weekNumber} check is open{status.checkLastDate ? ` through ${shortDate(status.checkLastDate)}` : ""}
 					</span>
-				</Link>
-
-				<div className="flex items-center gap-2 sm:shrink-0">
-					{/* Visual 5-dot pip counter */}
-					<div className="hidden items-center gap-1 sm:flex" aria-hidden="true" title={`${reps} of 5 Listen sentences today`}>
-						{[0, 1, 2, 3, 4].map((i) => (
-							<span
-								key={i}
-								className={cn(
-									"size-2 rounded-full transition-colors",
-									i < reps ? "bg-teal" : "bg-ink-4/35",
-								)}
-							/>
+				) : (
+					<span className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-[13px] text-ink-3" data-testid="study-entry-languages">
+						{status.languages.map((l) => (
+							<span key={l.id} className="inline-flex items-center gap-1.5">
+								{studyLanguage(l.id).name}
+								<span className="flex gap-[2px]" aria-hidden="true">
+									{Array.from({ length: need }, (_, i) => (
+										<i key={i} className={cn("h-1.5 w-2.5 rounded-[2px]", i < l.dictationReps ? "bg-teal" : "bg-[var(--q-line-2)]")} />
+									))}
+								</span>
+								<span className="tabular-nums">{l.validDay ? "counts" : `${Math.min(l.dictationReps, need)} of ${need}`}</span>
+							</span>
 						))}
-					</div>
-
-					{/* Primary action CTA right inside the card */}
-					{weeklyCheckDue && !weeklyCheckCompleted ? (
-						<Link
-							href="/experiments/input-first/check"
-							className="q-btn primary h-11 w-full sm:h-9 sm:w-auto"
-							data-testid="study-quick-check"
-						>
-							<span>Take Week {weekNumber} Check</span>
-							<QIcon name="arrow" className="size-3.5" />
-						</Link>
-					) : !validDay ? (
-						<Link
-							href="/listen"
-							className="q-btn primary h-11 w-full sm:h-9 sm:w-auto"
-							data-testid="study-quick-listen"
-						>
-							<span>Do {needed} in Listen</span>
-							<QIcon name="arrow" className="size-3.5" />
-						</Link>
-					) : (
-						<Link
-							href="/experiments/input-first"
-							className="q-btn sec h-11 w-full sm:h-9 sm:w-auto"
-						>
-							<span>View Study</span>
-							<QIcon name="chev" className="size-3.5 text-ink-4" />
-						</Link>
-					)}
-				</div>
-			</div>
-		</div>
+					</span>
+				)}
+			</span>
+			<span className={cn("q-pill shrink-0", status.validDay && !checkOpen && "grey")}>{pill}</span>
+			<QIcon name="chev" className="shrink-0 text-ink-4" />
+		</Link>
 	);
 }
