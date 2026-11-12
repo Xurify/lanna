@@ -82,6 +82,7 @@ import { ensureReadmes } from "../store/corpus.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { knownWordStore } from "../store/known-words.ts";
+import { latestMeasuredVocabulary } from "../store/word-check.ts";
 import { readSettings } from "../store/settings.ts";
 import { storyStore } from "../store/stories.ts";
 import { readingSourceStore, type ReadingSource } from "../store/reading-sources.ts";
@@ -169,7 +170,22 @@ export function frequencyOrder(lexicon: Lexicon): string[] {
 		.sort((x, y) => (counts.get(y.slug) ?? 0) - (counts.get(x.slug) ?? 0) || share(x) - share(y) || x.slug.localeCompare(y.slug))
 		.map((e) => e.slug);
 	orderCache.set(lexicon, order);
+	unplacedCache.set(lexicon, new Set(order.filter((slug) => !counts.has(slug))));
+	usesCache.set(lexicon, counts);
 	return order;
+}
+
+const unplacedCache = new WeakMap<Lexicon, Set<string>>();
+const usesCache = new WeakMap<Lexicon, ReadonlyMap<string, number>>();
+
+export function usesInTheDictionarySentences(lexicon: Lexicon): ReadonlyMap<string, number> {
+	frequencyOrder(lexicon);
+	return usesCache.get(lexicon)!;
+}
+
+export function wordsWithNoPlaceInTheFrequencyOrder(lexicon: Lexicon): ReadonlySet<string> {
+	frequencyOrder(lexicon);
+	return unplacedCache.get(lexicon)!;
 }
 
 const commonnessCache = new WeakMap<Lexicon, Map<string, number>>();
@@ -233,7 +249,7 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 		for (const e of lexicon.entries) if ((wide ? wide.has(e.slug) : e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
 	}
 	// The same credit the Milestones page gives: the word check's estimate, or the level's band through the progress made in it.
-	const expectedWords = level ? LEVEL_VOCAB[at] : creditedWords(goal.vocabulary, at, state.levelProgress);
+	const expectedWords = level ? LEVEL_VOCAB[at] : creditedWords(latestMeasuredVocabulary(goal.vocabulary), at, state.levelProgress);
 	const expected = new Set(met);
 	if (lexicon) {
 		for (const slug of frequencyOrder(lexicon).slice(0, expectedWords)) expected.add(slug);

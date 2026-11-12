@@ -105,6 +105,7 @@ export * from "./listen-guide.ts";
 export * from "./ai-status.ts";
 export * from "./personal.ts";
 export * from "./vocab-probe.ts";
+export * from "./word-estimate.ts";
 export * from "./unit-bridges.ts";
 export * from "./reading.ts";
 export * from "./listen.ts";
