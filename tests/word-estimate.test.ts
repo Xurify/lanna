@@ -14,6 +14,7 @@ const server = await import("../src/server/word-estimate.ts");
 const { wordCheckStore, latestMeasuredVocabulary } = await import("../src/store/word-check.ts");
 const { knownWordStore } = await import("../src/store/known-words.ts");
 const { progressStore } = await import("../src/store/progress.ts");
+const { reviewStore } = await import("../src/store/review.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { frequencyOrder } = await import("../src/server/reading.ts");
 type CheckAnswer = import("../src/core/word-estimate.ts").CheckAnswer;
@@ -241,6 +242,27 @@ describe("the word check", () => {
 		assert.equal(result.answered, 6);
 		assert.equal(result.missed.length, 6);
 		assert.equal(wordCheckStore.sessions().length, 2);
+	});
+
+	test("a Review card counts by the scheduler's chance of recall today, an unanswered or suspended card does not, and none of them is asked in a check", () => {
+		const now = new Date("2026-11-14T09:00:00Z");
+		const before = server.wordEstimateReport(now).estimate!;
+		const untested = frequencyOrder(lexicon).filter((slug) => !wordCheckStore.answers().some((a) => a.slug === slug) && !knownWordStore.has(slug));
+		const [fresh, old, unanswered, suspended] = untested.slice(-40, -36) as [string, string, string, string];
+		const card = (slug: string, extra: Record<string, unknown>) => ({ id: `${slug}#0`, slug, lemma: slug, gloss: "", sentence: "", translation: "", answer: "", at: 0, state: "review" as const, due: now.toISOString(), reps: 1, lapses: 0, createdAt: now.toISOString(), ...extra });
+		reviewStore.writeCards({
+			[`${fresh}#0`]: card(fresh, { memory: { stability: 10, difficulty: 5 }, lastReview: now.toISOString() }),
+			[`${old}#0`]: card(old, { memory: { stability: 10, difficulty: 5 }, lastReview: "2026-11-04T09:00:00Z" }),
+			[`${unanswered}#0`]: card(unanswered, { state: "new", reps: 0 }),
+			[`${suspended}#0`]: card(suspended, { memory: { stability: 10, difficulty: 5 }, lastReview: now.toISOString(), suspended: true }),
+		});
+		const after = server.wordEstimateReport(now).estimate!;
+		assert.equal(after.counts.review, before.counts.review + 2);
+		assert.equal(after.parts.review, before.parts.review + 2, "1 for the card answered now, 0.9 for the one answered a stability ago, rounded");
+		const start = server.startWordCheck(now, 5);
+		assert.ok(![fresh, old, unanswered, suspended].includes(start.item.slug));
+		server.finishWordCheck({ id: start.id }, now);
+		reviewStore.writeCards({});
 	});
 
 	test("a newer level check replaces the word check's figure, an older one does not", () => {
