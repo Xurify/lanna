@@ -712,4 +712,5 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 
 - **Why:** the owner asked for the explanation area to look better and read shorter.
 - **What changed:** the area is one comparison, "You wrote" next to "Needed here", each word underlined in its color (miss red, teal), with its meaning, and the form and the word that decides it under the needed one. Below a hairline: "Both can mean …", then one short explanation with its source. Lines about one word carry that word's color. An aspect miss went from five sentences to two lines; an AI note is asked for in 30 words. The dock's top line is red after a miss and teal after a right answer, and the space around the dot in "Again · comes back in 10 min" is even. E108.
+- **The Enter key on teal buttons** (Check, Continue, and the same button in Listen, Ear gym and Line) follows the button's own text color, so in Night it is dark on the light teal instead of white and nearly invisible.
 - **Checked:** the miss tests (63), typecheck, lint; the card in the app with a real model in Day and Night at 1280 and 390 px, and at 320 px.

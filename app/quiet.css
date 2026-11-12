@@ -19,7 +19,7 @@
 .q-btn.primary { background: var(--q-teal); color: var(--q-on-teal); box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 1px 2px rgb(10 84 82 / 0.35); }
 @media (hover: hover) { .q-btn.primary:hover:not(:disabled) { background: var(--q-teal-2); } }
 .q-btn.primary:active:not(:disabled) { transform: translateY(0.5px); }
-.q-btn.primary .q-kbd { background: rgb(255 255 255 / 0.14); color: rgb(255 255 255 / 0.9); box-shadow: none; }
+.q-btn.primary .q-kbd { background: color-mix(in srgb, var(--q-on-teal) 14%, transparent); color: var(--q-on-teal); box-shadow: none; }
 .q-btn.sec { background: var(--q-card); color: var(--q-ink); box-shadow: 0 0 0 1px var(--q-line-2), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05); padding: 0 14px 0 12px; }
 @media (hover: hover) { .q-btn.sec:hover:not(:disabled) { background: var(--q-well); } }
 .q-btn.sec .q-ico { color: var(--q-ink-3); }
