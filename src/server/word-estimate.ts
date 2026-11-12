@@ -36,7 +36,7 @@ import { reviewStore } from "../store/review.ts";
 import { wordCheckStore, type OpenWordCheck } from "../store/word-check.ts";
 import { activeLanguage } from "./active-language.ts";
 import { recordActiveTime } from "./lesson.ts";
-import { frequencyOrder, wordsWithNoPlaceInTheFrequencyOrder } from "./reading.ts";
+import { frequencyOrder, usesInTheDictionarySentences, wordsWithNoPlaceInTheFrequencyOrder } from "./reading.ts";
 import { canJudgeMeanings, judgeMeaning, wordCheckModel } from "./word-check-judge.ts";
 
 const DAY_MS = 86_400_000;
@@ -58,7 +58,8 @@ const daysBetween = (from: string | undefined, now: Date) => (from ? Math.max(0,
 function gather(now: Date): Gathered | null {
 	const lexicon = loadLexicon();
 	if (!lexicon) return null;
-	const ranked = frequencyOrder(lexicon).map((slug, i) => ({ slug, rank: i + 1 }));
+	const uses = usesInTheDictionarySentences(lexicon);
+	const ranked = frequencyOrder(lexicon).map((slug, i) => ({ slug, rank: i + 1, uses: uses.get(slug) ?? 0 }));
 	const rankOf = new Map(ranked.map((w) => [w.slug, w.rank]));
 	const evidence = new Map<string, WordEvidence>();
 	const evidenceOf = (slug: string) => {

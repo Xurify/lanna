@@ -169,6 +169,16 @@ describe("the estimate of words known", () => {
 		assert.equal(core.dictionaryAccepts(["transport", "to the right"], "to the right"), true, "a word written the same way counts with either meaning");
 	});
 
+	test("counted by use, a few common words are most of the words met", () => {
+		const used = words.map((w) => ({ ...w, uses: Math.round(10000 / w.rank) }));
+		const commonest = new Map<string, WordEvidence>(used.slice(0, 100).map((w) => [w.slug, { marked: true }]));
+		const curve = core.fitKnowledgeCurve([{ slug: "w150", rank: 150, known: false, ageDays: 0 }, { slug: "w300", rank: 300, known: false, ageDays: 0 }, { slug: "w600", rank: 600, known: false, ageDays: 0 }], 200, DICTIONARY);
+		const estimate = core.estimateWords(used, commonest, curve);
+		assert.ok(estimate.total < DICTIONARY * 0.1, `${estimate.total} words`);
+		assert.ok(estimate.shareOfUses! > 0.5 && estimate.shareOfUses! < 1, `${estimate.shareOfUses} of the uses`);
+		assert.equal(core.estimateWords(words, commonest, curve).shareOfUses, null, "no share without counts of use");
+	});
+
 	test("the number of answers studies ask for grows with the dictionary", () => {
 		assert.equal(core.answersForASteadyEstimate(7105), 210);
 		assert.equal(core.answersForASteadyEstimate(1000), 30);

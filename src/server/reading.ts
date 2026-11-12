@@ -171,10 +171,17 @@ export function frequencyOrder(lexicon: Lexicon): string[] {
 		.map((e) => e.slug);
 	orderCache.set(lexicon, order);
 	unplacedCache.set(lexicon, new Set(order.filter((slug) => !counts.has(slug))));
+	usesCache.set(lexicon, counts);
 	return order;
 }
 
 const unplacedCache = new WeakMap<Lexicon, Set<string>>();
+const usesCache = new WeakMap<Lexicon, ReadonlyMap<string, number>>();
+
+export function usesInTheDictionarySentences(lexicon: Lexicon): ReadonlyMap<string, number> {
+	frequencyOrder(lexicon);
+	return usesCache.get(lexicon)!;
+}
 
 export function wordsWithNoPlaceInTheFrequencyOrder(lexicon: Lexicon): ReadonlySet<string> {
 	frequencyOrder(lexicon);

@@ -82,7 +82,7 @@ export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | n
 				<i className="over" style={{ left: percent(fromEvidence / estimate.dictionary), width: percent(estimate.parts.inferred / estimate.dictionary) }} />
 			</div>
 			<p className="q-legend" data-testid="word-estimate-legend">
-				<span title="Review cards count by the scheduler's chance that you recall each one today. A word you marked as known counts in full. A checked word counts when you picked its meaning.">
+				<span title="Review cards count by the scheduler's chance that you recall each one today. A word you marked as known counts in full. A checked word counts when the meaning you typed was right.">
 					<i className="bg-[var(--q-bar)]" />
 					<span>
 						<b className="tabular-nums">{count(fromEvidence)}</b> counted: {count(estimate.parts.review)} from Review, {count(estimate.parts.marked)} marked known, {count(estimate.parts.checked)} checked
@@ -98,6 +98,11 @@ export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | n
 					of <b className="tabular-nums">{count(estimate.dictionary)}</b> in this dictionary
 				</span>
 			</p>
+			{estimate.shareOfUses !== null && (
+				<p className="q-sub max-w-[60ch]" data-testid="word-estimate-coverage">
+					Counted by use, not one each, these words are about <b className="tabular-nums">{Math.round(estimate.shareOfUses * 100)}%</b> of the words in this dictionary's example sentences: a few common words do most of the work.
+				</p>
+			)}
 			<SourcesNote feature="word-check" className="mt-4" />
 		</section>
 	);

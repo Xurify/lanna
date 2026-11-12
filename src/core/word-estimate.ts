@@ -1,6 +1,7 @@
 export interface RankedWord {
 	slug: string;
 	rank: number;
+	uses?: number;
 }
 
 export interface CheckAnswer {
@@ -35,6 +36,7 @@ export interface WordEstimate {
 	dictionary: number;
 	answers: number;
 	midpointRank: number;
+	shareOfUses: number | null;
 }
 
 export interface EstimateRange {
@@ -297,11 +299,15 @@ export function estimateWords(words: readonly RankedWord[], evidence: ReadonlyMa
 	const parts: Record<WordEvidenceSource, number> = { review: 0, marked: 0, checked: 0, inferred: 0 };
 	const counts: Record<WordEvidenceSource, number> = { review: 0, marked: 0, checked: 0, inferred: 0 };
 	let outcomeVariance = 0;
+	let usesOfKnownWords = 0;
+	let usesOfAllWords = 0;
 	let shiftSensitivity = 0;
 	let slopeSensitivity = 0;
 	for (const word of words) {
 		const reading = readWord(curve, word.rank, evidence.get(word.slug));
 		parts[reading.source] += reading.chance;
+		usesOfKnownWords += reading.chance * (word.uses ?? 0);
+		usesOfAllWords += word.uses ?? 0;
 		counts[reading.source]++;
 		outcomeVariance += reading.chance * (1 - reading.chance);
 		if (reading.curveShare > 0) {
@@ -325,6 +331,7 @@ export function estimateWords(words: readonly RankedWord[], evidence: ReadonlyMa
 		dictionary: words.length,
 		answers: curve.answers,
 		midpointRank: Math.round(midpointRank(curve)),
+		shareOfUses: usesOfAllWords > 0 ? usesOfKnownWords / usesOfAllWords : null,
 	};
 }
 

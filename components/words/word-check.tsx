@@ -489,6 +489,12 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 					)}
 				</p>
 
+				{estimate && estimate.shareOfUses !== null && (
+					<p className="q-line dim mt-1 !text-[16px]" data-testid="word-check-coverage">
+						Counted by use, they are about <b className="font-[600] tabular-nums text-foreground">{Math.round(estimate.shareOfUses * 100)}%</b> of the words in this dictionary&apos;s example sentences.
+					</p>
+				)}
+
 				<div className="mt-6 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5" data-testid="word-check-ranges">
 					<RangeRow label="Before" range={result.before} scale={scale} now={false} />
 					<RangeRow label="Now" range={result.after} scale={scale} now />
