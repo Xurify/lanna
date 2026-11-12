@@ -5,14 +5,14 @@ description: "How LangHarness writes an explanation of a Slovak grammar rule (a 
 
 # Grammar explanations
 
-The owner's rule (2026-11-08, rule E74 in `docs/DECISIONS.md`): the grammar text must be right, complete and clear, and a missed case is a bug, not a polish item. The case walk-throughs shipped with all of these wrong at first: a letter list written from memory, three genders where the language has more patterns, "hard noun" and "men" with no meaning for a learner, "learn which with each word" for something that has a rule, and an unlabeled `do Žiliny, v Žiline, Žilinu` that read as one case.
+The owner's rule (2026-11-08, rule E74 (`docs/decisions/E74-a-grammar-claim-is-sourced-complete-labeled.md`)): the grammar text must be right, complete and clear, and a missed case is a bug, not a polish item. The case walk-throughs shipped with all of these wrong at first: a letter list written from memory, three genders where the language has more patterns, "hard noun" and "men" with no meaning for a learner, "learn which with each word" for something that has a rule, and an unlabeled `do Žiliny, v Žiline, Žilinu` that read as one case.
 
 Use it twice: once **before** you write (sources, scope), once **after** (the checks at the bottom).
 
 ## 1. Source every form and rule
 
 - Order of sources: the case page on slovak.wiki (`/grammar/cases/<case>`, source in the slovak.wiki repo `src/lib/catalog/reference/cases.ts`), then the paradigm tables of English Wikipedia "Slovak declension", then the JÚĽŠ norm. Never write a form or a rule from memory.
-- A claim only a weaker source gives is written, and the changelog says which source and that slovak.wiki does not have it. A claim with no source is not written.
+- A claim only a weaker source gives is written, and the pull request's description says which source and that slovak.wiki does not have it. A claim with no source is not written.
 - When the wiki and the app disagree, one of them is wrong: fix the wiki (it is the owner's site) on its own branch, or say so.
 - Say in the answer what you did not verify. "Checked" means a page was read, not that it is probably right.
 
@@ -29,7 +29,7 @@ A rule that holds for "most" words is incomplete until its patterns are listed. 
 | feminine ending in a consonant | noc, radosť, pieseň |
 | neuter | mesto, srdce, námestie, dievča |
 
-Run every test word through the table you wrote, in every case it covers, before you call it done. Audit **every** unit that shares the pattern, not only the one you were editing. List what is left out on purpose (plural, dievča) in the changelog.
+Run every test word through the table you wrote, in every case it covers, before you call it done. Audit **every** unit that shares the pattern, not only the one you were editing. List what is left out on purpose (plural, dievča) in the pull request's description.
 
 ## 3. A rule is a rule
 
@@ -65,7 +65,7 @@ A rule with parallel cases is a table, not paragraphs. A spatial idea is an ink 
 4. Would a learner who has only seen this app understand every word?
 5. Did I audit the other units and the wiki, not only the one in front of me?
 6. Is each "exception" really an exception, and each "learn it" really without a rule?
-7. Did the changelog say what is unverified and what has no wiki source?
+7. Did the pull request's description say what is unverified and what has no wiki source?
 
 `tests/case-forms.test.ts` holds the forms of the case tables to a paradigm table and fails on a missing row. Add a word to it when you add a form.
 

@@ -1,6 +1,6 @@
 # Practice for one situation: a game played in Russian only
 
-2026-11-09. Decision: [E95](../DECISIONS.md).
+2026-11-09. Decision: [E95](../decisions/E95-a-cheatsheet-s-own-lines-can-be.md).
 
 ## The question
 

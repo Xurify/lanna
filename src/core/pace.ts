@@ -5,7 +5,7 @@
  * before (6ed7944) and once more on 2026-11-03, and failed each time, because
  * the clips are recorded at a deliberately slow ElevenLabs speed and their pace
  * varies with the sentence. Clips play as recorded; see docs/research/voice-pace.md
- * and DECISIONS E37.
+ * and decision E37.
  */
 
 const SK_VOWELS = "aeiouyáäéíóôúý";

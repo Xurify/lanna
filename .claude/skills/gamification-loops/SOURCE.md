@@ -14,4 +14,4 @@ It passed the registry's three security audits and had 580 installs at the time.
 
 How LangHarness uses it: read `SKILL.md` and the three references before adding or changing any
 streak, stamp, goal or reward (docs/research/gamification.md records how the current design
-measures against the validations). The repo's own rules in docs/DECISIONS.md win where they differ.
+measures against the validations). The repo's own rules in docs/decisions/ win where they differ.

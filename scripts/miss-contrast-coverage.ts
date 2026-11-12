@@ -1,6 +1,6 @@
 /**
  * How much a Review miss on another word can explain, from data alone
- * (E105). Every pair of lexicon words that share a meaning, unless grading
+ * (docs/decisions/review-miss-explains-from-the-apps-own-data.md). Every pair of lexicon words that share a meaning, unless grading
  * accepts one for the other (src/core/variants.ts), is a miss that can
  * happen; for each, the card's best line comes from a curated rule, an aspect
  * pair or a passage of the language reference, the parts of speech, a note in

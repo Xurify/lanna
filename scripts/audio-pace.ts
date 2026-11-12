@@ -1,7 +1,7 @@
 /**
  * How fast is each voice? Reads <data>/audio/index.jsonl, measures every clip's
  * length with ffprobe, and prints the pace in syllables a second per engine and
- * voice. Measuring only: playback is not changed by it (DECISIONS E37).
+ * voice. Measuring only: playback is not changed by it (decision E37).
  *
  *   LH_DATA_DIR=/path/to/data npx tsx scripts/audio-pace.ts      (default: ./data)
  *
