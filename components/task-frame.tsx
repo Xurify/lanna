@@ -54,7 +54,7 @@ export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave
 
 export type PipOutcome = "right" | "almost" | "miss" | "shown" | "now" | "ahead";
 
-export const STRUCK = "relative bg-well-2 after:absolute after:inset-x-0 after:top-[calc(50%-1px)] after:h-0.5 after:rounded-full after:content-['']";
+const STRUCK = "relative bg-well-2 after:absolute after:inset-x-0 after:top-[calc(50%-1px)] after:h-0.5 after:rounded-full after:content-['']";
 
 export function Pip({ outcome, className }: { outcome: PipOutcome; className?: string }) {
 	return (
@@ -64,7 +64,7 @@ export function Pip({ outcome, className }: { outcome: PipOutcome; className?: s
 				"h-1.5 rounded-full transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
 				outcome === "right" && "bg-teal",
 				outcome === "almost" && "bg-teal-line",
-				outcome === "miss" && cn(STRUCK, "after:bg-miss"),
+				outcome === "miss" && "bg-miss",
 				outcome === "shown" && cn(STRUCK, "after:bg-ink-4"),
 				outcome === "now" && "bg-ink-4",
 				outcome === "ahead" && "bg-well-2",
