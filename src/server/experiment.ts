@@ -16,8 +16,10 @@ import crypto from "node:crypto";
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { PATHS } from "../../config.ts";
+import { curriculumFile, PATHS } from "../../config.ts";
+import { loadLexicon } from "../agent/lexicon.ts";
 import {
+	analyzeStudy,
 	buildSchedule,
 	calculateCompliance,
 	createRng,
@@ -28,17 +30,20 @@ import {
 	EXPERIMENT_CONSTANTS,
 	generateSummaryMarkdown,
 	isFirstPlayUnderstood,
-	runRandomizationTest,
+	scheduleDeviations,
 	weeklyCheckRows,
 	type CheckItemRecord,
 	type DailyExperimentRecord,
 	type DaySchedule,
+	type DeviationRecord,
 	type ExperimentConfig,
 	type LanguagePools,
 	type ProbeItem,
 	type ProbePoolData,
+	type StudyLanguageToday,
 	type TodayExperimentStatus,
 } from "../core/experiment.ts";
+import { languageById } from "../core/language.ts";
 import { dayKey } from "../core/review.ts";
 
 export const EXPERIMENT_SEED = 20261108;
@@ -251,17 +256,7 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 	if (!fs.existsSync(path.join(dir, "checks.jsonl"))) writeExperimentFile("checks.jsonl", "");
 	if (!fs.existsSync(path.join(dir, "deviations.jsonl"))) writeExperimentFile("deviations.jsonl", "");
 
-	const initialSummary = generateSummaryMarkdown(config, schedule, [], [], {
-		b0: 0,
-		b1: 0,
-		b2: 0,
-		b3: 0,
-		pValue: 1.0,
-		baselineDays: 0,
-		interventionDays: 0,
-		verdictStatus: "pending",
-	}, config.startDate);
-	writeExperimentFile("summary.md", initialSummary);
+	writeExperimentFile("summary.md", generateSummaryMarkdown(config, schedule, [], [], analyzeStudy(config, [], [], 0), config.startDate));
 
 	return { config, schedule, pool };
 }
@@ -313,18 +308,9 @@ export function resetExperiment(newStartDate?: string): { config: ExperimentConf
 	writeExperimentFile("daily.jsonl", "");
 	writeExperimentFile("checks.jsonl", "");
 	writeExperimentFile("deviations.jsonl", "");
+	fs.rmSync(path.join(dir, MEASURE_FILE), { force: true });
 
-	const initialSummary = generateSummaryMarkdown(config, schedule, [], [], {
-		b0: 0,
-		b1: 0,
-		b2: 0,
-		b3: 0,
-		pValue: 1.0,
-		baselineDays: 0,
-		interventionDays: 0,
-		verdictStatus: "pending",
-	}, config.startDate);
-	writeExperimentFile("summary.md", initialSummary);
+	writeExperimentFile("summary.md", generateSummaryMarkdown(config, schedule, [], [], analyzeStudy(config, [], [], 0), config.startDate));
 
 	return { config, schedule, pool };
 }
@@ -369,9 +355,98 @@ function readDayLessonLogs(profile: string, day: string): any[] {
 	return readJsonl(path.join(PATHS.base, "profiles", profile, "lessons", `${day}.jsonl`));
 }
 
+/** Mean lexicon frequency rank over every word of the day's sentences the lexicon knows; undefined when it knows none. */
+function meanFrequencyRank(language: string, sentences: string[]): number | undefined {
+	const lexicon = loadLexicon(language);
+	if (!lexicon) return undefined;
+	const tag = languageById(language)?.tag;
+	const ranks: number[] = [];
+	for (const sentence of sentences) {
+		for (const word of sentence.toLocaleLowerCase(tag).match(/\p{L}+/gu) ?? []) {
+			const rank = lexicon.byForm.get(word)?.find((e) => typeof e.rank === "number")?.rank;
+			if (rank !== undefined) ranks.push(rank);
+		}
+	}
+	return ranks.length > 0 ? Math.round((ranks.reduce((a, b) => a + b, 0) / ranks.length) * 10) / 10 : undefined;
+}
+
+const MEASURE_FILE = "measure.json";
+
+/** What decides whether a Listen sentence counts as understood on the first play: the grader, the picker, the player that logs replays and peeks, and both lexicons the picker draws from. `isFirstPlayUnderstood` is pinned by its test instead, because its file also holds the analysis. */
+function measureSources(config: ExperimentConfig): string[] {
+	return [
+		path.join(PATHS.root, "src", "core", "listen.ts"),
+		path.join(PATHS.root, "src", "server", "listen.ts"),
+		path.join(PATHS.root, "app", "api", "listen", "route.ts"),
+		path.join(PATHS.root, "components", "listen", "listen-player.tsx"),
+		curriculumFile(config.languages.treatment, "lexicon.json"),
+		curriculumFile(config.languages.control, "lexicon.json"),
+	];
+}
+
+interface MeasureFingerprint {
+	checkedOn: string;
+	files: Record<string, string>;
+}
+
+function fingerprint(files: string[]): Record<string, string> {
+	const out: Record<string, string> = {};
+	for (const file of files) {
+		const name = path.relative(PATHS.root, file).split(path.sep).join("/");
+		try {
+			out[name] = crypto.createHash("sha256").update(fs.readFileSync(/*turbopackIgnore: true*/ file)).digest("hex");
+		} catch {
+			out[name] = "missing";
+		}
+	}
+	return out;
+}
+
+/** Compares the measure's files with the last check, at most once a day; the first check only records them. */
+function measureDeviations(config: ExperimentConfig, today: string): DeviationRecord[] {
+	const file = path.join(experimentDir(), MEASURE_FILE);
+	let previous: MeasureFingerprint | null = null;
+	try {
+		previous = JSON.parse(fs.readFileSync(file, "utf8")) as MeasureFingerprint;
+	} catch {
+		previous = null;
+	}
+	if (previous?.checkedOn === today) return [];
+	const files = fingerprint(measureSources(config));
+	writeExperimentFile(MEASURE_FILE, JSON.stringify({ checkedOn: today, files } satisfies MeasureFingerprint, null, 2));
+	if (!previous) return [];
+	const changed = Object.keys(files).filter((name) => previous!.files[name] !== files[name]);
+	if (changed.length === 0) return [];
+	const commit = getSystemProvenance().gitCommit.slice(0, 8);
+	return [
+		{
+			key: `measure-changed:${today}:${changed.map((name) => files[name]!.slice(0, 12)).join(",")}`,
+			kind: "measure-changed",
+			date: today,
+			note: `changed since ${previous.checkedOn}: ${changed.join(", ")} (app at ${commit})`,
+		},
+	];
+}
+
+/** Appends the deviations not written yet; a line written by hand without a key is kept as it is. */
+function appendDeviations(found: DeviationRecord[], now: Date): void {
+	if (found.length === 0) return;
+	const file = path.join(experimentDir(), "deviations.jsonl");
+	const known = new Set(readJsonl<{ key?: string }>(file).map((d) => d.key));
+	const fresh = found.filter((d) => !known.has(d.key));
+	if (fresh.length === 0) return;
+	ensureDir(path.dirname(file));
+	fs.appendFileSync(file, fresh.map((d) => JSON.stringify({ ...d, at: now.toISOString() })).join("\n") + "\n", "utf8");
+}
+
+/** Every deviation recorded so far, in the order written. */
+export function readDeviations(): Array<DeviationRecord & { at?: string }> {
+	return readJsonl(path.join(experimentDir(), "deviations.jsonl"));
+}
+
 /**
  * Synchronizes daily experiment data from lesson logs and progress records.
- * Updates daily.jsonl and regenerates summary.md.
+ * Updates daily.jsonl, appends deviations and regenerates summary.md.
  */
 export function syncDailyExperimentData(now = new Date()): { daily: DailyExperimentRecord[]; summary: string } {
 	const { config, schedule } = ensureExperimentInitialized();
@@ -391,7 +466,7 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 		if (!s) continue;
 		const dateStr = s.date;
 
-		for (const lang of ["russian", "slovak"] as const) {
+		for (const lang of [config.languages.treatment, config.languages.control]) {
 			const logs = readDayLessonLogs(lang, dateStr);
 			const progress = readProfileProgress(lang);
 			const dayProgress = progress?.days?.[dateStr];
@@ -410,18 +485,20 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 
 			const minutesBy = dayProgress?.minutesBy || {};
 			const minutes = dayProgress?.minutes || Object.values(minutesBy).reduce((a: number, b: any) => a + Number(b), 0);
-			const compliance = lang === "russian" && s.russianArm === "input-first" ? calculateCompliance(minutesBy) : 100;
+			const isTreatment = lang === config.languages.treatment;
+			const compliance = isTreatment && s.russianArm === "input-first" ? calculateCompliance(minutesBy) : 100;
+			const rank = meanFrequencyRank(lang, dictationReps.map((r: any) => String(r.sentence ?? "")));
 
 			const record: DailyExperimentRecord = {
 				date: dateStr,
 				dayNumber: d,
 				language: lang,
 				phase: s.phase,
-				arm: lang === "russian" ? s.russianArm : "normal",
+				arm: isTreatment ? s.russianArm : "normal",
 				firstPlayShare,
 				dictationReps: repCount,
 				understoodReps: understoodCount,
-				covariates: { meanWordsPerSentence: meanWords },
+				covariates: { meanWordsPerSentence: meanWords, ...(rank !== undefined ? { meanFrequencyRank: rank } : {}) },
 				minutes: Math.round(Number(minutes) || 0),
 				minutesBy,
 				compliance,
@@ -437,28 +514,36 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 	writeExperimentFile("daily.jsonl", jsonlLines);
 
 	const checkRecords = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
-	const russianRecords = updatedDaily.filter((r) => r.language === "russian");
-	const analysis = runRandomizationTest(russianRecords, config.onsetDay);
+	const study = analyzeStudy(config, updatedDaily, checkRecords, currentDayNumber);
 
-	const summary = generateSummaryMarkdown(config, schedule, updatedDaily, checkRecords, analysis, todayDateStr);
+	if (currentDayNumber >= 1) {
+		appendDeviations([...scheduleDeviations(config, schedule, updatedDaily, checkRecords, currentDayNumber), ...(currentDayNumber <= config.days ? measureDeviations(config, todayDateStr) : [])], now);
+	}
+
+	const summary = generateSummaryMarkdown(config, schedule, updatedDaily, checkRecords, study, todayDateStr);
 	writeExperimentFile("summary.md", summary);
 
-	// If study is complete (day > 42), write verdict.json
 	if (currentDayNumber > EXPERIMENT_CONSTANTS.TOTAL_DAYS) {
 		const verdictPath = path.join(experimentDir(), "verdict.json");
 		if (!fs.existsSync(verdictPath)) {
+			const { regression } = study;
 			const verdictData = {
 				completedAt: now.toISOString(),
 				version: config.version,
 				decisionRule: config.decisionRule,
-				analysis,
-				flags: {
-					baselineDaysValid: analysis.baselineDays >= EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE,
-					interventionDaysValid: analysis.interventionDays >= EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE,
-					randomizationTestPassed: analysis.pValue <= 1 / 11 + 1e-4,
-					levelShiftPassed: analysis.b2 >= 0.1,
+				analysis: regression,
+				checkWeeksDone: study.checkWeeksDone,
+				rule: {
+					baselineDaysValid: regression.baselineDays >= EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE,
+					interventionDaysValid: regression.interventionDays >= EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE,
+					checkWeeksValid: study.checkWeeksDone >= EXPERIMENT_CONSTANTS.CHECK_WEEKS_NEEDED,
+					randomizationTestPassed: regression.pValue <= 1 / 11 + 1e-4,
+					levelShiftPassed: regression.b2 >= EXPERIMENT_CONSTANTS.GAIN_NEEDED,
 				},
-				verdict: analysis.verdictStatus,
+				flags: study.flags,
+				speaking: study.speaking,
+				deviations: readDeviations().length,
+				verdict: study.verdictStatus,
 			};
 			writeExperimentFile("verdict.json", JSON.stringify(verdictData, null, 2));
 		}
@@ -494,10 +579,7 @@ export function getExperimentState(now = new Date()) {
 		weeklyCheckDue: currentDayNumber > 0 && currentDayNumber % 7 === 0,
 	};
 
-	const analysis = runRandomizationTest(
-		daily.filter((d) => d.language === "russian"),
-		config.onsetDay,
-	);
+	const study = analyzeStudy(config, daily, checks, currentDayNumber);
 
 	return {
 		config,
@@ -506,7 +588,8 @@ export function getExperimentState(now = new Date()) {
 		daily,
 		checks,
 		summary,
-		analysis,
+		study,
+		deviations: readDeviations(),
 		today: {
 			date: todayDateStr,
 			dayNumber: currentDayNumber,
@@ -516,7 +599,7 @@ export function getExperimentState(now = new Date()) {
 }
 
 /** Returns real-time today status for experiment (used by Today view and reminders). */
-export function getTodayExperimentStatus(now = new Date(), targetLanguage = "russian"): TodayExperimentStatus | null {
+export function getTodayExperimentStatus(now = new Date()): TodayExperimentStatus | null {
 	try {
 		const { config, schedule } = ensureExperimentInitialized();
 		const todayDateStr = dayKey(now);
@@ -533,7 +616,7 @@ export function getTodayExperimentStatus(now = new Date(), targetLanguage = "rus
 			weeklyCheckDue: dayNumber > 0 && dayNumber % 7 === 0,
 		};
 
-		const countReps = (lang: string) => {
+		const countReps = (lang: string): StudyLanguageToday => {
 			const logs = readDayLessonLogs(lang, todayDateStr);
 			const listenLessons = logs.filter((l: any) => l.mode === "listen");
 			const allReps = listenLessons.flatMap((l: any) => l.reps || []);
@@ -542,6 +625,7 @@ export function getTodayExperimentStatus(now = new Date(), targetLanguage = "rus
 			const repCount = dictationReps.length;
 			const understoodCount = understoodReps.length;
 			return {
+				id: lang,
 				dictationReps: repCount,
 				understoodReps: understoodCount,
 				validDay: repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY,
@@ -549,17 +633,18 @@ export function getTodayExperimentStatus(now = new Date(), targetLanguage = "rus
 			};
 		};
 
-		const ru = countReps("russian");
-		const sk = countReps("slovak");
+		const languages = [config.languages.treatment, config.languages.control].map(countReps);
+		const byId = (id: string) => languages.find((l) => l.id === id) ?? countReps(id);
+		const ru = byId("russian");
+		const sk = byId("slovak");
 
 		const checks = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
 		const checkRows = weeklyCheckRows(config, checks, dayNumber);
-		const weekNumber = Math.min(6, Math.max(1, Math.ceil(dayNumber / 7)));
-		const currentWeekRows = checkRows.filter((r) => r.week === weekNumber);
-		const weeklyCheckCompleted = currentWeekRows.length > 0 && currentWeekRows.every((r) => r.state === "done");
-		const weeklyCheckDue = Boolean(todaySchedule.weeklyCheckDue || (dayNumber > 0 && dayNumber % 7 === 0));
-
-		const targetStatus = targetLanguage === "slovak" ? sk : ru;
+		// A check stays due through its make-up window, so the week is the open check's, not the calendar week.
+		const openCheck = checkRows.find((r) => r.state === "open");
+		const weekNumber = openCheck?.week ?? Math.min(EXPERIMENT_CONSTANTS.TOTAL_WEEKS, Math.max(1, Math.ceil(dayNumber / 7)));
+		const weeklyCheckDue = Boolean(openCheck);
+		const weeklyCheckCompleted = checkRows.filter((r) => r.week === weekNumber).every((r) => r.state === "done");
 
 		return {
 			active: true,
@@ -573,7 +658,9 @@ export function getTodayExperimentStatus(now = new Date(), targetLanguage = "rus
 			weeklyCheckDue,
 			weeklyCheckCompleted,
 			weekNumber,
-			validDay: targetStatus.validDay,
+			checkLastDate: openCheck?.lastDate ?? null,
+			validDay: languages.every((l) => l.validDay),
+			languages,
 			russian: ru,
 			slovak: sk,
 		};
