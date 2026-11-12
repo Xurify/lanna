@@ -423,6 +423,10 @@ export interface LessonItem {
 	/** The answer's form in plain words: "he / she / it form of dávať",
 	 *  "accusative of káva". */
 	form?: string;
+	/** Who does the verb, when the sentence cannot say it: Slovak drops the
+	 *  subject pronoun ("Bývam v Groningene"), so with the English hidden the
+	 *  base form alone leaves bývam, bývaš and bývame all possible. */
+	person?: Person;
 	/** A form-reading task (aspect chapters). Its kind and rendering differ; see LessonTask. */
 	task?: LessonTask;
 	/** pairs: the contrast pair behind this rep. The form in the sentence is
@@ -450,6 +454,30 @@ const CASE_OF_UNIT: Partial<Record<UnitId, string>> = {
 	dat: "dative",
 };
 
+export type Person = "I" | "you" | "he / she / it" | "we" | "you (plural)" | "they";
+
+function presentPerson(answer: string): Person {
+	const a = answer.toLowerCase();
+	return a.endsWith("me") ? "we" : a.endsWith("te") ? "you (plural)" : a.endsWith("m") ? "I" : a.endsWith("š") ? "you" : /(ú|ia|jú|u)$/.test(a) ? "they" : "he / she / it";
+}
+
+const SUBJECT_PRONOUNS = new Set(["ja", "ty", "on", "ona", "ono", "my", "vy", "oni", "ony"]);
+
+/** The person a present-tense blank wants, when nothing in the sentence
+ *  names it. A subject pronoun anywhere names it. A third-person verb
+ *  usually follows its noun subject ("Mama býva…"), so it counts as
+ *  unstated only when the blank opens the sentence. */
+export function unstatedPerson(sentence: string, at: number, form: string | undefined): Person | undefined {
+	const who = form?.match(/^(.+) form of /)?.[1];
+	if (!who || who.includes("(past)")) return undefined;
+	const words = sentence.toLowerCase().split(/[^\p{L}]+/u);
+	if (words.some((w) => SUBJECT_PRONOUNS.has(w))) return undefined;
+	const person = who as Person;
+	const third = person === "he / she / it" || person === "they";
+	if (third && /\p{L}/u.test(sentence.slice(0, at))) return undefined;
+	return person;
+}
+
 /** The answer's form in plain words, from the ending and the unit: who is
  *  doing a verb, which case a noun is in. Undefined when nothing safe can
  *  be said (an adverb, a phrase, a form the unit does not name). */
@@ -470,8 +498,7 @@ export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | 
 	if (isVerb && ((entry.forms ?? []).some((f) => f.toLowerCase() === a) || verbUnit)) {
 		const past = a.endsWith("li") ? "they" : a.endsWith("la") ? "she" : a.endsWith("lo") ? "it" : a.endsWith("l") ? "he" : null;
 		if (past) return `${past} (past) form of ${entry.sk}`;
-		const who = a.endsWith("me") ? "we" : a.endsWith("te") ? "you (plural)" : a.endsWith("m") ? "I" : a.endsWith("š") ? "you" : /(ú|ia|jú|u)$/.test(a) ? "they" : "he / she / it";
-		return `${who} form of ${entry.sk}`;
+		return `${presentPerson(a)} form of ${entry.sk}`;
 	}
 	const kase = CASE_OF_UNIT[unit];
 	if (kase && !isVerb) return `${kase} of ${entry.sk}${entry.gender ? ` (${entry.gender})` : ""}`;
@@ -752,6 +779,8 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	if (c.entry.gender) item.gender = c.entry.gender;
 	const form = describeForm(c.entry, answer, c.unit);
 	if (form) item.form = form;
+	const person = vocabulary ? undefined : unstatedPerson(exampleText(ex), at, form);
+	if (person) item.person = person;
 	const alts = [...knownVariants(answer), ...(info.match ? sameCellForms(c.entry, answer, activeCourse()?.tag ?? "sk-SK") : [])];
 	if (alts.length > 0) item.alternatives = alts;
 	const trigger = vocabulary ? undefined : triggerOf(exampleText(ex), at, c.unit);

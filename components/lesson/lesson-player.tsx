@@ -831,10 +831,18 @@ function HintChip({ item }: { item: LessonItem }) {
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
 	return (
-		<span className="q-pair mr-2" data-testid="lesson-hint-chip">
-			<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
-			<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
-		</span>
+		<>
+			<span className="q-pair mr-2" data-testid="lesson-hint-chip">
+				<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
+				<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
+			</span>
+			{item.person && item.kind !== "meaning" && (
+				<span className="q-pair mr-2" data-testid="lesson-person-chip">
+					<s>for</s>
+					<span>{item.person}</span>
+				</span>
+			)}
+		</>
 	);
 }
 
