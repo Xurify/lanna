@@ -90,6 +90,7 @@ export { activeProfile, shownProfiles, type LanguageProfile } from "../../config
 export { languageOf } from "./request-language.ts";
 export * from "./distractors.ts";
 export * from "./word-bank.ts";
+export * from "./word-estimate.ts";
 export { savedPhraseStore } from "../store/saved-phrases.ts";
 export { knownWordStore } from "../store/known-words.ts";
 export { cheatsheetStore } from "../store/cheatsheets.ts";
