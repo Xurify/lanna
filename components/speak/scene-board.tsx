@@ -91,7 +91,20 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						<ArrowLeftIcon className="size-3.5" />
 						Today
 					</Link>
-					<h1 className="mt-5 font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
+						<div className="flex items-center gap-1.5" role="tablist" aria-label="Speaking practice modes">
+							<span className="rounded-lg bg-foreground px-3 py-1 font-ui text-xs font-[600] text-background">
+								With tutor
+							</span>
+							<Link
+								href="/speak/self-talk"
+								className="rounded-lg bg-well px-3 py-1 font-ui text-xs font-[550] text-ink-2 transition-colors hover:bg-well-2 hover:text-foreground"
+							>
+								Solo Self-Talk
+							</Link>
+						</div>
+					</div>
 					<p className="mt-1 font-prose text-[15px] text-ink-3">{typed || !state?.stt ? "The tutor plays the other person and answers out loud. You write your part." : "The tutor plays the other person and answers out loud. You say your part."}</p>
 
 					{error && (
