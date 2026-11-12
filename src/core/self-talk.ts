@@ -40,16 +40,14 @@ export interface SelfTalkPrompt {
 	starters: UsefulChunk[];
 	/** High-frequency words relevant to the prompt. */
 	suggestedWords: UsefulChunk[];
-	/** Optional scene or illustration description for picture-based prompts. */
-	sceneEmoji?: string;
 }
 
 export const SELF_TALK_CATEGORIES: Array<{ id: SelfTalkCategory; label: string; description: string }> = [
 	{ id: "surroundings", label: "Surroundings", description: "Name objects, colors, and positions around you (A1)" },
-	{ id: "routine", label: "Daily Routine", description: "Narrate what you are doing right now or your daily rituals (A1-A2)" },
-	{ id: "picture", label: "Scene & Picture", description: "Describe what people are doing and wearing in a scene (A2-B1)" },
-	{ id: "story", label: "Yesterday & Tomorrow", description: "Tell what happened earlier or what you plan to do (A2-B1)" },
-	{ id: "opinion", label: "Thoughts & Opinions", description: "Explain why you like something or share a perspective (B1-B2)" },
+	{ id: "routine", label: "Daily routine", description: "Narrate what you are doing right now or your daily rituals (A1-A2)" },
+	{ id: "picture", label: "Scenes and pictures", description: "Describe what people are doing and wearing in a scene (A2-B1)" },
+	{ id: "story", label: "Yesterday and tomorrow", description: "Tell what happened earlier or what you plan to do (A2-B1)" },
+	{ id: "opinion", label: "Thoughts and opinions", description: "Explain why you like something or share a perspective (B1-B2)" },
 ];
 
 export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
@@ -78,7 +76,6 @@ export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
 			{ sk: "veľký", en: "big" },
 			{ sk: "malý", en: "small" },
 		],
-		sceneEmoji: "🪑",
 	},
 	{
 		id: "morning-ritual",
@@ -104,7 +101,6 @@ export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
 			{ sk: "raňajky", en: "breakfast" },
 			{ sk: "voda", en: "water" },
 		],
-		sceneEmoji: "☕",
 	},
 	{
 		id: "now-doing",
@@ -129,7 +125,6 @@ export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
 			{ sk: "ruka", en: "hand" },
 			{ sk: "hlas", en: "voice" },
 		],
-		sceneEmoji: "🎙️",
 	},
 	{
 		id: "cafe-scene",
@@ -155,7 +150,6 @@ export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
 			{ sk: "príjemný", en: "pleasant" },
 			{ sk: "hudba", en: "music" },
 		],
-		sceneEmoji: "🥐",
 	},
 	{
 		id: "yesterday-recap",
@@ -181,7 +175,6 @@ export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
 			{ sk: "film", en: "movie" },
 			{ sk: "kniha", en: "book" },
 		],
-		sceneEmoji: "📅",
 	},
 	{
 		id: "favorite-season",
@@ -208,7 +201,6 @@ export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
 			{ sk: "príroda", en: "nature" },
 			{ sk: "slnko", en: "sun" },
 		],
-		sceneEmoji: "🍂",
 	},
 	{
 		id: "why-slovak",
@@ -234,7 +226,6 @@ export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
 			{ sk: "cesta", en: "journey / trip" },
 			{ sk: "cieľ", en: "goal" },
 		],
-		sceneEmoji: "🇸🇰",
 	},
 ];
 
