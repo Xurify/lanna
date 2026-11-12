@@ -8,7 +8,7 @@ Keep the tutor for explaining and for one Socratic question after a miss. Move t
 
 ## What the code does now
 
-- `src/core/curriculum.ts` has `tutor("aspect", …)` (A2, "Moving around") and `tutor("gender-this-my", …)` (A1, "Family"). Both are run as practice sessions with the tutor, and a tutor unit is done after two sessions (the unit-completion rule in `docs/DECISIONS.md`), not after a count of right answers.
+- `src/core/curriculum.ts` has `tutor("aspect", …)` (A2, "Moving around") and `tutor("gender-this-my", …)` (A1, "Family"). Both are run as practice sessions with the tutor, and a tutor unit is done after two sessions (the unit-completion rule, `docs/decisions/E3-unit-completion-rule.md`), not after a count of right answers.
 - The tutor writes the sentences in those sessions. Nothing checks them against the lexicon, and nothing records a first try, so the app cannot say which aspect or which demonstrative a learner gets wrong.
 - The research note already says tutor units are for explanation: `docs/research/comprehensible-input.md` lists "Why? and tutor units" as "explanation, which is what they are for". The unit brief asks for practice. The code and the note disagree.
 - The rules say no sentence a learner drills comes from a model (P8, E26), and a wrong form in a drill is learned as right at A1–A2 (P8).
@@ -69,7 +69,7 @@ Prompts worked at least as well as recasts in classroom studies (`docs/research/
 
 ## Changes
 
-Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42 in `docs/DECISIONS.md`). The rules that set the limits are P8, E26 and E27; the verifier reviewed the rows (`/mnt/project-files/council/verifier-rows-1.md`). The status of each item:
+Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42 (`docs/decisions/E42-aspect-and-demonstratives-drilled-only-from-verified.md`)). The rules that set the limits are P8, E26 and E27; the verifier reviewed the rows (`/mnt/project-files/council/verifier-rows-1.md`). The status of each item:
 
 | Item | Status | Evidence or reason |
 |---|---|---|
@@ -89,9 +89,9 @@ Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42 in `docs/D
 | U14 Typed answers | DONE (verified, unchanged) | Lessons grade typed answers with `compareAnswer`; the model judge runs only in placement, after a string miss. No model call added. |
 | U15 Tutor units | DONE (left unchanged) | `tutor("aspect")` and `tutor("gender-this-my")` are untouched (D1). They still write practice in tutor chats. |
 | U16 Form-reading tasks | DONE (second round) | A grid (tenses as rows, aspects as columns; the cells placed by label, the forms after the answer) and a cue task at slots 3, 7 and 11 of the aspect chapters' Dvojičky lesson; 66 tasks in all (60 grid, 6 cue: six of the 18 approved rows have three windows left after the form's neighbors and the cue words are dropped, row 21 with its keep list for "Dlho"; row 53 has no span; eight rows have too few windows; one perfective cue, nakoniec). Not a first try, a mix-up or a retry; a task seen in the last lesson goes last. Reachable now; an hour is not reached (about 11 minutes of tasks in one pass). |
-| R1 DECISIONS entry | DONE | E42. |
+| R1 Decision | DONE | E42. |
 | R2 This note | DONE | This section; the research facts are unchanged. |
-| R3 Changelog | DONE | `docs/CHANGELOG-2026-11.md`, 4 November section. |
+| R3 Changelog | DONE | 4 November section of the changelog, removed 2026-11-11 (git history). |
 | R4 Tests, typecheck, lint | DONE | Run on the branch; the counts are in the PR. |
 
 Also built: the three cue points and a case grid for the explanations, a slovak.wiki allowlist (five pages, plus the `#contrasts` and `#rule` sections verified on 2026-11-05), the excluded sentences (four, with reasons), the `vtomto` typo in `reading.ts`, the empty frame file with its switch (`curriculum/slovak/aspect-frames.json`, `src/server/aspect-frames.ts`), and a simulator in the tests. Built in the second round: the form-reading grid (cells empty until answered; the learner places the form by its label) and the "which word decided it" cue task, at most three per lesson in the six aspect chapters (`src/core/aspect-tasks.ts`, `components/lesson/task-grid.tsx`). Not built: any change to the Dvojičky pairs step (see below). That step (E11) still drills 12 aspect pairs from raw verified sentences, 167 of its 230 sentences, without the approved rows or the both-aspects gate. Gating it would empty five chapter pairs-steps, so it is a coordinator decision, with the gate recommended.

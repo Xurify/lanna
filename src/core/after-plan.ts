@@ -4,7 +4,7 @@
  * The plan holds about 35 to 45 minutes, but a goal can be up to 600. The
  * time beyond the plan used to go to "One more lesson", which is
  * deliberate study, already the strand furthest over Nation's quarter
- * (DECISIONS.md P2). Input is the strand that scales with time: it stays
+ * (decision P2). Input is the strand that scales with time: it stays
  * easy at the word level, costs no model call once a video is prepared,
  * and is what the milestones page's speed gap needs. So the step after the
  * plan is a video that waits, else ten more Listen sentences, and the
