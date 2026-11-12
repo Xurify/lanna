@@ -16,3 +16,5 @@
 - The listening items are graded by the Listen rule (`judgeTyped`), as the protocol says, and a sentence whose audio failed does not count as heard.
 - **The study's files stay under the data root.** `src/server/experiment.ts` used to copy every file it wrote into `C:/Users/Stream/Projects/langharness/data/` and to fall back to that folder's lesson logs, progress and Russian word list. A test run, a build or a sandbox therefore rewrote the owner's real study files. Those paths are gone and a test (`tests/experiment.test.ts`) fails if a folder outside the data root is named there again (E6).
 - Not built: the protocol asks for the five production prompts to be spoken, and the screen takes them typed (`engine: "typed"`). The screen says "Write this in …", so it does not claim otherwise.
+
+Changed by [study-follows-its-protocol.md](study-follows-its-protocol.md) on 2026-11-11.
