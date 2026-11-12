@@ -9,10 +9,10 @@ import { QIcon } from "@/components/quiet/icon";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useActiveTime } from "@/components/use-active-time";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, PLAY_ROW, PracticeCard, PRIMARY, SECONDARY, Stat, Stats, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, PLAY_ROW, PracticeCard, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
 import { SMALL } from "@/components/ui/learn-buttons";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { belongsToLayoutAccent, type WordCheckMiss, type WordCheckFeedback, type WordCheckItem, type WordCheckResult, type WordCheckStart } from "@/src/core";
+import { belongsToLayoutAccent, type WordCheckAnswered, type WordCheckMiss, type WordCheckFeedback, type WordCheckItem, type WordCheckResult, type WordCheckStart } from "@/src/core";
 
 const WORDS_HREF = "/words";
 const DONT_KNOW_KEY = "?";
@@ -313,6 +313,125 @@ export function WordCheck() {
 		</TaskFrame>
 	);
 }
+const AXIS_FROM_RANK = 10;
+const DOT_PX = 12;
+const DOT_ROWS = 4;
+const TOO_CLOSE = 0.04;
+
+function placeOnAxis(rank: number, dictionary: number): number {
+	const from = Math.log(AXIS_FROM_RANK);
+	return Math.min(1, Math.max(0, (Math.log(Math.max(AXIS_FROM_RANK, rank)) - from) / (Math.log(Math.max(dictionary, AXIS_FROM_RANK * 10)) - from)));
+}
+
+function laneRows(answers: readonly WordCheckAnswered[], dictionary: number): Array<{ answer: WordCheckAnswered; x: number; row: number }> {
+	const lastInRow: number[] = [];
+	return answers.map((answer) => {
+		const x = placeOnAxis(answer.rank, dictionary);
+		let row = 0;
+		while (row < DOT_ROWS && lastInRow[row] !== undefined && x - lastInRow[row]! < TOO_CLOSE) row++;
+		if (row === DOT_ROWS) row = lastInRow.indexOf(Math.min(...lastInRow));
+		lastInRow[row] = x;
+		return { answer, x, row };
+	});
+}
+
+function AnswerLane({ title, answers, dictionary, filled, active, onActive }: { title: string; answers: readonly WordCheckAnswered[]; dictionary: number; filled: boolean; active: string | null; onActive: (slug: string | null) => void }) {
+	return (
+		<div>
+			<p className="font-ui text-[13px] text-ink-2">
+				{title} <b className="font-[600] tabular-nums text-foreground">{answers.length}</b>
+			</p>
+			<div className="relative mt-1.5" style={{ height: DOT_ROWS * (DOT_PX + 2) }}>
+				{laneRows(answers, dictionary).map(({ answer, x, row }) => (
+					<button
+						key={answer.slug}
+						type="button"
+						tabIndex={-1}
+						aria-hidden="true"
+						onPointerEnter={() => onActive(answer.slug)}
+						onPointerLeave={() => onActive(null)}
+						onClick={() => onActive(active === answer.slug ? null : answer.slug)}
+						className="absolute -m-1.5 box-content rounded-full p-1.5"
+						style={{ left: `calc(${(x * 100).toFixed(2)}% - ${DOT_PX / 2}px)`, top: row * (DOT_PX + 2), width: DOT_PX, height: DOT_PX }}
+					>
+						<span
+							className={cn(
+								"block size-full rounded-full border-2",
+								filled ? "border-[var(--q-card)] bg-[var(--q-teal)]" : "border-[var(--q-ink-3)] bg-[var(--q-card)]",
+								active === answer.slug && "outline outline-2 outline-offset-1 outline-[var(--q-ink)]",
+							)}
+						/>
+					</button>
+				))}
+			</div>
+		</div>
+	);
+}
+
+function AnswerStrip({ answers, dictionary, edgeRank, lang }: { answers: readonly WordCheckAnswered[]; dictionary: number; edgeRank: number; lang?: string }) {
+	const [active, setActive] = useState<string | null>(null);
+	const knew = answers.filter((a) => a.verdict === "known");
+	const notYet = answers.filter((a) => a.verdict !== "known");
+	const shown = answers.find((a) => a.slug === active);
+	const edge = placeOnAxis(edgeRank, dictionary);
+	const ticks = [100, 1000].filter((rank) => rank < dictionary * 0.7);
+	return (
+		<figure className="mt-4" data-testid="word-check-strip" data-no-word-lookup="true">
+			<div
+				role="img"
+				aria-label={`Your answers by how common each word is. You knew ${knew.length} and did not know ${notYet.length}. About half of the words around number ${count(edgeRank)} in the frequency order are known. The words are listed below.`}
+				className="relative"
+			>
+				<div aria-hidden="true" className="absolute inset-y-0 w-px bg-[var(--q-ink-3)]" style={{ left: `${(edge * 100).toFixed(2)}%` }} />
+				<AnswerLane title="You knew" answers={knew} dictionary={dictionary} filled active={active} onActive={setActive} />
+				<div className="mt-3">
+					<AnswerLane title="You did not know" answers={notYet} dictionary={dictionary} filled={false} active={active} onActive={setActive} />
+				</div>
+				<div aria-hidden="true" className="relative mt-2 h-5 border-t border-[var(--q-line-2)] font-ui text-[12px] tabular-nums text-ink-3">
+					<span className="absolute left-0 top-1">commonest</span>
+					{ticks.map((rank) => (
+						<span key={rank} className="absolute top-0 flex -translate-x-1/2 flex-col items-center" style={{ left: `${(placeOnAxis(rank, dictionary) * 100).toFixed(2)}%` }}>
+							<i className="h-1 w-px bg-[var(--q-line-2)]" />
+							{count(rank)}th
+						</span>
+					))}
+					<span className="absolute right-0 top-1">rarest</span>
+				</div>
+			</div>
+			<figcaption className="mt-3 min-h-[2.75rem] font-ui text-[13px] leading-normal text-ink-3" aria-live="polite">
+				{shown ? (
+					<>
+						<span lang={lang} className="font-prose text-[15px] font-semibold text-foreground">
+							{shown.lemma}
+						</span>{" "}
+						<span className="text-ink-2">{shown.gloss}</span> · number {count(shown.rank)} by how common it is · {shown.verdict === "known" ? "you knew it" : shown.typed ? `you wrote “${shown.typed}”` : "you did not know it"}
+					</>
+				) : (
+					<>
+						Each dot is a word you were asked, placed by how common it is. The line is your edge: around the <b className="font-[550] tabular-nums text-ink-2">{count(edgeRank)}</b> commonest words, you know about one word in two. Tap or point at a dot to see the word.
+					</>
+				)}
+			</figcaption>
+		</figure>
+	);
+}
+
+function RangeRow({ label, range, scale, now }: { label: string; range: { total: number; low: number; high: number }; scale: number; now: boolean }) {
+	const at = (n: number) => `${Math.min(100, (n / scale) * 100).toFixed(2)}%`;
+	return (
+		<>
+			<span className="font-ui text-[13px] text-ink-2">{label}</span>
+			<span className="q-bar" aria-hidden="true">
+				<i className={now ? "!bg-[var(--q-teal)]" : "over !rounded"} style={{ left: at(range.low), width: `calc(${at(range.high)} - ${at(range.low)})` }} />
+				{now && <span className="target" style={{ left: at(range.total) }} />}
+			</span>
+			<span className="text-right font-ui text-[13px] tabular-nums text-ink-2">
+				{count(range.low)} to {count(range.high)}
+			</span>
+		</>
+	);
+}
+
 function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?: string; onAgain: () => void }) {
 	const [inReview, setInReview] = useState<Set<string>>(() => new Set(result.missed.filter((w) => w.inReview).map((w) => w.slug)));
 	const [adding, setAdding] = useState(false);
@@ -332,9 +451,11 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 		}
 	};
 
-	const moved = result.after.total - result.before.total;
+	const estimate = result.report.estimate;
 	const steady = result.report.answersForASteadyEstimate;
-	const checked = result.report.estimate?.answers ?? 0;
+	const checked = estimate?.answers ?? 0;
+	const scale = Math.max(100, Math.ceil((Math.max(result.before.high, result.after.high) * 1.08) / 100) * 100);
+	const knew = result.answers.filter((a) => a.verdict === "known");
 	return (
 		<TaskFrame>
 			<TaskEnd
@@ -352,33 +473,47 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 					</>
 				}
 			>
-				<p className="font-ui text-[13px] font-[550] text-ink-3">{result.measured ? "Measured from the meanings you typed" : "Too few answers to measure yet"}</p>
+				<p className="font-ui text-[13px] font-[550] text-ink-3">Words you know</p>
 				<h1 className="mt-1 font-title text-[40px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground sm:text-[48px]" data-testid="word-check-total">
-					About <span className="tabular-nums">{count(result.after.total)}</span> words
+					About <span className="tabular-nums">{count(result.after.total)}</span>
 				</h1>
 				<p className="q-line dim mt-2 !text-[16px]">
-					Likely between <span className="tabular-nums">{count(result.after.low)}</span> and <span className="tabular-nums">{count(result.after.high)}</span>.{" "}
-					{moved === 0 ? "The same as before this check." : `Before this check the app said about ${count(result.before.total)}.`}
+					{result.measured ? (
+						<>
+							Measured from the <span className="tabular-nums">{count(checked)}</span> meanings you have typed. You knew <b className="font-[600] text-foreground">{result.known}</b> of the <span className="tabular-nums">{result.answered}</span> in this check.
+						</>
+					) : (
+						<>
+							Too few answers to call this measured yet. You knew <b className="font-[600] text-foreground">{result.known}</b> of <span className="tabular-nums">{result.answered}</span>.
+						</>
+					)}
 				</p>
-				{steady > 0 && checked < steady && (
-					<p className="q-line dim mt-2 !text-[14px]" data-testid="word-check-steadiness">
-						A first reading, not a firm number: you have checked <span className="tabular-nums">{count(checked)}</span> words, and studies of size tests ask for about <span className="tabular-nums">{count(steady)}</span> here. Each check narrows the range.
-					</p>
-				)}
 
-				<Stats className="mt-8">
-					<Stat label="Words you knew" value={`${result.known} of ${result.answered}`} />
-					<Stat label="Range before this check" value={`${count(result.before.low)} to ${count(result.before.high)}`} />
-					<Stat label="Range now" value={`${count(result.after.low)} to ${count(result.after.high)}`} />
-				</Stats>
-				{result.unchecked > 0 && (
-					<p className="q-line dim mt-3 !text-[14px]" data-testid="word-check-unchecked">
-						{result.unchecked} {result.unchecked === 1 ? "answer was" : "answers were"} not counted: the dictionary words the meaning differently and no model was set to judge it.
-					</p>
+				<div className="mt-6 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5" data-testid="word-check-ranges">
+					<RangeRow label="Before" range={result.before} scale={scale} now={false} />
+					<RangeRow label="Now" range={result.after} scale={scale} now />
+				</div>
+				<p className="mt-3 font-ui text-[13px] leading-normal text-ink-3" data-testid="word-check-steadiness">
+					The bar is the range the real number is likely in; the mark is the best guess.
+					{steady > 0 && checked < steady && (
+						<>
+							{" "}
+							It is still wide: studies of size tests ask for about <span className="tabular-nums">{count(steady)}</span> checked words here, and you have <span className="tabular-nums">{count(checked)}</span>. Each check narrows it.
+						</>
+					)}
+				</p>
+
+				{estimate && result.answers.length > 0 && (
+					<section className="mt-10" aria-labelledby="word-check-answers">
+						<h2 id="word-check-answers" className="font-ui text-[15px] font-semibold text-foreground">
+							Where your answers fall
+						</h2>
+						<AnswerStrip answers={result.answers} dictionary={estimate.dictionary} edgeRank={estimate.midpointRank} lang={lang} />
+					</section>
 				)}
 
 				{result.missed.length > 0 && (
-					<section className="mt-10" aria-labelledby="word-check-missed">
+					<section className="mt-8" aria-labelledby="word-check-missed">
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							<h2 id="word-check-missed" className="font-ui text-[15px] font-semibold text-foreground">
 								Words you have now met
@@ -397,12 +532,30 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 											{w.lemma}
 										</span>{" "}
 										<span className="text-ink-3">{w.gloss}</span>
+										{w.typed && <span className="font-ui text-[13px] text-ink-3"> · you wrote &ldquo;{w.typed}&rdquo;</span>}
 									</p>
 									<span className="shrink-0 font-ui text-[13px] text-ink-3">{inReview.has(w.slug) ? "In Review" : ""}</span>
 								</li>
 							))}
 						</ul>
 					</section>
+				)}
+
+				{knew.length > 0 && (
+					<section className="mt-8" aria-labelledby="word-check-knew">
+						<h2 id="word-check-knew" className="font-ui text-[15px] font-semibold text-foreground">
+							Words you knew
+						</h2>
+						<p className="mt-2 font-prose text-[16px] leading-relaxed text-ink-2" lang={lang} data-no-word-lookup="true" data-testid="word-check-knew-list">
+							{knew.map((a) => a.lemma).join(", ")}
+						</p>
+					</section>
+				)}
+
+				{result.unchecked > 0 && (
+					<p className="q-line dim mt-6 !text-[14px]" data-testid="word-check-unchecked">
+						{result.unchecked} {result.unchecked === 1 ? "answer was" : "answers were"} not counted: the dictionary words the meaning differently and no model was set to judge it.
+					</p>
 				)}
 
 				<SourcesNote feature="word-check" className="mt-10" />

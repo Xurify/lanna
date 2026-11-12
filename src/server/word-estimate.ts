@@ -261,6 +261,9 @@ export function finishWordCheck(input: { id: string; activeMs?: number; tz?: num
 	wordCheckStore.closeOpen();
 	const lexicon = loadLexicon();
 	const inDeck = new Set(Object.values(reviewStore.readCards()).map((c) => c.slug));
-	const missed = counted.filter((a) => a.verdict !== "known").map((a) => ({ slug: a.slug, lemma: a.lemma, gloss: lexicon?.bySlug.get(a.slug)?.en ?? "", inReview: inDeck.has(a.slug) }));
-	return { before: check.before, after, answered: counted.length, known, unchecked, measured: measuredNow.measured, missed, report: wordEstimateReport(now) };
+	const answers = counted
+		.map((a) => ({ slug: a.slug, lemma: a.lemma, gloss: lexicon?.bySlug.get(a.slug)?.en ?? "", rank: a.rank, verdict: a.verdict, typed: a.typed }))
+		.sort((x, y) => x.rank - y.rank);
+	const missed = answers.filter((a) => a.verdict !== "known").map((a) => ({ ...a, inReview: inDeck.has(a.slug) }));
+	return { before: check.before, after, answered: counted.length, known, unchecked, measured: measuredNow.measured, answers, missed, report: wordEstimateReport(now) };
 }

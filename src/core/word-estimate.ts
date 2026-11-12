@@ -87,10 +87,16 @@ export interface WordCheckFeedback {
 	progress: WordCheckProgress;
 }
 
-export interface WordCheckMiss {
+export interface WordCheckAnswered {
 	slug: string;
 	lemma: string;
 	gloss: string;
+	rank: number;
+	verdict: WordCheckVerdict;
+	typed: string | null;
+}
+
+export interface WordCheckMiss extends WordCheckAnswered {
 	inReview: boolean;
 }
 
@@ -101,6 +107,7 @@ export interface WordCheckResult {
 	known: number;
 	unchecked: number;
 	measured: boolean;
+	answers: WordCheckAnswered[];
 	missed: WordCheckMiss[];
 	report: WordEstimateReport;
 }
