@@ -48,11 +48,15 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 - One text per add; no reading list of several links, no share target from the phone, no mailbox.
 - Sponsor blocks and a newsletter's own promotion are left to the model to skip; nothing in code removes them, so a last part can hold little but those.
 - A link to a site's home page is read as if it were an article.
+- Under "not simplified", a text already in the language is kept as written, so a poor machine translation is shown as it is. The retold settings rewrite it, but they start from the same poor text; the original-language link is the better source.
+- A page behind a bot check (HTTP 403 with a challenge page) cannot be read; the learner is asked to paste the text.
 - Real generation on the PC with a live model has not been verified by the owner.
 
 ## Tried on the owner's links
 
 Ten links from the owner's newsletters, 2026-11-11, through `addSource` with no model call: all ten were fetched and reduced to text (482 to 5,971 words, 2 to 7 parts). One was a podcast transcript over the word limit and was cut at 6,000 words. One was a site's home page, which came back as 442 words of marketing copy. Seven carried a sponsor block or a subscribe footer inside the extracted text. Mailchimp's archive link opened without the reader's id (`e`), which the import now drops along with `utm_*` and click ids.
+
+A second batch of nine links, 2026-11-12: eight were read (109 to 5,990 words, 1 to 8 parts) and one, on blog.x.com, answered with a bot check and was refused with the "paste its text" message. A public LinkedIn post came back as one 471-word paragraph, which the section cutter splits at sentence ends. A gated report's landing page came back as its 109 words of blurb. A site's own Slovak version of an English article was a condensed machine translation with wrong forms (487 words against 1,215).
 
 ## Sources
 
