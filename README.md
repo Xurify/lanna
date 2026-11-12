@@ -1,82 +1,106 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lh_banner_dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/assets/lh_banner_light.png">
-    <img src="docs/assets/lh_banner_light.png" alt="LearnHarness" width="640">
-  </picture>
-</p>
+# LangHarness
 
-<p align="center"><strong>An agent harness for learning.</strong></p>
+A fork of LearnHarness 0.3.8 for learning Slovak, and any language added from the app,
+with bridges from the languages you already know. Built on branch `slovak` from the plan in
+`wayfinder-slovak-harness-spec.md`.
 
-<p align="center">
-  <a href="https://learnharness.ai">Download</a> ·
-  <a href="#how-it-works">How it works</a> ·
-  <a href="docs/development.md">Documentation</a> ·
-  <a href="https://github.com/amosblomqvist/learnharness/issues">Issues</a>
-</p>
+What each page does is on the page, and the research behind each task is on **Sources** (`/sources`). This file holds what the app cannot show you: how to run it, keys, commands and limits. The rules for working on it are in [CLAUDE.md](CLAUDE.md).
 
-LearnHarness uses AI agents to plan and teach lessons from your current understanding to your goal. It builds a detailed picture of what you understand and how you reason. That picture is updated as you learn.
+## Pages
 
-Instead of just giving you an explanation, it uses your answers and thinking to decide what you need next. Teaching builds understanding one reasoning step at a time. Practice makes it usable. A persistent knowledge graph carries it across sessions.
+| Page | Route |
+|---|---|
+| Today | `/` |
+| Setup | `/start` |
+| Lesson, Blitz | `/lesson?unit=<id>`, `/lesson?mode=blitz` |
+| Chapter exam | `/exam?chapter=<id>` |
+| Curriculum | `/curriculum` |
+| Review | `/review` |
+| Words, Phrases, Cheatsheets | `/words`, `/words?tab=cheatsheets` |
+| Grammar | `/grammar` |
+| Mistakes | `/mistakes` |
+| Catch the mistake | `/catch` |
+| Listen | `/listen` |
+| Today's line | `/line` |
+| Read | `/read` |
+| Speak, Talk in writing | `/speak`, `/speak?mode=typed` |
+| Speed | `/speed` |
+| Sound | `/sound?id=<id>` |
+| Ear gym | `/phonology` |
+| Media (Watch, Get ready) | `/watch` |
+| Chat | `/chat/new`, `/chat/<id>` |
+| When can I…? | `/milestones` |
+| Progress, Stamps | `/progress`, `/progress#stamps` |
+| Sources | `/sources` |
+| Tasks | `/tasks` |
+| Log (what was done each day) | `/log` |
+| Pair a device | `/pair` |
 
-![LearnHarness teaching session](docs/assets/teaching-session.png)
+Languages: Slovak is built in. Every other language is added from the language menu, **Add a language…**, which builds its course in the background ([docs/adding-a-language.md](docs/adding-a-language.md)). Each language keeps its own data under `data/profiles/<language>/`, and each device keeps its own language.
 
-## How it works
+## Your data
 
-1. **Measure.** Before teaching, the agent finds where your understanding ends on each part the lesson depends on. Your answers, confidence, and thinking show it where to start.
-2. **Plan.** It works out a dependency map from that starting point to your goal. You can see the plan, and the lesson adapts when your understanding turns out different.
-3. **Teach.** Each step builds on something you already understand. You predict, get an explanation, and check your understanding. Confusions are repaired before anything is built on them. The aim is for the goal to feel obviously true, not merely familiar.
-4. **Practice.** Separate sessions pose varied problems that require the right knowledge to come to mind without being named first. Problems and hints adapt to your reasoning.
+Everything the app generates or you produce stays on disk in open formats, with a README in every folder: `data/README.md` is the map, and [docs/corpus.md](docs/corpus.md) the rules. `npm run corpus:export` writes a clean, app-independent snapshot to `data/export/<stamp>/` (sentences, lessons, dialogues, explanations, audio catalog, review history, usage summary).
 
-**Think out loud.** The thinking fields let you explain your reasoning, uncertainties, and reactions in your own words. This is how the agent gets a detailed picture rather than just a record of right and wrong answers. You can type or use dictation.
+## Phone and iPad
 
-The agent can also research questions in the background and create visual explanations.
+A phone or iPad reaches the app over your own Tailscale network. It is off by default. In Settings → Devices, turn on **Remote access**, run `tailscale serve --bg 3010` once on this computer (Tailscale signed in, HTTPS certificates on), then choose **Make a code** and type the six digits on the phone within five minutes. The server still listens on this computer only, and Funnel stays off. Share, then Add to Home Screen, opens it full screen. Steps: [docs/remote-access.md](docs/remote-access.md). An always-on server: [docs/server.md](docs/server.md).
 
-## Knowledge that carries forward
+## Where the thinking lives
 
-What you are taught accumulates as propositions and reasoning chains: individual claims and the premises that lead to them. The graph shows this structure, with links back to the source sessions. You can also import notes.
+- [CLAUDE.md](CLAUDE.md): the product principles and working rules.
+- [docs/learner.md](docs/learner.md): the learner it is built for and what made them drop off.
+- [docs/research/README.md](docs/research/README.md): the research note behind each task.
+- `.claude/skills/gamification-loops/`: the agent skill behind the stamps and streaks, with its origin in `SOURCE.md`; read it before changing any reward mechanic.
+- [docs/corpus.md](docs/corpus.md): where every generated thing is kept under `data/`.
+- [docs/development.md](docs/development.md), [docs/adding-a-language.md](docs/adding-a-language.md), [docs/desktop-release.md](docs/desktop-release.md): the upstream guides.
 
-Future teaching sessions can read the graph instead of starting from scratch. Practice sessions can draw their material from it. It stores the ideas and their connections, not ratings of your ability.
+## Run it
 
-![LearnHarness knowledge graph](docs/assets/knowledge-graph.png)
-
-## Download and get started
-
-**[Download from learnharness.ai](https://learnharness.ai)** · [GitHub Releases](https://github.com/amosblomqvist/learnharness/releases)
-
-- **macOS (Apple Silicon):** signed and notarized DMG. Drag the app to Applications.
-- **Windows (x64):** run the installer. It is currently unsigned; Windows may show an “unknown publisher” or SmartScreen warning.
-- **Linux (x64):** make the AppImage executable and open it, or install the Debian/Ubuntu `.deb`.
-
-Add your provider API key and choose your models, then start a session with what you want to understand. LearnHarness supports 30+ provider options, including OpenAI, Anthropic, Google, DeepSeek, and OpenRouter. Optional dictation and web search use separate service keys.
-
-All three platforms support in-app updates.
-
-## Your keys, your data
-
-- **Your keys and models.** No LearnHarness subscription or markup. You pay your providers for usage; a live cost meter shows model costs.
-- **Local storage.** Your chats, graph, settings, and API keys live on your machine. Learning records are plain files you can inspect.
-- **External services.** Models run through your configured providers. Model requests send the context needed for the task; web research and dictation also contact external services. Local storage does not mean offline processing.
-- **Inspectable behavior.** System prompts are visible and editable. The app is open source under the AGPL-3.0 license.
-
-## Development and support
-
-```bash
+```
 npm install
-npm run dev        # http://localhost:3010
-npm test           # deterministic, no LLM, no network
+npm run dev          # http://localhost:3010
 ```
 
-See the [development guide](docs/development.md), [adding a language guide](docs/adding-a-language.md), [architecture](docs/architecture.md), and [desktop release guide](docs/desktop-release.md).
+Add a model key in Settings → API keys as in LearnHarness.
 
-### Multi-Language Extensibility
+Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 
-LangHarness supports learning any target language with clean data isolation (`<data>/profiles/<language>/`), FSRS-5 spaced repetition, and an extensible registry. To add a new language, see [`docs/adding-a-language.md`](docs/adding-a-language.md) or invoke the `add-language` skill. Ready-to-use presets are available for Czech, Romanian, German, Spanish, and more.
+- `ELEVENLABS_API_KEY`: the best voice, and speech-to-text for the Speak task (Scribe). Change the voice with `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`. Every language is read with `eleven_v4` (set `ELEVENLABS_MODEL_ID` for another); an account without it falls back to `eleven_v3`, then `eleven_multilingual_v2` for the 29 languages that one reads. Single words and the tutor's lines in a language without its own ElevenLabs voice use Edge unless `ELEVENLABS_VOICE_ID_<CODE>` (for example `ELEVENLABS_VOICE_ID_ET`) names one. `npm run audio:regen` lists the kept clips the newest model would make better (an older model, or an Edge clip in a voice ElevenLabs has) with their characters and cost, and spends nothing; `npm run audio:regen -- --yes` makes them again (`--max-chars` caps the spend). Replaced files move to `data/audio/replaced/<stamp>/`.
+- `DEEPGRAM_API_KEY`: speech-to-text for the Speak task when there is no ElevenLabs key (and the composer's dictation).
+- `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`: Azure Speech pronunciation assessment (Slovak is covered) for Speak and Speed — a phoneme-level score for every spoken line. Without them clarity is judged from the transcript alone.
+- `LH_PRON_SCRIPT=1`: dev only — a made-up pronunciation score for working on the screens without a key. `LH_STT_SCRIPT=<text>`: dev only — every recording transcribes to that text.
+- `LH_SPEAK_SCRIPT=<file>`: dev only — a JSON array of scripted tutor replies for working on the Speak screen without a model.
+- Edge voices need no key, only internet.
+- Piper works offline: set `PIPER_PATH` to the binary and `PIPER_MODEL_SK` to a Slovak `.onnx` voice.
 
-Questions, bug reports, and feature requests: [GitHub Issues](https://github.com/amosblomqvist/learnharness/issues).
+On Windows, `npm test` and `npm run desktop:dev` use Unix-style env syntax
+inherited from upstream. Run them from Git Bash, or once run
+`npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
+
+## Refresh the curriculum
+
+```
+npm run lexicon:export   # reads ../slovak.wiki, writes curriculum/slovak/lexicon.json
+npm run seed:build       # curriculum/slovak/seed-source.json → seed.json
+```
+
+The seed source is hand-written. Edit nodes, chains, clusters or goals
+there, then rebuild. An existing profile is not re-seeded. To start
+fresh, delete `data/profiles/slovak/`.
+
+## Limits worth knowing
+
+- Only 4 words (from slovak.wiki's hand-checked set) have full declension tables checked against JÚĽŠ. 2,958 more have rule-generated form sets that slovak.wiki verified. For the rest, `lookup_word` says plainly that the form is not in the dictionary.
+- Slovak is the only built-in language. Russian, Estonian and the others are added from **Add a language…**.
+- Estonian and Russian come with a course written by hand (`curriculum/estonian/`, `curriculum/russian/`): every case and verb form is drilled where Tatoeba has the sentences, and the rest is covered by tutor sessions. Another added language gets a course generated when it is added. The Dvojičky pairs and the aspect tasks are Slovak content and do not appear for the others.
+- Edge speech could not be tested in the build sandbox (no network there). The fallback to the next tier was tested.
+- Example sentences come from slovak.wiki's curated set or from Tatoeba (CC BY 2.0 FR). The review page credits them, and each card names which one it is.
+
+## Tests
+
+`npm test` runs every file in `tests/`. Run it with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile.
 
 ## License
 
-[AGPL-3.0](LICENSE)
-
-The app is free and open forever. If we ever charge for anything, it will be for convenience — managed keys, hosting — never for features you can run locally.
+Upstream: [LearnHarness](https://github.com/amosblomqvist/learnharness). [AGPL-3.0](LICENSE).

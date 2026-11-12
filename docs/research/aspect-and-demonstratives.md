@@ -8,7 +8,7 @@ Keep the tutor for explaining and for one Socratic question after a miss. Move t
 
 ## What the code does now
 
-- `src/core/curriculum.ts` has `tutor("aspect", …)` (A2, "Moving around") and `tutor("gender-this-my", …)` (A1, "Family"). Both are run as practice sessions with the tutor, and a tutor unit is done after two sessions (the unit-completion rule, `docs/decisions/E3-unit-completion-rule.md`), not after a count of right answers.
+- `src/core/curriculum.ts` has `tutor("aspect", …)` (A2, "Moving around") and `tutor("gender-this-my", …)` (A1, "Family"). Both are run as practice sessions with the tutor, and a tutor unit is done after two sessions (the unit-completion rule, E3), not after a count of right answers.
 - The tutor writes the sentences in those sessions. Nothing checks them against the lexicon, and nothing records a first try, so the app cannot say which aspect or which demonstrative a learner gets wrong.
 - The research note already says tutor units are for explanation: `docs/research/comprehensible-input.md` lists "Why? and tutor units" as "explanation, which is what they are for". The unit brief asks for practice. The code and the note disagree.
 - The rules say no sentence a learner drills comes from a model (P8, E26), and a wrong form in a drill is learned as right at A1–A2 (P8).
@@ -69,7 +69,7 @@ Prompts worked at least as well as recasts in classroom studies (`docs/research/
 
 ## Changes
 
-Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42 (`docs/decisions/E42-aspect-and-demonstratives-drilled-only-from-verified.md`)). The rules that set the limits are P8, E26 and E27; the verifier reviewed the rows (`/mnt/project-files/council/verifier-rows-1.md`). The status of each item:
+Built on `feat/aspect-demonstrative-drills` (2026-11-04, decision E42). The rules that set the limits are P8, E26 and E27; the verifier reviewed the rows (`/mnt/project-files/council/verifier-rows-1.md`). The status of each item:
 
 | Item | Status | Evidence or reason |
 |---|---|---|

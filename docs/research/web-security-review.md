@@ -1,6 +1,6 @@
 # Web security review: what changes when the app has a public address
 
-Date: 2026-11-09. Decision: [E92](../decisions/E92-what-the-app-fetches-for-someone-else.md). Context: [plans/always-on-server.md](../plans/always-on-server.md), route W (the app at its own address behind a sign-in).
+Date: 2026-11-09. Decision: E92. Context: [plans/always-on-server.md](../plans/always-on-server.md), route W (the app at its own address behind a sign-in).
 
 ## Question
 

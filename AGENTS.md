@@ -11,7 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # Rules in short
 
 - **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule under **Code style → Comments** below.
-- **Pull requests**: every PR description MUST show the changed thing with images/screenshots before asking for a review (Day and Night screenshots attached via `gh pr create/edit --attach`). Include: what changes for the learner, Day and Night screenshots, how to try it, commit-pinned links to the code, what was and was not checked. Template `.github/pull_request_template.md`, rule W5 (`docs/decisions/W5-a-pull-request-shows-the-change-before.md`), steps in the `pr-description` skill. Never open or hand back a PR without embedded screenshots of the change.
+- **Pull requests**: every PR description MUST show the changed thing with images/screenshots before asking for a review (Day and Night screenshots attached via `gh pr create/edit --attach`). Include: what changes for the learner, Day and Night screenshots, how to try it, commit-pinned links to the code, what was and was not checked. Template `.github/pull_request_template.md`, rule W5, steps in the `pr-description` skill. Never open or hand back a PR without embedded screenshots of the change.
 
 # Code style
 
@@ -30,8 +30,8 @@ Not allowed:
 
 - restating what the code does, or naming the element ("// the rating row");
 - docblocks on this repo's own functions, types, fields, routes or test files;
-- the product reason for a choice, the owner's words, dates or history ("was X before", "since PR #12"): those go in a decision file in `docs/decisions/`, the pull request's description and the commit message;
-- commented-out code and TODOs: delete the code; write a deferred item in `docs/decisions/dropped-or-deferred.md`.
+- the product reason for a choice, the owner's words, dates or history ("was X before", "since PR #12"): those go in the pull request's description and the commit message;
+- commented-out code and TODOs: delete the code; say what was deferred in the pull request's description.
 
 Code you add or change follows this rule. An older comment goes when the code around it is next changed.
 
@@ -52,7 +52,7 @@ Before you design or restyle any screen, component, page or artifact, read `.cla
 - No stock shadcn/ui look: restyle radius, color and shadow to the app's tokens.
 - One layout primitive per screen, one bold choice per screen, body text that passes WCAG AA in both themes.
 
-Run the skill's diff checks before you call a UI change done, and write any new visual rule into a new file in `docs/decisions/` in the same PR.
+Run the skill's diff checks before you call a UI change done, and write any new visual rule that later screens must follow into `CLAUDE.md` in the same PR.
 
 Before you write or change any grammar rule, example form, table row or grammar claim (in the app, on slovak.wiki or in chat), read `.claude/skills/grammar-explanations/SKILL.md` (the `grammar-explanations` skill): every form is sourced, the whole paradigm is covered, a rule is stated with its exceptions, every example names its case, and no word is used that the learner was not given.
 
