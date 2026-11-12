@@ -34,7 +34,7 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { sharedJson } from "@/lib/shared-fetch";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
-import { catalogLanguage, type TodayExperimentStatus } from "@/src/core";
+import { catalogLanguage, EXPERIMENT_CONSTANTS, type TodayExperimentStatus } from "@/src/core";
 
 interface Counts {
 	due: number;
@@ -258,30 +258,7 @@ export function LanguageSwitcher() {
 								>
 									{item.label}
 									{item.id === "experiment" && experiment?.active ? (
-										<span
-											className={cn(
-												"ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-												experiment.weeklyCheckDue && !experiment.weeklyCheckCompleted
-													? "bg-amber-500 text-white"
-													: experiment.validDay
-														? "border border-teal/40 bg-teal/20 text-teal"
-														: "bg-sun text-sun-ink",
-											)}
-											data-testid="experiment-badge"
-											title={
-												experiment.weeklyCheckDue && !experiment.weeklyCheckCompleted
-													? `Week ${experiment.weekNumber} check due today`
-													: experiment.validDay
-														? `Day ${experiment.dayNumber} validated (${experiment.russian.dictationReps}/5 reps)`
-														: `${experiment.russian.dictationReps} of 5 Listen sentences done today`
-											}
-										>
-											{experiment.weeklyCheckDue && !experiment.weeklyCheckCompleted
-												? "Check!"
-												: experiment.validDay
-													? "✓ 5/5"
-													: `${experiment.russian.dictationReps}/5`}
-										</span>
+										<StudyBadge status={experiment} />
 									) : (
 										item.badge && (
 											<span
@@ -395,5 +372,21 @@ function NavItem({
 			<span className={cn("shrink-0", active ? (accent === "teal" ? "text-teal" : "text-sun") : "")}>{icon}</span>
 			{children}
 		</Link>
+	);
+}
+
+function StudyBadge({ status }: { status: TodayExperimentStatus }) {
+	const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
+	const checkOpen = status.weeklyCheckDue && !status.weeklyCheckCompleted;
+	const left = status.languages.reduce((sum, l) => sum + Math.max(0, need - l.dictationReps), 0);
+	if (!checkOpen && left === 0) return null;
+	return (
+		<span
+			className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums", checkOpen ? "bg-teal text-sun-ink" : "bg-sun text-sun-ink")}
+			data-testid="experiment-badge"
+			title={checkOpen ? `The week ${status.weekNumber} check is open` : `${left} typed Listen sentences to go today`}
+		>
+			{checkOpen ? "check" : `${left} to go`}
+		</span>
 	);
 }

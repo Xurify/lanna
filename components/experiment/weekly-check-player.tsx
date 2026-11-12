@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Volume2Icon, XIcon } from "lucide-react";
+import { LoaderCircleIcon, MicIcon, Volume2Icon, XIcon } from "lucide-react";
+import { micSupported, Recorder, transcribeClip } from "@/components/speak/recorder";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { QIcon } from "@/components/quiet/icon";
 import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
@@ -15,6 +16,13 @@ import { dayKey, EXPERIMENT_CONSTANTS, judgeTyped, wordMatch, type CheckItemReco
 
 type Step = "intro" | "probes" | "production" | "end";
 type SaveState = "saving" | "saved" | "failed";
+type MicState = "idle" | "recording" | "transcribing";
+
+const TYPED_ENGINE = "typed";
+const SILENCE_MS = 1600;
+const MAX_LINE_MS = 20_000;
+
+const wasSpoken = (record: CheckItemRecord) => record.engine?.startsWith("stt:") === true;
 
 interface CheckItems {
 	probes: ProbeItem[];
@@ -35,7 +43,7 @@ function clipUrl(text: string, language: StudyLanguage): string {
 	return `/api/tts?${q.toString()}`;
 }
 
-export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: { initialWeek: number; initialLanguage: string; languages: string[] }) {
+export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt }: { initialWeek: number; initialLanguage: string; languages: string[]; stt: string | null }) {
 	const router = useRouter();
 	const [week, setWeek] = useState(initialWeek);
 	const [languageId, setLanguageId] = useState(initialLanguage);
@@ -54,8 +62,18 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 	const field = useRef<HTMLInputElement | null>(null);
 	const playRing = useRef<SVGCircleElement | null>(null);
 	const loadSeq = useRef(0);
+	const recorder = useRef<Recorder | null>(null);
+	const [micOk, setMicOk] = useState<boolean | null>(null);
+	const [mic, setMic] = useState<MicState>("idle");
+	const [typingInstead, setTypingInstead] = useState(false);
+	const [micNote, setMicNote] = useState<string | null>(null);
 
 	const language = studyLanguage(languageId);
+
+	// The browser's microphone API exists only on the client, so it is read after the first paint to keep the server render the same.
+	useEffect(() => setMicOk(micSupported()), []);
+	useEffect(() => () => recorder.current?.cancel(), []);
+	const canSpeak = stt !== null && micOk === true;
 
 	const load = useCallback(async () => {
 		const seq = ++loadSeq.current;
@@ -96,6 +114,8 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 		setPlaying(false);
 		setPlayFailed(false);
 		setAnswer(null);
+		setTypingInstead(false);
+		setMicNote(null);
 		setSave("saving");
 		setStep(nextLanguage === languageId ? "probes" : "intro");
 	};
@@ -129,7 +149,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 		}, notHeard);
 	};
 
-	const answerWith = (response: string) => {
+	const answerWith = (response: string, engine = TYPED_ENGINE) => {
 		if (!item || answer) return;
 		const base = { date: dayKey(new Date()), week, dayNumber: week * 7, language: languageId, itemId: item.id, expected: item.targetSentence, response };
 		if (step === "probes") {
@@ -140,7 +160,51 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 		const match = wordMatch(item.targetSentence, response);
 		const score = response ? Math.round(match.score * 100) / 100 : 0;
 		const verdict = score >= CLEAR_SCORE ? "clear" : score >= PARTIAL_SCORE ? "partial" : "not-yet";
-		setAnswer({ record: { ...base, type: "production", prompt: item.englishTranslation, score, verdict, engine: "typed" }, missing: response ? match.missing : [], extra: response ? match.extra : [] });
+		setAnswer({ record: { ...base, type: "production", prompt: item.englishTranslation, score, verdict, engine }, missing: response ? match.missing : [], extra: response ? match.extra : [] });
+	};
+
+	const typeInstead = (note: string) => {
+		setTypingInstead(true);
+		setMicNote(note);
+		setMic("idle");
+	};
+
+	const finishRecording = async () => {
+		const rec = recorder.current;
+		if (!rec) return;
+		recorder.current = null;
+		setMic("transcribing");
+		try {
+			const clip = await rec.stop();
+			const heard = clip.spokeAt === null ? "" : await transcribeClip(clip.wav, language.code);
+			setMic("idle");
+			if (!heard) {
+				setMicNote("Nothing was heard. Press the microphone and say it again.");
+				return;
+			}
+			setMicNote(null);
+			answerWith(heard, `stt:${stt}`);
+		} catch (err) {
+			typeInstead(`What you said could not be written down (${err instanceof Error ? err.message : String(err)}), so type this one. The study notes that it was typed.`);
+		}
+	};
+
+	const toggleRecording = async () => {
+		if (answer || mic === "transcribing") return;
+		if (mic === "recording") {
+			await finishRecording();
+			return;
+		}
+		const rec = new Recorder();
+		recorder.current = rec;
+		setMicNote(null);
+		try {
+			await rec.start({ silenceMs: SILENCE_MS, maxMs: MAX_LINE_MS, onAutoStop: () => void finishRecording() });
+			setMic("recording");
+		} catch {
+			recorder.current = null;
+			typeInstead("The microphone is not available, so type this one. The study notes that it was typed.");
+		}
 	};
 
 	const send = async (all: CheckItemRecord[]) => {
@@ -162,6 +226,9 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 		setPlayed(false);
 		setPlaying(false);
 		setPlayFailed(false);
+		setTypingInstead(false);
+		setMicNote(null);
+		setMic("idle");
 		stopClip();
 		const last = index + 1 >= (step === "probes" ? items.probes.length : items.production.length);
 		if (!last) setIndex((i) => i + 1);
@@ -237,7 +304,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 							Week {week} in {language.name}
 						</h1>
 						<p className="q-line dim mt-3 max-w-2xl">
-							{probeCount} sentences to hear and type, then {productionCount} to write yourself. It measures where you are this week, so it gives no XP.
+							{probeCount} sentences to hear and type, then {productionCount} to {canSpeak ? "say" : "write"} yourself. It measures where you are this week, so it gives no XP.
 						</p>
 						<CheckTrack
 							large
@@ -245,7 +312,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 							marks={[]}
 							parts={[
 								{ count: probeCount, caption: `${probeCount} to hear, one play each` },
-								{ count: productionCount, caption: `${productionCount} to write` },
+								{ count: productionCount, caption: `${productionCount} to ${canSpeak ? "say" : "write"}` },
 							]}
 						/>
 						<div className="mt-7 grid max-w-md grid-cols-2 gap-3">
@@ -260,6 +327,13 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 						</div>
 						<ul className="mt-6 flex max-w-2xl flex-col gap-1.5 font-prose text-sm leading-relaxed text-muted-foreground">
 							<li>There is no replay and no slow play.</li>
+							{stt === null ? (
+								<li>Speech to text is not set up, so the last {productionCount} are written. Add a speech-to-text key in Settings → API keys to say them. The study notes which way each was answered.</li>
+							) : micOk === false ? (
+								<li>This browser cannot record, so the last {productionCount} are written. The study notes which way each was answered.</li>
+							) : (
+								<li>For the last {productionCount}, press the microphone and say the sentence. It stops when you pause.</li>
+							)}
 							<li>Your answers are saved after the last sentence, so finish in one sitting.</li>
 						</ul>
 					</div>
@@ -288,6 +362,9 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 	const good = listening ? score === 1 : score >= CLEAR_SCORE;
 	const partly = !listening && !good && score >= PARTIAL_SCORE;
 	const canCheck = draft.trim().length > 0 && (!listening || played);
+	const speaking = !listening && canSpeak && !typingInstead;
+	const micBusy = mic !== "idle";
+	const micLabel = mic === "recording" ? "Stop" : mic === "transcribing" ? "Writing it down…" : "Speak";
 
 	return (
 		<Frame strip={false}>
@@ -298,7 +375,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
 					<PracticeCard icon={listening ? "listen" : "check"} title="Weekly check" sub={`${index + 1} of ${stepCount}`} right={`Week ${week} · ${language.name}`}>
-						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">{listening ? (!answer ? "Type what you hear" : good ? "Understood" : "It said…") : !answer ? `Write this in ${language.name}` : score === 1 ? "That is it" : "It is…"}</h2>
+						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">{listening ? (!answer ? "Type what you hear" : good ? "Understood" : "It said…") : !answer ? `${speaking ? "Say" : "Write"} this in ${language.name}` : score === 1 ? "That is it" : "It is…"}</h2>
 
 						{listening ? (
 							<div className="flex items-center gap-4">
@@ -333,7 +410,34 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 						)}
 
 						<div className="mt-6">
-							<input
+							{speaking ? (
+								<div className="flex items-center gap-4" data-testid="check-speak">
+									<button
+										type="button"
+										onClick={() => void toggleRecording()}
+										disabled={!!answer || mic === "transcribing"}
+										autoFocus
+										aria-label={mic === "recording" ? "Stop recording" : `Say the sentence in ${language.name}`}
+										aria-pressed={mic === "recording"}
+										className="lh-press group relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--q-card),0_0_0_4px_var(--q-teal)] disabled:cursor-not-allowed"
+										data-testid="check-mic"
+									>
+										<svg viewBox="0 0 72 72" className="absolute inset-0 size-full" aria-hidden="true">
+											<circle cx="36" cy="36" r="34" fill="none" stroke={mic === "recording" ? "var(--q-teal)" : "var(--q-well-2)"} strokeWidth="3" />
+										</svg>
+										<span className={cn("flex size-14 items-center justify-center rounded-full transition-colors duration-150", answer || mic === "transcribing" ? "bg-well-2 text-ink-4" : mic === "recording" ? "bg-teal-2 text-sun-ink" : "bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] group-hover:group-enabled:bg-teal-2")}>
+											{mic === "transcribing" ? <LoaderCircleIcon className="size-6 animate-spin motion-reduce:animate-none" strokeWidth={1.6} /> : <MicIcon className="size-6" strokeWidth={1.6} />}
+										</span>
+									</button>
+									<div className="min-w-0" aria-live="polite">
+										<p className="font-ui text-sm font-semibold text-foreground">{answer ? "Said" : mic === "recording" ? "Listening…" : mic === "transcribing" ? "Writing down what you said…" : "Say it"}</p>
+										<p className="mt-0.5 font-ui text-[13px] leading-snug text-ink-3">{answer ? "This sentence had its one try." : mic === "recording" ? "It stops when you pause, or press again." : micNote ?? "Press the microphone, then say the whole sentence."}</p>
+									</div>
+								</div>
+							) : (
+								<>
+									{micNote && !listening && <p className="mb-3 font-ui text-[13px] leading-snug text-ink-3">{micNote}</p>}
+									<input
 								ref={field}
 								type="text"
 								lang={language.code}
@@ -354,6 +458,8 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 								className={FIELD}
 								data-testid="check-input"
 							/>
+								</>
+							)}
 						</div>
 
 						<div className="mt-6 min-h-[4.5rem]" data-testid="check-feedback">
@@ -366,12 +472,12 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 										<p className="mt-2 font-prose text-base text-ink-3">
 											{answer.record.response ? (
 												<>
-													You typed · <span lang={language.code}>{answer.record.response}</span>
+													{wasSpoken(answer.record) ? "You said" : "You typed"} · <span lang={language.code}>{answer.record.response}</span>
 												</>
 											) : listening ? (
 												"Not caught"
 											) : (
-												"Not written"
+												"Not answered"
 											)}
 										</p>
 									)}
@@ -391,7 +497,7 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 									{listening && <p className="mt-3 font-prose text-base text-ink-2">{item.englishTranslation}</p>}
 								</div>
 							) : (
-								<p className="font-ui text-[13px] leading-relaxed text-ink-3">{listening ? "The text appears once you have typed what you heard." : "The sentence appears once you have written yours."}</p>
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">{listening ? "The text appears once you have typed what you heard." : `The sentence appears once you have ${speaking ? "said" : "written"} yours.`}</p>
 							)}
 						</div>
 					</PracticeCard>
@@ -417,15 +523,22 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages }: {
 						</>
 					) : (
 						<>
-							<button type="button" onClick={() => answerWith("")} disabled={listening && !played} className={SECONDARY} data-testid="check-give-up">
+							<button type="button" onClick={() => answerWith("")} disabled={(listening && !played) || micBusy} className={SECONDARY} data-testid="check-give-up">
 								{listening ? "I didn't catch it" : "I don't know"}
 							</button>
-							<button type="button" onClick={() => answerWith(draft.trim())} disabled={!canCheck} className={PRIMARY} data-testid="check-check">
-								Check
-								<span className="q-kbd">
-									<QIcon name="enter" />
-								</span>
-							</button>
+							{speaking ? (
+								<button type="button" onClick={() => void toggleRecording()} disabled={mic === "transcribing"} className={PRIMARY} data-testid="check-speak-toggle">
+									<MicIcon className="size-4" strokeWidth={1.8} aria-hidden="true" />
+									{micLabel}
+								</button>
+							) : (
+								<button type="button" onClick={() => answerWith(draft.trim())} disabled={!canCheck} className={PRIMARY} data-testid="check-check">
+									Check
+									<span className="q-kbd">
+										<QIcon name="enter" />
+									</span>
+								</button>
+							)}
 						</>
 					)}
 				</div>
@@ -470,7 +583,7 @@ function EndScreen({ week, language, other, records, save, onRetrySave, onOther 
 				marks={records.map(markOf)}
 				parts={[
 					{ count: probes.length, caption: `${understood} of ${probes.length} heard right` },
-					{ count: production.length, caption: `${wordsRight}% of the words written` },
+					{ count: production.length, caption: `${wordsRight}% of the words ${production.some(wasSpoken) ? "said" : "written"}` },
 				]}
 			/>
 			<TrackLegend className="!mt-3" />
@@ -491,13 +604,13 @@ function EndScreen({ week, language, other, records, save, onRetrySave, onOther 
 								note={
 									r.response ? (
 										<span>
-											You typed{" "}
+											{wasSpoken(r) ? "You said" : "You typed"}{" "}
 											<span className="font-medium text-miss" lang={language.code}>
 												“{r.response}”
 											</span>
 										</span>
 									) : (
-										<span>{r.type === "probe" ? "Not caught" : "Not written"}</span>
+										<span>{r.type === "probe" ? "Not caught" : "Not answered"}</span>
 									)
 								}
 							/>

@@ -10,7 +10,6 @@ import type { DailyExperimentRecord, WeeklyCheckRow } from "@/src/core";
 export interface ChartDay {
 	dayNumber: number;
 	label: string;
-	listeningFirst: boolean;
 }
 
 export interface ChartFit {
@@ -27,7 +26,8 @@ interface StudyChartProps {
 	todayDay: number;
 	treatment: StudyLanguage;
 	control: StudyLanguage;
-	onsetDay: number;
+	onsetDay: number | null;
+	switchWindow: { from: number; to: number };
 	switchLabel: string;
 	fit: ChartFit | null;
 	minReps: number;
@@ -38,7 +38,7 @@ const TICKS = [0, 50, 100];
 const pct = (fraction: number) => `${fraction * 100}%`;
 const clampShare = (share: number) => Math.max(0, Math.min(1, share));
 
-export function StudyChart({ days, daily, checks, todayDay, treatment, control, onsetDay, switchLabel, fit, minReps }: StudyChartProps) {
+export function StudyChart({ days, daily, checks, todayDay, treatment, control, onsetDay, switchWindow, switchLabel, fit, minReps }: StudyChartProps) {
 	const total = days.length;
 	const running = todayDay >= 1 && todayDay <= total;
 	const [readDay, setReadDay] = useState<number | null>(null);
@@ -65,7 +65,7 @@ export function StudyChart({ days, daily, checks, todayDay, treatment, control, 
 	};
 
 	const lanes = [
-		{ language: treatment, switchDay: onsetDay, fit, note: `listening first from day ${onsetDay}` },
+		{ language: treatment, switchDay: onsetDay, fit, note: onsetDay !== null ? `listening first from day ${onsetDay}` : "switches on a random day" },
 		{ language: control, switchDay: null, fit: null, note: "normal plan" },
 	];
 
@@ -79,10 +79,21 @@ export function StudyChart({ days, daily, checks, todayDay, treatment, control, 
 			<div className={cn(GRID, "mt-3")} aria-hidden="true">
 				<span />
 				<div className="relative h-5">
-					<span className="absolute inset-y-0 w-[1.5px] bg-teal" style={{ left: pct((onsetDay - 1) / total) }} />
-					<span className="absolute bottom-0 whitespace-nowrap pl-2 font-ui text-[11.5px] leading-5 text-ink-2" style={{ left: pct((onsetDay - 1) / total) }}>
-						{switchLabel}
-					</span>
+					{onsetDay !== null ? (
+						<>
+							<span className="absolute inset-y-0 w-[1.5px] bg-teal" style={{ left: pct((onsetDay - 1) / total) }} />
+							<span className="absolute bottom-0 whitespace-nowrap pl-2 font-ui text-[11.5px] leading-5 text-ink-2" style={{ left: pct((onsetDay - 1) / total) }}>
+								{switchLabel}
+							</span>
+						</>
+					) : (
+						<>
+							<span className="absolute bottom-0.5 h-2 rounded-t-[3px] border-x-[1.5px] border-t-[1.5px] border-[var(--q-teal-line)]" style={{ left: pct((switchWindow.from - 1) / total), width: pct((switchWindow.to - switchWindow.from + 1) / total) }} data-testid="study-switch-window" />
+							<span className="absolute bottom-2.5 -translate-x-1/2 whitespace-nowrap font-ui text-[11.5px] leading-none text-ink-2" style={{ left: pct((switchWindow.from - 1 + (switchWindow.to - switchWindow.from + 1) / 2) / total) }}>
+								{switchLabel}
+							</span>
+						</>
+					)}
 				</div>
 				<span />
 			</div>
@@ -153,7 +164,7 @@ export function StudyChart({ days, daily, checks, todayDay, treatment, control, 
 								.map((check) => (
 									<li key={check.week} className="flex h-9 items-center justify-center font-ui text-[11.5px] tabular-nums sm:h-7" data-testid={`study-check-${check.week}-${check.language}`}>
 										{check.state === "done" ? (
-											<span className="flex flex-col items-center gap-0.5 font-semibold leading-none text-foreground sm:flex-row sm:gap-1.5" aria-label={`Week ${check.week}: ${check.probesUnderstood} of ${check.probesAnswered} heard right, ${Math.round((check.productionMatch ?? 0) * 100)}% of the words written`}>
+											<span className="flex flex-col items-center gap-0.5 font-semibold leading-none text-foreground sm:flex-row sm:gap-1.5" aria-label={`Week ${check.week}: ${check.probesUnderstood} of ${check.probesAnswered} heard right, ${Math.round((check.productionMatch ?? 0) * 100)}% of the words right when speaking`}>
 												<span>
 													{check.probesUnderstood}
 													<span className="max-[359px]:hidden">/{check.probesAnswered}</span>
@@ -169,6 +180,10 @@ export function StudyChart({ days, daily, checks, todayDay, treatment, control, 
 												<span className="max-sm:hidden">Start</span>
 												<ArrowRightIcon className="size-3.5 sm:hidden" strokeWidth={2} aria-hidden="true" />
 											</Link>
+										) : check.state === "missed" ? (
+											<span className="text-ink-3" role="img" aria-label={`Week ${check.week}: missed, the make-up days are over`}>
+												missed
+											</span>
 										) : (
 											<span className="size-1 rounded-full bg-[var(--q-dash)]" role="img" aria-label={`Week ${check.week}: not open yet`} />
 										)}
@@ -222,7 +237,7 @@ export function StudyChart({ days, daily, checks, todayDay, treatment, control, 
 					</span>
 				)}
 			</p>
-			<p className="mt-1.5 px-1 font-ui text-[12.5px] text-ink-3 sm:px-0">Check: sentences heard right on one play, out of {checks[0]?.probesAnswered || 10}, then the share of words right in the written part.</p>
+			<p className="mt-1.5 px-1 font-ui text-[12.5px] text-ink-3 sm:px-0">Check: sentences heard right on one play, out of {checks[0]?.probesAnswered || 10}, then the share of words right in the five you say.</p>
 		</figure>
 	);
 }

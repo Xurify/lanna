@@ -27,9 +27,18 @@ fs.writeFileSync(path.join(lessons, `${start}.jsonl`), `${JSON.stringify({ mode:
 const dayOne = new Date(`${start}T12:00:00`);
 
 describe("today's study status", () => {
-	it("counts the day by the treatment's reps, whatever language runs", () => {
+	it("counts the day by both study languages, whatever language runs", () => {
 		const fromSlovak = getTodayExperimentStatus(dayOne, "slovak");
-		assert.equal(fromSlovak?.validDay, true, "five Russian sentences make the day count, even seen from Slovak");
+		const fromRussian = getTodayExperimentStatus(dayOne, "russian");
+		assert.equal(fromSlovak?.validDay, false, "the control language still needs its five sentences");
+		assert.equal(fromRussian?.validDay, fromSlovak?.validDay, "the running language does not change whether the day counts");
+		assert.deepEqual(
+			fromSlovak?.languages.map((l) => [l.id, l.validDay]),
+			[
+				["russian", true],
+				["slovak", false],
+			],
+		);
 		assert.equal(fromSlovak?.runningLanguageReps?.dictationReps, 0, "the running language's own count is Slovak's");
 	});
 
