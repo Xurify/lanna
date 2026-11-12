@@ -98,7 +98,7 @@ export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | n
 					of <b className="tabular-nums">{count(estimate.dictionary)}</b> in this dictionary
 				</span>
 			</p>
-			{estimate.shareOfUses !== null && (
+			{report.measured && estimate.shareOfUses !== null && (
 				<p className="q-sub max-w-[60ch]" data-testid="word-estimate-coverage">
 					Counted by use, not one each, these words are about <b className="tabular-nums">{Math.round(estimate.shareOfUses * 100)}%</b> of the words in this dictionary's example sentences: a few common words do most of the work.
 				</p>

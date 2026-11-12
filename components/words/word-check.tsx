@@ -28,7 +28,7 @@ const count = (n: number) => n.toLocaleString("en-US");
 
 function verdictLine(feedback: WordCheckFeedback): string {
 	if (feedback.verdict === "known") return "You know it";
-	if (feedback.verdict === "dont-know") return "Not yet. Now you have met it.";
+	if (feedback.verdict === "dont-know") return "Now you have met it";
 	if (feedback.verdict === "unchecked") return "Not counted";
 	return "Not this meaning";
 }
@@ -151,7 +151,7 @@ export function WordCheck() {
 	if (result) return <CheckResult result={result} lang={lang?.code} onAgain={() => void begin()} />;
 
 	const known = feedback?.verdict === "known";
-	const counted = feedback ? feedback.verdict !== "unchecked" : false;
+	const judged = feedback?.verdict === "known" || feedback?.verdict === "not-known";
 
 	return (
 		<TaskFrame>
@@ -194,7 +194,7 @@ export function WordCheck() {
 							>
 								{feedback ? (
 									<p
-										className={cn("flex min-h-12 items-center rounded-lg px-4 py-2.5 font-prose text-[18px] font-semibold", known ? "bg-go-soft text-foreground" : counted && feedback.typed ? "bg-miss-soft text-foreground" : "bg-[var(--q-well)] text-ink-2")}
+										className={cn("flex min-h-12 items-center rounded-lg px-4 py-2.5 font-prose text-[18px] font-semibold", known ? "bg-go-soft text-foreground" : judged ? "bg-miss-soft text-foreground" : "bg-[var(--q-well)] text-ink-2")}
 										data-testid="word-check-typed"
 									>
 										{feedback.typed ?? "I don't know this word"}
@@ -279,15 +279,15 @@ export function WordCheck() {
 				</div>
 			</div>
 
-			<Dock tone={feedback && counted ? (known ? "right" : "miss") : "plain"} live testId="word-check-dock">
+			<Dock tone={judged ? (known ? "right" : "miss") : "plain"} live testId="word-check-dock">
 				<div className={cn(COLUMN, "flex min-h-20 max-w-2xl items-center justify-between gap-4 py-4")}>
 					{feedback ? (
 						<>
 							<p className="flex min-w-0 items-center gap-2.5 font-ui text-[15px] font-[550] text-foreground" data-testid="word-check-verdict">
-								{counted && <VerdictDisc ok={known} />}
+								{judged && <VerdictDisc ok={known} />}
 								{verdictLine(feedback)}
 							</p>
-							<button type="button" className={PRIMARY} onClick={next} disabled={busy} data-testid="word-check-next">
+							<button type="button" className={cn(PRIMARY, "shrink-0 whitespace-nowrap")} onClick={next} disabled={busy} data-testid="word-check-next">
 								{feedback.item ? "Next word" : "See the result"}
 								<span className="q-kbd pointer-coarse:hidden">
 									<QIcon name="enter" />
