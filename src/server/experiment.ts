@@ -549,8 +549,9 @@ export function getTodayExperimentStatus(now = new Date(), targetLanguage = "rus
 			};
 		};
 
-		const ru = countReps("russian");
-		const sk = countReps("slovak");
+		const { treatment, control } = config.languages;
+		const ru = countReps(treatment);
+		const sk = countReps(control);
 
 		const checks = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
 		const checkRows = weeklyCheckRows(config, checks, dayNumber);
@@ -559,7 +560,8 @@ export function getTodayExperimentStatus(now = new Date(), targetLanguage = "rus
 		const weeklyCheckCompleted = currentWeekRows.length > 0 && currentWeekRows.every((r) => r.state === "done");
 		const weeklyCheckDue = Boolean(todaySchedule.weeklyCheckDue || (dayNumber > 0 && dayNumber % 7 === 0));
 
-		const targetStatus = targetLanguage === "slovak" ? sk : ru;
+		const runningLanguageReps = targetLanguage === treatment ? ru : targetLanguage === control ? sk : null;
+		const oldestOpen = checkRows.find((r) => r.state === "open");
 
 		return {
 			active: true,
@@ -573,7 +575,11 @@ export function getTodayExperimentStatus(now = new Date(), targetLanguage = "rus
 			weeklyCheckDue,
 			weeklyCheckCompleted,
 			weekNumber,
-			validDay: targetStatus.validDay,
+			oldestOpenCheck: oldestOpen ? { week: oldestOpen.week, language: oldestOpen.language } : null,
+			treatment,
+			runningLanguage: targetLanguage,
+			validDay: ru.validDay,
+			runningLanguageReps,
 			russian: ru,
 			slovak: sk,
 		};

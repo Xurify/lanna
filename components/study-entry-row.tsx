@@ -10,6 +10,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import type { TodayExperimentStatus } from "@/src/core";
+import { ListenInLanguage } from "@/components/experiment/listen-in-language";
+import { CHECK_ROUTE, studyLanguage } from "@/components/experiment/study-language";
 
 export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null | undefined }) {
 	if (!status || !status.active) return null;
@@ -17,12 +19,14 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 	const { dayNumber, totalDays, russianArm, weeklyCheckDue, weeklyCheckCompleted, weekNumber, validDay, russian } = status;
 	const reps = russian.dictationReps;
 	const needed = Math.max(0, 5 - reps);
+	const treatment = studyLanguage(status.treatment);
+	const check = status.oldestOpenCheck ?? { week: weekNumber, language: status.treatment };
 
 	const subtitle = weeklyCheckDue && !weeklyCheckCompleted
 		? `Week ${weekNumber} check due today · ${reps >= 5 ? "Daily reps validated" : `${needed} more dictation rep${needed === 1 ? "" : "s"} needed`}`
 		: validDay
 			? `Day ${dayNumber} validated · ${reps} dictation reps (${russian.firstPlayShare !== null ? Math.round(russian.firstPlayShare * 100) : 0}% 1st-play understood)`
-			: `Need ${needed} more Russian Listen sentence${needed === 1 ? "" : "s"} today (no replay/peek for 1st-play score)`;
+			: `Need ${needed} more ${treatment.name} Listen sentence${needed === 1 ? "" : "s"} today (no replay/peek for 1st-play score)`;
 
 	const pillText = weeklyCheckDue && !weeklyCheckCompleted
 		? "Check due"
@@ -102,7 +106,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 					{/* Primary action CTA right inside the card */}
 					{weeklyCheckDue && !weeklyCheckCompleted ? (
 						<Link
-							href="/experiments/input-first/check"
+							href={`${CHECK_ROUTE}?week=${check.week}&lang=${check.language}`}
 							className="q-btn primary h-11 w-full sm:h-9 sm:w-auto"
 							data-testid="study-quick-check"
 						>
@@ -110,14 +114,15 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 							<QIcon name="arrow" className="size-3.5" />
 						</Link>
 					) : !validDay ? (
-						<Link
-							href="/listen"
+						<ListenInLanguage
+							language={treatment}
+							running={status.runningLanguage}
 							className="q-btn primary h-11 w-full sm:h-9 sm:w-auto"
-							data-testid="study-quick-listen"
+							testId="study-quick-listen"
 						>
-							<span>Do {needed} in Listen</span>
+							<span>Do {needed} in {treatment.name} Listen</span>
 							<QIcon name="arrow" className="size-3.5" />
-						</Link>
+						</ListenInLanguage>
 					) : (
 						<Link
 							href="/experiments/input-first"
