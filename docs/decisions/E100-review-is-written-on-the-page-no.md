@@ -14,3 +14,5 @@ The owner, on two screenshots of Review: "I'm curious what things would look lik
 - **The caught-up screen** is the same page: "All caught up." at the sentence's size (the count is in the band only), the new words per day, the sources, today's answers; Back to Today and Do a lesson in the dock.
 - **Not changed:** the grading, the hints and their price, the miss reason, the letter key (E98), the leeches list, the keys (Enter checks and continues, 1 to 4 rate, 1 to 4 pick).
 - **Reviewed twice by Fable 5.2** (2026-11-11) before the PR: the moving hint slot, the button heights, the empty dock row in Choosing on a phone, the sunken chosen rating, the six struck-through labels after a miss, the dead space under the key tip, the settings in the dock, and the one-tap Hide with no undo came from that review.
+
+Changed by [review-miss-two-words-side-by-side.md](review-miss-two-words-side-by-side.md) on 2026-11-11.

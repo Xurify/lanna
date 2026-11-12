@@ -5,6 +5,7 @@ import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { activeProfile, PATHS } from "../../../config.ts";
 import { checkerNote, checkSlovak } from "../../core/slovak-check.ts";
 import { serverExecute } from "../tool-execute.ts";
+import { referenceDir } from "../language-reference.ts";
 import { formatEntry, loadLexicon, lookupWord, slovakLookup } from "../lexicon.ts";
 
 /**
@@ -74,7 +75,7 @@ const checkSlovakTool: AgentTool<typeof checkInput> = {
 };
 
 /** The slovak-language skill's references (.claude/skills/slovak-language, from slovak.wiki). */
-const REFERENCE_DIR = path.join(PATHS.root, ".claude", "skills", "slovak-language", "references");
+const REFERENCE_DIR = referenceDir("slovak")!;
 
 const REFERENCES: Record<string, string> = {
 	"grammar-core": "cases, agreement, verbs, aspect, prepositions: the overview",

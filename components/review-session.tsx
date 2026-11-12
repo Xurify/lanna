@@ -19,6 +19,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
+import { MissWhy } from "@/components/miss-why";
 import { compareAnswer, diacriticSlips, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, splitOnWords, targetWordOf, wordsOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
@@ -135,56 +136,6 @@ function stillToDo(counts: Status["counts"]): string {
 	const toRepeat = counts.due + counts.learning;
 	if (left === 0) return toRepeat > 0 ? `Every card seen once today. ${toRepeat} to repeat.` : later > 0 ? `Done for now. ${later} more ${later === 1 ? "card comes" : "cards come"} due later today.` : "All done for today.";
 	return `Still to do: ${counts.dueUntouched} due, ${newLeft} new${toRepeat > counts.dueUntouched ? `, ${toRepeat - counts.dueUntouched} to repeat` : ""}${later > 0 ? `, ${later} more due later today` : ""}.`;
-}
-
-function MissWhy({ reason, given, code, className }: { reason: MissReason; given: string; code?: string; className?: string }) {
-	const w = (text: string) => (
-		<b className="font-semibold" lang={code}>
-			{text}
-		</b>
-	);
-	const yours = <span lang={code}>“{given.trim()}”</span>;
-	const here = (
-		<>
-			This one is {w(reason.lemma)}, {reason.gloss}.
-		</>
-	);
-	const what =
-		reason.slip === "other" && reason.other ? (
-			<>
-				{yours} {reason.other.isLemma ? <>means {reason.other.gloss}</> : <>is a form of {w(reason.other.lemma)}, {reason.other.gloss}</>}: a different word. {here}
-			</>
-		) : reason.slip === "other" ? (
-			<>
-				{yours} is not a form of {w(reason.lemma)} ({reason.gloss}).
-			</>
-		) : reason.slip === "base" ? (
-			<>{yours} is the dictionary form. The sentence needs an ending on it.</>
-		) : reason.slip === "same-word" ? (
-			<>
-				{yours} is {w(reason.lemma)} with another ending.
-			</>
-		) : (
-			<>
-				The word is {w(reason.lemma)}, {reason.gloss}.
-			</>
-		);
-	const need = reason.trigger ? (
-		<>
-			<span className="rounded-[5px] bg-well px-1.5 font-semibold text-teal-2" lang={code}>
-				{reason.trigger}
-			</span>{" "}
-			decides the case{reason.form ? <>: {w(`${reason.form}`)}</> : null}.
-		</>
-	) : reason.form ? (
-		<>The sentence needs the {w(reason.form)}.</>
-	) : null;
-	return (
-		<div className={cn("lh-fade flex flex-col gap-1.5 text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
-			{what && <p>{what}</p>}
-			{need && <p>{need}</p>}
-		</div>
-	);
 }
 
 function Note({ label, children, lang }: { label: string; children: React.ReactNode; lang?: string }) {
@@ -413,12 +364,17 @@ export function ReviewSession() {
 			sfx.wrong();
 			shake(sentenceRef.current);
 			const id = prompt.card.id;
-			void fetch(`/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}&words=${prompt.words}`)
-				.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
-				.then((body) => {
-					if (body?.reason && knownStatus?.next?.card.id === id) setReason(body.reason);
-				})
-				.catch(() => {});
+			const missUrl = `/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}&words=${prompt.words}`;
+			const showMiss = (url: string) =>
+				fetch(url)
+					.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
+					.then((body) => {
+						if (!body?.reason || knownStatus?.next?.card.id !== id) return;
+						setReason(body.reason);
+						if (body.reason.other?.notePending && !url.endsWith("&note=write")) void showMiss(`${url}&note=write`);
+					})
+					.catch(() => {});
+			void showMiss(missUrl);
 		}
 		void speak(prompt.card.sentence);
 	};
@@ -856,13 +812,13 @@ export function ReviewSession() {
 													{verdict === "wrong" ? <XIcon className="size-4" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
 													{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
 													{exact && <span>· {helped ? "help used" : "no help used"}</span>}
-													{!exact && given.trim() && (
+													{!exact && given.trim() && !(verdict === "wrong" && reason) && (
 														<span className="min-w-0 truncate">
 															· you wrote “<span lang={lang?.code}>{givenParts.filter(Boolean).join(" … ")}</span>”
 														</span>
 													)}
 												</p>
-												{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} code={lang?.code} className="mt-2.5" />}
+												{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} answer={prompt.card.answer} code={lang?.code} className="mt-3" />}
 												{verdict !== "wrong" && (
 													<p className="mt-3 flex flex-wrap gap-x-6 gap-y-1" data-testid="review-facts">
 														<Note label="word">
@@ -917,7 +873,14 @@ export function ReviewSession() {
 
 					{prompt && lang && (
 						<div
-							className={cn("shrink-0 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--q-line)] transition-colors", verdict === "wrong" ? "bg-miss-soft" : verdict ? "bg-teal-wash" : "bg-background")}
+							className={cn(
+								"shrink-0 pb-[env(safe-area-inset-bottom)] transition-colors",
+								verdict === "wrong"
+									? "bg-miss-soft shadow-[0_-1px_0_color-mix(in_srgb,var(--q-miss)_45%,transparent)]"
+									: verdict
+										? "bg-teal-wash shadow-[0_-1px_0_var(--q-teal-line)]"
+										: "bg-background shadow-[0_-1px_0_var(--q-line)]",
+							)}
 							data-testid="review-dock"
 						>
 							<div className={cn(COLUMN, "py-4")}>
@@ -961,9 +924,12 @@ export function ReviewSession() {
 									) : (
 										<div key="rate" className="grid gap-2 @2xl:flex @2xl:h-14 @2xl:items-center">
 											{cap === 1 ? (
-												<p className="flex h-14 items-center gap-2 text-[15px] text-ink-2 @2xl:w-[440px]" data-testid="review-ratings">
+												<p className="flex h-14 items-center text-[15px] text-ink-2 @2xl:w-[440px]" data-testid="review-ratings">
 													<b className="font-semibold text-foreground">Again</b>
-													<span className="text-ink-3">· comes back in {comesBack(prompt.intervals[1])}</span>
+													<span aria-hidden="true" className="mx-2 text-ink-3">
+														·
+													</span>
+													<span className="text-ink-3">comes back in {comesBack(prompt.intervals[1])}</span>
 												</p>
 											) : (
 											<div className="grid h-14 grid-cols-4 rounded-[10px] bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)] @2xl:w-[440px]" role="radiogroup" aria-label="Rate it yourself: when the word comes back" data-testid="review-ratings">

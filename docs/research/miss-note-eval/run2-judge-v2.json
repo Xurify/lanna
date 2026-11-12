@@ -1,0 +1,399 @@
+[
+	{
+		"pair": "v/na",
+		"was": "rejected",
+		"wasReason": "judge: The note presents na as surfaces/destinations and v as inside places, but B4 (v pondelok = on Monday) and A2 (na autobus = for the bus) show other uses the note ignores, and the na-vs-v difference is not simply surface vs. inside: na is also used with places like pošta (at the post office) and stanica, which are not surfaces, so the stated contrast is a coincidence of the chosen examples.",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004344,
+		"ms": 3524
+	},
+	{
+		"pair": "kam/kde",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0015605,
+		"ms": 782
+	},
+	{
+		"pair": "z/od",
+		"was": "rejected",
+		"wasReason": "52 words, over 45",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004545500000000001,
+		"ms": 2853
+	},
+	{
+		"pair": "pre/za",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0015379999999999999,
+		"ms": 843
+	},
+	{
+		"pair": "na/ďalej",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0050055,
+		"ms": 3715
+	},
+	{
+		"pair": "len/iba",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "krajina/štát",
+		"was": "rejected",
+		"wasReason": "judge: The note claims krajina means 'landscape' and that štát is used with political-status words, but no sentence shows the 'landscape' sense, and the pattern rests on only a few examples (ostrovný, suverénny). B1 and B2 (Štát som ja) show štát as 'the state' without any status word, and the adjectives with krajina (big, old, beautiful) are just coincidence of the sentences given.",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": false,
+			"problem": "\"Ostrovný\" (island) is a geographic description, not a political-status word, so the descriptive vs. political-status contrast is not shown by these sentences."
+		},
+		"cost": 0.006040500000000001,
+		"ms": 3936
+	},
+	{
+		"pair": "spolu/spoločne",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "človek/osoba",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "žiť/bývať",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "zákon/právo",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004858,
+		"ms": 4595
+	},
+	{
+		"pair": "opäť/zasa",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "trochu/trošku",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "cesta/spôsob",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.001973,
+		"ms": 988
+	},
+	{
+		"pair": "jednoduchý/ľahký",
+		"was": "rejected",
+		"wasReason": "judge: The note presents the translation split (jednoduchý = simple, ľahký = easy) as the difference, but the sentences only show a coincidence of the small sample: the dictionary glosses jednoduchý as both \"simple; easy\", and ľahký is used in B1-B5 only in negated or generic contexts, so nothing shows jednoduchý cannot mean \"easy\" or that ľahký cannot mean \"simple\".",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0049455,
+		"ms": 3259
+	},
+	{
+		"pair": "tiež/príliš",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.001598,
+		"ms": 803
+	},
+	{
+		"pair": "kto/ktorý",
+		"was": "rejected",
+		"wasReason": "judge: The note's claim that 'kto' is a stand-alone question word is backed by A1-A5, but A5 is glossed 'Whose birthday is it today?', which does not match 'Kto má dnes narodeniny?' (really 'Who has a birthday today?'). More importantly, the 'ktorý' contrast is only partly shown: B1-B2 are near-identical sentences, so the 'which + noun' use rests on one pattern, and 'links a clause to a person' (B3) is a single example.",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004205500000000001,
+		"ms": 2527
+	},
+	{
+		"pair": "ahoj/dobrý deň",
+		"was": "rejected",
+		"wasReason": "does not name dobrý deň",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0014555,
+		"ms": 1137
+	},
+	{
+		"pair": "niečo/dačo",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "pekný/milý",
+		"was": "rejected",
+		"wasReason": "judge: The note says pekný is 'about looks or beauty' in contrast to milý, but B2 (Life is beautiful) and B3 (nice suit) show pekný is not limited to looks, and the note's claim that milý is kind behavior ignores A1 (cute ducks) where milý also describes appearance; the contrast is overstated beyond what the sentences show.",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004818,
+		"ms": 2908
+	},
+	{
+		"pair": "zostať/ostať",
+		"was": "none",
+		"nowDeterministic": "none"
+	},
+	{
+		"pair": "rozhodnúť/rozhodovať",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.005220500000000001,
+		"ms": 3731
+	},
+	{
+		"pair": "nájsť/nachádzať",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.005098,
+		"ms": 3695
+	},
+	{
+		"pair": "zmeniť/meniť",
+		"was": "rejected",
+		"wasReason": "judge: The note's contrast (ongoing vs. a particular thing) is a coincidence of the sample: A3 and A4 use meniť for a specific agent acting (God changes things), and B1-B5 are all single completed or possible acts. The real pattern, imperfective vs. perfective aspect, is not stated or shown, and the 'particular thing' claim does not separate the words since meniť also takes objects (A3).",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": false,
+			"problem": "The note's contrast does not separate the words: meniť also takes a particular object in A3 and A4 (Boh mení), where God changes things rather than something ongoing. zmeniť is not shown to mean 'changing a particular thing' as opposed to meniť, since both can take objects or be intransitive and the evidence is too sparse. It also ignores the imperfective/perfective (aspect) difference, which is what actually distinguishes the pair."
+		},
+		"cost": 0.0031155,
+		"ms": 2168
+	},
+	{
+		"pair": "pozrieť/pozerať",
+		"was": "rejected",
+		"wasReason": "names \"habitual\", which the evidence does not",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.001808,
+		"ms": 945
+	},
+	{
+		"pair": "platiť/zaplatiť",
+		"was": "rejected",
+		"wasReason": "names \"habitually\", which the evidence does not",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.005628000000000001,
+		"ms": 3454
+	},
+	{
+		"pair": "ukázať/ukazovať",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0056405000000000005,
+		"ms": 4301
+	},
+	{
+		"pair": "učiť/naučiť",
+		"was": "rejected",
+		"wasReason": "judge: The note says naučiť sa is about learning that ends in success and is a skill or language, but A1, A2 and A5 only show 'learn' and 'would like/should learn' with no stated outcome, and A3 shows plain naučiť means 'teach'; only A4 hints at mastery (and the English 'master' gloss is one sentence), so the success/completion contrast is not shown by the data and the note omits that naučiť itself can mean teach.",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.007520500000000001,
+		"ms": 5041
+	},
+	{
+		"pair": "priniesť/prinášať",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0018505,
+		"ms": 1044
+	},
+	{
+		"pair": "skoro/čoskoro",
+		"was": "rejected",
+		"wasReason": "judge: The note says čoskoro 'only' means 'soon', but the evidence shows only that čoskoro is glossed 'soon' in five sentences; nothing shows it cannot mean anything else. The note also never mentions that the dictionary lists 'soon' as a meaning of skoro, and no skoro sentence illustrates 'soon', so the contrast it draws between the two words is not fully shown.",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.007118000000000001,
+		"ms": 4676
+	},
+	{
+		"pair": "veľa/oveľa",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0019255,
+		"ms": 889
+	},
+	{
+		"pair": "ďalej/naďalej",
+		"was": "rejected",
+		"wasReason": "judge: The note says naďalej marks a situation continuing, while ďalej goes with action verbs, but B3 (naďalej používajte) and A1/A2 (continue digging, keep reading) show both words with continuing actions, so the verb-type contrast is a coincidence of the sentences; the real contrast, 'next' in A3/A5, is not stated for naďalej.",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": false,
+			"problem": "The action-verb vs. ongoing-situation contrast fails: B3 uses naďalej with an action verb (naďalej používajte, 'continue to use'), much like A1 'Kopte ďalej' continue digging."
+		},
+		"cost": 0.005915500000000001,
+		"ms": 3581
+	},
+	{
+		"pair": "stále/neustále",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004360500000000001,
+		"ms": 2788
+	},
+	{
+		"pair": "hneď/ihneď",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0049105,
+		"ms": 3076
+	},
+	{
+		"pair": "dopredu/vopred",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0016455,
+		"ms": 1022
+	},
+	{
+		"pair": "povedať/rozprávať",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0019054999999999999,
+		"ms": 1331
+	},
+	{
+		"pair": "žiadať/pýtať",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004533000000000001,
+		"ms": 2968
+	},
+	{
+		"pair": "ísť/chodiť",
+		"was": "rejected",
+		"wasReason": "names \"habitual\", which the evidence does not",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0056830000000000006,
+		"ms": 3392
+	},
+	{
+		"pair": "sem/tu",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.001503,
+		"ms": 1256
+	},
+	{
+		"pair": "nikto/niekto",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.004503,
+		"ms": 3081
+	},
+	{
+		"pair": "už/ešte",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.005848000000000001,
+		"ms": 3506
+	},
+	{
+		"pair": "vstávať/vstať",
+		"was": "kept",
+		"nowDeterministic": "kept",
+		"judge2": {
+			"supported": true
+		},
+		"cost": 0.0016555,
+		"ms": 869
+	}
+]
