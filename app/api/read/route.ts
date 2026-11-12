@@ -10,9 +10,15 @@
  * POST /api/read {action: "finish", storyId, answers, tapped, ms?, tz?} —
  * a finished reading: the comprehension score, XP, the words sent to the
  * review deck, and a fresh summary.
+ * POST /api/read {action: "import", url? | text?, title?, difficulty?} — a
+ * text of the learner's own: kept, cut into parts, and its first unread
+ * part written (src/server/read-import.ts).
+ * POST /api/read {action: "part", sourceId, part} — that part, written now
+ * when it is not yet. {action: "remove-source", sourceId} hides a text.
  */
 
-import { BODY_LIMITS, bodyTooLarge, generating, nextStory, readingState, recordOnce, recordRead, sessionClientId, storyStore } from "@/src/server";
+import { isReadingDifficulty, MAX_SOURCE_PARTS } from "@/src/core";
+import { BODY_LIMITS, bodyTooLarge, generating, importReading, nextStory, ReadImportError, readingState, recordOnce, recordRead, removeSource, sessionClientId, sourcePart, storyStore, UNKNOWN_TEXT } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +29,6 @@ function tzOf(v: unknown): number | undefined {
 
 export async function GET(req: Request) {
 	const url = new URL(req.url);
-	// The sentences of the story being written so far (the writing screen
-	// polls this and shows them as they arrive).
 	if (url.searchParams.get("progress") !== null) return Response.json({ generating: generating() });
 	const id = url.searchParams.get("id");
 	if (id) {
@@ -37,7 +41,22 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { action?: unknown; storyId?: unknown; answers?: unknown; tapped?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown; clientId?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as {
+		action?: unknown;
+		storyId?: unknown;
+		answers?: unknown;
+		tapped?: unknown;
+		ms?: unknown;
+		activeMs?: unknown;
+		tz?: unknown;
+		clientId?: unknown;
+		text?: unknown;
+		url?: unknown;
+		title?: unknown;
+		difficulty?: unknown;
+		sourceId?: unknown;
+		part?: unknown;
+	} | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "next") {
 		try {
@@ -58,5 +77,44 @@ export async function POST(req: Request) {
 			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 		}
 	}
-	return Response.json({ message: "action must be next or finish" }, { status: 400 });
+	if (body.action === "import") {
+		const url = typeof body.url === "string" ? body.url.slice(0, MAX_URL_CHARS) : undefined;
+		const text = typeof body.text === "string" ? body.text : undefined;
+		const title = typeof body.title === "string" ? body.title.slice(0, MAX_TITLE_CHARS) : undefined;
+		const difficulty = isReadingDifficulty(body.difficulty) ? body.difficulty : undefined;
+		try {
+			return Response.json(await importReading({ url, text, title, difficulty }));
+		} catch (err) {
+			if (err instanceof ReadImportError) return Response.json({ message: err.message }, { status: 422 });
+			return modelFailure(err);
+		}
+	}
+	if (body.action === "part") {
+		const part = Number(body.part);
+		if (!validSourceId(body.sourceId) || !Number.isInteger(part) || part < 1 || part > MAX_SOURCE_PARTS) return Response.json({ message: "sourceId and part are required" }, { status: 400 });
+		try {
+			return Response.json(await sourcePart(body.sourceId, part));
+		} catch (err) {
+			return modelFailure(err);
+		}
+	}
+	if (body.action === "remove-source") {
+		if (!validSourceId(body.sourceId)) return Response.json({ message: "sourceId is required" }, { status: 400 });
+		removeSource(body.sourceId);
+		return Response.json({ ok: true });
+	}
+	return Response.json({ message: "action must be next, finish, import, part or remove-source" }, { status: 400 });
+}
+
+const MAX_URL_CHARS = 2000;
+const MAX_TITLE_CHARS = 200;
+
+function validSourceId(id: unknown): id is string {
+	return typeof id === "string" && /^[a-z0-9][a-z0-9-]*$/.test(id);
+}
+
+function modelFailure(err: unknown): Response {
+	const message = err instanceof Error ? err.message : String(err);
+	const status = message.startsWith(UNKNOWN_TEXT) ? 404 : /No model is configured/.test(message) ? 503 : 502;
+	return Response.json({ message }, { status });
 }

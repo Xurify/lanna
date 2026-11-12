@@ -71,6 +71,7 @@ function indexEntryOf(story: StoryRecord): StoryIndexEntry {
 		coverage: story.coverage,
 		newWords: story.newWords.map((w) => w.lemma),
 		model: story.usage.model,
+		...(story.source ? { source: story.source } : {}),
 	};
 }
 

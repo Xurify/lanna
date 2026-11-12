@@ -22,7 +22,7 @@ What each page does is on the page, and the research behind each task is on **So
 | Catch the mistake | `/catch` |
 | Listen | `/listen` |
 | Today's line | `/line` |
-| Read | `/read` |
+| Read | `/read`: the library of stories, and your own articles and newsletters (a link or pasted text), retold at your level or not simplified |
 | Speak, Talk in writing | `/speak`, `/speak?mode=typed` |
 | Speed | `/speed` |
 | Sound | `/sound?id=<id>` |

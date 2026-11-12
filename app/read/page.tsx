@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
  *  word tappable, every sentence spoken, three questions at the end.
  *  ?id=<story> reopens an episode from the library; ?library=1 opens the library. The state is read
  *  with the page so the text is in the first HTML and never swaps. */
-export default async function ReadPage({ searchParams }: { searchParams: Promise<{ id?: string; library?: string }> }) {
-	const { id, library } = await searchParams;
+export default async function ReadPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+	const { id } = await searchParams;
 	let state = null;
 	let story = null;
 	try {
@@ -19,5 +19,5 @@ export default async function ReadPage({ searchParams }: { searchParams: Promise
 	} catch {
 		state = null;
 	}
-	return <Reader key={id ?? (library ? "library" : "next")} initial={state} initialStory={story} startOnShelf={!!library && !id} />;
+	return <Reader key={id ?? "library"} initial={state} initialStory={story} />;
 }

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { groupTokens, storyMeta } from "@/components/reading/reader";
+import { groupTokens, kindOf, sourceMeta, storyMeta } from "@/components/reading/reader";
 import { ROBO_EPISODES } from "../scripts/fixtures/series-episodes.ts";
 
 const tok = (text: string, word = /\p{L}/u.test(text)) => ({ text, word });
@@ -36,5 +36,18 @@ describe("the reader's text", () => {
 			const glossed = words.filter((w) => ep.glossary[w.toLocaleLowerCase("sk-SK")]).length;
 			assert.ok(glossed / words.length > 0.95, `${ep.id}: only ${glossed} of ${words.length} words glossed`);
 		}
+	});
+
+	it("a text of your own says where it is from, how far it is read and how hard it is", () => {
+		const entry = { id: "s1", title: "Test", parts: 3, written: 1, read: 0, nextPart: 1, addedAt: "2026-11-01T10:00:00Z", finished: false, shortened: false, difficulty: "level" as const };
+		assert.equal(sourceMeta({ ...entry, site: "example.com" }), "example.com · 3 parts · not started");
+		assert.equal(sourceMeta({ ...entry, read: 1, nextPart: 2 }), "part 2 of 3 is next");
+		assert.equal(sourceMeta({ ...entry, read: 3, finished: true, difficulty: "full" }), "read · 3 parts · not simplified");
+		assert.equal(sourceMeta({ ...entry, parts: 1, shortened: true, difficulty: "harder" }), "1 part · not started · a step up · a shorter version");
+	});
+
+	it("a part of your own text is named by its number", () => {
+		assert.equal(kindOf({ episode: 2, genre: "own", source: { id: "s1", title: "Test", part: 2, parts: 3 } }), "Part 2 of 3");
+		assert.equal(kindOf({ episode: 4 }), "Episode 4");
 	});
 });
