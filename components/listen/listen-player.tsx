@@ -480,14 +480,9 @@ export function ListenPlayer({
 
 						{(current || peeked) && (
 							<div className="lh-rise mt-6" data-testid="listen-sentence" data-word-lookup-enabled="true">
-								<p className="font-prose text-[24px] font-[550] leading-[1.35] tracking-[-0.025em] text-foreground sm:text-[30px]" lang={lang?.code}>
+								<p className="font-prose text-[24px] font-[550] leading-[1.35] tracking-[-0.025em] text-foreground sm:text-[30px]" lang={lang?.code} data-testid="listen-marks">
 									<Heard sentence={item.sentence} stretch={stretch} marks={current ? marksOf(current) : undefined} tag={lang?.tag} />
 								</p>
-								{current && current.verdict !== "exact" && current.given && (
-									<p className="mt-2 font-prose text-base text-ink-3" data-testid="listen-typed">
-										You typed · <span lang={lang?.code}>{current.given}</span>
-									</p>
-								)}
 								{item.stretch.length > 0 && (
 									<ul className="mt-3 flex flex-wrap gap-2" aria-label="New words">
 										{item.stretch.map((w) => (
@@ -604,18 +599,33 @@ export function ListenPlayer({
 const WORD_LINE = "underline decoration-2 underline-offset-[6px]";
 
 function Heard({ sentence, stretch, marks, tag }: { sentence: string; stretch: string[]; marks?: LineMark[]; tag?: string }) {
+	const pieces = heardPieces(sentence, { newWords: stretch, marks, tag });
 	return (
-		<>
-			{heardPieces(sentence, { newWords: stretch, marks, tag }).map((piece, i) => (
-				<span
-					key={i}
-					title={piece.mark === "missed" ? "Not typed correctly" : piece.mark === "almost" ? "The right word, an accent missing" : undefined}
-					className={cn(piece.newWord && "font-semibold text-teal-2", piece.mark === "missed" ? cn(WORD_LINE, "decoration-miss") : (piece.mark === "almost" || piece.newWord) && cn(WORD_LINE, "decoration-teal"))}
-				>
-					{piece.text}
-				</span>
-			))}
-		</>
+		<span className={cn(pieces.some((piece) => piece.given) && "leading-[calc(1.35em_+_max(11px,0.48em)_+_6px)]")}>
+			{pieces.map((piece, i) => {
+				const word = (
+					<span
+						title={piece.mark === "missed" ? (piece.given ? `You typed “${piece.given}”` : "Not typed") : piece.mark === "almost" ? "The right word, an accent missing" : undefined}
+						className={cn(
+							piece.newWord && "font-semibold text-teal-2",
+							piece.mark === "missed" && "rounded-[0.18em] bg-miss-soft px-[0.1em]",
+							(piece.mark === "almost" || (piece.newWord && piece.mark !== "missed")) && cn(WORD_LINE, "decoration-teal"),
+						)}
+					>
+						{piece.text}
+					</span>
+				);
+				if (!piece.given) return <span key={i}>{word}</span>;
+				return (
+					<ruby key={i} className="[ruby-position:under]">
+						{word}
+						<rt data-no-word-lookup="true" className={cn("pt-0.5 font-prose text-[max(11px,0.48em)] font-[450] leading-none tracking-normal", piece.mark === "missed" ? "text-miss" : "text-ink-3")}>
+							{piece.given}
+						</rt>
+					</ruby>
+				);
+			})}
+		</span>
 	);
 }
 
@@ -787,19 +797,7 @@ function ListenRows({ reps }: { reps: Rep[] }) {
 					translation={r.item.translation}
 					onPlay={() => void speak(r.item.sentence)}
 					note={
-						r.peeked ? (
-							<span>The text was shown</span>
-						) : r.verdict === "exact" ? undefined : r.verdict === "accents" ? (
-							<span>
-								Accents off: <span className="font-medium text-ink-2" lang={lang?.code}>“{r.given}”</span>
-							</span>
-						) : r.given ? (
-							<span>
-								You typed <span className="font-medium text-miss" lang={lang?.code}>“{r.given}”</span>
-							</span>
-						) : (
-							<span>Not caught</span>
-						)
+						r.peeked ? <span>The text was shown</span> : r.verdict === "exact" || r.given ? undefined : <span>Not caught</span>
 					}
 				>
 					<Heard sentence={r.item.sentence} stretch={[]} marks={marksOf(r)} tag={lang?.tag} />

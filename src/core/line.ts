@@ -17,7 +17,7 @@
 import { exampleText, type LexiconEntry } from "./review.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { judgeSentence, type ListenLookup } from "./listen.ts";
-import { alignWords, listenWords } from "./listen-analysis.ts";
+import { alignWords, listenWords, sentenceWordSpans } from "./listen-analysis.ts";
 
 export const LINE_MIN_WORDS = 5;
 export const LINE_MAX_WORDS = 12;
@@ -133,6 +133,8 @@ export interface LineMark {
 	caught: boolean;
 	/** Right word, missing accent: shown apart, not counted as caught. */
 	almost: boolean;
+	/** What was typed in its place, as typed; absent when the word was skipped. */
+	given?: string;
 }
 
 export interface LineScore {
@@ -148,12 +150,14 @@ const unaccented = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "");
  *  without its accents is marked "almost" and is not counted as caught. */
 export function scoreLine(sentence: string, typed: string): LineScore {
 	const target = listenWords(sentence);
-	const given = listenWords(typed);
+	const typedSpans = sentenceWordSpans(typed);
 	const marks: LineMark[] = [];
-	for (const op of alignWords(target, given)) {
+	let at = 0;
+	for (const op of alignWords(target, typedSpans.map((s) => s.word))) {
 		if (op.op === "match") marks.push({ word: op.target!, caught: true, almost: false });
-		else if (op.op === "sub") marks.push({ word: op.target!, caught: false, almost: unaccented(op.target!) === unaccented(op.given!) });
+		else if (op.op === "sub") marks.push({ word: op.target!, caught: false, almost: unaccented(op.target!) === unaccented(op.given!), given: typedSpans[at]!.text });
 		else if (op.op === "del") marks.push({ word: op.target!, caught: false, almost: false });
+		if (op.op !== "del") at++;
 	}
 	return { words: target.length, caught: marks.filter((m) => m.caught).length, marks };
 }
