@@ -4,6 +4,7 @@ import { SidebarToggle } from "@/components/sidebar";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
 import { StudyChart } from "@/components/experiment/study-chart";
+import { ListenInLanguage } from "@/components/experiment/listen-in-language";
 import { CHECK_ROUTE, studyLanguage, type StudyLanguage } from "@/components/experiment/study-language";
 import { EXPERIMENT_CONSTANTS, weeklyCheckRows, type CheckItemRecord, type DailyExperimentRecord, type DaySchedule, type DeviationRecord, type ExperimentConfig, type StudyAnalysis, type VerdictStatus } from "@/src/core";
 
@@ -20,6 +21,7 @@ export interface StudyPageProps {
 	study: StudyAnalysis;
 	deviations: Array<DeviationRecord & { at?: string }>;
 	today: { date: string; dayNumber: number };
+	runningLanguage: string;
 }
 
 function dayInWords(iso: string): string {
@@ -54,7 +56,7 @@ function dateOf(config: ExperimentConfig, dayNumber: number): string {
 const signedPoints = (share: number) => `${share >= 0 ? "+" : "−"}${Math.abs(share * 100).toFixed(1)}`;
 const percent = (share: number | null) => (share === null ? "—" : `${Math.round(share * 100)}%`);
 
-export function StudyPage({ config, schedule, daily, checks, study, deviations, today }: StudyPageProps) {
+export function StudyPage({ config, schedule, daily, checks, study, deviations, today, runningLanguage }: StudyPageProps) {
 	const analysis = study.regression;
 	const treatment = studyLanguage(config.languages.treatment);
 	const control = studyLanguage(config.languages.control);
@@ -73,6 +75,7 @@ export function StudyPage({ config, schedule, daily, checks, study, deviations, 
 	const recent = newestFirst.slice(0, DAYS_LISTED);
 	const earlier = newestFirst.slice(DAYS_LISTED);
 	const daysNeeded = EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE;
+	const firstShort = languages.find((l) => (daily.find((d) => d.date === today.date && d.language === l.id)?.dictationReps ?? 0) < EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY);
 
 	return (
 		<div className="relative min-h-dvh bg-background">
@@ -137,9 +140,9 @@ export function StudyPage({ config, schedule, daily, checks, study, deviations, 
 							</ul>
 							<div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 								<p className="font-prose text-[13px] text-ink-3">{openCheck ? "A weekly check is open too." : nextCheck ? `Next check: ${dayInWords(nextCheck.date)}.` : "Every weekly check is done."}</p>
-								<Link href="/listen" className={cn(SECONDARY, SMALL)}>
-									Open Listen
-								</Link>
+								<ListenInLanguage language={studyLanguage(firstShort?.id ?? treatment.id)} running={runningLanguage} className={cn(SECONDARY, SMALL)} testId="study-today-listen">
+									Open {studyLanguage(firstShort?.id ?? treatment.id).name} Listen
+								</ListenInLanguage>
 							</div>
 						</section>
 					)}

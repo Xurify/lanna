@@ -586,7 +586,7 @@ export function getExperimentState(now = new Date()) {
 	};
 }
 
-export function getTodayExperimentStatus(now = new Date()): TodayExperimentStatus | null {
+export function getTodayExperimentStatus(now = new Date(), runningLanguage = "russian"): TodayExperimentStatus | null {
 	try {
 		const { config, schedule } = ensureExperimentInitialized();
 		const todayDateStr = dayKey(now);
@@ -620,10 +620,11 @@ export function getTodayExperimentStatus(now = new Date()): TodayExperimentStatu
 			};
 		};
 
-		const languages = [config.languages.treatment, config.languages.control].map(countReps);
-		const byId = (id: string) => languages.find((l) => l.id === id) ?? countReps(id);
-		const ru = byId("russian");
-		const sk = byId("slovak");
+		const { treatment, control } = config.languages;
+		const ru = countReps(treatment);
+		const sk = countReps(control);
+		const languages = [ru, sk];
+		const runningLanguageReps = languages.find((l) => l.id === runningLanguage) ?? null;
 
 		const checks = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
 		const checkRows = weeklyCheckRows(config, checks, dayNumber);
@@ -644,9 +645,13 @@ export function getTodayExperimentStatus(now = new Date()): TodayExperimentStatu
 			weeklyCheckDue,
 			weeklyCheckCompleted,
 			weekNumber,
+			oldestOpenCheck: openCheck ? { week: openCheck.week, language: openCheck.language } : null,
 			checkLastDate: openCheck?.lastDate ?? null,
+			treatment,
+			runningLanguage,
 			validDay: languages.every((l) => l.validDay),
 			languages,
+			runningLanguageReps,
 			russian: ru,
 			slovak: sk,
 		};

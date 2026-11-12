@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
+import { ListenInLanguage } from "@/components/experiment/listen-in-language";
 import { CHECK_ROUTE, STUDY_ROUTE, studyLanguage } from "@/components/experiment/study-language";
 import { EXPERIMENT_CONSTANTS, type TodayExperimentStatus } from "@/src/core";
 
@@ -15,12 +16,14 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 
 	const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
 	const checkOpen = status.weeklyCheckDue && !status.weeklyCheckCompleted;
+	const check = status.oldestOpenCheck ?? { week: status.weekNumber, language: status.treatment };
+	const firstShort = status.languages.find((l) => !l.validDay);
 	const left = status.languages.reduce((sum, l) => sum + Math.max(0, need - l.dictationReps), 0);
 	const pill = checkOpen ? "check open" : status.validDay ? "counts" : `${left} to go`;
-	const href = checkOpen ? `${CHECK_ROUTE}?week=${status.weekNumber}&lang=${status.languages[0]?.id ?? ""}` : STUDY_ROUTE;
+	const label = `Study, day ${status.dayNumber} of ${status.totalDays}: ${pill}`;
 
-	return (
-		<Link href={href} className={ROW} data-testid="study-entry-row" aria-label={`Study, day ${status.dayNumber} of ${status.totalDays}: ${pill}`}>
+	const inner = (
+		<>
 			<QIcon name="chart" className={cn("shrink-0", status.validDay && !checkOpen ? "text-ink-3" : "text-teal")} />
 			<span className="min-w-0 flex-1">
 				<span className="block text-[15px] font-[550] tracking-[-0.006em] text-foreground">
@@ -28,7 +31,7 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 				</span>
 				{checkOpen ? (
 					<span className="block truncate text-[13px] text-ink-3">
-						The week {status.weekNumber} check is open{status.checkLastDate ? ` through ${shortDate(status.checkLastDate)}` : ""}
+						The week {check.week} check in {studyLanguage(check.language).name} is open{status.checkLastDate ? ` through ${shortDate(status.checkLastDate)}` : ""}
 					</span>
 				) : (
 					<span className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-[13px] text-ink-3" data-testid="study-entry-languages">
@@ -48,6 +51,26 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 			</span>
 			<span className={cn("q-pill shrink-0", status.validDay && !checkOpen && "grey")}>{pill}</span>
 			<QIcon name="chev" className="shrink-0 text-ink-4" />
+		</>
+	);
+
+	if (checkOpen) {
+		return (
+			<Link href={`${CHECK_ROUTE}?week=${check.week}&lang=${check.language}`} className={ROW} data-testid="study-entry-row" aria-label={label}>
+				{inner}
+			</Link>
+		);
+	}
+	if (firstShort) {
+		return (
+			<ListenInLanguage language={studyLanguage(firstShort.id)} running={status.runningLanguage} className={ROW} testId="study-entry-row">
+				{inner}
+			</ListenInLanguage>
+		);
+	}
+	return (
+		<Link href={STUDY_ROUTE} className={ROW} data-testid="study-entry-row" aria-label={label}>
+			{inner}
 		</Link>
 	);
 }

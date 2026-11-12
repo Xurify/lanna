@@ -600,9 +600,13 @@ export interface TodayExperimentStatus {
 	weeklyCheckDue: boolean;
 	weeklyCheckCompleted: boolean;
 	weekNumber: number;
+	oldestOpenCheck: { week: number; language: string } | null;
 	checkLastDate: string | null;
+	treatment: string;
+	runningLanguage: string;
 	validDay: boolean;
 	languages: StudyLanguageToday[];
+	runningLanguageReps: StudyLanguageToday | null;
 	russian: {
 		dictationReps: number;
 		understoodReps: number;

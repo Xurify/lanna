@@ -85,6 +85,7 @@ export interface ScheduledNudge {
 	languageName?: string;
 	taskKind?: string;
 	taskTitle?: string;
+	href?: string;
 	title: string;
 	message: string;
 	urgent?: boolean;
@@ -409,6 +410,7 @@ export function buildDailyNudges(options: {
 	}
 
 	if (exp?.active) {
+		const check = exp.oldestOpenCheck ?? { week: exp.weekNumber, language: exp.treatment };
 		const short = exp.languages.filter((l) => !l.validDay);
 		if (short.length > 0) {
 			const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
@@ -422,6 +424,7 @@ export function buildDailyNudges(options: {
 				languageId: first.id,
 				languageName: studyLanguageName(first.id),
 				taskKind: "listen",
+				href: "/listen",
 				taskTitle: `${need} Listen sentences`,
 				title: `Study: ${left} to go in Listen`,
 				message: `Day ${exp.dayNumber} of ${exp.totalDays} counts once each language has ${need} typed Listen sentences.`,
@@ -431,17 +434,17 @@ export function buildDailyNudges(options: {
 
 		if (exp.weeklyCheckDue && !exp.weeklyCheckCompleted) {
 			const checkTime = "19:00";
-			const treatment = exp.languages[0]?.id ?? "russian";
 			timeMap.set(checkTime, {
 				id: `nudge-study-check-${checkTime}`,
 				time: checkTime,
 				source: "experiment",
-				languageId: treatment,
-				languageName: studyLanguageName(treatment),
+				languageId: check.language,
+				languageName: studyLanguageName(check.language),
 				taskKind: "experiment",
+				href: `/experiments/input-first/check?week=${check.week}&lang=${check.language}`,
 				taskTitle: "Weekly check",
-				title: `Study: the week ${exp.weekNumber} check is open`,
-				message: `${EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK} sentences to hear and ${EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK} to say, in each language${exp.checkLastDate ? `, by ${exp.checkLastDate}` : ""}.`,
+				title: `Study: the week ${check.week} check is open`,
+				message: `${EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK} sentences to hear once and type, then ${EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK} to say${exp.checkLastDate ? `, by ${exp.checkLastDate}` : ""}.`,
 				urgent: true,
 			});
 		}
