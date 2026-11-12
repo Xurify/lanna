@@ -388,6 +388,10 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 		weeklyCheckDue: false,
 		weeklyCheckCompleted: false,
 		weekNumber: 1,
+		oldestOpenCheck: null,
+		treatment: "russian",
+		runningLanguage: "slovak",
+		runningLanguageReps: null,
 		validDay: false, // Incomplete!
 		russian: {
 			dictationReps: 2,
@@ -415,6 +419,8 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	const studyNudge = nudges.find((n) => n.source === "experiment");
 	assert.ok(studyNudge, "Should contain an experiment source nudge");
 	assert.equal(studyNudge?.taskKind, "listen");
+	assert.equal(studyNudge?.languageId, "russian", "the study nudge opens Listen in the study language, not the running one");
+	assert.equal(studyNudge?.href, "/listen");
 	assert.match(studyNudge?.title ?? "", /Study Alert: 3 dictation reps needed/);
 	assert.match(studyNudge?.message ?? "", /Day 1 of 42/);
 
@@ -423,6 +429,7 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 		...experimentStatus,
 		dayNumber: 7,
 		weekNumber: 1,
+		oldestOpenCheck: { week: 1, language: "slovak" },
 		weeklyCheckDue: true,
 		weeklyCheckCompleted: false,
 		validDay: true, // Reps done, but check pending
@@ -436,6 +443,8 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	const checkNudge = checkNudges.find((n) => n.taskKind === "experiment");
 	assert.ok(checkNudge, "Should contain weekly check alert");
 	assert.match(checkNudge?.title ?? "", /Week 1 Check Due/);
+	assert.equal(checkNudge?.href, "/experiments/input-first/check?week=1&lang=slovak", "the check nudge opens the open check, not week 1 of the treatment by default");
+	assert.doesNotMatch(checkNudge?.message ?? "", /spoken/, "the weekly check is typed");
 
 	// 3. shouldTriggerNudge fires study alert when experimentPending is true even if todayMinutes >= dailyGoal
 	const testTime = new Date("2026-11-10T20:30:00");

@@ -18,7 +18,7 @@ export function ListenInLanguage({ language, running, className, children, testI
 		);
 	}
 	return (
-		<span className="inline-flex flex-col items-end gap-1">
+		<>
 			<button
 				type="button"
 				className={className}
@@ -36,10 +36,10 @@ export function ListenInLanguage({ language, running, className, children, testI
 				{children}
 			</button>
 			{error && (
-				<span role="alert" className="max-w-64 text-end text-xs text-miss">
+				<span role="alert" className="block max-w-64 text-xs text-miss">
 					{error}
 				</span>
 			)}
-		</span>
+		</>
 	);
 }

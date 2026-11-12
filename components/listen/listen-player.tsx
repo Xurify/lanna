@@ -428,9 +428,9 @@ export function ListenPlayer({
 	const stretch = item.stretch.map((w) => w.text);
 
 	const sessionStudyReps = reps.length + (current ? 1 : 0);
-	const baseStudyReps = lang?.code === "ru" ? (initialExperiment?.russian.dictationReps ?? 0) : (initialExperiment?.slovak.dictationReps ?? 0);
-	const liveStudyReps = baseStudyReps + sessionStudyReps;
-	const studyActive = !sheet && initialExperiment?.active;
+	const studyReps = initialExperiment?.runningLanguageReps ?? null;
+	const liveStudyReps = (studyReps?.dictationReps ?? 0) + sessionStudyReps;
+	const studyActive = !sheet && initialExperiment?.active && studyReps !== null;
 
 	return (
 		<Frame strip={false}>

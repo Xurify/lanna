@@ -9,6 +9,7 @@
 
 import type { ScheduledNudge, NotificationSoundPreset } from "@/src/core";
 import { playReminderSound } from "./reminder-sound.ts";
+import { switchLanguage } from "@/components/switch-language";
 
 export type BannerAlertHandler = (nudge: ScheduledNudge) => void;
 
@@ -87,12 +88,13 @@ export async function dispatchReminderAlert(options: DispatchAlertOptions): Prom
 				notification.close();
 				if (onActionClick) {
 					onActionClick();
-				} else if (nudge.taskKind === "experiment") {
-					window.location.href = "/experiments/input-first/check";
-				} else if (nudge.taskKind === "listen") {
-					window.location.href = "/listen";
-				} else if (nudge.taskKind) {
-					window.location.href = `/#task-${encodeURIComponent(nudge.taskKind)}`;
+				} else if (nudge.taskKind || nudge.href) {
+					const target = nudge.href ?? (nudge.taskKind === "listen" ? "/listen" : `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`);
+					if (nudge.languageId) {
+						switchLanguage(nudge.languageId, nudge.languageName ?? nudge.languageId, target).catch(() => window.location.assign(target));
+					} else {
+						window.location.assign(target);
+					}
 				}
 			};
 		} catch {

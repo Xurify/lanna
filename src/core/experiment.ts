@@ -472,7 +472,16 @@ export interface TodayExperimentStatus {
 	weeklyCheckDue: boolean;
 	weeklyCheckCompleted: boolean;
 	weekNumber: number;
+	oldestOpenCheck: { week: number; language: string } | null;
+	treatment: string;
+	runningLanguage: string;
 	validDay: boolean;
+	runningLanguageReps: {
+		dictationReps: number;
+		understoodReps: number;
+		validDay: boolean;
+		firstPlayShare: number | null;
+	} | null;
 	russian: {
 		dictationReps: number;
 		understoodReps: number;
