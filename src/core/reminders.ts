@@ -408,9 +408,7 @@ export function buildDailyNudges(options: {
 		}
 	}
 
-	// 4. Study experiment alerts (if study is active and reps or weekly check pending)
 	if (exp?.active) {
-		// Daily 5 Listen dictation reps alert
 		const short = exp.languages.filter((l) => !l.validDay);
 		if (short.length > 0) {
 			const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
@@ -431,7 +429,6 @@ export function buildDailyNudges(options: {
 			});
 		}
 
-		// Weekly check alert (due on days 7, 14, 21, 28, 35, 42)
 		if (exp.weeklyCheckDue && !exp.weeklyCheckCompleted) {
 			const checkTime = "19:00";
 			const treatment = exp.languages[0]?.id ?? "russian";

@@ -1,11 +1,3 @@
-/**
- * STUDY DEVIATION LOG PINS: the app writes each deviation it can see once,
- * records the measure's files on the first day it looks, and logs a change
- * to them on a later day.
- *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
- */
-
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import * as os from "node:os";

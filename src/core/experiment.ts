@@ -80,7 +80,6 @@ export interface DailyExperimentRecord {
 
 export interface DayCovariates {
 	meanWordsPerSentence: number;
-	/** Mean lexicon frequency rank of the sentence words the lexicon knows; absent when it knows none. */
 	meanFrequencyRank?: number;
 }
 
@@ -111,7 +110,6 @@ export interface RegressionResult {
 	pValue: number; // Randomization test p-value (e.g. 1/11 = 0.0909)
 	baselineDays: number;
 	interventionDays: number;
-	/** The day covariates the model controlled for; one is left out when it does not vary across the days. */
 	covariatesUsed: CovariateName[];
 	verdictStatus: VerdictStatus;
 }
@@ -220,11 +218,6 @@ export function isFirstPlayUnderstood(rep: {
 	return rep.verdict === "exact" || rep.verdict === "accents";
 }
 
-/**
- * Calculates compliance percentage for a day on the input-first arm.
- * Allowed tasks on input-first arm: review, listen, words, read, watch.
- * Forbidden: lesson, strengthen, blitz, speak, fluency.
- */
 export function calculateCompliance(minutesBy: Record<string, number>): number {
 	const { allowed, total } = allowedAndTotal(minutesBy);
 	if (total === 0) return 100;
@@ -244,7 +237,6 @@ function allowedAndTotal(minutesBy: Record<string, number>): { allowed: number; 
 	return { allowed, total };
 }
 
-/** The covariates known on every counted day that also vary across them; a constant one cannot be told apart from the intercept. */
 export function usableCovariates(days: DailyExperimentRecord[]): CovariateName[] {
 	const valid = days.filter((d) => d.firstPlayShare !== null);
 	return COVARIATE_NAMES.filter((name) => {
@@ -255,12 +247,6 @@ export function usableCovariates(days: DailyExperimentRecord[]): CovariateName[]
 	});
 }
 
-/**
- * Fits the protocol's interrupted time series by OLS:
- * Y_t = b0 + b1 * t + b2 * D_t(k) + b3 * (t - k) * D_t(k) + c * covariates_t
- * where D_t(k) = 1 if t >= k else 0. Covariates are centered, so b0 + b1 * t
- * is the line at the mean sentence length and word frequency of the study.
- */
 export function fitInterruptedTimeSeries(days: DailyExperimentRecord[], onsetDay: number, covariates: readonly CovariateName[] = []): { b0: number; b1: number; b2: number; b3: number } | null {
 	const valid = days.filter((d) => d.firstPlayShare !== null);
 	const width = 4 + covariates.length;
@@ -315,16 +301,11 @@ function solveLinear(A: number[][], b: number[]): number[] | null {
 	return M.map((row) => row[n]!);
 }
 
-/**
- * Runs the exact permutation randomization test over the 11 candidate onsets (12..22).
- */
 export function runRandomizationTest(days: DailyExperimentRecord[], observedOnset: number): RegressionResult {
 	const valid = days.filter((d) => d.firstPlayShare !== null);
 	const baselineDays = valid.filter((d) => d.dayNumber < observedOnset).length;
 	const interventionDays = valid.filter((d) => d.dayNumber >= observedOnset).length;
 
-	// The candidates are compared under one model: a covariate set that leaves
-	// the observed fit singular is dropped for all of them.
 	let covariatesUsed = usableCovariates(days);
 	let observedFit = fitInterruptedTimeSeries(days, observedOnset, covariatesUsed);
 	if (!observedFit && covariatesUsed.length > 0) {
@@ -380,7 +361,6 @@ export interface WeeklyCheckRow {
 	date: string;
 	language: string;
 	state: "done" | "open" | "ahead" | "missed";
-	/** The last day the check can be taken: its own day plus the make-up window. */
 	lastDate: string;
 	probesUnderstood: number;
 	probesAnswered: number;
@@ -388,7 +368,6 @@ export interface WeeklyCheckRow {
 	productionMatch: number | null;
 }
 
-/** One row per week and language. A check opens on its own day and stays open through the make-up window; an item answered twice counts once, with its latest answer. */
 export function weeklyCheckRows(config: ExperimentConfig, checks: CheckItemRecord[], todayDayNumber: number): WeeklyCheckRow[] {
 	const rows: WeeklyCheckRow[] = [];
 	for (let week = 1; week <= EXPERIMENT_CONSTANTS.TOTAL_WEEKS; week++) {
@@ -415,17 +394,12 @@ export function weeklyCheckRows(config: ExperimentConfig, checks: CheckItemRecor
 	return rows;
 }
 
-/** The protocol's flags, printed beside the verdict; they never change it. */
 export interface StudyFlags {
-	/** The control's level change at the treatment's switch day, against the treatment's own. */
 	timeTrend: { controlB2: number | null; flagged: boolean };
-	/** Share of the treatment's minutes on listening-first days spent on allowed tasks. */
 	compliance: { share: number | null; flagged: boolean };
-	/** Treatment minutes a day on listening-first days, as a share of minutes a day before the switch. */
 	balance: { ratio: number | null; flagged: boolean };
 }
 
-/** Weekly checks before and after the switch, treatment only. Descriptive: it is never tested. */
 export interface SpeakingComparison {
 	baselineWeeks: number;
 	armWeeks: number;
@@ -433,7 +407,6 @@ export interface SpeakingComparison {
 	armProduction: number | null;
 	baselineProbe: number | null;
 	armProbe: number | null;
-	/** The protocol's "speaking cost (descriptive)": production fell by the threshold or more. */
 	cost: boolean;
 }
 
@@ -451,7 +424,6 @@ function fitWithUsableCovariates(days: DailyExperimentRecord[], onsetDay: number
 
 const mean = (values: number[]): number | null => (values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null);
 
-/** The whole decision of the protocol: the regression, the weeks of checks it needs, the flags and the speaking comparison. */
 export function analyzeStudy(config: ExperimentConfig, daily: DailyExperimentRecord[], checks: CheckItemRecord[], todayDayNumber: number): StudyAnalysis {
 	const { treatment, control } = config.languages;
 	const elapsed = (d: DailyExperimentRecord) => d.dayNumber <= Math.min(todayDayNumber, config.days);
@@ -495,7 +467,6 @@ export function analyzeStudy(config: ExperimentConfig, daily: DailyExperimentRec
 }
 
 export interface DeviationRecord {
-	/** One key per event, so a deviation seen on every sync is written once. */
 	key: string;
 	kind: "missed-day" | "missed-check" | "measure-changed";
 	date: string;
@@ -503,7 +474,6 @@ export interface DeviationRecord {
 	note: string;
 }
 
-/** The deviations the schedule itself can see: a past day without enough Listen in a language, and a check whose make-up window closed. */
 export function scheduleDeviations(config: ExperimentConfig, schedule: DaySchedule[], daily: DailyExperimentRecord[], checks: CheckItemRecord[], todayDayNumber: number): DeviationRecord[] {
 	const languages = [config.languages.treatment, config.languages.control];
 	const out: DeviationRecord[] = [];
@@ -618,7 +588,6 @@ export interface StudyLanguageToday {
 	firstPlayShare: number | null;
 }
 
-/** Real-time status for the current day of the experiment (for Today UI and notifications). */
 export interface TodayExperimentStatus {
 	active: boolean;
 	startDate: string;
@@ -631,11 +600,8 @@ export interface TodayExperimentStatus {
 	weeklyCheckDue: boolean;
 	weeklyCheckCompleted: boolean;
 	weekNumber: number;
-	/** The last day the open check can be taken, while one is open. */
 	checkLastDate: string | null;
-	/** True once every study language has its typed Listen sentences today. */
 	validDay: boolean;
-	/** Treatment first, then the control, each with today's Listen count. */
 	languages: StudyLanguageToday[];
 	russian: {
 		dictationReps: number;

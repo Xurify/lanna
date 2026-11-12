@@ -17,7 +17,6 @@ interface Part {
 	caption?: string;
 }
 
-/** The check's marks drawn as the task segments every other task uses (E103), so a miss reads the same here as in Review and Listen. */
 function outcomeOf(mark: TrackMark | undefined, isCurrent: boolean): PipOutcome {
 	if (mark === "right") return "right";
 	if (mark === "partly") return "almost";

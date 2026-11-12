@@ -1,9 +1,3 @@
-/**
- * The Study on Today: a row with the same anatomy as Today's line, so the
- * plan keeps the one Start on the page (E4a). It says whether today counts
- * in each study language, or that a weekly check is open, and opens it.
- */
-
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";

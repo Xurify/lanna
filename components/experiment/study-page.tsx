@@ -37,7 +37,6 @@ const RESULT_WORDS: Record<VerdictStatus, string> = {
 	no_effect_or_harm: "No clear gain",
 };
 
-/** The switch day stays unnamed until it comes: knowing it ahead lets a learner practice toward it, which the random draw is there to prevent. */
 function whereItStands(config: ExperimentConfig, todayDay: number, treatment: string): string {
 	if (todayDay < 1) return `It starts on ${dayInWords(config.startDate)}.`;
 	if (todayDay > config.days) return `It ended on ${dayInWords(config.endDate)}.`;
@@ -277,7 +276,6 @@ function Deviations({ deviations }: { deviations: Array<DeviationRecord & { at?:
 	);
 }
 
-/** The protocol's flags and the speaking comparison: printed beside the result, never changing it. */
 function ResultChecks({ study, control }: { study: StudyAnalysis; control: string }) {
 	const { timeTrend, compliance, balance } = study.flags;
 	const { speaking } = study;

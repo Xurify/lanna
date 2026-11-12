@@ -1,11 +1,3 @@
-/**
- * STUDY PROTOCOL PINS (docs/experiments/input-first-russian.md, v3): the
- * analysis does what the protocol fixed before day 1. The model holds the
- * day covariates level, the verdict needs five weeks of checks, the three
- * flags and the speaking comparison are printed beside it, a check closes
- * after its make-up days, and the deviations the schedule can see are found.
- */
-
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
@@ -72,7 +64,6 @@ function weekChecks(language: string, week: number, probesRight: number, product
 const allWeeks = (language: string, production: (week: number) => number) => Array.from({ length: 6 }, (_, i) => weekChecks(language, i + 1, 6, production(i + 1))).flat();
 
 test("the model holds sentence length level: harder sentences after the switch no longer hide the jump", () => {
-	// After the switch the sentences are two words longer, and each extra word costs 5 points.
 	const words = (d: number) => 6 + (d >= ONSET ? 2 : 0) + (d % 3);
 	const russian = days("russian", (d) => 0.5 + (d >= ONSET ? 0.2 : 0) - 0.05 * (words(d) - 6), (d) => ({ covariates: { meanWordsPerSentence: words(d) } }));
 
@@ -131,7 +122,6 @@ test("compliance and balance read the treatment's minutes on listening-first day
 
 test("speaking is compared before and after the switch, and a drop of ten points is named a cost", () => {
 	const daily = [...days("russian", () => 0.5), ...days("slovak", () => 0.5)];
-	// The switch is day 15, so the checks of weeks 1 and 2 (days 7 and 14) come before it.
 	const study = analyzeStudy(config, daily, allWeeks("russian", (w) => (w <= 2 ? 0.8 : 0.7)), 43);
 	assert.equal(study.speaking.baselineWeeks, 2);
 	assert.equal(study.speaking.armWeeks, 4);

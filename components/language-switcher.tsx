@@ -375,7 +375,6 @@ function NavItem({
 	);
 }
 
-/** The Study's nav count, read the same way as its row on Today: an open check first, then the Listen sentences still missing across both study languages. */
 function StudyBadge({ status }: { status: TodayExperimentStatus }) {
 	const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
 	const checkOpen = status.weeklyCheckDue && !status.weeklyCheckCompleted;

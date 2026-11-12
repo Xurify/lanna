@@ -315,7 +315,6 @@ export function resetExperiment(newStartDate?: string): { config: ExperimentConf
 	return { config, schedule, pool };
 }
 
-/** Reads scheduled arm for a language on a specific date. */
 export function getScheduledArmForDate(language: string, dateStr: string): "normal" | "input-first" {
 	try {
 		const { schedule } = ensureExperimentInitialized();
@@ -355,7 +354,6 @@ function readDayLessonLogs(profile: string, day: string): any[] {
 	return readJsonl(path.join(PATHS.base, "profiles", profile, "lessons", `${day}.jsonl`));
 }
 
-/** Mean lexicon frequency rank over every word of the day's sentences the lexicon knows; undefined when it knows none. */
 function meanFrequencyRank(language: string, sentences: string[]): number | undefined {
 	const lexicon = loadLexicon(language);
 	if (!lexicon) return undefined;
@@ -372,7 +370,6 @@ function meanFrequencyRank(language: string, sentences: string[]): number | unde
 
 const MEASURE_FILE = "measure.json";
 
-/** What decides whether a Listen sentence counts as understood on the first play: the grader, the picker, the player that logs replays and peeks, and both lexicons the picker draws from. `isFirstPlayUnderstood` is pinned by its test instead, because its file also holds the analysis. */
 function measureSources(config: ExperimentConfig): string[] {
 	return [
 		path.join(PATHS.root, "src", "core", "listen.ts"),
@@ -402,7 +399,6 @@ function fingerprint(files: string[]): Record<string, string> {
 	return out;
 }
 
-/** Compares the measure's files with the last check, at most once a day; the first check only records them. */
 function measureDeviations(config: ExperimentConfig, today: string): DeviationRecord[] {
 	const file = path.join(experimentDir(), MEASURE_FILE);
 	let previous: MeasureFingerprint | null = null;
@@ -428,7 +424,6 @@ function measureDeviations(config: ExperimentConfig, today: string): DeviationRe
 	];
 }
 
-/** Appends the deviations not written yet; a line written by hand without a key is kept as it is. */
 function appendDeviations(found: DeviationRecord[], now: Date): void {
 	if (found.length === 0) return;
 	const file = path.join(experimentDir(), "deviations.jsonl");
@@ -439,15 +434,10 @@ function appendDeviations(found: DeviationRecord[], now: Date): void {
 	fs.appendFileSync(file, fresh.map((d) => JSON.stringify({ ...d, at: now.toISOString() })).join("\n") + "\n", "utf8");
 }
 
-/** Every deviation recorded so far, in the order written. */
 export function readDeviations(): Array<DeviationRecord & { at?: string }> {
 	return readJsonl(path.join(experimentDir(), "deviations.jsonl"));
 }
 
-/**
- * Synchronizes daily experiment data from lesson logs and progress records.
- * Updates daily.jsonl, appends deviations and regenerates summary.md.
- */
 export function syncDailyExperimentData(now = new Date()): { daily: DailyExperimentRecord[]; summary: string } {
 	const { config, schedule } = ensureExperimentInitialized();
 	const todayDateStr = dayKey(now);
@@ -552,7 +542,6 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 	return { daily: updatedDaily, summary };
 }
 
-/** Records results from a weekly check into checks.jsonl. */
 export function recordWeeklyCheckResults(items: CheckItemRecord[]): void {
 	const dir = experimentDir();
 	const existing = readJsonl<CheckItemRecord>(path.join(dir, "checks.jsonl"));
@@ -563,7 +552,6 @@ export function recordWeeklyCheckResults(items: CheckItemRecord[]): void {
 	syncDailyExperimentData();
 }
 
-/** Returns the full experiment state for the UI. */
 export function getExperimentState(now = new Date()) {
 	const { config, schedule, pool } = ensureExperimentInitialized();
 	const { daily, summary } = syncDailyExperimentData(now);
@@ -598,7 +586,6 @@ export function getExperimentState(now = new Date()) {
 	};
 }
 
-/** Returns real-time today status for experiment (used by Today view and reminders). */
 export function getTodayExperimentStatus(now = new Date()): TodayExperimentStatus | null {
 	try {
 		const { config, schedule } = ensureExperimentInitialized();
@@ -640,7 +627,6 @@ export function getTodayExperimentStatus(now = new Date()): TodayExperimentStatu
 
 		const checks = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
 		const checkRows = weeklyCheckRows(config, checks, dayNumber);
-		// A check stays due through its make-up window, so the week is the open check's, not the calendar week.
 		const openCheck = checkRows.find((r) => r.state === "open");
 		const weekNumber = openCheck?.week ?? Math.min(EXPERIMENT_CONSTANTS.TOTAL_WEEKS, Math.max(1, Math.ceil(dayNumber / 7)));
 		const weeklyCheckDue = Boolean(openCheck);

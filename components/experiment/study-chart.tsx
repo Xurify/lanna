@@ -26,7 +26,6 @@ interface StudyChartProps {
 	todayDay: number;
 	treatment: StudyLanguage;
 	control: StudyLanguage;
-	/** Null until the switch has come: the chart then marks only the days it can fall on. */
 	onsetDay: number | null;
 	switchWindow: { from: number; to: number };
 	switchLabel: string;
