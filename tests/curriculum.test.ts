@@ -221,6 +221,12 @@ test("the daily plan: only a spoken scene or a tutor session ticks Speak; a weak
 	assert.equal(task(carried, "read")!.from, undefined);
 	assert.equal(carried.total, plain.total);
 	assert.equal(carried.minutes, plain.minutes);
+
+	// The Read task names its story; with none written yet it says what it will be.
+	assert.equal(task(dailyPlan({ ...base, story: "Robo na trhu", day: day() }), "read")!.title, "Read: Robo na trhu");
+	assert.equal(task(dailyPlan({ ...base, story: "Robo na trhu", day: day({ reads: 1 }) }), "read")!.line, "Read today");
+	assert.equal(task(plain, "read")!.title, "Read");
+	assert.match(task(plain, "read")!.line, /^Read the next part of the story/);
 });
 
 test("a tutor unit's prompt carries its brief and the answer-first doctrine", () => {

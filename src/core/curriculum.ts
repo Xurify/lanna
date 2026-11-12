@@ -717,6 +717,8 @@ interface PlanInput {
 	watch?: { id: string; title: string; minutes: number; coverage?: number; estimated?: boolean; captionLang?: string };
 	/** An episode read before today exists, so a timed re-read is possible. */
 	reread?: boolean;
+	/** The story's title: the one read today, else the one /read opens next; absent while none is written. */
+	story?: string;
 	/** Unfinished tasks from earlier days (src/core/carry-over.ts): the ones
 	 *  this plan offers again move to the top, labeled with their day. */
 	carried?: Array<{ id: string; from: string }>;
@@ -873,12 +875,13 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	// 6. Read: an episode at the learner's level (src/core/reading.ts) —
 	//    easy graded reading at ~97% known words, the input the plan had
 	//    none of, where words are met again between lessons.
+	const readDone = (day.reads ?? 0) > 0;
 	tasks.push({
 		id: "read",
-		title: "Read",
-		line: (day.reads ?? 0) > 0 ? "Read today's part of the story" : "Read the next part of the story — tap any word for its meaning",
+		title: input.story ? `Read: ${input.story}` : "Read",
+		line: input.story ? (readDone ? "Read today" : "Tap any word for its meaning") : readDone ? "Read today's part of the story" : "Read the next part of the story — tap any word for its meaning",
 		minutes: TASK_MINUTES.read,
-		done: (day.reads ?? 0) > 0,
+		done: readDone,
 		href: "/read",
 	});
 
