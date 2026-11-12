@@ -24,7 +24,7 @@
 - `src/core/mixups.ts`: the record, the prediction rules, the Mix-ups lesson and the tutor line. `progress.json` keeps `mixups`; the lesson log has a `mixups` mode.
 - `/lesson?mode=mixups`: the Mix-ups lesson. It moves no unit on the path.
 - Today: a "Words you mix up" card with the open pairs, the predicted ones and one "Practice them" link. The plan's Strengthen task takes the Mix-ups lesson when there is no weak spot on record.
-- Decision E24 in [../DECISIONS.md](../DECISIONS.md).
+- Decision [E24](../decisions/E24-mix-ups-are-kept-per-pair-of.md).
 
 ## Limits
 
@@ -34,7 +34,7 @@
 - Exam picks and Speak corrections do not feed mix-ups yet. Catch the mistake answers do (one answer per item, so each is a first try).
 - A pair mended before the two-day rule existed has no days on record, so it shows as open again until right first tries on two days are counted.
 - The guide may suggest pairs no family names (E26). They enter as probes, so the same rule holds: a guess is tested before it is taught.
-- The trend is a comparison of two windows of first tries, not a model of learning. It needs six first tries on each side and a difference a two-proportion z-test would not put down to chance. A unit's score is shown with its 95% Wilson range under twenty first tries, and a unit is called weak only when that whole range is under 85%. The page is E24 in [../DECISIONS.md](../DECISIONS.md).
+- The trend is a comparison of two windows of first tries, not a model of learning. It needs six first tries on each side and a difference a two-proportion z-test would not put down to chance. A unit's score is shown with its 95% Wilson range under twenty first tries, and a unit is called weak only when that whole range is under 85%. The page is [E24](../decisions/E24-mix-ups-are-kept-per-pair-of.md).
 
 ## Sources
 

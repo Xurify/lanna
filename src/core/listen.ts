@@ -10,7 +10,7 @@
  * (dictation, Clozemaster-style). It is graded like a lesson's listening
  * rep (compareAnswer: exact, accents-only, wrong), and an accents-only
  * answer earns half XP, as in the lessons. No grammar grading. Since
- * 2026-11-03 typing is the only way to answer (docs/DECISIONS.md E38): a
+ * 2026-11-03 typing is the only way to answer (decision E38): a
  * picked meaning could not say why a sentence was missed. "pick" stays in
  * the type for the sessions logged before.
  *

@@ -5,7 +5,7 @@ description: How a LangHarness pull request description is written and what it c
 
 # Pull request description
 
-The rule is `docs/DECISIONS.md` → **W5**; the shape is `.github/pull_request_template.md`. This repo's PRs are reviewed by the owner on a local app, with no preview URL and no CI (W3), so the description has to carry what a preview would: pictures of the change, how to see it, and where it lives.
+The rule is **W5** (`docs/decisions/W5-a-pull-request-shows-the-change-before.md`); the shape is `.github/pull_request_template.md`. This repo's PRs are reviewed by the owner on a local app, with no preview URL and no CI (W3), so the description has to carry what a preview would: pictures of the change, how to see it, and where it lives.
 
 ## Steps
 
