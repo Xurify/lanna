@@ -20,6 +20,7 @@ import { listAudioClips } from "../store/corpus.ts";
 import { storyStore } from "../store/stories.ts";
 import { speakStore } from "../store/speak.ts";
 import { placementStore } from "../store/placement.ts";
+import { wordCheckStore } from "../store/word-check.ts";
 import { videoStore } from "../store/videos.ts";
 import { jobCost, turnCost } from "./pricing.ts";
 import { stores } from "./stores.ts";
@@ -204,6 +205,17 @@ export function usageReport(now = new Date()): UsageReport {
 			addMonth(e.startedAt, usd);
 		}
 	}
+	let wordChecksUsd = 0;
+	let wordChecksUnpriced = 0;
+	const markedWordChecks = wordCheckStore.sessions().filter((s) => s.usage && s.usage.steps.length > 0);
+	for (const s of markedWordChecks) {
+		const usd = safeTurnCost(s.usage!);
+		if (usd === null) wordChecksUnpriced++;
+		else {
+			wordChecksUsd += usd;
+			addMonth(s.startedAt, usd);
+		}
+	}
 	// What adding a language paid a model for (the course and the story
 	// bible, kept beside its build steps): one line per language.
 	let languagesUsd = 0;
@@ -244,7 +256,7 @@ export function usageReport(now = new Date()): UsageReport {
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
-		totalUsd: round(turnsUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd + languagesUsd),
+		totalUsd: round(turnsUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd + wordChecksUsd + languagesUsd),
 		turnsUsd: round(turnsUsd),
 		jobsUsd: round(jobsUsd),
 		storiesUsd: round(storiesUsd),
@@ -255,6 +267,8 @@ export function usageReport(now = new Date()): UsageReport {
 		videos: { count: videoIndex.length, unpriced: videosUnpriced },
 		placementUsd: round(placementUsd),
 		placement: { count: placementIndex.length, unpriced: placementUnpriced },
+		wordChecksUsd: round(wordChecksUsd),
+		wordChecks: { count: markedWordChecks.length, unpriced: wordChecksUnpriced },
 		languagesUsd: round(languagesUsd),
 		languages: { count: languagesCount, unpriced: languagesUnpriced },
 		unpricedTurns,

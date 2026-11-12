@@ -43,6 +43,7 @@ import { readLessonLog } from "../store/corpus.ts";
 import { milestoneStore, type CustomMilestoneRecord } from "../store/milestones.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
+import { latestMeasuredVocabulary } from "../store/word-check.ts";
 import { DEFAULT_DAYS_PER_WEEK } from "../core/onboarding.ts";
 import { aiMissing, aiStatus, friendlyAiError } from "./ai-status.ts";
 import { frequencyOrder, storyEngine } from "./reading.ts";
@@ -85,7 +86,7 @@ export function wordSets(lexicon: Lexicon | null): WordSets {
 	// good, and to credit the whole band of the level being entered.)
 	const placed = !!goal.placedAt;
 	const level: Cefr = state.level;
-	const measured = goal.vocabulary;
+	const measured = latestMeasuredVocabulary(goal.vocabulary);
 	const credited = creditedWords(measured, level, state.levelProgress);
 	const met = new Set<string>();
 	let solid = 0;

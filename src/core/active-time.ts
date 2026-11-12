@@ -15,9 +15,9 @@
  * same seconds twice. Pure and browser-safe; the server side is `addMinutes`.
  */
 
-export type TimedActivity = "lesson" | "blitz" | "review" | "placement" | "listen" | "read" | "watch" | "speak" | "reread" | "fast";
+export type TimedActivity = "lesson" | "blitz" | "review" | "placement" | "wordcheck" | "listen" | "read" | "watch" | "speak" | "reread" | "fast";
 
-export const TIMED_ACTIVITIES: readonly TimedActivity[] = ["lesson", "blitz", "review", "placement", "listen", "read", "watch", "speak", "reread", "fast"];
+export const TIMED_ACTIVITIES: readonly TimedActivity[] = ["lesson", "blitz", "review", "placement", "wordcheck", "listen", "read", "watch", "speak", "reread", "fast"];
 
 export function isTimedActivity(v: unknown): v is TimedActivity {
 	return typeof v === "string" && (TIMED_ACTIVITIES as readonly string[]).includes(v);
@@ -27,7 +27,7 @@ export function isTimedActivity(v: unknown): v is TimedActivity {
  *  tab, not the measurement itself. */
 /** Watch's cap is the longest video the app takes (90 min, MAX_VIDEO_SEC): a watching counts the
  *  video's playing time, so one send can never be longer than the video. */
-export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, listen: 20, read: 20, watch: 90, speak: 20, reread: 10, fast: 10 };
+export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, wordcheck: 15, listen: 20, read: 20, watch: 90, speak: 20, reread: 10, fast: 10 };
 
 /** What a day's ledger holds (src/store/progress.ts DayRecord). */
 interface MinutesLedger {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { WordBankPage, type WordsTab } from "@/components/words/word-bank-page";
 import { WORDS_PAGE_SIZE } from "@/components/words/page-size";
-import { getWordBank } from "@/src/server";
+import { getWordBank, wordEstimateReport } from "@/src/server";
 
 export const metadata: Metadata = {
 	title: "Words",
@@ -22,5 +22,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
 	} catch {
 		firstWords = null;
 	}
-	return <WordBankPage initialWords={firstWords} initialTab={initialTab} initialSheet={initialTab === "cheatsheets" ? sheet : undefined} initialSearch={initialTab === "words" ? search : undefined} />;
+	let firstEstimate = null;
+	try {
+		firstEstimate = wordEstimateReport();
+	} catch {
+		firstEstimate = null;
+	}
+	return <WordBankPage initialWords={firstWords} initialEstimate={firstEstimate} initialTab={initialTab} initialSheet={initialTab === "cheatsheets" ? sheet : undefined} initialSearch={initialTab === "words" ? search : undefined} />;
 }

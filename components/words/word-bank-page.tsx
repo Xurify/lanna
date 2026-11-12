@@ -7,16 +7,17 @@ import { BookOpenIcon, BookmarkCheckIcon, FileTextIcon, BookmarkIcon, PlusIcon, 
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
-import type { SavedPhrase, WordBankItem, WordBankSummary } from "@/src/core";
+import type { SavedPhrase, WordBankItem, WordBankSummary, WordEstimateReport } from "@/src/core";
 import { WORDS_PAGE_SIZE } from "@/components/words/page-size";
 import { fillStyle } from "@/components/ui/fill";
 import { CheatsheetsTab } from "@/components/words/cheatsheets";
+import { WordEstimatePanel } from "@/components/words/word-estimate-panel";
 
 const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
 export type WordsTab = "words" | "phrases" | "cheatsheets";
 
-export function WordBankPage({ initialTab = "words", initialSheet, initialSearch, initialWords = null }: { initialTab?: WordsTab; initialSheet?: string; initialSearch?: string; initialWords?: { items: WordBankItem[]; total: number; summary: WordBankSummary } | null }) {
+export function WordBankPage({ initialTab = "words", initialSheet, initialSearch, initialWords = null, initialEstimate = null }: { initialTab?: WordsTab; initialSheet?: string; initialSearch?: string; initialWords?: { items: WordBankItem[]; total: number; summary: WordBankSummary } | null; initialEstimate?: WordEstimateReport | null }) {
 	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
@@ -221,35 +222,17 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 			<div className={COLUMN}>
 				{!sheetOpen && (
 					<>
-						<div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-							<div className="min-w-0">
-								<h1 className="font-title text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Words</h1>
-								<p className="q-legend min-h-5" data-testid="words-summary">
-									{summary && (
-										<>
-											<span title="Cards in Review that you have answered at least once and that the scheduler predicts you can recall at 80% or more. It is not a count of all the words you know.">
-												<b className="tabular-nums">{summary.wordsMastered}</b> can recall at 80%+
-											</span>
-											<span>
-												<b className="tabular-nums">{summary.wordsLearning}</b> in progress
-											</span>
-											<span>
-												<b className="tabular-nums">{summary.wordsFavorited}</b> {summary.wordsFavorited === 1 ? "favorite" : "favorites"}
-											</span>
-											<span>
-												<b className="tabular-nums">{summary.savedPhrasesCount}</b> {summary.savedPhrasesCount === 1 ? "saved phrase" : "saved phrases"}
-											</span>
-										</>
-									)}
-								</p>
-							</div>
+						<div className="mb-5 flex min-h-11 items-center justify-between gap-3">
+							<h1 className="font-title text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Words</h1>
 							{summary && summary.wordsDue > 0 && (
-								<Link href="/review" className="q-btn sec self-start md:self-auto pointer-coarse:min-h-11">
+								<Link href="/review" className="q-btn sec pointer-coarse:min-h-11">
 									<RepeatIcon className="size-4" />
 									{summary.wordsDue} due for review
 								</Link>
 							)}
 						</div>
+
+						<WordEstimatePanel initial={initialEstimate} />
 
 						{/* Primary Tab Selector */}
 						<div className="mb-6 flex overflow-x-auto border-b border-border/80">
@@ -359,12 +342,12 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 						{/* Status Filters Bar */}
 						<div className="flex flex-wrap items-center gap-1.5 font-ui text-xs font-semibold">
 							{[
-								{ id: "all", label: "All" },
-								{ id: "favorite", label: "Favorites" },
-								{ id: "mastered", label: "Can recall (≥80%)" },
-								{ id: "learning", label: "In progress" },
-								{ id: "due", label: "Due for review" },
-								{ id: "new", label: "New in the deck" },
+								{ id: "all", label: "All", count: undefined },
+								{ id: "favorite", label: "Favorites", count: summary?.wordsFavorited },
+								{ id: "mastered", label: "Can recall (≥80%)", count: summary?.wordsMastered },
+								{ id: "learning", label: "In progress", count: summary?.wordsLearning },
+								{ id: "due", label: "Due for review", count: summary?.wordsDue },
+								{ id: "new", label: "New in the deck", count: undefined },
 							].map((tab) => (
 								<button
 									key={tab.id}
@@ -378,6 +361,7 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 									)}
 								>
 									{tab.label}
+									{tab.count !== undefined && <span className="ml-1.5 font-normal tabular-nums opacity-80">{tab.count}</span>}
 								</button>
 							))}
 						</div>

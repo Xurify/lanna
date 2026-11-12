@@ -45,6 +45,9 @@ export interface UsageReport {
 	/** Placement checks (src/server/placement.ts): judged answers + the Socratic stage, USD. */
 	placementUsd?: number;
 	placement?: { count: number; unpriced: number };
+	/** Word checks (src/server/word-estimate.ts): typed meanings the dictionary words differently, marked by a model, USD. */
+	wordChecksUsd?: number;
+	wordChecks?: { count: number; unpriced: number };
 	/** Courses and story bibles written while adding a language (src/server/language-add.ts), USD. */
 	languagesUsd?: number;
 	languages?: { count: number; unpriced: number };

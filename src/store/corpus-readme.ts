@@ -99,6 +99,17 @@ where the format is not obvious.
 - \`known.json\`: the words you marked as known (I know this): each word's
   slug, dictionary form and when, and \`updatedAt\`. They count as known
   wherever the app measures what you know.
+- \`word-check/\`: the word check under Words. \`answers.jsonl\` is one line
+  per word asked (the word, its place in the frequency order, the meaning
+  you typed or null for "I don't know", the verdict, whether the
+  dictionary or a model marked it, the model's note, when);
+  \`sessions.jsonl\` is one line per check (how many you knew, how many
+  answers nobody could mark, the estimate and its range before and after,
+  what the model cost); \`history.json\` keeps the estimate of words you
+  know per day with its parts (Review, marked, checked, estimated);
+  \`judgements.json\` keeps every verdict a model gave on a typed meaning,
+  so the same answer is never sent twice; \`open.json\` is a check in
+  progress.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
   correct answers, plus the first-try tallies the grammar atlas and the
   tutor read (\`first\`, split \`byGender\` in Slovak and \`byForm\`, by case
@@ -191,6 +202,16 @@ story at your level, each paid for once and kept here for good.
   \`correct\`/\`total\` on the comprehension check, \`answers\` (the option
   picked per question, -1 = skipped), \`tapped\` (the words you looked up),
   \`queued\` (the words sent to the review deck), \`xp\`.
+- \`sources/<id>.json\`: a text of your own (an article, a newsletter, a
+  pasted email) as it was added: \`title\`, \`url\` and \`site\` when it came
+  from a link, \`text\` (as read from the page or pasted), \`wordCount\`,
+  \`sections[]\` (the text cut into parts), \`level\` (your level when it was
+  added), \`difficulty\` (\`level\`: retold at your level, \`harder\`: one level
+  up, \`full\`: not simplified), \`addedAt\`, \`truncated\` (the text was over
+  the word limit and was cut) and \`removedAt\` (you removed it from the
+  library; nothing is deleted). Each part is a story file like any other,
+  named \`<id>-pNN.json\`, with \`source\` (which text and which part) and
+  \`original\` (the section of your text it was written from).
 
 The sentences\' audio is in \`../../../audio/\` like every other clip.
 `;
