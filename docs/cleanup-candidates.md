@@ -53,7 +53,6 @@ Nothing proposed. `src/agent/prompts/language/10-russian.md`, `src/core/language
 
 | Candidate | Notes |
 |---|---|
-| `README.md` | Still the upstream LearnHarness README (banners, screenshots of the teaching session and knowledge graph). `LANGHARNESS.md` is the real description. Needs a rewrite, not a deletion. |
 | `docs/archive/architecture-2026-09-08.md`, `docs/plan.md`, `docs/release-0.3.md`, `docs/probe-teach-split.md`, `docs/compaction-accounting.md`, `docs/tool-content-recovery.md`, `docs/pi-engine-swap.md` | Upstream history. About 850 lines. Each says it is historical or a decision record; `docs/architecture.md` links the archive. |
 | `docs/architecture.md` (577 lines) | Describes the upstream graph and classroom system as if it were the whole app. It is accurate for what still runs, but it does not mention Today, the strands, or the corpus. |
 | `docs/assets/lh_banner_*.svg` | Source art for the README banners; the PNGs the README uses are separate. |

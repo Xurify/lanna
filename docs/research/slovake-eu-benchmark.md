@@ -1,6 +1,6 @@
 # slovake.eu: what a free course does that we don't
 
-Date: 2026-10-30. Question: what should LangHarness copy from the structure of slovake.eu's course, and what should it leave alone? Rule [W4](../decisions/W4-research-notes-live-in-the-repo.md): sources are listed here, and the index in [README.md](README.md) is updated.
+Date: 2026-10-30. Question: what should LangHarness copy from the structure of slovake.eu's course, and what should it leave alone? Rule W4: sources are listed here, and the index in [README.md](README.md) is updated.
 
 ## Sources and method
 
@@ -51,7 +51,7 @@ Two corrections to my first answer. I said "roughly 60 chapters"; the count is 4
 
 ## Where we stand
 
-Our engine is stronger on everything the course lacks: FSRS review, the adaptive placement, graded help, the four strands, and honest numbers ([P1 to P9](../decisions/README.md)). The curriculum is weaker. Units are named after grammar IDs (`acc-fem`, `loc`). The 19 chapters are labels over drill types. Talk and Story had two implementations, which PR #37 fixes. There is no pronunciation track, no contrast pair drill and no grammar reference.
+Our engine is stronger on everything the course lacks: FSRS review, the adaptive placement, graded help, the four strands, and honest numbers (P1 to P9). The curriculum is weaker. Units are named after grammar IDs (`acc-fem`, `loc`). The 19 chapters are labels over drill types. Talk and Story had two implementations, which PR #37 fixes. There is no pronunciation track, no contrast pair drill and no grammar reference.
 
 ## Mapping
 
@@ -61,8 +61,8 @@ Our engine is stronger on everything the course lacks: FSRS review, the adaptive
 | A story with named characters | Read episodes of Robo in Bratislava (`src/core/reading.ts`), not tied to chapters | no cast shared across tasks | B. Story bible |
 | Contrast pairs as steps | none | pairs are not drilled | C. Dvojičky |
 | A situational exercise | six Speak scenes (`src/core/speak.ts`), one per goal | no scripted version before the live one | D. Scripted scenes |
-| A pronunciation step per chapter | Speak and Say it faster score clarity (Azure, or transcript matching; LANGHARNESS.md) | no sound-focused item | E. Zvuk |
-| A final test | unit completion, [E3](../decisions/E3-unit-completion-rule.md) | no mixed chapter test | F. Skúška and "I can" lines |
+| A pronunciation step per chapter | Speak and Say it faster score clarity (Azure, or transcript matching; README.md) | no sound-focused item | E. Zvuk |
+| A final test | unit completion, E3 | no mixed chapter test | F. Skúška and "I can" lines |
 | A grammar reference | none; `/map` is a concept graph | no reference page | G. Grammar atlas |
 | Culture texts | none | no calendar or culture content | H. Calendar |
 | Slovak interface at higher levels | English interface with bridges (P6) | not used as input | H. Calendar (quick win) |

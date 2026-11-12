@@ -76,7 +76,7 @@ This tries the real phone experience before anything moves. The checks below app
 
 ## Phase 1: make the server ready to live somewhere else (agents in the cloud, alongside phase 0)
 
-Each item is its own branch and pull request, tested on a scratch data folder (E6) and recorded in `docs/decisions/`.
+Each item is its own branch and pull request, tested on a scratch data folder (E6) and its reasons are written in its description.
 
 | # | Work | Why | Size |
 |---|---|---|---|
@@ -124,7 +124,7 @@ Each item is its own branch and pull request, tested on a scratch data folder (E
 
 Study as normal for seven days, mostly on the phone and the iPad. Agents read the server's log once at the end of the week; the owner reports anything odd as it happens. The fallbacks are `npm run remote:off` inside the container and a switch back to the previous image.
 
-**Phase 3 is done when** the "Done means" line at the top holds. Then record where the server lives in a new file in `docs/decisions/`, and mark E7, E20 and E21 as changed by it.
+**Phase 3 is done when** the "Done means" line at the top holds. Then record where the server lives in `README.md`.
 
 ## Costs
 
@@ -200,7 +200,7 @@ The pieces already in place carry most of the weight. The device session from E2
 
 ### W, what changes in the rules
 
-E7 (data stays local) and E21 (no public address; Funnel refused; no third party holding the keys and data) are reversed for this deployment. The keys and the data move to the owner's own VPS, and the app becomes reachable from the internet behind a sign-in. When W ships, record that in a new file in `docs/decisions/`: why, what protects it (W1–W3), and that Tailscale stays available.
+E7 (data stays local) and E21 (no public address; Funnel refused; no third party holding the keys and data) are reversed for this deployment. The keys and the data move to the owner's own VPS, and the app becomes reachable from the internet behind a sign-in. When W ships, record in its pull request: why, what protects it (W1–W3), and that Tailscale stays available.
 
 ### W, for other learners later
 

@@ -4,7 +4,7 @@ This guide is for the owner. It turns on the app for your own phone and iPad whi
 
 To keep the server running while the PC is off, see [server.md](server.md).
 
-The rules behind it are in [E21](decisions/E21-remote-access-is-off-by-default-and.md) and the research in [research/remote-access.md](research/remote-access.md).
+The rules behind it are in E21 and the research in [research/remote-access.md](research/remote-access.md).
 
 To serve the app at a public address of its own, behind a password, with no Tailscale on the phone, see [At a public address](#at-a-public-address-a-server-with-a-domain) at the end.
 
@@ -66,7 +66,7 @@ Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's h
 
 ## At a public address (a server with a domain)
 
-For a server that is always on, such as a VPS: the app at `https://learn.example.com`, a password instead of a pairing code, and no Tailscale app on the phone. The rules are in [E93](decisions/E93-the-app-can-be-served-at-a.md). Everything below was run locally against nginx 1.24 on plain HTTP; a real domain, certificate and phone have not been tried.
+For a server that is always on, such as a VPS: the app at `https://learn.example.com`, a password instead of a pairing code, and no Tailscale app on the phone. The rules are in E93. Everything below was run locally against nginx 1.24 on plain HTTP; a real domain, certificate and phone have not been tried.
 
 1. **Keep the app on the server's own loopback.** It listens on `127.0.0.1:3010`; only the reverse proxy reaches it. Do not publish the port.
 2. **Make a secret for the proxy** and set both variables where the app starts (the environment, or `.env.local` beside it). The secret is at least 32 characters, and only the proxy and the app know it:

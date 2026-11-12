@@ -1,6 +1,6 @@
 # Can a model explain a Review miss on another word, from the app's own evidence?
 
-2026-11-11, branch `feat/review-miss-contrast-ai`. The question after [review-miss-explains-from-the-apps-own-data](../decisions/review-miss-explains-from-the-apps-own-data.md): 62.3% of common word pairs that share a meaning get only an example sentence when a learner types one for the other. Can the Cheap slot write a note on what tells them apart without stating a rule from memory, and what does it cost?
+2026-11-11, branch `feat/review-miss-contrast-ai`. The question after the data-only contrasts of PR #190: 62.3% of common word pairs that share a meaning get only an example sentence when a learner types one for the other. Can the Cheap slot write a note on what tells them apart without stating a rule from memory, and what does it cost?
 
 ## Method
 

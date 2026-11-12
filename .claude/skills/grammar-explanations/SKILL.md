@@ -5,7 +5,7 @@ description: "How LangHarness writes an explanation of a Slovak grammar rule (a 
 
 # Grammar explanations
 
-The owner's rule (2026-11-08, rule E74 (`docs/decisions/E74-a-grammar-claim-is-sourced-complete-labeled.md`)): the grammar text must be right, complete and clear, and a missed case is a bug, not a polish item. The case walk-throughs shipped with all of these wrong at first: a letter list written from memory, three genders where the language has more patterns, "hard noun" and "men" with no meaning for a learner, "learn which with each word" for something that has a rule, and an unlabeled `do Žiliny, v Žiline, Žilinu` that read as one case.
+The owner's rule (2026-11-08, rule E74): the grammar text must be right, complete and clear, and a missed case is a bug, not a polish item. The case walk-throughs shipped with all of these wrong at first: a letter list written from memory, three genders where the language has more patterns, "hard noun" and "men" with no meaning for a learner, "learn which with each word" for something that has a rule, and an unlabeled `do Žiliny, v Žiline, Žilinu` that read as one case.
 
 Use it twice: once **before** you write (sources, scope), once **after** (the checks at the bottom).
 
