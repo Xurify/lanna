@@ -1379,3 +1379,17 @@ The owner, after E103: "should it be plain code though?", then "Can we find ways
 **Measured:** `npm run miss:coverage` counts every pair of lexicon words that share a meaning and that grading does not accept as a variant. On 2026-11-11, for pairs where both words are common (a function word, or rank ≤ 300; 950 pairs): rule 2.3%, parts of speech 15.2%, meaning note 19.8%, question 0.4%, example only 62.3%. Before this, everything past the example was 0%. The script lists the uncovered common pairs, commonest first (v/na, z/od, pre/za, len/iba, krajina/štát…): that list is the queue for new rules in `pairs.json`, written with a source like every other rule there.
 
 **Not done:** no model writes a contrast. The remaining pairs are mostly prepositions and near-synonyms, where a rule written without a source would be a guess; a cached, source-checked note per pair the learner actually mixes up (the mixups record) is the next step, if the queue shows it is needed.
+
+### E105. Where no rule exists, an AI note on the pair, written once from the lexicon's own sentences and checked before it is shown (2026-11-11, branch `feat/review-miss-contrast-ai`, a prototype for the owner's decision)
+
+The owner, on the 62.3% of E104's pairs left with an example sentence: coverage "for almost everything", decided on evidence: AI, no AI, or a compromise. The owner has caught many wrong grammar rules, so a note may say only what the app's own data shows.
+
+**Why:** on 42 graded pairs ([research/miss-note-eval.md](research/miss-note-eval.md)) the Cheap slot, given only the two glosses and up to five verified sentences per word, wrote 30 notes that passed both checks: 27 correct, 2 vague, 1 partly wrong, and no invented form or rule. It said "no clear difference" for 8 pairs, honestly for synonyms. All 6 notes on curated pairs agreed with the hand-written rule. One pair costs about $0.006 and 5 seconds.
+
+**How to apply:**
+- **Once per pair, on the first real miss:** only when the two words share a meaning and the card has nothing better than an example sentence (`wantsAiNote`, `src/core/review-miss.ts`), and each word has at least two verified sentences. The card shows at once; the note follows (`/api/review/miss?…&note=write`). Never a call per miss.
+- **Evidence only:** `missNoteBrief` (`src/core/miss-note.ts`) gives glosses, parts of speech and sentences that hold only one of the two words, and asks for "no clear difference" rather than a guess.
+- **Checked in code, then judged:** `verifyMissNote` keeps a note only when every Slovak word in it is in the evidence, both words are named, no grammar category is named that the evidence does not name, and its citations exist. A second call judges it against the same evidence; the strict wording rejected 4 correct notes in 29, the soft one none in 34.
+- **Kept, whatever the outcome:** `data/profiles/<language>/miss-notes.json`, one record per pair (E1): the reply, kept, none or rejected and why, the judge's verdict, cost and time. A pair is never asked twice.
+- **Labeled:** the card shows the note with the Slovak words in bold and "AI note from the dictionary's sentences, not checked by a person." A curated rule still wins.
+- **Open:** whether to batch the 296 common pairs (under $2) into a curriculum file the owner reads first; register and diminutives (dačo, trošku) are out of reach, because the lexicon never names them.

@@ -22,6 +22,8 @@ export interface MissWord {
 	rule?: string;
 	aspect?: { perfective: string; imperfective: string; chapter: string; rule?: string };
 	reference?: ReferenceContrast;
+	note?: string;
+	notePending?: boolean;
 	example?: MissExample;
 }
 
@@ -96,6 +98,8 @@ export function missWordOf(
 		typed: string;
 		isLemma: boolean;
 		language: string;
+		note?: string;
+		noteCanBeWritten?: boolean;
 		reference?: { units: readonly ReferenceUnit[]; aspectPairs: ReadonlyArray<AspectPair & { chapter: string }> } | null;
 	},
 	tag = "sk-SK",
@@ -110,7 +114,7 @@ export function missWordOf(
 	const aspect = pair && { perfective: pair.perfective, imperfective: pair.imperfective, chapter: pair.chapter, ...(theAspectRule ? { rule: theAspectRule } : {}) };
 	const reference = !rule && !aspect && opts.reference ? referenceContrast(opts.reference.units, card.lemma, otherLemma, tag) : undefined;
 	const example = contrastExample(other.examples, opts.typed, tag);
-	return {
+	const word: MissWord = {
 		lemma: otherLemma,
 		gloss: shortGloss(other.en),
 		isLemma: opts.isLemma,
@@ -122,14 +126,23 @@ export function missWordOf(
 		...(reference ? { reference } : {}),
 		...(example ? { example } : {}),
 	};
+	if (!wantsAiNote(word)) return word;
+	if (opts.note) return { ...word, note: opts.note };
+	return opts.noteCanBeWritten ? { ...word, notePending: true } : word;
 }
 
-export type ContrastSource = "rule" | "aspect pair" | "reference" | "part of speech" | "meaning note" | "question" | "example" | "none";
+export function wantsAiNote(word: MissWord): boolean {
+	const source = contrastSource(word, false);
+	return Boolean(word.alsoMeans) && (source === "example" || source === "question" || source === "none");
+}
+
+export type ContrastSource = "rule" | "aspect pair" | "reference" | "ai note" | "part of speech" | "meaning note" | "question" | "example" | "none";
 
 export function contrastSource(word: MissWord, cardAsks: boolean): ContrastSource {
 	if (word.rule) return "rule";
 	if (word.aspect) return "aspect pair";
 	if (word.reference) return "reference";
+	if (word.note) return "ai note";
 	if (word.partOfSpeech) return "part of speech";
 	if (word.alsoMeans && word.hereMeans && word.alsoMeans !== word.hereMeans && /\(/.test(word.alsoMeans + word.hereMeans)) return "meaning note";
 	if (word.example && Boolean(word.example.asks) !== cardAsks) return "question";

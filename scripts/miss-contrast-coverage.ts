@@ -47,7 +47,7 @@ const pairs = new Map<string, [LexiconEntry, LexiconEntry]>();
 const gradedRight = (card: LexiconEntry, other: LexiconEntry) => isVariantMatch(entryLemma(card), entryLemma(other), tag);
 for (const list of bySense.values()) for (const card of list) for (const other of list) if (card !== other && !gradedRight(card, other)) pairs.set(`${card.slug}>${other.slug}`, [card, other]);
 
-const SOURCES: ContrastSource[] = ["rule", "aspect pair", "reference", "part of speech", "meaning note", "question", "example", "none"];
+const SOURCES: ContrastSource[] = ["rule", "aspect pair", "reference", "ai note", "part of speech", "meaning note", "question", "example", "none"];
 const tally = (rows: Array<[LexiconEntry, LexiconEntry, ContrastSource]>) => {
 	const counts = new Map(SOURCES.map((s) => [s, 0]));
 	for (const [, , s] of rows) counts.set(s, counts.get(s)! + 1);

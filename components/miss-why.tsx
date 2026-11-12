@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { MissReason, MissWord } from "@/src/core";
+import { noteSpans, type MissReason, type MissWord } from "@/src/core";
 
 const withArticle = (noun: string) => `${/^[aeiou]/.test(noun) ? "an" : "a"} ${noun}`;
 
@@ -100,6 +100,17 @@ export function MissWhy({ reason, given, code, className }: { reason: MissReason
 				<p data-testid="review-why-reference">
 					{other.reference.line}
 					{source(other.reference.chapter)}
+				</p>
+			)}
+			{other?.note && (
+				<p data-testid="review-why-note">
+					{noteSpans(other.note).map((part, i) => (part.word ? <b key={i} className="font-semibold" lang={code}>{part.text}</b> : <span key={i}>{part.text}</span>))}{" "}
+					<span className="text-[13px] text-ink-3">AI note from the dictionary&apos;s sentences, not checked by a person.</span>
+				</p>
+			)}
+			{other?.notePending && (
+				<p data-testid="review-why-note-pending" className="text-ink-3">
+					Comparing the two words in the dictionary&apos;s sentences…
 				</p>
 			)}
 			{example && (

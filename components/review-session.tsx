@@ -359,12 +359,17 @@ export function ReviewSession() {
 			sfx.wrong();
 			shake(sentenceRef.current);
 			const id = prompt.card.id;
-			void fetch(`/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}&words=${prompt.words}`)
-				.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
-				.then((body) => {
-					if (body?.reason && knownStatus?.next?.card.id === id) setReason(body.reason);
-				})
-				.catch(() => {});
+			const missUrl = `/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}&words=${prompt.words}`;
+			const showMiss = (url: string) =>
+				fetch(url)
+					.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
+					.then((body) => {
+						if (!body?.reason || knownStatus?.next?.card.id !== id) return;
+						setReason(body.reason);
+						if (body.reason.other?.notePending && !url.endsWith("&note=write")) void showMiss(`${url}&note=write`);
+					})
+					.catch(() => {});
+			void showMiss(missUrl);
 		}
 		void speak(prompt.card.sentence);
 	};

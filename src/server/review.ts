@@ -20,6 +20,9 @@ import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
 import { firstTryOf, recordFirstTry } from "../core/first-try.ts";
 import { noteReviewMixup } from "./mixups.ts";
+import { aiStatus } from "./ai-status.ts";
+import { cachedMissNote, ensureMissNote } from "./miss-note.ts";
+import { enoughEvidence, missNoteEvidence } from "../core/miss-note.ts";
 
 const DAY_MS = 86_400_000;
 const INFLECTING_CATEGORIES = new Set(["Nouns", "Verbs", "Adjectives"]);
@@ -328,6 +331,20 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 }
 
 export function reviewMiss(cardId: string, givenAnswer: string, words?: number): MissReason | null {
+	return missOf(cardId, givenAnswer, words)?.reason ?? null;
+}
+
+export async function reviewMissWithNote(cardId: string, givenAnswer: string, words?: number): Promise<MissReason | null> {
+	const miss = missOf(cardId, givenAnswer, words);
+	if (!miss?.reason.other?.notePending || !miss.entry || !miss.otherEntry) return miss?.reason ?? null;
+	await ensureMissNote(miss.entry, miss.otherEntry);
+	const after = reviewMiss(cardId, givenAnswer, words);
+	if (!after?.other?.notePending) return after;
+	const { notePending: _unwritten, ...other } = after.other;
+	return { ...after, other };
+}
+
+function missOf(cardId: string, givenAnswer: string, words?: number): { reason: MissReason; entry?: LexiconEntry; otherEntry?: LexiconEntry } | null {
 	const card = reviewStore.readCards()[cardId];
 	if (!card) return null;
 	const given = targetWordOf(blankOf(card, reviewStore.readMeta().settings.blankWords, words), givenAnswer);
@@ -338,20 +355,27 @@ export function reviewMiss(cardId: string, givenAnswer: string, words?: number):
 	const matches = word ? (lexicon?.byForm.get(word) ?? lexicon?.byFolded.get(foldDiacritics(word)) ?? []) : [];
 	const samePartOfSpeechFirst = (a: LexiconEntry, b: LexiconEntry) => Number(b.cat === entry?.cat) - Number(a.cat === entry?.cat);
 	const commonerFirst = (a: LexiconEntry, b: LexiconEntry) => (a.rank ?? Infinity) - (b.rank ?? Infinity);
-	const rankedEntriesOfGiven: MissWord[] = matches
+	const ranked = matches
 		.filter((e) => e.slug !== card.slug)
 		.map((e) => ({ e, isLemma: foldDiacritics(entryLemma(e).toLocaleLowerCase(tag())) === foldDiacritics(word) }))
-		.sort((a, b) => samePartOfSpeechFirst(a.e, b.e) || Number(b.isLemma) - Number(a.isLemma) || commonerFirst(a.e, b.e))
-		.map(({ e, isLemma }) => missWordOf({ slug: card.slug, lemma: card.lemma, entry }, e, { typed: word, isLemma, language: activeLanguage().id, reference: languageReference(activeLanguage().id, tag()) }, tag()));
+		.sort((a, b) => samePartOfSpeechFirst(a.e, b.e) || Number(b.isLemma) - Number(a.isLemma) || commonerFirst(a.e, b.e));
+	const aiReady = ranked.length > 0 && aiStatus().ready;
+	const reference = languageReference(activeLanguage().id, tag());
+	const rankedEntriesOfGiven: MissWord[] = ranked.map(({ e, isLemma }) => {
+		const cached = entry ? cachedMissNote(entry, e) : undefined;
+		const noteCanBeWritten = !cached && aiReady && !!entry && enoughEvidence(missNoteEvidence(entry, e, tag()));
+		return missWordOf({ slug: card.slug, lemma: card.lemma, entry }, e, { typed: word, isLemma, language: activeLanguage().id, reference, ...(cached?.status === "kept" ? { note: cached.note } : {}), noteCanBeWritten }, tag());
+	});
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const trigger = unit && unit !== "words" ? triggerOf(card.sentence, card.at, unit) : undefined;
 	const forms = entry ? knownForms(entry) : [];
-	return (
-		missReason(
-			{ answer: card.answer, lemma: card.lemma, gloss: entry ? shortGloss(entry.en) : card.gloss, given, forms, inflects: !entry || forms.length > 0 || INFLECTING_CATEGORIES.has(entry.cat), asks: startsQuestion(card.sentence, card.answer, tag()), form, trigger, rankedEntriesOfGiven },
-			tag(),
-		) ?? null
+	const reason = missReason(
+		{ answer: card.answer, lemma: card.lemma, gloss: entry ? shortGloss(entry.en) : card.gloss, given, forms, inflects: !entry || forms.length > 0 || INFLECTING_CATEGORIES.has(entry.cat), asks: startsQuestion(card.sentence, card.answer, tag()), form, trigger, rankedEntriesOfGiven },
+		tag(),
 	);
+	if (!reason) return null;
+	const otherEntry = reason.other ? ranked[rankedEntriesOfGiven.indexOf(reason.other)]?.e : undefined;
+	return { reason, ...(entry ? { entry } : {}), ...(otherEntry ? { otherEntry } : {}) };
 }
 
 /** A review answer as a first try (src/core/first-try.ts) on the drill its
