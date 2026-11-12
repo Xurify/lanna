@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Pip, type PipOutcome } from "@/components/task-frame";
 import type { CheckItemRecord } from "@/src/core";
 
 export type TrackMark = "right" | "partly" | "miss";
@@ -16,6 +17,14 @@ interface Part {
 	caption?: string;
 }
 
+/** The check's marks drawn as the task segments every other task uses (E103), so a miss reads the same here as in Review and Listen. */
+function outcomeOf(mark: TrackMark | undefined, isCurrent: boolean): PipOutcome {
+	if (mark === "right") return "right";
+	if (mark === "partly") return "almost";
+	if (mark === "miss") return "miss";
+	return isCurrent ? "now" : "ahead";
+}
+
 export function CheckTrack({ parts, marks, current = -1, large = false, className }: { parts: Part[]; marks: TrackMark[]; current?: number; large?: boolean; className?: string }) {
 	const total = parts.reduce((sum, part) => sum + part.count, 0);
 	const tally = (mark: TrackMark) => marks.filter((m) => m === mark).length;
@@ -28,24 +37,10 @@ export function CheckTrack({ parts, marks, current = -1, large = false, classNam
 				offset += part.count;
 				return (
 					<div key={p} className="min-w-0" style={{ flex: part.count }}>
-						<div className={cn("flex items-center", large ? "h-2.5 gap-1" : "h-2 gap-[3px]")}>
-							{Array.from({ length: part.count }, (_, i) => {
-								const mark = marks[start + i];
-								return (
-									<i
-										key={i}
-										className={cn(
-											"min-w-0 flex-1 rounded-[3px]",
-											mark === "partly" ? "h-1" : "h-full",
-											mark === "right" && "bg-teal",
-											mark === "partly" && "bg-teal",
-											mark === "miss" && "shadow-[inset_0_0_0_1.5px_var(--q-ink-4)]",
-											mark === undefined && "bg-well-2",
-											mark === undefined && start + i === current && "shadow-[0_0_0_1.5px_var(--q-bg),0_0_0_3px_var(--q-teal)]",
-										)}
-									/>
-								);
-							})}
+						<div className={cn("flex items-center", large ? "gap-1" : "gap-[3px]")}>
+							{Array.from({ length: part.count }, (_, i) => (
+								<Pip key={i} outcome={outcomeOf(marks[start + i], start + i === current)} className={cn("min-w-0 flex-1", large && "h-2")} />
+							))}
 						</div>
 						{part.caption && <p className="mt-2 font-ui text-[12.5px] text-ink-3">{part.caption}</p>}
 					</div>
@@ -59,15 +54,15 @@ export function TrackLegend({ className }: { className?: string }) {
 	return (
 		<p className={cn("q-legend", className)}>
 			<span>
-				<i style={{ background: "var(--q-teal)" }} />
+				<i className="bg-teal" />
 				right
 			</span>
 			<span>
-				<i className="!h-1" style={{ background: "var(--q-teal)" }} />
+				<i className="bg-teal-line" />
 				partly
 			</span>
 			<span>
-				<i style={{ boxShadow: "inset 0 0 0 1.5px var(--q-ink-4)" }} />
+				<i className="bg-miss" />
 				missed
 			</span>
 		</p>
