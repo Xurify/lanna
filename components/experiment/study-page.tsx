@@ -4,6 +4,7 @@ import { SidebarToggle } from "@/components/sidebar";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
 import { StudyChart } from "@/components/experiment/study-chart";
+import { ListenInLanguage } from "@/components/experiment/listen-in-language";
 import { CHECK_ROUTE, studyLanguage, type StudyLanguage } from "@/components/experiment/study-language";
 import { EXPERIMENT_CONSTANTS, weeklyCheckRows, type CheckItemRecord, type DailyExperimentRecord, type DaySchedule, type ExperimentConfig, type RegressionResult } from "@/src/core";
 
@@ -17,6 +18,7 @@ export interface StudyPageProps {
 	checks: CheckItemRecord[];
 	analysis: RegressionResult;
 	today: { date: string; dayNumber: number };
+	runningLanguage: string;
 }
 
 function dayInWords(iso: string): string {
@@ -42,7 +44,7 @@ function whereItStands(config: ExperimentConfig, todayDay: number, treatment: st
 	return `Day ${todayDay} of ${config.days}. ${treatment} has been listening first since ${dayInWords(config.onsetDate)}: no lessons, speaking or speed drills.`;
 }
 
-export function StudyPage({ config, schedule, daily, checks, analysis, today }: StudyPageProps) {
+export function StudyPage({ config, schedule, daily, checks, analysis, today, runningLanguage }: StudyPageProps) {
 	const treatment = studyLanguage(config.languages.treatment);
 	const control = studyLanguage(config.languages.control);
 	const languages = [treatment, control];
@@ -129,12 +131,12 @@ export function StudyPage({ config, schedule, daily, checks, analysis, today }: 
 							<h2 className="mt-2 text-base font-semibold text-foreground sm:text-[17px]">
 								{russianValid
 									? `Today's trial data is recorded (${russianReps} of 5 Listen sentences completed)`
-									: `Complete 5 typed sentences in Russian Listen today (${russianReps} of 5 done)`}
+									: `Complete 5 typed sentences in ${treatment.name} Listen today (${russianReps} of 5 done)`}
 							</h2>
 							<p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-2">
 								{russianValid
 									? `First-play comprehension: ${todayRussian?.firstPlayShare !== null ? Math.round((todayRussian?.firstPlayShare ?? 0) * 100) : 0}%. Your Day ${today.dayNumber} data is safely logged!`
-									: `To record today's baseline comprehension, open Russian Listen and type each sentence without peeking or replaying. At least 5 dictation sentences are required for Day ${today.dayNumber}.`}
+									: `To record today's baseline comprehension, open ${treatment.name} Listen and type each sentence without peeking or replaying. At least 5 dictation sentences are required for Day ${today.dayNumber}.`}
 							</p>
 							<div className="mt-3 flex items-center gap-3">
 								<div className="flex items-center gap-1.5" aria-label={`${russianReps} of 5 sentences`}>
@@ -155,13 +157,13 @@ export function StudyPage({ config, schedule, daily, checks, analysis, today }: 
 						</div>
 						<div className="shrink-0">
 							{russianValid ? (
-								<Link href="/listen" className={SECONDARY} data-testid="study-action-btn">
-									Open Listen
-								</Link>
+								<ListenInLanguage language={treatment} running={runningLanguage} className={SECONDARY} testId="study-action-btn">
+									Open {treatment.name} Listen
+								</ListenInLanguage>
 							) : (
-								<Link href="/listen" className={PRIMARY} data-testid="study-action-btn">
-									Start Russian Listen ({Math.max(0, 5 - russianReps)} more) →
-								</Link>
+								<ListenInLanguage language={treatment} running={runningLanguage} className={PRIMARY} testId="study-action-btn">
+									Start {treatment.name} Listen ({Math.max(0, 5 - russianReps)} more) →
+								</ListenInLanguage>
 							)}
 						</div>
 					</section>
