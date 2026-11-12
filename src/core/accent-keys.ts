@@ -30,6 +30,11 @@ function changes(before: string, letter: string, tag: string): boolean {
 	return before.toLocaleLowerCase(tag) !== letter.toLocaleLowerCase(tag) && baseLetter(before, tag) === baseLetter(letter, tag);
 }
 
+/** A dead key (´ ˇ ¨ on the learner's own layout) or a key inside an IME composition. Browsers report 229 as the keyCode of a key an IME is handling. */
+export function belongsToLayoutAccent(key: { key: string; isComposing: boolean; keyCode: number }): boolean {
+	return key.key === "Dead" || key.isComposing || key.keyCode === 229;
+}
+
 export function liveFamily(families: readonly LetterFamily[], value: string, start: number, end: number, tag: string): string | null {
 	const before = letterBefore(value, start, end);
 	if (!before) return null;

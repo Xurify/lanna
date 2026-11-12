@@ -16,3 +16,5 @@ The owner, after E100: "I was thinking more like Speak, Ear gym, etc", "make the
 - **Flags** (`components/ui/country-flag.tsx`) are cropped to fill their 3:2 box, have a hairline ring and no drop shadow; Today's plan headings use 27 by 18 px flags beside 15 px names.
 - **Reviewed** by Fable 5.2 over several rounds; round two found that the first replace rule broke Estonian doubles and Russian `её`.
 - **Not changed:** the Today page's cards, the letter strip in chats (the `bar` variant), the jump palette's letters.
+
+Changed by [layout-accent-keys-always-type.md](layout-accent-keys-always-type.md) on 2026-11-11.
