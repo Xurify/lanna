@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import type { EstimateRange } from "../core/word-estimate.ts";
+import type { StoryUsage } from "../core/reading.ts";
+import type { EstimateRange, WordCheckMarker, WordCheckVerdict } from "../core/word-estimate.ts";
 
 export interface WordCheckAnswerRecord {
 	at: string;
@@ -9,9 +10,10 @@ export interface WordCheckAnswerRecord {
 	slug: string;
 	lemma: string;
 	rank: number;
-	options: string[];
-	picked: string | null;
-	known: boolean;
+	typed: string | null;
+	verdict: WordCheckVerdict;
+	markedBy?: WordCheckMarker;
+	note?: string;
 	ms?: number;
 }
 
@@ -21,10 +23,12 @@ export interface WordCheckSessionRecord {
 	endedAt: string;
 	answered: number;
 	known: number;
+	unchecked: number;
 	before: EstimateRange;
 	after: EstimateRange;
 	measured: boolean;
 	activeMs?: number;
+	usage?: StoryUsage;
 }
 
 export interface OpenWordCheck {
@@ -33,7 +37,8 @@ export interface OpenWordCheck {
 	seed: number;
 	before: EstimateRange;
 	asked: string[];
-	pending?: { slug: string; options: string[] };
+	pending?: { slug: string };
+	usage: StoryUsage;
 }
 
 export interface EstimateDay extends EstimateRange {
@@ -42,6 +47,13 @@ export interface EstimateDay extends EstimateRange {
 	checked: number;
 	inferred: number;
 	answers: number;
+}
+
+export interface MeaningJudgementRecord {
+	accepted: boolean;
+	note: string;
+	model: string;
+	at: string;
 }
 
 interface HistoryFile {
@@ -53,6 +65,7 @@ const ANSWERS = () => path.join(DIR(), "answers.jsonl");
 const SESSIONS = () => path.join(DIR(), "sessions.jsonl");
 const OPEN = () => path.join(DIR(), "open.json");
 const HISTORY = () => path.join(DIR(), "history.json");
+const JUDGEMENTS = () => path.join(DIR(), "judgements.json");
 
 function readJson<T>(file: string, fallback: T): T {
 	try {
@@ -123,6 +136,12 @@ export const wordCheckStore = {
 		const before = days[day];
 		if (before && JSON.stringify(before) === JSON.stringify(snapshot)) return;
 		writeJsonAtomic(HISTORY(), { days: { ...days, [day]: snapshot } });
+	},
+	judgements(): Record<string, MeaningJudgementRecord> {
+		return readJson<Record<string, MeaningJudgementRecord>>(JUDGEMENTS(), {});
+	},
+	putJudgement(key: string, judgement: MeaningJudgementRecord): void {
+		writeJsonAtomic(JUDGEMENTS(), { ...wordCheckStore.judgements(), [key]: judgement });
 	},
 };
 

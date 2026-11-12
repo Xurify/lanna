@@ -9,7 +9,7 @@ interface Body {
 	action?: unknown;
 	id?: unknown;
 	slug?: unknown;
-	pick?: unknown;
+	typed?: unknown;
 	ms?: unknown;
 	activeMs?: unknown;
 	tz?: unknown;
@@ -26,8 +26,8 @@ export async function POST(req: Request) {
 		if (typeof body?.id !== "string") return Response.json({ message: "id is required" }, { status: 400 });
 		if (body.action === "answer") {
 			if (typeof body.slug !== "string") return Response.json({ message: "slug is required" }, { status: 400 });
-			const pick = typeof body.pick === "number" && Number.isInteger(body.pick) && body.pick >= 0 ? body.pick : null;
-			return Response.json(answerWordCheck({ id: body.id, slug: body.slug, pick, ms: boundedMs(body.ms, MAX_ANSWER_MS) }));
+			const typed = typeof body.typed === "string" ? body.typed : null;
+			return Response.json(await answerWordCheck({ id: body.id, slug: body.slug, typed, ms: boundedMs(body.ms, MAX_ANSWER_MS) }));
 		}
 		if (body.action === "finish") {
 			const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;

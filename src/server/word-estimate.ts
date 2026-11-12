@@ -1,7 +1,8 @@
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
+import type { PiEngine } from "../agent/models.ts";
 import { curriculumState, type Cefr } from "../core/curriculum.ts";
 import { retrievability } from "../core/fsrs.ts";
-import { rng, shortGloss, shuffle } from "../core/lesson.ts";
+import { rng } from "../core/lesson.ts";
 import { creditedWords } from "../core/milestones.ts";
 import { isGrim } from "../core/onboarding.ts";
 import { grammarWord } from "../core/reading.ts";
@@ -9,8 +10,11 @@ import { dayKey, entryLemma, exampleText, pickClozeExample, type LexiconEntry } 
 import {
 	ANSWERS_FOR_A_MEASURED_ESTIMATE,
 	CHECK_LENGTH,
+	answersForASteadyEstimate,
+	dictionaryAccepts,
 	estimateWords,
 	fitKnowledgeCurve,
+	meaningsInGloss,
 	nextCheckWord,
 	type CheckAnswer,
 	type EstimateRange,
@@ -18,8 +22,10 @@ import {
 	type RankedWord,
 	type WordCheckFeedback,
 	type WordCheckItem,
+	type WordCheckMarker,
 	type WordCheckResult,
 	type WordCheckStart,
+	type WordCheckVerdict,
 	type WordEstimate,
 	type WordEstimateReport,
 	type WordEvidence,
@@ -31,11 +37,11 @@ import { wordCheckStore, type OpenWordCheck } from "../store/word-check.ts";
 import { activeLanguage } from "./active-language.ts";
 import { recordActiveTime } from "./lesson.ts";
 import { frequencyOrder, wordsWithNoPlaceInTheFrequencyOrder } from "./reading.ts";
+import { canJudgeMeanings, judgeMeaning, wordCheckModel } from "./word-check-judge.ts";
 
 const DAY_MS = 86_400_000;
-const DISTRACTORS = 3;
 const HISTORY_DAYS_SHOWN = 90;
-const GLOSS_WORDS_THAT_SAY_NOTHING = new Set(["the", "and", "for", "not", "with", "from", "into", "onto", "about", "sth", "something", "someone", "somebody", "oneself", "one's", "that", "this"]);
+const TYPED_LIMIT = 120;
 
 interface Gathered {
 	lexicon: Lexicon;
@@ -70,8 +76,8 @@ function gather(now: Date): Gathered | null {
 	const answers: CheckAnswer[] = [];
 	for (const a of wordCheckStore.answers()) {
 		const rank = rankOf.get(a.slug);
-		if (rank === undefined) continue;
-		const answer = { slug: a.slug, rank, known: a.known, saidDontKnow: a.picked === null, ageDays: daysBetween(a.at, now) };
+		if (rank === undefined || !a.verdict || a.verdict === "unchecked") continue;
+		const answer = { slug: a.slug, rank, known: a.verdict === "known", ageDays: daysBetween(a.at, now) };
 		answers.push(answer);
 		evidenceOf(a.slug).check = { known: answer.known, ageDays: answer.ageDays };
 	}
@@ -82,15 +88,9 @@ function gather(now: Date): Gathered | null {
 	return { lexicon, ranked, rankOf, evidence, answers, curve: fitKnowledgeCurve(answers, priorSize, ranked.length), level: state.level };
 }
 
-export function meaningOffered(entry: Pick<LexiconEntry, "en">): string {
-	return shortGloss(entry.en)
-		.replace(/\s*\([^)]*\)/g, "")
-		.trim();
-}
-
 function isCheckable(entry: LexiconEntry, tag: string): boolean {
 	const lemma = entryLemma(entry);
-	if (entry.cat === "Places" || lemma.length < 2 || !meaningOffered(entry)) return false;
+	if (entry.cat === "Places" || lemma.length < 2 || meaningsInGloss(entry.en).length === 0) return false;
 	if (lemma.charAt(0) !== lemma.charAt(0).toLocaleLowerCase(tag)) return false;
 	return !grammarWord(lemma) && !isGrim(lemma) && !isGrim(entry.en);
 }
@@ -111,12 +111,13 @@ export function wordEstimateReport(now = new Date()): WordEstimateReport {
 		.sort(([a], [b]) => a.localeCompare(b))
 		.slice(-HISTORY_DAYS_SHOWN)
 		.map(([day, d]) => ({ day, total: d.total }));
-	if (!g) return { estimate: null, measured: false, level: null, checks: sessions.length, history, wordsLeftToCheck: 0, checkLength: CHECK_LENGTH };
+	if (!g) return { estimate: null, measured: false, answersForASteadyEstimate: 0, level: null, checks: sessions.length, history, wordsLeftToCheck: 0, checkLength: CHECK_LENGTH };
 	const estimate = estimateWords(g.ranked, g.evidence, g.curve);
 	const lastCheckAt = sessions.at(-1)?.endedAt;
 	return {
 		estimate,
 		measured: estimate.answers >= ANSWERS_FOR_A_MEASURED_ESTIMATE,
+		answersForASteadyEstimate: answersForASteadyEstimate(g.ranked.length),
 		level: g.level,
 		checks: sessions.length,
 		...(lastCheckAt ? { lastCheckAt } : {}),
@@ -135,43 +136,11 @@ export function recordEstimateDay(now = new Date(), tz?: number): WordEstimateRe
 	return wordEstimateReport(now);
 }
 
-const contentWords = (gloss: string) =>
-	new Set(
-		gloss
-			.toLowerCase()
-			.split(/[^a-z']+/)
-			.filter((w) => w.length >= 3 && !GLOSS_WORDS_THAT_SAY_NOTHING.has(w)),
-	);
-
-function distractorsFor(target: LexiconEntry, g: Gathered, rand: () => number): LexiconEntry[] {
-	const tag = activeLanguage().tag;
-	const rank = g.rankOf.get(target.slug) ?? g.ranked.length;
-	const targetWords = contentWords(target.en);
-	const taken = new Set([meaningOffered(target).toLowerCase()]);
-	const usable = (e: LexiconEntry) => e.slug !== target.slug && isCheckable(e, tag) && ![...contentWords(e.en)].some((w) => targetWords.has(w));
-	const near = (e: LexiconEntry) => {
-		const r = g.rankOf.get(e.slug) ?? Infinity;
-		return r >= rank / 2 - 50 && r <= rank * 2 + 200;
-	};
-	const sameKind = g.lexicon.entries.filter((e) => e.cat === target.cat && usable(e));
-	const picks: LexiconEntry[] = [];
-	for (const pool of [sameKind.filter(near), sameKind, g.lexicon.entries.filter(usable)]) {
-		for (const e of shuffle(pool, rand)) {
-			if (picks.length >= DISTRACTORS) return picks;
-			const gloss = meaningOffered(e).toLowerCase();
-			if (taken.has(gloss)) continue;
-			taken.add(gloss);
-			picks.push(e);
-		}
-	}
-	return picks;
-}
-
 function itemOf(check: OpenWordCheck, lexicon: Lexicon): WordCheckItem | null {
 	if (!check.pending) return null;
 	const entry = lexicon.bySlug.get(check.pending.slug);
 	if (!entry) return null;
-	return { slug: entry.slug, word: entryLemma(entry), options: check.pending.options.map((slug) => meaningOffered(lexicon.bySlug.get(slug) ?? { en: "" })) };
+	return { slug: entry.slug, word: entryLemma(entry) };
 }
 
 function drawNext(check: OpenWordCheck, g: Gathered): void {
@@ -181,10 +150,10 @@ function drawNext(check: OpenWordCheck, g: Gathered): void {
 	const word = nextCheckWord(untestedCheckableWords(g, new Set(check.asked)), g.curve, check.asked.length, rand);
 	const entry = word && g.lexicon.bySlug.get(word.slug);
 	if (!entry) return;
-	check.pending = { slug: entry.slug, options: shuffle([entry, ...distractorsFor(entry, g, rand)], rand).map((e) => e.slug) };
+	check.pending = { slug: entry.slug };
 }
 
-export function startWordCheck(now = new Date(), seed = now.getTime() % 1_000_000): WordCheckStart {
+export function startWordCheck(now = new Date(), seed = now.getTime() % 1_000_000, engine?: PiEngine): WordCheckStart {
 	const g = gather(now);
 	if (!g) throw new Error("This language has no dictionary to check words against yet.");
 	const check: OpenWordCheck = {
@@ -193,40 +162,57 @@ export function startWordCheck(now = new Date(), seed = now.getTime() % 1_000_00
 		seed,
 		before: rangeOf(estimateWords(g.ranked, g.evidence, g.curve)),
 		asked: [],
+		usage: { model: wordCheckModel(engine), steps: [] },
 	};
 	drawNext(check, g);
 	const item = itemOf(check, g.lexicon);
 	if (!item) throw new Error("Every word in the dictionary has been checked or is in Review already.");
 	wordCheckStore.putOpen(check);
-	return { id: check.id, item, progress: { asked: 0, total: CHECK_LENGTH } };
+	return { id: check.id, item, progress: { asked: 0, total: CHECK_LENGTH }, judges: canJudgeMeanings(engine) };
 }
 
 export interface WordCheckAnswerInput {
 	id: string;
 	slug: string;
-	pick: number | null;
+	typed: string | null;
 	ms?: number;
 }
 
-export function answerWordCheck(input: WordCheckAnswerInput, now = new Date()): WordCheckFeedback {
-	const check = wordCheckStore.open();
-	if (!check || check.id !== input.id) throw new Error("No such word check.");
-	const pending = check.pending;
-	if (!pending || pending.slug !== input.slug) throw new Error("That word was answered already.");
+function meaningsOfTheWrittenWord(entry: LexiconEntry, lexicon: Lexicon): string[] {
+	const tag = activeLanguage().tag;
+	const written = entryLemma(entry).toLocaleLowerCase(tag);
+	return [entry.en, ...lexicon.entries.filter((e) => e.slug !== entry.slug && entryLemma(e).toLocaleLowerCase(tag) === written).map((e) => e.en)];
+}
+
+async function markTyped(entry: LexiconEntry, glosses: readonly string[], typed: string | null, check: OpenWordCheck, now: Date, engine?: PiEngine): Promise<{ verdict: WordCheckVerdict; markedBy?: WordCheckMarker; note?: string }> {
+	if (!typed) return { verdict: "dont-know" };
+	if (dictionaryAccepts(glosses, typed)) return { verdict: "known", markedBy: "dictionary" };
+	const judged = await judgeMeaning({ slug: entry.slug, word: entryLemma(entry), glosses, typed }, check.usage, { engine, now });
+	if (!judged) return { verdict: "unchecked" };
+	return { verdict: judged.accepted ? "known" : "not-known", markedBy: "model", ...(judged.note ? { note: judged.note } : {}) };
+}
+
+export async function answerWordCheck(input: WordCheckAnswerInput, now = new Date(), engine?: PiEngine): Promise<WordCheckFeedback> {
+	const opened = wordCheckStore.open();
+	if (!opened || opened.id !== input.id) throw new Error("No such word check.");
+	if (opened.pending?.slug !== input.slug) throw new Error("That word was answered already.");
 	const before = gather(now);
-	const entry = before?.lexicon.bySlug.get(pending.slug);
+	const entry = before?.lexicon.bySlug.get(input.slug);
 	if (!before || !entry) throw new Error("The dictionary has no such word.");
-	const picked = input.pick === null ? null : (pending.options[input.pick] ?? null);
-	const known = picked === pending.slug;
+	const typed = input.typed?.trim().slice(0, TYPED_LIMIT) || null;
+	const glosses = meaningsOfTheWrittenWord(entry, before.lexicon);
+	const marked = await markTyped(entry, glosses, typed, opened, now, engine);
+	const check = wordCheckStore.open();
+	if (!check || check.id !== input.id || check.pending?.slug !== input.slug) throw new Error("That word was answered already.");
+	check.usage = opened.usage;
 	wordCheckStore.appendAnswer({
 		at: now.toISOString(),
 		session: check.id,
 		slug: entry.slug,
 		lemma: entryLemma(entry),
 		rank: before.rankOf.get(entry.slug) ?? before.ranked.length,
-		options: pending.options,
-		picked,
-		known,
+		typed,
+		...marked,
 		...(input.ms !== undefined ? { ms: input.ms } : {}),
 	});
 	check.asked.push(entry.slug);
@@ -236,10 +222,10 @@ export function answerWordCheck(input: WordCheckAnswerInput, now = new Date()): 
 	const bestExample = entry.examples[pickClozeExample(entry) ?? -1];
 	const example = bestExample && !isGrim(exampleText(bestExample)) && !isGrim(bestExample.en) ? bestExample : undefined;
 	return {
-		known,
-		correctOption: pending.options.indexOf(pending.slug),
+		...marked,
+		typed,
 		lemma: entryLemma(entry),
-		gloss: entry.en,
+		gloss: glosses.join("; "),
 		...(example ? { example: { text: exampleText(example), translation: example.en } } : {}),
 		item: itemOf(check, after.lexicon),
 		progress: { asked: check.asked.length, total: CHECK_LENGTH },
@@ -253,24 +239,28 @@ export function finishWordCheck(input: { id: string; activeMs?: number; tz?: num
 	const measuredNow = recordEstimateDay(now, input.tz);
 	if (!measuredNow.estimate) throw new Error("This language has no dictionary to check words against yet.");
 	const after = rangeOf(measuredNow.estimate);
-	const known = mine.filter((a) => a.known).length;
+	const counted = mine.filter((a) => a.verdict !== "unchecked");
+	const known = counted.filter((a) => a.verdict === "known").length;
+	const unchecked = mine.length - counted.length;
 	if (mine.length > 0) {
 		wordCheckStore.appendSession({
 			id: check.id,
 			startedAt: check.startedAt,
 			endedAt: now.toISOString(),
-			answered: mine.length,
+			answered: counted.length,
 			known,
+			unchecked,
 			before: check.before,
 			after,
 			measured: measuredNow.measured,
 			...(input.activeMs !== undefined ? { activeMs: input.activeMs } : {}),
+			...(check.usage.steps.length > 0 ? { usage: check.usage } : {}),
 		});
 		if (input.activeMs !== undefined) recordActiveTime("wordcheck", input.activeMs, input.tz, now);
 	}
 	wordCheckStore.closeOpen();
 	const lexicon = loadLexicon();
 	const inDeck = new Set(Object.values(reviewStore.readCards()).map((c) => c.slug));
-	const missed = mine.filter((a) => !a.known).map((a) => ({ slug: a.slug, lemma: a.lemma, gloss: lexicon?.bySlug.get(a.slug)?.en ?? "", inReview: inDeck.has(a.slug) }));
-	return { before: check.before, after, answered: mine.length, known, measured: measuredNow.measured, missed, report: wordEstimateReport(now) };
+	const missed = counted.filter((a) => a.verdict !== "known").map((a) => ({ slug: a.slug, lemma: a.lemma, gloss: lexicon?.bySlug.get(a.slug)?.en ?? "", inReview: inDeck.has(a.slug) }));
+	return { before: check.before, after, answered: counted.length, known, unchecked, measured: measuredNow.measured, missed, report: wordEstimateReport(now) };
 }

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, test } from "node:test";
+import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-word-estimate-"));
 process.env.LH_DATA_DIR = TMP_DATA;
@@ -11,6 +12,7 @@ process.env.LH_PROFILE = "slovak";
 const core = await import("../src/core/word-estimate.ts");
 const { rng } = await import("../src/core/lesson.ts");
 const server = await import("../src/server/word-estimate.ts");
+const judge = await import("../src/server/word-check-judge.ts");
 const { wordCheckStore, latestMeasuredVocabulary } = await import("../src/store/word-check.ts");
 const { knownWordStore } = await import("../src/store/known-words.ts");
 const { progressStore } = await import("../src/store/progress.ts");
@@ -35,7 +37,7 @@ function learnerWhoKnows(midpoint: number, slope: number) {
 	return { chance, size: words.reduce((n, w) => n + chance(w.rank), 0) };
 }
 
-function simulateChecks(learner: ReturnType<typeof learnerWhoKnows>, count: number, priorSize: number, seed: number, picksBlindWhenNotKnown = false): CheckAnswer[] {
+function simulateChecks(learner: ReturnType<typeof learnerWhoKnows>, count: number, priorSize: number, seed: number): CheckAnswer[] {
 	const rand = rng(seed);
 	const answers: CheckAnswer[] = [];
 	const asked = new Set<string>();
@@ -48,9 +50,7 @@ function simulateChecks(learner: ReturnType<typeof learnerWhoKnows>, count: numb
 			rand,
 		)!;
 		asked.add(word.slug);
-		const knows = rand() < learner.chance(word.rank);
-		const luckyPick = !knows && picksBlindWhenNotKnown && rand() < 1 / core.CHECK_OPTIONS;
-		answers.push({ slug: word.slug, rank: word.rank, known: knows || luckyPick, saidDontKnow: !knows && !picksBlindWhenNotKnown, ageDays: 0 });
+		answers.push({ slug: word.slug, rank: word.rank, known: rand() < learner.chance(word.rank), ageDays: 0 });
 	}
 	return answers;
 }
@@ -87,46 +87,14 @@ describe("the estimate of words known", () => {
 
 	test("every answer right or every answer wrong still gives a finite size inside the dictionary", () => {
 		for (const known of [true, false]) {
-			const answers: CheckAnswer[] = [50, 200, 800, 2000, 5000].map((rank) => ({ slug: `w${rank}`, rank, known, saidDontKnow: !known, ageDays: 0 }));
+			const answers: CheckAnswer[] = [50, 200, 800, 2000, 5000].map((rank) => ({ slug: `w${rank}`, rank, known, ageDays: 0 }));
 			const estimate = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve(answers, 1200, DICTIONARY));
 			assert.ok(Number.isFinite(estimate.total) && estimate.total >= 0 && estimate.total <= DICTIONARY, `${known}: ${estimate.total}`);
 			assert.ok(estimate.low <= estimate.total && estimate.total <= estimate.high);
 		}
-		const more = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: true, saidDontKnow: false, ageDays: 0 }], 1200, DICTIONARY));
-		const fewer = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: false, saidDontKnow: true, ageDays: 0 }], 1200, DICTIONARY));
+		const more = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: true, ageDays: 0 }], 1200, DICTIONARY));
+		const fewer = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: false, ageDays: 0 }], 1200, DICTIONARY));
 		assert.ok(more.total > fewer.total);
-	});
-
-	test("wrong picks say how many of the right answers were luck", () => {
-		const answer = (rank: number, known: boolean, saidDontKnow: boolean): CheckAnswer => ({ slug: `w${rank}`, rank, known, saidDontKnow, ageDays: 0 });
-		const right = [10, 20, 30, 40].map((rank) => answer(rank, true, false));
-		const dontKnows = [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800].map((rank) => answer(rank, false, true));
-		const wrongPicks = [2000, 2100, 2200].map((rank) => answer(rank, false, false));
-
-		assert.equal(core.pickingHabit([...right, ...dontKnows], core.CHECK_OPTIONS).luckyPickRate, 0);
-		assert.equal(core.pickingHabit([...right, ...wrongPicks], core.CHECK_OPTIONS).luckyPickRate, 1 / core.CHECK_OPTIONS);
-		assert.ok(Math.abs(core.pickingHabit([...right, ...dontKnows, ...wrongPicks], core.CHECK_OPTIONS).luckyPickRate - 1 / 13) < 1e-9);
-
-		const honest = core.fitKnowledgeCurve([...right, ...dontKnows], 1200, DICTIONARY);
-		assert.equal(honest.luckyPickRate, 0);
-		const rare: WordEvidence = { check: { known: true, ageDays: 0 } };
-		assert.equal(core.estimateWords(words, new Map([["w6000", rare]]), honest).parts.checked, 1);
-
-		const picker = core.fitKnowledgeCurve([...right, ...wrongPicks, answer(6000, true, false)], 1200, DICTIONARY);
-		assert.ok(picker.luckyPickRate >= 1 / core.CHECK_OPTIONS);
-		assert.equal(core.estimateWords(words, new Map([["w6000", rare]]), picker).parts.checked, 0);
-		assert.equal(core.estimateWords(words, new Map([["w10", rare]]), picker).parts.checked, 1);
-	});
-
-	test("a learner who picks blind and never says \"I don't know\" is not read as knowing several times more", () => {
-		const learner = learnerWhoKnows(500, 1.5);
-		const ratios = [1, 2, 3, 4, 5, 6, 7].map((seed) => {
-			const answers = simulateChecks(learner, core.CHECK_LENGTH, 1200, seed, true);
-			const evidence = new Map<string, WordEvidence>(answers.map((a) => [a.slug, { check: { known: a.known, ageDays: 0 } }]));
-			return core.estimateWords(words, evidence, core.fitKnowledgeCurve(answers, 1200, DICTIONARY)).total / learner.size;
-		});
-		const median = [...ratios].sort((a, b) => a - b)[3]!;
-		assert.ok(median > 0.5 && median < 1.7, `median ${median.toFixed(2)} of ${ratios.map((r) => r.toFixed(2)).join(", ")}`);
 	});
 
 	test("a word with evidence counts by its evidence, the strongest first", () => {
@@ -183,6 +151,28 @@ describe("the estimate of words known", () => {
 		assert.ok(Math.max(...spread) > 4000 && Math.min(...spread) < 100, "spread turns reach both ends");
 		assert.equal(core.nextCheckWord([], curve, 0, rand), undefined);
 	});
+	test("a typed meaning is right by the dictionary only when every meaning typed is one of the word's own", () => {
+		assert.deepEqual(core.meaningsInGloss("to apologize (sa); to excuse / justify (someone)"), ["apologize", "excuse", "justify"]);
+		assert.deepEqual(core.meaningsInGloss("circle; round; lap; bike (colloq.)"), ["circle", "round", "lap", "bike"]);
+		assert.equal(core.plainMeaning("  To Smile (usmiať sa) "), "smile");
+		assert.equal(core.plainMeaning("the"), "the");
+
+		const kolo = ["circle; round; lap; bike (colloq.)"];
+		assert.equal(core.dictionaryAccepts(kolo, "Circle"), true);
+		assert.equal(core.dictionaryAccepts(kolo, "a bike"), true);
+		assert.equal(core.dictionaryAccepts(kolo, "lap, round"), true);
+		assert.equal(core.dictionaryAccepts(kolo, "circle or wheel"), false, "one meaning the dictionary does not list sends the whole answer to the model");
+		assert.equal(core.dictionaryAccepts(kolo, "wheel"), false);
+		assert.equal(core.dictionaryAccepts(kolo, "  "), false);
+		assert.equal(core.dictionaryAccepts(["to smile (usmiať sa)"], "to smile"), true);
+		assert.equal(core.dictionaryAccepts(["to smile (usmiať sa)"], "smiling"), false);
+		assert.equal(core.dictionaryAccepts(["transport", "to the right"], "to the right"), true, "a word written the same way counts with either meaning");
+	});
+
+	test("the number of answers studies ask for grows with the dictionary", () => {
+		assert.equal(core.answersForASteadyEstimate(7105), 210);
+		assert.equal(core.answersForASteadyEstimate(1000), 30);
+	});
 });
 
 describe("the word check", () => {
@@ -211,10 +201,12 @@ describe("the word check", () => {
 		assert.equal(after.parts.marked, before.parts.marked + 1);
 	});
 
-	test("a whole check, four meanings each, none repeated; the answers measure the size and the measurement reaches Milestones", () => {
+	test("a whole check: one word at a time with no meanings shown, none repeated; the typed meanings measure the size and the measurement reaches Milestones", async () => {
 		const started = new Date("2026-11-12T11:00:00Z");
 		const start = server.startWordCheck(started, 4242);
 		assert.equal(start.progress.total, core.CHECK_LENGTH);
+		assert.equal(start.judges, false, "no model is set in a test profile");
+		assert.deepEqual(Object.keys(start.item).sort(), ["slug", "word"], "the question carries no meaning to pick from");
 		let item: WordCheckItem | null = start.item;
 		const seen = new Set<string>();
 		let known = 0;
@@ -222,29 +214,27 @@ describe("the word check", () => {
 		while (item) {
 			assert.ok(!seen.has(item.slug), `${item.slug} asked twice`);
 			seen.add(item.slug);
-			assert.equal(item.options.length, 4);
-			assert.equal(new Set(item.options.map((o) => o.toLowerCase())).size, 4, `distinct meanings for ${item.word}: ${item.options.join(" | ")}`);
 			const entry: LexiconEntry = lexicon.bySlug.get(item.slug)!;
-			const right = item.options.indexOf(server.meaningOffered(entry));
-			assert.ok(!item.options.some((o) => /[()]/.test(o)), `no bracketed note that could name the word: ${item.options.join(" | ")}`);
-			assert.ok(right >= 0, `the right meaning is offered for ${item.word}`);
 			const knows: boolean = rankOf.get(item.slug)! <= KNOWS_UP_TO_RANK;
-			const feedback: WordCheckFeedback = server.answerWordCheck({ id: start.id, slug: item.slug, pick: knows ? right : null, ms: 2500 }, new Date(started.getTime() + (asked + 1) * 5000));
-			assert.equal(feedback.known, knows);
-			assert.equal(feedback.correctOption, right);
-			assert.equal(feedback.gloss, entry.en);
+			const typed: string | null = knows ? core.meaningsInGloss(entry.en)[0]! : null;
+			const feedback: WordCheckFeedback = await server.answerWordCheck({ id: start.id, slug: item.slug, typed, ms: 2500 }, new Date(started.getTime() + (asked + 1) * 5000));
+			assert.equal(feedback.verdict, knows ? "known" : "dont-know");
+			assert.equal(feedback.markedBy, knows ? "dictionary" : undefined);
+			assert.equal(feedback.typed, typed);
+			assert.ok(feedback.gloss.startsWith(entry.en));
 			if (knows) known++;
 			asked++;
 			assert.equal(feedback.progress.asked, asked);
 			item = feedback.item;
 		}
 		assert.equal(asked, core.CHECK_LENGTH);
-		assert.throws(() => server.answerWordCheck({ id: start.id, slug: "nothing", pick: 0 }), /answered already/);
+		await assert.rejects(server.answerWordCheck({ id: start.id, slug: "nothing", typed: "x" }), /answered already/);
 
 		const ended = new Date(started.getTime() + 150_000);
 		const result = server.finishWordCheck({ id: start.id, activeMs: 120_000, tz: 0 }, ended);
 		assert.equal(result.answered, core.CHECK_LENGTH);
 		assert.equal(result.known, known);
+		assert.equal(result.unchecked, 0);
 		assert.equal(result.measured, true);
 		assert.equal(result.missed.length, core.CHECK_LENGTH - known);
 		assert.ok(result.after.total > 450 && result.after.total < 1800, `a learner who knows the commonest ${KNOWS_UP_TO_RANK}: ${result.after.total} (${result.after.low} to ${result.after.high})`);
@@ -253,15 +243,17 @@ describe("the word check", () => {
 		assert.equal(result.report.checks, 1);
 		assert.equal(result.report.lastCheckAt, ended.toISOString());
 		assert.equal(result.report.history.at(-1)!.total, result.after.total);
+		assert.equal(result.report.answersForASteadyEstimate, core.answersForASteadyEstimate(lexicon.entries.length));
 
 		assert.equal(wordCheckStore.open(), null);
 		assert.equal(wordCheckStore.answers().length, core.CHECK_LENGTH);
+		assert.equal(wordCheckStore.sessions().at(-1)!.usage, undefined, "no model was called, so the check cost nothing");
 		assert.deepEqual(latestMeasuredVocabulary(undefined), { size: result.after.total, at: ended.toISOString(), reliable: true });
 		assert.equal(progressStore.read().days["2026-11-12"]?.minutesBy?.wordcheck, 2);
 		assert.throws(() => server.finishWordCheck({ id: start.id }), /No such word check/);
 	});
 
-	test("a second check asks other words, and never a word in Review or marked as known", () => {
+	test("a second check asks other words, and never a word in Review or marked as known; fewer answers than a whole check are not called measured", async () => {
 		const first = new Set(wordCheckStore.answers().map((a) => a.slug));
 		const marked = knownWordStore.slugs();
 		const start = server.startWordCheck(new Date("2026-11-13T09:00:00Z"), 99);
@@ -269,13 +261,75 @@ describe("the word check", () => {
 		let n = 0;
 		while (item && n < 6) {
 			assert.ok(!first.has(item.slug) && !marked.has(item.slug));
-			item = server.answerWordCheck({ id: start.id, slug: item.slug, pick: null }, new Date("2026-11-13T09:01:00Z")).item;
+			item = (await server.answerWordCheck({ id: start.id, slug: item.slug, typed: null }, new Date("2026-11-13T09:01:00Z"))).item;
 			n++;
 		}
 		const result = server.finishWordCheck({ id: start.id }, new Date("2026-11-13T09:02:00Z"));
 		assert.equal(result.answered, 6);
 		assert.equal(result.missed.length, 6);
 		assert.equal(wordCheckStore.sessions().length, 2);
+	});
+
+	test("an answer the dictionary words differently goes to the model once, is kept, and counts by its verdict; with no model it counts neither way", async () => {
+		const now = new Date("2026-11-13T12:00:00Z");
+		const answersBefore = server.wordEstimateReport(now).estimate!.answers;
+		const calls = { n: 0 };
+		const judging = (accept: boolean, note: string) => {
+			const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+			return {
+				model: faux.getModel(),
+				streamFn: ((model, context, options) => {
+					calls.n++;
+					faux.setResponses([fauxAssistantMessage(JSON.stringify({ accept, note }))]);
+					return faux.streamSimple(model, context, options);
+				}) as typeof faux.streamSimple,
+			};
+		};
+		const start = server.startWordCheck(now, 7, judging(true, ""));
+		assert.equal(start.judges, true);
+
+		const accepted = await server.answerWordCheck({ id: start.id, slug: start.item.slug, typed: "zzz a paraphrase" }, now, judging(true, "A close paraphrase."));
+		assert.equal(accepted.verdict, "known");
+		assert.equal(accepted.markedBy, "model");
+		assert.equal(accepted.note, "A close paraphrase.");
+		assert.equal(calls.n, 1);
+		assert.deepEqual(Object.keys(wordCheckStore.judgements()), [`${start.item.slug}|zzz a paraphrase`]);
+
+		const rejected = await server.answerWordCheck({ id: start.id, slug: accepted.item!.slug, typed: "zzz something else" }, now, judging(false, "A different meaning."));
+		assert.equal(rejected.verdict, "not-known");
+		assert.equal(rejected.markedBy, "model");
+		assert.equal(calls.n, 2);
+
+		const unchecked = await server.answerWordCheck({ id: start.id, slug: rejected.item!.slug, typed: "zzz nobody to ask" }, now);
+		assert.equal(unchecked.verdict, "unchecked");
+		assert.equal(unchecked.markedBy, undefined);
+
+		const result = server.finishWordCheck({ id: start.id }, now);
+		assert.equal(result.answered, 2);
+		assert.equal(result.known, 1);
+		assert.equal(result.unchecked, 1);
+		assert.deepEqual(
+			result.missed.map((w) => w.slug),
+			[accepted.item!.slug],
+		);
+		assert.equal(result.report.estimate!.answers, answersBefore + 2, "the unchecked answer is no evidence");
+		assert.equal(wordCheckStore.sessions().at(-1)!.usage!.steps.length, 2);
+
+		const again = server.startWordCheck(now, 8);
+		const sameAnswer = await judge.judgeMeaning({ slug: start.item.slug, word: start.item.word, glosses: ["x"], typed: "ZZZ a paraphrase" }, { model: "none", steps: [] });
+		assert.deepEqual(sameAnswer, { accepted: true, note: "A close paraphrase." }, "the kept verdict answers without a model");
+		assert.equal(calls.n, 2);
+		server.finishWordCheck({ id: again.id }, now);
+	});
+
+	test("the model's reply is read strictly: a verdict or nothing", () => {
+		assert.deepEqual(judge.parseMeaningJudgement('Sure. {"accept": true, "note": " same meaning "}'), { accepted: true, note: "same meaning" });
+		assert.deepEqual(judge.parseMeaningJudgement('{"accept": false}'), { accepted: false, note: "" });
+		assert.equal(judge.parseMeaningJudgement('{"accept": "yes"}'), null);
+		assert.equal(judge.parseMeaningJudgement("I think it is right."), null);
+		const prompt = judge.meaningJudgePrompt({ slug: "kolo", word: "kolo", glosses: ["circle; round", "bike"], typed: "wheel" });
+		assert.ok(prompt.includes("Word: kolo") && prompt.includes("circle; round | bike") && prompt.includes("The learner typed: wheel"));
+		assert.ok(judge.meaningJudgeSystem({ english: "Slovak" }).includes("one Slovak word"));
 	});
 
 	test("a Review card counts by the scheduler's chance of recall today, an unanswered or suspended card does not, and none of them is asked in a check", () => {

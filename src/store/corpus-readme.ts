@@ -100,13 +100,16 @@ where the format is not obvious.
   slug, dictionary form and when, and \`updatedAt\`. They count as known
   wherever the app measures what you know.
 - \`word-check/\`: the word check under Words. \`answers.jsonl\` is one line
-  per word asked (the word, its place in the frequency order, the four
-  words whose meanings were offered, the one you picked or null for "I
-  don't know", whether that was right, when); \`sessions.jsonl\` is one line
-  per check (how many you knew, the estimate and its range before and
-  after); \`history.json\` keeps the estimate of words you know per day with
-  its parts (Review, marked, checked, estimated); \`open.json\` is a check
-  in progress.
+  per word asked (the word, its place in the frequency order, the meaning
+  you typed or null for "I don't know", the verdict, whether the
+  dictionary or a model marked it, the model's note, when);
+  \`sessions.jsonl\` is one line per check (how many you knew, how many
+  answers nobody could mark, the estimate and its range before and after,
+  what the model cost); \`history.json\` keeps the estimate of words you
+  know per day with its parts (Review, marked, checked, estimated);
+  \`judgements.json\` keeps every verdict a model gave on a typed meaning,
+  so the same answer is never sent twice; \`open.json\` is a check in
+  progress.
 - \`progress.json\`: XP, streak days, and per unit how many lessons, reps and
   correct answers, plus the first-try tallies the grammar atlas and the
   tutor read (\`first\`, split \`byGender\` in Slovak and \`byForm\`, by case

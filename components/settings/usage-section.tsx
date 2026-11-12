@@ -61,6 +61,7 @@ export function UsageSection() {
 					{(report.speak?.count ?? 0) > 0 && <> · {report.speak.count} spoken {report.speak.count === 1 ? "scene" : "scenes"} {formatUsd(report.speakUsd)}</>}
 					{(report.videos?.count ?? 0) > 0 && <> · {report.videos.count} {report.videos.count === 1 ? "video" : "videos"} prepared {formatUsd(report.videosUsd)}</>}
 					{(report.placement?.count ?? 0) > 0 && <> · {report.placement!.count} placement {report.placement!.count === 1 ? "check" : "checks"} {formatUsd(report.placementUsd ?? 0)}</>}
+					{(report.wordChecks?.count ?? 0) > 0 && <> · {report.wordChecks!.count} word {report.wordChecks!.count === 1 ? "check" : "checks"} {formatUsd(report.wordChecksUsd ?? 0)}</>}
 					{(report.languages?.count ?? 0) > 0 && <> · {report.languages!.count} {report.languages!.count === 1 ? "language" : "languages"} added (course and stories) {formatUsd(report.languagesUsd ?? 0)}</>}
 					{report.unpricedTurns > 0 && <> · {report.unpricedTurns} turns had no known price and are not counted</>}
 					. Lessons, Blitz, Review, Listen and Speed run on this computer and cost nothing.

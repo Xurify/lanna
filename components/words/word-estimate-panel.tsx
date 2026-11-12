@@ -57,7 +57,7 @@ export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | n
 					<p className="q-sub !mt-1 max-w-[60ch]" data-testid="word-estimate-line">
 						{report.measured ? (
 							<>
-								Likely between <b className="tabular-nums">{count(estimate.low)}</b> and <b className="tabular-nums">{count(estimate.high)}</b>, measured from {count(estimate.answers)} checked words.
+								Likely between <b className="tabular-nums">{count(estimate.low)}</b> and <b className="tabular-nums">{count(estimate.high)}</b>, measured from {count(estimate.answers)} meanings you typed.{estimate.answers < report.answersForASteadyEstimate ? ` A first reading: studies of size tests ask for about ${count(report.answersForASteadyEstimate)} words here.` : ""}
 								{earlier && earlier.total !== estimate.total && ` It was about ${count(earlier.total)} on ${dayLabel(earlier.day)}.`}
 							</>
 						) : (
@@ -72,7 +72,7 @@ export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | n
 						<Link href="/words/check" className={cn("q-btn pointer-coarse:min-h-11", report.measured ? "sec" : "primary")} data-testid="word-estimate-check">
 							{report.measured ? `Check ${report.checkLength} more` : "Check my words"}
 						</Link>
-						<span className="font-ui text-[12.5px] text-ink-3">{report.measured ? "Each check narrows the range" : `${report.checkLength} words, about 3 minutes`}</span>
+						<span className="font-ui text-[12.5px] text-ink-3">{report.measured ? "Each check narrows the range" : `${report.checkLength} words to type the meaning of, about 5 minutes`}</span>
 					</div>
 				)}
 			</div>
