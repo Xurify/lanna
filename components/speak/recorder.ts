@@ -239,9 +239,10 @@ export async function scoreClip(wav: Blob, reference: string, heard?: string): P
 
 /** Send a recording to /api/stt. Returns "" for silence; throws when no
  *  engine is set or the engine refused. */
-export async function transcribeClip(wav: Blob): Promise<string> {
+export async function transcribeClip(wav: Blob, lang?: string): Promise<string> {
 	const form = new FormData();
 	form.set("audio", wav, "line.wav");
+	if (lang) form.set("lang", lang);
 	const res = await fetch("/api/stt", { method: "POST", body: form });
 	const data = (await res.json().catch(() => ({}))) as { text?: string; message?: string };
 	if (!res.ok) throw new Error(data.message ?? `HTTP ${res.status}`);
