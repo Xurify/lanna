@@ -876,7 +876,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	tasks.push({
 		id: "read",
 		title: "Read",
-		line: (day.reads ?? 0) > 0 ? "Today's episode is read" : "Today's episode of the story — tap any word for its meaning",
+		line: (day.reads ?? 0) > 0 ? "Read today's part of the story" : "Read the next part of the story — tap any word for its meaning",
 		minutes: TASK_MINUTES.read,
 		done: (day.reads ?? 0) > 0,
 		href: "/read",
