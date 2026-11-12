@@ -491,7 +491,7 @@ describe("writeNewStory and POST /api/read actions", () => {
 		const bad = await POST(new Request("http://localhost/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "bogus" }) }));
 		assert.equal(bad.status, 400);
 		const err = (await bad.json()) as { message: string };
-		assert.match(err.message, /action must be next, write or finish/);
+		assert.match(err.message, /action must be next, write, finish, import, part or remove-source/);
 
 		const nextRes = await POST(new Request("http://localhost/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "next" }) }));
 		assert.equal(nextRes.status, 200);

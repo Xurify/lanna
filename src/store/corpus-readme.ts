@@ -191,6 +191,16 @@ story at your level, each paid for once and kept here for good.
   \`correct\`/\`total\` on the comprehension check, \`answers\` (the option
   picked per question, -1 = skipped), \`tapped\` (the words you looked up),
   \`queued\` (the words sent to the review deck), \`xp\`.
+- \`sources/<id>.json\`: a text of your own (an article, a newsletter, a
+  pasted email) as it was added: \`title\`, \`url\` and \`site\` when it came
+  from a link, \`text\` (as read from the page or pasted), \`wordCount\`,
+  \`sections[]\` (the text cut into parts), \`level\` (your level when it was
+  added), \`difficulty\` (\`level\`: retold at your level, \`harder\`: one level
+  up, \`full\`: not simplified), \`addedAt\`, \`truncated\` (the text was over
+  the word limit and was cut) and \`removedAt\` (you removed it from the
+  library; nothing is deleted). Each part is a story file like any other,
+  named \`<id>-pNN.json\`, with \`source\` (which text and which part) and
+  \`original\` (the section of your text it was written from).
 
 The sentences\' audio is in \`../../../audio/\` like every other clip.
 `;
