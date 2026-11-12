@@ -840,6 +840,13 @@ function pickNext(lexicon: Lexicon | null = loadLexicon()): { story: StoryRecord
 	return pickStory(unreadStories(), { level: k.level, known: k.known, recentGenres: recent.genres, recentTopics: recent.topics, chapter: k.chapter });
 }
 
+/** The story the plan's Read task names: the one read on `day`, else the one /read opens next. */
+export function planStoryTitle(day: string): string | undefined {
+	const readToday = storyStore.reads().filter((r) => r.day === day).at(-1);
+	if (readToday) return storyStore.list().find((s) => s.id === readToday.storyId)?.title;
+	return pickNext()?.story.title;
+}
+
 export function readingState(tz?: number, now = new Date(), opts: { topUpShelf?: boolean } = {}): ReadingState {
 	const lib = library();
 	const today = dayKey(now, tz);

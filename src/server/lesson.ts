@@ -82,6 +82,7 @@ import { stampEvidence, syncStamps, type StampReport } from "./stamps.ts";
 import type { StampState, TrailLog } from "../core/stamps.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
+import { planStoryTitle } from "./reading.ts";
 import { videoStore } from "../store/videos.ts";
 import { coverageKind, watchMinutes } from "../core/watch.ts";
 import { afterPlan, type AfterPlan } from "../core/after-plan.ts";
@@ -610,6 +611,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		// A timed re-read needs an episode read on an earlier day.
 		reread: storyStore.reads().some((r) => r.day < key),
 		watch: pendingWatch(key),
+		story: planStoryTitle(key),
 		carried: carried.map((c) => ({ id: c.id, from: c.from })),
 	});
 	const snapshot = plan.tasks.map((t) => ({ id: t.id, title: t.title, done: t.done }));
