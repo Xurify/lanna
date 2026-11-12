@@ -51,7 +51,8 @@ export async function POST(req: Request) {
 	}
 	if (body.action === "write") {
 		try {
-			return Response.json(await writeNewStory());
+			const topic = typeof (body as { topic?: unknown }).topic === "string" ? ((body as { topic: string }).topic.trim().slice(0, 150) || undefined) : undefined;
+			return Response.json(await writeNewStory({ topic }));
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : 502 });

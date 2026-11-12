@@ -307,6 +307,7 @@ export interface ReadingState {
 export interface WritingProgress {
 	level: Cefr;
 	genre: StoryGenre;
+	topic?: string;
 	startedAt: string;
 	/** The Slovak sentences found in the model's text so far. */
 	sentences: string[];

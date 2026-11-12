@@ -470,6 +470,22 @@ describe("writeNewStory and POST /api/read actions", () => {
 		assert.equal(storyStore.list().length, countBefore + 1);
 	});
 
+	it("storyBrief and writeNewStory respect custom topic", async () => {
+		const k = reading.knownWords(null);
+		const brief = reading.storyBrief(k, [], [], new Date("2026-11-01T12:00:00Z"), "robo", null, { english: "Slovak", tag: "sk", country: "Slovakia" }, "buying train tickets");
+		assert.equal(brief.theme, "buying train tickets");
+		assert.match(brief.prompt, /Topic requested by the learner: "buying train tickets"/);
+
+		const ep = {
+			...EPISODE,
+			title: "Na stanici",
+		};
+		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify(ep))]);
+		const customStory = await reading.writeNewStory({ engine, model: "faux:story", topic: "buying train tickets", now: new Date("2026-11-01T12:00:00Z") });
+		assert.equal(customStory.title, "Na stanici");
+		assert.equal(customStory.topic, "buying train tickets");
+	});
+
 	it("validates action and rejects invalid actions", async () => {
 		const { POST } = await import("../app/api/read/route.ts");
 		const bad = await POST(new Request("http://localhost/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "bogus" }) }));
@@ -481,5 +497,10 @@ describe("writeNewStory and POST /api/read actions", () => {
 		assert.equal(nextRes.status, 200);
 		const nextBody = (await nextRes.json()) as StoryRecord;
 		assert.ok(nextBody.id);
+
+		const writeRes = await POST(new Request("http://localhost/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "write", topic: "na pošte" }) }));
+		assert.equal(writeRes.status, 503);
+		const writeBody = (await writeRes.json()) as { message: string };
+		assert.match(writeBody.message, /No model is configured/);
 	});
 });

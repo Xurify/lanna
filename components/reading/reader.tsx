@@ -94,15 +94,19 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 		}
 	}, []);
 
-	const lastAction = useRef<"next" | "write">("next");
+	const lastRequest = useRef<{ action: "next" | "write"; topic?: string }>({ action: "next" });
 
 	const requestStory = useCallback(
-		async (action: "next" | "write") => {
-			lastAction.current = action;
+		async (action: "next" | "write", topic?: string) => {
+			lastRequest.current = { action, topic };
 			setStage("writing");
 			setError(null);
 			try {
-				const res = await fetch("/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
+				const res = await fetch("/api/read", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ action, ...(topic ? { topic } : {}) }),
+				});
 				const body = (await res.json()) as StoryRecord | { message: string };
 				if (!res.ok || !("sentences" in body)) throw new Error("message" in body ? body.message : `HTTP ${res.status}`);
 				setStory(body);
@@ -122,7 +126,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	);
 
 	const next = useCallback(() => requestStory("next"), [requestStory]);
-	const write = useCallback(() => requestStory("write"), [requestStory]);
+	const write = useCallback((topic?: string) => requestStory("write", topic), [requestStory]);
 
 	// Opened with nothing to read and nothing read today: write the episode.
 	const bootedInWriting = useRef(stage === "writing");
@@ -227,7 +231,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 						testid="read-error"
 						title="The episode could not be written"
 						action={
-							<button type="button" onClick={() => void requestStory(lastAction.current)} className="q-btn primary">
+							<button type="button" onClick={() => void requestStory(lastRequest.current.action, lastRequest.current.topic)} className="q-btn primary">
 								Try again
 							</button>
 						}
@@ -248,7 +252,7 @@ export function Reader({ initial, initialStory, startOnShelf = false }: { initia
 	if (stage === "shelf" || !story) {
 		return (
 			<Frame>
-				<Shelf state={state} onOpen={open} onWrite={() => void write()} />
+				<Shelf state={state} onOpen={open} onWrite={(topic) => void write(topic)} />
 			</Frame>
 		);
 	}
@@ -312,7 +316,7 @@ function Writing({ initial }: { initial: WritingProgress | null }) {
 			clearInterval(timer);
 		};
 	}, []);
-	const label = progress ? (progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story";
+	const label = progress ? (progress.topic ? `"${progress.topic}"` : progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story";
 	const lines = progress?.sentences ?? [];
 	return (
 		<Frame>
@@ -766,12 +770,14 @@ export function storyMeta(s: { level: string; wordCount: number; coverage: numbe
 	return parts.join(" · ");
 }
 
-function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen: (id: string) => void; onWrite: () => void }) {
+function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen: (id: string) => void; onWrite: (topic?: string) => void }) {
 	const lang = useActiveLanguage();
 	const list = state?.library ?? [];
 	const [level, setLevel] = useState<string>("all");
 	const [status, setStatus] = useState<"all" | "unread" | "read">("all");
 	const [query, setQuery] = useState("");
+	const [showPrompt, setShowPrompt] = useState(false);
+	const [topic, setTopic] = useState("");
 	const canWrite = state?.canWrite !== false;
 
 	const LEVEL_RANK: Record<string, number> = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
@@ -802,19 +808,81 @@ function Shelf({ state, onOpen, onWrite }: { state: ReadingState | null; onOpen:
 						<p className="q-line dim mt-1">Short stories at your level. Tap any word for its meaning.</p>
 					</div>
 					{canWrite && list.length > 0 && (
-						<button type="button" onClick={onWrite} className="q-btn sec" data-testid="read-write-next">
+						<button
+							type="button"
+							onClick={() => setShowPrompt((p) => !p)}
+							className={cn("q-btn", showPrompt ? "primary" : "sec")}
+							data-testid="read-write-next"
+							aria-expanded={showPrompt}
+						>
 							<SparklesIcon className="size-4" />
 							{unread ? "Write another episode" : "Write a new episode"}
 						</button>
 					)}
 				</div>
 
+				{showPrompt && (
+					<div className="mt-4 q-card p-4 sm:p-5" data-testid="read-topic-prompt">
+						<div className="flex items-center justify-between gap-2">
+							<label htmlFor="story-topic" className="font-ui text-sm font-semibold text-foreground">
+								What should it be about? <span className="font-normal text-muted-foreground">(optional)</span>
+							</label>
+							<button
+								type="button"
+								onClick={() => setShowPrompt(false)}
+								className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+								aria-label="Close topic prompt"
+							>
+								<XIcon className="size-4" />
+							</button>
+						</div>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								onWrite(topic.trim() || undefined);
+							}}
+							className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-center"
+						>
+							<input
+								id="story-topic"
+								type="text"
+								value={topic}
+								onChange={(e) => setTopic(e.target.value)}
+								placeholder="e.g. buying train tickets, meeting a neighbour, finding a flat…"
+								className="q-field w-full flex-1 px-3.5 py-2 font-prose text-sm"
+								autoFocus
+								maxLength={150}
+							/>
+							<button type="submit" className="q-btn primary shrink-0" data-testid="read-write-submit">
+								<SparklesIcon className="size-4" />
+								Write episode
+							</button>
+						</form>
+						<div className="mt-3 flex flex-wrap items-center gap-1.5 font-ui text-xs text-muted-foreground">
+							<span className="font-medium text-ink-3">Ideas:</span>
+							{["At the café", "The train station", "At the doctor's", "Finding a flat", "Sunday lunch"].map((idea) => (
+								<button
+									key={idea}
+									type="button"
+									onClick={() => {
+										setTopic(idea);
+										onWrite(idea);
+									}}
+									className="rounded-md bg-well px-2 py-0.5 text-foreground hover:bg-well-2"
+								>
+									{idea}
+								</button>
+							))}
+						</div>
+					</div>
+				)}
+
 				{list.length === 0 && (
 					<div className="mt-8">
 						<EmptyState
 							testid="read-empty"
 							title="No episodes yet"
-							action={canWrite ? <button type="button" onClick={onWrite} className="q-btn primary">Write the first episode</button> : <AddKeyButton />}
+							action={canWrite ? <button type="button" onClick={() => onWrite()} className="q-btn primary">Write the first episode</button> : <AddKeyButton />}
 							secondary={<Link href="/" className="q-btn ghost">Back to Today</Link>}
 						>
 							<p>Episodes are short stories at your level, with every word tappable.</p>

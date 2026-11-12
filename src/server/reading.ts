@@ -532,22 +532,29 @@ export function questionLine(level: Cefr): string {
  *  language's story bible (`world.json`, src/server/world.ts):
  *  its cast, its places, and the chapter the learner is in as this
  *  episode's plot beat. */
-export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null, lang: Pick<LanguageInfo, "english" | "tag" | "country"> = activeLanguage()): StoryBrief {
+export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null, lang: Pick<LanguageInfo, "english" | "tag" | "country"> = activeLanguage(), customTopic?: string): StoryBrief {
 	const robo = previous.filter((s) => (s.genre ?? "robo") === "robo");
 	const episode = genre === "robo" ? robo.length + 1 : 0;
 	const names = { series: world?.series ?? "The story", language: lang.english, country: countryOf(lang) };
-	const theme = genre === "robo" ? episodeTheme(k.purposes, episode, world) : genreInfo(genre, names).label.toLowerCase();
+	const theme = customTopic?.trim() || (genre === "robo" ? episodeTheme(k.purposes, episode, world) : genreInfo(genre, names).label.toLowerCase());
 	const lead = world?.cast[0]?.name;
 	const len = STORY_LENGTH[k.level];
 	const stage = STAGES.find((s) => s.level === k.level);
 	const topics = previous.map((s) => s.topic).filter((t): t is string => !!t).slice(-12);
 	const series = genre === "robo" && world?.cast.length ? world : null;
+	const heading = customTopic?.trim()
+		? (genre === "robo"
+			? `Text: episode ${episode} of the ${lead ? `${lead} series` : "running series"}. Topic requested by the learner: "${customTopic.trim()}". Center the episode around this.`
+			: `Text: ${genreInfo(genre, names).brief}. Topic requested by the learner: "${customTopic.trim()}". Center the text around this.`)
+		: (genre === "robo"
+			? `Text: episode ${episode} of the ${lead ? `${lead} series` : "running series"}. Setting: ${theme}.`
+			: `Text: ${genreInfo(genre, names).brief}.`);
 	const lines = [
-		genre === "robo" ? `Text: episode ${episode} of the ${lead ? `${lead} series` : "running series"}. Setting: ${theme}.` : `Text: ${genreInfo(genre, names).brief}.`,
+		heading,
 		series ? `Series bible, keep them as written — the cast: ${series.cast.map((c) => `${c.name} (${c.gender === "f" ? "woman" : "man"}, ${c.age}) ${c.role}`).join("; ")}.` : "",
 		series ? `The places they meet at: ${series.places.map((p) => p.name).join(", ")}.` : "",
-		series ? `This episode's beat: "${series.beats[k.chapter] ?? `another day in ${series.city ?? "the city"}`}" — build the episode on it.` : "",
-		topics.length ? `Already on the shelf (write about something else): ${topics.join("; ")}.` : "",
+		series && !customTopic?.trim() ? `This episode's beat: "${series.beats[k.chapter] ?? `another day in ${series.city ?? "the city"}`}" — build the episode on it.` : "",
+		topics.length && !customTopic?.trim() ? `Already on the shelf (write about something else): ${topics.join("; ")}.` : "",
 		`Learner level: ${k.level}${stage ? ` (${stage.title})` : ""}, working in the chapter "${k.chapterTitle}".`,
 		`Length: ${len.min} to ${len.max} sentences. New words allowed: at most ${NEW_WORDS_MAX[k.level]}.`,
 		questionLine(k.level),
@@ -576,6 +583,8 @@ interface GenerateOptions {
 	genre?: StoryGenre;
 	/** A reader is waiting for it (true) or the shelf is being filled. */
 	wanted?: boolean;
+	/** A custom topic or situation requested by the learner. */
+	topic?: string;
 }
 
 /** The cheap slot (stories are reading input, not teaching), else the
@@ -637,7 +646,7 @@ function withKinds(questions: readonly StoryQuestion[], level: Cefr): StoryQuest
 }
 
 /** Turn a draft into the record: gloss, measure, number. */
-export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, lexicon: Lexicon | null, usage: StoryUsage, drafts: number, now: Date, voices: ReadonlySet<string> | null = null): StoryRecord {
+export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, lexicon: Lexicon | null, usage: StoryUsage, drafts: number, now: Date, voices: ReadonlySet<string> | null = null, customTopic?: string): StoryRecord {
 	const newWords: StoryWord[] = d.newWords.map((w) => {
 		const entry = lexicon ? resolveWord(lexicon, w.sk, k.known) : undefined;
 		return entry ? { lemma: entryLemma(entry), gloss: entry.en, slug: entry.slug } : { lemma: w.sk, gloss: w.en };
@@ -664,7 +673,7 @@ export function assembleStory(d: StoryDraft, brief: StoryBrief, k: KnownWords, l
 		chapter: k.chapter,
 		theme: brief.theme,
 		genre: brief.genre,
-		...(d.topic ? { topic: d.topic } : {}),
+		topic: d.topic || customTopic?.trim() || brief.theme,
 		cast,
 		narratorVoice: NARRATOR_VOICE,
 		createdAt: now.toISOString(),
@@ -713,7 +722,7 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 		.slice(-4)
 		.map((s) => storyStore.get(s.id)?.recap)
 		.filter((r): r is string => !!r);
-	const brief = storyBrief(k, previous, recaps, now, genre, loadWorld());
+	const brief = storyBrief(k, previous, recaps, now, genre, loadWorld(), activeLanguage(), opts.topic);
 	let engine = opts.engine;
 	let model = opts.model;
 	if (!engine) {
@@ -723,7 +732,7 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 		model ??= resolved.model;
 	}
 	const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
-	const progress: WritingProgress = { level: k.level, genre, startedAt: now.toISOString(), sentences: [], wanted: opts.wanted ?? true };
+	const progress: WritingProgress = { level: k.level, genre, topic: opts.topic?.trim(), startedAt: now.toISOString(), sentences: [], wanted: opts.wanted ?? true };
 	writing.progress = progress;
 	const onPartial = (text: string) => {
 		progress.sentences = sentencesSoFar(text);
@@ -731,7 +740,7 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 	try {
 		const voices = opts.engine ? null : await availableVoiceIds();
 		const d1 = await draft(engine, brief.prompt, usage, onPartial);
-		let first = assembleStory(d1, brief, k, lexicon, usage, 1, now, voices);
+		let first = assembleStory(d1, brief, k, lexicon, usage, 1, now, voices, opts.topic);
 		if (first.coverage < COVERAGE_FLOOR) {
 			// Too many stray unknown words: once more, naming the ones to drop.
 			const declared = new Set(d1.newWords.map((w) => foldDiacritics(w.sk.toLocaleLowerCase(tag()))));
@@ -740,7 +749,7 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 			const again = `${brief.prompt}\n\nYour first draft used too many words the learner does not know (${Math.round((1 - first.coverage) * 100)} in 100). Write the text again with simpler, more common words. Avoid these in particular: ${hard.join(", ")}. Keep the same plot.`;
 			progress.sentences = [];
 			try {
-				const second = assembleStory(await draft(engine, again, usage, onPartial), brief, k, lexicon, usage, 2, now, voices);
+				const second = assembleStory(await draft(engine, again, usage, onPartial), brief, k, lexicon, usage, 2, now, voices, opts.topic);
 				if (second.coverage >= first.coverage) first = second;
 				else first = { ...first, usage, drafts: 2 };
 			} catch {
@@ -865,6 +874,11 @@ export function readingState(tz?: number, now = new Date(), opts: { topUpShelf?:
 }
 
 export async function writeNewStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
+	if (opts.topic?.trim()) {
+		const story = await generateStory({ ...opts, wanted: true });
+		if (!opts.engine) kickShelf();
+		return story;
+	}
 	const k = knownWords(loadLexicon());
 	if (!library().some((s) => s.chapter === k.chapter)) {
 		const chapterStory = await generateStory({ ...opts, wanted: true });
