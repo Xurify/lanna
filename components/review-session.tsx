@@ -868,7 +868,7 @@ export function ReviewSession() {
 														</span>
 													)}
 												</p>
-												{verdict === "wrong" && reason && <MissWhy reason={reason} given={targetWordOf(prompt, given)} answer={prompt.card.answer} code={lang?.code} className="mt-3" />}
+												{verdict === "wrong" && reason && <MissWhy reason={reason} given={reason.given ?? targetWordOf(prompt, given)} answer={reason.answer ?? prompt.card.answer} code={lang?.code} className="mt-3" />}
 												{verdict !== "wrong" && (
 													<p className="mt-3 flex flex-wrap gap-x-6 gap-y-1" data-testid="review-facts">
 														<Note label="word">

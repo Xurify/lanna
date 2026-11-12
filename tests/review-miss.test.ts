@@ -35,8 +35,33 @@ const card = (id: string, slug: string, lemma: string, sentence: string, answer:
 	createdAt: NOW,
 });
 
+const learning = (c: ReviewCard): ReviewCard => ({ ...c, state: "learning", reps: 2 });
+
 reviewStore.writeCards({
 	"vecera#2": card("vecera#2", "vecera", "večera", "Po večeri ideme na prechádzku.", "večeri"),
+	"kseft#0": learning(card("kseft#0", "kseft", "kšeft", "Na tom kšefte.", "kšefte")),
+	"ist#0": learning(card("ist#0", "ist", "ísť", "Ideme na dovolenku.", "Ideme")),
+});
+
+test("with several gaps, a miss on another hidden word is the one explained", () => {
+	const r = reviewMiss("ist#0", "Ideme na dovolenka", 3)!;
+	assert.equal(r.slip, "base");
+	assert.equal(r.lemma, "dovolenka");
+	assert.equal(r.answer, "dovolenku");
+	assert.equal(r.given, "dovolenka");
+});
+
+test("a missed grammar word the dictionary has no entry for is named from the grammar-word table", () => {
+	const r = reviewMiss("kseft#0", "Na toto kšefte", 3)!;
+	assert.equal(r.lemma, "ten");
+	assert.equal(r.answer, "tom");
+	assert.equal(r.other?.lemma, "tento");
+	assert.equal(r.other?.gloss, "this");
+});
+
+test("with several gaps, the card's own word still comes first, and all right explains nothing", () => {
+	assert.equal(reviewMiss("kseft#0", "Na toto kšeft", 3)!.answer, "kšefte");
+	assert.equal(reviewMiss("kseft#0", "Na tom kšefte", 3), null);
 });
 
 test("another dictionary word is named with its meaning, even when it shares the stem", () => {

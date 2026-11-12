@@ -12,6 +12,7 @@ import { activeLanguage } from "./active-language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
 import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
 import { knownForms } from "../core/form-slip.ts";
+import { grammarWord } from "../core/reading.ts";
 import { missReason, missWordOf, startsQuestion, type MissReason, type MissWord } from "../core/review-miss.ts";
 import { languageReference } from "../agent/language-reference.ts";
 import { MAX_BLANK_WORDS, blankAround, blankFromSpans, blankWordsFor, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings, type Span } from "../core/review.ts";
@@ -344,11 +345,35 @@ export async function reviewMissWithNote(cardId: string, givenAnswer: string, wo
 	return { ...after, other };
 }
 
+type MissTarget = Pick<ReviewCard, "slug" | "lemma" | "gloss" | "sentence" | "answer" | "at">;
+
+/** The gap a wrong answer is explained on: the card's own word when it is
+ *  the one missed, otherwise the first other hidden word typed wrong, as
+ *  the dictionary's commonest entry with that form. */
+const slovakGrammarWord = (form: string) => (tag().startsWith("sk") ? grammarWord(form) : undefined);
+
+function missedGap(card: ReviewCard, blank: Blank, givenAnswer: string, lexicon: ReturnType<typeof loadLexicon>): { card: MissTarget; given: string } | null {
+	const typed = givenAnswer.trim().split(/\s+/);
+	if (blank.words <= 1 || typed.length !== blank.words) return { card, given: targetWordOf(blank, givenAnswer) };
+	const wrong = (i: number) => compareAnswer(blank.gaps[i]!, typed[i]!, tag()) === "wrong";
+	if (wrong(blank.target)) return { card, given: typed[blank.target]! };
+	const gap = blank.gaps.findIndex((_, i) => i !== blank.target && wrong(i));
+	if (gap < 0) return null;
+	const answer = blank.gaps[gap]!;
+	const commonerFirst = (a: LexiconEntry, b: LexiconEntry) => (a.rank ?? Infinity) - (b.rank ?? Infinity);
+	const entry = [...(lexicon?.byForm.get(answer.toLocaleLowerCase(tag())) ?? [])].sort(commonerFirst)[0];
+	const grammar = entry ? undefined : slovakGrammarWord(answer);
+	const lemma = entry ? entryLemma(entry) : (grammar?.lemma ?? answer.toLocaleLowerCase(tag()));
+	return { card: { slug: entry?.slug ?? "", lemma, gloss: entry ? shortGloss(entry.en) : (grammar?.gloss ?? ""), sentence: card.sentence, answer, at: blank.spans[gap]![0] }, given: typed[gap]! };
+}
+
 function missOf(cardId: string, givenAnswer: string, words?: number): { reason: MissReason; entry?: LexiconEntry; otherEntry?: LexiconEntry } | null {
-	const card = reviewStore.readCards()[cardId];
-	if (!card) return null;
-	const given = targetWordOf(blankOf(card, reviewStore.readMeta().settings.blankWords, words), givenAnswer);
+	const reviewCard = reviewStore.readCards()[cardId];
+	if (!reviewCard) return null;
 	const lexicon = loadLexicon();
+	const missed = missedGap(reviewCard, blankOf(reviewCard, reviewStore.readMeta().settings.blankWords, words), givenAnswer, lexicon);
+	if (!missed) return null;
+	const { card, given } = missed;
 	const entry = lexicon?.bySlug.get(card.slug);
 	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
 	const word = given.trim().toLocaleLowerCase(tag());
@@ -366,6 +391,8 @@ function missOf(cardId: string, givenAnswer: string, words?: number): { reason: 
 		const noteCanBeWritten = !cached && aiReady && !!entry && enoughEvidence(missNoteEvidence(entry, e, tag()));
 		return missWordOf({ slug: card.slug, lemma: card.lemma, entry }, e, { typed: word, isLemma, language: activeLanguage().id, reference, ...(cached?.status === "kept" ? { note: cached.note } : {}), noteCanBeWritten }, tag());
 	});
+	const givenGrammar = ranked.length === 0 && word ? slovakGrammarWord(word) : undefined;
+	if (givenGrammar) rankedEntriesOfGiven.push({ lemma: givenGrammar.lemma, gloss: givenGrammar.gloss, isLemma: givenGrammar.lemma === word });
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const trigger = unit && unit !== "words" ? triggerOf(card.sentence, card.at, unit) : undefined;
 	const forms = entry ? knownForms(entry) : [];
@@ -374,6 +401,8 @@ function missOf(cardId: string, givenAnswer: string, words?: number): { reason: 
 		tag(),
 	);
 	if (!reason) return null;
+	reason.answer = card.answer;
+	reason.given = given;
 	const otherEntry = reason.other ? ranked[rankedEntriesOfGiven.indexOf(reason.other)]?.e : undefined;
 	return { reason, ...(entry ? { entry } : {}), ...(otherEntry ? { otherEntry } : {}) };
 }
