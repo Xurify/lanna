@@ -36,6 +36,8 @@ export interface MissReason {
 	other?: MissWord;
 	form?: string;
 	trigger?: string;
+	answer?: string;
+	given?: string;
 }
 
 interface MissInput {
