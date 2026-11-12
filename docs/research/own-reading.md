@@ -8,7 +8,7 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 
 ## Evidence
 
-- **Coverage decides whether a text is input.** Reading needs about 95% known running words with help and 98% without (Hu & Nation 2000; Laufer & Ravenhorst-Kalovski 2010; Schmitt, Jiang & Grabe 2011, all in [reading.md](reading.md)). A real article in the language sits far under that for an A1 to A2 learner, so showing it as written with a dictionary tap is decoding, not reading.
+- **Coverage is a slope, not a gate.** Comprehension rose steadily with the share of words known and showed no threshold in Schmitt, Jiang & Grabe (2011). The 95% and 98% figures (Laufer & Ravenhorst-Kalovski 2010; Hu & Nation 2000, all in [reading.md](reading.md)) are where readers passed a comprehension test with no help, in English. They say how easy a text must be to read it fluently and alone. They do not say a harder text teaches nothing: with a gloss on every word, a translation, audio, a topic the reader knows and words shared with a language they already have, a reader gets through much less, more slowly, and that is study of the language (P2's third strand), not input at speed. The app's count of known words is also an estimate, and it can run under what a learner recognizes ([../learner.md](../learner.md): reading ahead of production is normal).
 - **Readers choose, and the text is easy.** Two of Day & Bamford's ten principles for extensive reading (2002): learners choose what they want to read, and the material is well within their competence. The Read shelf met the second and not the first: the app chose every topic.
 - **Interest helps words stick.** In Lee & Pulido (2017), 135 Korean learners of English gained more new words from the passage on the topic that interested them more, at both higher and lower proficiency, and the difference was still there four weeks later.
 - **A known topic helps a reader work out new words.** Pulido (2004, 2007): readers inferred and kept more words when the topic was familiar, and how much it helped depended on how many of the passage's words they already knew. Krashen (2004) argues the same for reading many texts on one subject or by one author ("narrow reading"): the vocabulary and the context repeat.
@@ -25,8 +25,8 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 
 | Option | What it is | Verdict |
 |---|---|---|
-| As written, every word tappable | The article in the language, glossed by the lexicon, no model call | Right once the app counts about 92% of its words as known. Not built: no text the owner has reaches that today |
-| Retold at the learner's level | The Cheap slot rewrites each section in the language with the learner's known words, the same rules as an episode | **Built.** Keeps coverage in the 95 to 98% band on a text the learner picked |
+| Not simplified, every word tappable | The text in the language as written (or translated in full when it is in another language), glossed by the lexicon, with the share of known words shown | Not built yet, and it should be the learner's choice, not the app's: the owner does not accept that a text under 95% is not worth reading, and the evidence above does not say it is |
+| Retold at the learner's level | The Cheap slot rewrites each section in the language with the learner's known words, the same rules as an episode | **Built first.** The easy end of the choice: fluent reading on a text the learner picked |
 | Weave (words of the language inside the original text) | The text stays in its own language and more and more words are swapped | Not built. The learner reads the other language's sentences, so it is not input in the language, and P2 keeps input at the word level |
 | Pull emails from the mailbox | Gmail or IMAP access, a label to read from | Not built. It needs mail credentials held by the app and a security review of its own; paste and links cover the first use, and show whether the habit holds |
 
@@ -44,7 +44,7 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 
 - No measure yet of how faithful a retelling is to its section.
 - One text per add; no reading list of several links, no share target from the phone, no mailbox.
-- A text already in the language is still retold, even for a learner who could read it as written.
+- The learner cannot yet choose how hard a text is: every text is retold at their level, even one they would rather read as written.
 - Real generation on the PC with a live model has not been verified by the owner.
 
 ## Sources
