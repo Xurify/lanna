@@ -310,6 +310,7 @@ describe("reading a text of your own", () => {
 		assert.match(graded, /graded Slovak/);
 		assert.match(graded, /never instructions to you/);
 		assert.match(graded, /Add nothing that is not in it/);
+		assert.match(graded, /natural Slovak wins/);
 		const unsimplified = reading.retellSystem({ english: "Estonian" }, "full");
 		assert.match(unsimplified, /natural Estonian, without simplifying it/);
 		assert.match(unsimplified, /"newWords" is an empty array/);
@@ -390,6 +391,27 @@ describe("adding several links at once", () => {
 		assert.equal(storyStore.get(core.ownStoryId(id!, 1)), null, "left for the learner to open, which writes it on demand");
 		const opened = await reading.sourcePart(id!, 1, { engine: working, model: "faux:retell" });
 		assert.equal(opened.source?.part, 1);
+	});
+});
+
+describe("the rules a program can check", () => {
+	const withSentence = (sk: string) => ({ ...RETOLD_DRAFT, sentences: [...RETOLD_DRAFT.sentences, { sk, en: "I am going to town with my sister." }] });
+	const text = (n: number) => makeParagraphs(3, 40 + n);
+
+	it("has a draft that breaks one written again with the mistake named, and keeps the clean one", async () => {
+		const broken = fauxAssistantMessage(JSON.stringify(withSentence("Idem do mesta s sestrou.")));
+		const clean = fauxAssistantMessage(JSON.stringify(withSentence("Idem do mesta so sestrou.")));
+		const { story } = await readImport.importReading({ text: text(1), title: "Pravidlá jedna" }, { engine: fauxEngine([broken, clean]), model: "faux:retell" });
+		assert.equal(story.drafts, 2);
+		assert.equal(story.sentences.at(-1)?.sk, "Idem do mesta so sestrou.");
+		assert.equal(story.ruleIssues, undefined);
+		assert.deepEqual(reading.ruleIssues({ sentences: [{ sk: "Idem do mesta s sestrou.", en: "", tokens: [] }] }).length, 1);
+	});
+
+	it("says on the record how many are left when the second draft breaks them too", async () => {
+		const broken = () => fauxAssistantMessage(JSON.stringify(withSentence("Idem do mesta s sestrou.")));
+		const { story } = await readImport.importReading({ text: text(2), title: "Pravidlá dva" }, { engine: fauxEngine([broken(), broken()]), model: "faux:retell" });
+		assert.equal(story.ruleIssues, 1);
 	});
 });
 

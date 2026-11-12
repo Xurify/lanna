@@ -76,7 +76,7 @@
 .q-rv-tease { font-size: 17px; line-height: 1.5; color: var(--q-ink-2); margin-top: 8px; letter-spacing: -0.008em; }
 .q-rv-meta { font-size: 13px; color: var(--q-ink-3); margin-top: 6px; }
 .q-rv-meta b { color: var(--q-ink-2); font-weight: 550; }
-/* A blank is a straight writing line, never a tinted pill. The border is !important because the app's unlayered `* { border-color }` rule would otherwise beat any layered utility or component color. */
+/* A blank is a straight writing line, never a tinted pill. */
 .q-blank { display: inline-block; width: 56px; height: 1em; vertical-align: baseline; margin: 0 2px; border-radius: 0 !important; border-bottom: 2px solid var(--q-ink-4) !important; }
 .q-write { border-radius: 0 !important; background: transparent; border-bottom: 2px solid var(--q-ink-4) !important; }
 .q-write:focus, .q-write:focus-within { border-bottom-color: var(--q-teal) !important; }

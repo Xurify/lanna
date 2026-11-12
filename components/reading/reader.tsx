@@ -34,7 +34,7 @@ import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { Bookshelf, type BookState, type ShelfBook, type ShelfSlot } from "@/components/reading/bookshelf";
 import { AddReadingDialog, difficultyInfo, EMPTY_READING_DRAFT, linksIn, type ReadingDraft } from "@/components/reading/add-reading-dialog";
-import { cheersFor, genreInfo, gradeAnswers, readXp, type LibraryEntry, type ReadingState, type SourceEntry, type StoryRecord, type StorySource, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
+import { cheersFor, genreInfo, gradeAnswers, MAX_SOURCE_WORDS, readXp, type LibraryEntry, type ReadingState, type SourceEntry, type StoryRecord, type StorySource, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
@@ -95,27 +95,36 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 		}
 	}, []);
 
-	/** The next episode: the newest unread one, or a new one written now. */
-	const next = useCallback(async () => {
-		setStage("writing");
-		setError(null);
-		try {
-			const res = await fetch("/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "next" }) });
-			const body = (await res.json()) as StoryRecord | { message: string };
-			if (!res.ok || !("sentences" in body)) throw new Error("message" in body ? body.message : `HTTP ${res.status}`);
-			setStory(body);
-			setTapped([]);
-			setAnswers([]);
-			setOutcome(null);
-			startedAt.current = Date.now();
-			activeTime.restart();
-			setStage("reading");
-			void load();
-		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
-			setStage("error");
-		}
-	}, [load, activeTime]);
+	const lastRequest = useRef<{ action: "next" | "write"; topic?: string } | { action: "part"; sourceId: string; part: number }>({ action: "next" });
+
+	const requestStory = useCallback(
+		async (action: "next" | "write", topic?: string) => {
+			lastRequest.current = { action, topic };
+			setWaitingForOwnText(false);
+			setStage("writing");
+			setError(null);
+			try {
+				const res = await fetch("/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ...(topic ? { topic } : {}) }) });
+				const body = (await res.json()) as StoryRecord | { message: string };
+				if (!res.ok || !("sentences" in body)) throw new Error("message" in body ? body.message : `HTTP ${res.status}`);
+				setStory(body);
+				setTapped([]);
+				setAnswers([]);
+				setOutcome(null);
+				startedAt.current = Date.now();
+				activeTime.restart();
+				setStage("reading");
+				void load();
+			} catch (err) {
+				setError(err instanceof Error ? err.message : String(err));
+				setStage("error");
+			}
+		},
+		[load, activeTime],
+	);
+
+	const next = useCallback(() => requestStory("next"), [requestStory]);
+	const write = useCallback((topic?: string) => requestStory("write", topic), [requestStory]);
 
 	useEffect(() => {
 		void load();
@@ -166,6 +175,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 
 	const openPart = (sourceId: string, part: number, storyId?: string) => {
 		if (storyId) return open(storyId);
+		lastRequest.current = { action: "part", sourceId, part };
 		setWaitingForOwnText(true);
 		setStage("writing");
 		setError(null);
@@ -214,9 +224,10 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 			.then(load);
 	};
 
-	const writeNext = () => {
-		setWaitingForOwnText(false);
-		void next();
+	const tryAgain = () => {
+		const last = lastRequest.current;
+		if (last.action === "part") openPart(last.sourceId, last.part);
+		else void requestStory(last.action, last.topic);
 	};
 
 	const finish = useCallback(
@@ -291,8 +302,8 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 						testid="read-error"
 						title={waitingForOwnText ? "This part could not be written" : "The episode could not be written"}
 						action={
-							<button type="button" onClick={waitingForOwnText ? () => setStage("shelf") : writeNext} className="q-btn primary">
-								{waitingForOwnText ? "Back to the library" : "Try again"}
+							<button type="button" onClick={tryAgain} className="q-btn primary">
+								Try again
 							</button>
 						}
 						secondary={
@@ -302,7 +313,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 						}
 					>
 						<p>{error ?? "Something went wrong."}</p>
-						<p>Episodes you have already read are still in the library.</p>
+						<p>{waitingForOwnText ? "The parts already written are still in the library." : "Episodes you have already read are still in the library."}</p>
 					</EmptyState>
 				</div>
 			</Frame>
@@ -312,7 +323,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "shelf" || !story) {
 		return (
 			<Frame>
-				<Shelf state={state} linksBeingRead={linksBeingRead} onOpen={open} onWrite={writeNext} onAdd={() => setAdding({ draft: EMPTY_READING_DRAFT, error: null })} onOpenPart={openPart} onRemoveSource={removeText} />
+				<Shelf state={state} linksBeingRead={linksBeingRead} onOpen={open} onWrite={(topic) => void write(topic)} onAdd={() => setAdding({ draft: EMPTY_READING_DRAFT, error: null })} onOpenPart={openPart} onRemoveSource={removeText} />
 				{adding && <AddReadingDialog initial={adding.draft} error={adding.error} onClose={() => setAdding(null)} onSubmit={importText} />}
 			</Frame>
 		);
@@ -338,7 +349,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End story={story} tapped={tapped} answers={answers} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={writeNext} onOpenPart={openPart} nextPartStoryId={nextPartStoryId(state, story)} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
+				<End story={story} tapped={tapped} answers={answers} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onOpenPart={openPart} nextPartStoryId={nextPartStoryId(state, story)} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
 			</Frame>
 		);
 	}
@@ -378,7 +389,7 @@ function Writing({ initial, ownText }: { initial: WritingProgress | null; ownTex
 		};
 	}, []);
 	const mine = !ownText || !!progress?.title;
-	const heading = progress?.title && ownText ? `Writing “${progress.title}” for you…` : ownText ? "Getting your text ready…" : `Writing ${progress ? (progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story"}…`;
+	const heading = progress?.title && ownText ? `Writing “${progress.title}” for you…` : ownText ? "Getting your text ready…" : `Writing ${progress ? (progress.topic ? `“${progress.topic}”` : progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story"}…`;
 	const lines = mine ? (progress?.sentences ?? []) : [];
 	return (
 		<Frame>
@@ -917,7 +928,7 @@ const partsWord = (parts: number) => `${parts} ${parts === 1 ? "part" : "parts"}
 export function sourceMeta(entry: SourceEntry): string {
 	const notStarted = entry.written > 0 ? "not started" : entry.preparing ? "part 1 is being written" : "not written yet";
 	const progress = entry.finished ? `read · ${partsWord(entry.parts)}` : entry.read === 0 ? `${partsWord(entry.parts)} · ${notStarted}` : `part ${entry.nextPart} of ${entry.parts} is next`;
-	return [entry.site, progress, entry.difficulty === "level" ? null : difficultyInfo(entry.difficulty, "").label.toLowerCase(), entry.shortened ? "a shorter version" : null].filter(Boolean).join(" · ");
+	return [entry.site, progress, entry.difficulty === "level" ? null : difficultyInfo(entry.difficulty, "").label.toLowerCase(), entry.shortened ? "a shorter version" : null, entry.truncated ? `only its first ${MAX_SOURCE_WORDS.toLocaleString("en-US")} words` : null].filter(Boolean).join(" · ");
 }
 
 function sourceLine(source: StorySource): string {
@@ -953,7 +964,7 @@ export function storyBookMeta(s: Pick<LibraryEntry, "wordCount" | "coverage" | "
 	return parts.join(" · ");
 }
 
-function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRemoveSource }: { state: ReadingState | null; linksBeingRead: number; onOpen: (id: string) => void; onWrite: () => void; onAdd: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; onRemoveSource: (sourceId: string) => void }) {
+function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRemoveSource }: { state: ReadingState | null; linksBeingRead: number; onOpen: (id: string) => void; onWrite: (topic?: string) => void; onAdd: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; onRemoveSource: (sourceId: string) => void }) {
 	const lang = useActiveLanguage();
 	const library = useMemo(() => state?.library ?? [], [state]);
 	const stories = useMemo(() => library.filter((s) => !s.source), [library]);
@@ -962,6 +973,8 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 	const [status, setStatus] = useState<"all" | "unread" | "read">("all");
 	const [query, setQuery] = useState("");
 	const [chosenBook, setChosenBook] = useState<string | null | undefined>(undefined);
+	const [askingTopic, setAskingTopic] = useState(false);
+	const [topic, setTopic] = useState("");
 	const canWrite = state?.canWrite !== false;
 
 	const pick = library.find((s) => s.id === state?.current?.id) ?? stories.find((s) => s.reads === 0);
@@ -1018,7 +1031,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 
 	const slotLevel = state?.current?.level ?? stories[0]?.level ?? "A1";
 	const addSlot: ShelfSlot | undefined = canWrite ? { label: "Add a text", icon: <PlusIcon />, level: slotLevel, onClick: onAdd, testId: "read-add" } : undefined;
-	const writeSlot: ShelfSlot | undefined = canWrite ? { label: unread ? "Write another episode" : "Write a new episode", icon: <SparklesIcon />, level: slotLevel, onClick: onWrite, testId: "read-write-next" } : undefined;
+	const writeSlot: ShelfSlot | undefined = canWrite ? { label: unread ? "Write another episode" : "Write a new episode", icon: <SparklesIcon />, level: slotLevel, onClick: () => setAskingTopic((asking) => !asking), expanded: askingTopic, testId: "read-write-next" } : undefined;
 
 	const ownShelf = (
 		<section className="mt-9" aria-label="Your reading">
@@ -1101,6 +1114,47 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 					</EmptyState>
 				)
 			)}
+			{askingTopic && canWrite && (
+				<div className="q-card mt-4 p-4 sm:p-5" data-testid="read-topic-prompt">
+					<div className="flex items-center justify-between gap-2">
+						<label htmlFor="story-topic" className="text-[14px] font-semibold text-foreground">
+							What should it be about? <span className="font-normal text-ink-3">(optional)</span>
+						</label>
+						<button type="button" onClick={() => setAskingTopic(false)} className="-mr-1.5 rounded-md p-2.5 text-ink-3 hover:bg-well hover:text-foreground" aria-label="Close">
+							<XIcon className="size-4" />
+						</button>
+					</div>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							onWrite(topic.trim() || undefined);
+						}}
+						className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-center"
+					>
+						<input id="story-topic" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Buying train tickets, meeting a neighbor, finding a flat" className="q-field h-10 w-full flex-1 px-3.5 text-[14px]" autoFocus maxLength={150} />
+						<button type="submit" className="q-btn primary shrink-0" data-testid="read-write-submit">
+							<SparklesIcon className="size-4" />
+							Write episode
+						</button>
+					</form>
+					<div className="mt-3 flex flex-wrap items-center gap-1.5 text-[13px] text-ink-3">
+						<span className="font-medium">Ideas:</span>
+						{["At the café", "The train station", "At the doctor's", "Finding a flat", "Sunday lunch"].map((idea) => (
+							<button
+								key={idea}
+								type="button"
+								onClick={() => {
+									setTopic(idea);
+									onWrite(idea);
+								}}
+								className="rounded-md bg-well px-2 py-1 text-foreground hover:bg-well-2"
+							>
+								{idea}
+							</button>
+						))}
+					</div>
+				</div>
+			)}
 			{!canWrite && (
 				<div className="mt-4">
 					<KeyNote>New episodes are written with an AI key.</KeyNote>
@@ -1128,7 +1182,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 						<EmptyState
 							testid="read-empty"
 							title="No episodes yet"
-							action={canWrite ? <button type="button" onClick={onWrite} className="q-btn primary">Write the first episode</button> : <AddKeyButton />}
+							action={canWrite ? <button type="button" onClick={() => onWrite()} className="q-btn primary">Write the first episode</button> : <AddKeyButton />}
 							secondary={<Link href="/" className="q-btn ghost">Back to Today</Link>}
 						>
 							<p>Episodes are short stories at your level, with every word tappable.</p>

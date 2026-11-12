@@ -311,8 +311,10 @@ html[data-keyboard] :focus-visible {
 	--color-ring: var(--ring);
 }
 
-* {
-	border-color: var(--color-border);
+@layer base {
+	* {
+		border-color: var(--color-border);
+	}
 }
 
 /* Contextual cursor design (Uxcel UI/UX Standards):

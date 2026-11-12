@@ -76,6 +76,8 @@ import {
 	type StoryWord,
 } from "../core/reading.ts";
 import { dayKey, entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
+import { checkSlovak } from "../core/slovak-check.ts";
+import { slovakLookup } from "../agent/lexicon.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
@@ -514,7 +516,7 @@ export function retellSystem(lang: Pick<LanguageInfo, "english" | "promptExample
 		return `${RETELL_OPENING(`put a text the learner chose to read into natural ${name}, without simplifying it`)}
 
 Rules, in order of weight:
-- When the section is already in ${name}, keep its sentences exactly as written. Otherwise translate it faithfully into the ${name} an educated native speaker would write: nothing added, nothing dropped, nothing made simpler.
+- When the section is already in ${name}, keep its sentences exactly as written. Otherwise put it into the ${name} an educated native speaker would write: idiomatic sentences, never word for word after the original. Keep every point, add nothing, simplify nothing.
 ${RETELL_LEFT_OUT}
 - One sentence per array item, in the section's own order. Set "p": true on the first sentence of each paragraph of the section.
 - "newWords" is an empty array.
@@ -526,7 +528,8 @@ Shape: {"title": "...", "topic": "...", "cast": [], "sentences": [{"p": true, "s
 	return `${RETELL_OPENING(`rewrite a text the learner chose to read into graded ${name}`)} Retell that section in ${name}.
 
 Rules, in order of weight:
-- Say what the section says: its facts, names, numbers, the order of its points, and the author's own view. Add nothing that is not in it: no examples, no opinions, no ending of your own.
+- Write ${name} as a ${name} speaker would really write it: natural word order and everyday phrasing, never a word-for-word copy of the original's sentences. Where sounding natural and staying close to the original pull apart, natural ${name} wins.
+- Keep the section's main points, in its order, with its names and numbers as they are. Detail may go. Add nothing that is not in it: no examples, no opinions, no ending of your own.
 ${RETELL_LEFT_OUT}
 - When the section holds more than fits the length, keep the points the text's argument rests on and drop the detail.
 - Write at the level the brief names and ONLY with the grammar listed as held. Simple main clauses at A1; a subordinate clause${clauseWords ? ` with ${clauseWords}` : ""} from A2. A hard idea is said in two short sentences, not one long one.
@@ -596,21 +599,24 @@ function learnerBriefLines(k: KnownWords): string[] {
  *  language's story bible (`world.json`, src/server/world.ts):
  *  its cast, its places, and the chapter the learner is in as this
  *  episode's plot beat. */
-export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null, lang: Pick<LanguageInfo, "english" | "tag" | "country"> = activeLanguage()): StoryBrief {
+export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], recaps: readonly string[], now = new Date(), genre: StoryGenre = "robo", world: World | null = null, lang: Pick<LanguageInfo, "english" | "tag" | "country"> = activeLanguage(), customTopic?: string): StoryBrief {
 	const robo = previous.filter((s) => (s.genre ?? "robo") === "robo");
 	const episode = genre === "robo" ? robo.length + 1 : 0;
 	const names = { series: world?.series ?? "The story", language: lang.english, country: countryOf(lang) };
-	const theme = genre === "robo" ? episodeTheme(k.purposes, episode, world) : genreInfo(genre, names).label.toLowerCase();
+	const requested = customTopic?.trim();
+	const theme = requested || (genre === "robo" ? episodeTheme(k.purposes, episode, world) : genreInfo(genre, names).label.toLowerCase());
 	const lead = world?.cast[0]?.name;
 	const topics = previous.map((s) => s.topic).filter((t): t is string => !!t).slice(-12);
 	const series = genre === "robo" && world?.cast.length ? world : null;
 	const [levelLine, lengthLine, ...learnerLines] = learnerBriefLines(k);
+	const kindOfText = genre === "robo" ? `episode ${episode} of the ${lead ? `${lead} series` : "running series"}` : genreInfo(genre, names).brief;
+	const heading = requested ? `Text: ${kindOfText}. Topic requested by the learner: "${requested}". Center the ${genre === "robo" ? "episode" : "text"} around this.` : genre === "robo" ? `Text: ${kindOfText}. Setting: ${theme}.` : `Text: ${kindOfText}.`;
 	const lines = [
-		genre === "robo" ? `Text: episode ${episode} of the ${lead ? `${lead} series` : "running series"}. Setting: ${theme}.` : `Text: ${genreInfo(genre, names).brief}.`,
+		heading,
 		series ? `Series bible, keep them as written — the cast: ${series.cast.map((c) => `${c.name} (${c.gender === "f" ? "woman" : "man"}, ${c.age}) ${c.role}`).join("; ")}.` : "",
 		series ? `The places they meet at: ${series.places.map((p) => p.name).join(", ")}.` : "",
-		series ? `This episode's beat: "${series.beats[k.chapter] ?? `another day in ${series.city ?? "the city"}`}" — build the episode on it.` : "",
-		topics.length ? `Already on the shelf (write about something else): ${topics.join("; ")}.` : "",
+		series && !requested ? `This episode's beat: "${series.beats[k.chapter] ?? `another day in ${series.city ?? "the city"}`}" — build the episode on it.` : "",
+		topics.length && !requested ? `Already on the shelf (write about something else): ${topics.join("; ")}.` : "",
 		levelLine,
 		lengthLine,
 		...learnerLines,
@@ -620,6 +626,14 @@ export function storyBrief(k: KnownWords, previous: readonly StoryIndexEntry[], 
 		`Today is ${now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}; the season may show.`,
 	].filter(Boolean);
 	return { genre, episode, theme, prompt: lines.join("\n") };
+}
+
+const RULE_ISSUES_NAMED = 12;
+
+export function ruleIssues(story: Pick<StoryRecord, "sentences">): string[] {
+	if (code() !== "sk") return [];
+	const lookup = slovakLookup() ?? undefined;
+	return story.sentences.flatMap((s) => checkSlovak(s.sk, lookup).issues.map((issue) => `"${issue.found}"${issue.fix ? ` should be "${issue.fix}"` : ""}: ${issue.why}`));
 }
 
 export function retellBrief(k: KnownWords, source: Pick<ReadingSource, "title" | "site" | "sections" | "difficulty">, part: number, recaps: readonly string[]): StoryBrief {
@@ -650,6 +664,7 @@ export interface GenerateOptions {
 	/** A reader is waiting for it (true) or the shelf is being filled. */
 	wanted?: boolean;
 	source?: { id: string; part: number };
+	topic?: string;
 }
 
 /** The cheap slot (stories are reading input, not teaching), else the
@@ -720,7 +735,8 @@ export function assembleStory(
 	drafts: number,
 	now: Date,
 	voices: ReadonlySet<string> | null = null,
-	sourceMeta?: { source: StorySource; original: string }
+	sourceMeta?: { source: StorySource; original: string },
+	customTopic?: string
 ): StoryRecord {
 	const newWords: StoryWord[] = d.newWords.map((w) => {
 		const entry = lexicon ? resolveWord(lexicon, w.sk, k.known) : undefined;
@@ -757,7 +773,7 @@ export function assembleStory(
 		chapter: sourceMeta ? "own" : k.chapter,
 		theme: brief.theme,
 		genre: brief.genre,
-		...(d.topic ? { topic: d.topic } : {}),
+		topic: d.topic || customTopic?.trim() || brief.theme,
 		cast,
 		narratorVoice: NARRATOR_VOICE,
 		createdAt: now.toISOString(),
@@ -844,7 +860,7 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 			.slice(-4)
 			.map((s) => storyStore.get(s.id)?.recap)
 			.filter((r): r is string => !!r);
-		brief = storyBrief(k, previous, recaps, now, genre, loadWorld());
+		brief = storyBrief(k, previous, recaps, now, genre, loadWorld(), activeLanguage(), opts.topic);
 	}
 
 	let engine = opts.engine;
@@ -859,6 +875,7 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 	const progress: WritingProgress = {
 		level: k.level,
 		genre: brief.genre,
+		...(opts.topic?.trim() ? { topic: opts.topic.trim() } : {}),
 		startedAt: now.toISOString(),
 		sentences: [],
 		wanted: opts.wanted ?? true,
@@ -872,24 +889,30 @@ async function writeStory(opts: GenerateOptions): Promise<StoryRecord> {
 		const voices = opts.engine ? null : await availableVoiceIds();
 		const systemPrompt = opts.source ? retellSystem(activeLanguage(), difficulty) : storySystem(activeLanguage(), loadWorld());
 		const d1 = await draft(systemPrompt, brief.prompt, engine, usage, onPartial);
-		let first = assembleStory(d1, brief, k, lexicon, usage, 1, now, voices, sourceMeta);
+		let first = assembleStory(d1, brief, k, lexicon, usage, 1, now, voices, sourceMeta, opts.topic);
+		const brokenRules = ruleIssues(first);
+		const tooHard = first.coverage < COVERAGE_FLOOR;
 		if (difficulty === "full") first = { ...first, newWords: [] };
-		else if (first.coverage < COVERAGE_FLOOR) {
-			// Too many stray unknown words: once more, naming the ones to drop.
+		else if (tooHard || brokenRules.length > 0) {
 			const declared = new Set(d1.newWords.map((w) => foldDiacritics(w.sk.toLocaleLowerCase(tag()))));
 			const stray = (t: StoryToken) => t.fresh && !declared.has(foldDiacritics((t.lemma ?? t.text).toLocaleLowerCase(tag())));
 			const hard = [...new Set(first.sentences.flatMap((s) => s.tokens).filter(stray).map((t) => t.lemma ?? t.text))].slice(0, 30);
 			const plotInstruction = opts.source ? "Keep what the section says." : "Keep the same plot.";
-			const again = `${brief.prompt}\n\nYour first draft used too many words the learner does not know (${Math.round((1 - first.coverage) * 100)} in 100). Write the text again with simpler, more common words. Avoid these in particular: ${hard.join(", ")}. ${plotInstruction}`;
+			const simpler = tooHard ? `Your first draft used too many words the learner does not know (${Math.round((1 - first.coverage) * 100)} in 100). Write the text again with simpler, more common words. Avoid these in particular: ${hard.join(", ")}. ${plotInstruction}` : "";
+			const corrected = brokenRules.length > 0 ? `Your first draft breaks rules of ${activeLanguage().english} that a program checked for certain. Write the text again with each one put right, and check the rest for the same mistakes. ${tooHard ? "" : `${plotInstruction} `}The mistakes:\n${brokenRules.slice(0, RULE_ISSUES_NAMED).map((issue) => `- ${issue}`).join("\n")}` : "";
+			const again = [brief.prompt, simpler, corrected].filter(Boolean).join("\n\n");
 			progress.sentences = [];
 			try {
-				const second = assembleStory(await draft(systemPrompt, again, engine, usage, onPartial), brief, k, lexicon, usage, 2, now, voices, sourceMeta);
-				if (second.coverage >= first.coverage) first = second;
-				else first = { ...first, usage, drafts: 2 };
+				const second = assembleStory(await draft(systemPrompt, again, engine, usage, onPartial), brief, k, lexicon, usage, 2, now, voices, sourceMeta, opts.topic);
+				const stillBroken = ruleIssues(second).length;
+				const secondIsBetter = stillBroken < brokenRules.length || (stillBroken === brokenRules.length && second.coverage >= first.coverage);
+				first = secondIsBetter ? second : { ...first, usage, drafts: 2 };
 			} catch {
 				first = { ...first, usage, drafts: 2 };
 			}
 		}
+		const rulesStillBroken = ruleIssues(first).length;
+		if (rulesStillBroken > 0) first = { ...first, ruleIssues: rulesStillBroken };
 		// Two texts on the same day cannot share an id.
 		if (!opts.source && storyStore.get(first.id)) first = { ...first, id: `${first.id}-${now.getTime().toString(36).slice(-4)}` };
 		storyStore.put(first);
@@ -1049,6 +1072,7 @@ export function sourceEntries(): SourceEntry[] {
 				level: s.level,
 				wordCount: s.wordCount,
 				preparing: writing.firstPartsBeingWritten.has(s.id),
+				truncated: s.truncated === true,
 			};
 		});
 }
@@ -1091,13 +1115,12 @@ export function readingState(tz?: number, now = new Date(), opts: { topUpShelf?:
 	};
 }
 
-/** The story to read: an unread episode of the current chapter first (the
- *  arc's story step), else the shelf's best fit, else a new one written
- *  now — the chapter's episode when it has none yet, else a series episode
- *  or the genre the shelf lacks most. */
-export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
-	const pick = pickNext();
-	if (pick) return pick.story;
+export async function writeNewStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
+	if (opts.topic?.trim()) {
+		const story = await generateStory({ ...opts, wanted: true });
+		if (!opts.engine) kickShelf();
+		return story;
+	}
 	const k = knownWords(loadLexicon());
 	if (!library().some((s) => s.chapter === k.chapter)) {
 		const chapterStory = await generateStory({ ...opts, wanted: true });
@@ -1109,6 +1132,12 @@ export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord
 	const story = await generateStory({ ...opts, level: need?.level ?? k.level, genre: need?.genre ?? "robo", wanted: true });
 	if (!opts.engine) kickShelf();
 	return story;
+}
+
+export async function nextStory(opts: GenerateOptions = {}): Promise<StoryRecord> {
+	const pick = pickNext();
+	if (pick) return pick.story;
+	return writeNewStory(opts);
 }
 
 // ─── Recording a reading ────────────────────────────────────────────────────

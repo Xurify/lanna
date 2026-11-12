@@ -41,11 +41,12 @@ describe("the reader's text", () => {
 	});
 
 	it("a text of your own says where it is from, how far it is read and how hard it is", () => {
-		const entry = { id: "s1", title: "Test", parts: 3, written: 1, read: 0, nextPart: 1, addedAt: "2026-11-01T10:00:00Z", finished: false, shortened: false, difficulty: "level" as const, level: "A1" as const, wordCount: 600, preparing: false };
+		const entry = { id: "s1", title: "Test", parts: 3, written: 1, read: 0, nextPart: 1, addedAt: "2026-11-01T10:00:00Z", finished: false, shortened: false, difficulty: "level" as const, level: "A1" as const, wordCount: 600, preparing: false, truncated: false };
 		assert.equal(sourceMeta({ ...entry, site: "example.com" }), "example.com · 3 parts · not started");
 		assert.equal(sourceMeta({ ...entry, read: 1, nextPart: 2 }), "part 2 of 3 is next");
 		assert.equal(sourceMeta({ ...entry, written: 0, preparing: true }), "3 parts · part 1 is being written");
 		assert.equal(sourceMeta({ ...entry, written: 0 }), "3 parts · not written yet");
+		assert.equal(sourceMeta({ ...entry, truncated: true }), "3 parts · not started · only its first 6,000 words");
 		assert.equal(sourceMeta({ ...entry, read: 3, finished: true, difficulty: "full" }), "read · 3 parts · not simplified");
 		assert.equal(sourceMeta({ ...entry, parts: 1, shortened: true, difficulty: "harder" }), "1 part · not started · a step up · a shorter version");
 	});

@@ -29,6 +29,7 @@ export interface ShelfSlot {
 	icon: React.ReactNode;
 	level: string;
 	onClick: () => void;
+	expanded?: boolean;
 	testId: string;
 }
 
@@ -96,7 +97,7 @@ export function Bookshelf({ books, slot, openId, onOpen, label, testId }: { book
 			})}
 			{slot && (
 				<li className="q-book" style={{ "--spine-h": `${spineSize(slot.level, 0).height}px` } as React.CSSProperties}>
-					<button type="button" className="q-slot" onClick={slot.onClick} data-testid={slot.testId}>
+					<button type="button" className="q-slot" onClick={slot.onClick} aria-expanded={slot.expanded} data-testid={slot.testId}>
 						{slot.icon}
 						<span>{slot.label}</span>
 					</button>

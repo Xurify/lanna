@@ -225,6 +225,7 @@ export interface SourceEntry {
 	level: Cefr;
 	wordCount: number;
 	preparing: boolean;
+	truncated: boolean;
 }
 
 export interface StoryRecord {
@@ -251,6 +252,7 @@ export interface StoryRecord {
 	drafts: number;
 	source?: StorySource;
 	original?: string;
+	ruleIssues?: number;
 }
 
 export interface StoryIndexEntry {
@@ -303,6 +305,7 @@ export interface ReadingState {
 export interface WritingProgress {
 	level: Cefr;
 	genre: StoryGenre;
+	topic?: string;
 	startedAt: string;
 	sentences: string[];
 	wanted: boolean;

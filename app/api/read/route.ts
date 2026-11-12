@@ -7,6 +7,8 @@
  * POST /api/read {action: "next"} — the next episode: the newest unread
  * one, or a new one written on the cheap model slot and kept under
  * data/profiles/<language>/stories/ (src/server/reading.ts).
+ * POST /api/read {action: "write", topic?} — write a new episode on the
+ * cheap model slot and keep it on disk, even if unread stories exist.
  * POST /api/read {action: "finish", storyId, answers, tapped, ms?, tz?} —
  * a finished reading: the comprehension score, XP, the words sent to the
  * review deck, and a fresh summary.
@@ -21,7 +23,7 @@
  */
 
 import { isReadingDifficulty, MAX_LINKS_PER_ADD, MAX_SOURCE_PARTS } from "@/src/core";
-import { BODY_LIMITS, bodyTooLarge, generating, importLinks, importReading, nextStory, ReadImportError, readingState, recordOnce, recordRead, removeSource, sessionClientId, sourcePart, storyStore, UNKNOWN_TEXT } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, generating, importLinks, importReading, nextStory, ReadImportError, readingState, recordOnce, recordRead, removeSource, sessionClientId, sourcePart, storyStore, UNKNOWN_TEXT, writeNewStory } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +60,7 @@ export async function POST(req: Request) {
 		urls?: unknown;
 		title?: unknown;
 		difficulty?: unknown;
+		topic?: unknown;
 		sourceId?: unknown;
 		part?: unknown;
 	} | null;
@@ -68,6 +71,14 @@ export async function POST(req: Request) {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : 502 });
+		}
+	}
+	if (body.action === "write") {
+		try {
+			const topic = typeof body.topic === "string" ? body.topic.trim().slice(0, MAX_TOPIC_CHARS) || undefined : undefined;
+			return Response.json(await writeNewStory({ topic }));
+		} catch (err) {
+			return modelFailure(err);
 		}
 	}
 	if (body.action === "finish") {
@@ -117,10 +128,11 @@ export async function POST(req: Request) {
 		removeSource(body.sourceId);
 		return Response.json({ ok: true });
 	}
-	return Response.json({ message: "action must be next, finish, import, part or remove-source" }, { status: 400 });
+	return Response.json({ message: "action must be next, write, finish, import, part or remove-source" }, { status: 400 });
 }
 
 const MAX_URL_CHARS = 2000;
+const MAX_TOPIC_CHARS = 150;
 const MAX_TITLE_CHARS = 200;
 
 function validSourceId(id: unknown): id is string {
