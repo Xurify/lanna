@@ -25,7 +25,7 @@
 import mixupsJson from "../../curriculum/slovak/mixups.json";
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
 import { matchCase, rng, shortGloss, shuffle, type ItemKind, type LessonExplain, type LessonItem, type LessonPlan, type RepVerdict } from "./lesson.ts";
-import { formsOfEntry, MIN_PAIR_SENTENCES, PAIRS, twinSentences, type PairSentence } from "./pairs.ts";
+import { formsOfEntry, getPairsForLanguage, MIN_PAIR_SENTENCES, PAIRS, twinSentences, type PairSentence } from "./pairs.ts";
 import { dayKey, entryLemma, exampleText, type LexiconEntry, type ReviewCard } from "./review.ts";
 
 export interface MixupFamily {
@@ -544,6 +544,12 @@ export function mixupRule(m: Pick<Mixup, "a" | "b" | "family">, lex: MixupLexico
 	const pair = PAIRS.find((p) => mixupKey(p.a, p.b) === mixupKey(la, lb));
 	if (pair) return { rule: pair.rule, bridge: pair.bridge };
 	return { rule: `${la} = ${ea ? shortGloss(ea.en) : "?"} · ${lb} = ${eb ? shortGloss(eb.en) : "?"}`, bridge: "" };
+}
+
+export function pairContrastRule(language: string, a: { slug: string; lemma: string }, b: { slug: string; lemma: string }): string | undefined {
+	const pair = getPairsForLanguage(language).find((p) => mixupKey(p.a, p.b) === mixupKey(a.lemma, b.lemma));
+	if (pair) return pair.rule;
+	return (mixupsJson as { language?: string }).language === language ? familyOf(a.slug, b.slug)?.rule : undefined;
 }
 
 /** The rule for a regular lesson rep whose word is in an open mix-up, so

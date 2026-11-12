@@ -10,7 +10,8 @@ process.env.LH_PROFILE = "slovak";
 
 // ESM evaluates static imports before this module's body, so the app modules are imported after the env is set.
 
-const { contrastExample, missReason, sharedMeaning } = await import("../src/core/review-miss.ts");
+const { contrastExample, contrastSource, missReason, partsOfSpeechIfDifferent, sharedMeaning, startsQuestion } = await import("../src/core/review-miss.ts");
+const { pairContrastRule } = await import("../src/core/mixups.ts");
 const { reviewMiss } = await import("../src/server/review.ts");
 const { reviewStore } = await import("../src/store/review.ts");
 type ReviewCard = import("../src/core/review.ts").ReviewCard;
@@ -95,12 +96,51 @@ test("a word that never takes an ending gets no stem guess", () => {
 	assert.equal(r.inflects, false);
 });
 
-test("sharedMeaning finds a sense both glosses have, ignoring notes in brackets", () => {
+test("sharedMeaning finds a sense both glosses have, matching without notes in brackets and keeping the first gloss's note", () => {
 	assert.equal(sharedMeaning("when", "when (conjunction); if"), "when");
+	assert.equal(sharedMeaning("when (conjunction); if", "when"), "when (conjunction)");
 	assert.equal(sharedMeaning("only", "only; just"), "only");
-	assert.equal(sharedMeaning("here (to)", "here (location — for motion use sem)"), "here");
+	assert.equal(sharedMeaning("here (to)", "here (location — for motion use sem)"), "here (to)");
 	assert.equal(sharedMeaning("where to", "where"), undefined);
 	assert.equal(sharedMeaning("evening", "dinner"), undefined);
+});
+
+test("sharedMeaning carries an aspect the lexicon marks on the whole entry", () => {
+	assert.equal(sharedMeaning("to get; to receive (imperfective)", "to get; to receive"), "to get (imperfective)");
+	assert.equal(sharedMeaning("to begin (imperfective)", "to begin; to start"), "to begin (imperfective)");
+	assert.equal(sharedMeaning("to get; to receive", "to get; to receive (imperfective)"), "to get");
+});
+
+test("startsQuestion: the word opens the sentence and the sentence asks", () => {
+	assert.equal(startsQuestion("Kedy prídeš?", "kedy"), true);
+	assert.equal(startsQuestion("„Kedy prídeš?“", "kedy"), false);
+	assert.equal(startsQuestion("Keď prídeš, zavolaj.", "keď"), false);
+	assert.equal(startsQuestion("Neviem, kedy príde?", "kedy"), false);
+	assert.equal(startsQuestion("Ked prides?", "keď"), true);
+});
+
+test("partsOfSpeechIfDifferent names two open classes only when they differ", () => {
+	assert.deepEqual(partsOfSpeechIfDifferent("Adjectives", "Nouns"), ["adjective", "noun"]);
+	assert.equal(partsOfSpeechIfDifferent("Nouns", "Nouns"), undefined);
+	assert.equal(partsOfSpeechIfDifferent("Phrases", "Nouns"), undefined);
+});
+
+test("pairContrastRule: the pair's own rule first, then its family's, and none for another language", () => {
+	assert.match(pairContrastRule("slovak", { slug: "ist", lemma: "ísť" }, { slug: "chodit", lemma: "chodiť" }) ?? "", /^ísť is one trip/);
+	assert.match(pairContrastRule("slovak", { slug: "tu", lemma: "tu" }, { slug: "sem", lemma: "sem" }) ?? "", /^After a verb of motion/);
+	assert.equal(pairContrastRule("slovak", { slug: "len", lemma: "len" }, { slug: "iba", lemma: "iba" }), undefined);
+	assert.equal(pairContrastRule("russian", { slug: "tu", lemma: "tu" }, { slug: "sem", lemma: "sem" }), undefined);
+});
+
+test("contrastSource ranks a curated rule, then parts of speech, a meaning note, a question, an example", () => {
+	const base = { lemma: "kedy", gloss: "when", isLemma: true };
+	const example = { text: "Kedy prídeš?", en: "When will you come?", asks: true };
+	assert.equal(contrastSource({ ...base, rule: "r", partOfSpeech: "noun" }, false), "rule");
+	assert.equal(contrastSource({ ...base, partOfSpeech: "adjective", herePartOfSpeech: "noun" }, false), "part of speech");
+	assert.equal(contrastSource({ ...base, alsoMeans: "when (conjunction)", hereMeans: "when" }, false), "meaning note");
+	assert.equal(contrastSource({ ...base, example }, false), "question");
+	assert.equal(contrastSource({ ...base, example }, true), "example");
+	assert.equal(contrastSource(base, false), "none");
 });
 
 test("contrastExample prefers a sentence with the typed word, then the shortest, and skips rejected or untranslated ones", () => {

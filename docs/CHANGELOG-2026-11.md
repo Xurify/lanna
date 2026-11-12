@@ -685,3 +685,11 @@ Times are UTC. "Unverified" means the owner has not yet used it in the live app;
 - **What changed:** after a miss on another dictionary word, the card says what the two words share ("“Kedy” also means when, but it is another word."), shows one sentence with the learner's word from the lexicon (*Kedy prídeš?* When will you come?), then names the word the sentence needs. Fixed on the way: an answer without accents is no longer called "a form of" its own dictionary form, glosses no longer sit inside nested brackets, and words that never take an ending (keď, potom) are no longer described by endings. E103.
 - **Checked:** `npm test` (2634 tests, 0 failed), typecheck, lint on the changed files; the card in a sandbox in Day and Night at 1280 and 390 px for "Kedy" on *keď* and "večerom" on *večera*.
 - **Unverified:** the owner's own deck.
+
+## 11 November: a miss on another word says why the two differ (`fix/review-miss-contrast`)
+
+- **Why:** the owner: "Can we find ways to further decrease this gap?" The card showed the other word in a sentence but did not say what separates the two.
+- **What changed:** the card now uses, in this order, the curated rule for the pair (Dvojičky, then the Mix-ups family: "ísť is one trip, now or planned; chodiť is repeated, a habit."), the parts of speech ("“vodný” is an adjective… This one is the noun voda"), the gloss's own note and the entry's aspect ("which also means to go (habitually)", "to get (imperfective)"), and whether one of the two sentences asks a question ("“Kedy” asks a question: Kedy prídeš?"). An example sentence is the fallback. No model call. E104.
+- **New:** `npm run miss:coverage` measures how many word pairs get each kind of line and lists the uncovered common pairs, the queue for new curated rules.
+- **Checked:** `npm test` (2642 tests, 0 failed), typecheck, lint; the card in a sandbox in Day and Night at 1280 and 390 px for chodím on *ísť*, vodný on *voda* and Kedy on *keď*.
+- **Unverified:** the owner's own deck.
