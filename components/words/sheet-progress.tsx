@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { SheetProgress } from "@/src/core";
+import { STRUCK } from "@/components/task-frame";
 
 const SEGMENT = "h-full min-w-2 rounded-full";
 
@@ -12,7 +13,7 @@ export function SheetProgressBar({ progress, className }: { progress: SheetProgr
 		<div className={className} data-testid="sheet-progress">
 			<div role="img" aria-label={parts.join(", ")} className="flex h-2 gap-[3px]">
 				{caught > 0 && <span className={cn(SEGMENT, "bg-teal")} style={{ flex: `${caught} 1 0%` }} />}
-				{missed > 0 && <span className={cn(SEGMENT, "shadow-[inset_0_0_0_1.5px_var(--q-miss)]")} style={{ flex: `${missed} 1 0%` }} />}
+				{missed > 0 && <span className={cn(SEGMENT, STRUCK, "after:bg-miss")} style={{ flex: `${missed} 1 0%` }} />}
 				{ahead > 0 && <span className={cn(SEGMENT, "bg-well-2")} style={{ flex: `${ahead} 1 0%` }} />}
 			</div>
 			<p className="q-legend" aria-hidden="true">
@@ -22,7 +23,7 @@ export function SheetProgressBar({ progress, className }: { progress: SheetProgr
 				</span>
 				{missed > 0 && (
 					<span>
-						<i className="shadow-[inset_0_0_0_1.5px_var(--q-miss)]" />
+						<i className={cn(STRUCK, "after:bg-miss")} />
 						<b className="tabular-nums">{missed}</b> missed last time
 					</span>
 				)}

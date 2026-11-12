@@ -11,7 +11,7 @@ import { QIcon } from "@/components/quiet/icon";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { KBD } from "@/components/ui/learn-buttons";
 import { QUIET } from "@/components/ui/learn-buttons";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, PracticeCard, PRIMARY, SECONDARY, TaskBar, TaskEnd, TaskFrame, VerdictDisc } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, Pip, PracticeCard, PRIMARY, SECONDARY, TaskBar, TaskEnd, TaskFrame, VerdictDisc } from "@/components/task-frame";
 import { sfx } from "@/components/lesson/sound";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { speak, stopSpeaking } from "@/components/speech";
@@ -25,7 +25,6 @@ type FamilyChoice = PhonologyFamily | "all";
 type Answer = string | null;
 type Span = [start: number, end: number];
 type TileState = "idle" | "right" | "wrong";
-type Outcome = "right" | "miss" | "now" | "ahead";
 
 const VIEW_LABELS: Record<View, string> = { pairs: "Pairs", sounds: "Sounds", rhythm: "Rhythm" };
 
@@ -431,22 +430,6 @@ function ViewSwitch({ views, view, onChange }: { views: readonly View[]; view: V
 			</div>
 			{crowded && <ChoiceMenu quiet value={view} options={views.map((v) => ({ value: v, label: VIEW_LABELS[v] }))} onChange={(next) => onChange(next as View)} ariaLabel="View" className="-ms-2 shrink-0 sm:hidden" />}
 		</>
-	);
-}
-
-function Pip({ outcome, className }: { outcome: Outcome; className?: string }) {
-	return (
-		<span
-			aria-hidden="true"
-			className={cn(
-				"h-1.5 rounded-full transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
-				outcome === "right" && "bg-teal",
-				outcome === "miss" && "shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
-				outcome === "now" && "bg-ink-4",
-				outcome === "ahead" && "bg-well-2",
-				className,
-			)}
-		/>
 	);
 }
 
