@@ -8,7 +8,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookmarkIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, ChevronDownIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
@@ -239,6 +239,56 @@ function AnsweredRow({ line, code, fresh, hide }: { line: AnsweredLine; code?: s
 				{line.helped && " · help"}
 			</span>
 		</li>
+	);
+}
+
+function AnsweredHistory({ lines, sessionSince, answeredToday, code, hide }: { lines: AnsweredLine[]; sessionSince: string | undefined; answeredToday: number; code: string; hide: ReadonlySet<string> }) {
+	const [earlierOpen, setEarlierOpen] = useState(false);
+	const inSession = (line: AnsweredLine) => sessionSince !== undefined && line.reviewedAt > sessionSince;
+	const session = lines.filter(inSession);
+	const earlier = lines.filter((line) => !inSession(line));
+	const earlierAnswers = answeredToday - session.length;
+	const missed = session.filter((line) => line.verdict === "wrong").length;
+	const sessionCut = earlier.length === 0 && answeredToday > lines.length;
+	const row = (line: AnsweredLine) => <AnsweredRow key={`${line.cardId}@${line.reviewedAt}`} line={line} code={code} hide={hide} fresh={inSession(line)} />;
+	return (
+		<section className="mt-8" aria-label="Answered today" data-testid="review-answered">
+			{session.length > 0 && (
+				<>
+					<h2 className="q-sh !mb-0" data-testid="review-session-heading">
+						This session
+						<small>
+							{sessionCut && `latest ${session.length} · `}
+							{session.length - missed} right · {missed} missed
+						</small>
+					</h2>
+					<ol className="divide-y divide-[var(--q-line)]">{session.map(row)}</ol>
+				</>
+			)}
+			{earlier.length > 0 && (
+				<>
+					<button
+						type="button"
+						aria-expanded={earlierOpen}
+						aria-controls="review-answered-earlier"
+						onClick={() => setEarlierOpen((open) => !open)}
+						className="-ml-1 mt-1 flex h-10 items-center gap-1.5 rounded-md px-1 text-[13px] font-[500] text-ink-2 hover:text-foreground"
+						data-testid="review-answered-earlier-toggle"
+					>
+						<ChevronDownIcon className={cn("size-3.5 transition-transform", earlierOpen && "rotate-180")} aria-hidden="true" />
+						Earlier today · {earlierAnswers}
+					</button>
+					<div id="review-answered-earlier" hidden={!earlierOpen}>
+						<ol className="divide-y divide-[var(--q-line)]">{earlier.map(row)}</ol>
+						{earlier.length < earlierAnswers && (
+							<p className="pt-2 text-[12.5px] text-ink-3">
+								The latest {earlier.length} of {earlierAnswers} show here.
+							</p>
+						)}
+					</div>
+				</>
+			)}
+		</section>
 	);
 }
 
@@ -838,17 +888,7 @@ export function ReviewSession() {
 
 
 							{lang && status?.available && answered.length > 0 && (prompt || caughtUp) && (
-								<section className="mt-8" aria-labelledby="review-answered-title" data-testid="review-answered">
-									<h2 className="q-sh !mb-0" id="review-answered-title">
-										Answered today
-										{counts && counts.reviewedToday > answered.length && <small>latest {answered.length} of {counts.reviewedToday}</small>}
-									</h2>
-									<ol className="divide-y divide-[var(--q-line)]">
-										{answered.map((line) => (
-											<AnsweredRow key={`${line.cardId}@${line.reviewedAt}`} line={line} code={lang.code} hide={hideInHistory} fresh={newestLineAtOpen !== undefined && line.reviewedAt > newestLineAtOpen} />
-										))}
-									</ol>
-								</section>
+								<AnsweredHistory lines={answered} sessionSince={newestLineAtOpen} answeredToday={counts?.reviewedToday ?? answered.length} code={lang.code} hide={hideInHistory} />
 							)}
 
 							{status && lang && status.leeches.length > 0 && (
