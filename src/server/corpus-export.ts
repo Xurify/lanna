@@ -18,6 +18,7 @@ import { chatStore } from "../store/chats.ts";
 import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEntry } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
+import { readingSourceStore } from "../store/reading-sources.ts";
 import { fluencyStore, speakStore } from "../store/speak.ts";
 import { outsideStore } from "../store/outside.ts";
 import { videoStore } from "../store/videos.ts";
@@ -202,7 +203,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
 | \`known.json\` | an object | \`words\` (the words you marked as known: by slug, the dictionary form and when) and \`updatedAt\` |
 | \`word-check.json\` | an object | \`answers[]\` (every word asked in a word check: the word, its place in the frequency order, the meanings offered, what you picked, whether it was right, when), \`sessions[]\` (every check with the estimate before and after) and \`history\` (the estimate of words you know per day, with its parts) |
-| \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage) and \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) |
+| \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage), \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) and \`sources[]\` (your own texts as added: the text, its sections and the difficulty chosen; a story written from one carries \`source\` and \`original\`) |
 | \`videos.json\` | an object | \`videos[]\` (every YouTube video prepared for the Watch task: title, channel, length, caption source, every line with times, translation and glossed tokens, the pre-teach words, questions, coverage, usage), \`watchings[]\` (every watching: mode, lines got on the first listen, replays, the check, words tapped and queued, XP, per-line stats), \`sections[]\` (the study sections a model found per video) and \`preps[]\` (the briefing made per video before watching: what it is about, its parts, the keys, the short version at the learner's level, its cost, and when the keys were typed) |
 | \`cheatsheets.json\` | an array | every cheatsheet you made under Words → Cheatsheets: title, when made and edited, and its sections with their rows (the phrase, how to say it, the meaning, a note) |
 | \`cheatsheet-practice.json\` | an object | Listen and type on your cheatsheets: \`phrases\` (per sheet and phrase: times heard, how many times in a row it was caught by ear, when) and \`sessions[]\` (every session: the sheet, the day, and each phrase with what you typed and the verdict). Your own phrases, unchecked, so none of it is in \`lessons.json\` |
@@ -340,7 +341,8 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("review.json", { cards, answers });
 	write("known.json", knownWordStore.read());
 	write("word-check.json", { answers: wordCheckStore.answers(), sessions: wordCheckStore.sessions(), history: wordCheckStore.history() });
-	write("stories.json", { stories, readings });
+	const readingSources = readingSourceStore.list().filter((s) => !s.removedAt);
+	write("stories.json", { stories, readings, sources: readingSources });
 	write("spoken.json", { scenes, fluency });
 	write("videos.json", { videos, watchings, sections, preps });
 	write("cheatsheets.json", cheatsheets);
