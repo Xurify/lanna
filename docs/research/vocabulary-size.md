@@ -32,7 +32,7 @@ None of them grows as the learner reads and reviews, and none says how sure it i
 |---|---|---|
 | A Review card answered at least once | The scheduler's chance of recalling it today (FSRS retrievability, 0 to 1) | from Review |
 | Marked as known in the reader | 1 | marked known |
-| Asked in a word check | 1 if the right meaning was picked, 0 if not; the answer fades toward the curve with a half-life of 60 days | checked |
+| Asked in a word check | 0 if the right meaning was not picked; if it was, the chance that the pick was knowledge and not luck (1 for a learner with no wrong picks); the answer fades toward the curve with a half-life of 60 days | checked |
 | Nothing | The curve's chance for a word that common | estimated |
 
 **The curve.** The chance of knowing an untested word falls with the logarithm of its frequency rank: `chance = 1 / (1 + e^-(shift - slope × (ln rank - center)))`. Two numbers are fitted (where the edge is, and how sharp it is), so 40 answers already say something. Before any answer the edge sits where the learner's level puts it (the same credit Milestones used), with a wide range.
@@ -42,6 +42,8 @@ None of them grows as the learner reads and reviews, and none says how sure it i
 **Which words the check asks.** One at a time, chosen after each answer: half near the current edge (where an answer says the most), half spread evenly over the logarithm of rank (so a wrong first guess is found out). Three wrong meanings come from words of the same part of speech and similar frequency whose meaning shares no word with the right one. Place names, names, grammar words, grim words (the level check's own filter) and the 112 Slovak words whose forms never occur in the dictionary's sentences (their place in the frequency order is not reliable) are never asked.
 
 **"I don't know this word"** is a full answer with its own key, and the screen says why: a lucky guess counts as a word known.
+
+**Wrong picks pay for lucky ones.** A check has three outcomes, not two: the right meaning, a wrong meaning, and "I don't know". A wrong pick is proof of a pick made without knowing the word, and picks made without knowing are sometimes right. So the wrong picks say how many right answers were luck: a learner who picks blind among four meanings is wrong three times in four, so three wrong picks stand for four blind picks and one lucky one. The curve is fitted with that floor under it (`chance of a right answer = luck + (1 - luck) × chance of knowing`), and a right answer counts as the chance it was knowledge. The app does not know whether the learner picks blind or first rules meanings out (the meaning of a word they do know cannot be this word's), so it fits the curve three times, for picks among four, three and two meanings, and keeps the one that explains the answers best. A learner with no wrong picks is read exactly as before. This is the app's own arithmetic; no study of it was read.
 
 **The range.** The app shows "likely between X and Y": an 80% range from the uncertainty of the fitted curve plus the chance spread of every uncertain word. Each check narrows it.
 
@@ -55,20 +57,32 @@ None of them grows as the learner reads and reviews, and none says how sure it i
 
 | Answers | About 300 words | About 900 | About 2,100 | About 4,200 |
 |---|---|---|---|---|
-| 40 (one check) | median error 28%, in range 81% | 22%, 86% | 12%, 92% | 8%, 77% |
-| 80 | 16%, 75% | 16%, 78% | 10%, 76% | 8%, 74% |
-| 160 | 10%, 78% | 9%, 85% | 6%, 90% | 5%, 77% |
+| 40 (one check) | median error 25%, in range 83% | 18%, 85% | 14%, 88% | 10%, 77% |
+| 80 | 14%, 79% | 12%, 83% | 11%, 84% | 6%, 84% |
+| 160 | 13%, 75% | 10%, 73% | 8%, 76% | 3%, 85% |
 
-"In range" is how often the real size was inside the 80% range. This is the best case: real learners do not follow a clean curve, and a learner who really guesses will read high. The range is the app's own arithmetic and holds the real size 74% to 92% of the time here, not always the 80% it aims at.
+"In range" is how often the real size was inside the 80% range. Those learners always say "I don't know" when they do not know: the best case. The range is the app's own arithmetic and holds the real size 73% to 88% of the time here, not always the 80% it aims at. An earlier run of the same learners with other random draws gave errors up to 4 points away from these, so the table is good to about that.
+
+**Learners who guess.** The same learners, one check of 40, with three habits for a word they do not know. The first figure is the median estimate as a multiple of the real size:
+
+| Habit | About 300 words | About 900 | About 2,100 | About 4,200 |
+|---|---|---|---|---|
+| Picks blind for half of them | 1.17×, median error 32%, in range 92% | 1.06×, 30%, 76% | 1.05×, 18%, 85% | 0.93×, 11%, 77% |
+| Always picks blind | 1.22×, 42%, 83% | 1.18×, 36%, 78% | 0.98×, 20%, 85% | 0.94×, 13%, 74% |
+| Always picks, after ruling two meanings out | 2.46×, 146%, 74% | 1.70×, 70%, 63% | 1.51×, 51%, 51% | 1.04×, 14%, 83% |
+
+Before the wrong picks were counted, a learner who always picked blind was read at about 6 times the real size at 260 words, 2.3 times at 800 and 1.5 times at 2,100 (a smaller run: two slopes, one starting guess, twenty runs each). Guessing still costs precision: the error of a blind picker is about twice that of a learner who says "I don't know". A learner who rules meanings out and never says "I don't know" is still read far too high when they know few words, and the range misses the real size up to half of the time.
 
 ## What it does not show
 
+- **It was never compared with real learners.** Every accuracy figure here comes from simulated learners who follow the same kind of curve the app fits. No learner's result was set beside another vocabulary test.
 - **It leans high.** Picking a meaning from four is easier than recalling it while reading (point 3). A typed-meaning check judged by the Cheap slot would be stricter; it is not built.
+- **Guessing well still inflates it.** The correction assumes picks among four, three or two meanings. A learner who rules meanings out and never says "I don't know" is read high, most of all with few words known (the table above). How sure the app is of the picking habit is not in the range.
 - **It counts dictionary words (lemmas), not word families**, and never more than the dictionary holds. The published thresholds (Nation 2006) are in English word families.
 - **Written recognition only.** It says nothing about hearing a word at speed; Milestones measures that apart.
 - **The frequency order** comes from the dictionary's own 30,000 example sentences, not from a national corpus.
 - **Estonian and Russian** use the same code on their own dictionaries; only the Slovak one was looked at.
-- **The numbers that are the app's own choice:** 40 words a check (the size of the level check's word stage), the half-and-half sampling, the curve's first slope (1.2) and how firmly the first guess is held, the 60-day half-life, the 80% range, 12 answers before the number is called measured.
+- **The numbers that are the app's own choice:** 40 words a check (the size of the level check's word stage), the half-and-half sampling, the curve's first slope (1.2) and how firmly the first guess is held, the 60-day half-life, the 80% range, 12 answers before the number is called measured, and the three picking habits the fit chooses from.
 
 ## Sources
 

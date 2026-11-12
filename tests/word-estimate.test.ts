@@ -35,7 +35,7 @@ function learnerWhoKnows(midpoint: number, slope: number) {
 	return { chance, size: words.reduce((n, w) => n + chance(w.rank), 0) };
 }
 
-function simulateChecks(learner: ReturnType<typeof learnerWhoKnows>, count: number, priorSize: number, seed: number): CheckAnswer[] {
+function simulateChecks(learner: ReturnType<typeof learnerWhoKnows>, count: number, priorSize: number, seed: number, picksBlindWhenNotKnown = false): CheckAnswer[] {
 	const rand = rng(seed);
 	const answers: CheckAnswer[] = [];
 	const asked = new Set<string>();
@@ -48,7 +48,9 @@ function simulateChecks(learner: ReturnType<typeof learnerWhoKnows>, count: numb
 			rand,
 		)!;
 		asked.add(word.slug);
-		answers.push({ slug: word.slug, rank: word.rank, known: rand() < learner.chance(word.rank), ageDays: 0 });
+		const knows = rand() < learner.chance(word.rank);
+		const luckyPick = !knows && picksBlindWhenNotKnown && rand() < 1 / core.CHECK_OPTIONS;
+		answers.push({ slug: word.slug, rank: word.rank, known: knows || luckyPick, saidDontKnow: !knows && !picksBlindWhenNotKnown, ageDays: 0 });
 	}
 	return answers;
 }
@@ -85,14 +87,46 @@ describe("the estimate of words known", () => {
 
 	test("every answer right or every answer wrong still gives a finite size inside the dictionary", () => {
 		for (const known of [true, false]) {
-			const answers: CheckAnswer[] = [50, 200, 800, 2000, 5000].map((rank) => ({ slug: `w${rank}`, rank, known, ageDays: 0 }));
+			const answers: CheckAnswer[] = [50, 200, 800, 2000, 5000].map((rank) => ({ slug: `w${rank}`, rank, known, saidDontKnow: !known, ageDays: 0 }));
 			const estimate = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve(answers, 1200, DICTIONARY));
 			assert.ok(Number.isFinite(estimate.total) && estimate.total >= 0 && estimate.total <= DICTIONARY, `${known}: ${estimate.total}`);
 			assert.ok(estimate.low <= estimate.total && estimate.total <= estimate.high);
 		}
-		const more = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: true, ageDays: 0 }], 1200, DICTIONARY));
-		const fewer = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: false, ageDays: 0 }], 1200, DICTIONARY));
+		const more = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: true, saidDontKnow: false, ageDays: 0 }], 1200, DICTIONARY));
+		const fewer = core.estimateWords(words, noEvidence, core.fitKnowledgeCurve([{ slug: "w3000", rank: 3000, known: false, saidDontKnow: true, ageDays: 0 }], 1200, DICTIONARY));
 		assert.ok(more.total > fewer.total);
+	});
+
+	test("wrong picks say how many of the right answers were luck", () => {
+		const answer = (rank: number, known: boolean, saidDontKnow: boolean): CheckAnswer => ({ slug: `w${rank}`, rank, known, saidDontKnow, ageDays: 0 });
+		const right = [10, 20, 30, 40].map((rank) => answer(rank, true, false));
+		const dontKnows = [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800].map((rank) => answer(rank, false, true));
+		const wrongPicks = [2000, 2100, 2200].map((rank) => answer(rank, false, false));
+
+		assert.equal(core.pickingHabit([...right, ...dontKnows], core.CHECK_OPTIONS).luckyPickRate, 0);
+		assert.equal(core.pickingHabit([...right, ...wrongPicks], core.CHECK_OPTIONS).luckyPickRate, 1 / core.CHECK_OPTIONS);
+		assert.ok(Math.abs(core.pickingHabit([...right, ...dontKnows, ...wrongPicks], core.CHECK_OPTIONS).luckyPickRate - 1 / 13) < 1e-9);
+
+		const honest = core.fitKnowledgeCurve([...right, ...dontKnows], 1200, DICTIONARY);
+		assert.equal(honest.luckyPickRate, 0);
+		const rare: WordEvidence = { check: { known: true, ageDays: 0 } };
+		assert.equal(core.estimateWords(words, new Map([["w6000", rare]]), honest).parts.checked, 1);
+
+		const picker = core.fitKnowledgeCurve([...right, ...wrongPicks, answer(6000, true, false)], 1200, DICTIONARY);
+		assert.ok(picker.luckyPickRate >= 1 / core.CHECK_OPTIONS);
+		assert.equal(core.estimateWords(words, new Map([["w6000", rare]]), picker).parts.checked, 0);
+		assert.equal(core.estimateWords(words, new Map([["w10", rare]]), picker).parts.checked, 1);
+	});
+
+	test("a learner who picks blind and never says \"I don't know\" is not read as knowing several times more", () => {
+		const learner = learnerWhoKnows(500, 1.5);
+		const ratios = [1, 2, 3, 4, 5, 6, 7].map((seed) => {
+			const answers = simulateChecks(learner, core.CHECK_LENGTH, 1200, seed, true);
+			const evidence = new Map<string, WordEvidence>(answers.map((a) => [a.slug, { check: { known: a.known, ageDays: 0 } }]));
+			return core.estimateWords(words, evidence, core.fitKnowledgeCurve(answers, 1200, DICTIONARY)).total / learner.size;
+		});
+		const median = [...ratios].sort((a, b) => a - b)[3]!;
+		assert.ok(median > 0.5 && median < 1.7, `median ${median.toFixed(2)} of ${ratios.map((r) => r.toFixed(2)).join(", ")}`);
 	});
 
 	test("a word with evidence counts by its evidence, the strongest first", () => {

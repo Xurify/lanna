@@ -71,7 +71,7 @@ function gather(now: Date): Gathered | null {
 	for (const a of wordCheckStore.answers()) {
 		const rank = rankOf.get(a.slug);
 		if (rank === undefined) continue;
-		const answer = { slug: a.slug, rank, known: a.known, ageDays: daysBetween(a.at, now) };
+		const answer = { slug: a.slug, rank, known: a.known, saidDontKnow: a.picked === null, ageDays: daysBetween(a.at, now) };
 		answers.push(answer);
 		evidenceOf(a.slug).check = { known: answer.known, ageDays: answer.ageDays };
 	}
