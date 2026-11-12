@@ -292,10 +292,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 					</div>
 
 					<p className="mt-10 max-w-2xl font-ui text-xs text-muted-foreground">
-						The time you talk counts toward Speaking. With a speech-to-text key the app also listens for the words on the list; without one, only the time counts.{" "}
-						<Link href="/methodologies#machova" className="underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-foreground">
-							Why talk to yourself
-						</Link>
+						The time you talk counts toward Speaking. With a speech-to-text key the app also listens for the words on the list; without one, only the time counts.
 					</p>
 				</div>
 			</div>
