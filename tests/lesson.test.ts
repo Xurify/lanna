@@ -17,6 +17,7 @@ import {
 	sentenceTokens,
 	streakOf,
 	triggerOf,
+	unheardWord,
 	unstatedPerson,
 	unitDone,
 	unitLevel,
@@ -92,6 +93,15 @@ test("repXp: misses earn nothing, combos add a bonus, accents earn less", () => 
 test("sameSentence ignores case and punctuation, not word order", () => {
 	assert.ok(sameSentence(sentenceTokens("Idem do školy."), sentenceTokens("idem do školy")));
 	assert.ok(!sameSentence(sentenceTokens("Idem do školy."), sentenceTokens("do školy idem")));
+});
+
+test("unheardWord names the first typed word the sentence does not contain", () => {
+	const sentence = "Ona tiež rozumie.";
+	assert.equal(unheardWord(sentence, "Ona tiež nerozumije"), "nerozumije");
+	assert.equal(unheardWord(sentence, "Ona tiež rozumije"), "rozumije");
+	assert.equal(unheardWord(sentence, "Ona tiez rozumie"), undefined);
+	assert.equal(unheardWord(sentence, "rozumie tiež ona"), undefined);
+	assert.equal(unheardWord(sentence, "Ona tiež rozumie"), undefined);
 });
 
 test("streakOf counts back from today and forgives one rest day after six", () => {

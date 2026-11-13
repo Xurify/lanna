@@ -48,6 +48,7 @@ import {
 	repXp,
 	sameSentence,
 	rankLabel,
+	unheardWord,
 	unitDone,
 	unitBridges,
 	unitInfo,
@@ -905,7 +906,7 @@ function RepView({
  *  come with the answer after the second miss. A graded hint keeps the
  *  retry a retrieval, not a reading (Aleven & Koedinger 2002; docs/
  *  research/desirable-difficulties.md). A missed choice retries typed. */
-function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; wasChoice: boolean }) {
+function HintPanel({ item, miss, wasChoice, tag }: { item: LessonItem; miss: string; wasChoice: boolean; tag: string }) {
 	const vocabulary = unitInfo(item.unit).kind === "words";
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const slip = !vocabulary && !pairs ? formSlip({ answer: item.answer, lemma: item.lemma, given: miss }) : undefined;
@@ -915,7 +916,9 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 				Not “<span lang={lessonLanguage()}>{miss}</span>”. {item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
 			</p>
 			<div className="mt-2 flex flex-col gap-1 font-prose text-[15px] leading-relaxed">
-				{item.pair?.cue ? (
+				{item.kind === "listen" ? (
+					<ListenCue heard={unheardWord(item.sentence, miss, tag)} />
+				) : item.pair?.cue ? (
 					<p className="text-foreground">{item.pair.cue}</p>
 				) : slip === "base" ? (
 					<p className="text-foreground">
@@ -968,6 +971,18 @@ function HintPanel({ item, miss, wasChoice }: { item: LessonItem; miss: string; 
 				)}
 			</div>
 		</div>
+	);
+}
+
+function ListenCue({ heard }: { heard: string | undefined }) {
+	if (!heard) return <p className="text-foreground">A word is missing or in the wrong order.</p>;
+	return (
+		<p className="text-foreground">
+			<span className="font-semibold text-miss" lang={lessonLanguage()}>
+				“{heard}”
+			</span>{" "}
+			is not in the sentence.
+		</p>
 	);
 }
 
@@ -1113,7 +1128,7 @@ function ClozeRep({
 				</div>
 				{input("mt-6 block h-14 w-full bg-card px-4 font-prose text-2xl font-medium tracking-[-0.01em] text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] focus:shadow-[inset_0_0_0_1.5px_var(--q-teal)]")}
 				<DiacriticBar variant="keys" className="mt-4" />
-				{miss !== null && <HintPanel item={item} miss={miss} wasChoice={false} />}
+				{miss !== null && <HintPanel item={item} miss={miss} wasChoice={false} tag={tag} />}
 			</form>
 		);
 	}
@@ -1207,7 +1222,7 @@ function ClozeRep({
 				</form>
 			</div>
 
-			{miss !== null && !locked && <HintPanel item={item} miss={miss} wasChoice={retypes} />}
+			{miss !== null && !locked && <HintPanel item={item} miss={miss} wasChoice={retypes} tag={tag} />}
 
 			{(item.kind === "choose" || meaning) && !retypes && (
 				<div className={cn("mt-7 grid gap-3", meaning ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")} data-testid="lesson-options">
@@ -1444,7 +1459,7 @@ function FeedbackSheet({
 						<p className={cn("font-ui text-[19px] font-semibold leading-tight tracking-[-0.015em]", tone.ink)} lang={titleLang}>
 							{tone.title}
 						</p>
-						{comesBack && <span className="font-ui text-[13px] text-ink-3">Comes back once more at the end</span>}
+						{comesBack && <span className="font-ui text-[13px] text-ink-3">Comes back at the end of the lesson</span>}
 					</div>
 					<div className="flex items-center gap-2">
 						{verdict === "exact" && (
