@@ -648,6 +648,14 @@ export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given
 	return "wrong";
 }
 
+export function unheardWord(sentence: string, given: string, tag = "sk-SK"): string | undefined {
+	const trimEdges = (w: string) => w.replace(/^[„“"'(¿¡]+|[,.;:!?„“"')…]+$/gu, "");
+	const key = (w: string) => foldDiacritics(trimEdges(w.normalize("NFC").toLocaleLowerCase(tag)));
+	const heard = new Set(sentence.split(/\s+/).map(key));
+	const typed = given.trim().split(/\s+/).find((w) => key(w) !== "" && !heard.has(key(w)));
+	return typed === undefined ? undefined : trimEdges(typed);
+}
+
 /** The rhythm of a first lesson on a unit. A new unit meets the form before it
  *  is asked for it: two reps that only ask what the sentence means (spoken,
  *  form marked), then recognition, then production, with a word bank and a
