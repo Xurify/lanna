@@ -31,6 +31,7 @@ export function SoundControl({ className, iconClass = "size-5", testid = "sound-
 	const hoverTimer = useRef<number | undefined>(undefined);
 	const pressTimer = useRef<number | undefined>(undefined);
 	const swallowClick = useRef(false);
+	const pointerInside = useRef(false);
 
 	const show = () => {
 		window.clearTimeout(closeTimer.current);
@@ -93,12 +94,17 @@ export function SoundControl({ className, iconClass = "size-5", testid = "sound-
 			className="relative"
 			onPointerEnter={(e) => {
 				if (e.pointerType !== "mouse") return;
+				pointerInside.current = true;
 				window.clearTimeout(closeTimer.current);
 				if (!open) hoverTimer.current = window.setTimeout(show, HOVER_INTENT_MS);
 			}}
-			onPointerLeave={(e) => e.pointerType === "mouse" && hideSoon()}
+			onPointerLeave={(e) => {
+				if (e.pointerType !== "mouse") return;
+				pointerInside.current = false;
+				hideSoon();
+			}}
 			onBlur={(e) => {
-				if (!root.current?.contains(e.relatedTarget as Node)) hideSoon();
+				if (!root.current?.contains(e.relatedTarget as Node) && !pointerInside.current) hideSoon();
 			}}
 			onWheel={(e) => {
 				move(Math.min(1, Math.max(0, volume() + (e.deltaY < 0 ? 0.05 : -0.05))));
