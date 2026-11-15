@@ -1154,7 +1154,7 @@ function SessionsSidebar() {
 								onPointerEnter={preloadSettingsDialog}
 								onFocus={preloadSettingsDialog}
 								data-testid="settings-entry"
-								className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+								className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-well-2 hover:text-foreground"
 							>
 								<SettingsIcon className="size-[18px]" />
 								Settings
