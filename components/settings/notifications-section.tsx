@@ -38,6 +38,7 @@ import {
 	CheckCircle2Icon,
 	AlertCircleIcon,
 } from "lucide-react";
+import { ChoiceMenu } from "@/components/ui/choice-menu";
 
 const SOUND_PRESET_LABELS: Record<NotificationSoundPreset, string> = {
 	chime: "Melodic Chime",
@@ -93,12 +94,19 @@ export function NotificationsSection({
 		onSave(next);
 	};
 
+	// Browsers show the permission prompt only while the answer is "default".
+	// Once blocked, requestPermission() resolves "denied" without a prompt,
+	// so a blocked site is re-read from the browser instead.
 	const handleRequestPermission = async () => {
 		const result = await requestDesktopNotificationPermission();
 		setPermission(result);
 		if (result === "granted") {
 			update({ systemNotification: true });
 		}
+	};
+
+	const handleRecheckPermission = () => {
+		setPermission(getDesktopNotificationPermission());
 	};
 
 	const handleAddTime = () => {
@@ -196,7 +204,7 @@ export function NotificationsSection({
 						) : permission === "denied" ? (
 							<span className="inline-flex items-center gap-1 text-destructive">
 								<AlertCircleIcon className="h-3.5 w-3.5" />
-								<span>Browser permission blocked in site settings</span>
+								<span>Blocked in browser site settings. Allow notifications for this site, then check again.</span>
 							</span>
 						) : (
 							"Requires browser notification permission"
@@ -205,13 +213,22 @@ export function NotificationsSection({
 					dimmed={!current.enabled}
 				>
 					<div className="flex items-center gap-3">
-						{permission !== "granted" && permission !== "unsupported" && (
+						{permission === "default" && (
 							<button
 								type="button"
 								onClick={handleRequestPermission}
 								className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:bg-well transition-colors"
 							>
 								Grant permission
+							</button>
+						)}
+						{permission === "denied" && (
+							<button
+								type="button"
+								onClick={handleRecheckPermission}
+								className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:bg-well transition-colors"
+							>
+								Check again
 							</button>
 						)}
 						<Toggle
@@ -368,25 +385,22 @@ export function NotificationsSection({
 					dimmed={!current.enabled}
 				>
 					<div className="flex items-center gap-2">
-						<select
+						<ChoiceMenu
+							ariaLabel="Alert tone"
 							value={current.soundPreset}
 							disabled={!current.enabled}
-							onChange={(e) => update({ soundPreset: e.target.value as NotificationSoundPreset })}
-							className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-						>
-							{NOTIFICATION_SOUND_PRESETS.map((p) => (
-								<option key={p} value={p}>
-									{SOUND_PRESET_LABELS[p]}
-								</option>
-							))}
-						</select>
+							options={NOTIFICATION_SOUND_PRESETS.map((p) => ({ value: p, label: SOUND_PRESET_LABELS[p] }))}
+							onChange={(next) => update({ soundPreset: next as NotificationSoundPreset })}
+							compact
+							className="w-56"
+						/>
 
 						<button
 							type="button"
 							onClick={() => playReminderSound(current.soundPreset)}
 							disabled={!current.enabled || current.soundPreset === "none"}
 							title="Test tone"
-							className="rounded-md border border-border bg-card p-1.5 text-foreground hover:bg-well transition-colors disabled:opacity-50"
+							className="inline-flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background text-foreground transition-colors hover:border-border disabled:opacity-50"
 						>
 							<Volume2Icon className="h-4 w-4" />
 						</button>

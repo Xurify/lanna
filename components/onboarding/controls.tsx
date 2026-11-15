@@ -15,7 +15,7 @@ import { KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLan
 
 const CHIP = "min-w-14 rounded-xl border px-4 py-2 font-ui text-base font-semibold tabular-nums transition-colors";
 const ON = "border-primary/80 bg-primary/15 text-primary shadow-xs font-semibold";
-const OFF = "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground";
+const OFF = "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent hover:text-foreground";
 const PANEL = "flex w-[22rem] max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-border bg-card p-3 shadow-xl";
 
 /** One of a few: a row of chips, one pressed. */

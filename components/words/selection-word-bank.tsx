@@ -793,7 +793,7 @@ export function SelectionWordBankBar() {
 							phraseSaved
 								? "bg-xp/15 text-xp"
 								: selection.isSingleWord
-									? "bg-accent text-foreground hover:bg-accent/80"
+									? "bg-accent text-foreground hover:bg-well-2"
 									: "bg-go text-primary-foreground hover:brightness-105",
 						)}
 					>

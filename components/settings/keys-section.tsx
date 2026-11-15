@@ -251,7 +251,7 @@ function KeyTableRow({
 				onClick={() => !envOwned && onToggle()}
 				title={envOwned ? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.` : undefined}
 				className={`flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 text-left transition-colors ${
-					envOwned ? "cursor-default" : "cursor-pointer hover:border-border/80 hover:bg-accent/30"
+					envOwned ? "cursor-default" : "cursor-pointer hover:border-border/80 hover:bg-accent"
 				}`}
 			>
 				<span className="flex items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
@@ -327,7 +327,7 @@ function PlainSettingRow({
 
 	return (
 		<div data-testid={testid} className={envOwned ? "opacity-40" : undefined}>
-			<div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent/30 max-md:flex-col max-md:items-stretch">
+			<div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent max-md:flex-col max-md:items-stretch">
 				<span className="flex items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
 					<ProviderIcon provider="azure" />
 					<span>{label}</span>
@@ -411,7 +411,7 @@ function AddProviderRow({
 				aria-expanded={open}
 				data-testid="add-provider"
 				onClick={() => setOpen((v) => !v)}
-				className="flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 bg-accent/10 px-3.5 py-2.5 text-left font-ui text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-accent/25 hover:text-foreground"
+				className="flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 bg-accent/10 px-3.5 py-2.5 text-left font-ui text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-accent hover:text-foreground"
 			>
 				<span className="flex items-center gap-2.5">
 					<span className="flex size-5 items-center justify-center rounded-md bg-accent font-semibold text-foreground">

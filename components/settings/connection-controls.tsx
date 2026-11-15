@@ -9,7 +9,7 @@ import { ProviderIcon } from "./provider-icons.tsx";
 export function ConnectionRow({ label, action, disabled, onAction, children, testid, actionTestid, card }: { label: string; action: string; disabled: boolean; onAction: () => void; children?: React.ReactNode; testid?: string; actionTestid?: string; card?: boolean }) {
 	return (
 		<div
-			className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent/30"
+			className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent"
 			data-testid={testid}
 		>
 			<span className="flex items-center gap-2.5 font-ui text-xs font-semibold text-foreground">

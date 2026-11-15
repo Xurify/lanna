@@ -159,7 +159,7 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 									onClick={() => setPicked(r.id)}
 									className={cn(
 										"flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
-										selected ? "bg-accent font-semibold text-foreground ring-1 ring-inset ring-primary/50" : "text-foreground hover:bg-accent/60",
+										selected ? "bg-accent font-semibold text-foreground ring-1 ring-inset ring-primary/50" : "text-foreground hover:bg-accent",
 										unavailable && "cursor-default text-muted-foreground hover:bg-transparent",
 									)}
 								>
@@ -195,7 +195,7 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 										onClick={() => setWriter(w.slot)}
 										className={cn(
 											"flex w-full items-start justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
-											on ? "bg-accent text-foreground ring-1 ring-inset ring-primary/50" : "text-muted-foreground hover:bg-accent/60",
+											on ? "bg-accent text-foreground ring-1 ring-inset ring-primary/50" : "text-muted-foreground hover:bg-accent",
 										)}
 									>
 										<span className="min-w-0">
