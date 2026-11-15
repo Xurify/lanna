@@ -78,6 +78,12 @@ describe("stats bar", () => {
 	it("prettyModel strips vendor + date suffix, keeps dashes", () => {
 		assert.equal(prettyModel("z-ai/glm-5.3-flash"), "glm-5.3-flash");
 		assert.equal(prettyModel("qwen/qwen3.8-max-0902"), "qwen3.8-max");
+		assert.equal(prettyModel("anthropic:claude-haiku-4-5-20251001"), "claude-haiku-4-5");
+	});
+
+	it("prettyModel keeps a version digit at the end", () => {
+		assert.equal(prettyModel("claude-haiku-5-5"), "claude-haiku-5-5");
+		assert.equal(prettyModel("anthropic:claude-sonnet-5"), "claude-sonnet-5");
 	});
 
 	it("provider-qualified stamps (usage contract, model-slots wave)", () => {

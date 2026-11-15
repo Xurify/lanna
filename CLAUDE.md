@@ -37,4 +37,6 @@ Every task is retrieval-first with graded, priced help; cache every model or TTS
 
 - **Story covers** are the one place with colour besides teal: ink scenes with loose watercolour washes in four low-chroma hues (`--q-wash-ochre`, `-rose`, `-sage`, `-sky`), one teal patch on the thing the story is about. The story writer picks the scene (`cover`); how a scene is drawn and reviewed is the `ink-drawing` skill, "Story covers".
 
+- **Level labels**: thinking levels show in Title Case (Off, Minimal, Low, Medium, High, Extra high, Max) through `thinkingLabel` in `components/thinking-default.ts`. A raw level string is never printed to a learner. Owner rule, 2026-11-15.
+- **Model names**: a model shows its catalog name and a provider's label through `components/model-names.ts`, never a raw id, in any picker, chip or dialog.
 - **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule in [AGENTS.md](AGENTS.md) under **Code style → Comments**.

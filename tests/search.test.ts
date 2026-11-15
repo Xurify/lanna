@@ -78,13 +78,13 @@ describe("resolveSearchEngineFor (the auto-detect decision)", () => {
 		assert.ok(!out.available);
 		assert.equal(out.engine, null);
 		assert.match(out.reason, /context/i);
-		assert.match(out.reason, /CONTEXT_API_KEY/);
+		assert.match(out.reason, /a Context key/);
 
 		const tavOut = resolveSearchEngineFor("tavily", { brave: "brave-throwaway-key-00001" });
 		assert.ok(!tavOut.available);
 		assert.equal(tavOut.engine, null);
 		assert.match(tavOut.reason, /tavily/i);
-		assert.match(tavOut.reason, /TAVILY_API_KEY/);
+		assert.match(tavOut.reason, /a Tavily key/);
 	});
 });
 

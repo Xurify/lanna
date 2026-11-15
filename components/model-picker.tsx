@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatSettings, ModelCatalogEntry, ModelCatalogResponse, ModelsSettings, UserSettings } from "@/src/core";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
-import { prettyModel } from "@/components/usage-format";
+import { modelName } from "@/components/model-names";
 import { ModelMenuList, ThinkingMenuList } from "@/components/settings/model-menu";
 import { composeSlotModel } from "@/components/settings/ai-section";
 import { MenuShell } from "@/components/menu-shell";
 import { Hint } from "@/components/ui/hint";
 import { notifySettingsSaved, onSettingsSaved, useSettingsSaved } from "@/components/settings-signal";
-import { defaultOrderLevel, populateLevel, THINKING_LABEL } from "@/components/thinking-default";
+import { defaultOrderLevel, populateLevel, thinkingLabel } from "@/components/thinking-default";
 
 /** /api/models is cached per page load. The menu re-fetches on every open and swaps in the fresh list (stale-while-revalidate). */
 let catalogCache: ModelCatalogResponse | undefined;
@@ -262,7 +262,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				// Matches the graph's floating buttons, so the graph does not bleed through.
 				className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-raise transition-colors hover:bg-well"
 			>
-				<span className="text-card-foreground"><span className="inline-block min-w-[6.5rem] text-center">{effectiveId ? prettyModel(effectiveId) : catalog ? "No model" : "Model"}</span></span>
+				<span className="text-card-foreground"><span className="inline-block min-w-[6.5rem] text-center">{effectiveId ? modelName(catalog?.models, effectiveProvider, effectiveId) : catalog ? "No model" : "Model"}</span></span>
 				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
 			</button>
 			</Hint>
@@ -286,7 +286,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 			>
 				{/* Just the level, as the model button shows just the model name. */}
 				<span className="text-card-foreground">
-					<span className="inline-block min-w-14 text-center">{effectiveLevel === undefined ? (effectiveId ? "Thinking" : "Thinking off") : (THINKING_LABEL[effectiveLevel] ?? effectiveLevel)}</span>
+					<span className="inline-block min-w-16 text-center">{effectiveLevel === undefined ? (effectiveId ? "Thinking" : "Thinking off") : thinkingLabel(effectiveLevel)}</span>
 				</span>
 				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
 			</button>
@@ -297,7 +297,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 					anchorRef={containerRef}
 					testid="model-menu"
 					preferredSide="up"
-					menuClass="flex w-[22rem] flex-col rounded-xl border bg-card p-2 text-xs shadow-xl"
+					menuClass="flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border bg-card p-2 text-xs shadow-xl"
 				>
 					{error && <div className="mb-1.5 text-destructive">{error}</div>}
 					<ModelMenuList
@@ -327,7 +327,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 						levels={catalog ? levels : []}
 						effectiveLevel={effectiveLevel}
 						onPick={(level) => apply(effectiveProvider ?? "", effectiveId ?? "", level as ThinkingLevel)}
-						empty={catalog ? (effectiveId ? `${prettyModel(effectiveId)} has no thinking levels.` : "Pick a model first.") : "Loading…"}
+						empty={catalog ? (effectiveId ? `${modelName(catalog?.models, effectiveProvider, effectiveId)} has no thinking levels.` : "Pick a model first.") : "Loading…"}
 						footer="Levels this model supports"
 					/>
 					{error && <div className="mt-1 text-destructive">{error}</div>}

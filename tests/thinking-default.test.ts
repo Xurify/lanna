@@ -9,7 +9,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DEFAULT_THINKING_ORDER } from "../src/core/settings.ts";
-import { defaultOrderLevel, populateLevel } from "../components/thinking-default.ts";
+import { defaultOrderLevel, populateLevel, thinkingLabel } from "../components/thinking-default.ts";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 
 const tl = (levels: string[]) => levels as ThinkingLevel[];
@@ -55,5 +55,14 @@ describe("populateLevel — an explicit pick always rides; absence populates", (
 
 	it("off as an explicit level rides when supported", () => {
 		assert.equal(populateLevel("off", tl(["off"])), "off");
+	});
+
+	it("levels show in Title Case; xhigh reads as Extra high; unknown strings pass through", () => {
+		assert.equal(thinkingLabel("off"), "Off");
+		assert.equal(thinkingLabel("high"), "High");
+		assert.equal(thinkingLabel("xhigh"), "Extra high");
+		assert.equal(thinkingLabel("max"), "Max");
+		assert.equal(thinkingLabel(""), "");
+		assert.equal(thinkingLabel("turbo"), "turbo");
 	});
 });

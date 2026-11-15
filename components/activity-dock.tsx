@@ -7,6 +7,8 @@ import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenTo
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
 import { isModelsRefusal, isProviderKeyRefusal, subscriptionLabel, subscriptionLabels } from "@/src/core";
 import { formatTokens, planCostLabel } from "@/components/usage-format";
+import { stampModelLabel } from "@/components/model-names";
+import { useModelCatalog } from "@/components/model-picker";
 import { useServerEvent, useServerResync } from "@/components/server-events";
 
 /**
@@ -389,6 +391,7 @@ function ActivityBlobRow({
 	abortState: AbortState | undefined;
 	onAbort: () => void;
 }) {
+	const { catalog } = useModelCatalog();
 	const Icon = blob.process === "task" ? (blob.taskKind === "language" ? GlobeIcon : ClapperboardIcon) : (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
 	const label =
 		blob.process === "task"
@@ -482,7 +485,7 @@ function ActivityBlobRow({
 						{blob.model && (
 							<div className="flex justify-between gap-2">
 								<span>Model</span>
-								<span className="truncate text-card-foreground">{blob.model}</span>
+								<span className="truncate text-card-foreground">{stampModelLabel(catalog?.models, blob.model)}</span>
 							</div>
 						)}
 						{blob.steps !== undefined && (
