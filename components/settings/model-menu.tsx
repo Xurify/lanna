@@ -12,14 +12,17 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon } from "lucide-react";
 import type { ModelCatalogEntry } from "@/src/core";
-import { fuzzyScore, subscriptionLabel } from "@/src/core";
+import { AUTH_PROVIDER_KEYS, fuzzyScore, subscriptionLabel } from "@/src/core";
 import { formatTokens } from "@/components/usage-format";
 import { cn } from "@/lib/utils";
 import { ProviderIcon } from "./provider-icons.tsx";
 
 function priceLabel(cost: ModelCatalogEntry["cost"]): string {
-	const fmt = (n: number) => `$${n < 1 ? n.toFixed(2).replace(/0$/, "") : n.toFixed(2)}`;
-	return `${fmt(cost.input)}/${fmt(cost.output)}`;
+	return `$${cost.input.toFixed(2)} in · $${cost.output.toFixed(2)} out`;
+}
+
+function providerLabel(id: string): string {
+	return AUTH_PROVIDER_KEYS.find((p) => p.id === id)?.label ?? id;
 }
 
 /** Hover and the keyboard highlight take bg-accent. The chosen row never takes a fill; it carries a go-colored check. */
@@ -132,13 +135,13 @@ export function ModelMenuList({
 						>
 							<span className="flex items-center justify-between gap-2">
 								<span className={`truncate ${m.id === effectiveId && m.provider === (effectiveProvider ?? m.provider) ? "text-go" : "text-card-foreground"}`}>{m.name}</span>
-								<span className="shrink-0 tabular-nums text-muted-foreground" title={subscriptionLabel(`${m.provider}:${m.id}`) ? "Subscription connection" : "USD per 1M tokens in/out"}>
+								<span className="shrink-0 tabular-nums text-muted-foreground" title={subscriptionLabel(`${m.provider}:${m.id}`) ? "Subscription connection" : "Price per million tokens"}>
 									{subscriptionLabel(`${m.provider}:${m.id}`) ?? priceLabel(m.cost)}
 								</span>
 							</span>
 							<span className="flex items-center justify-between gap-2 text-muted-foreground">
-								<span className="truncate">{subscriptionLabel(`${m.provider}:${m.id}`) ? `${subscriptionLabel(`${m.provider}:${m.id}`)} (subscription)` : m.provider} · {m.id}</span>
-								<span className="shrink-0 tabular-nums">{formatTokens(m.contextWindow)}</span>
+								<span className="truncate">{subscriptionLabel(`${m.provider}:${m.id}`) ? `${subscriptionLabel(`${m.provider}:${m.id}`)} (subscription)` : providerLabel(m.provider)} · {m.id}</span>
+								<span className="shrink-0 tabular-nums">{formatTokens(m.contextWindow)} context</span>
 							</span>
 						</MenuOption>
 					</li>

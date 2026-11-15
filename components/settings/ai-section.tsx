@@ -590,7 +590,7 @@ export function AiSection({
 							>
 								{slot !== "strong" && <><ChatGPTBackgroundAccess provider={coord?.provider} /><NativeSubscriptionBackgroundAccess provider={coord?.provider} /></>}
 								<MenuTrigger
-									value={modelId ? prettyModel(modelId) : ""}
+									value={modelId ? (chosen?.name ?? prettyModel(modelId)) : ""}
 									emptyLabel="—"
 									ariaLabel={`${SLOT_META[slot].label} model`}
 									testid={`slot-model-${slot}`}
@@ -628,7 +628,7 @@ export function AiSection({
 											footer={
 												catalog && catalog.length === 0
 													? "No models — add a provider key in Settings → API keys"
-													: "Runs everything this row lists"
+													: "Used for everything listed in this row. Prices are per million tokens."
 											}
 										/>
 									</MenuShell>

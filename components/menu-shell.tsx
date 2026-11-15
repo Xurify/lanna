@@ -70,10 +70,11 @@ interface MenuPlacement {
  *  on the preferred side unless it cannot show the full content AND the
  *  other side is roomier. The cap always keeps the menu inside its side's
  *  room when there is room; the floor keeps it usable when there isn't. */
-function computeMenuPlacement(
+export function computeMenuPlacement(
 	rect: { top: number; bottom: number; left: number; right: number },
 	viewport: { width: number; height: number },
 	contentHeight: number,
+	contentWidth: number,
 	preferredSide: MenuSide,
 	align: MenuAlign,
 ): MenuPlacement {
@@ -92,7 +93,9 @@ function computeMenuPlacement(
 	const avail = side === "down" ? availDown : availUp;
 	const maxHeight = Math.max(MIN_USABLE, Math.min(CAP_VH * viewport.height, avail));
 	const horizontal: Record<string, number> =
-		align === "right" ? { right: viewport.width - rect.right } : { left: rect.left };
+		align === "right"
+			? { right: Math.max(EDGE, Math.min(viewport.width - rect.right, viewport.width - EDGE - contentWidth)) }
+			: { left: Math.max(EDGE, Math.min(rect.left, viewport.width - EDGE - contentWidth)) };
 	const vertical: Record<string, number> =
 		side === "down" ? { top: rect.bottom + GAP } : { bottom: viewport.height - rect.top + GAP };
 	return { side, style: { ...horizontal, ...vertical }, maxHeight };
@@ -202,6 +205,7 @@ export function MenuShell({
 				el.getBoundingClientRect(),
 				{ width: window.innerWidth, height: window.innerHeight },
 				menuRef.current.scrollHeight,
+				menuRef.current.offsetWidth,
 				preferredSide,
 				align,
 			);
