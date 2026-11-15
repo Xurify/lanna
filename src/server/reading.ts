@@ -31,6 +31,7 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { curriculumState, allChapters, STAGES, type Cefr } from "../core/curriculum.ts";
+import { COVER_MOTIFS } from "../core/cover.ts";
 import { creditedWords, LEVEL_VOCAB } from "../core/milestones.ts";
 import { countryOf, foldDiacritics, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -507,16 +508,18 @@ Rules that matter more than the plot:
 - "en" is a plain English translation of the sentence.
 - Comprehension questions as the brief lists them: that many, of those kinds in that order, each with that many options, question and options in ${name} at the text's level. Mark each question with its "kind". Options are short and all the same shape; the wrong ones are plausible (things the text mentions, or a near meaning), never silly. The right one is at a different index each time. "answer" is the index of the right option. Questions test meaning, never grammar.
 - "topic" is three to six English words saying what the text is about.
+- "cover" is the picture on the story's card, one word from this list: ${COVER_MOTIFS.join(", ")}. Pick the place or thing the story happens in or is about.
 - "recap" is one English sentence saying what happened (for the next episode's brief).
 - "title" is two to five ${name} words.
 
-Shape: {"title": "...", "topic": "...", "cast": [{"name": "${leadName}", "gender": "m", "age": "young"}], "sentences": [{"who": "narrator", "sk": "...", "en": "..."}, {"who": "${leadName}", "sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
+Shape: {"title": "...", "topic": "...", "cover": "...", "cast": [{"name": "${leadName}", "gender": "m", "age": "young"}], "sentences": [{"who": "narrator", "sk": "...", "en": "..."}, {"who": "${leadName}", "sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
 }
 
 const RETELL_SHARED_RULES = (name: string) => `- Correct ${name} spelling with all diacritics. Check case endings and verb forms; a wrong form teaches a wrong form.
 - "en" is a plain English translation of the ${name} sentence.
 - Comprehension questions as the brief lists them: that many, of those kinds in that order, each with that many options, question and options in ${name} at the level the brief names. Mark each question with its "kind". Options are short and all the same shape; the wrong ones are plausible, never silly. The right one is at a different index each time. "answer" is the index of the right option. Questions test what this part says, never grammar.
 - "topic" is three to six English words saying what the part is about.
+- "cover" is the picture on the story's card, one word from this list: ${COVER_MOTIFS.join(", ")}. Pick the place or thing the story happens in or is about.
 - "recap" is one English sentence saying what this part said (for the next part's brief).
 - "title" is two to five ${name} words for this part.`;
 
@@ -538,7 +541,7 @@ ${RETELL_LEFT_OUT}
 - "newWords" is an empty array.
 ${RETELL_SHARED_RULES(name)}
 
-Shape: {"title": "...", "topic": "...", "cast": [], "sentences": [{"p": true, "sk": "...", "en": "..."}, {"sk": "...", "en": "..."}], "newWords": [], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
+Shape: {"title": "...", "topic": "...", "cover": "...", "cast": [], "sentences": [{"p": true, "sk": "...", "en": "..."}, {"sk": "...", "en": "..."}], "newWords": [], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
 	}
 	const clauseWords = lang.promptExamples?.clauseWords;
 	return `${RETELL_OPENING(`rewrite a text the learner chose to read into graded ${name}`)} Retell that section in ${name}.
@@ -554,7 +557,7 @@ ${RETELL_LEFT_OUT}
 - One sentence per array item; each 4 to 14 words; the whole text within the sentence count the brief gives. Set "p": true on the first sentence of each new paragraph (every 3 to 6 sentences, where the topic turns).
 ${RETELL_SHARED_RULES(name)}
 
-Shape: {"title": "...", "topic": "...", "cast": [], "sentences": [{"p": true, "sk": "...", "en": "..."}, {"sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
+Shape: {"title": "...", "topic": "...", "cover": "...", "cast": [], "sentences": [{"p": true, "sk": "...", "en": "..."}, {"sk": "...", "en": "..."}], "newWords": [{"sk": "lemma", "en": "gloss"}], "questions": [{"kind": "recall", "q": "...", "options": ["...", "...", "..."], "answer": 0}], "recap": "..."}`;
 }
 
 export interface StoryBrief {
@@ -790,6 +793,7 @@ export function assembleStory(
 		theme: brief.theme,
 		genre: brief.genre,
 		topic: d.topic || customTopic?.trim() || brief.theme,
+		...(d.cover ? { cover: d.cover } : {}),
 		cast,
 		narratorVoice: NARRATOR_VOICE,
 		createdAt: now.toISOString(),

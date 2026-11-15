@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { groupTokens, kindOf, sourceMeta, storyBookMeta, storyMeta } from "@/components/reading/reader";
 import { linksIn } from "@/components/reading/add-reading-dialog";
 import { ROBO_EPISODES } from "../scripts/fixtures/series-episodes.ts";
-import { coverMotif } from "@/components/reading/cover-scene";
+import { coverMotif } from "@/src/core";
 
 const tok = (text: string, word = /\p{L}/u.test(text)) => ({ text, word });
 
@@ -57,6 +57,10 @@ describe("the reader's text", () => {
 		assert.equal(coverMotif("Cesta vlakom do Tatier"), "train");
 		assert.equal(coverMotif("Lekár a chrípka"), "clinic");
 		assert.equal(coverMotif("Ahoj, ja som Matej"), "friends");
+		assert.equal(coverMotif("Moji dobrí priatelia"), "table");
+		assert.equal(coverMotif("Čo robím cez víkend"), "bike");
+		assert.equal(coverMotif("Kúpa knihy"), "books");
+		assert.notEqual(coverMotif("Xyz", 0), coverMotif("Xyz", 1));
 	});
 
 	it("a story's cover says how long it is, how much is counted as known, and the last score", () => {

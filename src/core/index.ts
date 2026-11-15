@@ -25,6 +25,7 @@ export * from "./phases.ts";
 export * from "./pending.ts";
 export * from "./prompt-segments.ts";
 export * from "./sketch.ts";
+export * from "./cover.ts";
 export * from "./chat-replies.ts";
 export * from "./chat-board.ts";
 export * from "./chat-answers.ts";

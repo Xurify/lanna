@@ -1,8 +1,9 @@
 "use client";
 
 import { CheckIcon, LoaderCircleIcon, XIcon } from "lucide-react";
-import { CoverScene, coverMotif, coverSeed } from "@/components/reading/cover-scene";
+import { CoverScene } from "@/components/reading/cover-scene";
 import { cn } from "@/lib/utils";
+import { coverMotif, coverSeed, type CoverMotif } from "@/src/core";
 
 export type BookState = "next" | "unread" | "read";
 
@@ -18,6 +19,7 @@ export interface ListBook {
 	meta: string;
 	about: string;
 	known?: number;
+	cover?: CoverMotif;
 	progress?: number;
 	newWords?: readonly string[];
 	actionLabel: string;
@@ -42,11 +44,11 @@ export interface BookGroup {
 
 const PAPER_TONES = 5;
 
-function Art({ book, className, sun = true }: { book: ListBook; className: string; sun?: boolean }) {
+function Art({ book, className }: { book: ListBook; className: string }) {
 	const seed = coverSeed(book.id);
 	return (
 		<div className={className} data-paper={seed % PAPER_TONES}>
-			<CoverScene motif={coverMotif(`${book.title} ${book.about}`)} seed={seed} sun={sun} className="q-cov-scene" />
+			<CoverScene motif={book.cover ?? coverMotif(`${book.title} ${book.about}`, seed)} seed={seed} className="q-cov-scene" />
 		</div>
 	);
 }
@@ -96,7 +98,7 @@ function Cover({ book }: { book: ListBook }) {
 	return (
 		<li className={cn("q-cov", book.state)} data-testid="read-book">
 			<button type="button" className="q-cov-hit" onClick={book.onRead} aria-label={`${book.actionLabel}: ${book.title}, ${book.kind}, ${book.meta}, ${status}`}>
-				<Art book={book} className="q-cov-art" sun={!book.onRemove} />
+				<Art book={book} className="q-cov-art" />
 				<span className="q-cov-body" aria-hidden="true">
 					<span className="q-cov-kind">
 						<span className="truncate">{book.kind}</span>

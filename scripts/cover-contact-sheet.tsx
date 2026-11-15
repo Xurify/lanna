@@ -3,7 +3,8 @@ import React from "react";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { CoverScene, type CoverMotif } from "../components/reading/cover-scene.tsx";
+import { CoverScene } from "../components/reading/cover-scene.tsx";
+import type { CoverMotif } from "../src/core/cover.ts";
 
 const outDir = process.argv[2]!;
 const order = (process.argv[3] ?? "").split(",").filter(Boolean) as CoverMotif[];
@@ -18,12 +19,12 @@ function sheet(night: boolean): string {
 	});
 	return `<!doctype html><meta charset="utf-8"><style>
 body{margin:0;padding:24px;background:${night ? "#101214" : "#ffffff"};color:${ink};font-family:sans-serif}
-.grid{display:grid;grid-template-columns:repeat(3,360px);gap:20px}
+.grid{display:grid;grid-template-columns:repeat(4,300px);gap:20px}
 figure{margin:0}.art{aspect-ratio:5/3;padding:8px 6px 2px;border-radius:12px}figcaption{font-size:20px;font-weight:700;color:${ink3};padding:6px 4px}
 svg{display:block;width:100%;height:100%}
 .text-foreground{color:${ink}}.text-ink-2{color:${ink2}}.text-ink-3{color:${ink3}}.text-teal-2{color:${teal2}}
 .font-prose{font-family:"Source Sans 3","Segoe UI",sans-serif}.stroke-current{stroke:currentColor}.fill-none{fill:none}.fill-current{fill:currentColor}.fill-teal-2{fill:${teal2}}
-.fill-teal\\/20{fill:color-mix(in srgb,${teal} 20%,transparent)}.q-ink-patch{fill:color-mix(in srgb,${teal} ${night ? 30 : 20}%,transparent)}
+.fill-teal\\/20{fill:color-mix(in srgb,${teal} 20%,transparent)}.q-wash-ochre{fill:${night ? "rgb(236 200 128 / 0.15)" : "rgb(214 170 90 / 0.34)"}}.q-wash-rose{fill:${night ? "rgb(240 160 146 / 0.15)" : "rgb(206 128 112 / 0.28)"}}.q-wash-sage{fill:${night ? "rgb(160 210 150 / 0.14)" : "rgb(122 160 110 / 0.3)"}}.q-wash-sky{fill:${night ? "rgb(150 195 240 / 0.15)" : "rgb(108 150 190 / 0.28)"}}.q-ink-patch{fill:color-mix(in srgb,${teal} ${night ? 30 : 20}%,transparent)}
 </style><div class="grid">${cells.join("")}</div>`;
 }
 writeFileSync(path.join(outDir, "sheet-light.html"), sheet(false));

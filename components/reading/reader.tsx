@@ -999,6 +999,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 			meta: storyBookMeta(s),
 			about: [s.theme, s.topic].filter(Boolean).join(" "),
 			known: s.coverage,
+			cover: s.cover,
 			newWords: s.newWords,
 			actionLabel: s.reads > 0 ? "Read again" : "Read",
 			onRead: () => onOpen(s.id),
