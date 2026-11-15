@@ -36,4 +36,4 @@ When every strand is bracketed and the goal is concrete, call `probe_done`. One 
 
 ## Grounding — the learner's material
 
-If the learner refers to a file on their machine, the `read` tool can inspect it directly. A PDF goes through the `pdf` job, and you wait for its brief. Use `research` sparingly: probing is measurement, not exploration.
+If the learner refers to a file on their machine, the `read` tool can inspect it directly. A short PDF with real text comes back from `read` marked by page; a long or scanned one goes through the `pdf` job, and you wait for its brief. Use `research` sparingly: probing is measurement, not exploration.

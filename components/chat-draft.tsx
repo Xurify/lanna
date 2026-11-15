@@ -5,6 +5,8 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { ArrowUpIcon } from "lucide-react";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { DiacriticBar } from "@/components/diacritic-bar";
+import { ChatPdfButton, DraftPdfChips } from "@/components/chat-pdf-button";
+import { joinDraft, splitDraft } from "@/src/core";
 import { Arrow, Box, Figure, Line, Loop, Note, Patch, Sheet } from "@/components/lesson/ink";
 import { SidebarToggle } from "@/components/sidebar";
 import { cn } from "@/lib/utils";
@@ -68,6 +70,7 @@ export function ChatDraft({
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const dictation = useDictation({ append: (t) => onChange(joinDictation(text, t)) });
 	const canSend = !busy && (text.trim().length > 0 || dictation.active);
+	const draft = splitDraft(text);
 	const send = () => {
 		if (!canSend) return;
 		if (dictation.active) {
@@ -101,11 +104,12 @@ export function ChatDraft({
 					</p>
 
 					<div data-testid="composer" className="mt-8 rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3">
+						<DraftPdfChips pdfs={draft.pdfs} onRemove={(pdf) => onChange(joinDraft(draft.pdfs.filter((p) => p !== pdf), draft.rest))} className="px-4 pt-3" />
 						<textarea
 							ref={inputRef}
-							value={text}
+							value={draft.rest}
 							rows={2}
-							onChange={(e) => onChange(e.target.value)}
+							onChange={(e) => onChange(joinDraft(draft.pdfs, e.target.value))}
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
 									e.preventDefault();
@@ -119,6 +123,12 @@ export function ChatDraft({
 						/>
 						<div className="flex items-center gap-2 px-3 pb-3">
 							<DictationBar dictation={dictation} />
+							<ChatPdfButton
+								onAttached={(pdf) => {
+									onChange(joinDraft([...draft.pdfs, pdf], draft.rest));
+									inputRef.current?.focus();
+								}}
+							/>
 							<span className="flex-1" />
 							{setupCta}
 							<span className="hidden font-ui text-xs text-muted-foreground pointer-fine:inline">Enter to ask</span>

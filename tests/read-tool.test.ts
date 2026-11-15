@@ -123,3 +123,56 @@ describe("read tool — image semantics (native content parts)", () => {
 		assert.equal((result.content[0] as { type: "text"; text: string }).text, "body");
 	});
 });
+
+/** A minimal text PDF, one string per page ("" = a page with no text, as a scan has). */
+function writePdf(name: string, pages: string[]): string {
+	const objects: string[] = [];
+	const pageIds = pages.map((_, i) => 4 + i * 2);
+	objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+	objects[2] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>`;
+	objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+	pages.forEach((text, i) => {
+		const stream = text ? `BT /F1 12 Tf 72 720 Td (${text}) Tj ET` : "";
+		objects[pageIds[i]!] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${pageIds[i]! + 1} 0 R >>`;
+		objects[pageIds[i]! + 1] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+	});
+	let body = "%PDF-1.4\n";
+	const offsets: number[] = [];
+	for (let id = 1; id < objects.length; id++) {
+		offsets[id] = body.length;
+		body += `${id} 0 obj\n${objects[id]}\nendobj\n`;
+	}
+	const xref = body.length;
+	body += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+	for (let id = 1; id < objects.length; id++) body += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+	body += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+	const file = path.join(tmp, name);
+	fs.writeFileSync(file, body, "latin1");
+	return file;
+}
+
+const LINE = "The locative follows the prepositions v and na, as in the examples below.";
+
+describe("read tool — PDFs", () => {
+	it("reads a short text PDF in place, marked by page", async () => {
+		const file = writePdf("handout.pdf", [LINE, `${LINE} Page two.`]);
+		const { text } = await run({ path: file });
+		assert.match(text, /handout\.pdf: 2 pages, text extracted below\./);
+		assert.match(text, /--- Page 1 ---\nThe locative follows/);
+		assert.match(text, /--- Page 2 ---/);
+		assert.match(text, /\(p\. N\)/, "tells the tutor how to cite");
+	});
+
+	it("sends a long PDF to the pdf job instead of dumping it", async () => {
+		const file = writePdf("book.pdf", Array.from({ length: 11 }, () => LINE));
+		const { text } = await run({ path: file });
+		assert.match(text, /11 pages, too long to read in place\. Dispatch the pdf job/);
+		assert.doesNotMatch(text, /--- Page/);
+	});
+
+	it("sends a PDF with a textless (scanned) page to the pdf job", async () => {
+		const file = writePdf("scan.pdf", [LINE, ""]);
+		const { text } = await run({ path: file });
+		assert.match(text, /page 2 has little or no text \(likely scanned\)\. Dispatch the pdf job/);
+	});
+});

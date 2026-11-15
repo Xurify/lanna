@@ -1,5 +1,7 @@
 /** The chat title derived from the learner's first message (pure). */
 
+import { splitAttachedPdfs } from "./attached-pdf.ts";
+
 export const TITLE_MAX_CHARS = 72;
 
 /** Derive a short chat title from the learner's first message (pure).
@@ -10,7 +12,9 @@ export const TITLE_MAX_CHARS = 72;
  *  single spaces first, so boundaries are always single-space boundaries.
  *  Used on chat creation; deterministic so tests can pin it. */
 export function titleFromPrompt(prompt: string): string {
-	const oneLine = prompt.replace(/\s+/g, " ").trim();
+	const { pdfs, rest } = splitAttachedPdfs(prompt);
+	const words = rest || (pdfs[0] ? `PDF: ${pdfs[0].name}` : prompt);
+	const oneLine = words.replace(/\s+/g, " ").trim();
 	if (oneLine.length <= TITLE_MAX_CHARS) return oneLine;
 	// Last space among the first TITLE_MAX_CHARS characters; the cut sits
 	// before it so no trailing space rides into the title.

@@ -68,8 +68,11 @@ function itemsToText(items: unknown[]): string {
 	let out = "";
 	for (const it of items) {
 		if (it && typeof it === "object" && "str" in (it as Record<string, unknown>)) {
-			const str = (it as { str?: unknown }).str;
+			const { str, hasEOL } = it as { str?: unknown; hasEOL?: unknown };
 			if (typeof str === "string") out += str;
+			// pdf.js marks the last item of a printed line with hasEOL; without
+			// the break, table cells and lines run together into one string.
+			if (hasEOL === true) out += "\n";
 		}
 	}
 	return out;

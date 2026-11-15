@@ -8,7 +8,7 @@
  * read the federated catalog from /api/models, so a stored id stays visible even
  * if its provider key lapsed. The Default row clears the override.
  *
- * Tools: research, visual, pdf. An absent key counts as enabled; the UI
+ * Tools: research, pdf. An absent key counts as enabled; the UI
  * writes explicit booleans for all four. The search engine (Tavily or Brave) is
  * live only with its key, so the row grays without one.
  *
@@ -45,7 +45,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
 	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus grading" },
-	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
+	vision: { label: "Vision", roster: "The assistant that reads long or scanned PDFs" },
 };
 
 /** Search engines, as in src/core/search.ts. */
@@ -63,13 +63,12 @@ const TRANSCRIPTION_ENGINE_LABELS: Record<TranscriptionEngineId, string> = {
 };
 
 /** Toggleable tools. Changing this list needs the user's sign-off. */
-const TOGGLE_TOOLS = ["research", "visual", "pdf"] as const;
+const TOGGLE_TOOLS = ["research", "pdf"] as const;
 
 /** Learner-facing copy. The ids stay the engine's names. */
 const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
 	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → API keys." },
-	visual: { label: "Precise figures", hint: "Draws exact pictures: graphs, number lines and geometry." },
-	pdf: { label: "Read PDFs", hint: "Reads the PDFs you give it and cites their pages." },
+	pdf: { label: "Read PDFs", hint: "Reads the PDFs you add with the PDF button and cites their pages." },
 };
 
 /** The quiz style's two options (the engine's `explain` switch). */

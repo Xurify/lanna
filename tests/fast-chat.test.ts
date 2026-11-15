@@ -292,5 +292,15 @@ describe("the board's glossed forms", () => {
 			{ phrase: "kde", meaning: "where (at)" },
 			{ phrase: "v meste", meaning: "in town" },
 		]);
+		assert.deepEqual(
+			boardPhrases(['Its table shows `say: na stole` (p. 1) and `say: v dome` (pp. 1–2), and `say: v škole` (p. 1) ("in the school").']),
+			[{ phrase: "v škole", meaning: "in the school" }],
+			"a page citation is not a meaning",
+		);
+		assert.deepEqual(
+			boardPhrases(['`say: na stole` (masculine), `say: v meste` (neuter). `say: Som na ___` (ulica, street) = "I am on the street"']),
+			[],
+			"a grammar label is not a meaning, and a gap prompt is not a word",
+		);
 	});
 });

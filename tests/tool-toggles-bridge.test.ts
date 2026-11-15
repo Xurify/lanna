@@ -89,10 +89,16 @@ describe("parseAgentSettingsBody: tool keys validate at write time", () => {
 	it("unknown keys are rejected with the supported list (the quiz wedge never persists)", () => {
 		const r = parse({ quiz: false });
 		assert.equal(r.ok, false);
-		assert.match(!r.ok && r.error, /unknown tool "quiz" \(supported: research, visual, pdf, explain\)/);
+		assert.match(!r.ok && r.error, /unknown tool "quiz" \(supported: research, pdf, explain\)/);
 		const typo = parse({ reasearch: false });
 		assert.equal(typo.ok, false);
 		assert.match(!typo.ok && typo.error, /unknown tool "reasearch"/);
+	});
+
+	it("a saved toggle for the removed visual tool is dropped, so the section still saves", () => {
+		const r = parse({ visual: false, pdf: true });
+		assert.equal(r.ok, true);
+		assert.deepEqual(r.ok && r.settings.tools, { pdf: true });
 	});
 
 	it("absent tools field is fine (absent = enabled everywhere)", () => {

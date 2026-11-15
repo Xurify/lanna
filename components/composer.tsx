@@ -49,8 +49,10 @@ export function Composer({
 	nextProblem = false,
 	onNext,
 	toolbar,
+	attachments,
 }: {
 	toolbar?: React.ReactNode;
+	attachments?: React.ReactNode;
 	busy: boolean;
 	value: string;
 	onChange: (v: string) => void;
@@ -91,6 +93,7 @@ export function Composer({
 				act();
 			}}
 		>
+			{attachments && <div className={toolbar ? "col-span-2 px-1 pt-1" : "w-full"}>{attachments}</div>}
 			<textarea
 				ref={inputRef}
 				value={value}

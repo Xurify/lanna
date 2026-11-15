@@ -60,7 +60,7 @@ export function toolQuestionKind(tool: string): "quiz" | "ask" | "explain" {
 
 /** The tools a user may toggle off in settings — THE DEFINITIVE LIST
  *  (adjudicated 2026-09-19, P2 reconciliation: the sub-agent JOB tools
- *  only — research/visual/pdf). Deliberately NOT toggleable, ever:
+ *  only — research/pdf). Deliberately NOT toggleable, ever:
  *  quiz + ask_user_question (the prober's flow is graded-quiz brackets →
  *  probe_done; quiz-off would collapse the assessment and teaching
  *  doctrine is built on graded verification — the wedge danger), the
@@ -72,7 +72,9 @@ export function toolQuestionKind(tool: string): "quiz" | "ask" | "explain" {
  *  lenient for forward-compat. The names are the MODEL-FACING tool names
  *  (research, not researcher; pdf is the PDF-reader dispatch, sources v0
  *  2026-09). */
-const TOGGLEABLE_TOOLS = ["research", "visual", "pdf"] as const;
+export const TOGGLEABLE_TOOLS = ["research", "pdf"] as const;
+
+export const RETIRED_TOOL_KEYS = ["visual"] as const;
 
 /** The keys the settings WRITE side accepts in agent.tools: the plain
  *  toggleables PLUS the quizzing-mechanics switch (`explain: true` arms
@@ -91,6 +93,13 @@ export type EnabledTools = Partial<Record<string, boolean>>;
 
 /** Drop every tool the resolved settings mark as disabled. The single
  *  filtering site every factory shares (prober/teacher). */
+export function filterToggleableTools<T>(tools: Record<string, T>, enabled?: EnabledTools): Record<string, T> {
+	if (!enabled) return tools;
+	const out = { ...tools };
+	for (const name of TOGGLEABLE_TOOLS) if (enabled[name] === false) delete out[name];
+	return out;
+}
+
 export function filterEnabledTools<T>(tools: Record<string, T>, enabled?: EnabledTools): Record<string, T> {
 	if (!enabled) return tools;
 	const out: Record<string, T> = {};
@@ -139,7 +148,6 @@ const ACTIVITY_LABELS: Record<string, string> = {
 	find: "Finding files…",
 	grep: "Searching file contents…",
 	research: "Dispatching research…",
-	visual: "Making a visual…",
 	pdf: "Reading a PDF…",
 	plan_init: "Drawing up the plan…",
 	probe_done: "Concluding the assessment…",

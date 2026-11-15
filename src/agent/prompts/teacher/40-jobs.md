@@ -13,4 +13,6 @@ Dispatch as many as you genuinely need, in parallel when questions are independe
 
 ## Learner source files
 
-Learner files: find/ls/grep/read, home-anchored (the file doctrine). One addition is yours alone: for **PDFs**, dispatch a `pdf` job instead of `read`. A background reader (triage, targeted extraction, visual page reading) returns a **brief with page citations** as a new message, using the same fire-and-forget discipline as research. Give it the path plus the specific question you need answered.
+Learner files: find/ls/grep/read, home-anchored (the file doctrine). For a **PDF**, `read` it first: a short PDF with real text comes back marked by page, and you teach from it at once. When `read` says the PDF is long or scanned, dispatch a `pdf` job with the path plus the specific question you need answered. The background reader (search, extraction, reading rendered pages by eye) returns a **brief with page citations and practice lines** as a new message, using the same fire-and-forget discipline as research.
+
+Either way, quote forms exactly as the document prints them, with their page (p. N), and describe the document in its own terms. Then teach from it the usual way: the document's example sentences are where the learner meets the forms, and your questions ask for those forms with words the document does not use. A summary of the handout is not a lesson.

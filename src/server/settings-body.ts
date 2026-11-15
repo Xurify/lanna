@@ -30,8 +30,8 @@ import type {
 	ModelsSettings,
 	RoleModelOverride,
 } from "../core/settings.ts";
-import { BACKGROUND_MODEL_ROLES, COMPACTION_THRESHOLD_FLOOR, MODEL_SLOTS } from "../core/settings.ts";
-import { WRITABLE_TOOL_KEYS } from "../core/pending.ts";
+import { BACKGROUND_MODEL_ROLES, COMPACTION_THRESHOLD_FLOOR, MODEL_SLOTS, RETIRED_MODEL_ROLES } from "../core/settings.ts";
+import { RETIRED_TOOL_KEYS, WRITABLE_TOOL_KEYS } from "../core/pending.ts";
 
 /** Parsed-or-rejected — `ok: false` carries the 400's error message. */
 export type SettingsBodyResult<T> =
@@ -147,6 +147,7 @@ export function parseAgentSettingsBody(body: unknown): SettingsBodyResult<AgentS
 		const known = BACKGROUND_MODEL_ROLES as readonly string[];
 		const parsed: NonNullable<AgentSettings["models"]> = {};
 		for (const [role, value] of Object.entries(models)) {
+			if ((RETIRED_MODEL_ROLES as readonly string[]).includes(role)) continue;
 			if (!known.includes(role)) {
 				return { ok: false, error: `unknown role "${role}" (supported: ${known.join(", ")})` };
 			}
@@ -166,7 +167,12 @@ export function parseAgentSettingsBody(body: unknown): SettingsBodyResult<AgentS
 		// 2026-09-27). The read-side sanitizer stays lenient for
 		// forward-compat.
 		const supported = WRITABLE_TOOL_KEYS as readonly string[];
+		const retired = RETIRED_TOOL_KEYS as readonly string[];
 		for (const key of Object.keys(tools.map)) {
+			if (retired.includes(key)) {
+				delete tools.map[key];
+				continue;
+			}
 			if (!supported.includes(key)) {
 				return { ok: false, error: `unknown tool "${key}" (supported: ${supported.join(", ")})` };
 			}

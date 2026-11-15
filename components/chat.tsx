@@ -16,6 +16,8 @@ import {
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { DiacriticBar } from "@/components/diacritic-bar";
+import { ChatPdfButton, DraftPdfChips } from "@/components/chat-pdf-button";
+import { joinDraft, splitDraft } from "@/src/core";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrailleSpinner } from "@/components/braille-spinner";
@@ -570,6 +572,7 @@ export function Chat({
 	}, [pageTitle]);
 
 	const [text, setText] = useState("");
+	const draftParts = splitDraft(text);
 	/* The composer's value MIRROR ("nothing gets lost" round, owner
 	 * 2026-10-01): a dictation flush lands via setState, which a closure
 	 * waiting through `await finish()` cannot observe in time. Kept
@@ -1729,8 +1732,9 @@ export function Chat({
 							// abort channel kills it server-side; stop() alone would
 							// only detach our view.
 							busy={busy}
-							value={text}
-							onChange={applyText}
+							value={draftParts.rest}
+							onChange={(v) => applyText(joinDraft(draftParts.pdfs, v))}
+							attachments={<DraftPdfChips pdfs={draftParts.pdfs} onRemove={(pdf) => applyText(joinDraft(draftParts.pdfs.filter((p) => p !== pdf), draftParts.rest))} />}
 							inputRef={composerInputRef}
 							onSend={onSend}
 							onStop={abortInFlightTurn}
@@ -1746,6 +1750,13 @@ export function Chat({
 								kind === "chat" ? (
 									<>
 										<DictationBar dictation={dictation} compact />
+										<ChatPdfButton
+											compact
+											onAttached={(pdf) => {
+												applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest));
+												composerInputRef.current?.focus();
+											}}
+										/>
 										<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
 									</>
 								) : undefined

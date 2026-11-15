@@ -49,8 +49,9 @@ export const CURRENT_SETTINGS_VERSION = 1;
  *  the strong slot (one controller, the model picker). Tests pin the set. */
 export const BACKGROUND_MODEL_ROLES = [
 	"researcher",
-	"visualMaker",
 ] as const;
+
+export const RETIRED_MODEL_ROLES = ["visualMaker"] as const;
 
 export type BackgroundModelRole = (typeof BACKGROUND_MODEL_ROLES)[number];
 
@@ -68,7 +69,7 @@ export interface RoleModelOverride {
 /** The capability tiers a user can pin models into (owner-settled mapping):
  *  strong = prober + teacher (also the per-session default-teacher
  *  starting point); cheap = researcher,
-; vision = visual-maker + pdf-reader. Resolution per role:
+; vision = pdf-reader. Resolution per role:
  *  ROLE OVERRIDE → slot → factory pin. */
 export const MODEL_SLOTS = ["strong", "cheap", "vision"] as const;
 export type ModelSlotName = (typeof MODEL_SLOTS)[number];
@@ -202,7 +203,6 @@ export const ROLE_SLOT: Readonly<Record<ModelRole, ModelSlotName>> = {
 	prober: "strong",
 	teacher: "strong",
 	researcher: "cheap",
-	visualMaker: "vision",
 	pdfReader: "vision",
 };
 
