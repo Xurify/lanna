@@ -959,9 +959,11 @@ function nextPartStoryId(state: ReadingState | null, story: StoryRecord): string
 }
 
 const LEVEL_RANK: Record<string, number> = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
+const LEVEL_NAME: Record<string, string> = { A1: "Beginner", A2: "Elementary", B1: "Intermediate", B2: "Upper intermediate", C1: "Advanced" };
+const readMinutes = (words: number) => Math.max(1, Math.round(words / 80));
 
 export function storyBookMeta(s: Pick<LibraryEntry, "wordCount" | "coverage" | "lastScore">): string {
-	const parts = [`about ${Math.max(1, Math.round(s.wordCount / 80))} min`];
+	const parts = [`about ${readMinutes(s.wordCount)} min`];
 	if (s.coverage > 0) parts.push(`${Math.round(s.coverage * 100)}% counted as known`);
 	if (s.lastScore) parts.push(`${s.lastScore.correct} of ${s.lastScore.total} right`);
 	return parts.join(" · ");
@@ -993,7 +995,11 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 			level: s.level,
 			state: s.id === nextBookId ? "next" : s.reads > 0 ? "read" : "unread",
 			kind: kindOf(s),
+			length: `${readMinutes(s.wordCount)} min`,
 			meta: storyBookMeta(s),
+			about: [s.theme, s.topic].filter(Boolean).join(" "),
+			known: s.coverage,
+			newWords: s.newWords,
 			actionLabel: s.reads > 0 ? "Read again" : "Read",
 			onRead: () => onOpen(s.id),
 		}),
@@ -1009,7 +1015,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 			.map(storyBook);
 		const shownLevels = levels.filter((l) => shown.some((b) => b.level === l));
 		if (shownLevels.length < 2 && levels.length < 2) return shown.length ? [{ label: "", books: shown }] : [];
-		return shownLevels.map((l) => ({ label: l, books: shown.filter((b) => b.level === l) }));
+		return shownLevels.map((l) => ({ label: l, name: LEVEL_NAME[l], books: shown.filter((b) => b.level === l) }));
 	}, [stories, levels, level, status, query, storyBook]);
 
 	const sourceBooks = sources.map(
@@ -1020,7 +1026,10 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 			state: entry.id === nextBookId ? "next" : entry.finished ? "read" : "unread",
 			beingWritten: entry.preparing,
 			kind: entry.site ?? "Your text",
+			length: `${entry.read}/${entry.parts}`,
 			meta: sourceMeta({ ...entry, site: undefined }),
+			about: entry.title,
+			progress: entry.read / Math.max(1, entry.parts),
 			actionLabel: entry.finished ? "Read again" : `Read part ${entry.nextPart}`,
 			onRead: () => onOpenPart(entry.id, entry.nextPart, entry.nextStoryId),
 			onRemove: () => onRemoveSource(entry.id),
@@ -1030,8 +1039,8 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 	const pickStory = pick && !pick.source ? stories.find((s) => s.id === pick.id) : undefined;
 	const nextBook = sourceBooks.find((b) => b.id === nextBookId) ?? (pickStory ? storyBook(pickStory) : undefined);
 
-	const addSlot: ListSlot | undefined = canWrite ? { label: "Add an article or text", icon: <PlusIcon />, onClick: onAdd, testId: "read-add" } : undefined;
-	const writeSlot: ListSlot | undefined = canWrite ? { label: unread ? "Write another episode" : "Write a new episode", icon: <SparklesIcon />, onClick: () => setAskingTopic((asking) => !asking), expanded: askingTopic, testId: "read-write-next" } : undefined;
+	const addSlot: ListSlot | undefined = canWrite ? { label: "Add a text", hint: "A link or pasted article, at your level", icon: <PlusIcon />, onClick: onAdd, testId: "read-add" } : undefined;
+	const writeSlot: ListSlot | undefined = canWrite ? { label: unread ? "Write another episode" : "Write a new episode", hint: "About a topic you pick", icon: <SparklesIcon />, onClick: () => setAskingTopic((asking) => !asking), expanded: askingTopic, testId: "read-write-next" } : undefined;
 
 	const ownShelf = (
 		<section className="mt-9" aria-label="Your reading">
@@ -1165,7 +1174,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 
 	return (
 		<div className="flex flex-1 flex-col overflow-y-auto pb-16 pt-8 [scrollbar-gutter:stable]">
-			<div className={cn(COLUMN, "max-w-3xl lh-rise")} data-testid="read-shelf-list">
+			<div className={cn(COLUMN, "max-w-5xl lh-rise")} data-testid="read-shelf-list">
 				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
 					<XIcon className="size-3.5" strokeWidth={1.6} />
 					Today
