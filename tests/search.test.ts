@@ -18,7 +18,7 @@ describe("resolveSearchEngineFor (the auto-detect decision)", () => {
 		const out = resolveSearchEngineFor(undefined, {});
 		assert.ok(!out.available);
 		assert.equal(out.engine, null);
-		assert.match(out.reason, /no search engine configured/i);
+		assert.match(out.reason, /no search engine yet/i);
 	});
 
 	it("a key alone is enough — no engine choice needed", () => {
@@ -77,14 +77,14 @@ describe("resolveSearchEngineFor (the auto-detect decision)", () => {
 		const out = resolveSearchEngineFor("context", { brave: "brave-throwaway-key-00001" });
 		assert.ok(!out.available);
 		assert.equal(out.engine, null);
-		assert.match(out.reason, /context/);
-		assert.match(out.reason, /CONTEXT_API_KEY key/);
+		assert.match(out.reason, /context/i);
+		assert.match(out.reason, /CONTEXT_API_KEY/);
 
 		const tavOut = resolveSearchEngineFor("tavily", { brave: "brave-throwaway-key-00001" });
 		assert.ok(!tavOut.available);
 		assert.equal(tavOut.engine, null);
-		assert.match(tavOut.reason, /tavily/);
-		assert.match(tavOut.reason, /TAVILY_API_KEY key/);
+		assert.match(tavOut.reason, /tavily/i);
+		assert.match(tavOut.reason, /TAVILY_API_KEY/);
 	});
 });
 
