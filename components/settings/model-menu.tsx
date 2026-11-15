@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { CheckIcon } from "lucide-react";
 import type { ModelCatalogEntry } from "@/src/core";
 import { fuzzyScore, subscriptionLabel } from "@/src/core";
 import { formatTokens } from "@/components/usage-format";
@@ -178,7 +179,7 @@ export function ThinkingMenuList({
 						className="flex items-center justify-between text-card-foreground"
 					>
 						<span>{level}</span>
-						{level === effectiveLevel && <span aria-hidden className="text-go">✓</span>}
+						{level === effectiveLevel && <CheckIcon aria-hidden className="size-3.5 text-go" />}
 					</MenuOption>
 				))
 			)}
@@ -384,7 +385,7 @@ export function FontMenuList({
 									<span className="truncate text-card-foreground">{family ?? "Geist"}</span>
 									<span className="shrink-0 text-muted-foreground">
 										{isDefault && "default"}
-										{effective && <span aria-hidden className={isDefault ? "ml-1 text-go" : "text-go"}>✓</span>}
+										{effective && <CheckIcon aria-hidden className={cn("size-3.5 text-go", isDefault && "ml-1")} />}
 									</span>
 								</MenuOption>
 							</li>
