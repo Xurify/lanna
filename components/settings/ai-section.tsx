@@ -44,7 +44,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 /** Display identity per slot. The roster is the row hint. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
-	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research and grade your work" },
+	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus grading" },
 	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
 };
 
@@ -581,6 +581,7 @@ export function AiSection({
 							label={SLOT_META[slot].label}
 							hint={SLOT_META[slot].roster}
 							testid={`slot-row-${slot}`}
+							stack={false}
 						>
 							{/* Outside-click anchor: the span holding both triggers. */}
 							<span

@@ -12,7 +12,9 @@ export function ChoiceMenu({
 	ariaLabel,
 	className,
 	quiet = false,
+	compact = false,
 	align = "start",
+	disabled = false,
 }: {
 	value: string;
 	options: readonly { value: string; label: string }[];
@@ -20,7 +22,10 @@ export function ChoiceMenu({
 	ariaLabel: string;
 	className?: string;
 	quiet?: boolean;
+	/** The settings look: the same height and corners as the settings model triggers. */
+	compact?: boolean;
 	align?: "start" | "end";
+	disabled?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
 	const root = useRef<HTMLDivElement>(null);
@@ -51,11 +56,14 @@ export function ChoiceMenu({
 				aria-haspopup="listbox"
 				aria-expanded={open}
 				onClick={() => setOpen((v) => !v)}
+				disabled={disabled}
 				className={cn(
-					"flex items-center gap-2 rounded-md font-ui focus-visible:ring-2 focus-visible:ring-teal",
+					"flex items-center gap-2 rounded-md font-ui focus-visible:ring-2 focus-visible:ring-teal disabled:pointer-events-none disabled:opacity-50",
 					quiet
 						? "h-8 px-2 text-[13px] font-[550] text-ink-2 transition-colors hover:bg-well hover:text-foreground pointer-coarse:h-11"
-						: "h-10 w-full justify-between bg-card px-3 text-sm font-medium text-foreground ring-1 ring-line-2 transition-shadow hover:bg-well",
+						: compact
+							? "h-8.5 w-full justify-between rounded-xl border border-border/80 bg-background px-2.5 text-xs text-foreground transition-colors hover:border-border"
+							: "h-10 w-full justify-between bg-card px-3 text-sm font-medium text-foreground ring-1 ring-line-2 transition-shadow hover:bg-well",
 				)}
 			>
 				<span className="truncate">{current?.label}</span>
