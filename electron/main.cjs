@@ -392,7 +392,10 @@ function createWindow(url) {
 	// loopback-origin only — Electron's default is auto-approve-everything,
 	// and we do not ship that.
 	// "local-fonts": the appearance section's reading-font picker (2026-09-26).
-	const allowedPermissions = new Set(["media", "clipboard-sanitized-write", "local-fonts"]);
+	// "notifications": reminder alerts. Without it Chromium resolves
+	// Notification.requestPermission() as "denied" with no prompt, so the
+	// desktop app could never reach the granted state.
+	const allowedPermissions = new Set(["media", "clipboard-sanitized-write", "local-fonts", "notifications"]);
 	const fromOwnOrigin = (origin, permission) =>
 		origin === allowedOrigin() && allowedPermissions.has(permission);
 	session.defaultSession.setPermissionRequestHandler((_wc, permission, callback, details) => {

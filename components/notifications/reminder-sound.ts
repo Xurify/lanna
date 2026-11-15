@@ -4,10 +4,11 @@
  * Provides:
  * 1. WebAudio synthesized presets (chime, bell, harp, gentle, subtle).
  * 2. Local custom sound loading, caching, and playback (supporting mp3, wav, ogg, etc.).
- * 3. Master volume coordination with app settings ("lh-volume").
+ * 3. Shares the lesson sound switch and master volume (lh-sound, lh-volume).
  */
 
 import type { NotificationSoundPreset } from "@/src/core";
+import { soundOn, volume as appVolume } from "@/components/lesson/sound";
 
 const CUSTOM_SOUND_KEY = "lh:custom-reminder-sound-data";
 const CUSTOM_SOUND_NAME_KEY = "lh:custom-reminder-sound-name";
@@ -25,31 +26,6 @@ function getAudioContext(): AudioContext | null {
 		audioCtx.resume().catch(() => {});
 	}
 	return audioCtx;
-}
-
-export function getMasterVolume(): number {
-	if (typeof window === "undefined") return 0.8;
-	try {
-		const raw = localStorage.getItem("lh-volume");
-		if (raw !== null) {
-			const parsed = parseFloat(raw);
-			if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 1) return parsed;
-		}
-	} catch {
-		// Ignore storage errors
-	}
-	return 0.8;
-}
-
-export function isAudioEnabled(): boolean {
-	if (typeof window === "undefined") return true;
-	try {
-		const raw = localStorage.getItem("lh-sound");
-		if (raw !== null) return raw === "true";
-	} catch {
-		// Ignore
-	}
-	return true;
 }
 
 /**
@@ -136,10 +112,10 @@ function playSynthNote(
  * Plays the chosen reminder sound preset or custom uploaded audio.
  */
 export async function playReminderSound(preset: NotificationSoundPreset): Promise<void> {
-	if (!isAudioEnabled() || preset === "none") return;
+	if (!soundOn() || preset === "none") return;
 
-	const volume = getMasterVolume();
-	if (volume <= 0.001) return;
+	const level = appVolume();
+	if (level <= 0.001) return;
 
 	// 1. Custom uploaded sound
 	if (preset === "custom") {
@@ -147,7 +123,7 @@ export async function playReminderSound(preset: NotificationSoundPreset): Promis
 			const dataUrl = localStorage.getItem(CUSTOM_SOUND_KEY);
 			if (dataUrl) {
 				const audio = new Audio(dataUrl);
-				audio.volume = volume;
+				audio.volume = level;
 				await audio.play();
 				return;
 			}
@@ -161,7 +137,7 @@ export async function playReminderSound(preset: NotificationSoundPreset): Promis
 	if (!ctx) return;
 
 	const now = ctx.currentTime;
-	const masterGain = volume * 0.4;
+	const masterGain = level * 0.4;
 
 	switch (preset) {
 		case "chime": {
