@@ -879,7 +879,7 @@ function SessionsSidebar() {
 			>
 				{/* Folded: a narrow column that holds only the button to open it. It is a real column (the page moves over), not a floating button, so nothing on the page sits under it. */}
 				{collapsed && (
-					<div className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side pt-3 md:flex" data-testid="sidebar-folded">
+					<div className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side lh-side pt-3 md:flex" data-testid="sidebar-folded">
 						<Hint label="Open sidebar" action="toggle-sidebar" side="right">
 							<Button variant="ghost" size="icon" aria-label="Open sidebar" onClick={toggle} data-testid="sidebar-open" className="lh-no-drag text-ink-3 hover:text-foreground">
 								<PanelLeftOpenIcon className="size-4" />
@@ -887,7 +887,7 @@ function SessionsSidebar() {
 						</Hint>
 					</div>
 				)}
-				<div inert={!visible} className={cn("@container flex h-full w-72 flex-col border-r bg-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
+				<div inert={!visible} className={cn("@container flex h-full w-72 flex-col border-r bg-side lh-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -896,7 +896,7 @@ function SessionsSidebar() {
 							<Link
 								href="/"
 								aria-label="Home"
-								className="lh-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+								className="lh-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
 							>
 								<LhMark className="size-6" />
 							</Link>
@@ -1154,7 +1154,7 @@ function SessionsSidebar() {
 								onPointerEnter={preloadSettingsDialog}
 								onFocus={preloadSettingsDialog}
 								data-testid="settings-entry"
-								className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+								className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 							>
 								<SettingsIcon className="size-[18px]" />
 								Settings

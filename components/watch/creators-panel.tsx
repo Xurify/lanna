@@ -63,7 +63,7 @@ export function CreatorsPanel({ d, canPrepare, onPrepare, onCut }: { d: Discover
 											setChosen(c.id);
 										}}
 										aria-current={on ? "true" : undefined}
-										className={cn("flex w-full min-w-0 items-center gap-2.5 rounded-xl py-2 pl-2 pr-3 text-left transition-colors @max-3xl:w-auto", on ? "bg-well" : "hover:bg-well/60")}
+										className={cn("flex w-full min-w-0 items-center gap-2.5 rounded-xl py-2 pl-2 pr-3 text-left transition-colors @max-3xl:w-auto", on ? "bg-well-2" : "hover:bg-well")}
 										data-testid="watch-creator"
 									>
 										<Avatar name={c.name} src={c.avatar} />
