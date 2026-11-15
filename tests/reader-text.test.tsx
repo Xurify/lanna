@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { groupTokens, kindOf, sourceMeta, storyBookMeta, storyMeta } from "@/components/reading/reader";
 import { linksIn } from "@/components/reading/add-reading-dialog";
 import { ROBO_EPISODES } from "../scripts/fixtures/series-episodes.ts";
+import { coverMotif } from "@/components/reading/cover-scene";
 
 const tok = (text: string, word = /\p{L}/u.test(text)) => ({ text, word });
 
@@ -48,6 +49,14 @@ describe("the reader's text", () => {
 		assert.equal(sourceMeta({ ...entry, truncated: true }), "3 parts · not started · only its first 6,000 words");
 		assert.equal(sourceMeta({ ...entry, read: 3, finished: true, difficulty: "full" }), "read · 3 parts · not simplified");
 		assert.equal(sourceMeta({ ...entry, parts: 1, shortened: true, difficulty: "harder" }), "1 part · not started · a step up · a shorter version");
+	});
+
+	it("a cover's sketch comes from the story's title, and a castle is not a garden", () => {
+		assert.equal(coverMotif("Výlet na Spišský hrad"), "mountains");
+		assert.equal(coverMotif("Dom a záhrada"), "tree");
+		assert.equal(coverMotif("Cesta vlakom do Tatier"), "train");
+		assert.equal(coverMotif("Lekár a chrípka"), "clinic");
+		assert.equal(coverMotif("Ahoj, ja som Matej"), "friends");
 	});
 
 	it("a story's cover says how long it is, how much is counted as known, and the last score", () => {

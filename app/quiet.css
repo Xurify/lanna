@@ -242,6 +242,7 @@
 [data-paper="3"] { --paper: var(--q-paper-3); }
 [data-paper="4"] { --paper: var(--q-paper-4); }
 .q-cov-scene { display: block; width: 100%; height: 100%; }
+.q-ink-patch { fill: var(--q-patch); }
 
 .q-hero { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); overflow: hidden; }
 .q-hero-art { display: flex; align-items: flex-end; min-height: 220px; padding: 16px 14px 6px; }
