@@ -70,6 +70,7 @@ html[data-keyboard] :focus-visible {
 	--q-side: #f6f6f4;
 	--q-well: #f5f5f3;
 	--q-well-2: #ededea;
+	--q-side-well: #ededea;
 	--q-line: #e8e8e5;
 	--q-line-2: #d8d9d5;
 	--q-ink: #16181b;
@@ -152,6 +153,7 @@ html[data-keyboard] :focus-visible {
 	--q-side: #16181a;
 	--q-well: #24282c;
 	--q-well-2: #2d3236;
+	--q-side-well: #24282c;
 	--q-field: #2d3236;
 	--q-line: #2f3438;
 	--q-line-2: #454b51;
@@ -190,6 +192,7 @@ html[data-keyboard] :focus-visible {
 		--q-side: #16181a;
 		--q-well: #24282c;
 		--q-well-2: #2d3236;
+		--q-side-well: #24282c;
 		--q-field: #2d3236;
 		--q-line: #2f3438;
 		--q-line-2: #454b51;
@@ -317,6 +320,13 @@ html[data-keyboard] :focus-visible {
 	}
 }
 
+.lh-side {
+	--q-well: var(--q-side-well);
+	--accent: var(--q-side-well);
+	--muted: var(--q-side-well);
+	--secondary: var(--q-side-well);
+}
+
 /* Contextual cursor design (Uxcel UI/UX Standards):
    - Interactive elements (buttons, links, triggers, summaries, checkboxes, radio, options) get cursor: pointer
    - Disabled states get cursor: not-allowed
@@ -428,6 +438,7 @@ body {
 		--q-side: #f6f6f4;
 		--q-well: #f5f5f3;
 		--q-well-2: #ededea;
+		--q-side-well: #ededea;
 		--q-line: #e8e8e5;
 		--q-line-2: #d8d9d5;
 		--q-ink: #16181b;

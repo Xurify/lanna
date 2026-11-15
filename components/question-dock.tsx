@@ -181,7 +181,7 @@ function QuestionDockBar({
 				type="button"
 				data-testid="teach-check-reveal"
 				onClick={onExpand}
-				className="dock-variant flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40"
+				className="dock-variant flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent"
 			>
 				<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
 					<PlayIcon className="size-3.5" />
@@ -201,7 +201,7 @@ function QuestionDockBar({
 			type="button"
 			data-testid="question-dock-bar"
 			onClick={onExpand}
-			className="dock-variant flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors hover:bg-accent/40"
+			className="dock-variant flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors hover:bg-accent"
 		>
 			<span className="shrink-0 text-xs font-semibold text-muted-foreground">
 				{label ??
@@ -593,7 +593,7 @@ function QuestionDockForm({
 									onClick={() => pick(i)}
 									className={cn(
 										"flex items-start gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left text-[15px] outline-none shadow-[0_2px_0_0_var(--border)] transition-[translate,box-shadow,background-color,border-color] active:translate-y-px active:shadow-none",
-										isSel ? "border-go bg-go-soft" : "hover:border-sky/50 hover:bg-accent/50",
+										isSel ? "border-go bg-go-soft" : "hover:border-sky/50 hover:bg-accent",
 										i === kbdIdx && !isSel && "ring-1 ring-border bg-accent/40",
 									)}
 								>
@@ -668,7 +668,7 @@ function QuestionDockForm({
 								onClick={selectOther}
 								className={cn(
 									"flex items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm outline-none transition-colors",
-									sel.otherSelected ? "border-primary bg-accent" : "border-dashed hover:bg-accent/50",
+									sel.otherSelected ? "border-primary bg-accent" : "border-dashed hover:bg-accent",
 									kbdIdx === optionCount && !sel.otherSelected && "ring-1 ring-border bg-accent/40",
 								)}
 							>

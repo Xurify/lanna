@@ -574,7 +574,7 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 											void fetchWords(false);
 										}}
 										disabled={loadingWords}
-										className="rounded-2xl bg-accent px-6 py-2.5 font-ui text-xs font-semibold text-foreground transition-colors hover:bg-accent/80 disabled:opacity-50"
+										className="rounded-2xl bg-accent px-6 py-2.5 font-ui text-xs font-semibold text-foreground transition-colors hover:bg-well-2 disabled:opacity-50"
 									>
 										{loadingWords ? "Loading…" : "Show more words"}
 									</button>
