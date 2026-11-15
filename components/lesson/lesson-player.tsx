@@ -1174,11 +1174,11 @@ function ClozeRep({
 						) : typed ? (
 							// Grows with what is typed (a hidden twin sizes it), so a long
 							// answer is never clipped.
-							<span className="mx-1 inline-grid max-w-full align-baseline" style={{ minWidth: `${Math.max(4, item.answer.length + 2)}ch` }}>
-								<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre px-3.5 font-semibold">
+							<span className="relative mx-1 inline-block max-w-full align-baseline" style={{ minWidth: `${Math.max(4, item.answer.length + 2)}ch` }}>
+								<span aria-hidden="true" className="invisible inline-block whitespace-pre px-3.5 font-semibold">
 									{given || " "}
 								</span>
-								{input("q-write col-start-1 row-start-1 h-12 w-px min-w-full self-center px-1 py-0 font-semibold text-foreground outline-none sm:h-[58px]")}
+								{input("q-write absolute left-0 top-[-15px] h-12 w-full px-1 pt-[30px] pb-0 font-semibold text-foreground outline-none sm:top-[-9px] sm:h-[58px] sm:pt-[24px]")}
 							</span>
 						) : (
 							<span className="q-blank mx-1 w-[5ch]" aria-label="blank" />
