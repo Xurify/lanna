@@ -273,13 +273,14 @@ test("buildLesson prioritizes weakGender candidates when unit is practiced", () 
 });
 
 
-test("a dropped subject pronoun is named; a stated subject is not", () => {
-	const at = (s: string, w: string) => s.indexOf(w);
-	assert.equal(unstatedPerson("Bývam v Groningene.", 0, "I form of bývať"), "I");
-	assert.equal(unstatedPerson("Kde bývaš?", at("Kde bývaš?", "bývaš"), "you form of bývať"), "you");
-	assert.equal(unstatedPerson("Ja bývam v Groningene.", 3, "I form of bývať"), undefined);
-	assert.equal(unstatedPerson("Mama býva v Košiciach.", 5, "he / she / it form of bývať"), undefined);
-	assert.equal(unstatedPerson("Býva v Košiciach.", 0, "he / she / it form of bývať"), "he / she / it");
-	assert.equal(unstatedPerson("Bývala v Košiciach.", 0, "she (past) form of bývať"), undefined);
-	assert.equal(unstatedPerson("Vidím mamu.", 6, "accusative of mama (feminine)"), undefined);
+test("a present-tense blank names its person unless a subject pronoun does", () => {
+	assert.equal(unstatedPerson("Bývam v Groningene.", "I form of bývať"), "I");
+	assert.equal(unstatedPerson("Kde bývaš?", "you form of bývať"), "you");
+	assert.equal(unstatedPerson("Ja bývam v Groningene.", "I form of bývať"), undefined);
+	assert.equal(unstatedPerson("Ona býva v Košiciach.", "he / she / it form of bývať"), undefined);
+	assert.equal(unstatedPerson("Býva v Košiciach.", "he / she / it form of bývať"), "he / she / it");
+	assert.equal(unstatedPerson("Mama býva v Košiciach.", "he / she / it form of bývať"), "he / she / it");
+	assert.equal(unstatedPerson("Komu patrí tá zbraň?", "he / she / it form of patriť"), "he / she / it");
+	assert.equal(unstatedPerson("Bývala v Košiciach.", "she (past) form of bývať"), undefined);
+	assert.equal(unstatedPerson("Vidím mamu.", "accusative of mama (feminine)"), undefined);
 });
