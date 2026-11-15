@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { subscriptionLabels, subscriptionLabel, type SessionPricing, type TurnUsage } from "@/src/core";
-import { formatTokens, formatUsd, planCostLabel, prettyModel } from "@/components/usage-format";
+import { formatTokens, formatUsd, planCostLabel } from "@/components/usage-format";
+import { stampModelLabel } from "@/components/model-names";
 import { ModelControl, catalogLimits, useModelCatalog } from "@/components/model-picker";
 
 export function formatContextMeasurement(tokens: number | null, limit: number | null): string {
@@ -167,7 +168,7 @@ export function StatsBar({
 										return (
 											<li key={`${turn.messageId}-${i}`} className="flex items-center justify-between gap-2">
 												<span className="truncate text-muted-foreground">
-													#{i + 1} · {prettyModel(turn.model, true)}
+													#{i + 1} · {stampModelLabel(catalog?.models, turn.model)}
 												</span>
 												<span className="flex shrink-0 items-center gap-2 tabular-nums text-card-foreground">
 													<span className="text-muted-foreground">{turn.steps.length} steps</span>

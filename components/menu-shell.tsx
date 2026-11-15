@@ -65,7 +65,7 @@ interface MenuPlacement {
 }
 
 /** Pure: the placement decision — anchored rect + viewport + the menu's
- *  UNCAPPED content height (scrollHeight, so re-placements after a search
+ *  UNCAPPED content height and width (scrollHeight and offsetWidth, so re-placements after a search
  *  filter re-measure honestly) → side, fixed style, cap. Flip rule: stay
  *  on the preferred side unless it cannot show the full content AND the
  *  other side is roomier. The cap always keeps the menu inside its side's

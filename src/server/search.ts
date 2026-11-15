@@ -197,7 +197,7 @@ export function resolveSearchEngineFor(
 			return {
 				available: false,
 				engine: null,
-				reason: `${entry?.label ?? pinned} is chosen, but its API key is missing. Add ${entry?.envVar ?? "its key"} in API keys.`,
+				reason: `${entry?.label ?? pinned} is chosen, but its API key is missing. Add ${entry ? `a ${entry.label} key` : "its key"} in API keys.`,
 				key: null,
 			};
 		}

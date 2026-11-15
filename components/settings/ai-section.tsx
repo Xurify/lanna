@@ -21,7 +21,7 @@ import { CheckIcon, ChevronDownIcon, KeyRoundIcon } from "lucide-react";
 import { MenuShell } from "@/components/menu-shell";
 import { cn } from "@/lib/utils";
 import { useSettingsSaved } from "@/components/settings-signal";
-import { defaultOrderLevel, populateLevel } from "@/components/thinking-default";
+import { defaultOrderLevel, populateLevel, thinkingLabel } from "@/components/thinking-default";
 import {
 	COMPACTION_THRESHOLD_FLOOR,
 	MODEL_SLOTS,
@@ -35,7 +35,7 @@ import {
 	type TranscriptionEngineId,
 } from "@/src/core";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
-import { prettyModel } from "@/components/usage-format";
+import { modelName } from "@/components/model-names";
 import { CommitInput, SettingsDisclosure, SettingsGroup, SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 import { MenuOption, ModelMenuList, ThinkingMenuList } from "./model-menu";
 import { ChatGPTBackgroundAccess } from "./chatgpt-connection";
@@ -590,17 +590,17 @@ export function AiSection({
 							>
 								{slot !== "strong" && <><ChatGPTBackgroundAccess provider={coord?.provider} /><NativeSubscriptionBackgroundAccess provider={coord?.provider} /></>}
 								<MenuTrigger
-									value={modelId ? (chosen?.name ?? prettyModel(modelId)) : ""}
+									value={modelId ? modelName(catalog, provider, modelId) : ""}
 									emptyLabel="—"
 									ariaLabel={`${SLOT_META[slot].label} model`}
 									testid={`slot-model-${slot}`}
 									open={thisMenuOpen === "model"}
 									onClick={() => setOpenMenu(thisMenuOpen === "model" ? null : { target: slot, kind: "model" })}
-									widthClass="min-w-20"
+									widthClass="min-w-20 max-w-44"
 								/>
 								<MenuTrigger
 									// Unset level on a known model shows the resolved one. Display only until a pick writes.
-									value={thinking || (chosen ? defaultOrderLevel(levels) : "")}
+									value={thinkingLabel(thinking || (chosen ? defaultOrderLevel(levels) : ""))}
 									emptyLabel="—"
 									ariaLabel={`${SLOT_META[slot].label} thinking`}
 									testid={`slot-thinking-${slot}`}
@@ -613,7 +613,7 @@ export function AiSection({
 										preferredSide="down"
 											anchorTestid={`slot-model-${slot}`}
 										testid={`slot-model-menu-${slot}`}
-										menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+										menuClass="flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 									>
 										<ModelMenuList
 											models={slotCatalog ?? undefined}

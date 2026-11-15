@@ -35,7 +35,6 @@
 import { useEffect, useRef, useState } from "react";
 import type React from "react";
 import { type ModelCatalogEntry, type ModelSlotName, type ModelsSettings } from "@/src/core";
-import { prettyModel } from "@/components/usage-format";
 import { ModelMenuList } from "@/components/settings/model-menu";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved, useSettingsSaved } from "@/components/settings-signal";
@@ -47,7 +46,7 @@ import { ChevronDown, SlidersIcon, XIcon } from "lucide-react";
 import { Dialog, DialogPortal, DialogOverlay, DialogContent } from "@/components/ui/dialog";
 import { ChatGPTBackgroundAccess, ChatGPTUIProvider } from "@/components/settings/chatgpt-connection";
 import { NativeSubscriptionBackgroundAccess, NativeSubscriptionUIProvider, SubscriptionConnections } from "@/components/settings/subscription-connections";
-import { populateLevel, THINKING_LABEL } from "@/components/thinking-default";
+import { populateLevel, thinkingLabel } from "@/components/thinking-default";
 import { ThinkingMenuList } from "@/components/settings/model-menu";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 
@@ -173,7 +172,7 @@ export function SetupKeysBody({
 							testid="setup-key-provider-menu"
 							preferredSide="down"
 							align="left"
-							menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+							menuClass="flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 						>
 							<ProviderMenuList providers={providers ?? []} onPick={onPick} />
 						</MenuShell>
@@ -504,7 +503,7 @@ export function SetupDialog({
 												onClick={() => setOpenMenu(openMenu?.slot === slot && openMenu.kind === "model" ? null : { slot, kind: "model" })}
 												className="flex h-7 min-w-40 w-full items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50"
 											>
-												<span className="min-w-0 flex-1 truncate">{entry ? prettyModel(entry.id) : "Pick a model…"}</span>
+												<span className="min-w-0 flex-1 truncate">{entry ? entry.name : "Pick a model…"}</span>
 												<span aria-hidden className="text-muted-foreground">
 													▾
 												</span>
@@ -524,7 +523,7 @@ export function SetupDialog({
 													testid={`setup-menu-${slot}`}
 													preferredSide="down"
 													align="left"
-													menuClass="flex w-[22rem] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+													menuClass="flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 												>
 													<ModelMenuList
 														models={catalog}
@@ -560,7 +559,7 @@ export function SetupDialog({
 												className="flex h-7 w-24 items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
 											>
 												<span className="min-w-0 flex-1 truncate text-left">
-													{entry ? (level ? THINKING_LABEL[level] ?? level : "…") : "—"}
+													{entry ? (level ? thinkingLabel(level) : "…") : "—"}
 												</span>
 												<span aria-hidden className="text-muted-foreground">
 													▾
