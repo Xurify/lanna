@@ -168,10 +168,10 @@ export function contextProvider(apiKey: string, fetchFn: FetchLike = fetch): Sea
 /** The engines this wave ships, in PREFERENCE order (both keys present,
  *  no explicit pin → the first live engine wins; owner decision: Context
  *  first — agent-native search API with highlights, then Tavily, then Brave). */
-const ENGINE_ORDER: ReadonlyArray<{ id: SearchEngineId; envVar: string }> = [
-	{ id: "context", envVar: "CONTEXT_API_KEY" },
-	{ id: "tavily", envVar: "TAVILY_API_KEY" },
-	{ id: "brave", envVar: "BRAVE_API_KEY" },
+const ENGINE_ORDER: ReadonlyArray<{ id: SearchEngineId; label: string; envVar: string }> = [
+	{ id: "context", label: "Context", envVar: "CONTEXT_API_KEY" },
+	{ id: "tavily", label: "Tavily", envVar: "TAVILY_API_KEY" },
+	{ id: "brave", label: "Brave", envVar: "BRAVE_API_KEY" },
 ];
 
 /** The engine's key (env-or-file; env wins) — null when the engine is
@@ -192,25 +192,25 @@ export function resolveSearchEngineFor(
 ): SearchStatus & { key: string | null } {
 	const pinnedKey = pinned ? keys[pinned] ?? null : null;
 	if (pinned) {
+		const entry = ENGINE_ORDER.find((e) => e.id === pinned);
 		if (!pinnedKey) {
-			const envVar = ENGINE_ORDER.find((e) => e.id === pinned)?.envVar ?? "API_KEY";
 			return {
 				available: false,
 				engine: null,
-				reason: `search engine is set to "${pinned}" but its API key is missing — set the ${envVar} key`,
+				reason: `${entry?.label ?? pinned} is chosen, but its API key is missing. Add ${entry?.envVar ?? "its key"} in API keys.`,
 				key: null,
 			};
 		}
-		return { available: true, engine: pinned, reason: `search engine: ${pinned} (chosen)`, key: pinnedKey };
+		return { available: true, engine: pinned, reason: `${entry?.label ?? pinned}, chosen by you.`, key: pinnedKey };
 	}
-	for (const { id } of ENGINE_ORDER) {
+	for (const { id, label } of ENGINE_ORDER) {
 		const key = keys[id] ?? null;
-		if (key) return { available: true, engine: id, reason: `search engine: ${id} (auto)`, key };
+		if (key) return { available: true, engine: id, reason: `${label}, picked automatically.`, key };
 	}
 	return {
 		available: false,
 		engine: null,
-		reason: "no search engine configured — set a Context, Tavily or Brave search API key",
+		reason: "No search engine yet. Add a Context, Tavily or Brave key in API keys.",
 		key: null,
 	};
 }

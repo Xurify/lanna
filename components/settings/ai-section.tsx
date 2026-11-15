@@ -17,7 +17,9 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CheckIcon, ChevronDownIcon, KeyRoundIcon } from "lucide-react";
 import { MenuShell } from "@/components/menu-shell";
+import { cn } from "@/lib/utils";
 import { useSettingsSaved } from "@/components/settings-signal";
 import { defaultOrderLevel, populateLevel } from "@/components/thinking-default";
 import {
@@ -241,9 +243,7 @@ function MenuTrigger({
 			} ${widthClass}`}
 		>
 			<span className="min-w-0 flex-1 truncate text-left">{value || emptyLabel}</span>
-			<span aria-hidden className="text-muted-foreground">
-				▾
-			</span>
+			<ChevronDownIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
 		</button>
 	);
 }
@@ -422,9 +422,18 @@ export function AiSection({
 			className="flex w-full items-center justify-between text-card-foreground"
 		>
 			<span>{label}</span>
-			<span className="flex items-center gap-2 text-muted-foreground">
-				{live === null ? null : live ? <span aria-hidden>key</span> : <span aria-hidden>no key</span>}
-				{active && <span aria-hidden className="text-go">✓</span>}
+			<span className="flex items-center gap-2">
+				{live !== null && (
+					<span
+						role="img"
+						aria-label={live ? "Key saved" : "No key yet"}
+						title={live ? "Key saved" : "No key yet. Add it in API keys."}
+						className="flex"
+					>
+						<KeyRoundIcon aria-hidden className={cn("size-3.5", live ? "text-go" : "text-muted-foreground/50")} />
+					</span>
+				)}
+				{active && <CheckIcon aria-hidden className="size-3.5 text-go" />}
 			</span>
 		</MenuOption>
 	);
