@@ -53,7 +53,7 @@ Listen on a sheet (E95): ten of the sheet's phrases, heard before they are seen 
 
 - **Saying the phrases** (cue in English, say the Russian, scored) and **a role-play of the shift** with the tutor as the teammate, held to the sheet's phrases. Both are spoken output in Russian, which the listening-first study drops from day 15 (E82). They wait for 2026-12-20, or for the owner to say that game practice is outside the study.
 - **The four dialogues.** A sheet has no place for a dialogue with questions. Read's "dialogue" genre is model-written; a learner-supplied one would be new.
-- **PDF import.** A sheet is one line per phrase, and the chat's `pdf` job already reads a PDF, so the short path is "read this PDF and give me the lines". No upload was added (the app has no document upload by an earlier decision).
+- **PDF import.** A sheet is one line per phrase, and the chat's `pdf` job already reads a PDF, so the short path is "read this PDF and give me the lines". No upload was added at the time; since 2026-11-15 the Ask page has a PDF button ([figures-and-pdfs.md](figures-and-pdfs.md)).
 - **"Write me a cheatsheet for…"** inside the app (E50, still open).
 
 ## Sources
