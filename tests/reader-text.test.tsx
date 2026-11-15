@@ -1,9 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { groupTokens, kindOf, sourceMeta, storyBookMeta, storyMeta } from "@/components/reading/reader";
-import { shelfRowHeight, spineSize } from "@/components/reading/bookshelf";
 import { linksIn } from "@/components/reading/add-reading-dialog";
 import { ROBO_EPISODES } from "../scripts/fixtures/series-episodes.ts";
+import { coverMotif } from "@/src/core";
 
 const tok = (text: string, word = /\p{L}/u.test(text)) => ({ text, word });
 
@@ -51,13 +51,16 @@ describe("the reader's text", () => {
 		assert.equal(sourceMeta({ ...entry, parts: 1, shortened: true, difficulty: "harder" }), "1 part · not started · a step up · a shorter version");
 	});
 
-	it("a book is taller for a harder level and thicker for a longer text, within limits", () => {
-		assert.ok(spineSize("B1", 200).height > spineSize("A1", 200).height);
-		assert.ok(spineSize("A1", 600).width > spineSize("A1", 100).width);
-		assert.equal(spineSize("A1", 0).width, 38);
-		assert.equal(spineSize("A1", 50_000).width, 76);
-		assert.equal(spineSize("unknown", 200).height, spineSize("A1", 200).height);
-		assert.equal(shelfRowHeight(["A1", "C1"]), spineSize("C1", 100).height + 19);
+	it("a cover's sketch comes from the story's title, and a castle is not a garden", () => {
+		assert.equal(coverMotif("Výlet na Spišský hrad"), "mountains");
+		assert.equal(coverMotif("Dom a záhrada"), "tree");
+		assert.equal(coverMotif("Cesta vlakom do Tatier"), "train");
+		assert.equal(coverMotif("Lekár a chrípka"), "clinic");
+		assert.equal(coverMotif("Ahoj, ja som Matej"), "friends");
+		assert.equal(coverMotif("Moji dobrí priatelia"), "table");
+		assert.equal(coverMotif("Čo robím cez víkend"), "bike");
+		assert.equal(coverMotif("Kúpa knihy"), "books");
+		assert.notEqual(coverMotif("Xyz", 0), coverMotif("Xyz", 1));
 	});
 
 	it("a story's cover says how long it is, how much is counted as known, and the last score", () => {

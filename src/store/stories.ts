@@ -66,6 +66,7 @@ function indexEntryOf(story: StoryRecord): StoryIndexEntry {
 		...(story.chapter ? { chapter: story.chapter } : {}),
 		...(story.genre ? { genre: story.genre } : {}),
 		...(story.topic ? { topic: story.topic } : {}),
+		...(story.cover ? { cover: story.cover } : {}),
 		createdAt: story.createdAt,
 		wordCount: story.wordCount,
 		coverage: story.coverage,

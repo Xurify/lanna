@@ -81,6 +81,17 @@ html[data-keyboard] :focus-visible {
 	--q-teal-2: #0a5452;
 	--q-teal-wash: #e8f2f1;
 	--q-teal-line: #bcd8d5;
+	/* Paper tones behind the cover sketches in Read: five low-chroma tints so sixty covers do not read as one. */
+	--q-paper-0: #f3eee3;
+	--q-paper-1: #e8efe7;
+	--q-paper-2: #e6edf2;
+	--q-paper-3: #f3eae6;
+	--q-paper-4: #ecebe6;
+	--q-patch: color-mix(in srgb, #0d6764 20%, transparent);
+	--q-wash-ochre: rgb(214 170 90 / 0.34);
+	--q-wash-rose: rgb(206 128 112 / 0.28);
+	--q-wash-sage: rgb(122 160 110 / 0.3);
+	--q-wash-sky: rgb(108 150 190 / 0.28);
 	/* The mockup's literal greys for bars, checkboxes and dashed outlines. */
 	--q-bar: #7d838a;
 	--q-bar-hatch-a: #a9aeb3;
@@ -165,6 +176,16 @@ html[data-keyboard] :focus-visible {
 	--q-teal-2: #7bd3ce;
 	--q-teal-wash: #143634;
 	--q-teal-line: #1f5552;
+	--q-paper-0: #26241e;
+	--q-paper-1: #1f2621;
+	--q-paper-2: #1e242a;
+	--q-paper-3: #28211f;
+	--q-paper-4: #242422;
+	--q-patch: color-mix(in srgb, #4cbdb7 30%, transparent);
+	--q-wash-ochre: rgb(236 200 128 / 0.15);
+	--q-wash-rose: rgb(240 160 146 / 0.15);
+	--q-wash-sage: rgb(160 210 150 / 0.14);
+	--q-wash-sky: rgb(150 195 240 / 0.15);
 	--q-bar: #7d838a;
 	--q-bar-hatch-a: #565c62;
 	--q-bar-hatch-b: #3d4247;
@@ -204,6 +225,16 @@ html[data-keyboard] :focus-visible {
 		--q-teal-2: #7bd3ce;
 		--q-teal-wash: #143634;
 		--q-teal-line: #1f5552;
+		--q-paper-0: #26241e;
+		--q-paper-1: #1f2621;
+		--q-paper-2: #1e242a;
+		--q-paper-3: #28211f;
+		--q-paper-4: #242422;
+		--q-patch: color-mix(in srgb, #4cbdb7 30%, transparent);
+		--q-wash-ochre: rgb(236 200 128 / 0.15);
+		--q-wash-rose: rgb(240 160 146 / 0.15);
+		--q-wash-sage: rgb(160 210 150 / 0.14);
+		--q-wash-sky: rgb(150 195 240 / 0.15);
 		--q-bar: #7d838a;
 		--q-bar-hatch-a: #565c62;
 		--q-bar-hatch-b: #3d4247;

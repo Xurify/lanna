@@ -32,7 +32,7 @@ import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
-import { Bookshelf, type BookState, type ShelfBook, type ShelfSlot } from "@/components/reading/bookshelf";
+import { BookList, NextUp, type BookGroup, type ListBook, type ListSlot } from "@/components/reading/book-list";
 import { AddReadingDialog, difficultyInfo, EMPTY_READING_DRAFT, linksIn, type ReadingDraft } from "@/components/reading/add-reading-dialog";
 import { cheersFor, genreInfo, gradeAnswers, MAX_SOURCE_WORDS, readXp, type LibraryEntry, type ReadingState, type SourceEntry, type StoryRecord, type StorySource, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
@@ -959,10 +959,11 @@ function nextPartStoryId(state: ReadingState | null, story: StoryRecord): string
 }
 
 const LEVEL_RANK: Record<string, number> = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
-const BOOK_STATE_RANK: Record<BookState, number> = { next: 0, unread: 1, read: 2 };
+const LEVEL_NAME: Record<string, string> = { A1: "Beginner", A2: "Elementary", B1: "Intermediate", B2: "Upper intermediate", C1: "Advanced" };
+const readMinutes = (words: number) => Math.max(1, Math.round(words / 80));
 
 export function storyBookMeta(s: Pick<LibraryEntry, "wordCount" | "coverage" | "lastScore">): string {
-	const parts = [`about ${Math.max(1, Math.round(s.wordCount / 80))} min`];
+	const parts = [`about ${readMinutes(s.wordCount)} min`];
 	if (s.coverage > 0) parts.push(`${Math.round(s.coverage * 100)}% counted as known`);
 	if (s.lastScore) parts.push(`${s.lastScore.correct} of ${s.lastScore.total} right`);
 	return parts.join(" · ");
@@ -976,66 +977,71 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 	const [level, setLevel] = useState<string>("all");
 	const [status, setStatus] = useState<"all" | "unread" | "read">("all");
 	const [query, setQuery] = useState("");
-	const [chosenBook, setChosenBook] = useState<string | null | undefined>(undefined);
 	const [askingTopic, setAskingTopic] = useState(false);
 	const [topic, setTopic] = useState("");
 	const canWrite = state?.canWrite !== false;
 
 	const pick = library.find((s) => s.id === state?.current?.id) ?? stories.find((s) => s.reads === 0);
 	const nextBookId = pick?.source?.id ?? pick?.id ?? null;
-	const openBookId = chosenBook === undefined ? nextBookId : chosenBook;
 	const levels = useMemo(() => [...new Set(stories.map((s) => s.level))].sort((a, b) => (LEVEL_RANK[a] ?? 9) - (LEVEL_RANK[b] ?? 9)), [stories]);
 	const filtering = level !== "all" || status !== "all" || query.trim() !== "";
 	const unread = stories.filter((s) => s.reads === 0).length;
 
-	const storyBooks = useMemo(() => {
+	const storyBook = useCallback(
+		(s: LibraryEntry): ListBook => ({
+			id: s.id,
+			title: s.title,
+			titleLang: lang?.code,
+			level: s.level,
+			state: s.id === nextBookId ? "next" : s.reads > 0 ? "read" : "unread",
+			kind: kindOf(s),
+			length: `${readMinutes(s.wordCount)} min`,
+			meta: storyBookMeta(s),
+			about: [s.theme, s.topic].filter(Boolean).join(" "),
+			known: s.coverage,
+			cover: s.cover,
+			newWords: s.newWords,
+			actionLabel: s.reads > 0 ? "Read again" : "Read",
+			onRead: () => onOpen(s.id),
+		}),
+		[nextBookId, lang, onOpen],
+	);
+
+	const storyGroups = useMemo((): BookGroup[] => {
 		const q = query.trim().toLowerCase();
-		return stories
+		const shown = stories
 			.filter((s) => (level === "all" ? true : s.level === level))
 			.filter((s) => (status === "all" ? true : status === "unread" ? s.reads === 0 : s.reads > 0))
 			.filter((s) => !q || s.title.toLowerCase().includes(q) || (s.topic ?? "").toLowerCase().includes(q) || (s.genre ? genreInfo(s.genre).label.toLowerCase().includes(q) : false))
-			.map(
-				(s): ShelfBook => ({
-					id: s.id,
-					spineTitle: s.title,
-					spineLabel: s.level,
-					titleLang: lang?.code,
-					level: s.level,
-					words: s.wordCount,
-					state: s.id === nextBookId ? "next" : s.reads > 0 ? "read" : "unread",
-					tone: (s.genre ?? "robo") === "robo" ? "series" : "story",
-					kind: kindOf(s),
-					title: s.title,
-					meta: storyBookMeta(s),
-					actionLabel: s.reads > 0 ? "Read again" : "Read",
-					onRead: () => onOpen(s.id),
-				}),
-			)
-			.sort((a, b) => BOOK_STATE_RANK[a.state] - BOOK_STATE_RANK[b.state] || (LEVEL_RANK[a.level] ?? 9) - (LEVEL_RANK[b.level] ?? 9));
-	}, [stories, level, status, query, nextBookId, lang, onOpen]);
+			.map(storyBook);
+		const shownLevels = levels.filter((l) => shown.some((b) => b.level === l));
+		if (shownLevels.length < 2 && levels.length < 2) return shown.length ? [{ label: "", books: shown }] : [];
+		return shownLevels.map((l) => ({ label: l, name: LEVEL_NAME[l], books: shown.filter((b) => b.level === l) }));
+	}, [stories, levels, level, status, query, storyBook]);
 
 	const sourceBooks = sources.map(
-		(entry): ShelfBook => ({
+		(entry): ListBook => ({
 			id: entry.id,
-			spineTitle: entry.title,
-			spineLabel: `${entry.read}/${entry.parts}`,
+			title: entry.title,
 			level: entry.level,
-			words: entry.wordCount,
 			state: entry.id === nextBookId ? "next" : entry.finished ? "read" : "unread",
-			tone: "own",
 			beingWritten: entry.preparing,
 			kind: entry.site ?? "Your text",
-			title: entry.title,
+			length: `${entry.read}/${entry.parts}`,
 			meta: sourceMeta({ ...entry, site: undefined }),
+			about: entry.title,
+			progress: entry.read / Math.max(1, entry.parts),
 			actionLabel: entry.finished ? "Read again" : `Read part ${entry.nextPart}`,
 			onRead: () => onOpenPart(entry.id, entry.nextPart, entry.nextStoryId),
 			onRemove: () => onRemoveSource(entry.id),
 		}),
 	);
 
-	const slotLevel = state?.current?.level ?? stories[0]?.level ?? "A1";
-	const addSlot: ShelfSlot | undefined = canWrite ? { label: "Add a text", icon: <PlusIcon />, level: slotLevel, onClick: onAdd, testId: "read-add" } : undefined;
-	const writeSlot: ShelfSlot | undefined = canWrite ? { label: unread ? "Write another episode" : "Write a new episode", icon: <SparklesIcon />, level: slotLevel, onClick: () => setAskingTopic((asking) => !asking), expanded: askingTopic, testId: "read-write-next" } : undefined;
+	const pickStory = pick && !pick.source ? stories.find((s) => s.id === pick.id) : undefined;
+	const nextBook = sourceBooks.find((b) => b.id === nextBookId) ?? (pickStory ? storyBook(pickStory) : undefined);
+
+	const addSlot: ListSlot | undefined = canWrite ? { label: "Add a text", hint: "A link or pasted article, at your level", icon: <PlusIcon />, onClick: onAdd, testId: "read-add" } : undefined;
+	const writeSlot: ListSlot | undefined = canWrite ? { label: unread ? "Write another episode" : "Write a new episode", hint: "About a topic you pick", icon: <SparklesIcon />, onClick: () => setAskingTopic((asking) => !asking), expanded: askingTopic, testId: "read-write-next" } : undefined;
 
 	const ownShelf = (
 		<section className="mt-9" aria-label="Your reading">
@@ -1054,7 +1060,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 					Reading {linksBeingRead} links. They come onto the shelf as they are read.
 				</p>
 			)}
-			{(sources.length > 0 || addSlot) && <Bookshelf books={sourceBooks} slot={addSlot} openId={openBookId} onOpen={setChosenBook} label="Your reading" testId="read-sources" />}
+			{(sources.length > 0 || addSlot) && <BookList groups={sourceBooks.length ? [{ label: "", books: sourceBooks }] : []} slot={addSlot} label="Your reading" testId="read-sources" />}
 			{!canWrite && sources.length === 0 && (
 				<div className="mt-3">
 					<KeyNote>Your own texts are written with an AI key.</KeyNote>
@@ -1093,8 +1099,8 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 					<input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by title or topic" aria-label="Search stories" className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-ink-3" />
 				</div>
 			)}
-			{storyBooks.length > 0 ? (
-				<Bookshelf books={storyBooks} slot={filtering ? undefined : writeSlot} openId={openBookId} onOpen={setChosenBook} label="Stories" testId="read-library" />
+			{storyGroups.length > 0 ? (
+				<BookList groups={storyGroups} slot={filtering ? undefined : writeSlot} label="Stories" testId="read-library" />
 			) : (
 				filtering && (
 					<EmptyState
@@ -1169,7 +1175,7 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 
 	return (
 		<div className="flex flex-1 flex-col overflow-y-auto pb-16 pt-8 [scrollbar-gutter:stable]">
-			<div className={cn(COLUMN, "max-w-3xl lh-rise")} data-testid="read-shelf-list">
+			<div className={cn(COLUMN, "max-w-5xl lh-rise")} data-testid="read-shelf-list">
 				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
 					<XIcon className="size-3.5" strokeWidth={1.6} />
 					Today
@@ -1180,6 +1186,11 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 						<p className="q-line dim mt-1">Stories at your level, and your own articles and newsletters. Tap any word for its meaning.</p>
 					</div>
 				</div>
+				{nextBook && (
+					<div className="mt-7">
+						<NextUp book={nextBook} />
+					</div>
+				)}
 
 				{stories.length === 0 && sources.length === 0 && (
 					<div className="mt-8">
@@ -1206,7 +1217,6 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 						{ownShelf}
 					</>
 				)}
-				{(stories.length > 0 || sources.length > 0) && <p className="mt-4 text-[13px] text-ink-3">A taller book is a harder one, a thicker book is a longer one. The next one to read stands open.</p>}
 				<SourcesNote feature="read" className="mt-10" />
 			</div>
 		</div>

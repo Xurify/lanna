@@ -33,6 +33,7 @@
  */
 
 import type { Cefr } from "./curriculum.ts";
+import { isCoverMotif, type CoverMotif } from "./cover.ts";
 
 // ─── The story record ───────────────────────────────────────────────────────
 
@@ -239,6 +240,7 @@ export interface StoryRecord {
 	theme: string;
 	genre?: StoryGenre;
 	topic?: string;
+	cover?: CoverMotif;
 	cast?: StoryCharacter[];
 	narratorVoice?: string;
 	createdAt: string;
@@ -265,6 +267,7 @@ export interface StoryIndexEntry {
 	chapter?: string;
 	genre?: StoryGenre;
 	topic?: string;
+	cover?: CoverMotif;
 	createdAt: string;
 	wordCount: number;
 	coverage: number;
@@ -670,6 +673,7 @@ export function knownCoverage(sentences: readonly { tokens: readonly StoryToken[
 export interface StoryDraft {
 	title: string;
 	topic: string;
+	cover?: CoverMotif;
 	cast: StoryCharacter[];
 	sentences: Array<{ sk: string; en: string; who?: string; p?: boolean }>;
 	newWords: Array<{ sk: string; en: string }>;
@@ -753,6 +757,7 @@ export function parseStoryDraft(text: string): StoryDraft {
 	return {
 		title: str(o.title) || sentences[0]!.sk.replace(/[.!?…]+$/, ""),
 		topic: str(o.topic).slice(0, 80),
+		...(isCoverMotif(o.cover) ? { cover: o.cover } : {}),
 		cast,
 		sentences,
 		newWords,
