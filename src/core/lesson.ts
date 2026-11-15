@@ -463,19 +463,12 @@ function presentPerson(answer: string): Person {
 
 const SUBJECT_PRONOUNS = new Set(["ja", "ty", "on", "ona", "ono", "my", "vy", "oni", "ony"]);
 
-/** The person a present-tense blank wants, when nothing in the sentence
- *  names it. A subject pronoun anywhere names it. A third-person verb
- *  usually follows its noun subject ("Mama býva…"), so it counts as
- *  unstated only when the blank opens the sentence. */
-export function unstatedPerson(sentence: string, at: number, form: string | undefined): Person | undefined {
+export function unstatedPerson(sentence: string, form: string | undefined): Person | undefined {
 	const who = form?.match(/^(.+) form of /)?.[1];
 	if (!who || who.includes("(past)")) return undefined;
 	const words = sentence.toLowerCase().split(/[^\p{L}]+/u);
 	if (words.some((w) => SUBJECT_PRONOUNS.has(w))) return undefined;
-	const person = who as Person;
-	const third = person === "he / she / it" || person === "they";
-	if (third && /\p{L}/u.test(sentence.slice(0, at))) return undefined;
-	return person;
+	return who as Person;
 }
 
 /** The answer's form in plain words, from the ending and the unit: who is
@@ -787,7 +780,7 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	if (c.entry.gender) item.gender = c.entry.gender;
 	const form = describeForm(c.entry, answer, c.unit);
 	if (form) item.form = form;
-	const person = vocabulary ? undefined : unstatedPerson(exampleText(ex), at, form);
+	const person = vocabulary ? undefined : unstatedPerson(exampleText(ex), form);
 	if (person) item.person = person;
 	const alts = [...knownVariants(answer), ...(info.match ? sameCellForms(c.entry, answer, activeCourse()?.tag ?? "sk-SK") : [])];
 	if (alts.length > 0) item.alternatives = alts;
