@@ -4,6 +4,8 @@ const GLOSSED = /`say:\s*([^`]+?)\s*`\s*(?:=\s*|\(\s*)(?:["“]([^"”\n]+)["”
 
 const PAGE_CITATION = /\s*\(pp?\.\s*[\d,\s–-]+\)/g;
 
+const GRAMMAR_LABEL = /^(masculine|feminine|neuter|singular|plural|nominative|genitive|dative|accusative|locative|instrumental|vocative|perfective|imperfective)(\s+(animate|inanimate|singular|plural))?$/i;
+
 export function boardPhrases(replies: readonly string[]): BoardPhrase[] {
 	const seen = new Set<string>();
 	const found: BoardPhrase[] = [];
@@ -13,7 +15,7 @@ export function boardPhrases(replies: readonly string[]): BoardPhrase[] {
 			const phrase = match[1]!.trim();
 			const meaning = (match[2] ?? match[3] ?? "").trim().replace(/[.,;:]+$/, "");
 			const key = phrase.toLowerCase();
-			if (!meaning || seen.has(key)) continue;
+			if (!meaning || seen.has(key) || phrase.includes("___") || GRAMMAR_LABEL.test(meaning)) continue;
 			seen.add(key);
 			found.push({ phrase, meaning });
 		}
