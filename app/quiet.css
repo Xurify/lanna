@@ -235,35 +235,29 @@
 .q-segc .on kbd { color: var(--q-teal-2); }
 .q-decide .q-btn.primary { margin-left: auto; }
 
-/* the bookshelf (Read): a spine's height is the level and its width the length. The board under each row is a repeating background because wrapped flex rows have no box of their own to draw it on. */
-.q-shelf { --board: 7px; display: flex; flex-wrap: wrap; align-items: flex-end; column-gap: 5px; background-image: linear-gradient(to top, var(--q-well-2) var(--board), transparent var(--board)); background-size: 100% var(--shelf-row); }
-.q-book { --book: var(--q-well-2); --book-ink: var(--q-ink); display: flex; align-items: flex-end; height: var(--shelf-row); padding-bottom: var(--board); }
-.q-book.series { --book: var(--q-ink); --book-ink: var(--q-bg); }
-.q-book.own { --book: var(--q-teal-wash); --book-ink: var(--q-teal-2); }
-.q-book.next { --book: var(--q-teal); --book-ink: var(--q-on-teal); }
-.q-spine, .q-cover { background: var(--book); color: var(--book-ink); }
-.q-spine { position: relative; display: flex; flex-direction: column; align-items: center; width: var(--spine-w); height: var(--spine-h); padding: 11px 0 12px; border-radius: 4px 4px 1px 1px; transition: transform var(--dur-fast) var(--ease-out); }
-.q-spine::before, .q-spine::after { content: ""; position: absolute; left: 0; right: 0; height: 1px; background: currentColor; opacity: 0.22; }
-.q-spine::before { top: 36px; }
-.q-spine::after { bottom: 10px; }
-.q-spine-label { font-size: 11.5px; font-weight: 600; opacity: 0.72; font-variant-numeric: tabular-nums; }
-.q-spine-title { flex: 1; min-height: 0; margin-top: 16px; margin-bottom: 8px; writing-mode: vertical-rl; transform: rotate(180deg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; letter-spacing: -0.008em; line-height: 1.2; }
-.q-spine-mark { flex: none; width: 15px; height: 15px; margin-bottom: 7px; }
-.q-book.open .q-spine { border-radius: 4px 0 0 1px; }
-@media (hover: hover) { .q-book:not(.open) .q-spine:hover { transform: translateY(-7px); } }
-.q-spine:focus-visible, .q-cover-remove:focus-visible { outline: 2px solid var(--q-teal); outline-offset: 2px; }
-.q-cover { display: flex; flex-direction: column; width: 176px; height: var(--spine-h); padding: 15px 16px 16px; border-radius: 0 7px 7px 0; box-shadow: inset 1px 0 0 color-mix(in srgb, var(--book-ink) 22%, transparent); transform-origin: left center; }
-.q-cover-kind { font-size: 12.5px; font-weight: 500; opacity: 0.72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.q-cover-title { margin-top: 6px; font-size: 21px; line-height: 1.14; font-weight: 600; letter-spacing: -0.024em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
-.q-cover-meta { margin-top: auto; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--book-ink) 22%, transparent); font-size: 12.5px; line-height: 1.35; opacity: 0.78; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.q-cover-acts { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
-.q-cover-acts .q-btn { height: 34px; padding: 0 16px; }
-.q-cover-remove { font-size: 12.5px; opacity: 0.78; padding: 8px 2px; border-radius: 4px; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
-@media (hover: hover) { .q-cover-remove:hover { opacity: 1; text-decoration-color: currentColor; } }
-.q-slot { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 46px; height: var(--spine-h); padding: 12px 0; border-radius: 4px 4px 1px 1px; color: var(--q-ink-3); box-shadow: inset 0 0 0 1px var(--q-line-2); outline: 1px dashed transparent; transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
-.q-slot svg { flex: none; width: 16px; height: 16px; }
-.q-slot span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-size: 13px; font-weight: 550; }
-@media (hover: hover) { .q-slot:hover { color: var(--q-ink); background: var(--q-well); } }
-.q-slot:focus-visible { outline: 2px solid var(--q-teal); outline-offset: 2px; }
-@keyframes q-book-turn { from { transform: scaleX(0.72); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: no-preference) { .q-cover { animation: q-book-turn var(--dur-base) var(--ease-out) both; } }
+/* the Read library: one row per text, grouped by level, with the next one to read raised above the list */
+.q-nextup { display: flex; align-items: center; gap: 16px 20px; padding: 18px 20px; }
+.q-nextup-kind { font-size: 13px; font-weight: 550; color: var(--q-teal-2); }
+.q-nextup-title { margin-top: 4px; font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; color: var(--q-ink); text-wrap: balance; }
+.q-nextup-meta { margin-top: 4px; font-size: 14px; color: var(--q-ink-2); }
+.q-nextup .q-btn { margin-left: auto; }
+@media (max-width: 520px) { .q-nextup { flex-direction: column; align-items: stretch; } .q-nextup .q-btn { margin-left: 0; height: 44px; } }
+.q-books-group + .q-books-group { margin-top: 22px; }
+.q-books-head { display: flex; align-items: baseline; gap: 8px; padding: 0 12px 6px; font-size: 14px; font-weight: 600; color: var(--q-ink); }
+.q-books-head small { font-size: 12.5px; font-weight: 450; color: var(--q-ink-3); }
+.q-bookrow { position: relative; display: flex; align-items: center; border-radius: var(--radius-md); transition: background var(--dur-fast) var(--ease-out); }
+.q-bookrow + .q-bookrow::before { content: ""; position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: var(--q-line); }
+.q-bookrow:hover::before, .q-bookrow:hover + .q-bookrow::before, .q-bookrow:focus-within::before, .q-bookrow:focus-within + .q-bookrow::before { opacity: 0; }
+@media (hover: hover) { .q-bookrow:hover { background: var(--q-well); } }
+.q-bookrow-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 9px 12px; text-align: left; border-radius: inherit; }
+.q-bookrow-title { display: block; font-size: 15.5px; font-weight: 550; line-height: 1.3; letter-spacing: -0.008em; color: var(--q-ink); }
+.q-bookrow-sub { display: block; margin-top: 2px; font-size: 13px; line-height: 1.35; color: var(--q-ink-3); }
+.q-bookrow.read .q-bookrow-title { color: var(--q-ink-2); }
+.q-bookrow-end { flex: none; display: flex; align-items: center; min-width: 16px; font-size: 13px; font-weight: 550; color: var(--q-ink-3); }
+.q-bookrow.next .q-bookrow-end { color: var(--q-teal-2); }
+.q-bookrow-remove { flex: none; display: grid; place-items: center; width: 40px; height: 40px; margin-right: 6px; border-radius: var(--radius-md); color: var(--q-ink-3); }
+@media (hover: hover) { .q-bookrow-remove:hover { color: var(--q-ink); background: var(--q-well-2); } }
+.q-books-add { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; margin-top: 8px; padding: 0 12px; border-radius: var(--radius-md); font-size: 14.5px; font-weight: 550; color: var(--q-teal-2); box-shadow: inset 0 0 0 1px var(--q-line-2); }
+.q-books-add svg { width: 16px; height: 16px; }
+@media (hover: hover) { .q-books-add:hover { background: var(--q-well); } }
+.q-bookrow-main:focus-visible, .q-bookrow-remove:focus-visible, .q-books-add:focus-visible { outline: 2px solid var(--q-teal); outline-offset: -2px; }
