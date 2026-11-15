@@ -34,7 +34,12 @@ const UNMATCHED: readonly CoverMotif[] = ["friends", "books", "city", "bike", "t
 
 /** The cover for a story the writer gave none: the first scene whose words the title or theme contains, else one of the general scenes by seed. */
 export function coverMotif(text: string, seed = 0): CoverMotif {
-	return MOTIF_WORDS.find(([, words]) => words.test(text))?.[0] ?? UNMATCHED[seed % UNMATCHED.length]!;
+	return matchedCoverMotif(text) ?? UNMATCHED[seed % UNMATCHED.length]!;
+}
+
+/** The scene whose words the text contains, or undefined when none does. */
+export function matchedCoverMotif(text: string): CoverMotif | undefined {
+	return MOTIF_WORDS.find(([, words]) => words.test(text))?.[0];
 }
 
 export function coverSeed(id: string): number {
