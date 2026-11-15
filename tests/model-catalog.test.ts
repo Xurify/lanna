@@ -142,7 +142,6 @@ describe("the background roles' resolved pins (rolePins)", () => {
 		};
 		const pins = rolePinsFor(resolveSettings(record).agent.models);
 		assert.deepEqual(pins.researcher, { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "high" });
-		assert.equal(pins.visualMaker, null, "vision tier untouched");
 	});
 
 	it("catalogRolePins matches the same resolution the engine wiring uses", () => {

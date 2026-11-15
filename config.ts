@@ -383,7 +383,6 @@ export type ModelRole =
 	| "prober"
 	| "teacher"
 	| "researcher"
-	| "visualMaker"
 	| "pdfReader";
 
 /**

@@ -74,7 +74,6 @@ after(() => fs.rmSync(directory, { recursive: true, force: true }));
 
 for (const [kind, input] of Object.entries({
 	research: { question: "Saved research question", context: "Saved context" },
-	visual: { brief: "Saved figure brief" },
 	pdf: { path: "fixture.pdf", question: "Saved PDF question" },
 })) test(`${kind}: dispatch saves input before spawn and does not overwrite it on repeated dispatch`, async () => {
 	const owner = chat();
@@ -87,6 +86,14 @@ for (const [kind, input] of Object.entries({
 	await tools[kind]!.execute!("fixture-dispatch", input);
 	assert.equal(spawns, 1);
 	assert.equal(stores.jobStore.listJobs(owner.id)[0]!.kind, kind as JobKind);
+});
+
+test("a figure job saved before the visual tool was removed ends with a removal note, not a model call", async () => {
+	const owner = chat(true);
+	const job = stores.jobStore.createJob({ kind: "visual", chatId: owner.id, toolCallId: "old-figure", input: { brief: "Old figure" } });
+	const runner = createJobRunner({ ...stores, deliver: (steer) => deliverJobResult(steer) });
+	await runner.runJob(job.id);
+	assert.match(stores.jobStore.getJob(job.id)!.error ?? "", /Precise figures was removed/);
 });
 
 test("saved question survives absent transcript; runner ends while delivery is still pending", async () => {
