@@ -82,6 +82,17 @@ describe("the chat agent's tools", () => {
 		assert.equal(agent.state.systemPrompt, composeInstructions("chat"));
 	});
 
+	it("honors the Read PDFs and Web research switches in Settings", () => {
+		const agent = createChatAgent(
+			{ review: { enqueue: () => [], digest: () => "" }, jobs: { chatId: "c", jobStore: {} as never, spawn: () => {}, searchAvailable: () => true } },
+			{ engine: claudeEngine(), toolToggles: { pdf: false, research: false, explain: false } },
+		);
+		const names = agent.state.tools.map((tool) => tool.name);
+		assert.ok(!names.includes("pdf"));
+		assert.ok(!names.includes("research"));
+		assert.ok(names.includes("read") && names.includes("pose"), "only the job switches apply here");
+	});
+
 	it("grade records what the learner answered through the seam", async () => {
 		const recorded: unknown[] = [];
 		const tools = chatTools({ answers: { record: (a) => recorded.push(a) } });

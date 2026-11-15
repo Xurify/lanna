@@ -4,6 +4,7 @@ import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { serverExecute, type ImageFileResult } from "../tool-execute.ts";
 import { assertNotSecret, resolveSourcePath } from "./fs-shared.ts";
+import { pdfExtract, pdfInfo } from "../subagents/pdf-ops.ts";
 
 /**
  * The read tool — sources v0 (2026-09): a Node port of pi's read semantics
@@ -29,6 +30,11 @@ import { assertNotSecret, resolveSourcePath } from "./fs-shared.ts";
  */
 
 const MAX_LINES = 2000;
+
+/** A PDF this short with real text on every page is read in place; longer
+ *  or scanned ones go to the pdf job, which can render pages and read them. */
+const INLINE_PDF_MAX_PAGES = 10;
+const INLINE_PDF_MIN_PAGE_TEXT = 40;
 const MAX_BYTES = 50 * 1024;
 
 /** Extension map for v0 (pi sniffs magic bytes; extensions suffice here —
@@ -98,13 +104,14 @@ function readTextSlice(text: string, offset: number | undefined, limit: number |
 export const readTool: AgentTool<typeof readInput> = {
 	name: "read",
 	label: "read",
-	description: `Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50.0KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.`,
+	description: `Read the contents of a file. Supports text files, images (jpg, png, gif, webp, bmp) and short PDFs. Images are sent as attachments. A PDF of up to ${INLINE_PDF_MAX_PAGES} pages with real text comes back as text marked "--- Page N ---"; a longer or scanned PDF returns a note to dispatch the pdf job instead. For text files, output is truncated to 2000 lines or 50.0KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.`,
 	parameters: readInput,
 	execute: serverExecute("read", readInput, async ({ path: rawPath, offset, limit }): Promise<string | ImageFileResult> => {
 		const absolute = resolveSourcePath(rawPath);
 		await assertNotSecret(absolute);
 		const ext = path.extname(absolute).toLowerCase();
 		const mime = IMAGE_MIME[ext];
+		if (ext === ".pdf") return readPdf(absolute);
 		const buffer = await fs.readFile(absolute); // ENOENT/EACCES → error result the model sees
 		if (mime) {
 			// NOTE v0: no resize — raw bytes as base64. Learner files are study
@@ -119,3 +126,24 @@ export const readTool: AgentTool<typeof readInput> = {
 		return readTextSlice(text, offset, limit);
 	}),
 };
+
+async function readPdf(absolute: string): Promise<string> {
+	await fs.access(absolute); // ENOENT → error result the model sees
+	const info = await pdfInfo(absolute);
+	const name = path.basename(absolute);
+	const thinPages = info.pages.filter((p) => p.text_length < INLINE_PDF_MIN_PAGE_TEXT).map((p) => p.page);
+	if (info.page_count > INLINE_PDF_MAX_PAGES || thinPages.length > 0) {
+		const why =
+			info.page_count > INLINE_PDF_MAX_PAGES
+				? `${info.page_count} pages, too long to read in place`
+				: `page${thinPages.length === 1 ? "" : "s"} ${thinPages.join(", ")} ha${thinPages.length === 1 ? "s" : "ve"} little or no text (likely scanned)`;
+		return `${name}: ${why}. Dispatch the pdf job with this path and your question; it can search and render pages.`;
+	}
+	const text = await pdfExtract(absolute, "all");
+	return [
+		`${name}: ${info.page_count} page${info.page_count === 1 ? "" : "s"}, text extracted below.`,
+		"Cite each claim as (p. N). Copy forms exactly as printed, with diacritics. If accents look broken, dispatch the pdf job to read the pages by eye.",
+		"",
+		text,
+	].join("\n");
+}

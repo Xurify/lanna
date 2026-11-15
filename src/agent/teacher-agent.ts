@@ -13,7 +13,7 @@ import { healToolRecord, withArgumentHeal } from "./tools/heal.ts";
 import { sendToUserTool } from "./tools/send-to-user.ts";
 import { quizInputProblems } from "../core/question-core.ts";
 import { quizInputObject } from "../core/question-schemas.ts";
-import { QUESTION_TOOLS, type EnabledTools } from "../core/pending.ts";
+import { QUESTION_TOOLS, filterToggleableTools, type EnabledTools } from "../core/pending.ts";
 import { toLlmMessages, nativeInputCause, PRACTICE_PROBLEM_TOOL } from "../core/native-messages.ts";
 import { closesChatReply } from "../core/chat-answers.ts";
 import type { ChatGPTRequestCycle } from "./chatgpt-request-cycle.ts";
@@ -349,7 +349,7 @@ function bareQuestionTools(): Record<string, AgentTool<any>> {
  * for a mixed batch (for example, send_to_user + problem).
  */
 export function createPracticeAgent(ctx: PracticeToolContext, opts: AgentBuildOptions = {}) {
-	const tools = opts.tools ?? practiceTools(ctx);
+	const tools = opts.tools ?? filterToggleableTools(practiceTools(ctx), opts.toolToggles);
 	return baseAgentOptions("practice", opts, Object.values(tools));
 }
 
@@ -367,7 +367,7 @@ export function withLearnerNotes(messages: Message[], note: (text: string) => st
 }
 
 export function createChatAgent(ctx: ChatToolContext, opts: AgentBuildOptions = {}) {
-	const tools = opts.tools ?? chatTools(ctx);
+	const tools = opts.tools ?? filterToggleableTools(chatTools(ctx), opts.toolToggles);
 	return baseAgentOptions("chat", opts, Object.values(tools));
 }
 

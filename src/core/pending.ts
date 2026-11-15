@@ -72,7 +72,7 @@ export function toolQuestionKind(tool: string): "quiz" | "ask" | "explain" {
  *  lenient for forward-compat. The names are the MODEL-FACING tool names
  *  (research, not researcher; pdf is the PDF-reader dispatch, sources v0
  *  2026-09). */
-const TOGGLEABLE_TOOLS = ["research", "pdf"] as const;
+export const TOGGLEABLE_TOOLS = ["research", "pdf"] as const;
 
 /** Toggles that existed once. Saved settings may still carry them, so the
  *  write side drops them instead of refusing the whole section. */
@@ -95,6 +95,15 @@ export type EnabledTools = Partial<Record<string, boolean>>;
 
 /** Drop every tool the resolved settings mark as disabled. The single
  *  filtering site every factory shares (prober/teacher). */
+/** The job toggles only: the chat and practice registries have no quizzing
+ *  mechanics, so only research and pdf can be switched off there. */
+export function filterToggleableTools<T>(tools: Record<string, T>, enabled?: EnabledTools): Record<string, T> {
+	if (!enabled) return tools;
+	const out = { ...tools };
+	for (const name of TOGGLEABLE_TOOLS) if (enabled[name] === false) delete out[name];
+	return out;
+}
+
 export function filterEnabledTools<T>(tools: Record<string, T>, enabled?: EnabledTools): Record<string, T> {
 	if (!enabled) return tools;
 	const out: Record<string, T> = {};
