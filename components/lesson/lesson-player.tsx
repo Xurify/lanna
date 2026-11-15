@@ -23,9 +23,9 @@ import { useActiveTime } from "@/components/use-active-time";
 import { prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { QIcon } from "@/components/quiet/icon";
+import { QIcon, QPie } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, OptionTile, SentenceRow, SentenceRows, PracticeCard, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
+import { ACTIVE_TIME_HOW, COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, OptionTile, SentenceRow, SentenceRows, PracticeCard, PracticeTime, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { TaskGrid } from "@/components/lesson/task-grid";
@@ -148,6 +148,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	// The lesson's own score, known the moment the last answer is in. The
 	// server's answer (streak, goal, unit progress) lands behind it.
 	const [score, setScore] = useState<LessonScore | null>(null);
+	const [practiceMs, setPracticeMs] = useState<number | null>(null);
 	const [recorded, setRecorded] = useState<Recorded | null>(null);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [retryingSave, setRetryingSave] = useState(false);
@@ -256,6 +257,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 		setCombo(0);
 		setXp(0);
 		setScore(null);
+		setPracticeMs(null);
 		setRecorded(null);
 		setSaveFailed(false);
 		pendingId.current = null;
@@ -308,6 +310,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 		if (finishing.current || !plan) return;
 		finishing.current = true;
 		sfx.done();
+		const spentMs = activeTime.finish();
+		setPracticeMs(spentMs);
 		setScore(
 			lessonScore(
 				all.map((r) => ({ kind: r.item.kind, verdict: r.verdict, assisted: r.assisted === true })),
@@ -347,7 +351,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 				},
 			})),
 			ms: Date.now() - startedAt.current,
-			activeMs: activeTime.finish(),
+			activeMs: spentMs,
 			tz: new Date().getTimezoneOffset(),
 		});
 		forget();
@@ -581,6 +585,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 					unit={plan.unit}
 					reps={reps}
 					score={score}
+					practiceMs={practiceMs}
 					recorded={recorded}
 					failed={saveFailed}
 					onAgain={() => void load()}
@@ -1644,6 +1649,7 @@ function EndScreen({
 	unit,
 	reps,
 	score,
+	practiceMs,
 	recorded,
 	failed,
 	onAgain,
@@ -1656,6 +1662,7 @@ function EndScreen({
 	unit: UnitId;
 	reps: Rep[];
 	score: LessonScore;
+	practiceMs: number | null;
 	recorded: Recorded | null;
 	failed: boolean;
 	onAgain: () => void;
@@ -1777,11 +1784,12 @@ function EndScreen({
 						<span className="font-ui text-[52px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-foreground">{mode === "blitz" ? correct : `${accuracy}%`}</span>
 						<span className="font-ui text-[15px] font-[550] text-ink-2">{mode === "blitz" ? "right" : "right the first time"}</span>
 					</p>
+					{mode !== "blitz" && <PracticeTime ms={practiceMs} how={ACTIVE_TIME_HOW} />}
 					{reps.length > 0 && <RepStrip reps={reps} />}
 					<Stats className="mt-7 max-w-none">
 						<Stat label="XP" value={failed && !recorded ? "Not counted yet" : `+${xp}`} ink={failed && !recorded ? "text-ink-3" : "text-teal-2"} />
 						{mode === "blitz" && <Stat label="Best" value={String(Math.max(recorded?.summary.bestBlitz ?? 0, correct))} />}
-						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
+						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : recorded ? <QPie frac={recorded.summary.todayXp / recorded.summary.dailyGoal} size={18} /> : undefined} />
 						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} icon={failed && !recorded ? undefined : <FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
 						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} />
 					</Stats>

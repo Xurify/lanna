@@ -25,7 +25,7 @@ import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, Plu
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { endEnterBlocked, EnterHint, NotSaved, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { endEnterBlocked, EnterHint, NotSaved, PAGE_TIME_HOW, PracticeTime, Stat, Stats, TaskEnd } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -76,6 +76,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	const [tapped, setTapped] = useState<string[]>([]);
 	const [answers, setAnswers] = useState<number[]>([]);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
+	const [practiceMs, setPracticeMs] = useState<number | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [saveRefused, setSaveRefused] = useState(false);
@@ -238,8 +239,10 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 			setSaveRefused(false);
 			setStage("end");
 			sfx.done();
+			const activeMs = activeTime.finish();
+			setPracticeMs(activeMs);
 			try {
-				lastSave.current = keepSession(lang?.code ?? "sk", "/api/read", { action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/read", { action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() });
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
 			} catch (err) {
@@ -349,7 +352,7 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End story={story} tapped={tapped} answers={answers} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onOpenPart={openPart} nextPartStoryId={nextPartStoryId(state, story)} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
+				<End story={story} tapped={tapped} answers={answers} outcome={outcome} practiceMs={practiceMs} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onOpenPart={openPart} nextPartStoryId={nextPartStoryId(state, story)} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
 			</Frame>
 		);
 	}
@@ -725,7 +728,7 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 // ─── The end ────────────────────────────────────────────────────────────────
 
-function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, saving, onAgain, onNext, onOpenPart, nextPartStoryId, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; answers: number[]; outcome: Outcome | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; onAgain: () => void; onNext: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; nextPartStoryId?: string; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
+function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, practiceMs, saving, onAgain, onNext, onOpenPart, nextPartStoryId, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; answers: number[]; outcome: Outcome | null; practiceMs: number | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; onAgain: () => void; onNext: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; nextPartStoryId?: string; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
 	const lang = useActiveLanguage();
 	const language = lang?.english ?? "the language";
 	const source = story.source;
@@ -825,6 +828,7 @@ function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, sa
 						<span className="font-ui text-[52px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-foreground">{total ? `${graded.correct} of ${total}` : story.wordCount}</span>
 						<span className="font-ui text-[15px] font-[550] text-ink-2">{total ? "questions right" : "words read"}</span>
 					</p>
+					<PracticeTime ms={practiceMs} how={PAGE_TIME_HOW} />
 					<Stats className="mt-7 max-w-none">
 						<Stat label="XP" value={saving || !outcome ? null : failed ? notCounted : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 						{total > 0 && <Stat label="Words read" value={String(story.wordCount)} />}
