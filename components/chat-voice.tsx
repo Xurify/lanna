@@ -1,7 +1,8 @@
 "use client";
 
 import type { Ref } from "react";
-import { answerMark, type AnswerTone, type LearnerLine } from "@/src/core";
+import { FileTextIcon } from "lucide-react";
+import { answerMark, splitAttachedPdfs, type AnswerTone, type AttachedPdf, type LearnerLine } from "@/src/core";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<AnswerTone, string> = {
@@ -18,20 +19,43 @@ const STROKE: Record<AnswerTone, string> = {
 	shown: "M6 12.2 Q12 11.6 18 12.1",
 };
 
-export function LearnerLineView({ line, text, recede, titleRef }: { line: LearnerLine; text: string; recede?: boolean; titleRef?: Ref<HTMLHeadingElement> }) {
+function PdfChips({ pdfs, className }: { pdfs: readonly AttachedPdf[]; className?: string }) {
+	if (pdfs.length === 0) return null;
+	return (
+		<ul data-testid="attached-pdfs" className={cn("flex flex-wrap gap-2", className)}>
+			{pdfs.map((pdf) => (
+				<li key={pdf.path} title={pdf.path} className="flex max-w-full items-center gap-1.5 rounded-md bg-well px-2.5 py-1 font-ui text-[13px] text-ink-2">
+					<FileTextIcon className="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
+					<span className="truncate">{pdf.name}</span>
+					<span className="shrink-0 text-ink-3">· {pdf.pages} page{pdf.pages === 1 ? "" : "s"}</span>
+				</li>
+			))}
+		</ul>
+	);
+}
+
+export function LearnerLineView({ line, text: raw, recede, titleRef }: { line: LearnerLine; text: string; recede?: boolean; titleRef?: Ref<HTMLHeadingElement> }) {
 	const step = recede ? "lh-recede" : undefined;
+	const { pdfs, rest } = splitAttachedPdfs(raw);
+	const text = rest || (pdfs[0]?.name ?? raw);
 	if (line.kind === "title") {
 		return (
-			<h1 ref={titleRef} data-testid="user-message" data-line="title" className={cn("font-ui text-[28px] leading-[1.18] font-semibold tracking-[-0.022em] text-balance whitespace-pre-wrap text-foreground max-sm:text-2xl", step)}>
-				{text}
-			</h1>
+			<>
+				<PdfChips pdfs={pdfs} className={cn("mb-3", step)} />
+				<h1 ref={titleRef} data-testid="user-message" data-line="title" className={cn("font-ui text-[28px] leading-[1.18] font-semibold tracking-[-0.022em] text-balance whitespace-pre-wrap text-foreground max-sm:text-2xl", step)}>
+					{text}
+				</h1>
+			</>
 		);
 	}
 	if (line.kind === "ask") {
 		return (
-			<h2 data-testid="user-message" data-line="ask" className={cn("mt-8 font-ui text-xl leading-snug font-semibold tracking-[-0.015em] text-balance whitespace-pre-wrap text-foreground", step)}>
-				{text}
-			</h2>
+			<>
+				<PdfChips pdfs={pdfs} className={cn("mt-8", step)} />
+				<h2 data-testid="user-message" data-line="ask" className={cn(pdfs.length > 0 ? "mt-3" : "mt-8", "font-ui text-xl leading-snug font-semibold tracking-[-0.015em] text-balance whitespace-pre-wrap text-foreground", step)}>
+					{text}
+				</h2>
+			</>
 		);
 	}
 	if (line.kind === "request") {

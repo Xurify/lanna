@@ -74,8 +74,6 @@ export function toolQuestionKind(tool: string): "quiz" | "ask" | "explain" {
  *  2026-09). */
 export const TOGGLEABLE_TOOLS = ["research", "pdf"] as const;
 
-/** Toggles that existed once. Saved settings may still carry them, so the
- *  write side drops them instead of refusing the whole section. */
 export const RETIRED_TOOL_KEYS = ["visual"] as const;
 
 /** The keys the settings WRITE side accepts in agent.tools: the plain
@@ -95,8 +93,6 @@ export type EnabledTools = Partial<Record<string, boolean>>;
 
 /** Drop every tool the resolved settings mark as disabled. The single
  *  filtering site every factory shares (prober/teacher). */
-/** The job toggles only: the chat and practice registries have no quizzing
- *  mechanics, so only research and pdf can be switched off there. */
 export function filterToggleableTools<T>(tools: Record<string, T>, enabled?: EnabledTools): Record<string, T> {
 	if (!enabled) return tools;
 	const out = { ...tools };

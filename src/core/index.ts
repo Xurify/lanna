@@ -27,6 +27,7 @@ export * from "./prompt-segments.ts";
 export * from "./sketch.ts";
 export * from "./chat-replies.ts";
 export * from "./chat-board.ts";
+export * from "./attached-pdf.ts";
 export * from "./chat-answers.ts";
 export * from "./chat-analysis.ts";
 export * from "./chat-lines.ts";

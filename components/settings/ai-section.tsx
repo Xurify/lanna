@@ -43,7 +43,7 @@ import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
 	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research and grade your work" },
-	vision: { label: "Vision", roster: "The assistants that draw and read PDFs" },
+	vision: { label: "Vision", roster: "The assistant that reads long or scanned PDFs" },
 };
 
 /** Search engines, as in src/core/search.ts. */
@@ -66,7 +66,7 @@ const TOGGLE_TOOLS = ["research", "pdf"] as const;
 /** Learner-facing copy. The ids stay the engine's names. */
 const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
 	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → API keys." },
-	pdf: { label: "Read PDFs", hint: "Reads the PDFs you give it and cites their pages." },
+	pdf: { label: "Read PDFs", hint: "Reads the PDFs you add with the PDF button and cites their pages." },
 };
 
 /** The quiz style's two options (the engine's `explain` switch). */

@@ -2,11 +2,14 @@ export type BoardPhrase = { phrase: string; meaning: string };
 
 const GLOSSED = /`say:\s*([^`]+?)\s*`\s*(?:=\s*|\(\s*)(?:["“]([^"”\n]+)["”]|([^"”)\n]+?)\s*(?:\)|[.,;:]|$|\s(?=[A-Z])))/gm;
 
+const PAGE_CITATION = /\s*\(pp?\.\s*[\d,\s–-]+\)/g;
+
 export function boardPhrases(replies: readonly string[]): BoardPhrase[] {
 	const seen = new Set<string>();
 	const found: BoardPhrase[] = [];
 	for (const reply of replies) {
-		for (const match of reply.replace(/```[\s\S]*?(?:```|$)/g, "").matchAll(GLOSSED)) {
+		const prose = reply.replace(/```[\s\S]*?(?:```|$)/g, "").replace(PAGE_CITATION, "");
+		for (const match of prose.matchAll(GLOSSED)) {
 			const phrase = match[1]!.trim();
 			const meaning = (match[2] ?? match[3] ?? "").trim().replace(/[.,;:]+$/, "");
 			const key = phrase.toLowerCase();

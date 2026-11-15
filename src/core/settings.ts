@@ -51,7 +51,6 @@ export const BACKGROUND_MODEL_ROLES = [
 	"researcher",
 ] as const;
 
-/** Roles that existed once; a saved override for one is dropped on write. */
 export const RETIRED_MODEL_ROLES = ["visualMaker"] as const;
 
 export type BackgroundModelRole = (typeof BACKGROUND_MODEL_ROLES)[number];

@@ -31,8 +31,6 @@ import { pdfExtract, pdfInfo } from "../subagents/pdf-ops.ts";
 
 const MAX_LINES = 2000;
 
-/** A PDF this short with real text on every page is read in place; longer
- *  or scanned ones go to the pdf job, which can render pages and read them. */
 const INLINE_PDF_MAX_PAGES = 10;
 const INLINE_PDF_MIN_PAGE_TEXT = 40;
 const MAX_BYTES = 50 * 1024;

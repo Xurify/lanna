@@ -292,5 +292,10 @@ describe("the board's glossed forms", () => {
 			{ phrase: "kde", meaning: "where (at)" },
 			{ phrase: "v meste", meaning: "in town" },
 		]);
+		assert.deepEqual(
+			boardPhrases(['Its table shows `say: na stole` (p. 1) and `say: v dome` (pp. 1–2), and `say: v škole` (p. 1) ("in the school").']),
+			[{ phrase: "v škole", meaning: "in the school" }],
+			"a page citation is not a meaning",
+		);
 	});
 });

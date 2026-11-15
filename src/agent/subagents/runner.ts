@@ -117,8 +117,6 @@ const KIND_ROLE: Record<RunnableJobKind, ModelRole> = {
 	pdf: "pdfReader",
 };
 
-/** "visual" stays a JobKind so figures in old chats still render; no new
- *  visual job can start. */
 type RunnableJobKind = Exclude<JobKind, "visual">;
 const RETIRED_VISUAL_NOTES = "FAILED: Precise figures was removed. Explain in prose or a markdown table, or draw inline in the reply.";
 

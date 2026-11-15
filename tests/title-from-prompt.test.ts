@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { TITLE_MAX_CHARS, titleFromPrompt } from "../src/core/title.ts";
+import { attachedPdfLine, joinDraft, splitAttachedPdfs, splitDraft } from "../src/core/attached-pdf.ts";
 
 describe("titleFromPrompt (smart truncation)", () => {
 	it("short prompts pass through untouched — no ellipsis, whitespace collapsed", () => {
@@ -52,5 +53,40 @@ describe("titleFromPrompt (smart truncation)", () => {
 		const out = titleFromPrompt(prompt);
 		assert.ok(!out.slice(0, -1).endsWith(" "));
 		assert.ok(out.endsWith("…"));
+	});
+});
+
+describe("a first message that carries a PDF", () => {
+	const line = attachedPdfLine({ name: "Lekcia 3 – lokál.pdf", pages: 2, path: "C:/data/profiles/slovak/sources/Lekcia-3-lokal-0a1b2c.pdf" });
+
+	it("is titled by the learner's question, not the file path", () => {
+		assert.equal(titleFromPrompt(`${line}\nWhen do I use the locative?`), "When do I use the locative?");
+	});
+
+	it("is titled by the file name when the learner wrote nothing else", () => {
+		assert.equal(titleFromPrompt(line), "PDF: Lekcia 3 – lokál.pdf");
+	});
+
+	it("splits back into the PDF and the learner's words", () => {
+		assert.deepEqual(splitAttachedPdfs(`${line}\nWhen do I use the locative?`), {
+			pdfs: [{ name: "Lekcia 3 – lokál.pdf", pages: 2, path: "C:/data/profiles/slovak/sources/Lekcia-3-lokal-0a1b2c.pdf" }],
+			rest: "When do I use the locative?",
+		});
+		assert.deepEqual(splitAttachedPdfs("No file here."), { pdfs: [], rest: "No file here." });
+	});
+});
+
+describe("the composer's draft with a PDF", () => {
+	const pdf = { name: "handout.pdf", pages: 1, path: "/data/sources/handout-0a1b2c.pdf" };
+
+	it("shows only the learner's words in the field and keeps every keystroke, trailing space included", () => {
+		const draft = joinDraft([pdf], "When do I ");
+		assert.deepEqual(splitDraft(draft), { pdfs: [pdf], rest: "When do I " });
+		assert.equal(joinDraft([], "plain"), "plain");
+	});
+
+	it("drops the PDF line when the chip is removed", () => {
+		const { pdfs, rest } = splitDraft(joinDraft([pdf], "Question?"));
+		assert.equal(joinDraft(pdfs.filter((p) => p !== pdfs[0]), rest), "Question?");
 	});
 });
