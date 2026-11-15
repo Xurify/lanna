@@ -6,6 +6,7 @@
  */
 
 import { activeProfile } from "../../config.ts";
+import { processWide } from "../core/process-wide.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, foldDiacritics } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
@@ -29,12 +30,14 @@ const DAY_MS = 86_400_000;
 const INFLECTING_CATEGORIES = new Set(["Nouns", "Verbs", "Adjectives"]);
 const tag = () => activeLanguage().tag;
 
-let ordered: { profile: string; list: LexiconEntry[] } | null = null;
+const orderedByProfile = processWide("review.ordered", () => new Map<string, LexiconEntry[]>());
 function orderedLexicon(): LexiconEntry[] {
-	if (ordered?.profile === activeProfile()) return ordered.list;
+	const profile = activeProfile();
+	const hit = orderedByProfile.get(profile);
+	if (hit) return hit;
 	const lexicon = loadLexicon();
 	const list = lexicon ? [...lexicon.entries].sort(lexiconOrder) : [];
-	ordered = { profile: activeProfile(), list };
+	orderedByProfile.set(profile, list);
 	return list;
 }
 
