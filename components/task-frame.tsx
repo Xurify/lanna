@@ -11,7 +11,8 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { Volume2Icon, XIcon } from "lucide-react";
+import { TimerIcon, Volume2Icon, XIcon } from "lucide-react";
+import { practiceClock } from "@/src/core";
 import { cn } from "@/lib/utils";
 import { QIcon } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
@@ -298,6 +299,20 @@ export function Stat({ label, value, ink, icon }: { label: string; value: string
 		</div>
 	);
 }
+
+export function PracticeTime({ ms, how }: { ms: number | null; how: string }) {
+	return (
+		<p className="mt-3 flex h-6 items-center gap-1.5 font-ui text-[15px] font-[550] text-ink-2" title={how} data-testid="practice-time">
+			<TimerIcon className="size-4 text-teal" strokeWidth={1.6} aria-hidden="true" />
+			{ms === null ? <Pulse className="h-4 w-10" /> : <span className="tabular-nums text-foreground">{practiceClock(ms)}</span>}
+			<span>practice time</span>
+			<span className="sr-only">. {how}</span>
+		</p>
+	);
+}
+
+export const ACTIVE_TIME_HOW = "Active time: a pause longer than 90 seconds is not counted.";
+export const PAGE_TIME_HOW = "Counted while this page was open and in front of you.";
 
 export function Centered({ children, testId }: { children: React.ReactNode; testId?: string }) {
 	return (

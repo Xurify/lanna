@@ -1,6 +1,6 @@
 ---
 name: ink-drawing
-description: "How LangHarness draws explanatory pictures as pen sketches: the ink kit (wobbling strokes, hand-drawn people, houses and arrows, a highlighter patch, strokes that draw themselves), how to build a scene, the checks that a picture means one thing, and how to look at it before it ships. Use before and after drawing or changing any case sketch, lesson picture, table that explains a rule, or the drawing prompt, and when a picture 'looks off'."
+description: "How LangHarness draws explanatory pictures as pen sketches: the ink kit (wobbling strokes, hand-drawn people, houses and arrows, a highlighter patch, strokes that draw themselves), how to build a scene, the checks that a picture means one thing, and how to look at it before it ships. Use before and after drawing or changing any case sketch, lesson picture, story cover (the Read library), table that explains a rule, or the drawing prompt, and when a picture 'looks off'."
 ---
 
 # Ink drawing
@@ -76,6 +76,28 @@ Never judge a picture from its code.
 - A filter id must be unique per sheet (`useId`), and a sheet is keyed by its stage so the strokes draw again on each step.
 - `preLesson !== null` was always true: an intro frame opened empty on units with no sketch. Test the thing, not its negation.
 - A picture of a house for "from work" read as "from home".
+
+## Story covers
+
+Every story in the Read library has a cover: a small ink scene with watercolour washes, drawn in code by `components/reading/cover-scene.tsx` (owner, 2026-11-15). The rules below come from eight rounds of blind review (3.5 of 10 to 7), so follow them before you change a scene.
+
+**How a story gets its cover.** The story writer (`src/server/reading.ts`, the `"cover"` rule in the writer and retell prompts) picks one scene name from `COVER_MOTIFS` (`src/core/cover.ts`) for every new story, in the same model call as its `topic`. Stories without one fall back to `coverMotif()`: the first scene whose Slovak or English words appear in the title or theme, else one of the general scenes by the story's seed. The seed (`coverSeed(id)`) also picks the paper tone, the hue of the main object's wash and whether the scene is mirrored, so two cafés never look the same. A scene with words in it (the "Ahoj!" bubble) is never mirrored.
+
+**A new topic.** Start from the learner's own library: `LH_DATA_DIR=<profile folder> npx tsx scripts/cover-gaps.ts` lists every story with its cover and whether the writer named it, its words matched, or nothing matched ("general"); the general stories' topics are the scenes worth drawing next. Then add a scene: a function in `cover-scene.tsx`, its name in `COVER_MOTIFS`, its words in `MOTIF_WORDS` (Slovak stems and English words; guard short stems with `(?<!\p{L})` so `hrad` does not match `záhrada`), a test in `tests/reader-text.test.tsx`, and a blind review. The prompt lists `COVER_MOTIFS`, so the writer can pick it at once.
+
+**What a cover scene is.**
+
+| Part | Rule |
+|---|---|
+| Frame | viewBox `0 0 200 120`. The subject fills about 70 to 80% of the width with a 14 px margin; nothing runs off the edge. |
+| Ground | Outdoors: one soft ground line at y 104. Indoors: a table edge instead. Never both. No sun, no moon, no empty circles. |
+| Ink | Main shapes `MAIN` (1.7) in `ink`, details `DETAIL` (1.2) in `graphite`, scenery in `soft`. Long lines bow less than short ones (`L` does this). |
+| People | Head with dot eyes, a smile and hair; a coat or dress with body; arms with an elbow (`Person` takes arm paths); shoes. One clear action each: waving, walking toward a door, sitting with knees bent. |
+| Highlight | One teal patch (`Highlight`, `q-ink-patch`) on the one thing the story is about: the cross on a clinic, the briefcase, the coffee, the speech bubble. A bubble or a surface is filled to its outline, not blotted. Never on a random window or a tree crown. |
+| Washes | Loose and off-register under the ink (`Wash`, `WashBox`, `WashPath`), in the four low-chroma hues `ochre`, `rose`, `sage`, `sky` (`--q-wash-*`, with their own lighter Night values). Two or three per scene, kept inside or just past their shape; a wash that spreads like a stain is too big. A vehicle's frame or a thin object stays uncoloured. |
+| Each scene its own silhouette | Two scenes must not share a shape at card size: the park tree is round, the autumn tree is bare branches; the home is a gabled house, the mountain hut an A-frame. |
+
+**Review before it ships.** Render every scene on numbered tiles with `npx tsx scripts/cover-contact-sheet.tsx <dir> <motif,motif,...>`, screenshot `sheet-light.html` and `sheet-dark.html`, and give only the PNGs to a fresh reviewer each round (the brief in "Blind review before it ships" above, asking per tile: what is drawn, the guessed setting, clarity and craft 1 to 10, the one fix; then which tiles are too alike). Fix what it names, render again, use a new reviewer. Mistakes the reviewers caught: a stall awning that read as a blimp, a tree that read as a lollipop, leaf ticks that read as birds, marks on a bush that read as a face, a croissant that read as a fish, a plate seen from above that read as a UFO, a stick person with an arm that meant nothing, typed lettering in a hand-drawn scene.
 
 ## Figures the model draws
 

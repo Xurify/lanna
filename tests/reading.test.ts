@@ -79,6 +79,8 @@ describe("the pure rules", () => {
 		assert.equal(kinds.questions[0]!.kind, "vocab", "the model's kind is kept");
 		assert.equal(kinds.questions[0]!.options.length, 4, "four options from B1");
 		assert.equal(kinds.questions[1]!.kind, undefined, "an unknown kind is dropped, the question kept");
+		assert.equal(core.parseStoryDraft(JSON.stringify({ ...EPISODE, cover: "cup" })).cover, "cup", "a cover from the list is kept");
+		assert.equal(core.parseStoryDraft(JSON.stringify({ ...EPISODE, cover: "spaceship" })).cover, undefined, "an invented cover is dropped, the keywords decide");
 		assert.deepEqual(core.QUESTION_PLAN.A1.kinds, ["recall", "recall", "recall"]);
 		assert.ok(core.QUESTION_PLAN.B1.kinds.includes("inference") && core.QUESTION_PLAN.B1.options === 4);
 		assert.ok(core.QUESTION_PLAN.C1.kinds.includes("attitude") && core.QUESTION_PLAN.C1.count === 5);

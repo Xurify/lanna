@@ -55,7 +55,7 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
  *  section's slot rows. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
 	strong: { label: "Strong", roster: "The main model for your sessions: Learn a topic" },
-	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus the assistants that research and grade your work" },
+	cheap: { label: "Cheap", roster: "Speak, Read, Why? and practice, plus grading" },
 	vision: { label: "Vision", roster: "The assistant that reads long or scanned PDFs" },
 };
 const SLOT_ORDER: readonly ModelSlotName[] = ["strong", "cheap", "vision"];
@@ -160,7 +160,7 @@ export function SetupKeysBody({
 						data-testid="setup-key-provider"
 						aria-expanded={menuOpen}
 						onClick={onToggleMenu}
-						className="flex h-10 w-full items-center justify-between rounded-xl border border-border/80 bg-background/80 px-3.5 font-ui text-sm text-foreground transition-[color,background-color,border-color,box-shadow] hover:border-muted-foreground/50 hover:bg-accent/40 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+						className="flex h-10 w-full items-center justify-between rounded-xl border border-border/80 bg-background/80 px-3.5 font-ui text-sm text-foreground transition-[color,background-color,border-color,box-shadow] hover:border-muted-foreground/50 hover:bg-accent focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
 					>
 						<span className="min-w-0 flex-1 truncate text-left font-medium">
 							{provider ? provider.label : "Pick a provider…"}

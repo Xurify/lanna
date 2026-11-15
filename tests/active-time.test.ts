@@ -18,7 +18,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-active-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { ACTIVITY_CAP_MIN, addMinutes, createActiveClock, GAP_CAP_MS, isTimedActivity, MIN_SEND_MS, sessionMs, TIMED_ACTIVITIES, watchClockOn } = await import("../src/core/active-time.ts");
+const { ACTIVITY_CAP_MIN, addMinutes, createActiveClock, GAP_CAP_MS, isTimedActivity, MIN_SEND_MS, practiceClock, sessionMs, TIMED_ACTIVITIES, watchClockOn } = await import("../src/core/active-time.ts");
 
 it("watchClockOn: nothing counts before the video loads; playing counts; a line waiting for the learner counts up to its cap; questions and paused time count until the gap cap", () => {
 	const watching = { watching: true, questions: false, ready: true, playing: false, deciding: false, decideCapped: false, idle: false };
@@ -85,6 +85,16 @@ describe("addMinutes: one session's time into the day", () => {
 	it("knows its activities", () => {
 		assert.ok(isTimedActivity("blitz") && isTimedActivity("placement"));
 		assert.ok(!isTimedActivity("talk") && !isTimedActivity("") && !isTimedActivity(3));
+	});
+});
+
+describe("practiceClock: a session's time on its end screen", () => {
+	it("shows minutes and seconds, and hours past 59:59", () => {
+		assert.equal(practiceClock(0), "0:00");
+		assert.equal(practiceClock(42_400), "0:42");
+		assert.equal(practiceClock(7 * 60_000 + 20_000), "7:20");
+		assert.equal(practiceClock(59 * 60_000 + 59_000), "59:59");
+		assert.equal(practiceClock(65 * 60_000 + 3_000), "1:05:03");
 	});
 });
 

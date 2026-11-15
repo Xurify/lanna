@@ -151,7 +151,7 @@ export function LanguageSwitcher() {
 						data-testid="profile-trigger"
 						onClick={() => setOpen((v) => !v)}
 						className={cn(
-							"flex h-9 w-full items-center justify-between gap-2 rounded-xl bg-card px-2.5 text-xs font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-accent/70",
+							"flex h-9 w-full items-center justify-between gap-2 rounded-xl bg-card px-2.5 text-xs font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] transition-colors hover:bg-accent",
 							open && "ring-1 ring-border",
 						)}
 					>
@@ -202,7 +202,7 @@ export function LanguageSwitcher() {
 												"flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors",
 												running
 													? "bg-accent font-semibold text-foreground shadow-xs"
-													: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+													: "text-muted-foreground hover:bg-accent hover:text-foreground",
 											)}
 										>
 											<div className="flex min-w-0 items-center gap-2 truncate">
@@ -226,7 +226,7 @@ export function LanguageSwitcher() {
 									setOpen(false);
 									languages.openAdd();
 								}}
-								className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+								className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 							>
 								<PlusIcon className="size-3.5" />
 								<span>Add a language…</span>
@@ -360,7 +360,7 @@ function NavItem({
 			aria-current={active ? "page" : undefined}
 			className={cn(
 				"relative flex h-8 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors",
-				active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+				active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground",
 			)}
 		>
 			{active && (

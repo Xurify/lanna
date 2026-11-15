@@ -60,6 +60,15 @@ export const GAP_CAP_MS = 90_000;
 /** A send under this is noise (a page opened and closed). */
 export const MIN_SEND_MS = 2_000;
 
+/** A session's time on a clock face: "0:42", "7:20", "1:05:00". */
+export function practiceClock(ms: number): string {
+	const seconds = Math.max(0, Math.round(ms / 1000));
+	const h = Math.floor(seconds / 3600);
+	const m = Math.floor((seconds % 3600) / 60);
+	const s = String(seconds % 60).padStart(2, "0");
+	return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+
 /** How long one line may wait for the learner's decision and still count: a line
  *  is a few seconds of speech, so past this the learner has left the desk. */
 export const LINE_DECISION_CAP_MS = 120_000;
