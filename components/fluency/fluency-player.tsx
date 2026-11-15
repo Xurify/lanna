@@ -29,7 +29,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
-import { COLUMN, Centered, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import { ACTIVE_TIME_HOW, COLUMN, Centered, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, PracticeTime, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -427,6 +427,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	const [paused, setPaused] = useState(false);
 	const [level, setLevel] = useState(0);
 	const [outcome, setOutcome] = useState<FastOutcome | null>(null);
+	const [practiceMs, setPracticeMs] = useState<number | null>(null);
 	// The mic check reads browser globals: decided after mount so the
 	// server and the first client render agree (no hydration mismatch).
 	const [micOk, setMicOk] = useState<boolean | null>(null);
@@ -499,12 +500,14 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			if (finishing.current) return;
 			finishing.current = true;
 			sfx.done();
+			const activeMs = activeTime.finish();
+			setPracticeMs(activeMs);
 			setPhase("done");
 			try {
 				const res = await fetch("/api/fluency", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ mode: "fast", reps: all, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() }),
+					body: JSON.stringify({ mode: "fast", reps: all, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() }),
 				});
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				setOutcome((await res.json()) as FastOutcome);
@@ -727,6 +730,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						<h1 className="q-hello">
 							{scoredPasses.length ? `${clean} of ${reps.length} said clearly enough in the last window.` : `${clean} of ${reps.length} finished inside the last window.`}
 						</h1>
+						<PracticeTime ms={practiceMs} how={ACTIVE_TIME_HOW} />
 						<Stats className="mt-7 max-w-none">
 							<Stat label="XP" value={outcome ? `+${outcome.xp}` : null} ink="text-teal-2" />
 							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink={made === reps.length * FAST_PASSES ? "text-teal-2" : undefined} />

@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, endEnterBlocked, EnterHint, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
+import { ACTIVE_TIME_HOW, COLUMN, endEnterBlocked, EnterHint, PracticeTime, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
@@ -64,6 +64,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 	const [session, setSession] = useState<SpeakSession | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
+	const [practiceMs, setPracticeMs] = useState<number | null>(null);
 	// Browser globals are read after mount so server and client agree.
 	const [micOk, setMicOk] = useState(false);
 	useEffect(() => setMicOk(micSupported()), []);
@@ -163,8 +164,10 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 		setListening(false);
 		setPhase("ending");
 		sfx.done();
+		const activeMs = activeTime.finish();
 		try {
-			const o = await post<Outcome>({ action: "end", id: session.id, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+			const o = await post<Outcome>({ action: "end", id: session.id, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() });
+			setPracticeMs(activeMs);
 			setOutcome(o);
 			setSession(o.session);
 			setPhase("done");
@@ -384,7 +387,7 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 	if (phase === "done" && outcome) {
 		return (
 			<TaskFrame>
-				<EndScreen outcome={outcome} onAgain={() => router.push("/speak")} />
+				<EndScreen outcome={outcome} practiceMs={practiceMs} onAgain={() => router.push("/speak")} />
 			</TaskFrame>
 		);
 	}
@@ -621,7 +624,7 @@ function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 	);
 }
 
-function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void }) {
+function EndScreen({ outcome, practiceMs, onAgain }: { outcome: Outcome; practiceMs: number | null; onAgain: () => void }) {
 	const lang = useActiveLanguage();
 	const s = outcome.session;
 	const counts = speakCounts(s.turns);
@@ -654,6 +657,7 @@ function EndScreen({ outcome, onAgain }: { outcome: Outcome; onAgain: () => void
 				{praise && <span lang={praise.lang}>{praise.text} </span>}
 				{counts.learner} {counts.learner === 1 ? "line" : "lines"} said
 			</h1>
+			<PracticeTime ms={practiceMs} how={ACTIVE_TIME_HOW} />
 			<Stats className="mt-7 max-w-none">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
 				<Stat label="Repaired (tutor&apos;s call)" value={`${counts.repaired} of ${counts.prompts}`} ink={counts.prompts > 0 && counts.repaired >= counts.prompts ? "text-teal-2" : undefined} />

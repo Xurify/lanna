@@ -25,7 +25,7 @@ import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
 import { QUIET } from "@/components/ui/learn-buttons";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, Pips, PracticeCard, PRIMARY, Pulse, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskRound, VerdictDisc, type PipOutcome } from "@/components/task-frame";
+import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PAGE_TIME_HOW, Pips, PracticeCard, PracticeTime, PRIMARY, Pulse, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskRound, VerdictDisc, type PipOutcome } from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -122,6 +122,7 @@ export function ListenPlayer({
 	// render): the text can be shown only once it has been heard twice.
 	const [replays, setReplays] = useState(0);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
+	const [practiceMs, setPracticeMs] = useState<number | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [saveRefused, setSaveRefused] = useState(false);
@@ -214,8 +215,10 @@ export function ListenPlayer({
 			const almost = almostCount(all);
 			const tally: Outcome = { xp: sheet ? 0 : listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] };
 			setOutcome(tally);
+			const activeMs = activeTime.finish();
+			setPracticeMs(activeMs);
 			try {
-				const timed = { ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() };
+				const timed = { ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() };
 				lastSave.current = sheet
 					? keepSession(lang?.code ?? "sk", sheetListenUrl(sheet), {
 							reps: all.map((r) => ({ itemId: r.item.id, given: r.given, peeked: r.peeked, replays: r.replays, ms: r.ms, heardMs: r.heardMs })),
@@ -417,7 +420,7 @@ export function ListenPlayer({
 	if (outcome) {
 		return (
 			<Frame>
-				<EndScreen outcome={outcome} reps={reps} sheet={sheet} saving={saving} failed={saveFailed} refused={saveRefused} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
+				<EndScreen outcome={outcome} practiceMs={practiceMs} reps={reps} sheet={sheet} saving={saving} failed={saveFailed} refused={saveRefused} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
 			</Frame>
 		);
 	}
@@ -633,6 +636,7 @@ function Heard({ sentence, stretch, marks, tag }: { sentence: string; stretch: s
 
 interface EndScreenProps {
 	outcome: Outcome;
+	practiceMs: number | null;
 	reps: Rep[];
 	saving: boolean;
 	failed: boolean;
@@ -641,7 +645,7 @@ interface EndScreenProps {
 	onRetrySave: () => void;
 }
 
-function SheetEndScreen({ outcome, reps, sheet, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps & { sheet: ListenSheet }) {
+function SheetEndScreen({ outcome, practiceMs, reps, sheet, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps & { sheet: ListenSheet }) {
 	const missed = reps.filter((r) => r.verdict !== "exact");
 	const typedCorrectly = reps.filter((r) => r.verdict === "exact");
 	const shown = reps.filter((r) => r.peeked).length;
@@ -669,6 +673,7 @@ function SheetEndScreen({ outcome, reps, sheet, saving, failed, refused, onAgain
 			<h1 className="q-hello">
 				{outcome.correct + outcome.almost} of {outcome.total} caught by ear
 			</h1>
+			<PracticeTime ms={practiceMs} how={PAGE_TIME_HOW} />
 			<Pips outcomes={reps.map(pipOf)} className="mt-4 max-w-xs" />
 			{asides.length > 0 && <p className="q-sub !mt-3">{asides.join(" · ")}</p>}
 			<div className="mt-8" data-testid="listen-sheet-progress">
@@ -711,7 +716,7 @@ function EndScreen({ sheet, ...props }: EndScreenProps & { sheet?: ListenSheet }
 	return sheet ? <SheetEndScreen sheet={sheet} {...props} /> : <DictionaryEndScreen {...props} />;
 }
 
-function DictionaryEndScreen({ outcome, reps, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps) {
+function DictionaryEndScreen({ outcome, practiceMs, reps, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps) {
 	const lang = useActiveLanguage();
 	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
@@ -741,6 +746,7 @@ function DictionaryEndScreen({ outcome, reps, saving, failed, refused, onAgain, 
 			<h1 className="q-hello">
 				{outcome.correct} of {outcome.total} typed correctly, without the text
 			</h1>
+			<PracticeTime ms={practiceMs} how={PAGE_TIME_HOW} />
 			<Pips outcomes={reps.map(pipOf)} className="mt-4 max-w-xs" />
 			{outcome.almost > 0 && <p className="q-sub !mt-3">{outcome.almost} typed with only a missing accent (half XP)</p>}
 			<Stats className="mt-7 max-w-none">

@@ -35,7 +35,7 @@ import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { endEnterBlocked, EnterHint, NotSaved, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import { endEnterBlocked, EnterHint, NotSaved, PracticeTime, Stat, Stats, TaskEnd } from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { switchLanguage } from "@/components/switch-language";
@@ -102,6 +102,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const [answers, setAnswers] = useState<number[]>([]);
 	const [stats, setStats] = useState<SegmentStat[]>([]);
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
+	const [practiceMs, setPracticeMs] = useState<number | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [saveRefused, setSaveRefused] = useState(false);
@@ -291,8 +292,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			setSaveRefused(false);
 			setStage("end");
 			sfx.done();
+			const activeMs = activeTime.finish();
+			setPracticeMs(activeMs);
 			try {
-				lastSave.current = keepSession(lang?.code ?? "sk", "/api/watch", { action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs: activeTime.finish(), tz: new Date().getTimezoneOffset() });
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/watch", { action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() });
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
 			} catch (err) {
@@ -434,7 +437,7 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End video={video} stats={stats} outcome={outcome} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
+				<End video={video} stats={stats} outcome={outcome} practiceMs={practiceMs} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
 			</Frame>
 		);
 	}
@@ -1422,7 +1425,7 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 	);
 }
 
-function End({ failed, refused, onRetrySave, video, stats, outcome, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
+function End({ failed, refused, onRetrySave, video, stats, outcome, practiceMs, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; practiceMs: number | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
 	const lang = useActiveLanguage();
 	const speed = listeningSpeed(stats);
 	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
@@ -1465,6 +1468,7 @@ function End({ failed, refused, onRetrySave, video, stats, outcome, saving, mode
 			<p className="q-line dim mt-2" lang={lang?.code}>
 				{video.title}
 			</p>
+			<PracticeTime ms={practiceMs} how="Counted while the video played, and while you answered with no pause over 90 seconds." />
 			<Stats className="mt-7 max-w-none">
 				<Stat label="XP" value={saving || !outcome ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
 				<Stat label={mode === "step" ? "Got the first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst} of ${judged}` : "None judged") : String(video.segments.length)} />

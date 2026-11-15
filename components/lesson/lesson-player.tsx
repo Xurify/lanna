@@ -23,9 +23,9 @@ import { useActiveTime } from "@/components/use-active-time";
 import { prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
-import { QIcon } from "@/components/quiet/icon";
+import { QIcon, QPie } from "@/components/quiet/icon";
 import type { QIconName } from "@/components/quiet/icon-paths";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, OptionTile, SentenceRow, SentenceRows, PracticeCard, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
+import { ACTIVE_TIME_HOW, COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, OptionTile, SentenceRow, SentenceRows, PracticeCard, PracticeTime, Pulse, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
 import { startTutorChat, whyPrompt } from "@/components/lesson/tutor";
 import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { TaskGrid } from "@/components/lesson/task-grid";
@@ -148,6 +148,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 	// The lesson's own score, known the moment the last answer is in. The
 	// server's answer (streak, goal, unit progress) lands behind it.
 	const [score, setScore] = useState<LessonScore | null>(null);
+	const [practiceMs, setPracticeMs] = useState<number | null>(null);
 	const [recorded, setRecorded] = useState<Recorded | null>(null);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const [retryingSave, setRetryingSave] = useState(false);
@@ -256,6 +257,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 		setCombo(0);
 		setXp(0);
 		setScore(null);
+		setPracticeMs(null);
 		setRecorded(null);
 		setSaveFailed(false);
 		pendingId.current = null;
@@ -308,6 +310,8 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 		if (finishing.current || !plan) return;
 		finishing.current = true;
 		sfx.done();
+		const spentMs = activeTime.finish();
+		setPracticeMs(spentMs);
 		setScore(
 			lessonScore(
 				all.map((r) => ({ kind: r.item.kind, verdict: r.verdict, assisted: r.assisted === true })),
@@ -347,7 +351,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 				},
 			})),
 			ms: Date.now() - startedAt.current,
-			activeMs: activeTime.finish(),
+			activeMs: spentMs,
 			tz: new Date().getTimezoneOffset(),
 		});
 		forget();
@@ -581,6 +585,7 @@ export function LessonPlayer({ unit, mode, gender, focus, initialPlan = null }: 
 					unit={plan.unit}
 					reps={reps}
 					score={score}
+					practiceMs={practiceMs}
 					recorded={recorded}
 					failed={saveFailed}
 					onAgain={() => void load()}
@@ -1644,6 +1649,7 @@ function EndScreen({
 	unit,
 	reps,
 	score,
+	practiceMs,
 	recorded,
 	failed,
 	onAgain,
@@ -1656,6 +1662,7 @@ function EndScreen({
 	unit: UnitId;
 	reps: Rep[];
 	score: LessonScore;
+	practiceMs: number | null;
 	recorded: Recorded | null;
 	failed: boolean;
 	onAgain: () => void;
@@ -1777,11 +1784,12 @@ function EndScreen({
 						<span className="font-ui text-[52px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-foreground">{mode === "blitz" ? correct : `${accuracy}%`}</span>
 						<span className="font-ui text-[15px] font-[550] text-ink-2">{mode === "blitz" ? "right" : "right the first time"}</span>
 					</p>
+					{mode !== "blitz" && <PracticeTime ms={practiceMs} how={ACTIVE_TIME_HOW} />}
 					{reps.length > 0 && <RepStrip reps={reps} />}
 					<Stats className="mt-7 max-w-none">
 						<Stat label="XP" value={failed && !recorded ? "Not counted yet" : `+${xp}`} ink={failed && !recorded ? "text-ink-3" : "text-teal-2"} />
 						{mode === "blitz" && <Stat label="Best" value={String(Math.max(recorded?.summary.bestBlitz ?? 0, correct))} />}
-						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : undefined} />
+						<Stat label="Today's goal" value={recorded ? (goalMet ? "Reached" : `${toGoal} XP to go`) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : goalMet ? "text-teal-2" : "text-foreground"} icon={goalMet ? <QIcon name="check" className="size-4" /> : recorded ? <QPie frac={recorded.summary.todayXp / recorded.summary.dailyGoal} size={18} /> : undefined} />
 						<Stat label="Days in a row" value={recorded ? String(recorded.summary.streak.days) : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} icon={failed && !recorded ? undefined : <FlagIcon className="size-4 text-teal" strokeWidth={1.6} />} />
 						<Stat label="Added to Review" value={recorded ? (queued > 0 ? `${queued} ${queued === 1 ? "word" : "words"}` : "None") : failed ? "Not counted yet" : null} ink={failed && !recorded ? "text-ink-3" : undefined} />
 					</Stats>
@@ -1794,12 +1802,8 @@ function EndScreen({
 							Not right the first time
 							<small>{missed.length}</small>
 						</h2>
-						<p className="mt-1 font-prose text-[14px] text-ink-3">A sentence you missed and then got right is the one that sticks.</p>
-						<SentenceRows className="mt-2">
-							{missed.map((r) => (
-								<WorkedRow key={r.item.id} rep={r} back={reps.find((o) => o.item.again && o.item.sentence === r.item.sentence)} />
-							))}
-						</SentenceRows>
+						<p className="mt-1 font-prose text-[14px] text-ink-3">One square per try: the first, then the one when it came back.</p>
+						<WorkedGroups missed={missed} reps={reps} />
 					</section>
 				)}
 			</div>
@@ -1886,58 +1890,6 @@ function RepStrip({ reps }: { reps: Rep[] }) {
 	);
 }
 
-function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
-	const { item, verdict, given } = rep;
-	const target = lessonLanguage();
-	const answerLang = item.kind === "meaning" || item.task?.kind === "grid" ? undefined : target;
-	const firstAnswer = rep.first?.verdict === "wrong" ? rep.first.given : "";
-	const quoted = (text: string, ink: string) => (
-		<span className={cn("font-medium", ink)} lang={answerLang}>
-			“{text}”
-		</span>
-	);
-	const attempt =
-		verdict === "wrong" ? (
-			given ? (
-				<span>
-					{item.kind === "meaning" || item.kind === "choose" ? "You picked" : item.kind === "build" ? "You built" : "You wrote"} {quoted(given, "text-miss")}
-				</span>
-			) : (
-				<span>You didn&apos;t know it</span>
-			)
-		) : verdict === "accents" ? (
-			<span>Accents off: {quoted(given, "text-ink-2")}</span>
-		) : (
-			<span>{rep.first?.peeked ? "Right after you looked at the meaning" : firstAnswer ? <>Right on the second try · first try {quoted(firstAnswer, "text-miss")}</> : "Right with help"}</span>
-		);
-	return (
-		<SentenceRow
-			sentence={item.sentence}
-			lang={target}
-			translation={item.translation}
-			onPlay={() => void speak(item.sentence)}
-			note={
-				<>
-					{attempt}
-					{back &&
-						(firstTry(back) === "missed" ? (
-							<span className="text-miss">Missed again when it came back</span>
-						) : (
-							<span className="flex items-center gap-1 text-teal-2">
-								<QIcon name="check" className="size-3.5" />
-								{firstTry(back) === "almost" ? "Almost, when it came back" : "Right when it came back"}
-							</span>
-						))}
-				</>
-			}
-		>
-			{item.before}
-			<b className="font-semibold text-teal-2">{item.pair ? (item.form ?? item.answer) : item.answer}</b>
-			{item.after}
-		</SentenceRow>
-	);
-}
-
 /** How well the review deck knows this word, in one phrase. */
 function knownLine(known: LessonItem["known"]): string | undefined {
 	if (!known) return "not in review yet";
@@ -1953,4 +1905,96 @@ function whereLine(here: { title: string; lessons: number; done: boolean; accura
 	if (!here.done) return `Lesson ${Math.min(here.lessons, LESSONS_TO_COMPLETE)} of ${LESSONS_TO_COMPLETE}${next && next.title !== here.title ? ` · Up next: ${next.title}` : ""}`;
 	if (here.lessons === LESSONS_TO_COMPLETE || !next || next.title === here.title) return `${here.title} is done · ${here.lessons} lessons`;
 	return `${here.title} is done. Up next: ${next.title}`;
+}
+
+type WorkedFate = "again" | "once" | "fixed";
+
+const WORKED_GROUPS: Array<{ fate: WorkedFate; label: string }> = [
+	{ fate: "again", label: "Missed again when it came back" },
+	{ fate: "once", label: "Missed, not asked again" },
+	{ fate: "fixed", label: "Right when it came back" },
+];
+
+function WorkedGroups({ missed, reps }: { missed: Rep[]; reps: Rep[] }) {
+	const rows = missed.map((rep) => {
+		const back = reps.find((o) => o.item.again && o.item.sentence === rep.item.sentence);
+		const fate: WorkedFate = !back ? "once" : firstTry(back) === "missed" ? "again" : "fixed";
+		return { rep, back, fate };
+	});
+	return (
+		<div className="mt-5 flex flex-col gap-7">
+			{WORKED_GROUPS.map(({ fate, label }) => {
+				const group = rows.filter((r) => r.fate === fate);
+				if (group.length === 0) return null;
+				return (
+					<div key={fate} data-testid={`lesson-worked-${fate}`}>
+						<p className={cn("flex items-center gap-2 font-ui text-[13px] font-[550]", fate === "again" ? "text-miss" : fate === "fixed" ? "text-teal-2" : "text-ink-2")}>
+							{label}
+							<span className="font-[450] text-ink-3 tabular-nums">{group.length}</span>
+						</p>
+						<ul className="mt-1.5 divide-y divide-[var(--q-line)] border-t border-[var(--q-line)]">
+							{group.map((r) => (
+								<WorkedRow key={r.rep.item.id} rep={r.rep} back={r.back} />
+							))}
+						</ul>
+					</div>
+				);
+			})}
+		</div>
+	);
+}
+
+function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
+	const { item, verdict, given } = rep;
+	const target = lessonLanguage();
+	const answerLang = item.kind === "meaning" || item.task?.kind === "grid" ? undefined : target;
+	const firstAnswer = rep.first?.verdict === "wrong" ? rep.first.given : "";
+	const quoted = (text: string, ink: string) => (
+		<span className={cn("font-medium", ink)} lang={answerLang}>
+			“{text}”
+		</span>
+	);
+	const attempt =
+		verdict === "wrong" ? (
+			given ? (
+				<>
+					{item.kind === "meaning" || item.kind === "choose" ? "You picked" : item.kind === "build" ? "You built" : "You wrote"} {quoted(given, "text-miss")}
+				</>
+			) : null
+		) : verdict === "accents" ? (
+			<>Accents off: {quoted(given, "text-ink-2")}</>
+		) : rep.first?.peeked ? (
+			"Right after you looked at the meaning"
+		) : firstAnswer ? (
+			<>Right on the second try, after {quoted(firstAnswer, "text-miss")}</>
+		) : (
+			"Right with help"
+		);
+	const history = `First try ${firstTry(rep)}${back ? `, ${firstTry(back)} when it came back` : ""}`;
+	return (
+		<li className="grid grid-cols-[1.75rem_minmax(0,1fr)_auto] items-start gap-x-3 py-3">
+			<span className="mt-1 flex gap-[3px]" role="img" aria-label={history} title={history}>
+				<Mark kind={firstTry(rep)} className="h-4 w-2.5 rounded-[2px]" />
+				{back && <Mark kind={firstTry(back)} className="h-4 w-2.5 rounded-[2px]" />}
+			</span>
+			<div className="min-w-0">
+				<p className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground" lang={target}>
+					{item.before}
+					<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2 [box-decoration-break:clone]">{item.pair ? (item.form ?? item.answer) : item.answer}</b>
+					{item.after}
+				</p>
+				<p data-no-word-lookup="true" className="mt-0.5 font-prose text-[14.5px] leading-snug text-ink-3">
+					{item.translation}
+				</p>
+				{attempt && (
+					<p data-no-word-lookup="true" className="mt-1 font-ui text-[12.5px] text-ink-3">
+						{attempt}
+					</p>
+				)}
+			</div>
+			<button type="button" onClick={() => void speak(item.sentence)} className="lh-press -mr-1.5 flex size-8 items-center justify-center rounded-full text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-11" aria-label={`Play: ${item.sentence}`} title="Play">
+				<Volume2Icon className="size-4" strokeWidth={1.6} />
+			</button>
+		</li>
+	);
 }
