@@ -84,7 +84,6 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 			"scripts/spotify_helper.py",
 			"docs/experiments/input-first-russian.md",
 			".claude/skills/slovak-language/references/*.md",
-			"node_modules/@puppeteer/browsers/lib/browser-data/**/*.js",
 			"node_modules/pdfjs-dist/legacy/**/*",
 			"node_modules/pdfjs-dist/standard_fonts/**/*",
 			"node_modules/@napi-rs/canvas-*/**/*",

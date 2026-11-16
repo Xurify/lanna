@@ -1,7 +1,7 @@
 /**
  * The pdf-reader sub-agent (sources v0) — the hand-rolled loop on a faux
  * engine: triage→extract→brief flow, the unread-finish doctrine gate, the
- * render path via the headless fake, and the unreadable-source failure.
+ * render path via the renderer fake, and the unreadable-source failure.
  * The pdfjs layer itself is covered by pdf-ops.test.ts against the fixture.
  */
 import assert from "node:assert/strict";
@@ -18,7 +18,7 @@ import {
 } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 import { runPdfReaderAgent } from "../src/agent/subagents/pdf-reader.ts";
-import type { HeadlessApi } from "../src/agent/subagents/headless.ts";
+import type { PdfPageRenderer } from "../src/agent/subagents/pdf-pages.ts";
 
 const FIXTURE = path.join(import.meta.dirname, "fixtures", "sample-3page.pdf");
 
@@ -35,16 +35,14 @@ const PNG_1PX = Buffer.from([
 	0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
 ]);
 
-function fakeHeadless(
+function fakeRenderer(
 	rendered: { pages: number[] } = { pages: [] },
-): HeadlessApi & { calls: string[]; paths: string[] } {
+): PdfPageRenderer & { calls: string[]; paths: string[] } {
 	const calls: string[] = [];
 	const paths: string[] = [];
 	return {
 		calls,
 		paths,
-		available: () => true,
-		unavailableReason: () => null,
 		renderPdfPages: async (pdfPath, pages) => {
 			paths.push(pdfPath);
 			calls.push(`render:${pages.join(",")}`);
@@ -83,7 +81,7 @@ describe("pdf-reader source paths", () => {
 			const inputPath = kind === "absolute" ? absolutePath : relativePath;
 			assert.equal(os.homedir(), home);
 			assert.notEqual(path.resolve(relativePath), absolutePath, "cwd is not the learner's home");
-			const headless = fakeHeadless();
+			const renderer = fakeRenderer();
 			const engine = fauxEngine([
 				fauxAssistantMessage([fauxToolCall("pdf_info", {}, { id: "i1" })], { stopReason: "toolUse" }),
 				fauxAssistantMessage([fauxToolCall("pdf_search", { query: "integral", literal: true }, { id: "s1" })], {
@@ -99,13 +97,16 @@ describe("pdf-reader source paths", () => {
 				lastContext = JSON.stringify(args[1]);
 				return stream(...args);
 			};
-			const result = await runPdfReaderAgent({ path: inputPath, question: "Read the document" }, { engine, headless });
+			const result = await runPdfReaderAgent(
+				{ path: inputPath, question: "Read the document" },
+				{ engine, pdfPages: renderer },
+			);
 			assert.equal(result.path, absolutePath);
 			assert.match(result.brief, /^Read the requested document/);
 			assert.match(lastContext, /Pages: 3/, "metadata opened the home-anchored PDF");
 			assert.deepEqual(result.pagesRead, [2, 3]);
 			assert.deepEqual(result.pagesConsulted, [1, 2, 3], "search and extraction opened the home-anchored PDF");
-			assert.deepEqual(headless.paths, [absolutePath]);
+			assert.deepEqual(renderer.paths, [absolutePath]);
 		});
 	}
 
@@ -165,7 +166,7 @@ describe("pdf-reader loop (faux engine)", () => {
 	});
 
 	it("the render path: images ride a user message after tool results; pages counted", async () => {
-		const headless = fakeHeadless();
+		const renderer = fakeRenderer();
 		const engine = fauxEngine([
 			fauxAssistantMessage([fauxToolCall("pdf_render", { pages: "2-3", dpi: 150 }, { id: "r1" })], {
 				stopReason: "toolUse",
@@ -174,14 +175,14 @@ describe("pdf-reader loop (faux engine)", () => {
 		]);
 		const result = await runPdfReaderAgent(
 			{ path: FIXTURE, question: "what is the force formula?" },
-			{ engine, headless },
+			{ engine, pdfPages: renderer },
 		);
 		assert.deepEqual(result.pagesRead, [2, 3], "rendered pages are read pages");
 		assert.deepEqual(result.pagesConsulted, [2, 3]);
-		assert.deepEqual(headless.calls, ["render:2,3"]);
+		assert.deepEqual(renderer.calls, ["render:2,3"]);
 	});
 
-	it("no Chrome: render calls degrade to an error note, text tools still work", async () => {
+	it("a failed render degrades to an error note, text tools still work", async () => {
 		const engine = fauxEngine([
 			fauxAssistantMessage([fauxToolCall("pdf_render", { pages: "1", dpi: 150 }, { id: "r1" })], {
 				stopReason: "toolUse",
@@ -196,11 +197,9 @@ describe("pdf-reader loop (faux engine)", () => {
 			{ path: FIXTURE, question: "page 1 content?" },
 			{
 				engine,
-				headless: {
-					available: () => false,
-					unavailableReason: () => "No Chrome found",
+				pdfPages: {
 					renderPdfPages: async () => {
-						throw new Error("should not render");
+						throw new Error("render failed");
 					},
 				},
 			},

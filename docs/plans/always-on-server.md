@@ -12,7 +12,7 @@ The owner can study on the iPhone and the iPad from anywhere, with the PC switch
 
 - **Lanna already is a web app.** The phone uses the same pages in Safari, installed to the Home Screen (E20). There is no second app to build. The only open question is which machine runs the server behind those pages. Today that machine is the PC, so the phone works only while the PC is on.
 - **The owner already has three machines that are always on: the Synology NAS, the VPS that runs flags.games, and the router.** Using one of them adds no new device that has to keep running. The old laptop and the Raspberry Pi are not needed.
-- **The app cannot go on a serverless host such as Vercel.** It writes plain files from one long-running process (E7, `docs/architecture.md`), keeps each request's language in Next's request store (E75), and runs yt-dlp and a headless Chromium. It needs an ordinary machine with a disk.
+- **The app cannot go on a serverless host such as Vercel.** It writes plain files from one long-running process (E7), keeps each request's language in Next's request store (E75), and runs yt-dlp. It needs an ordinary machine with a disk.
 
 ## Routes
 

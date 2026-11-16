@@ -156,9 +156,6 @@ const nextConfig: NextConfig = {
 			"scripts/spotify_helper.py",
 			"docs/experiments/input-first-russian.md",
 			".claude/skills/slovak-language/references/*.md",
-			// The standalone trace omitted this entire runtime-imported directory
-			// in 0.3.0, so importing puppeteer-core failed before browser startup.
-			"node_modules/@puppeteer/browsers/lib/browser-data/**/*.js",
 			"node_modules/pdfjs-dist/legacy/**/*",
 			"node_modules/pdfjs-dist/standard_fonts/**/*",
 			// Wave E (2026-10-10): pdf_render paints via @napi-rs/canvas — its

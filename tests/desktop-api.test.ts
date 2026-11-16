@@ -6,7 +6,6 @@ import { NextRequest } from "next/server";
 import { unstable_doesMiddlewareMatch as unstable_doesProxyMatch } from "next/experimental/testing/server";
 import { desktopAPIAuthorized } from "../src/server/desktop-access.ts";
 import { proxy, config } from "../proxy.ts";
-import { browserServiceSpawnEnv } from "../src/agent/subagents/headless.ts";
 const require = createRequire(import.meta.url);
 const { desktopAPIHeaders, HEADER } = require("../electron/desktop-api.cjs");
 const { trustedSender, chatGPTControl } = require("../electron/chatgpt-ipc.cjs");
@@ -163,8 +162,4 @@ test("renderer controls have no lease or general token bridge, and require the t
 	assert(!trustedSender({ sender: contents, senderFrame: { url: mainFrame.url } }, origin, BrowserWindow));
 	mainFrame.url = "https://thirdparty.invalid/";
 	assert(!trustedSender({ sender: contents, senderFrame: mainFrame }, origin, BrowserWindow));
-	assert.equal(
-		browserServiceSpawnEnv({ LANNA_DESKTOP_API_SECRET: secret, LANNA_DESKTOP_SERVER: "1" }).LANNA_DESKTOP_API_SECRET,
-		undefined,
-	);
 });
