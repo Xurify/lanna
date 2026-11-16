@@ -22,7 +22,7 @@ import {
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 import { APP_IDENTITY, piEngineForSpec, type PiEngine } from "../src/agent/models.ts";
 import { runPdfReaderAgent } from "../src/agent/subagents/pdf-reader.ts";
-import type { HeadlessApi } from "../src/agent/subagents/headless.ts";
+import type { PdfPageRenderer } from "../src/agent/subagents/pdf-pages.ts";
 import { AUTH_PROVIDER_KEYS } from "../src/core/auth-keys.ts";
 import { providerEventsDir } from "../src/agent/provider-events.ts";
 
@@ -154,10 +154,8 @@ function callsFor(loop: Loop, round: number): Call[] {
 			];
 }
 
-function fakeHeadless(renders: string[]): HeadlessApi {
+function fakeRenderer(renders: string[]): PdfPageRenderer {
 	return {
-		available: () => true,
-		unavailableReason: () => null,
 		renderPdfPages: async (file, pages, opts) => {
 			assert.equal(file, FIXTURE);
 			assert.deepEqual(pages, [1]);
@@ -174,7 +172,7 @@ async function runLoop(loop: Loop, engine: PiEngine, signal = new AbortControlle
 	const usages: Usage[] = [];
 	const opts = {
 		engine,
-		headless: fakeHeadless(renders),
+		pdfPages: fakeRenderer(renders),
 		abortSignal: signal,
 		onActivity: (line: string) => activities.push(line),
 		onUsage: (usage: Usage) => usages.push(usage),

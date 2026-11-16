@@ -1,16 +1,6 @@
 import * as fs from "node:fs";
-import { createRequire } from "node:module";
 import * as path from "node:path";
 import { standardFontsDir } from "./pdf-ops";
-
-/**
- * Verification engines for sub-agents. PDFs render natively (pdfjs + Skia, no
- * browser). `available()` probes for the app's browser helper or a system
- * Chrome; nothing here launches one.
- *
- * Test seam: `headlessOverride.current` replaces the whole API (tests inject
- * a fake; nothing here touches a real browser). Builders call `getHeadless()`.
- */
 
 export interface RenderPdfOptions {
 	/** Render DPI — 72 is 100% zoom; the skill's guidance is 100/150/200. */
@@ -22,103 +12,8 @@ export interface RenderedPdfPage {
 	png: Buffer;
 }
 
-export interface HeadlessApi {
-	/** True when a browser helper or Chrome is resolvable (cheap, no launch). */
-	available(): boolean;
-	/** Why not — for error messages. */
-	unavailableReason(): string | null;
-	/** Render PDF pages to PNGs natively (pdfjs + Skia) for the pdf-reader. */
+export interface PdfPageRenderer {
 	renderPdfPages(pdfPath: string, pages: number[], opts?: RenderPdfOptions): Promise<RenderedPdfPage[]>;
-}
-
-/** Test seam — undefined in production. */
-const headlessOverride: { current?: HeadlessApi } = {};
-
-export function getHeadless(): HeadlessApi {
-	return headlessOverride.current ?? realHeadless;
-}
-
-// ─── Chrome resolution ───────────────────────────────────────────────────────
-
-const CHROME_CANDIDATES = [
-	...(process.platform === "win32"
-		? [
-				path.join(process.env.PROGRAMFILES ?? "C:\\Program Files", "Google", "Chrome", "Application", "chrome.exe"),
-				path.join(
-					process.env["PROGRAMFILES(X86)"] ?? "C:\\Program Files (x86)",
-					"Google",
-					"Chrome",
-					"Application",
-					"chrome.exe",
-				),
-				...(process.env.LOCALAPPDATA
-					? [path.join(process.env.LOCALAPPDATA, "Google", "Chrome", "Application", "chrome.exe")]
-					: []),
-			]
-		: []),
-	"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-	"/Applications/Chromium.app/Contents/MacOS/Chromium",
-	"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-	"/usr/bin/google-chrome",
-	"/usr/bin/google-chrome-stable",
-	"/usr/bin/chromium",
-	"/usr/bin/chromium-browser",
-];
-
-function resolveChromeExecutablePath(): string | null {
-	const candidates = [process.env.CHROME_PATH, ...CHROME_CANDIDATES].filter(
-		(p): p is string => typeof p === "string" && p.length > 0,
-	);
-	for (const candidate of candidates) {
-		try {
-			if (fs.existsSync(candidate)) return candidate;
-		} catch {
-			/* not readable — try the next */
-		}
-	}
-	return null;
-}
-
-const NO_CHROME_MESSAGE =
-	"No render engine available: the app's own browser helper failed to start and no system Chrome/Chromium was found. " +
-	"Install Google Chrome or set CHROME_PATH to a Chrome executable. " +
-	"(Verification is mandatory — figures are never delivered unverified.)";
-
-// ─── The app's own Chromium as a browser service (Wave E stage 3) ────────────
-
-/** Handshake line parser (pure; exported for tests). */
-export function parseBrowserServiceLine(line: string): number | null {
-	const m = line.match(/^BROWSER_SERVICE_CDP (\d+)$/);
-	if (!m) return null;
-	const port = Number(m[1]);
-	return port >= 1 && port <= 65535 ? port : null;
-}
-
-/** Spawn env sanitizer (pure; exported for tests): the helper must run as a
- *  FULL Electron app — ELECTRON_RUN_AS_NODE must not leak — and must not
- *  inherit the dev-shell userData redirect. */
-export function browserServiceSpawnEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
-	const out: Record<string, string | undefined> = { ...env };
-	delete out.ELECTRON_RUN_AS_NODE;
-	delete out.LANNA_DEV_URL;
-	// The artifact renderer is not an authorized app API client.
-	delete out.LANNA_DESKTOP_API_SECRET;
-	delete out.LANNA_DESKTOP_SERVER;
-	return out;
-}
-
-/** The helper binary: inside the packaged app the server runs under
- *  ELECTRON_RUN_AS_NODE so process.execPath IS the app binary; in dev
- *  (plain node) the electron package resolves to the dev binary path. */
-function browserServiceBinary(): string | null {
-	if (process.versions.electron) return process.execPath;
-	try {
-		const req = createRequire(import.meta.url);
-		const p = req("electron") as unknown as string;
-		return typeof p === "string" && p.length > 0 ? p : null;
-	} catch {
-		return null;
-	}
 }
 
 // ─── PNG canonical form ──────────────────────────────────────────────────────
@@ -250,16 +145,4 @@ async function renderPdfPages(
 	}
 }
 
-// ─── the real API ────────────────────────────────────────────────────────────
-
-export const realHeadless: HeadlessApi = {
-	available() {
-		// The helper binary exists by construction in the packaged app; in dev
-		// it resolves via the electron package. System Chrome widens coverage.
-		return browserServiceBinary() !== null || resolveChromeExecutablePath() !== null;
-	},
-	unavailableReason() {
-		return browserServiceBinary() === null && resolveChromeExecutablePath() === null ? NO_CHROME_MESSAGE : null;
-	},
-	renderPdfPages,
-};
+export const pdfPages: PdfPageRenderer = { renderPdfPages };

@@ -5,7 +5,7 @@ import importPlugin from "eslint-plugin-import";
 
 /**
  * ESLint with one job here: ENFORCE THE IMPORT LAW (the shell/core
- * architecture, docs/architecture.md). Everything else stays out of the
+ * architecture). Everything else stays out of the
  * way — this is not a style linter.
  *
  *   components/**  →  "@/src/core"  (the pure core barrel) — ONLY
@@ -53,27 +53,26 @@ export default defineConfig([
 							from: "./src",
 							// NOTE: the plugin resolves `except` relative to the zone's `from` path.
 							except: ["./core/index.ts", "./core/tutor.ts"],
-							message:
-								'Browser shell imports ONLY the pure core barrel: `from "@/src/core"` (architecture: docs/architecture.md).',
+							message: 'Browser shell imports ONLY the pure core barrel: `from "@/src/core"`.',
 						},
 						{
 							target: "./app",
 							from: "./src",
 							except: ["./core/index.ts", "./core/tutor.ts", "./server/index.ts"],
 							message:
-								"app/ (transport + server components) imports ONLY the barrels: `@/src/core` and `@/src/server` (architecture: docs/architecture.md).",
+								"app/ (transport + server components) imports ONLY the barrels: `@/src/core` and `@/src/server`.",
 						},
 						{
 							target: "./src/core",
 							from: ["./src/agent", "./src/server", "./src/store"],
 							message:
-								"Pure core never imports IO layers (agent/server/store): adapters implement core/ports.ts, and the composition root (src/server/stores.ts) passes them in (architecture: docs/architecture.md).",
+								"Pure core never imports IO layers (agent/server/store): adapters implement core/ports.ts, and the composition root (src/server/stores.ts) passes them in.",
 						},
 						{
 							target: "./src/agent",
 							from: ["./src/server", "./src/store"],
 							message:
-								"The agent layer receives its dependencies (storage ports via factories/closures) — it never imports the server layer or store adapters (architecture: docs/architecture.md).",
+								"The agent layer receives its dependencies (storage ports via factories/closures) — it never imports the server layer or store adapters.",
 						},
 					],
 				},

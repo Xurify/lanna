@@ -6,7 +6,7 @@ import { resolveSourcePath } from "../tools/fs-shared.ts";
 import { piEngineFor, type PiEngine, type ThinkingLevel } from "../models.ts";
 import { providerEventObserver, type ProviderEventObserver } from "../provider-events.ts";
 import type { PdfResult, PdfToolInput } from "../../core/contracts.ts";
-import { getHeadless, type HeadlessApi } from "./headless.ts";
+import { pdfPages, type PdfPageRenderer } from "./pdf-pages.ts";
 import { pdfExtract, pdfInfo, pdfProbe, pdfSearch } from "./pdf-ops.ts";
 
 /**
@@ -71,7 +71,7 @@ interface PdfReaderOptions {
 	abortSignal?: AbortSignal;
 	onUsage?: (usage: Usage) => void;
 	onActivity?: (line: string) => void;
-	headless?: HeadlessApi;
+	pdfPages?: PdfPageRenderer;
 	maxIterations?: number;
 	/** Debug: raw provider-event recording key (LANNA_PROVIDER_EVENTS=1). */
 	chatId?: string;
@@ -168,7 +168,7 @@ const UNREAD_FINISH_MESSAGE =
 	"You finished without consulting any page of the PDF — your brief would be invention, not reading. Extract or render the relevant pages first, then write the brief from what you actually saw.";
 
 export async function runPdfReaderAgent(input: PdfReaderInput, opts: PdfReaderOptions = {}): Promise<PdfResult> {
-	const headless = opts.headless ?? getHeadless();
+	const renderer = opts.pdfPages ?? pdfPages;
 	const maxIterations = opts.maxIterations ?? MAX_ITERATIONS;
 	const pdfPath = resolveSourcePath(input.path);
 
@@ -298,7 +298,7 @@ export async function runPdfReaderAgent(input: PdfReaderInput, opts: PdfReaderOp
 						const dpi = numOr(args.dpi, 150);
 						const wanted = specNumbers(spec, RENDER_BATCH_CAP);
 						opts.onActivity?.(`pdf_render: ${spec} @${dpi}dpi`);
-						const pages = await headless.renderPdfPages(pdfPath, wanted, { dpi });
+						const pages = await renderer.renderPdfPages(pdfPath, wanted, { dpi });
 						for (const p of pages) {
 							consulted.add(p.page);
 							read.add(p.page);

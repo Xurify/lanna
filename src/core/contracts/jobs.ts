@@ -4,7 +4,7 @@
  * Part of the domain-split contracts (src/core/contracts/): each domain file
  * is owned outright by its stream — cross-domain schema changes go through
  * master. Pure types + protocol docs + tiny pure helpers; type-only imports
- * of "ai" (safe everywhere: server, client, tests). See docs/vision.md.
+ * of "ai" (safe everywhere: server, client, tests).
  */
 import type { CallUsage } from "./chat.ts";
 import type { LannaMessage, LannaMarkerMessage } from "../native-messages.ts";
@@ -383,7 +383,7 @@ function abortText(kind: JobKind): string {
 	return "The figure job was aborted by the learner — no figure is coming. Acknowledge it in one line and teach without it (a re-dispatch is fine if the learner wants it).";
 }
 
-// ─── the probe handoff steer (the probe→teach split, docs/probe-teach-split.md §2) ──
+// ─── the probe handoff steer (the probe→teach split) ──
 //
 // probe_done's execute queues this through the same wake pipeline; the
 // pump fires it once the prober's turn ends (gates + grace). It carries no

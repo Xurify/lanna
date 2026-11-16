@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it } from "node:test";
-import { realHeadless } from "../src/agent/subagents/headless.ts";
+import { pdfPages } from "../src/agent/subagents/pdf-pages.ts";
 import { standardFontsDir } from "../src/agent/subagents/pdf-ops.ts";
 
 const FIXTURE = path.join(import.meta.dirname, "fixtures", "sample-3page.pdf");
@@ -39,7 +39,7 @@ describe("native pdf_render (pdfjs paints, @napi-rs/canvas hosts)", () => {
 	});
 
 	it("renders fixture pages as canonical single-IDAT PNGs", async () => {
-		const pages = await realHeadless.renderPdfPages(FIXTURE, [1, 3], { dpi: 150 });
+		const pages = await pdfPages.renderPdfPages(FIXTURE, [1, 3], { dpi: 150 });
 		assert.equal(pages.length, 2, "requested pages 1 and 3");
 		assert.deepEqual(
 			pages.map((p) => p.page),
@@ -54,8 +54,8 @@ describe("native pdf_render (pdfjs paints, @napi-rs/canvas hosts)", () => {
 	});
 
 	it("dpi arithmetic: 72dpi base doubles at 144dpi", async () => {
-		const [a] = await realHeadless.renderPdfPages(FIXTURE, [1], { dpi: 72 });
-		const [b] = await realHeadless.renderPdfPages(FIXTURE, [1], { dpi: 144 });
+		const [a] = await pdfPages.renderPdfPages(FIXTURE, [1], { dpi: 72 });
+		const [b] = await pdfPages.renderPdfPages(FIXTURE, [1], { dpi: 144 });
 		assert.ok(a && b, "both renders returned a page");
 		const fa = pngFacts(a.png);
 		const fb = pngFacts(b.png);
@@ -64,21 +64,11 @@ describe("native pdf_render (pdfjs paints, @napi-rs/canvas hosts)", () => {
 	});
 
 	it("skips out-of-range page numbers silently", async () => {
-		const pages = await realHeadless.renderPdfPages(FIXTURE, [0, 2, 99], { dpi: 72 });
+		const pages = await pdfPages.renderPdfPages(FIXTURE, [0, 2, 99], { dpi: 72 });
 		assert.deepEqual(
 			pages.map((p) => p.page),
 			[2],
 			"only the in-range page renders",
 		);
-	});
-
-	it("renders with NO browser present (available() may be false)", async () => {
-		// The whole point of stage 1: rendering must not consult any Chrome.
-		// realHeadless.available() reflects system Chrome only; on this
-		// machine it may well be true — the assertion that matters is that
-		// the render path never launches one, pinned by the import graph:
-		// renderPdfPages touches pdfjs + @napi-rs/canvas and nothing else.
-		const pages = await realHeadless.renderPdfPages(FIXTURE, [1], { dpi: 72 });
-		assert.equal(pages.length, 1);
 	});
 });

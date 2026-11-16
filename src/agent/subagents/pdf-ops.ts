@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
  * pdf_search / pdf_render), on the user-chosen hybrid stack:
  *
  * - TEXT (info / extract / search): pdfjs-dist — pure JS, no native deps.
- * - RENDER: subagents/headless.ts uses the same pdfjs engine with
+ * - RENDER: subagents/pdf-pages.ts uses the same pdfjs engine with
  *   @napi-rs/canvas (Skia), in-process — no browser needed.
  *
  * Doctrine (the skill's reading strategy, mirrored in the sub-agent's system
