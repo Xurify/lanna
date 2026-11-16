@@ -1,5 +1,5 @@
 /**
- * Near-miss wrong answers (LangHarness) — the active profile's
+ * Near-miss wrong answers — the active profile's
  * data/profiles/<language>/distractors/near-misses.jsonl: one line per Slovak
  * sentence, the English meanings the cheap model wrote that differ from the
  * right one in a single detail. Append-only; the last line for a sentence

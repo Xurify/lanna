@@ -1,5 +1,5 @@
 /**
- * Stamps — turistické známky (LangHarness, 2026-11-02; docs/research/gamification.md, E31).
+ * Stamps — turistické známky (2026-11-02; docs/research/gamification.md, E31).
  *
  * On Slovak trails, every peak and hut sells a round wooden stamp, and
  * hikers collect them in a book. The app's stamps are the same idea: one

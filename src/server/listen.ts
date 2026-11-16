@@ -1,5 +1,5 @@
 /**
- * Listen service (LangHarness, 2026-10-28) — behind /listen and
+ * Listen service (2026-10-28) — behind /listen and
  * /api/listen. The session is built locally from the dictionary against
  * the learner's known words (the same estimate the Read task uses, so the
  * two input tasks agree on what "known" means), so no rep waits on a

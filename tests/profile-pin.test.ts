@@ -12,8 +12,8 @@ import * as path from "node:path";
 import { describe, it } from "node:test";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-profile-pin-"));
-process.env.LH_DATA_DIR = dir;
-delete process.env.LH_PROFILE;
+process.env.LANNA_DATA_DIR = dir;
+delete process.env.LANNA_PROFILE;
 const added = path.join(dir, "languages", "czech");
 fs.mkdirSync(added, { recursive: true });
 fs.writeFileSync(

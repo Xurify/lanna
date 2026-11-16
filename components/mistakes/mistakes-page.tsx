@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * My mistakes (/mistakes, LangHarness 2026-11-01): what the lesson log says
+ * My mistakes (/mistakes, Lanna 2026-11-01): what the lesson log says
  * about where you go wrong and whether it is getting better, when it was
  * last read, and an optional personal guide written from it. The analysis
  * is local and free; only the guide uses a model, and only when asked.

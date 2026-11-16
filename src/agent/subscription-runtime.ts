@@ -15,7 +15,7 @@ export function configureWebSubscriptionRuntime(request: NonNullable<Runtime["re
 	runtime().request = request;
 }
 export function webSubscriptionsEnabled(): boolean {
-	return process.env.LH_DESKTOP_SERVER !== "1" && !process.env.LH_DESKTOP_API_SECRET && !!runtime().request;
+	return process.env.LANNA_DESKTOP_SERVER !== "1" && !process.env.LANNA_DESKTOP_API_SECRET && !!runtime().request;
 }
 export function onWebSubscriptionPacket(
 	channel: SubscriptionRuntimeChannel,

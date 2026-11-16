@@ -3,7 +3,7 @@
  * is kept only where it holds against the video's own lines, the gaps are
  * built from those lines, the answer is kept and not asked again, and a
  * practiced section pays XP and sends its misses to Review and Listen.
- * Runs under an isolated LH_DATA_DIR, so app modules are imported after it.
+ * Runs under an isolated LANNA_DATA_DIR, so app modules are imported after it.
  */
 
 import assert from "node:assert/strict";
@@ -14,7 +14,7 @@ import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-watch-sections-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const core = await import("../src/core/watch-sections.ts");
 const server = await import("../src/server/watch-sections.ts");

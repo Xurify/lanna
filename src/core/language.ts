@@ -1,11 +1,11 @@
 /**
- * Target languages (LangHarness) — pure facts about each language profile
+ * Target languages — pure facts about each language profile
  * and the answer comparison the drills share. Browser-safe: the review
  * page, the diacritic bar and the server all read from here.
  *
  * The built-in profile NAMES are mirrored in config.ts (LANGUAGE_PROFILES):
  * config is a leaf the core may not import from, so the list lives twice and
- * tests/langharness.test.ts pins them equal. A language the learner adds
+ * tests/lanna.test.ts pins them equal. A language the learner adds
  * from the app (LANGUAGE_CATALOG) is registered at run time from
  * <data>/languages/<id>/language.json.
  */

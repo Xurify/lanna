@@ -5,8 +5,8 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-acks-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { recordOnce, sessionClientId } = await import("../src/server/session-acks.ts");
 

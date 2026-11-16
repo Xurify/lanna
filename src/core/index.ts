@@ -73,7 +73,7 @@ export * from "./keyboard.ts";
 // ONE session→markdown formatter — the extractor's view and the user-facing
 // export share it. Pure, browser-safe.
 export * from "./session-markdown.ts";
-// LangHarness: target languages + answer comparison, the FSRS scheduler,
+// Lanna: target languages + answer comparison, the FSRS scheduler,
 // and the cloze review model (all pure, browser-safe).
 export * from "./language.ts";
 export * from "./cheers.ts";

@@ -1,5 +1,5 @@
 /**
- * MIX-UPS (LangHarness, 2026-11-01): a wrong first try that gives another
+ * MIX-UPS (2026-11-01): a wrong first try that gives another
  * lexicon word opens a pair, predicts its look-alikes, and the Mix-ups
  * lesson drills both. Pins: the family file, what counts as a mix-up (not a
  * form slip, a blank or a non-word), the open → mended and probe → cleared

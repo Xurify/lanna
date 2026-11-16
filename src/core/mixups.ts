@@ -1,5 +1,5 @@
 /**
- * Mix-ups (LangHarness, 2026-11-01): two different words the learner
+ * Mix-ups (2026-11-01): two different words the learner
  * confuses, such as "Niekto" typed where the sentence wanted "Nikto". A form
  * slip (src/core/form-slip.ts) is the wrong ending of the right word; a
  * mix-up is the wrong word, and it is kept per pair of words so the app can

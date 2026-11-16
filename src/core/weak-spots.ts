@@ -1,5 +1,5 @@
 /**
- * Weak spots (LangHarness, 2026-10-28) — the units the learner has shown
+ * Weak spots (2026-10-28) — the units the learner has shown
  * they struggle with, kept as a record of their own so the app can say
  * "you struggle with the accusative" and act on it, instead of letting
  * that fact sink into an accuracy figure.

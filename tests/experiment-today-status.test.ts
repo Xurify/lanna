@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { describe, it } from "node:test";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-experiment-today-"));
-process.env.LH_DATA_DIR = dir;
+process.env.LANNA_DATA_DIR = dir;
 
 const { EXPERIMENT_CONSTANTS } = await import("../src/core/experiment.ts");
 const { experimentDir, getTodayExperimentStatus } = await import("../src/server/experiment.ts");

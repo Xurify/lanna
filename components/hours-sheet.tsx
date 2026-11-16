@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "How long does it take?" (LangHarness, 2026-10-28) — the research behind
+ * "How long does it take?" (2026-10-28) — the research behind
  * the goal line's hours, in one sheet: the guided-hour bands per CEFR
  * level (Cambridge's figures for English next to this app's estimate for
  * language being learned), the FSI yardsticks for categories I and III, and what the

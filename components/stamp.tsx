@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Stamps — turistické známky (LangHarness, 2026-11-02; E31,
+ * Stamps — turistické známky (2026-11-02; E31,
  * docs/research/gamification.md). The round wooden stamp hikers collect at
  * every Slovak peak and hut, as the app's record of outcomes: a chapter
  * done, a level climbed, a week of days, a thousand words known.

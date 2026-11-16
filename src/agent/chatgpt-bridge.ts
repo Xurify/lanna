@@ -51,8 +51,8 @@ const validStamp = (s: Stamp) =>
  * These identify the transport, not a substitute for admission/lease checks. */
 function desktopIPCConnected(): boolean {
 	return (
-		process.env.LH_DESKTOP_SERVER === "1" &&
-		(process.env.LH_DESKTOP_API_SECRET?.length ?? 0) >= 64 &&
+		process.env.LANNA_DESKTOP_SERVER === "1" &&
+		(process.env.LANNA_DESKTOP_API_SECRET?.length ?? 0) >= 64 &&
 		typeof process.send === "function" &&
 		process.connected === true
 	);

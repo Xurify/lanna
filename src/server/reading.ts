@@ -1,5 +1,5 @@
 /**
- * Reading service (LangHarness, 2026-10-28) — behind /read and /api/read.
+ * Reading service (2026-10-28) — behind /read and /api/read.
  * Writes graded episodes of an ongoing story at the learner's level on the
  * cheap model slot, glosses every word against the lexicon, keeps every
  * episode on disk (src/store/stories.ts), and records each reading: the

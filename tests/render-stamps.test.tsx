@@ -1,5 +1,5 @@
 /**
- * THE STAMP BOOK ON SCREEN (LangHarness, 2026-11-02; E31): the disc, the
+ * THE STAMP BOOK ON SCREEN (2026-11-02; E31): the disc, the
  * book and the stamps card render from their states alone.
  */
 import assert from "node:assert/strict";

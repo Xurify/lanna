@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The placement check (LangHarness onboarding, 2026-10-28), three stages
+ * The placement check (onboarding, 2026-10-28), three stages
  * driven by src/server/placement.ts:
  *
  *   1. The ladder — one typed item at a time; the server picks every next

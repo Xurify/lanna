@@ -1,5 +1,5 @@
 /**
- * The story bible (LangHarness reading, chapter-arc phase 2, 2026-10-30):
+ * The story bible (reading, chapter-arc phase 2, 2026-10-30):
  * the series' cast, places and one plot beat per chapter, bundled under
  * curriculum/<profile>/world.json. It seeds the series episodes the Read
  * shelf writes for the chapter the learner is in, so every chapter opens

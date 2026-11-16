@@ -978,7 +978,7 @@ function SessionsSidebar() {
 							tabIndex={-1}
 							className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight"
 						>
-							Lang<span className="text-sun">Harness</span>
+							Lanna
 						</Link>
 						<Hint label="Collapse sidebar" action="toggle-sidebar">
 							<Button

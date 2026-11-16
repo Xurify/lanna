@@ -1,5 +1,5 @@
 /**
- * Today's line (LangHarness, 2026-11-05) — behind /line, /api/line and the
+ * Today's line (2026-11-05) — behind /line, /api/line and the
  * Today card. The day's sentence is picked once from the dictionary and kept:
  * the morning hearing stores it, so the evening replay plays the same words.
  * Nothing here calls a model; the audio is the shared Listen audio.

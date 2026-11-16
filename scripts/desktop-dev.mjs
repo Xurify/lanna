@@ -2,7 +2,7 @@
 /**
  * `npm run desktop:dev` — next dev + the Electron shell, on every OS.
  *
- * The old one-liner (`concurrently "next dev" "LH_DEV_URL=… electron ."`)
+ * The old one-liner (`concurrently "next dev" "LANNA_DEV_URL=… electron ."`)
  * broke on Windows: concurrently runs each command through cmd.exe, which
  * has no `VAR=value cmd` syntax, and Electron could open before Next was
  * listening (main.cjs loads the URL once, no retry). This launcher sets the
@@ -71,7 +71,7 @@ function startShell() {
 	const electron = spawn(electronBin, ["."], {
 		cwd: root,
 		stdio: "inherit",
-		env: { ...process.env, LH_DEV_URL: URL_ },
+		env: { ...process.env, LANNA_DEV_URL: URL_ },
 	});
 	children.add(electron);
 	electron.on("exit", (code) => {

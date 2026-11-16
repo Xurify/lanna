@@ -1,11 +1,11 @@
 /**
- * FRAGMENT PINS (LangHarness, 2026-11-06): the stretches of a video worth
+ * FRAGMENT PINS (2026-11-06): the stretches of a video worth
  * watching — how a stretch scores (known-word share, new words that come
  * back, speech all the way through, about two minutes), how the best ones
  * are chosen without overlapping, the strip and the range a learner drags,
  * and preparing only a stretch of a video (one cut kept per video).
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -16,8 +16,8 @@ import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-fragments-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const f = await import("../src/core/fragments.ts");
 const core = await import("../src/core/watch.ts");

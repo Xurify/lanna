@@ -1,5 +1,5 @@
 /**
- * LangHarness additions: answer comparison, the FSRS scheduler, the cloze
+ * Lanna additions: answer comparison, the FSRS scheduler, the cloze
  * card model, the lexicon lookup, the seed file's integrity, the language
  * prompt composition, and the review service over a throwaway data dir.
  * Deterministic: no LLM, no network.
@@ -12,8 +12,8 @@ import { describe, it } from "node:test";
 import { exampleText } from "../src/core/review.ts";
 
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-lang-"));
-process.env.LH_DATA_DIR = dataDir;
-delete process.env.LH_PROFILE;
+process.env.LANNA_DATA_DIR = dataDir;
+delete process.env.LANNA_PROFILE;
 
 const { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_IDS } =
 	await import("../src/core/language.ts");

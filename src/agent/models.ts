@@ -21,7 +21,7 @@ import { nativeSubscriptionStream } from "./subscription-stream.ts";
 /** App identity is immutable and shared by Models and every native Agent.
  * Agent's default Pi attribution otherwise overrides the Models identity. */
 export const APP_IDENTITY = Object.freeze({
-	userAgent: Object.freeze({ custom: `langharness/${packageMetadata.version}` }),
+	userAgent: Object.freeze({ custom: `lanna/${packageMetadata.version}` }),
 	attribution: Object.freeze({ name: packageMetadata.name, url: packageMetadata.homepage }),
 });
 

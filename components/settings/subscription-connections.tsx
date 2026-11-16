@@ -10,12 +10,12 @@ import { useNativeSubscriptionBridge } from "./subscription-client";
 
 const COPILOT_POLICY_NOTICE =
 	"Signing in to GitHub Copilot may turn on more models whose policy is not set yet. Models explicitly disabled by policy are not enabled. Organization restrictions still apply.";
-const SUBSCRIPTION_BACKGROUND_HINT = "Let LangHarness's helper agents and automatic follow-ups use this connection.";
+const SUBSCRIPTION_BACKGROUND_HINT = "Let Lanna's helper agents and automatic follow-ups use this connection.";
 export function subscriptionNotice(label: string, web = false): string {
-	return `Your prompts, tool results, and relevant session context are sent to ${label} to run the work you select. Credentials are stored ${web ? "on the machine running LangHarness" : "locally"} in an owner-only plaintext file. Provider terms, data-use policies, and plan limits apply. This connection never falls back to an API key.`;
+	return `Your prompts, tool results, and relevant session context are sent to ${label} to run the work you select. Credentials are stored ${web ? "on the machine running Lanna" : "locally"} in an owner-only plaintext file. Provider terms, data-use policies, and plan limits apply. This connection never falls back to an API key.`;
 }
 export function subscriptionDisconnectCopy(label: string, web = false): string {
-	return `Disconnect ${label} from LangHarness? This stops work using this connection and removes its saved credentials from ${web ? "the machine running LangHarness" : "this device"}. It does not cancel your subscription or revoke access at the provider. Saved model choices will remain unavailable until you reconnect or change them.`;
+	return `Disconnect ${label} from Lanna? This stops work using this connection and removes its saved credentials from ${web ? "the machine running Lanna" : "this device"}. It does not cancel your subscription or revoke access at the provider. Saved model choices will remain unavailable until you reconnect or change them.`;
 }
 function emptySubscriptionStatus(providerId: NativeSubscriptionProviderId): NativeSubscriptionStatus {
 	return {

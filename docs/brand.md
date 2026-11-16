@@ -1,6 +1,6 @@
 # Brand
 
-LangHarness is a language tutor for any language: you add a language from the app, and every task asks you to produce the answer before it helps (P3). The brand says that and nothing more.
+Lanna is a language tutor for any language: you add a language from the app, and every task asks you to produce the answer before it helps (P3). The brand says that and nothing more.
 
 Rule: E59. Sheet: [assets/brand/logo-sheet.png](assets/brand/logo-sheet.png); in the app: [assets/brand/sidebar-mark.png](assets/brand/sidebar-mark.png).
 
@@ -52,23 +52,6 @@ One geometry, kept in step by hand:
 - Don't animate the cursor blinking in the app chrome. A blinking cursor in the sidebar reads as a text field.
 - Don't put the in-app mark (ink and teal) on a teal surface: the line would vanish. On teal, use the app icon's colors (white cursor, pale teal line).
 
-## Name ideas
+## Name
 
-LangHarness is the name today: the repo, the app id (`com.langharness.LangHarness`), the window title and the PWA all use it, so a rename is its own piece of work. The name works with the new mark (the L). It also has weak points: "harness" reads as developer tooling (test harness, Harness.io), and "Lang" is a prefix that many language products use.
-
-If the app gets a name of its own, these fit what it does. The first three fit the mark best.
-
-| Name           | Why it fits                                                                                                                                                                           | Watch out for                                               |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **Unprompted** | The goal is to say a thing with no cue, and every rep starts without a hint (P3). The mark is a cursor with no prompt. It also plays on the model prompts, which the app keeps cheap. | Long (3 syllables), and "unprompted" can read as "unasked". |
-| **Foothold**   | A first, secure grip on a language, earned on a hard climb. The mark can be read as a climber (the cursor) on a ledge (the line).                                                     | Common English word; may be used in other fields.           |
-| **Offhand**    | To say something offhand is fluency: no notes, no searching. Short and friendly.                                                                                                      | Can mean "careless".                                        |
-| **Typed**      | The Review card says "Type it, don't pick it." It says what the app asks for.                                                                                                         | Leaves out speaking and listening.                          |
-| **Belay**      | In climbing, the belayer holds the rope while you climb. The tutor helps, but you do the climbing, and help has a price.                                                              | Climbing jargon; other companies use it.                    |
-| **Crux**       | The hardest move of a climb: desirable difficulty in one word.                                                                                                                        | Used by many products.                                      |
-| **Firsthand**  | Words you produce yourself, not ones you pick from a list.                                                                                                                            | Long; a little plain.                                       |
-| **Tabula**     | A blank slate (tabula rasa) that you fill. Latin, so it is neutral across languages.                                                                                                  | Abstract; easy to confuse with "Tableau".                   |
-
-**Decision (owner, 2026-11-06):** keep LangHarness for now. If the app gets a public name later, **Unprompted** fits the mark and the method best, with **Foothold** second.
-
-**Checked so far (2026-11-06):** web searches for Unprompted, Foothold and Offhand found no language app with that name. Nothing else has been checked: no trademark search, no domain search and no app store search.
+The app is called **Lanna**: short, easy to say in every language it teaches, and not built from the "Lang" prefix that many language products use. It starts with an L, so the mark (the cursor) stays. It was called LangHarness until 0.1.0; the desktop app moves the old LangHarness data folder to the Lanna one on its first start.

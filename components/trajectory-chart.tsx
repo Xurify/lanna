@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The projected line (LangHarness, 2026-10-29) — where the learner will be
+ * The projected line (2026-10-29) — where the learner will be
  * if they keep this pace. A solid line for what the days show so far, a
  * dashed one forward at the pace, the level's hours as a mark, and (full
  * size) a scrub to read any day. Two sizes: a sparkline for Today, the

@@ -8,10 +8,10 @@ import { Toggle } from "./controls";
 import { useChatGPTBridge } from "./subscription-client";
 
 export const CHATGPT_NOTICE =
-	"LangHarness stores your ChatGPT account details and credentials in an unencrypted local file on this device. When this connection is used, relevant conversation context, learning material, and tool results are sent directly to OpenAI. ChatGPT plan limits apply; any additional credits are authorized and managed in ChatGPT, not LangHarness.";
+	"Lanna stores your ChatGPT account details and credentials in an unencrypted local file on this device. When this connection is used, relevant conversation context, learning material, and tool results are sent directly to OpenAI. ChatGPT plan limits apply; any additional credits are authorized and managed in ChatGPT, not Lanna.";
 export function chatGPTNotice(web = false): string {
 	return web
-		? `${CHATGPT_NOTICE.replace("on this device", "on the machine running LangHarness")} Complete ChatGPT sign-in in a browser on that same machine.`
+		? `${CHATGPT_NOTICE.replace("on this device", "on the machine running Lanna")} Complete ChatGPT sign-in in a browser on that same machine.`
 		: CHATGPT_NOTICE;
 }
 const CHATGPT_BACKGROUND_HINT = "Background work counts toward your ChatGPT plan usage.";
@@ -454,7 +454,7 @@ export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 							<p className="mt-3 text-xs text-foreground">{managed?.email || "ChatGPT account"}</p>
 							<p className="mt-3 text-xs text-muted-foreground">
 								{web
-									? CHATGPT_DISCONNECT_COPY.body.replace("from this device", "from the machine running LangHarness")
+									? CHATGPT_DISCONNECT_COPY.body.replace("from this device", "from the machine running Lanna")
 									: CHATGPT_DISCONNECT_COPY.body}
 							</p>
 							{context.error && (

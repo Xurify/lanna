@@ -11,7 +11,7 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-regen-"));
-process.env.LH_DATA_DIR = dir;
+process.env.LANNA_DATA_DIR = dir;
 after(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 const { PATHS } = await import("../config.ts");

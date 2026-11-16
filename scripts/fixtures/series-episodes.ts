@@ -8,7 +8,7 @@
  *
  * Run it into a scratch profile (never the real one):
  *   npm run dev:sandbox -- --seed          # the sandbox seed now includes these episodes
- *   LH_DATA_DIR=<scratch folder> npx tsx scripts/seed-stories.ts
+ *   LANNA_DATA_DIR=<scratch folder> npx tsx scripts/seed-stories.ts
  *
  * Glosses are the dictionary form and the English meaning of each word as used in the sentence; a word
  * that is not in the glossary is left unglossed (the popover then shows only the word).

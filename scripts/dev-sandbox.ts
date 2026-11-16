@@ -1,13 +1,13 @@
 /**
  * A sandbox instance for demos, tests and anything an agent drives
- * (LangHarness, 2026-10-29).
+ * (2026-10-29).
  *
  *   npm run dev:sandbox              # an empty profile, no keys
  *   npm run dev:sandbox -- --seed    # with the demo week (scripts/demo-measured-minutes.ts)
  *
  * What it isolates, so nothing here can touch your learning data:
- *   data     LH_DATA_DIR  a new folder under the OS temp dir (never inside this repo)
- *   keys     LH_AUTH_FILE inside that folder, and LH_IGNORE_ENV_KEYS=1 hides every
+ *   data     LANNA_DATA_DIR  a new folder under the OS temp dir (never inside this repo)
+ *   keys     LANNA_AUTH_FILE inside that folder, and LANNA_IGNORE_ENV_KEYS=1 hides every
  *                         key in .env.local and the environment (no paid calls)
  *   port     a free port chosen by the OS, never 3010
  *
@@ -74,12 +74,12 @@ export function planSandbox(opts: { port: number; root?: string; tmp?: string; e
 	if (opts.port === REAL_PORT) throw new Error(`refusing port ${REAL_PORT}: that is your real dev server's port`);
 	const env: Env = { ...(opts.env ?? process.env) };
 	// A browser-only instance: no desktop capability, and not a test run.
-	delete env.LH_DESKTOP_SERVER;
-	delete env.LH_DESKTOP_API_SECRET;
+	delete env.LANNA_DESKTOP_SERVER;
+	delete env.LANNA_DESKTOP_API_SECRET;
 	delete env.NODE_ENV;
-	env.LH_DATA_DIR = dir;
-	env.LH_AUTH_FILE = path.join(dir, "auth.json");
-	env.LH_IGNORE_ENV_KEYS = "1";
+	env.LANNA_DATA_DIR = dir;
+	env.LANNA_AUTH_FILE = path.join(dir, "auth.json");
+	env.LANNA_IGNORE_ENV_KEYS = "1";
 	env.PORT = String(opts.port);
 	return { dir, port: opts.port, env };
 }
@@ -128,7 +128,7 @@ async function main(): Promise<void> {
 	console.log(`  URL      : http://127.0.0.1:${plan.port}`);
 	console.log(`  data dir : ${plan.dir}`);
 	console.log("             a throwaway folder; nothing deletes it, delete it when you are done");
-	console.log("  keys     : hidden (LH_IGNORE_ENV_KEYS=1); auth.json lives in the sandbox");
+	console.log("  keys     : hidden (LANNA_IGNORE_ENV_KEYS=1); auth.json lives in the sandbox");
 	console.log(rule);
 
 	if (args.includes("--seed")) {

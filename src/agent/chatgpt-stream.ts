@@ -59,12 +59,12 @@ export function chatGPTPayload(raw: unknown, selectedModelId: string): Record<st
 	if (Array.isArray(payload.tools) && payload.tools.length) {
 		if (payload.tools.some((tool) => tool.type !== "function" && tool.type !== "custom"))
 			throw new Error("Unsupported ChatGPT tool capability");
-		out.tools = [
-			{ type: "namespace", name: "langharness", description: "LangHarness local learning tools", tools: payload.tools },
-		];
+		out.tools = [{ type: "namespace", name: "lanna", description: "Lanna local learning tools", tools: payload.tools }];
 	}
 	return out;
 }
+
+const RETIRED_TOOL_NAMESPACES = new Set(["learnharness", "langharness"]);
 
 /** Only ChatGPT history is translated. Mixed API-key history keeps its actual identity. */
 export function chatGPTHistory(context: TranscriptContext, logicalModel: Model<Api>): TranscriptContext {
@@ -76,12 +76,12 @@ export function chatGPTHistory(context: TranscriptContext, logicalModel: Model<A
 		messages: messages.map((m) => {
 			if (m.role !== "assistant") return m;
 			const hasLegacyNamespace = m.content.some(
-				(item) => item.type === "toolCall" && item.namespace === "learnharness",
+				(item) => item.type === "toolCall" && RETIRED_TOOL_NAMESPACES.has(item.namespace ?? ""),
 			);
 			const content = hasLegacyNamespace
 				? m.content.map((item) =>
-						item.type === "toolCall" && item.namespace === "learnharness"
-							? { ...item, namespace: "langharness" }
+						item.type === "toolCall" && RETIRED_TOOL_NAMESPACES.has(item.namespace ?? "")
+							? { ...item, namespace: "lanna" }
 							: item,
 					)
 				: m.content;

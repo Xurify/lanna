@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 
 /**
- * A unit's circle on the path (LangHarness): its icon, with a ring that
+ * A unit's circle on the path: its icon, with a ring that
  * fills toward completion, a gold check once done, a lock while its
  * chapter or prerequisites are still ahead. Shared by the Today page's
  * Continue card and the curriculum path.

@@ -69,9 +69,9 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export const metadata: Metadata = {
-	title: { default: "LangHarness", template: "%s · LangHarness" },
-	applicationName: "LangHarness",
-	appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "default" },
+	title: { default: "Lanna", template: "%s · Lanna" },
+	applicationName: "Lanna",
+	appleWebApp: { capable: true, title: "Lanna", statusBarStyle: "default" },
 	// Next 16 emits the standard mobile-web-app-capable tag for capable: true;
 	// iOS Safari still reads the Apple name to launch full screen, so both go out.
 	other: { "apple-mobile-web-app-capable": "yes" },

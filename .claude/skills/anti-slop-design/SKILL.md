@@ -1,17 +1,17 @@
 ---
 name: anti-slop-design
-description: "Checklist of the visual tells that make a UI look AI-generated (Inter everywhere, lavender accent, gradients, glows, glassmorphism, colored card edges, badge over a centered hero, identical icon cards, 1-2-3 steps, stat rows, emoji nav, all-caps labels, stock shadcn) and what LangHarness does instead. Use before and after designing or restyling any screen, component, page, mockup or artifact, and when reviewing a UI diff."
+description: "Checklist of the visual tells that make a UI look AI-generated (Inter everywhere, lavender accent, gradients, glows, glassmorphism, colored card edges, badge over a centered hero, identical icon cards, 1-2-3 steps, stat rows, emoji nav, all-caps labels, stock shadcn) and what Lanna does instead. Use before and after designing or restyling any screen, component, page, mockup or artifact, and when reviewing a UI diff."
 ---
 
 # Anti-slop design
 
-A page an agent builds from defaults looks like every other page an agent built from defaults. The learner notices, even without a name for it, and reads it as "nobody decided this". LangHarness already has a direction of its own (the trail design, rule E30). This skill keeps new work on it.
+A page an agent builds from defaults looks like every other page an agent built from defaults. The learner notices, even without a name for it, and reads it as "nobody decided this". Lanna already has a direction of its own (the trail design, rule E30). This skill keeps new work on it.
 
 Use it twice: once **before** you write markup (pick from the "Do instead" column), and once **after** (run the checks at the bottom on your diff).
 
 ## The tells
 
-| Area       | Slop tell                                                                                                | Do instead in LangHarness                                                                                                                                                                                                          |
+| Area       | Slop tell                                                                                                | Do instead in Lanna                                                                                                                                                                                                                |
 | ---------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Type       | Inter (or Geist, Space Grotesk) for everything, especially a big centered headline                       | Chrome in Bricolage Grotesque, prose in Source Sans 3 (E30). Never add a third family.                                                                                                                                             |
 | Type       | One hero word in italic serif on a sans page                                                             | No accent words. Emphasis comes from weight and size inside the existing scale.                                                                                                                                                    |
@@ -32,7 +32,7 @@ Use it twice: once **before** you write markup (pick from the "Do instead" colum
 
 ## The bar
 
-- **One bold choice per screen, and only one.** In LangHarness that is usually the climb or the sun-colored main button. Everything around it stays quiet.
+- **One bold choice per screen, and only one.** In Lanna that is usually the climb or the sun-colored main button. Everything around it stays quiet.
 - **A decision you can name beats a default you cannot.** If you cannot say why a color, font, radius or shadow is there, take it out or replace it with a token.
 - **Write the decision down.** A new visual rule that every later screen must follow goes into `CLAUDE.md` in the same PR, so the next agent does not fall back to defaults.
 

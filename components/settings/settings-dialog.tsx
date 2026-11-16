@@ -260,7 +260,7 @@ function SettingsDialogBody({
 					</div>
 					<div className="min-w-0">
 						<h2 className="truncate font-ui text-base font-semibold tracking-[-0.01em] text-foreground">Settings</h2>
-						<p className="text-xs text-muted-foreground max-md:hidden">How LangHarness teaches, sounds and looks</p>
+						<p className="text-xs text-muted-foreground max-md:hidden">How Lanna teaches, sounds and looks</p>
 					</div>
 				</div>
 				<button
@@ -379,7 +379,7 @@ function SettingsDialogBody({
 							{active === "keys" && (
 								<SettingsSection
 									title="API keys"
-									hint="The keys and subscriptions that let LangHarness use AI models and AI voices."
+									hint="The keys and subscriptions that let Lanna use AI models and AI voices."
 									testid="section-keys"
 								>
 									<KeysSection initialRow={initialRow ?? undefined} />
@@ -388,7 +388,7 @@ function SettingsDialogBody({
 							{active === "ai" && (
 								<SettingsSection
 									title="AI models"
-									hint="Which AI models LangHarness uses, what they may look up, and their instructions. Needs an API key."
+									hint="Which AI models Lanna uses, what they may look up, and their instructions. Needs an API key."
 									testid="section-ai"
 								>
 									<AiSection
@@ -425,7 +425,7 @@ function SettingsDialogBody({
 							{active === "devices" && (
 								<SettingsSection
 									title="Devices"
-									hint="Use LangHarness on a phone or iPad over your own Tailscale network. Off by default: until you turn it on, only this computer can open the app."
+									hint="Use Lanna on a phone or iPad over your own Tailscale network. Off by default: until you turn it on, only this computer can open the app."
 									testid="section-devices"
 								>
 									<DevicesSection />

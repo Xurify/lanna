@@ -1,5 +1,5 @@
 /**
- * The Plan page's what-if (LangHarness, 2026-10-28): drag the minutes a day
+ * The Plan page's what-if (2026-10-28): drag the minutes a day
  * or the days a week and every date moves. The sums are the app's usual
  * ones (guided hours at planned hours a week; src/core/milestones.ts for the
  * milestones), run again on the client with the slider's values in place of

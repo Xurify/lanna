@@ -1,5 +1,5 @@
 /**
- * Which pair to catch, and whether the model's item checks out (LangHarness,
+ * Which pair to catch, and whether the model's item checks out (Lanna,
  * 2026-11-05; creator-hooks proposal 6). Catch the mistake shows a short item
  * with one wrong word from a pair the learner keeps mixing up (E24); the
  * learner taps it and types the right one.

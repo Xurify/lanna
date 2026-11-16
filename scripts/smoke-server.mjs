@@ -15,8 +15,8 @@
  * Electron shell does (electron/main.cjs) — with --electron it uses
  * Electron's bundled Node via ELECTRON_RUN_AS_NODE, otherwise host Node —
  * 127.0.0.1 on a kernel-assigned
- * free port, NODE_ENV=production, a THROWAWAY LH_DATA_DIR and an EMPTY
- * LH_AUTH_FILE under os.tmpdir() (no real keys or data ever touch it) —
+ * free port, NODE_ENV=production, a THROWAWAY LANNA_DATA_DIR and an EMPTY
+ * LANNA_AUTH_FILE under os.tmpdir() (no real keys or data ever touch it) —
  * polls GET / until it answers (200, or the first-run redirect to /start
  * that an empty profile gets), then probes the GET-only API surface (setup,
  * graph / models / settings — no side effects). Any other status, an early server
@@ -123,8 +123,8 @@ async function main() {
 			NODE_ENV: "production",
 			PORT: String(port),
 			HOSTNAME: "127.0.0.1",
-			LH_DATA_DIR: dataDir,
-			LH_AUTH_FILE: authFile,
+			LANNA_DATA_DIR: dataDir,
+			LANNA_AUTH_FILE: authFile,
 		},
 		stdio: ["ignore", "pipe", "pipe"],
 	});

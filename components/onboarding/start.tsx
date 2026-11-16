@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Setup (LangHarness onboarding, 2026-10-28) — the minute that replaces
+ * Setup (onboarding, 2026-10-28) — the minute that replaces
  * the placement chat. Four short screens, every one skippable, no model
  * call anywhere:
  *

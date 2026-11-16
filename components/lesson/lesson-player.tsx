@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The lesson player (LangHarness redesign): 12 quick reps, each answered
+ * The lesson player (redesign): 12 quick reps, each answered
  * in a second or two, with instant color-and-sound feedback, a combo
  * meter, a progress bar and an end screen. Blitz mode is the same player
  * against a 60-second clock, choose-only, no feedback sheet.

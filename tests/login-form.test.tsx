@@ -32,7 +32,7 @@ describe("the sign-in form", () => {
 		const beforeHeading = html.slice(0, html.indexOf("<h1"));
 		assert.match(beforeHeading, /<svg[^>]*aria-hidden="true"/);
 		assert.match(beforeHeading, /fill="#0D6764"/);
-		assert.match(html, /<h1[^>]*>Welcome to Lang<span[^>]*>Harness<\/span><\/h1>/);
+		assert.match(html, /<h1[^>]*>Welcome to Lanna<\/h1>/);
 	});
 
 	it("is one column on the page, not a card", () => {

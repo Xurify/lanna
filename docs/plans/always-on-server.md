@@ -1,4 +1,4 @@
-# Using LangHarness away from the PC: the plan
+# Using Lanna away from the PC: the plan
 
 Status: **proposed; revised 2026-11-09: the owner wants a web app at its own address (route W), and each device already runs its own language (E75).** Nothing in this plan is built yet. The evidence, prices and sources are in [../research/always-on-server.md](../research/always-on-server.md). The rules it builds on are E7 (local data), E20 (an installable web app), E21 (Tailscale and pairing) and E45 (one running language).
 
@@ -10,7 +10,7 @@ The owner can study on the iPhone and the iPad from anywhere, with the PC switch
 
 ## What is already true
 
-- **LangHarness already is a web app.** The phone uses the same pages in Safari, installed to the Home Screen (E20). There is no second app to build. The only open question is which machine runs the server behind those pages. Today that machine is the PC, so the phone works only while the PC is on.
+- **Lanna already is a web app.** The phone uses the same pages in Safari, installed to the Home Screen (E20). There is no second app to build. The only open question is which machine runs the server behind those pages. Today that machine is the PC, so the phone works only while the PC is on.
 - **The owner already has three machines that are always on: the Synology NAS, the VPS that runs flags.games, and the router.** Using one of them adds no new device that has to keep running. The old laptop and the Raspberry Pi are not needed.
 - **The app cannot go on a serverless host such as Vercel.** It writes plain files from one long-running process (E7, `docs/architecture.md`), keeps each request's language in Next's request store (E75), and runs yt-dlp and a headless Chromium. It needs an ordinary machine with a disk.
 
@@ -24,7 +24,7 @@ The owner can study on the iPhone and the iPad from anywhere, with the PC switch
 | B. The PC, woken from the phone                                    | The PC sleeps; the router's app wakes it (Wake-on-LAN) before a session                                              | works                                                                 | $0                                      | fallback                                 |
 | D. A store app                                                     | Wrap the web app for the App Store                                                                                   | as the server behind it                                               | Apple $99 a year                        | not recommended (E20)                    |
 
-A web app at a public address (open `https://langharness.<your domain>` in any browser, with no Tailscale app on the phone) is a choice of how to reach the server, not a separate route. It works with V, and with N through the router; see decision 2.
+A web app at a public address (open `https://lanna.<your domain>` in any browser, with no Tailscale app on the phone) is a choice of how to reach the server, not a separate route. It works with V, and with N through the router; see decision 2.
 
 ## Three checks first (owner, about 10 minutes)
 
@@ -38,7 +38,7 @@ A web app at a public address (open `https://langharness.<your domain>` in any b
 
    A list of subtitle languages means YouTube accepts the address, today. "Sign in to confirm you're not a bot" means it refuses it, and Watch could not prepare new videos from there. Run it two or three times over a day. An address's reputation can change later, so a pass is not a guarantee.
 
-3. **Memory on the VPS.** `free -h` on the VPS. LangHarness needs about 1 GB free to run, plus a few hundred MB more while the tutor's headless browser is open (an estimate), and a few GB to build. The image can be built elsewhere.
+3. **Memory on the VPS.** `free -h` on the VPS. Lanna needs about 1 GB free to run, plus a few hundred MB more while the tutor's headless browser is open (an estimate), and a few GB to build. The image can be built elsewhere.
 
 ## Decisions for the owner
 
@@ -48,7 +48,7 @@ Each decision has a recommendation, and work can start on the recommended option
 2. **How the phone reaches it.**
    - Recommended: **Tailscale**, as built. Leave the Tailscale app connected on the phone (iOS "VPN On Demand"); after that, nothing changes day to day.
    - Alternative: **a public address with the pairing code as the login.** The app then opens in any browser with no Tailscale app. It needs a small change to the gate, because today E21 accepts only tailnet names (work item 1h). The server and its keys would also be reachable from the internet, so only the pairing gate protects them. That reverses part of E21, so it is the owner's call. On the VPS this means a subdomain behind the reverse proxy that already serves flags.games. On the NAS it means a port forward on the router or a tunnel, which is not recommended for a box that also holds your files.
-3. **Where real study happens, and where branches are tested.** Today agents deploy pull-request branches to the PC's dev server, which uses the real profile (W3). Recommended: **the server runs `main` and holds the real profile. The PC's dev server tests branches on a copy of the server's data, refreshed each night** (`LH_DATA_DIR` pointed at the copy). The cost: an answer given while testing a branch does not count toward real progress.
+3. **Where real study happens, and where branches are tested.** Today agents deploy pull-request branches to the PC's dev server, which uses the real profile (W3). Recommended: **the server runs `main` and holds the real profile. The PC's dev server tests branches on a copy of the server's data, refreshed each night** (`LANNA_DATA_DIR` pointed at the copy). The cost: an answer given while testing a branch does not count toward real progress.
 4. **Cheatsheets in the repo.** The app writes repo sheets in place (`curriculum/<language>/cheatsheets/`, E50 Cheatsheets). Recommended: **mount that folder from the NAS share or the server's disk, and have the update script push edits to a branch named `sheets/<date>` for the owner to merge.**
 5. **How updates reach the server.** Recommended: **a timer checks `main` every 10 minutes, then builds a new image and switches over only when the build and a boot check pass**, keeping the last three images. The owner keeps merging pull requests as today (W2).
 
@@ -60,7 +60,7 @@ This tries the real phone experience before anything moves. The checks below app
 
 1. Pull `main` and start the production build: `bun run desktop:prod`. Dev mode is too slow to judge on a phone (E36). The production build serves the fixed port 3010, so Tailscale works with it.
 2. Follow [../remote-access.md](../remote-access.md): install Tailscale on the PC, iPhone and iPad, turn on MagicDNS and HTTPS certificates, then turn on Settings → Devices → Remote access, run `tailscale serve --bg 3010`, and pair the **iPhone and the iPad**. Pairing both means either one can make a code for the other later.
-3. Add LangHarness to the Home Screen from Safari on both devices.
+3. Add Lanna to the Home Screen from Safari on both devices.
 
 | Check                                                       | Where        | Pass if                                                             |
 | ----------------------------------------------------------- | ------------ | ------------------------------------------------------------------- |
@@ -88,7 +88,7 @@ Each item is its own branch and pull request, tested on a scratch data folder (E
 | 1e  | **The update script:** check `main`, build the image, run the boot check, switch only when it passes, keep three images, push repo-cheatsheet edits (decision 4)                                                                                                                           | an update never takes the app down                                                             | medium          |
 | 1f  | **Backups:** on the NAS, a share with snapshots plus Hyper Backup; on the VPS, a nightly copy to the NAS over the tailnet. Either way, a check that every JSON file parses, and one restore drill                                                                                          | the server becomes the only copy of the learner's work                                         | small           |
 | 1g  | **Fixes from phase 0,** such as unlocking iOS sound on the first tap if autoplay fails                                                                                                                                                                                                     | only what the device checks find                                                               | depends         |
-| 1h  | **Only if decision 2 picks a public address:** `LH_PUBLIC_HOST` lets the gate accept one named host over HTTPS, always behind pairing; pairing is limited per address as well as per code; the guide covers the reverse proxy                                                              | the public option                                                                              | small to medium |
+| 1h  | **Only if decision 2 picks a public address:** `LANNA_PUBLIC_HOST` lets the gate accept one named host over HTTPS, always behind pairing; pairing is limited per address as well as per code; the guide covers the reverse proxy                                                           | the public option                                                                              | small to medium |
 | 1i  | **Settings → Devices shows the server's address and the exact Serve command**                                                                                                                                                                                                              | setup without reading                                                                          | small           |
 
 **Phase 1 is done when** 1b to 1f are merged, and the image boots in the cloud sandbox on a scratch data folder with fake keys.
@@ -98,7 +98,7 @@ Each item is its own branch and pull request, tested on a scratch data folder (E
 **On the NAS:**
 
 1. Install Container Manager and Tailscale from the Package Center, and sign Tailscale in to your account.
-2. Make a shared folder `langharness` with snapshots turned on, and subfolders `data` and `keys`.
+2. Make a shared folder `lanna` with snapshots turned on, and subfolders `data` and `keys`.
 3. Load the image (built on the NAS if it has the memory, otherwise on the PC) and start it with the compose file from the guide.
 4. Turn on Tailscale Serve for port 3010 on the NAS, as the guide shows for the Synology package.
 
@@ -111,7 +111,7 @@ Each item is its own branch and pull request, tested on a scratch data folder (E
 **Then, either way:**
 
 1. **Move the data:**
-   - Quit LangHarness on the PC.
+   - Quit Lanna on the PC.
    - Copy `data/`, `auth.json` and the keys in `.env.local` to the server's `data` and `keys` folders.
    - Start the server, and only then rename the PC's `data/` to `data-moved-<date>`, so the PC can never write to it by accident.
 2. Run `npm run remote:code` inside the container (1b), turn remote access on, and pair the PC's browser, the iPhone and the iPad.
@@ -150,7 +150,7 @@ Study as normal for seven days, mostly on the phone and the iPad. Agents read th
 
 ## Route W: a web app at its own address
 
-**What the owner gets:** LangHarness at `https://learn.<your domain>`, like flags.games. Open it on the iPhone, the iPad, the PC or any other browser, sign in once per device, and add it to the Home Screen. There is no Tailscale, the PC can be off, and every device sees the same progress.
+**What the owner gets:** Lanna at `https://learn.<your domain>`, like flags.games. Open it on the iPhone, the iPad, the PC or any other browser, sign in once per device, and add it to the Home Screen. There is no Tailscale, the PC can be off, and every device sees the same progress.
 
 **What it takes:** the app's screens and data stay as they are. Three things change:
 
@@ -162,15 +162,15 @@ The pieces already in place carry most of the weight. The device session from E2
 
 ### W, phase 1: the app work (agents in the cloud; one pull request each)
 
-| #   | Work                                                                                                                                                                                                                                                                                                                                                                                               | Size    |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| W1  | **Sign-in page and password.** `/login` with one owner password, hashed with scrypt and set from the terminal with `npm run web:password`. A correct password creates an E21 device session, which Settings → Devices lists and can sign out. Wrong tries are limited per address (5 a minute, then a 15-minute wait). Turning web access off signs every device out.                              | medium  |
-| W2  | **The gate for a public address.** `LH_PUBLIC_HOST` names the one host the app answers. Requests must arrive from the local reverse proxy with HTTPS; any other host is refused. Everything except `/login`, its POST and the static assets needs a session. A POST must come from the app's own page (an Origin check, on top of SameSite=Lax). The E21 Tailscale path keeps working beside it.   | medium  |
-| W3  | **A security pass before the address goes live:** response headers (HSTS, CSP, frame-ancestors none), size limits on every upload route, a check that the URLs Watch and the tutor's web tools fetch cannot reach the VPS's own services (localhost, the metadata address, the private ranges), and a check that no API route returns a secret. Each finding is fixed or recorded with its reason. | medium  |
-| W4  | **Already on `main`:** each device runs its own language (E75). Nothing to build.                                                                                                                                                                                                                                                                                                                  | –       |
-| W5  | **Container image and compose file** (1c), **update script** (1e), and **a nightly backup** from the VPS to the NAS or the PC over the tailnet, or to off-site storage (1f)                                                                                                                                                                                                                        | medium  |
-| W6  | **Watch if YouTube refuses the VPS:** an optional `LH_YOUTUBE_PROXY` that sends only YouTube requests, including yt-dlp, through a small proxy on the NAS over the tailnet. Off by default, and built only if check 2 fails.                                                                                                                                                                       | small   |
-| W7  | **Fixes from the phone checks** (phase 0, run against the web address instead of the PC)                                                                                                                                                                                                                                                                                                           | depends |
+| #   | Work                                                                                                                                                                                                                                                                                                                                                                                                | Size    |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| W1  | **Sign-in page and password.** `/login` with one owner password, hashed with scrypt and set from the terminal with `npm run web:password`. A correct password creates an E21 device session, which Settings → Devices lists and can sign out. Wrong tries are limited per address (5 a minute, then a 15-minute wait). Turning web access off signs every device out.                               | medium  |
+| W2  | **The gate for a public address.** `LANNA_PUBLIC_HOST` names the one host the app answers. Requests must arrive from the local reverse proxy with HTTPS; any other host is refused. Everything except `/login`, its POST and the static assets needs a session. A POST must come from the app's own page (an Origin check, on top of SameSite=Lax). The E21 Tailscale path keeps working beside it. | medium  |
+| W3  | **A security pass before the address goes live:** response headers (HSTS, CSP, frame-ancestors none), size limits on every upload route, a check that the URLs Watch and the tutor's web tools fetch cannot reach the VPS's own services (localhost, the metadata address, the private ranges), and a check that no API route returns a secret. Each finding is fixed or recorded with its reason.  | medium  |
+| W4  | **Already on `main`:** each device runs its own language (E75). Nothing to build.                                                                                                                                                                                                                                                                                                                   | –       |
+| W5  | **Container image and compose file** (1c), **update script** (1e), and **a nightly backup** from the VPS to the NAS or the PC over the tailnet, or to off-site storage (1f)                                                                                                                                                                                                                         | medium  |
+| W6  | **Watch if YouTube refuses the VPS:** an optional `LANNA_YOUTUBE_PROXY` that sends only YouTube requests, including yt-dlp, through a small proxy on the NAS over the tailnet. Off by default, and built only if check 2 fails.                                                                                                                                                                     | small   |
+| W7  | **Fixes from the phone checks** (phase 0, run against the web address instead of the PC)                                                                                                                                                                                                                                                                                                            | depends |
 
 ### W, phase 2: going live (owner, about an hour, with `docs/server.md`)
 
@@ -180,7 +180,7 @@ The pieces already in place carry most of the weight. The device session from E2
 4. Add the subdomain to the reverse proxy flags.games uses (nginx, Caddy or similar), with HTTPS, proxying to 127.0.0.1:3010.
 5. Set the password with `npm run web:password` inside the container.
 6. **Move the data:**
-   - Quit LangHarness on the PC.
+   - Quit Lanna on the PC.
    - Copy `data/`, `auth.json` and the keys in `.env.local` to the container's volume.
    - Start the container, and only then rename the PC's `data/` to `data-moved-<date>`.
 7. Sign in on the iPhone, the iPad and the PC, and add the app to each Home Screen or taskbar.
@@ -220,7 +220,7 @@ This is for the case where neither the NAS nor the VPS can run the app.
 
 1. Run phase 0.
 2. Turn on Wake-on-LAN in the PC's BIOS and its network adapter (Ethernet is the reliable case). Let Windows sleep as usual.
-3. Before a session, wake the PC from the router's app, if the router has a Wake-on-LAN button. Many do; check the router's app or web page. It takes about half a minute. `bun run desktop:prod` survives sleep, so LangHarness comes back with the PC.
+3. Before a session, wake the PC from the router's app, if the router has a Wake-on-LAN button. Many do; check the router's app or web page. It takes about half a minute. `bun run desktop:prod` survives sleep, so Lanna comes back with the PC.
 4. Add a Task Scheduler entry that starts `bun run desktop:prod` at log-in, so a restart brings the app back.
 
 **Cost:** $0. **Limit:** a wake before every session; if Windows restarts for an update or the PC hangs, the phone is down until someone is home.

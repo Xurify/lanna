@@ -1,5 +1,5 @@
 /**
- * Scenes with a date (LangHarness, 2026-11-05; creator-hooks proposal 3), on
+ * Scenes with a date (2026-11-05; creator-hooks proposal 3), on
  * the server. A dated scene is a custom milestone (src/server/milestones.ts)
  * with a date and, once the date has passed, the line the learner wrote about
  * it. Every write checks its date on the learner's own day before anything

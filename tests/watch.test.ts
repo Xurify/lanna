@@ -1,12 +1,12 @@
 /**
- * WATCH PINS (LangHarness, 2026-10-28): a YouTube link becomes a guided
+ * WATCH PINS (2026-10-28): a YouTube link becomes a guided
  * video — the link parsed, the caption formats read, the cues cut into
  * lines the ear can hold, the coverage and pre-teach pass, the record on
  * disk from a scripted engine (translation + questions), the watching
  * recorded (first-listen stats, XP, the deck), the daily plan and the
  * strand balance counting it.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -17,8 +17,8 @@ import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-watch-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
 const core = await import("../src/core/watch.ts");

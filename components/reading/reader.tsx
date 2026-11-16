@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The reader (LangHarness, 2026-10-28) — the Read task's screen. One
+ * The reader (2026-10-28) — the Read task's screen. One
  * episode of a graded story at the learner's level: the text in large
  * Slovak type, every word tappable for its dictionary form and meaning,
  * every sentence with its own play button and a Play all that reads the

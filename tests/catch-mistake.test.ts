@@ -1,9 +1,9 @@
 /**
- * CATCH THE MISTAKE (LangHarness, 2026-11-06): the items the exercise is built from (src/core/catch-mistake.ts)
+ * CATCH THE MISTAKE (2026-11-06): the items the exercise is built from (src/core/catch-mistake.ts)
  * and the server that serves them (src/server/catch-mistake.ts). The pair comes from chooseCatch and the check
  * is verifyCatch, both from src/core/catch-pair.ts. One item is made on a scripted engine and kept; a second
  * visit gets the same item; an answer is graded once; the pair is held back after it. Runs under its own
- * scratch LH_DATA_DIR, never the real profile.
+ * scratch LANNA_DATA_DIR, never the real profile.
  */
 
 import assert from "node:assert/strict";
@@ -17,8 +17,8 @@ import { PAIRS } from "../src/core/pairs.ts";
 import { chooseCatch, type CatchLexicon, type CatchTarget } from "../src/core/catch-pair.ts";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-catch-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const core = await import("../src/core/catch-mistake.ts");

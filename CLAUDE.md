@@ -1,6 +1,6 @@
-# Working on LangHarness
+# Working on Lanna
 
-LangHarness is a local-first, agent-assisted language learning harness. Read these before changing anything:
+Lanna is a local-first, agent-assisted language learning harness. Read these before changing anything:
 
 1. This file: the product principles (P) and working rules (W) below.
 2. [docs/learner.md](docs/learner.md): what the app assumes about its learners and what makes them drop off.
@@ -34,7 +34,7 @@ There is no decisions file and no changelog. Why something was built, what was c
 
 ## Engineering rules
 
-Every task is retrieval-first with graded, priced help; cache every model or TTS output to `data/` before calling an API; custom UI with no native widgets and no layout shift; full grammar words (accusative, not acc.); test with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile. Run `npm run typecheck`, `npm run lint` (`oxlint` + `eslint`), `npm run fmt:check` (`oxfmt`), and `npm test` before calling work done. A keydown handler on a typing field that calls `preventDefault()` lets a dead key (`key: "Dead"`) and IME composition through (`belongsToLayoutAccent`, `src/core/accent-keys.ts`): preventing them cancels the accent the learner's own keyboard layout is typing.
+Every task is retrieval-first with graded, priced help; cache every model or TTS output to `data/` before calling an API; custom UI with no native widgets and no layout shift; full grammar words (accusative, not acc.); test with `NODE_ENV=test` and `LANNA_DATA_DIR` set to a scratch folder, never the real profile. Run `npm run typecheck`, `npm run lint` (`oxlint` + `eslint`), `npm run fmt:check` (`oxfmt`), and `npm test` before calling work done. A keydown handler on a typing field that calls `preventDefault()` lets a dead key (`key: "Dead"`) and IME composition through (`belongsToLayoutAccent`, `src/core/accent-keys.ts`): preventing them cancels the accent the learner's own keyboard layout is typing.
 
 - **Story covers** are the one place with colour besides teal: ink scenes with loose watercolour washes in four low-chroma hues (`--q-wash-ochre`, `-rose`, `-sage`, `-sky`), one teal patch on the thing the story is about. The story writer picks the scene (`cover`); how a scene is drawn and reviewed is the `ink-drawing` skill, "Story covers".
 

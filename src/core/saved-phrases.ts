@@ -1,5 +1,5 @@
 /**
- * Saved Phrases and Word Bank (LangHarness) — pure models and calculations.
+ * Saved Phrases and Word Bank — pure models and calculations.
  *
  * Supports:
  * - Bookmarked / saved phrases from stories, scenes, lessons, and custom inputs.

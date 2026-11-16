@@ -86,7 +86,7 @@ export function listSourceSegments(agent: PromptAgent): Array<{ path: string; sh
 			segments.push({ path: `${agent}/${f}`, shared: false, file: path.join(dir, f) });
 		}
 	}
-	// LangHarness: the active language profile's doctrine (target language,
+	// Lanna: the active language profile's doctrine (target language,
 	// the bridges from the learner's languages, immersion, audio and spelling rules)
 	// composes into EVERY agent, after its own fragments and before the
 	// shared appendix. language/<NN>-<profile>.md — only the active one.

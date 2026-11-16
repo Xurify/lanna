@@ -1,5 +1,5 @@
 /**
- * Form slips (LangHarness, 2026-10-31): what a wrong answer on a form drill
+ * Form slips (2026-10-31): what a wrong answer on a form drill
  * got wrong, named from the word's dictionary form and its known forms. The
  * verdict does not change (exact, accents, wrong); a slip says what kind of
  * wrong it was, so the grammar atlas can show the pattern behind a cell.

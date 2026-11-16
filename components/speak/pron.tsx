@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Pronunciation on screen (LangHarness, 2026-10-28): the chip a spoken
+ * Pronunciation on screen (2026-10-28): the chip a spoken
  * line gets, and the "work on" block the end screens share (src/core/
  * pronounce.ts for the scores and the report).
  */

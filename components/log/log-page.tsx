@@ -129,7 +129,7 @@ export function LogPage({ initial = null }: { initial?: { today: string; days: D
 				) : (
 					<p className="q-line dim mt-6">
 						{failed
-							? "The log could not be loaded. Check that LangHarness is still running, then reload."
+							? "The log could not be loaded. Check that Lanna is still running, then reload."
 							: days
 								? "No days yet. Each finished task shows up here."
 								: "\u00a0"}

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Today — the LangHarness front page, in the Quiet tool layout (redesign
+ * Today — the Lanna front page, in the Quiet tool layout (redesign
  * 2026-11-02, from the mockup r3-3-quiet/home-desktop and home-phone).
  *
  * A main column and a rail. The column says how the day stands (greeting,
@@ -334,7 +334,7 @@ export function Today({
 
 							{failed && (
 								<p className="mt-6 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground" role="alert">
-									Unable to load your progress. Check that LangHarness is still running, then{" "}
+									Unable to load your progress. Check that Lanna is still running, then{" "}
 									<button type="button" className="font-[550] underline underline-offset-2" onClick={load}>
 										try again
 									</button>

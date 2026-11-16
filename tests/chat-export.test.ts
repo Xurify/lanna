@@ -50,7 +50,7 @@ describe("chat-export", () => {
 			exportedAt: "2026-11-08",
 		});
 
-		assert.ok(md.startsWith("# Demonstratives\n\n*Exported from LangHarness · 2026-11-08*"));
+		assert.ok(md.startsWith("# Demonstratives\n\n*Exported from Lanna · 2026-11-08*"));
 		assert.ok(md.includes("## Learner\n\nWhy is it ten muž, but táto kniha?"));
 		assert.ok(md.includes('## Tutor\n\n**ten muž** = "that man"'), "a say: span reads as the bold form, not as code");
 		assert.ok(md.includes('```svg\n<svg viewBox="0 0 320 180"><text>ten muž</text></svg>\n```'));
@@ -221,7 +221,7 @@ describe("chat-export", () => {
 		};
 
 		assert.equal(parsed.version, 1);
-		assert.equal(parsed.format, "langharness-chat-export");
+		assert.equal(parsed.format, "lanna-chat-export");
 		assert.equal(parsed.chatId, "chat-123");
 		assert.equal(parsed.title, "Greetings");
 		assert.equal(parsed.messages.length, 1);

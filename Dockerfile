@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# docker buildx build --platform linux/amd64,linux/arm64 -t langharness:local .
+# docker buildx build --platform linux/amd64,linux/arm64 -t lanna:local .
 # The base image comes from Docker Hub, which rate-limits shared addresses:
 # --build-arg NODE_IMAGE=mirror.gcr.io/library/node:26-bookworm-slim uses Google's mirror of it.
 ARG NODE_IMAGE=node:26-bookworm-slim
@@ -46,9 +46,9 @@ ENV NODE_ENV=production \
 	PORT=3010 \
 	HOSTNAME=0.0.0.0 \
 	HOME=/home/lh \
-	LH_DATA_DIR=/data \
-	LH_AUTH_FILE=/keys/auth.json \
-	LH_REPO_CHEATSHEETS_DIR=/sheets \
+	LANNA_DATA_DIR=/data \
+	LANNA_AUTH_FILE=/keys/auth.json \
+	LANNA_REPO_CHEATSHEETS_DIR=/sheets \
 	CHROME_PATH=/usr/bin/chromium
 WORKDIR /app
 COPY --from=build /src/.next/standalone ./

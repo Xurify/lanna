@@ -1,5 +1,5 @@
 /**
- * Story voices (LangHarness reading, 2026-10-28): which TTS voice reads
+ * Story voices (reading, 2026-10-28): which TTS voice reads
  * which part of a story, so a dialogue sounds like two people and not
  * one flat narrator. Xurify: "the voice for these stories should be
  * based on the story — it doesn't flow correctly because of the way the

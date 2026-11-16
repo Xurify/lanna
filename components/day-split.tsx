@@ -40,7 +40,7 @@ export function DaySplit({
 			body: JSON.stringify({ minutes }),
 		}).catch(() => null);
 		if (!res?.ok) {
-			setError("Could not save the split. Check that LangHarness is still running.");
+			setError("Could not save the split. Check that Lanna is still running.");
 			setBusy(false);
 			return;
 		}

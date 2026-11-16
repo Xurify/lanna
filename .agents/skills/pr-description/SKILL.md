@@ -1,6 +1,6 @@
 ---
 name: pr-description
-description: How a LangHarness pull request description is written and what it carries (what changes for the learner, screenshots in Day and Night at two widths, how to try it in the sandbox, commit-pinned links to the changed code, what was and was not checked). Use before opening a PR, after the last push to one, and when asked to improve or fix a PR description.
+description: How a Lanna pull request description is written and what it carries (what changes for the learner, screenshots in Day and Night at two widths, how to try it in the sandbox, commit-pinned links to the changed code, what was and was not checked). Use before opening a PR, after the last push to one, and when asked to improve or fix a PR description.
 ---
 
 # Pull request description
@@ -33,7 +33,7 @@ The rule is **W5**; the shape is `.github/pull_request_template.md`. This repo's
      `gh` automatically uploads each file to GitHub user-attachments and rewrites the local Markdown image paths in the PR description to `https://github.com/user-attachments/assets/<uuid>`.
    - **Always include images and screenshots of the changed thing**: A PR is not ready for review until the screenshots are attached and rendered in the PR body. Never hand back a PR to the user without embedded screenshots.
 4. **Try it**: one checkbox per thing to check: the route in the sandbox, what to do, what to see.
-5. **Where**: one link per part of the diff, `https://github.com/Xurify/langharness/blob/<head SHA>/<path>#L<from>-L<to>`, the part the learner sees first, then the logic, the tests, the docs and skills. Re-pin the SHA and the lines after the last push (`git rev-parse HEAD`).
+5. **Where**: one link per part of the diff, `https://github.com/Xurify/lanna/blob/<head SHA>/<path>#L<from>-L<to>`, the part the learner sees first, then the logic, the tests, the docs and skills. Re-pin the SHA and the lines after the last push (`git rev-parse HEAD`).
 6. **Removed**: anything a learner has now that the PR takes away. The owner signs that off.
 7. **Checked**: the real counts (`npm test`, `npm run typecheck`, `npm run lint`), then what was looked at (page, theme, width) and **Not looked at:**. Never "should work".
 8. A PR that adds or changes a drawn explanation says how it was reviewed: the blind review in the `ink-drawing` skill, and the limits that remain.

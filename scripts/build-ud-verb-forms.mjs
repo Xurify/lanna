@@ -1,5 +1,5 @@
 /**
- * Verb forms from the Universal Dependencies Slovak treebank (LangHarness,
+ * Verb forms from the Universal Dependencies Slovak treebank (Lanna,
  * 2026-11-01). The forms are what the cloze step of the lexicon export blanks
  * in existing sentences (scripts/export-slovakwiki-lexicon.mjs).
  *

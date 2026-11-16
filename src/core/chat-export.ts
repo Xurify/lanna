@@ -124,7 +124,7 @@ function answerMarkdown(question: QuestionAnswerData): string {
 export function exportChatMarkdown(messages: ReadonlyArray<ExportMessage>, opts: ChatExportOptions = {}): string {
 	const title = opts.title?.trim() || "Chat";
 	const date = opts.exportedAt || new Date().toISOString().slice(0, 10);
-	const blocks: string[] = [`# ${title}`, `*Exported from LangHarness · ${date}*`, "---"];
+	const blocks: string[] = [`# ${title}`, `*Exported from Lanna · ${date}*`, "---"];
 
 	let speaking: Speaker | null = null;
 	const say = (speaker: Speaker, body: string) => {
@@ -276,7 +276,7 @@ export function exportChatJson(
 ): string {
 	const payload = {
 		version: 1,
-		format: "langharness-chat-export",
+		format: "lanna-chat-export",
 		chatId,
 		title: title.trim() || "Chat",
 		exportedAt: new Date().toISOString(),

@@ -1,5 +1,5 @@
 /**
- * Scripted scenes (LangHarness, 2026-10-30, E13): each Speak scene has an
+ * Scripted scenes (2026-10-30, E13): each Speak scene has an
  * authored script the learner can walk through before saying it live —
  * the tutor's line, then a choice of three next lines, one right and two
  * plausible slips. The scripts are data in curriculum/slovak/scenes/

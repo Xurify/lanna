@@ -1,6 +1,6 @@
 /**
  * The auth file under the test fence (2026-11-06): a test run that does not
- * set LH_AUTH_FILE must never resolve the repo-root auth.json, where the
+ * set LANNA_AUTH_FILE must never resolve the repo-root auth.json, where the
  * learner's keys live in dev. And an unknown var held in the file (a stray
  * fixture such as "B": "2") can be deleted through DELETE /api/keys/:id,
  * while an unknown id that is not in the file stays a 404.
@@ -12,9 +12,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-delete process.env.LH_AUTH_FILE;
+delete process.env.LANNA_AUTH_FILE;
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-auth-fence-"));
-process.env.LH_DATA_DIR = TMP;
+process.env.LANNA_DATA_DIR = TMP;
 
 const { AUTH_FILE, ROOT } = await import("../config.ts");
 const { authStore } = await import("../src/store/auth.ts");

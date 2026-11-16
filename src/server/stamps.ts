@@ -1,5 +1,5 @@
 /**
- * The stamp book's evidence and record (LangHarness, 2026-11-02; E31).
+ * The stamp book's evidence and record (2026-11-02; E31).
  * Gathers what the stamps are judged on from the progress record, the
  * review deck and the story log, judges every stamp (src/core/stamps.ts)
  * and writes the newly earned ones into progress.json with the day, so a

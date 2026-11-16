@@ -7,8 +7,8 @@ import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@ea
 import type { StoryRecord } from "../src/core/reading.ts";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-read-import-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 (process.env as Record<string, string | undefined>).NODE_ENV = "test";
 
 const core = await import("../src/core/reading.ts");

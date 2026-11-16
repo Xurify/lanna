@@ -5,7 +5,7 @@ import { SourceItem } from "@/components/sources/sources-note";
 import { FEATURES, SOURCES, sourcesOf } from "@/src/core";
 
 /**
- * /sources — the research behind every task (LangHarness, 2026-11-06).
+ * /sources — the research behind every task (2026-11-06).
  * For each feature: what the studies found, what they did not show and
  * which numbers are the app's own choice, then the references. A source
  * that two features lean on appears under each.

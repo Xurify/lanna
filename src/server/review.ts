@@ -1,5 +1,5 @@
 /**
- * Spaced review service (LangHarness) — the cloze deck behind /review and
+ * Spaced review service — the cloze deck behind /review and
  * /api/review. Mints cards from the lexicon (agent/lexicon.ts) in
  * frequency order, a daily budget of new ones, and schedules every answer
  * with FSRS (core/fsrs.ts). Persistence: src/store/review.ts.

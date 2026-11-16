@@ -1,4 +1,4 @@
-# Remote access: how a phone reaches LangHarness without exposing this PC
+# Remote access: how a phone reaches Lanna without exposing this PC
 
 Date: 2026-11-01. Rule: E21. Owner steps: [remote-access.md](../remote-access.md).
 
@@ -55,7 +55,7 @@ Trust comes from the device's own cookie (`lh_device`, HttpOnly, SameSite=Lax, S
 - Tailscale Serve on the owner's PC, and the headers it actually sends: the sandbox has no Tailscale, so the tests send the headers by hand.
 - The iPhone and iPad, Safari's cookie handling, and whether a Home Screen app shares cookies with Safari (the guide says so as unverified).
 - The packaged desktop app with remote access on. Its port changes on each start, so Serve needs a fixed port first (a later slice). The desktop window's own requests pass by the secret, which the code path shows but no test drives.
-- Dev through a tailnet name: Next's origin check refuses the page's scripts and the HMR socket unless the name is in `allowedDevOrigins`, so the page never starts and Pair does nothing. This corrects the earlier note that pages were not affected. The name comes from `LH_TAILNET_HOST` in `.env.local` (dev only). The check passes in Next's own function; the phone has not loaded the page since the change.
+- Dev through a tailnet name: Next's origin check refuses the page's scripts and the HMR socket unless the name is in `allowedDevOrigins`, so the page never starts and Pair does nothing. This corrects the earlier note that pages were not affected. The name comes from `LANNA_TAILNET_HOST` in `.env.local` (dev only). The check passes in Next's own function; the phone has not loaded the page since the change.
 
 ## Next steps (not built)
 

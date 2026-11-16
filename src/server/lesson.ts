@@ -1,5 +1,5 @@
 /**
- * Lesson + progress service (LangHarness redesign) — behind /lesson,
+ * Lesson + progress service (redesign) — behind /lesson,
  * /api/lesson and /api/progress. Lessons are built locally from the
  * lexicon (core/lesson.ts), so a rep never waits on a model. Finishing a
  * lesson records XP and the day, and every missed word goes into the

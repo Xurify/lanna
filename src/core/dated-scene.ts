@@ -1,5 +1,5 @@
 /**
- * A scene with a date (LangHarness, 2026-11-05; creator-hooks proposal 3).
+ * A scene with a date (2026-11-05; creator-hooks proposal 3).
  * The learner writes one scene in their own words and the day it should
  * work. The app says how far off the day is and whether the learner's
  * measured pace gets them there, and asks how it went once the day has

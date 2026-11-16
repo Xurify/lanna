@@ -1,10 +1,10 @@
 /**
- * WATCH LINES IN LISTEN (LangHarness, 2026-11-05; proposal 7 in
+ * WATCH LINES IN LISTEN (2026-11-05; proposal 7 in
  * docs/research/creator-hooks.md): the scheduling table, the store round trip,
  * the lines a Watch save queues, the Listen session that serves the due ones,
  * and what a Listen answer does to them. No network and no model.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -14,8 +14,8 @@ import * as path from "node:path";
 import { after, describe, test } from "node:test";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-watch-reps-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 type WatchRep = import("../src/core/watch-reps.ts").WatchRep;
 type VideoRecord = import("../src/core/watch.ts").VideoRecord;

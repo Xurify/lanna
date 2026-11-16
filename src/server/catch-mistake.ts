@@ -1,5 +1,5 @@
 /**
- * Catch the mistake, served (LangHarness, 2026-11-06). The next item is the one
+ * Catch the mistake, served (2026-11-06). The next item is the one
  * waiting for an answer; otherwise a new one is made when a pair the learner
  * mixes up qualifies (src/core/catch-pair.ts) and an AI key is set, and kept
  * in data/profiles/<language>/catch-mistake.json. Only one item waits at a

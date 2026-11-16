@@ -207,10 +207,10 @@ async function runStartedServer({
 		NODE_ENV: "production",
 		NEXT_TELEMETRY_DISABLED: "1",
 		HOSTNAME: "127.0.0.1",
-		LH_DATA_DIR: path.join(home, "data"),
-		LH_AUTH_FILE: path.join(home, "auth.json"),
-		LH_REPO_CHEATSHEETS_DIR: path.join(home, "sheets"),
-		LH_IGNORE_ENV_KEYS: "1",
+		LANNA_DATA_DIR: path.join(home, "data"),
+		LANNA_AUTH_FILE: path.join(home, "auth.json"),
+		LANNA_REPO_CHEATSHEETS_DIR: path.join(home, "sheets"),
+		LANNA_IGNORE_ENV_KEYS: "1",
 		...(process.env.CHROME_PATH ? { CHROME_PATH: process.env.CHROME_PATH } : {}),
 	};
 	prepare({ home, env });
@@ -271,7 +271,7 @@ function setPassword({ home, env }) {
 	const file = path.join(home, "password.txt");
 	fs.writeFileSync(file, `${PASSWORD}\n`, { mode: 0o600 });
 	execFileSync(process.execPath, [CLI], {
-		env: { ...env, LH_WEB_PASSWORD_FILE: file },
+		env: { ...env, LANNA_WEB_PASSWORD_FILE: file },
 		stdio: "ignore",
 		timeout: 60_000,
 	});
@@ -334,7 +334,7 @@ async function runPublicMode() {
 	}
 	await runStartedServer({
 		label: " in public mode",
-		extraEnv: { LH_PUBLIC_HOST: PUBLIC_NAME, LH_PROXY_SECRET: SECRET },
+		extraEnv: { LANNA_PUBLIC_HOST: PUBLIC_NAME, LANNA_PROXY_SECRET: SECRET },
 		prepare: setPassword,
 		probe: probePublicMode,
 		isUp: (res) => res.status === 403,

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- LangHarness: a text cursor waiting at an empty answer line. The two shapes
+  <!-- Lanna: a text cursor waiting at an empty answer line. The two shapes
        also read as an L. Colors are for the teal app tile (#0D6764): the cursor
        white, the line a pale teal (#9FE3DE). Same geometry:
        build/icon-flat.svg, app/icon.svg, components/lh-mark.tsx,

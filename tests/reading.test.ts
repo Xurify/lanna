@@ -1,11 +1,11 @@
 /**
- * READING PINS (LangHarness, 2026-10-28): the Read task's pure rules
+ * READING PINS (2026-10-28): the Read task's pure rules
  * (tokenizing, the model's JSON, grading, XP), glossing against the
  * lexicon (forms → lemma, fresh words), a whole episode written on a
  * scripted engine and kept on disk (one generation, reused until read,
  * redone once when too hard), a reading recorded (log, XP, deck, the
  * daily plan's Read task), and the corpus and spending folds seeing it.
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -17,8 +17,8 @@ import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@ea
 import type { StoryGenre, StoryRecord } from "../src/core/reading.ts";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-reading-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
 const core = await import("../src/core/reading.ts");

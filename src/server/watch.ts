@@ -1,5 +1,5 @@
 /**
- * Watch service (LangHarness, 2026-10-28) — behind /watch and /api/watch.
+ * Watch service (2026-10-28) — behind /watch and /api/watch.
  * Turns a pasted YouTube link into a guided video: the Slovak caption
  * track is fetched (YouTube's own, through the player API or the watch
  * page; yt-dlp when the app cannot; a Deepgram transcription of the

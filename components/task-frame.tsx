@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The full-screen task frame (LangHarness, 2026-10-28) — what the lesson,
+ * The full-screen task frame (2026-10-28) — what the lesson,
  * exam, Listen, Speak and Fluency screens share, in the Quiet tool look
  * (the mockup's practice screen): a fixed frame over the app (a focus
  * mode; Escape leaves), the one content column, the top bar with

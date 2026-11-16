@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Speak (LangHarness, 2026-10-28) — the output strand's screen. A scene
+ * Speak (2026-10-28) — the output strand's screen. A scene
  * from what Slovak is for (src/core/speak.ts), said out loud: the tutor's
  * line arrives as audio and text (meaning on demand), the learner holds
  * the mic and says theirs (the clip is transcribed and sent as the line;

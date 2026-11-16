@@ -1,9 +1,9 @@
 /**
- * MIX-UPS ON DISK (LangHarness, 2026-11-01): a lesson answer that gives
+ * MIX-UPS ON DISK (2026-11-01): a lesson answer that gives
  * another word lands in progress.json, shows on the summary and in the
  * Strengthen task, a Mix-ups lesson moves no unit, a review answer counts
  * too, and the tutor's block names the pair. Runs under an isolated
- * LH_DATA_DIR, so every app-module import is dynamic.
+ * LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -13,8 +13,8 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-mixups-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { recordLesson, mixupsFor } = await import("../src/server/lesson.ts");
 const { noteReviewMixup } = await import("../src/server/mixups.ts");

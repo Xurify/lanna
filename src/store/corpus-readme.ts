@@ -5,7 +5,7 @@
  * (or Xurify in a year, building something new from it) should find.
  */
 
-const ROOT = `# LangHarness data
+const ROOT = `# Lanna data
 
 Everything the app generates or the learner produces lives in this folder,
 in open formats (JSON, JSON Lines, MP3). Nothing here is regenerated when it

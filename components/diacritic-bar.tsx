@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The diacritic bar (LangHarness): one-click letters the learner's
+ * The diacritic bar: one-click letters the learner's
  * keyboard may lack (á ä č ď … for Slovak, ё й ъ … for Russian), plus the
  * playback-speed toggle. It types into whichever text field was focused
  * last — the composer, a question's answer or thinking field, the review

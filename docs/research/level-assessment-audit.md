@@ -1,4 +1,4 @@
-# Level assessment audit — LangHarness, 2026-10-28
+# Level assessment audit — Lanna, 2026-10-28
 
 Scope: the staircase placement drill (`src/core/onboarding.ts`, `components/onboarding/placement-drill.tsx`, `src/server/lesson.ts`), the self-report, the purposes → target mapping, how the placed level feeds the map, the hours projection, the milestones calculator, Read/Watch question grading, and the per-language CEFR levels from PR #6. Everything below was checked against the code on `main` (f1697f2) and reproduced with a script against a throwaway data folder; nothing here is a guess.
 

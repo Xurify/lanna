@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Watch → picks (LangHarness, 2026-11-05): the shared state behind the shelf's
+ * Watch → picks (2026-11-05): the shared state behind the shelf's
  * For you and Creators tabs (useDiscover, post), and the link to the
  * learner's YouTube (the desktop app's own sign-in window, or a Google
  * Takeout export). The work is on the server (src/server/discover.ts); the

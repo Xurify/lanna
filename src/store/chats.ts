@@ -192,7 +192,7 @@ function renameChat(id: string, title: string): ChatRecord {
  *  2026-09-22). False when the id is unknown — the route turns that into
  *  a 404. The record's graph traces and jobs are the route's choreography
  *  (core/graph-deletion.ts), not the store's.
- *  LangHarness (Xurify, 2026-10-27: every generated thing is kept): the
+ *  Lanna (Xurify, 2026-10-27: every generated thing is kept): the
  *  file is MOVED to chats/trash/, not unlinked — a deleted session leaves
  *  the app but stays on disk for the corpus. Move it back up to restore. */
 function deleteChat(id: string): boolean {

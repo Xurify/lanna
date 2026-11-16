@@ -1,5 +1,5 @@
 /**
- * Milestones (LangHarness, 2026-10-28) — when will I understand most of a
+ * Milestones (2026-10-28) — when will I understand most of a
  * Slovak YouTube video? Pure and browser-safe.
  *
  * Xurify's question (2026-10-28): "I want to know when I will be able to

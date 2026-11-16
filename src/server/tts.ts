@@ -1,5 +1,5 @@
 /**
- * Speech synthesis (LangHarness, spec D4 / WF-03) — the four-tier cascade
+ * Speech synthesis (spec D4 / WF-03) — the four-tier cascade
  * behind GET /api/tts. Before it: slovak.wiki's own clip for a dictionary
  * word or example (wiki-audio.ts), free, kept on first use.
  *

@@ -9,7 +9,7 @@ import { referenceDir } from "../language-reference.ts";
 import { formatEntry, loadLexicon, lookupWord, slovakLookup } from "../lexicon.ts";
 
 /**
- * The language tools (LangHarness) — composed into all three agents
+ * The language tools — composed into all three agents
  * (prober, teacher, practice):
  *
  * - lookup_word: the bundled dictionary (agent/lexicon.ts) as ground truth

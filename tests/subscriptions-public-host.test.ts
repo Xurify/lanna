@@ -5,11 +5,11 @@ import * as path from "node:path";
 import { after, afterEach, describe, it } from "node:test";
 
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-sub-public-"));
-process.env.LH_DATA_DIR = path.join(TMP, "data");
-process.env.LH_AUTH_FILE = path.join(TMP, "auth.json");
-fs.writeFileSync(process.env.LH_AUTH_FILE, "{}", { mode: 0o600 });
-delete process.env.LH_DESKTOP_SERVER;
-delete process.env.LH_DESKTOP_API_SECRET;
+process.env.LANNA_DATA_DIR = path.join(TMP, "data");
+process.env.LANNA_AUTH_FILE = path.join(TMP, "auth.json");
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}", { mode: 0o600 });
+delete process.env.LANNA_DESKTOP_SERVER;
+delete process.env.LANNA_DESKTOP_API_SECRET;
 
 const { subscriptionBrowserResponse, subscriptionControlsResponse } =
 	await import("../src/server/web-subscription-http.ts");
@@ -20,7 +20,7 @@ after(() => {
 	fs.rmSync(TMP, { recursive: true, force: true });
 });
 afterEach(() => {
-	delete process.env.LH_PUBLIC_HOST;
+	delete process.env.LANNA_PUBLIC_HOST;
 });
 
 const origin = "https://learn.example.com";
@@ -31,15 +31,15 @@ const sameOrigin = (method: "GET" | "POST", pathname: string, body?: unknown) =>
 			host: "learn.example.com",
 			origin,
 			"sec-fetch-site": "same-origin",
-			"x-langharness-subscriptions": "1",
+			"x-lanna-subscriptions": "1",
 			"content-type": "application/json",
 		},
 		...(body ? { body: JSON.stringify(body) } : {}),
 	});
 
 describe("subscription sign-ins on a public address", () => {
-	it("are refused for every control and the sign-in redirect while LH_PUBLIC_HOST is set", async () => {
-		process.env.LH_PUBLIC_HOST = "learn.example.com";
+	it("are refused for every control and the sign-in redirect while LANNA_PUBLIC_HOST is set", async () => {
+		process.env.LANNA_PUBLIC_HOST = "learn.example.com";
 		for (const request of [
 			sameOrigin("GET", "/api/subscriptions"),
 			sameOrigin("POST", "/api/subscriptions", { providerId: "chatgpt", op: "login" }),
@@ -58,12 +58,12 @@ describe("subscription sign-ins on a public address", () => {
 		}
 	});
 
-	it("stay available on a private setup, where LH_PUBLIC_HOST is unset or blank", async () => {
+	it("stay available on a private setup, where LANNA_PUBLIC_HOST is unset or blank", async () => {
 		for (const value of [undefined, "", "   "]) {
-			if (value === undefined) delete process.env.LH_PUBLIC_HOST;
-			else process.env.LH_PUBLIC_HOST = value;
+			if (value === undefined) delete process.env.LANNA_PUBLIC_HOST;
+			else process.env.LANNA_PUBLIC_HOST = value;
 			const response = await subscriptionControlsResponse(sameOrigin("GET", "/api/subscriptions"));
-			assert.notEqual(response.status, 403, `LH_PUBLIC_HOST=${JSON.stringify(value)}`);
+			assert.notEqual(response.status, 403, `LANNA_PUBLIC_HOST=${JSON.stringify(value)}`);
 		}
 	});
 });

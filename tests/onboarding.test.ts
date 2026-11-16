@@ -1,5 +1,5 @@
 /**
- * ONBOARDING PINS (LangHarness, 2026-10-28): the purposes → target
+ * ONBOARDING PINS (2026-10-28): the purposes → target
  * mapping, the placement staircase's outcome, how placement moves the
  * map (tested-out units, skipped chapters), the profile block the tutor
  * reads, and the server round trip into progress.json.

@@ -2607,7 +2607,7 @@ function DockOverlay({
 							claim={revealPending}
 						/>
 					)}
-					{/* LangHarness: one-click target-language letters + playback
+					{/* Lanna: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
 					{!plain && <DiacriticBar />}
 					<div

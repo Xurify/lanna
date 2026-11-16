@@ -1,5 +1,5 @@
 /**
- * The lesson outbox (LangHarness, 2026-10-30). A finished lesson is written
+ * The lesson outbox (2026-10-30). A finished lesson is written
  * here before its end screen waits on anything, then sent to POST /api/lesson
  * in the background. An entry leaves the outbox only once the server has
  * recorded it, so a window closed mid-save, a dropped connection or a restart

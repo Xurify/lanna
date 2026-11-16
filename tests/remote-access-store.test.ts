@@ -1,7 +1,7 @@
 /**
  * REMOTE ACCESS STORE (E21): the file, the pairing code's tries and expiry,
  * device sessions, their revocation, and the fail-closed read. Runs under a
- * throwaway LH_DATA_DIR, set before any config-loading import (E6).
+ * throwaway LANNA_DATA_DIR, set before any config-loading import (E6).
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -10,7 +10,7 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-remote-access-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const store = await import("../src/server/remote-access-store.ts");
 const { DEVICE_COOKIE } = await import("../src/server/remote-access.ts");

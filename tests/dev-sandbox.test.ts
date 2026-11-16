@@ -1,5 +1,5 @@
 /**
- * SANDBOX PINS (LangHarness, 2026-10-29): a demo or an agent-driven run must
+ * SANDBOX PINS (2026-10-29): a demo or an agent-driven run must
  * never reach the learner's real data, keys or port. The planning functions
  * of scripts/dev-sandbox.ts, and the demo seed's refusal to touch a folder
  * that already has data (run as the real script, in a subprocess).
@@ -33,10 +33,10 @@ describe("planSandbox: data, keys and port of its own", () => {
 			port: 4123,
 			tmp,
 			env: {
-				LH_DATA_DIR: "C:/real/profile/data",
-				LH_AUTH_FILE: "C:/real/auth.json",
-				LH_DESKTOP_SERVER: "1",
-				LH_DESKTOP_API_SECRET: "x".repeat(64),
+				LANNA_DATA_DIR: "C:/real/profile/data",
+				LANNA_AUTH_FILE: "C:/real/auth.json",
+				LANNA_DESKTOP_SERVER: "1",
+				LANNA_DESKTOP_API_SECRET: "x".repeat(64),
 				NODE_ENV: "test",
 				OPENAI_API_KEY: "sk-real",
 			},
@@ -44,12 +44,12 @@ describe("planSandbox: data, keys and port of its own", () => {
 		made.push(plan.dir);
 		assert.ok(plan.dir.startsWith(tmp), "under the temp folder");
 		assert.ok(path.relative(ROOT, plan.dir).startsWith(".."), "outside the repo");
-		assert.equal(plan.env.LH_DATA_DIR, plan.dir, "the caller's data folder is replaced, not kept");
-		assert.equal(plan.env.LH_AUTH_FILE, path.join(plan.dir, "auth.json"), "keys file is inside the sandbox");
-		assert.equal(plan.env.LH_IGNORE_ENV_KEYS, "1", "every key in the environment is hidden from the app");
+		assert.equal(plan.env.LANNA_DATA_DIR, plan.dir, "the caller's data folder is replaced, not kept");
+		assert.equal(plan.env.LANNA_AUTH_FILE, path.join(plan.dir, "auth.json"), "keys file is inside the sandbox");
+		assert.equal(plan.env.LANNA_IGNORE_ENV_KEYS, "1", "every key in the environment is hidden from the app");
 		assert.equal(plan.env.PORT, "4123");
-		assert.equal(plan.env.LH_DESKTOP_SERVER, undefined);
-		assert.equal(plan.env.LH_DESKTOP_API_SECRET, undefined);
+		assert.equal(plan.env.LANNA_DESKTOP_SERVER, undefined);
+		assert.equal(plan.env.LANNA_DESKTOP_API_SECRET, undefined);
 		assert.equal(plan.env.NODE_ENV, undefined);
 		assert.deepEqual(fs.readdirSync(plan.dir), [], "starts empty");
 	});
@@ -106,13 +106,10 @@ describe("freePort", () => {
 
 describe("explainFailure: Next locks the .next folder, so a second dev server cannot share a checkout", () => {
 	it("explains the lock and gives the worktree recipe", () => {
-		const text = explainFailure(
-			"  Another next dev server is already running.\n",
-			path.join(os.tmpdir(), "langharness"),
-		);
+		const text = explainFailure("  Another next dev server is already running.\n", path.join(os.tmpdir(), "lanna"));
 		assert.ok(text);
 		assert.match(text!, /already running from this checkout/);
-		assert.match(text!, /git worktree add \.\.[\\/]langharness-sandbox/);
+		assert.match(text!, /git worktree add \.\.[\\/]lanna-sandbox/);
 		assert.match(text!, /not touched/);
 	});
 	it("says nothing about any other output", () => {
@@ -127,7 +124,7 @@ describe("the demo seed only fills an empty folder", () => {
 			cwd: ROOT,
 			encoding: "utf8",
 			timeout: 90_000,
-			env: { ...process.env, ...(dataDir ? { LH_DATA_DIR: dataDir } : { LH_DATA_DIR: "" }) },
+			env: { ...process.env, ...(dataDir ? { LANNA_DATA_DIR: dataDir } : { LANNA_DATA_DIR: "" }) },
 		});
 	const progressFile = (dir: string) => path.join(dir, "profiles", "slovak", "progress.json");
 
@@ -171,6 +168,6 @@ describe("the demo seed only fills an empty folder", () => {
 	it("refuses to run with no data folder named", () => {
 		const res = run();
 		assert.equal(res.status, 1);
-		assert.match(res.stderr, /LH_DATA_DIR/);
+		assert.match(res.stderr, /LANNA_DATA_DIR/);
 	});
 });

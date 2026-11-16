@@ -15,9 +15,9 @@ const CACHE_HINT =
 const BROWSER_CACHE_HINT =
 	"Your browser keeps its own copy of audio and pages. Clear it in the browser’s settings, under cached images and files.";
 const CLEARED = "Cache cleared. Audio and pages download again when you need them.";
-const CLEAR_FAILED = "Couldn’t clear the cache. Restart LangHarness and try again.";
+const CLEAR_FAILED = "Couldn’t clear the cache. Restart Lanna and try again.";
 // An older desktop process has no storage handlers; a restart fixes it.
-const UNREADABLE_HINT = "Restart LangHarness to measure and clear the app cache.";
+const UNREADABLE_HINT = "Restart Lanna to measure and clear the app cache.";
 const LOAD_FAILED = "Couldn’t measure storage. Refresh to try again.";
 
 function savedHint(id: StorageArea["id"], language: string | null): string {

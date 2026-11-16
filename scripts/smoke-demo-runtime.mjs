@@ -21,7 +21,7 @@ export function probeEnv(env, home) {
 			([key]) =>
 				!/KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL/i.test(key) &&
 				!/^(AWS_|GOOGLE_|GCLOUD_|CLOUDSDK_|AZURE_|ANTHROPIC_|OPENAI_|OPENROUTER_|GEMINI_)/.test(key) &&
-				!["NODE_OPTIONS", "NODE_PATH", "LH_DEV_URL", "ELECTRON_RUN_AS_NODE"].includes(key),
+				!["NODE_OPTIONS", "NODE_PATH", "LANNA_DEV_URL", "ELECTRON_RUN_AS_NODE"].includes(key),
 		),
 	);
 	return {
@@ -32,9 +32,9 @@ export function probeEnv(env, home) {
 		LOCALAPPDATA: path.join(home, "local"),
 		XDG_CONFIG_HOME: path.join(home, "config"),
 		XDG_CACHE_HOME: path.join(home, "cache"),
-		LH_DATA_DIR: path.join(home, "data"),
-		LH_AUTH_FILE: path.join(home, "auth.json"),
-		LH_IGNORE_ENV_KEYS: "1",
+		LANNA_DATA_DIR: path.join(home, "data"),
+		LANNA_AUTH_FILE: path.join(home, "auth.json"),
+		LANNA_IGNORE_ENV_KEYS: "1",
 		NODE_ENV: "production",
 	};
 }
@@ -171,7 +171,7 @@ async function browserProbe(puppeteer) {
 	const home = process.env.HOME;
 	const env = { ...process.env };
 	delete env.ELECTRON_RUN_AS_NODE;
-	delete env.LH_DEV_URL;
+	delete env.LANNA_DEV_URL;
 	const helper = spawn(
 		process.execPath,
 		[

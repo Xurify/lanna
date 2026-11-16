@@ -1,5 +1,5 @@
 /**
- * Perf check (LangHarness, 2026-11-02): how fast the production build feels.
+ * Perf check (2026-11-02): how fast the production build feels.
  *
  *   npm run build
  *   node scripts/perf-check.mjs                 # measure, print tables

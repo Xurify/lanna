@@ -12,8 +12,8 @@ import {
 } from "../src/agent/chatgpt-bridge.ts";
 const send = Object.getOwnPropertyDescriptor(process, "send"),
 	connected = Object.getOwnPropertyDescriptor(process, "connected");
-const desktopMarker = process.env.LH_DESKTOP_SERVER,
-	desktopSecret = process.env.LH_DESKTOP_API_SECRET;
+const desktopMarker = process.env.LANNA_DESKTOP_SERVER,
+	desktopSecret = process.env.LANNA_DESKTOP_API_SECRET;
 const pending: any[] = [];
 const model = piModels()
 	.getModels("openai")
@@ -39,8 +39,8 @@ function reply(request: any, v: unknown) {
 	ipc({ channel: "lh:chatgpt", id: request.id, op: request.op, ok: true, value: v });
 }
 before(() => {
-	process.env.LH_DESKTOP_SERVER = "1";
-	process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+	process.env.LANNA_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
 	Object.defineProperty(process, "send", {
 		configurable: true,
@@ -52,10 +52,10 @@ before(() => {
 	});
 });
 after(() => {
-	if (desktopMarker === undefined) delete process.env.LH_DESKTOP_SERVER;
-	else process.env.LH_DESKTOP_SERVER = desktopMarker;
-	if (desktopSecret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-	else process.env.LH_DESKTOP_API_SECRET = desktopSecret;
+	if (desktopMarker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+	else process.env.LANNA_DESKTOP_SERVER = desktopMarker;
+	if (desktopSecret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+	else process.env.LANNA_DESKTOP_API_SECRET = desktopSecret;
 	if (send) Object.defineProperty(process, "send", send);
 	else delete process.send;
 	if (connected) Object.defineProperty(process, "connected", connected);

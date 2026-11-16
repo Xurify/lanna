@@ -6,11 +6,11 @@ import { after, describe, it } from "node:test";
 import { NextRequest } from "next/server";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-web-proxy-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+process.env.LANNA_DATA_DIR = TMP_DATA;
 const HOST = "learn.example.com";
 const SECRET = "p".repeat(48);
-process.env.LH_PUBLIC_HOST = HOST;
-process.env.LH_PROXY_SECRET = SECRET;
+process.env.LANNA_PUBLIC_HOST = HOST;
+process.env.LANNA_PROXY_SECRET = SECRET;
 
 const { proxy } = await import("../proxy.ts");
 const access = await import("../src/server/remote-access-store.ts");

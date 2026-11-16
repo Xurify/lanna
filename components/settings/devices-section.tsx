@@ -1,7 +1,7 @@
 "use client";
 /**
  * Settings → Devices (E21): the remote-access switch, the pairing code, and the
- * devices that may open LangHarness. Off by default. While the switch is off,
+ * devices that may open Lanna. Off by default. While the switch is off,
  * nothing on this screen changes what the computer does. Turning it off signs
  * every device out, so the confirmation names that first.
  */
@@ -200,7 +200,7 @@ export function DevicesSection() {
 	const left = code ? Date.parse(code.expiresAt) - now : 0;
 	const codeLine =
 		code && left > 0
-			? `Enter it on the device within ${clock(left)}. Open LangHarness there and type the code.`
+			? `Enter it on the device within ${clock(left)}. Open Lanna there and type the code.`
 			: code
 				? "That code has expired. Make a new one."
 				: status.pairing
@@ -211,7 +211,7 @@ export function DevicesSection() {
 		<>
 			<SettingsGroup label="Remote access" testid="devices-switch">
 				<SettingsRow
-					label={status.enabled ? "On: other devices can pair" : "Off: only this computer can open LangHarness"}
+					label={status.enabled ? "On: other devices can pair" : "Off: only this computer can open Lanna"}
 					hint="Phones and tablets on your Tailscale network sign in with a code from this screen. While this is off, nothing outside this computer can reach the app."
 					testid="devices-row-switch"
 				>
@@ -261,7 +261,7 @@ export function DevicesSection() {
 				<>
 					<SettingsGroup
 						label="Set up Tailscale Serve"
-						hint="Run this once in a terminal on this computer, with Tailscale signed in and HTTPS certificates turned on. It serves LangHarness over HTTPS on your tailnet only."
+						hint="Run this once in a terminal on this computer, with Tailscale signed in and HTTPS certificates turned on. It serves Lanna over HTTPS on your tailnet only."
 						testid="devices-serve"
 					>
 						<div className="flex flex-wrap items-center gap-2">

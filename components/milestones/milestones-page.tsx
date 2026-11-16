@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /milestones — "When can I…?" (LangHarness, 2026-10-28). Xurify asked for
+ * /milestones — "When can I…?" (2026-10-28). Xurify asked for
  * a calculator with a memory: one that knows what they know and says when
  * they will understand most of a Slovak YouTube video. The page shows,
  * for each situation, the two gaps the research separates — words

@@ -1,12 +1,12 @@
 /**
- * A SCENE WITH A DATE PINS (LangHarness, 2026-11-05; creator-hooks proposal 3):
+ * A SCENE WITH A DATE PINS (2026-11-05; creator-hooks proposal 3):
  * the calendar (the quick choices, the stepper across month ends, leap years
  * and year changes), the standing against the measured pace (no speed, on
  * track, behind, passed), the store round trip of a date and its line, records
  * written before dates existed, and the server flow. No real model is called:
  * a scripted engine answers the mapping.
  *
- * Runs under an isolated LH_DATA_DIR (E6); the real profile is refused.
+ * Runs under an isolated LANNA_DATA_DIR (E6); the real profile is refused.
  */
 
 import assert from "node:assert/strict";
@@ -19,11 +19,11 @@ import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const REAL_PROFILE_DATA = path.resolve("C:/Users/Stream/Projects/langharness/data").toLowerCase();
-const OWN_DIR = process.env.LH_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lh-dated-"));
-if (OWN_DIR) process.env.LH_DATA_DIR = OWN_DIR;
-if (path.resolve(process.env.LH_DATA_DIR!).toLowerCase().startsWith(REAL_PROFILE_DATA))
+const OWN_DIR = process.env.LANNA_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lh-dated-"));
+if (OWN_DIR) process.env.LANNA_DATA_DIR = OWN_DIR;
+if (path.resolve(process.env.LANNA_DATA_DIR!).toLowerCase().startsWith(REAL_PROFILE_DATA))
 	throw new Error("Tests never run on the real data folder (E6).");
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_PROFILE = "slovak";
 
 const dated = await import("../src/core/dated-scene.ts");
 const core = await import("../src/core/milestones.ts");

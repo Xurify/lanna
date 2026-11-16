@@ -4,7 +4,7 @@ Date: 2026-11-01. Decision: E20. Owner's question: "I'm thinking of turning our 
 
 ## Answer
 
-Ship LangHarness as a responsive, installable web app served from the owner's PC. Do not start a store app yet. The first slice makes the existing screens work at phone and iPad widths with touch targets, a drawer sidebar, safe-area padding, a manifest and icons, and a press-and-hold microphone. A phone or iPad still cannot reach the PC until a pairing step and HTTPS exist, so the next slice is reachability, not more layout.
+Ship Lanna as a responsive, installable web app served from the owner's PC. Do not start a store app yet. The first slice makes the existing screens work at phone and iPad widths with touch targets, a drawer sidebar, safe-area padding, a manifest and icons, and a press-and-hold microphone. A phone or iPad still cannot reach the PC until a pairing step and HTTPS exist, so the next slice is reachability, not more layout.
 
 ## Routes considered
 

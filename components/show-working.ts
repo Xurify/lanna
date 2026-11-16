@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "Show the tutor's working" (LangHarness redesign, 2026-10-27): the chat
+ * "Show the tutor's working" (redesign, 2026-10-27): the chat
  * hides the agent's reasoning and its bookkeeping tool calls (file reads)
  * by default — a learner reads the lesson,
  * not the engine room. One chip in the chat header turns them back on; the

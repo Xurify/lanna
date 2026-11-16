@@ -1,5 +1,5 @@
 /**
- * Spoken scenes and the fluency log (LangHarness, 2026-10-28) — the
+ * Spoken scenes and the fluency log (2026-10-28) — the
  * active profile's data/profiles/<language>/:
  *
  *   speak/<id>.json       one scene: every line (the tutor's Slovak with

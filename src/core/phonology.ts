@@ -1,5 +1,5 @@
 /**
- * Phonological Acquisition & Articulatory Diagnostics (LangHarness, 2026-11).
+ * Phonological Acquisition & Articulatory Diagnostics (2026-11).
  *
  * Implements research-grounded phonological training:
  * 1. Articulatory motor cues & diagnostic guidance (Pillars 3 & 4; Ngo et al. 2024; Neri et al. 2008): sound-notes.ts.

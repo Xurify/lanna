@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Starting a tutor chat from outside the composer (LangHarness redesign):
+ * Starting a tutor chat from outside the composer (redesign):
  * a tutor unit, a lesson's "Why?" and the placement follow-up open a session
  * with a prepared first message, the same way the old home composer did
  * (POST /api/chats, then /chat/<id>?prompt=…, whose page delivers the

@@ -1,5 +1,5 @@
 /**
- * Lessons (LangHarness redesign, 2026-10-27) — the fast local drill loop.
+ * Lessons (redesign, 2026-10-27) — the fast local drill loop.
  * Browser-safe and pure: the server (src/server/lesson.ts) hands in the
  * lexicon's entries, this module picks sentences and builds the items.
  *

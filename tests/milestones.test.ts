@@ -1,10 +1,10 @@
 /**
- * MILESTONES PINS (LangHarness, 2026-10-28): the coverage curve and the
+ * MILESTONES PINS (2026-10-28): the coverage curve and the
  * speed ladder, the estimate's arithmetic (what binds, the dates), the
  * speed reading from Listen reps, the custom-milestone mapping, and the
  * server round trip (facts from a profile, the report, the store).
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -14,8 +14,8 @@ import * as path from "node:path";
 import { after, test } from "node:test";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-milestones-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const core = await import("../src/core/milestones.ts");
 type LearnerFacts = import("../src/core/milestones.ts").LearnerFacts;

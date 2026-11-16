@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Watch (LangHarness, 2026-10-28) — the Watch task's screen. Paste a
+ * Watch (2026-10-28) — the Watch task's screen. Paste a
  * YouTube link; the app fetches the Slovak captions, cuts them into
  * lines, translates and glosses them once (src/server/watch.ts), then:
  *

@@ -1,8 +1,8 @@
 /**
- * WHICH PAIR TO CATCH (LangHarness, 2026-11-05; creator-hooks proposal 6): the
+ * WHICH PAIR TO CATCH (2026-11-05; creator-hooks proposal 6): the
  * chooser and the checker for the deliberate wrong word in Catch the mistake
  * (src/core/catch-pair.ts). The item itself is covered in catch-mistake.test.ts.
- * Runs under an isolated LH_DATA_DIR (the scratch folder when one is set).
+ * Runs under an isolated LANNA_DATA_DIR (the scratch folder when one is set).
  */
 
 import assert from "node:assert/strict";
@@ -22,9 +22,9 @@ import {
 } from "../src/core/catch-pair.ts";
 import { tokenize, type StorySentence } from "../src/core/reading.ts";
 
-const TMP_DATA = process.env.LH_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lh-slip-"));
-if (TMP_DATA) process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = process.env.LANNA_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lh-slip-"));
+if (TMP_DATA) process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 

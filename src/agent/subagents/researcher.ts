@@ -81,7 +81,7 @@ interface ResearcherRunOptions {
 	abortSignal?: AbortSignal;
 	onUsage?: (usage: Usage) => void;
 	onToolStart?: (toolName: string, args: unknown) => void;
-	/** Debug: raw provider-event recording key (LH_PROVIDER_EVENTS=1). */
+	/** Debug: raw provider-event recording key (LANNA_PROVIDER_EVENTS=1). */
 	chatId?: string;
 }
 

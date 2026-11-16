@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Listen (LangHarness, 2026-10-28) — the input task's screen. Ten real
+ * Listen (2026-10-28) — the input task's screen. Ten real
  * sentences the learner can follow (src/core/listen.ts picks them: at most
  * one unknown word each): each is played with the text hidden, and the
  * Slovak it said is typed (dictation). Picking one of three meanings was

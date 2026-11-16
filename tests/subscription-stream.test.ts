@@ -14,8 +14,8 @@ import { runSubagent } from "../src/agent/subagents/pi-run.ts";
 
 const originalSend = Object.getOwnPropertyDescriptor(process, "send"),
 	originalConnected = Object.getOwnPropertyDescriptor(process, "connected");
-const marker = process.env.LH_DESKTOP_SERVER,
-	secret = process.env.LH_DESKTOP_API_SECRET;
+const marker = process.env.LANNA_DESKTOP_SERVER,
+	secret = process.env.LANNA_DESKTOP_API_SECRET;
 const xaiKey = process.env.XAI_API_KEY,
 	copilotKey = process.env.COPILOT_GITHUB_TOKEN;
 let revision = 1,
@@ -40,8 +40,8 @@ function snapshot(background = true): NativeSubscriptionSnapshot {
 }
 const emit = (value: unknown) => (process.emit as (event: string, value: unknown) => boolean)("message", value);
 before(async () => {
-	process.env.LH_DESKTOP_SERVER = "1";
-	process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+	process.env.LANNA_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 	process.env.XAI_API_KEY = "fixture-must-never-be-used";
 	process.env.COPILOT_GITHUB_TOKEN = "fixture-api-route-only";
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
@@ -88,8 +88,8 @@ after(() => {
 	if (originalConnected) Object.defineProperty(process, "connected", originalConnected);
 	else delete (process as { connected?: boolean }).connected;
 	for (const [key, value] of [
-		["LH_DESKTOP_SERVER", marker],
-		["LH_DESKTOP_API_SECRET", secret],
+		["LANNA_DESKTOP_SERVER", marker],
+		["LANNA_DESKTOP_API_SECRET", secret],
 		["XAI_API_KEY", xaiKey],
 		["COPILOT_GITHUB_TOKEN", copilotKey],
 	]) {
@@ -260,9 +260,9 @@ test("background invalidation is provider-specific and preserves foreground cont
 });
 test("framework IPC alone cannot request subscription credentials or retain a usable catalog", async () => {
 	const previous = sends;
-	delete process.env.LH_DESKTOP_SERVER;
+	delete process.env.LANNA_DESKTOP_SERVER;
 	await assert.rejects(subscriptionRequest("snapshot"), /desktop app/);
 	assert.equal(sends, previous);
 	assert.deepEqual(nativeSubscriptionModels(), []);
-	process.env.LH_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_SERVER = "1";
 });

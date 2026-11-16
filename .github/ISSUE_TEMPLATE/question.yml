@@ -1,5 +1,5 @@
 name: Question
-description: Ask about using LangHarness.
+description: Ask about using Lanna.
 labels: [question]
 body:
   - type: markdown

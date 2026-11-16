@@ -71,7 +71,7 @@ describe("backup-data.sh", { skip: !toolsReady }, () => {
 		write(path.join(home, "data/audio/clip.mp3"), "audio-bytes");
 		write(path.join(home, "keys/auth.json"), '{"KEY":"x"}');
 		write(path.join(home, "sheets/slovak/mine.txt"), "# Mine\nahoj | | hello\n");
-		return { home, env: { LH_HOME: home, LH_REPO: fresh("backup-repo"), LH_BACKUP_RETRY_SECONDS: "0" } };
+		return { home, env: { LANNA_HOME: home, LANNA_REPO: fresh("backup-repo"), LANNA_BACKUP_RETRY_SECONDS: "0" } };
 	};
 	const snapshots = (home: string) =>
 		fs
@@ -192,9 +192,9 @@ case "$1" in
 	run) exit "\${STUB_RUN_EXIT:-0}" ;;
 	compose)
 		case "$*" in
-			*"up -d"*) echo "$LH_IMAGE" >"$STUB_DIR/running" ;;
+			*"up -d"*) echo "$LANNA_IMAGE" >"$STUB_DIR/running" ;;
 			*"ps -q"*) [ -f "$STUB_DIR/running" ] && echo container1 ;;
-			*"ps --format"*) echo "langharness Up" ;;
+			*"ps --format"*) echo "lanna Up" ;;
 		esac ;;
 	inspect)
 		if [ "$(cat "$STUB_DIR/running" 2>/dev/null)" = "\${STUB_UNHEALTHY_IMAGE:-none}" ]; then echo unhealthy; else echo healthy; fi ;;
@@ -231,9 +231,9 @@ exit 0
 		const env = {
 			PATH: `${bin}:${process.env.PATH}`,
 			STUB_DIR: stub,
-			LH_HOME: home,
-			LH_REPO: checkout,
-			LH_HEALTH_POLL_SECONDS: "0",
+			LANNA_HOME: home,
+			LANNA_REPO: checkout,
+			LANNA_HEALTH_POLL_SECONDS: "0",
 		};
 		const commit = (file: string, content: string, message = "change") => {
 			write(path.join(seed, file), content);
@@ -256,7 +256,7 @@ exit 0
 		const sha = git(s.checkout, "rev-parse", "origin/main");
 		const result = run(UPDATE, [], s.env);
 		assert.equal(result.status, 0, result.out);
-		const tag = `langharness:${short(sha)}`;
+		const tag = `lanna:${short(sha)}`;
 		assert.equal(builds(s.calls()).length, 1);
 		assert.ok(
 			s
@@ -271,7 +271,7 @@ exit 0
 		);
 		assert.equal(s.running(), tag);
 		assert.equal(read(path.join(s.home, "state/deployed")).trim(), sha);
-		assert.match(read(path.join(s.checkout, ".env")), new RegExp(`^LH_IMAGE=${tag}$`, "m"));
+		assert.match(read(path.join(s.checkout, ".env")), new RegExp(`^LANNA_IMAGE=${tag}$`, "m"));
 		assert.match(read(path.join(s.home, "logs/update.log")), /now running/);
 	});
 
@@ -309,7 +309,7 @@ exit 0
 		const forced = run(UPDATE, ["--force"], s.env);
 		assert.equal(forced.status, 0, forced.out);
 		assert.equal(builds(s.calls()).length, attempts + 1);
-		assert.ok(s.running().startsWith("langharness:"));
+		assert.ok(s.running().startsWith("lanna:"));
 	});
 
 	it("does not switch when the boot check fails", () => {
@@ -328,7 +328,7 @@ exit 0
 		assert.equal(run(UPDATE, [], s.env).status, 0);
 		const first = s.running();
 		const second = s.commit("curriculum/slovak/note.txt", "x");
-		const result = run(UPDATE, [], { ...s.env, STUB_UNHEALTHY_IMAGE: `langharness:${short(second)}` });
+		const result = run(UPDATE, [], { ...s.env, STUB_UNHEALTHY_IMAGE: `lanna:${short(second)}` });
 		assert.equal(result.status, 6, result.out);
 		assert.equal(s.running(), first);
 		assert.equal(read(path.join(s.home, "state/deployed")).trim(), git(s.seed, "rev-parse", "HEAD~1"));
@@ -340,17 +340,17 @@ exit 0
 		assert.equal(run(UPDATE, [], s.env).status, 0);
 		const second = s.commit("curriculum/slovak/note.txt", "x");
 		assert.equal(run(UPDATE, [], s.env).status, 0);
-		assert.equal(s.running(), `langharness:${short(second)}`);
+		assert.equal(s.running(), `lanna:${short(second)}`);
 		const rolled = run(UPDATE, ["rollback"], s.env);
 		assert.equal(rolled.status, 0, rolled.out);
-		assert.equal(s.running(), `langharness:${short(first)}`);
+		assert.equal(s.running(), `lanna:${short(first)}`);
 		assert.equal(read(path.join(s.home, "state/deployed")).trim(), first);
 		const buildsBefore = builds(s.calls()).length;
 		const after = run(UPDATE, [], s.env);
 		assert.equal(after.status, 0, after.out);
 		assert.match(after.out, /failed before/);
 		assert.equal(builds(s.calls()).length, buildsBefore);
-		assert.equal(s.running(), `langharness:${short(first)}`);
+		assert.equal(s.running(), `lanna:${short(first)}`);
 	});
 
 	it("keeps the newest images and removes older ones, but never the running or the previous one", () => {

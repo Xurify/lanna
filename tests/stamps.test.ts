@@ -1,5 +1,5 @@
 /**
- * STAMPS (LangHarness, 2026-11-02; E31, docs/research/gamification.md):
+ * STAMPS (2026-11-02; E31, docs/research/gamification.md):
  * the stamp book is pure. These pin the catalog (a summit per level, a
  * stamp per chapter, the deeds), the earning rule (met once, kept with its
  * day), what is new, what is closest and the longest streak.

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The microphone (LangHarness Speak, rewritten 2026-10-31): one recording
+ * The microphone (Speak, rewritten 2026-10-31): one recording
  * at a time, kept as 16 kHz mono PCM WAV — the one format every engine we
  * send a line to accepts (ElevenLabs, Deepgram, Azure's scoring). The
  * browser captures through the same AudioWorklet dictation uses

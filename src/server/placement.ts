@@ -1,5 +1,5 @@
 /**
- * The placement check, server side (LangHarness, 2026-10-28).
+ * The placement check, server side (2026-10-28).
  *
  * Three stages, one session on disk (src/store/placement.ts):
  *
@@ -92,12 +92,12 @@ function probeEngine(): { engine: PiEngine; model: string } | null {
 }
 
 /** A scripted tutor for screenshots and UI work without a key:
- *  LH_PLACEMENT_SCRIPT=<path to JSON {"judge": {accept, note}, "probe": [reply, …]}>.
+ *  LANNA_PLACEMENT_SCRIPT=<path to JSON {"judge": {accept, note}, "probe": [reply, …]}>.
  *  Dev only; never set in the desktop app. Judge calls answer with the
  *  one judge object; probe calls walk the list (the last entry repeats). */
 let scripted: { file: string; judge: PiEngine; probe: PiEngine } | null = null;
 function scriptedEngines(): { judge: PiEngine; probe: PiEngine } | null {
-	const path = process.env.LH_PLACEMENT_SCRIPT;
+	const path = process.env.LANNA_PLACEMENT_SCRIPT;
 	if (!path || process.env.NODE_ENV === "production") return null;
 	let file = path;
 	try {
@@ -551,14 +551,15 @@ export async function probePlacement(
 	let reply: ProbeReply;
 	try {
 		const text = await ask(real.engine, probeSystem(), prompt, s.usage);
-		if (process.env.LH_PLACEMENT_DEBUG)
+		if (process.env.LANNA_PLACEMENT_DEBUG)
 			console.error("[placement/probe]", JSON.stringify(text).slice(0, 400), s.probe.units);
 		reply = parseProbeReply(text, s.probe.units);
 		if (!reply.ask && !reply.done && asked < PROBE_TURNS) {
 			// Neither a question about an offered unit nor a reading: once more, with the units named.
 			const nudge = `${prompt}\n\nYour last reply had no question about one of the offered units (${s.probe.units.map((u) => `${u} = ${unitName(u)}`).join("; ")}) and no "done". Ask ONE question about one of those units, or set "done" with your reading.`;
 			const again = await ask(real.engine, probeSystem(), nudge, s.usage);
-			if (process.env.LH_PLACEMENT_DEBUG) console.error("[placement/probe retry]", JSON.stringify(again).slice(0, 400));
+			if (process.env.LANNA_PLACEMENT_DEBUG)
+				console.error("[placement/probe retry]", JSON.stringify(again).slice(0, 400));
 			reply = parseProbeReply(again, s.probe.units);
 			if (!reply.ask && !reply.done)
 				reply = { say: reply.say, done: "The tutor had no further question. The drill's evidence stands." };

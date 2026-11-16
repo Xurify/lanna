@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The comprehension check (LangHarness, 2026-10-28) — shared by the Read
+ * The comprehension check (2026-10-28) — shared by the Read
  * and Watch tasks: one Slovak question at a time, its kind named over
  * it, three or four options (keys 1–4), the right one spoken and marked,
  * Continue (Enter) to the next.

@@ -1,5 +1,5 @@
 /**
- * Get ready (LangHarness, 2026-11-07; docs/research/pre-listening.md): what a
+ * Get ready (2026-11-07; docs/research/pre-listening.md): what a
  * learner studies before a video they cannot yet follow. One cheap-slot
  * request reads the caption lines and returns a briefing:
  *

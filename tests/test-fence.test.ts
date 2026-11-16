@@ -1,5 +1,5 @@
 /**
- * THE TEST FENCE (LangHarness, 2026-10-29): in any test run, however it was
+ * THE TEST FENCE (2026-10-29): in any test run, however it was
  * launched, data goes to a throwaway folder and never to the learner's
  * real data/. It used to key on NODE_ENV=test alone, which `npm test` cannot
  * set on Windows, so bare `tsx --test` runs wrote fixtures, a goal, unit
@@ -25,8 +25,8 @@ after(() => {
 
 /** Where config.ts puts the data in a fresh process with exactly this environment. */
 function baseIn(extra: Record<string, string>): { base: string; pid: number } {
-	const env: Record<string, string | undefined> = { ...process.env, LH_PROFILE: "" };
-	for (const k of ["NODE_ENV", "NODE_TEST_CONTEXT", "LH_DATA_DIR"]) delete env[k];
+	const env: Record<string, string | undefined> = { ...process.env, LANNA_PROFILE: "" };
+	for (const k of ["NODE_ENV", "NODE_TEST_CONTEXT", "LANNA_DATA_DIR"]) delete env[k];
 	Object.assign(env, extra);
 	const out = execFileSync(
 		process.execPath,
@@ -57,10 +57,10 @@ describe("the test fence holds however the suite is launched", () => {
 		assert.equal(base, path.join(os.tmpdir(), `lh-test-data-${pid}`));
 	});
 
-	it("an explicit LH_DATA_DIR still wins, so tests that set their own folder keep it", () => {
+	it("an explicit LANNA_DATA_DIR still wins, so tests that set their own folder keep it", () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-fence-own-"));
 		made.push(dir);
-		assert.equal(baseIn({ NODE_TEST_CONTEXT: "child-v8", LH_DATA_DIR: dir }).base, dir);
+		assert.equal(baseIn({ NODE_TEST_CONTEXT: "child-v8", LANNA_DATA_DIR: dir }).base, dir);
 	});
 
 	it("outside a test run nothing changes: the repo's own data/", () => {

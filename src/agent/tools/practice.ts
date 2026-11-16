@@ -34,7 +34,7 @@ export interface PracticeToolContext {
 	/** THE RARELY-NEEDED SET (owner round 10, 2026-10-05): the research +
 	 *  pdf jobs (both keyless). Absent (tests) = absent from the registry. */
 	jobs?: JobToolContext;
-	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
+	/** Lanna: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
 

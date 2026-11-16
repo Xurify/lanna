@@ -1,6 +1,6 @@
 # Watch picks: finding videos from the learner's YouTube and saved creators
 
-_LangHarness, 2026-11-05. Branch `feat/watch-creators`. Code: `src/core/discover.ts`, `src/server/discover.ts`, `src/store/discover.ts`, `electron/youtube.cjs`, `components/watch/discover.tsx`, `app/api/watch/discover`._
+_Lanna, 2026-11-05. Branch `feat/watch-creators`. Code: `src/core/discover.ts`, `src/server/discover.ts`, `src/store/discover.ts`, `electron/youtube.cjs`, `components/watch/discover.tsx`, `app/api/watch/discover`._
 
 ## The ask
 

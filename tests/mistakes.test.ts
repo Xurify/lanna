@@ -1,5 +1,5 @@
 /**
- * MY MISTAKES (LangHarness, 2026-11-01): the analysis reads first tries from
+ * MY MISTAKES (2026-11-01): the analysis reads first tries from
  * the lesson log (never a retry, a meaning check, a peek or a Mix-ups
  * lesson), compares the last 14 days with the days before, names the words
  * missed most, and gives the guide's facts a digest that changes with them.

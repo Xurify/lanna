@@ -71,7 +71,7 @@ import { failTask, finishTask, listTasks, removeTask, startTask, updateTask } fr
 const WORD_LIMIT = 3000;
 /** Frequency rows a Wiktionary entry has to appear in to be read at all. */
 const WANTED = 30_000;
-const UA = "LangHarness/1.0 (language-learning app; adds a language from open data)";
+const UA = "Lanna/1.0 (language-learning app; adds a language from open data)";
 const TATOEBA = "https://downloads.tatoeba.org/exports/per_language";
 
 const taskIdOf = (id: string) => `language:${id}`;

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "Where you're heading" (LangHarness, 2026-10-29) — the projected line in
+ * "Where you're heading" (2026-10-29) — the projected line in
  * the hours sheet: a Hours / Units / Words switch, the headline, the chart
  * and a minutes-a-day slider that redraws it with a slower and a faster
  * scenario beside it. The slider only asks "what if"; it never changes the

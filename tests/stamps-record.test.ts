@@ -1,8 +1,8 @@
 /**
- * STAMPS ON RECORD (LangHarness, 2026-11-02; E31): finishing a lesson mints
+ * STAMPS ON RECORD (2026-11-02; E31): finishing a lesson mints
  * the stamps it earns, hands them to the end screen once, and writes their
  * day into progress.json, where they stay. Runs under an isolated
- * LH_DATA_DIR, so every app-module import is dynamic.
+ * LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -11,8 +11,8 @@ import * as path from "node:path";
 import { after, test } from "node:test";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-stamps-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { progressSummary, recordLesson } = await import("../src/server/lesson.ts");
 const { progressStore } = await import("../src/store/progress.ts");

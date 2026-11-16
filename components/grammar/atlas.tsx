@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /grammar — the grammar atlas (LangHarness, phase 4). Six cases down the
+ * /grammar — the grammar atlas (phase 4). Six cases down the
  * side, three genders across the top; each cell is the drill that teaches
  * it, showing the learner's first-try accuracy (or "not yet"). Pointing at a
  * cell — hover, focus or press — shows the unit's rule under the table, and

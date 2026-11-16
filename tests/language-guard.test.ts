@@ -9,8 +9,8 @@ import { after, beforeEach, describe, test } from "node:test";
 (globalThis as { AsyncLocalStorage?: unknown }).AsyncLocalStorage ??= AsyncLocalStorage;
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-language-guard-"));
-process.env.LH_DATA_DIR = dir;
-delete process.env.LH_PROFILE;
+process.env.LANNA_DATA_DIR = dir;
+delete process.env.LANNA_PROFILE;
 
 const czech = path.join(dir, "languages", "czech");
 fs.mkdirSync(czech, { recursive: true });

@@ -1,5 +1,5 @@
 /**
- * REJECTED EXAMPLES (LangHarness, 2026-10-30): a Tatoeba sentence reviewed
+ * REJECTED EXAMPLES (2026-10-30): a Tatoeba sentence reviewed
  * and marked `rejected` stays in the lexicon so example positions (and card
  * ids) do not move, but no feature may use it: not a lesson, a listen item,
  * a fluency drill, a review card, or the agent's examples.

@@ -44,7 +44,7 @@ Code you add or change follows this rule. An older comment goes when the code ar
 
 # Design: no AI slop
 
-Before you design or restyle any screen, component, page or artifact, read `.claude/skills/anti-slop-design/SKILL.md` (Claude Code loads it as the `anti-slop-design` skill). It lists the tells that make a UI look machine-made and what LangHarness does instead. In short:
+Before you design or restyle any screen, component, page or artifact, read `.claude/skills/anti-slop-design/SKILL.md` (Claude Code loads it as the `anti-slop-design` skill). It lists the tells that make a UI look machine-made and what Lanna does instead. In short:
 
 - No gradients, glows, colored shadows, glassmorphism, or thick colored top/left card borders.
 - No Inter-everywhere, no italic-serif accent word, no all-caps labels. Bricolage Grotesque for the chrome, Source Sans 3 for prose.

@@ -1,5 +1,5 @@
 /**
- * The picks for Watch on disk (LangHarness, 2026-11-05) — the active
+ * The picks for Watch on disk (2026-11-05) — the active
  * profile's data/profiles/<language>/videos/discover/:
  *
  *   creators.json    the saved channels and the settings (keepReady).

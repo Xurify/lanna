@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Today's line (LangHarness, 2026-11-06; docs/research/creator-hooks.md,
+ * Today's line (2026-11-06; docs/research/creator-hooks.md,
  * proposal 1), in the task frame the lessons and Listen use: a focus mode
  * (Escape leaves), one card, one bar at the bottom. The sentence plays as the
  * card opens and nothing is shown until the learner has typed what they

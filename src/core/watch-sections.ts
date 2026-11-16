@@ -1,5 +1,5 @@
 /**
- * Study sections (LangHarness, 2026-11-07; docs/research/watch-sections.md):
+ * Study sections (2026-11-07; docs/research/watch-sections.md):
  * a model picks the parts of a prepared video worth studying and the words in
  * them; the program builds the exercises from the real caption lines. The
  * model never writes a sentence (E27, E44): it returns line numbers and

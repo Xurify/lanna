@@ -11,9 +11,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chatgpt-native-"));
-process.env.LH_DATA_DIR = path.join(scratch, "data");
-process.env.LH_AUTH_FILE = path.join(scratch, "auth.json");
-fs.writeFileSync(process.env.LH_AUTH_FILE, "{}");
+process.env.LANNA_DATA_DIR = path.join(scratch, "data");
+process.env.LANNA_AUTH_FILE = path.join(scratch, "auth.json");
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
 const { runPiTurn } = await import("../src/server/pi/ui-stream.ts");
 import {
 	newUserMessage,
@@ -28,8 +28,8 @@ import {
 const originalSend = Object.getOwnPropertyDescriptor(process, "send");
 const originalConnected = Object.getOwnPropertyDescriptor(process, "connected");
 const realFetch = globalThis.fetch;
-const desktopMarker = process.env.LH_DESKTOP_SERVER,
-	desktopSecret = process.env.LH_DESKTOP_API_SECRET;
+const desktopMarker = process.env.LANNA_DESKTOP_SERVER,
+	desktopSecret = process.env.LANNA_DESKTOP_API_SECRET;
 const model = piModels().getModel("openai", "gpt-5") as Model<"openai-responses">;
 let epoch = 1,
 	revision = 1,
@@ -68,8 +68,8 @@ function revoke(full = false) {
 	});
 }
 before(() => {
-	process.env.LH_DESKTOP_SERVER = "1";
-	process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+	process.env.LANNA_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
 	Object.defineProperty(process, "send", {
 		configurable: true,
@@ -118,7 +118,7 @@ before(() => {
 				id: "fc_again",
 				call_id: "call_again",
 				name: "again",
-				namespace: "langharness",
+				namespace: "lanna",
 				arguments: "{}",
 				status: "completed",
 			};
@@ -172,10 +172,10 @@ before(() => {
 	};
 });
 after(() => {
-	if (desktopMarker === undefined) delete process.env.LH_DESKTOP_SERVER;
-	else process.env.LH_DESKTOP_SERVER = desktopMarker;
-	if (desktopSecret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-	else process.env.LH_DESKTOP_API_SECRET = desktopSecret;
+	if (desktopMarker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+	else process.env.LANNA_DESKTOP_SERVER = desktopMarker;
+	if (desktopSecret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+	else process.env.LANNA_DESKTOP_API_SECRET = desktopSecret;
 	globalThis.fetch = realFetch;
 	fs.rmSync(scratch, { recursive: true, force: true });
 	if (originalSend) Object.defineProperty(process, "send", originalSend);

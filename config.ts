@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * THE data-location seam (the Electron contract, 2026-09-17): LH_DATA_DIR
+ * THE data-location seam (the Electron contract, 2026-09-17): LANNA_DATA_DIR
  * relocates every MUTABLE record — chat sessions, the
  * embedding model cache — when set. The desktop shell points it at
  * userData so nothing is written inside the read-only .app bundle
@@ -16,15 +16,15 @@ export const ROOT = path.dirname(fileURLToPath(import.meta.url));
  * byte-for-byte as before. Read-only assets (prompts) stay ROOT-anchored
  * on purpose: they ship inside the app bundle by design.
  */
-const BASE_DATA_ROOT = process.env.LH_DATA_DIR
-	? path.resolve(process.env.LH_DATA_DIR)
+const BASE_DATA_ROOT = process.env.LANNA_DATA_DIR
+	? path.resolve(process.env.LANNA_DATA_DIR)
 	: underTestRunner()
 		? testDataRoot()
 		: path.join(ROOT, "data");
 
 /**
- * THE TEST FENCE (LangHarness, 2026-10-28): a test run that does not set
- * LH_DATA_DIR itself gets a throwaway folder under the OS temp dir, never
+ * THE TEST FENCE (2026-10-28): a test run that does not set
+ * LANNA_DATA_DIR itself gets a throwaway folder under the OS temp dir, never
  * the real data/. Upstream tests create chats ("feed chat A", "getApiKey
  * pin") and jobs through the real stores and clean up with unlink; run on
  * Xurify's PC from a shell where deletes are blocked, those fixtures
@@ -51,13 +51,13 @@ function testDataRoot(): string {
 	return dir;
 }
 
-// ─── Language profiles (LangHarness, spec D7 / WF-01) ──────────────────────
+// ─── Language profiles (spec D7 / WF-01) ──────────────────────
 // Each target language keeps its own learning records under
 // <data>/profiles/<language>/ — chats, jobs, review cards,
 // debug — so two languages never mix. Settings, prompt overrides, keys
 // and the audio cache stay at the data root: they are about the learner and
 // their providers, not about one language. The active profile is read ONCE
-// at boot (LH_PROFILE env wins, else <data>/profile.json, else slovak) and
+// at boot (LANNA_PROFILE env wins, else <data>/profile.json, else slovak) and
 // switched in place after that (POST /api/profile).
 
 /** The profiles that ship with the app. Every other language is added from
@@ -170,7 +170,8 @@ export function curriculumFile(profile: string, name: string): string {
  *  committed like the rest of the curriculum. A test run never writes there:
  *  under the test fence they live in the throwaway data folder. */
 export function repoCheatsheetsDir(profile: string = activeProfile()): string {
-	if (process.env.LH_REPO_CHEATSHEETS_DIR) return path.join(path.resolve(process.env.LH_REPO_CHEATSHEETS_DIR), profile);
+	if (process.env.LANNA_REPO_CHEATSHEETS_DIR)
+		return path.join(path.resolve(process.env.LANNA_REPO_CHEATSHEETS_DIR), profile);
 	if (underTestRunner()) return path.join(BASE_DATA_ROOT, "repo-cheatsheets", profile);
 	return path.join(ROOT, "curriculum", profile, "cheatsheets");
 }
@@ -224,7 +225,7 @@ function readCourse(profile: LanguageProfile): unknown {
 }
 
 function bootProfile(): LanguageProfile {
-	if (isLanguageProfile(process.env.LH_PROFILE)) return process.env.LH_PROFILE;
+	if (isLanguageProfile(process.env.LANNA_PROFILE)) return process.env.LANNA_PROFILE;
 	const { active } = readProfileChoice();
 	return isLanguageProfile(active) ? active : "slovak";
 }
@@ -309,7 +310,7 @@ export const PATHS = {
 	curriculum: path.join(ROOT, "curriculum"),
 	/** Languages added from the app, shared by every profile. */
 	languages: LANGUAGES_DIR,
-	/** Every spoken clip, paid for once and kept for good (LangHarness
+	/** Every spoken clip, paid for once and kept for good (Lanna
 	 *  corpus, 2026-10-27): <data>/audio/<lang>/<voice>/<slug>-<key>.mp3
 	 *  plus audio/index.jsonl (text, voice, tier, date per clip). Shared
 	 *  across profiles — a Slovak clip is a Slovak clip. */
@@ -323,21 +324,21 @@ export const PATHS = {
 	get lessons() {
 		return path.join(dataRoot(), "lessons");
 	},
-	/** Graded stories for the Read task (LangHarness reading, 2026-10-28):
+	/** Graded stories for the Read task (reading, 2026-10-28):
 	 *  stories/<id>.json (the text with glossed tokens, questions, cost),
 	 *  stories/index.jsonl (one line per story) and stories/reads.jsonl
 	 *  (one line per reading) — src/store/stories.ts. */
 	get stories() {
 		return path.join(dataRoot(), "stories");
 	},
-	/** Spoken scenes for the Speak task (LangHarness, 2026-10-28):
+	/** Spoken scenes for the Speak task (2026-10-28):
 	 *  speak/<id>.json (every line, the prompts, the summary, cost),
 	 *  speak/<id>/<n>.wav (the learner's own recordings), speak/index.jsonl
 	 *  — src/store/speak.ts. */
 	get speak() {
 		return path.join(dataRoot(), "speak");
 	},
-	/** Placement checks (LangHarness, 2026-10-28): placement/<id>.json —
+	/** Placement checks (2026-10-28): placement/<id>.json —
 	 *  every item and answer of the adaptive ladder, the model's judgements,
 	 *  the Socratic turns, the vocabulary ticks, the outcome and the cost —
 	 *  and placement/index.jsonl, one line per finished check. */
@@ -354,7 +355,7 @@ export const PATHS = {
 	get line() {
 		return path.join(dataRoot(), "line");
 	},
-	/** YouTube videos prepared for the Watch task (LangHarness watch,
+	/** YouTube videos prepared for the Watch task (watch,
 	 *  2026-10-28): videos/<id>.json (the segmented transcript with glossed
 	 *  tokens, translations, questions, cost), videos/captions/<id>.<lang>.json
 	 *  (the raw caption track as fetched), videos/index.jsonl and
@@ -434,7 +435,7 @@ export const PROMPTS_OVERRIDE_DIR = path.join(BASE_DATA_ROOT, "prompts");
  * THE AUTH/KEY STORE (auth-keys wave, 2026-09-19): BYOK provider keys in a
  * flat {VAR: value} JSON map — the SAME file the Electron app has always
  * hand-edited (owner decision: option A, zero migration). Desktop main.cjs
- * passes LH_AUTH_FILE pointing at userData/auth.json (mode 0600); in dev
+ * passes LANNA_AUTH_FILE pointing at userData/auth.json (mode 0600); in dev
  * (no Electron) the default is the repo-root auth.json (gitignored, same
  * pattern as .env.local — a worktree may symlink it to the master copy).
  * The SERVER reads/writes this file directly at call time (no restart to
@@ -444,14 +445,14 @@ export const PROMPTS_OVERRIDE_DIR = path.join(BASE_DATA_ROOT, "prompts");
  * re-read from disk on every API access. Secrets NEVER go in settings.json
  * — this file keeps that role, alongside .env.local.
  *
- * Under the test fence (2026-11-06) a run that does not set LH_AUTH_FILE
+ * Under the test fence (2026-11-06) a run that does not set LANNA_AUTH_FILE
  * gets auth.json inside the throwaway data folder, never the repo-root
  * file: a fixture var ("B": "2" from tests/auth-store.test.ts) had reached
  * a real key file, and tests/speak.test.ts deleted and restored the real
  * speech keys in it.
  */
-export const AUTH_FILE = process.env.LH_AUTH_FILE
-	? path.resolve(process.env.LH_AUTH_FILE)
+export const AUTH_FILE = process.env.LANNA_AUTH_FILE
+	? path.resolve(process.env.LANNA_AUTH_FILE)
 	: underTestRunner()
 		? path.join(BASE_DATA_ROOT, "auth.json")
 		: path.join(ROOT, "auth.json");

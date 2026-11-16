@@ -4,7 +4,7 @@
  * in order, keys that are runs of words of their line), the summary is
  * glossed and measured and written again once when it is too hard, the
  * answer is kept and not asked again, and typing the keys pays XP and sends
- * the misses to Review and Listen. Runs under an isolated LH_DATA_DIR, so
+ * the misses to Review and Listen. Runs under an isolated LANNA_DATA_DIR, so
  * app modules are imported after it.
  */
 
@@ -16,7 +16,7 @@ import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-watch-prep-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const core = await import("../src/core/watch-prep.ts");
 const server = await import("../src/server/watch-prep.ts");

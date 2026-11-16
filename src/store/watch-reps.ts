@@ -1,5 +1,5 @@
 /**
- * Watch lines to hear again in Listen (LangHarness, 2026-11-05): the active
+ * Watch lines to hear again in Listen (2026-11-05): the active
  * profile's data/profiles/<language>/watch-reps.json, one entry per line
  * (the scheduling is in src/core/watch-reps.ts). Written through a temp file
  * and a rename, as the milestones file is (src/store/milestones.ts).

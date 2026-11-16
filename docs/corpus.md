@@ -36,5 +36,5 @@ Rule E1: anything the app pays for (audio, tutor turns, explanations, stories, t
 - Add an index line and a README entry, and extend the export.
 - Keep log line shapes stable: the milestones page reads Listen timing and `videos/watches.jsonl`; Speak and Watch add their own day counters next to `speaks`, `rereads`, `fasts`, `watches`.
 - Cost truth is each chat's `turns` log priced at read time (`src/server/pricing.ts`), shown at Settings → Spending. Story episodes, speak scenes and custom milestones are counted; check new model calls appear there.
-- Tests use a throwaway data folder (`NODE_ENV=test` + `LH_DATA_DIR`), never the real profile.
+- Tests use a throwaway data folder (`NODE_ENV=test` + `LANNA_DATA_DIR`), never the real profile.
 - The Slovak lexicon (`curriculum/slovak/lexicon.json`) changes only through `scripts/merge-lexicon.mjs <shipped> <fresh>`. Card and lesson ids are `word#position`: a raw export that reorders or drops examples points existing cards at other sentences, and one that drops `rejected` flags puts reviewed sentences back in use (what PR #60 did, restored 2026-11-01).

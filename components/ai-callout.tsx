@@ -2,7 +2,7 @@
 
 /**
  * The line that says a feature is better with AI and how to turn it on
- * (LangHarness, 2026-11-01). Shown only while AI is not ready: no model on
+ * (2026-11-01). Shown only while AI is not ready: no model on
  * set up, or its provider has no key. It says what
  * is missing in plain words, what AI adds, and that the rest works without
  * it, then opens Settings in place (SettingsLink).

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Fluency (LangHarness, 2026-10-28) — the speed strand's two screens
+ * Fluency (2026-10-28) — the speed strand's two screens
  * (src/core/fluency.ts):
  *
  *   reread — an episode already read, against the clock. Start the

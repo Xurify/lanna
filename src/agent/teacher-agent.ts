@@ -132,7 +132,7 @@ export interface AgentBuildOptions {
 	promptSwitches?: Record<string, boolean>;
 	/** Native conversation identity: the existing persisted chat id, reused
 	 * across reconstructed prober, teacher, and practice Agents.
-	 * Debug: when set AND LH_PROVIDER_EVENTS=1, raw provider stream events
+	 * Debug: when set AND LANNA_PROVIDER_EVENTS=1, raw provider stream events
 	 *  (pre-normalization) append to data/debug/provider-events/
 	 *  <chatId>.jsonl via providerEventObserver — the GLM-truncation /
 	 *  DeepSeek-id incident layer. Absent or env-off → no observer. */
@@ -212,7 +212,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 	const composed = opts.promptSwitches ? composeInstructions(kind, opts.promptSwitches) : getComposedInstructions(kind);
 	const systemPrompt = [composed, opts.appContent, profile].filter(Boolean).join("\n\n---\n\n");
 	// Debug recorder (owner, 2026-10-04): raw provider events when
-	// LH_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
+	// LANNA_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
 	// the normal no-observer path (tests, env-off).
 	const providerEvents = opts.chatId ? providerEventObserver(opts.chatId, kind) : undefined;
 	const seenInputs = new Set((opts.messages ?? []).map((m) => (m as { id?: string }).id).filter(Boolean));

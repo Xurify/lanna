@@ -332,7 +332,7 @@ function QuestionDockForm({
 	// between questions, so each question starts fresh at 50.
 	const [confIdx, setConfIdx] = useState<number>(initialDraft?.confidenceIndex ?? DEFAULT_CONFIDENCE_INDEX);
 	const selectMode: SelectMode = qd.mode === "multi-select" ? "multi-select" : "single-select";
-	/* ONE TAP (LangHarness redesign): the confidence slider and the thinking
+	/* ONE TAP (redesign): the confidence slider and the thinking
 	 * field cost ~60 s a question and were left untouched most of the time,
 	 * so they sit behind "Explain my reasoning". Closed, a single-select
 	 * click IS the answer; open, the dock is the full reasoning surface. */

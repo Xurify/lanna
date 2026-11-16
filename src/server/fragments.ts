@@ -1,5 +1,5 @@
 /**
- * Fragments of a video (LangHarness, 2026-11-06): find the stretches of a
+ * Fragments of a video (2026-11-06): find the stretches of a
  * video worth watching, and prepare only one of them.
  *
  * `analyzeFragments(id)` reads the video's caption lines (kept under

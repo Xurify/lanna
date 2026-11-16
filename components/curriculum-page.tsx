@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /curriculum — the whole map, every chapter open (LangHarness). The Today
+ * /curriculum — the whole map, every chapter open. The Today
  * page shows the same path folded to the current chapter; this is where
  * the learner sees how far the road goes and what each stage buys.
  */

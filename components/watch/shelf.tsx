@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The Media shelf (LangHarness, 2026-11-07): what the learner sees before a
+ * The Media shelf (2026-11-07): what the learner sees before a
  * video starts. One shape, the video card, in four places, behind four tabs
  * that stay in reach while the page scrolls:
  *

@@ -43,7 +43,7 @@ export function LoginForm({ next }: { next: string }) {
 					: (body?.error ?? "Could not sign in. Try again."),
 			);
 		} catch {
-			setError("LangHarness could not be reached. Check your connection, then try again.");
+			setError("Lanna could not be reached. Check your connection, then try again.");
 		} finally {
 			setBusy(false);
 		}
@@ -57,7 +57,7 @@ export function LoginForm({ next }: { next: string }) {
 					className="mt-5 text-center font-ui text-[22px] font-semibold tracking-tight text-foreground"
 					data-testid="login-heading"
 				>
-					Welcome to Lang<span className="text-sun">Harness</span>
+					Welcome to Lanna
 				</h1>
 				<p className="mt-1.5 text-center text-[15px] leading-snug text-[var(--q-ink-2)]">
 					Enter your password to continue.

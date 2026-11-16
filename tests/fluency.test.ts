@@ -1,11 +1,11 @@
 /**
- * FLUENCY PINS (LangHarness, 2026-10-28): the speed strand — the known-
+ * FLUENCY PINS (2026-10-28): the speed strand — the known-
  * sentence picker (100% known, practiced sentences first), the shrinking
  * windows, words a minute and the XP rules, and the server round trips
  * (a timed re-read of a stored episode with its history; a "say it
  * faster" round into the ledger and the logs).
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -15,8 +15,8 @@ import * as path from "node:path";
 import { after, test } from "node:test";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-fluency-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
 const {

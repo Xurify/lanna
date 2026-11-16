@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * A tappable word (LangHarness, 2026-10-28) — shared by the Read and
+ * A tappable word (2026-10-28) — shared by the Read and
  * Watch tasks. The popover under (or above) the word shows the dictionary
  * form, the form "here", the gloss, the part of speech and whether the word
  * is new to the learner. A fresh word carries a dotted underline so the eye

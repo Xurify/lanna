@@ -227,7 +227,7 @@ function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 
 	// Inline code: no data-block (the pre handler stamps block fences only).
 	if (!("data-block" in props)) {
-		// LangHarness: `say: …` is a target-language phrase with a play button.
+		// Lanna: `say: …` is a target-language phrase with a play button.
 		const spoken = spokenText(codeSource(children));
 		if (spoken) return <SpokenPhrase text={spoken} />;
 		return (

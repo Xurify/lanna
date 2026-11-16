@@ -1,5 +1,5 @@
 /**
- * "Why?" from a lesson (LangHarness corpus, 2026-10-27) — behind
+ * "Why?" from a lesson (corpus, 2026-10-27) — behind
  * POST /api/why. The explanation for a (sentence, answer) pair is paid
  * for once: the profile's Why? index (data/profiles/<language>/lessons/
  * why-index.json, store/corpus.ts) remembers which chat answered it, and a

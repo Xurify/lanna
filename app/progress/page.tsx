@@ -7,7 +7,7 @@ export const metadata = { title: "Progress" };
 export const dynamic = "force-dynamic";
 
 /** The Plan: goal, pace sliders, hours, milestones and weak spots in one
- *  place (LangHarness). Computed here with the page, so the first HTML
+ *  place. Computed here with the page, so the first HTML
  *  already carries the dates. */
 export default function PlanRoute() {
 	const tz = new Date().getTimezoneOffset();

@@ -11,7 +11,7 @@ import path from "node:path";
 import { test } from "node:test";
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-language-estimate-"));
-process.env.LH_DATA_DIR = dir;
+process.env.LANNA_DATA_DIR = dir;
 fs.writeFileSync(
 	path.join(dir, "settings.json"),
 	JSON.stringify({

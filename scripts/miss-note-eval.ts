@@ -3,7 +3,7 @@
  * (src/server/miss-note.ts: Cheap slot, deterministic check, judge call) and
  * saves what came back, with cost and time, for a person to grade.
  *
- *   LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> \
+ *   LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<auth.json> \
  *     tsx scripts/miss-note-eval.ts <out-dir> <a/b> [<a/b> ...]
  *   ... tsx scripts/miss-note-eval.ts <out-dir> --dry <a/b> ...   prints the prompt, calls nothing
  *
@@ -17,9 +17,9 @@ import path from "node:path";
 const [outDir, ...rest] = process.argv.slice(2);
 const dry = rest.includes("--dry");
 const wanted = rest.filter((a) => a !== "--dry");
-if (!outDir || wanted.length === 0 || !process.env.LH_DATA_DIR) {
+if (!outDir || wanted.length === 0 || !process.env.LANNA_DATA_DIR) {
 	console.error(
-		"usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> tsx scripts/miss-note-eval.ts <out-dir> [--dry] <a/b> ...",
+		"usage: LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<auth.json> tsx scripts/miss-note-eval.ts <out-dir> [--dry] <a/b> ...",
 	);
 	process.exit(1);
 }

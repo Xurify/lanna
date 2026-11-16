@@ -1,11 +1,11 @@
 /**
- * DISTRACTORS (LangHarness, 2026-10-30): the wrong meanings in a meaning
+ * DISTRACTORS (2026-10-30): the wrong meanings in a meaning
  * question are close to the right one. The neighbor index and the option
  * chooser (pure), then the server: a sentence with no close neighbor gets
  * two near-misses from a scripted cheap model, kept on disk and reused
  * without a second call; a plan never waits longer than the cap.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -16,8 +16,8 @@ import { after, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-distractors-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { buildNeighborIndex, chooseOptions, neighbors, MIN_CLOSE } = await import("../src/core/distractors.ts");
 const { rng } = await import("../src/core/lesson.ts");

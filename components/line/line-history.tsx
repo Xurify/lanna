@@ -1,5 +1,5 @@
 /**
- * The last 14 days of today's line (LangHarness, 2026-11-06). One column a
+ * The last 14 days of today's line (2026-11-06). One column a
  * day, two marks: the morning in the app's de-emphasis gray, the evening in
  * the teal, joined by a hairline when both are in, so the lift from one to the
  * other is the shape the eye reads (the "emphasis" form: one hue plus gray;

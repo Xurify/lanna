@@ -1,6 +1,6 @@
-# Remote access: LangHarness on a phone or iPad
+# Remote access: Lanna on a phone or iPad
 
-This guide is for the owner. It turns on the app for your own phone and iPad while LangHarness runs on this PC. Your keys and your learning data stay on this PC. Nothing is published to the internet.
+This guide is for the owner. It turns on the app for your own phone and iPad while Lanna runs on this PC. Your keys and your learning data stay on this PC. Nothing is published to the internet.
 
 To keep the server running while the PC is off, see [server.md](server.md).
 
@@ -12,12 +12,12 @@ To serve the app at a public address of its own, behind a password, with no Tail
 
 1. Install Tailscale on this PC, on the iPhone and on the iPad. Sign in to the same Tailscale account on all three.
 2. In the Tailscale admin console, turn on **MagicDNS** and **HTTPS certificates** (the DNS page). Serve needs both.
-3. Leave **Funnel** off. Funnel publishes a service to the whole internet. LangHarness is built for your own tailnet only.
+3. Leave **Funnel** off. Funnel publishes a service to the whole internet. Lanna is built for your own tailnet only.
 
 ## Set it up (about five minutes)
 
-1. Name this computer's address for the phone. In the project folder, create a file named `.env.local` with one line: `LH_TAILNET_HOST=` followed by the name in your phone's address, without `https://` and without a path. The file is never committed. Then start LangHarness on this PC with `bun run desktop:dev`. It listens on port 3010. Restart it after you change `.env.local`.
-2. In LangHarness, open **Settings → Devices** and turn on **Remote access**. This window is signed in automatically, as "This computer".
+1. Name this computer's address for the phone. In the project folder, create a file named `.env.local` with one line: `LANNA_TAILNET_HOST=` followed by the name in your phone's address, without `https://` and without a path. The file is never committed. Then start Lanna on this PC with `bun run desktop:dev`. It listens on port 3010. Restart it after you change `.env.local`.
+2. In Lanna, open **Settings → Devices** and turn on **Remote access**. This window is signed in automatically, as "This computer".
 3. In a terminal on this PC (PowerShell on Windows), run the command Settings shows:
 
    ```
@@ -28,11 +28,11 @@ To serve the app at a public address of its own, behind a password, with no Tail
 
 4. On the phone, open that `https://` address in Safari. The app sends you to **Pair this device**.
 5. On the PC, in **Settings → Devices**, choose **Make a code**. Type the six digits on the phone within five minutes, and give the device a name such as "iPhone".
-6. On the iPhone or iPad, tap Share, then **Add to Home Screen**, and open LangHarness from its icon.
+6. On the iPhone or iPad, tap Share, then **Add to Home Screen**, and open Lanna from its icon.
 
 ## Day to day
 
-Nothing to do. The app works while this PC is awake, LangHarness is running, and Serve is set up. After a restart, start LangHarness again; Serve keeps its setting.
+Nothing to do. The app works while this PC is awake, Lanna is running, and Serve is set up. After a restart, start Lanna again; Serve keeps its setting.
 
 ## Sign a device out, or turn everything off
 
@@ -57,13 +57,13 @@ It turns remote access off and signs every paired device out. It does not touch 
 - **"That code has expired."** A code lasts five minutes and works once. Make a new one.
 - **The Home Screen icon asks for a code again.** iOS may keep a Home Screen app's cookies apart from Safari's. This is not verified. Pair from the Home Screen icon if it asks.
 - **The installed (packaged) desktop app does not work here.** Its port changes on every start, and Serve needs a fixed one. Use `bun run desktop:dev` for now. A fixed port for the installed app is a later step.
-- **The PC terminal says "Blocked cross-origin request to Next.js dev resource", and Pair does nothing on the phone.** The page never started, because Next refused its scripts from your tailnet name. Check that `.env.local` has `LH_TAILNET_HOST` set to that name (step 1), then restart `bun run desktop:dev`.
+- **The PC terminal says "Blocked cross-origin request to Next.js dev resource", and Pair does nothing on the phone.** The page never started, because Next refused its scripts from your tailnet name. Check that `.env.local` has `LANNA_TAILNET_HOST` set to that name (step 1), then restart `bun run desktop:dev`.
 
 ## What is checked, and what is not
 
 Checked in the cloud sandbox with a throwaway data folder: the switch, this computer's own browser at `localhost` opening the app with no code (switch on and off), pairing with a code and its tries and expiry, sign-out, turning off, the refusals for other host names and for proxy headers, and the recovery command.
 
-Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's handling of the cookie, the Home Screen app, and the phone's page after the `LH_TAILNET_HOST` fix. The owner has to check those on the devices.
+Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's handling of the cookie, the Home Screen app, and the phone's page after the `LANNA_TAILNET_HOST` fix. The owner has to check those on the devices.
 
 ## At a public address (a server with a domain)
 
@@ -77,8 +77,8 @@ For a server that is always on, such as a VPS: the app at `https://learn.example
    ```
 
    ```
-   LH_PUBLIC_HOST=learn.example.com
-   LH_PROXY_SECRET=<the 64 characters from the command above>
+   LANNA_PUBLIC_HOST=learn.example.com
+   LANNA_PROXY_SECRET=<the 64 characters from the command above>
    ```
 
 3. **Set the proxy.** nginx, inside the `server` block that already holds the certificate for the name:
@@ -115,7 +115,7 @@ For a server that is always on, such as a VPS: the app at `https://learn.example
 
 **Turn it off.** Settings → Devices, or `npm run remote:off` on the server. Every browser is signed out and the address answers 403.
 
-**Both ways in at once.** Tailscale and the public address can be used together. A request addressed by a tailnet name is handled as before (pairing code, `tailscale serve`), whether or not `LH_PUBLIC_HOST` is set. Both share one switch: the first `npm run web:password` turns remote access on, and turning it off in Settings or with `npm run remote:off` signs out the public sign-ins and the paired Tailscale devices alike.
+**Both ways in at once.** Tailscale and the public address can be used together. A request addressed by a tailnet name is handled as before (pairing code, `tailscale serve`), whether or not `LANNA_PUBLIC_HOST` is set. Both share one switch: the first `npm run web:password` turns remote access on, and turning it off in Settings or with `npm run remote:off` signs out the public sign-ins and the paired Tailscale devices alike.
 
 **A machine with no screen** cannot make a pairing code in Settings. `npm run remote:code` prints one (`npm run remote:code -- --enable` turns remote access on first); it is for pairing a tailnet device, not for the public address.
 

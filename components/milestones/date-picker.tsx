@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The day of a scene with a date (LangHarness, 2026-11-05): five quick
+ * The day of a scene with a date (2026-11-05): five quick
  * choices, then a month and year stepper for any other day. The stepper holds
  * the day it starts from and clamps it to the month's length, so the 31st
  * becomes the 28th or 29th in February. The chosen date is said in words under

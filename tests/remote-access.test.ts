@@ -47,14 +47,14 @@ describe("remote access off (the default): the old rules, plus two refusals", ()
 	it("keeps the desktop check on the API, as before", () => {
 		const decision = decideAccess(input({ pathname: "/api/settings", desktopApiOk: false }));
 		assert.equal(decision.action, "refuse");
-		assert.match(decision.action === "refuse" ? decision.message : "", /trusted LangHarness window/);
+		assert.match(decision.action === "refuse" ? decision.message : "", /trusted Lanna window/);
 	});
 
 	it("refuses another host, on pages and on the API", () => {
 		const page = decideAccess(input({ host: "evil.example" }));
-		assert.deepEqual(page, { action: "refuse", message: "LangHarness only answers this computer." });
+		assert.deepEqual(page, { action: "refuse", message: "Lanna only answers this computer." });
 		const api = decideAccess(input({ host: "evil.example", pathname: "/api/chats" }));
-		assert.deepEqual(api, { action: "refuse", message: "The LangHarness API only answers this computer." });
+		assert.deepEqual(api, { action: "refuse", message: "The Lanna API only answers this computer." });
 	});
 
 	it("reads the original name from x-forwarded-host, because the router rewrites Host on the way in", () => {
@@ -122,7 +122,7 @@ describe("remote access on: this computer always passes; a proxied request needs
 	it("keeps the desktop API check for this computer, with remote access on as with it off", () => {
 		const decision = decideAccess(input({ ...on, pathname: "/api/settings", desktopApiOk: false }));
 		assert.equal(decision.action, "refuse");
-		assert.match(decision.action === "refuse" ? decision.message : "", /trusted LangHarness window/);
+		assert.match(decision.action === "refuse" ? decision.message : "", /trusted Lanna window/);
 	});
 
 	it("lets the packaged desktop window through", () => {

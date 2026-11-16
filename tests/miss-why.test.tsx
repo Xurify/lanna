@@ -6,8 +6,8 @@ import { after, test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-miss-why-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 // ESM evaluates static imports before this module's body, so the app modules are imported after the env is set.
 
