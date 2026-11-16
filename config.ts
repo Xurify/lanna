@@ -177,30 +177,35 @@ const RUNNING = ((globalThis as { __lhRunning?: Record<string, Running> }).__lhR
 
 const COURSE_KEY = "__lhCourse";
 const COURSE_RECHECK_MS = 1000;
-const COURSES = ((globalThis as { __lhCourses?: Map<string, { mtimeMs: number; checkedAt: number; course: unknown }> }).__lhCourses ??= new Map());
+const COURSES = ((globalThis as { __lhCourses?: Map<string, { file: string; mtimeMs: number; checkedAt: number; course: unknown }> }).__lhCourses ??= new Map());
+
+function courseFile(profile: LanguageProfile): string {
+	const checkedFile = path.join(LANGUAGES_DIR, profile, "course.json");
+	const shippedFile = path.join(ROOT, "curriculum", profile, "course.json");
+	return fs.existsSync(checkedFile) ? checkedFile : (fs.existsSync(shippedFile) ? shippedFile : checkedFile);
+}
 
 function readCourse(profile: LanguageProfile): unknown {
 	if ((LANGUAGE_PROFILES as readonly string[]).includes(profile)) return undefined;
-	const checkedFile = path.join(LANGUAGES_DIR, profile, "course.json");
-	const shippedFile = path.join(ROOT, "curriculum", profile, "course.json");
-	const file = fs.existsSync(checkedFile) ? checkedFile : (fs.existsSync(shippedFile) ? shippedFile : checkedFile);
-	const kept = COURSES.get(file);
+	const key = `${LANGUAGES_DIR}\0${profile}`;
+	const kept = COURSES.get(key);
 	const now = Date.now();
 	if (kept && now - kept.checkedAt < COURSE_RECHECK_MS) return kept.course;
+	const file = courseFile(profile);
 	let mtimeMs: number;
 	try {
 		mtimeMs = fs.statSync(file).mtimeMs;
 	} catch {
-		COURSES.delete(file);
+		COURSES.set(key, { file, mtimeMs: -1, checkedAt: now, course: undefined });
 		return undefined;
 	}
-	if (kept?.mtimeMs === mtimeMs) {
+	if (kept?.file === file && kept.mtimeMs === mtimeMs) {
 		kept.checkedAt = now;
 		return kept.course;
 	}
 	try {
 		const course: unknown = JSON.parse(fs.readFileSync(file, "utf-8"));
-		COURSES.set(file, { mtimeMs, checkedAt: now, course });
+		COURSES.set(key, { file, mtimeMs, checkedAt: now, course });
 		return course;
 	} catch {
 		return undefined;

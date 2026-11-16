@@ -21,6 +21,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { ReadLogEntry, StoryIndexEntry, StoryRecord } from "../core/reading.ts";
+import { processWide } from "../core/process-wide.ts";
 
 const INDEX = () => path.join(PATHS.stories, "index.jsonl");
 const READS = () => path.join(PATHS.stories, "reads.jsonl");
@@ -55,6 +56,16 @@ function appendJsonl(file: string, value: unknown): void {
 	fs.appendFileSync(file, `${JSON.stringify(value)}\n`, "utf-8");
 }
 
+const parsedStories = processWide("stories.parsed", () => new Map<string, { mtimeMs: number; size: number; story: StoryRecord }>());
+
+function deepFreeze<T>(value: T): T {
+	if (value && typeof value === "object" && !Object.isFrozen(value)) {
+		Object.freeze(value);
+		for (const inner of Object.values(value)) deepFreeze(inner);
+	}
+	return value;
+}
+
 function indexEntryOf(story: StoryRecord): StoryIndexEntry {
 	return {
 		id: story.id,
@@ -81,9 +92,16 @@ export const storyStore = {
 	list(): StoryIndexEntry[] {
 		return readJsonl<StoryIndexEntry>(INDEX()).sort((a, b) => a.episode - b.episode || a.createdAt.localeCompare(b.createdAt));
 	},
+	/** The story as saved. Parsed once per change on disk and shared, so it is frozen. */
 	get(id: string): StoryRecord | null {
 		try {
-			return JSON.parse(fs.readFileSync(storyFile(id), "utf-8")) as StoryRecord;
+			const file = storyFile(id);
+			const { mtimeMs, size } = fs.statSync(file);
+			const kept = parsedStories.get(file);
+			if (kept && kept.mtimeMs === mtimeMs && kept.size === size) return kept.story;
+			const story = deepFreeze(JSON.parse(fs.readFileSync(file, "utf-8")) as StoryRecord);
+			parsedStories.set(file, { mtimeMs, size, story });
+			return story;
 		} catch {
 			return null;
 		}
