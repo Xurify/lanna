@@ -18,6 +18,7 @@
 
 import { entryLemma, exampleText, type LexiconEntry, type LexiconExample } from "./review.ts";
 import { foldDiacritics, knownVariants } from "./language.ts";
+import { cellsOf, numberByEnding, numberIn, type CaseName, type Declension } from "./form-cells.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
@@ -853,6 +854,8 @@ export interface LessonItem {
 	/** The answer's form in plain words: "he / she / it form of dávať",
 	 *  "accusative of káva". */
 	form?: string;
+	declension?: Declension;
+	forms?: readonly string[];
 	/** Who does the verb, when the sentence cannot say it: Slovak drops the
 	 *  subject pronoun ("Bývam v Groningene"), so with the English hidden the
 	 *  base form alone leaves bývam, bývaš and bývame all possible. */
@@ -875,7 +878,7 @@ export interface WordKnown {
 	reps: number;
 }
 
-const CASE_OF_UNIT: Partial<Record<UnitId, string>> = {
+const CASE_OF_UNIT: Partial<Record<UnitId, CaseName>> = {
 	"acc-fem": "accusative",
 	"acc-people": "accusative",
 	loc: "locative",
@@ -915,7 +918,7 @@ export function unstatedPerson(sentence: string, form: string | undefined): Pers
  *  doing a verb, which case a noun is in. Undefined when nothing safe can
  *  be said (an adverb, a phrase, a form the unit does not name). */
 export function describeForm(
-	entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | "cat" | "forms" | "gender" | "formTags">,
+	entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | "cat" | "forms" | "gender" | "formTags" | "declension">,
 	answer: string,
 	unit: UnitId,
 ): string | undefined {
@@ -946,8 +949,17 @@ export function describeForm(
 		return `${presentPerson(a)} form of ${entry.sk}`;
 	}
 	const kase = CASE_OF_UNIT[unit];
-	if (kase && !isVerb) return `${kase} of ${entry.sk}${entry.gender ? ` (${entry.gender})` : ""}`;
-	return undefined;
+	if (!kase || isVerb) return undefined;
+	const number = entry.declension
+		? numberIn(cellsOf(entry.declension, answer), kase)
+		: entry.cat === "Nouns"
+			? numberByEnding(answer, kase)
+			: undefined;
+	return `${kase}${number ? ` ${number}` : ""} of ${entry.sk}${entry.gender ? ` (${entry.gender})` : ""}`;
+}
+
+export function caseOfUnit(unit: UnitId): CaseName | undefined {
+	return CASE_OF_UNIT[unit];
 }
 
 /** A frequency rank in words: how often the learner will meet this word. */
@@ -1317,6 +1329,10 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	if (c.entry.gender) item.gender = c.entry.gender;
 	const form = describeForm(c.entry, answer, c.unit);
 	if (form) item.form = form;
+	if (caseOfUnit(c.unit)) {
+		if (c.entry.declension) item.declension = c.entry.declension;
+		else if (c.entry.forms?.length) item.forms = c.entry.forms;
+	}
 	const person = vocabulary ? undefined : unstatedPerson(exampleText(ex), form);
 	if (person) item.person = person;
 	const alts = [

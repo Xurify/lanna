@@ -87,6 +87,7 @@ export * from "./lesson.ts";
 export * from "./reference-pages.ts";
 export * from "./grammar.ts";
 export * from "./course-grammar.ts";
+export * from "./form-cells.ts";
 export * from "./form-slip.ts";
 export * from "./review-miss.ts";
 export * from "./miss-note.ts";

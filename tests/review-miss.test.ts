@@ -42,6 +42,7 @@ reviewStore.writeCards({
 	"vecera#2": card("vecera#2", "vecera", "večera", "Po večeri ideme na prechádzku.", "večeri"),
 	"kseft#0": learning(card("kseft#0", "kseft", "kšeft", "Na tom kšefte.", "kšefte")),
 	"ist#0": learning(card("ist#0", "ist", "ísť", "Ideme na dovolenku.", "Ideme")),
+	"kseftovat#2": learning(card("kseftovat#2", "kseftovat", "kšeftovať", "Kšeftuje s bytmi v centre.", "Kšeftuje")),
 });
 
 test("with several gaps, a miss on another hidden word is the one explained", () => {
@@ -50,6 +51,15 @@ test("with several gaps, a miss on another hidden word is the one explained", ()
 	assert.equal(r.lemma, "dovolenka");
 	assert.equal(r.answer, "dovolenku");
 	assert.equal(r.given, "dovolenka");
+});
+
+test("the right case in the wrong number says so: s bytom for s bytmi", () => {
+	const r = reviewMiss("kseftovat#2", "Kšeftuje bytom v", 3)!;
+	assert.equal(r.lemma, "byt");
+	assert.equal(r.slip, "same-word");
+	assert.equal(r.givenForm, "instrumental singular");
+	assert.deepEqual(r.mismatch, { kind: "number", grammarCase: "instrumental", given: "singular", needed: "plural" });
+	assert.match(r.form ?? "", /^instrumental plural/);
 });
 
 test("a missed grammar word the dictionary has no entry for is named from the grammar-word table", () => {
@@ -76,7 +86,7 @@ test("another dictionary word is named with its meaning, even when it shares the
 	assert.equal(r.lemma, "večera");
 	assert.equal(r.gloss, "dinner");
 	assert.equal(r.trigger, "po");
-	assert.match(r.form ?? "", /^locative of večera/);
+	assert.match(r.form ?? "", /^locative singular of večera/);
 });
 
 test("a form of another word says so", () => {
