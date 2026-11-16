@@ -12,8 +12,8 @@ export const TITLE_MAX_CHARS = 72;
  *  single spaces first, so boundaries are always single-space boundaries.
  *  Used on chat creation; deterministic so tests can pin it. */
 export function titleFromPrompt(prompt: string): string {
-	const { pdfs, rest } = splitAttachedPdfs(prompt);
-	const words = rest || (pdfs[0] ? `PDF: ${pdfs[0].name}` : prompt);
+	const { pdfs, images, rest } = splitAttachedPdfs(prompt);
+	const words = rest || (pdfs[0] ? `PDF: ${pdfs[0].name}` : images[0] ? `Image: ${images[0].name}` : prompt);
 	const oneLine = words.replace(/\s+/g, " ").trim();
 	if (oneLine.length <= TITLE_MAX_CHARS) return oneLine;
 	// Last space among the first TITLE_MAX_CHARS characters; the cut sits

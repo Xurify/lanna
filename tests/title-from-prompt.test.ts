@@ -70,9 +70,10 @@ describe("a first message that carries a PDF", () => {
 	it("splits back into the PDF and the learner's words", () => {
 		assert.deepEqual(splitAttachedPdfs(`${line}\nWhen do I use the locative?`), {
 			pdfs: [{ name: "Lekcia 3 – lokál.pdf", pages: 2, path: "C:/data/profiles/slovak/sources/Lekcia-3-lokal-0a1b2c.pdf" }],
+			images: [],
 			rest: "When do I use the locative?",
 		});
-		assert.deepEqual(splitAttachedPdfs("No file here."), { pdfs: [], rest: "No file here." });
+		assert.deepEqual(splitAttachedPdfs("No file here."), { pdfs: [], images: [], rest: "No file here." });
 	});
 });
 
@@ -81,12 +82,31 @@ describe("the composer's draft with a PDF", () => {
 
 	it("shows only the learner's words in the field and keeps every keystroke, trailing space included", () => {
 		const draft = joinDraft([pdf], "When do I ");
-		assert.deepEqual(splitDraft(draft), { pdfs: [pdf], rest: "When do I " });
+		assert.deepEqual(splitDraft(draft), { pdfs: [pdf], images: [], rest: "When do I " });
 		assert.equal(joinDraft([], "plain"), "plain");
 	});
 
 	it("drops the PDF line when the chip is removed", () => {
 		const { pdfs, rest } = splitDraft(joinDraft([pdf], "Question?"));
 		assert.equal(joinDraft(pdfs.filter((p) => p !== pdfs[0]), rest), "Question?");
+	});
+});
+
+describe("a message that carries an image", () => {
+	const img = { name: "sign.png", path: "/data/sources/sign-0a1b2c.png" };
+
+	it("is titled by the image name when the learner wrote nothing else", () => {
+		assert.equal(titleFromPrompt(`My image "${img.name}": ${img.path}`), "Image: sign.png");
+	});
+
+	it("is titled by the learner's question when text is present", () => {
+		assert.equal(titleFromPrompt(`My image "${img.name}": ${img.path}\nWhat does this sign mean?`), "What does this sign mean?");
+	});
+
+	it("splits and joins draft with image attachments", () => {
+		const draft = joinDraft([], "Explain this photo", [img]);
+		assert.deepEqual(splitDraft(draft), { pdfs: [], images: [img], rest: "Explain this photo" });
+		const { images, rest } = splitDraft(draft);
+		assert.equal(joinDraft([], rest, images.filter((i) => i !== images[0])), "Explain this photo");
 	});
 });
