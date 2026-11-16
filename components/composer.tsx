@@ -45,6 +45,7 @@ export function Composer({
 	autoFocus,
 	inputRef,
 	onEscape,
+	onPaste,
 	placeholder = "Write to your tutor…",
 	nextProblem = false,
 	onNext,
@@ -66,6 +67,8 @@ export function Composer({
 	/** Escape while a dictation runs stops it (STT wave, 2026-09-17). No-op
 	 *  when absent — Esc otherwise means nothing in the composer. */
 	onEscape?: () => void;
+	/** Clipboard paste handler (e.g. for image attachments). */
+	onPaste?: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
 	/** The textarea's placeholder (owner refinement round, 2026-09-24):
 	 *  active sessions read "Ask, answer, or steer the lesson…"; the fresh
 	 *  new-session page asks the graph view's opening question instead. */
@@ -102,6 +105,7 @@ export function Composer({
 				ref={inputRef}
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
+				onPaste={onPaste}
 				onKeyDown={(e) => {
 					// Esc ends dictation before anything else Esc might someday mean
 					// here (the dictate decisions: click-again or Esc to stop).
