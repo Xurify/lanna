@@ -45,3 +45,15 @@ test("the measure's files are recorded on the first look and a later change is l
 	syncDailyExperimentData(noonOf(4));
 	assert.equal(readDeviations().filter((d) => d.kind === "measure-changed").length, 1, "checked at most once a day");
 });
+
+test("a page view that finds nothing new leaves the study's files untouched", () => {
+	syncDailyExperimentData(noonOf(4));
+	const files = ["daily.jsonl", "summary.md"].map((name) => path.join(experimentDir(), name));
+	const before = files.map((file) => fs.statSync(file).mtimeMs);
+	fs.utimesSync(files[0]!, new Date(0), new Date(0));
+	fs.utimesSync(files[1]!, new Date(0), new Date(0));
+	syncDailyExperimentData(noonOf(4));
+	assert.deepEqual(files.map((file) => fs.statSync(file).mtimeMs), [0, 0], "nothing was rewritten");
+	assert.ok(before.every((ms) => ms > 0));
+	assert.deepEqual(fs.readdirSync(experimentDir()).filter((name) => name.endsWith(".tmp")), [], "no half-written file is left");
+});

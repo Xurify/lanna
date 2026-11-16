@@ -61,8 +61,15 @@ function ensureDir(dirPath: string): void {
 
 function writeExperimentFile(fileName: string, content: string): void {
 	const target = path.join(experimentDir(), fileName);
+	try {
+		if (fs.readFileSync(target, "utf8") === content) return;
+	} catch {
+		// not written yet
+	}
 	ensureDir(path.dirname(target));
-	fs.writeFileSync(target, content, "utf8");
+	const tmp = `${target}.${process.pid}.tmp`;
+	fs.writeFileSync(tmp, content, "utf8");
+	fs.renameSync(tmp, target);
 }
 
 /** Reads protocol hash and git commit. */
@@ -450,15 +457,17 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 	}
 
 	const maxDay = currentDayNumber < 1 ? 0 : Math.min(currentDayNumber, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
+	const languages = [config.languages.treatment, config.languages.control];
+	const progressOf = new Map(languages.map((lang) => [lang, maxDay > 0 ? readProfileProgress(lang) : null]));
 
 	for (let d = 1; d <= maxDay; d++) {
 		const s = schedule[d - 1];
 		if (!s) continue;
 		const dateStr = s.date;
 
-		for (const lang of [config.languages.treatment, config.languages.control]) {
+		for (const lang of languages) {
 			const logs = readDayLessonLogs(lang, dateStr);
-			const progress = readProfileProgress(lang);
+			const progress = progressOf.get(lang);
 			const dayProgress = progress?.days?.[dateStr];
 
 			const listenLessons = logs.filter((l: any) => l.mode === "listen");
