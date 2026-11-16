@@ -114,6 +114,7 @@ export function contrastExample(
 	examples: readonly Pick<LexiconExample, "text" | "sk" | "en" | "rejected">[],
 	word: string,
 	tag = "sk-SK",
+	meaning?: string,
 ): MissExample | undefined {
 	const key = (w: string) => foldDiacritics(normalizeAnswer(w, tag));
 	const target = key(word);
@@ -122,7 +123,13 @@ export function contrastExample(
 		.map((e) => ({ text: exampleText(e), en: e.en }));
 	const hasWord = (e: MissExample) => e.text.split(/[^\p{L}]+/u).some((t) => key(t) === target);
 	const pool = usable.some(hasWord) ? usable.filter(hasWord) : usable;
-	const example = [...pool].sort((a, b) => a.text.length - b.text.length)[0];
+	const senseWords = senses(meaning ?? "").map(senseHead);
+	const senseRank = (e: MissExample) => {
+		const en = ` ${e.en.toLowerCase().replace(/[^\p{L}\s]+/gu, " ")} `;
+		const i = senseWords.findIndex((s) => s && en.includes(` ${s} `));
+		return i < 0 ? senseWords.length : i;
+	};
+	const example = [...pool].sort((a, b) => senseRank(a) - senseRank(b) || a.text.length - b.text.length)[0];
 	return example && startsQuestion(example.text, word, tag) ? { ...example, asks: true } : example;
 }
 
@@ -164,7 +171,7 @@ export function missWordOf(
 		!rule && !aspect && opts.reference
 			? referenceContrast(opts.reference.units, card.lemma, otherLemma, tag)
 			: undefined;
-	const example = contrastExample(other.examples, opts.typed, tag);
+	const example = contrastExample(other.examples, opts.typed, tag, other.en);
 	const word: MissWord = {
 		lemma: otherLemma,
 		gloss: shortGloss(other.en),

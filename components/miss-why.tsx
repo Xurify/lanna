@@ -9,13 +9,12 @@ const DASH: Record<Tone, string> = { yours: "bg-miss", needed: "bg-teal" };
 const senseHead = (sense: string) => sense.replace(/\s*\([^)]*\)/g, "").trim();
 const sameWord = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-function Side({
+function Row({
 	label,
 	word,
 	detail,
 	tone,
 	code,
-	className,
 	testId,
 }: {
 	label: string;
@@ -23,24 +22,44 @@ function Side({
 	detail?: React.ReactNode;
 	tone: Tone;
 	code?: string;
-	className?: string;
 	testId: string;
 }) {
 	return (
-		<div className={cn("min-w-0", className)} data-testid={testId}>
-			<p className="text-[12px] font-medium text-ink-3">{label}</p>
+		<div className="contents" data-testid={testId}>
+			<p className="text-[13px] text-ink-3">{label}</p>
 			<p
 				lang={code}
 				className={cn(
-					"mt-1 break-words font-title text-[22px] leading-tight underline decoration-2 underline-offset-[5px]",
+					"min-w-0 break-words font-title text-[22px] leading-tight underline decoration-2 underline-offset-[5px]",
 					UNDERLINE[tone],
 					tone === "yours" ? "text-ink-2" : "font-semibold text-ink",
 				)}
 			>
 				{word}
 			</p>
-			{detail && <p className="mt-1.5 text-[14px] leading-snug text-ink-3">{detail}</p>}
+			{detail && (
+				<p className="col-start-2 -mt-1 min-w-0 text-[14px] leading-snug text-ink-3 @md:col-start-3 @md:mt-0">
+					{detail}
+				</p>
+			)}
 		</div>
+	);
+}
+
+function InUse({ text, words, code }: { text: string; words: readonly string[]; code?: string }) {
+	const marked = new Set(words.map((word) => word.toLocaleLowerCase(code)));
+	return (
+		<>
+			{text.split(/(\p{L}+)/u).map((part, i) =>
+				marked.has(part.toLocaleLowerCase(code)) ? (
+					<span key={i} className={cn("underline decoration-[1.5px] underline-offset-[3px]", UNDERLINE.yours)}>
+						{part}
+					</span>
+				) : (
+					part
+				),
+			)}
+		</>
 	);
 }
 
@@ -191,11 +210,15 @@ export function MissWhy({
 	) : example ? (
 		<div data-testid="review-why-example">
 			<span className="block">
-				{example.asks && onlyOneAsks ? <>{w(typed, "yours")} asks a question:</> : <>Your word in use:</>}
+				{example.asks && onlyOneAsks ? (
+					<>{w(typed, "yours")} asks a question:</>
+				) : (
+					<>{w(other!.lemma, "yours")} in use:</>
+				)}
 			</span>
-			<i lang={code} className="mt-1 block">
-				{example.text}
-			</i>
+			<span lang={code} className="mt-1 block font-[500] text-ink">
+				<InUse text={example.text} words={[typed, other!.lemma]} code={code} />
+			</span>
 			<span className="block text-ink-3">{example.en}</span>
 		</div>
 	) : null;
@@ -224,33 +247,28 @@ export function MissWhy({
 
 	return (
 		<div className={cn("lh-fade text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
-			<div className="flex items-stretch">
+			<div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 gap-y-2.5 @md:grid-cols-[auto_auto_minmax(0,1fr)] @md:gap-x-5">
 				{typed && (
-					<Side
+					<Row
 						label="You wrote"
 						word={typed}
 						detail={yoursDetail(reason, other, given, bold)}
 						tone="yours"
 						code={code}
-						className="flex-1 pr-5 @xl:flex-none @xl:min-w-[10rem] @xl:pr-8"
 						testId="review-why-yours"
 					/>
 				)}
-				<Side
+				<Row
 					label={typed ? "Needed here" : "The word here"}
 					word={needed}
 					detail={neededDetail}
 					tone="needed"
 					code={code}
-					className={cn("flex-1 @xl:flex-none", typed && "border-l border-[var(--q-line)] pl-5 @xl:pl-8")}
 					testId="review-why-needed"
 				/>
 			</div>
 			{why.length > 0 && (
-				<div
-					className="mt-4 flex flex-col gap-2.5 border-t border-[var(--q-line)] pt-3.5"
-					data-testid="review-why-because"
-				>
+				<div className="mt-4 flex flex-col gap-2.5" data-testid="review-why-because">
 					{why.map((line, i) => (
 						<div key={i}>{line}</div>
 					))}
