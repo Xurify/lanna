@@ -1,7 +1,7 @@
 /** Client-safe accounting folds. Rates and calculation live on the server,
  * using Pi's catalog and calculateCost; no copied pricing table lives here. */
 import type { CallUsage, ChatRecord, JobRecord, TurnUsage } from "./contracts.ts";
-import { NATIVE_SUBSCRIPTIONS } from "./contracts/subscriptions.ts";
+import { SUBSCRIPTIONS } from "./contracts/subscriptions.ts";
 
 type CallPricer = (usage: Partial<CallUsage>, model: string) => number | null;
 export interface SessionPricing {
@@ -13,12 +13,8 @@ export interface SessionPricing {
 	turnCosts: Record<string, number | null>;
 }
 
-function isChatGPTPlan(model: string | undefined): boolean {
-	return model?.startsWith("chatgpt:") === true;
-}
 export function subscriptionLabel(model: string | undefined): string | undefined {
-	if (isChatGPTPlan(model)) return "ChatGPT";
-	return NATIVE_SUBSCRIPTIONS.find((p) => model?.startsWith(`${p.logicalId}:`))?.label;
+	return SUBSCRIPTIONS.find((p) => model?.startsWith(`${p.id}:`))?.label;
 }
 export function isSubscriptionModel(model: string | undefined): boolean {
 	return subscriptionLabel(model) !== undefined;

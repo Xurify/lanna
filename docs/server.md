@@ -239,7 +239,7 @@ The order matters. The point is that two copies never run at the same time, and 
 2. Copy these from the PC's project folder to your own login on the server (PowerShell has `scp`), because the `lanna` user cannot log in:
    - the `data` folder;
    - `auth.json`;
-   - `chatgpt-credentials.json`, `github-copilot-credentials.json` and `xai-credentials.json`, but only if they exist.
+   - `subscriptions.json`, but only if it exists.
 
    ```powershell
    ssh you@your-vps mkdir lanna-import

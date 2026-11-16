@@ -67,7 +67,7 @@ One thing seen on the way, not caused by this change as far as I can tell: React
 
 ## What a public deployment must switch off or protect
 
-- The subscription sign-ins: off while `LANNA_PUBLIC_HOST` is set. Delete `chatgpt-credentials.json`, `github-copilot-credentials.json` and `xai-credentials.json` from the server.
+- The subscription sign-ins: off while `LANNA_PUBLIC_HOST` is set. Delete `subscriptions.json` from the server.
 - The Electron bridges (the YouTube sign-in window, cache clearing, fonts, the desktop secret): they exist only inside the desktop window and are not reachable from a browser. A server has no Electron, so nothing to switch off.
 - `POST /api/reset` moves the learner's progress into backups; `GET /api/storage` lists server paths. Both are behind the sign-in.
 - The reverse proxy: `client_max_body_size 10m`, HTTPS, and the app bound to `127.0.0.1` on a port no other service on the machine uses.

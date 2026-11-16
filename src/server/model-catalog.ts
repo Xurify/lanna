@@ -20,43 +20,24 @@
 import { clampThinkingLevel, getSupportedThinkingLevels, type Api, type Model } from "@earendil-works/pi-ai";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { piModels } from "../agent/models.ts";
-import { chatGPTConnected, chatGPTModel, chatGPTModels, refreshChatGPTModels } from "../agent/chatgpt-bridge.ts";
-import { NATIVE_SUBSCRIPTIONS } from "../core/contracts/subscriptions.ts";
-import {
-	nativeSubscriptionId,
-	nativeSubscriptionConnected,
-	nativeSubscriptionModel,
-	nativeSubscriptionModels,
-	refreshSubscriptionModels,
-} from "../agent/subscription-bridge.ts";
+import { isSubscriptionProvider } from "../agent/subscriptions.ts";
+import { SUBSCRIPTIONS } from "../core/contracts/subscriptions.ts";
+import { subscriptionCredential, subscriptionSignedIn } from "../store/subscription-credentials.ts";
 
-export async function refreshConnectionCatalog(provider?: string): Promise<void> {
-	await Promise.all([
-		!provider || provider === "chatgpt"
-			? refreshChatGPTModels(
-					piModels()
-						.getModels("openai")
-						.filter((m): m is Model<"openai-responses"> => m.api === "openai-responses"),
-				)
-			: Promise.resolve(),
-		!provider || nativeSubscriptionId(provider) ? refreshSubscriptionModels() : Promise.resolve(),
-	]);
+/** A subscription offers what the signed-in account may use (pi's per-credential filter); every other provider its whole catalog. */
+function providerModels(providerId: string): readonly Model<Api>[] {
+	const all = piModels().getModels(providerId);
+	if (!isSubscriptionProvider(providerId)) return all;
+	const filter = piModels().getProvider(providerId)?.filterModels;
+	return filter ? filter(all, subscriptionCredential(providerId)) : all;
 }
 function connectionModel(provider: string, id: string): Model<Api> | undefined {
-	return provider === "chatgpt"
-		? chatGPTModel(id)
-		: nativeSubscriptionId(provider)
-			? nativeSubscriptionModel(provider, id)
-			: piModels().getModel(provider, id);
+	return piModels().getModel(provider, id);
 }
 function connectionProviderIds(): string[] {
-	return [
-		...piModels()
-			.getProviders()
-			.map((p) => p.id),
-		"chatgpt",
-		...NATIVE_SUBSCRIPTIONS.map((p) => p.logicalId),
-	];
+	return piModels()
+		.getProviders()
+		.map((p) => p.id);
 }
 import { effectiveSettings } from "./stores.ts";
 import { keyValue } from "./keys.ts";
@@ -165,14 +146,7 @@ export function catalogProviders(): CatalogProvider[] {
 		envVar: p.envVar,
 		keyPresent: keyValue(p.envVar) !== undefined,
 	}))
-		.concat([
-			{ id: "chatgpt", envVar: "", keyPresent: chatGPTConnected() },
-			...NATIVE_SUBSCRIPTIONS.map((p) => ({
-				id: p.logicalId,
-				envVar: "",
-				keyPresent: nativeSubscriptionConnected(p.providerId),
-			})),
-		])
+		.concat(SUBSCRIPTIONS.map((p) => ({ id: p.id, envVar: "", keyPresent: subscriptionSignedIn(p.id) })))
 		.sort((a, b) => a.id.localeCompare(b.id));
 }
 
@@ -219,12 +193,10 @@ export function catalogContextLimits(): Map<string, number> {
 	const index = new Map<string, number>();
 	for (const provider of piModels().getProviders()) {
 		if (!keyed.has(provider.id)) continue;
-		for (const model of piModels().getModels(provider.id)) {
+		for (const model of providerModels(provider.id)) {
 			index.set(`${provider.id}:${model.id}`, model.contextWindow);
 		}
 	}
-	for (const model of [...chatGPTModels(), ...nativeSubscriptionModels()])
-		index.set(`${model.provider}:${model.id}`, model.contextWindow);
 	return index;
 }
 
@@ -237,10 +209,9 @@ export function modelCatalog(): ModelCatalogResponse {
 	const models = piModels()
 		.getProviders()
 		.filter((p) => keyed.has(p.id))
-		.flatMap((p) => piModels().getModels(p.id))
+		.flatMap((p) => providerModels(p.id))
 		.map(toModelDto)
-		.sort((a, b) => (a.provider === b.provider ? a.id.localeCompare(b.id) : a.provider.localeCompare(b.provider)))
-		.concat([...chatGPTModels(), ...nativeSubscriptionModels()].map(toModelDto));
+		.sort((a, b) => (a.provider === b.provider ? a.id.localeCompare(b.id) : a.provider.localeCompare(b.provider)));
 	return {
 		models,
 		defaults: catalogDefaults(),

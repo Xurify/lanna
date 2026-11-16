@@ -65,7 +65,6 @@ import { stopSpeaking } from "@/components/speech";
  *
  * Mirrors SIDEBAR_AUTOCLOSE in electron/main.cjs — keep in sync.
  */
-import type { ChatGPTControlBridge, NativeSubscriptionControlBridge } from "@/src/core";
 import type { UpdateState } from "@/components/settings/update-settings.tsx";
 
 // Only needed once the learner selects text, so it stays out of the first load.
@@ -95,10 +94,6 @@ declare global {
 			/** Read-only host OS; determines the native-control gutter. */
 			platform?: string;
 			/** External Next desktop-dev uses the server's web connections. */
-			subscriptionTransport?: "desktop" | "web";
-			openSubscriptionBrowser?: (action: string) => Promise<void>;
-			chatgpt?: ChatGPTControlBridge;
-			subscriptions?: NativeSubscriptionControlBridge;
 			expandWindow: () => void;
 			/** Tells the Electron frame which theme the page is in. */
 			setTheme?: (night: boolean) => void;
@@ -207,13 +202,7 @@ export function SidebarProvider({
 			return !c;
 		});
 	}, [forcedFolded, pathname]);
-	useEffect(() => {
-		const bridge = window.lanna?.chatgpt;
-		if (!bridge) return;
-		const off = bridge.onChange(() => notifySettingsSaved("keys"));
-		notifySettingsSaved("keys"); // cover changes missed before this root-lifetime subscription
-		return off;
-	}, []);
+	useServerEvent("subscriptions-changed", () => notifySettingsSaved("keys"));
 	// The sidebar is a column on a desktop window, open by default. The fold
 	// button in its header hides it entirely, and the open button in every
 	// page header (SidebarToggle) brings it back; the choice is kept in a

@@ -129,14 +129,7 @@ const nextConfig: NextConfig = {
 	// helpers use the app's own binary). Runtime dependencies' dist/ dirs
 	// stay intact, and the script guards against leaked data/keys.
 	outputFileTracingExcludes: {
-		"*": [
-			"**/data/**/*",
-			"auth.json",
-			"chatgpt-credentials.json*",
-			"github-copilot-credentials.json*",
-			"xai-credentials.json*",
-			".env*",
-		],
+		"*": ["**/data/**/*", "auth.json", "subscriptions.json*", ".env*"],
 	},
 	// Empirically verified gaps (2026-09-17 standalone smoke): the tracer
 	// misses JSON loaded via `import ... with { type: "json" }` attributes —
@@ -165,10 +158,10 @@ const nextConfig: NextConfig = {
 			// resolves to exactly one Skia binary per build.
 			"node_modules/@napi-rs/canvas-*/**/*",
 			"node_modules/@earendil-works/pi-ai/dist/providers/data/**/*",
-			// Public native OAuth factories load these flows through variable imports.
-			// Electron main uses the same standalone SDK; the offline runtime gate
-			// evaluates their real toAuth paths without login or provider requests.
-			"node_modules/@earendil-works/pi-ai/dist/auth/oauth/{load,github-copilot,xai,device-code}.js",
+			// pi-ai loads its OAuth flows through variable imports the tracer cannot
+			// follow; the ChatGPT flow's own static imports ride along with it.
+			"node_modules/@earendil-works/pi-ai/dist/auth/oauth/{load,github-copilot,xai,device-code,openai-chatgpt,pkce}.js",
+			"node_modules/@earendil-works/pi-ai/dist/utils/{oauth-page,provider-env}.js",
 			"node_modules/@earendil-works/pi-ai/dist/utils/sleep.js",
 			"node_modules/@earendil-works/pi-agent-core/dist/**/*.json",
 			// Next 16.3.2 native Turbopack applies unanchored excludes while

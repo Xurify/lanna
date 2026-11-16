@@ -88,7 +88,7 @@ function probeEngine(): { engine: PiEngine; model: string } | null {
 	const slot = models?.strong?.model ? models.strong : models?.cheap?.model ? models.cheap : null;
 	if (!slot?.model) return null;
 	const spec = { provider: slot.model.provider, id: slot.model.id, thinkingLevel: slot.thinkingLevel };
-	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
+	return { engine: piEngineForSpec(spec), model: `${spec.provider}:${spec.id}` };
 }
 
 /** A scripted tutor for screenshots and UI work without a key:

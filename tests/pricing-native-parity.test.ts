@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { calculateCost, type Usage } from "@earendil-works/pi-ai";
 import { piModels } from "../src/agent/models.ts";
+import { isSubscriptionModel } from "../src/core/prices.ts";
 import { callCost, jobCost } from "../src/server/pricing.ts";
 import { accumulateJobUsage, piUsageToStep } from "../src/core/contracts/jobs.ts";
 
@@ -27,9 +28,16 @@ const saved = (u: Usage) => ({
 	reasoningTokens: 500,
 });
 
+test("subscription models have no dollar price: the plan pays", () => {
+	const plans = models.filter((m) => isSubscriptionModel(`${m.provider}:${m.id}`));
+	assert.ok(plans.length > 0);
+	for (const model of plans) assert.equal(callCost(saved(nativeUsage(1_000)), `${model.provider}:${model.id}`), null);
+});
+
 test("all catalog models price through Pi, including every tier boundary; saved usage is never mutated", () => {
 	assert.ok(models.length > 100);
 	for (const model of models) {
+		if (isSubscriptionModel(`${model.provider}:${model.id}`)) continue;
 		const sizes = [
 			1_000,
 			...(model.cost.tiers ?? []).flatMap((t) => [

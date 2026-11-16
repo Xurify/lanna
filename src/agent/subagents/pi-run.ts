@@ -2,7 +2,6 @@ import { Agent, type AgentEvent, type AgentMessage, type AgentTool } from "@eare
 import type { AssistantMessage, ToolResultMessage, Usage } from "@earendil-works/pi-ai";
 import { randomUUID } from "node:crypto";
 import { APP_IDENTITY, piEngineFor, type PiEngine } from "../models.ts";
-import { usageWasAdmitted } from "../subscription-request-cycle.ts";
 import { providerEventObserver } from "../provider-events.ts";
 import type { ModelRole } from "../../../config.ts";
 
@@ -109,10 +108,6 @@ export async function runSubagent(tools: AgentTool<any, any>[], opts: SubagentRu
 							// The call was cancelled — no completed step, no billed
 							// usage (the abort path asserts zero steps).
 							aborted = true;
-							break;
-						}
-						if (!usageWasAdmitted(m.usage)) {
-							if (m.stopReason === "error") errorMessage = m.errorMessage;
 							break;
 						}
 						step++;

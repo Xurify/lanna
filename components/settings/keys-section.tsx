@@ -15,7 +15,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AUTH_KEYS, isPlainAuthSetting, type AuthKeyStatus } from "@/src/core";
 import { SettingsGroup } from "./controls.tsx";
-import { SubscriptionConnections } from "./subscription-connections.tsx";
+import { SubscriptionsSection } from "./subscriptions-section.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
@@ -608,7 +608,7 @@ export function KeysSection({
 			</SettingsGroup>
 
 			<SettingsGroup label="Subscriptions" testid="group-subscriptions">
-				<SubscriptionConnections />
+				<SubscriptionsSection />
 			</SettingsGroup>
 
 			{(

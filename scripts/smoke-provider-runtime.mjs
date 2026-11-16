@@ -177,6 +177,7 @@ async function probe(standalone) {
 		for (const [name, factory] of [
 			["github-copilot", "githubCopilotProvider"],
 			["xai", "xaiProvider"],
+			["openai", "openaiProvider"],
 		]) {
 			const provider = (await import(new URL(`providers/${name}.js`, entry).href))[factory]();
 			const credential = {
@@ -184,7 +185,7 @@ async function probe(standalone) {
 				access:
 					name === "github-copilot"
 						? "tid=offline;proxy-ep=proxy.individual.githubcopilot.com;"
-						: "offline-xai-oauth-not-a-token",
+						: `offline-${name}-oauth-not-a-token`,
 				refresh: "offline-refresh-not-a-token",
 				expires: Date.now() + 3600000,
 				availableModelIds: provider.getModels().map((model) => model.id),

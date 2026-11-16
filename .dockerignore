@@ -9,9 +9,7 @@ data
 .fresh-data
 auth.json
 auth-saved.json
-chatgpt-credentials.json*
-github-copilot-credentials.json*
-xai-credentials.json*
+subscriptions.json*
 .env
 .env.*
 *.log

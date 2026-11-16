@@ -155,7 +155,7 @@ async function ask(model: string, level: string, skill: boolean, item: Item) {
 			ms: 0,
 		};
 	}
-	const engine = piEngineForSpec({ provider: "anthropic", id: model, thinkingLevel: level as never }, true);
+	const engine = piEngineForSpec({ provider: "anthropic", id: model, thinkingLevel: level as never });
 	let cost = 0;
 	let output = 0;
 	let reasoning = 0;
