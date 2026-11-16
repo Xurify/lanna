@@ -1204,7 +1204,7 @@ export function ReviewSession() {
 								/>
 							)}
 
-							{status && lang && status.leeches.length > 0 && (
+							{caughtUp && status && lang && status.leeches.length > 0 && (
 								<section className="mt-12" data-testid="review-leeches">
 									<h2 className="q-sh">Words that keep slipping</h2>
 									<p className="q-sub" style={{ marginTop: 0 }}>
@@ -1296,11 +1296,8 @@ export function ReviewSession() {
 													className="flex h-14 items-center text-[15px] text-ink-2 @2xl:w-[440px]"
 													data-testid="review-ratings"
 												>
-													<b className="font-semibold text-foreground">Again</b>
-													<span aria-hidden="true" className="mx-2 text-ink-3">
-														·
-													</span>
-													<span className="text-ink-3">comes back in {comesBack(prompt.intervals[1])}</span>
+													Comes back in&nbsp;
+													<b className="font-semibold text-foreground">{comesBack(prompt.intervals[1])}</b>
 												</p>
 											) : (
 												<div
@@ -1351,7 +1348,7 @@ export function ReviewSession() {
 												className="q-btn primary !h-12 @2xl:ml-auto @2xl:min-w-44"
 											>
 												{saving && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
-												Continue · {RATING_LABELS[shownSuggested]}
+												{cap === 1 ? "Continue" : `Continue · ${RATING_LABELS[shownSuggested]}`}
 												<span className="q-kbd pointer-coarse:hidden">
 													<QIcon name="enter" />
 												</span>

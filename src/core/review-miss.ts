@@ -1,4 +1,5 @@
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
+import { formContrast, type CaseName, type Declension, type FormMismatch } from "./form-cells.ts";
 import { formSlip, type FormSlip } from "./form-slip.ts";
 import { shortGloss } from "./lesson.ts";
 import { aspectRoles, pairContrastRule } from "./mixups.ts";
@@ -46,6 +47,8 @@ export interface MissReason {
 	asks?: boolean;
 	other?: MissWord;
 	form?: string;
+	givenForm?: string;
+	mismatch?: FormMismatch;
 	trigger?: string;
 	answer?: string;
 	given?: string;
@@ -61,6 +64,9 @@ interface MissInput {
 	asks?: boolean;
 	form?: string;
 	trigger?: string;
+	declension?: Declension;
+	neededCase?: CaseName;
+	isNoun?: boolean;
 	rankedEntriesOfGiven?: readonly MissWord[];
 }
 
@@ -108,6 +114,7 @@ export function contrastExample(
 	examples: readonly Pick<LexiconExample, "text" | "sk" | "en" | "rejected">[],
 	word: string,
 	tag = "sk-SK",
+	meaning?: string,
 ): MissExample | undefined {
 	const key = (w: string) => foldDiacritics(normalizeAnswer(w, tag));
 	const target = key(word);
@@ -116,7 +123,13 @@ export function contrastExample(
 		.map((e) => ({ text: exampleText(e), en: e.en }));
 	const hasWord = (e: MissExample) => e.text.split(/[^\p{L}]+/u).some((t) => key(t) === target);
 	const pool = usable.some(hasWord) ? usable.filter(hasWord) : usable;
-	const example = [...pool].sort((a, b) => a.text.length - b.text.length)[0];
+	const senseWords = senses(meaning ?? "").map(senseHead);
+	const senseRank = (e: MissExample) => {
+		const en = ` ${e.en.toLowerCase().replace(/[^\p{L}\s]+/gu, " ")} `;
+		const i = senseWords.findIndex((s) => s && en.includes(` ${s} `));
+		return i < 0 ? senseWords.length : i;
+	};
+	const example = [...pool].sort((a, b) => senseRank(a) - senseRank(b) || a.text.length - b.text.length)[0];
 	return example && startsQuestion(example.text, word, tag) ? { ...example, asks: true } : example;
 }
 
@@ -158,7 +171,7 @@ export function missWordOf(
 		!rule && !aspect && opts.reference
 			? referenceContrast(opts.reference.units, card.lemma, otherLemma, tag)
 			: undefined;
-	const example = contrastExample(other.examples, opts.typed, tag);
+	const example = contrastExample(other.examples, opts.typed, tag, other.en);
 	const word: MissWord = {
 		lemma: otherLemma,
 		gloss: shortGloss(other.en),
@@ -224,8 +237,24 @@ export function missReason(input: MissInput, tag = "sk-SK"): MissReason | undefi
 		slip !== "blank" && !givenIsOwnForm
 			? input.rankedEntriesOfGiven?.find((o) => key(o.lemma) !== key(input.lemma))
 			: undefined;
+	const finalSlip = anotherWord ? "other" : slip;
+	const { givenForm, mismatch } =
+		finalSlip === "same-word"
+			? formContrast(
+					{
+						given: input.given,
+						answer: input.answer,
+						lemma: input.lemma,
+						neededCase: input.neededCase,
+						isNoun: input.isNoun,
+						declension: input.declension,
+						forms: input.forms,
+					},
+					tag,
+				)
+			: {};
 	return {
-		slip: anotherWord ? "other" : slip,
+		slip: finalSlip,
 		lemma: input.lemma,
 		gloss: input.gloss,
 		inflects,
@@ -233,5 +262,7 @@ export function missReason(input: MissInput, tag = "sk-SK"): MissReason | undefi
 		...(anotherWord ? { other: anotherWord } : {}),
 		...(input.form ? { form: input.form } : {}),
 		...(input.trigger ? { trigger: input.trigger } : {}),
+		...(givenForm ? { givenForm } : {}),
+		...(mismatch ? { mismatch } : {}),
 	};
 }

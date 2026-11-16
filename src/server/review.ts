@@ -11,7 +11,7 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import { compareAnswer, foldDiacritics } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { nextDue, previewIntervals, review, type Rating } from "../core/fsrs.ts";
-import { classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
+import { caseOfUnit, classifyExample, describeForm, shortGloss, triggerOf } from "../core/lesson.ts";
 import { knownForms } from "../core/form-slip.ts";
 import { grammarWord } from "../core/reading.ts";
 import { missReason, missWordOf, startsQuestion, type MissReason, type MissWord } from "../core/review-miss.ts";
@@ -517,6 +517,7 @@ function missOf(
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const trigger = unit && unit !== "words" ? triggerOf(card.sentence, card.at, unit) : undefined;
 	const forms = entry ? knownForms(entry) : [];
+	const neededCase = unit ? caseOfUnit(unit) : undefined;
 	const reason = missReason(
 		{
 			answer: card.answer,
@@ -528,6 +529,9 @@ function missOf(
 			asks: startsQuestion(card.sentence, card.answer, tag()),
 			form,
 			trigger,
+			...(entry?.declension ? { declension: entry.declension } : {}),
+			...(neededCase ? { neededCase } : {}),
+			isNoun: entry?.cat === "Nouns",
 			rankedEntriesOfGiven,
 		},
 		tag(),
