@@ -5,11 +5,12 @@ export async function register() {
 	// core, so every route builds the same lessons (src/core/course.ts).
 	await import("./config.ts");
 	await import("./src/server/request-language.ts");
-	// The lexicon is 8 MB of JSON. Parsing it on the first Review or Lesson request made
-	// that one tap wait about half a second; here it costs the server's idle start-up.
+	// The lexicon is 8 MB of JSON, and its frequency order reads every example
+	// sentence in it. Building both on the first Today, Review or Lesson request
+	// made that tap wait about half a second; here it costs the server's idle start-up.
 	setTimeout(() => {
 		void import("@/src/server")
-			.then((s) => s.warmLexicon())
+			.then((s) => s.warmDictionary())
 			.catch(() => {});
 	}, 200);
 }

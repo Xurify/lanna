@@ -15,6 +15,7 @@ import { foldDiacritics } from "../core/language.ts";
 import { profileLanguage } from "./profile-language.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "../core/review.ts";
 import type { SlovakLookup } from "../core/slovak-check.ts";
+import { processWide } from "../core/process-wide.ts";
 
 export interface Lexicon {
 	entries: LexiconEntry[];
@@ -27,7 +28,7 @@ export interface Lexicon {
 	license?: string;
 }
 
-const cache = new Map<string, Lexicon | null>();
+const cache = processWide("lexicon", () => new Map<string, Lexicon | null>());
 
 function lexiconPath(profile: string = activeProfile()): string {
 	return curriculumFile(profile, "lexicon.json");
@@ -110,7 +111,7 @@ export function lookupWord(query: string, profile: string = activeProfile(), lim
 	return { query, match: "none", entries: [] };
 }
 
-const lookups = new Map<string, SlovakLookup | null>();
+const lookups = processWide("lexicon.lookups", () => new Map<string, SlovakLookup | null>());
 const sentenceKey = (s: string) => s.normalize("NFC").toLocaleLowerCase("sk").replace(/[.!?…"„“]/g, "").replace(/\s+/g, " ").trim();
 
 /** The dictionary as the Slovak checker reads it (src/core/slovak-check.ts):

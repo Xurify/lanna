@@ -26,6 +26,7 @@
  */
 
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
+import { processWide } from "../core/process-wide.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
@@ -89,7 +90,7 @@ import { storyStore } from "../store/stories.ts";
 import { readingSourceStore, type ReadingSource } from "../store/reading-sources.ts";
 import { assignVoices, availableVoiceIds, NARRATOR_VOICE } from "./voices.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
-import { enqueueWords } from "./review.ts";
+import { enqueueWords, warmLexicon } from "./review.ts";
 import { loadWorld, type World } from "./world.ts";
 
 const STORY_SERIES = "robo";
@@ -129,7 +130,7 @@ export interface KnownWords {
 	note?: string;
 }
 
-const orderCache = new WeakMap<Lexicon, string[]>();
+const orderCache = processWide("reading.order", () => new WeakMap<Lexicon, string[]>());
 
 /** Whether every word is ranked on one list (Estonian, Russian) rather than
  *  within its part of speech (Slovak): nearly all the ranks are different. */
@@ -176,8 +177,14 @@ export function frequencyOrder(lexicon: Lexicon): string[] {
 	return order;
 }
 
-const unplacedCache = new WeakMap<Lexicon, Set<string>>();
-const usesCache = new WeakMap<Lexicon, ReadonlyMap<string, number>>();
+export function warmDictionary(): void {
+	warmLexicon();
+	const lexicon = loadLexicon();
+	if (lexicon) frequencyOrder(lexicon);
+}
+
+const unplacedCache = processWide("reading.unplaced", () => new WeakMap<Lexicon, Set<string>>());
+const usesCache = processWide("reading.uses", () => new WeakMap<Lexicon, ReadonlyMap<string, number>>());
 
 export function usesInTheDictionarySentences(lexicon: Lexicon): ReadonlyMap<string, number> {
 	frequencyOrder(lexicon);
@@ -189,7 +196,7 @@ export function wordsWithNoPlaceInTheFrequencyOrder(lexicon: Lexicon): ReadonlyS
 	return unplacedCache.get(lexicon)!;
 }
 
-const commonnessCache = new WeakMap<Lexicon, Map<string, number>>();
+const commonnessCache = processWide("reading.commonness", () => new WeakMap<Lexicon, Map<string, number>>());
 
 /** Where a word sits among all the dictionary's words by use (1 = commonest),
  *  the same in every language and part of speech. Thresholds on "how common"
