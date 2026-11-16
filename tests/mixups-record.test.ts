@@ -36,7 +36,15 @@ const rep = (given: string, verdict: "exact" | "wrong", over: Record<string, unk
 	kind: "type" as const,
 	verdict,
 	first: { given, verdict },
-	detail: { unit: "words", lemma: "nikto", gloss: "no one", sentence: "Nikto mi nezavolal.", translation: "Nobody called me.", answer: "Nikto", given },
+	detail: {
+		unit: "words",
+		lemma: "nikto",
+		gloss: "no one",
+		sentence: "Nikto mi nezavolal.",
+		translation: "Nobody called me.",
+		answer: "Nikto",
+		given,
+	},
 	...over,
 });
 
@@ -58,12 +66,31 @@ describe("mix-ups on record", () => {
 		const plan = mixupsFor(3);
 		assert.equal(plan.focus, "mixups");
 		assert.ok(plan.items.some((i) => i.slug === "nikto" || i.slug === "niekto"));
-		assert.ok(plan.items.every((i) => i.pair), "every rep carries the pair's rule");
+		assert.ok(
+			plan.items.every((i) => i.pair),
+			"every rep carries the pair's rule",
+		);
 	});
 
 	it("finishing a Mix-ups lesson counts the day and the mix-ups, not a unit", () => {
 		const before = progressStore.read().units.words?.lessons ?? 0;
-		const out = recordLesson({ unit: "words", mode: "lesson", focus: "mixups", reps: [rep("Nikto", "exact"), rep("Niekto", "exact", { itemId: "niekto#0", slug: "niekto", detail: { unit: "words", sentence: "Niekto volal.", answer: "Niekto", given: "Niekto" } })], tz: 0 }, NOW);
+		const out = recordLesson(
+			{
+				unit: "words",
+				mode: "lesson",
+				focus: "mixups",
+				reps: [
+					rep("Nikto", "exact"),
+					rep("Niekto", "exact", {
+						itemId: "niekto#0",
+						slug: "niekto",
+						detail: { unit: "words", sentence: "Niekto volal.", answer: "Niekto", given: "Niekto" },
+					}),
+				],
+				tz: 0,
+			},
+			NOW,
+		);
 		const p = progressStore.read();
 		assert.equal(p.units.words?.lessons ?? 0, before, "no unit moves");
 		assert.equal(p.days["2026-11-01"]?.mixups, 1);
@@ -75,7 +102,21 @@ describe("mix-ups on record", () => {
 	});
 
 	it("a review answer counts, unless a hint came first", () => {
-		const card = { id: "niekto#1", slug: "niekto", lemma: "niekto", gloss: "someone", sentence: "Niekto klope.", translation: "", answer: "Niekto", at: 0, state: "review" as const, due: NOW.toISOString(), reps: 1, lapses: 0, createdAt: NOW.toISOString() };
+		const card = {
+			id: "niekto#1",
+			slug: "niekto",
+			lemma: "niekto",
+			gloss: "someone",
+			sentence: "Niekto klope.",
+			translation: "",
+			answer: "Niekto",
+			at: 0,
+			state: "review" as const,
+			due: NOW.toISOString(),
+			reps: 1,
+			lapses: 0,
+			createdAt: NOW.toISOString(),
+		};
 		noteReviewMixup(card, "Nikto", "wrong", 1, NOW);
 		assert.equal(progressStore.read().mixups?.[NIKTO]?.misses, 1, "a hinted answer is not a first try");
 		noteReviewMixup(card, "Nikto", "wrong", undefined, NOW);

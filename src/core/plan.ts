@@ -25,7 +25,13 @@ function addDaysIso(from: Date, days: number): string {
 }
 
 /** When each level, up to the goal, lands at `minutesPerDay` × `daysPerWeek`. */
-export function levelDates(opts: { goal: Cefr; hoursDone: number; minutesPerDay: number; daysPerWeek: number; now: Date }): LevelDate[] {
+export function levelDates(opts: {
+	goal: Cefr;
+	hoursDone: number;
+	minutesPerDay: number;
+	daysPerWeek: number;
+	now: Date;
+}): LevelDate[] {
 	const weekly = weeklyHours(opts.minutesPerDay, opts.daysPerWeek);
 	return CEFR_ORDER.slice(0, CEFR_ORDER.indexOf(opts.goal) + 1).map((level) => {
 		const hours = GUIDED_HOURS[level];
@@ -46,6 +52,11 @@ export function shiftLine(fromDays: number | null, toDays: number | null): strin
 	const diff = toDays - fromDays;
 	if (Math.abs(diff) < 7) return null;
 	const a = Math.abs(diff);
-	const span = a < 60 ? `${Math.round(a / 7)} week${Math.round(a / 7) === 1 ? "" : "s"}` : a < 700 ? `${Math.round(a / 30.4)} months` : `${Math.round((a / 365.25) * 2) / 2} years`;
+	const span =
+		a < 60
+			? `${Math.round(a / 7)} week${Math.round(a / 7) === 1 ? "" : "s"}`
+			: a < 700
+				? `${Math.round(a / 30.4)} months`
+				: `${Math.round((a / 365.25) * 2) / 2} years`;
 	return `${span} ${diff < 0 ? "sooner" : "later"} than your saved plan`;
 }

@@ -7,10 +7,20 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { curriculumState, dailyPlan, nextLessonUnit, type UnitEvidence } from "../src/core/curriculum.ts";
 
-const evidence: Record<string, UnitEvidence> = { present: { lessons: 2, reps: 30, correct: 24 }, "acc-fem": { lessons: 2, reps: 24, correct: 14 } };
+const evidence: Record<string, UnitEvidence> = {
+	present: { lessons: 2, reps: 30, correct: 24 },
+	"acc-fem": { lessons: 2, reps: 24, correct: 14 },
+};
 const state = curriculumState(evidence, "B2");
 const next = nextLessonUnit(state);
-const base = { state, evidence, review: { due: 12, newLeft: 10, available: true }, minutesPerDay: 60, next, dayOfYear: 301 };
+const base = {
+	state,
+	evidence,
+	review: { due: 12, newLeft: 10, available: true },
+	minutesPerDay: 60,
+	next,
+	dayOfYear: 301,
+};
 const day = { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 };
 const FORM_OR_OUTPUT: string[] = ["lesson", "strengthen", "blitz", "speak", "fluency"];
 const INPUT_OR_VOCAB = ["review", "listen", "words", "read", "watch"];

@@ -33,12 +33,7 @@ async function main() {
 		console.log("Reset index.jsonl");
 	}
 
-	const allStories = [
-		...STORIES_A1,
-		...STORIES_A2,
-		...STORIES_B1,
-		...STORIES_B2,
-	];
+	const allStories = [...STORIES_A1, ...STORIES_A2, ...STORIES_B1, ...STORIES_B2];
 
 	console.log(`Starting assembly of ${allStories.length} graded reader stories...`);
 
@@ -77,7 +72,7 @@ async function main() {
 			lexicon,
 			{ model: "curated-traditional", steps: [] },
 			1,
-			new Date(Date.now() + count * 1000)
+			new Date(Date.now() + count * 1000),
 		);
 
 		// Override ID to match human-friendly slug
@@ -87,7 +82,9 @@ async function main() {
 		story.theme = s.theme;
 
 		storyStore.put(story);
-		console.log(`[${count}/${allStories.length}] [${s.level}] ${story.id} (${story.title}) - ${story.sentences.length} sentences, coverage: ${Math.round(story.coverage * 100)}%`);
+		console.log(
+			`[${count}/${allStories.length}] [${s.level}] ${story.id} (${story.title}) - ${story.sentences.length} sentences, coverage: ${Math.round(story.coverage * 100)}%`,
+		);
 	}
 
 	console.log("\nFinished generating all 60 curated graded reader stories!");

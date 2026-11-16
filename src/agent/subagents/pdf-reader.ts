@@ -90,12 +90,14 @@ export function createPdfTools(_pdfPath: string): Record<string, Tool> {
 	return {
 		pdf_info: {
 			name: "pdf_info",
-			description: "Metadata + per-page triage signals for the PDF (page count, text length, image count, math density). ALWAYS call this first.",
+			description:
+				"Metadata + per-page triage signals for the PDF (page count, text length, image count, math density). ALWAYS call this first.",
 			parameters: Type.Object({}),
 		},
 		pdf_extract: {
 			name: "pdf_extract",
-			description: "Extract text from pages (spec: 'all', '1-5', '1,3,7', '3'). Use pdf_info first; narrow the spec for big documents.",
+			description:
+				"Extract text from pages (spec: 'all', '1-5', '1,3,7', '3'). Use pdf_info first; narrow the spec for big documents.",
 			parameters: Type.Object({
 				pages: Type.String({ description: "Page spec, e.g. 'all', '1-5', '1,3,7'" }),
 			}),
@@ -113,13 +115,16 @@ export function createPdfTools(_pdfPath: string): Record<string, Tool> {
 		},
 		pdf_search: {
 			name: "pdf_search",
-			description: "Search the PDF's text by keyword or regex (case-insensitive); returns hits with context lines. Use for long documents before reading anything at length.",
+			description:
+				"Search the PDF's text by keyword or regex (case-insensitive); returns hits with context lines. Use for long documents before reading anything at length.",
 			parameters: Type.Object({
 				query: Type.String({ description: "Keyword or regex" }),
 				context_lines: Type.Optional(
 					Type.Integer({ minimum: 0, maximum: 8, description: "Context lines around each hit (default 3)" }),
 				),
-				literal: Type.Optional(Type.Boolean({ description: "true = treat the query literally (no regex; default false)" })),
+				literal: Type.Optional(
+					Type.Boolean({ description: "true = treat the query literally (no regex; default false)" }),
+				),
 			}),
 		},
 	};
@@ -131,10 +136,7 @@ async function pdfInfoText(pdfPath: string): Promise<string> {
 	const lines = [
 		`File: ${info.path}`,
 		`Pages: ${info.page_count} (mean text length/page: ${info.mean_text_length})`,
-		...info.pages.map(
-			(p) =>
-				`p${p.page}: len=${p.text_length} img=${p.image_count} math=${p.math_density.toFixed(2)}`,
-		),
+		...info.pages.map((p) => `p${p.page}: len=${p.text_length} img=${p.image_count} math=${p.math_density.toFixed(2)}`),
 	];
 	return lines.join("\n");
 }
@@ -165,10 +167,7 @@ function toolText(toolCallId: string, toolName: string, value: string): ToolResu
 const UNREAD_FINISH_MESSAGE =
 	"You finished without consulting any page of the PDF — your brief would be invention, not reading. Extract or render the relevant pages first, then write the brief from what you actually saw.";
 
-export async function runPdfReaderAgent(
-	input: PdfReaderInput,
-	opts: PdfReaderOptions = {},
-): Promise<PdfResult> {
+export async function runPdfReaderAgent(input: PdfReaderInput, opts: PdfReaderOptions = {}): Promise<PdfResult> {
 	const headless = opts.headless ?? getHeadless();
 	const maxIterations = opts.maxIterations ?? MAX_ITERATIONS;
 	const pdfPath = resolveSourcePath(input.path);
@@ -177,7 +176,13 @@ export async function runPdfReaderAgent(
 	// for renders — the brief never starts on a broken source.
 	const openError = await probeReadable(pdfPath);
 	if (openError) {
-		return { path: pdfPath, question: input.question, brief: `PDF failed: ${openError}`, pagesRead: [], pagesConsulted: [] };
+		return {
+			path: pdfPath,
+			question: input.question,
+			brief: `PDF failed: ${openError}`,
+			pagesRead: [],
+			pagesConsulted: [],
+		};
 	}
 	// No Chrome gate (Wave E, 2026-10-10): pdf_render is native now
 	// (pdfjs paints into @napi-rs/canvas in-process) — the whole pdf-reader
@@ -238,13 +243,16 @@ export async function runPdfReaderAgent(
 				// count, not a delivery gate.
 				if (consulted.size === 0 && !nudged) {
 					nudged = true;
-					messages = [
-						...messages,
-						{ role: "user", content: UNREAD_FINISH_MESSAGE, timestamp: Date.now() },
-					];
+					messages = [...messages, { role: "user", content: UNREAD_FINISH_MESSAGE, timestamp: Date.now() }];
 					continue;
 				}
-				return { path: pdfPath, question: input.question, brief: finalText || "(no brief text)", pagesRead: [...read].sort((a, b) => a - b), pagesConsulted: [...consulted].sort((a, b) => a - b) };
+				return {
+					path: pdfPath,
+					question: input.question,
+					brief: finalText || "(no brief text)",
+					pagesRead: [...read].sort((a, b) => a - b),
+					pagesConsulted: [...consulted].sort((a, b) => a - b),
+				};
 			}
 
 			const toolResults: ToolResultMessage[] = [];
@@ -340,7 +348,13 @@ export async function runPdfReaderAgent(
 		}
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		return { path: pdfPath, question: input.question, brief: `PDF failed: the reader crashed — ${msg}`, pagesRead: [...read].sort((a, b) => a - b), pagesConsulted: [...consulted].sort((a, b) => a - b) };
+		return {
+			path: pdfPath,
+			question: input.question,
+			brief: `PDF failed: the reader crashed — ${msg}`,
+			pagesRead: [...read].sort((a, b) => a - b),
+			pagesConsulted: [...consulted].sort((a, b) => a - b),
+		};
 	}
 
 	// Iteration limit: deliver whatever was honestly consulted (never invention).

@@ -1,6 +1,6 @@
 # Speak and fluency: the two missing strands, and honest pronunciation scores
 
-*LangHarness, 2026-10-28. Thread "Build speaking and fluency tasks". Code: `src/core/speak.ts`, `src/core/fluency.ts`, `src/core/pronounce.ts`, their `src/server/` counterparts, `components/speak/`, `app/speak`, `app/speed` (called Fluency when this was written).*
+_LangHarness, 2026-10-28. Thread "Build speaking and fluency tasks". Code: `src/core/speak.ts`, `src/core/fluency.ts`, `src/core/pronounce.ts`, their `src/server/` counterparts, `components/speak/`, `app/speak`, `app/speed` (called Fluency when this was written)._
 
 ## Why
 
@@ -17,7 +17,7 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 - Six scenes from the learner's purposes (café, asking the way, a new colleague, the shop, the doctor, family); the chapter's own scene and the purposes' scenes come first; the daily plan rotates them by day once no tutor unit is open.
 - The learner holds Space or taps the mic; recording stops on silence. Speech-to-text is ElevenLabs Scribe if that key exists, else Deepgram nova-2; typing is always there.
 - The tutor plays the other person on the Cheap slot, in Slovak audio and text with the meaning a tap away. A slip in a case ending, verb ending or aspect comes back as a prompt to repair ("do škol…? skús ešte raz"), never a recast; a repaired turn earns extra XP; everything else waits.
-- After about eight lines, or *Koniec*: at most three corrections (yours → the right line, the rule in a few words, played aloud), two phrases to keep, the slips' words into the review deck.
+- After about eight lines, or _Koniec_: at most three corrections (yours → the right line, the rule in a few words, played aloud), two phrases to keep, the slips' words into the review deck.
 - Sessions and recordings are kept under `data/profiles/<lang>/speak/`. Cost shows under Spending as "Speaking".
 
 ## Speed (`/speed`)

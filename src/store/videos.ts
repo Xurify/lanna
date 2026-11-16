@@ -193,7 +193,8 @@ export const videoStore = {
 		}
 		const dir = path.join(PATHS.videos, "captions");
 		try {
-			for (const name of fs.readdirSync(dir)) if (name.startsWith(`${id}.`)) fs.rmSync(path.join(dir, name), { force: true });
+			for (const name of fs.readdirSync(dir))
+				if (name.startsWith(`${id}.`)) fs.rmSync(path.join(dir, name), { force: true });
 		} catch {
 			// no captions folder
 		}

@@ -6,7 +6,13 @@ import type { Message, Usage } from "@earendil-works/pi-ai";
 import { APP_IDENTITY, piEngineFor, type PiEngine } from "./models.ts";
 import { effectivePromptSegments } from "./prompt-segments.ts";
 import { learnerProfileSegment } from "./learner-profile.ts";
-import { askUserQuestionTool, createProberTools, createTeacherTools, type ProberToolContext, type TeacherToolContext } from "./tools.ts";
+import {
+	askUserQuestionTool,
+	createProberTools,
+	createTeacherTools,
+	type ProberToolContext,
+	type TeacherToolContext,
+} from "./tools.ts";
 import { practiceTools, type PracticeToolContext } from "./tools/practice.ts";
 import { chatTools, type ChatToolContext } from "./tools/chat.ts";
 import { healToolRecord, withArgumentHeal } from "./tools/heal.ts";
@@ -164,16 +170,22 @@ function makeQuestionStopper(kind: AgentKind) {
 		toolResults: Array<{ toolCallId: string; isError?: boolean }>;
 	}): boolean => {
 		if (kind === "chat" && closesChatReply(context.message.content)) {
-			const failed = context.toolResults.filter((r) => r.isError).map((r) => context.message.content.find((c) => c.id === r.toolCallId)?.name ?? r.toolCallId);
-			if (failed.length) console.warn(`[chat] reply kept, record call failed and was not retried: ${failed.join(", ")}`);
+			const failed = context.toolResults
+				.filter((r) => r.isError)
+				.map((r) => context.message.content.find((c) => c.id === r.toolCallId)?.name ?? r.toolCallId);
+			if (failed.length)
+				console.warn(`[chat] reply kept, record call failed and was not retried: ${failed.join(", ")}`);
 			return true;
 		}
 		const called = new Set(
 			context.message.content
-				.filter((c) => c.type === "toolCall" && c.name !== undefined && (
-					(QUESTION_TOOLS as readonly string[]).includes(c.name) ||
-					(kind === "practice" && c.name === PRACTICE_PROBLEM_TOOL)
-				))
+				.filter(
+					(c) =>
+						c.type === "toolCall" &&
+						c.name !== undefined &&
+						((QUESTION_TOOLS as readonly string[]).includes(c.name) ||
+							(kind === "practice" && c.name === PRACTICE_PROBLEM_TOOL)),
+				)
 				.map((c) => c.id!),
 		);
 		if (called.size === 0) return false;
@@ -197,9 +209,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 	// the composition as a trailing block, read fresh per build so a
 	// lesson between turns changes it. Null on a fresh profile.
 	const profile = learnerProfileSegment();
-	const composed = opts.promptSwitches
-		? composeInstructions(kind, opts.promptSwitches)
-		: getComposedInstructions(kind);
+	const composed = opts.promptSwitches ? composeInstructions(kind, opts.promptSwitches) : getComposedInstructions(kind);
 	const systemPrompt = [composed, opts.appContent, profile].filter(Boolean).join("\n\n---\n\n");
 	// Debug recorder (owner, 2026-10-04): raw provider events when
 	// LH_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
@@ -247,10 +257,13 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 		// UI-only markers (plan-block) drop, the app's id fields strip, and
 		// an abort's dangling question call gets its INTERRUPTED result. It
 		// must never throw (pi's convertToLlm contract).
-		convertToLlm: opts.noteLearnerText ? (messages) => withLearnerNotes(toLlmMessages(messages), opts.noteLearnerText!) : toLlmMessages,
+		convertToLlm: opts.noteLearnerText
+			? (messages) => withLearnerNotes(toLlmMessages(messages), opts.noteLearnerText!)
+			: toLlmMessages,
 		prepareRequest: (request) => {
 			if (opts.callPurpose) {
-				let learner = false, automatic = false;
+				let learner = false,
+					automatic = false;
 				const messages = request.context.messages;
 				for (const message of messages) {
 					const id = (message as { id?: string }).id;
@@ -272,7 +285,12 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 			if (event.type === "message_end" && event.message.role === "assistant" && "usage" in event.message) {
 				// A cancelled call is not a billed step (partial/estimated
 				// usage on an aborted message is not money spent).
-				if (event.message.stopReason === "aborted" || !usageWasAdmitted(event.message.usage) || (opts.requestCycle && !opts.requestCycle.acceptsUsage(event.message))) return;
+				if (
+					event.message.stopReason === "aborted" ||
+					!usageWasAdmitted(event.message.usage) ||
+					(opts.requestCycle && !opts.requestCycle.acceptsUsage(event.message))
+				)
+					return;
 				opts.onUsage!(event.message.usage);
 			}
 		});
@@ -376,4 +394,3 @@ export type TeacherAgent = ReturnType<typeof createTeacherAgent>;
 export type PracticeAgent = ReturnType<typeof createPracticeAgent>;
 export type ChatAgent = ReturnType<typeof createChatAgent>;
 export type TeachingAgent = ProberAgent | TeacherAgent | PracticeAgent | ChatAgent;
-

@@ -17,7 +17,17 @@
 
 import { allChapters } from "./curriculum.ts";
 import { chapterArc } from "./arc.ts";
-import { buildItem, buildPairsLesson, candidatesFor, rng, shuffle, unitInfo, type Candidate, type LessonItem, type UnitId } from "./lesson.ts";
+import {
+	buildItem,
+	buildPairsLesson,
+	candidatesFor,
+	rng,
+	shuffle,
+	unitInfo,
+	type Candidate,
+	type LessonItem,
+	type UnitId,
+} from "./lesson.ts";
 import { foldDiacritics } from "./language.ts";
 import { entryLemma, type LexiconEntry } from "./review.ts";
 
@@ -62,8 +72,12 @@ export function examItems(chapterId: string, seed: number, entries: readonly Lex
 			if (out.length >= n) break;
 			const info = unitInfo(unit);
 			const top = candidatesFor(entries, unit).slice(0, info.kind === "words" ? 400 : 160);
-			const fits = (c: Candidate) => info.kind !== "words" || fold(c.entry.examples[c.index]!.cloze!.answer) === fold(entryLemma(c.entry));
-			const pool = info.kind === "words" ? [...new Set(top.map((c) => entryLemma(c.entry)))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer);
+			const fits = (c: Candidate) =>
+				info.kind !== "words" || fold(c.entry.examples[c.index]!.cloze!.answer) === fold(entryLemma(c.entry));
+			const pool =
+				info.kind === "words"
+					? [...new Set(top.map((c) => entryLemma(c.entry)))]
+					: top.map((c) => c.entry.examples[c.index]!.cloze!.answer);
 			for (const c of shuffle(top.filter(fits), rand)) {
 				if (out.length >= n) break;
 				const id = `${c.entry.slug}#${c.index}`;
@@ -77,9 +91,16 @@ export function examItems(chapterId: string, seed: number, entries: readonly Lex
 
 	const words = drawFrom(wordUnits, 3);
 	const forms = drawFrom(formUnits, pairsUnit ? 2 : 3);
-	const pair = pairsUnit ? buildPairsLesson(entries, pairsUnit, { seed, length: 1 }).items.filter((i) => !used.has(i.id)).slice(0, 1) : [];
+	const pair = pairsUnit
+		? buildPairsLesson(entries, pairsUnit, { seed, length: 1 })
+				.items.filter((i) => !used.has(i.id))
+				.slice(0, 1)
+		: [];
 	if (pair[0]) used.add(pair[0].id);
-	const more = drawFrom([...wordUnits, ...formUnits], Math.max(0, EXAM_LENGTH - words.length - forms.length - pair.length));
+	const more = drawFrom(
+		[...wordUnits, ...formUnits],
+		Math.max(0, EXAM_LENGTH - words.length - forms.length - pair.length),
+	);
 	return { chapter: chapterId, seed, items: shuffle([...words, ...forms, ...pair, ...more], rand) };
 }
 
@@ -112,7 +133,9 @@ export function scoreExam(items: readonly LessonItem[], answers: readonly unknow
 
 /** A chapter's best attempt: the highest score first, the more recent one
  *  breaking a tie. Null before any attempt. */
-export function bestAttempt<T extends { at: string; score: number; total: number; passed: boolean }>(attempts: readonly T[]): T | null {
+export function bestAttempt<T extends { at: string; score: number; total: number; passed: boolean }>(
+	attempts: readonly T[],
+): T | null {
 	return [...attempts].sort((a, b) => b.score - a.score || (a.at < b.at ? 1 : -1))[0] ?? null;
 }
 
@@ -145,7 +168,10 @@ export function examSummaries(exams: Record<string, readonly ExamResult[]>): Rec
 		if (!chapterHasExam(ch.id)) continue;
 		const attempts = exams[ch.id] ?? [];
 		const best = bestAttempt(attempts);
-		out[ch.id] = { attempts: attempts.length, best: best ? { at: best.at, score: best.score, total: best.total, passed: best.passed } : null };
+		out[ch.id] = {
+			attempts: attempts.length,
+			best: best ? { at: best.at, score: best.score, total: best.total, passed: best.passed } : null,
+		};
 	}
 	return out;
 }

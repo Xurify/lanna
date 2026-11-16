@@ -52,9 +52,8 @@ fs.writeFileSync(
 process.env.OPENROUTER_API_KEY = "sk-or-v1-envvalue99";
 
 // Import AFTER env setup — module init runs the boot fill-gap + snapshot.
-const { deleteKey, initAuthEnv, keyStatuses, keyValue, resolveKeyStatuses, saveKey, isWritableAuthKey } = await import(
-	"../src/server/keys.ts"
-);
+const { deleteKey, initAuthEnv, keyStatuses, keyValue, resolveKeyStatuses, saveKey, isWritableAuthKey } =
+	await import("../src/server/keys.ts");
 const { authKeySavedAt, authStore } = await import("../src/store/auth.ts");
 
 const ENV_OWNED = "sk-or-v1-envvalue99";

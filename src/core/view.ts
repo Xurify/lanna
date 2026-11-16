@@ -34,7 +34,13 @@
 
 import type { AssistantMessage, ToolResultMessage } from "@earendil-works/pi-ai";
 import type { LhMarkerMessage, LhMessage } from "./native-messages.ts";
-import { modelSolutionForConclude, PRACTICE_CONCLUDE_TOOL, problemInputForConclude, SEND_TO_USER_TOOL, sendToUserText } from "./native-messages.ts";
+import {
+	modelSolutionForConclude,
+	PRACTICE_CONCLUDE_TOOL,
+	problemInputForConclude,
+	SEND_TO_USER_TOOL,
+	sendToUserText,
+} from "./native-messages.ts";
 import { activeCompactionOf, type CompactionDetails } from "./compaction.ts";
 import { QUESTION_TOOLS } from "./pending.ts";
 import type { SubagentArtifactData, SubagentResultMeta } from "./contracts/jobs.ts";
@@ -142,9 +148,9 @@ export function projectView(messages: readonly LhMessage[], live?: LiveTurnState
 			// NEWEST-FIRST part scan within a group (the Lacan heal, 2026-10-04):
 			// a result pairs with the most RECENT call carrying its id. Unique
 			// ids (the uniquifier guarantees them for new turns) make scan order
-		// irrelevant; for legacy duplicate-id records (DeepSeek's per-response
-		// `call_0`) this routes each answer to its own call instead of letting
-		// a later result overwrite an earlier question's card.
+			// irrelevant; for legacy duplicate-id records (DeepSeek's per-response
+			// `call_0`) this routes each answer to its own call instead of letting
+			// a later result overwrite an earlier question's card.
 			const parts = out[i]!.parts;
 			for (let p = parts.length - 1; p >= 0; p--) {
 				const part = parts[p]!;
@@ -460,10 +466,10 @@ function projectMarker(marker: LhMarkerMessage, out: LhViewMessage[]): void {
 				role: "user",
 				parts: [
 					{
-					type: "data-compaction",
-					id: `cm_${marker.id}`,
-					data: { content: marker.content, details: marker.details as CompactionDetails },
-				},
+						type: "data-compaction",
+						id: `cm_${marker.id}`,
+						data: { content: marker.content, details: marker.details as CompactionDetails },
+					},
 				],
 			});
 			return;

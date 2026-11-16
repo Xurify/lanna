@@ -30,8 +30,6 @@ export interface QuizOption {
 // ─── tool input schemas (the question contract) ─────────────────────────────
 // Parameter names mirror the prompt docs exactly — keep them in sync.
 
-
-
 /** GLM wobble guard (owner-approved, 2026-09-26): models sometimes emit
  *  `options` as a JSON-ENCODED STRING instead of an array. Parse it before
  *  use. Shared by the tools' prepareArguments (server, pre-validation) and
@@ -60,9 +58,7 @@ export function parseOptionsIfString<T>(options: string | T[] | undefined): unkn
  *  (trimmed `value`, falling back to the trimmed label — exactly how
  *  normalizeOptions keys them) distinct. Returns the problems plus the
  *  resolved keys for the correctAnswer check. */
-function optionProblems(
-	options: Array<{ label: string; value?: string }>,
-): { problems: string[]; keys: string[] } {
+function optionProblems(options: Array<{ label: string; value?: string }>): { problems: string[]; keys: string[] } {
 	const problems: string[] = [];
 	const keys: string[] = [];
 	options.forEach((option, i) => {
@@ -112,13 +108,12 @@ export function quizInputProblems(input: {
 	}
 	if (unique.length > 1 && input.multiSelect !== true) {
 		problems.push(
-				`correctAnswer lists ${unique.length} values but multiSelect is not true — a single-select question with several ` +
-					"correct answers can never be answered correctly. Set multiSelect: true, or make exactly one option correct.",
+			`correctAnswer lists ${unique.length} values but multiSelect is not true — a single-select question with several ` +
+				"correct answers can never be answered correctly. Set multiSelect: true, or make exactly one option correct.",
 		);
 	}
 	return problems;
 }
-
 
 // The TEACH-side quiz object: the shared base + the plan-position field
 // + the ROLE field (owner design 2026-10-03, "two questions per teaching
@@ -162,11 +157,6 @@ export function questionNeedsReveal(tool: string, rawInput: unknown, phase: stri
 	return normalizeQuizType((rawInput as { type?: unknown } | null)?.type) !== "predict";
 }
 
-
-
-
-
-
 // ─── the explain tool (free-recall quizzing, owner 2026-09-27) ─────────────
 //
 // Quiz mechanics WITHOUT options: the learner answers in his own words.
@@ -179,10 +169,8 @@ export function questionNeedsReveal(tool: string, rawInput: unknown, phase: stri
 // Mechanics doctrine lives in the TOOL DESCRIPTIONS (pi-native ruling),
 // not in the system prompt.
 
-
 /** The TEACH-side explain object: base + the plan-position field (same
  *  semantics as the quiz's nodeId — the seam recognizes BOTH tools). */
-
 
 /** The explain authoring contract: the commitment must exist. Empty
  *  result = an explain the dock can arm and the model can grade against. */
@@ -196,8 +184,6 @@ export function explainInputProblems(input: { correctAnswer: string }): string[]
 // Ask's option sanity (labels non-empty, values distinct — ask is not
 // graded, but duplicate values break the dock's value keying) runs at the
 // call boundary in execute (askOptionProblems, above).
-
-
 
 /** A real selected answer, in the order the options were displayed. */
 export interface OptionAnswer {
@@ -271,16 +257,6 @@ export interface QuestionAnswerData {
 	explanation?: string; // quiz only (rendering)
 	dismissed?: boolean;
 	answeredAt: string;
-}
-
-/** Client-facing question payload — deliberately omits the answer. */
-interface ClientQuestion {
-	id: string;
-	kind: QuestionKind;
-	question: string;
-	context?: string;
-	mode: QuestionMode;
-	options: QuizOption[];
 }
 
 /** What the server passes to the bridge when the learner answers. */
@@ -430,10 +406,7 @@ export function shuffleOptions(options: QuizOption[], rand: () => number = Math.
  *  Non-matches keep the existing whitehead heal (`[":parmenides"]`) and
  *  JSON-stringified multi-select coercion. Shared by boundary, display,
  *  and grading; canonical option keys are never rewritten. */
-function coerceCorrectAnswer(
-	correctAnswer: string | string[],
-	optionValues: readonly string[],
-): string[] {
+function coerceCorrectAnswer(correctAnswer: string | string[], optionValues: readonly string[]): string[] {
 	const clean = (value: string): string => {
 		const trimmed = value.trim();
 		return optionValues.includes(trimmed) ? trimmed : stripModelValueDebris(value);
@@ -461,7 +434,10 @@ export function resolveCorrect(
 	options: QuizOption[],
 ): { indices: number[]; error?: string } {
 	if (correctAnswer === undefined) return { indices: [], error: "correctAnswer is required" };
-	const arr = coerceCorrectAnswer(correctAnswer, options.map((o) => o.value));
+	const arr = coerceCorrectAnswer(
+		correctAnswer,
+		options.map((o) => o.value),
+	);
 	if (arr.length === 0) return { indices: [], error: "correctAnswer is required" };
 	const byValue = new Map(options.map((o, i) => [o.value, i + 1]));
 	const indices: number[] = [];
@@ -518,7 +494,12 @@ export function buildAnswer(qd: QuestionData, req: AnswerRequest, tool?: string)
 	if (qd.kind === "quiz") {
 		base.correctIndices = qd.correctIndices ?? [];
 		base.explanation = qd.explanation;
-		base.correct = base.dontKnow ? false : isCorrect(base.answers.map((a) => a.index), qd.correctIndices ?? []);
+		base.correct = base.dontKnow
+			? false
+			: isCorrect(
+					base.answers.map((a) => a.index),
+					qd.correctIndices ?? [],
+				);
 		// The confidence slider rides on real quiz answers only — never on
 		// "I don't know" (no answer, no probability). Clamped defensively;
 		// the dock snaps to the grid, the record accepts any integer.

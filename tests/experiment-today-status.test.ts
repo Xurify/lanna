@@ -14,7 +14,16 @@ const start = EXPERIMENT_CONSTANTS.START_DATE;
 fs.mkdirSync(experimentDir(), { recursive: true });
 fs.writeFileSync(
 	path.join(experimentDir(), "experiment.json"),
-	JSON.stringify({ id: EXPERIMENT_CONSTANTS.ID, startDate: start, endDate: "2026-12-22", days: 42, seed: 1, onsetDay: 15, onsetDate: "2026-11-25", languages: { treatment: "russian", control: "slovak" } }),
+	JSON.stringify({
+		id: EXPERIMENT_CONSTANTS.ID,
+		startDate: start,
+		endDate: "2026-12-22",
+		days: 42,
+		seed: 1,
+		onsetDay: 15,
+		onsetDate: "2026-11-25",
+		languages: { treatment: "russian", control: "slovak" },
+	}),
 );
 fs.writeFileSync(path.join(experimentDir(), "schedule.json"), "[]");
 fs.writeFileSync(path.join(experimentDir(), "probe-pool.json"), "{}");
@@ -22,7 +31,10 @@ fs.writeFileSync(path.join(experimentDir(), "probe-pool.json"), "{}");
 const typed = { kind: "dictation", answer: "type", replays: 0, peeked: false, verdict: "exact" };
 const lessons = path.join(dir, "profiles", "russian", "lessons");
 fs.mkdirSync(lessons, { recursive: true });
-fs.writeFileSync(path.join(lessons, `${start}.jsonl`), `${JSON.stringify({ mode: "listen", reps: [typed, typed, typed, typed, typed] })}\n`);
+fs.writeFileSync(
+	path.join(lessons, `${start}.jsonl`),
+	`${JSON.stringify({ mode: "listen", reps: [typed, typed, typed, typed, typed] })}\n`,
+);
 
 const dayOne = new Date(`${start}T12:00:00`);
 
@@ -31,7 +43,11 @@ describe("today's study status", () => {
 		const fromSlovak = getTodayExperimentStatus(dayOne, "slovak");
 		const fromRussian = getTodayExperimentStatus(dayOne, "russian");
 		assert.equal(fromSlovak?.validDay, false, "the control language still needs its five sentences");
-		assert.equal(fromRussian?.validDay, fromSlovak?.validDay, "the running language does not change whether the day counts");
+		assert.equal(
+			fromRussian?.validDay,
+			fromSlovak?.validDay,
+			"the running language does not change whether the day counts",
+		);
 		assert.deepEqual(
 			fromSlovak?.languages.map((l) => [l.id, l.validDay]),
 			[

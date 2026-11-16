@@ -5,7 +5,12 @@ import { coverageBand, formatClock } from "@/src/core";
 import { Poster } from "@/components/watch/thumb";
 
 const FILL = { comfortable: "bg-teal-2", stretch: "bg-teal-2/60", hard: "bg-ink-3", "too-hard": "bg-ink-4" } as const;
-const TEXT = { comfortable: "text-teal-2", stretch: "text-teal-2", hard: "text-ink-2", "too-hard": "text-ink-3" } as const;
+const TEXT = {
+	comfortable: "text-teal-2",
+	stretch: "text-teal-2",
+	hard: "text-ink-2",
+	"too-hard": "text-ink-3",
+} as const;
 
 /** "92% known" in the colour of its band; `about` for a share estimated from another language's captions. */
 export function Known({ coverage, about }: { coverage: number; about?: boolean }) {
@@ -63,11 +68,16 @@ export function VideoCard({
 	const poster = (
 		<span className="relative block overflow-hidden rounded-xl">
 			<Poster id={id} watched={watched} className="rounded-xl" />
-			<span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 font-ui text-[11.5px] font-[600] tabular-nums leading-none text-white">{formatClock(durationSec)}</span>
+			<span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 font-ui text-[11.5px] font-[600] tabular-nums leading-none text-white">
+				{formatClock(durationSec)}
+			</span>
 			{badge && <span className="absolute left-2 top-2">{badge}</span>}
 			{band && coverage !== undefined && (
 				<span className="absolute inset-x-0 bottom-0 block h-1 bg-black/45">
-					<span className={cn("block h-full", FILL[band])} style={{ width: `${Math.max(2, Math.round(coverage * 100))}%` }} />
+					<span
+						className={cn("block h-full", FILL[band])}
+						style={{ width: `${Math.max(2, Math.round(coverage * 100))}%` }}
+					/>
 				</span>
 			)}
 		</span>
@@ -80,21 +90,44 @@ export function VideoCard({
 					{poster}
 				</a>
 			) : (
-				<button type="button" onClick={onOpen} tabIndex={-1} aria-hidden="true" className="block w-full rounded-xl text-left">
+				<button
+					type="button"
+					onClick={onOpen}
+					tabIndex={-1}
+					aria-hidden="true"
+					className="block w-full rounded-xl text-left"
+				>
 					{poster}
 				</button>
 			)}
 			<div className="mt-2.5 min-w-0 flex-1">
 				{href ? (
-					<a href={href} target="_blank" rel="noreferrer" className={label} lang={lang} title={`${title} (opens on YouTube)`} data-testid="watch-card-title">
+					<a
+						href={href}
+						target="_blank"
+						rel="noreferrer"
+						className={label}
+						lang={lang}
+						title={`${title} (opens on YouTube)`}
+						data-testid="watch-card-title"
+					>
 						{title}
 					</a>
 				) : (
-					<button type="button" onClick={onOpen} className={label} lang={lang} title={title} data-testid="watch-card-title">
+					<button
+						type="button"
+						onClick={onOpen}
+						className={label}
+						lang={lang}
+						title={title}
+						data-testid="watch-card-title"
+					>
 						{title}
 					</button>
 				)}
-				{by && <div className="mt-1 flex min-w-0 items-center gap-1.5 truncate font-prose text-[13px] text-ink-3">{by}</div>}
+				{by && (
+					<div className="mt-1 flex min-w-0 items-center gap-1.5 truncate font-prose text-[13px] text-ink-3">{by}</div>
+				)}
 				{line && <div className="mt-0.5 font-prose text-[13px] leading-snug text-ink-3">{line}</div>}
 			</div>
 			{children && <div className="mt-3 flex items-center gap-1.5">{children}</div>}
@@ -103,9 +136,32 @@ export function VideoCard({
 }
 
 /** A square icon action on a card: the same 32px target everywhere. */
-export function CardIconButton({ label, onClick, active, children, testid }: { label: string; onClick: () => void; active?: boolean; children: React.ReactNode; testid?: string }) {
+export function CardIconButton({
+	label,
+	onClick,
+	active,
+	children,
+	testid,
+}: {
+	label: string;
+	onClick: () => void;
+	active?: boolean;
+	children: React.ReactNode;
+	testid?: string;
+}) {
 	return (
-		<button type="button" onClick={onClick} aria-label={label} title={label} aria-pressed={active} className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-foreground pointer-coarse:size-11", active ? "bg-accent text-foreground" : "text-muted-foreground")} data-testid={testid}>
+		<button
+			type="button"
+			onClick={onClick}
+			aria-label={label}
+			title={label}
+			aria-pressed={active}
+			className={cn(
+				"flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-foreground pointer-coarse:size-11",
+				active ? "bg-accent text-foreground" : "text-muted-foreground",
+			)}
+			data-testid={testid}
+		>
 			{children}
 		</button>
 	);

@@ -25,10 +25,18 @@ function maxMemory(N: number, r: number): number {
 	return 128 * N * r * 2;
 }
 
-function derive(password: string, salt: Buffer, params: Pick<ScryptParams, "N" | "r" | "p" | "keyLength">): Promise<Buffer> {
+function derive(
+	password: string,
+	salt: Buffer,
+	params: Pick<ScryptParams, "N" | "r" | "p" | "keyLength">,
+): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
-		scrypt(password.normalize("NFKC"), salt, params.keyLength, { N: params.N, r: params.r, p: params.p, maxmem: maxMemory(params.N, params.r) }, (err, key) =>
-			err ? reject(err) : resolve(key),
+		scrypt(
+			password.normalize("NFKC"),
+			salt,
+			params.keyLength,
+			{ N: params.N, r: params.r, p: params.p, maxmem: maxMemory(params.N, params.r) },
+			(err, key) => (err ? reject(err) : resolve(key)),
 		);
 	});
 }
@@ -40,7 +48,11 @@ export function passwordProblem(password: unknown): string | null {
 	return null;
 }
 
-export async function hashPassword(password: string, params: ScryptParams = SCRYPT_DEFAULT, at: Date = new Date()): Promise<PasswordRecord> {
+export async function hashPassword(
+	password: string,
+	params: ScryptParams = SCRYPT_DEFAULT,
+	at: Date = new Date(),
+): Promise<PasswordRecord> {
 	const salt = randomBytes(params.saltBytes);
 	const key = await derive(password, salt, params);
 	return {
@@ -66,7 +78,8 @@ export async function verifyPassword(password: string, record: PasswordRecord): 
 export function isPasswordRecord(value: unknown): value is PasswordRecord {
 	const r = value as Partial<PasswordRecord> | null;
 	if (!r || r.version !== 1 || r.algo !== "scrypt") return false;
-	const power = (n: unknown) => typeof n === "number" && Number.isInteger(n) && n >= 2 ** 10 && n <= 2 ** 20 && (n & (n - 1)) === 0;
+	const power = (n: unknown) =>
+		typeof n === "number" && Number.isInteger(n) && n >= 2 ** 10 && n <= 2 ** 20 && (n & (n - 1)) === 0;
 	const small = (n: unknown, max: number) => typeof n === "number" && Number.isInteger(n) && n >= 1 && n <= max;
 	return (
 		power(r.N) &&

@@ -20,26 +20,53 @@ if (!fs.existsSync(index)) {
 	process.exit(1);
 }
 
-interface Row { tier: string; voice: string; lang: string; text: string; seconds: number; syllables: number }
+interface Row {
+	tier: string;
+	voice: string;
+	lang: string;
+	text: string;
+	seconds: number;
+	syllables: number;
+}
 const seen = new Set<string>();
 const rows: Row[] = [];
 for (const line of fs.readFileSync(index, "utf8").split("\n")) {
 	if (!line.trim()) continue;
-	const e = JSON.parse(line) as { key: string; tier: string; voice: string; lang: string; text: string | null; file: string };
+	const e = JSON.parse(line) as {
+		key: string;
+		tier: string;
+		voice: string;
+		lang: string;
+		text: string | null;
+		file: string;
+	};
 	const file = path.join(root, e.file);
 	if (!e.text || seen.has(e.key) || !fs.existsSync(file)) continue;
 	seen.add(e.key);
-	const seconds = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).toString());
-	if (Number.isFinite(seconds) && seconds > 0) rows.push({ tier: e.tier, voice: e.voice, lang: e.lang, text: e.text, seconds, syllables: countSyllables(e.text, e.lang) });
+	const seconds = Number(
+		execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).toString(),
+	);
+	if (Number.isFinite(seconds) && seconds > 0)
+		rows.push({
+			tier: e.tier,
+			voice: e.voice,
+			lang: e.lang,
+			text: e.text,
+			seconds,
+			syllables: countSyllables(e.text, e.lang),
+		});
 }
 
 const median = (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)] ?? 0;
 const groups = new Map<string, Row[]>();
-for (const r of rows) groups.set(`${r.lang} ${r.tier}/${r.voice}`, [...(groups.get(`${r.lang} ${r.tier}/${r.voice}`) ?? []), r]);
+for (const r of rows)
+	groups.set(`${r.lang} ${r.tier}/${r.voice}`, [...(groups.get(`${r.lang} ${r.tier}/${r.voice}`) ?? []), r]);
 console.log(`${rows.length} clips\n`);
 for (const [name, g] of groups) {
 	const long = g.filter((r) => r.seconds >= 0.8 && r.syllables >= 3);
 	const pace = long.map((r) => r.syllables / r.seconds);
 	if (pace.length === 0) continue;
-	console.log(`${name}: ${g.length} clips (${long.length} measured)  pace median ${median(pace).toFixed(2)}, min ${Math.min(...pace).toFixed(2)}, max ${Math.max(...pace).toFixed(2)} syl/s`);
+	console.log(
+		`${name}: ${g.length} clips (${long.length} measured)  pace median ${median(pace).toFixed(2)}, min ${Math.min(...pace).toFixed(2)}, max ${Math.max(...pace).toFixed(2)} syl/s`,
+	);
 }

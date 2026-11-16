@@ -26,18 +26,42 @@ const evidence: StampEvidence = {
 	chapters: new Map([["ch-a", 0.5]]),
 	stages: new Map([["a1", 0]]),
 };
-const summit: StampState = { id: "summit:a1", kind: "summit", name: "A1 · Základy", line: "Every chapter of A1 done", goal: 1, level: "A1", stage: "a1", earned: null, have: 0, progress: 0 };
-const chapter: StampState = { id: "chapter:ch-a", kind: "chapter", name: "Pozdravy", line: "Chapter done · A1", goal: 1, level: "A1", stage: "a1", earned: null, have: 0.5, progress: 0.5 };
+const summit: StampState = {
+	id: "summit:a1",
+	kind: "summit",
+	name: "A1 · Základy",
+	line: "Every chapter of A1 done",
+	goal: 1,
+	level: "A1",
+	stage: "a1",
+	earned: null,
+	have: 0,
+	progress: 0,
+};
+const chapter: StampState = {
+	id: "chapter:ch-a",
+	kind: "chapter",
+	name: "Pozdravy",
+	line: "Chapter done · A1",
+	goal: 1,
+	level: "A1",
+	stage: "a1",
+	earned: null,
+	have: 0.5,
+	progress: 0.5,
+};
 const deeds = stampStates(DEED_STAMPS, evidence, { "first-step": "2026-11-01" }, "2026-11-02");
 const all = [summit, chapter, ...deeds];
 
 describe("StampDisc", () => {
 	it("marks an earned stamp, and draws the progress arc on one in reach", () => {
-		const earned = renderToStaticMarkup(createElement(StampDisc, { state: deeds.find((s) => s.id === "first-step")!, size: "sm", pressed: true }));
+		const earned = renderToStaticMarkup(
+			createElement(StampDisc, { state: deeds.find((s) => s.id === "first-step")!, size: "sm", pressed: true }),
+		);
 		assert.ok(earned.includes('data-testid="stamp-first-step"'));
 		assert.ok(earned.includes('data-earned="true"'));
 		assert.ok(earned.includes("lh-stamp"), "the pressed animation class");
-		assert.ok(!earned.includes("stroke-dasharray=\"3 5\""), "no dashed rim once earned");
+		assert.ok(!earned.includes('stroke-dasharray="3 5"'), "no dashed rim once earned");
 
 		const words = renderToStaticMarkup(createElement(StampDisc, { state: deeds.find((s) => s.id === "words-50")! }));
 		assert.ok(words.includes('data-earned="false"'));

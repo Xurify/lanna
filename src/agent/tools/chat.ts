@@ -27,16 +27,32 @@ export interface ChatToolContext {
 }
 
 const poseInput = Type.Object({
-	answer: Type.String({ minLength: 1, description: "The exact answer you expect, in the target language, committed before the learner answers. Check any form you are not sure of before you write the question." }),
-	accept: Type.Optional(Type.String({ description: "Other answers that are also fully correct, in quotes like every value, separated by \" | \"." })),
-	focus: Type.String({ minLength: 1, description: "What the question tests, in a few plain words with grammar in full words, never abbreviated (\"the feminine accusative of this\", \"the locative after v\")." }),
+	answer: Type.String({
+		minLength: 1,
+		description:
+			"The exact answer you expect, in the target language, committed before the learner answers. Check any form you are not sure of before you write the question.",
+	}),
+	accept: Type.Optional(
+		Type.String({
+			description: 'Other answers that are also fully correct, in quotes like every value, separated by " | ".',
+		}),
+	),
+	focus: Type.String({
+		minLength: 1,
+		description:
+			'What the question tests, in a few plain words with grammar in full words, never abbreviated ("the feminine accusative of this", "the locative after v").',
+	}),
 });
 
 function gradeInputFor(units: readonly { id: string; title: string }[]) {
 	return Type.Object({
-		verdict: Type.Union([Type.Literal("right"), Type.Literal("slip"), Type.Literal("wrong"), Type.Literal("dont_know")], {
-			description: "right: the committed answer or an accepted one. slip: the right form with a spelling or accent slip. wrong: another form or word. dont_know: the learner gave up or asked for the answer.",
-		}),
+		verdict: Type.Union(
+			[Type.Literal("right"), Type.Literal("slip"), Type.Literal("wrong"), Type.Literal("dont_know")],
+			{
+				description:
+					"right: the committed answer or an accepted one. slip: the right form with a spelling or accent slip. wrong: another form or word. dont_know: the learner gave up or asked for the answer.",
+			},
+		),
 		given: Type.String({ description: "What the learner wrote, verbatim." }),
 		expected: Type.String({ minLength: 1, description: "The committed answer from the pose." }),
 		focus: Type.String({ minLength: 1, description: "The pose's focus." }),
@@ -85,7 +101,8 @@ function gradeTool(seam: ChatAnswerSeam | undefined): AgentTool<ReturnType<typeo
 const drawInput = Type.Object({
 	brief: Type.String({
 		minLength: 1,
-		description: "What the picture shows in a few words, its layout, and the forms it labels with their meanings, all from your reply. Never the answer to your question.",
+		description:
+			"What the picture shows in a few words, its layout, and the forms it labels with their meanings, all from your reply. Never the answer to your question.",
 	}),
 });
 
@@ -95,7 +112,8 @@ function drawTool(seam: ChatDrawingSeam): AgentTool<typeof drawInput, ChatDrawin
 	return {
 		name: "draw",
 		label: "draw",
-		description: "Ask for one drawing under the reply you just wrote. Call it after the text, with the other record calls; a drawer makes it while the learner reads.",
+		description:
+			"Ask for one drawing under the reply you just wrote. Call it after the text, with the other record calls; a drawer makes it while the learner reads.",
 		parameters: drawInput,
 		executionMode: "parallel",
 		execute: async (_toolCallId, input, signal) => {
@@ -113,7 +131,10 @@ function drawTool(seam: ChatDrawingSeam): AgentTool<typeof drawInput, ChatDrawin
 			}
 			return svg
 				? { content: [{ type: "text", text: `Drawn under the reply: ${input.brief}` }], details: { svg } }
-				: { content: [{ type: "text", text: "The drawing could not be made; the reply stands without it." }], details: { failed: true } };
+				: {
+						content: [{ type: "text", text: "The drawing could not be made; the reply stands without it." }],
+						details: { failed: true },
+					};
 		},
 	};
 }

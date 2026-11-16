@@ -11,11 +11,20 @@ import { CheckIcon, MinusIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { MenuShell, type MenuAlign } from "@/components/menu-shell";
 import { CountryFlag } from "@/components/ui/country-flag";
-import { KNOWN_LANGUAGES, LANG_LEVELS, languageName, MAX_LANGUAGES, normalizeLangLevel, type Lang, type LangLevel } from "@/src/core";
+import {
+	KNOWN_LANGUAGES,
+	LANG_LEVELS,
+	languageName,
+	MAX_LANGUAGES,
+	normalizeLangLevel,
+	type Lang,
+	type LangLevel,
+} from "@/src/core";
 
 const CHIP = "min-w-14 rounded-xl border px-4 py-2 font-ui text-base font-semibold tabular-nums transition-colors";
 const ON = "border-primary/80 bg-primary/15 text-primary shadow-xs font-semibold";
-const OFF = "border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent hover:text-foreground";
+const OFF =
+	"border-border/80 bg-accent/20 text-muted-foreground hover:border-border hover:bg-accent hover:text-foreground";
 const PANEL = "flex w-[22rem] max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-border bg-card p-3 shadow-xl";
 
 /** One of a few: a row of chips, one pressed. */
@@ -35,7 +44,15 @@ export function Chips<T extends string | number>({
 	return (
 		<div className="flex flex-wrap gap-2" role="group" aria-label={label} data-testid={testid}>
 			{items.map((it) => (
-				<button key={String(it.id)} type="button" aria-pressed={it.id === value} title={it.hint} onClick={() => onPick(it.id)} className={cn(CHIP, it.id === value ? ON : OFF)} data-testid={testid ? `${testid}-${it.id}` : undefined}>
+				<button
+					key={String(it.id)}
+					type="button"
+					aria-pressed={it.id === value}
+					title={it.hint}
+					onClick={() => onPick(it.id)}
+					className={cn(CHIP, it.id === value ? ON : OFF)}
+					data-testid={testid ? `${testid}-${it.id}` : undefined}
+				>
 					{it.title}
 				</button>
 			))}
@@ -76,12 +93,27 @@ export function NumberPicker({
 	return (
 		<div className="flex flex-wrap items-center gap-2" role="group" aria-label={label} data-testid={testid}>
 			{quick.map((q) => (
-				<button key={q} type="button" aria-pressed={value === q} onClick={() => onChange(q)} className={cn(CHIP, value === q ? ON : OFF)} data-testid={testid ? `${testid}-${q}` : undefined}>
+				<button
+					key={q}
+					type="button"
+					aria-pressed={value === q}
+					onClick={() => onChange(q)}
+					className={cn(CHIP, value === q ? ON : OFF)}
+					data-testid={testid ? `${testid}-${q}` : undefined}
+				>
 					{q}
 				</button>
 			))}
-			<div className="flex items-center rounded-xl border-2 border-border focus-within:border-go" data-testid={testid ? `${testid}-custom` : undefined}>
-				<button type="button" aria-label={`Less ${unit}`} onClick={() => onChange(clamp(value - step))} className="flex size-10 items-center justify-center rounded-l-[10px] text-muted-foreground hover:bg-accent hover:text-foreground">
+			<div
+				className="flex items-center rounded-xl border-2 border-border focus-within:border-go"
+				data-testid={testid ? `${testid}-custom` : undefined}
+			>
+				<button
+					type="button"
+					aria-label={`Less ${unit}`}
+					onClick={() => onChange(clamp(value - step))}
+					className="flex size-10 items-center justify-center rounded-l-[10px] text-muted-foreground hover:bg-accent hover:text-foreground"
+				>
 					<MinusIcon className="size-4" />
 				</button>
 				<input
@@ -98,7 +130,12 @@ export function NumberPicker({
 					className="w-16 bg-transparent text-center font-ui text-base font-semibold tabular-nums text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 				<span className="pr-1 font-ui text-xs text-muted-foreground">{unit}</span>
-				<button type="button" aria-label={`More ${unit}`} onClick={() => onChange(clamp(value + step))} className="flex size-10 items-center justify-center rounded-r-[10px] text-muted-foreground hover:bg-accent hover:text-foreground">
+				<button
+					type="button"
+					aria-label={`More ${unit}`}
+					onClick={() => onChange(clamp(value + step))}
+					className="flex size-10 items-center justify-center rounded-r-[10px] text-muted-foreground hover:bg-accent hover:text-foreground"
+				>
 					<PlusIcon className="size-4" />
 				</button>
 			</div>
@@ -141,11 +178,24 @@ export function LanguagePicker({
 		return next;
 	};
 	const toggle = (id: Lang) => {
-		if (value.includes(id)) return onChange(value.filter((l) => l !== id), levelsFor(value.filter((l) => l !== id)));
+		if (value.includes(id))
+			return onChange(
+				value.filter((l) => l !== id),
+				levelsFor(value.filter((l) => l !== id)),
+			);
 		if (pickable.length >= MAX_LANGUAGES) return;
 		onChange([...value, id], levelsFor([...value, id]));
 	};
-	const togglePending = (id: Lang) => setPending((p) => (p ? (p.includes(id) ? p.filter((l) => l !== id) : p.filter((l) => l !== exclude).length >= MAX_LANGUAGES ? p : [...p, id]) : p));
+	const togglePending = (id: Lang) =>
+		setPending((p) =>
+			p
+				? p.includes(id)
+					? p.filter((l) => l !== id)
+					: p.filter((l) => l !== exclude).length >= MAX_LANGUAGES
+						? p
+						: [...p, id]
+				: p,
+		);
 	const setLevel = (id: Lang, level: LangLevel) => onChange([...value], { ...levels, [id]: level });
 	// The panel lines up with the More button on the side that has room: the button sits at the end of a wrapping row.
 	const open = () => {
@@ -155,7 +205,8 @@ export function LanguagePicker({
 		setPending([...value]);
 	};
 	const close = () => {
-		if (pending && (pending.length !== value.length || pending.some((l, i) => value[i] !== l))) onChange(pending, levelsFor(pending));
+		if (pending && (pending.length !== value.length || pending.some((l, i) => value[i] !== l)))
+			onChange(pending, levelsFor(pending));
 		setPending(null);
 		setQuery("");
 	};
@@ -190,25 +241,58 @@ export function LanguagePicker({
 				{shown.map((l) => {
 					const on = value.includes(l.id);
 					return (
-						<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => toggle(l.id)} className={cn(CHIP, "min-w-0 px-3.5 py-1.5 text-sm inline-flex items-center gap-2", on ? ON : OFF)} data-testid={`${testid}-${l.id}`}>
+						<button
+							key={l.id}
+							type="button"
+							aria-pressed={on}
+							title={l.line}
+							onClick={() => toggle(l.id)}
+							className={cn(CHIP, "min-w-0 px-3.5 py-1.5 text-sm inline-flex items-center gap-2", on ? ON : OFF)}
+							data-testid={`${testid}-${l.id}`}
+						>
 							<CountryFlag lang={l.id} className="w-6 h-4 rounded-[3px]" />
 							<span>{l.title}</span>
 						</button>
 					);
 				})}
 				<span ref={anchor}>
-					<button type="button" aria-expanded={more} onClick={() => (more ? close() : open())} className={cn(CHIP, OFF, "min-w-0 border-dashed px-3.5 py-1.5 text-sm", more && "border-foreground/40 text-foreground")} data-testid={`${testid}-more`}>
+					<button
+						type="button"
+						aria-expanded={more}
+						onClick={() => (more ? close() : open())}
+						className={cn(
+							CHIP,
+							OFF,
+							"min-w-0 border-dashed px-3.5 py-1.5 text-sm",
+							more && "border-foreground/40 text-foreground",
+						)}
+						data-testid={`${testid}-more`}
+					>
 						<SearchIcon className="-ml-0.5 mr-1.5 inline size-3.5" />
 						More languages
 					</button>
 					{more && (
-						<MenuShell anchorRef={anchor} preferredSide="down" align={align} testid={`${testid}-panel`} menuClass={PANEL}>
-							<div role="dialog" aria-label="More languages" className="flex min-h-0 flex-1 flex-col" onKeyDown={(e) => e.key === "Escape" && (e.preventDefault(), e.stopPropagation(), close())}>
+						<MenuShell
+							anchorRef={anchor}
+							preferredSide="down"
+							align={align}
+							testid={`${testid}-panel`}
+							menuClass={PANEL}
+						>
+							<div
+								role="dialog"
+								aria-label="More languages"
+								className="flex min-h-0 flex-1 flex-col"
+								onKeyDown={(e) => e.key === "Escape" && (e.preventDefault(), e.stopPropagation(), close())}
+							>
 								<input
 									value={query}
 									onChange={(e) => setQuery(e.target.value)}
 									onKeyDown={(e) => {
-										if (e.key === "Enter" && found[0]) (e.preventDefault(), togglePending(found[0].id));
+										if (e.key === "Enter" && found[0]) {
+											e.preventDefault();
+											togglePending(found[0].id);
+										}
 									}}
 									placeholder="Search languages"
 									aria-label="Search languages"
@@ -219,20 +303,49 @@ export function LanguagePicker({
 									{found.map((l) => {
 										const on = chosen.includes(l.id);
 										return (
-											<button key={l.id} type="button" aria-pressed={on} title={l.line} onClick={() => togglePending(l.id)} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-semibold transition-colors", on ? "bg-go/10 text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")} data-testid={`${testid}-pick-${l.id}`}>
-												<span className={cn("flex size-4 shrink-0 items-center justify-center rounded-full border-2", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3" strokeWidth={3} />}</span>
+											<button
+												key={l.id}
+												type="button"
+												aria-pressed={on}
+												title={l.line}
+												onClick={() => togglePending(l.id)}
+												className={cn(
+													"flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-semibold transition-colors",
+													on
+														? "bg-go/10 text-foreground"
+														: "text-muted-foreground hover:bg-accent hover:text-foreground",
+												)}
+												data-testid={`${testid}-pick-${l.id}`}
+											>
+												<span
+													className={cn(
+														"flex size-4 shrink-0 items-center justify-center rounded-full border-2",
+														on ? "border-go bg-go text-go-ink" : "border-border",
+													)}
+												>
+													{on && <CheckIcon className="size-3" strokeWidth={3} />}
+												</span>
 												<CountryFlag lang={l.id} className="w-6 h-4 rounded-[3px]" />
 												<span>{l.title}</span>
 											</button>
 										);
 									})}
-									{found.length === 0 && <p className="col-span-2 px-2 py-3 font-prose text-sm text-muted-foreground">Nothing by that name. Pick the nearest relative; the tutor adapts.</p>}
+									{found.length === 0 && (
+										<p className="col-span-2 px-2 py-3 font-prose text-sm text-muted-foreground">
+											Nothing by that name. Pick the nearest relative; the tutor adapts.
+										</p>
+									)}
 								</div>
 								<div className="mt-2 flex shrink-0 items-center justify-between gap-3 border-t border-border/60 pt-2">
 									<span className="font-ui text-xs text-muted-foreground" aria-live="polite">
 										{added === 0 ? "Pick as many as you like" : `${added} to add`}
 									</span>
-									<button type="button" onClick={close} className="rounded-lg bg-go px-3 py-1.5 font-ui text-xs font-semibold text-go-ink hover:brightness-110" data-testid={`${testid}-done`}>
+									<button
+										type="button"
+										onClick={close}
+										className="rounded-lg bg-go px-3 py-1.5 font-ui text-xs font-semibold text-go-ink hover:brightness-110"
+										data-testid={`${testid}-done`}
+									>
 										Done
 									</button>
 								</div>
@@ -246,12 +359,20 @@ export function LanguagePicker({
 					{pickable.map((id) => {
 						const level = normalizeLangLevel(levels[id]); // none until pressed; a profile from before may still say "fluent"
 						return (
-							<div key={id} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 transition-colors max-md:flex-wrap max-md:gap-y-2" data-testid={`level-${id}`}>
+							<div
+								key={id}
+								className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5 transition-colors max-md:flex-wrap max-md:gap-y-2"
+								data-testid={`level-${id}`}
+							>
 								<span className="flex items-center gap-2.5 w-36 shrink-0 min-w-0">
 									<CountryFlag lang={id} className="w-6 h-4 rounded-[3px]" />
 									<span className="truncate font-ui text-sm font-semibold text-foreground">{languageName(id)}</span>
 								</span>
-								<span className="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:basis-full" role="group" aria-label={`Your level in ${languageName(id)}, on the CEFR`}>
+								<span
+									className="flex min-w-0 flex-wrap gap-1 max-md:order-last max-md:basis-full"
+									role="group"
+									aria-label={`Your level in ${languageName(id)}, on the CEFR`}
+								>
 									{LANG_LEVELS.map((lv) => (
 										<button
 											key={lv.id}
@@ -331,8 +452,20 @@ export function PickSome<T extends string>({
 				const at = value.indexOf(it.id);
 				const on = at >= 0;
 				return (
-					<button key={String(it.id)} type="button" aria-pressed={on} title={it.hint} onClick={() => pick(it.id)} className={cn(CHIP, "inline-flex items-center gap-2", on ? ON : OFF)} data-testid={testid ? `${testid}-${it.id}` : undefined}>
-						{on && max > 1 && <span className="flex size-5 items-center justify-center rounded-full bg-go font-ui text-[11px] font-semibold text-go-ink">{at + 1}</span>}
+					<button
+						key={String(it.id)}
+						type="button"
+						aria-pressed={on}
+						title={it.hint}
+						onClick={() => pick(it.id)}
+						className={cn(CHIP, "inline-flex items-center gap-2", on ? ON : OFF)}
+						data-testid={testid ? `${testid}-${it.id}` : undefined}
+					>
+						{on && max > 1 && (
+							<span className="flex size-5 items-center justify-center rounded-full bg-go font-ui text-[11px] font-semibold text-go-ink">
+								{at + 1}
+							</span>
+						)}
 						<CountryFlag lang={String(it.id)} className="w-6 h-4 rounded-[3px]" />
 						<span>{it.title}</span>
 					</button>
@@ -344,5 +477,8 @@ export function PickSome<T extends string>({
 
 /** The explanation language: English, or any language picked above. */
 export function explainChoices(langs: readonly Lang[]): Array<{ id: Lang; title: string }> {
-	return [{ id: "en" as Lang, title: "English" }, ...langs.filter((l) => l !== "en").map((l) => ({ id: l, title: languageName(l) }))];
+	return [
+		{ id: "en" as Lang, title: "English" },
+		...langs.filter((l) => l !== "en").map((l) => ({ id: l, title: languageName(l) })),
+	];
 }

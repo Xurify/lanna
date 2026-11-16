@@ -98,26 +98,33 @@ function stubFetch(canned: unknown, expect: (url: string, init: RequestInit) => 
 
 describe("contextProvider (wire shape per docs.context.dev, verified 2026-11-09)", () => {
 	it("POSTs api.context.dev/v1/web/search with Bearer auth + query and numResults body", async () => {
-		const provider = contextProvider("cxt-throwaway-key-00001", stubFetch(
-			{
-				results: [
-					{ title: "Context Example", url: "https://example.com/c", description: "line1\nline2" },
-					{ title: "Array Highlights", url: "https://example.com/a", highlights: ["passage1", "passage2"] },
-					{ title: "Object Highlights", url: "https://example.com/o", highlights: { highlights: ["nested", "passage"] } },
-					{ title: "No URL", description: "dropped" },
-				],
-			},
-			(url, init) => {
-				assert.equal(url, "https://api.context.dev/v1/web/search");
-				assert.equal(init.method, "POST");
-				const headers = init.headers as Record<string, string>;
-				assert.equal(headers.authorization, "Bearer cxt-throwaway-key-00001");
-				assert.equal(headers["content-type"], "application/json");
-				const body = JSON.parse(init.body as string);
-				assert.equal(body.query, "test query");
-				assert.equal(body.numResults, 5);
-			},
-		));
+		const provider = contextProvider(
+			"cxt-throwaway-key-00001",
+			stubFetch(
+				{
+					results: [
+						{ title: "Context Example", url: "https://example.com/c", description: "line1\nline2" },
+						{ title: "Array Highlights", url: "https://example.com/a", highlights: ["passage1", "passage2"] },
+						{
+							title: "Object Highlights",
+							url: "https://example.com/o",
+							highlights: { highlights: ["nested", "passage"] },
+						},
+						{ title: "No URL", description: "dropped" },
+					],
+				},
+				(url, init) => {
+					assert.equal(url, "https://api.context.dev/v1/web/search");
+					assert.equal(init.method, "POST");
+					const headers = init.headers as Record<string, string>;
+					assert.equal(headers.authorization, "Bearer cxt-throwaway-key-00001");
+					assert.equal(headers["content-type"], "application/json");
+					const body = JSON.parse(init.body as string);
+					assert.equal(body.query, "test query");
+					assert.equal(body.numResults, 5);
+				},
+			),
+		);
 		const hits = await provider.search("test query", 5);
 		assert.deepEqual(hits, [
 			{ title: "Context Example", url: "https://example.com/c", snippet: "line1 line2" },
@@ -128,10 +135,13 @@ describe("contextProvider (wire shape per docs.context.dev, verified 2026-11-09)
 
 	it("clamps numResults between 1 and 20", async () => {
 		let requestedResults = 0;
-		const provider = contextProvider("cxt-throwaway-key-00001", stubFetch({ results: [] }, (_url, init) => {
-			const body = JSON.parse(init.body as string);
-			requestedResults = body.numResults;
-		}));
+		const provider = contextProvider(
+			"cxt-throwaway-key-00001",
+			stubFetch({ results: [] }, (_url, init) => {
+				const body = JSON.parse(init.body as string);
+				requestedResults = body.numResults;
+			}),
+		);
 		await provider.search("q", 0);
 		assert.equal(requestedResults, 1);
 		await provider.search("q", 99);
@@ -139,20 +149,27 @@ describe("contextProvider (wire shape per docs.context.dev, verified 2026-11-09)
 	});
 
 	it("maps the {message, error_code} and {error} error body into the message", async () => {
-		const provider = contextProvider("cxt-throwaway-key-00001", async () =>
-			new Response(JSON.stringify({ message: "Profile not found or subscription expired.", error_code: "PROFILE_NOT_FOUND" }), { status: 401 }),
+		const provider = contextProvider(
+			"cxt-throwaway-key-00001",
+			async () =>
+				new Response(
+					JSON.stringify({ message: "Profile not found or subscription expired.", error_code: "PROFILE_NOT_FOUND" }),
+					{ status: 401 },
+				),
 		);
 		await assert.rejects(provider.search("q", 5), /Context search API 401: Profile not found/);
 
-		const errorProvider = contextProvider("cxt-throwaway-key-00001", async () =>
-			new Response(JSON.stringify({ error: "Invalid API token" }), { status: 403 }),
+		const errorProvider = contextProvider(
+			"cxt-throwaway-key-00001",
+			async () => new Response(JSON.stringify({ error: "Invalid API token" }), { status: 403 }),
 		);
 		await assert.rejects(errorProvider.search("q", 5), /Context search API 403: Invalid API token/);
 	});
 
 	it("surfaces raw HTTP status on error without JSON body", async () => {
-		const provider = contextProvider("cxt-throwaway-key-00001", async () =>
-			new Response("Too many requests", { status: 429 }),
+		const provider = contextProvider(
+			"cxt-throwaway-key-00001",
+			async () => new Response("Too many requests", { status: 429 }),
 		);
 		await assert.rejects(provider.search("q", 5), /Context search API 429: Too many requests/);
 	});
@@ -160,32 +177,39 @@ describe("contextProvider (wire shape per docs.context.dev, verified 2026-11-09)
 
 describe("tavilyProvider (wire shape per docs.tavily.com, verified 2026-09-20)", () => {
 	it("POSTs api.tavily.com/search with Bearer auth + the query body", async () => {
-		const provider = tavilyProvider("tvly-throwaway-key-00001", stubFetch(
-			{
-				results: [
-					{ title: "Example", url: "https://example.com/a", content: "line1\nline2" },
-					{ title: "No URL", content: "dropped" },
-				],
-			},
-			(url, init) => {
-				assert.equal(url, "https://api.tavily.com/search");
-				assert.equal(init.method, "POST");
-				const headers = init.headers as Record<string, string>;
-				assert.equal(headers.authorization, "Bearer tvly-throwaway-key-00001");
-				const body = JSON.parse(init.body as string);
-				assert.equal(body.query, "test query");
-				assert.equal(body.max_results, 5);
-				// The legacy api_key-in-body form is retired — auth is the header.
-				assert.equal(body.api_key, undefined);
-			},
-		));
+		const provider = tavilyProvider(
+			"tvly-throwaway-key-00001",
+			stubFetch(
+				{
+					results: [
+						{ title: "Example", url: "https://example.com/a", content: "line1\nline2" },
+						{ title: "No URL", content: "dropped" },
+					],
+				},
+				(url, init) => {
+					assert.equal(url, "https://api.tavily.com/search");
+					assert.equal(init.method, "POST");
+					const headers = init.headers as Record<string, string>;
+					assert.equal(headers.authorization, "Bearer tvly-throwaway-key-00001");
+					const body = JSON.parse(init.body as string);
+					assert.equal(body.query, "test query");
+					assert.equal(body.max_results, 5);
+					// The legacy api_key-in-body form is retired — auth is the header.
+					assert.equal(body.api_key, undefined);
+				},
+			),
+		);
 		const hits = await provider.search("test query", 5);
 		assert.deepEqual(hits, [{ title: "Example", url: "https://example.com/a", snippet: "line1 line2" }]);
 	});
 
 	it("maps the {detail:{error}} error body into the message", async () => {
-		const provider = tavilyProvider("tvly-throwaway-key-00001", async () =>
-			new Response(JSON.stringify({ detail: { error: "Unauthorized: missing or invalid API key." } }), { status: 401 }),
+		const provider = tavilyProvider(
+			"tvly-throwaway-key-00001",
+			async () =>
+				new Response(JSON.stringify({ detail: { error: "Unauthorized: missing or invalid API key." } }), {
+					status: 401,
+				}),
 		);
 		await assert.rejects(provider.search("q", 5), /Tavily search API 401: Unauthorized/);
 	});
@@ -193,30 +217,34 @@ describe("tavilyProvider (wire shape per docs.tavily.com, verified 2026-09-20)",
 
 describe("braveProvider (wire shape per Brave's dashboard docs, verified 2026-09-20)", () => {
 	it("GETs res/v1/web/search with the X-Subscription-Token header", async () => {
-		const provider = braveProvider("brave-throwaway-key-00001", stubFetch(
-			{
-				web: {
-					results: [
-						{ title: "Example", url: "https://example.com/b", description: "a description" },
-						{ description: "dropped — no url" },
-					],
+		const provider = braveProvider(
+			"brave-throwaway-key-00001",
+			stubFetch(
+				{
+					web: {
+						results: [
+							{ title: "Example", url: "https://example.com/b", description: "a description" },
+							{ description: "dropped — no url" },
+						],
+					},
 				},
-			},
-			(url, init) => {
-				assert.ok(url.startsWith("https://api.search.brave.com/res/v1/web/search?"), url);
-				assert.ok(url.includes("q=test+query"), url); // URLSearchParams: spaces as +
-				assert.ok(url.includes("count=5"));
-				const headers = init.headers as Record<string, string>;
-				assert.equal(headers["x-subscription-token"], "brave-throwaway-key-00001");
-			},
-		));
+				(url, init) => {
+					assert.ok(url.startsWith("https://api.search.brave.com/res/v1/web/search?"), url);
+					assert.ok(url.includes("q=test+query"), url); // URLSearchParams: spaces as +
+					assert.ok(url.includes("count=5"));
+					const headers = init.headers as Record<string, string>;
+					assert.equal(headers["x-subscription-token"], "brave-throwaway-key-00001");
+				},
+			),
+		);
 		const hits = await provider.search("test query", 5);
 		assert.deepEqual(hits, [{ title: "Example", url: "https://example.com/b", snippet: "a description" }]);
 	});
 
 	it("surfaces the HTTP status on failure", async () => {
-		const provider = braveProvider("brave-throwaway-key-00001", async () =>
-			new Response("rate limited", { status: 429 }),
+		const provider = braveProvider(
+			"brave-throwaway-key-00001",
+			async () => new Response("rate limited", { status: 429 }),
 		);
 		await assert.rejects(provider.search("q", 5), /Brave search API 429/);
 	});

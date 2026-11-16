@@ -36,7 +36,11 @@ const ACTIONS = ["pointerdown", "pointerup", "keydown", "keyup", "wheel", "touch
 
 const visibleAndFocused = () => document.visibilityState === "visible" && document.hasFocus();
 
-export function useActiveTime(activity: TimedActivity, mode: "interactive" | "passive", opts: ActiveTimeOptions = {}): ActiveTime {
+export function useActiveTime(
+	activity: TimedActivity,
+	mode: "interactive" | "passive",
+	opts: ActiveTimeOptions = {},
+): ActiveTime {
 	const onStage = useRef(opts.active !== false);
 	onStage.current = opts.active !== false;
 	const clock = useRef<ActiveClock | null>(null);
@@ -88,7 +92,8 @@ export function useActiveTime(activity: TimedActivity, mode: "interactive" | "pa
 		const sync = () => {
 			if (!stopped.current) c.engage(visibleAndFocused() && onStage.current);
 		};
-		if (mode === "interactive") for (const e of ACTIONS) window.addEventListener(e, act, { capture: true, passive: true });
+		if (mode === "interactive")
+			for (const e of ACTIONS) window.addEventListener(e, act, { capture: true, passive: true });
 		else {
 			sync();
 			document.addEventListener("visibilitychange", sync);

@@ -60,7 +60,11 @@ test("what counts: a form rep's first answer, unaided, the first ask of the sent
 	assert.equal(countsAsFirstTry({ kind: "listen", first }), true);
 	assert.equal(countsAsFirstTry({ kind: "meaning", first }), false, "a meaning check tests the sentence");
 	assert.equal(countsAsFirstTry({ kind: "build", first }), false, "a word bank tests the order");
-	assert.equal(countsAsFirstTry({ kind: "type", first, again: true }), false, "the end-of-lesson retry is a second ask");
+	assert.equal(
+		countsAsFirstTry({ kind: "type", first, again: true }),
+		false,
+		"the end-of-lesson retry is a second ask",
+	);
 	assert.equal(countsAsFirstTry({ kind: "type", first: { ...first, peeked: true } }), false, "a peek is a priced hint");
 	assert.equal(countsAsFirstTry({ kind: "type" }), false, "no first answer, nothing to count");
 });
@@ -70,15 +74,32 @@ test("firstTryOf: the drill, the cell, the verdict, the slip", () => {
 	assert.deepEqual(wrong, { unit: "gen", cell: { row: "G", col: "fem" }, verdict: "wrong", slip: "base" });
 	const wrongCase = firstTryOf({ ...genRep, first: { given: "stanicu", verdict: "wrong" } });
 	assert.equal(wrongCase?.slip, "same-word");
-	assert.deepEqual(firstTryOf({ ...genRep, first: { given: "stanice", verdict: "exact" } }), { unit: "gen", cell: { row: "G", col: "fem" }, verdict: "exact" });
+	assert.deepEqual(firstTryOf({ ...genRep, first: { given: "stanice", verdict: "exact" } }), {
+		unit: "gen",
+		cell: { row: "G", col: "fem" },
+		verdict: "exact",
+	});
 	assert.equal(firstTryOf({ ...genRep, kind: "meaning", first: { given: "x", verdict: "exact" } }), null);
 	assert.equal(firstTryOf({ ...genRep, first: { given: "stanica", verdict: "wrong", peeked: true } }), null);
 	assert.equal(firstTryOf({ ...genRep, again: true, first: { given: "stanica", verdict: "wrong" } }), null);
 });
 
 test("firstTryOf: a place has no gender — the try counts, but fills no atlas cell", () => {
-	const bratislava: LexiconEntry = { slug: "bratislava", sk: "Bratislava", en: "Bratislava", cat: "Places", examples: [], related: [] };
-	const p = firstTryOf({ kind: "type", unit: "loc", answer: "Bratislave", entry: bratislava, first: { given: "Bratislava", verdict: "wrong" } });
+	const bratislava: LexiconEntry = {
+		slug: "bratislava",
+		sk: "Bratislava",
+		en: "Bratislava",
+		cat: "Places",
+		examples: [],
+		related: [],
+	};
+	const p = firstTryOf({
+		kind: "type",
+		unit: "loc",
+		answer: "Bratislave",
+		entry: bratislava,
+		first: { given: "Bratislava", verdict: "wrong" },
+	});
 	assert.deepEqual(p, { unit: "loc", cell: null, verdict: "wrong", slip: "base" });
 });
 
@@ -109,14 +130,39 @@ test("spokenSlip: the word of the corrected line the learner did not say, agains
 	assert.deepEqual(hit, { drill: "gen", slip: "base" });
 	const wrongCase = spokenSlip(stanica, "Ako ďaleko je to od stanicu?", "Ako ďaleko je to od stanice?");
 	assert.deepEqual(wrongCase, { drill: "gen", slip: "same-word" });
-	assert.equal(spokenSlip(stanica, "Ako ďaleko je to od stanice?", "Ako ďaleko je to od stanice?"), undefined, "said right: no slip");
+	assert.equal(
+		spokenSlip(stanica, "Ako ďaleko je to od stanice?", "Ako ďaleko je to od stanice?"),
+		undefined,
+		"said right: no slip",
+	);
 	// A word whose initial letter has a diacritic (škola -> školy, spoken without háček as skola).
-	const skola: LexiconEntry = { slug: "skola", sk: "škola", en: "school", cat: "Nouns", gender: "feminine", forms: ["školy", "škole", "školu"], examples: [], related: [] };
+	const skola: LexiconEntry = {
+		slug: "skola",
+		sk: "škola",
+		en: "school",
+		cat: "Nouns",
+		gender: "feminine",
+		forms: ["školy", "škole", "školu"],
+		examples: [],
+		related: [],
+	};
 	const diacriticSlip = spokenSlip(skola, "Idem do skola.", "Idem do školy.");
 	assert.deepEqual(diacriticSlip, { drill: "gen", slip: "base" });
 });
 
 test("spokenSlip: a verb form is not a case slip", () => {
-	const robit: LexiconEntry = { slug: "robit", sk: "robiť", en: "do", cat: "Verbs", forms: ["robím", "robíš", "robí"], examples: [], related: [] };
-	assert.equal(spokenSlip(robit, "Ja robit doma.", "Ja robím doma."), undefined, "the present is a drill, but no case drill");
+	const robit: LexiconEntry = {
+		slug: "robit",
+		sk: "robiť",
+		en: "do",
+		cat: "Verbs",
+		forms: ["robím", "robíš", "robí"],
+		examples: [],
+		related: [],
+	};
+	assert.equal(
+		spokenSlip(robit, "Ja robit doma.", "Ja robím doma."),
+		undefined,
+		"the present is a drill, but no case drill",
+	);
 });

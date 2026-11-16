@@ -9,16 +9,43 @@ import { QIcon } from "@/components/quiet/icon";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useActiveTime } from "@/components/use-active-time";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, PLAY_ROW, PracticeCard, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import {
+	COLUMN,
+	Dock,
+	endEnterBlocked,
+	EnterHint,
+	onFocusedControl,
+	PLAY_ROW,
+	PracticeCard,
+	PRIMARY,
+	SECONDARY,
+	TaskEnd,
+	TaskFrame,
+	TaskTop,
+	VerdictDisc,
+} from "@/components/task-frame";
 import { SMALL } from "@/components/ui/learn-buttons";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { belongsToLayoutAccent, type WordCheckAnswered, type WordCheckMiss, type WordCheckFeedback, type WordCheckItem, type WordCheckResult, type WordCheckStart } from "@/src/core";
+import {
+	belongsToLayoutAccent,
+	type WordCheckAnswered,
+	type WordCheckMiss,
+	type WordCheckFeedback,
+	type WordCheckItem,
+	type WordCheckResult,
+	type WordCheckStart,
+} from "@/src/core";
 
 const WORDS_HREF = "/words";
 const DONT_KNOW_KEY = "?";
 const TYPED_LIMIT = 120;
 async function post<T>(body: Record<string, unknown>, keepalive = false): Promise<T> {
-	const res = await fetch("/api/words/check", { method: "POST", keepalive, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+	const res = await fetch("/api/words/check", {
+		method: "POST",
+		keepalive,
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify(body),
+	});
 	const data = (await res.json().catch(() => null)) as (T & { message?: string }) | null;
 	if (!res.ok || !data) throw new Error(data?.message ?? "The word check could not be reached.");
 	return data;
@@ -87,7 +114,13 @@ export function WordCheck() {
 			setBusy(true);
 			setError(null);
 			try {
-				const reply = await post<WordCheckFeedback>({ action: "answer", id, slug: item.slug, typed: meaning, ms: Math.round(performance.now() - shownAt.current) });
+				const reply = await post<WordCheckFeedback>({
+					action: "answer",
+					id,
+					slug: item.slug,
+					typed: meaning,
+					ms: Math.round(performance.now() - shownAt.current),
+				});
 				setFeedback(reply);
 				setAnswered((n) => n + 1);
 			} catch (err) {
@@ -103,7 +136,14 @@ export function WordCheck() {
 		if (!id) return;
 		setBusy(true);
 		try {
-			setResult(await post<WordCheckResult>({ action: "finish", id, activeMs: time.finish(), tz: new Date().getTimezoneOffset() }));
+			setResult(
+				await post<WordCheckResult>({
+					action: "finish",
+					id,
+					activeMs: time.finish(),
+					tz: new Date().getTimezoneOffset(),
+				}),
+			);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "The result was not saved.");
 		} finally {
@@ -124,7 +164,10 @@ export function WordCheck() {
 	}, [feedback, busy, finish]);
 
 	const leave = useCallback(() => {
-		if (id && !result && answered > 0) void post({ action: "finish", id, activeMs: time.finish(), tz: new Date().getTimezoneOffset() }, true).catch(() => {});
+		if (id && !result && answered > 0)
+			void post({ action: "finish", id, activeMs: time.finish(), tz: new Date().getTimezoneOffset() }, true).catch(
+				() => {},
+			);
 		router.push(WORDS_HREF);
 	}, [id, result, answered, time, router]);
 
@@ -155,7 +198,12 @@ export function WordCheck() {
 
 	return (
 		<TaskFrame>
-			<TaskTop progress={total ? answered / total : 0} label="Words checked" count={`${Math.min(answered + (feedback ? 0 : 1), Math.max(total, 1))}/${total || "…"}`} onLeave={leave} />
+			<TaskTop
+				progress={total ? answered / total : 0}
+				label="Words checked"
+				count={`${Math.min(answered + (feedback ? 0 : 1), Math.max(total, 1))}/${total || "…"}`}
+				onLeave={leave}
+			/>
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div className={cn(COLUMN, "max-w-2xl")}>
@@ -174,11 +222,22 @@ export function WordCheck() {
 					) : item ? (
 						<PracticeCard icon="check" title="Word check" sub="What does this word mean?">
 							<div className="flex min-h-14 items-center gap-3">
-								<h2 className="font-prose text-[34px] font-semibold leading-tight tracking-[-0.025em] text-foreground sm:text-[40px]" lang={lang?.code} data-testid="word-check-word" data-no-word-lookup="true">
+								<h2
+									className="font-prose text-[34px] font-semibold leading-tight tracking-[-0.025em] text-foreground sm:text-[40px]"
+									lang={lang?.code}
+									data-testid="word-check-word"
+									data-no-word-lookup="true"
+								>
 									{item.word}
 								</h2>
 								{feedback && (
-									<button type="button" onClick={() => void speak(item.word).catch(() => {})} className={PLAY_ROW} aria-label={`Play: ${item.word}`} title="Play">
+									<button
+										type="button"
+										onClick={() => void speak(item.word).catch(() => {})}
+										className={PLAY_ROW}
+										aria-label={`Play: ${item.word}`}
+										title="Play"
+									>
 										<Volume2Icon className="size-4" strokeWidth={1.6} />
 									</button>
 								)}
@@ -194,7 +253,14 @@ export function WordCheck() {
 							>
 								{feedback ? (
 									<p
-										className={cn("flex min-h-12 items-center rounded-lg px-4 py-2.5 font-prose text-[18px] font-semibold", known ? "bg-go-soft text-foreground" : judged ? "bg-miss-soft text-foreground" : "bg-[var(--q-well)] text-ink-2")}
+										className={cn(
+											"flex min-h-12 items-center rounded-lg px-4 py-2.5 font-prose text-[18px] font-semibold",
+											known
+												? "bg-go-soft text-foreground"
+												: judged
+													? "bg-miss-soft text-foreground"
+													: "bg-[var(--q-well)] text-ink-2",
+										)}
 										data-testid="word-check-typed"
 									>
 										{feedback.typed ?? "I don't know this word"}
@@ -242,25 +308,42 @@ export function WordCheck() {
 											</p>
 										)}
 										{feedback.markedBy === "model" && (
-											<p className="mt-2.5 font-ui text-[13px] leading-normal text-ink-3" data-testid="word-check-model-note">
-												Marked by the model, because your answer is not the dictionary&apos;s wording{feedback.note ? `: ${feedback.note}` : "."}
+											<p
+												className="mt-2.5 font-ui text-[13px] leading-normal text-ink-3"
+												data-testid="word-check-model-note"
+											>
+												Marked by the model, because your answer is not the dictionary&apos;s wording
+												{feedback.note ? `: ${feedback.note}` : "."}
 											</p>
 										)}
 										{feedback.verdict === "unchecked" && (
-											<p className="mt-2.5 font-ui text-[13px] leading-normal text-ink-3" data-testid="word-check-unchecked-note">
-												Your answer is not the dictionary&apos;s wording and no model is set to judge it, so this word counts neither as known nor as not known.
+											<p
+												className="mt-2.5 font-ui text-[13px] leading-normal text-ink-3"
+												data-testid="word-check-unchecked-note"
+											>
+												Your answer is not the dictionary&apos;s wording and no model is set to judge it, so this word
+												counts neither as known nor as not known.
 											</p>
 										)}
 									</div>
 								) : (
 									<>
-										<button type="button" className={cn(SECONDARY, "self-start pointer-coarse:min-h-11")} disabled={busy} onClick={() => void answer(null)} data-testid="word-check-dont-know">
+										<button
+											type="button"
+											className={cn(SECONDARY, "self-start pointer-coarse:min-h-11")}
+											disabled={busy}
+											onClick={() => void answer(null)}
+											data-testid="word-check-dont-know"
+										>
 											<span className="q-kbd pointer-coarse:hidden">{DONT_KNOW_KEY}</span>
 											I don&apos;t know this word
 										</button>
 										<p className="font-ui text-[13px] leading-normal text-ink-3">
-											There are no meanings to pick from, on purpose: picking from a list reads higher than what you can recall while reading.
-											{judges ? " A model marks an answer the dictionary words differently." : " No model is set, so only the dictionary's own wording counts."}
+											There are no meanings to pick from, on purpose: picking from a list reads higher than what you can
+											recall while reading.
+											{judges
+												? " A model marks an answer the dictionary words differently."
+												: " No model is set, so only the dictionary's own wording counts."}
 										</p>
 									</>
 								)}
@@ -283,11 +366,20 @@ export function WordCheck() {
 				<div className={cn(COLUMN, "flex min-h-20 max-w-2xl items-center justify-between gap-4 py-4")}>
 					{feedback ? (
 						<>
-							<p className="flex min-w-0 items-center gap-2.5 font-ui text-[15px] font-[550] text-foreground" data-testid="word-check-verdict">
+							<p
+								className="flex min-w-0 items-center gap-2.5 font-ui text-[15px] font-[550] text-foreground"
+								data-testid="word-check-verdict"
+							>
 								{judged && <VerdictDisc ok={known} />}
 								{verdictLine(feedback)}
 							</p>
-							<button type="button" className={cn(PRIMARY, "shrink-0 whitespace-nowrap")} onClick={next} disabled={busy} data-testid="word-check-next">
+							<button
+								type="button"
+								className={cn(PRIMARY, "shrink-0 whitespace-nowrap")}
+								onClick={next}
+								disabled={busy}
+								data-testid="word-check-next"
+							>
 								{feedback.item ? "Next word" : "See the result"}
 								<span className="q-kbd pointer-coarse:hidden">
 									<QIcon name="enter" />
@@ -297,7 +389,13 @@ export function WordCheck() {
 					) : (
 						<>
 							<span aria-hidden="true" />
-							<button type="button" className={PRIMARY} onClick={() => void answer(typed)} disabled={!item || !typed.trim() || busy} data-testid="word-check-submit">
+							<button
+								type="button"
+								className={PRIMARY}
+								onClick={() => void answer(typed)}
+								disabled={!item || !typed.trim() || busy}
+								data-testid="word-check-submit"
+							>
 								{busy && <LoaderCircleIcon className="size-5 animate-spin" />}
 								{busy ? (judges ? "Marking…" : "Checking…") : "Check"}
 								{!busy && (
@@ -320,10 +418,19 @@ const TOO_CLOSE = 0.04;
 
 function placeOnAxis(rank: number, dictionary: number): number {
 	const from = Math.log(AXIS_FROM_RANK);
-	return Math.min(1, Math.max(0, (Math.log(Math.max(AXIS_FROM_RANK, rank)) - from) / (Math.log(Math.max(dictionary, AXIS_FROM_RANK * 10)) - from)));
+	return Math.min(
+		1,
+		Math.max(
+			0,
+			(Math.log(Math.max(AXIS_FROM_RANK, rank)) - from) / (Math.log(Math.max(dictionary, AXIS_FROM_RANK * 10)) - from),
+		),
+	);
 }
 
-function laneRows(answers: readonly WordCheckAnswered[], dictionary: number): Array<{ answer: WordCheckAnswered; x: number; row: number }> {
+function laneRows(
+	answers: readonly WordCheckAnswered[],
+	dictionary: number,
+): Array<{ answer: WordCheckAnswered; x: number; row: number }> {
 	const lastInRow: number[] = [];
 	return answers.map((answer) => {
 		const x = placeOnAxis(answer.rank, dictionary);
@@ -335,7 +442,21 @@ function laneRows(answers: readonly WordCheckAnswered[], dictionary: number): Ar
 	});
 }
 
-function AnswerLane({ title, answers, dictionary, filled, active, onActive }: { title: string; answers: readonly WordCheckAnswered[]; dictionary: number; filled: boolean; active: string | null; onActive: (slug: string | null) => void }) {
+function AnswerLane({
+	title,
+	answers,
+	dictionary,
+	filled,
+	active,
+	onActive,
+}: {
+	title: string;
+	answers: readonly WordCheckAnswered[];
+	dictionary: number;
+	filled: boolean;
+	active: string | null;
+	onActive: (slug: string | null) => void;
+}) {
 	return (
 		<div>
 			<p className="font-ui text-[13px] text-ink-2">
@@ -352,7 +473,12 @@ function AnswerLane({ title, answers, dictionary, filled, active, onActive }: { 
 						onPointerLeave={() => onActive(null)}
 						onClick={() => onActive(active === answer.slug ? null : answer.slug)}
 						className="absolute -m-1.5 box-content rounded-full p-1.5"
-						style={{ left: `calc(${(x * 100).toFixed(2)}% - ${DOT_PX / 2}px)`, top: row * (DOT_PX + 2), width: DOT_PX, height: DOT_PX }}
+						style={{
+							left: `calc(${(x * 100).toFixed(2)}% - ${DOT_PX / 2}px)`,
+							top: row * (DOT_PX + 2),
+							width: DOT_PX,
+							height: DOT_PX,
+						}}
 					>
 						<span
 							className={cn(
@@ -368,7 +494,17 @@ function AnswerLane({ title, answers, dictionary, filled, active, onActive }: { 
 	);
 }
 
-function AnswerStrip({ answers, dictionary, edgeRank, lang }: { answers: readonly WordCheckAnswered[]; dictionary: number; edgeRank: number; lang?: string }) {
+function AnswerStrip({
+	answers,
+	dictionary,
+	edgeRank,
+	lang,
+}: {
+	answers: readonly WordCheckAnswered[];
+	dictionary: number;
+	edgeRank: number;
+	lang?: string;
+}) {
 	const [active, setActive] = useState<string | null>(null);
 	const knew = answers.filter((a) => a.verdict === "known");
 	const notYet = answers.filter((a) => a.verdict !== "known");
@@ -382,15 +518,40 @@ function AnswerStrip({ answers, dictionary, edgeRank, lang }: { answers: readonl
 				aria-label={`Your answers by how common each word is. You knew ${knew.length} and did not know ${notYet.length}. About half of the words around number ${count(edgeRank)} in the frequency order are known. The words are listed below.`}
 				className="relative"
 			>
-				<div aria-hidden="true" className="absolute inset-y-0 w-px bg-[var(--q-ink-3)]" style={{ left: `${(edge * 100).toFixed(2)}%` }} />
-				<AnswerLane title="You knew" answers={knew} dictionary={dictionary} filled active={active} onActive={setActive} />
+				<div
+					aria-hidden="true"
+					className="absolute inset-y-0 w-px bg-[var(--q-ink-3)]"
+					style={{ left: `${(edge * 100).toFixed(2)}%` }}
+				/>
+				<AnswerLane
+					title="You knew"
+					answers={knew}
+					dictionary={dictionary}
+					filled
+					active={active}
+					onActive={setActive}
+				/>
 				<div className="mt-3">
-					<AnswerLane title="You did not know" answers={notYet} dictionary={dictionary} filled={false} active={active} onActive={setActive} />
+					<AnswerLane
+						title="You did not know"
+						answers={notYet}
+						dictionary={dictionary}
+						filled={false}
+						active={active}
+						onActive={setActive}
+					/>
 				</div>
-				<div aria-hidden="true" className="relative mt-2 h-5 border-t border-[var(--q-line-2)] font-ui text-[12px] tabular-nums text-ink-3">
+				<div
+					aria-hidden="true"
+					className="relative mt-2 h-5 border-t border-[var(--q-line-2)] font-ui text-[12px] tabular-nums text-ink-3"
+				>
 					<span className="absolute left-0 top-1">commonest</span>
 					{ticks.map((rank) => (
-						<span key={rank} className="absolute top-0 flex -translate-x-1/2 flex-col items-center" style={{ left: `${(placeOnAxis(rank, dictionary) * 100).toFixed(2)}%` }}>
+						<span
+							key={rank}
+							className="absolute top-0 flex -translate-x-1/2 flex-col items-center"
+							style={{ left: `${(placeOnAxis(rank, dictionary) * 100).toFixed(2)}%` }}
+						>
 							<i className="h-1 w-px bg-[var(--q-line-2)]" />
 							{count(rank)}th
 						</span>
@@ -404,11 +565,18 @@ function AnswerStrip({ answers, dictionary, edgeRank, lang }: { answers: readonl
 						<span lang={lang} className="font-prose text-[15px] font-semibold text-foreground">
 							{shown.lemma}
 						</span>{" "}
-						<span className="text-ink-2">{shown.gloss}</span> · number {count(shown.rank)} by how common it is · {shown.verdict === "known" ? "you knew it" : shown.typed ? `you wrote “${shown.typed}”` : "you did not know it"}
+						<span className="text-ink-2">{shown.gloss}</span> · number {count(shown.rank)} by how common it is ·{" "}
+						{shown.verdict === "known"
+							? "you knew it"
+							: shown.typed
+								? `you wrote “${shown.typed}”`
+								: "you did not know it"}
 					</>
 				) : (
 					<>
-						Each dot is a word you were asked, placed by how common it is. The line is your edge: around the <b className="font-[550] tabular-nums text-ink-2">{count(edgeRank)}</b> commonest words, you know about one word in two. Tap or point at a dot to see the word.
+						Each dot is a word you were asked, placed by how common it is. The line is your edge: around the{" "}
+						<b className="font-[550] tabular-nums text-ink-2">{count(edgeRank)}</b> commonest words, you know about one
+						word in two. Tap or point at a dot to see the word.
 					</>
 				)}
 			</figcaption>
@@ -416,13 +584,26 @@ function AnswerStrip({ answers, dictionary, edgeRank, lang }: { answers: readonl
 	);
 }
 
-function RangeRow({ label, range, scale, now }: { label: string; range: { total: number; low: number; high: number }; scale: number; now: boolean }) {
+function RangeRow({
+	label,
+	range,
+	scale,
+	now,
+}: {
+	label: string;
+	range: { total: number; low: number; high: number };
+	scale: number;
+	now: boolean;
+}) {
 	const at = (n: number) => `${Math.min(100, (n / scale) * 100).toFixed(2)}%`;
 	return (
 		<>
 			<span className="font-ui text-[13px] text-ink-2">{label}</span>
 			<span className="q-bar" aria-hidden="true">
-				<i className={now ? "!bg-[var(--q-teal)]" : "over !rounded"} style={{ left: at(range.low), width: `calc(${at(range.high)} - ${at(range.low)})` }} />
+				<i
+					className={now ? "!bg-[var(--q-teal)]" : "over !rounded"}
+					style={{ left: at(range.low), width: `calc(${at(range.high)} - ${at(range.low)})` }}
+				/>
 				{now && <span className="target" style={{ left: at(range.total) }} />}
 			</span>
 			<span className="text-right font-ui text-[13px] tabular-nums text-ink-2">
@@ -433,7 +614,9 @@ function RangeRow({ label, range, scale, now }: { label: string; range: { total:
 }
 
 function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?: string; onAgain: () => void }) {
-	const [inReview, setInReview] = useState<Set<string>>(() => new Set(result.missed.filter((w) => w.inReview).map((w) => w.slug)));
+	const [inReview, setInReview] = useState<Set<string>>(
+		() => new Set(result.missed.filter((w) => w.inReview).map((w) => w.slug)),
+	);
 	const [adding, setAdding] = useState(false);
 	const toAdd = result.missed.filter((w) => !inReview.has(w.slug));
 
@@ -441,7 +624,11 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 		if (adding || words.length === 0) return;
 		setAdding(true);
 		try {
-			const res = await fetch("/api/review/enqueue", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slugs: words.map((w) => w.slug) }) });
+			const res = await fetch("/api/review/enqueue", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ slugs: words.map((w) => w.slug) }),
+			});
 			if (res.ok) {
 				const { added } = (await res.json()) as { added: string[] };
 				setInReview((s) => new Set([...s, ...added]));
@@ -464,7 +651,13 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 				hint={<EnterHint>back to Words</EnterHint>}
 				actions={
 					<>
-						<button type="button" className={SECONDARY} onClick={onAgain} disabled={result.report.wordsLeftToCheck === 0} data-testid="word-check-again">
+						<button
+							type="button"
+							className={SECONDARY}
+							onClick={onAgain}
+							disabled={result.report.wordsLeftToCheck === 0}
+							data-testid="word-check-again"
+						>
 							Check {result.report.checkLength} more
 						</button>
 						<Link href={WORDS_HREF} className={PRIMARY} data-testid="word-check-done">
@@ -474,28 +667,40 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 				}
 			>
 				<p className="font-ui text-[13px] font-[550] text-ink-3">Words you know</p>
-				<h1 className="mt-1 font-title text-[40px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground sm:text-[48px]" data-testid="word-check-total">
+				<h1
+					className="mt-1 font-title text-[40px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground sm:text-[48px]"
+					data-testid="word-check-total"
+				>
 					About <span className="tabular-nums">{count(result.after.total)}</span>
 				</h1>
 				<p className="q-line dim mt-2 !text-[16px]">
 					{result.measured ? (
 						<>
-							Measured from the <span className="tabular-nums">{count(checked)}</span> meanings you have typed. You knew <b className="font-[600] text-foreground">{result.known}</b> of the <span className="tabular-nums">{result.answered}</span> in this check.
+							Measured from the <span className="tabular-nums">{count(checked)}</span> meanings you have typed. You knew{" "}
+							<b className="font-[600] text-foreground">{result.known}</b> of the{" "}
+							<span className="tabular-nums">{result.answered}</span> in this check.
 						</>
 					) : (
 						<>
-							Too few answers to call this measured yet. You knew <b className="font-[600] text-foreground">{result.known}</b> of <span className="tabular-nums">{result.answered}</span>.
+							Too few answers to call this measured yet. You knew{" "}
+							<b className="font-[600] text-foreground">{result.known}</b> of{" "}
+							<span className="tabular-nums">{result.answered}</span>.
 						</>
 					)}
 				</p>
 
 				{estimate && estimate.shareOfUses !== null && (
 					<p className="q-line dim mt-1 !text-[16px]" data-testid="word-check-coverage">
-						Counted by use, they are about <b className="font-[600] tabular-nums text-foreground">{Math.round(estimate.shareOfUses * 100)}%</b> of the words in this dictionary&apos;s example sentences.
+						Counted by use, they are about{" "}
+						<b className="font-[600] tabular-nums text-foreground">{Math.round(estimate.shareOfUses * 100)}%</b> of the
+						words in this dictionary&apos;s example sentences.
 					</p>
 				)}
 
-				<div className="mt-6 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5" data-testid="word-check-ranges">
+				<div
+					className="mt-6 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5"
+					data-testid="word-check-ranges"
+				>
 					<RangeRow label="Before" range={result.before} scale={scale} now={false} />
 					<RangeRow label="Now" range={result.after} scale={scale} now />
 				</div>
@@ -504,7 +709,9 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 					{steady > 0 && checked < steady && (
 						<>
 							{" "}
-							It is still wide: studies of size tests ask for about <span className="tabular-nums">{count(steady)}</span> checked words here, and you have <span className="tabular-nums">{count(checked)}</span>. Each check narrows it.
+							It is still wide: studies of size tests ask for about{" "}
+							<span className="tabular-nums">{count(steady)}</span> checked words here, and you have{" "}
+							<span className="tabular-nums">{count(checked)}</span>. Each check narrows it.
 						</>
 					)}
 				</p>
@@ -514,7 +721,12 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 						<h2 id="word-check-answers" className="font-ui text-[15px] font-semibold text-foreground">
 							Where your answers fall
 						</h2>
-						<AnswerStrip answers={result.answers} dictionary={estimate.dictionary} edgeRank={estimate.midpointRank} lang={lang} />
+						<AnswerStrip
+							answers={result.answers}
+							dictionary={estimate.dictionary}
+							edgeRank={estimate.midpointRank}
+							lang={lang}
+						/>
 					</section>
 				)}
 
@@ -525,12 +737,21 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 								Words you have now met
 							</h2>
 							{toAdd.length > 0 && (
-								<button type="button" className={cn(SECONDARY, SMALL)} onClick={() => void addToReview(toAdd)} disabled={adding} data-testid="word-check-add-all">
+								<button
+									type="button"
+									className={cn(SECONDARY, SMALL)}
+									onClick={() => void addToReview(toAdd)}
+									disabled={adding}
+									data-testid="word-check-add-all"
+								>
 									Add {toAdd.length === result.missed.length ? "all" : "the other"} {toAdd.length} to Review
 								</button>
 							)}
 						</div>
-						<ul className="mt-3 divide-y divide-[var(--q-line)] border-y border-[var(--q-line)]" data-no-word-lookup="true">
+						<ul
+							className="mt-3 divide-y divide-[var(--q-line)] border-y border-[var(--q-line)]"
+							data-no-word-lookup="true"
+						>
 							{result.missed.map((w) => (
 								<li key={w.slug} className="flex min-h-12 items-center justify-between gap-4 py-2">
 									<p className="min-w-0 font-prose text-[16px]">
@@ -538,9 +759,13 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 											{w.lemma}
 										</span>{" "}
 										<span className="text-ink-3">{w.gloss}</span>
-										{w.typed && <span className="font-ui text-[13px] text-ink-3"> · you wrote &ldquo;{w.typed}&rdquo;</span>}
+										{w.typed && (
+											<span className="font-ui text-[13px] text-ink-3"> · you wrote &ldquo;{w.typed}&rdquo;</span>
+										)}
 									</p>
-									<span className="shrink-0 font-ui text-[13px] text-ink-3">{inReview.has(w.slug) ? "In Review" : ""}</span>
+									<span className="shrink-0 font-ui text-[13px] text-ink-3">
+										{inReview.has(w.slug) ? "In Review" : ""}
+									</span>
 								</li>
 							))}
 						</ul>
@@ -552,7 +777,12 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 						<h2 id="word-check-knew" className="font-ui text-[15px] font-semibold text-foreground">
 							Words you knew
 						</h2>
-						<p className="mt-2 font-prose text-[16px] leading-relaxed text-ink-2" lang={lang} data-no-word-lookup="true" data-testid="word-check-knew-list">
+						<p
+							className="mt-2 font-prose text-[16px] leading-relaxed text-ink-2"
+							lang={lang}
+							data-no-word-lookup="true"
+							data-testid="word-check-knew-list"
+						>
 							{knew.map((a) => a.lemma).join(", ")}
 						</p>
 					</section>
@@ -560,7 +790,8 @@ function CheckResult({ result, lang, onAgain }: { result: WordCheckResult; lang?
 
 				{result.unchecked > 0 && (
 					<p className="q-line dim mt-6 !text-[14px]" data-testid="word-check-unchecked">
-						{result.unchecked} {result.unchecked === 1 ? "answer was" : "answers were"} not counted: the dictionary words the meaning differently and no model was set to judge it.
+						{result.unchecked} {result.unchecked === 1 ? "answer was" : "answers were"} not counted: the dictionary
+						words the meaning differently and no model was set to judge it.
 					</p>
 				)}
 

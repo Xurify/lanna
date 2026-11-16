@@ -52,8 +52,8 @@ describe("chat-export", () => {
 
 		assert.ok(md.startsWith("# Demonstratives\n\n*Exported from LangHarness · 2026-11-08*"));
 		assert.ok(md.includes("## Learner\n\nWhy is it ten muž, but táto kniha?"));
-		assert.ok(md.includes("## Tutor\n\n**ten muž** = \"that man\""), "a say: span reads as the bold form, not as code");
-		assert.ok(md.includes("```svg\n<svg viewBox=\"0 0 320 180\"><text>ten muž</text></svg>\n```"));
+		assert.ok(md.includes('## Tutor\n\n**ten muž** = "that man"'), "a say: span reads as the bold form, not as code");
+		assert.ok(md.includes('```svg\n<svg viewBox="0 0 320 180"><text>ten muž</text></svg>\n```'));
 	});
 
 	it("keeps the tutor's line breaks, puts its headings under the speaker, and drops links that only open in the app", () => {
@@ -88,7 +88,10 @@ describe("chat-export", () => {
 		const md = exportChatMarkdown(messages, { title: "Possessives", exportedAt: "2026-11-09" });
 
 		assert.ok(md.includes("## Tutor\n\n### My and your\n"), "the reply's own heading sits one level under the speaker");
-		assert.ok(md.includes('**môj brat** = "my brother"  \n**moja sestra** = "my sister"\n'), "two lines stay two lines in any Markdown reader");
+		assert.ok(
+			md.includes('**môj brat** = "my brother"  \n**moja sestra** = "my sister"\n'),
+			"two lines stay two lines in any Markdown reader",
+		);
 		assert.ok(md.includes("- one\n- two\n"), "list items need no hard break");
 		assert.ok(md.includes("The unit is Gender, this and mine; the forms are at [Hlavac](https://example.org/l22)."));
 		assert.ok(md.includes("# not a heading\nkept as written\n"), "a code fence is left alone");
@@ -116,13 +119,23 @@ describe("chat-export", () => {
 					answeredAt: "2026-11-08T09:37:34.769Z",
 				},
 			},
-			{ id: "n-3", role: "toolResult", toolName: "draw", isError: false, details: { svg: '<svg viewBox="0 0 10 10"></svg>' } },
+			{
+				id: "n-3",
+				role: "toolResult",
+				toolName: "draw",
+				isError: false,
+				details: { svg: '<svg viewBox="0 0 10 10"></svg>' },
+			},
 			{ id: "n-4", role: "toolResult", toolName: "grade", isError: false, details: { correct: true } },
 		] as unknown as LhMessage[];
 
 		const md = exportChatMarkdown(messages, { title: "Demonstratives", exportedAt: "2026-11-09" });
 
-		assert.ok(md.includes('## Tutor\n\nOne quick check.\n\nComplete the sentence: "Čítam ___ knihu."\n\n- túto (correct)\n- tú\n\n## Learner\n\ntú\n'));
+		assert.ok(
+			md.includes(
+				'## Tutor\n\nOne quick check.\n\nComplete the sentence: "Čítam ___ knihu."\n\n- túto (correct)\n- tú\n\n## Learner\n\ntú\n',
+			),
+		);
 		assert.ok(md.includes('## Tutor\n\n```svg\n<svg viewBox="0 0 10 10"></svg>\n```'));
 		assert.ok(!md.includes("grade"), "a tool the learner never sees leaves no trace");
 	});
@@ -137,12 +150,19 @@ describe("chat-export", () => {
 						type: "text",
 						text: 'Correct: `say: Toto je môj brat.` = "This is my brother". Alone it is `say: môj` = "my", and `say: naše auto` = "our car".',
 					},
-					{ type: "tool-add_to_review", toolCallId: "call-1", state: "output-available", input: { words: ["môj", "moja sestra"] } },
+					{
+						type: "tool-add_to_review",
+						toolCallId: "call-1",
+						state: "output-available",
+						input: { words: ["môj", "moja sestra"] },
+					},
 				],
 			},
 		];
 
-		assert.deepEqual(chatClozeSentences(messages), [{ sentence: "Toto je môj brat.", translation: "This is my brother.", cloze: "môj" }]);
+		assert.deepEqual(chatClozeSentences(messages), [
+			{ sentence: "Toto je môj brat.", translation: "This is my brother.", cloze: "môj" },
+		]);
 	});
 
 	it("blanks the taught word as the sentence writes it", () => {
@@ -168,7 +188,12 @@ describe("chat-export", () => {
 				role: "assistant",
 				parts: [
 					{ type: "text", text: '`say: môj dom` = "my house" and `say: jeho brat` = "his brother".' },
-					{ type: "tool-add_to_review", toolCallId: "call-1", state: "output-available", input: { words: ["môj", "jeho"] } },
+					{
+						type: "tool-add_to_review",
+						toolCallId: "call-1",
+						state: "output-available",
+						input: { words: ["môj", "jeho"] },
+					},
 				],
 			},
 		];

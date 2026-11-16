@@ -17,16 +17,33 @@ let catalogInflight: Promise<void> | undefined;
 let catalogGeneration = 0;
 let stopCatalogSignals: (() => void) | undefined;
 const catalogReaders = new Set<() => void>();
-const publishCatalog = () => { for (const reader of catalogReaders) reader(); };
+const publishCatalog = () => {
+	for (const reader of catalogReaders) reader();
+};
 function fetchCatalog(revalidate = false): void {
-	if (revalidate) { catalogGeneration++; catalogInflight = undefined; }
+	if (revalidate) {
+		catalogGeneration++;
+		catalogInflight = undefined;
+	}
 	if (catalogInflight) return;
 	const generation = catalogGeneration;
 	catalogInflight = fetch("/api/models")
-		.then((r) => { if (!r.ok) throw new Error(`catalog request failed: ${r.status}`); return r.json() as Promise<ModelCatalogResponse>; })
-		.then((c) => { if (generation === catalogGeneration) { catalogCache = c; publishCatalog(); } })
-		.catch(() => { /* existing unavailable/usage-only posture, no retry timer */ })
-		.finally(() => { if (generation === catalogGeneration) catalogInflight = undefined; });
+		.then((r) => {
+			if (!r.ok) throw new Error(`catalog request failed: ${r.status}`);
+			return r.json() as Promise<ModelCatalogResponse>;
+		})
+		.then((c) => {
+			if (generation === catalogGeneration) {
+				catalogCache = c;
+				publishCatalog();
+			}
+		})
+		.catch(() => {
+			/* existing unavailable/usage-only posture, no retry timer */
+		})
+		.finally(() => {
+			if (generation === catalogGeneration) catalogInflight = undefined;
+		});
 }
 export function useModelCatalog(): { catalog: ModelCatalogResponse | undefined; refresh: () => void } {
 	const [catalog, setCatalog] = useState(catalogCache);
@@ -37,14 +54,23 @@ export function useModelCatalog(): { catalog: ModelCatalogResponse | undefined; 
 		if (first) {
 			stopCatalogSignals = onSettingsSaved((section) => {
 				if (section === "keys") {
-					catalogGeneration++; catalogInflight = undefined; catalogCache = undefined;
-					publishCatalog(); fetchCatalog();
+					catalogGeneration++;
+					catalogInflight = undefined;
+					catalogCache = undefined;
+					publishCatalog();
+					fetchCatalog();
 				} else if (section === "models") fetchCatalog(true);
 			});
 			fetchCatalog(true);
 		} else fetchCatalog();
 		read();
-		return () => { catalogReaders.delete(read); if (!catalogReaders.size) { stopCatalogSignals?.(); stopCatalogSignals = undefined; } };
+		return () => {
+			catalogReaders.delete(read);
+			if (!catalogReaders.size) {
+				stopCatalogSignals?.();
+				stopCatalogSignals = undefined;
+			}
+		};
 	}, []);
 	const refresh = useCallback(() => fetchCatalog(true), []);
 	return { catalog, refresh };
@@ -62,7 +88,13 @@ export function catalogLimits(catalog: Pick<ModelCatalogResponse, "models">): Ma
  * Without a chatId (draft surfaces), they bind the strong slot, so picking
  * here changes the new-session default. An unpicked model reads "—".
  */
-export function ModelControl({ chatId, onModelChange }: { chatId?: string; onModelChange?: (model: string | undefined) => void }) {
+export function ModelControl({
+	chatId,
+	onModelChange,
+}: {
+	chatId?: string;
+	onModelChange?: (model: string | undefined) => void;
+}) {
 	const { catalog, refresh } = useModelCatalog();
 	const [models, setModels] = useState<ModelsSettings | undefined>();
 	const [session, setSession] = useState<ChatSettings | undefined>();
@@ -110,9 +142,7 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 		onModelChange?.(effectiveProvider && effectiveId ? `${effectiveProvider}:${effectiveId}` : undefined);
 	}, [effectiveProvider, effectiveId, onModelChange]);
 	const storedLevel = override?.thinkingLevel;
-	const entry = catalog?.models.find(
-		(m) => m.id === effectiveId && m.provider === effectiveProvider,
-	);
+	const entry = catalog?.models.find((m) => m.id === effectiveId && m.provider === effectiveProvider);
 	const levels = entry?.supportedLevels ?? [];
 	// A model with no stored level displays the resolved level, which is what the engine runs. Display only.
 	const effectiveLevel = storedLevel ?? (entry ? defaultOrderLevel(levels) : undefined);
@@ -144,33 +174,28 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 	}, [open]);
 
 	// composeSlotModel keeps the sibling slots intact when writing the strong slot.
-	const save = useCallback(
-		async (next: ModelsSettings) => {
-			setError(null);
-			try {
-				const res = await fetch("/api/settings/models", {
-					method: "PUT",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(next),
-				});
-				if (!res.ok) {
-					const body = (await res.json().catch(() => ({}))) as { error?: string };
-					setError(body.error ?? `settings rejected (${res.status})`);
-					return;
-				}
-				// Show the stored value, which the server may have clamped.
-				const stored = (
-					(await res.json().catch(() => null)) as { settings?: UserSettings } | null
-				)?.settings?.models;
-				setModels(stored ?? next);
-				setOpen(null);
-				notifySettingsSaved("models");
-			} catch {
-				setError("Could not reach the server — try again.");
+	const save = useCallback(async (next: ModelsSettings) => {
+		setError(null);
+		try {
+			const res = await fetch("/api/settings/models", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(next),
+			});
+			if (!res.ok) {
+				const body = (await res.json().catch(() => ({}))) as { error?: string };
+				setError(body.error ?? `settings rejected (${res.status})`);
+				return;
 			}
-		},
-		[],
-	);
+			// Show the stored value, which the server may have clamped.
+			const stored = ((await res.json().catch(() => null)) as { settings?: UserSettings } | null)?.settings?.models;
+			setModels(stored ?? next);
+			setOpen(null);
+			notifySettingsSaved("models");
+		} catch {
+			setError("Could not reach the server — try again.");
+		}
+	}, []);
 
 	// Session write (chat mode). No notifySettingsSaved: no other surface reads one session's record.
 	const saveChat = useCallback(
@@ -255,16 +280,26 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				side="bottom"
 			>
 				<button
-				type="button"
-				data-testid="stats-model"
-				onClick={() => openMenu("model")}
-				aria-expanded={open === "model"}
-				// Matches the graph's floating buttons, so the graph does not bleed through.
-				className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-raise transition-colors hover:bg-well"
-			>
-				<span className="text-card-foreground"><span className="inline-block min-w-[6.5rem] text-center">{effectiveId ? modelName(catalog?.models, effectiveProvider, effectiveId) : catalog ? "No model" : "Model"}</span></span>
-				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
-			</button>
+					type="button"
+					data-testid="stats-model"
+					onClick={() => openMenu("model")}
+					aria-expanded={open === "model"}
+					// Matches the graph's floating buttons, so the graph does not bleed through.
+					className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-raise transition-colors hover:bg-well"
+				>
+					<span className="text-card-foreground">
+						<span className="inline-block min-w-[6.5rem] text-center">
+							{effectiveId
+								? modelName(catalog?.models, effectiveProvider, effectiveId)
+								: catalog
+									? "No model"
+									: "Model"}
+						</span>
+					</span>
+					<span aria-hidden className="text-xs text-muted-foreground">
+						▾
+					</span>
+				</button>
 			</Hint>
 			<Hint
 				// Shows the rebindable ⇧⇥ shortcut.
@@ -273,23 +308,31 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 				side="bottom"
 			>
 				<button
-				type="button"
-				data-testid="stats-thinking"
-				onClick={() => {
-					// No model picked: nothing to set a level for.
-					if (entry === undefined) return;
-					openMenu("thinking");
-				}}
-				aria-expanded={open === "thinking"}
-				// Matches the graph's floating buttons, so the graph does not bleed through.
-				className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-raise transition-colors hover:bg-well"
-			>
-				{/* Just the level, as the model button shows just the model name. */}
-				<span className="text-card-foreground">
-					<span className="inline-block min-w-16 text-center">{effectiveLevel === undefined ? (effectiveId ? "Thinking" : "Thinking off") : thinkingLabel(effectiveLevel)}</span>
-				</span>
-				<span aria-hidden className="text-xs text-muted-foreground">▾</span>
-			</button>
+					type="button"
+					data-testid="stats-thinking"
+					onClick={() => {
+						// No model picked: nothing to set a level for.
+						if (entry === undefined) return;
+						openMenu("thinking");
+					}}
+					aria-expanded={open === "thinking"}
+					// Matches the graph's floating buttons, so the graph does not bleed through.
+					className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-raise transition-colors hover:bg-well"
+				>
+					{/* Just the level, as the model button shows just the model name. */}
+					<span className="text-card-foreground">
+						<span className="inline-block min-w-16 text-center">
+							{effectiveLevel === undefined
+								? effectiveId
+									? "Thinking"
+									: "Thinking off"
+								: thinkingLabel(effectiveLevel)}
+						</span>
+					</span>
+					<span aria-hidden className="text-xs text-muted-foreground">
+						▾
+					</span>
+				</button>
 			</Hint>
 
 			{open === "model" && (
@@ -327,7 +370,13 @@ export function ModelControl({ chatId, onModelChange }: { chatId?: string; onMod
 						levels={catalog ? levels : []}
 						effectiveLevel={effectiveLevel}
 						onPick={(level) => apply(effectiveProvider ?? "", effectiveId ?? "", level as ThinkingLevel)}
-						empty={catalog ? (effectiveId ? `${modelName(catalog?.models, effectiveProvider, effectiveId)} has no thinking levels.` : "Pick a model first.") : "Loading…"}
+						empty={
+							catalog
+								? effectiveId
+									? `${modelName(catalog?.models, effectiveProvider, effectiveId)} has no thinking levels.`
+									: "Pick a model first."
+								: "Loading…"
+						}
 						footer="Levels this model supports"
 					/>
 					{error && <div className="mt-1 text-destructive">{error}</div>}

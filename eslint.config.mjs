@@ -21,8 +21,17 @@ import importPlugin from "eslint-plugin-import";
 
 export default defineConfig([
 	// electron/** — the desktop shell: plain Node, no framework, outside the
-// import law (same rationale as scripts/).
-	globalIgnores([".next/**", "node_modules/**", "data/**", "next-env.d.ts", "scripts/**", "electron/**", "dist/**", "_backup-*/**"]),
+	// import law (same rationale as scripts/).
+	globalIgnores([
+		".next/**",
+		"node_modules/**",
+		"data/**",
+		"next-env.d.ts",
+		"scripts/**",
+		"electron/**",
+		"dist/**",
+		"_backup-*/**",
+	]),
 	{
 		files: ["**/*.{js,mjs,ts,tsx}"],
 		languageOptions: {
@@ -45,7 +54,7 @@ export default defineConfig([
 							// NOTE: the plugin resolves `except` relative to the zone's `from` path.
 							except: ["./core/index.ts", "./core/tutor.ts"],
 							message:
-								"Browser shell imports ONLY the pure core barrel: `from \"@/src/core\"` (architecture: docs/architecture.md).",
+								'Browser shell imports ONLY the pure core barrel: `from "@/src/core"` (architecture: docs/architecture.md).',
 						},
 						{
 							target: "./app",

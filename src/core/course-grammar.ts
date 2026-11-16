@@ -39,8 +39,14 @@ function sumTallies(tallies: ReadonlyArray<FirstTally | undefined>): FirstTally 
 	const present = tallies.filter((t): t is FirstTally => !!t);
 	if (present.length === 0) return undefined;
 	const slips: Partial<Record<FormSlip, number>> = {};
-	for (const t of present) for (const [k, n] of Object.entries(t.slips) as Array<[FormSlip, number]>) slips[k] = (slips[k] ?? 0) + n;
-	return { reps: present.reduce((n, t) => n + t.reps, 0), right: present.reduce((n, t) => n + t.right, 0), accents: present.reduce((n, t) => n + t.accents, 0), slips };
+	for (const t of present)
+		for (const [k, n] of Object.entries(t.slips) as Array<[FormSlip, number]>) slips[k] = (slips[k] ?? 0) + n;
+	return {
+		reps: present.reduce((n, t) => n + t.reps, 0),
+		right: present.reduce((n, t) => n + t.right, 0),
+		accents: present.reduce((n, t) => n + t.accents, 0),
+		slips,
+	};
 }
 
 export function caseTable(course: Course, stats: Readonly<Record<string, FirstTryStats | undefined>>): CaseTableRow[] {
@@ -52,9 +58,13 @@ export function caseTable(course: Course, stats: Readonly<Record<string, FirstTr
 		means: row.means,
 		cells: CASE_NUMBERS.map((number): CaseTableCell => {
 			const key = `${row.tag} ${number}`;
-			const covering = units.filter((u) => unitCaseCells(u).includes(key)).sort((x, y) => unitCaseCells(x).length - unitCaseCells(y).length);
+			const covering = units
+				.filter((u) => unitCaseCells(u).includes(key))
+				.sort((x, y) => unitCaseCells(x).length - unitCaseCells(y).length);
 			const unit = covering[0] ?? null;
-			const tally = sumTallies(covering.map((u) => (unitCaseCells(u).length === 1 ? stats[u.id]?.first : stats[u.id]?.byForm?.[key])));
+			const tally = sumTallies(
+				covering.map((u) => (unitCaseCells(u).length === 1 ? stats[u.id]?.first : stats[u.id]?.byForm?.[key])),
+			);
 			const tutorTitle = row.tutor ? tutorTitles.get(row.tutor) : undefined;
 			return {
 				case: row.tag,

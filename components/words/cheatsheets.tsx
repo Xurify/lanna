@@ -2,20 +2,46 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, FileTextIcon, FolderGit2Icon, HeadphonesIcon, PencilIcon, PlusIcon, RepeatIcon, SearchIcon, Trash2Icon, UploadIcon, Volume2Icon, XIcon } from "lucide-react";
+import {
+	ArrowLeftIcon,
+	FileTextIcon,
+	FolderGit2Icon,
+	HeadphonesIcon,
+	PencilIcon,
+	PlusIcon,
+	RepeatIcon,
+	SearchIcon,
+	Trash2Icon,
+	UploadIcon,
+	Volume2Icon,
+	XIcon,
+} from "lucide-react";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { SheetProgressBar } from "@/components/words/sheet-progress";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
-import { CheatsheetParseError, cheatsheetRowCount, countOverlap, formatSheetText, parseSheetText, searchSections, type Cheatsheet, type CheatRow, type CheatsheetSummary, type CheatSection, type SheetProgress } from "@/src/core";
+import {
+	CheatsheetParseError,
+	cheatsheetRowCount,
+	countOverlap,
+	formatSheetText,
+	parseSheetText,
+	searchSections,
+	type Cheatsheet,
+	type CheatRow,
+	type CheatsheetSummary,
+	type CheatSection,
+	type SheetProgress,
+} from "@/src/core";
 
 interface ReviewState {
 	inDictionary: number;
 	inReview: number;
 }
 
-const dateLabel = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const dateLabel = (iso: string) =>
+	new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -33,13 +59,39 @@ function setSheetInUrl(id: string | null) {
 	window.history.replaceState(null, "", url);
 }
 
-function SearchField({ value, onChange, placeholder, label, className }: { value: string; onChange: (v: string) => void; placeholder: string; label: string; className?: string }) {
+function SearchField({
+	value,
+	onChange,
+	placeholder,
+	label,
+	className,
+}: {
+	value: string;
+	onChange: (v: string) => void;
+	placeholder: string;
+	label: string;
+	className?: string;
+}) {
 	return (
 		<div className={cn("relative min-w-0 flex-1", className)}>
 			<SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
-			<input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} autoComplete="off" spellCheck={false} className="q-field h-10 w-full rounded-xl pl-10 pr-10 font-prose text-[15px]" />
+			<input
+				type="text"
+				value={value}
+				onChange={(e) => onChange(e.target.value)}
+				placeholder={placeholder}
+				aria-label={label}
+				autoComplete="off"
+				spellCheck={false}
+				className="q-field h-10 w-full rounded-xl pl-10 pr-10 font-prose text-[15px]"
+			/>
 			{value && (
-				<button type="button" onClick={() => onChange("")} aria-label="Clear the search" className="absolute right-2.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-ink-3 hover:bg-well hover:text-foreground">
+				<button
+					type="button"
+					onClick={() => onChange("")}
+					aria-label="Clear the search"
+					className="absolute right-2.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-ink-3 hover:bg-well hover:text-foreground"
+				>
 					<XIcon className="size-4" />
 				</button>
 			)}
@@ -47,7 +99,15 @@ function SearchField({ value, onChange, placeholder, label, className }: { value
 	);
 }
 
-export function CheatsheetsTab({ initialSheet, onCount, onOpenChange }: { initialSheet?: string; onCount?: (n: number) => void; onOpenChange?: (open: boolean) => void }) {
+export function CheatsheetsTab({
+	initialSheet,
+	onCount,
+	onOpenChange,
+}: {
+	initialSheet?: string;
+	onCount?: (n: number) => void;
+	onOpenChange?: (open: boolean) => void;
+}) {
 	const [sheets, setSheets] = useState<CheatsheetSummary[] | null>(null);
 	const [openId, setOpenId] = useState<string | null>(initialSheet ?? null);
 	const [creating, setCreating] = useState(false);
@@ -114,8 +174,21 @@ export function CheatsheetsTab({ initialSheet, onCount, onOpenChange }: { initia
 	return (
 		<div className="space-y-4" data-testid="cheatsheets">
 			<div className="flex items-center gap-3">
-				<SearchField value={query} onChange={(v) => { setQuery(v); if (!v.trim()) setFound(null); }} placeholder="Search sheets" label="Search your cheatsheets and their phrases" />
-				<button type="button" className="q-btn primary shrink-0" onClick={() => setCreating(true)} data-testid="cheatsheet-new">
+				<SearchField
+					value={query}
+					onChange={(v) => {
+						setQuery(v);
+						if (!v.trim()) setFound(null);
+					}}
+					placeholder="Search sheets"
+					label="Search your cheatsheets and their phrases"
+				/>
+				<button
+					type="button"
+					className="q-btn primary shrink-0"
+					onClick={() => setCreating(true)}
+					data-testid="cheatsheet-new"
+				>
 					<PlusIcon className="size-4" />
 					New cheatsheet
 				</button>
@@ -123,10 +196,17 @@ export function CheatsheetsTab({ initialSheet, onCount, onOpenChange }: { initia
 
 			<div className="min-h-[120px]">
 				{shownSheets && shownSheets.length > 0 && (
-					<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden" data-testid="cheatsheet-list">
+					<ul
+						className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden"
+						data-testid="cheatsheet-list"
+					>
 						{shownSheets.map((s) => (
 							<li key={s.id}>
-								<button type="button" onClick={() => open(s.id)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-well">
+								<button
+									type="button"
+									onClick={() => open(s.id)}
+									className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-well"
+								>
 									<FileTextIcon className="size-4 shrink-0 text-ink-3" />
 									<span className="min-w-0 flex-1">
 										<span className="block truncate font-ui text-[15px] font-semibold text-foreground">{s.title}</span>
@@ -171,7 +251,10 @@ function parseOrError(text: string): { sections: CheatSection[] | null; error: s
 	try {
 		return { sections: parseSheetText(text), error: null };
 	} catch (err) {
-		return { sections: null, error: err instanceof CheatsheetParseError ? err.message : "This text could not be read." };
+		return {
+			sections: null,
+			error: err instanceof CheatsheetParseError ? err.message : "This text could not be read.",
+		};
 	}
 }
 
@@ -198,7 +281,13 @@ function draftFromSections(sections: ReadonlyArray<CheatSection>): DraftSection[
 	return sections.map((s) => ({
 		key: nextKey(),
 		title: s.title,
-		rows: s.rows.map((r) => ({ key: nextKey(), text: r.text, pron: r.pron ?? "", meaning: r.meaning ?? "", note: r.note ?? "" })),
+		rows: s.rows.map((r) => ({
+			key: nextKey(),
+			text: r.text,
+			pron: r.pron ?? "",
+			meaning: r.meaning ?? "",
+			note: r.note ?? "",
+		})),
 	}));
 }
 
@@ -210,14 +299,20 @@ function sectionsFromDraft(draft: DraftSection[]): Array<{ title: string; rows: 
 		for (const r of s.rows) {
 			const text = r.text.trim();
 			if (!text) continue;
-			rows.push({ text, pron: r.pron.trim() || undefined, meaning: r.meaning.trim() || undefined, note: r.note.trim() || undefined });
+			rows.push({
+				text,
+				pron: r.pron.trim() || undefined,
+				meaning: r.meaning.trim() || undefined,
+				note: r.note.trim() || undefined,
+			});
 		}
 		if (rows.length) out.push({ title: s.title.trim() || "Phrases", rows });
 	}
 	return out;
 }
 
-const phraseCount = (sections: ReadonlyArray<{ rows: ReadonlyArray<unknown> }>) => sections.reduce((n, s) => n + s.rows.length, 0);
+const phraseCount = (sections: ReadonlyArray<{ rows: ReadonlyArray<unknown> }>) =>
+	sections.reduce((n, s) => n + s.rows.length, 0);
 
 /** One dialog for the phrases, in three uses: a new sheet, adding phrases to an open one, and editing a sheet.
  *  It edits as a table; the text view pastes a list, such as an assistant's answer, as one phrase per line. */
@@ -225,9 +320,12 @@ type DialogMode = { kind: "new" } | { kind: "add"; sheet: Cheatsheet } | { kind:
 
 type RowField = keyof Omit<DraftRow, "key">;
 
-const FIELD = "h-9 w-full min-w-0 rounded-md border border-border bg-well px-2.5 font-prose text-sm text-foreground outline-none focus:border-primary";
-const ICON_BUTTON = "grid size-9 shrink-0 place-items-center rounded-md text-ink-3 transition-colors hover:bg-well hover:text-miss";
-const COLUMNS = "grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_2.25rem]";
+const FIELD =
+	"h-9 w-full min-w-0 rounded-md border border-border bg-well px-2.5 font-prose text-sm text-foreground outline-none focus:border-primary";
+const ICON_BUTTON =
+	"grid size-9 shrink-0 place-items-center rounded-md text-ink-3 transition-colors hover:bg-well hover:text-miss";
+const COLUMNS =
+	"grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_2.25rem]";
 
 const isFilled = (r: DraftRow) => !!(r.text.trim() || r.pron.trim() || r.meaning.trim() || r.note.trim());
 
@@ -264,12 +362,20 @@ const RowFields = memo(function RowFields({
 		/>
 	);
 	return (
-		<div data-row-key={row.key} className={cn(COLUMNS, "[contain:layout_paint] max-sm:border-b max-sm:border-border/60 max-sm:pb-3")}>
+		<div
+			data-row-key={row.key}
+			className={cn(COLUMNS, "[contain:layout_paint] max-sm:border-b max-sm:border-border/60 max-sm:pb-3")}
+		>
 			{input("text", "Phrase", cn(FIELD, "col-span-2 sm:col-span-1"), tag)}
 			{input("pron", "Say it", cn(FIELD, "font-ui text-[13px] text-ink-2"))}
 			{input("meaning", "Meaning", FIELD, "en")}
 			{input("note", "Note", cn(FIELD, "font-ui text-[13px] text-ink-2"))}
-			<button type="button" aria-label="Remove phrase" onClick={() => onRemove(sectionKey, row.key)} className={cn(ICON_BUTTON, "justify-self-end")}>
+			<button
+				type="button"
+				aria-label="Remove phrase"
+				onClick={() => onRemove(sectionKey, row.key)}
+				className={cn(ICON_BUTTON, "justify-self-end")}
+			>
 				<Trash2Icon className="size-4" />
 			</button>
 		</div>
@@ -306,7 +412,10 @@ const SectionEditor = memo(function SectionEditor({
 }) {
 	const filled = section.rows.filter(isFilled).length;
 	return (
-		<div data-section-key={section.key} className="scroll-mt-2 space-y-2 [contain-intrinsic-size:auto_520px] [content-visibility:auto]">
+		<div
+			data-section-key={section.key}
+			className="scroll-mt-2 space-y-2 [contain-intrinsic-size:auto_520px] [content-visibility:auto]"
+		>
 			<div className="flex items-center gap-2">
 				<input
 					type="text"
@@ -324,7 +433,12 @@ const SectionEditor = memo(function SectionEditor({
 				/>
 				{confirming ? (
 					<span className="flex shrink-0 items-center gap-1">
-						<button type="button" className="q-btn ghost text-miss" onClick={() => onRemove(section.key, filled > 0, true)} data-testid="cheatsheet-remove-section-yes">
+						<button
+							type="button"
+							className="q-btn ghost text-miss"
+							onClick={() => onRemove(section.key, filled > 0, true)}
+							data-testid="cheatsheet-remove-section-yes"
+						>
 							Remove {plural(filled, "phrase")}
 						</button>
 						<button type="button" className="q-btn ghost" onClick={onKeep}>
@@ -332,7 +446,12 @@ const SectionEditor = memo(function SectionEditor({
 						</button>
 					</span>
 				) : (
-					<button type="button" aria-label="Remove section" onClick={() => onRemove(section.key, filled > 0, false)} className={ICON_BUTTON}>
+					<button
+						type="button"
+						aria-label="Remove section"
+						onClick={() => onRemove(section.key, filled > 0, false)}
+						className={ICON_BUTTON}
+					>
 						<Trash2Icon className="size-4" />
 					</button>
 				)}
@@ -348,7 +467,15 @@ const SectionEditor = memo(function SectionEditor({
 
 			<div className="space-y-2 max-sm:space-y-3">
 				{section.rows.map((row) => (
-					<RowFields key={row.key} sectionKey={section.key} row={row} tag={tag} onChange={onChange} onRemove={onRemoveRow} onEnter={onEnter} />
+					<RowFields
+						key={row.key}
+						sectionKey={section.key}
+						row={row}
+						tag={tag}
+						onChange={onChange}
+						onRemove={onRemoveRow}
+						onEnter={onEnter}
+					/>
 				))}
 			</div>
 
@@ -360,11 +487,21 @@ const SectionEditor = memo(function SectionEditor({
 	);
 });
 
-function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: () => void; onSaved: (sheet: Cheatsheet) => void }) {
+function SheetDialog({
+	mode,
+	onClose,
+	onSaved,
+}: {
+	mode: DialogMode;
+	onClose: () => void;
+	onSaved: (sheet: Cheatsheet) => void;
+}) {
 	const lang = useActiveLanguage();
 	// Adding to a sheet is mostly pasting a list; writing or editing one is the table.
 	const [view, setView] = useState<"table" | "text">(mode.kind === "add" ? "text" : "table");
-	const [draft, setDraft] = useState<DraftSection[]>(() => (mode.kind === "edit" ? draftFromSections(mode.sheet.sections) : [emptySection()]));
+	const [draft, setDraft] = useState<DraftSection[]>(() =>
+		mode.kind === "edit" ? draftFromSections(mode.sheet.sections) : [emptySection()],
+	);
 	const [text, setText] = useState("");
 	const [switchError, setSwitchError] = useState<string | null>(null);
 	const [title, setTitle] = useState(mode.kind === "edit" ? mode.sheet.title : "");
@@ -381,18 +518,39 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 	const pendingFocus = useRef<string | null>(null);
 
 	const textParse = useMemo(() => (view === "text" ? parseOrError(text) : null), [view, text]);
-	const current = useMemo(() => (view === "table" ? sectionsFromDraft(draft) : (textParse?.sections ?? [])), [view, draft, textParse]);
+	const current = useMemo(
+		() => (view === "table" ? sectionsFromDraft(draft) : (textParse?.sections ?? [])),
+		[view, draft, textParse],
+	);
 	const phrases = phraseCount(current);
 	const overlap = mode.kind === "add" && phrases > 0 ? countOverlap(mode.sheet.sections, current) : null;
 	const nothingNew = !!overlap && overlap.fresh === 0;
 	const canSave = phrases > 0 && !saving && !nothingNew && !textParse?.error;
 
-	const initial = useMemo(() => ({ body: mode.kind === "edit" ? formatSheetText(mode.sheet.sections) : "", title: mode.kind === "edit" ? mode.sheet.title : "" }), [mode]);
+	const initial = useMemo(
+		() => ({
+			body: mode.kind === "edit" ? formatSheetText(mode.sheet.sections) : "",
+			title: mode.kind === "edit" ? mode.sheet.title : "",
+		}),
+		[mode],
+	);
 	const body = useMemo(() => (view === "table" ? formatSheetText(current) : text), [view, current, text]);
 	const dirty = body.trim() !== initial.body.trim() || title.trim() !== initial.title.trim();
 
-	const heading = mode.kind === "new" ? "New cheatsheet" : mode.kind === "add" ? `Add phrases to ${mode.sheet.title}` : "Edit cheatsheet";
-	const action = mode.kind === "edit" ? "Save" : mode.kind === "add" ? (nothingNew ? "Nothing new" : `Add ${plural(overlap?.fresh ?? 0, "phrase")}`) : "Create";
+	const heading =
+		mode.kind === "new"
+			? "New cheatsheet"
+			: mode.kind === "add"
+				? `Add phrases to ${mode.sheet.title}`
+				: "Edit cheatsheet";
+	const action =
+		mode.kind === "edit"
+			? "Save"
+			: mode.kind === "add"
+				? nothingNew
+					? "Nothing new"
+					: `Add ${plural(overlap?.fresh ?? 0, "phrase")}`
+				: "Create";
 
 	const requestClose = useCallback(() => {
 		if (dirty) setConfirmClose(true);
@@ -440,7 +598,11 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 	};
 
 	const updateRow = useCallback((sectionKey: number, rowKey: number, field: RowField, value: string) => {
-		setDraft((d) => d.map((s) => (s.key !== sectionKey ? s : { ...s, rows: s.rows.map((r) => (r.key === rowKey ? { ...r, [field]: value } : r)) })));
+		setDraft((d) =>
+			d.map((s) =>
+				s.key !== sectionKey ? s : { ...s, rows: s.rows.map((r) => (r.key === rowKey ? { ...r, [field]: value } : r)) },
+			),
+		);
 	}, []);
 
 	const removeRow = useCallback((sectionKey: number, rowKey: number) => {
@@ -482,10 +644,15 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 		setDraft((d) => (d.length > 1 ? d.filter((s) => s.key !== sectionKey) : [emptySection()]));
 	}, []);
 	const keepSection = useCallback(() => setConfirmSection(null), []);
-	const renameSection = useCallback((sectionKey: number, value: string) => setDraft((d) => d.map((s) => (s.key === sectionKey ? { ...s, title: value } : s))), []);
+	const renameSection = useCallback(
+		(sectionKey: number, value: string) =>
+			setDraft((d) => d.map((s) => (s.key === sectionKey ? { ...s, title: value } : s))),
+		[],
+	);
 
 	const focusFirstPhrase = useCallback((sectionKey?: number) => {
-		const scope = sectionKey === undefined ? bodyRef.current : bodyRef.current?.querySelector(`[data-section-key="${sectionKey}"]`);
+		const scope =
+			sectionKey === undefined ? bodyRef.current : bodyRef.current?.querySelector(`[data-section-key="${sectionKey}"]`);
 		scope?.querySelector<HTMLInputElement>("[data-row-key] input")?.focus();
 	}, []);
 
@@ -507,8 +674,16 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 				? { url: `/api/cheatsheets/${encodeURIComponent(mode.sheet.id)}`, method: "PUT", body: { title, text: body } }
 				: mode.kind === "add"
 					? { url: `/api/cheatsheets/${encodeURIComponent(mode.sheet.id)}/add`, method: "POST", body: { text: body } }
-					: { url: "/api/cheatsheets", method: "POST", body: { title: title.trim() || fileName?.replace(/\.txt$/i, "") || "", text: body } };
-		const res = await fetch(request.url, { method: request.method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(request.body) }).catch(() => null);
+					: {
+							url: "/api/cheatsheets",
+							method: "POST",
+							body: { title: title.trim() || fileName?.replace(/\.txt$/i, "") || "", text: body },
+						};
+		const res = await fetch(request.url, {
+			method: request.method,
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(request.body),
+		}).catch(() => null);
 		setSaving(false);
 		if (!res) return setServerError("The app did not answer. Try again.");
 		const data = (await res.json().catch(() => ({}))) as { sheet?: Cheatsheet; message?: string };
@@ -519,11 +694,18 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 	let status: React.ReactNode = null;
 	const shownError = serverError ?? switchError ?? textParse?.error ?? null;
 	if (shownError) status = <span className="text-miss">{shownError}</span>;
-	else if (overlap) status = <span className="text-ink-2">{`${overlap.fresh} new · ${overlap.shared} already here`}</span>;
-	else if (phrases > 0) status = <span className="text-ink-2">{`${plural(phrases, "phrase")} in ${plural(current.length, "section")}`}</span>;
+	else if (overlap)
+		status = <span className="text-ink-2">{`${overlap.fresh} new · ${overlap.shared} already here`}</span>;
+	else if (phrases > 0)
+		status = (
+			<span className="text-ink-2">{`${plural(phrases, "phrase")} in ${plural(current.length, "section")}`}</span>
+		);
 
 	return (
-		<div className="lh-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4" onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
+		<div
+			className="lh-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4"
+			onMouseDown={(e) => e.target === e.currentTarget && requestClose()}
+		>
 			<form
 				ref={formRef}
 				onSubmit={submit}
@@ -543,12 +725,21 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 					<h2 id="cheatsheet-dialog-title" className="truncate font-title text-xl font-semibold text-foreground">
 						{heading}
 					</h2>
-					<button type="button" onClick={requestClose} aria-label="Close" className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-well hover:text-foreground">
+					<button
+						type="button"
+						onClick={requestClose}
+						aria-label="Close"
+						className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-well hover:text-foreground"
+					>
 						<XIcon className="size-5" />
 					</button>
 				</div>
 
-				<div ref={bodyRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 sm:px-6" data-testid="cheatsheet-dialog-body">
+				<div
+					ref={bodyRef}
+					className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 sm:px-6"
+					data-testid="cheatsheet-dialog-body"
+				>
 					{mode.kind !== "add" && (
 						<label className="block">
 							<span className="font-ui text-xs font-semibold text-muted-foreground">Title</span>
@@ -571,15 +762,33 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 
 					<div className="flex flex-wrap items-center gap-2">
 						<div className="q-segc" role="radiogroup" aria-label="Edit as">
-							<button type="button" role="radio" aria-checked={view === "table"} className={cn(view === "table" && "on")} onClick={() => switchTo("table")} data-testid="cheatsheet-view-table">
+							<button
+								type="button"
+								role="radio"
+								aria-checked={view === "table"}
+								className={cn(view === "table" && "on")}
+								onClick={() => switchTo("table")}
+								data-testid="cheatsheet-view-table"
+							>
 								Table
 							</button>
-							<button type="button" role="radio" aria-checked={view === "text"} className={cn(view === "text" && "on")} onClick={() => switchTo("text")} data-testid="cheatsheet-view-text">
+							<button
+								type="button"
+								role="radio"
+								aria-checked={view === "text"}
+								className={cn(view === "text" && "on")}
+								onClick={() => switchTo("text")}
+								data-testid="cheatsheet-view-text"
+							>
 								Text
 							</button>
 						</div>
 						{view === "text" && (
-							<button type="button" className="ml-auto font-ui text-xs font-medium text-teal-2 hover:underline" onClick={() => fileRef.current?.click()}>
+							<button
+								type="button"
+								className="ml-auto font-ui text-xs font-medium text-teal-2 hover:underline"
+								onClick={() => fileRef.current?.click()}
+							>
 								<UploadIcon className="mr-1 inline size-3.5 align-[-2px]" />
 								{fileName ?? "From a text file"}
 							</button>
@@ -593,7 +802,10 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 								}}
 								ariaLabel="Jump to a section"
 								className="w-full sm:ml-auto sm:w-64"
-								options={[{ value: "", label: "Jump to a section" }, ...draft.map((s) => ({ value: String(s.key), label: s.title.trim() || "Untitled section" }))]}
+								options={[
+									{ value: "", label: "Jump to a section" },
+									...draft.map((s) => ({ value: String(s.key), label: s.title.trim() || "Untitled section" })),
+								]}
 							/>
 						)}
 					</div>
@@ -624,7 +836,9 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 						</div>
 					) : (
 						<div className="space-y-2">
-							<span className="block font-ui text-xs text-ink-3">One phrase per line: phrase | say it | meaning | note. A line with no | is a section name.</span>
+							<span className="block font-ui text-xs text-ink-3">
+								One phrase per line: phrase | say it | meaning | note. A line with no | is a section name.
+							</span>
 							<textarea
 								value={text}
 								onChange={(e) => {
@@ -635,7 +849,9 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 								rows={14}
 								spellCheck={false}
 								autoFocus
-								placeholder={"Desk\nПускаем? | poos-KA-yem? | Do we let it in?\nНе пускаем. | nye poos-KA-yem | We don't let it in."}
+								placeholder={
+									"Desk\nПускаем? | poos-KA-yem? | Do we let it in?\nНе пускаем. | nye poos-KA-yem | We don't let it in."
+								}
 								className="q-field w-full resize-y rounded-md px-3 py-2 font-mono text-[13px] leading-relaxed"
 								data-testid="cheatsheet-text"
 							/>
@@ -657,15 +873,28 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 					/>
 				</div>
 
-				<div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-5 py-3.5 sm:px-6" data-testid="cheatsheet-dialog-footer">
+				<div
+					className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-5 py-3.5 sm:px-6"
+					data-testid="cheatsheet-dialog-footer"
+				>
 					{confirmClose ? (
 						<>
 							<p className="font-ui text-sm text-ink-2">Discard your changes?</p>
 							<div className="ml-auto flex items-center gap-2">
-								<button type="button" className="q-btn ghost" onClick={() => setConfirmClose(false)} data-testid="cheatsheet-keep-editing">
+								<button
+									type="button"
+									className="q-btn ghost"
+									onClick={() => setConfirmClose(false)}
+									data-testid="cheatsheet-keep-editing"
+								>
 									Keep editing
 								</button>
-								<button type="button" className="q-btn sec text-miss" onClick={onClose} data-testid="cheatsheet-discard">
+								<button
+									type="button"
+									className="q-btn sec text-miss"
+									onClick={onClose}
+									data-testid="cheatsheet-discard"
+								>
 									Discard
 								</button>
 							</div>
@@ -691,7 +920,19 @@ function SheetDialog({ mode, onClose, onSaved }: { mode: DialogMode; onClose: ()
 	);
 }
 
-function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: string; onBack: () => void; onChanged: () => void; onMoved: (newId: string) => void; onRemoved: () => void }) {
+function CheatsheetView({
+	id,
+	onBack,
+	onChanged,
+	onMoved,
+	onRemoved,
+}: {
+	id: string;
+	onBack: () => void;
+	onChanged: () => void;
+	onMoved: (newId: string) => void;
+	onRemoved: () => void;
+}) {
 	const lang = useActiveLanguage();
 	const [sheet, setSheet] = useState<Cheatsheet | null>(null);
 	const [missing, setMissing] = useState(false);
@@ -726,7 +967,11 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 		if (!res?.ok) return setReviewNote("The words were not added. Try again.");
 		const data = (await res.json()) as ReviewState & { added: string[] };
 		setReview({ inDictionary: data.inDictionary, inReview: data.inReview });
-		setReviewNote(data.added.length ? `Added ${plural(data.added.length, "word")} to Review.` : "None of these words has a dictionary sentence yet, so none was added.");
+		setReviewNote(
+			data.added.length
+				? `Added ${plural(data.added.length, "word")} to Review.`
+				: "None of these words has a dictionary sentence yet, so none was added.",
+		);
 	};
 
 	const [moveError, setMoveError] = useState<string | null>(null);
@@ -779,7 +1024,12 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 			</button>
 
 			{!sheet && (
-				<div className="mt-4 space-y-3" aria-busy="true" aria-label="Loading the cheatsheet" data-testid="cheatsheet-loading">
+				<div
+					className="mt-4 space-y-3"
+					aria-busy="true"
+					aria-label="Loading the cheatsheet"
+					data-testid="cheatsheet-loading"
+				>
 					<div className="h-9 w-64 max-w-full rounded-lg bg-well" />
 					<div className="h-4 w-32 rounded-md bg-well" />
 					<div className="q-card h-48" />
@@ -790,7 +1040,9 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 				<>
 					<header className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
 						<div className="min-w-0">
-							<h1 className="font-title text-[28px] font-semibold leading-[1.15] tracking-[-0.025em] text-foreground sm:text-[34px]">{sheet.title}</h1>
+							<h1 className="font-title text-[28px] font-semibold leading-[1.15] tracking-[-0.025em] text-foreground sm:text-[34px]">
+								{sheet.title}
+							</h1>
 							<p className="mt-1.5 font-ui text-[13px] text-ink-3" title={sheet.repoFile}>
 								{plural(cheatsheetRowCount(sheet), "phrase")} ·{" "}
 								{sheet.repoFile ? (
@@ -809,7 +1061,12 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 							{confirmRemove ? (
 								<>
 									<span className="pl-2.5 font-ui text-xs text-ink-2 sm:pl-0">Remove this sheet?</span>
-									<button type="button" className="q-btn ghost text-miss" onClick={() => void remove()} data-testid="cheatsheet-remove-yes">
+									<button
+										type="button"
+										className="q-btn ghost text-miss"
+										onClick={() => void remove()}
+										data-testid="cheatsheet-remove-yes"
+									>
 										Remove
 									</button>
 									<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(false)}>
@@ -818,21 +1075,42 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 								</>
 							) : (
 								<>
-									<button type="button" className="q-btn ghost" onClick={() => setDialog({ kind: "add", sheet })} data-testid="cheatsheet-add">
+									<button
+										type="button"
+										className="q-btn ghost"
+										onClick={() => setDialog({ kind: "add", sheet })}
+										data-testid="cheatsheet-add"
+									>
 										<PlusIcon className="size-4" />
 										Add phrases
 									</button>
-									<button type="button" className="q-btn ghost" onClick={() => setDialog({ kind: "edit", sheet })} data-testid="cheatsheet-edit">
+									<button
+										type="button"
+										className="q-btn ghost"
+										onClick={() => setDialog({ kind: "edit", sheet })}
+										data-testid="cheatsheet-edit"
+									>
 										<PencilIcon className="size-4" />
 										Edit
 									</button>
 									{!sheet.repoFile && (
 										<>
-											<button type="button" className="q-btn ghost" onClick={() => void toRepo()} title="Keep it in the repo, as a text file you can commit" data-testid="cheatsheet-to-repo">
+											<button
+												type="button"
+												className="q-btn ghost"
+												onClick={() => void toRepo()}
+												title="Keep it in the repo, as a text file you can commit"
+												data-testid="cheatsheet-to-repo"
+											>
 												<FolderGit2Icon className="size-4" />
 												<span className="max-sm:sr-only">Move to repo</span>
 											</button>
-											<button type="button" className="q-btn ghost" onClick={() => setConfirmRemove(true)} data-testid="cheatsheet-remove">
+											<button
+												type="button"
+												className="q-btn ghost"
+												onClick={() => setConfirmRemove(true)}
+												data-testid="cheatsheet-remove"
+											>
 												<Trash2Icon className="size-4" />
 												<span className="max-sm:sr-only">Remove</span>
 											</button>
@@ -853,7 +1131,13 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 									</Link>
 								)}
 								{canReview && (
-									<button type="button" className="q-btn sec" onClick={() => void addToReview()} disabled={adding} data-testid="cheatsheet-to-review">
+									<button
+										type="button"
+										className="q-btn sec"
+										onClick={() => void addToReview()}
+										disabled={adding}
+										data-testid="cheatsheet-to-review"
+									>
 										<RepeatIcon className="size-4" />
 										{adding ? "Adding…" : `Add ${plural(Math.min(waiting, 30), "word")} to Review`}
 									</button>
@@ -879,14 +1163,33 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 
 					<div className="mt-7 flex flex-wrap items-center gap-2">
 						<div className="q-segc pointer-coarse:[&>button]:h-10" role="radiogroup" aria-label="Show the phrases">
-							<button type="button" role="radio" aria-checked={!cover} className={cn(!cover && "on")} onClick={() => setMode(false)}>
+							<button
+								type="button"
+								role="radio"
+								aria-checked={!cover}
+								className={cn(!cover && "on")}
+								onClick={() => setMode(false)}
+							>
 								Show all
 							</button>
-							<button type="button" role="radio" aria-checked={cover} className={cn(cover && "on")} onClick={() => setMode(true)} data-testid="cheatsheet-cover">
+							<button
+								type="button"
+								role="radio"
+								aria-checked={cover}
+								className={cn(cover && "on")}
+								onClick={() => setMode(true)}
+								data-testid="cheatsheet-cover"
+							>
 								Cover the {languageName}
 							</button>
 						</div>
-						<SearchField value={find} onChange={setFind} placeholder="Search this sheet" label="Search this cheatsheet by phrase, meaning or note" className="min-w-[13rem]" />
+						<SearchField
+							value={find}
+							onChange={setFind}
+							placeholder="Search this sheet"
+							label="Search this cheatsheet by phrase, meaning or note"
+							className="min-w-[13rem]"
+						/>
 						{sections.length > 1 && (
 							<ChoiceMenu
 								value={jump}
@@ -896,7 +1199,10 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 								}}
 								ariaLabel="Jump to a section"
 								className="w-full sm:w-56"
-								options={[{ value: "", label: "Jump to a section" }, ...sections.map((s) => ({ value: s.id, label: s.title }))]}
+								options={[
+									{ value: "", label: "Jump to a section" },
+									...sections.map((s) => ({ value: s.id, label: s.title })),
+								]}
 							/>
 						)}
 					</div>
@@ -908,7 +1214,11 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 
 					<div className="mt-7 space-y-7">
 						{sections.map((section) => (
-							<section key={section.id} id={`cs-${section.id}`} className="scroll-mt-6 space-y-3 [contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+							<section
+								key={section.id}
+								id={`cs-${section.id}`}
+								className="scroll-mt-6 space-y-3 [contain-intrinsic-size:auto_900px] [content-visibility:auto]"
+							>
 								<h2 className="q-sh !mb-0">
 									{section.title}
 									<Link
@@ -924,7 +1234,15 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 								<ul className="q-card border border-border/70 divide-y divide-border/70 overflow-hidden">
 									{section.rows.map((row, i) => {
 										const key = `${section.id}:${i}`;
-										return <CheatRowItem key={key} row={row} tag={lang?.tag} hidden={cover && !shown.has(key)} onReveal={() => setShown((prev) => new Set(prev).add(key))} />;
+										return (
+											<CheatRowItem
+												key={key}
+												row={row}
+												tag={lang?.tag}
+												hidden={cover && !shown.has(key)}
+												onReveal={() => setShown((prev) => new Set(prev).add(key))}
+											/>
+										);
 									})}
 								</ul>
 							</section>
@@ -950,21 +1268,41 @@ function CheatsheetView({ id, onBack, onChanged, onMoved, onRemoved }: { id: str
 	);
 }
 
-function CheatRowItem({ row, tag, hidden, onReveal }: { row: CheatRow; tag?: string; hidden: boolean; onReveal: () => void }) {
+function CheatRowItem({
+	row,
+	tag,
+	hidden,
+	onReveal,
+}: {
+	row: CheatRow;
+	tag?: string;
+	hidden: boolean;
+	onReveal: () => void;
+}) {
 	return (
 		<li className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] sm:items-baseline">
 			<span className="row-span-2 pt-0.5 sm:row-span-1">
 				{hidden ? (
 					<span className="block size-8 pointer-coarse:size-11" aria-hidden="true" />
 				) : (
-					<button type="button" onClick={() => void speak(row.text).catch(() => {})} aria-label={`Play ${row.text}`} className="lh-press grid size-8 place-items-center rounded-full bg-well text-ink-2 hover:text-foreground pointer-coarse:size-11">
+					<button
+						type="button"
+						onClick={() => void speak(row.text).catch(() => {})}
+						aria-label={`Play ${row.text}`}
+						className="lh-press grid size-8 place-items-center rounded-full bg-well text-ink-2 hover:text-foreground pointer-coarse:size-11"
+					>
 						<Volume2Icon className="size-4" />
 					</button>
 				)}
 			</span>
 			<span className="min-w-0">
 				{hidden ? (
-					<button type="button" onClick={onReveal} className="block w-full text-left font-ui text-[13px] text-ink-3 underline decoration-line-2 decoration-2 underline-offset-[7px] hover:text-ink-2" data-testid="cheatsheet-reveal">
+					<button
+						type="button"
+						onClick={onReveal}
+						className="block w-full text-left font-ui text-[13px] text-ink-3 underline decoration-line-2 decoration-2 underline-offset-[7px] hover:text-ink-2"
+						data-testid="cheatsheet-reveal"
+					>
 						Say it, then show
 					</button>
 				) : (

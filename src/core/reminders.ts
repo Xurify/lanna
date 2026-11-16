@@ -16,15 +16,7 @@ import { catalogLanguage, languageById } from "./language.ts";
 
 const studyLanguageName = (id: string) => languageById(id)?.english ?? catalogLanguage(id)?.english ?? id;
 
-export const NOTIFICATION_SOUND_PRESETS = [
-	"chime",
-	"bell",
-	"harp",
-	"gentle",
-	"subtle",
-	"custom",
-	"none",
-] as const;
+export const NOTIFICATION_SOUND_PRESETS = ["chime", "bell", "harp", "gentle", "subtle", "custom", "none"] as const;
 
 export type NotificationSoundPreset = (typeof NOTIFICATION_SOUND_PRESETS)[number];
 
@@ -115,18 +107,12 @@ export function normalizeTimeString(time: string): string {
 	return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-export function parseHourMinute(time: string): { hour: number; minute: number } {
+function parseHourMinute(time: string): { hour: number; minute: number } {
 	const [h, m] = time.split(":").map(Number);
 	return {
 		hour: h !== undefined && Number.isFinite(h) ? Math.min(Math.max(h, 0), 23) : 9,
 		minute: m !== undefined && Number.isFinite(m) ? Math.min(Math.max(m, 0), 59) : 0,
 	};
-}
-
-export function formatHourMinute(hour: number, minute: number): string {
-	const h = Math.min(Math.max(Math.floor(hour), 0), 23);
-	const m = Math.min(Math.max(Math.floor(minute), 0), 59);
-	return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 /**
@@ -210,10 +196,7 @@ export interface PlanTaskItem {
  * - Afternoon (12:00 - 18:00): focused learning (lesson, grammar, units).
  * - Evening (>18:00): consolidation (review, listening, stories, speaking).
  */
-export function pickNextOptimalTask(
-	tasks: readonly PlanTaskItem[],
-	hour: number,
-): PlanTaskItem | undefined {
+export function pickNextOptimalTask(tasks: readonly PlanTaskItem[], hour: number): PlanTaskItem | undefined {
 	const undone = tasks.filter((t) => !t.done);
 	if (undone.length === 0) return undefined;
 
@@ -259,16 +242,14 @@ export function buildDailyNudges(options: {
 	const isMulti = rawLanguages.length > 0;
 
 	// Total goals and minutes (across all languages if multi-language)
-	const dailyGoal = isMulti
-		? rawLanguages.reduce((n, l) => n + l.minutes, 0)
-		: (options.dailyGoal ?? 20);
+	const dailyGoal = isMulti ? rawLanguages.reduce((n, l) => n + l.minutes, 0) : (options.dailyGoal ?? 20);
 
-	const todayMinutes = isMulti
-		? rawLanguages.reduce((n, l) => n + l.practiced, 0)
-		: (options.todayMinutes ?? 0);
+	const todayMinutes = isMulti ? rawLanguages.reduce((n, l) => n + l.practiced, 0) : (options.todayMinutes ?? 0);
 
 	const exp = options.experiment;
-	const experimentPending = Boolean(exp?.active && (!exp.validDay || (exp.weeklyCheckDue && !exp.weeklyCheckCompleted)));
+	const experimentPending = Boolean(
+		exp?.active && (!exp.validDay || (exp.weeklyCheckDue && !exp.weeklyCheckCompleted)),
+	);
 
 	if (todayMinutes >= dailyGoal && !experimentPending) return [];
 
@@ -278,7 +259,7 @@ export function buildDailyNudges(options: {
 	const unmetLanguages = isMulti
 		? rawLanguages
 				.filter((l) => (l.setUp ?? true) && l.practiced < l.minutes)
-				.sort((a, b) => (b.minutes - b.practiced) - (a.minutes - a.practiced))
+				.sort((a, b) => b.minutes - b.practiced - (a.minutes - a.practiced))
 		: [];
 
 	const fallbackTasks = options.tasks ?? [];
@@ -304,18 +285,20 @@ export function buildDailyNudges(options: {
 			const langRemaining = lang ? Math.max(0, lang.minutes - lang.practiced) : remainingMinutes;
 
 			const title = lang
-				? (unmetLanguages.length > 1
-						? `[${lang.endonym}] ${langRemaining} min left (${remainingMinutes}m total)`
-						: `Daily Goal: ${remainingMinutes} min left`)
-				: (remainingMinutes > 0 ? `Daily Goal: ${remainingMinutes} min left` : "Time for Practice");
+				? unmetLanguages.length > 1
+					? `[${lang.endonym}] ${langRemaining} min left (${remainingMinutes}m total)`
+					: `Daily Goal: ${remainingMinutes} min left`
+				: remainingMinutes > 0
+					? `Daily Goal: ${remainingMinutes} min left`
+					: "Time for Practice";
 
 			const message = lang
-				? (task
-						? `Up next in ${lang.english}: ${task.title}. (${lang.practiced} of ${lang.minutes} min done)`
-						: `Spend ${langRemaining} minutes with ${lang.english} to maintain your daily streak!`)
-				: (task
-						? `Up next: ${task.title}. Keep your daily learning streak alive!`
-						: `Spend a few minutes with ${fallbackLangName} to maintain your momentum.`);
+				? task
+					? `Up next in ${lang.english}: ${task.title}. (${lang.practiced} of ${lang.minutes} min done)`
+					: `Spend ${langRemaining} minutes with ${lang.english} to maintain your daily streak!`
+				: task
+					? `Up next: ${task.title}. Keep your daily learning streak alive!`
+					: `Spend a few minutes with ${fallbackLangName} to maintain your momentum.`;
 
 			timeMap.set(norm, {
 				id: `nudge-sched-${norm}`,
@@ -342,12 +325,12 @@ export function buildDailyNudges(options: {
 				slotIdx++;
 
 				const langTasks = lang?.tasks ?? fallbackTasks;
-				const task = settings.autoScheduleTasks ? pickNextOptimalTask(langTasks, hour) : langTasks.find((tk) => !tk.done);
+				const task = settings.autoScheduleTasks
+					? pickNextOptimalTask(langTasks, hour)
+					: langTasks.find((tk) => !tk.done);
 				const langName = lang?.endonym ?? lang?.english ?? fallbackLangName;
 
-				const title = lang
-					? `Best time for ${lang.english}`
-					: `Best time for ${fallbackLangName}`;
+				const title = lang ? `Best time for ${lang.english}` : `Best time for ${fallbackLangName}`;
 
 				const message = task
 					? `Your peak study window is now! Perfect time for ${task.title}${lang ? ` (${lang.english})` : ""}.`

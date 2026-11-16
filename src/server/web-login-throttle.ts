@@ -31,7 +31,8 @@ export function pruneThrottle(state: ThrottleState, now: number): ThrottleState 
 	const addresses: Record<string, AddressState> = {};
 	for (const [address, entry] of Object.entries(state.addresses)) {
 		const attempts = within(entry.attempts, now, LOGIN_LIMITS.windowMs);
-		if (attempts.length > 0 || entry.lockedUntil > now) addresses[address] = { attempts, lockedUntil: entry.lockedUntil };
+		if (attempts.length > 0 || entry.lockedUntil > now)
+			addresses[address] = { attempts, lockedUntil: entry.lockedUntil };
 	}
 	return {
 		addresses,
@@ -42,16 +43,23 @@ export function pruneThrottle(state: ThrottleState, now: number): ThrottleState 
 
 export function reserveAttempt(input: ThrottleState, address: string, now: number): Reservation {
 	const state = pruneThrottle(input, now);
-	if (state.globalLockedUntil > now) return { allowed: false, state, scope: "global", retryAfterMs: state.globalLockedUntil - now };
+	if (state.globalLockedUntil > now)
+		return { allowed: false, state, scope: "global", retryAfterMs: state.globalLockedUntil - now };
 	const entry = state.addresses[address] ?? { attempts: [], lockedUntil: 0 };
-	if (entry.lockedUntil > now) return { allowed: false, state, scope: "address", retryAfterMs: entry.lockedUntil - now };
+	if (entry.lockedUntil > now)
+		return { allowed: false, state, scope: "address", retryAfterMs: entry.lockedUntil - now };
 	if (state.globalAttempts.length >= LOGIN_LIMITS.globalTries) {
 		const next = { ...state, globalLockedUntil: now + LOGIN_LIMITS.globalLockMs };
 		return { allowed: false, state: next, scope: "global", retryAfterMs: LOGIN_LIMITS.globalLockMs };
 	}
 	if (entry.attempts.length >= LOGIN_LIMITS.perAddressTries) {
 		const locked = { attempts: entry.attempts, lockedUntil: now + LOGIN_LIMITS.lockMs };
-		return { allowed: false, state: { ...state, addresses: { ...state.addresses, [address]: locked } }, scope: "address", retryAfterMs: LOGIN_LIMITS.lockMs };
+		return {
+			allowed: false,
+			state: { ...state, addresses: { ...state.addresses, [address]: locked } },
+			scope: "address",
+			retryAfterMs: LOGIN_LIMITS.lockMs,
+		};
 	}
 	if (!(address in state.addresses) && Object.keys(state.addresses).length >= LOGIN_LIMITS.maxAddresses) {
 		const next = { ...state, globalLockedUntil: now + LOGIN_LIMITS.globalLockMs };
@@ -60,7 +68,11 @@ export function reserveAttempt(input: ThrottleState, address: string, now: numbe
 	const attempts = [...entry.attempts, now];
 	return {
 		allowed: true,
-		state: { ...state, addresses: { ...state.addresses, [address]: { ...entry, attempts } }, globalAttempts: [...state.globalAttempts, now] },
+		state: {
+			...state,
+			addresses: { ...state.addresses, [address]: { ...entry, attempts } },
+			globalAttempts: [...state.globalAttempts, now],
+		},
 		triesLeft: LOGIN_LIMITS.perAddressTries - attempts.length,
 	};
 }
@@ -73,14 +85,23 @@ export function refundAttempt(state: ThrottleState, address: string, stamp: numb
 	};
 	return {
 		...state,
-		addresses: entry ? { ...state.addresses, [address]: { ...entry, attempts: without(entry.attempts) } } : state.addresses,
+		addresses: entry
+			? { ...state.addresses, [address]: { ...entry, attempts: without(entry.attempts) } }
+			: state.addresses,
 		globalAttempts: without(state.globalAttempts),
 	};
 }
 
 export function readThrottle(value: unknown): ThrottleState {
 	const v = value as Partial<ThrottleState> | null;
-	if (!v || typeof v !== "object" || typeof v.addresses !== "object" || v.addresses === null || !Array.isArray(v.globalAttempts)) return emptyThrottle();
+	if (
+		!v ||
+		typeof v !== "object" ||
+		typeof v.addresses !== "object" ||
+		v.addresses === null ||
+		!Array.isArray(v.globalAttempts)
+	)
+		return emptyThrottle();
 	const addresses: Record<string, AddressState> = {};
 	for (const [address, entry] of Object.entries(v.addresses)) {
 		const e = entry as Partial<AddressState> | null;

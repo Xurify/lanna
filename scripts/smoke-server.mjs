@@ -168,7 +168,9 @@ async function main() {
 		if (boot.status !== 200 && !isFirstRunRedirect(boot)) {
 			throw new Error(`server never answered on ${url} (last status: ${boot.status} ${boot.location})`);
 		}
-		console.log(`[smoke-server] boot ok: GET / → ${boot.status}${boot.status === 200 ? "" : ` → ${boot.location} (first run)`} (${url})`);
+		console.log(
+			`[smoke-server] boot ok: GET / → ${boot.status}${boot.status === 200 ? "" : ` → ${boot.location} (first run)`} (${url})`,
+		);
 
 		// 2) API surface: every probe must be 200.
 		for (const route of PROBES) {

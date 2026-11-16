@@ -11,18 +11,34 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { TrajectoryChart, trajectoryHeadline } from "@/components/trajectory-chart";
-import { MAX_MINUTES, measuredPace, MIN_WORD_SNAPSHOTS, trajectory, TRAJECTORY_METRICS, type Cefr, type Trajectory, type TrajectoryInput, type TrajectoryMetric } from "@/src/core";
+import {
+	MAX_MINUTES,
+	measuredPace,
+	MIN_WORD_SNAPSHOTS,
+	trajectory,
+	TRAJECTORY_METRICS,
+	type Cefr,
+	type Trajectory,
+	type TrajectoryInput,
+	type TrajectoryMetric,
+} from "@/src/core";
 
 /** What the line assumes about the payoff of an hour, said plainly. */
 function rateLine(t: Trajectory): string {
 	const per = t.perPracticeHour;
 	if (t.metric === "hours") {
-		return t.basis === "measured" ? `Lately an hour of practice has earned about ${per.toFixed(1)} guided hours.` : "Until there is a couple of weeks of history, an hour of practice counts as one guided hour.";
+		return t.basis === "measured"
+			? `Lately an hour of practice has earned about ${per.toFixed(1)} guided hours.`
+			: "Until there is a couple of weeks of history, an hour of practice counts as one guided hour.";
 	}
 	if (t.metric === "units") {
-		return t.basis === "measured" ? `Lately ${per.toFixed(2)} units for every hour of practice.` : "Estimated from lessons per hour until there is a couple of weeks of history.";
+		return t.basis === "measured"
+			? `Lately ${per.toFixed(2)} units for every hour of practice.`
+			: "Estimated from lessons per hour until there is a couple of weeks of history.";
 	}
-	return t.basis === "measured" ? `Lately about ${Math.round(per)} new words for every hour of practice.` : "Not enough practice yet to say how fast words arrive.";
+	return t.basis === "measured"
+		? `Lately about ${Math.round(per)} new words for every hour of practice.`
+		: "Not enough practice yet to say how fast words arrive.";
 }
 
 export function TrajectorySection({ input, target }: { input: TrajectoryInput; target: Cefr }) {
@@ -33,7 +49,10 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 	const minutes = override ?? pace.minutesPerDay;
 	const maxSlider = Math.min(MAX_MINUTES, Math.max(120, pace.minutesPerDay * 2, input.goalMinutes * 2));
 
-	const main = useMemo(() => trajectory(input, metric, { minutesPerDay: minutes, daysPerWeek: pace.daysPerWeek }), [input, metric, minutes, pace.daysPerWeek]);
+	const main = useMemo(
+		() => trajectory(input, metric, { minutesPerDay: minutes, daysPerWeek: pace.daysPerWeek }),
+		[input, metric, minutes, pace.daysPerWeek],
+	);
 	const span = main.future.at(-1)?.day;
 	const scenarios = useMemo(() => {
 		const at = (m: number) => trajectory(input, metric, { minutesPerDay: m, daysPerWeek: pace.daysPerWeek }, span);
@@ -54,7 +73,14 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 				</h3>
 				<div className="q-segc" role="group" aria-label="Measure">
 					{TRAJECTORY_METRICS.map((m) => (
-						<button key={m.id} type="button" aria-pressed={metric === m.id} onClick={() => setMetric(m.id)} className={cn(metric === m.id && "on")} data-testid={`trajectory-${m.id}`}>
+						<button
+							key={m.id}
+							type="button"
+							aria-pressed={metric === m.id}
+							onClick={() => setMetric(m.id)}
+							className={cn(metric === m.id && "on")}
+							data-testid={`trajectory-${m.id}`}
+						>
 							{m.title}
 						</button>
 					))}
@@ -65,7 +91,10 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 				{trajectoryHeadline(main, now, target)}
 			</p>
 			<p className="font-prose text-sm text-muted-foreground">
-				{pace.measured ? "At your pace of the last two weeks" : "At your planned pace, until a week of study is on record"}: {minutes} min on {pace.daysPerWeek} days a week.
+				{pace.measured
+					? "At your pace of the last two weeks"
+					: "At your planned pace, until a week of study is on record"}
+				: {minutes} min on {pace.daysPerWeek} days a week.
 			</p>
 
 			{main.ready && (
@@ -79,8 +108,13 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 					<TrajectoryChart t={main} now={now} scenarios={scenarios} targetLevel={target} />
 				</div>
 			) : (
-				<p className="mt-3 rounded-xl bg-well-2 px-4 py-6 text-center font-prose text-sm text-muted-foreground" role="status">
-					{metric === "words" ? `Word counts are saved once a day from now on: ${Math.min(snapshots, MIN_WORD_SNAPSHOTS)} of ${MIN_WORD_SNAPSHOTS} days so far. The line appears when there are enough.` : "No lessons on record yet. Finish one and the line starts."}
+				<p
+					className="mt-3 rounded-xl bg-well-2 px-4 py-6 text-center font-prose text-sm text-muted-foreground"
+					role="status"
+				>
+					{metric === "words"
+						? `Word counts are saved once a day from now on: ${Math.min(snapshots, MIN_WORD_SNAPSHOTS)} of ${MIN_WORD_SNAPSHOTS} days so far. The line appears when there are enough.`
+						: "No lessons on record yet. Finish one and the line starts."}
 				</p>
 			)}
 
@@ -88,15 +122,33 @@ export function TrajectorySection({ input, target }: { input: TrajectoryInput; t
 				<label htmlFor="trajectory-minutes" className="font-ui text-sm font-semibold text-foreground">
 					What if I did
 				</label>
-				<input id="trajectory-minutes" type="range" min={5} max={maxSlider} step={5} value={Math.min(maxSlider, minutes)} onChange={(e) => setOverride(Number(e.target.value))} className="min-w-40 flex-1 accent-[var(--q-teal)]" data-testid="trajectory-slider" />
+				<input
+					id="trajectory-minutes"
+					type="range"
+					min={5}
+					max={maxSlider}
+					step={5}
+					value={Math.min(maxSlider, minutes)}
+					onChange={(e) => setOverride(Number(e.target.value))}
+					className="min-w-40 flex-1 accent-[var(--q-teal)]"
+					data-testid="trajectory-slider"
+				/>
 				<span className="w-24 font-ui text-sm tabular-nums text-foreground">{minutes} min a day</span>
 				{edited && (
-					<button type="button" onClick={() => setOverride(null)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
+					<button
+						type="button"
+						onClick={() => setOverride(null)}
+						className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+					>
 						Back to my pace
 					</button>
 				)}
 			</div>
-			<p className="mt-2 font-prose text-xs text-muted-foreground">An estimate: the line carries your recent pace forward, and the solid part is what your days recorded (earlier days are pieced together from your practice). The slider only shows what a different pace would do; it doesn&apos;t change your plan.</p>
+			<p className="mt-2 font-prose text-xs text-muted-foreground">
+				An estimate: the line carries your recent pace forward, and the solid part is what your days recorded (earlier
+				days are pieced together from your practice). The slider only shows what a different pace would do; it
+				doesn&apos;t change your plan.
+			</p>
 		</section>
 	);
 }

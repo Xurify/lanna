@@ -38,7 +38,7 @@ import {
 	newUserMessage,
 	pendingProblemDismissalOf,
 } from "./native-messages.ts";
-import { QUESTION_TOOLS, toolQuestionKind } from "./pending.ts";
+import { toolQuestionKind } from "./pending.ts";
 
 /** One client-originated input event (the POST body's `input`). */
 export type ChatInput =
@@ -194,10 +194,7 @@ export function parseChatInput(input: unknown): ChatInput {
  * else 400s honestly instead of silently interrupting a question or
  * double-answering.
  */
-export function inputAppends(
-	record: { messages: LhMessage[]; kind?: string },
-	input: ChatInput,
-): LhMessage[] {
+export function inputAppends(record: { messages: LhMessage[]; kind?: string }, input: ChatInput): LhMessage[] {
 	switch (input.type) {
 		case "text":
 			return [...dismissalConclusion(record), newUserMessage(input.text)];

@@ -10,7 +10,8 @@ process.env.LH_PROFILE = "slovak";
 
 // ESM evaluates static imports before this module's body, so the app modules are imported after the env is set.
 
-const { contrastExample, contrastSource, missReason, partsOfSpeechIfDifferent, sharedMeaning, startsQuestion } = await import("../src/core/review-miss.ts");
+const { contrastExample, contrastSource, missReason, partsOfSpeechIfDifferent, sharedMeaning, startsQuestion } =
+	await import("../src/core/review-miss.ts");
 const { pairContrastRule } = await import("../src/core/mixups.ts");
 const { reviewMiss } = await import("../src/server/review.ts");
 const { reviewStore } = await import("../src/store/review.ts");
@@ -67,7 +68,10 @@ test("with several gaps, the card's own word still comes first, and all right ex
 test("another dictionary word is named with its meaning, even when it shares the stem", () => {
 	const r = reviewMiss("vecera#2", "večer")!;
 	assert.equal(r.slip, "other");
-	assert.deepEqual({ ...r.other, example: undefined }, { lemma: "večer", gloss: "evening", isLemma: true, example: undefined });
+	assert.deepEqual(
+		{ ...r.other, example: undefined },
+		{ lemma: "večer", gloss: "evening", isLemma: true, example: undefined },
+	);
 	assert.match(r.other?.example?.text ?? "", /večer/i);
 	assert.equal(r.lemma, "večera");
 	assert.equal(r.gloss, "dinner");
@@ -151,8 +155,14 @@ test("partsOfSpeechIfDifferent names two open classes only when they differ", ()
 });
 
 test("pairContrastRule: the pair's own rule first, then its family's, and none for another language", () => {
-	assert.match(pairContrastRule("slovak", { slug: "ist", lemma: "ísť" }, { slug: "chodit", lemma: "chodiť" }) ?? "", /^ísť is one trip/);
-	assert.match(pairContrastRule("slovak", { slug: "tu", lemma: "tu" }, { slug: "sem", lemma: "sem" }) ?? "", /^After a verb of motion/);
+	assert.match(
+		pairContrastRule("slovak", { slug: "ist", lemma: "ísť" }, { slug: "chodit", lemma: "chodiť" }) ?? "",
+		/^ísť is one trip/,
+	);
+	assert.match(
+		pairContrastRule("slovak", { slug: "tu", lemma: "tu" }, { slug: "sem", lemma: "sem" }) ?? "",
+		/^After a verb of motion/,
+	);
 	assert.equal(pairContrastRule("slovak", { slug: "len", lemma: "len" }, { slug: "iba", lemma: "iba" }), undefined);
 	assert.equal(pairContrastRule("russian", { slug: "tu", lemma: "tu" }, { slug: "sem", lemma: "sem" }), undefined);
 });
@@ -161,7 +171,10 @@ test("contrastSource ranks a curated rule, then parts of speech, a meaning note,
 	const base = { lemma: "kedy", gloss: "when", isLemma: true };
 	const example = { text: "Kedy prídeš?", en: "When will you come?", asks: true };
 	assert.equal(contrastSource({ ...base, rule: "r", partOfSpeech: "noun" }, false), "rule");
-	assert.equal(contrastSource({ ...base, partOfSpeech: "adjective", herePartOfSpeech: "noun" }, false), "part of speech");
+	assert.equal(
+		contrastSource({ ...base, partOfSpeech: "adjective", herePartOfSpeech: "noun" }, false),
+		"part of speech",
+	);
 	assert.equal(contrastSource({ ...base, alsoMeans: "when (conjunction)", hereMeans: "when" }, false), "meaning note");
 	assert.equal(contrastSource({ ...base, example }, false), "question");
 	assert.equal(contrastSource({ ...base, example }, true), "example");

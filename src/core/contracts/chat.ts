@@ -79,7 +79,6 @@ export interface ChatSettings {
 	thinkingLevel?: ThinkingLevel;
 }
 
-
 // ─── Usage accounting (the money channel) ─────────────────────────────────────
 
 /** One model call's token accounting — the SDK's LanguageModelUsage
@@ -197,7 +196,6 @@ export const NEXT_PROBLEM_TEXT =
  *  distrusts the seam. */
 export const COMPACTED_HISTORY_HEADER =
 	"[SESSION HISTORY COMPACTED] The transcript before this point was summarized to fit the context window; the summary below replaces it. Everything after this message is the verbatim recent transcript.";
-
 
 export interface PlanBlockData {
 	/** Only "full" survives (the 2026-09-11 pivot): the plan renders IN

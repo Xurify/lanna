@@ -25,8 +25,19 @@ describe("ink paths", () => {
 			boxD(10, 10, 60, 40, 2),
 			loopD(100, 60, 30, 20, 3),
 			patchD(100, 60, 30, 20, 4),
-			smoothD([[0, 0], [10, 20], [30, 10]]),
-			smoothD([[0, 0], [10, 20], [30, 10]], true),
+			smoothD([
+				[0, 0],
+				[10, 20],
+				[30, 10],
+			]),
+			smoothD(
+				[
+					[0, 0],
+					[10, 20],
+					[30, 10],
+				],
+				true,
+			),
 			arrowD([10, 10], [200, 90], 5, 8).shaft,
 			arrowD([10, 10], [200, 90], 5, 8).head,
 		];
@@ -61,7 +72,7 @@ describe("case sketches in ink", () => {
 				assert.match(html, /<svg[^>]*viewBox="0 0 340 132"/, `${unit} ${stage}`);
 				assert.match(html, /<feDisplacementMap/, `${unit} ${stage}`);
 				assert.ok((html.match(/class="ink-draw/g) ?? []).length >= 1, `${unit} ${stage} has pen strokes`);
-				assert.ok(html.includes("pathLength=\"1\""), `${unit} ${stage}`);
+				assert.ok(html.includes('pathLength="1"'), `${unit} ${stage}`);
 				assert.ok(!/NaN|undefined/.test(html), `${unit} ${stage}`);
 			});
 		}
@@ -107,7 +118,11 @@ describe("what the walk-through teaches", () => {
 	it("the summary is a table with one row for each kind of word", () => {
 		for (const unit of units) {
 			const summary = sketchSummary(unit)!;
-			assert.deepEqual(summary.rows.map((r) => r.who), WHO, unit);
+			assert.deepEqual(
+				summary.rows.map((r) => r.who),
+				WHO,
+				unit,
+			);
 			for (const row of summary.rows) assert.ok(row.stem.length > 0 && row.from.length > 0, `${unit} ${row.who}`);
 		}
 	});

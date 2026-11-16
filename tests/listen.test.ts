@@ -18,7 +18,19 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
-const { almostCount, judgeSentence, judgeTyped, LISTEN_COUNT, LISTEN_FLOOR, listenXp, meaningOptions, pickListen, sessionCoverage, STRETCH_MAX, understood } = await import("../src/core/listen.ts");
+const {
+	almostCount,
+	judgeSentence,
+	judgeTyped,
+	LISTEN_COUNT,
+	LISTEN_FLOOR,
+	listenXp,
+	meaningOptions,
+	pickListen,
+	sessionCoverage,
+	STRETCH_MAX,
+	understood,
+} = await import("../src/core/listen.ts");
 const { foldDiacritics } = await import("../src/core/language.ts");
 const { strandAdvice, strandBalance, STRANDS } = await import("../src/core/strands.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
@@ -36,7 +48,8 @@ assert.ok(lexicon, "the Slovak lexicon loads");
 /** A learner who knows the 800 commonest words of each kind. */
 function lookup(bound = 800) {
 	const known = new Set<string>();
-	for (const e of lexicon.entries) if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
+	for (const e of lexicon.entries)
+		if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
 	return { resolve: (form: string) => resolveWord(lexicon, form, known), known };
 }
 
@@ -89,8 +102,16 @@ test("pickListen: ten sentences, one per word, each inside the band with at most
 
 test("judgeTyped: case, spacing and punctuation are forgiven, accents are a near miss, a missing word is wrong", () => {
 	assert.equal(judgeTyped("za internet platíme mesačne", "Za internet platíme mesačne."), "exact");
-	assert.equal(judgeTyped("Za internet, platíme mesačne", "Za internet platíme mesačne."), "exact", "a comma not heard is not a wrong word");
-	assert.equal(judgeTyped("Za  internet plati\u0301me mesačne", "Za internet platíme mesačne."), "exact", "decomposed accents read as the same letters");
+	assert.equal(
+		judgeTyped("Za internet, platíme mesačne", "Za internet platíme mesačne."),
+		"exact",
+		"a comma not heard is not a wrong word",
+	);
+	assert.equal(
+		judgeTyped("Za  internet plati\u0301me mesačne", "Za internet platíme mesačne."),
+		"exact",
+		"decomposed accents read as the same letters",
+	);
 	assert.equal(judgeTyped("Za internet platime mesacne", "Za internet platíme mesačne."), "accents");
 	assert.equal(judgeTyped("Za internet platíme", "Za internet platíme mesačne."), "wrong");
 	assert.equal(judgeTyped("", "Za internet platíme mesačne."), "wrong");
@@ -101,13 +122,24 @@ test("judgeTyped: case, spacing and punctuation are forgiven, accents are a near
 test("listenXp and the typed verdicts: an accents-only answer earns half and is not understood", () => {
 	assert.equal(listenXp(2, 4, 1), 2 * 4 + 2 + 10);
 	assert.equal(listenXp(2, 4), 2 * 4 + 10, "the picks-only sum is unchanged");
-	const reps = [{ verdict: "accents" as const }, { verdict: "accents" as const, peeked: true }, { verdict: "exact" as const }];
+	const reps = [
+		{ verdict: "accents" as const },
+		{ verdict: "accents" as const, peeked: true },
+		{ verdict: "exact" as const },
+	];
 	assert.equal(almostCount(reps), 1, "a peeked accents answer earns nothing");
 	assert.equal(understood(reps), 1);
 });
 
 test("meaningOptions: the translation plus two others of similar length, never a duplicate", () => {
-	const pool = ["I am at home.", "Where is the station?", "He drinks coffee in the morning.", "I am at home.", "We go to school.", "A very long sentence about something else entirely, far longer than the rest."];
+	const pool = [
+		"I am at home.",
+		"Where is the station?",
+		"He drinks coffee in the morning.",
+		"I am at home.",
+		"We go to school.",
+		"A very long sentence about something else entirely, far longer than the rest.",
+	];
 	const opts = meaningOptions("She is at work.", pool, () => 0.5);
 	assert.equal(opts.length, 3);
 	assert.ok(opts.includes("She is at work."));
@@ -171,7 +203,8 @@ test("the server: a session for the learner's known words; finishing records the
 	// The stretch words and the missed sentence's word are in the deck.
 	const wanted = new Set([...reps.flatMap((r) => r.stretch), reps[0]!.slug]);
 	const cards = Object.values(reviewStore.readCards());
-	for (const slug of wanted) assert.ok(cards.some((c) => c.slug === slug) || !lexicon.bySlug.get(slug), `${slug} in the deck`);
+	for (const slug of wanted)
+		assert.ok(cards.some((c) => c.slug === slug) || !lexicon.bySlug.get(slug), `${slug} in the deck`);
 	assert.ok(out.queued.length > 0);
 	// The summary's plan ticks Listen off and the balance counts it as input.
 	assert.equal(out.summary.plan.tasks.find((t) => t.id === "listen")?.done, true);
@@ -230,7 +263,10 @@ test("typed listen: the server grades a typed sentence itself, half XP for a mis
 	assert.equal(byId.get(third!.id)?.verdict, "wrong");
 	// A picked rep keeps its kind and its options.
 	const picked = listenFor(9).items[0]!;
-	const pickOut = recordListen({ reps: [{ ...rep(picked, picked.translation, "exact"), answer: "pick", options: picked.options }], tz: 0 }, new Date("2026-10-29T11:00:00Z"));
+	const pickOut = recordListen(
+		{ reps: [{ ...rep(picked, picked.translation, "exact"), answer: "pick", options: picked.options }], tz: 0 },
+		new Date("2026-10-29T11:00:00Z"),
+	);
 	assert.equal(pickOut.correct, 1);
 	const pickLog = readLessonLog().find((e) => e.at === "2026-10-29T11:00:00.000Z");
 	assert.equal(pickLog?.reps[0]?.kind, "meaning");

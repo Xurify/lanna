@@ -165,9 +165,7 @@ export function MenuShell({
 		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 		const { key } = e;
 		if (key !== "ArrowDown" && key !== "ArrowUp" && key !== "Home" && key !== "End") return;
-		const buttons = Array.from(
-			menuRef.current?.querySelectorAll<HTMLElement>("button:not([disabled])") ?? [],
-		);
+		const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLElement>("button:not([disabled])") ?? []);
 		if (buttons.length === 0) return;
 		e.preventDefault();
 		if (key === "Home") {

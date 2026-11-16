@@ -28,7 +28,22 @@ import { StampBook } from "@/components/stamp";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { LevelProgress, StrandBars, StreakCalendar, WeekXpChart } from "@/components/quiet/charts";
 import type { ChartData } from "@/components/quiet/chart-data";
-import { DEFAULT_DAYS_PER_WEEK, estimateMilestone, GUIDED_HOURS, knownLanguages, LEVEL_CAN_DO, levelDates, MIN_PACE_DAYS, PACE_WINDOW_DAYS, paceEta, purposePhrase, shiftLine, withPlan, type LearnerGoal, type WeakSpotSummary } from "@/src/core";
+import {
+	DEFAULT_DAYS_PER_WEEK,
+	estimateMilestone,
+	GUIDED_HOURS,
+	knownLanguages,
+	LEVEL_CAN_DO,
+	levelDates,
+	MIN_PACE_DAYS,
+	PACE_WINDOW_DAYS,
+	paceEta,
+	purposePhrase,
+	shiftLine,
+	withPlan,
+	type LearnerGoal,
+	type WeakSpotSummary,
+} from "@/src/core";
 import type { LearnerFacts, MilestoneEstimate, StampState, TrailLog } from "@/src/core";
 
 /** The part of the milestones report (src/server/milestones.ts) the page reads. */
@@ -60,7 +75,21 @@ function hoursText(h: number): string {
 const CARD = "q-card mt-5 p-5";
 const H2 = "text-[13px] font-semibold text-ink-2";
 
-export function PlanPage({ goal, report, weak, stamps = null, log = null, charts = null }: { goal: LearnerGoal; report: PlanReport | null; weak: WeakSpotSummary[]; stamps?: StampState[] | null; log?: TrailLog | null; charts?: ChartData | null }) {
+export function PlanPage({
+	goal,
+	report,
+	weak,
+	stamps = null,
+	log = null,
+	charts = null,
+}: {
+	goal: LearnerGoal;
+	report: PlanReport | null;
+	weak: WeakSpotSummary[];
+	stamps?: StampState[] | null;
+	log?: TrailLog | null;
+	charts?: ChartData | null;
+}) {
 	const router = useRouter();
 	const savedMinutes = goal.minutesPerDay;
 	const savedDays = goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK;
@@ -74,24 +103,38 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 	const hoursDone = facts?.hoursDone ?? 0;
 	const dirty = minutes !== savedMinutes || days !== savedDays;
 
-	const dates = useMemo(() => levelDates({ goal: goal.level, hoursDone, minutesPerDay: minutes, daysPerWeek: days, now }), [goal.level, hoursDone, minutes, days, now]);
-	const savedDates = useMemo(() => levelDates({ goal: goal.level, hoursDone, minutesPerDay: savedMinutes, daysPerWeek: savedDays, now }), [goal.level, hoursDone, savedMinutes, savedDays, now]);
+	const dates = useMemo(
+		() => levelDates({ goal: goal.level, hoursDone, minutesPerDay: minutes, daysPerWeek: days, now }),
+		[goal.level, hoursDone, minutes, days, now],
+	);
+	const savedDates = useMemo(
+		() => levelDates({ goal: goal.level, hoursDone, minutesPerDay: savedMinutes, daysPerWeek: savedDays, now }),
+		[goal.level, hoursDone, savedMinutes, savedDays, now],
+	);
 	const target = dates[dates.length - 1]!;
 	const shift = dirty ? shiftLine(savedDates[savedDates.length - 1]!.days, target.days) : null;
 
 	const milestones = useMemo(() => {
 		if (!report) return [];
 		const f = withPlan(report.facts, minutes, days);
-		return report.milestones.map((m) => estimateMilestone(m.def, f, { now })).sort((a, b) => (a.eta.daysPlanned ?? 1e9) - (b.eta.daysPlanned ?? 1e9));
+		return report.milestones
+			.map((m) => estimateMilestone(m.def, f, { now }))
+			.sort((a, b) => (a.eta.daysPlanned ?? 1e9) - (b.eta.daysPlanned ?? 1e9));
 	}, [report, minutes, days, now]);
 
 	const paceKnown = (facts?.paceDays ?? 0) >= MIN_PACE_DAYS;
-	const paceDate = facts ? paceEta(Math.max(0, GUIDED_HOURS[goal.level] - hoursDone), facts.paceMinutes, facts.paceDays, now) : null;
+	const paceDate = facts
+		? paceEta(Math.max(0, GUIDED_HOURS[goal.level] - hoursDone), facts.paceMinutes, facts.paceDays, now)
+		: null;
 
 	const save = async () => {
 		setSaving("saving");
 		try {
-			const res = await fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: { minutesPerDay: minutes, daysPerWeek: days } }) });
+			const res = await fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`, {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ goal: { minutesPerDay: minutes, daysPerWeek: days } }),
+			});
 			if (!res.ok) throw new Error(String(res.status));
 			setSaving("idle");
 			router.refresh();
@@ -100,7 +143,15 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 		}
 	};
 
-	const purposes = (goal.purposes ?? []).map((p) => (p === "other" && goal.purposeNote ? (goal.purposeNote.length > 60 ? `${goal.purposeNote.slice(0, 57).trimEnd()}…` : goal.purposeNote) : purposePhrase(p))).join(", ");
+	const purposes = (goal.purposes ?? [])
+		.map((p) =>
+			p === "other" && goal.purposeNote
+				? goal.purposeNote.length > 60
+					? `${goal.purposeNote.slice(0, 57).trimEnd()}…`
+					: goal.purposeNote
+				: purposePhrase(p),
+		)
+		.join(", ");
 	const maxMinutes = Math.max(240, savedMinutes);
 	const topHours = GUIDED_HOURS[goal.level];
 
@@ -145,32 +196,76 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 							Re-check my level
 						</Link>
 					</div>
-					<p className="mt-3 text-xs text-ink-3">{goal.placedAt ? `Last check: ${goal.placedLevel ?? "—"} on ${goal.placedAt.slice(0, 10)}.` : "No level check yet. Guided hours are credited as you finish units."}</p>
+					<p className="mt-3 text-xs text-ink-3">
+						{goal.placedAt
+							? `Last check: ${goal.placedLevel ?? "—"} on ${goal.placedAt.slice(0, 10)}.`
+							: "No level check yet. Guided hours are credited as you finish units."}
+					</p>
 				</section>
 
 				{/* The sliders: every date below moves as they do. */}
 				<section className="mt-10" data-testid="plan-pace" aria-label="Your pace">
 					<h2 className="q-sh">Your pace</h2>
-					<p className="mt-2 text-3xl font-semibold tracking-[-0.028em] text-foreground" aria-live="polite" data-testid="plan-eta">
-						{target.days === 0 ? `${goal.level} is within reach now` : target.date ? `${goal.level} around ${monthOf(target.date)}` : "Set some minutes to see a date"}
+					<p
+						className="mt-2 text-3xl font-semibold tracking-[-0.028em] text-foreground"
+						aria-live="polite"
+						data-testid="plan-eta"
+					>
+						{target.days === 0
+							? `${goal.level} is within reach now`
+							: target.date
+								? `${goal.level} around ${monthOf(target.date)}`
+								: "Set some minutes to see a date"}
 					</p>
 					<p className="mt-1 min-h-5 text-sm text-ink-3" aria-live="polite">
-						{shift ?? (dirty ? "About the same as your saved plan." : `${hoursText(hoursDone)} of ~${topHours} guided hours done · at ${clock(savedMinutes)} × ${savedDays} days a week`)}
+						{shift ??
+							(dirty
+								? "About the same as your saved plan."
+								: `${hoursText(hoursDone)} of ~${topHours} guided hours done · at ${clock(savedMinutes)} × ${savedDays} days a week`)}
 					</p>
 					{facts && (
 						<p className="mt-2 text-sm font-semibold text-ink-2" data-testid="plan-gap">
-							You planned {clock(savedMinutes)} a day. The last {PACE_WINDOW_DAYS} days averaged {clock(Math.round(facts.paceMinutes))} a day.
+							You planned {clock(savedMinutes)} a day. The last {PACE_WINDOW_DAYS} days averaged{" "}
+							{clock(Math.round(facts.paceMinutes))} a day.
 						</p>
 					)}
 
 					<div className="mt-4 grid gap-x-10 gap-y-3 sm:grid-cols-2">
-						<Slider header value={minutes} min={5} max={maxMinutes} step={5} onChange={setMinutes} label="Minutes a day" valueText={clock(minutes)} ticks={[15, 30, 45, 60, 90, 120, 180, 240]} testid="plan-minutes" valueTestid="plan-minutes-value" />
-						<Slider header value={days} min={1} max={7} step={1} onChange={setDays} label="Days a week" valueText={`${days} ${days === 1 ? "day" : "days"}`} ticks testid="plan-days" valueTestid="plan-days-value" />
+						<Slider
+							header
+							value={minutes}
+							min={5}
+							max={maxMinutes}
+							step={5}
+							onChange={setMinutes}
+							label="Minutes a day"
+							valueText={clock(minutes)}
+							ticks={[15, 30, 45, 60, 90, 120, 180, 240]}
+							testid="plan-minutes"
+							valueTestid="plan-minutes-value"
+						/>
+						<Slider
+							header
+							value={days}
+							min={1}
+							max={7}
+							step={1}
+							onChange={setDays}
+							label="Days a week"
+							valueText={`${days} ${days === 1 ? "day" : "days"}`}
+							ticks
+							testid="plan-days"
+							valueTestid="plan-days-value"
+						/>
 					</div>
 
 					<div className="mt-3 flex min-h-10 flex-wrap items-center justify-between gap-3">
 						<p className="text-xs text-ink-3" data-testid="plan-real-pace">
-							{paceKnown ? (paceDate ? `At your real pace (${facts!.paceMinutes} min a day over the last two weeks): ${monthOf(paceDate)}.` : "At your real pace: no date yet.") : `At your real pace: not enough data yet (${facts?.paceDays ?? 0} of the ${MIN_PACE_DAYS} study days it needs, out of the last ${PACE_WINDOW_DAYS}).`}
+							{paceKnown
+								? paceDate
+									? `At your real pace (${facts!.paceMinutes} min a day over the last two weeks): ${monthOf(paceDate)}.`
+									: "At your real pace: no date yet."
+								: `At your real pace: not enough data yet (${facts?.paceDays ?? 0} of the ${MIN_PACE_DAYS} study days it needs, out of the last ${PACE_WINDOW_DAYS}).`}
 						</p>
 						{dirty && (
 							<div className="flex items-center gap-2">
@@ -184,7 +279,13 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 								>
 									Reset
 								</button>
-								<button type="button" onClick={() => void save()} disabled={saving === "saving"} className="q-btn primary" data-testid="plan-save">
+								<button
+									type="button"
+									onClick={() => void save()}
+									disabled={saving === "saving"}
+									className="q-btn primary"
+									data-testid="plan-save"
+								>
 									{saving === "saving" && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
 									Make this my plan
 								</button>
@@ -221,7 +322,10 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 							))}
 						</dl>
 						<p className="mt-4 text-[12.5px] leading-relaxed text-ink-3" data-testid="plan-log-hours-note">
-							Time studied is the time measured while you were active. Guided hours are the curriculum&apos;s own count: each level is worth a set number (A1 {GUIDED_HOURS.A1}, A2 {GUIDED_HOURS.A2}, B1 {GUIDED_HOURS.B1}, B2 {GUIDED_HOURS.B2}), and each unit you finish adds its share. The two differ on purpose, so guided hours stay at 0 until your first unit is done.
+							Time studied is the time measured while you were active. Guided hours are the curriculum&apos;s own count:
+							each level is worth a set number (A1 {GUIDED_HOURS.A1}, A2 {GUIDED_HOURS.A2}, B1 {GUIDED_HOURS.B1}, B2{" "}
+							{GUIDED_HOURS.B2}), and each unit you finish adds its share. The two differ on purpose, so guided hours
+							stay at 0 until your first unit is done.
 						</p>
 					</section>
 				)}
@@ -230,7 +334,11 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 				{stamps && stamps.length > 0 && (
 					<section id="stamps" className={cn(CARD, "scroll-mt-20")} data-testid="plan-stamps" aria-label="Stamp book">
 						<h2 className={H2}>Stamp book</h2>
-						<p className="mt-1 text-sm text-ink-3">Like the wooden stamps sold at mountain huts: one for each chapter and each level, and one for each thing done on the way. Most stamps mark something you can now do; a few count practice you did, such as reviews, listens and guided hours credited for finished units. None count minutes alone.</p>
+						<p className="mt-1 text-sm text-ink-3">
+							Like the wooden stamps sold at mountain huts: one for each chapter and each level, and one for each thing
+							done on the way. Most stamps mark something you can now do; a few count practice you did, such as reviews,
+							listens and guided hours credited for finished units. None count minutes alone.
+						</p>
 						<StampBook stamps={stamps} className="mt-4" />
 						<SourcesNote feature="habit" className="mt-5" />
 					</section>
@@ -240,7 +348,12 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 				<section className={CARD} data-testid="plan-hours" aria-label="Hours to each level">
 					<div className="flex items-baseline justify-between gap-3">
 						<h2 className={H2}>Guided hours to each level</h2>
-						<button type="button" onClick={() => setHoursOpen(true)} className="text-xs text-ink-3 underline underline-offset-2 hover:text-ink-2" data-testid="plan-hours-sheet">
+						<button
+							type="button"
+							onClick={() => setHoursOpen(true)}
+							className="text-xs text-ink-3 underline underline-offset-2 hover:text-ink-2"
+							data-testid="plan-hours-sheet"
+						>
 							How long does it take?
 						</button>
 					</div>
@@ -249,10 +362,22 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 							const done = Math.min(1, hoursDone / l.hours);
 							const isGoal = l.level === goal.level;
 							return (
-								<li key={l.level} className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-3" title={`${l.level}: about ${l.hours} guided hours from zero. ${l.days === 0 ? "Reached." : l.date ? `At this pace, around ${monthOf(l.date)}.` : ""}`}>
-									<span className={cn("text-sm font-semibold", isGoal ? "text-foreground" : "text-ink-3")}>{l.level}</span>
-									<span className="relative h-2 overflow-hidden rounded-full bg-well-2" style={{ width: `${Math.max(12, (l.hours / topHours) * 100)}%` }}>
-										<span className={cn("absolute inset-y-0 left-0 rounded-full", "bg-teal")} style={{ width: `${done * 100}%` }} />
+								<li
+									key={l.level}
+									className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-3"
+									title={`${l.level}: about ${l.hours} guided hours from zero. ${l.days === 0 ? "Reached." : l.date ? `At this pace, around ${monthOf(l.date)}.` : ""}`}
+								>
+									<span className={cn("text-sm font-semibold", isGoal ? "text-foreground" : "text-ink-3")}>
+										{l.level}
+									</span>
+									<span
+										className="relative h-2 overflow-hidden rounded-full bg-well-2"
+										style={{ width: `${Math.max(12, (l.hours / topHours) * 100)}%` }}
+									>
+										<span
+											className={cn("absolute inset-y-0 left-0 rounded-full", "bg-teal")}
+											style={{ width: `${done * 100}%` }}
+										/>
 									</span>
 									<span className="q-num text-xs text-ink-3">
 										{l.hours} h · {l.days === 0 ? "reached" : (monthOf(l.date) ?? "—")}
@@ -272,7 +397,11 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 					<section className={CARD} data-testid="plan-milestones" aria-label="When can I…?">
 						<div className="flex items-baseline justify-between gap-3">
 							<h2 className={H2}>When can I…?</h2>
-							<Link href="/milestones" className="text-xs text-ink-3 underline underline-offset-2 hover:text-ink-2" data-testid="plan-milestones-link">
+							<Link
+								href="/milestones"
+								className="text-xs text-ink-3 underline underline-offset-2 hover:text-ink-2"
+								data-testid="plan-milestones-link"
+							>
 								See details or add your own
 							</Link>
 						</div>
@@ -281,19 +410,35 @@ export function PlanPage({ goal, report, weak, stamps = null, log = null, charts
 				)}
 
 				{weak.length > 0 && (
-					<section className={cn(CARD, "[&>div]:mt-0 [&>div]:border-t-0 [&>div]:pt-0")} data-testid="plan-weak" aria-label="Your weak spots">
+					<section
+						className={cn(CARD, "[&>div]:mt-0 [&>div]:border-t-0 [&>div]:pt-0")}
+						data-testid="plan-weak"
+						aria-label="Your weak spots"
+					>
 						<WeakSpots weak={weak} />
 					</section>
 				)}
 
 				<p className="mt-2 font-ui text-xs text-ink-3">
 					Every task is built from published research.{" "}
-					<Link href="/sources" className="underline decoration-line-2 underline-offset-[3px] hover:text-ink-2" data-testid="plan-sources-link">
+					<Link
+						href="/sources"
+						className="underline decoration-line-2 underline-offset-[3px] hover:text-ink-2"
+						data-testid="plan-sources-link"
+					>
 						See the sources
 					</Link>
 				</p>
 			</main>
-			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={minutes} daysPerWeek={days} target={goal.level} hoursDone={hoursDone} languages={knownLanguages(goal)} />
+			<HoursSheet
+				open={hoursOpen}
+				onClose={() => setHoursOpen(false)}
+				minutesPerDay={minutes}
+				daysPerWeek={days}
+				target={goal.level}
+				hoursDone={hoursDone}
+				languages={knownLanguages(goal)}
+			/>
 		</div>
 	);
 }

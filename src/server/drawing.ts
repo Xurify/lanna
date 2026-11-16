@@ -17,7 +17,9 @@ export function svgOf(text: string): string | null {
 }
 
 export function latestReplyText(messages: readonly AgentMessage[]): string {
-	const reply = [...messages].reverse().find((m) => (m as { role?: string }).role === "assistant") as { content?: Array<{ type: string; text?: string }> } | undefined;
+	const reply = [...messages].reverse().find((m) => (m as { role?: string }).role === "assistant") as
+		| { content?: Array<{ type: string; text?: string }> }
+		| undefined;
 	return (reply?.content ?? []).flatMap((c) => (c.type === "text" && c.text ? [c.text] : [])).join("\n\n");
 }
 

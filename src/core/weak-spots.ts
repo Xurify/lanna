@@ -53,16 +53,36 @@ export const WEAK_REVIEW_LAPSES = 2;
  *  on a feminine noun and on a person is "the accusative by noun class",
  *  not two unrelated misses. Shown and told as one spot. */
 export const WEAK_FAMILIES: ReadonlyArray<{ id: string; title: string; tagline: string; units: readonly UnitId[] }> = [
-	{ id: "accusative", title: "The accusative by noun class", tagline: "feminine -a → -u, people +a, things unchanged", units: ["acc-fem", "acc-people", "kam-kde"] },
-	{ id: "adjectives", title: "Adjective endings", tagline: "agree with the noun, in every case", units: ["adj", "adj-cases"] },
-	{ id: "present", title: "Present-tense endings", tagline: "-ám/-ím, -ujem, -em, and the irregulars", units: ["present", "present-ujem", "present-em", "core-verbs"] },
+	{
+		id: "accusative",
+		title: "The accusative by noun class",
+		tagline: "feminine -a → -u, people +a, things unchanged",
+		units: ["acc-fem", "acc-people", "kam-kde"],
+	},
+	{
+		id: "adjectives",
+		title: "Adjective endings",
+		tagline: "agree with the noun, in every case",
+		units: ["adj", "adj-cases"],
+	},
+	{
+		id: "present",
+		title: "Present-tense endings",
+		tagline: "-ám/-ím, -ujem, -em, and the irregulars",
+		units: ["present", "present-ujem", "present-em", "core-verbs"],
+	},
 ];
 
 export function weakFamily(unit: UnitId): (typeof WEAK_FAMILIES)[number] | undefined {
 	return WEAK_FAMILIES.find((f) => f.units.includes(unit));
 }
 
-const SOURCE_LABEL: Record<WeakSource, string> = { check: "from the level check", lesson: "from your lessons", review: "from review", chat: "from your chats" };
+const SOURCE_LABEL: Record<WeakSource, string> = {
+	check: "from the level check",
+	lesson: "from your lessons",
+	review: "from review",
+	chat: "from your chats",
+};
 
 function isUnit(id: string): id is UnitId {
 	return allUnits().some((u) => u.id === id);
@@ -71,13 +91,25 @@ function isUnit(id: string): id is UnitId {
 /** Flag a unit. An existing spot keeps its first date and its tally; a
  *  note from the check replaces an older one (it is the freshest reading),
  *  any other note fills in only when there was none. */
-export function flagWeak(weak: WeakRecord, unit: string, source: WeakSource, note: string | undefined, now: Date): WeakRecord {
+export function flagWeak(
+	weak: WeakRecord,
+	unit: string,
+	source: WeakSource,
+	note: string | undefined,
+	now: Date,
+): WeakRecord {
 	if (!isUnit(unit)) return weak;
 	const at = now.toISOString();
 	const prev = weak[unit];
 	const clean = note?.trim().replace(/[.\s]+$/u, "") || undefined;
 	const spot: WeakSpot = prev
-		? { ...prev, lastAt: at, ...(source === "check" ? { source, note: clean ?? prev.note, hits: 0, misses: 0 } : { note: prev.note ?? clean }) }
+		? {
+				...prev,
+				lastAt: at,
+				...(source === "check"
+					? { source, note: clean ?? prev.note, hits: 0, misses: 0 }
+					: { note: prev.note ?? clean }),
+			}
 		: { since: at, source, ...(clean ? { note: clean } : {}), hits: 0, misses: 0, lastAt: at };
 	return { ...weak, [unit]: spot };
 }
@@ -91,12 +123,19 @@ export function clearWeak(weak: WeakRecord, unit: string): WeakRecord {
 
 /** Count reps on a unit against its spot; a spot that has earned it is
  *  dropped. Returns the record and whether the unit was just mended. */
-export function tallyWeak(weak: WeakRecord, unit: string, hits: number, misses: number, now: Date): { weak: WeakRecord; mended: boolean } {
+export function tallyWeak(
+	weak: WeakRecord,
+	unit: string,
+	hits: number,
+	misses: number,
+	now: Date,
+): { weak: WeakRecord; mended: boolean } {
 	const spot = weak[unit];
 	if (!spot) return { weak, mended: false };
 	const next: WeakSpot = { ...spot, hits: spot.hits + hits, misses: spot.misses + misses, lastAt: now.toISOString() };
 	const reps = next.hits + next.misses;
-	if (reps >= WEAK_MEND_REPS && next.hits / reps >= WEAK_MEND_ACCURACY) return { weak: clearWeak(weak, unit), mended: true };
+	if (reps >= WEAK_MEND_REPS && next.hits / reps >= WEAK_MEND_ACCURACY)
+		return { weak: clearWeak(weak, unit), mended: true };
 	return { weak: { ...weak, [unit]: next }, mended: false };
 }
 
@@ -108,7 +147,10 @@ export function noteChatAnswer(weak: WeakRecord, answer: ChatAnswer, recentMisse
 	let next = weak;
 	if (miss || hit) next = tallyWeak(next, unit, hit ? 1 : 0, miss ? 1 : 0, now).weak;
 	if (miss && !next[unit] && recentMisses >= WEAK_CHAT_MISSES) {
-		const note = answer.verdict === "dont_know" ? `did not know “${answer.expected}” in a chat` : `wrote “${answer.given}” for “${answer.expected}” in a chat`;
+		const note =
+			answer.verdict === "dont_know"
+				? `did not know “${answer.expected}” in a chat`
+				: `wrote “${answer.given}” for “${answer.expected}” in a chat`;
 		next = flagWeak(next, unit, "chat", note, now);
 	}
 	return next;
@@ -143,7 +185,17 @@ export function weakSpotList(weak: WeakRecord | undefined): WeakSpotSummary[] {
 		if (!isUnit(unit)) continue;
 		const info = unitInfo(unit);
 		const since = s.hits + s.misses > 0 ? ` · since then ${s.hits}/${s.hits + s.misses} right` : "";
-		out.push({ unit, title: info.title, tagline: info.tagline, source: s.source, since: s.since, ...(s.note ? { note: s.note } : {}), hits: s.hits, misses: s.misses, line: `${SOURCE_LABEL[s.source]}${s.note ? `: ${s.note}` : ""}${since}` });
+		out.push({
+			unit,
+			title: info.title,
+			tagline: info.tagline,
+			source: s.source,
+			since: s.since,
+			...(s.note ? { note: s.note } : {}),
+			hits: s.hits,
+			misses: s.misses,
+			line: `${SOURCE_LABEL[s.source]}${s.note ? `: ${s.note}` : ""}${since}`,
+		});
 	}
 	const order: Record<WeakSource, number> = { check: 0, chat: 1, review: 1, lesson: 2 };
 	return out.sort((a, b) => order[a.source] - order[b.source] || b.misses - a.misses || a.since.localeCompare(b.since));
@@ -171,7 +223,14 @@ export function weakSpotGroups(list: readonly WeakSpotSummary[]): WeakSpotGroup[
 		if (fam && members.length > 1) {
 			if (seen.has(fam.id)) continue;
 			seen.add(fam.id);
-			out.push({ id: fam.id, title: fam.title, tagline: fam.tagline, spots: members, unit: members[0]!.unit, line: members.map((m) => `${m.title}: ${m.line}`).join(" · ") });
+			out.push({
+				id: fam.id,
+				title: fam.title,
+				tagline: fam.tagline,
+				spots: members,
+				unit: members[0]!.unit,
+				line: members.map((m) => `${m.title}: ${m.line}`).join(" · "),
+			});
 		} else out.push({ id: w.unit, title: w.title, tagline: w.tagline, spots: [w], unit: w.unit, line: w.line });
 	}
 	return out;
@@ -180,6 +239,12 @@ export function weakSpotGroups(list: readonly WeakSpotSummary[]): WeakSpotGroup[
 /** The line in the tutor's "This learner" block. */
 export function weakSpotsLine(list: readonly WeakSpotSummary[]): string | null {
 	if (!list.length) return null;
-	const parts = weakSpotGroups(list).slice(0, 6).map((g) => (g.spots.length > 1 ? `${g.title} (${g.tagline}; ${g.spots.map((m) => `${m.title}: ${m.line}`).join("; ")})` : `${g.title} (${g.tagline}; ${g.line})`));
+	const parts = weakSpotGroups(list)
+		.slice(0, 6)
+		.map((g) =>
+			g.spots.length > 1
+				? `${g.title} (${g.tagline}; ${g.spots.map((m) => `${m.title}: ${m.line}`).join("; ")})`
+				: `${g.title} (${g.tagline}; ${g.line})`,
+		);
 	return `- Weak spots on record: ${parts.join("; ")}. Work these into examples and corrections; a spot is cleared once ${WEAK_MEND_REPS} reps since the flag come back ${Math.round(WEAK_MEND_ACCURACY * 100)}% right.`;
 }

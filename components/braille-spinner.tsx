@@ -18,16 +18,80 @@ import { cn } from "@/lib/utils";
  * exists only while a turn is in flight and vanishes the moment it ends.
  */
 const FRAMES: ReadonlyArray<{ dots: ReadonlyArray<readonly [number, number]> }> = [
-	{ dots: [[1, 1], [1, 3], [3, 1]] },
-	{ dots: [[1, 1], [3, 1], [3, 3]] },
-	{ dots: [[1, 1], [3, 1], [3, 3], [3, 5]] },
-	{ dots: [[3, 1], [3, 3], [3, 5]] },
-	{ dots: [[1, 5], [3, 1], [3, 3], [3, 5]] },
-	{ dots: [[1, 5], [3, 3], [3, 5]] },
-	{ dots: [[1, 3], [1, 5], [3, 5]] },
-	{ dots: [[1, 1], [1, 3], [1, 5], [3, 5]] },
-	{ dots: [[1, 1], [1, 3], [1, 5]] },
-	{ dots: [[1, 1], [1, 3], [1, 5], [3, 1]] },
+	{
+		dots: [
+			[1, 1],
+			[1, 3],
+			[3, 1],
+		],
+	},
+	{
+		dots: [
+			[1, 1],
+			[3, 1],
+			[3, 3],
+		],
+	},
+	{
+		dots: [
+			[1, 1],
+			[3, 1],
+			[3, 3],
+			[3, 5],
+		],
+	},
+	{
+		dots: [
+			[3, 1],
+			[3, 3],
+			[3, 5],
+		],
+	},
+	{
+		dots: [
+			[1, 5],
+			[3, 1],
+			[3, 3],
+			[3, 5],
+		],
+	},
+	{
+		dots: [
+			[1, 5],
+			[3, 3],
+			[3, 5],
+		],
+	},
+	{
+		dots: [
+			[1, 3],
+			[1, 5],
+			[3, 5],
+		],
+	},
+	{
+		dots: [
+			[1, 1],
+			[1, 3],
+			[1, 5],
+			[3, 5],
+		],
+	},
+	{
+		dots: [
+			[1, 1],
+			[1, 3],
+			[1, 5],
+		],
+	},
+	{
+		dots: [
+			[1, 1],
+			[1, 3],
+			[1, 5],
+			[3, 1],
+		],
+	},
 ];
 
 /** The animation constants (mirrors globals.css .braille-frame). */
@@ -50,12 +114,7 @@ export function BrailleSpinner({
 			className={cn("h-3 w-auto shrink-0 text-foreground", className)}
 		>
 			{FRAMES.map((frame, k) => (
-				<g
-					key={k}
-					className="braille-frame"
-					data-frame={k}
-					style={{ animationDelay: `${k * SPINNER_FRAME_MS}ms` }}
-				>
+				<g key={k} className="braille-frame" data-frame={k} style={{ animationDelay: `${k * SPINNER_FRAME_MS}ms` }}>
 					{frame.dots.map(([cx, cy]) => (
 						<circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={0.8} className="fill-current" />
 					))}

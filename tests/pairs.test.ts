@@ -26,7 +26,10 @@ test("the pairs file: 12 to 20 pairs, both forms in the lexicon, a real chapter,
 		assert.ok(lemmas.has(p.a), `${p.id}: "${p.a}" is not a lexicon entry`);
 		assert.ok(lemmas.has(p.b), `${p.id}: "${p.b}" is not a lexicon entry`);
 		assert.notEqual(p.a, p.b, p.id);
-		assert.ok(allChapters().some((c) => c.id === p.chapter), `${p.id}: "${p.chapter}" is not a chapter`);
+		assert.ok(
+			allChapters().some((c) => c.id === p.chapter),
+			`${p.id}: "${p.chapter}" is not a chapter`,
+		);
 		assert.ok(p.rule.length > 10 && !p.rule.includes("\n"), `${p.id}: the rule is one English line`);
 		assert.ok(p.bridge.length > 10 && !p.bridge.includes("\n"), `${p.id}: the bridge is one Estonian line`);
 	}
@@ -34,7 +37,11 @@ test("the pairs file: 12 to 20 pairs, both forms in the lexicon, a real chapter,
 
 test("the registry has one pairs unit per chapter that teaches a pair, of the pairs kind", () => {
 	const chapters = [...new Set(PAIRS.map((p) => p.chapter))];
-	assert.deepEqual([...PAIR_UNIT_IDS], chapters.map((c) => `pairs-${c}`), "PAIR_UNIT_IDS and the file agree");
+	assert.deepEqual(
+		[...PAIR_UNIT_IDS],
+		chapters.map((c) => `pairs-${c}`),
+		"PAIR_UNIT_IDS and the file agree",
+	);
 	for (const id of PAIR_UNIT_IDS) {
 		const info = allUnits().find((u) => u.id === id)!;
 		assert.equal(info.kind, "pairs", id);
@@ -57,7 +64,12 @@ test("a pair with fewer than three verified sentences is dropped", () => {
 			sk,
 			en: "to test",
 			cat: "Verbs",
-			examples: Array.from({ length: sentences }, (_, i) => ({ sk: `${sk} ${i}`, en: `to test ${i}`, src: "curated", cloze: { answer: sk, at: 0 } })),
+			examples: Array.from({ length: sentences }, (_, i) => ({
+				sk: `${sk} ${i}`,
+				en: `to test ${i}`,
+				src: "curated",
+				cloze: { answer: sk, at: 0 },
+			})),
 		}) as unknown as LexiconEntry;
 	const pair = { id: "thin", a: "robiť", b: "urobiť", rule: "r", bridge: "b", chapter: "moving" };
 	assert.equal(pairsWithSentences([entry("robiť", 1), entry("urobiť", 1)], [pair]).length, 0, "two sentences: dropped");
@@ -70,7 +82,9 @@ test("each chapter's pairs unit sits right after its forms unit and fills the ar
 		const ch = allChapters().find((c) => c.id === chapterId)!;
 		const idx = ch.units.indexOf(id);
 		assert.ok(idx > 0, `${id} is on the chapter's list`);
-		const forms = ch.units.map((u) => curriculumUnit(u)!).find((u) => u.kind === "drill" && !u.id.startsWith("lx-") && !u.id.startsWith("pairs-"));
+		const forms = ch.units
+			.map((u) => curriculumUnit(u)!)
+			.find((u) => u.kind === "drill" && !u.id.startsWith("lx-") && !u.id.startsWith("pairs-"));
 		assert.ok(forms, `${chapterId} has a forms unit`);
 		assert.equal(ch.units.indexOf(forms!.id), idx - 1, `${id} sits right after ${forms!.id}`);
 		assert.deepEqual(chapterArc(chapterId)!.find((a) => a.step.id === "pairs")!.units, [id], chapterId);
@@ -107,8 +121,14 @@ test("a pairs lesson is deterministic per seed and puts fresh sentences first", 
 		if (recent.has(item.id)) break; // fresh ones all come first
 		assert.ok(!recent.has(item.id), "fresh sentences before recent ones");
 	}
-	assert.ok(c.items.some((i) => !recent.has(i.id)), "a fresh sentence is never crowded out");
+	assert.ok(
+		c.items.some((i) => !recent.has(i.id)),
+		"a fresh sentence is never crowded out",
+	);
 	const d = buildPairsLesson(entries, "pairs-town" as UnitId, { seed: 43 });
-	assert.notDeepEqual(a.items.map((i) => i.id), d.items.map((i) => i.id));
+	assert.notDeepEqual(
+		a.items.map((i) => i.id),
+		d.items.map((i) => i.id),
+	);
 	assert.equal(unitInfo("pairs-town" as UnitId).kind, "pairs");
 });

@@ -12,7 +12,10 @@ const require = createRequire(import.meta.url);
 const fonts = require("../electron/fonts-ipc.cjs");
 
 type Run = (file: string, args: string[], opts: object, cb: (err: Error | null, stdout: string) => void) => void;
-const fake = (stdout: string, err: Error | null = null): { run: Run; calls: Array<{ file: string; args: string[] }> } => {
+const fake = (
+	stdout: string,
+	err: Error | null = null,
+): { run: Run; calls: Array<{ file: string; args: string[] }> } => {
 	const calls: Array<{ file: string; args: string[] }> = [];
 	return { calls, run: (file, args, _opts, cb) => (calls.push({ file, args }), cb(err, stdout)) };
 };
@@ -26,7 +29,11 @@ describe("installed fonts", () => {
 	});
 
 	it("asks the OS with a fixed command per platform, no shell", async () => {
-		for (const [platform, file] of [["win32", "powershell.exe"], ["darwin", "osascript"], ["linux", "fc-list"]] as const) {
+		for (const [platform, file] of [
+			["win32", "powershell.exe"],
+			["darwin", "osascript"],
+			["linux", "fc-list"],
+		] as const) {
 			fonts.resetFontCache();
 			const { run, calls } = fake("Arial\n");
 			assert.deepEqual(await fonts.listInstalledFonts({ platform, run }), ["Arial"]);
@@ -54,6 +61,9 @@ describe("installed fonts", () => {
 	});
 
 	it("the preload forwards to that one channel", () => {
-		assert.match(readFileSync(new URL("../electron/preload.cjs", import.meta.url), "utf-8"), /fonts: \{\s*list: \(\) => ipcRenderer\.invoke\("lh:fonts:list"\)/);
+		assert.match(
+			readFileSync(new URL("../electron/preload.cjs", import.meta.url), "utf-8"),
+			/fonts: \{\s*list: \(\) => ipcRenderer\.invoke\("lh:fonts:list"\)/,
+		);
 	});
 });

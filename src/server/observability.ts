@@ -21,7 +21,6 @@ import { jobCost } from "./pricing.ts";
 import { listTasks, type TaskRecord } from "./tasks.ts";
 import type { JobRecord } from "../core/contracts.ts";
 
-
 /** A running sub-agent job, joined with its chat's title for the dock.
  *  contextLimit (context-meter amendment, owner 2026-09-23): the model's
  *  live catalog limit, resolved SERVER-SIDE from pi's catalog — the dock

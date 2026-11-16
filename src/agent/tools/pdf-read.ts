@@ -58,7 +58,11 @@ function scopedPath(dir: string, filePath: string): string | null {
 function pdfFileName(url: string): string {
 	try {
 		const last = new URL(url).pathname.split("/").filter(Boolean).pop() ?? "document";
-		const slug = last.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(-80) || "document";
+		const slug =
+			last
+				.replace(/[^A-Za-z0-9._-]+/g, "-")
+				.replace(/^-+|-+$/g, "")
+				.slice(-80) || "document";
 		const stem = slug.replace(/\.pdf$/i, "");
 		return `${stem}-${Math.random().toString(36).slice(2, 8)}.pdf`;
 	} catch {
@@ -86,7 +90,8 @@ export function createPdfReadTools(dir: string): Record<string, AgentTool<any>> 
 	const pdfExtractInput = Type.Object({
 		path: Type.String({ description: "The local PDF path returned by web_fetch_pdf" }),
 		pages: Type.String({
-			description: "Pages to extract: 'all', '1-5', '1,3,7', or '3'. Use pdf_info first; narrow the spec for big documents.",
+			description:
+				"Pages to extract: 'all', '1-5', '1,3,7', or '3'. Use pdf_info first; narrow the spec for big documents.",
 		}),
 	});
 	const pdfSearchInput = Type.Object({

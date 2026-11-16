@@ -82,7 +82,10 @@ function sectionId(title: string, taken: Set<string>): string {
 
 /** Read a sheet's text. Throws CheatsheetParseError when there is no phrase or the text is too big. */
 export function parseSheetText(text: string): CheatSection[] {
-	if (text.length > CHEATSHEET_MAX_CHARS) throw new CheatsheetParseError(`The text is too long (over ${CHEATSHEET_MAX_CHARS.toLocaleString("en")} characters).`);
+	if (text.length > CHEATSHEET_MAX_CHARS)
+		throw new CheatsheetParseError(
+			`The text is too long (over ${CHEATSHEET_MAX_CHARS.toLocaleString("en")} characters).`,
+		);
 	const groups: Array<{ title: string; rows: CheatRow[] }> = [];
 	let current: { title: string; rows: CheatRow[] } | null = null;
 	let count = 0;
@@ -114,7 +117,8 @@ export function parseSheetText(text: string): CheatSection[] {
 			current = { title: "Phrases", rows: [] };
 			groups.push(current);
 		}
-		if (++count > CHEATSHEET_MAX_ROWS) throw new CheatsheetParseError(`More than ${CHEATSHEET_MAX_ROWS} phrases. Split it into two cheatsheets.`);
+		if (++count > CHEATSHEET_MAX_ROWS)
+			throw new CheatsheetParseError(`More than ${CHEATSHEET_MAX_ROWS} phrases. Split it into two cheatsheets.`);
 		const row: CheatRow = { text: first };
 		if (pron) row.pron = pron;
 		if (meaning) row.meaning = meaning;
@@ -123,7 +127,8 @@ export function parseSheetText(text: string): CheatSection[] {
 		current.rows.push(row);
 	}
 
-	if (count === 0) throw new CheatsheetParseError("No phrases yet. Each phrase is one line: phrase | say it | meaning.");
+	if (count === 0)
+		throw new CheatsheetParseError("No phrases yet. Each phrase is one line: phrase | say it | meaning.");
 	const taken = new Set<string>();
 	return groups
 		.filter((g) => g.rows.length > 0)
@@ -176,7 +181,10 @@ function covered(text: string, keys: Set<string>): boolean {
 }
 
 /** How many of the incoming phrases the sections already have, and how many are new. */
-export function countOverlap(existing: ReadonlyArray<Pick<CheatSection, "rows">>, incoming: ReadonlyArray<Pick<CheatSection, "rows">>): { shared: number; fresh: number } {
+export function countOverlap(
+	existing: ReadonlyArray<Pick<CheatSection, "rows">>,
+	incoming: ReadonlyArray<Pick<CheatSection, "rows">>,
+): { shared: number; fresh: number } {
 	const keys = phraseKeys(existing);
 	const seen = new Set<string>();
 	let shared = 0;
@@ -203,7 +211,10 @@ export function sameSection(a: string, b: string): boolean {
 }
 
 /** Add the incoming phrases that the sheet does not have. Each goes to the section it names, or to a new section at the end. */
-export function mergeSections(existing: CheatSection[], incoming: CheatSection[]): { sections: CheatSection[]; added: number } {
+export function mergeSections(
+	existing: CheatSection[],
+	incoming: CheatSection[],
+): { sections: CheatSection[]; added: number } {
 	const keys = phraseKeys(existing);
 	const sections = existing.map((s) => ({ ...s, rows: [...s.rows] }));
 	const taken = new Set(sections.map((s) => s.id));
@@ -228,7 +239,15 @@ export function cheatsheetRowCount(sheet: Pick<Cheatsheet, "sections">): number 
 }
 
 export function cheatsheetSummary(sheet: Cheatsheet): CheatsheetSummary {
-	return { id: sheet.id, title: sheet.title, sections: sheet.sections.length, rows: cheatsheetRowCount(sheet), importedAt: sheet.importedAt, updatedAt: sheet.updatedAt, repoFile: sheet.repoFile };
+	return {
+		id: sheet.id,
+		title: sheet.title,
+		sections: sheet.sections.length,
+		rows: cheatsheetRowCount(sheet),
+		importedAt: sheet.importedAt,
+		updatedAt: sheet.updatedAt,
+		repoFile: sheet.repoFile,
+	};
 }
 
 /** The words of a sheet's phrases, lowercased in the language's own rules, each once, in the order they first appear. */
@@ -262,7 +281,9 @@ export function searchSections(sections: CheatSection[], query: string, tag = "e
 			out.push(section);
 			continue;
 		}
-		const rows = section.rows.filter((r) => holdsAll(searchKey([r.text, r.pron, r.meaning, r.note].filter(Boolean).join(" "), tag)));
+		const rows = section.rows.filter((r) =>
+			holdsAll(searchKey([r.text, r.pron, r.meaning, r.note].filter(Boolean).join(" "), tag)),
+		);
 		if (rows.length > 0) out.push({ ...section, rows });
 	}
 	return out;

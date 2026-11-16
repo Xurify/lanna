@@ -51,10 +51,30 @@ export interface Stage {
 }
 
 export const STAGES: Stage[] = [
-	{ id: "a1", level: "A1", title: "Foundations", blurb: "Introduce yourself, order, ask the way, talk about family and your day." },
-	{ id: "a2", level: "A2", title: "Getting around", blurb: "Shop, make appointments, describe people and plans, tell what happened." },
-	{ id: "b1", level: "B1", title: "Independence", blurb: "Tell stories, give opinions, deal with offices, read simple news." },
-	{ id: "b2", level: "B2", title: "Argument", blurb: "Argue a point, follow film and news, write a formal email, feel the register." },
+	{
+		id: "a1",
+		level: "A1",
+		title: "Foundations",
+		blurb: "Introduce yourself, order, ask the way, talk about family and your day.",
+	},
+	{
+		id: "a2",
+		level: "A2",
+		title: "Getting around",
+		blurb: "Shop, make appointments, describe people and plans, tell what happened.",
+	},
+	{
+		id: "b1",
+		level: "B1",
+		title: "Independence",
+		blurb: "Tell stories, give opinions, deal with offices, read simple news.",
+	},
+	{
+		id: "b2",
+		level: "B2",
+		title: "Argument",
+		blurb: "Argue a point, follow film and news, write a formal email, feel the register.",
+	},
 ];
 
 // ─── Units ──────────────────────────────────────────────────────────────────
@@ -101,7 +121,15 @@ const drill = (id: UnitId, extra: Partial<CurriculumUnit> = {}): CurriculumUnit 
 	};
 };
 
-const tutor = (id: string, title: string, tagline: string, glyph: string, node: string | undefined, brief: string, extra: Partial<CurriculumUnit> = {}): CurriculumUnit => {
+const tutor = (
+	id: string,
+	title: string,
+	tagline: string,
+	glyph: string,
+	node: string | undefined,
+	brief: string,
+	extra: Partial<CurriculumUnit> = {},
+): CurriculumUnit => {
 	const rawTitle = title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 	return {
 		id,
@@ -115,7 +143,14 @@ const tutor = (id: string, title: string, tagline: string, glyph: string, node: 
 	};
 };
 
-const goal = (id: string, title: string, tagline: string, node: string | undefined, scene: string | undefined, extra: Partial<CurriculumUnit> = {}): CurriculumUnit => {
+const goal = (
+	id: string,
+	title: string,
+	tagline: string,
+	node: string | undefined,
+	scene: string | undefined,
+	extra: Partial<CurriculumUnit> = {},
+): CurriculumUnit => {
 	const rawTitle = title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 	return {
 		id,
@@ -135,22 +170,64 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	// ── A1 · 1 Hello ──
 	drill("words"),
 	drill("lx-greetings"),
-	tutor("sounds", "Sounds and spelling", "dĺžeň, mäkčeň, stress on the first syllable", "ear", "n_seed_ph_spelling", "Slovak sounds and spelling: stress on the first syllable, the dĺžeň (length changes meaning: pas/pás), the mäkčeň and soft d t n l before e and i, and the rhythmic law. Read each example to me with say: spans and make me read some back.", { slovakTerm: "Hláskoslovie a pravopis", grammarTerm: "Phonetics & orthography" }),
+	tutor(
+		"sounds",
+		"Sounds and spelling",
+		"dĺžeň, mäkčeň, stress on the first syllable",
+		"ear",
+		"n_seed_ph_spelling",
+		"Slovak sounds and spelling: stress on the first syllable, the dĺžeň (length changes meaning: pas/pás), the mäkčeň and soft d t n l before e and i, and the rhythmic law. Read each example to me with say: spans and make me read some back.",
+		{ slovakTerm: "Hláskoslovie a pravopis", grammarTerm: "Phonetics & orthography" },
+	),
 	drill("lx-questions"),
 	drill("present"),
-	tutor("vykanie", "You and you: ty, vy", "Polite vy and dropping the pronoun", "handshake", "n_seed_pr_vykanie", "Personal pronouns and vykanie: when Slovak drops the pronoun (robím, not ja robím), and when to say ty or vy and the matching verb forms (Ako sa máš? vs Ako sa máte?), including Vy with a capital in writing.", { slovakTerm: "Vykanie a tykanie", grammarTerm: "Formal vs informal address" }),
-	goal("can-introduce", "Can introduce myself", "Volám sa… Som z Estónska. Odkiaľ ste?", "n_seed_can_introduce", "colleague", { slovakTerm: "Predstavenie sa", grammarTerm: "Can-Do: Introduce yourself" }),
+	tutor(
+		"vykanie",
+		"You and you: ty, vy",
+		"Polite vy and dropping the pronoun",
+		"handshake",
+		"n_seed_pr_vykanie",
+		"Personal pronouns and vykanie: when Slovak drops the pronoun (robím, not ja robím), and when to say ty or vy and the matching verb forms (Ako sa máš? vs Ako sa máte?), including Vy with a capital in writing.",
+		{ slovakTerm: "Vykanie a tykanie", grammarTerm: "Formal vs informal address" },
+	),
+	goal(
+		"can-introduce",
+		"Can introduce myself",
+		"Volám sa… Som z Estónska. Odkiaľ ste?",
+		"n_seed_can_introduce",
+		"colleague",
+		{ slovakTerm: "Predstavenie sa", grammarTerm: "Can-Do: Introduce yourself" },
+	),
 
 	// ── A1 · 2 At the café ──
-	tutor("byt", "To be: som, si, je", "byť in the present, and nie som", "smile", "n_seed_cop_byt", "byť in the present: som, si, je, sme, ste, sú, the negative nie som / nie je, and dropping the pronoun (Som doma). Drill me with short sentences about where I am, what I am and what I am not.", { slovakTerm: "Sloveso byť", grammarTerm: "Present copula 'byť'" }),
+	tutor(
+		"byt",
+		"To be: som, si, je",
+		"byť in the present, and nie som",
+		"smile",
+		"n_seed_cop_byt",
+		"byť in the present: som, si, je, sme, ste, sú, the negative nie som / nie je, and dropping the pronoun (Som doma). Drill me with short sentences about where I am, what I am and what I am not.",
+		{ slovakTerm: "Sloveso byť", grammarTerm: "Present copula 'byť'" },
+	),
 	drill("lx-core-verbs"),
 	drill("acc-fem"),
 	drill("lx-drinks"),
 	drill("lx-cafe"),
 	drill("lx-food"),
 	drill("modal-inf", { requires: ["present"] }),
-	tutor("numbers-basic", "Numbers 1–100 and prices", "jeden, dva, tri… Koľko to stojí?", "hash", "n_seed_lx_numbers", "Numbers 1 to 100, prices in euros and cents (dve eurá, päť eur, jedno euro päťdesiat), and the question Koľko to stojí? Drill me on hearing and saying prices.", { slovakTerm: "Základné číslovky", grammarTerm: "Numbers 1–100 & prices" }),
-	goal("can-order", "Can order in a café", "Dám si kávu, prosím. Zaplatím.", "n_seed_can_order", "cafe", { slovakTerm: "Objednávka v kaviarni", grammarTerm: "Can-Do: Order in a café" }),
+	tutor(
+		"numbers-basic",
+		"Numbers 1–100 and prices",
+		"jeden, dva, tri… Koľko to stojí?",
+		"hash",
+		"n_seed_lx_numbers",
+		"Numbers 1 to 100, prices in euros and cents (dve eurá, päť eur, jedno euro päťdesiat), and the question Koľko to stojí? Drill me on hearing and saying prices.",
+		{ slovakTerm: "Základné číslovky", grammarTerm: "Numbers 1–100 & prices" },
+	),
+	goal("can-order", "Can order in a café", "Dám si kávu, prosím. Zaplatím.", "n_seed_can_order", "cafe", {
+		slovakTerm: "Objednávka v kaviarni",
+		grammarTerm: "Can-Do: Order in a café",
+	}),
 
 	// ── A1 · 3 In town ──
 	drill("loc"),
@@ -159,18 +236,40 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("lx-directions"),
 	drill("kam-kde", { requires: ["loc", "acc-fem"] }),
 	drill("lx-transport"),
-	tutor("questions", "Asking questions", "Kde? Kedy? Prečo? and yes/no questions", "message-circle-question", "n_seed_questions", "Asking questions in Slovak: question words (kto, čo, kde, kam, kedy, prečo, ako, koľko, aký, ktorý), yes/no questions by intonation and word order, and short answers. Make me ask you questions about a picture you describe.", { slovakTerm: "Tvorenie otázok", grammarTerm: "Interrogative syntax" }),
-	goal("can-directions", "Can ask the way", "Prepáčte, kde je stanica?", "n_seed_can_directions", "way", { slovakTerm: "Pýtanie sa na cestu", grammarTerm: "Can-Do: Ask the way" }),
+	tutor(
+		"questions",
+		"Asking questions",
+		"Kde? Kedy? Prečo? and yes/no questions",
+		"message-circle-question",
+		"n_seed_questions",
+		"Asking questions in Slovak: question words (kto, čo, kde, kam, kedy, prečo, ako, koľko, aký, ktorý), yes/no questions by intonation and word order, and short answers. Make me ask you questions about a picture you describe.",
+		{ slovakTerm: "Tvorenie otázok", grammarTerm: "Interrogative syntax" },
+	),
+	goal("can-directions", "Can ask the way", "Prepáčte, kde je stanica?", "n_seed_can_directions", "way", {
+		slovakTerm: "Pýtanie sa na cestu",
+		grammarTerm: "Can-Do: Ask the way",
+	}),
 
 	// ── A1 · 4 Family ──
 	drill("acc-people"),
 	drill("pairs-family"),
 	drill("gen"),
-	tutor("gender-this-my", "Gender, this and mine", "ten / tá / to, môj / moja / moje", "tag", "n_seed_gender", "Reading a noun's gender from its ending, and matching ten/tá/to and the possessives môj/moja/moje, tvoj, náš, váš (and the invariable jeho/jej/ich) to it. Drill me with mixed nouns.", { slovakTerm: "Gramatický rod a zámená", grammarTerm: "Gender & possessives" }),
+	tutor(
+		"gender-this-my",
+		"Gender, this and mine",
+		"ten / tá / to, môj / moja / moje",
+		"tag",
+		"n_seed_gender",
+		"Reading a noun's gender from its ending, and matching ten/tá/to and the possessives môj/moja/moje, tvoj, náš, váš (and the invariable jeho/jej/ich) to it. Drill me with mixed nouns.",
+		{ slovakTerm: "Gramatický rod a zámená", grammarTerm: "Gender & possessives" },
+	),
 	drill("lx-family"),
 	drill("lx-people"),
 	drill("lx-home"),
-	goal("can-family", "Can talk about family", "Mám brata a dve sestry.", "n_seed_can_family", "family", { slovakTerm: "Rodina a vzťahy", grammarTerm: "Can-Do: Talk about family" }),
+	goal("can-family", "Can talk about family", "Mám brata a dve sestry.", "n_seed_can_family", "family", {
+		slovakTerm: "Rodina a vzťahy",
+		grammarTerm: "Can-Do: Talk about family",
+	}),
 
 	// ── A1 · 5 Every day ──
 	drill("ins"),
@@ -181,22 +280,59 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("lx-routine"),
 	drill("lx-meals"),
 	drill("lx-colours"),
-	goal("can-describe-day", "Can describe my day", "Ráno vstávam o siedmej, potom idem do práce…", undefined, "colleague", { slovakTerm: "Denný režim", grammarTerm: "Can-Do: Describe your day" }),
+	goal(
+		"can-describe-day",
+		"Can describe my day",
+		"Ráno vstávam o siedmej, potom idem do práce…",
+		undefined,
+		"colleague",
+		{ slovakTerm: "Denný režim", grammarTerm: "Can-Do: Describe your day" },
+	),
 
 	// ── A1 · 6 Yesterday ──
 	drill("past"),
 	drill("dat"),
 	drill("lx-shopping"),
-	tutor("byt-past", "Was and were", "bol som, bola si, boli sme", "history", "n_seed_v_byt_past", "byť in the past: bol/bola/bolo/boli with som/si/sme/ste, and the negative nebol som. Then mix it with other past-tense verbs in short stories about yesterday.", { slovakTerm: "Minulý čas slovesa byť", grammarTerm: "Past copula 'byť'" }),
-	goal("can-tell-day", "Can tell what I did", "Včera som išiel do práce a večer som čítal.", "n_seed_can_tell_day", "family", { slovakTerm: "Rozprávanie o včerajšku", grammarTerm: "Can-Do: Tell what you did" }),
+	tutor(
+		"byt-past",
+		"Was and were",
+		"bol som, bola si, boli sme",
+		"history",
+		"n_seed_v_byt_past",
+		"byť in the past: bol/bola/bolo/boli with som/si/sme/ste, and the negative nebol som. Then mix it with other past-tense verbs in short stories about yesterday.",
+		{ slovakTerm: "Minulý čas slovesa byť", grammarTerm: "Past copula 'byť'" },
+	),
+	goal(
+		"can-tell-day",
+		"Can tell what I did",
+		"Včera som išiel do práce a večer som čítal.",
+		"n_seed_can_tell_day",
+		"family",
+		{ slovakTerm: "Rozprávanie o včerajšku", grammarTerm: "Can-Do: Tell what you did" },
+	),
 
 	// ── A2 · 7 Health and body ──
 	drill("present-ujem"),
 	drill("pairs-health"),
 	drill("lx-body"),
 	drill("lx-health"),
-	tutor("reflexive", "sa and si", "Volám sa, umývam si ruky", "repeat", "n_seed_v_reflexive", "Reflexive verbs with sa and si: which verbs take sa (volať sa, učiť sa, báť sa), when si marks doing something to oneself (umývam si ruky), and where sa/si sit in the sentence (second position). Estonian has no reflexive particle, so show me the contrast with ennast/endale.", { slovakTerm: "Zvratné slovesá (sa / si)", grammarTerm: "Reflexive verbs" }),
-	goal("can-appointment", "Can make an appointment", "Máte čas v piatok o piatej?", "n_seed_can_appointment", "doctor", { slovakTerm: "Dohodnutie termínu", grammarTerm: "Can-Do: Make an appointment" }),
+	tutor(
+		"reflexive",
+		"sa and si",
+		"Volám sa, umývam si ruky",
+		"repeat",
+		"n_seed_v_reflexive",
+		"Reflexive verbs with sa and si: which verbs take sa (volať sa, učiť sa, báť sa), when si marks doing something to oneself (umývam si ruky), and where sa/si sit in the sentence (second position). Estonian has no reflexive particle, so show me the contrast with ennast/endale.",
+		{ slovakTerm: "Zvratné slovesá (sa / si)", grammarTerm: "Reflexive verbs" },
+	),
+	goal(
+		"can-appointment",
+		"Can make an appointment",
+		"Máte čas v piatok o piatej?",
+		"n_seed_can_appointment",
+		"doctor",
+		{ slovakTerm: "Dohodnutie termínu", grammarTerm: "Can-Do: Make an appointment" },
+	),
 
 	// ── A2 · 8 Shopping ──
 	drill("numbers"),
@@ -204,7 +340,10 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("plural"),
 	drill("lx-clothes"),
 	drill("cond"),
-	goal("can-shop", "Can shop for food", "Prosím si kilo jabĺk. Koľko to stojí?", "n_seed_can_shop", "shop", { slovakTerm: "Nákup potravín", grammarTerm: "Can-Do: Shop for food" }),
+	goal("can-shop", "Can shop for food", "Prosím si kilo jabĺk. Koľko to stojí?", "n_seed_can_shop", "shop", {
+		slovakTerm: "Nákup potravín",
+		grammarTerm: "Can-Do: Shop for food",
+	}),
 
 	// ── A2 · 9 Plans and weather ──
 	drill("present-em"),
@@ -212,8 +351,19 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("lx-seasons"),
 	drill("lx-weather"),
 	drill("lx-when"),
-	tutor("future", "Talking about later", "budem robiť / urobím", "calendar-clock", "n_seed_v_future", "The future: budem + imperfective infinitive (budem čítať) versus the perfective present with future meaning (prečítam). Compare with the Estonian present-for-future (homme loen). Drill me on choosing between budem robiť and urobím in plans for the weekend.", { slovakTerm: "Budúci čas", grammarTerm: "Future tense" }),
-	goal("can-plan", "Can make plans", "Cez víkend pôjdeme na výlet, ak bude pekne.", undefined, "colleague", { slovakTerm: "Plánovanie", grammarTerm: "Can-Do: Make plans" }),
+	tutor(
+		"future",
+		"Talking about later",
+		"budem robiť / urobím",
+		"calendar-clock",
+		"n_seed_v_future",
+		"The future: budem + imperfective infinitive (budem čítať) versus the perfective present with future meaning (prečítam). Compare with the Estonian present-for-future (homme loen). Drill me on choosing between budem robiť and urobím in plans for the weekend.",
+		{ slovakTerm: "Budúci čas", grammarTerm: "Future tense" },
+	),
+	goal("can-plan", "Can make plans", "Cez víkend pôjdeme na výlet, ak bude pekne.", undefined, "colleague", {
+		slovakTerm: "Plánovanie",
+		grammarTerm: "Can-Do: Make plans",
+	}),
 
 	// ── A2 · 10 Moving around ──
 	drill("motion"),
@@ -221,9 +371,28 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("core-verbs"),
 	drill("lx-motion"),
 	drill("lx-where"),
-	tutor("aspect", "Aspect: robiť vs urobiť", "The pair every verb comes in", "git-compare", "n_seed_aspect", "Verbal aspect: imperfective (process, habit: robiť, písať, čítať) versus perfective (one completed act: urobiť, napísať, prečítať), how perfectives are made (prefix, or a suffix change like dať/dávať), and how Estonian shows the same difference with total vs partial objects (lugesin raamatut / lugesin raamatu läbi). Drill me with pairs in the past tense.", { slovakTerm: "Vid (dokonavý a nedokonavý)", grammarTerm: "Verbal aspect" }),
-	tutor("imperative", "Commands and requests", "Rob! Robte! Poď sem!", "megaphone", "n_seed_imperative", "The imperative: the ty form (rob, píš, poď), the vy/plural form (robte, píšte, poďte), the my form (poďme), negative commands with the imperfective (nerob to!), and the soft forms with prosím. Drill me with requests in a shop, at home and on the street.", { slovakTerm: "Rozkazovací spôsob", grammarTerm: "Imperative mood" }),
-	goal("can-travel", "Can travel by train", "Jeden lístok do Košíc, prosím. Mešká vlak?", undefined, "way", { slovakTerm: "Cestovanie vlakom", grammarTerm: "Can-Do: Travel by train" }),
+	tutor(
+		"aspect",
+		"Aspect: robiť vs urobiť",
+		"The pair every verb comes in",
+		"git-compare",
+		"n_seed_aspect",
+		"Verbal aspect: imperfective (process, habit: robiť, písať, čítať) versus perfective (one completed act: urobiť, napísať, prečítať), how perfectives are made (prefix, or a suffix change like dať/dávať), and how Estonian shows the same difference with total vs partial objects (lugesin raamatut / lugesin raamatu läbi). Drill me with pairs in the past tense.",
+		{ slovakTerm: "Vid (dokonavý a nedokonavý)", grammarTerm: "Verbal aspect" },
+	),
+	tutor(
+		"imperative",
+		"Commands and requests",
+		"Rob! Robte! Poď sem!",
+		"megaphone",
+		"n_seed_imperative",
+		"The imperative: the ty form (rob, píš, poď), the vy/plural form (robte, píšte, poďte), the my form (poďme), negative commands with the imperfective (nerob to!), and the soft forms with prosím. Drill me with requests in a shop, at home and on the street.",
+		{ slovakTerm: "Rozkazovací spôsob", grammarTerm: "Imperative mood" },
+	),
+	goal("can-travel", "Can travel by train", "Jeden lístok do Košíc, prosím. Mešká vlak?", undefined, "way", {
+		slovakTerm: "Cestovanie vlakom",
+		grammarTerm: "Can-Do: Travel by train",
+	}),
 
 	// ── A2 · 11 People and feelings ──
 	drill("adj-cases", { requires: ["adj"] }),
@@ -232,72 +401,257 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 	drill("lx-describe-people"),
 	drill("lx-describe-things"),
 	drill("clitics"),
-	tutor("pron-cases", "Me, you, him: pronoun cases", "ma / mňa, mi / mne, ho / jeho", "user-round", "n_seed_pron_cases", "Personal pronouns in the cases: the short forms (ma, ťa, ho, ju, mi, ti, mu, jej, nás, vás, ich, im) in second position, the long forms (mňa, teba, jeho, mne, tebe) after prepositions and for emphasis. Drill me on choosing the form from the verb or preposition.", { slovakTerm: "Pády osobných zámen", grammarTerm: "Pronoun cases" }),
-	tutor("liking", "Liking things", "mám rád, rada čítam, páči sa mi", "heart", "n_seed_rad", "Three ways to like: mám rád/rada + accusative (mám rád kávu), rád/rada + verb (rád čítam), and páči sa mi + nominative (páči sa mi Bratislava), with the gender of rád/rada. Drill me on all three.", { slovakTerm: "Vyjadrovanie záľub", grammarTerm: "Expressing preferences" }),
-	goal("can-describe-people", "Can describe people", "Môj brat je vysoký a trochu lenivý.", undefined, "family", { slovakTerm: "Opis osôb", grammarTerm: "Can-Do: Describe people" }),
+	tutor(
+		"pron-cases",
+		"Me, you, him: pronoun cases",
+		"ma / mňa, mi / mne, ho / jeho",
+		"user-round",
+		"n_seed_pron_cases",
+		"Personal pronouns in the cases: the short forms (ma, ťa, ho, ju, mi, ti, mu, jej, nás, vás, ich, im) in second position, the long forms (mňa, teba, jeho, mne, tebe) after prepositions and for emphasis. Drill me on choosing the form from the verb or preposition.",
+		{ slovakTerm: "Pády osobných zámen", grammarTerm: "Pronoun cases" },
+	),
+	tutor(
+		"liking",
+		"Liking things",
+		"mám rád, rada čítam, páči sa mi",
+		"heart",
+		"n_seed_rad",
+		"Three ways to like: mám rád/rada + accusative (mám rád kávu), rád/rada + verb (rád čítam), and páči sa mi + nominative (páči sa mi Bratislava), with the gender of rád/rada. Drill me on all three.",
+		{ slovakTerm: "Vyjadrovanie záľub", grammarTerm: "Expressing preferences" },
+	),
+	goal("can-describe-people", "Can describe people", "Môj brat je vysoký a trochu lenivý.", undefined, "family", {
+		slovakTerm: "Opis osôb",
+		grammarTerm: "Can-Do: Describe people",
+	}),
 
 	// ── A2 · 12 Work and school ──
 	drill("lx-work"),
 	drill("lx-school"),
 	drill("lx-hobbies"),
 	drill("words-300"),
-	tutor("negation", "Saying no", "ne- on the verb, nikto nič nikdy", "ban", "n_seed_v_neg", "Negation: ne- written together with the verb (nerobím, nemám), nie som / nie je for byť, and double negation with nikto, nič, nikdy, nikde (Nikto nič nevie). Drill me on turning sentences negative.", { slovakTerm: "Zápor", grammarTerm: "Negation" }),
-	tutor("time-dates", "Time and dates", "o siedmej, v piatok, piateho mája", "clock", "n_seed_time", "Telling the time (Je sedem hodín. O pol ôsmej. O štvrť na deväť.), days (v pondelok), months and dates with the genitive (piateho mája), and the question Kedy? Drill me on hearing and saying times and dates.", { slovakTerm: "Čas a dátumy", grammarTerm: "Time and dates" }),
-	tutor("word-order", "Word order", "New information last", "arrow-right-left", "n_seed_word_order", "Slovak word order: the sentence is free but not random — known information first, new information last, clitics in second position. Give me pairs of sentences that differ only in order and make me say which question each answers.", { slovakTerm: "Slovosled", grammarTerm: "Word order" }),
-	goal("can-interview", "Can talk about my work", "Pracujem ako… Študoval som…", undefined, "colleague", { slovakTerm: "Rozhovor o práci", grammarTerm: "Can-Do: Talk about work" }),
+	tutor(
+		"negation",
+		"Saying no",
+		"ne- on the verb, nikto nič nikdy",
+		"ban",
+		"n_seed_v_neg",
+		"Negation: ne- written together with the verb (nerobím, nemám), nie som / nie je for byť, and double negation with nikto, nič, nikdy, nikde (Nikto nič nevie). Drill me on turning sentences negative.",
+		{ slovakTerm: "Zápor", grammarTerm: "Negation" },
+	),
+	tutor(
+		"time-dates",
+		"Time and dates",
+		"o siedmej, v piatok, piateho mája",
+		"clock",
+		"n_seed_time",
+		"Telling the time (Je sedem hodín. O pol ôsmej. O štvrť na deväť.), days (v pondelok), months and dates with the genitive (piateho mája), and the question Kedy? Drill me on hearing and saying times and dates.",
+		{ slovakTerm: "Čas a dátumy", grammarTerm: "Time and dates" },
+	),
+	tutor(
+		"word-order",
+		"Word order",
+		"New information last",
+		"arrow-right-left",
+		"n_seed_word_order",
+		"Slovak word order: the sentence is free but not random — known information first, new information last, clitics in second position. Give me pairs of sentences that differ only in order and make me say which question each answers.",
+		{ slovakTerm: "Slovosled", grammarTerm: "Word order" },
+	),
+	goal("can-interview", "Can talk about my work", "Pracujem ako… Študoval som…", undefined, "colleague", {
+		slovakTerm: "Rozhovor o práci",
+		grammarTerm: "Can-Do: Talk about work",
+	}),
 
 	// ── B1 · 13 Telling stories ──
 	drill("cases-mix"),
 	drill("pairs-stories"),
 	drill("words-600"),
-	tutor("verb-prefixes", "Verb prefixes", "prísť, odísť, prejsť, vojsť", "route", "n_seed_motion", "Prefixes on verbs of motion and others: pri- (arrive), od- (leave), pre- (across/through), vy- (out), vo- (in), do- (reach), roz- (apart), and how a prefix also makes the verb perfective. Drill me with one scene told with ísť plus prefixes.", { slovakTerm: "Slovesné predpony", grammarTerm: "Verb prefixes" }),
-	tutor("narration", "Telling what happened", "Past tense with aspect, step by step", "book-open", "n_seed_aspect", "Narrating in the past: perfective verbs move the story forward (prišiel, otvoril, povedal), imperfectives set the scene (svietilo slnko, ľudia sedeli). Give me a six-picture story in English and have me tell it in Slovak one line at a time, prompting the aspect before you correct.", { slovakTerm: "Rozprávanie v minulosti", grammarTerm: "Narrating past events" }),
-	goal("can-narrate", "Can tell a story", "Minulý víkend sa mi stalo niečo zvláštne…", undefined, "family", { slovakTerm: "Príbeh", grammarTerm: "Can-Do: Tell a story" }),
+	tutor(
+		"verb-prefixes",
+		"Verb prefixes",
+		"prísť, odísť, prejsť, vojsť",
+		"route",
+		"n_seed_motion",
+		"Prefixes on verbs of motion and others: pri- (arrive), od- (leave), pre- (across/through), vy- (out), vo- (in), do- (reach), roz- (apart), and how a prefix also makes the verb perfective. Drill me with one scene told with ísť plus prefixes.",
+		{ slovakTerm: "Slovesné predpony", grammarTerm: "Verb prefixes" },
+	),
+	tutor(
+		"narration",
+		"Telling what happened",
+		"Past tense with aspect, step by step",
+		"book-open",
+		"n_seed_aspect",
+		"Narrating in the past: perfective verbs move the story forward (prišiel, otvoril, povedal), imperfectives set the scene (svietilo slnko, ľudia sedeli). Give me a six-picture story in English and have me tell it in Slovak one line at a time, prompting the aspect before you correct.",
+		{ slovakTerm: "Rozprávanie v minulosti", grammarTerm: "Narrating past events" },
+	),
+	goal("can-narrate", "Can tell a story", "Minulý víkend sa mi stalo niečo zvláštne…", undefined, "family", {
+		slovakTerm: "Príbeh",
+		grammarTerm: "Can-Do: Tell a story",
+	}),
 
 	// ── B1 · 14 Opinions ──
 	drill("verbs-mix"),
 	drill("pairs-opinions"),
 	drill("lx-thinking"),
 	drill("lx-speaking"),
-	tutor("relative", "Which and that: ktorý", "Relative clauses and commas", "link", undefined, "Relative clauses with ktorý/ktorá/ktoré, which take the case their own clause needs (muž, ktorého poznám; kniha, o ktorej hovoríš), plus čo and kde, and the comma rule. Drill me on joining two sentences into one.", { slovakTerm: "Prívlastkové vety (ktorý)", grammarTerm: "Relative clauses" }),
-	tutor("reported", "že, aby, keby", "Saying what people said and wanted", "quote", undefined, "Subordinate clauses: že (that), aby (so that / want someone to, with the -l form), keby (if, unreal), či (whether). Drill me on turning quotes into reported speech and wishes.", { slovakTerm: "Vedľajšie vety (že, aby, keby)", grammarTerm: "Reported speech & clauses" }),
-	tutor("comparatives", "More and most", "väčší, lepší, najkrajší", "trending-up", undefined, "Comparatives and superlatives of adjectives and adverbs: -ší/-ejší, naj-, the irregular ones (dobrý–lepší–najlepší, zlý–horší, veľký–väčší, malý–menší), and ako / než after a comparative. Drill me on comparing things.", { slovakTerm: "Stupňovanie prídavných mien", grammarTerm: "Comparatives & superlatives" }),
-	goal("can-opinion", "Can give an opinion", "Myslím si, že… Súhlasím, ale…", undefined, "colleague", { slovakTerm: "Vyjadrenie názoru", grammarTerm: "Can-Do: Express opinions" }),
+	tutor(
+		"relative",
+		"Which and that: ktorý",
+		"Relative clauses and commas",
+		"link",
+		undefined,
+		"Relative clauses with ktorý/ktorá/ktoré, which take the case their own clause needs (muž, ktorého poznám; kniha, o ktorej hovoríš), plus čo and kde, and the comma rule. Drill me on joining two sentences into one.",
+		{ slovakTerm: "Prívlastkové vety (ktorý)", grammarTerm: "Relative clauses" },
+	),
+	tutor(
+		"reported",
+		"že, aby, keby",
+		"Saying what people said and wanted",
+		"quote",
+		undefined,
+		"Subordinate clauses: že (that), aby (so that / want someone to, with the -l form), keby (if, unreal), či (whether). Drill me on turning quotes into reported speech and wishes.",
+		{ slovakTerm: "Vedľajšie vety (že, aby, keby)", grammarTerm: "Reported speech & clauses" },
+	),
+	tutor(
+		"comparatives",
+		"More and most",
+		"väčší, lepší, najkrajší",
+		"trending-up",
+		undefined,
+		"Comparatives and superlatives of adjectives and adverbs: -ší/-ejší, naj-, the irregular ones (dobrý–lepší–najlepší, zlý–horší, veľký–väčší, malý–menší), and ako / než after a comparative. Drill me on comparing things.",
+		{ slovakTerm: "Stupňovanie prídavných mien", grammarTerm: "Comparatives & superlatives" },
+	),
+	goal("can-opinion", "Can give an opinion", "Myslím si, že… Súhlasím, ale…", undefined, "colleague", {
+		slovakTerm: "Vyjadrenie názoru",
+		grammarTerm: "Can-Do: Express opinions",
+	}),
 
 	// ── B1 · 15 Dealing with offices ──
-	tutor("plural-cases", "Plural in every case", "s kamarátmi, v mestách, bez peňazí", "layers", "n_seed_gen_pl", "The plural across the cases: genitive (domov, žien, miest, peňazí), dative -om, locative -och, instrumental -ami/-mi, and the adjective plural endings -ých/-ým/-ými. Drill me with prepositions that pick the case.", { slovakTerm: "Pády v množnom čísle", grammarTerm: "Plural in all cases" }),
+	tutor(
+		"plural-cases",
+		"Plural in every case",
+		"s kamarátmi, v mestách, bez peňazí",
+		"layers",
+		"n_seed_gen_pl",
+		"The plural across the cases: genitive (domov, žien, miest, peňazí), dative -om, locative -och, instrumental -ami/-mi, and the adjective plural endings -ých/-ým/-ými. Drill me with prepositions that pick the case.",
+		{ slovakTerm: "Pády v množnom čísle", grammarTerm: "Plural in all cases" },
+	),
 	drill("lx-admin"),
 	drill("lx-tech"),
 	drill("lx-languages"),
 	drill("words-1000"),
-	tutor("phone-email", "On the phone, in an email", "Dobrý deň, volám kvôli…", "phone", undefined, "Phone calls and short emails: opening and closing phrases, vykanie, asking for a person, leaving a message, and a formal email's shape (Vážená pani / S pozdravom). Run a phone call with me, then have me write a five-line email and correct it.", { slovakTerm: "Telefonát a email", grammarTerm: "Formal phone & email" }),
-	goal("can-complain", "Can sort out a problem", "Objednal som si…, ale prišlo niečo iné.", undefined, "shop", { slovakTerm: "Riešenie reklamácie", grammarTerm: "Can-Do: Solve problems" }),
+	tutor(
+		"phone-email",
+		"On the phone, in an email",
+		"Dobrý deň, volám kvôli…",
+		"phone",
+		undefined,
+		"Phone calls and short emails: opening and closing phrases, vykanie, asking for a person, leaving a message, and a formal email's shape (Vážená pani / S pozdravom). Run a phone call with me, then have me write a five-line email and correct it.",
+		{ slovakTerm: "Telefonát a email", grammarTerm: "Formal phone & email" },
+	),
+	goal("can-complain", "Can sort out a problem", "Objednal som si…, ale prišlo niečo iné.", undefined, "shop", {
+		slovakTerm: "Riešenie reklamácie",
+		grammarTerm: "Can-Do: Solve problems",
+	}),
 
 	// ── B1 · 16 The wider world ──
 	drill("lx-nature"),
 	drill("lx-animals"),
 	drill("words-1500"),
-	tutor("participles", "Participles and verbal nouns", "robený, robiac, robenie", "file-text", undefined, "Passive participles (-ný/-tý: napísaný, otvorený), the verbal noun (-nie/-tie: čítanie, bývanie), and the adverbial participle (-úc/-iac) you meet in writing. Show me each in real headlines and make me rewrite active sentences with them.", { slovakTerm: "Príčastia a prechodníky", grammarTerm: "Participles & verbal nouns" }),
-	goal("can-read-news", "Can read simple news", "A short article, understood and retold", undefined, undefined, { slovakTerm: "Čítanie správ", grammarTerm: "Can-Do: Read simple news" }),
+	tutor(
+		"participles",
+		"Participles and verbal nouns",
+		"robený, robiac, robenie",
+		"file-text",
+		undefined,
+		"Passive participles (-ný/-tý: napísaný, otvorený), the verbal noun (-nie/-tie: čítanie, bývanie), and the adverbial participle (-úc/-iac) you meet in writing. Show me each in real headlines and make me rewrite active sentences with them.",
+		{ slovakTerm: "Príčastia a prechodníky", grammarTerm: "Participles & verbal nouns" },
+	),
+	goal("can-read-news", "Can read simple news", "A short article, understood and retold", undefined, undefined, {
+		slovakTerm: "Čítanie správ",
+		grammarTerm: "Can-Do: Read simple news",
+	}),
 
 	// ── B2 · 17 Nuance ──
 	drill("words-2000"),
-	tutor("passive", "The passive and 'one does'", "Bolo rozhodnuté. Hovorí sa, že…", "shield", undefined, "The passive voice with byť + participle, the reflexive passive (hovorí sa, predáva sa), and impersonal constructions (treba, dá sa, možno). Drill me on turning active sentences into each kind and on choosing the natural one."),
-	tutor("cond-past", "Would have", "Bol by som prišiel, keby…", "rewind", "n_seed_conditional", "The past conditional (bol by som prišiel) and unreal conditions with keby, plus the modal shades of mal by som / mohol by som. Drill me with regrets and advice."),
-	tutor("numerals-full", "Numbers in every case", "s dvoma kamarátmi, o piatich hodinách", "calculator", "n_seed_numerals", "Numerals in the oblique cases (dvoch/dvom/dvoma, piatich/piatim/piatimi), ordinals and dates (dvadsiateho prvého), collective numerals (dvaja, traja for men), fractions and percentages. Drill me on prices, dates and statistics."),
+	tutor(
+		"passive",
+		"The passive and 'one does'",
+		"Bolo rozhodnuté. Hovorí sa, že…",
+		"shield",
+		undefined,
+		"The passive voice with byť + participle, the reflexive passive (hovorí sa, predáva sa), and impersonal constructions (treba, dá sa, možno). Drill me on turning active sentences into each kind and on choosing the natural one.",
+	),
+	tutor(
+		"cond-past",
+		"Would have",
+		"Bol by som prišiel, keby…",
+		"rewind",
+		"n_seed_conditional",
+		"The past conditional (bol by som prišiel) and unreal conditions with keby, plus the modal shades of mal by som / mohol by som. Drill me with regrets and advice.",
+	),
+	tutor(
+		"numerals-full",
+		"Numbers in every case",
+		"s dvoma kamarátmi, o piatich hodinách",
+		"calculator",
+		"n_seed_numerals",
+		"Numerals in the oblique cases (dvoch/dvom/dvoma, piatich/piatim/piatimi), ordinals and dates (dvadsiateho prvého), collective numerals (dvaja, traja for men), fractions and percentages. Drill me on prices, dates and statistics.",
+	),
 	goal("can-write-formal", "Can write a formal email", "Vážený pán…, obraciam sa na Vás…", undefined, undefined),
 
 	// ── B2 · 18 Register and idiom ──
-	tutor("idioms", "Idioms and set phrases", "mať niečo na háku, byť v siedmom nebi", "sparkles", undefined, "Common Slovak idioms and collocations in context: give me ten at a time in short dialogues, check I can guess them, then have me use each in a sentence of my own."),
-	tutor("colloquial", "Standard and street", "spisovná slovenčina vs hovorová", "mic", undefined, "Register: standard (spisovná) versus colloquial Slovak and Bratislava usage (čo robíš → čo robíš, že?, dobre → fajn, veľmi → strašne), when each is right, and words that mark a text as formal. Give me lines to shift between registers."),
-	tutor("connectors", "Connecting ideas", "hoci, preto, napriek tomu, pokiaľ", "git-merge", undefined, "Connectors and conjunctions for argument: preto, lebo, hoci, napriek tomu, pokiaľ, kým, zatiaľ čo, teda, jednak… jednak, and how they shape word order. Make me argue a point for and against in eight sentences using them."),
+	tutor(
+		"idioms",
+		"Idioms and set phrases",
+		"mať niečo na háku, byť v siedmom nebi",
+		"sparkles",
+		undefined,
+		"Common Slovak idioms and collocations in context: give me ten at a time in short dialogues, check I can guess them, then have me use each in a sentence of my own.",
+	),
+	tutor(
+		"colloquial",
+		"Standard and street",
+		"spisovná slovenčina vs hovorová",
+		"mic",
+		undefined,
+		"Register: standard (spisovná) versus colloquial Slovak and Bratislava usage (čo robíš → čo robíš, že?, dobre → fajn, veľmi → strašne), when each is right, and words that mark a text as formal. Give me lines to shift between registers.",
+	),
+	tutor(
+		"connectors",
+		"Connecting ideas",
+		"hoci, preto, napriek tomu, pokiaľ",
+		"git-merge",
+		undefined,
+		"Connectors and conjunctions for argument: preto, lebo, hoci, napriek tomu, pokiaľ, kým, zatiaľ čo, teda, jednak… jednak, and how they shape word order. Make me argue a point for and against in eight sentences using them.",
+	),
 	drill("words-3000"),
 	goal("can-debate", "Can argue a point", "Na jednej strane…, na druhej strane…", undefined, "colleague"),
 
 	// ── B2 · 19 Media ──
-	tutor("reading", "Reading the news", "An article a day, discussed in Slovak", "newspaper", undefined, "Pick a short real-style Slovak news article (write one at B2 level, 150 words) on a topic I choose, let me read it, then ask me five comprehension and two opinion questions in Slovak, correcting form slips only after I answer."),
-	tutor("listening-film", "Film and radio", "Following fast speech", "film", undefined, "Fast listening: read me, in say: spans at natural speed, a two-minute dialogue with colloquial speech and interruptions; then ask what happened, who wanted what, and the exact phrases used. Repeat the hard lines slower only on request."),
-	tutor("writing", "Writing at length", "A 150-word text, corrected", "pen-line", undefined, "Writing: give me a prompt (a complaint, a story, an opinion piece), have me write about 150 words in Slovak, then correct it in three passes: cases and agreement, aspect and tense, then style and register, explaining each change in one line."),
+	tutor(
+		"reading",
+		"Reading the news",
+		"An article a day, discussed in Slovak",
+		"newspaper",
+		undefined,
+		"Pick a short real-style Slovak news article (write one at B2 level, 150 words) on a topic I choose, let me read it, then ask me five comprehension and two opinion questions in Slovak, correcting form slips only after I answer.",
+	),
+	tutor(
+		"listening-film",
+		"Film and radio",
+		"Following fast speech",
+		"film",
+		undefined,
+		"Fast listening: read me, in say: spans at natural speed, a two-minute dialogue with colloquial speech and interruptions; then ask what happened, who wanted what, and the exact phrases used. Repeat the hard lines slower only on request.",
+	),
+	tutor(
+		"writing",
+		"Writing at length",
+		"A 150-word text, corrected",
+		"pen-line",
+		undefined,
+		"Writing: give me a prompt (a complaint, a story, an opinion piece), have me write about 150 words in Slovak, then correct it in three passes: cases and agreement, aspect and tense, then style and register, explaining each change in one line.",
+	),
 	goal("can-follow-media", "Can follow Slovak media", "News, film and a podcast, understood", undefined, undefined),
 ];
 
@@ -310,7 +664,15 @@ interface Chapter {
 	units: string[];
 }
 
-function chapter(map: readonly CurriculumUnit[], id: string, stage: StageId, title: string, tagline: string, from: string, to: string): Chapter {
+function chapter(
+	map: readonly CurriculumUnit[],
+	id: string,
+	stage: StageId,
+	title: string,
+	tagline: string,
+	from: string,
+	to: string,
+): Chapter {
 	const a = map.findIndex((u) => u.id === from);
 	const b = map.findIndex((u) => u.id === to);
 	if (a < 0 || b < a) throw new Error(`curriculum: bad chapter ${id}`);
@@ -329,11 +691,35 @@ const slovakChapters = (map: readonly CurriculumUnit[]): Chapter[] => [
 	chapter(map, "shopping", "a2", "Shopping", "Numbers, plural, would like", "numbers", "can-shop"),
 	chapter(map, "plans", "a2", "Plans and weather", "-em verbs and the future", "present-em", "can-plan"),
 	chapter(map, "moving", "a2", "Moving around", "Motion, aspect, commands", "motion", "can-travel"),
-	chapter(map, "people", "a2", "People and feelings", "Adjective cases, pronouns, clitics", "adj-cases", "can-describe-people"),
+	chapter(
+		map,
+		"people",
+		"a2",
+		"People and feelings",
+		"Adjective cases, pronouns, clitics",
+		"adj-cases",
+		"can-describe-people",
+	),
 	chapter(map, "work", "a2", "Work and school", "Negation, time, word order", "lx-work", "can-interview"),
 	chapter(map, "stories", "b1", "Telling stories", "All cases mixed, prefixes, narration", "cases-mix", "can-narrate"),
-	chapter(map, "opinions", "b1", "Opinions", "Relative clauses, reported speech, comparison", "verbs-mix", "can-opinion"),
-	chapter(map, "offices", "b1", "Dealing with offices", "Plural cases, forms, phone and email", "plural-cases", "can-complain"),
+	chapter(
+		map,
+		"opinions",
+		"b1",
+		"Opinions",
+		"Relative clauses, reported speech, comparison",
+		"verbs-mix",
+		"can-opinion",
+	),
+	chapter(
+		map,
+		"offices",
+		"b1",
+		"Dealing with offices",
+		"Plural cases, forms, phone and email",
+		"plural-cases",
+		"can-complain",
+	),
 	chapter(map, "world", "b1", "The wider world", "Participles, nature, 1,500 words", "lx-nature", "can-read-news"),
 	chapter(map, "nuance", "b2", "Nuance", "Passive, past conditional, numerals", "words-2000", "can-write-formal"),
 	chapter(map, "register", "b2", "Register and idiom", "Idioms, street Slovak, connectors", "idioms", "can-debate"),
@@ -360,11 +746,21 @@ function courseCurriculum(course: Course): CurriculumUnit[] {
 }
 
 /** Every unit on the map, in teaching order: the running language's course (src/core/course.ts), else Slovak's. */
-export const curriculumUnits = perCourse((course): CurriculumUnit[] => (course ? courseCurriculum(course) : slovakCurriculum()));
+export const curriculumUnits = perCourse((course): CurriculumUnit[] =>
+	course ? courseCurriculum(course) : slovakCurriculum(),
+);
 
 /** The map's chapters, in order. Each closes with a can-do goal. */
 export const allChapters = perCourse((course): Chapter[] =>
-	course ? course.chapters.map((c, i) => ({ id: c.id, stage: c.stage, title: c.title, tagline: c.tagline, units: i === 0 ? ["words", ...c.units] : [...c.units] })) : slovakChapters(curriculumUnits()),
+	course
+		? course.chapters.map((c, i) => ({
+				id: c.id,
+				stage: c.stage,
+				title: c.title,
+				tagline: c.tagline,
+				units: i === 0 ? ["words", ...c.units] : [...c.units],
+			}))
+		: slovakChapters(curriculumUnits()),
 );
 
 export function curriculumUnit(id: string): CurriculumUnit | undefined {
@@ -439,11 +835,16 @@ const TEST_OUT_ACCURACY = 0.95;
 /** A chapter opens when the one before has at most this many units undone. */
 const CHAPTER_SLACK = 2;
 
-function unitProgressOf(u: CurriculumUnit, e: UnitEvidence | undefined, lessonsToComplete: number): { done: boolean; progress: number } {
+function unitProgressOf(
+	u: CurriculumUnit,
+	e: UnitEvidence | undefined,
+	lessonsToComplete: number,
+): { done: boolean; progress: number } {
 	const lessons = e?.lessons ?? 0;
 	const accuracy = e && e.reps > 0 ? e.correct / e.reps : null;
 	if (u.kind === "tutor") return { done: lessons >= TUTOR_SESSIONS, progress: Math.min(1, lessons / TUTOR_SESSIONS) };
-	if (u.lessonsToComplete) return { done: lessons >= lessonsToComplete, progress: Math.min(1, lessons / lessonsToComplete) };
+	if (u.lessonsToComplete)
+		return { done: lessons >= lessonsToComplete, progress: Math.min(1, lessons / lessonsToComplete) };
 	// Placement: both of the drill's reps right tests the unit out.
 	if (e?.placed && lessons === 0 && e.reps >= 2 && e.correct === e.reps) return { done: true, progress: 1 };
 	const aced = lessons >= 1 && (e?.reps ?? 0) >= 10 && (accuracy ?? 0) >= TEST_OUT_ACCURACY;
@@ -456,9 +857,16 @@ function unitProgressOf(u: CurriculumUnit, e: UnitEvidence | undefined, lessonsT
 /** The whole map's state from the progress ledger. Pure. `startChapter`
  *  (from placement) skips every chapter before it: their undone units
  *  count as passed and stay open to revisit. */
-export function curriculumState(evidence: Record<string, UnitEvidence | undefined>, target: Cefr = "B2", opts: { startChapter?: string } = {}): CurriculumState {
+export function curriculumState(
+	evidence: Record<string, UnitEvidence | undefined>,
+	target: Cefr = "B2",
+	opts: { startChapter?: string } = {},
+): CurriculumState {
 	const targetIdx = CEFR_ORDER.indexOf(target);
-	const startIdx = Math.max(0, allChapters().findIndex((c) => c.id === opts.startChapter));
+	const startIdx = Math.max(
+		0,
+		allChapters().findIndex((c) => c.id === opts.startChapter),
+	);
 	const doneSet = new Set<string>();
 	const chapters: ChapterState[] = [];
 	let prevOpenSlack: boolean = true; // the first chapter is always open
@@ -486,7 +894,10 @@ export function curriculumState(evidence: Record<string, UnitEvidence | undefine
 				const reached = open && doneCount >= countable;
 				status = reached ? (units.some((x) => x.status === "skipped") ? "skipped" : "done") : "locked";
 				progress = countable > 0 ? Math.min(1, doneCount / countable) : 0;
-				if (!reached) needs = open ? `Finish the chapter's ${countable - doneCount} open unit${countable - doneCount === 1 ? "" : "s"}` : `Opens when “${ch.title}” opens`;
+				if (!reached)
+					needs = open
+						? `Finish the chapter's ${countable - doneCount} open unit${countable - doneCount === 1 ? "" : "s"}`
+						: `Opens when “${ch.title}” opens`;
 			} else {
 				const p = unitProgressOf(u, e, u.lessonsToComplete ?? 0);
 				const missing = (u.requires ?? []).filter((r) => !doneSet.has(r));
@@ -496,7 +907,10 @@ export function curriculumState(evidence: Record<string, UnitEvidence | undefine
 				else if (missing.length) status = "locked";
 				else status = lessons > 0 ? "started" : "open";
 				progress = p.progress;
-				if (status === "locked") needs = !open ? `Opens when “${ch.title}” opens` : `After ${missing.map((m) => curriculumUnit(m)?.title ?? m).join(" and ")}`;
+				if (status === "locked")
+					needs = !open
+						? `Opens when “${ch.title}” opens`
+						: `After ${missing.map((m) => curriculumUnit(m)?.title ?? m).join(" and ")}`;
 			}
 			if (status === "done" || status === "skipped") {
 				doneSet.add(id);
@@ -527,7 +941,17 @@ export function curriculumState(evidence: Record<string, UnitEvidence | undefine
 			done += units.filter((u) => u.status === "done" || u.status === "skipped").length;
 		}
 		if (open && !chapterDone && !current && !skippedChapter) current = ch.id;
-		chapters.push({ id: ch.id, stage: ch.stage, title: ch.title, tagline: ch.tagline, open, done: chapterDone, doneCount, total: countable, units });
+		chapters.push({
+			id: ch.id,
+			stage: ch.stage,
+			title: ch.title,
+			tagline: ch.tagline,
+			open,
+			done: chapterDone,
+			doneCount,
+			total: countable,
+			units,
+		});
 		prevOpenSlack = open && countable - doneCount <= CHAPTER_SLACK;
 	}
 	const cur = chapters.find((c) => c.id === (current ?? chapters[chapters.length - 1]!.id))!;
@@ -618,21 +1042,45 @@ export function hoursDone(state: CurriculumState): number {
 /** Study days a week when the goal does not say (DEFAULT_DAYS_PER_WEEK in onboarding.ts). */
 const DAYS_PER_WEEK = 6;
 
-export function projection(state: CurriculumState, opts: { target: Cefr; minutesPerDay: number; daysPerWeek?: number; recentMinutes: number[]; now: Date }): Projection {
+export function projection(
+	state: CurriculumState,
+	opts: { target: Cefr; minutesPerDay: number; daysPerWeek?: number; recentMinutes: number[]; now: Date },
+): Projection {
 	const done = hoursDone(state);
 	const targetHours = GUIDED_HOURS[opts.target];
 	const left = Math.max(0, targetHours - done);
 	const plannedWeekly = (opts.minutesPerDay / 60) * (opts.daysPerWeek ?? DAYS_PER_WEEK);
-	const paceMinutes = opts.recentMinutes.length ? opts.recentMinutes.reduce((a, b) => a + b, 0) / opts.recentMinutes.length : 0;
+	const paceMinutes = opts.recentMinutes.length
+		? opts.recentMinutes.reduce((a, b) => a + b, 0) / opts.recentMinutes.length
+		: 0;
 	const etaPlanned = plannedWeekly > 0 ? addDaysIso(opts.now, (left / plannedWeekly) * 7) : null;
 	const paceDays = opts.recentMinutes.filter((m) => m > 0).length;
 	const etaPace = opts.recentMinutes.length >= 14 ? paceEta(left, paceMinutes, paceDays, opts.now) : null;
-	return { target: opts.target, hoursDone: Math.round(done), hoursTarget: targetHours, plannedWeekly: Math.round(plannedWeekly * 10) / 10, paceMinutes: Math.round(paceMinutes), paceDays, etaPlanned, etaPace };
+	return {
+		target: opts.target,
+		hoursDone: Math.round(done),
+		hoursTarget: targetHours,
+		plannedWeekly: Math.round(plannedWeekly * 10) / 10,
+		paceMinutes: Math.round(paceMinutes),
+		paceDays,
+		etaPlanned,
+		etaPace,
+	};
 }
 
 // ─── The daily plan ─────────────────────────────────────────────────────────
 
-export type TaskKind = "review" | "listen" | "lesson" | "strengthen" | "words" | "read" | "watch" | "speak" | "fluency" | "blitz";
+export type TaskKind =
+	| "review"
+	| "listen"
+	| "lesson"
+	| "strengthen"
+	| "words"
+	| "read"
+	| "watch"
+	| "speak"
+	| "fluency"
+	| "blitz";
 
 export interface PlanTask {
 	id: TaskKind;
@@ -726,14 +1174,34 @@ interface PlanInput {
 
 /** Which tasks survive a tight budget first (lower keeps): the must-haves,
  *  then one task of each strand, then the second form-focused ones. */
-const BUDGET_ORDER: Record<TaskKind, number> = { review: 0, lesson: 1, listen: 2, speak: 3, read: 4, watch: 4, fluency: 5, strengthen: 6, blitz: 6, words: 7 };
+const BUDGET_ORDER: Record<TaskKind, number> = {
+	review: 0,
+	lesson: 1,
+	listen: 2,
+	speak: 3,
+	read: 4,
+	watch: 4,
+	fluency: 5,
+	strengthen: 6,
+	blitz: 6,
+	words: 7,
+};
 
 /** The tasks an input-first arm keeps (docs/experiments/input-first-russian.md):
  *  meaning-focused input (Listen, Watch, Read) and vocabulary (Review, Words).
  *  Form drills, the tutor, speed (which records speech) and speaking are left out. */
 const INPUT_FIRST_TASKS: ReadonlySet<TaskKind> = new Set<TaskKind>(["review", "listen", "words", "read", "watch"]);
 
-const TASK_MINUTES = { listen: LISTEN_MINUTES, lesson: 3, strengthen: 3, words: 3, read: 4, speak: 6, fluency: 3, blitz: 1 } as const;
+const TASK_MINUTES = {
+	listen: LISTEN_MINUTES,
+	lesson: 3,
+	strengthen: 3,
+	words: 3,
+	read: 4,
+	speak: 6,
+	fluency: 3,
+	blitz: 1,
+} as const;
 
 /**
  * The day's plan, from the research on what actually moves a learner:
@@ -762,7 +1230,12 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "review",
 			title: "Review",
-			line: review.due > 0 ? `${review.due} card${review.due === 1 ? "" : "s"} due — recall them before anything new` : review.newLeft > 0 && !done ? `${review.newLeft} new word${review.newLeft === 1 ? "" : "s"} waiting` : "All caught up",
+			line:
+				review.due > 0
+					? `${review.due} card${review.due === 1 ? "" : "s"} due — recall them before anything new`
+					: review.newLeft > 0 && !done
+						? `${review.newLeft} new word${review.newLeft === 1 ? "" : "s"} waiting`
+						: "All caught up",
 			minutes,
 			done,
 			href: "/review",
@@ -775,7 +1248,10 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	tasks.push({
 		id: "listen",
 		title: "Listen",
-		line: (day.listens ?? 0) > 0 ? "Ten sentences heard and typed" : "Ten sentences you can follow — hear each, then type what you heard",
+		line:
+			(day.listens ?? 0) > 0
+				? "Ten sentences heard and typed"
+				: "Ten sentences you can follow — hear each, then type what you heard",
 		minutes: TASK_MINUTES.listen,
 		done: (day.listens ?? 0) > 0,
 		href: "/listen",
@@ -798,7 +1274,11 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	tasks.push({
 		id: "lesson",
 		title: next ? `${prefix}: ${nextClean}${termSuffix}` : "Grammar lesson",
-		line: next ? (next.lessons > 0 ? `Lesson ${next.lessons + 1} · ${lineGrammar}${next.tagline}` : `New · ${lineGrammar}${next.tagline}`) : "The next step on your path",
+		line: next
+			? next.lessons > 0
+				? `Lesson ${next.lessons + 1} · ${lineGrammar}${next.tagline}`
+				: `New · ${lineGrammar}${next.tagline}`
+			: "The next step on your path",
 		minutes: TASK_MINUTES.lesson,
 		done: newGroundDone,
 		unit: input.next,
@@ -808,15 +1288,29 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	// 4. Strengthen: a weak spot on record first (the check or the deck
 	//    flagged it, even with no lesson yet), else the weakest practiced
 	//    drill (not the Continue unit), else a blitz across the units started.
-	const spot = (input.weak ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
-	const worseUnit = spot ? undefined : (input.worse ?? []).map((id) => byId.get(id)).find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
+	const spot = (input.weak ?? [])
+		.map((id) => byId.get(id))
+		.find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
+	const worseUnit = spot
+		? undefined
+		: (input.worse ?? [])
+				.map((id) => byId.get(id))
+				.find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
 	const weak =
 		spot ??
 		worseUnit ??
 		all
-			.filter((u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85)
+			.filter(
+				(u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85,
+			)
 			.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1))[0];
-	const strengthenDone = Object.keys(day.units).some((id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0) || day.blitz > 0 || (day.mixups ?? 0) > 0 || (day.personal ?? 0) > 0;
+	const strengthenDone =
+		Object.keys(day.units).some(
+			(id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0,
+		) ||
+		day.blitz > 0 ||
+		(day.mixups ?? 0) > 0 ||
+		(day.personal ?? 0) > 0;
 	const mixups = input.mixups ?? [];
 	if (!spot && input.personal) {
 		tasks.push({
@@ -843,21 +1337,37 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: ${weakClean}${weakSlovak ? ` · ${weakSlovak}` : ""}`,
-			line: spot ? `A weak spot on record — a typed lesson, mixed with related units` : worseUnit ? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with related units` : `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with related units`,
+			line: spot
+				? `A weak spot on record — a typed lesson, mixed with related units`
+				: worseUnit
+					? `Slipping lately: ${Math.round((worseUnit.accuracy ?? 0) * 100)}% right — a typed lesson, mixed with related units`
+					: `${Math.round((weak.accuracy ?? 0) * 100)}% right so far — a typed lesson, mixed with related units`,
 			minutes: TASK_MINUTES.strengthen,
 			done: strengthenDone,
 			unit: weak.id,
 			href: `/lesson?unit=${weak.id}`,
 		});
 	} else if (all.some((u) => u.kind === "drill" && lessonsBeforeToday(u.id) >= 1 && u.id !== "words")) {
-		tasks.push({ id: "blitz", title: "Blitz", line: "60 seconds across everything you have started", minutes: TASK_MINUTES.blitz, done: strengthenDone, href: "/lesson?mode=blitz" });
+		tasks.push({
+			id: "blitz",
+			title: "Blitz",
+			line: "60 seconds across everything you have started",
+			minutes: TASK_MINUTES.blitz,
+			done: strengthenDone,
+			href: "/lesson?mode=blitz",
+		});
 	}
 
 	// 5. Words: the first open words unit that is not already the lesson.
 	//    A words unit that Strengthen already takes is left to it.
-	const wordsUnit = all.find((u) => u.kind === "words" && u.id !== input.next && u.id !== spot?.id && (u.status === "open" || u.status === "started"));
+	const wordsUnit = all.find(
+		(u) =>
+			u.kind === "words" && u.id !== input.next && u.id !== spot?.id && (u.status === "open" || u.status === "started"),
+	);
 	if (wordsUnit) {
-		const wordsDone = Object.keys(day.units).some((id) => byId.get(id)?.kind === "words" && id !== input.next && id !== spot?.id && (day.units[id] ?? 0) > 0);
+		const wordsDone = Object.keys(day.units).some(
+			(id) => byId.get(id)?.kind === "words" && id !== input.next && id !== spot?.id && (day.units[id] ?? 0) > 0,
+		);
 		const wordsInfo = isUnitId(wordsUnit.id) ? unitInfo(wordsUnit.id) : undefined;
 		const wordsSlovak = wordsUnit.slovakTerm ?? wordsInfo?.slovakTerm;
 		const wordsClean = wordsUnit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
@@ -879,7 +1389,13 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	tasks.push({
 		id: "read",
 		title: input.story ? `Read: ${input.story}` : "Read",
-		line: input.story ? (readDone ? "Read today" : "Tap any word for its meaning") : readDone ? "Read today's part of the story" : "Read the next part of the story — tap any word for its meaning",
+		line: input.story
+			? readDone
+				? "Read today"
+				: "Tap any word for its meaning"
+			: readDone
+				? "Read today's part of the story"
+				: "Read the next part of the story — tap any word for its meaning",
 		minutes: TASK_MINUTES.read,
 		done: readDone,
 		href: "/read",
@@ -892,7 +1408,12 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 		tasks.push({
 			id: "watch",
 			title: `Watch: ${input.watch.title}`,
-			line: (day.watches ?? 0) > 0 ? "Watched today" : input.watch.coverage === undefined ? `${input.watch.captionLang ?? "Other-language"} captions — listen first, then reveal` : `${input.watch.estimated ? "About " : ""}${Math.round(input.watch.coverage * 100)} of every 100 words known — listen first, then reveal`,
+			line:
+				(day.watches ?? 0) > 0
+					? "Watched today"
+					: input.watch.coverage === undefined
+						? `${input.watch.captionLang ?? "Other-language"} captions — listen first, then reveal`
+						: `${input.watch.estimated ? "About " : ""}${Math.round(input.watch.coverage * 100)} of every 100 words known — listen first, then reveal`,
 			minutes: input.watch.minutes,
 			done: (day.watches ?? 0) > 0,
 			href: `/watch?id=${input.watch.id}`,
@@ -911,11 +1432,39 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const speakDone = (day.speaks ?? 0) + (tutorUnit ? day.tutors : 0) > 0;
 	if (tutorUnit) {
 		const tutorClean = tutorUnit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
-		tasks.push({ id: "speak", title: `With the tutor: ${tutorClean}`, line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`, minutes: TASK_MINUTES.speak, done: speakDone, unit: tutorUnit.id, via: "tutor" });
+		tasks.push({
+			id: "speak",
+			title: `With the tutor: ${tutorClean}`,
+			line: `${tutorUnit.tagline} · ${tutorUnit.lessons}/${TUTOR_SESSIONS} sessions`,
+			minutes: TASK_MINUTES.speak,
+			done: speakDone,
+			unit: tutorUnit.id,
+			via: "tutor",
+		});
 	} else if (scene) {
-		tasks.push({ id: "speak", title: "Speak", line: scene === chapterScene ? "Say the chapter's scene out loud — the tutor answers and asks you to fix your slips" : "Say a scene from your goals out loud — the tutor answers and asks you to fix your slips", minutes: TASK_MINUTES.speak, done: speakDone, unit: scene, via: "speak", href: `/speak?scene=${scene}` });
+		tasks.push({
+			id: "speak",
+			title: "Speak",
+			line:
+				scene === chapterScene
+					? "Say the chapter's scene out loud — the tutor answers and asks you to fix your slips"
+					: "Say a scene from your goals out loud — the tutor answers and asks you to fix your slips",
+			minutes: TASK_MINUTES.speak,
+			done: speakDone,
+			unit: scene,
+			via: "speak",
+			href: `/speak?scene=${scene}`,
+		});
 	} else {
-		tasks.push({ id: "speak", title: "Speak", line: "A scene out loud — the tutor answers and asks you to fix your slips", minutes: TASK_MINUTES.speak, done: speakDone, via: "speak", href: "/speak" });
+		tasks.push({
+			id: "speak",
+			title: "Speak",
+			line: "A scene out loud — the tutor answers and asks you to fix your slips",
+			minutes: TASK_MINUTES.speak,
+			done: speakDone,
+			via: "speak",
+			href: "/speak",
+		});
 	}
 
 	// 8. Speed: fluency on what is already known (src/core/fluency.ts). A
@@ -926,8 +1475,22 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const rereadDay = input.reread && input.dayOfYear % 2 === 1;
 	tasks.push(
 		rereadDay
-			? { id: "fluency", title: "Read it faster", line: "An episode you have read, against the clock — words a minute, then one question", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=reread" }
-			: { id: "fluency", title: "Speed", line: "Six sentences you know, each said three times in a shrinking window", minutes: TASK_MINUTES.fluency, done: fluencyDone, href: "/speed?mode=fast" },
+			? {
+					id: "fluency",
+					title: "Read it faster",
+					line: "An episode you have read, against the clock — words a minute, then one question",
+					minutes: TASK_MINUTES.fluency,
+					done: fluencyDone,
+					href: "/speed?mode=reread",
+				}
+			: {
+					id: "fluency",
+					title: "Speed",
+					line: "Six sentences you know, each said three times in a shrinking window",
+					minutes: TASK_MINUTES.fluency,
+					done: fluencyDone,
+					href: "/speed?mode=fast",
+				},
 	);
 
 	// Cut to the planned minutes, keeping review and the lesson. A tight
@@ -949,7 +1512,12 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const carried = new Map((input.carried ?? []).map((c) => [c.id, c.from]));
 	const marked = kept.map((t) => (carried.has(t.id) && !t.done ? { ...t, from: carried.get(t.id) } : t));
 	const ordered = [...marked.filter((t) => t.from), ...marked.filter((t) => !t.from)];
-	return { minutes: kept.reduce((n, t) => n + t.minutes, 0), tasks: ordered, done: kept.filter((t) => t.done).length, total: kept.length };
+	return {
+		minutes: kept.reduce((n, t) => n + t.minutes, 0),
+		tasks: ordered,
+		done: kept.filter((t) => t.done).length,
+		total: kept.length,
+	};
 }
 
 /** A tutor unit's first message: the brief plus the doctrine the practice

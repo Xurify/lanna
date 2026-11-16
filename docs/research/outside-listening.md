@@ -21,16 +21,16 @@ So the app should not offer a "ten hours" mode. P2 stands: one task per strand, 
 
 ## The evidence on attention and passive exposure
 
-| Finding | Source | Checked |
-|---|---|---|
-| Adults found the words in a stream of artificial speech by listening alone; a task done at the same time (noises, pictures or pitch) impaired it dramatically. | Toro, Sinnett & Soto-Faraco 2005, *Cognition* 97(2) | abstract |
-| Dividing attention while taking words in gave large reductions in later memory; dividing it at recall cost little. | Craik, Govoni, Naveh-Benjamin & Anderson 1996, *JEP: General* 125(2) | abstract |
-| Across four experiments, full against divided attention at encoding: .46 vs .32, .58 vs .44, .47 vs .22, .47 vs .36 (a loss of roughly a quarter to a half). | Naveh-Benjamin, Guez & Marom 2003, *Memory & Cognition* 31(7) | full text |
-| Infants learned Mandarin sounds in 12 sessions with a live tutor; the same sessions on video or audio produced no learning. | Kuhl, Tsao & Liu 2003, *PNAS* 100(15) | full text |
-| Extra exposure to a sound helped discrimination learning only next to practice, even during an unrelated task; it stopped helping a few hours away from practice. | Wright, Sabin, Zhang, Marrone & Fitzgerald 2010, *J Neurosci* 30(38) | abstract |
-| 70 adults who heard daily Italian podcasts in their normal routines for two weeks got better at telling Italian words from non-words than controls. Meanings were not tested and attention was not controlled. | Alexander, Van Hedger & Batterink 2023, *Psychonomic Bulletin & Review* 30(2) | abstract |
-| Self-reported media time correlated with logged time at r = 0.38 (47 studies); fewer than 10% of reports were within 5% of the logs, and errors ran both ways. | Parry et al. 2021, *Nature Human Behaviour* 5 | full text |
-| Focused viewing of one full TV program, or ten episodes, gave a small number of new words, more for learners who already knew more of the words. | Peters & Webb 2018, *SSLA* 40(3); Rodgers & Webb 2020, *ITL* 171(2) | partly |
+| Finding                                                                                                                                                                                                        | Source                                                                        | Checked   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------- |
+| Adults found the words in a stream of artificial speech by listening alone; a task done at the same time (noises, pictures or pitch) impaired it dramatically.                                                 | Toro, Sinnett & Soto-Faraco 2005, _Cognition_ 97(2)                           | abstract  |
+| Dividing attention while taking words in gave large reductions in later memory; dividing it at recall cost little.                                                                                             | Craik, Govoni, Naveh-Benjamin & Anderson 1996, _JEP: General_ 125(2)          | abstract  |
+| Across four experiments, full against divided attention at encoding: .46 vs .32, .58 vs .44, .47 vs .22, .47 vs .36 (a loss of roughly a quarter to a half).                                                   | Naveh-Benjamin, Guez & Marom 2003, _Memory & Cognition_ 31(7)                 | full text |
+| Infants learned Mandarin sounds in 12 sessions with a live tutor; the same sessions on video or audio produced no learning.                                                                                    | Kuhl, Tsao & Liu 2003, _PNAS_ 100(15)                                         | full text |
+| Extra exposure to a sound helped discrimination learning only next to practice, even during an unrelated task; it stopped helping a few hours away from practice.                                              | Wright, Sabin, Zhang, Marrone & Fitzgerald 2010, _J Neurosci_ 30(38)          | abstract  |
+| 70 adults who heard daily Italian podcasts in their normal routines for two weeks got better at telling Italian words from non-words than controls. Meanings were not tested and attention was not controlled. | Alexander, Van Hedger & Batterink 2023, _Psychonomic Bulletin & Review_ 30(2) | abstract  |
+| Self-reported media time correlated with logged time at r = 0.38 (47 studies); fewer than 10% of reports were within 5% of the logs, and errors ran both ways.                                                 | Parry et al. 2021, _Nature Human Behaviour_ 5                                 | full text |
+| Focused viewing of one full TV program, or ten episodes, gave a small number of new words, more for learners who already knew more of the words.                                                               | Peters & Webb 2018, _SSLA_ 40(3); Rodgers & Webb 2020, _ITL_ 171(2)           | partly    |
 
 The DOIs of the first six (Naveh-Benjamin aside) were matched on Crossref with `npm run sources:check`; the abstract and full-text checks were done by a research pass in the same session, not by the owner.
 

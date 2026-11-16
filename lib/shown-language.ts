@@ -1,6 +1,11 @@
 import { isLanguageGone, isSameOrigin, SHOWN_LANGUAGE_HEADER, type LanguageGone } from "@/src/core";
 
-export function shownLanguageFetch(base: typeof fetch, shown: string, origin: string, onGone: (refusal: LanguageGone) => void): typeof fetch {
+export function shownLanguageFetch(
+	base: typeof fetch,
+	shown: string,
+	origin: string,
+	onGone: (refusal: LanguageGone) => void,
+): typeof fetch {
 	return async (input, init) => {
 		const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
 		if (!isSameOrigin(url, origin)) return base(input, init);

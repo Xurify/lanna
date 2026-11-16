@@ -65,7 +65,13 @@ const NOMINATIVE: NoDrill = {
 
 const NO_DRILL: Partial<Record<AtlasCase, Partial<Record<AtlasGender, NoDrill>>>> = {
 	N: { masc: NOMINATIVE, fem: NOMINATIVE, neut: NOMINATIVE },
-	A: { neut: { short: "same as nominative", sub: "the word does not change", why: "A neuter word as the object keeps its dictionary form, the same as in the nominative: Vidím mesto. So there is nothing to change and nothing to practice." } },
+	A: {
+		neut: {
+			short: "same as nominative",
+			sub: "the word does not change",
+			why: "A neuter word as the object keeps its dictionary form, the same as in the nominative: Vidím mesto. So there is nothing to change and nothing to practice.",
+		},
+	},
 };
 
 const NOT_BUILT: NoDrill = { short: "no drill yet", sub: "", why: "There is no drill for this cell yet." };
@@ -172,7 +178,11 @@ export function slipLine(slips: Partial<Record<FormSlip, number>>): string {
 		.join(" · ");
 }
 
-export function weakestGender(byGender?: Partial<Record<AtlasGender, FirstTally>>, minReps = 3, threshold = 0.7): AtlasGender | null {
+export function weakestGender(
+	byGender?: Partial<Record<AtlasGender, FirstTally>>,
+	minReps = 3,
+	threshold = 0.7,
+): AtlasGender | null {
 	if (!byGender) return null;
 	const candidates: Array<{ gender: AtlasGender; accuracy: number; reps: number }> = [];
 	for (const g of ["masc", "fem", "neut"] as const) {
@@ -191,4 +201,3 @@ export function weakestAtlasCell(atlas: AtlasCell[], minReps = 3, threshold = 0.
 	if (candidates.length === 0) return null;
 	return candidates.sort((a, b) => a.accuracy! - b.accuracy! || b.reps - a.reps)[0]!;
 }
-

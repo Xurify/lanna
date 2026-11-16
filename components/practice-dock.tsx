@@ -48,7 +48,15 @@ interface PracticeDockProps {
 	compactionRunning?: boolean;
 }
 
-export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmit, onEscape, compactionRunning = false }: PracticeDockProps) {
+export function PracticeDock({
+	problemCallId,
+	input,
+	expanded,
+	onExpand,
+	onSubmit,
+	onEscape,
+	compactionRunning = false,
+}: PracticeDockProps) {
 	const [thinking, setThinking] = useState("");
 	// Ref MIRRORS the field ("nothing gets lost", the question-dock
 	// discipline): a submit resuming after `await finishDictation()` reads
@@ -56,14 +64,11 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 	const thinkingRef = useRef("");
 
 	useDictationTarget(
-		useCallback(
-			(t: string) => {
-				const v = joinDictation(thinkingRef.current, t);
-				thinkingRef.current = v;
-				setThinking(v);
-			},
-			[],
-		),
+		useCallback((t: string) => {
+			const v = joinDictation(thinkingRef.current, t);
+			thinkingRef.current = v;
+			setThinking(v);
+		}, []),
 		true,
 	);
 
@@ -118,9 +123,7 @@ export function PracticeDock({ problemCallId, input, expanded, onExpand, onSubmi
 				data-testid="practice-thinking-field"
 				className="m-1.5 rounded-[10px] bg-card shadow-[inset_0_0_0_1px_var(--q-line-2)] transition-shadow focus-within:shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
 			>
-				<div className="px-2.5 pt-2 font-ui text-xs font-semibold text-ink-3">
-					Your answer
-				</div>
+				<div className="px-2.5 pt-2 font-ui text-xs font-semibold text-ink-3">Your answer</div>
 				<textarea
 					value={thinking}
 					onChange={(e) => {

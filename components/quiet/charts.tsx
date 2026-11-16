@@ -33,7 +33,11 @@ export function WeekXpChart({ data, className }: { data: ChartData; className?: 
 			</h4>
 			<div className="relative mt-4" style={{ height: H + 36 }}>
 				{data.dailyGoal > 0 && (
-					<div className="absolute inset-x-0" style={{ bottom: 18 + (data.dailyGoal / top) * H, borderTop: "1px dashed var(--q-ink-4)" }} aria-hidden="true" />
+					<div
+						className="absolute inset-x-0"
+						style={{ bottom: 18 + (data.dailyGoal / top) * H, borderTop: "1px dashed var(--q-ink-4)" }}
+						aria-hidden="true"
+					/>
 				)}
 				<ol className="absolute inset-x-0 bottom-0 flex items-end gap-2" style={{ height: H + 36 }}>
 					{week.map((d, i) => {
@@ -41,20 +45,34 @@ export function WeekXpChart({ data, className }: { data: ChartData; className?: 
 						const hit = data.dailyGoal > 0 && d.xp >= data.dailyGoal;
 						const h = d.xp > 0 ? Math.max(4, (d.xp / top) * H) : 3;
 						return (
-							<li key={d.day} className="flex min-w-0 flex-1 flex-col items-center justify-end" title={`${WEEKDAY_EN[dow(d.day)]}: ${d.xp} XP`}>
-								<span className={cn("q-num mb-1 text-[11px]", d.xp > 0 ? "text-ink-2" : "text-transparent")}>{d.xp}</span>
+							<li
+								key={d.day}
+								className="flex min-w-0 flex-1 flex-col items-center justify-end"
+								title={`${WEEKDAY_EN[dow(d.day)]}: ${d.xp} XP`}
+							>
+								<span className={cn("q-num mb-1 text-[11px]", d.xp > 0 ? "text-ink-2" : "text-transparent")}>
+									{d.xp}
+								</span>
 								<span
-									className={cn("w-full max-w-7 rounded-[4px]", d.xp <= 0 ? "bg-well-2" : hit ? "bg-teal" : "bg-teal-line", today && "shadow-[0_0_0_2px_var(--q-well),0_0_0_3.5px_var(--q-teal)]")}
+									className={cn(
+										"w-full max-w-7 rounded-[4px]",
+										d.xp <= 0 ? "bg-well-2" : hit ? "bg-teal" : "bg-teal-line",
+										today && "shadow-[0_0_0_2px_var(--q-well),0_0_0_3.5px_var(--q-teal)]",
+									)}
 									style={{ height: h }}
 								/>
-								<span className={cn("mt-1.5 h-4 text-[11px]", today ? "font-[600] text-ink-2" : "text-ink-3")}>{WEEKDAY[dow(d.day)]}</span>
+								<span className={cn("mt-1.5 h-4 text-[11px]", today ? "font-[600] text-ink-2" : "text-ink-3")}>
+									{WEEKDAY[dow(d.day)]}
+								</span>
 							</li>
 						);
 					})}
 				</ol>
 			</div>
 			<p className="mt-1 text-[12.5px] text-ink-3" data-testid="week-xp-summary">
-				{total === 0 ? "No XP yet this week. A first lesson draws the first bar." : `${total} XP in 7 days. ${reached} of 7 days reached the goal.`}
+				{total === 0
+					? "No XP yet this week. A first lesson draws the first bar."
+					: `${total} XP in 7 days. ${reached} of 7 days reached the goal.`}
 			</p>
 		</figure>
 	);
@@ -74,7 +92,9 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 	for (let k = lastXp > 0 ? 0 : 1; streakDays.size < data.streak; k++) {
 		const d = new Date(end);
 		d.setDate(end.getDate() - k);
-		streakDays.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+		streakDays.add(
+			`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+		);
 	}
 	// One truth per day, the same one the XP chart above draws: inside its seven days a cell follows that day's XP (goal met, some, none); before them only minutes were kept, so older cells follow minutes. A day with timed minutes but no XP is not practice here, so the two charts never disagree.
 	type Cell = { day: string; state: "future" | "none" | "some" | "goal"; label: string };
@@ -93,15 +113,27 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 		}
 		if (weekByDay.has(key)) {
 			const xp = weekByDay.get(key) ?? 0;
-			cells.push({ day: key, state: xp <= 0 ? "none" : data.dailyGoal > 0 && xp >= data.dailyGoal ? "goal" : "some", label: `${name}: ${xp} XP` });
+			cells.push({
+				day: key,
+				state: xp <= 0 ? "none" : data.dailyGoal > 0 && xp >= data.dailyGoal ? "goal" : "some",
+				label: `${name}: ${xp} XP`,
+			});
 			continue;
 		}
 		const m = Math.max(byDay.get(key) ?? 0, streakDays.has(key) ? 1 : 0);
-		cells.push({ day: key, state: m <= 0 ? "none" : data.goalMinutes > 0 && m >= data.goalMinutes ? "goal" : "some", label: `${name}: ${m > 0 ? `${Math.round(m)} min` : "no practice"}` });
+		cells.push({
+			day: key,
+			state: m <= 0 ? "none" : data.goalMinutes > 0 && m >= data.goalMinutes ? "goal" : "some",
+			label: `${name}: ${m > 0 ? `${Math.round(m)} min` : "no practice"}`,
+		});
 	}
 	const active = cells.filter((c) => c.state === "some" || c.state === "goal").length;
 	return (
-		<figure className={cn("q-well", className)} aria-label="Days practiced in the last five weeks" data-testid="streak-calendar">
+		<figure
+			className={cn("q-well", className)}
+			aria-label="Days practiced in the last five weeks"
+			data-testid="streak-calendar"
+		>
 			<h3>
 				Streak <small>last 5 weeks</small>
 			</h3>
@@ -115,17 +147,38 @@ export function StreakCalendar({ data, className }: { data: ChartData; className
 					<span
 						key={c.day}
 						title={c.state === "future" ? undefined : c.label}
-						className={cn("mx-auto aspect-square w-full max-w-6 rounded-[5px]", c.state === "future" ? "bg-transparent shadow-[inset_0_0_0_1px_var(--q-line)]" : c.state === "goal" ? "bg-teal" : c.state === "some" ? "bg-teal-line" : "bg-well-2", c.day === last && "shadow-[0_0_0_2px_var(--q-well),0_0_0_3.5px_var(--q-teal)]")}
+						className={cn(
+							"mx-auto aspect-square w-full max-w-6 rounded-[5px]",
+							c.state === "future"
+								? "bg-transparent shadow-[inset_0_0_0_1px_var(--q-line)]"
+								: c.state === "goal"
+									? "bg-teal"
+									: c.state === "some"
+										? "bg-teal-line"
+										: "bg-well-2",
+							c.day === last && "shadow-[0_0_0_2px_var(--q-well),0_0_0_3.5px_var(--q-teal)]",
+						)}
 					/>
 				))}
 			</div>
 			<p className="q-legend" aria-hidden="true">
-				<span><i className="bg-teal" />goal met</span>
-				<span><i className="bg-teal-line" />some practice</span>
-				<span><i className="bg-well-2" />none</span>
+				<span>
+					<i className="bg-teal" />
+					goal met
+				</span>
+				<span>
+					<i className="bg-teal-line" />
+					some practice
+				</span>
+				<span>
+					<i className="bg-well-2" />
+					none
+				</span>
 			</p>
 			<p className="mt-3 text-[12.5px] text-ink-3" data-testid="streak-summary">
-				{active === 0 ? "No days yet. Today is the first square." : `${active} of the last ${cells.filter((c) => c.state !== "future").length} days practiced.`}
+				{active === 0
+					? "No days yet. Today is the first square."
+					: `${active} of the last ${cells.filter((c) => c.state !== "future").length} days practiced.`}
 				{data.streak > 0 && (
 					<>
 						{" "}
@@ -159,9 +212,18 @@ export function LevelProgress({ data, className }: { data: ChartData; className?
 			<div className="border-t border-border px-4 pb-3.5 pt-3">
 				<div className="flex items-baseline justify-between">
 					<b className="text-[14px] font-semibold tracking-[-0.01em]">Level {level.level}</b>
-					<small className="q-num text-[12px] text-ink-3">{level.span - level.into} XP to level {level.level + 1}</small>
+					<small className="q-num text-[12px] text-ink-3">
+						{level.span - level.into} XP to level {level.level + 1}
+					</small>
 				</div>
-				<div className="q-bar mt-2 hot" role="meter" aria-valuemin={0} aria-valuemax={level.span} aria-valuenow={level.into} aria-label={`Level ${level.level}: ${level.into} of ${level.span} XP`}>
+				<div
+					className="q-bar mt-2 hot"
+					role="meter"
+					aria-valuemin={0}
+					aria-valuemax={level.span}
+					aria-valuenow={level.into}
+					aria-label={`Level ${level.level}: ${level.into} of ${level.span} XP`}
+				>
 					<i style={{ width: `${Math.max(frac > 0 ? 2 : 0, frac * 100)}%` }} />
 				</div>
 			</div>
@@ -184,7 +246,9 @@ export function StrandBars({ balance, className }: { balance: StrandBalance | nu
 				<h4>
 					Minutes by strand <small>aim: about {Math.round(STRAND_TARGET * 100)}% each</small>
 				</h4>
-				<p className="mt-3 text-[13px] text-ink-3">Nothing counted yet this week. Listening, speaking, words and speed each get a bar once you have practiced.</p>
+				<p className="mt-3 text-[13px] text-ink-3">
+					Nothing counted yet this week. Listening, speaking, words and speed each get a bar once you have practiced.
+				</p>
 			</figure>
 		);
 	}
@@ -201,11 +265,30 @@ export function StrandBars({ balance, className }: { balance: StrandBalance | nu
 					const hot = balance.behind === x.id;
 					const solid = Math.min(share, balance.target);
 					return (
-						<div key={x.id} className="contents" title={`${x.title}: ${x.line} · ${Math.round(balance.minutes[x.id])} min`}>
+						<div
+							key={x.id}
+							className="contents"
+							title={`${x.title}: ${x.line} · ${Math.round(balance.minutes[x.id])} min`}
+						>
 							<span className={cn("lab", hot && "hotc")}>{x.title}</span>
-							<span className={cn("q-bar", hot && "hot")} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={`${x.title}: ${pct}% of the week`}>
+							<span
+								className={cn("q-bar", hot && "hot")}
+								role="meter"
+								aria-valuemin={0}
+								aria-valuemax={100}
+								aria-valuenow={pct}
+								aria-label={`${x.title}: ${pct}% of the week`}
+							>
 								<i style={{ width: `${(solid / max) * 100}%` }} />
-								{share > balance.target && <i className="over" style={{ left: `${(balance.target / max) * 100}%`, width: `${((share - balance.target) / max) * 100}%` }} />}
+								{share > balance.target && (
+									<i
+										className="over"
+										style={{
+											left: `${(balance.target / max) * 100}%`,
+											width: `${((share - balance.target) / max) * 100}%`,
+										}}
+									/>
+								)}
 								<span className="target" style={{ left: `${(balance.target / max) * 100}%` }} aria-hidden="true" />
 							</span>
 							<span className={cn("mins q-num", hot && "hotc")}>{formatMinutes(balance.minutes[x.id])}</span>

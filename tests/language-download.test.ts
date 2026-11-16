@@ -31,7 +31,10 @@ function body(text: string, chunk: number): Response {
 async function collect(text: string, chunk: number): Promise<string[]> {
 	const get = (async () => body(text, chunk)) as unknown as typeof fetch;
 	const out: string[] = [];
-	for await (const line of lines(get, "https://example.test/download", new AbortController().signal, { what: "the test download" })) out.push(line);
+	for await (const line of lines(get, "https://example.test/download", new AbortController().signal, {
+		what: "the test download",
+	}))
+		out.push(line);
 	return out;
 }
 

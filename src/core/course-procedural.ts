@@ -13,11 +13,39 @@
  * (checkCourse), so a unit with too few sentences is dropped either way.
  */
 
-import { courseUnitsFor, type Course, type CourseChapter, type CourseGoal, type CourseStage, type CourseTutor, type CourseUnit } from "./course.ts";
+import {
+	courseUnitsFor,
+	type Course,
+	type CourseChapter,
+	type CourseGoal,
+	type CourseStage,
+	type CourseTutor,
+	type CourseUnit,
+} from "./course.ts";
 import type { LexiconEntry } from "./review.ts";
 
 /** Case names across the catalog's languages, as Wiktionary tags them. */
-const CASES = ["nominative", "accusative", "genitive", "dative", "locative", "instrumental", "partitive", "illative", "inessive", "elative", "allative", "adessive", "ablative", "translative", "terminative", "essive", "abessive", "comitative", "prepositional"];
+const CASES = [
+	"nominative",
+	"accusative",
+	"genitive",
+	"dative",
+	"locative",
+	"instrumental",
+	"partitive",
+	"illative",
+	"inessive",
+	"elative",
+	"allative",
+	"adessive",
+	"ablative",
+	"translative",
+	"terminative",
+	"essive",
+	"abessive",
+	"comitative",
+	"prepositional",
+];
 /** Verb forms worth a lesson each, most basic first. */
 const VERB_FORMS: Array<{ tags: string[]; title: string; term: string }> = [
 	{ tags: ["present", "first-person"], title: "I and we: the present", term: "Present tense, first person" },
@@ -32,9 +60,25 @@ const VERB_FORMS: Array<{ tags: string[]; title: string; term: string }> = [
 const NUMBERS = ["singular", "plural"] as const;
 
 const GLYPHS: Record<string, string> = {
-	nominative: "copy", accusative: "coffee", genitive: "door-open", dative: "gift", locative: "map-pin", instrumental: "handshake", partitive: "layers",
-	illative: "door-open", inessive: "map-pin", elative: "route", allative: "signpost", adessive: "map-pin", ablative: "route", translative: "repeat",
-	essive: "user", comitative: "handshake", abessive: "ban", terminative: "flag", prepositional: "map-pin",
+	nominative: "copy",
+	accusative: "coffee",
+	genitive: "door-open",
+	dative: "gift",
+	locative: "map-pin",
+	instrumental: "handshake",
+	partitive: "layers",
+	illative: "door-open",
+	inessive: "map-pin",
+	elative: "route",
+	allative: "signpost",
+	adessive: "map-pin",
+	ablative: "route",
+	translative: "repeat",
+	essive: "user",
+	comitative: "handshake",
+	abessive: "ban",
+	terminative: "flag",
+	prepositional: "map-pin",
 };
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -59,7 +103,8 @@ function measure(unit: CourseUnit, entries: readonly LexiconEntry[], tag: string
 			const words = text.split(/\s+/).length;
 			const fits = (n: number) => n >= 3 && n <= 8;
 			const better = !example || (fits(words) && (!fits(example.words) || (e.rank ?? Infinity) < example.rank));
-			if (better) example = { text, answer: ex.cloze!.answer, lemma: e.lemma ?? e.sk ?? "", words, rank: e.rank ?? Infinity };
+			if (better)
+				example = { text, answer: ex.cloze!.answer, lemma: e.lemma ?? e.sk ?? "", words, rank: e.rank ?? Infinity };
 		}
 	}
 	return { unit, sentences, ...(example ? { example } : {}) };
@@ -69,7 +114,11 @@ function measure(unit: CourseUnit, entries: readonly LexiconEntry[], tag: string
  *  the unambiguous noun forms right after it, when one case has at least
  *  two thirds of them and three sentences. ("útoku" is genitive, dative
  *  and locative alike, so it says nothing about the "do" before it.) */
-function prepositionCases(entries: readonly LexiconEntry[], preps: ReadonlySet<string>, tag: string): Map<string, string> {
+function prepositionCases(
+	entries: readonly LexiconEntry[],
+	preps: ReadonlySet<string>,
+	tag: string,
+): Map<string, string> {
 	const tally = new Map<string, Map<string, number>>();
 	for (const e of entries) {
 		if (e.cat !== "Nouns") continue;
@@ -77,10 +126,17 @@ function prepositionCases(entries: readonly LexiconEntry[], preps: ReadonlySet<s
 			const c = ex.cloze;
 			const text = ex.text ?? ex.sk ?? "";
 			if (!c) continue;
-			const cells = Object.entries(e.formTags ?? {}).find(([f]) => f.toLocaleLowerCase(tag) === c.answer.toLocaleLowerCase(tag))?.[1] ?? [];
-			const cases = new Set(cells.flatMap((cell) => cell.split(" ").filter((t) => CASES.includes(t) && t !== "vocative")));
+			const cells =
+				Object.entries(e.formTags ?? {}).find(
+					([f]) => f.toLocaleLowerCase(tag) === c.answer.toLocaleLowerCase(tag),
+				)?.[1] ?? [];
+			const cases = new Set(
+				cells.flatMap((cell) => cell.split(" ").filter((t) => CASES.includes(t) && t !== "vocative")),
+			);
 			if (cases.size !== 1) continue;
-			const prev = (text.slice(0, c.at).trim().split(/\s+/).pop() ?? "").toLocaleLowerCase(tag).replace(/[^\p{L}]/gu, "");
+			const prev = (text.slice(0, c.at).trim().split(/\s+/).pop() ?? "")
+				.toLocaleLowerCase(tag)
+				.replace(/[^\p{L}]/gu, "");
 			if (!preps.has(prev)) continue;
 			const kase = [...cases][0]!;
 			const t = tally.get(prev) ?? new Map<string, number>();
@@ -99,18 +155,69 @@ function prepositionCases(entries: readonly LexiconEntry[], preps: ReadonlySet<s
 
 /** The prepositions that take this case, commonest first. */
 function triggersFor(kase: string, byPrep: ReadonlyMap<string, string>): string[] {
-	return [...byPrep.entries()].filter(([, k]) => k === kase).map(([p]) => p).slice(0, 6);
+	return [...byPrep.entries()]
+		.filter(([, k]) => k === kase)
+		.map(([p]) => p)
+		.slice(0, 6);
 }
 
 const TUTORS = (language: string): CourseTutor[] => [
-	{ id: "sounds", title: "Sounds and spelling", tagline: "How it is written and said", glyph: "ear", brief: `${language} sounds and spelling: the letters an English speaker lacks, where the stress falls, and the spellings that trip learners. Read each example to me with say: spans and have me read some back.` },
-	{ id: "address", title: "Formal and informal you", tagline: "Who you say what to", glyph: "handshake", brief: `How ${language} speakers address a stranger, a colleague and a friend, and the verb forms and greetings that go with each. Give me short exchanges and have me pick the right form.` },
-	{ id: "questions", title: "Asking questions", tagline: "Question words and yes/no", glyph: "message-circle-question", brief: `Asking questions in ${language}: the question words and how a yes/no question is built. Ask me to turn statements into questions and answer yours.` },
-	{ id: "numbers", title: "Numbers, time and dates", tagline: "Counting, the clock, the calendar", glyph: "hash", brief: `Numbers in ${language} and what they do to the noun after them, telling the time, days and dates. Drill me with prices, times and appointments.` },
-	{ id: "word-order", title: "Word order", tagline: "What comes first, and why", glyph: "arrow-right-left", brief: `${language} word order: where the verb goes, where the little words go, and what moves for emphasis. Give me jumbled sentences to put in order and explain each fix in one line.` },
-	{ id: "storytelling", title: "Telling what happened", tagline: "A story in the past", glyph: "book-open", brief: `Telling a short story in ${language} in the past: sequence words and the past forms. Have me tell you about my weekend in five sentences and correct them one at a time.` },
-	{ id: "opinions", title: "Giving an opinion", tagline: "I think, because, but", glyph: "megaphone", brief: `Giving and defending an opinion in ${language}: I think, because, but, on the other hand. Ask me questions about everyday topics and push back on my answers.` },
-	{ id: "register", title: "Formal and everyday", tagline: "Writing an email, talking to friends", glyph: "pen-line", brief: `Register in ${language}: the formal email against everyday speech. Have me write a short formal email, then say the same thing to a friend, and correct both.` },
+	{
+		id: "sounds",
+		title: "Sounds and spelling",
+		tagline: "How it is written and said",
+		glyph: "ear",
+		brief: `${language} sounds and spelling: the letters an English speaker lacks, where the stress falls, and the spellings that trip learners. Read each example to me with say: spans and have me read some back.`,
+	},
+	{
+		id: "address",
+		title: "Formal and informal you",
+		tagline: "Who you say what to",
+		glyph: "handshake",
+		brief: `How ${language} speakers address a stranger, a colleague and a friend, and the verb forms and greetings that go with each. Give me short exchanges and have me pick the right form.`,
+	},
+	{
+		id: "questions",
+		title: "Asking questions",
+		tagline: "Question words and yes/no",
+		glyph: "message-circle-question",
+		brief: `Asking questions in ${language}: the question words and how a yes/no question is built. Ask me to turn statements into questions and answer yours.`,
+	},
+	{
+		id: "numbers",
+		title: "Numbers, time and dates",
+		tagline: "Counting, the clock, the calendar",
+		glyph: "hash",
+		brief: `Numbers in ${language} and what they do to the noun after them, telling the time, days and dates. Drill me with prices, times and appointments.`,
+	},
+	{
+		id: "word-order",
+		title: "Word order",
+		tagline: "What comes first, and why",
+		glyph: "arrow-right-left",
+		brief: `${language} word order: where the verb goes, where the little words go, and what moves for emphasis. Give me jumbled sentences to put in order and explain each fix in one line.`,
+	},
+	{
+		id: "storytelling",
+		title: "Telling what happened",
+		tagline: "A story in the past",
+		glyph: "book-open",
+		brief: `Telling a short story in ${language} in the past: sequence words and the past forms. Have me tell you about my weekend in five sentences and correct them one at a time.`,
+	},
+	{
+		id: "opinions",
+		title: "Giving an opinion",
+		tagline: "I think, because, but",
+		glyph: "megaphone",
+		brief: `Giving and defending an opinion in ${language}: I think, because, but, on the other hand. Ask me questions about everyday topics and push back on my answers.`,
+	},
+	{
+		id: "register",
+		title: "Formal and everyday",
+		tagline: "Writing an email, talking to friends",
+		glyph: "pen-line",
+		brief: `Register in ${language}: the formal email against everyday speech. Have me write a short formal email, then say the same thing to a friend, and correct both.`,
+	},
 ];
 
 const GOALS: CourseGoal[] = [
@@ -131,11 +238,20 @@ const GOALS: CourseGoal[] = [
 /** The free course: lessons from the dictionary's grammar, in the order a
  *  learner meets forms most, spread over chapters with general tutor
  *  sessions and the Speak scenes as goals. */
-export function proceduralCourse(entries: readonly LexiconEntry[], language: string, english: string, tag: string): Course {
-	const preps = new Set(entries.filter((e) => e.cat === "Prepositions").map((e) => (e.lemma ?? e.sk ?? "").toLocaleLowerCase(tag)));
+export function proceduralCourse(
+	entries: readonly LexiconEntry[],
+	language: string,
+	english: string,
+	tag: string,
+): Course {
+	const preps = new Set(
+		entries.filter((e) => e.cat === "Prepositions").map((e) => (e.lemma ?? e.sk ?? "").toLocaleLowerCase(tag)),
+	);
 	const byPrep = prepositionCases(entries, preps, tag);
 	const present = new Set<string>();
-	for (const e of entries) for (const cells of Object.values(e.formTags ?? {})) for (const c of cells) for (const t of c.split(" ")) present.add(t);
+	for (const e of entries)
+		for (const cells of Object.values(e.formTags ?? {}))
+			for (const c of cells) for (const t of c.split(" ")) present.add(t);
 
 	const candidates: Candidate[] = [];
 	// Verb forms first: the present by person, then the other tenses.
@@ -145,7 +261,23 @@ export function proceduralCourse(entries: readonly LexiconEntry[], language: str
 		const id = `v-${v.tags.join("-")}`;
 		// Wiktionary tags some imperatives "present" too; "indicative" keeps them out of the tenses.
 		const tags = indicative && ["present", "future"].includes(v.tags[0]!) ? [...v.tags, "indicative"] : v.tags;
-		candidates.push(measure({ id, kind: "grammar", title: v.title, tagline: v.term, rule: "", glyph: v.tags.includes("past") ? "history" : v.tags.includes("imperative") ? "megaphone" : "users", grammarTerm: v.term, cat: "Verbs", tags }, entries, tag));
+		candidates.push(
+			measure(
+				{
+					id,
+					kind: "grammar",
+					title: v.title,
+					tagline: v.term,
+					rule: "",
+					glyph: v.tags.includes("past") ? "history" : v.tags.includes("imperative") ? "megaphone" : "users",
+					grammarTerm: v.term,
+					cat: "Verbs",
+					tags,
+				},
+				entries,
+				tag,
+			),
+		);
 	}
 	// Cases by number; a case that its prepositions decide gets them as triggers.
 	for (const kase of CASES) {
@@ -153,16 +285,44 @@ export function proceduralCourse(entries: readonly LexiconEntry[], language: str
 		const after = triggersFor(kase, byPrep);
 		for (const number of NUMBERS) {
 			const id = `${kase}-${number}`;
-			const unit: CourseUnit = { id, kind: "grammar", title: `${cap(kase)} ${number}`, tagline: after.length ? `After ${after.slice(0, 3).join(", ")}` : `The ${kase} ${number}`, rule: "", glyph: GLYPHS[kase] ?? "book", grammarTerm: `${cap(kase)} case, ${number}`, cat: "Nouns", tags: [kase, number] };
+			const unit: CourseUnit = {
+				id,
+				kind: "grammar",
+				title: `${cap(kase)} ${number}`,
+				tagline: after.length ? `After ${after.slice(0, 3).join(", ")}` : `The ${kase} ${number}`,
+				rule: "",
+				glyph: GLYPHS[kase] ?? "book",
+				grammarTerm: `${cap(kase)} case, ${number}`,
+				cat: "Nouns",
+				tags: [kase, number],
+			};
 			const plain = measure(unit, entries, tag);
 			const triggered = after.length ? measure({ ...unit, after }, entries, tag) : null;
 			// The preposition is a cue the learner can see: keep it when it still
 			// leaves a lesson (it also lets in forms a case shares with another).
-			candidates.push(triggered && triggered.sentences >= 12 && triggered.sentences >= 0.6 * plain.sentences ? triggered : plain);
+			candidates.push(
+				triggered && triggered.sentences >= 12 && triggered.sentences >= 0.6 * plain.sentences ? triggered : plain,
+			);
 		}
 	}
 	if (present.has("nominative") && present.has("plural")) {
-		candidates.push(measure({ id: "nominative-plural", kind: "grammar", title: "More than one", tagline: "The plural", rule: "", glyph: "copy", grammarTerm: "Nominative plural", cat: "Nouns", tags: ["nominative", "plural"] }, entries, tag));
+		candidates.push(
+			measure(
+				{
+					id: "nominative-plural",
+					kind: "grammar",
+					title: "More than one",
+					tagline: "The plural",
+					rule: "",
+					glyph: "copy",
+					grammarTerm: "Nominative plural",
+					cat: "Nouns",
+					tags: ["nominative", "plural"],
+				},
+				entries,
+				tag,
+			),
+		);
 	}
 
 	const kept = candidates.filter((c) => c.sentences >= 12 && c.example);
@@ -178,7 +338,12 @@ export function proceduralCourse(entries: readonly LexiconEntry[], language: str
 	const units: CourseUnit[] = ordered.map(({ unit, example }) => {
 		const eg = `${example!.text} (${example!.answer}, from ${example!.lemma})`;
 		const name = unit.grammarTerm ?? unit.title;
-		return { ...unit, rule: unit.after?.length ? `After ${unit.after.join(", ")}, a noun takes the ${unit.tags!.filter((t) => CASES.includes(t)).join(" ")}: ${eg}.` : `${name}: ${eg}.` };
+		return {
+			...unit,
+			rule: unit.after?.length
+				? `After ${unit.after.join(", ")}, a noun takes the ${unit.tags!.filter((t) => CASES.includes(t)).join(" ")}: ${eg}.`
+				: `${name}: ${eg}.`,
+		};
 	});
 
 	// Chapters: two or three lessons, a tutor session, a goal.
@@ -205,7 +370,27 @@ export function proceduralCourse(entries: readonly LexiconEntry[], language: str
 		const goal = GOALS[i]!;
 		ids.push(goal.id);
 		usedGoals.push(goal);
-		chapters.push({ id: `chapter-${i + 1}`, stage: stageOf(i), title: goal.title.replace(/^Can /, ""), tagline: units.filter((x) => ids.includes(x.id)).map((x) => x.title).join(", ") || tutor.title, units: ids });
+		chapters.push({
+			id: `chapter-${i + 1}`,
+			stage: stageOf(i),
+			title: goal.title.replace(/^Can /, ""),
+			tagline:
+				units
+					.filter((x) => ids.includes(x.id))
+					.map((x) => x.title)
+					.join(", ") || tutor.title,
+			units: ids,
+		});
 	}
-	return { language, code: tag.split("-")[0]!, tag, version: 1, draft: true, units, tutors: usedTutors, goals: usedGoals, chapters };
+	return {
+		language,
+		code: tag.split("-")[0]!,
+		tag,
+		version: 1,
+		draft: true,
+		units,
+		tutors: usedTutors,
+		goals: usedGoals,
+		chapters,
+	};
 }

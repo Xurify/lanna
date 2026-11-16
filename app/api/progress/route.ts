@@ -31,7 +31,8 @@ export async function PUT(req: Request) {
 		const g = body.goal;
 		const level = typeof g.level === "string" ? (g.level as "A1" | "A2" | "B1" | "B2" | "C1") : undefined;
 		const num = (v: unknown) => (typeof v === "number" ? v : undefined);
-		const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 8) : undefined);
+		const strs = (v: unknown) =>
+			Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 8) : undefined;
 		return Response.json(
 			setGoal(
 				{
@@ -42,7 +43,14 @@ export async function PUT(req: Request) {
 					purposeNote: typeof g.purposeNote === "string" ? g.purposeNote.slice(0, 1000) : undefined,
 					languages: strs(g.languages) as never,
 					otherLanguages: strs(g.otherLanguages),
-					languageLevels: g.languageLevels && typeof g.languageLevels === "object" ? (Object.fromEntries(Object.entries(g.languageLevels as Record<string, unknown>).filter(([, v]) => typeof v === "string").slice(0, 32)) as never) : undefined,
+					languageLevels:
+						g.languageLevels && typeof g.languageLevels === "object"
+							? (Object.fromEntries(
+									Object.entries(g.languageLevels as Record<string, unknown>)
+										.filter(([, v]) => typeof v === "string")
+										.slice(0, 32),
+								) as never)
+							: undefined,
 					explainIn: (typeof g.explainIn === "string" ? [g.explainIn] : strs(g.explainIn)) as never,
 					prior: typeof g.prior === "string" ? (g.prior as never) : undefined,
 					showParallels: typeof g.showParallels === "boolean" ? g.showParallels : undefined,
@@ -61,6 +69,13 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { activity?: unknown; unit?: unknown } | null;
-	if (!body || !ACTIVITIES.has(body.activity as string)) return Response.json({ message: "activity must be talk, story or tutor" }, { status: 400 });
-	return Response.json(recordActivity(body.activity as "talk" | "story" | "tutor", typeof body.unit === "string" ? body.unit : undefined, tzOf(req)));
+	if (!body || !ACTIVITIES.has(body.activity as string))
+		return Response.json({ message: "activity must be talk, story or tutor" }, { status: 400 });
+	return Response.json(
+		recordActivity(
+			body.activity as "talk" | "story" | "tutor",
+			typeof body.unit === "string" ? body.unit : undefined,
+			tzOf(req),
+		),
+	);
 }

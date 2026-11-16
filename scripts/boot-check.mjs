@@ -52,10 +52,13 @@ function freePort() {
 function request(base, route, headers = {}) {
 	const url = new URL(route, base);
 	return new Promise((resolve) => {
-		const req = http.request({ host: url.hostname, port: url.port, path: url.pathname + url.search, method: "GET", headers }, (res) => {
-			res.resume();
-			resolve({ status: res.statusCode ?? 0, location: res.headers.location ?? "" });
-		});
+		const req = http.request(
+			{ host: url.hostname, port: url.port, path: url.pathname + url.search, method: "GET", headers },
+			(res) => {
+				res.resume();
+				resolve({ status: res.statusCode ?? 0, location: res.headers.location ?? "" });
+			},
+		);
 		req.on("error", () => resolve({ status: 0, location: "" }));
 		req.setTimeout(10_000, () => {
 			req.destroy();
@@ -69,10 +72,23 @@ function post(base, route, headers, json) {
 	const url = new URL(route, base);
 	const payload = JSON.stringify(json);
 	return new Promise((resolve) => {
-		const req = http.request({ host: url.hostname, port: url.port, path: url.pathname, method: "POST", headers: { ...headers, "content-type": "application/json", "content-length": Buffer.byteLength(payload) } }, (res) => {
-			res.resume();
-			resolve({ status: res.statusCode ?? 0, location: res.headers.location ?? "", cookie: [res.headers["set-cookie"] ?? []].flat().join("; ") });
-		});
+		const req = http.request(
+			{
+				host: url.hostname,
+				port: url.port,
+				path: url.pathname,
+				method: "POST",
+				headers: { ...headers, "content-type": "application/json", "content-length": Buffer.byteLength(payload) },
+			},
+			(res) => {
+				res.resume();
+				resolve({
+					status: res.statusCode ?? 0,
+					location: res.headers.location ?? "",
+					cookie: [res.headers["set-cookie"] ?? []].flat().join("; "),
+				});
+			},
+		);
 		req.on("error", () => resolve({ status: 0, location: "", cookie: "" }));
 		req.setTimeout(10_000, () => {
 			req.destroy();
@@ -104,7 +120,11 @@ function check(label, ok, detail = "") {
 async function probeServer(base) {
 	const host = new URL(base).host;
 	const home = await request(base, "/");
-	check("GET / answers (200, or the first-run redirect to /start)", home.status === 200 || firstRunRedirect(home), `${home.status} ${home.location}`);
+	check(
+		"GET / answers (200, or the first-run redirect to /start)",
+		home.status === 200 || firstRunRedirect(home),
+		`${home.status} ${home.location}`,
+	);
 	for (const route of ["/start", "/api/models", "/api/settings"]) {
 		const res = await request(base, route);
 		check(`GET ${route} → 200`, res.status === 200, String(res.status));
@@ -127,14 +147,30 @@ function checkImage(dir) {
 	for (const asset of REQUIRED_ASSETS) check(`present: ${asset}`, fs.existsSync(path.join(dir, asset)));
 	const leaked = fs.readdirSync(dir).filter((name) => FORBIDDEN_FILES.some((pattern) => pattern.test(name)));
 	check("no data, keys or env files in the image", leaked.length === 0, leaked.join(", "));
-	check("runs as a non-root user", typeof process.getuid !== "function" || process.getuid() !== 0, `uid ${process.getuid?.()}`);
+	check(
+		"runs as a non-root user",
+		typeof process.getuid !== "function" || process.getuid() !== 0,
+		`uid ${process.getuid?.()}`,
+	);
 
 	const chrome = process.env.CHROME_PATH;
 	check("CHROME_PATH names a browser", !!chrome && fs.existsSync(chrome), chrome ?? "unset");
 	if (chrome && fs.existsSync(chrome)) {
 		const profile = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chrome-"));
 		try {
-			const dom = execFileSync(chrome, ["--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", `--user-data-dir=${profile}`, "--dump-dom", "about:blank"], { timeout: 45_000, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+			const dom = execFileSync(
+				chrome,
+				[
+					"--headless",
+					"--no-sandbox",
+					"--disable-gpu",
+					"--disable-dev-shm-usage",
+					`--user-data-dir=${profile}`,
+					"--dump-dom",
+					"about:blank",
+				],
+				{ timeout: 45_000, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+			);
 			check("headless Chromium renders a page", dom.includes("<html"));
 		} catch (error) {
 			check("headless Chromium renders a page", false, String(error.message).split("\n")[0]);
@@ -150,7 +186,13 @@ function checkImage(dir) {
 	}
 }
 
-async function runStartedServer({ label = "", extraEnv = {}, prepare = () => {}, probe = probeServer, isUp = (res) => res.status === 200 || firstRunRedirect(res) } = {}) {
+async function runStartedServer({
+	label = "",
+	extraEnv = {},
+	prepare = () => {},
+	probe = probeServer,
+	isUp = (res) => res.status === 200 || firstRunRedirect(res),
+} = {}) {
 	const server = path.join(STANDALONE, "server.js");
 	if (!fs.existsSync(server)) {
 		console.error(`[boot-check] ${server} is missing; run next build and scripts/build-server.mjs first.`);
@@ -228,12 +270,21 @@ const CLI = path.join(STANDALONE, "cli", "web-password.mjs");
 function setPassword({ home, env }) {
 	const file = path.join(home, "password.txt");
 	fs.writeFileSync(file, `${PASSWORD}\n`, { mode: 0o600 });
-	execFileSync(process.execPath, [CLI], { env: { ...env, LH_WEB_PASSWORD_FILE: file }, stdio: "ignore", timeout: 60_000 });
+	execFileSync(process.execPath, [CLI], {
+		env: { ...env, LH_WEB_PASSWORD_FILE: file },
+		stdio: "ignore",
+		timeout: 60_000,
+	});
 	fs.rmSync(file, { force: true });
 }
 
 async function probePublicMode(base) {
-	const proxied = { host: PUBLIC_NAME, "x-forwarded-host": PUBLIC_NAME, "x-forwarded-proto": "https", "x-lh-proxy-secret": SECRET };
+	const proxied = {
+		host: PUBLIC_NAME,
+		"x-forwarded-host": PUBLIC_NAME,
+		"x-forwarded-proto": "https",
+		"x-lh-proxy-secret": SECRET,
+	};
 	const noSecret = { host: PUBLIC_NAME, "x-forwarded-host": PUBLIC_NAME, "x-forwarded-proto": "https" };
 	const wrongSecret = { ...proxied, "x-lh-proxy-secret": "c".repeat(48) };
 	const notHttps = { ...proxied, "x-forwarded-proto": "http" };
@@ -250,7 +301,11 @@ async function probePublicMode(base) {
 		check(`public mode, not served: ${label}`, res.status !== 200 && turnedAway(res), `${res.status} ${res.location}`);
 	}
 	const page = await request(base, "/", proxied);
-	check("public mode: a page without a session goes to /login", page.status >= 300 && page.status < 400 && new URL(page.location, "https://x").pathname === "/login", `${page.status} ${page.location}`);
+	check(
+		"public mode: a page without a session goes to /login",
+		page.status >= 300 && page.status < 400 && new URL(page.location, "https://x").pathname === "/login",
+		`${page.status} ${page.location}`,
+	);
 	const api = await request(base, "/api/settings", proxied);
 	check("public mode: the API without a session answers 401", api.status === 401, String(api.status));
 	const login = await request(base, "/login", proxied);
@@ -261,7 +316,10 @@ async function probePublicMode(base) {
 	check("public mode: a wrong password answers 401", wrong.status === 401, String(wrong.status));
 	const right = await post(base, "/api/access/login", { ...proxied, ...origin }, { password: PASSWORD });
 	check("public mode: the right password signs in", right.status === 200, String(right.status));
-	check("public mode: the session cookie is HttpOnly and Secure", /lh_device=/.test(right.cookie) && /HttpOnly/i.test(right.cookie) && /Secure/i.test(right.cookie));
+	check(
+		"public mode: the session cookie is HttpOnly and Secure",
+		/lh_device=/.test(right.cookie) && /HttpOnly/i.test(right.cookie) && /Secure/i.test(right.cookie),
+	);
 	const cookie = right.cookie.match(/lh_device=[^;]+/)?.[0] ?? "";
 	const inside = await request(base, "/api/settings", { ...proxied, cookie });
 	check("public mode: the API answers with the session", inside.status === 200, String(inside.status));
@@ -274,7 +332,13 @@ async function runPublicMode() {
 		console.log(`[boot-check] skip public mode: ${CLI} is not built (the image has it).`);
 		return;
 	}
-	await runStartedServer({ label: " in public mode", extraEnv: { LH_PUBLIC_HOST: PUBLIC_NAME, LH_PROXY_SECRET: SECRET }, prepare: setPassword, probe: probePublicMode, isUp: (res) => res.status === 403 });
+	await runStartedServer({
+		label: " in public mode",
+		extraEnv: { LH_PUBLIC_HOST: PUBLIC_NAME, LH_PROXY_SECRET: SECRET },
+		prepare: setPassword,
+		probe: probePublicMode,
+		isUp: (res) => res.status === 403,
+	});
 }
 
 if (flag("--image-checks")) checkImage(STANDALONE);

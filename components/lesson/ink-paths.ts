@@ -41,8 +41,14 @@ export function lineD(from: Point, to: Point, seed: number, bow = 1): string {
 	const ux = dx / length;
 	const uy = dy / length;
 	const over = Math.min(2, length * 0.03);
-	const start: Point = [from[0] - ux * over * random() + spread(random, 0.4), from[1] - uy * over * random() + spread(random, 0.4)];
-	const end: Point = [to[0] + ux * over * random() + spread(random, 0.4), to[1] + uy * over * random() + spread(random, 0.4)];
+	const start: Point = [
+		from[0] - ux * over * random() + spread(random, 0.4),
+		from[1] - uy * over * random() + spread(random, 0.4),
+	];
+	const end: Point = [
+		to[0] + ux * over * random() + spread(random, 0.4),
+		to[1] + uy * over * random() + spread(random, 0.4),
+	];
 	const bend = spread(random, Math.min(3, length * 0.03)) * bow;
 	const control: Point = [(start[0] + end[0]) / 2 - uy * bend, (start[1] + end[1]) / 2 + ux * bend];
 	return `M${point(start)} Q${point(control)} ${point(end)}`;

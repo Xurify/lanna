@@ -19,18 +19,59 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckIcon, KeyboardIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SendIcon, SquareIcon, Volume2Icon } from "lucide-react";
+import {
+	CheckIcon,
+	KeyboardIcon,
+	LoaderCircleIcon,
+	MicIcon,
+	RepeatIcon,
+	SendIcon,
+	SquareIcon,
+	Volume2Icon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { ACTIVE_TIME_HOW, COLUMN, endEnterBlocked, EnterHint, PracticeTime, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, Centered } from "@/components/task-frame";
+import {
+	ACTIVE_TIME_HOW,
+	COLUMN,
+	endEnterBlocked,
+	EnterHint,
+	PracticeTime,
+	PRIMARY,
+	SECONDARY,
+	SentenceRow,
+	SentenceRows,
+	Stat,
+	Stats,
+	TaskEnd,
+	TaskFrame,
+	TaskTop,
+	Centered,
+} from "@/components/task-frame";
 import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SceneBoard } from "@/components/speak/scene-board";
 import { SettingsLink } from "@/components/settings/settings-link";
-import { PRON_CLEAR, PRON_GOOD, praiseFor, pronLabel, SLIP_LABEL, SPEAK_CLEAR_XP, SPEAK_REPAIR_XP, SPEAK_TURNS, speakCounts, type PronEngine, type PronReport, type PronScore, type SpeakSceneEntry, type SpeakSession, type SpeakTurn } from "@/src/core";
+import {
+	PRON_CLEAR,
+	PRON_GOOD,
+	praiseFor,
+	pronLabel,
+	SLIP_LABEL,
+	SPEAK_CLEAR_XP,
+	SPEAK_REPAIR_XP,
+	SPEAK_TURNS,
+	speakCounts,
+	type PronEngine,
+	type PronReport,
+	type PronScore,
+	type SpeakSceneEntry,
+	type SpeakSession,
+	type SpeakTurn,
+} from "@/src/core";
 import { QIcon } from "@/components/quiet/icon";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { useServerValue } from "@/components/use-server-value";
@@ -43,7 +84,15 @@ export interface SpeakState {
 	stt: SttEngine | null;
 	pron: PronEngine | null;
 	unfinished: { id: string; scene: string; sceneTitle: string; turns: number } | null;
-	recent: Array<{ id: string; scene: string; sceneTitle: string; startedAt: string; turns: number; corrections: number; xp?: number }>;
+	recent: Array<{
+		id: string;
+		scene: string;
+		sceneTitle: string;
+		startedAt: string;
+		turns: number;
+		corrections: number;
+		xp?: number;
+	}>;
 }
 
 interface Outcome {
@@ -56,7 +105,17 @@ interface Outcome {
 
 type Phase = "pick" | "starting" | "scene" | "ending" | "done";
 
-export function SpeakPlayer({ initialState, sceneId = null, typed = false, sceneLang = { id: "slovak", tag: "sk-SK" } }: { initialState: SpeakState | null; sceneId?: string | null; typed?: boolean; sceneLang?: { id: string; tag: string } }) {
+export function SpeakPlayer({
+	initialState,
+	sceneId = null,
+	typed = false,
+	sceneLang = { id: "slovak", tag: "sk-SK" },
+}: {
+	initialState: SpeakState | null;
+	sceneId?: string | null;
+	typed?: boolean;
+	sceneLang?: { id: string; tag: string };
+}) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [state, setState] = useServerValue<SpeakState | null>(initialState);
@@ -105,7 +164,12 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 	}, [initialState, load]);
 
 	const post = async <T,>(body: Record<string, unknown> | FormData): Promise<T> => {
-		const res = await fetch("/api/speak", body instanceof FormData ? { method: "POST", body } : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+		const res = await fetch(
+			"/api/speak",
+			body instanceof FormData
+				? { method: "POST", body }
+				: { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) },
+		);
 		const data = (await res.json().catch(() => ({}))) as T & { message?: string };
 		if (!res.ok) throw new Error(data.message ?? `HTTP ${res.status}`);
 		return data;
@@ -132,23 +196,26 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 		[activeTime],
 	);
 
-	const resume = useCallback(async (id: string) => {
-		// The unfinished scene's record comes back through "turn" only; a
-		// resume re-reads it via the state's id by starting nothing new.
-		setError(null);
-		try {
-			const res = await fetch(`/api/speak?id=${encodeURIComponent(id)}`);
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const data = (await res.json()) as SpeakState & { session?: SpeakSession };
-			if (!data.session) throw new Error("That scene is gone.");
-			setSession(data.session);
-			startedAt.current = Date.now();
-			activeTime.restart();
-			setPhase("scene");
-		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
-		}
-	}, [activeTime]);
+	const resume = useCallback(
+		async (id: string) => {
+			// The unfinished scene's record comes back through "turn" only; a
+			// resume re-reads it via the state's id by starting nothing new.
+			setError(null);
+			try {
+				const res = await fetch(`/api/speak?id=${encodeURIComponent(id)}`);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const data = (await res.json()) as SpeakState & { session?: SpeakSession };
+				if (!data.session) throw new Error("That scene is gone.");
+				setSession(data.session);
+				startedAt.current = Date.now();
+				activeTime.restart();
+				setPhase("scene");
+			} catch (err) {
+				setError(err instanceof Error ? err.message : String(err));
+			}
+		},
+		[activeTime],
+	);
 
 	// ?scene=… opens the scene at once (the daily plan's link).
 	useEffect(() => {
@@ -166,7 +233,13 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 		sfx.done();
 		const activeMs = activeTime.finish();
 		try {
-			const o = await post<Outcome>({ action: "end", id: session.id, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() });
+			const o = await post<Outcome>({
+				action: "end",
+				id: session.id,
+				ms: Date.now() - startedAt.current,
+				activeMs,
+				tz: new Date().getTimezoneOffset(),
+			});
 			setPracticeMs(activeMs);
 			setOutcome(o);
 			setSession(o.session);
@@ -186,7 +259,13 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 			setDraft("");
 			setMeaning(false);
 			// The learner's line shows at once; the tutor's follows.
-			const mine: SpeakTurn = { role: "learner", text: text.trim(), via, at: new Date().toISOString(), ...(clip?.pron ? { pron: clip.pron } : {}) };
+			const mine: SpeakTurn = {
+				role: "learner",
+				text: text.trim(),
+				via,
+				at: new Date().toISOString(),
+				...(clip?.pron ? { pron: clip.pron } : {}),
+			};
 			setSession({ ...session, turns: [...session.turns, mine] });
 			try {
 				const form = new FormData();
@@ -269,45 +348,45 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 	}, [state, sending, hearing, phase, listening, send]);
 	const toggleRef = useRef(toggleMic);
 	toggleRef.current = toggleMic;
-		// Press-and-hold on touch (2026-11-01): the mic records while a finger holds it,
-		// and the release sends the line. A mouse keeps press-to-start, press-to-send,
-		// as the keyboard's Space does. The click a touch press leaves behind is the
-		// same press, so it is ignored.
-		const onMicDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-			touchPressRef.current = e.pointerType !== "mouse";
-			if (e.pointerType === "mouse") return;
-			e.preventDefault();
-			holdRef.current = "down";
-			try {
-				e.currentTarget.setPointerCapture(e.pointerId);
-			} catch {
-				// Capture is a nicety: the release still reaches the button on most devices.
-			}
-			if (!listening) void toggleMic();
-		};
-		const onMicUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-			if (e.pointerType === "mouse" || holdRef.current !== "down") return;
-			if (listening) {
-				holdRef.current = "idle";
-				void toggleMic();
-			} else {
-				holdRef.current = "up"; // still starting: stop as soon as the mic is live
-			}
-		};
-		const onMicClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-			if (touchPressRef.current && e.detail !== 0) {
-				touchPressRef.current = false;
-				return;
-			}
+	// Press-and-hold on touch (2026-11-01): the mic records while a finger holds it,
+	// and the release sends the line. A mouse keeps press-to-start, press-to-send,
+	// as the keyboard's Space does. The click a touch press leaves behind is the
+	// same press, so it is ignored.
+	const onMicDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+		touchPressRef.current = e.pointerType !== "mouse";
+		if (e.pointerType === "mouse") return;
+		e.preventDefault();
+		holdRef.current = "down";
+		try {
+			e.currentTarget.setPointerCapture(e.pointerId);
+		} catch {
+			// Capture is a nicety: the release still reaches the button on most devices.
+		}
+		if (!listening) void toggleMic();
+	};
+	const onMicUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+		if (e.pointerType === "mouse" || holdRef.current !== "down") return;
+		if (listening) {
+			holdRef.current = "idle";
 			void toggleMic();
-		};
-		// A release that came before the mic was live stops it the moment it is.
-		useEffect(() => {
-			if (listening && holdRef.current === "up") {
-				holdRef.current = "idle";
-				void toggleRef.current();
-			}
-		}, [listening]);
+		} else {
+			holdRef.current = "up"; // still starting: stop as soon as the mic is live
+		}
+	};
+	const onMicClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+		if (touchPressRef.current && e.detail !== 0) {
+			touchPressRef.current = false;
+			return;
+		}
+		void toggleMic();
+	};
+	// A release that came before the mic was live stops it the moment it is.
+	useEffect(() => {
+		if (listening && holdRef.current === "up") {
+			holdRef.current = "idle";
+			void toggleRef.current();
+		}
+	}, [listening]);
 
 	// The newest line scrolls into view.
 	useEffect(() => {
@@ -328,7 +407,8 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 					setLevel(0);
 					return;
 				}
-				if (phase === "scene" && session && speakCounts(session.turns).learner === 0) void post({ action: "drop", id: session.id }).catch(() => undefined);
+				if (phase === "scene" && session && speakCounts(session.turns).learner === 0)
+					void post({ action: "drop", id: session.id }).catch(() => undefined);
 				router.push(readOrigin());
 				return;
 			}
@@ -415,7 +495,9 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 				<div className={cn(COLUMN, "flex flex-col gap-4")}>
 					<div className="flex flex-wrap items-baseline justify-between gap-2">
 						<div>
-							<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · {scene?.blurb ?? session.sceneTitle}</p>
+							<p className="font-ui text-sm font-[600] text-muted-foreground">
+								Speak · {scene?.blurb ?? session.sceneTitle}
+							</p>
 							<h2 className="font-prose text-2xl font-semibold text-foreground" lang={lang?.code}>
 								{session.sceneTitle}
 							</h2>
@@ -426,7 +508,16 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 					<ol className="flex flex-col gap-3" data-testid="speak-turns" aria-live="polite">
 						{session.turns.map((t, i) => (
 							<li key={`${t.at}-${i}`} className={cn("flex", t.role === "learner" ? "justify-end" : "justify-start")}>
-								{t.role === "tutor" ? <TutorBubble turn={t} last={t === lastTutor} meaning={meaning && t === lastTutor} onMeaning={() => setMeaning((v) => !v)} /> : <LearnerBubble turn={t} />}
+								{t.role === "tutor" ? (
+									<TutorBubble
+										turn={t}
+										last={t === lastTutor}
+										meaning={meaning && t === lastTutor}
+										onMeaning={() => setMeaning((v) => !v)}
+									/>
+								) : (
+									<LearnerBubble turn={t} />
+								)}
 							</li>
 						))}
 						{sending && (
@@ -438,7 +529,11 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 						)}
 					</ol>
 					{error && (
-						<p className="rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss" data-testid="speak-error" role="alert">
+						<p
+							className="rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss"
+							data-testid="speak-error"
+							role="alert"
+						>
 							{error}
 						</p>
 					)}
@@ -476,11 +571,23 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 								className="min-h-12 flex-1 resize-none rounded-lg bg-card px-4 py-3 font-prose text-lg text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] dark:bg-background"
 								data-testid="speak-input"
 							/>
-							<button type="submit" disabled={sending || !draft.trim()} className={cn(PRIMARY, "h-12 px-4")} aria-label="Send" data-testid="speak-send">
+							<button
+								type="submit"
+								disabled={sending || !draft.trim()}
+								className={cn(PRIMARY, "h-12 px-4")}
+								aria-label="Send"
+								data-testid="speak-send"
+							>
 								<SendIcon className="size-5" />
 							</button>
 							{canMic && (
-								<button type="button" onClick={() => setTyping(false)} className={cn(SECONDARY, "h-12 px-3")} aria-label="Use the microphone" title="Use the microphone">
+								<button
+									type="button"
+									onClick={() => setTyping(false)}
+									className={cn(SECONDARY, "h-12 px-3")}
+									aria-label="Use the microphone"
+									title="Use the microphone"
+								>
 									<MicIcon className="size-5" />
 								</button>
 							)}
@@ -497,22 +604,64 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 									"lh-press relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink disabled:opacity-60 [-webkit-touch-callout:none]",
 									listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
 								)}
-								data-testid="speak-mic" onPointerDown={onMicDown} onPointerUp={onMicUp} onPointerCancel={onMicUp} onLostPointerCapture={onMicUp} onContextMenu={(e) => e.preventDefault()}
+								data-testid="speak-mic"
+								onPointerDown={onMicDown}
+								onPointerUp={onMicUp}
+								onPointerCancel={onMicUp}
+								onLostPointerCapture={onMicUp}
+								onContextMenu={(e) => e.preventDefault()}
 							>
-								{listening && <span className="absolute inset-0 rounded-full bg-miss/40" style={{ transform: `scale(${1 + level * 0.6})` }} aria-hidden="true" />}
-								{hearing ? <LoaderCircleIcon className="relative size-7 animate-spin" /> : listening ? <SquareIcon className="relative size-6 fill-current" /> : <MicIcon className="relative size-7" />}
+								{listening && (
+									<span
+										className="absolute inset-0 rounded-full bg-miss/40"
+										style={{ transform: `scale(${1 + level * 0.6})` }}
+										aria-hidden="true"
+									/>
+								)}
+								{hearing ? (
+									<LoaderCircleIcon className="relative size-7 animate-spin" />
+								) : listening ? (
+									<SquareIcon className="relative size-6 fill-current" />
+								) : (
+									<MicIcon className="relative size-7" />
+								)}
 							</button>
 							<div className="min-w-0 flex-1">
 								{listening ? (
 									<Meter level={level} />
 								) : (
 									<p className="font-ui text-sm font-[600] text-foreground" data-testid="speak-hint">
-										{hearing ? "Hearing you…" : sending ? "The tutor is answering…" : <><span className="pointer-coarse:hidden">{counts.learner === 0 ? "Press the mic (or Space), say your line, press again." : "Your turn. Mic or Space."}</span><span className="hidden pointer-coarse:inline">{counts.learner === 0 ? "Hold the mic, say your line, let go." : "Your turn. Hold the mic."}</span></>}
+										{hearing ? (
+											"Hearing you…"
+										) : sending ? (
+											"The tutor is answering…"
+										) : (
+											<>
+												<span className="pointer-coarse:hidden">
+													{counts.learner === 0
+														? "Press the mic (or Space), say your line, press again."
+														: "Your turn. Mic or Space."}
+												</span>
+												<span className="hidden pointer-coarse:inline">
+													{counts.learner === 0 ? "Hold the mic, say your line, let go." : "Your turn. Hold the mic."}
+												</span>
+											</>
+										)}
 									</p>
 								)}
-								<p className="mt-0.5 font-prose text-xs text-muted-foreground pointer-coarse:hidden">{listening ? "Press again (or Space) when you have said it · Escape throws it away" : "M shows the meaning · R replays · T types a line"}</p>
+								<p className="mt-0.5 font-prose text-xs text-muted-foreground pointer-coarse:hidden">
+									{listening
+										? "Press again (or Space) when you have said it · Escape throws it away"
+										: "M shows the meaning · R replays · T types a line"}
+								</p>
 							</div>
-							<button type="button" onClick={() => setTyping(true)} className="rounded-md p-2 pointer-coarse:p-3 text-ink-3 hover:bg-well hover:text-foreground" aria-label="Type instead" title="Type instead (T)">
+							<button
+								type="button"
+								onClick={() => setTyping(true)}
+								className="rounded-md p-2 pointer-coarse:p-3 text-ink-3 hover:bg-well hover:text-foreground"
+								aria-label="Type instead"
+								title="Type instead (T)"
+							>
 								<KeyboardIcon className="size-5" />
 							</button>
 						</div>
@@ -531,14 +680,23 @@ export function SpeakPlayer({ initialState, sceneId = null, typed = false, scene
 								<SpeedToggle /> tutor speed
 							</span>
 						)}
-						<button type="button" onClick={() => void finish()} disabled={counts.learner === 0 || sending || phase !== "scene"} className={cn(SECONDARY, "h-11 px-4 text-sm")} data-testid="speak-end">
+						<button
+							type="button"
+							onClick={() => void finish()}
+							disabled={counts.learner === 0 || sending || phase !== "scene"}
+							className={cn(SECONDARY, "h-11 px-4 text-sm")}
+							data-testid="speak-end"
+						>
 							Koniec · get my corrections
 						</button>
 					</div>
 				</div>
 			</div>
 			{phase === "ending" && (
-				<div className="absolute inset-0 z-10 flex items-center justify-center bg-background" data-testid="speak-ending">
+				<div
+					className="absolute inset-0 z-10 flex items-center justify-center bg-background"
+					data-testid="speak-ending"
+				>
 					<p className="flex items-center gap-3 font-ui text-sm text-muted-foreground">
 						<LoaderCircleIcon className="size-5 animate-spin" />
 						Looking back over what you said…
@@ -555,18 +713,35 @@ function Meter({ level }: { level: number }) {
 	return (
 		<div className="flex h-6 items-center gap-0.5" aria-label="Microphone level" data-testid="speak-meter">
 			{Array.from({ length: cells }, (_, i) => (
-				<span key={i} className={cn("w-1.5 rounded-sm transition-[height] duration-75", i < lit ? "bg-teal" : "bg-accent")} style={{ height: `${6 + (i < lit ? 14 * Math.min(1, (i + 1) / cells + 0.3) : 0)}px` }} />
+				<span
+					key={i}
+					className={cn("w-1.5 rounded-sm transition-[height] duration-75", i < lit ? "bg-teal" : "bg-accent")}
+					style={{ height: `${6 + (i < lit ? 14 * Math.min(1, (i + 1) / cells + 0.3) : 0)}px` }}
+				/>
 			))}
 		</div>
 	);
 }
 
-function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last: boolean; meaning: boolean; onMeaning: () => void }) {
+function TutorBubble({
+	turn,
+	last,
+	meaning,
+	onMeaning,
+}: {
+	turn: SpeakTurn;
+	last: boolean;
+	meaning: boolean;
+	onMeaning: () => void;
+}) {
 	const lang = useActiveLanguage();
 	return (
 		<div className="max-w-[85%]">
 			{turn.prompt && (
-				<div className="mb-1.5 inline-flex max-w-full flex-wrap items-baseline gap-x-2 rounded-xl border border-teal-line bg-teal-wash px-3 py-1.5 font-prose text-base" data-testid="speak-prompt">
+				<div
+					className="mb-1.5 inline-flex max-w-full flex-wrap items-baseline gap-x-2 rounded-xl border border-teal-line bg-teal-wash px-3 py-1.5 font-prose text-base"
+					data-testid="speak-prompt"
+				>
 					<span className="font-ui text-xs font-[600] text-foreground">Fix the {SLIP_LABEL[turn.prompt.kind]}</span>
 					<span className="text-muted-foreground line-through decoration-2" lang={lang?.code}>
 						{turn.prompt.yours}
@@ -577,15 +752,28 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 				</div>
 			)}
 			{turn.repaired && (
-				<p className="mb-1.5 inline-flex items-center gap-1.5 rounded-xl bg-teal-wash px-3 py-1 font-ui text-sm font-[600] text-teal-2" data-testid="speak-repaired">
+				<p
+					className="mb-1.5 inline-flex items-center gap-1.5 rounded-xl bg-teal-wash px-3 py-1 font-ui text-sm font-[600] text-teal-2"
+					data-testid="speak-repaired"
+				>
 					<CheckIcon className="size-4" strokeWidth={3} />
 					Repaired, in the tutor&apos;s judgment · +{SPEAK_REPAIR_XP} XP
 				</p>
 			)}
-			<div className={cn("rounded-lg rounded-bl-md bg-well px-4 py-3", last && "lh-rise shadow-[0_0_0_1.5px_var(--q-teal)]")}>
+			<div
+				className={cn(
+					"rounded-lg rounded-bl-md bg-well px-4 py-3",
+					last && "lh-rise shadow-[0_0_0_1.5px_var(--q-teal)]",
+				)}
+			>
 				<div className="flex items-start gap-2">
-					<button type="button" onClick={() => void speak(turn.text).catch(() => {})} aria-label="Play" className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-well-2">
-							<Volume2Icon className="size-4" strokeWidth={1.6} />
+					<button
+						type="button"
+						onClick={() => void speak(turn.text).catch(() => {})}
+						aria-label="Play"
+						className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-well-2"
+					>
+						<Volume2Icon className="size-4" strokeWidth={1.6} />
 					</button>
 					<p className={cn("font-prose text-foreground", last ? "text-2xl leading-snug" : "text-lg")} lang={lang?.code}>
 						{turn.text}
@@ -598,7 +786,11 @@ function TutorBubble({ turn, last, meaning, onMeaning }: { turn: SpeakTurn; last
 								{turn.en}
 							</p>
 						) : last ? (
-							<button type="button" onClick={onMeaning} className="font-ui text-xs font-[600] text-muted-foreground hover:text-foreground">
+							<button
+								type="button"
+								onClick={onMeaning}
+								className="font-ui text-xs font-[600] text-muted-foreground hover:text-foreground"
+							>
 								Show the meaning (M)
 							</button>
 						) : null}
@@ -624,7 +816,15 @@ function LearnerBubble({ turn }: { turn: SpeakTurn }) {
 	);
 }
 
-function EndScreen({ outcome, practiceMs, onAgain }: { outcome: Outcome; practiceMs: number | null; onAgain: () => void }) {
+function EndScreen({
+	outcome,
+	practiceMs,
+	onAgain,
+}: {
+	outcome: Outcome;
+	practiceMs: number | null;
+	onAgain: () => void;
+}) {
 	const lang = useActiveLanguage();
 	const s = outcome.session;
 	const counts = speakCounts(s.turns);
@@ -660,13 +860,33 @@ function EndScreen({ outcome, practiceMs, onAgain }: { outcome: Outcome; practic
 			<PracticeTime ms={practiceMs} how={ACTIVE_TIME_HOW} />
 			<Stats className="mt-7 max-w-none">
 				<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
-				<Stat label="Repaired (tutor&apos;s call)" value={`${counts.repaired} of ${counts.prompts}`} ink={counts.prompts > 0 && counts.repaired >= counts.prompts ? "text-teal-2" : undefined} />
-				{s.pron && <Stat label="Pronunciation" value={`${s.pron.average} · ${pronLabel(s.pron.average)}`} ink={s.pron.average >= PRON_GOOD ? "text-teal-2" : s.pron.average >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
-				<Stat label="Added to Review" value={outcome.queued.length ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} />
+				<Stat
+					label="Repaired (tutor's call)"
+					value={`${counts.repaired} of ${counts.prompts}`}
+					ink={counts.prompts > 0 && counts.repaired >= counts.prompts ? "text-teal-2" : undefined}
+				/>
+				{s.pron && (
+					<Stat
+						label="Pronunciation"
+						value={`${s.pron.average} · ${pronLabel(s.pron.average)}`}
+						ink={
+							s.pron.average >= PRON_GOOD ? "text-teal-2" : s.pron.average >= PRON_CLEAR ? "text-teal-2" : "text-miss"
+						}
+					/>
+				)}
+				<Stat
+					label="Added to Review"
+					value={
+						outcome.queued.length
+							? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}`
+							: "None"
+					}
+				/>
 			</Stats>
 			{s.pron && (
 				<p className="mt-2 font-prose text-sm text-ink-3" data-testid="speak-pron">
-					{s.pron.clear} of {s.pron.lines} spoken {s.pron.lines === 1 ? "line" : "lines"} said clearly (+{SPEAK_CLEAR_XP} XP each){s.pron.engine === "azure" ? ", scored sound by sound" : ""}.
+					{s.pron.clear} of {s.pron.lines} spoken {s.pron.lines === 1 ? "line" : "lines"} said clearly (+
+					{SPEAK_CLEAR_XP} XP each){s.pron.engine === "azure" ? ", scored sound by sound" : ""}.
 				</p>
 			)}
 			<PronWorkOn report={outcome.report} />
@@ -686,23 +906,34 @@ function EndScreen({ outcome, practiceMs, onAgain }: { outcome: Outcome; practic
 									<>
 										<span>{SLIP_LABEL[c.kind]}</span>
 										<span>
-											You said <s className="text-ink-2 decoration-2" lang={lang?.code}>{c.yours}</s>
+											You said{" "}
+											<s className="text-ink-2 decoration-2" lang={lang?.code}>
+												{c.yours}
+											</s>
 										</span>
 									</>
 								}
 							/>
 						))}
 					</SentenceRows>
-					{outcome.queued.length > 0 && <p className="mt-2 font-prose text-sm text-ink-3">The words behind them are in Review now.</p>}
+					{outcome.queued.length > 0 && (
+						<p className="mt-2 font-prose text-sm text-ink-3">The words behind them are in Review now.</p>
+					)}
 				</div>
 			) : (
 				sum &&
 				(sum.unreadable ? (
-					<p className="mt-6 rounded-xl bg-well px-4 py-3 font-ui text-sm font-[600] text-ink-3" data-testid="speak-unreadable">
+					<p
+						className="mt-6 rounded-xl bg-well px-4 py-3 font-ui text-sm font-[600] text-ink-3"
+						data-testid="speak-unreadable"
+					>
 						The summary could not be read, so no fixes are listed.
 					</p>
 				) : (
-					<p className="mt-6 rounded-xl bg-teal-wash px-4 py-3 font-ui text-sm font-[600] text-teal-2" data-testid="speak-clean">
+					<p
+						className="mt-6 rounded-xl bg-teal-wash px-4 py-3 font-ui text-sm font-[600] text-teal-2"
+						data-testid="speak-clean"
+					>
 						Nothing to fix this time.
 					</p>
 				))
@@ -712,9 +943,18 @@ function EndScreen({ outcome, practiceMs, onAgain }: { outcome: Outcome; practic
 					<h2 className="q-sh">Worth keeping</h2>
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{sum.keep.map((k) => (
-							<li key={k} className="flex items-center gap-2 rounded-md bg-well px-2.5 py-1 font-prose text-base" lang={lang?.code}>
+							<li
+								key={k}
+								className="flex items-center gap-2 rounded-md bg-well px-2.5 py-1 font-prose text-base"
+								lang={lang?.code}
+							>
 								<span>{k}</span>
-								<button type="button" onClick={() => void speak(k).catch(() => {})} aria-label={`Play: ${k}`} className="flex size-6 items-center justify-center rounded-full text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-11">
+								<button
+									type="button"
+									onClick={() => void speak(k).catch(() => {})}
+									aria-label={`Play: ${k}`}
+									className="flex size-6 items-center justify-center rounded-full text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-11"
+								>
 									<Volume2Icon className="size-3.5" />
 								</button>
 							</li>

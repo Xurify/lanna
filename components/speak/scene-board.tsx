@@ -47,10 +47,13 @@ interface SceneBoardProps {
 
 export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResume, onRetry }: SceneBoardProps) {
 	const scenes = useMemo(() => state?.scenes ?? [], [state]);
-	const initial = state?.unfinished?.scene ?? (sceneId && scenes.some((s) => s.id === sceneId) ? sceneId : scenes[0]?.id) ?? null;
+	const initial =
+		state?.unfinished?.scene ?? (sceneId && scenes.some((s) => s.id === sceneId) ? sceneId : scenes[0]?.id) ?? null;
 	const [selected, setSelected] = useState<string | null>(initial);
 	const current = scenes.find((s) => s.id === selected) ?? scenes[0] ?? null;
-	const groups = GROUPS.map((g) => ({ ...g, scenes: scenes.filter((s) => s.why === g.why) })).filter((g) => g.scenes.length > 0);
+	const groups = GROUPS.map((g) => ({ ...g, scenes: scenes.filter((s) => s.why === g.why) })).filter(
+		(g) => g.scenes.length > 0,
+	);
 	const grouped = groups.length > 1;
 
 	useEffect(() => {
@@ -82,13 +85,28 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 		return () => window.removeEventListener("keydown", onKey);
 	}, [current, scenes, state, typed, onPick, onResume]);
 
-	const sheet = (inline: boolean) => current && <SceneSheet key={`${current.id}-${inline}`} scene={current} lang={lang} state={state} typed={typed} inline={inline} onPick={onPick} onResume={onResume} />;
+	const sheet = (inline: boolean) =>
+		current && (
+			<SceneSheet
+				key={`${current.id}-${inline}`}
+				scene={current}
+				lang={lang}
+				state={state}
+				typed={typed}
+				inline={inline}
+				onPick={onPick}
+				onResume={onResume}
+			/>
+		);
 
 	return (
 		<TaskFrame>
 			<div className="@container flex flex-1 flex-col overflow-y-auto">
 				<div className="mx-auto w-full max-w-5xl px-5 pt-[5vh] pb-12 @md:px-6">
-					<Link href="/" className="lh-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground">
+					<Link
+						href="/"
+						className="lh-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
+					>
 						<ArrowLeftIcon className="size-3.5" />
 						Today
 					</Link>
@@ -96,10 +114,18 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
 						<SpeakModes current="tutor" />
 					</div>
-					<p className="mt-1 font-prose text-[15px] text-ink-3">{typed || !state?.stt ? "The tutor plays the other person and answers out loud. You write your part." : "The tutor plays the other person and answers out loud. You say your part."}</p>
+					<p className="mt-1 font-prose text-[15px] text-ink-3">
+						{typed || !state?.stt
+							? "The tutor plays the other person and answers out loud. You write your part."
+							: "The tutor plays the other person and answers out loud. You say your part."}
+					</p>
 
 					{error && (
-						<p className="mt-5 rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert" data-testid="speak-error">
+						<p
+							className="mt-5 rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss"
+							role="alert"
+							data-testid="speak-error"
+						>
 							{error}{" "}
 							<button type="button" onClick={onRetry} className="underline">
 								Try again
@@ -107,9 +133,17 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						</p>
 					)}
 					{state && !state.canSpeak && (
-						<EmptyState className="mt-6 max-w-none" testid="speak-nomodel" title="Say a scene out loud with a tutor" action={<AddKeyButton />}>
+						<EmptyState
+							className="mt-6 max-w-none"
+							testid="speak-nomodel"
+							title="Say a scene out loud with a tutor"
+							action={<AddKeyButton />}
+						>
 							<p>In a scene the tutor plays the other person and answers what you say. That needs an AI key.</p>
-							<p>Step by step works without one: pick a scene and walk through it line by line.{state.stt ? "" : " Speaking by voice also takes a speech-to-text key, which is optional."}</p>
+							<p>
+								Step by step works without one: pick a scene and walk through it line by line.
+								{state.stt ? "" : " Speaking by voice also takes a speech-to-text key, which is optional."}
+							</p>
 						</EmptyState>
 					)}
 
@@ -137,10 +171,19 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 															aria-current={on ? "true" : undefined}
 															data-scene-row={s.id}
 															data-testid={`scene-${s.id}`}
-															className={cn("lh-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors", on ? "bg-well" : "hover:bg-well")}
+															className={cn(
+																"lh-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors",
+																on ? "bg-well" : "hover:bg-well",
+															)}
 														>
 															<span className="min-w-0 flex-1">
-																<span className={cn("block truncate font-ui text-[15px] font-[600] tracking-[-0.01em]", on ? "text-foreground" : "text-ink-2")} lang={lang.tag}>
+																<span
+																	className={cn(
+																		"block truncate font-ui text-[15px] font-[600] tracking-[-0.01em]",
+																		on ? "text-foreground" : "text-ink-2",
+																	)}
+																	lang={lang.tag}
+																>
 																	{s.title}
 																</span>
 																<span className="block truncate font-prose text-[13px] text-ink-3">{s.blurb}</span>
@@ -148,7 +191,10 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 															{open ? (
 																<span className="shrink-0 font-ui text-xs font-[550] text-teal-2">unfinished</span>
 															) : s.done > 0 ? (
-																<span className="shrink-0 font-ui text-xs tabular-nums text-ink-4" title={`Said ${s.done === 1 ? "once" : `${s.done} times`}`}>
+																<span
+																	className="shrink-0 font-ui text-xs tabular-nums text-ink-4"
+																	title={`Said ${s.done === 1 ? "once" : `${s.done} times`}`}
+																>
 																	{s.done}×
 																</span>
 															) : null}
@@ -161,7 +207,8 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 									</section>
 								))}
 								<p className="hidden px-3 font-ui text-xs text-ink-3 pointer-fine:@3xl:block">
-									<kbd className={KBD}>↑</kbd> <kbd className={KBD}>↓</kbd> pick · <kbd className={KBD}>Enter</kbd> starts · <kbd className={KBD}>Esc</kbd> leaves
+									<kbd className={KBD}>↑</kbd> <kbd className={KBD}>↓</kbd> pick · <kbd className={KBD}>Enter</kbd>{" "}
+									starts · <kbd className={KBD}>Esc</kbd> leaves
 								</p>
 							</div>
 							<div className="sticky top-6 hidden @3xl:block">{sheet(false)}</div>
@@ -170,7 +217,9 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 
 					{state && (
 						<p className="mt-10 font-ui text-xs text-muted-foreground">
-							{state.stt ? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : state.stt === "groq" ? "Groq" : "Deepgram"} speech-to-text, your recordings kept with the scene.` : "No speech-to-text key yet (ElevenLabs, Groq or Deepgram in Settings → API keys): lines are typed until then."}
+							{state.stt
+								? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : state.stt === "groq" ? "Groq" : "Deepgram"} speech-to-text, your recordings kept with the scene.`
+								: "No speech-to-text key yet (ElevenLabs, Groq or Deepgram in Settings → API keys): lines are typed until then."}
 						</p>
 					)}
 					<SourcesNote feature="speak" className="mt-6" />
@@ -180,7 +229,23 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 	);
 }
 
-function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { scene: SpeakSceneEntry; lang: { id: string; tag: string }; state: SpeakState | null; typed: boolean; inline: boolean; onPick: (id: string, typed: boolean) => void; onResume: (id: string) => void }) {
+function SceneSheet({
+	scene,
+	lang,
+	state,
+	typed,
+	inline,
+	onPick,
+	onResume,
+}: {
+	scene: SpeakSceneEntry;
+	lang: { id: string; tag: string };
+	state: SpeakState | null;
+	typed: boolean;
+	inline: boolean;
+	onPick: (id: string, typed: boolean) => void;
+	onResume: (id: string) => void;
+}) {
 	const canSpeak = !!state?.canSpeak;
 	// Without speech-to-text a line can only be typed, so the mic is not offered.
 	const byVoice = !!state?.stt;
@@ -206,7 +271,12 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 	if (unfinished) {
 		actions = (
 			<>
-				<button type="button" onClick={() => onResume(unfinished.id)} className={PRIMARY} data-testid={tid("speak-resume")}>
+				<button
+					type="button"
+					onClick={() => onResume(unfinished.id)}
+					className={PRIMARY}
+					data-testid={tid("speak-resume")}
+				>
 					<RepeatIcon className="size-4" />
 					Carry on
 					<kbd className={cn(KBD, "hidden bg-white/15 text-current shadow-none pointer-fine:inline-flex")}>Enter</kbd>
@@ -221,12 +291,22 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 	} else if (canSpeak) {
 		actions = (
 			<>
-				<button type="button" onClick={() => onPick(scene.id, keyboardFirst)} className={PRIMARY} data-testid={tid("speak-start")}>
+				<button
+					type="button"
+					onClick={() => onPick(scene.id, keyboardFirst)}
+					className={PRIMARY}
+					data-testid={tid("speak-start")}
+				>
 					{keyboardFirst ? keyboard : voice}
 					<kbd className={cn(KBD, "hidden bg-white/15 text-current shadow-none pointer-fine:inline-flex")}>Enter</kbd>
 				</button>
 				{byVoice && (
-					<button type="button" onClick={() => onPick(scene.id, !keyboardFirst)} className={SECONDARY} data-testid={tid("speak-start-other")}>
+					<button
+						type="button"
+						onClick={() => onPick(scene.id, !keyboardFirst)}
+						className={SECONDARY}
+						data-testid={tid("speak-start-other")}
+					>
 						{keyboardFirst ? voice : keyboard}
 					</button>
 				)}
@@ -246,24 +326,49 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 			</Link>
 		);
 	} else {
-		actions = <p className="font-prose text-sm text-ink-3">This scene needs an AI key; it has no step-by-step script in this language yet.</p>;
+		actions = (
+			<p className="font-prose text-sm text-ink-3">
+				This scene needs an AI key; it has no step-by-step script in this language yet.
+			</p>
+		);
 	}
 
 	return (
-		<article className={cn(inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lh-rise border-l border-[var(--q-line)] pl-8")} data-testid={tid("speak-sheet")} aria-label={scene.title}>
+		<article
+			className={cn(
+				inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lh-rise border-l border-[var(--q-line)] pl-8",
+			)}
+			data-testid={tid("speak-sheet")}
+			aria-label={scene.title}
+		>
 			<div className={cn(inline ? "py-2" : "pt-1 pb-2")}>
 				{/* Opened under its row, the row already names the scene. */}
 				{!inline && (
 					<>
-						{scene.why && <p className="font-ui text-[13px] font-[550] text-teal-2">{scene.why === "chapter" ? "Your chapter's scene" : "One of your goals"}</p>}
-						<h2 className={cn("font-ui text-[30px] font-[600] tracking-[-0.028em] text-foreground @4xl:text-[34px]", scene.why && "mt-1")} lang={lang.tag}>
+						{scene.why && (
+							<p className="font-ui text-[13px] font-[550] text-teal-2">
+								{scene.why === "chapter" ? "Your chapter's scene" : "One of your goals"}
+							</p>
+						)}
+						<h2
+							className={cn(
+								"font-ui text-[30px] font-[600] tracking-[-0.028em] text-foreground @4xl:text-[34px]",
+								scene.why && "mt-1",
+							)}
+							lang={lang.tag}
+						>
 							{scene.title}
 						</h2>
 						<p className="mt-1 font-prose text-base text-ink-2">{scene.blurb}</p>
 					</>
 				)}
 
-				<dl className={cn("grid gap-x-6 gap-y-3 font-prose text-[15px] @md:grid-cols-[7rem_minmax(0,1fr)]", !inline && "mt-5 border-t border-border pt-5")}>
+				<dl
+					className={cn(
+						"grid gap-x-6 gap-y-3 font-prose text-[15px] @md:grid-cols-[7rem_minmax(0,1fr)]",
+						!inline && "mt-5 border-t border-border pt-5",
+					)}
+				>
 					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">You meet</dt>
 					<dd className="-mt-2 text-foreground @md:mt-0">{sceneCounterpart(scene.brief)}</dd>
 					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">Your part</dt>
@@ -301,7 +406,8 @@ function SceneSheet({ scene, lang, state, typed, inline, onPick, onResume }: { s
 			</div>
 			{canSpeak && (
 				<p className="mt-5 border-t border-border pt-4 pb-1 font-prose text-[13px] text-ink-3">
-					{keyboardFirst ? "Type each line and press Enter." : "Press the mic, speak, press again."} A slip in an ending comes back for you to fix; the rest waits for the end.
+					{keyboardFirst ? "Type each line and press Enter." : "Press the mic, speak, press again."} A slip in an ending
+					comes back for you to fix; the rest waits for the end.
 				</p>
 			)}
 		</article>

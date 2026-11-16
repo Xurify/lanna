@@ -28,7 +28,15 @@ const rep = (given: string, verdict: "exact" | "wrong") => ({
 	kind: "type" as const,
 	verdict,
 	first: { given, verdict },
-	detail: { unit: "words", lemma: "nikto", gloss: "no one", sentence: "Nikto mi nezavolal.", translation: "Nobody called me.", answer: "Nikto", given },
+	detail: {
+		unit: "words",
+		lemma: "nikto",
+		gloss: "no one",
+		sentence: "Nikto mi nezavolal.",
+		translation: "Nobody called me.",
+		answer: "Nikto",
+		given,
+	},
 });
 
 describe("my mistakes on disk", () => {
@@ -38,12 +46,27 @@ describe("my mistakes on disk", () => {
 		assert.equal(r.analysis.at, "2026-11-01T08:00:00.000Z");
 		assert.equal(analysisStore.read().analysis?.at, r.analysis.at, "saved");
 		assert.equal(r.guide, null);
-		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T08:01:00Z") }), /needs at least 30 first tries with 5 mistakes among them; you have 0 and 0/);
+		await assert.rejects(
+			() => writeGuide({ now: new Date("2026-11-01T08:01:00Z") }),
+			/needs at least 30 first tries with 5 mistakes among them; you have 0 and 0/,
+		);
 	});
 
 	it("a visit shows the saved time, and Analyze now reads the log again", () => {
-		recordLesson({ unit: "words", mode: "lesson", reps: [rep("Niekto", "wrong"), rep("Nikto", "exact"), rep("Nikto", "exact")], tz: 0 }, new Date("2026-11-01T09:00:00Z"));
-		assert.equal(mistakesReport(new Date("2026-11-01T10:00:00Z")).analysis.at, "2026-11-01T08:00:00.000Z", "a visit does not re-read");
+		recordLesson(
+			{
+				unit: "words",
+				mode: "lesson",
+				reps: [rep("Niekto", "wrong"), rep("Nikto", "exact"), rep("Nikto", "exact")],
+				tz: 0,
+			},
+			new Date("2026-11-01T09:00:00Z"),
+		);
+		assert.equal(
+			mistakesReport(new Date("2026-11-01T10:00:00Z")).analysis.at,
+			"2026-11-01T08:00:00.000Z",
+			"a visit does not re-read",
+		);
 		const r = analyzeNow(new Date("2026-11-01T10:00:00Z"));
 		assert.equal(r.analysis.at, "2026-11-01T10:00:00.000Z");
 		assert.equal(r.analysis.reps, 3);
@@ -55,7 +78,13 @@ describe("my mistakes on disk", () => {
 
 	it("a saved guide is reused for the same facts, kept by a new snapshot, and stale once the answers change", async () => {
 		const analysis = analysisStore.read().analysis!;
-		const guide = { text: "## Do this week\n- Practice nikto / niekto.", at: "2026-11-01T10:05:00.000Z", digest: digest(guideFacts(analysis)), model: "faux:faux", usage: { model: "faux:faux", steps: [] } };
+		const guide = {
+			text: "## Do this week\n- Practice nikto / niekto.",
+			at: "2026-11-01T10:05:00.000Z",
+			digest: digest(guideFacts(analysis)),
+			model: "faux:faux",
+			usage: { model: "faux:faux", steps: [] },
+		};
 		analysisStore.write({ analysis, guide });
 		const again = await writeGuide({ now: new Date("2026-11-01T11:00:00Z") });
 		assert.equal(again.guide?.at, guide.at, "the same facts reuse it at no cost");
@@ -63,7 +92,10 @@ describe("my mistakes on disk", () => {
 		const re = analyzeNow(new Date("2026-11-01T12:00:00Z"));
 		assert.equal(re.guide?.text, guide.text, "a new snapshot keeps the guide");
 		assert.equal(re.guideCurrent, true);
-		recordLesson({ unit: "words", mode: "lesson", reps: [rep("Niekto", "wrong")], tz: 0 }, new Date("2026-11-01T12:30:00Z"));
+		recordLesson(
+			{ unit: "words", mode: "lesson", reps: [rep("Niekto", "wrong")], tz: 0 },
+			new Date("2026-11-01T12:30:00Z"),
+		);
 		assert.equal(analyzeNow(new Date("2026-11-01T13:00:00Z")).guideCurrent, false, "the answers changed since");
 	});
 });
@@ -71,8 +103,29 @@ describe("my mistakes on disk", () => {
 describe("the plan reads the saved trends", () => {
 	it("slippingUnits lists units whose trend is worse, worst first, and a stale snapshot is renewed after a lesson", async () => {
 		const { slippingUnits, refreshSnapshotIfStale } = await import("../src/server/mistakes-snapshot.ts");
-		const mk = (unit: string, recent: number) => ({ unit, title: unit, reps: 20, wrong: 5, accuracy: 0.7, recent, earlier: 0.9, trend: "worse" as const, slips: {} });
-		const analysis = { at: "2026-11-03T08:00:00.000Z", reps: 40, wrong: 10, from: null, to: null, units: [mk("loc", 0.6), mk("gen", 0.4), { ...mk("dat", 0.9), trend: "steady" as const }], slips: {}, words: [], weeks: [], mixups: [] };
+		const mk = (unit: string, recent: number) => ({
+			unit,
+			title: unit,
+			reps: 20,
+			wrong: 5,
+			accuracy: 0.7,
+			recent,
+			earlier: 0.9,
+			trend: "worse" as const,
+			slips: {},
+		});
+		const analysis = {
+			at: "2026-11-03T08:00:00.000Z",
+			reps: 40,
+			wrong: 10,
+			from: null,
+			to: null,
+			units: [mk("loc", 0.6), mk("gen", 0.4), { ...mk("dat", 0.9), trend: "steady" as const }],
+			slips: {},
+			words: [],
+			weeks: [],
+			mixups: [],
+		};
 		analysisStore.write({ analysis, guide: null });
 		assert.deepEqual(slippingUnits(), ["gen", "loc"]);
 		refreshSnapshotIfStale(new Date("2026-11-03T09:00:00Z"));

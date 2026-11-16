@@ -12,28 +12,28 @@ Public pages only: the shared conversation the owner sent, the landing, pricing,
 
 ### Observed
 
-| What | Evidence |
-|---|---|
-| One model, no picker | Pricing: "Every plan runs on OpenAI's GPT-6.1 Sol. Never a smaller model". Privacy: model provider OpenAI. |
-| A reply is plain text | The shared page stores each tutor turn as one text field (`InkText {text}`). The API reply the owner pasted: `{"said": true, "thought": {"kind": "reply", "quote": "What else can we learn?", "message": {"text": "…"}, "riddlerId": null, "riddlerVersionId": null}}`. |
-| Drawings are written in the reply | A fenced ` ```svg ` block inside the reply text, parsed by `/```([\w+#.-]*)\n([\s\S]*?)\n?```/g`. |
-| Drawings follow the page's theme | Colors and fonts are CSS variables: `--ink`, `--graphite`, `--faint`, `--rule`, `--riddle-wash`, `--font-voice` (forms, 16 to 18 px), `--font-sans` (labels, 11 to 12 px). Width 320. |
-| Drawings are checked, not trusted | Their own allowlist, not a general sanitizer: about 15 SVG elements, those CSS variables only, no `url(` except a marker reference, no `javascript`, `data:` or `@import`, at most 24,000 characters. A failed drawing reads "Riddled couldn't draw this one." |
-| Drawings can build up in steps | Groups carry `data-step` (1 to 10) and `data-caption`; the player has Step back, Step forward, Play again and a counter. |
-| Personas and memory | "Riddlers" are custom personas with versions (likely `riddlerId` / `riddlerVersionId`). Up to 15 short lines "About you" that the learner can see, reword and delete. A per-note instruction ("Quiz me before Friday", "never give the answer unless I ask"). |
+| What                              | Evidence                                                                                                                                                                                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| One model, no picker              | Pricing: "Every plan runs on OpenAI's GPT-6.1 Sol. Never a smaller model". Privacy: model provider OpenAI.                                                                                                                                                              |
+| A reply is plain text             | The shared page stores each tutor turn as one text field (`InkText {text}`). The API reply the owner pasted: `{"said": true, "thought": {"kind": "reply", "quote": "What else can we learn?", "message": {"text": "…"}, "riddlerId": null, "riddlerVersionId": null}}`. |
+| Drawings are written in the reply | A fenced ` ```svg ` block inside the reply text, parsed by `/```([\w+#.-]*)\n([\s\S]*?)\n?```/g`.                                                                                                                                                                       |
+| Drawings follow the page's theme  | Colors and fonts are CSS variables: `--ink`, `--graphite`, `--faint`, `--rule`, `--riddle-wash`, `--font-voice` (forms, 16 to 18 px), `--font-sans` (labels, 11 to 12 px). Width 320.                                                                                   |
+| Drawings are checked, not trusted | Their own allowlist, not a general sanitizer: about 15 SVG elements, those CSS variables only, no `url(` except a marker reference, no `javascript`, `data:` or `@import`, at most 24,000 characters. A failed drawing reads "Riddled couldn't draw this one."          |
+| Drawings can build up in steps    | Groups carry `data-step` (1 to 10) and `data-caption`; the player has Step back, Step forward, Play again and a counter.                                                                                                                                                |
+| Personas and memory               | "Riddlers" are custom personas with versions (likely `riddlerId` / `riddlerVersionId`). Up to 15 short lines "About you" that the learner can see, reword and delete. A per-note instruction ("Quiz me before Friday", "never give the answer unless I ask").           |
 
 ### The turn, read from the demonstratives thread (39 turns)
 
-| Turn type | What it does | Example |
-|---|---|---|
-| First answer | The rule in one sentence, glossed examples inline, then a drawing (a speaker, a near book, a far book) | "ten muž (that man), tá žena (that woman), to dieťa (that child)" |
-| "Help me clear this better" | A new frame, not the same words again: two separate choices, shown as a grid (across: distance; down: gender) | "Think of two separate choices: distance and agreement." |
-| "Help me learn this better" | Switches to production, one item per turn | "Fill the gaps using tento, táto, or toto" |
-| A right answer | The verdict first, the form restated with its meaning, the next question | "Correct: toto dieťa = “this child.”" |
-| A spelling slip | Counted right, the accent shown | "Right form—just add the accent: tamtá kniha" |
-| A wrong answer | What was right first, then the fix and the contrast | "You matched the feminine gender correctly: tá kniha means “that book.” For “this book,” use táto kniha" |
-| The order of items | One thing changes at a time: gender, then distance, a new noun (auto), a full sentence, then a mixed set "without hints" | "Now try without hints: …" |
-| A return to a miss | Several items later, in a new frame | "Let's check the distinction that tripped you up earlier" |
+| Turn type                   | What it does                                                                                                             | Example                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| First answer                | The rule in one sentence, glossed examples inline, then a drawing (a speaker, a near book, a far book)                   | "ten muž (that man), tá žena (that woman), to dieťa (that child)"                                        |
+| "Help me clear this better" | A new frame, not the same words again: two separate choices, shown as a grid (across: distance; down: gender)            | "Think of two separate choices: distance and agreement."                                                 |
+| "Help me learn this better" | Switches to production, one item per turn                                                                                | "Fill the gaps using tento, táto, or toto"                                                               |
+| A right answer              | The verdict first, the form restated with its meaning, the next question                                                 | "Correct: toto dieťa = “this child.”"                                                                    |
+| A spelling slip             | Counted right, the accent shown                                                                                          | "Right form—just add the accent: tamtá kniha"                                                            |
+| A wrong answer              | What was right first, then the fix and the contrast                                                                      | "You matched the feminine gender correctly: tá kniha means “that book.” For “this book,” use táto kniha" |
+| The order of items          | One thing changes at a time: gender, then distance, a new noun (auto), a full sentence, then a mixed set "without hints" | "Now try without hints: …"                                                                               |
+| A return to a miss          | Several items later, in a new frame                                                                                      | "Let's check the distinction that tripped you up earlier"                                                |
 
 ### Inferred, not verified
 
@@ -45,16 +45,16 @@ The order of items is variation theory (Marton 2015): a learner notices a featur
 
 ## What LangHarness took (E76)
 
-| From riddled.ai | In LangHarness |
-|---|---|
-| A plain chat, no test before the answer | A new kind of chat (`kind: "chat"`), the default for New chat and for Why?: no probe, no plan map, no question cards, no practice problems. |
-| One model, no picker, a fast reply | The chat takes the strong slot's model at a low thinking level, and the model picker and the token figures are not shown in it. The probe's five questions and the high thinking level were most of the wait in the owner's screenshot. |
-| Two short paragraphs, glossed forms, one question | The chat's prompt (`src/agent/prompts/chat/10-chat.md`): about 90 words, plain prose with no headings or lists, every form followed by its meaning, at most one question. |
-| Change one thing at a time, fade the hints, come back to a miss | The same prompt, "Breaking a concept down". |
-| "Clear this better" → a new frame | "When the learner is lost": a grid, a drawing, a minimal pair, a bridge, or a smaller first piece, shorter than before. |
-| Drawings written in the reply, on the theme's colors | ` ```svg ` fences render in the page (`components/sketch-figure.tsx`) after an allowlist rebuild (`src/core/sketch.ts`): the same idea as theirs, in the LangHarness ink look (a pen wobble filter, strokes that draw themselves on a new drawing, teal for the one thing that matters). The prompt is `src/agent/prompts/chat/20-drawing.md`. |
-| Drawings in steps | `<g data-step data-caption>`, with Back, Next and a counter under the drawing. |
-| Asking for help in words | One-tap replies under the tutor's last message: Hint, I don't know, Explain it another way when a question is open; Quiz me, Explain it another way, Draw it otherwise. |
+| From riddled.ai                                                 | In LangHarness                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A plain chat, no test before the answer                         | A new kind of chat (`kind: "chat"`), the default for New chat and for Why?: no probe, no plan map, no question cards, no practice problems.                                                                                                                                                                                                    |
+| One model, no picker, a fast reply                              | The chat takes the strong slot's model at a low thinking level, and the model picker and the token figures are not shown in it. The probe's five questions and the high thinking level were most of the wait in the owner's screenshot.                                                                                                        |
+| Two short paragraphs, glossed forms, one question               | The chat's prompt (`src/agent/prompts/chat/10-chat.md`): about 90 words, plain prose with no headings or lists, every form followed by its meaning, at most one question.                                                                                                                                                                      |
+| Change one thing at a time, fade the hints, come back to a miss | The same prompt, "Breaking a concept down".                                                                                                                                                                                                                                                                                                    |
+| "Clear this better" → a new frame                               | "When the learner is lost": a grid, a drawing, a minimal pair, a bridge, or a smaller first piece, shorter than before.                                                                                                                                                                                                                        |
+| Drawings written in the reply, on the theme's colors            | ` ```svg ` fences render in the page (`components/sketch-figure.tsx`) after an allowlist rebuild (`src/core/sketch.ts`): the same idea as theirs, in the LangHarness ink look (a pen wobble filter, strokes that draw themselves on a new drawing, teal for the one thing that matters). The prompt is `src/agent/prompts/chat/20-drawing.md`. |
+| Drawings in steps                                               | `<g data-step data-caption>`, with Back, Next and a counter under the drawing.                                                                                                                                                                                                                                                                 |
+| Asking for help in words                                        | One-tap replies under the tutor's last message: Hint, I don't know, Explain it another way when a question is open; Quiz me, Explain it another way, Draw it otherwise.                                                                                                                                                                        |
 
 ## What LangHarness did not take, and why
 
@@ -65,15 +65,15 @@ The order of items is variation theory (Marton 2015): a learner notices a featur
 
 ## Checked against real models (2026-11-08)
 
-`scripts/eval-chat.ts` plays three scripted conversations (demonstratives, v + locative against do + genitive, a learner's own sentence with *s sestra*) against the chat agent. Four runs: Haiku 5.5 at low (three times, between prompt fixes), Haiku 5.5 at medium, Sonnet 5.5 at low.
+`scripts/eval-chat.ts` plays three scripted conversations (demonstratives, v + locative against do + genitive, a learner's own sentence with _s sestra_) against the chat agent. Four runs: Haiku 5.5 at low (three times, between prompt fixes), Haiku 5.5 at medium, Sonnet 5.5 at low.
 
-| | Haiku 5.5, low | Haiku 5.5, medium | Sonnet 5.5, low |
-|---|---|---|---|
-| First text, follow-up turns | about 1.4 to 5 s | about 1.4 to 5 s | about 0.6 to 7 s |
-| First text, first reply | 7 to 10.5 s | 12.5 s | 13 s |
-| Prose words per reply | 17 to 138 | 29 to 148 | 11 to 110 |
-| Drawings passing the allowlist | all | all | all |
-| Slovak claims read wrong | none | none | one ("do … answers from what?") |
+|                                | Haiku 5.5, low   | Haiku 5.5, medium | Sonnet 5.5, low                 |
+| ------------------------------ | ---------------- | ----------------- | ------------------------------- |
+| First text, follow-up turns    | about 1.4 to 5 s | about 1.4 to 5 s  | about 0.6 to 7 s                |
+| First text, first reply        | 7 to 10.5 s      | 12.5 s            | 13 s                            |
+| Prose words per reply          | 17 to 138        | 29 to 148         | 11 to 110                       |
+| Drawings passing the allowlist | all              | all               | all                             |
+| Slovak claims read wrong       | none             | none              | one ("do … answers from what?") |
 
 What the runs found and the prompt now forbids is listed under E76. The Slovak was read by the author of this change against the slovak-language skill, not by a native speaker.
 
@@ -83,18 +83,18 @@ The owner opened riddled.ai's note editor (`/write`) in a browser signed in to t
 
 ### Observed
 
-| What | Evidence |
-|---|---|
+| What                 | Evidence                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A note is the center | `/write` is a ProseMirror note. The tutor's remarks are "thoughts" anchored to a quoted passage (`quote`), shown under it or in a margin. A side Chat panel answers about the whole note ("I've read the whole note and its threads. Ask me anything about it.") with three starters: what am I still misunderstanding, what have we figured out, what should I work on next. |
-| Storage | Supabase tables `notes` (`doc`, `revision`, `brief_goal`, `brief_voice`, `read_along`, `riddler_id`), `thoughts` (`kind`, `status`, `quote`, `sketch`), `thought_messages`, `note_messages`, `riddler_versions` (`approach`, `default_voice`, `eagerness`). |
-| One endpoint | `POST /api/riddled` with `{ task, message, messageId, thoughtId, noteId, noteText, voice: "plain", images, imageKeys, timeZone, near }`; `task` is `chat`, `read`, `answer`, `ask`, `visualize`, `reply` or `draw`. The whole note text goes with every call. |
-| No streaming | The client awaits `res.json()`: the reply arrives whole. The page then reveals it word by word in at most about 1.8 s, with a pulsing one-line "writing back" mark before it. |
-| Two-phase drawings | A reply that wants a picture comes back with `drawing: true` and text that describes the picture in words. The client then calls `task: "draw"` for the same message, which returns the text plus an `svg` code fence. Measured: text at 3.3 s, the drawing 7.4 s later. |
-| Times | Text answer 3.7 s; a graded answer 2.6 s (whole JSON, about 60 to 120 words). |
-| Reading along | A tracker marks which passages the tutor has read; a new read waits at least 10 s after the last and 8 s after the last remark, covers at most 3,000 characters, and the server may answer `said: false` (shown as a faint "nothing to add" mark). At most 5 open remarks; older ones are resolved. |
-| Two model tiers | Limit errors name `limit_mini` and `limit_frontier`, and the page polls `/api/ai-status` every 60 s to show an outage before a send fails. |
-| Personas | Riddler presets carry an `approach` text and an `eagerness` (Rarely 0.5, When it matters 1, Often 1.5). |
-| Teaching | The first miss got the right form at once ("For “at school,” use v škole"), as in the shared thread. Examples sit on their own lines (`Som v škole. = I'm at school.`), pairs as `Where? → v škole`, and the task gives the first words ("Start with Toto dieťa…"). |
+| Storage              | Supabase tables `notes` (`doc`, `revision`, `brief_goal`, `brief_voice`, `read_along`, `riddler_id`), `thoughts` (`kind`, `status`, `quote`, `sketch`), `thought_messages`, `note_messages`, `riddler_versions` (`approach`, `default_voice`, `eagerness`).                                                                                                                   |
+| One endpoint         | `POST /api/riddled` with `{ task, message, messageId, thoughtId, noteId, noteText, voice: "plain", images, imageKeys, timeZone, near }`; `task` is `chat`, `read`, `answer`, `ask`, `visualize`, `reply` or `draw`. The whole note text goes with every call.                                                                                                                 |
+| No streaming         | The client awaits `res.json()`: the reply arrives whole. The page then reveals it word by word in at most about 1.8 s, with a pulsing one-line "writing back" mark before it.                                                                                                                                                                                                 |
+| Two-phase drawings   | A reply that wants a picture comes back with `drawing: true` and text that describes the picture in words. The client then calls `task: "draw"` for the same message, which returns the text plus an `svg` code fence. Measured: text at 3.3 s, the drawing 7.4 s later.                                                                                                      |
+| Times                | Text answer 3.7 s; a graded answer 2.6 s (whole JSON, about 60 to 120 words).                                                                                                                                                                                                                                                                                                 |
+| Reading along        | A tracker marks which passages the tutor has read; a new read waits at least 10 s after the last and 8 s after the last remark, covers at most 3,000 characters, and the server may answer `said: false` (shown as a faint "nothing to add" mark). At most 5 open remarks; older ones are resolved.                                                                           |
+| Two model tiers      | Limit errors name `limit_mini` and `limit_frontier`, and the page polls `/api/ai-status` every 60 s to show an outage before a send fails.                                                                                                                                                                                                                                    |
+| Personas             | Riddler presets carry an `approach` text and an `eagerness` (Rarely 0.5, When it matters 1, Often 1.5).                                                                                                                                                                                                                                                                       |
+| Teaching             | The first miss got the right form at once ("For “at school,” use v škole"), as in the shared thread. Examples sit on their own lines (`Som v škole. = I'm at school.`), pairs as `Where? → v škole`, and the task gives the first words ("Start with Toto dieťa…").                                                                                                           |
 
 ### What LangHarness took, in its own way (E77)
 
@@ -113,4 +113,4 @@ The owner opened riddled.ai's note editor (`/write`) in a browser signed in to t
 - riddled.ai, shared conversation "Slovak Demonstratives", https://www.riddled.ai/s/84eb42d5e6174b76898a4a93a3ffca34fea3bf1a01e149b09f44b646627137eb (read 2026-11-08).
 - riddled.ai landing, pricing, privacy, about and teams pages, https://www.riddled.ai (read 2026-11-08).
 - Noah Kim, "AI is Making us Dumber, So I Built This", YouTube, 2026-11-01, https://youtu.be/UyPbjmLUtEo (captions read 2026-11-08).
-- Marton, F. (2015). *Necessary Conditions of Learning*. Routledge. ISBN 9780415739139. The contrast, generalization and fusion patterns were checked against the publisher's description and the University of Hong Kong's summary of variation theory (https://kb.edu.hku.hk/approaches_variation_theory/), not against the book itself.
+- Marton, F. (2015). _Necessary Conditions of Learning_. Routledge. ISBN 9780415739139. The contrast, generalization and fusion patterns were checked against the publisher's description and the University of Hong Kong's summary of variation theory (https://kb.edu.hku.hk/approaches_variation_theory/), not against the book itself.

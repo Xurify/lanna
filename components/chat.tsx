@@ -43,7 +43,12 @@ import { useFieldCycle } from "@/components/field-cycle";
 import { JobsContext } from "@/components/jobs-context";
 import { StatsBar } from "@/components/stats-bar";
 import { useServerEvent, useServerResync } from "@/components/server-events";
-import { isProviderKeyRefusal, kbdEventForAction as kbdEventForChat, type LhMessage, type ModelSlotName } from "@/src/core";
+import {
+	isProviderKeyRefusal,
+	kbdEventForAction as kbdEventForChat,
+	type LhMessage,
+	type ModelSlotName,
+} from "@/src/core";
 import { PlanBlock, PlanPopup, latestTree } from "@/components/plan-block";
 import { PlanMarginalia, planExists } from "@/components/plan-window";
 import { MermaidOverlay, SessionMermaidContext } from "@/components/session-overlay";
@@ -57,7 +62,15 @@ import { ThinkingCard, type PracticeThinkingData } from "@/components/practice-c
 import { TopBar } from "@/components/top-bar";
 import { cn } from "@/lib/utils";
 import { setShowWorking, useShowWorking, WORKING_TOOLS } from "@/components/show-working";
-import type { ArtifactPartProps, JobRecord, Phase3, QuestionAnswerData, QuestionFormDraft, TurnUsage, SessionPricing } from "@/src/core";
+import type {
+	ArtifactPartProps,
+	JobRecord,
+	Phase3,
+	QuestionAnswerData,
+	QuestionFormDraft,
+	TurnUsage,
+	SessionPricing,
+} from "@/src/core";
 import type { LhViewMessage } from "@/src/core";
 import { PhaseChip, PhaseDivider } from "@/components/phase-divider";
 import {
@@ -134,8 +147,11 @@ export function parseModelsRefusal(message: string | undefined): ModelSlotName[]
 	if (!message) return null;
 	try {
 		const body = JSON.parse(message) as { code?: unknown; missing?: unknown };
-		if (body.code === "models_not_configured" && Array.isArray(body.missing)
-			&& body.missing.every((s) => typeof s === "string")) {
+		if (
+			body.code === "models_not_configured" &&
+			Array.isArray(body.missing) &&
+			body.missing.every((s) => typeof s === "string")
+		) {
 			return body.missing as ModelSlotName[];
 		}
 		return null;
@@ -169,10 +185,7 @@ const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayout
  *  scaffolding). */
 function SystemLine({ children, testId }: { children: React.ReactNode; testId?: string }) {
 	return (
-		<div
-			data-testid={testId}
-			className="flex items-center justify-center gap-1.5 py-1 text-xs text-muted-foreground"
-		>
+		<div data-testid={testId} className="flex items-center justify-center gap-1.5 py-1 text-xs text-muted-foreground">
 			{children}
 		</div>
 	);
@@ -185,7 +198,9 @@ function isSubagentSteer(m: LhViewMessage): boolean {
 function lastReplyText(messages: readonly LhViewMessage[]): string {
 	const last = messages.at(-1);
 	if (!last || last.role !== "assistant") return "";
-	return last.parts.flatMap((part, i) => (part.type === "text" && !repeatsEarlierText(last.parts, i) ? [part.text] : [])).join("\n\n");
+	return last.parts
+		.flatMap((part, i) => (part.type === "text" && !repeatsEarlierText(last.parts, i) ? [part.text] : []))
+		.join("\n\n");
 }
 
 /**
@@ -242,8 +257,28 @@ export function Chat({
 	// (core/view.ts projectView); sends are ONE explicit input event each
 	// ({chatId, input} — the stash indirection died with the SDK), and the
 	// turn stream is the VERBATIM AgentEvent passthrough the server emits.
-	const { messages, nativeMessages, contextTokens, send, continueIfOwed, steer, steerQueue, submitAnswer, dismissQuestion, dismissProblem, questionDraft, saveQuestionDraft, setMessages, adoptRecord, status, error, stop, clearError, resumeStream, setReattachSettled } =
-		useChatSession({ chatId, initialMessages, initialError, initiallyInFlight });
+	const {
+		messages,
+		nativeMessages,
+		contextTokens,
+		send,
+		continueIfOwed,
+		steer,
+		steerQueue,
+		submitAnswer,
+		dismissQuestion,
+		dismissProblem,
+		questionDraft,
+		saveQuestionDraft,
+		setMessages,
+		adoptRecord,
+		status,
+		error,
+		stop,
+		clearError,
+		resumeStream,
+		setReattachSettled,
+	} = useChatSession({ chatId, initialMessages, initialError, initiallyInFlight });
 
 	const sessionFindScopeRef = useRef<HTMLDivElement | null>(null);
 	const scrollContextRef = useRef<StickToBottomContext | null>(null);
@@ -293,9 +328,7 @@ export function Chat({
 				});
 				if (!res.ok) throw new Error(`rename failed: ${res.status}`);
 				setTitleText(t);
-				window.dispatchEvent(
-					new CustomEvent("lh:chat-renamed", { detail: { id: chatId, title: t } }),
-				);
+				window.dispatchEvent(new CustomEvent("lh:chat-renamed", { detail: { id: chatId, title: t } }));
 			} catch (err) {
 				console.error("rename failed:", err); // keep the old title
 			}
@@ -309,8 +342,8 @@ export function Chat({
 		if (renaming) {
 			const el = titleInputRef.current;
 			if (el) {
-					el.focus();
-					el.select();
+				el.focus();
+				el.select();
 			}
 		}
 	}, [renaming]);
@@ -420,10 +453,7 @@ export function Chat({
 				const reading = readingThinkingRef.current.trim() || undefined;
 				clearReadingThinking();
 				const answer = dismissedAnswer(toolQuestionKind(p.tool), question);
-				void dismissQuestion(
-					p.toolCallId,
-					reading ? { ...answer, readingThinking: reading } : answer,
-				);
+				void dismissQuestion(p.toolCallId, reading ? { ...answer, readingThinking: reading } : answer);
 				if (busyRef.current) abortInFlightTurn();
 				return;
 			}
@@ -548,7 +578,7 @@ export function Chat({
 	useEffect(() => {
 		// Different calls never share a draft; a failed submission of THIS
 		// call restores the reading channel alongside the form's snapshot.
-		const reading = pendingQuestionId ? questionDraft(pendingQuestionId)?.readingThinking ?? "" : "";
+		const reading = pendingQuestionId ? (questionDraft(pendingQuestionId)?.readingThinking ?? "") : "";
 		readingThinkingRef.current = reading;
 		setReadingThinking(reading);
 	}, [pendingQuestionId, questionDraft]);
@@ -710,8 +740,7 @@ export function Chat({
 	// server's registry mutex is the structural gate; this is the
 	// affordance).
 	const [compacting, setCompacting] = useState(initiallyCompacting);
-	const canSend =
-		(text.trim().length > 0 || dictation.active) && !pending && !activeProblem && !compacting;
+	const canSend = (text.trim().length > 0 || dictation.active) && !pending && !activeProblem && !compacting;
 
 	/* THE PRACTICE PAUSE (owner round 16): between problems — practice
 	 * kind, nothing active, nothing in flight, and at least one problem
@@ -724,7 +753,8 @@ export function Chat({
 		!compacting &&
 		!busy &&
 		nativeMessages.some(
-			(m) => (m as { role?: string }).role === "assistant" &&
+			(m) =>
+				(m as { role?: string }).role === "assistant" &&
 				Array.isArray((m as { content?: unknown[] }).content) &&
 				(m as { content: Array<{ type?: string; name?: string }> }).content.some(
 					(b) => b.type === "toolCall" && b.name === "problem",
@@ -748,7 +778,12 @@ export function Chat({
 	const syncFromServer = useCallback(async () => {
 		const res = await fetch(`/api/chats/${chatId}`);
 		if (!res.ok) return;
-		const record = (await res.json()) as { messages?: LhMessage[]; turns?: TurnUsage[]; pricing?: SessionPricing; turnError?: string };
+		const record = (await res.json()) as {
+			messages?: LhMessage[];
+			turns?: TurnUsage[];
+			pricing?: SessionPricing;
+			turnError?: string;
+		};
 		if (Array.isArray(record.turns)) setTurns(record.turns);
 		setPricing(record.pricing);
 		if (!Array.isArray(record.messages)) return;
@@ -1037,11 +1072,7 @@ export function Chat({
 				jobStatusRef.current.set(j.id, j.status);
 			}
 			firstFetchRef.current = false;
-			if (
-				pendingSyncRef.current &&
-				!localStreamRef.current &&
-				data.turnInFlight !== true
-			) {
+			if (pendingSyncRef.current && !localStreamRef.current && data.turnInFlight !== true) {
 				pendingSyncRef.current = false;
 				void syncFromServer();
 			}
@@ -1232,22 +1263,22 @@ export function Chat({
 				openSetup: () => setSetupOpen(true),
 			}}
 		>
-		<SessionMermaidContext.Provider
-			value={{
-				openMermaid: setMermaidFocus,
-				openFigure: (svg, inverted) => setFigureFocus({ svg, inverted }),
-			}}
-		>
-		<JobsContext.Provider value={jobs}>
-		{/* The session surface: the transcript column (header + scroller) and
+			<SessionMermaidContext.Provider
+				value={{
+					openMermaid: setMermaidFocus,
+					openFigure: (svg, inverted) => setFigureFocus({ svg, inverted }),
+				}}
+			>
+				<JobsContext.Provider value={jobs}>
+					{/* The session surface: the transcript column (header + scroller) and
 		    the plan-tree panel as full-height SIBLINGS — the panel spans top to
 		    bottom exactly like the left sidebar, and the header (name + phase
 		    chip) spans from the left sidebar's edge to the panel's edge. The
 		    dock overlays the column bottom (outside the scroller); a spacer in
 		    the transcript reserves its height. */}
-		<div className="flex h-dvh">
-			<div className="flex min-w-0 flex-1 flex-col">
-				{/* The top bar is its own block (owner, top-fade round 4): in flow
+					<div className="flex h-dvh">
+						<div className="flex min-w-0 flex-1 flex-col">
+							{/* The top bar is its own block (owner, top-fade round 4): in flow
 				    above the scroller on the plain page background — no gradient. Its
 				    bottom outline (border-b border-border) matches the one that
 				    separates the left sidebar — same width, same color (owner, r5).
@@ -1257,206 +1288,232 @@ export function Chat({
 				    60px is an ALIGNMENT, not just a size: it equals the sidebar's
 				    LH wordmark band, so the header's border-b continues that
 				    band's bottom edge as one line across the app (owner, round 6). */}
-				<TopBar
-					bare={kind === "chat"}
-					// While renaming the bar is NOT a drag surface: app-region:drag
-					// would eat the mousedown, so click-to-escape (below) could
-					// never fire. Rename mode is interactive mode (owner ask) —
-					// TopBar's one escape hatch.
-					drag={!renaming}
-					onMouseDown={(e) => {
-						// Escape hitbox: any mousedown outside the input itself blurs
-						// it, running the existing onBlur commit path. The input is
-						// shrink-to-fit (field-sizing), so the rest of the bar is
-						// this spacer + inert chips — all click-to-exit (owner ask).
-						if (renaming && e.target !== titleInputRef.current) titleInputRef.current?.blur();
-					}}
-				>
-					{renaming ? (
-						<>
-							<input
-								ref={titleInputRef}
-								value={titleDraft}
-								onChange={(e) => setTitleDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") void commitRename(titleDraft);
-									// stopPropagation claims the Esc (keyboard wave A):
-									// closing rename must not also abort a turn.
-									else if (e.key === "Escape") {
-										e.stopPropagation();
-										setRenaming(false);
-									}
+							<TopBar
+								bare={kind === "chat"}
+								// While renaming the bar is NOT a drag surface: app-region:drag
+								// would eat the mousedown, so click-to-escape (below) could
+								// never fire. Rename mode is interactive mode (owner ask) —
+								// TopBar's one escape hatch.
+								drag={!renaming}
+								onMouseDown={(e) => {
+									// Escape hitbox: any mousedown outside the input itself blurs
+									// it, running the existing onBlur commit path. The input is
+									// shrink-to-fit (field-sizing), so the rest of the bar is
+									// this spacer + inert chips — all click-to-exit (owner ask).
+									if (renaming && e.target !== titleInputRef.current) titleInputRef.current?.blur();
 								}}
-								onBlur={() => void commitRename(titleDraft)}
-								spellCheck={false}
-								aria-label="Chat title"
-								title="Rename this chat"
-								className="lh-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
-							/>
-							{/* flex-1 spacer during rename too, so the chips stay at
+							>
+								{renaming ? (
+									<>
+										<input
+											ref={titleInputRef}
+											value={titleDraft}
+											onChange={(e) => setTitleDraft(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") void commitRename(titleDraft);
+												// stopPropagation claims the Esc (keyboard wave A):
+												// closing rename must not also abort a turn.
+												else if (e.key === "Escape") {
+													e.stopPropagation();
+													setRenaming(false);
+												}
+											}}
+											onBlur={() => void commitRename(titleDraft)}
+											spellCheck={false}
+											aria-label="Chat title"
+											title="Rename this chat"
+											className="lh-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
+										/>
+										{/* flex-1 spacer during rename too, so the chips stay at
 							    the right edge; clicks here commit via the header
 							    mousedown handler. */}
-							<div className="min-w-4 flex-1" aria-hidden="true" />
-						</>
-					) : (
-					<>
-						<Hint
-							// F2 renames (registry) — surfaced on the hover.
-							label="Rename chat"
-							action="rename-session"
-							side="bottom"
-						>
-<button
-							type="button"
-														onClick={() => {
-								setTitleDraft(titleText);
-								setRenaming(true);
-							}}
-							className={cn("lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent", kind === "chat" ? "font-ui text-sm font-medium text-muted-foreground transition-opacity" : "font-title text-2xl font-semibold tracking-tight", kind === "chat" && pageTitleInView && "pointer-events-none opacity-0")}
-							aria-hidden={kind === "chat" && pageTitleInView ? true : undefined}
-							tabIndex={kind === "chat" && pageTitleInView ? -1 : undefined}
-						>
-							{titleText}
-							</button>
-						</Hint>
-							{/* flex-1 spacer: keeps the chips at the right edge AND stays a
+										<div className="min-w-4 flex-1" aria-hidden="true" />
+									</>
+								) : (
+									<>
+										<Hint
+											// F2 renames (registry) — surfaced on the hover.
+											label="Rename chat"
+											action="rename-session"
+											side="bottom"
+										>
+											<button
+												type="button"
+												onClick={() => {
+													setTitleDraft(titleText);
+													setRenaming(true);
+												}}
+												className={cn(
+													"lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent",
+													kind === "chat"
+														? "font-ui text-sm font-medium text-muted-foreground transition-opacity"
+														: "font-title text-2xl font-semibold tracking-tight",
+													kind === "chat" && pageTitleInView && "pointer-events-none opacity-0",
+												)}
+												aria-hidden={kind === "chat" && pageTitleInView ? true : undefined}
+												tabIndex={kind === "chat" && pageTitleInView ? -1 : undefined}
+											>
+												{titleText}
+											</button>
+										</Hint>
+										{/* flex-1 spacer: keeps the chips at the right edge AND stays a
 							    drag surface (no carve-out) — the freed bar is grippable. */}
-							<div className="min-w-4 flex-1" aria-hidden="true" />
-					</>
-					)}
-					{/* The plan chip (owner, plan-placement round): session-level
+										<div className="min-w-4 flex-1" aria-hidden="true" />
+									</>
+								)}
+								{/* The plan chip (owner, plan-placement round): session-level
 					    structure beside the phase chip — access to the full-DAG popup
 					    at every width; the marginalia is the wide-screen glance view. */}
-					{planTree && (
-						<Hint label="Open the full plan" side="bottom">
-<button
-							type="button"
-							data-testid="plan-chip"
-							onClick={(e) => {
-								blurAfterPointerClick(e);
-								setPlanOpen(true);
-							}}
-							className="lh-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-border hover:text-foreground"
-						>
-							<WaypointsIcon className="size-3.5 text-primary" aria-hidden />
-							Plan
-						</button>
-</Hint>
-					)}
-					{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
+								{planTree && (
+									<Hint label="Open the full plan" side="bottom">
+										<button
+											type="button"
+											data-testid="plan-chip"
+											onClick={(e) => {
+												blurAfterPointerClick(e);
+												setPlanOpen(true);
+											}}
+											className="lh-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+										>
+											<WaypointsIcon className="size-3.5 text-primary" aria-hidden />
+											Plan
+										</button>
+									</Hint>
+								)}
+								{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
 					    tool calls are hidden by default; this chip brings them back. */}
-					{kind !== "chat" && <Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
-						<button
-							type="button"
-							data-testid="show-working"
-							aria-pressed={showWorking}
-							onClick={(e) => {
-								blurAfterPointerClick(e);
-								setShowWorking(!showWorking);
-							}}
-							className={cn(
-								"lh-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors hover:text-foreground",
-								showWorking ? "border-border text-foreground" : "border-border/60 text-muted-foreground",
-							)}
-						>
-							<CogIcon className="size-3.5" aria-hidden />
-							{showWorking ? "Hide working" : "Show working"}
-						</button>
-					</Hint>}
-					{messages.length > 0 && (
-						<ChatExportMenu
-							chatId={chatId}
-							title={titleText}
-							messages={messages}
-							nativeMessages={nativeMessages}
-							plain={kind === "chat"}
-						/>
-					)}
-					{/* Practice sessions: no phase arc — a quiet Practice tag
+								{kind !== "chat" && (
+									<Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
+										<button
+											type="button"
+											data-testid="show-working"
+											aria-pressed={showWorking}
+											onClick={(e) => {
+												blurAfterPointerClick(e);
+												setShowWorking(!showWorking);
+											}}
+											className={cn(
+												"lh-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors hover:text-foreground",
+												showWorking ? "border-border text-foreground" : "border-border/60 text-muted-foreground",
+											)}
+										>
+											<CogIcon className="size-3.5" aria-hidden />
+											{showWorking ? "Hide working" : "Show working"}
+										</button>
+									</Hint>
+								)}
+								{messages.length > 0 && (
+									<ChatExportMenu
+										chatId={chatId}
+										title={titleText}
+										messages={messages}
+										nativeMessages={nativeMessages}
+										plain={kind === "chat"}
+									/>
+								)}
+								{/* Practice sessions: no phase arc — a quiet Practice tag
 					    instead of the phase chip. */}
-					{kind === "chat" ? null : kind === "practice" ? (
-						<span
-							data-testid="phase-chip"
-							data-phase="practice"
-							aria-hidden="true"
-							className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-xs font-semibold text-muted-foreground"
-						>
-							<DumbbellIcon className="size-3" />
-							Practice
-						</span>
-					) : (
-						<PhaseChip phase={phases.at(-1) ?? "probe"} />
-					)}
-				</TopBar>
+								{kind === "chat" ? null : kind === "practice" ? (
+									<span
+										data-testid="phase-chip"
+										data-phase="practice"
+										aria-hidden="true"
+										className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-xs font-semibold text-muted-foreground"
+									>
+										<DumbbellIcon className="size-3" />
+										Practice
+									</span>
+								) : (
+									<PhaseChip phase={phases.at(-1) ?? "probe"} />
+								)}
+							</TopBar>
 
-				<SessionFind scopeRef={sessionFindScopeRef} scrollContextRef={scrollContextRef} />
-				<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
-				<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
-					<ConversationContent className="min-h-full gap-0 p-0" scrollClassName={kind === "chat" ? "lh-fade-out" : undefined}>
-						<div data-session-find-root="" className={cn(COLUMN, "flex flex-1 flex-col gap-4 pt-4", kind === "chat" && "max-w-[42rem] gap-5 pt-10")}>
-							{messages.length === 0 && !busy && (
-								<ConversationEmptyState
-									title="New chat"
-									description={kind === "practice" ? "Your tutor starts with a first problem." : kind === "chat" ? "Ask anything about the language." : "Your tutor starts with a few quick questions to see what you know."}
-								/>
-							)}
+							<SessionFind scopeRef={sessionFindScopeRef} scrollContextRef={scrollContextRef} />
+							<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
+								<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
+									<ConversationContent
+										className="min-h-full gap-0 p-0"
+										scrollClassName={kind === "chat" ? "lh-fade-out" : undefined}
+									>
+										<div
+											data-session-find-root=""
+											className={cn(
+												COLUMN,
+												"flex flex-1 flex-col gap-4 pt-4",
+												kind === "chat" && "max-w-[42rem] gap-5 pt-10",
+											)}
+										>
+											{messages.length === 0 && !busy && (
+												<ConversationEmptyState
+													title="New chat"
+													description={
+														kind === "practice"
+															? "Your tutor starts with a first problem."
+															: kind === "chat"
+																? "Ask anything about the language."
+																: "Your tutor starts with a few quick questions to see what you know."
+													}
+												/>
+											)}
 
-							{messages.map((m, mi) =>
-								m.role === "user" && isSubagentSteer(m) ? (
-									// Sub-agent delivery (wake-pipeline steer): NO message bubble — the
-									// artifact card sits in the transcript column directly, full width
-									// and centered like the teacher's artifacts (contracts.ts "THE ASYNC
-									// PROTOCOL" §4). Key fallback: legacy transcripts (pre id-hygiene)
-									// can still hold empty ids — the index keeps keys unique for them.
-									<SubagentSteerCard key={m.id || `m-${mi}`} message={m} />
-								) : m.role === "user" && m.parts.some((p) => p.type === "data-probe-handoff") ? (
-								// The probe→teach handoff wake (custom-message scheme): the
-								// PLANNING DIVIDER IS the seam (owner ruling 2026-09-26 — it
-								// replaced the "Preparing your plan…" system line; the marker
-								// renders in the right spot by record construction, so the old
-								// fold-based divider — which floated to the transcript top once
-								// Wave D grouping merged the whole probe into one giant
-								// assistant group — is gone). Never a user bubble: the wake is
-								// scaffolding; the model-facing instruction lives in the adapter.
-								<PhaseDivider key={m.id || `m-${mi}`} phase="plan" />
-							) : m.role === "user" && m.parts.length > 0 && m.parts.every((p) => p.type.startsWith("data-")) ? (
-								// Marker cards (custom messages, 2026-10-04): user-side
-								// scaffolding — the graph-context pick, the practice
-								// thinking trace — render as cards in the transcript
-								// column directly, NO chat bubble (the subagent-steer
-								// precedent). The user branch below renders text only;
-								// without this hoist a data-only message read as an
-								// EMPTY bubble (owner report, 2026-10-04).
-								<Fragment key={m.id || `m-${mi}`}>
-									{m.parts.map((part, pi) => {
-										switch (part.type) {
-											case "data-compaction":
-												return <CompactionMomentDivider key={pi} data={part.data as CompactionDividerData} />;
-											case "data-compaction-cut":
-												return <CompactionCutDivider key={pi} data={part.data as CompactionDividerData} />;
-											case "data-practice-thinking":
-												return <ThinkingCard key={pi} data={part.data as PracticeThinkingData} />;
-											case "data-practice-next":
-												// The learner's move-on signal (owner round 16): a compact
-												// centered mono-caps line — chrome, the dismissal register.
-												return (
-													<div
-														key={pi}
-														data-testid="practice-next-line"
-														className="my-4 flex items-center justify-center gap-1.5 font-ui text-xs font-semibold text-muted-foreground"
-													>
-														<ArrowRightIcon className="size-3" />
-														Next problem
-													</div>
-												);
-											default:
-												return null;
-										}
-									})}
-								</Fragment>
-							) : (
-									<Fragment key={m.id || `m-${mi}`}>
-									{/* THE INFERRED TEACH SEAM (owner ruling 2026-09-26, the verdict
+											{messages.map((m, mi) =>
+												m.role === "user" && isSubagentSteer(m) ? (
+													// Sub-agent delivery (wake-pipeline steer): NO message bubble — the
+													// artifact card sits in the transcript column directly, full width
+													// and centered like the teacher's artifacts (contracts.ts "THE ASYNC
+													// PROTOCOL" §4). Key fallback: legacy transcripts (pre id-hygiene)
+													// can still hold empty ids — the index keeps keys unique for them.
+													<SubagentSteerCard key={m.id || `m-${mi}`} message={m} />
+												) : m.role === "user" && m.parts.some((p) => p.type === "data-probe-handoff") ? (
+													// The probe→teach handoff wake (custom-message scheme): the
+													// PLANNING DIVIDER IS the seam (owner ruling 2026-09-26 — it
+													// replaced the "Preparing your plan…" system line; the marker
+													// renders in the right spot by record construction, so the old
+													// fold-based divider — which floated to the transcript top once
+													// Wave D grouping merged the whole probe into one giant
+													// assistant group — is gone). Never a user bubble: the wake is
+													// scaffolding; the model-facing instruction lives in the adapter.
+													<PhaseDivider key={m.id || `m-${mi}`} phase="plan" />
+												) : m.role === "user" &&
+												  m.parts.length > 0 &&
+												  m.parts.every((p) => p.type.startsWith("data-")) ? (
+													// Marker cards (custom messages, 2026-10-04): user-side
+													// scaffolding — the graph-context pick, the practice
+													// thinking trace — render as cards in the transcript
+													// column directly, NO chat bubble (the subagent-steer
+													// precedent). The user branch below renders text only;
+													// without this hoist a data-only message read as an
+													// EMPTY bubble (owner report, 2026-10-04).
+													<Fragment key={m.id || `m-${mi}`}>
+														{m.parts.map((part, pi) => {
+															switch (part.type) {
+																case "data-compaction":
+																	return <CompactionMomentDivider key={pi} data={part.data as CompactionDividerData} />;
+																case "data-compaction-cut":
+																	return <CompactionCutDivider key={pi} data={part.data as CompactionDividerData} />;
+																case "data-practice-thinking":
+																	return <ThinkingCard key={pi} data={part.data as PracticeThinkingData} />;
+																case "data-practice-next":
+																	// The learner's move-on signal (owner round 16): a compact
+																	// centered mono-caps line — chrome, the dismissal register.
+																	return (
+																		<div
+																			key={pi}
+																			data-testid="practice-next-line"
+																			className="my-4 flex items-center justify-center gap-1.5 font-ui text-xs font-semibold text-muted-foreground"
+																		>
+																			<ArrowRightIcon className="size-3" />
+																			Next problem
+																		</div>
+																	);
+																default:
+																	return null;
+															}
+														})}
+													</Fragment>
+												) : (
+													<Fragment key={m.id || `m-${mi}`}>
+														{/* THE INFERRED TEACH SEAM (owner ruling 2026-09-26, the verdict
 									death): teaching begins where the FIRST nodeId-tagged quiz is
 									posed — the fold (phaseTimeline, the same derivation the phase chip
 									reads) flips to teach exactly AT this assistant group. STEP-LEVEL
@@ -1474,17 +1531,22 @@ export function Chat({
 									PREPENDED, never a replacement branch: the teach group is a real
 									message with content — a replacement ternary swallowed the entire
 									first lesson block (the Lacan session, 2026-09-27). */}
-									{m.role === "assistant" &&
-									mi > 0 &&
-									phases[mi] === "teach" &&
-									phases[mi - 1] !== "teach" &&
-									teachStepIndex(m.parts) === -1 ? (
-										<PhaseDivider key={`teach-${m.id || `m-${mi}`}`} phase="teach" />
-									) : null}
-									{m.role === "user" && lines?.get(mi) ? (
-										<LearnerLineView line={lines.get(mi)!} text={messageText(m)} recede={busy && mi < currentLine} titleRef={lines.get(mi)!.kind === "title" ? setPageTitle : undefined} />
-									) : m.role === "user" ? (
-										/* THE DOCUMENT ROW (owner round, 2026-10-05): no right-aligned
+														{m.role === "assistant" &&
+														mi > 0 &&
+														phases[mi] === "teach" &&
+														phases[mi - 1] !== "teach" &&
+														teachStepIndex(m.parts) === -1 ? (
+															<PhaseDivider key={`teach-${m.id || `m-${mi}`}`} phase="teach" />
+														) : null}
+														{m.role === "user" && lines?.get(mi) ? (
+															<LearnerLineView
+																line={lines.get(mi)!}
+																text={messageText(m)}
+																recede={busy && mi < currentLine}
+																titleRef={lines.get(mi)!.kind === "title" ? setPageTitle : undefined}
+															/>
+														) : m.role === "user" ? (
+															/* THE DOCUMENT ROW (owner round, 2026-10-05): no right-aligned
 										    bubble — the transcript reads as a document. User text is a
 										    full-width quote block: muted "You" label, muted rail,
 										    FULL-opacity text (learner words are content, not whisper).
@@ -1493,140 +1555,188 @@ export function Chat({
 										    User text renders plain — the model's LaTeX pipeline is not
 										    applied to learner-authored text ($ stays $, no surprises).
 										    Rendered WITHOUT the Message wrapper — that is the bubble. */
-											<div
-										data-testid="user-message"
-										/* THE DOCUMENT, ALL-IN (owner rounds two+three, 2026-10-07):
+															<div
+																data-testid="user-message"
+																/* THE DOCUMENT, ALL-IN (owner rounds two+three, 2026-10-07):
 										    no chat side — the user message is a full-width card-color
 										    BAND, the IDENTICAL geometry as the thinking rows: 5px band
 										    padding, the left gap matches it, the rail fills the 3ch
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-										className={kind === "chat" ? "mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground first:mt-0" : "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"}
-									>
-												{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
+																className={
+																	kind === "chat"
+																		? "mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground first:mt-0"
+																		: "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"
+																}
+															>
+																{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
-												<div className="sr-only">You</div>
-												<div className={kind === "chat" ? "whitespace-pre-wrap" : "lh-prose whitespace-pre-wrap text-foreground"}>
-													{m.parts.filter((p) => p.type === "text").map((p) => p.text).join("\n")}
-												</div>
-											</div>
-									) : (
-									<Message from="assistant" className={cn("max-w-full", kind === "chat" && "lh-voice", kind === "chat" && localStream && mi === messages.length - 1 && "lh-writing", kind === "chat" && busy && mi < currentLine && "lh-recede")}>
-									<MessageContent className="w-full">
-											{m.parts.map((part, pi) => {
-												const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
-												// The step boundary where teaching begins (round 8): when
-												// the teach flip happens in a LATER step, its PhaseDivider
-												// replaces this boundary's plain hairline.
-												const teachBoundary =
-													m.role === "assistant" &&
-													mi > 0 &&
-													phases[mi] === "teach" &&
-													phases[mi - 1] !== "teach" &&
-													teachStepIndex(m.parts) === pi;
-												// A tool call that errored BACK TO THE AGENT (validation
-												// failure, malformed args) is invisible work — the agent
-												// reads the error and retries. Owner ruling 2026-09-26:
-												// surface the retry loop as one quiet line, any tool,
-												// instead of silence (question tools used to render null,
-												// so a flailing quiz loop read as a stall). Aborts are
-												// terminal — nothing retries — so they stay silent.
-												if (
-													part.state === "output-error" &&
-													part.type.startsWith("tool-") &&
-													part.errorText !== "Operation aborted" &&
-													!(kind === "chat" && CHAT_RECORD_TOOLS.has(part.type.slice("tool-".length)))
-												) {
-													return (
-														<SystemLine key={`retry-${pi}`} testId="tool-retry">
-															Retrying…
-														</SystemLine>
-													);
-												}
-												switch (part.type) {
-													case "text": {
-														if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
-														return (
-															<div key={part.id || pi} className="lh-source-passage">
-																<MessageResponse {...(kind === "chat" ? { components: chatMdComponents } : {})}>{part.text}</MessageResponse>
+																<div className="sr-only">You</div>
+																<div
+																	className={
+																		kind === "chat"
+																			? "whitespace-pre-wrap"
+																			: "lh-prose whitespace-pre-wrap text-foreground"
+																	}
+																>
+																	{m.parts
+																		.filter((p) => p.type === "text")
+																		.map((p) => p.text)
+																		.join("\n")}
+																</div>
 															</div>
-														);
-													}
-													case "reasoning":
-														// Hidden unless "Show working" is on — except the live
-														// row while this turn streams, which is the activity signal.
-														if (kind === "chat") return status === "streaming" && isLastPart ? <TutorWriting key={pi} /> : null;
-														if (!showWorking && !(status === "streaming" && isLastPart)) return null;
-														return (
-															<Reasoning key={pi} isStreaming={status === "streaming" && isLastPart} className="mb-2">
-																<ReasoningTrigger />
-																<ReasoningContent>{part.text ?? ""}</ReasoningContent>
-															</Reasoning>
-														);
-													case "step-start":
-														if (teachBoundary)
-															return <PhaseDivider key={`teach-step-${pi}`} phase="teach" />;
-														return pi > 0 && kind !== "chat" ? <Separator key={pi} className="my-3" /> : null;
-													case "data-plan-block":
-														// The plan in the chat (wave 4): a frozen snapshot
-														// block — rendered as carried, never re-derived.
-														return (
-															<PlanBlock
-																key={pi}
-																data={part.data as PlanBlockData}
-																onOpen={() => setPlanOpen(true)}
-															/>
-														);
-													case "tool-draw": {
-														const drawn = part.state === "output-available" ? (part.output as { svg?: string } | null)?.svg : undefined;
-														if (drawn) return <SketchFigure key={pi} source={drawn} incomplete={false} />;
-														return part.state !== "output-available" && part.state !== "output-error" && busy ? <SketchFigure key={pi} source="" incomplete /> : null;
-													}
-													case "tool-quiz":
-													case "tool-probe":
-													case "tool-ask_user_question":
-													case "tool-explain":
-													case "tool-recall": {
-														// Pending/streaming questions live in the dock, not the
-														// transcript; answered ones render as graded records.
-														if (part.state === "output-available") {
-															return (
-																<AnsweredCard key={pi} answer={part.output as QuestionAnswerData} input={part.input} />
-															);
-														}
-														return null;
-													}
-													default: {
-														// A tool call being WRITTEN (owner, streaming round 2026-10-01):
-														// input-streaming spans the whole execution, and the live card —
-														// spinner + shimmered activity label, the input watchable on expand
-														// — replaces the retired transcript bottom line. On settling, the
-														// registry's card takes over below.
-														if (part.type.startsWith("tool-") && part.state === "input-streaming") {
-															if (kind === "chat") return null;
-															return <LiveToolCard key={pi} part={part as ArtifactPartProps["part"]} />;
-														}
-														// Artifact extension point (contracts.ts): job
-														// parts and future artifacts render via the
-														// registry — add renderers there, not here.
-														if (part.type.startsWith("tool-")) {
-															if (!showWorking && WORKING_TOOLS.has(part.type.slice("tool-".length))) return null;
-															const Renderer = artifactRenderers[part.type.slice("tool-".length)];
-															if (Renderer) return <Renderer key={pi} part={part as ArtifactPartProps["part"]} />;
-														}
-														return null;
-													}
-												}
-											})}
-										</MessageContent>
-									</Message>
-									)}
-								</Fragment>
-							))}
+														) : (
+															<Message
+																from="assistant"
+																className={cn(
+																	"max-w-full",
+																	kind === "chat" && "lh-voice",
+																	kind === "chat" && localStream && mi === messages.length - 1 && "lh-writing",
+																	kind === "chat" && busy && mi < currentLine && "lh-recede",
+																)}
+															>
+																<MessageContent className="w-full">
+																	{m.parts.map((part, pi) => {
+																		const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
+																		// The step boundary where teaching begins (round 8): when
+																		// the teach flip happens in a LATER step, its PhaseDivider
+																		// replaces this boundary's plain hairline.
+																		const teachBoundary =
+																			m.role === "assistant" &&
+																			mi > 0 &&
+																			phases[mi] === "teach" &&
+																			phases[mi - 1] !== "teach" &&
+																			teachStepIndex(m.parts) === pi;
+																		// A tool call that errored BACK TO THE AGENT (validation
+																		// failure, malformed args) is invisible work — the agent
+																		// reads the error and retries. Owner ruling 2026-09-26:
+																		// surface the retry loop as one quiet line, any tool,
+																		// instead of silence (question tools used to render null,
+																		// so a flailing quiz loop read as a stall). Aborts are
+																		// terminal — nothing retries — so they stay silent.
+																		if (
+																			part.state === "output-error" &&
+																			part.type.startsWith("tool-") &&
+																			part.errorText !== "Operation aborted" &&
+																			!(kind === "chat" && CHAT_RECORD_TOOLS.has(part.type.slice("tool-".length)))
+																		) {
+																			return (
+																				<SystemLine key={`retry-${pi}`} testId="tool-retry">
+																					Retrying…
+																				</SystemLine>
+																			);
+																		}
+																		switch (part.type) {
+																			case "text": {
+																				if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
+																				return (
+																					<div key={part.id || pi} className="lh-source-passage">
+																						<MessageResponse
+																							{...(kind === "chat" ? { components: chatMdComponents } : {})}
+																						>
+																							{part.text}
+																						</MessageResponse>
+																					</div>
+																				);
+																			}
+																			case "reasoning":
+																				// Hidden unless "Show working" is on — except the live
+																				// row while this turn streams, which is the activity signal.
+																				if (kind === "chat")
+																					return status === "streaming" && isLastPart ? (
+																						<TutorWriting key={pi} />
+																					) : null;
+																				if (!showWorking && !(status === "streaming" && isLastPart)) return null;
+																				return (
+																					<Reasoning
+																						key={pi}
+																						isStreaming={status === "streaming" && isLastPart}
+																						className="mb-2"
+																					>
+																						<ReasoningTrigger />
+																						<ReasoningContent>{part.text ?? ""}</ReasoningContent>
+																					</Reasoning>
+																				);
+																			case "step-start":
+																				if (teachBoundary)
+																					return <PhaseDivider key={`teach-step-${pi}`} phase="teach" />;
+																				return pi > 0 && kind !== "chat" ? (
+																					<Separator key={pi} className="my-3" />
+																				) : null;
+																			case "data-plan-block":
+																				// The plan in the chat (wave 4): a frozen snapshot
+																				// block — rendered as carried, never re-derived.
+																				return (
+																					<PlanBlock
+																						key={pi}
+																						data={part.data as PlanBlockData}
+																						onOpen={() => setPlanOpen(true)}
+																					/>
+																				);
+																			case "tool-draw": {
+																				const drawn =
+																					part.state === "output-available"
+																						? (part.output as { svg?: string } | null)?.svg
+																						: undefined;
+																				if (drawn) return <SketchFigure key={pi} source={drawn} incomplete={false} />;
+																				return part.state !== "output-available" &&
+																					part.state !== "output-error" &&
+																					busy ? (
+																					<SketchFigure key={pi} source="" incomplete />
+																				) : null;
+																			}
+																			case "tool-quiz":
+																			case "tool-probe":
+																			case "tool-ask_user_question":
+																			case "tool-explain":
+																			case "tool-recall": {
+																				// Pending/streaming questions live in the dock, not the
+																				// transcript; answered ones render as graded records.
+																				if (part.state === "output-available") {
+																					return (
+																						<AnsweredCard
+																							key={pi}
+																							answer={part.output as QuestionAnswerData}
+																							input={part.input}
+																						/>
+																					);
+																				}
+																				return null;
+																			}
+																			default: {
+																				// A tool call being WRITTEN (owner, streaming round 2026-10-01):
+																				// input-streaming spans the whole execution, and the live card —
+																				// spinner + shimmered activity label, the input watchable on expand
+																				// — replaces the retired transcript bottom line. On settling, the
+																				// registry's card takes over below.
+																				if (part.type.startsWith("tool-") && part.state === "input-streaming") {
+																					if (kind === "chat") return null;
+																					return <LiveToolCard key={pi} part={part as ArtifactPartProps["part"]} />;
+																				}
+																				// Artifact extension point (contracts.ts): job
+																				// parts and future artifacts render via the
+																				// registry — add renderers there, not here.
+																				if (part.type.startsWith("tool-")) {
+																					if (!showWorking && WORKING_TOOLS.has(part.type.slice("tool-".length)))
+																						return null;
+																					const Renderer = artifactRenderers[part.type.slice("tool-".length)];
+																					if (Renderer)
+																						return <Renderer key={pi} part={part as ArtifactPartProps["part"]} />;
+																				}
+																				return null;
+																			}
+																		}
+																	})}
+																</MessageContent>
+															</Message>
+														)}
+													</Fragment>
+												),
+											)}
 
-							{/* THE placeholder, ACTION-gated (owner, optimistic round
+											{/* THE placeholder, ACTION-gated (owner, optimistic round
 							    3, 2026-10-02): spinner + shimmered Thinking… from the
 							    instant of any action that produces tokens — send,
 							    answer, session start, reattach (status flips to
@@ -1641,185 +1751,224 @@ export function Chat({
 							    provider-connect gap. turnInFlight: the same state
 							    entered by external discovery (wake) / the poll
 							    fallback. Never collapsible itself. */}
-							{/* Compaction (owner round 15): the same register as the
+											{/* Compaction (owner round 15): the same register as the
 						    thinking placeholder — a visible session-wide state while
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
-							{kind === "chat" && heldAnswer !== null && <HeldLine text={heldAnswer} />}
-							{kind === "chat" && !busy && !compacting && !error && <ChatReplies reply={lastReplyText(messages)} open={questionOpen(messages) || undefined} onPick={sendQuickReply} drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }} />}
-							{compacting && (
-								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
-									<BrailleSpinner label="Summarizing the chat so far" />
-									<Shimmer duration={1}>Summarizing the chat so far…</Shimmer>
-								</span>
-							)}
-							{(status === "submitted" || turnInFlight) && kind === "chat" && <TutorWriting />}
-							{(status === "submitted" || turnInFlight) && kind !== "chat" && (
-								<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
-									<BrailleSpinner label="Thinking" />
-									<Shimmer duration={1}>
-										Thinking…
-									</Shimmer>
-								</span>
-							)}
-							{error && (
-								<div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
-									Something went wrong: {error.message}
-								</div>
-							)}
-						</div>
+											{kind === "chat" && heldAnswer !== null && <HeldLine text={heldAnswer} />}
+											{kind === "chat" && !busy && !compacting && !error && (
+												<ChatReplies
+													reply={lastReplyText(messages)}
+													open={questionOpen(messages) || undefined}
+													onPick={sendQuickReply}
+													drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }}
+												/>
+											)}
+											{compacting && (
+												<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
+													<BrailleSpinner label="Summarizing the chat so far" />
+													<Shimmer duration={1}>Summarizing the chat so far…</Shimmer>
+												</span>
+											)}
+											{(status === "submitted" || turnInFlight) && kind === "chat" && <TutorWriting />}
+											{(status === "submitted" || turnInFlight) && kind !== "chat" && (
+												<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
+													<BrailleSpinner label="Thinking" />
+													<Shimmer duration={1}>Thinking…</Shimmer>
+												</span>
+											)}
+											{error && (
+												<div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
+													Something went wrong: {error.message}
+												</div>
+											)}
+										</div>
 
-						{/* The dock's reserved tail (DockOverlay reports its height):
+										{/* The dock's reserved tail (DockOverlay reports its height):
 						    keeps at-rest transcript content scrolling fully clear of
 						    the overlay — the flow-space replacement for the old
 						    sticky dock. Zero only pre-measurement (the first layout
 						    effect reports before paint). */}
-						<div aria-hidden data-testid="dock-spacer" style={{ height: dockReserve }} />
-				</ConversationContent>
-				{/* The dock: an overlay sibling of the scroller (the
+										<div aria-hidden data-testid="dock-spacer" style={{ height: dockReserve }} />
+									</ConversationContent>
+									{/* The dock: an overlay sibling of the scroller (the
 				    use-stick-to-bottom pattern). The scroll-down button lives
 				    INSIDE the overlay now (owner refinement round, 2026-09-24):
 				    anchored to the dock block's top edge, so it rides every
 				    height morph (typing, a question growing the band, the
 				    fold) and NEVER overlaps the composer. */}
-				<DockOverlay
-					plain={kind === "chat"}
-					pending={pending}
-					initialQuestionDraft={pending ? questionDraft(pending.toolCallId)?.form : undefined}
-					onSaveQuestionDraft={(form) => { if (pending) saveQuestionDraft(pending.toolCallId, { form }); }}
-					practice={activeProblem}
-					compactionRunning={compacting}
-					onSubmitThinking={submitThinking}
-					chatId={chatId}
-					plan={hasPlan ? <PlanMarginalia messages={messages} /> : undefined}
-					onOpenPlan={() => setPlanOpen(true)}
-					requiresReveal={requiresReveal}
-					readingThinking={readingThinking}
-					onReadingThinking={applyReadingThinking}
-					phase={phases.at(-1) ?? "probe"}
-					turns={turns}
-					contextTokens={contextTokens}
-					pricing={pricing}
-					onReserve={setDockReserve}
-					dictationSlot={<DictationBar dictation={dictation} />}
-					dictationCancel={dictation.cancel}
-					queuedSteers={visibleQueuedSteers(steerQueue, nativeMessages)}
-					setupCta={
-						zeroKeys ? (
-							<ZeroKeysPill onOpen={() => setSetupOpen(true)} />
-						) : (
-							!configured && (
-								<div className="relative h-0">
-								<div className="pointer-events-auto absolute inset-x-0 bottom-2 flex justify-center">
-									<button
-										type="button"
-										data-testid="setup-cta"
-										onClick={() => setSetupOpen(true)}
-										className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
-									>
-										Add an AI key
-									</button>
-								</div>
-								</div>
-							)
-						)
-					}
-					composer={
-						<Composer
-							// Stop aborts ANY in-flight turn (stream-reattach wave): the
-							// square renders while a reattached/wake turn runs too — the
-							// abort channel kills it server-side; stop() alone would
-							// only detach our view.
-							busy={busy}
-							value={draftParts.rest}
-							onChange={(v) => applyText(joinDraft(draftParts.pdfs, v))}
-							attachments={<DraftPdfChips pdfs={draftParts.pdfs} onRemove={(pdf) => applyText(joinDraft(draftParts.pdfs.filter((p) => p !== pdf), draftParts.rest))} />}
-							inputRef={composerInputRef}
-							onSend={onSend}
-							onStop={abortInFlightTurn}
-							canSend={canSend}
-							onEscape={dictation.active ? dictation.cancel : undefined}
-							// The pause affordance (owner round 16): the placeholder
-							// IS the hint — empty state, exactly where Enter-on-empty
-							// applies.
-							nextProblem={nextReady}
-							onNext={sendNext}
-							placeholder={nextReady ? "Ask anything, or press Enter for the next one." : kind === "chat" ? (busy ? "Write ahead while the tutor writes" : questionOpen(messages) ? "Write your answer" : "Ask something else") : undefined}
-							toolbar={
-								kind === "chat" ? (
-									<>
-										<DictationBar dictation={dictation} compact />
-										<ChatPdfButton
-											compact
-											onAttached={(pdf) => {
-												applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest));
-												composerInputRef.current?.focus();
-											}}
-										/>
-										<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
-									</>
-								) : undefined
-							}
-						/>
-					}
-					onSubmitAnswer={(output) => {
-						if (!pending) return;
-						// THE ANSWER IS THE QUESTION CALL'S TOOL RESULT (fork 1, owner
-						// 2026-09-26): one input event, one turn — the hook appends
-						// the optimistic graded result (the AnsweredCard shows at
-						// once) and the server's write-ahead persists it before the
-						// turn; the teacher's reaction streams below it. Dismissals
-						// ride the same callback (QuestionAnswerData.dismissed). The
-						// reading-thinking draft rides along (owner 2026-10-03) — the
-						// check answer is its only carrier.
-						saveQuestionDraft(pending.toolCallId, { readingThinking: readingThinkingRef.current });
-						const reading = readingThinkingRef.current.trim() || undefined;
-						// The pending-id effect clears this only when the question
-						// actually leaves. An offline preflight keeps the draft visible.
-						submitAnswer(pending.tool, pending.toolCallId, reading ? { ...output, readingThinking: reading } : output);
-					}}
-				/>
-				</Conversation>
-				{kind === "chat" && <ChatBoard messages={messages} drill={drillState} />}
+									<DockOverlay
+										plain={kind === "chat"}
+										pending={pending}
+										initialQuestionDraft={pending ? questionDraft(pending.toolCallId)?.form : undefined}
+										onSaveQuestionDraft={(form) => {
+											if (pending) saveQuestionDraft(pending.toolCallId, { form });
+										}}
+										practice={activeProblem}
+										compactionRunning={compacting}
+										onSubmitThinking={submitThinking}
+										chatId={chatId}
+										plan={hasPlan ? <PlanMarginalia messages={messages} /> : undefined}
+										onOpenPlan={() => setPlanOpen(true)}
+										requiresReveal={requiresReveal}
+										readingThinking={readingThinking}
+										onReadingThinking={applyReadingThinking}
+										phase={phases.at(-1) ?? "probe"}
+										turns={turns}
+										contextTokens={contextTokens}
+										pricing={pricing}
+										onReserve={setDockReserve}
+										dictationSlot={<DictationBar dictation={dictation} />}
+										dictationCancel={dictation.cancel}
+										queuedSteers={visibleQueuedSteers(steerQueue, nativeMessages)}
+										setupCta={
+											zeroKeys ? (
+												<ZeroKeysPill onOpen={() => setSetupOpen(true)} />
+											) : (
+												!configured && (
+													<div className="relative h-0">
+														<div className="pointer-events-auto absolute inset-x-0 bottom-2 flex justify-center">
+															<button
+																type="button"
+																data-testid="setup-cta"
+																onClick={() => setSetupOpen(true)}
+																className={cn(
+																	buttonVariants({ variant: "accent-soft", size: "sm" }),
+																	"cursor-pointer rounded-full font-ui font-semibold",
+																)}
+															>
+																Add an AI key
+															</button>
+														</div>
+													</div>
+												)
+											)
+										}
+										composer={
+											<Composer
+												// Stop aborts ANY in-flight turn (stream-reattach wave): the
+												// square renders while a reattached/wake turn runs too — the
+												// abort channel kills it server-side; stop() alone would
+												// only detach our view.
+												busy={busy}
+												value={draftParts.rest}
+												onChange={(v) => applyText(joinDraft(draftParts.pdfs, v))}
+												attachments={
+													<DraftPdfChips
+														pdfs={draftParts.pdfs}
+														onRemove={(pdf) =>
+															applyText(
+																joinDraft(
+																	draftParts.pdfs.filter((p) => p !== pdf),
+																	draftParts.rest,
+																),
+															)
+														}
+													/>
+												}
+												inputRef={composerInputRef}
+												onSend={onSend}
+												onStop={abortInFlightTurn}
+												canSend={canSend}
+												onEscape={dictation.active ? dictation.cancel : undefined}
+												// The pause affordance (owner round 16): the placeholder
+												// IS the hint — empty state, exactly where Enter-on-empty
+												// applies.
+												nextProblem={nextReady}
+												onNext={sendNext}
+												placeholder={
+													nextReady
+														? "Ask anything, or press Enter for the next one."
+														: kind === "chat"
+															? busy
+																? "Write ahead while the tutor writes"
+																: questionOpen(messages)
+																	? "Write your answer"
+																	: "Ask something else"
+															: undefined
+												}
+												toolbar={
+													kind === "chat" ? (
+														<>
+															<DictationBar dictation={dictation} compact />
+															<ChatPdfButton
+																compact
+																onAttached={(pdf) => {
+																	applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest));
+																	composerInputRef.current?.focus();
+																}}
+															/>
+															<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
+														</>
+													) : undefined
+												}
+											/>
+										}
+										onSubmitAnswer={(output) => {
+											if (!pending) return;
+											// THE ANSWER IS THE QUESTION CALL'S TOOL RESULT (fork 1, owner
+											// 2026-09-26): one input event, one turn — the hook appends
+											// the optimistic graded result (the AnsweredCard shows at
+											// once) and the server's write-ahead persists it before the
+											// turn; the teacher's reaction streams below it. Dismissals
+											// ride the same callback (QuestionAnswerData.dismissed). The
+											// reading-thinking draft rides along (owner 2026-10-03) — the
+											// check answer is its only carrier.
+											saveQuestionDraft(pending.toolCallId, { readingThinking: readingThinkingRef.current });
+											const reading = readingThinkingRef.current.trim() || undefined;
+											// The pending-id effect clears this only when the question
+											// actually leaves. An offline preflight keeps the draft visible.
+											submitAnswer(
+												pending.tool,
+												pending.toolCallId,
+												reading ? { ...output, readingThinking: reading } : output,
+											);
+										}}
+									/>
+								</Conversation>
+								{kind === "chat" && <ChatBoard messages={messages} drill={drillState} />}
 
-				{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
+								{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
 				    INSIDE the session area — absolute inset-0 siblings of the scroller,
 				    so they own the area below the drag bar, right of the sidebar, and
 				    the top bar stays sharp + draggable while a focus is open. */}
-				{mermaidFocus !== null && (
-					<MermaidOverlay chart={mermaidFocus} onClose={() => setMermaidFocus(null)} />
-				)}
-				{figureFocus !== null && (
-					<MermaidOverlay
-						svg={figureFocus.svg}
-						inverted={figureFocus.inverted}
-						onClose={() => setFigureFocus(null)}
-					/>
-				)}
-				{planOpen && <PlanPopup messages={messages} onClose={() => setPlanOpen(false)} />}
-				<AbortTurnDialog mode={abortAsk} onClose={() => setAbortAsk(null)} onConfirm={confirmAbort} busy={busy} />
-				</div>
-			</div>
-		</div>
-		</JobsContext.Provider>
-		</SessionMermaidContext.Provider>
-		{/* The BYOK setup flow (owner, 2026-09-22): one mount serves the
+								{mermaidFocus !== null && <MermaidOverlay chart={mermaidFocus} onClose={() => setMermaidFocus(null)} />}
+								{figureFocus !== null && (
+									<MermaidOverlay
+										svg={figureFocus.svg}
+										inverted={figureFocus.inverted}
+										onClose={() => setFigureFocus(null)}
+									/>
+								)}
+								{planOpen && <PlanPopup messages={messages} onClose={() => setPlanOpen(false)} />}
+								<AbortTurnDialog
+									mode={abortAsk}
+									onClose={() => setAbortAsk(null)}
+									onConfirm={confirmAbort}
+									busy={busy}
+								/>
+							</div>
+						</div>
+					</div>
+				</JobsContext.Provider>
+			</SessionMermaidContext.Provider>
+			{/* The BYOK setup flow (owner, 2026-09-22): one mount serves the
 		    persistent CTA, the refused-send interception, and the job cards'
 		    deep-link. Save keeps the draft in the composer — it never sends
 		    (owner ruling 2026-10-09); Esc also keeps it (the dialog is
 		    closable by design — the gate is the server, not this modal). */}
-		<SetupDialog
-			open={setupOpen}
-			onClose={() => setSetupOpen(false)}
-			onDone={() => {
-				setSetupOpen(false);
-				setConfigured(true);
-				// Save only saves (owner ruling 2026-10-09): the draft went
-				// home into the composer at refusal time and STAYS there —
-				// the learner sends it themselves.
-			}}
-		/>
+			<SetupDialog
+				open={setupOpen}
+				onClose={() => setSetupOpen(false)}
+				onDone={() => {
+					setSetupOpen(false);
+					setConfigured(true);
+					// Save only saves (owner ruling 2026-10-09): the draft went
+					// home into the composer at refusal time and STAYS there —
+					// the learner sends it themselves.
+				}}
+			/>
 		</ChatActionsContext.Provider>
 	);
 }
@@ -1864,7 +2013,7 @@ export function Chat({
  *  then setup (self-closing — the gate only must not fire), then the
  *  2026-10-02 abort chain proper (question before turn). */
 type EscAbortTarget = "mermaid" | "plan" | "setup" | "question" | "problem" | "turn" | null;
-	/**
+/**
  * Does the ?prompt topic still owe its first send? The gate is "no real
  * conversation yet" (no user/assistant message) — NOT emptiness: a
  * session started with map picks carries a graph-context MARKER as
@@ -2265,9 +2414,9 @@ function DockOverlay({
 			if (
 				t &&
 				((t.tagName === "INPUT" && (t as HTMLInputElement).type !== "range") ||
-				t.tagName === "TEXTAREA" ||
-				t.isContentEditable ||
-				t.closest("button"))
+					t.tagName === "TEXTAREA" ||
+					t.isContentEditable ||
+					t.closest("button"))
 			)
 				return;
 			e.preventDefault();
@@ -2319,11 +2468,7 @@ function DockOverlay({
 		if (b) offer(b.getBoundingClientRect().height);
 	};
 
-	const mode = pending
-		? `question:${pending.toolCallId}`
-		: practice
-			? `practice:${practice.toolCallId}`
-			: "chat";
+	const mode = pending ? `question:${pending.toolCallId}` : practice ? `practice:${practice.toolCallId}` : "chat";
 	// The opening variant of a session appears instantly — the fade/rise is
 	// reserved for mid-session transitions.
 	const initialModeRef = useRef(mode);
@@ -2341,7 +2486,10 @@ function DockOverlay({
 		if (prevExpandedForFadeRef.current === expanded) return;
 		prevExpandedForFadeRef.current = expanded;
 		contentRef.current?.animate(
-			[{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "translateY(0)" }],
+			[
+				{ opacity: 0, transform: "translateY(6px)" },
+				{ opacity: 1, transform: "translateY(0)" },
+			],
 			{ duration: 160, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
 		);
 	}, [expanded]);
@@ -2383,7 +2531,11 @@ function DockOverlay({
 	return (
 		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: sbInset }}>
 			<div className="h-24" />
-			<div ref={blockRef} className={cn("relative pb-5", plain ? "pt-1" : "bg-background shadow-[0_-1px_0_var(--q-line)]")} style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}>
+			<div
+				ref={blockRef}
+				className={cn("relative pb-5", plain ? "pt-1" : "bg-background shadow-[0_-1px_0_var(--q-line)]")}
+				style={{ "--dock-max-h": dockMaxH ? `${dockMaxH}px` : undefined } as React.CSSProperties}
+			>
 				<div className={cn(DOCK, plain && "max-w-[42rem]")}>
 					{setupCta}
 					{/* The queued-steer indicator (owner spec 2026-10-03): quiet
@@ -2415,12 +2567,16 @@ function DockOverlay({
 					{/* LangHarness: one-click target-language letters + playback
 					    speed, typing into whichever field was focused last. */}
 					{!plain && <DiacriticBar />}
-					<div ref={shellRef} className={cn("pointer-events-auto overflow-hidden", plain ? "rounded-[20px] bg-card shadow-raise-hi outline-1 outline-transparent transition-[outline-color] focus-within:outline-ink-4" : "rounded-xl bg-card shadow-raise-hi")}>
-						<div
-						ref={contentRef}
-						key={mode}
-						className={mode === initialModeRef.current ? undefined : "dock-variant"}
+					<div
+						ref={shellRef}
+						className={cn(
+							"pointer-events-auto overflow-hidden",
+							plain
+								? "rounded-[20px] bg-card shadow-raise-hi outline-1 outline-transparent transition-[outline-color] focus-within:outline-ink-4"
+								: "rounded-xl bg-card shadow-raise-hi",
+						)}
 					>
+						<div ref={contentRef} key={mode} className={mode === initialModeRef.current ? undefined : "dock-variant"}>
 							{pending ? (
 								<QuestionDock
 									toolName={pending.tool as "quiz" | "probe" | "ask_user_question" | "explain" | "recall"}
@@ -2458,7 +2614,15 @@ function DockOverlay({
 					{/* The stats row: beneath the composer/question shell, not
 					    flush to the screen bottom — static height, outside the
 					    morphing shell so it never joins a height animation. */}
-					{!plain && <StatsBar turns={turns} contextTokens={contextTokens} pricing={pricing} dictationSlot={dictationSlot} chatId={chatId} />}
+					{!plain && (
+						<StatsBar
+							turns={turns}
+							contextTokens={contextTokens}
+							pricing={pricing}
+							dictationSlot={dictationSlot}
+							chatId={chatId}
+						/>
+					)}
 					{/* The scroll-down disc (moved here from the Conversation,
 					    owner refinement round 2026-09-24): anchored to the BLOCK's
 					    top edge — above the composer shell AND the stats row, in
@@ -2484,20 +2648,20 @@ function DockOverlay({
 				    back in. */}
 				{pending && plan && (
 					<Hint label="Open the full plan" side="bottom">
-<button
-						type="button"
-						data-testid="plan-marginalia"
-						onClick={onOpenPlan}
-						style={{ left: `calc(50% + ${DOCK_W / 2 + MARGIN_GAP}px)` }}
-						className={`absolute bottom-5 right-4 top-0 cursor-pointer transition-[filter,opacity] duration-300 ease-out ${
-							expanded && flankW >= MARGIN_MIN_W
-								? "pointer-events-auto opacity-100 blur-0"
-								: "pointer-events-none opacity-0 blur-md"
-						}`}
-					>
-						{plan}
-					</button>
-</Hint>
+						<button
+							type="button"
+							data-testid="plan-marginalia"
+							onClick={onOpenPlan}
+							style={{ left: `calc(50% + ${DOCK_W / 2 + MARGIN_GAP}px)` }}
+							className={`absolute bottom-5 right-4 top-0 cursor-pointer transition-[filter,opacity] duration-300 ease-out ${
+								expanded && flankW >= MARGIN_MIN_W
+									? "pointer-events-auto opacity-100 blur-0"
+									: "pointer-events-none opacity-0 blur-md"
+							}`}
+						>
+							{plan}
+						</button>
+					</Hint>
 				)}
 			</div>
 		</div>

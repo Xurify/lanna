@@ -23,33 +23,48 @@ export function verifyProviderRuntime(standalone, runtime = process.execPath) {
 		const result = spawnSync(runtime, [fileURLToPath(import.meta.url), "--probe", path.resolve(standalone)], {
 			cwd: home,
 			env: { ...probeEnv(process.env, home), ELECTRON_RUN_AS_NODE: "1" },
-			encoding: "utf8", timeout: 30_000, maxBuffer: 128 * 1024,
+			encoding: "utf8",
+			timeout: 30_000,
+			maxBuffer: 128 * 1024,
 		});
 		if (result.status !== 0 || result.error) {
-			throw new Error(`provider runtime probe failed (${result.error?.message ?? result.status}):\n${result.stdout ?? ""}${result.stderr ?? ""}`);
+			throw new Error(
+				`provider runtime probe failed (${result.error?.message ?? result.status}):\n${result.stdout ?? ""}${result.stderr ?? ""}`,
+			);
 		}
 		assert.match(result.stdout, /native Pi Google initialization passed/, "probe exited without success marker");
 		process.stdout.write(result.stdout);
-	} finally { fs.rmSync(home, { recursive: true, force: true }); }
+	} finally {
+		fs.rmSync(home, { recursive: true, force: true });
+	}
 }
 
 // Dedicated child only: nothing delegates to a live transport, even if the SDK
 // changes its fetch path. Count attempts as well: a swallowed guard error fails.
 function closeNetwork() {
 	let attempts = 0;
-	const deny = () => { attempts++; throw new Error("OFFLINE provider gate: network forbidden"); };
+	const deny = () => {
+		attempts++;
+		throw new Error("OFFLINE provider gate: network forbidden");
+	};
 	globalThis.fetch = deny;
-	globalThis.WebSocket = class { constructor() { deny(); } };
+	globalThis.WebSocket = class {
+		constructor() {
+			deny();
+		}
+	};
 	const require = createRequire(import.meta.url);
 	for (const [name, methods] of [
-		["http", ["request", "get"]], ["https", ["request", "get"]],
-		["net", ["connect", "createConnection"]], ["tls", ["connect"]],
+		["http", ["request", "get"]],
+		["https", ["request", "get"]],
+		["net", ["connect", "createConnection"]],
+		["tls", ["connect"]],
 		["dgram", ["createSocket"]],
 		["dns", ["lookup", "resolve", "resolve4", "resolve6", "resolveAny", "reverse"]],
 		["dns/promises", ["lookup", "resolve", "resolve4", "resolve6", "resolveAny", "reverse"]],
 	]) {
-		const module = require(`node:${name}`);
-		for (const method of methods) module[method] = deny;
+		const mod = require(`node:${name}`);
+		for (const method of methods) mod[method] = deny;
 	}
 	require("node:net").Socket.prototype.connect = deny;
 	syncBuiltinESMExports();
@@ -61,8 +76,10 @@ async function probe(standalone) {
 	const root = fs.realpathSync(standalone);
 	const inside = (file) => {
 		const relative = path.relative(root, fs.realpathSync(file));
-		assert.ok(relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative),
-			`dependency escaped standalone payload: ${file}`);
+		assert.ok(
+			relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative),
+			`dependency escaped standalone payload: ${file}`,
+		);
 	};
 	const loaded = new Set();
 	const hooks = registerHooks({
@@ -81,22 +98,32 @@ async function probe(standalone) {
 		const entry = pathToFileURL(path.join(root, "node_modules/@earendil-works/pi-ai/dist/index.js"));
 		const { createModels } = await import(entry.href);
 		const models = createModels();
-		for (const [name, factory] of [["google", "googleProvider"], ["opencode", "opencodeProvider"], ["opencode-go", "opencodeGoProvider"]]) {
+		for (const [name, factory] of [
+			["google", "googleProvider"],
+			["opencode", "opencodeProvider"],
+			["opencode-go", "opencodeGoProvider"],
+		]) {
 			const provider = (await import(new URL(`providers/${name}.js`, entry).href))[factory]();
 			models.setProvider(provider);
 			const model = provider.getModels().find((candidate) => candidate.api === "google-generative-ai");
 			assert.ok(model, `${name}: missing Google-backed catalog model`);
 			const sentinel = `LH_OFFLINE_ON_PAYLOAD_${randomUUID()}`;
 			let reached = 0;
-			const result = await models.streamSimple(model, { messages: [{ role: "user", content: "Offline initialization only", timestamp: 0 }] }, {
-				apiKey: "dummy-offline-provider-gate-not-a-key",
-				onPayload(payload, selected) {
-					assert.equal(selected.api, "google-generative-ai");
-					assert.ok(payload && typeof payload === "object");
-					reached++;
-					throw new Error(sentinel);
-				},
-			}).result();
+			const result = await models
+				.streamSimple(
+					model,
+					{ messages: [{ role: "user", content: "Offline initialization only", timestamp: 0 }] },
+					{
+						apiKey: "dummy-offline-provider-gate-not-a-key",
+						onPayload(payload, selected) {
+							assert.equal(selected.api, "google-generative-ai");
+							assert.ok(payload && typeof payload === "object");
+							reached++;
+							throw new Error(sentinel);
+						},
+					},
+				)
+				.result();
 			assert.equal(reached, 1, `${name}: did not reach onPayload: ${result.errorMessage}`);
 			assert.equal(result.stopReason, "error");
 			assert.equal(result.errorMessage, sentinel, `${name}: unexpected initialization error`);
@@ -105,9 +132,21 @@ async function probe(standalone) {
 		}
 		// Exercise the public lazy OAuth surface offline. toAuth evaluates the
 		// real flow module and its imports but neither logs in nor refreshes.
-		for (const [name, factory] of [["github-copilot", "githubCopilotProvider"], ["xai", "xaiProvider"]]) {
+		for (const [name, factory] of [
+			["github-copilot", "githubCopilotProvider"],
+			["xai", "xaiProvider"],
+		]) {
 			const provider = (await import(new URL(`providers/${name}.js`, entry).href))[factory]();
-			const credential = { type: "oauth", access: name === "github-copilot" ? "tid=offline;proxy-ep=proxy.individual.githubcopilot.com;" : "offline-xai-oauth-not-a-token", refresh: "offline-refresh-not-a-token", expires: Date.now() + 3600000, availableModelIds: provider.getModels().map((model) => model.id) };
+			const credential = {
+				type: "oauth",
+				access:
+					name === "github-copilot"
+						? "tid=offline;proxy-ep=proxy.individual.githubcopilot.com;"
+						: "offline-xai-oauth-not-a-token",
+				refresh: "offline-refresh-not-a-token",
+				expires: Date.now() + 3600000,
+				availableModelIds: provider.getModels().map((model) => model.id),
+			};
 			const auth = await provider.auth.oauth.toAuth(credential);
 			assert.equal(auth.apiKey, credential.access);
 			if (name === "github-copilot") assert.equal(auth.baseUrl, "https://api.individual.githubcopilot.com");
@@ -117,23 +156,44 @@ async function probe(standalone) {
 				seenApis.add(model.api);
 				const sentinel = `LH_OFFLINE_SUBSCRIPTION_${randomUUID()}`;
 				let reached = 0;
-				const result = await provider.streamSimple({ ...model, ...(auth.baseUrl ? { baseUrl: auth.baseUrl } : {}) }, { messages: [{ role: "user", content: "Offline initialization only", timestamp: 0 }] }, {
-					...auth, maxRetries: 0, onPayload() { reached++; throw new Error(sentinel); },
-				}).result();
+				const result = await provider
+					.streamSimple(
+						{ ...model, ...(auth.baseUrl ? { baseUrl: auth.baseUrl } : {}) },
+						{ messages: [{ role: "user", content: "Offline initialization only", timestamp: 0 }] },
+						{
+							...auth,
+							maxRetries: 0,
+							onPayload() {
+								reached++;
+								throw new Error(sentinel);
+							},
+						},
+					)
+					.result();
 				assert.equal(reached, 1, `${name}/${model.api}: ${result.errorMessage}`);
 				assert.equal(result.errorMessage, sentinel);
 			}
 			noNetwork();
-			console.log(`[smoke-provider-runtime] ${name}: public native OAuth and ${seenApis.size} transport APIs initialized offline`);
+			console.log(
+				`[smoke-provider-runtime] ${name}: public native OAuth and ${seenApis.size} transport APIs initialized offline`,
+			);
 		}
 		// Resolution/evaluation, not folder-exists checks. This also covers the
 		// previously missing transitive edge and permits legitimate nested deps.
 		for (const name of ["@google/genai", "google-auth-library", "gcp-metadata", "json-bigint", "bignumber.js"]) {
-			assert.ok([...loaded].some((file) => file.includes(`${path.sep}node_modules${path.sep}${name.replaceAll("/", path.sep)}${path.sep}`)),
-				`Google runtime chain was not loaded: ${name}`);
+			assert.ok(
+				[...loaded].some((file) =>
+					file.includes(`${path.sep}node_modules${path.sep}${name.replaceAll("/", path.sep)}${path.sep}`),
+				),
+				`Google runtime chain was not loaded: ${name}`,
+			);
 		}
-		console.log(`[smoke-provider-runtime] native Pi Google initialization passed; ${loaded.size} modules confined to ${root}; zero network attempts`);
-	} finally { hooks.deregister(); }
+		console.log(
+			`[smoke-provider-runtime] native Pi Google initialization passed; ${loaded.size} modules confined to ${root}; zero network attempts`,
+		);
+	} finally {
+		hooks.deregister();
+	}
 }
 
 async function main() {
@@ -145,9 +205,15 @@ async function main() {
 		assert.ok(args[index + 1] && !args[index + 1].startsWith("--"), `${name} requires a path`);
 		return path.resolve(args[index + 1]);
 	};
-	verifyProviderRuntime(value("--standalone", path.resolve(import.meta.dirname, "../.next/standalone")), value("--runtime", process.execPath));
+	verifyProviderRuntime(
+		value("--standalone", path.resolve(import.meta.dirname, "../.next/standalone")),
+		value("--runtime", process.execPath),
+	);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-	main().catch((error) => { console.error(`[smoke-provider-runtime] FAIL: ${formatProbeError(error)}`); process.exitCode = 1; });
+	main().catch((error) => {
+		console.error(`[smoke-provider-runtime] FAIL: ${formatProbeError(error)}`);
+		process.exitCode = 1;
+	});
 }

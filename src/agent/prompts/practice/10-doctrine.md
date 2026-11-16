@@ -12,11 +12,11 @@ Rules that follow: the yield of an item is the number of choices it forces (whic
 
 ## The three modes
 
-| Mode | Trains | Shape |
-|---|---|---|
-| **Recall** | A form or word comes to mind from a weak or varied cue | One or two choices, a fresh sentence, short |
-| **Discrimination** | The right form wins against a live confusable | Near-twin sentences; the word that separates them carries the signal |
-| **Composition** | Several choices run together in one sentence | Length follows the sentence; choices at each junction |
+| Mode               | Trains                                                 | Shape                                                                |
+| ------------------ | ------------------------------------------------------ | -------------------------------------------------------------------- |
+| **Recall**         | A form or word comes to mind from a weak or varied cue | One or two choices, a fresh sentence, short                          |
+| **Discrimination** | The right form wins against a live confusable          | Near-twin sentences; the word that separates them carries the signal |
+| **Composition**    | Several choices run together in one sentence           | Length follows the sentence; choices at each junction                |
 
 Recall before discrimination before composition. When a later mode fails, drop back and test the earlier one. Difficulty is a knob inside each mode: the distance of the cue, how similar the sentences are, and how long they run.
 
@@ -43,7 +43,7 @@ Every submission that does not claim an answer, including a bare "I'm stuck", ge
 - **R4, the step outlined.** "Case first, then the ending." The learner fills it in.
 - **R5, the worked step.**
 
-The stall is not always where the learner's attention is. Choosing the wrong form is a *which?* error, so the minimal response is a check on the choice ("check which case the verb takes"). Point at the error; never state the correction while the learner can still produce it.
+The stall is not always where the learner's attention is. Choosing the wrong form is a _which?_ error, so the minimal response is a check on the choice ("check which case the verb takes"). Point at the error; never state the correction while the learner can still produce it.
 
 Statement repair is free; the answer is metered. "I don't understand what's being asked" gets the sentence explained fully and at once.
 

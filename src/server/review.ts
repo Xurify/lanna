@@ -16,7 +16,29 @@ import { knownForms } from "../core/form-slip.ts";
 import { grammarWord } from "../core/reading.ts";
 import { missReason, missWordOf, startsQuestion, type MissReason, type MissWord } from "../core/review-miss.ts";
 import { languageReference } from "../agent/language-reference.ts";
-import { MAX_BLANK_WORDS, blankAround, blankFromSpans, blankWordsFor, dayKey, dueCards, entryLemma, leeches, lexiconOrder, mintCard, pickClozeExample, ratingCeiling, ratingFor, targetWordOf, type Blank, type LexiconEntry, type ReviewCard, type ReviewHelp, type ReviewLogEntry, type ReviewSettings, type Span } from "../core/review.ts";
+import {
+	MAX_BLANK_WORDS,
+	blankAround,
+	blankFromSpans,
+	blankWordsFor,
+	dayKey,
+	dueCards,
+	entryLemma,
+	leeches,
+	lexiconOrder,
+	mintCard,
+	pickClozeExample,
+	ratingCeiling,
+	ratingFor,
+	targetWordOf,
+	type Blank,
+	type LexiconEntry,
+	type ReviewCard,
+	type ReviewHelp,
+	type ReviewLogEntry,
+	type ReviewSettings,
+	type Span,
+} from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
@@ -51,7 +73,10 @@ export function warmLexicon(): void {
 function mintNext(cards: Record<string, ReviewCard>, now: Date, preferSlugs: string[] = []): ReviewCard | undefined {
 	const have = new Set(Object.values(cards).map((c) => c.slug));
 	const lexicon = loadLexicon();
-	const candidates = [...preferSlugs.map((s) => lexicon?.bySlug.get(s)).filter((e): e is LexiconEntry => !!e), ...orderedLexicon()];
+	const candidates = [
+		...preferSlugs.map((s) => lexicon?.bySlug.get(s)).filter((e): e is LexiconEntry => !!e),
+		...orderedLexicon(),
+	];
 	for (const entry of candidates) {
 		if (have.has(entry.slug)) continue;
 		const idx = pickClozeExample(entry);
@@ -101,7 +126,18 @@ export const ANSWERED_LINES = 30;
 interface ReviewStatus {
 	profile: string;
 	available: boolean;
-	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
+	counts: {
+		due: number;
+		learning: number;
+		newToday: number;
+		newLeft: number;
+		total: number;
+		reviewedToday: number;
+		cardsToday: number;
+		dueUntouched: number;
+		pendingNew: number;
+		dueLater: number;
+	};
 	settings: ReviewSettings;
 	next: ReviewPrompt | null;
 	answered: AnsweredLine[];
@@ -125,7 +161,9 @@ function distractors(card: ReviewCard): string[] {
 	// hovoríš, hovorí, hovoria): the choice is the ending, which is the point.
 	// A form that differs only by accents is a typo, not a wrong answer.
 	const folded = new Set([foldDiacritics(card.answer).toLocaleLowerCase(tag())]);
-	const own = [...new Set([...(entry?.forms ?? []), ...(entry?.declension?.singular ?? []), ...(entry?.declension?.plural ?? [])])];
+	const own = [
+		...new Set([...(entry?.forms ?? []), ...(entry?.declension?.singular ?? []), ...(entry?.declension?.plural ?? [])]),
+	];
 	for (const f of own.sort((x, y) => hash(x + card.id) - hash(y + card.id))) {
 		const k = f.toLocaleLowerCase(tag());
 		const fk = foldDiacritics(k);
@@ -168,14 +206,20 @@ export function blankOf(card: ReviewCard, max: number, words?: number): Blank {
 function loggedBlank(card: ReviewCard, spans: Span[] | undefined): Blank {
 	const own: Span = [card.at, card.at + card.answer.length];
 	const target = spans?.findIndex(([from, to]) => from === own[0] && to === own[1]) ?? -1;
-	const ordered = !!spans && spans.every(([from, to], i) => from < to && to <= card.sentence.length && (i === 0 || spans[i - 1]![1] <= from));
-	return target >= 0 && ordered ? blankFromSpans(card.sentence, spans!, target) : blankFromSpans(card.sentence, [own], 0);
+	const ordered =
+		!!spans &&
+		spans.every(([from, to], i) => from < to && to <= card.sentence.length && (i === 0 || spans[i - 1]![1] <= from));
+	return target >= 0 && ordered
+		? blankFromSpans(card.sentence, spans!, target)
+		: blankFromSpans(card.sentence, [own], 0);
 }
 
 function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPrompt {
 	const elapsed = card.lastReview ? (now.getTime() - Date.parse(card.lastReview)) / DAY_MS : 0;
 	const entry = loadLexicon()?.bySlug.get(card.slug);
-	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	const unit = entry
+		? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } })
+		: null;
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const sentenceSource = entry?.examples[Number(card.id.split("#")[1])]?.src;
 	const blank = blankOf(card, settings.blankWords);
@@ -197,7 +241,12 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 
 /** Reviews logged on a local day. The log is chronological, so walk back from the newest line and
  *  stop two days short of now (no time zone is further off than 14 hours): the whole log is not scanned. */
-function reviewedOn(today: string, now: Date, deck: Record<string, ReviewCard>, tzOffset?: number): { answers: number; cards: Set<string>; lines: AnsweredLine[] } {
+function reviewedOn(
+	today: string,
+	now: Date,
+	deck: Record<string, ReviewCard>,
+	tzOffset?: number,
+): { answers: number; cards: Set<string>; lines: AnsweredLine[] } {
 	const log = reviewStore.readLog();
 	const floor = now.getTime() - 2 * DAY_MS;
 	let answers = 0;
@@ -214,7 +263,16 @@ function reviewedOn(today: string, now: Date, deck: Record<string, ReviewCard>, 
 		const card = deck[entry.cardId];
 		if (card && lines.length < ANSWERED_LINES) {
 			const { pieces, gaps } = loggedBlank(card, entry.spans);
-			lines.push({ cardId: card.id, reviewedAt: entry.reviewedAt, pieces, gaps, translation: card.translation, rating: entry.rating, verdict: entry.verdict, helped: !!entry.hints || !!entry.picked });
+			lines.push({
+				cardId: card.id,
+				reviewedAt: entry.reviewedAt,
+				pieces,
+				gaps,
+				translation: card.translation,
+				rating: entry.rating,
+				verdict: entry.verdict,
+				helped: !!entry.hints || !!entry.picked,
+			});
 		}
 	}
 	return { answers, cards, lines };
@@ -259,7 +317,14 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 			// New cards that already exist and have not been answered (minted just now, or put in the deck by a lesson, Listen or Read), which the daily budget does not count.
 			pendingNew: Object.values(cards).filter((c) => c.state === "new" && !c.suspended).length,
 			// Cards not seen today that fall due before the local day ends: the day's work that has not come due yet.
-			dueLater: list.filter((c) => !c.suspended && c.state !== "new" && !answeredToday.cards.has(c.id) && Date.parse(c.due) > now.getTime() && Date.parse(c.due) < endOfDay).length,
+			dueLater: list.filter(
+				(c) =>
+					!c.suspended &&
+					c.state !== "new" &&
+					!answeredToday.cards.has(c.id) &&
+					Date.parse(c.due) > now.getTime() &&
+					Date.parse(c.due) < endOfDay,
+			).length,
 		},
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings) : null,
@@ -300,7 +365,10 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	const verdict = compareAnswer(blank.answer, input.given, tag());
 	const word = targetWordOf(blank, input.given);
 	const wordVerdict = blank.words > 1 ? compareAnswer(card.answer, word, tag()) : verdict;
-	const help: ReviewHelp = { ...(input.hints ? { hints: input.hints } : {}), ...(input.picked ? { picked: true } : {}) };
+	const help: ReviewHelp = {
+		...(input.hints ? { hints: input.hints } : {}),
+		...(input.picked ? { picked: true } : {}),
+	};
 	const rating = Math.min(input.rating ?? ratingFor(verdict, input.ms, help), ratingCeiling(verdict, help)) as Rating;
 	const elapsedDays = card.lastReview ? (now.getTime() - Date.parse(card.lastReview)) / DAY_MS : 0;
 	const memory = review(card.memory, rating, elapsedDays);
@@ -338,7 +406,11 @@ export function reviewMiss(cardId: string, givenAnswer: string, words?: number):
 	return missOf(cardId, givenAnswer, words)?.reason ?? null;
 }
 
-export async function reviewMissWithNote(cardId: string, givenAnswer: string, words?: number): Promise<MissReason | null> {
+export async function reviewMissWithNote(
+	cardId: string,
+	givenAnswer: string,
+	words?: number,
+): Promise<MissReason | null> {
 	const miss = missOf(cardId, givenAnswer, words);
 	if (!miss?.reason.other?.notePending || !miss.entry || !miss.otherEntry) return miss?.reason ?? null;
 	await ensureMissNote(miss.entry, miss.otherEntry);
@@ -355,7 +427,12 @@ type MissTarget = Pick<ReviewCard, "slug" | "lemma" | "gloss" | "sentence" | "an
  *  the dictionary's commonest entry with that form. */
 const slovakGrammarWord = (form: string) => (tag().startsWith("sk") ? grammarWord(form) : undefined);
 
-function missedGap(card: ReviewCard, blank: Blank, givenAnswer: string, lexicon: ReturnType<typeof loadLexicon>): { card: MissTarget; given: string } | null {
+function missedGap(
+	card: ReviewCard,
+	blank: Blank,
+	givenAnswer: string,
+	lexicon: ReturnType<typeof loadLexicon>,
+): { card: MissTarget; given: string } | null {
 	const typed = givenAnswer.trim().split(/\s+/);
 	if (blank.words <= 1 || typed.length !== blank.words) return { card, given: targetWordOf(blank, givenAnswer) };
 	const wrong = (i: number) => compareAnswer(blank.gaps[i]!, typed[i]!, tag()) === "wrong";
@@ -367,40 +444,92 @@ function missedGap(card: ReviewCard, blank: Blank, givenAnswer: string, lexicon:
 	const entry = [...(lexicon?.byForm.get(answer.toLocaleLowerCase(tag())) ?? [])].sort(commonerFirst)[0];
 	const grammar = entry ? undefined : slovakGrammarWord(answer);
 	const lemma = entry ? entryLemma(entry) : (grammar?.lemma ?? answer.toLocaleLowerCase(tag()));
-	return { card: { slug: entry?.slug ?? "", lemma, gloss: entry ? shortGloss(entry.en) : (grammar?.gloss ?? ""), sentence: card.sentence, answer, at: blank.spans[gap]![0] }, given: typed[gap]! };
+	return {
+		card: {
+			slug: entry?.slug ?? "",
+			lemma,
+			gloss: entry ? shortGloss(entry.en) : (grammar?.gloss ?? ""),
+			sentence: card.sentence,
+			answer,
+			at: blank.spans[gap]![0],
+		},
+		given: typed[gap]!,
+	};
 }
 
-function missOf(cardId: string, givenAnswer: string, words?: number): { reason: MissReason; entry?: LexiconEntry; otherEntry?: LexiconEntry } | null {
+function missOf(
+	cardId: string,
+	givenAnswer: string,
+	words?: number,
+): { reason: MissReason; entry?: LexiconEntry; otherEntry?: LexiconEntry } | null {
 	const reviewCard = reviewStore.readCards()[cardId];
 	if (!reviewCard) return null;
 	const lexicon = loadLexicon();
-	const missed = missedGap(reviewCard, blankOf(reviewCard, reviewStore.readMeta().settings.blankWords, words), givenAnswer, lexicon);
+	const missed = missedGap(
+		reviewCard,
+		blankOf(reviewCard, reviewStore.readMeta().settings.blankWords, words),
+		givenAnswer,
+		lexicon,
+	);
 	if (!missed) return null;
 	const { card, given } = missed;
 	const entry = lexicon?.bySlug.get(card.slug);
-	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	const unit = entry
+		? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } })
+		: null;
 	const word = given.trim().toLocaleLowerCase(tag());
 	const matches = word ? (lexicon?.byForm.get(word) ?? lexicon?.byFolded.get(foldDiacritics(word)) ?? []) : [];
-	const samePartOfSpeechFirst = (a: LexiconEntry, b: LexiconEntry) => Number(b.cat === entry?.cat) - Number(a.cat === entry?.cat);
+	const samePartOfSpeechFirst = (a: LexiconEntry, b: LexiconEntry) =>
+		Number(b.cat === entry?.cat) - Number(a.cat === entry?.cat);
 	const commonerFirst = (a: LexiconEntry, b: LexiconEntry) => (a.rank ?? Infinity) - (b.rank ?? Infinity);
 	const ranked = matches
 		.filter((e) => e.slug !== card.slug)
 		.map((e) => ({ e, isLemma: foldDiacritics(entryLemma(e).toLocaleLowerCase(tag())) === foldDiacritics(word) }))
-		.sort((a, b) => samePartOfSpeechFirst(a.e, b.e) || Number(b.isLemma) - Number(a.isLemma) || commonerFirst(a.e, b.e));
+		.sort(
+			(a, b) => samePartOfSpeechFirst(a.e, b.e) || Number(b.isLemma) - Number(a.isLemma) || commonerFirst(a.e, b.e),
+		);
 	const aiReady = ranked.length > 0 && aiStatus().ready;
 	const reference = languageReference(activeLanguage().id, tag());
 	const rankedEntriesOfGiven: MissWord[] = ranked.map(({ e, isLemma }) => {
 		const cached = entry ? cachedMissNote(entry, e) : undefined;
 		const noteCanBeWritten = !cached && aiReady && !!entry && enoughEvidence(missNoteEvidence(entry, e, tag()));
-		return missWordOf({ slug: card.slug, lemma: card.lemma, entry }, e, { typed: word, isLemma, language: activeLanguage().id, reference, ...(cached?.status === "kept" ? { note: cached.note } : {}), noteCanBeWritten }, tag());
+		return missWordOf(
+			{ slug: card.slug, lemma: card.lemma, entry },
+			e,
+			{
+				typed: word,
+				isLemma,
+				language: activeLanguage().id,
+				reference,
+				...(cached?.status === "kept" ? { note: cached.note } : {}),
+				noteCanBeWritten,
+			},
+			tag(),
+		);
 	});
 	const givenGrammar = ranked.length === 0 && word ? slovakGrammarWord(word) : undefined;
-	if (givenGrammar) rankedEntriesOfGiven.push({ lemma: givenGrammar.lemma, gloss: givenGrammar.gloss, isLemma: givenGrammar.lemma === word });
+	if (givenGrammar)
+		rankedEntriesOfGiven.push({
+			lemma: givenGrammar.lemma,
+			gloss: givenGrammar.gloss,
+			isLemma: givenGrammar.lemma === word,
+		});
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const trigger = unit && unit !== "words" ? triggerOf(card.sentence, card.at, unit) : undefined;
 	const forms = entry ? knownForms(entry) : [];
 	const reason = missReason(
-		{ answer: card.answer, lemma: card.lemma, gloss: entry ? shortGloss(entry.en) : card.gloss, given, forms, inflects: !entry || forms.length > 0 || INFLECTING_CATEGORIES.has(entry.cat), asks: startsQuestion(card.sentence, card.answer, tag()), form, trigger, rankedEntriesOfGiven },
+		{
+			answer: card.answer,
+			lemma: card.lemma,
+			gloss: entry ? shortGloss(entry.en) : card.gloss,
+			given,
+			forms,
+			inflects: !entry || forms.length > 0 || INFLECTING_CATEGORIES.has(entry.cat),
+			asks: startsQuestion(card.sentence, card.answer, tag()),
+			form,
+			trigger,
+			rankedEntriesOfGiven,
+		},
 		tag(),
 	);
 	if (!reason) return null;
@@ -414,11 +543,27 @@ function missOf(cardId: string, givenAnswer: string, words?: number): { reason: 
  *  sentence practices, unless a hint came before the answer. Returns what
  *  the log keeps of it: the drill, the word's gender and a counted slip. A
  *  card with no drill (plain vocabulary) counts toward nothing. */
-function noteFirstTry(card: ReviewCard, input: ReviewAnswer, given: string, verdict: ReviewLogEntry["verdict"]): Pick<ReviewLogEntry, "unit" | "gender" | "slip"> {
+function noteFirstTry(
+	card: ReviewCard,
+	input: ReviewAnswer,
+	given: string,
+	verdict: ReviewLogEntry["verdict"],
+): Pick<ReviewLogEntry, "unit" | "gender" | "slip"> {
 	const entry = loadLexicon()?.bySlug.get(card.slug);
-	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	const unit = entry
+		? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } })
+		: null;
 	if (!entry || !unit) return {};
-	const count = firstTryOf({ kind: input.picked ? "choose" : "type", unit, answer: card.answer, entry, first: { given, verdict, ...(input.hints ? { peeked: true } : {}) } }, tag());
+	const count = firstTryOf(
+		{
+			kind: input.picked ? "choose" : "type",
+			unit,
+			answer: card.answer,
+			entry,
+			first: { given, verdict, ...(input.hints ? { peeked: true } : {}) },
+		},
+		tag(),
+	);
 	try {
 		if (count) {
 			const p = progressStore.read();
@@ -437,14 +582,17 @@ function noteFirstTry(card: ReviewCard, input: ReviewAnswer, given: string, verd
  *  stay the deck's business. */
 function noteWeakForm(card: ReviewCard, rating: Rating, now: Date, formMissed = rating === 1): void {
 	const entry = loadLexicon()?.bySlug.get(card.slug);
-	const unit = entry ? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } }) : null;
+	const unit = entry
+		? classifyExample(entry, { sk: card.sentence, cloze: { answer: card.answer, at: card.at } })
+		: null;
 	if (!unit || unit === "words") return;
 	try {
 		const p = progressStore.read();
 		let weak = p.weak ?? {};
 		const miss = formMissed;
 		weak = tallyWeak(weak, unit, miss ? 0 : 1, miss ? 1 : 0, now).weak;
-		if (miss && !weak[unit] && card.lapses >= WEAK_REVIEW_LAPSES) weak = flagWeak(weak, unit, "review", `${card.lemma} keeps slipping (${card.answer}, ×${card.lapses})`, now);
+		if (miss && !weak[unit] && card.lapses >= WEAK_REVIEW_LAPSES)
+			weak = flagWeak(weak, unit, "review", `${card.lemma} keeps slipping (${card.answer}, ×${card.lapses})`, now);
 		if (weak !== (p.weak ?? {})) {
 			p.weak = weak;
 			progressStore.write(p);
@@ -464,9 +612,12 @@ export function suspendCard(cardId: string, suspended = true): void {
 export function updateReviewSettings(patch: Partial<ReviewSettings>): ReviewSettings {
 	const meta = reviewStore.readMeta();
 	const next: ReviewSettings = { ...meta.settings };
-	if (typeof patch.newPerDay === "number" && Number.isFinite(patch.newPerDay)) next.newPerDay = Math.max(0, Math.min(100, Math.round(patch.newPerDay)));
-	if (typeof patch.retention === "number" && Number.isFinite(patch.retention)) next.retention = Math.max(0.7, Math.min(0.97, patch.retention));
-	if (typeof patch.blankWords === "number" && Number.isFinite(patch.blankWords)) next.blankWords = Math.max(1, Math.min(MAX_BLANK_WORDS, Math.round(patch.blankWords)));
+	if (typeof patch.newPerDay === "number" && Number.isFinite(patch.newPerDay))
+		next.newPerDay = Math.max(0, Math.min(100, Math.round(patch.newPerDay)));
+	if (typeof patch.retention === "number" && Number.isFinite(patch.retention))
+		next.retention = Math.max(0.7, Math.min(0.97, patch.retention));
+	if (typeof patch.blankWords === "number" && Number.isFinite(patch.blankWords))
+		next.blankWords = Math.max(1, Math.min(MAX_BLANK_WORDS, Math.round(patch.blankWords)));
 	reviewStore.writeMeta({ ...meta, settings: next });
 	return next;
 }
@@ -498,6 +649,8 @@ export function reviewDigest(now = new Date()): string {
 	const slipping = leeches(list, 2).slice(0, 12);
 	return [
 		`Spaced review: ${list.length} words in the deck, ${learned} stable for a week or more, ${due} due now.`,
-		slipping.length ? `Words that keep slipping (lapses): ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.lapses}`).join("; ")}.` : "No words are repeatedly slipping.",
+		slipping.length
+			? `Words that keep slipping (lapses): ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.lapses}`).join("; ")}.`
+			: "No words are repeatedly slipping.",
 	].join("\n");
 }

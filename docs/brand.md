@@ -18,10 +18,10 @@ A text cursor waiting at an empty answer line.
 
 1024 box, two rounded rectangles (radius 22), no strokes:
 
-| Part | x | y | w | h | Color |
-|---|---|---|---|---|---|
-| Cursor | 262 | 212 | 116 | 600 | ink |
-| Answer line | 418 | 696 | 344 | 116 | teal |
+| Part        | x   | y   | w   | h   | Color |
+| ----------- | --- | --- | --- | --- | ----- |
+| Cursor      | 262 | 212 | 116 | 600 | ink   |
+| Answer line | 418 | 696 | 344 | 116 | teal  |
 
 The drawing spans 500 × 600 and is centered at 512, 512. The bars are the same width, and the gap between them is a third of a bar, so the two parts stay apart at 16 px. The first drawing (bars of 72, spanning 460 × 520) was too thin and too small to read in a taskbar (owner, 2026-11-07: "Make the icon a bit better"); the bars are now 60% thicker and the drawing fills more of the tile.
 
@@ -29,9 +29,9 @@ The drawing spans 500 × 600 and is centered at 512, 512. The bars are the same 
 
 In the app, the mark uses the app's two tokens and nothing else (E33):
 
-| | Day | Night |
-|---|---|---|
-| Cursor | `--q-ink` #16181B | `--q-ink` #ECEDEE |
+|             | Day                | Night              |
+| ----------- | ------------------ | ------------------ |
+| Cursor      | `--q-ink` #16181B  | `--q-ink` #ECEDEE  |
 | Answer line | `--q-teal` #0D6764 | `--q-teal` #4CBDB7 |
 
 The app icon is a teal tile (#0D6764, Day `--q-teal`) with a white cursor and a pale teal line (#9FE3DE). The first version used an ink tile, which disappeared on a dark taskbar. Teal stands out on a dark or a light one, and it is the app's one accent. The wordmark follows the in-app split: "Lang" in ink, "Harness" in teal.
@@ -58,16 +58,16 @@ LangHarness is the name today: the repo, the app id (`com.langharness.LangHarnes
 
 If the app gets a name of its own, these fit what it does. The first three fit the mark best.
 
-| Name | Why it fits | Watch out for |
-|---|---|---|
+| Name           | Why it fits                                                                                                                                                                           | Watch out for                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | **Unprompted** | The goal is to say a thing with no cue, and every rep starts without a hint (P3). The mark is a cursor with no prompt. It also plays on the model prompts, which the app keeps cheap. | Long (3 syllables), and "unprompted" can read as "unasked". |
-| **Foothold** | A first, secure grip on a language, earned on a hard climb. The mark can be read as a climber (the cursor) on a ledge (the line). | Common English word; may be used in other fields. |
-| **Offhand** | To say something offhand is fluency: no notes, no searching. Short and friendly. | Can mean "careless". |
-| **Typed** | The Review card says "Type it, don't pick it." It says what the app asks for. | Leaves out speaking and listening. |
-| **Belay** | In climbing, the belayer holds the rope while you climb. The tutor helps, but you do the climbing, and help has a price. | Climbing jargon; other companies use it. |
-| **Crux** | The hardest move of a climb: desirable difficulty in one word. | Used by many products. |
-| **Firsthand** | Words you produce yourself, not ones you pick from a list. | Long; a little plain. |
-| **Tabula** | A blank slate (tabula rasa) that you fill. Latin, so it is neutral across languages. | Abstract; easy to confuse with "Tableau". |
+| **Foothold**   | A first, secure grip on a language, earned on a hard climb. The mark can be read as a climber (the cursor) on a ledge (the line).                                                     | Common English word; may be used in other fields.           |
+| **Offhand**    | To say something offhand is fluency: no notes, no searching. Short and friendly.                                                                                                      | Can mean "careless".                                        |
+| **Typed**      | The Review card says "Type it, don't pick it." It says what the app asks for.                                                                                                         | Leaves out speaking and listening.                          |
+| **Belay**      | In climbing, the belayer holds the rope while you climb. The tutor helps, but you do the climbing, and help has a price.                                                              | Climbing jargon; other companies use it.                    |
+| **Crux**       | The hardest move of a climb: desirable difficulty in one word.                                                                                                                        | Used by many products.                                      |
+| **Firsthand**  | Words you produce yourself, not ones you pick from a list.                                                                                                                            | Long; a little plain.                                       |
+| **Tabula**     | A blank slate (tabula rasa) that you fill. Latin, so it is neutral across languages.                                                                                                  | Abstract; easy to confuse with "Tableau".                   |
 
 **Decision (owner, 2026-11-06):** keep LangHarness for now. If the app gets a public name later, **Unprompted** fits the mark and the method best, with **Foothold** second.
 

@@ -70,9 +70,7 @@ describe("AgentBuildOptions.toolToggles (the P2 bridge)", () => {
 
 describe("parseAgentSettingsBody: tool keys validate at write time", () => {
 	const parse = (tools: Record<string, boolean>) =>
-		parseAgentSettingsBody({ tools }) as
-			| { ok: true; settings: AgentSettings }
-			| { ok: false; error: string };
+		parseAgentSettingsBody({ tools }) as { ok: true; settings: AgentSettings } | { ok: false; error: string };
 
 	it("a valid job-tool delta parses", () => {
 		const r = parse({ research: false, pdf: false });

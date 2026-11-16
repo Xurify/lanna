@@ -35,7 +35,15 @@ describe("audio library", () => {
 		const key = corpus.audioKey("sk", "female", "  Dobrý deň, ako sa máte? ");
 		assert.equal(key, ttsCacheKey({ text: "Dobrý deň, ako sa máte?", lang: "sk", voice: "female" }));
 		assert.equal(corpus.findAudioClip(key), null);
-		const stored = corpus.storeAudioClip({ key, lang: "sk", voice: "female", tier: "edge", text: "Dobrý deň, ako sa máte?", ext: "mp3", data: Buffer.from("mp3bytes") });
+		const stored = corpus.storeAudioClip({
+			key,
+			lang: "sk",
+			voice: "female",
+			tier: "edge",
+			text: "Dobrý deň, ako sa máte?",
+			ext: "mp3",
+			data: Buffer.from("mp3bytes"),
+		});
 		assert.equal(stored.file, `sk/female/dobry-den-ako-sa-mate-${key.slice(0, 12)}.mp3`);
 		assert.ok(fs.existsSync(path.join(PATHS.audio, stored.file)));
 		const hit = corpus.findAudioClip(key);
@@ -81,14 +89,41 @@ const rep = (over: Partial<Parameters<typeof recordLesson>[0]["reps"][number]> =
 	slug: "dom",
 	kind: "type" as const,
 	verdict: "exact" as const,
-	detail: { unit: "loc", lemma: "dom", gloss: "house", sentence: "Bývam v dome.", translation: "I live in a house.", answer: "dome", given: "dome", trigger: "v", hint: "dom" },
+	detail: {
+		unit: "loc",
+		lemma: "dom",
+		gloss: "house",
+		sentence: "Bývam v dome.",
+		translation: "I live in a house.",
+		answer: "dome",
+		given: "dome",
+		trigger: "v",
+		hint: "dom",
+	},
 	...over,
 });
 
 describe("lesson log", () => {
 	it("recordLesson appends the whole lesson with every answer to lessons/<day>.jsonl", () => {
 		const now = new Date("2026-10-27T22:30:00Z");
-		recordLesson({ unit: "loc", mode: "lesson", reps: [rep(), rep({ itemId: "mesto#1", slug: "mesto", verdict: "wrong", detail: { ...rep().detail, sentence: "Som v meste.", answer: "meste", given: "mesto", mixed: true } })], ms: 61_000, tz: -60 }, now);
+		recordLesson(
+			{
+				unit: "loc",
+				mode: "lesson",
+				reps: [
+					rep(),
+					rep({
+						itemId: "mesto#1",
+						slug: "mesto",
+						verdict: "wrong",
+						detail: { ...rep().detail, sentence: "Som v meste.", answer: "meste", given: "mesto", mixed: true },
+					}),
+				],
+				ms: 61_000,
+				tz: -60,
+			},
+			now,
+		);
 		const file = path.join(PATHS.lessons, "2026-10-27.jsonl");
 		assert.ok(fs.existsSync(file), "the day file exists (local day with tz)");
 		const entries = corpus.readLessonLog();
@@ -110,7 +145,10 @@ describe("lesson log", () => {
 	});
 
 	it("a rep without detail still logs (old clients)", () => {
-		recordLesson({ unit: "loc", mode: "blitz", reps: [{ itemId: "x#0", slug: "x", kind: "choose", verdict: "exact" }], tz: 0 }, new Date("2026-10-28T10:00:00Z"));
+		recordLesson(
+			{ unit: "loc", mode: "blitz", reps: [{ itemId: "x#0", slug: "x", kind: "choose", verdict: "exact" }], tz: 0 },
+			new Date("2026-10-28T10:00:00Z"),
+		);
 		const entries = corpus.readLessonLog();
 		assert.equal(entries.length, 2);
 		assert.equal(entries[1]!.mode, "blitz");
@@ -120,32 +158,62 @@ describe("lesson log", () => {
 
 describe("Why? reuse", () => {
 	it("the first question creates a plain chat and records it; the same sentence reopens it", () => {
-		const first = openWhy({ title: "Why dome?", sentence: "Bývam v dome.", answer: "dome", lemma: "dom", given: "dom" });
+		const first = openWhy({
+			title: "Why dome?",
+			sentence: "Bývam v dome.",
+			answer: "dome",
+			lemma: "dom",
+			given: "dom",
+		});
 		assert.equal(first.reused, false);
 		const chat = chatStore.getChat(first.id);
 		assert.ok(chat);
 		assert.equal(chat.kind, "chat");
 		assert.equal(chat.settings, undefined, "no model slot in the fixture, so nothing to stamp");
 		assert.equal(chat.title, "Why dome?");
-		const again = openWhy({ title: "Why dome?", sentence: "Bývam v dome.", answer: "dome", lemma: "dom", given: "domu" });
+		const again = openWhy({
+			title: "Why dome?",
+			sentence: "Bývam v dome.",
+			answer: "dome",
+			lemma: "dom",
+			given: "domu",
+		});
 		assert.equal(again.reused, true);
 		assert.equal(again.id, first.id);
 		const entry = corpus.findWhy(corpus.whyKey("sk", "Bývam v dome.", "dome"));
 		assert.ok(entry);
 		assert.equal(entry.reused, 1);
 		assert.equal(entry.given, "dom", "the first answer is what the index keeps");
-		const other = openWhy({ title: "Why meste?", sentence: "Som v meste.", answer: "meste", lemma: "mesto", given: "mesto" });
+		const other = openWhy({
+			title: "Why meste?",
+			sentence: "Som v meste.",
+			answer: "meste",
+			lemma: "mesto",
+			given: "mesto",
+		});
 		assert.equal(other.reused, false);
 		assert.notEqual(other.id, first.id);
 	});
 
 	it("a deleted Why? chat is asked again, and the deleted file lands in chats/trash", () => {
-		const first = openWhy({ title: "Why rieke?", sentence: "Plávam v rieke.", answer: "rieke", lemma: "rieka", given: "rieka" });
+		const first = openWhy({
+			title: "Why rieke?",
+			sentence: "Plávam v rieke.",
+			answer: "rieke",
+			lemma: "rieka",
+			given: "rieka",
+		});
 		assert.equal(chatStore.deleteChat(first.id), true);
 		assert.equal(chatStore.getChat(first.id), null);
 		assert.ok(fs.existsSync(path.join(PATHS.chats, "trash", `${first.id}.json`)), "deleted = moved to trash");
 		assert.ok(!chatStore.listChats().some((c) => c.id === first.id), "trash is not in the list");
-		const next = openWhy({ title: "Why rieke?", sentence: "Plávam v rieke.", answer: "rieke", lemma: "rieka", given: "rieka" });
+		const next = openWhy({
+			title: "Why rieke?",
+			sentence: "Plávam v rieke.",
+			answer: "rieke",
+			lemma: "rieka",
+			given: "rieka",
+		});
 		assert.equal(next.reused, false);
 		assert.notEqual(next.id, first.id);
 	});
@@ -171,7 +239,15 @@ describe("export", () => {
 					timestamp: 2,
 				} as never,
 			],
-			turns: [{ id: "t1", messageId: "a1", at: "2026-10-27T00:00:30.000Z", model: "anthropic:claude-sonnet-4", steps: [{ inputTokens: 100, outputTokens: 20, cacheReadTokens: 5, cacheWriteTokens: 0, reasoningTokens: 0 }] }],
+			turns: [
+				{
+					id: "t1",
+					messageId: "a1",
+					at: "2026-10-27T00:00:30.000Z",
+					model: "anthropic:claude-sonnet-4",
+					steps: [{ inputTokens: 100, outputTokens: 20, cacheReadTokens: 5, cacheWriteTokens: 0, reasoningTokens: 0 }],
+				},
+			],
 		});
 		assert.equal(d.practiceMode, "why");
 		assert.equal(d.messages.length, 2);
@@ -194,16 +270,32 @@ describe("export", () => {
 
 	it("exportCorpus writes one file per kind plus a README and a summary", () => {
 		const { dir, summary } = exportCorpus({ stamp: "test" });
-		for (const f of ["README.md", "summary.json", "audio.json", "sentences.json", "lessons.json", "dialogues.json", "explanations.json", "review.json"]) {
+		for (const f of [
+			"README.md",
+			"summary.json",
+			"audio.json",
+			"sentences.json",
+			"lessons.json",
+			"dialogues.json",
+			"explanations.json",
+			"review.json",
+		]) {
 			assert.ok(fs.existsSync(path.join(dir, f)), `${f} exists`);
 		}
 		assert.equal(summary.counts.audioClips, 3);
 		assert.equal(summary.counts.lessons, 2);
 		assert.equal(summary.counts.reps, 3);
 		assert.ok(summary.counts.dialogues >= 4, "live and trashed chats both count");
-		const dialogues = JSON.parse(fs.readFileSync(path.join(dir, "dialogues.json"), "utf-8")) as Array<{ deleted: boolean }>;
-		assert.ok(dialogues.some((d) => d.deleted), "the trashed chat is exported, marked deleted");
-		const explanations = JSON.parse(fs.readFileSync(path.join(dir, "explanations.json"), "utf-8")) as Array<{ sentence: string }>;
+		const dialogues = JSON.parse(fs.readFileSync(path.join(dir, "dialogues.json"), "utf-8")) as Array<{
+			deleted: boolean;
+		}>;
+		assert.ok(
+			dialogues.some((d) => d.deleted),
+			"the trashed chat is exported, marked deleted",
+		);
+		const explanations = JSON.parse(fs.readFileSync(path.join(dir, "explanations.json"), "utf-8")) as Array<{
+			sentence: string;
+		}>;
 		assert.ok(explanations.some((e) => e.sentence === "Bývam v dome."));
 		assert.ok(fs.existsSync(path.join(PATHS.base, "README.md")), "the data root README exists");
 		assert.ok(fs.existsSync(path.join(PATHS.audio, "README.md")));
@@ -216,14 +308,27 @@ describe("spending report", () => {
 		const { usageReport, sessionMode } = await import("../src/server/usage-report.ts");
 		const report = usageReport(new Date("2026-10-28T00:00:00Z"));
 		assert.ok(report.sessions.length >= 4, "live and trashed sessions both count");
-		assert.ok(report.sessions.some((s) => s.deleted), "the trashed one is marked");
-		assert.ok(report.sessions.every((s) => s.mode === "why"), "every fixture session is a Why? chat");
+		assert.ok(
+			report.sessions.some((s) => s.deleted),
+			"the trashed one is marked",
+		);
+		assert.ok(
+			report.sessions.every((s) => s.mode === "why"),
+			"every fixture session is a Why? chat",
+		);
 		assert.equal(report.byMode[0]?.mode, "why");
 		assert.equal(report.audio.clips, 3);
 		assert.equal(report.totalUsd, 0, "no priced turns in the fixtures");
 		assert.equal(report.unpricedTurns, 0);
 		assert.equal(sessionMode({ kind: "practice", title: "Talk: Kaviareň", messages: [] }), "talk");
-		assert.equal(sessionMode({ kind: "practice", title: "x", messages: [{ id: "u", role: "user", content: "Story: tell me", timestamp: 1 } as never] }), "story");
+		assert.equal(
+			sessionMode({
+				kind: "practice",
+				title: "x",
+				messages: [{ id: "u", role: "user", content: "Story: tell me", timestamp: 1 } as never],
+			}),
+			"story",
+		);
 		assert.equal(sessionMode({ kind: undefined, title: "Cases", messages: [] }), "learn");
 		assert.equal(sessionMode({ kind: "practice", title: "Household items", messages: [] }), "practice");
 		assert.equal(sessionMode({ kind: "chat", title: "This and that", messages: [] }), "chat");
@@ -248,9 +353,23 @@ describe("ElevenLabs reads Estonian with a model that knows it", () => {
 		const { LANGUAGE_CATALOG, registerLanguage } = await import("../src/core/language.ts");
 		registerLanguage({ ...LANGUAGE_CATALOG.find((l) => l.id === "estonian")!, specialLetters: ["õ", "ä", "ö", "ü"] });
 		const { synthesize, ttsCacheKey } = await import("../src/server/tts.ts");
-		const req = { text: "Mart on Tartus.", lang: "et", voice: "YJsJ2Mt3VRr0gCiTY6DA", gender: "female" as const, style: "narration" as const };
+		const req = {
+			text: "Mart on Tartus.",
+			lang: "et",
+			voice: "YJsJ2Mt3VRr0gCiTY6DA",
+			gender: "female" as const,
+			style: "narration" as const,
+		};
 		// An Estonian clip multilingual v2 made before the model was recorded.
-		corpus.storeAudioClip({ key: ttsCacheKey(req), lang: "et", voice: req.voice, tier: "elevenlabs", text: req.text, ext: "mp3", data: Buffer.from("old") });
+		corpus.storeAudioClip({
+			key: ttsCacheKey(req),
+			lang: "et",
+			voice: req.voice,
+			tier: "elevenlabs",
+			text: req.text,
+			ext: "mp3",
+			data: Buffer.from("old"),
+		});
 		const sent: Array<Record<string, unknown>> = [];
 		const realFetch = globalThis.fetch;
 		const hadKey = process.env.ELEVENLABS_API_KEY;
@@ -270,8 +389,22 @@ describe("ElevenLabs reads Estonian with a model that knows it", () => {
 			assert.equal(again?.tier, "cache", "a v4 clip is kept");
 
 			// A Slovak clip from before the model was recorded is still good: multilingual v2 reads Slovak.
-			const sk = { text: "Dobrý deň.", lang: "sk", voice: "YJsJ2Mt3VRr0gCiTY6DA", gender: "female" as const, style: "narration" as const };
-			corpus.storeAudioClip({ key: ttsCacheKey(sk), lang: "sk", voice: sk.voice, tier: "elevenlabs", text: sk.text, ext: "mp3", data: Buffer.from("old") });
+			const sk = {
+				text: "Dobrý deň.",
+				lang: "sk",
+				voice: "YJsJ2Mt3VRr0gCiTY6DA",
+				gender: "female" as const,
+				style: "narration" as const,
+			};
+			corpus.storeAudioClip({
+				key: ttsCacheKey(sk),
+				lang: "sk",
+				voice: sk.voice,
+				tier: "elevenlabs",
+				text: sk.text,
+				ext: "mp3",
+				data: Buffer.from("old"),
+			});
 			assert.equal((await synthesize(sk))?.tier, "cache");
 
 			// An account without v4: the refusal moves the line to v3, and v4 is not asked again within the hour.
@@ -279,11 +412,16 @@ describe("ElevenLabs reads Estonian with a model that knows it", () => {
 			globalThis.fetch = (async (_url: string | URL | Request, init?: RequestInit) => {
 				const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
 				sent.push(body);
-				return body.model_id === "eleven_v4" ? new Response("model not available", { status: 403 }) : new Response(new Uint8Array([4, 5]), { status: 200 });
+				return body.model_id === "eleven_v4"
+					? new Response("model not available", { status: 403 })
+					: new Response(new Uint8Array([4, 5]), { status: 200 });
 			}) as typeof fetch;
 			await synthesize({ ...req, text: "Täna on laupäev." });
 			await synthesize({ ...req, text: "Mart tuleb bussiga." });
-			assert.deepEqual(sent.map((b) => b.model_id), ["eleven_v4", "eleven_v3", "eleven_v3"]);
+			assert.deepEqual(
+				sent.map((b) => b.model_id),
+				["eleven_v4", "eleven_v3", "eleven_v3"],
+			);
 		} finally {
 			globalThis.fetch = realFetch;
 			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;

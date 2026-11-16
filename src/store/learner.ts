@@ -19,7 +19,8 @@ export function readLearnerFields(): LearnerFields | null {
 		const raw: unknown = JSON.parse(fs.readFileSync(FILE(), "utf-8"));
 		if (!raw || typeof raw !== "object") return null;
 		const out: Record<string, unknown> = {};
-		for (const k of LEARNER_FIELDS) if ((raw as Record<string, unknown>)[k] !== undefined) out[k] = (raw as Record<string, unknown>)[k];
+		for (const k of LEARNER_FIELDS)
+			if ((raw as Record<string, unknown>)[k] !== undefined) out[k] = (raw as Record<string, unknown>)[k];
 		return out as LearnerFields;
 	} catch {
 		return null;

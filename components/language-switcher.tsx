@@ -49,7 +49,10 @@ export function AddingRow({ task }: { task: FeedTask }) {
 	const english = task.language?.english ?? task.title;
 	const endonym = catalogLanguage(id)?.endonym ?? english;
 	return (
-		<div className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground" data-testid="profile-adding">
+		<div
+			className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground"
+			data-testid="profile-adding"
+		>
 			<div className="flex min-w-0 items-center gap-2 truncate">
 				<CountryFlag lang={id} />
 				<span className="truncate font-semibold">{endonym}</span>
@@ -184,9 +187,7 @@ export function LanguageSwitcher() {
 						menuClass="flex w-60 flex-col gap-0.5 rounded-xl border bg-card p-1.5 text-xs shadow-xl"
 					>
 						<div ref={menuRef} role="listbox" aria-label="Languages" className="flex flex-col gap-0.5">
-							<div className="px-2 py-1 text-xs font-semibold text-ink-3">
-								Target Language
-							</div>
+							<div className="px-2 py-1 text-xs font-semibold text-ink-3">Target Language</div>
 							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">
 								{profile.profiles.map((p) => {
 									const running = p.id === profile.active;
@@ -238,10 +239,20 @@ export function LanguageSwitcher() {
 
 			{languages.dialogs}
 
-			{languages.note && <p className="px-1 text-xs text-muted-foreground" role="status">{languages.note}</p>}
+			{languages.note && (
+				<p className="px-1 text-xs text-muted-foreground" role="status">
+					{languages.note}
+				</p>
+			)}
 			<nav className="flex flex-col gap-3" aria-label="Main">
 				{NAV.map((group) => (
-					<div key={group.id} className="flex flex-col gap-0.5" role={group.label ? "group" : undefined} aria-label={group.label ?? undefined} data-testid={`nav-group-${group.id}`}>
+					<div
+						key={group.id}
+						className="flex flex-col gap-0.5"
+						role={group.label ? "group" : undefined}
+						aria-label={group.label ?? undefined}
+						data-testid={`nav-group-${group.id}`}
+					>
 						{group.id === "trial" && <div className="mb-2 border-t border-border/40" />}
 						{group.label && <p className="px-2.5 pb-0.5 pt-1 text-xs font-bold text-muted-foreground">{group.label}</p>}
 						{group.items.map((item) => {
@@ -271,7 +282,10 @@ export function LanguageSwitcher() {
 									)}
 									{item.id === "review" && counts && (reviewDue > 0 || reviewNew > 0) && (
 										<span
-											className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums", reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground")}
+											className={cn(
+												"ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+												reviewDue > 0 ? "bg-sun text-sun-ink" : "bg-accent text-foreground",
+											)}
 											data-testid="review-badge"
 										>
 											{reviewDue > 0 ? reviewDue : `${reviewNew} new`}
@@ -328,7 +342,8 @@ function NavItem({
 }) {
 	const router = useRouter();
 	const wentOnMouseDown = useRef(false);
-	const plain = (e: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; button: number }) => !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0;
+	const plain = (e: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; button: number }) =>
+		!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0;
 	return (
 		<Link
 			href={href}
@@ -365,7 +380,10 @@ function NavItem({
 		>
 			{active && (
 				<span
-					className={cn("absolute -left-3 top-1.5 bottom-1.5 w-[3px] rounded-r-full", accent === "teal" ? "bg-teal" : "bg-sun")}
+					className={cn(
+						"absolute -left-3 top-1.5 bottom-1.5 w-[3px] rounded-r-full",
+						accent === "teal" ? "bg-teal" : "bg-sun",
+					)}
 					aria-hidden="true"
 				/>
 			)}
@@ -382,7 +400,10 @@ function StudyBadge({ status }: { status: TodayExperimentStatus }) {
 	if (!checkOpen && left === 0) return null;
 	return (
 		<span
-			className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums", checkOpen ? "bg-teal text-sun-ink" : "bg-sun text-sun-ink")}
+			className={cn(
+				"ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+				checkOpen ? "bg-teal text-sun-ink" : "bg-sun text-sun-ink",
+			)}
 			data-testid="experiment-badge"
 			title={checkOpen ? `The week ${status.weekNumber} check is open` : `${left} typed Listen sentences to go today`}
 		>

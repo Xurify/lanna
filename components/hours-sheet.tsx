@@ -21,7 +21,18 @@ import { cn } from "@/lib/utils";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { TrajectorySection } from "@/components/trajectory-section";
 import { useActiveLanguage } from "@/components/speech";
-import { CEFR_ORDER, GUIDED_HOURS, languageName, LEVEL_CAN_DO, measuredPace, trajectory, weeklyHours, type Cefr, type Lang, type TrajectoryInput } from "@/src/core";
+import {
+	CEFR_ORDER,
+	GUIDED_HOURS,
+	languageName,
+	LEVEL_CAN_DO,
+	measuredPace,
+	trajectory,
+	weeklyHours,
+	type Cefr,
+	type Lang,
+	type TrajectoryInput,
+} from "@/src/core";
 
 /** Cambridge English's guided-learning-hour bands (cumulative, midpoints):
  *  A1 ≈ 90–100, A2 ≈ 180–200, B1 ≈ 350–400, B2 ≈ 500–600, C1 ≈ 700–800. */
@@ -31,11 +42,18 @@ const CAMBRIDGE_ENGLISH: Record<Cefr, number> = { A1: 95, A2: 190, B1: 375, B2: 
 const FSI_CAT3 = 1100;
 const FSI_CAT1 = 700;
 
-const CATEGORY_HOURS: Record<1 | 2 | 3 | 4, string> = { 1: "about 24–30 weeks, 600–750 class hours", 2: "about 36 weeks, 900 class hours", 3: "about 44 weeks, 1,100 class hours", 4: "about 88 weeks, 2,200 class hours" };
+const CATEGORY_HOURS: Record<1 | 2 | 3 | 4, string> = {
+	1: "about 24–30 weeks, 600–750 class hours",
+	2: "about 36 weeks, 900 class hours",
+	3: "about 44 weeks, 1,100 class hours",
+	4: "about 88 weeks, 2,200 class hours",
+};
 const ROMAN = { 1: "I", 2: "II", 3: "III", 4: "IV" } as const;
 
 /** The studies behind the chart, for the language being learned. */
-function studies(lang: { english: string; fsiCategory?: 1 | 2 | 3 | 4 } | null): Array<{ who: string; what: string; line: string }> {
+function studies(
+	lang: { english: string; fsiCategory?: 1 | 2 | 3 | 4 } | null,
+): Array<{ who: string; what: string; line: string }> {
 	const name = lang?.english ?? "The language";
 	const cat = lang?.fsiCategory;
 	const fsi = cat
@@ -90,10 +108,13 @@ const HEAD_START: Partial<Record<Lang, string>> = {
  *  Estonian", which read as the app's language; the hours table does not
  *  change by language, the assumption behind it does. */
 function headStartLine(languages: readonly Lang[], targetCode?: string): string {
-	const have = languages.filter((l) => l !== targetCode && HEAD_START[l]).map((l) => `${languageName(l)} (${HEAD_START[l]})`);
+	const have = languages
+		.filter((l) => l !== targetCode && HEAD_START[l])
+		.map((l) => `${languageName(l)} (${HEAD_START[l]})`);
 	const worth = `the gap to the FSI line, ${FSI_CAT3 - GUIDED_HOURS.C1}–${FSI_CAT3 - GUIDED_HOURS.B2} hours at B2–C1`;
 	const assume = "The green bars assume a head start: a language you know that already has cases or aspect.";
-	if (have.length === 0) return `${assume} None of yours is, so read nearer the FSI line; the head start is ${worth} (Ringbom 2007).`;
+	if (have.length === 0)
+		return `${assume} None of yours is, so read nearer the FSI line; the head start is ${worth} (Ringbom 2007).`;
 	return `${assume} Yours: ${have.join(", ")}. The head start is ${worth} (Ringbom 2007).`;
 }
 
@@ -135,14 +156,21 @@ export function HoursSheet({
 
 	// With the day history the dates follow the recent pace once a week of
 	// study is on record, at the credited rate; without it, the planned pace.
-	const recent = trajectoryInput ? measuredPace(trajectoryInput.days, trajectoryInput.goalMinutes, trajectoryInput.goalDays) : null;
+	const recent = trajectoryInput
+		? measuredPace(trajectoryInput.days, trajectoryInput.goalMinutes, trajectoryInput.goalDays)
+		: null;
 	const paceWord = recent?.measured ? "recent" : "planned";
 	const paceMinutes = recent?.measured ? recent.minutesPerDay : minutesPerDay;
 	const paceDays = recent?.measured ? recent.daysPerWeek : daysPerWeek;
-	const perDay = trajectoryInput ? trajectory(trajectoryInput, "hours", { minutesPerDay: paceMinutes, daysPerWeek: paceDays }).ratePerDay : weeklyHours(paceMinutes, paceDays) / 7;
+	const perDay = trajectoryInput
+		? trajectory(trajectoryInput, "hours", { minutesPerDay: paceMinutes, daysPerWeek: paceDays }).ratePerDay
+		: weeklyHours(paceMinutes, paceDays) / 7;
 	const yearly = perDay * 365;
 	const now = new Date();
-	const dateFor = (hours: number) => (perDay > 0 ? monthOf(new Date(now.getTime() + Math.ceil(Math.max(0, hours - hoursDone) / perDay) * 86_400_000)) : "—");
+	const dateFor = (hours: number) =>
+		perDay > 0
+			? monthOf(new Date(now.getTime() + Math.ceil(Math.max(0, hours - hoursDone) / perDay) * 86_400_000))
+			: "—";
 
 	// Chart geometry: horizontal grouped bars, one row per level.
 	const W = 560;
@@ -158,14 +186,29 @@ export function HoursSheet({
 	const ticks = [0, 300, 600, 900, 1200];
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 animate-in fade-in duration-100 sm:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label="How long does it take?" data-testid="hours-sheet">
+		<div
+			className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 animate-in fade-in duration-100 sm:items-center"
+			onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+			role="dialog"
+			aria-modal="true"
+			aria-label="How long does it take?"
+			data-testid="hours-sheet"
+		>
 			<div className="lh-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2 className="text-2xl font-semibold tracking-[-0.022em] text-foreground">How long does it take?</h2>
-						<p className="mt-1 font-prose text-base text-muted-foreground">Guided hours to each level: this app&apos;s estimate next to the usual figures for English, and the FSI yardsticks for language categories I and III.</p>
+						<p className="mt-1 font-prose text-base text-muted-foreground">
+							Guided hours to each level: this app&apos;s estimate next to the usual figures for English, and the FSI
+							yardsticks for language categories I and III.
+						</p>
 					</div>
-					<button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-well hover:text-ink-2">
+					<button
+						type="button"
+						onClick={onClose}
+						aria-label="Close"
+						className="rounded-lg p-1.5 text-muted-foreground hover:bg-well hover:text-ink-2"
+					>
 						<XIcon className="size-5" />
 					</button>
 				</div>
@@ -173,7 +216,10 @@ export function HoursSheet({
 				{trajectoryInput && <TrajectorySection input={trajectoryInput} target={target} />}
 
 				<div className="mt-4 flex items-center justify-between gap-3">
-					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground" aria-label="Legend">
+					<div
+						className="flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-xs text-muted-foreground"
+						aria-label="Legend"
+					>
 						<span className="flex items-center gap-1.5">
 							<span className="inline-block size-2.5 rounded-sm bg-teal" aria-hidden="true" />
 							This app
@@ -189,7 +235,13 @@ export function HoursSheet({
 					</div>
 					<div className="q-segc" role="group" aria-label="View">
 						{(["chart", "table"] as const).map((v) => (
-							<button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={cn("capitalize", view === v && "on")}>
+							<button
+								key={v}
+								type="button"
+								aria-pressed={view === v}
+								onClick={() => setView(v)}
+								className={cn("capitalize", view === v && "on")}
+							>
 								{v}
 							</button>
 						))}
@@ -198,7 +250,12 @@ export function HoursSheet({
 
 				{view === "chart" ? (
 					<div className="relative mt-3">
-						<svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Guided hours to each CEFR level, this app's estimate against Cambridge's figures for English, with the FSI figure as a reference line">
+						<svg
+							viewBox={`0 0 ${W} ${H}`}
+							className="w-full"
+							role="img"
+							aria-label="Guided hours to each CEFR level, this app's estimate against Cambridge's figures for English, with the FSI figure as a reference line"
+						>
 							{ticks.map((t) => (
 								<g key={t}>
 									<line x1={x(t)} x2={x(t)} y1={top - 6} y2={H - 24} stroke="var(--border)" strokeWidth={1} />
@@ -208,12 +265,39 @@ export function HoursSheet({
 								</g>
 							))}
 							{/* FSI reference */}
-							<line x1={x(FSI_CAT3)} x2={x(FSI_CAT3)} y1={top - 6} y2={H - 24} stroke="var(--q-ink-3)" strokeWidth={2} />
-							<line x1={x(FSI_CAT1)} x2={x(FSI_CAT1)} y1={top - 6} y2={H - 24} stroke="var(--q-ink-3)" strokeWidth={1} strokeOpacity={0.45} />
-							<text x={x(FSI_CAT1) - 4} y={top - 8} textAnchor="end" className="fill-muted-foreground font-ui" fontSize={10}>
+							<line
+								x1={x(FSI_CAT3)}
+								x2={x(FSI_CAT3)}
+								y1={top - 6}
+								y2={H - 24}
+								stroke="var(--q-ink-3)"
+								strokeWidth={2}
+							/>
+							<line
+								x1={x(FSI_CAT1)}
+								x2={x(FSI_CAT1)}
+								y1={top - 6}
+								y2={H - 24}
+								stroke="var(--q-ink-3)"
+								strokeWidth={1}
+								strokeOpacity={0.45}
+							/>
+							<text
+								x={x(FSI_CAT1) - 4}
+								y={top - 8}
+								textAnchor="end"
+								className="fill-muted-foreground font-ui"
+								fontSize={10}
+							>
 								FSI cat. I
 							</text>
-							<text x={x(FSI_CAT3) - 4} y={top - 8} textAnchor="end" className="fill-muted-foreground font-ui" fontSize={10}>
+							<text
+								x={x(FSI_CAT3) - 4}
+								y={top - 8}
+								textAnchor="end"
+								className="fill-muted-foreground font-ui"
+								fontSize={10}
+							>
 								FSI cat. III
 							</text>
 							{CEFR_ORDER.map((lv, i) => {
@@ -222,23 +306,70 @@ export function HoursSheet({
 								const en = CAMBRIDGE_ENGLISH[lv];
 								const dim = hover && hover.level !== lv;
 								return (
-									<g key={lv} opacity={dim ? 0.45 : 1} className="transition-opacity" onMouseLeave={() => setHover(null)}>
+									<g
+										key={lv}
+										opacity={dim ? 0.45 : 1}
+										className="transition-opacity"
+										onMouseLeave={() => setHover(null)}
+									>
 										{/* One hit area for the whole row, gap between the two bars included, so the pointer never leaves it mid-row. */}
-										<rect x={0} y={y0 - (rowH - bar * 2 - gap) / 2} width={W} height={rowH} fill="transparent" onMouseEnter={() => setHover((h) => (h?.level === lv ? h : { level: lv, series: "app" }))} />
-										<text x={left - 10} y={y0 + bar + gap + 4} textAnchor="end" className="fill-foreground font-ui" fontSize={13} fontWeight={600}>
+										<rect
+											x={0}
+											y={y0 - (rowH - bar * 2 - gap) / 2}
+											width={W}
+											height={rowH}
+											fill="transparent"
+											onMouseEnter={() => setHover((h) => (h?.level === lv ? h : { level: lv, series: "app" }))}
+										/>
+										<text
+											x={left - 10}
+											y={y0 + bar + gap + 4}
+											textAnchor="end"
+											className="fill-foreground font-ui"
+											fontSize={13}
+											fontWeight={600}
+										>
 											{lv}
 										</text>
-										<rect x={left} y={y0} width={Math.max(0, x(app) - left)} height={bar} rx={0} className="fill-teal" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "app" })}>
+										<rect
+											x={left}
+											y={y0}
+											width={Math.max(0, x(app) - left)}
+											height={bar}
+											rx={0}
+											className="fill-teal"
+											style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }}
+											onMouseEnter={() => setHover({ level: lv, series: "app" })}
+										>
 											<title>{`${lv}: about ${app} guided hours (this app)`}</title>
 										</rect>
-										<text x={x(app) + 6} y={y0 + bar - 3} className="fill-foreground font-ui" fontSize={11} fontWeight={600}>
+										<text
+											x={x(app) + 6}
+											y={y0 + bar - 3}
+											className="fill-foreground font-ui"
+											fontSize={11}
+											fontWeight={600}
+										>
 											{app}
 										</text>
-										<rect x={left} y={y0 + bar + gap} width={Math.max(0, x(en) - left)} height={bar} className="fill-ink-4" style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }} onMouseEnter={() => setHover({ level: lv, series: "en" })}>
+										<rect
+											x={left}
+											y={y0 + bar + gap}
+											width={Math.max(0, x(en) - left)}
+											height={bar}
+											className="fill-ink-4"
+											style={{ clipPath: `inset(0 0 0 0 round 0 4px 4px 0)` }}
+											onMouseEnter={() => setHover({ level: lv, series: "en" })}
+										>
 											<title>{`${lv}: about ${en} guided hours (Cambridge, English)`}</title>
 										</rect>
 										{lv === target && (
-											<text x={x(Math.max(app, en)) + 6} y={y0 + bar * 2 + gap - 3} className="fill-muted-foreground font-ui" fontSize={10}>
+											<text
+												x={x(Math.max(app, en)) + 6}
+												y={y0 + bar * 2 + gap - 3}
+												className="fill-muted-foreground font-ui"
+												fontSize={10}
+											>
 												your target · {dateFor(app)} at your {paceWord} pace
 											</text>
 										)}
@@ -250,7 +381,11 @@ export function HoursSheet({
 						<p className="mt-1 min-h-10 font-ui text-xs text-muted-foreground" role="status" aria-live="polite">
 							{hover ? (
 								<>
-									<b className="text-foreground">{hover.level}</b> · {hover.series === "app" ? `about ${GUIDED_HOURS[hover.level]} h in this app` : `about ${CAMBRIDGE_ENGLISH[hover.level]} h for English (Cambridge)`} · {LEVEL_CAN_DO[hover.level]}
+									<b className="text-foreground">{hover.level}</b> ·{" "}
+									{hover.series === "app"
+										? `about ${GUIDED_HOURS[hover.level]} h in this app`
+										: `about ${CAMBRIDGE_ENGLISH[hover.level]} h for English (Cambridge)`}{" "}
+									· {LEVEL_CAN_DO[hover.level]}
 								</>
 							) : (
 								"Hover a bar for what the level means."
@@ -288,10 +423,15 @@ export function HoursSheet({
 				</p>
 
 				<p className="mt-3 rounded-xl bg-well px-4 py-3 font-prose text-sm text-foreground" data-testid="hours-pace">
-					At your {paceWord} pace, <b>{paceMinutes} min</b> × <b>{paceDays} days</b>, you cover about <b>{Math.round(yearly)} guided hours a year</b>, so {target} ({GUIDED_HOURS[target]} h{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>. Guided hours are credited as units are done, so your real date moves with the evidence, not with this table.
+					At your {paceWord} pace, <b>{paceMinutes} min</b> × <b>{paceDays} days</b>, you cover about{" "}
+					<b>{Math.round(yearly)} guided hours a year</b>, so {target} ({GUIDED_HOURS[target]} h
+					{hoursDone > 0 ? `, ${Math.round(hoursDone)} done` : ""}) lands around <b>{dateFor(GUIDED_HOURS[target])}</b>.
+					Guided hours are credited as units are done, so your real date moves with the evidence, not with this table.
 				</p>
 
-				<h3 className="mt-5 font-ui text-xs font-semibold tracking-wide text-muted-foreground">The studies behind the numbers</h3>
+				<h3 className="mt-5 font-ui text-xs font-semibold tracking-wide text-muted-foreground">
+					The studies behind the numbers
+				</h3>
 				<ol className="mt-2 flex flex-col gap-3">
 					{studies(lang).map((s) => (
 						<li key={s.who} className="font-prose text-sm leading-relaxed">
@@ -302,7 +442,10 @@ export function HoursSheet({
 						</li>
 					))}
 				</ol>
-				<p className="mt-4 font-prose text-xs text-muted-foreground">Guided hours mean lessons and tutoring with feedback; the bands assume about as much again in reading, listening and review on your own. All of it is a planning estimate.</p>
+				<p className="mt-4 font-prose text-xs text-muted-foreground">
+					Guided hours mean lessons and tutoring with feedback; the bands assume about as much again in reading,
+					listening and review on your own. All of it is a planning estimate.
+				</p>
 				<p className="mt-2 font-prose text-xs text-muted-foreground">
 					Hours say when a level lands.{" "}
 					<Link href="/milestones" className="underline hover:text-foreground" data-testid="hours-milestones">

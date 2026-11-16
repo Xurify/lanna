@@ -9,49 +9,79 @@ function subscriptionRequestOrigin(request: Request): string | undefined {
 		const url = new URL(request.url);
 		const host = request.headers.get("host") ?? url.host;
 		const addressed = new URL(`${url.protocol}//${host}`);
-		if (!["http:", "https:"].includes(addressed.protocol) || addressed.username || addressed.password || addressed.pathname !== "/" || addressed.search || addressed.hash) return;
+		if (
+			!["http:", "https:"].includes(addressed.protocol) ||
+			addressed.username ||
+			addressed.password ||
+			addressed.pathname !== "/" ||
+			addressed.search ||
+			addressed.hash
+		)
+			return;
 		return addressed.origin;
-	} catch { return; }
+	} catch {
+		return;
+	}
 }
 function authorized(request: Request): boolean {
 	const origin = subscriptionRequestOrigin(request);
-	if (!origin || request.headers.get("x-learnharness-subscriptions") !== "1") return false;
+	if (!origin || request.headers.get("x-langharness-subscriptions") !== "1") return false;
 	if (request.headers.get("sec-fetch-site") === "cross-site") return false;
 	const supplied = request.headers.get("origin");
 	return request.method === "GET" ? !supplied || supplied === origin : supplied === origin;
 }
-function error(message: string, status: number) { return Response.json({ error: message }, { status, headers: HEADERS }); }
-const PUBLIC_DEPLOYMENT = "Subscription sign-ins are off when LangHarness is served at a public address. Add an API key in Settings → API keys instead.";
-function publicDeployment(): boolean { return Boolean(process.env.LH_PUBLIC_HOST?.trim()); }
+function error(message: string, status: number) {
+	return Response.json({ error: message }, { status, headers: HEADERS });
+}
+const PUBLIC_DEPLOYMENT =
+	"Subscription sign-ins are off when LangHarness is served at a public address. Add an API key in Settings → API keys instead.";
+function publicDeployment(): boolean {
+	return Boolean(process.env.LH_PUBLIC_HOST?.trim());
+}
 export async function subscriptionControlsResponse(request: Request): Promise<Response> {
 	if (publicDeployment()) return error(PUBLIC_DEPLOYMENT, 403);
 	if (!webSubscriptionsEnabled()) return error("Web subscription controls are unavailable in desktop-owned mode.", 404);
-	if (!authorized(request)) return error("Subscription controls require a same-origin LearnHarness request.", 403);
+	if (!authorized(request)) return error("Subscription controls require a same-origin LangHarness request.", 403);
 	try {
 		if (request.method === "GET") return Response.json(await webSubscriptionStatus(), { headers: HEADERS });
 		if (request.method !== "POST") return error("Unsupported method.", 405);
-		if (request.headers.get("content-type")?.split(";")[0]?.trim() !== "application/json") return error("Expected JSON.", 415);
+		if (request.headers.get("content-type")?.split(";")[0]?.trim() !== "application/json")
+			return error("Expected JSON.", 415);
 		// Bound both advertised and streamed input before parsing commands.
 		if (Number(request.headers.get("content-length")) > 16384) return error("Request too large.", 413);
 		const reader = request.body?.getReader();
 		if (!reader) return error("Expected a command.", 400);
-		const chunks: Uint8Array[] = []; let size = 0;
+		const chunks: Uint8Array[] = [];
+		let size = 0;
 		try {
 			for (;;) {
-				const next = await reader.read(); if (next.done) break;
+				const next = await reader.read();
+				if (next.done) break;
 				size += next.value.byteLength;
-				if (size > 16384) { await reader.cancel(); return error("Request too large.", 413); }
+				if (size > 16384) {
+					await reader.cancel();
+					return error("Request too large.", 413);
+				}
 				chunks.push(next.value);
 			}
-		} finally { reader.releaseLock(); }
+		} finally {
+			reader.releaseLock();
+		}
 		const command: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 		if (!command || typeof command !== "object" || Array.isArray(command)) return error("Invalid command.", 400);
 		const fields = command as Record<string, unknown>;
 		const providerId = fields.providerId;
-		if (providerId !== "chatgpt" && !NATIVE_SUBSCRIPTIONS.some((provider) => provider.providerId === providerId)) return error("Unsupported connection.", 400);
-		const allowed = providerId === "chatgpt" ? ["login", "cancel", "select", "disconnect", "logout", "consent"] : ["login", "cancel", "respond", "open", "retry", "disconnect", "consent"];
+		if (providerId !== "chatgpt" && !NATIVE_SUBSCRIPTIONS.some((provider) => provider.providerId === providerId))
+			return error("Unsupported connection.", 400);
+		const allowed =
+			providerId === "chatgpt"
+				? ["login", "cancel", "select", "disconnect", "logout", "consent"]
+				: ["login", "cancel", "respond", "open", "retry", "disconnect", "consent"];
 		if (typeof fields.op !== "string" || !allowed.includes(fields.op)) return error("Unsupported control.", 400);
-		return Response.json(await webSubscriptionOwner().control(providerId as string, fields, subscriptionRequestOrigin(request)!), { headers: HEADERS });
+		return Response.json(
+			await webSubscriptionOwner().control(providerId as string, fields, subscriptionRequestOrigin(request)!),
+			{ headers: HEADERS },
+		);
 	} catch {
 		return error("The subscription connection could not be changed. Retry or reconnect in Settings → API keys.", 400);
 	}
@@ -62,7 +92,11 @@ export async function subscriptionBrowserResponse(request: Request): Promise<Res
 	if (publicDeployment()) return error(PUBLIC_DEPLOYMENT, 403);
 	if (!webSubscriptionsEnabled()) return error("Unavailable.", 404);
 	const origin = subscriptionRequestOrigin(request);
-	if (!origin || (request.method === "POST" ? !authorized(request) : request.headers.get("sec-fetch-site") !== "same-origin")) return error("Open sign-in from LearnHarness.", 403);
+	if (
+		!origin ||
+		(request.method === "POST" ? !authorized(request) : request.headers.get("sec-fetch-site") !== "same-origin")
+	)
+		return error("Open sign-in from LangHarness.", 403);
 	const id = new URL(request.url).searchParams.get("id");
 	if (!id || !/^[0-9a-f-]{36}$/.test(id)) return error("This sign-in action is no longer available.", 410);
 	const target = await webSubscriptionOwner().takeBrowserAction(id, origin);

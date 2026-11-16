@@ -66,7 +66,11 @@ interface CarriedTask {
 
 /** Unfinished tasks from the days before `today`, newest appearance per task.
  *  A task finished on a later day, or done today, is not carried. */
-export function carriedTasks(days: readonly DayPlanSnapshot[], today: string, doneToday: ReadonlySet<string>): CarriedTask[] {
+export function carriedTasks(
+	days: readonly DayPlanSnapshot[],
+	today: string,
+	doneToday: ReadonlySet<string>,
+): CarriedTask[] {
 	const latest = new Map<string, CarriedTask>();
 	const past = days.filter((d) => d.day < today).sort((a, b) => a.day.localeCompare(b.day));
 	for (const d of past) {

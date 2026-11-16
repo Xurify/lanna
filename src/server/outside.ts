@@ -39,15 +39,29 @@ export function outsideSummaryNow(now = new Date(), tz?: number): OutsideSummary
 	return outsideSummary(outsideStore.read().entries, paceWindow(now, tz));
 }
 
-type LogResult = { ok: true; entry: OutsideEntry; state: OutsideState } | { ok: false; status: number; message: string };
+type LogResult =
+	| { ok: true; entry: OutsideEntry; state: OutsideState }
+	| { ok: false; status: number; message: string };
 
-export function logOutside(body: { minutes?: unknown; attention?: unknown; what?: unknown; day?: unknown } | null, now = new Date(), tz?: number): LogResult {
+export function logOutside(
+	body: { minutes?: unknown; attention?: unknown; what?: unknown; day?: unknown } | null,
+	now = new Date(),
+	tz?: number,
+): LogResult {
 	const parsed = parseEntry(body);
 	if (!parsed.ok) return { ok: false, status: 400, message: parsed.message };
 	const allowed = paceWindow(now, tz).slice(-BACKDATE_DAYS);
 	const day = body?.day === undefined ? allowed.at(-1)! : body.day;
-	if (typeof day !== "string" || !allowed.includes(day)) return { ok: false, status: 400, message: `day must be one of the last ${BACKDATE_DAYS} days` };
-	const entry: OutsideEntry = { id: crypto.randomUUID(), day, at: now.toISOString(), minutes: parsed.minutes, attention: parsed.attention, ...(parsed.what ? { what: parsed.what } : {}) };
+	if (typeof day !== "string" || !allowed.includes(day))
+		return { ok: false, status: 400, message: `day must be one of the last ${BACKDATE_DAYS} days` };
+	const entry: OutsideEntry = {
+		id: crypto.randomUUID(),
+		day,
+		at: now.toISOString(),
+		minutes: parsed.minutes,
+		attention: parsed.attention,
+		...(parsed.what ? { what: parsed.what } : {}),
+	};
 	const file = outsideStore.read();
 	file.entries.push(entry);
 	outsideStore.write(file);

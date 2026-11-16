@@ -34,7 +34,8 @@ export class LearnerPdfError extends Error {}
 export async function saveLearnerPdf(bytes: Uint8Array, originalName: string): Promise<SavedLearnerPdf> {
 	if (bytes.byteLength === 0) throw new LearnerPdfError("The file is empty.");
 	if (bytes.byteLength > LEARNER_PDF_MAX_BYTES) throw new LearnerPdfError("The PDF is larger than 10 MB.");
-	if (Buffer.from(bytes.subarray(0, 5)).toString("latin1") !== "%PDF-") throw new LearnerPdfError("That file is not a PDF.");
+	if (Buffer.from(bytes.subarray(0, 5)).toString("latin1") !== "%PDF-")
+		throw new LearnerPdfError("That file is not a PDF.");
 	const dir = learnerPdfDir();
 	await fs.mkdir(dir, { recursive: true });
 	const file = path.join(dir, learnerPdfFileName(originalName));

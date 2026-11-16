@@ -6,7 +6,12 @@ import { EnterHint, onFocusedControl, TaskEnd, TaskFrame } from "@/components/ta
 function render(wide = false): string {
 	return renderToStaticMarkup(
 		<TaskFrame>
-			<TaskEnd testId="end" wide={wide} hint={<EnterHint>for Today</EnterHint>} actions={<button type="button">Today</button>}>
+			<TaskEnd
+				testId="end"
+				wide={wide}
+				hint={<EnterHint>for Today</EnterHint>}
+				actions={<button type="button">Today</button>}
+			>
 				<h1>Done</h1>
 			</TaskEnd>
 		</TaskFrame>,
@@ -20,7 +25,10 @@ describe("an end screen in the task frame (E77)", () => {
 		const heading = html.indexOf("<h1>Done</h1>");
 		const button = html.indexOf("<button");
 		assert.ok(body > 0 && heading > body && button > heading, "result first, then the dock");
-		assert.match(html, /tabindex="-1" role="region" aria-label="Your result" data-task-end="" class="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" data-testid="end"/);
+		assert.match(
+			html,
+			/tabindex="-1" role="region" aria-label="Your result" data-task-end="" class="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" data-testid="end"/,
+		);
 		assert.match(html, /<kbd[^>]*>Enter<\/kbd> for Today/);
 	});
 

@@ -8,7 +8,17 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-line-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { LINE_MAX_WORDS, LINE_MIN_WORDS, LINE_NEW_MAX, LINE_NEW_MIN, lineRow, lineSeed, pickLine, repeatWindowStart, scoreLine } = await import("../src/core/line.ts");
+const {
+	LINE_MAX_WORDS,
+	LINE_MIN_WORDS,
+	LINE_NEW_MAX,
+	LINE_NEW_MIN,
+	lineRow,
+	lineSeed,
+	pickLine,
+	repeatWindowStart,
+	scoreLine,
+} = await import("../src/core/line.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { resolveWord, STORY_NAMES } = await import("../src/server/reading.ts");
 
@@ -75,7 +85,8 @@ test("pickLine: five to twelve words, one or two glossed new words, the same for
 	assert.ok(lexicon, "the Slovak lexicon loads");
 	// A learner who knows the commonest words, as the listen tests assume.
 	const known = new Set<string>();
-	for (const e of lexicon.entries) if ((e.rank !== undefined && e.rank <= 800) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
+	for (const e of lexicon.entries)
+		if ((e.rank !== undefined && e.rank <= 800) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
 	const lookup = { resolve: (form: string) => resolveWord(lexicon, form, known), known, names: STORY_NAMES };
 	const seed = lineSeed("slovak", "2026-11-05");
 	const a = pickLine(lexicon.entries, lookup, { seed });
@@ -106,7 +117,12 @@ test("lineRow: says where the day's line stands, in the learner's own counts", (
 	const open = lineRow({ hasLine: true, morning: { caught: 3, words: 9 }, evening: null, eveningOpen: true });
 	assert.equal(open.tone, "open");
 	assert.equal(open.pill, "Hear it again");
-	const both = lineRow({ hasLine: true, morning: { caught: 3, words: 9 }, evening: { caught: 8, words: 9 }, eveningOpen: true });
+	const both = lineRow({
+		hasLine: true,
+		morning: { caught: 3, words: 9 },
+		evening: { caught: 8, words: 9 },
+		eveningOpen: true,
+	});
 	assert.equal(both.tone, "done");
 	assert.equal(both.line, "First hearing 3 of 9 words, second hearing 8 of 9.");
 });

@@ -12,10 +12,17 @@ export interface LanguageGone {
 
 const READS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-export function languageGone(request: { method: string; pathname: string; shown: string | null }, isLanguage: (id: string) => boolean): LanguageGone | null {
+export function languageGone(
+	request: { method: string; pathname: string; shown: string | null },
+	isLanguage: (id: string) => boolean,
+): LanguageGone | null {
 	const { method, pathname, shown } = request;
 	if (!shown || !pathname.startsWith("/api/") || READS.has(method.toUpperCase()) || isLanguage(shown)) return null;
-	return { error: LANGUAGE_GONE, shown, message: "This page's language was removed, so it saved nothing. Reload the page to continue." };
+	return {
+		error: LANGUAGE_GONE,
+		shown,
+		message: "This page's language was removed, so it saved nothing. Reload the page to continue.",
+	};
 }
 
 export function isLanguageGone(body: unknown): body is LanguageGone {

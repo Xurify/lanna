@@ -38,12 +38,7 @@ const GLYPHS: Record<MarkKind, { d: string; x: number; y: number; w: number; h: 
 export function GlyphMark({ kind, className }: { kind: MarkKind; className?: string }) {
 	const g = GLYPHS[kind];
 	return (
-		<svg
-			aria-hidden
-			className={className}
-			viewBox={`${g.x} ${g.y} ${g.w} ${g.h}`}
-			fill="currentColor"
-		>
+		<svg aria-hidden className={className} viewBox={`${g.x} ${g.y} ${g.w} ${g.h}`} fill="currentColor">
 			<path d={g.d} transform="scale(1,-1)" />
 		</svg>
 	);

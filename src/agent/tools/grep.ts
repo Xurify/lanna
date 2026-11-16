@@ -135,9 +135,7 @@ export const grepTool: AgentTool<typeof grepInput> = {
 				continue;
 			}
 			const lines = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-			const rel = isDirectory
-				? path.relative(searchPath, filePath).split(path.sep).join("/")
-				: path.basename(filePath);
+			const rel = isDirectory ? path.relative(searchPath, filePath).split(path.sep).join("/") : path.basename(filePath);
 
 			for (let i = 0; i < lines.length; i++) {
 				if (regex.test(lines[i]!)) {
@@ -172,7 +170,8 @@ export const grepTool: AgentTool<typeof grepInput> = {
 		const { content, truncated } = capOutput(outLines);
 		const notices: string[] = [];
 		if (limitReached || matchCount >= effectiveLimit) notices.push(`${effectiveLimit} matches limit reached`);
-		if (linesTruncated) notices.push(`Some lines truncated to ${GREP_MAX_LINE_LENGTH} chars. Use read tool to see full lines`);
+		if (linesTruncated)
+			notices.push(`Some lines truncated to ${GREP_MAX_LINE_LENGTH} chars. Use read tool to see full lines`);
 		if (truncated) notices.push(`${formatSize(MAX_OUTPUT_BYTES)} limit reached`);
 		if (timedOut || scanTimedOut) notices.push("search timed out after 10s — partial results, narrow the directory");
 		return notices.length > 0 ? `${content}\n\n[${notices.join(". ")}]` : content;

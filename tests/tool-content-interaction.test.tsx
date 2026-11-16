@@ -8,15 +8,29 @@ import { AnsweredCard } from "../components/answered-card.tsx";
 import { type QuestionAnswerData } from "../src/core/index.ts";
 
 const dom = parseHTML("<html><body></body></html>");
-Object.assign(globalThis, { window: dom.window, document: dom.document, Element: dom.window.Element,
-	HTMLElement: dom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true });
+Object.assign(globalThis, {
+	window: dom.window,
+	document: dom.document,
+	Element: dom.window.Element,
+	HTMLElement: dom.window.HTMLElement,
+	IS_REACT_ACT_ENVIRONMENT: true,
+});
 
 test("committed-answer reveals keep the first paragraph inline without flattening later paragraphs", async () => {
 	const committed = "First paragraph.\n\nSecond paragraph with a plain sentence and a **bold** word.";
-	const answer: QuestionAnswerData = { kind: "explain", questionText: "Explain the gradient.", answers: [], text: "Synthetic answer", committed, dontKnow: false, answeredAt: "2026-10-26T00:00:00.000Z" };
+	const answer: QuestionAnswerData = {
+		kind: "explain",
+		questionText: "Explain the gradient.",
+		answers: [],
+		text: "Synthetic answer",
+		committed,
+		dontKnow: false,
+		answeredAt: "2026-10-26T00:00:00.000Z",
+	};
 	const input = { question: answer.questionText, correctAnswer: committed };
 	const before = structuredClone(answer);
-	const host = document.createElement("div"); document.body.append(host);
+	const host = document.createElement("div");
+	document.body.append(host);
 	const root = createRoot(host);
 	try {
 		await act(async () => root.render(<AnsweredCard answer={answer} input={input} />));
@@ -25,5 +39,8 @@ test("committed-answer reveals keep the first paragraph inline without flattenin
 		assert.ok(paragraphs[1]!.parentElement!.classList.contains("[&>p:first-child]:inline"));
 		assert.ok(!paragraphs[1]!.parentElement!.classList.contains("[&_p]:inline"));
 		assert.deepEqual(answer, before);
-	} finally { await act(async () => root.unmount()); host.remove(); }
+	} finally {
+		await act(async () => root.unmount());
+		host.remove();
+	}
 });

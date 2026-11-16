@@ -3,7 +3,11 @@ export const REPLIES_AFTER_AN_ANSWER = ["Quiz me", "Explain it another way", "Dr
 
 export function endsWithQuestion(reply: string): boolean {
 	const prose = reply.replace(/```[\s\S]*?(?:```|$)/g, "").trim();
-	const lastParagraph = prose.split(/\n\s*\n/).at(-1)?.trim() ?? "";
+	const lastParagraph =
+		prose
+			.split(/\n\s*\n/)
+			.at(-1)
+			?.trim() ?? "";
 	return /\?["'”’)*_\s]*$/.test(lastParagraph);
 }
 

@@ -11,7 +11,9 @@ import { test } from "node:test";
 import { grade, scriptFor, tutorLineText, type SceneScript } from "../src/core/speak-script.ts";
 import { SPEAK_SCENES } from "../src/core/speak.ts";
 
-const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: Array<{ sk: string }> };
+const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as {
+	words: Array<{ sk: string }>;
+};
 const lemmas = new Set(lexicon.words.map((e) => e.sk.toLowerCase()));
 
 test("every scene has a script, and nothing else does", () => {
@@ -27,9 +29,16 @@ test("each script has six to ten turns: a tutor line (Slovak and English), three
 			assert.ok(tutorLineText(turn.tutor).length > 0, `${scene.id} turn ${i}: no Slovak tutor line`);
 			assert.ok(turn.tutor.en.length > 0, `${scene.id} turn ${i}: no English meaning`);
 			assert.equal(turn.options.length, 3, `${scene.id} turn ${i}: ${turn.options.length} options`);
-			assert.equal(turn.options.filter((o) => o.correct).length, 1, `${scene.id} turn ${i}: not exactly one correct option`);
+			assert.equal(
+				turn.options.filter((o) => o.correct).length,
+				1,
+				`${scene.id} turn ${i}: not exactly one correct option`,
+			);
 			const correct = turn.options.find((o) => o.correct)!;
-			assert.ok(correct.lemmas && correct.lemmas.length > 0, `${scene.id} turn ${i}: the correct option names no lemmas`);
+			assert.ok(
+				correct.lemmas && correct.lemmas.length > 0,
+				`${scene.id} turn ${i}: the correct option names no lemmas`,
+			);
 			for (const wrong of turn.options.filter((o) => !o.correct)) {
 				assert.ok(wrong.why && wrong.why.length > 0, `${scene.id} turn ${i}: a wrong option explains nothing`);
 			}

@@ -14,7 +14,13 @@ function read(day: string, tz: number) {
 	const reviews = reviewStore.readLog();
 	const cards = Object.values(reviewStore.readCards());
 	const days = progressStore.read().days;
-	return { lessons, reviews, cards, days, log: buildDayLog(day, { lessons: lessons.filter((e) => e.day === day), reviews, cards, record: days[day], tz }) };
+	return {
+		lessons,
+		reviews,
+		cards,
+		days,
+		log: buildDayLog(day, { lessons: lessons.filter((e) => e.day === day), reviews, cards, record: days[day], tz }),
+	};
 }
 
 export function dayLog(day: string, tz = 0): DayLog {
@@ -27,7 +33,8 @@ export function dayLogDays(today: string, tz = 0, limit = 30): DayLog[] {
 	const keys = new Set<string>([today]);
 	for (const e of lessons) keys.add(e.day);
 	for (const r of reviews) keys.add(localDay(r.reviewedAt, tz));
-	for (const [d, rec] of Object.entries(days)) if ((rec.xp ?? 0) > 0 || (rec.reviews ?? 0) > 0 || (rec.lessons ?? 0) > 0) keys.add(d);
+	for (const [d, rec] of Object.entries(days))
+		if ((rec.xp ?? 0) > 0 || (rec.reviews ?? 0) > 0 || (rec.lessons ?? 0) > 0) keys.add(d);
 	return [...keys]
 		.filter((d) => d <= today)
 		.sort()

@@ -20,9 +20,18 @@ export function subscriptionLabel(model: string | undefined): string | undefined
 	if (isChatGPTPlan(model)) return "ChatGPT";
 	return NATIVE_SUBSCRIPTIONS.find((p) => model?.startsWith(`${p.logicalId}:`))?.label;
 }
-export function isSubscriptionModel(model: string | undefined): boolean { return subscriptionLabel(model) !== undefined; }
+export function isSubscriptionModel(model: string | undefined): boolean {
+	return subscriptionLabel(model) !== undefined;
+}
 export function subscriptionLabels(models: readonly (string | undefined)[]): string[] {
-	return [...new Set(models.flatMap((model) => { const label = subscriptionLabel(model); return label ? [label] : []; }))];
+	return [
+		...new Set(
+			models.flatMap((model) => {
+				const label = subscriptionLabel(model);
+				return label ? [label] : [];
+			}),
+		),
+	];
 }
 
 /** Absent stays absent. Long-cache precision is unknown if any write-bearing
@@ -36,7 +45,8 @@ export function sumSteps(steps: readonly CallUsage[]): CallUsage {
 		cacheReadTokens: sumIfAny(steps.map((s) => s.cacheReadTokens)),
 		cacheWriteTokens: sumIfAny(steps.map((s) => s.cacheWriteTokens)),
 		cacheWrite1hTokens: steps.some((s) => (s.cacheWriteTokens ?? 0) > 0 && s.cacheWrite1hTokens === undefined)
-			? undefined : sumIfAny(steps.map((s) => s.cacheWrite1hTokens)),
+			? undefined
+			: sumIfAny(steps.map((s) => s.cacheWrite1hTokens)),
 		reasoningTokens: sumIfAny(steps.map((s) => s.reasoningTokens)),
 	};
 }
@@ -64,7 +74,14 @@ export function sessionCost(record: Pick<ChatRecord, "turns">, price: CallPricer
 		else if (dollars === null) unpriced++;
 		else cost += dollars;
 	}
-	return { cost, unpriced, ...(subscription ? { subscription, subscriptionProviders: subscriptionLabels((record.turns ?? []).map((turn) => turn.model)) } : {}), turnCosts };
+	return {
+		cost,
+		unpriced,
+		...(subscription
+			? { subscription, subscriptionProviders: subscriptionLabels((record.turns ?? []).map((turn) => turn.model)) }
+			: {}),
+		turnCosts,
+	};
 }
 
 export function jobCost(job: Pick<JobRecord, "usage">, price: CallPricer): number | null {

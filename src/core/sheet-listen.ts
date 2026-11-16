@@ -44,7 +44,13 @@ export function sheetLines(sheet: Pick<Cheatsheet, "sections">): SheetLine[] {
 				const key = phraseKey(text);
 				if (!key || seen.has(key)) continue;
 				seen.add(key);
-				lines.push({ key, text: text.trim(), meaning: row.meaning ?? "", ...(row.note ? { note: row.note } : {}), sectionId: section.id });
+				lines.push({
+					key,
+					text: text.trim(),
+					meaning: row.meaning ?? "",
+					...(row.note ? { note: row.note } : {}),
+					sectionId: section.id,
+				});
 			}
 		}
 	return lines;
@@ -58,12 +64,18 @@ export function sheetProgress(lines: readonly SheetLine[], practice: SheetPracti
 	};
 }
 
-export function pickSheetLines(lines: readonly SheetLine[], practice: SheetPractice, opts: { seed: number; count?: number }): SheetLine[] {
+export function pickSheetLines(
+	lines: readonly SheetLine[],
+	practice: SheetPractice,
+	opts: { seed: number; count?: number },
+): SheetLine[] {
 	const count = opts.count ?? SHEET_LISTEN_COUNT;
 	const oldestFirst = (a: SheetLine, b: SheetLine) => practice[a.key]!.at.localeCompare(practice[b.key]!.at);
 	const missed = lines.filter((l) => practice[l.key]?.caughtInARow === 0).sort(oldestFirst);
 	const fresh = lines.filter((l) => !practice[l.key]);
-	const caught = lines.filter((l) => (practice[l.key]?.caughtInARow ?? 0) > 0).sort((a, b) => practice[a.key]!.caughtInARow - practice[b.key]!.caughtInARow || oldestFirst(a, b));
+	const caught = lines
+		.filter((l) => (practice[l.key]?.caughtInARow ?? 0) > 0)
+		.sort((a, b) => practice[a.key]!.caughtInARow - practice[b.key]!.caughtInARow || oldestFirst(a, b));
 	const missedFirst = Math.ceil(count * MISSED_SHARE);
 	const chosen = [...missed.slice(0, missedFirst), ...fresh, ...caught, ...missed.slice(missedFirst)].slice(0, count);
 	return shuffle(chosen, rng(opts.seed));

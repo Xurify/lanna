@@ -24,7 +24,8 @@ export async function POST(req: Request) {
 		return Response.json({ message: "multipart form with audio is required" }, { status: 400 });
 	}
 	const file = form.get("audio");
-	if (!(file instanceof Blob) || file.size === 0) return Response.json({ message: "audio is required" }, { status: 400 });
+	if (!(file instanceof Blob) || file.size === 0)
+		return Response.json({ message: "audio is required" }, { status: 400 });
 	if (file.size > STT_MAX_BYTES) return Response.json({ message: "the recording is too long" }, { status: 413 });
 	const reference = typeof form.get("reference") === "string" ? (form.get("reference") as string).slice(0, 600) : "";
 	const heardRaw = form.get("heard");

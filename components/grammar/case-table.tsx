@@ -30,7 +30,10 @@ export function CaseTable({ rows }: { rows: CaseTableRow[] }) {
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Grammar</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
-					Every case of {lang?.english ?? "the language"}, in the singular and the plural. A cell with a percentage or <span className="font-semibold text-foreground">not tried</span> opens its lesson; the percentage is how often you were right on the first try, with no help. A grey cell says why it has no lesson. Point at a cell to read its rule.
+					Every case of {lang?.english ?? "the language"}, in the singular and the plural. A cell with a percentage or{" "}
+					<span className="font-semibold text-foreground">not tried</span> opens its lesson; the percentage is how often
+					you were right on the first try, with no help. A grey cell says why it has no lesson. Point at a cell to read
+					its rule.
 				</p>
 
 				{rows.length === 0 ? (
@@ -95,7 +98,10 @@ export function CaseTable({ rows }: { rows: CaseTableRow[] }) {
 									{selected.tutor && (
 										<p className="mt-2 text-sm text-ink-3">
 											Practiced with the tutor in{" "}
-											<Link href="/curriculum" className="font-semibold text-teal-2 underline decoration-teal-line underline-offset-4 hover:text-teal">
+											<Link
+												href="/curriculum"
+												className="font-semibold text-teal-2 underline decoration-teal-line underline-offset-4 hover:text-teal"
+											>
 												Curriculum
 											</Link>
 											: {selected.tutor.title}.
@@ -128,7 +134,10 @@ function CellRecord({ cell }: { cell: CaseTableCell }) {
 			{wrong && <p>Wrong on the first try: {wrong}.</p>}
 			{cell.unit && (
 				<p className="mt-1">
-					<Link href={`/lesson?unit=${cell.unit}`} className="text-sm font-semibold text-teal-2 underline decoration-teal-line underline-offset-4 hover:text-teal">
+					<Link
+						href={`/lesson?unit=${cell.unit}`}
+						className="text-sm font-semibold text-teal-2 underline decoration-teal-line underline-offset-4 hover:text-teal"
+					>
 						Practice this lesson →
 					</Link>
 				</p>
@@ -137,7 +146,15 @@ function CellRecord({ cell }: { cell: CaseTableCell }) {
 	);
 }
 
-function Cell({ cell, selected, onSelect }: { cell: CaseTableCell; selected: boolean; onSelect: (c: CaseTableCell) => void }) {
+function Cell({
+	cell,
+	selected,
+	onSelect,
+}: {
+	cell: CaseTableCell;
+	selected: boolean;
+	onSelect: (c: CaseTableCell) => void;
+}) {
 	const base = "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 transition-colors";
 	const testId = `cell-${cell.case}-${cell.number}`;
 	const select = {
@@ -149,7 +166,16 @@ function Cell({ cell, selected, onSelect }: { cell: CaseTableCell; selected: boo
 	if (!cell.unit) {
 		return (
 			<td className="p-0 align-middle">
-				<div className={cn(base, "cursor-default", selected ? "shadow-[inset_0_0_0_1.5px_var(--q-line-2)]" : "shadow-[inset_0_0_0_1px_var(--q-line)]")} tabIndex={0} data-testid={testId} {...select}>
+				<div
+					className={cn(
+						base,
+						"cursor-default",
+						selected ? "shadow-[inset_0_0_0_1.5px_var(--q-line-2)]" : "shadow-[inset_0_0_0_1px_var(--q-line)]",
+					)}
+					tabIndex={0}
+					data-testid={testId}
+					{...select}
+				>
 					<span className="text-sm text-ink-3">{cell.noDrill?.short}</span>
 				</div>
 			</td>
@@ -159,7 +185,10 @@ function Cell({ cell, selected, onSelect }: { cell: CaseTableCell; selected: boo
 		<td className="p-0 align-middle">
 			<Link
 				href={`/lesson?unit=${cell.unit}`}
-				className={cn(base, selected ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-card shadow-raise hover:bg-well")}
+				className={cn(
+					base,
+					selected ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-card shadow-raise hover:bg-well",
+				)}
 				data-testid={testId}
 				title={cell.reps > 0 ? `${cell.right} of ${cell.reps} right on the first try` : "No first tries yet"}
 				{...select}
@@ -168,7 +197,11 @@ function Cell({ cell, selected, onSelect }: { cell: CaseTableCell; selected: boo
 					<span className="text-sm text-ink-3">not tried</span>
 				) : (
 					<>
-						<span className={cn("text-sm font-bold tabular-nums", cell.accuracy >= 0.8 ? "text-teal-2" : "text-foreground")}>{Math.round(cell.accuracy * 100)}%</span>
+						<span
+							className={cn("text-sm font-bold tabular-nums", cell.accuracy >= 0.8 ? "text-teal-2" : "text-foreground")}
+						>
+							{Math.round(cell.accuracy * 100)}%
+						</span>
 						<span className="text-xs text-ink-3 tabular-nums">
 							{cell.reps} first {cell.reps === 1 ? "try" : "tries"}
 						</span>

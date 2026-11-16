@@ -48,8 +48,8 @@ figcaption{font-size:13px;color:${ink3};text-align:center}
 svg{width:100%;height:auto;max-width:420px}
 .text-foreground{color:${ink}}.text-ink-2{color:${ink2}}.text-ink-3{color:${ink3}}.text-teal-2{color:${teal2}}.text-line-2{color:${line2}}
 .stroke-current{stroke:currentColor}.stroke-teal-2{stroke:${teal2}}.fill-none{fill:none}.fill-current{fill:currentColor}.fill-teal-2{fill:${teal2}}
-.fill-teal\/20{fill:color-mix(in srgb,${teal} 20%,transparent)}
-.font-prose{font-family:"Segoe UI",sans-serif}.text-\[15px\]{font-size:15px}.font-semibold{font-weight:600}
+.fill-teal\\/20{fill:color-mix(in srgb,${teal} 20%,transparent)}
+.font-prose{font-family:"Segoe UI",sans-serif}.text-\\[15px\\]{font-size:15px}.font-semibold{font-weight:600}
 .ink-draw{stroke-dasharray:1 2;stroke-dashoffset:0}.ink-fade{opacity:1}
 </style><div class="grid">${cells.join("")}</div>`;
 }

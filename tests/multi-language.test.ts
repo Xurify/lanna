@@ -7,7 +7,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { LANGUAGE_PROFILES } from "../config.ts";
-import { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_CATALOG, LANGUAGE_IDS } from "../src/core/language.ts";
+import {
+	compareAnswer,
+	diacriticSlips,
+	foldDiacritics,
+	LANGUAGES,
+	LANGUAGE_CATALOG,
+	LANGUAGE_IDS,
+} from "../src/core/language.ts";
 import { loadLexicon, lookupWord } from "../src/agent/lexicon.ts";
 import { entryLemma, exampleText, pickClozeExample, mintCard } from "../src/core/review.ts";
 import { getPairsForLanguage } from "../src/core/pairs.ts";
@@ -43,29 +50,14 @@ describe("multi-language architecture", () => {
 
 	it("folds diacritics and letters across Czech, Romanian, Russian, and Slovak", () => {
 		// Czech
-		assert.equal(
-			foldDiacritics("Příliš žluťoučký kůň úpěl ďábelské ódy"),
-			"Prilis zlutoucky kun upel dabelske ody",
-		);
+		assert.equal(foldDiacritics("Příliš žluťoučký kůň úpěl ďábelské ódy"), "Prilis zlutoucky kun upel dabelske ody");
 		// Romanian
-		assert.equal(
-			foldDiacritics("Câinele mănâncă pâine în curte"),
-			"Cainele mananca paine in curte",
-		);
-		assert.equal(
-			foldDiacritics("o țară frumoasă cu școală"),
-			"o tara frumoasa cu scoala",
-		);
+		assert.equal(foldDiacritics("Câinele mănâncă pâine în curte"), "Cainele mananca paine in curte");
+		assert.equal(foldDiacritics("o țară frumoasă cu școală"), "o tara frumoasa cu scoala");
 		// Slovak
-		assert.equal(
-			foldDiacritics("Môj dĺžeň a mäkčeň"),
-			"Moj dlzen a makcen",
-		);
+		assert.equal(foldDiacritics("Môj dĺžeň a mäkčeň"), "Moj dlzen a makcen");
 		// Russian
-		assert.equal(
-			foldDiacritics("Ёлка и ёж"),
-			"Елка и еж",
-		);
+		assert.equal(foldDiacritics("Ёлка и ёж"), "Елка и еж");
 	});
 
 	it("identifies diacritic slips in Czech and Romanian", () => {

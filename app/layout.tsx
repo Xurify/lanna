@@ -29,9 +29,20 @@ import { ReminderScheduler } from "@/components/notifications/reminder-scheduler
 // Geist is preloaded and the fallback is size-matched, so a late font swaps in without moving the text. (display: optional was tried: the dev server does not preload fonts, so it left whole page views in the fallback face, and next/font accepts only literal option values, so it cannot be limited to production.)
 const geist = Geist({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-geist", display: "swap" });
 // preload: false keeps the reading face off the first paint of pages that never use it.
-const read = Fira_Sans({ subsets: ["latin", "latin-ext", "cyrillic"], weight: ["400", "600"], style: ["normal", "italic"], variable: "--font-read", preload: false, display: "swap" });
+const read = Fira_Sans({
+	subsets: ["latin", "latin-ext", "cyrillic"],
+	weight: ["400", "600"],
+	style: ["normal", "italic"],
+	variable: "--font-read",
+	preload: false,
+	display: "swap",
+});
 // Code only: not preloaded, so it never competes with Geist for the first paint.
-const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains", preload: false });
+const mono = JetBrains_Mono({
+	subsets: ["latin", "latin-ext", "cyrillic"],
+	variable: "--font-jetbrains",
+	preload: false,
+});
 
 // Full-bleed on a notched phone or an iPad: the shell pads for the safe areas
 // (components/sidebar.tsx), and the theme color
@@ -39,17 +50,31 @@ const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], varia
 export async function generateViewport(): Promise<Viewport> {
 	// An explicit Day or Night paints the status bar in that mode whatever the system is set to; "system" lets the system decide.
 	const theme = themeFromCookie((await cookies()).get(THEME_COOKIE)?.value);
-	const themeColor = theme === "day" ? "#ffffff" : theme === "night" ? "#101214" : [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }, { media: "(prefers-color-scheme: dark)", color: "#101214" }];
-	return { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor, colorScheme: theme === "system" ? "light dark" : theme === "night" ? "dark" : "light" };
+	const themeColor =
+		theme === "day"
+			? "#ffffff"
+			: theme === "night"
+				? "#101214"
+				: [
+						{ media: "(prefers-color-scheme: light)", color: "#ffffff" },
+						{ media: "(prefers-color-scheme: dark)", color: "#101214" },
+					];
+	return {
+		width: "device-width",
+		initialScale: 1,
+		viewportFit: "cover",
+		themeColor,
+		colorScheme: theme === "system" ? "light dark" : theme === "night" ? "dark" : "light",
+	};
 }
 
 export const metadata: Metadata = {
 	title: { default: "LangHarness", template: "%s · LangHarness" },
-		applicationName: "LangHarness",
-		appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "default" },
-			// Next 16 emits the standard mobile-web-app-capable tag for capable: true;
-			// iOS Safari still reads the Apple name to launch full screen, so both go out.
-			other: { "apple-mobile-web-app-capable": "yes" },
+	applicationName: "LangHarness",
+	appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "default" },
+	// Next 16 emits the standard mobile-web-app-capable tag for capable: true;
+	// iOS Safari still reads the Apple name to launch full screen, so both go out.
+	other: { "apple-mobile-web-app-capable": "yes" },
 	description: "A language tutor: lessons, spaced review, reading and speaking, kept on your own computer.",
 };
 
@@ -71,36 +96,48 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	const vars = appearanceVars(resolveAppearance(appearance));
 	const course = activeCourse();
 	return (
-		<html lang="en" className={`${geist.variable} ${mono.variable} ${read.variable}${theme === "night" ? " dark" : ""}`} data-theme={theme === "system" ? undefined : theme} data-lh-language={activeProfile()} style={vars as React.CSSProperties} suppressHydrationWarning>
+		<html
+			lang="en"
+			className={`${geist.variable} ${mono.variable} ${read.variable}${theme === "night" ? " dark" : ""}`}
+			data-theme={theme === "system" ? undefined : theme}
+			data-lh-language={activeProfile()}
+			style={vars as React.CSSProperties}
+			suppressHydrationWarning
+		>
 			<body className="min-h-dvh antialiased">
-			{/* A language added from the app runs its generated course: the browser
+				{/* A language added from the app runs its generated course: the browser
 			    gets the same one as the server before any module of the core loads
 			    (src/core/course.ts). */}
-			{course && <Script id="lh-course" strategy="beforeInteractive">{`globalThis.__lhCourse=${JSON.stringify(course).replace(/</g, "\\u003c")};`}</Script>}
-			{/* The notification channel rides OUTSIDE everything: sidebar, dock,
+				{course && (
+					<Script
+						id="lh-course"
+						strategy="beforeInteractive"
+					>{`globalThis.__lhCourse=${JSON.stringify(course).replace(/</g, "\\u003c")};`}</Script>
+				)}
+				{/* The notification channel rides OUTSIDE everything: sidebar, dock,
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
-							<ServerEventsProvider>
-				<AppearanceProvider initialDelta={appearance}>
-					<SidebarProvider defaultCollapsed={sidebarCollapsed} defaultWidth={sidebarWidth}>
-						<ActivityProvider>
-							<AppShell>{children}</AppShell>
-							<TaskNotice />
-							<LanguageGoneNotice />
-						</ActivityProvider>
-					</SidebarProvider>
-				</AppearanceProvider>
-			</ServerEventsProvider>
-			<ThemeSync />
-			<InstantNavigation />
+				<ServerEventsProvider>
+					<AppearanceProvider initialDelta={appearance}>
+						<SidebarProvider defaultCollapsed={sidebarCollapsed} defaultWidth={sidebarWidth}>
+							<ActivityProvider>
+								<AppShell>{children}</AppShell>
+								<TaskNotice />
+								<LanguageGoneNotice />
+							</ActivityProvider>
+						</SidebarProvider>
+					</AppearanceProvider>
+				</ServerEventsProvider>
+				<ThemeSync />
+				<InstantNavigation />
 				<KeyboardFocusMode />
-			<OriginStamp />
-			{/* Lessons finished but not yet recorded are sent again (components/lesson/outbox.ts). */}
-			<OutboxFlush />
-			{/* Auto-update banner (Wave C): fixed card, Electron-only pushes. */}
-			<UpdateBanner />
-			{/* Daily activity alerts, smart nudges, and audio reminders. */}
-			<ReminderScheduler />
-		</body>
+				<OriginStamp />
+				{/* Lessons finished but not yet recorded are sent again (components/lesson/outbox.ts). */}
+				<OutboxFlush />
+				{/* Auto-update banner (Wave C): fixed card, Electron-only pushes. */}
+				<UpdateBanner />
+				{/* Daily activity alerts, smart nudges, and audio reminders. */}
+				<ReminderScheduler />
+			</body>
 		</html>
 	);
 }

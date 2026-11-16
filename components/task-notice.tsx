@@ -38,7 +38,8 @@ export function TaskNotice({ tasks }: { tasks?: FeedTask[] } = {}) {
 		refresh();
 	};
 
-	const say = (id: string, err: unknown) => setLines((l) => ({ ...l, [id]: err instanceof Error ? err.message : String(err) }));
+	const say = (id: string, err: unknown) =>
+		setLines((l) => ({ ...l, [id]: err instanceof Error ? err.message : String(err) }));
 
 	const switchTo = async (task: FeedTask) => {
 		if (!task.language) return;
@@ -72,9 +73,18 @@ export function TaskNotice({ tasks }: { tasks?: FeedTask[] } = {}) {
 	};
 
 	return (
-		<div data-testid="task-notice" className="fixed right-4 bottom-4 z-40 flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2" role="status" aria-live="polite">
+		<div
+			data-testid="task-notice"
+			className="fixed right-4 bottom-4 z-40 flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2"
+			role="status"
+			aria-live="polite"
+		>
 			{finished.map((task) => (
-				<div key={task.id} data-testid={`task-notice-${task.status}`} className="relative rounded-lg bg-card py-3 pr-9 pl-4 shadow-raise-hi">
+				<div
+					key={task.id}
+					data-testid={`task-notice-${task.status}`}
+					className="relative rounded-lg bg-card py-3 pr-9 pl-4 shadow-raise-hi"
+				>
 					<p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
 						{task.status === "done" && <CheckIcon className="size-3.5" />}
 						{TASK_HEADLINE[task.kind]?.[task.status === "done" ? "done" : "error"] ?? task.title}
@@ -87,22 +97,45 @@ export function TaskNotice({ tasks }: { tasks?: FeedTask[] } = {}) {
 					{lines[task.id] && <p className="mt-0.5 text-xs text-muted-foreground">{lines[task.id]}</p>}
 					<div className="mt-2 flex gap-2 text-sm">
 						{task.status === "done" && task.href && (
-							<Link href={task.href} onClick={() => void dismiss(task.id)} className="font-medium text-primary hover:underline" data-testid="task-notice-open">
+							<Link
+								href={task.href}
+								onClick={() => void dismiss(task.id)}
+								className="font-medium text-primary hover:underline"
+								data-testid="task-notice-open"
+							>
 								Open
 							</Link>
 						)}
 						{task.status === "done" && task.language && (
-							<button type="button" disabled={busy === task.id} onClick={() => void switchTo(task)} className="font-medium text-primary hover:underline disabled:opacity-50" data-testid="task-notice-switch">
+							<button
+								type="button"
+								disabled={busy === task.id}
+								onClick={() => void switchTo(task)}
+								className="font-medium text-primary hover:underline disabled:opacity-50"
+								data-testid="task-notice-switch"
+							>
 								Switch to {task.language.english}
 							</button>
 						)}
 						{task.status === "error" && task.language && (
-							<button type="button" disabled={busy === task.id} onClick={() => void addAgain(task)} className="font-medium text-primary hover:underline disabled:opacity-50" data-testid="task-notice-retry">
+							<button
+								type="button"
+								disabled={busy === task.id}
+								onClick={() => void addAgain(task)}
+								className="font-medium text-primary hover:underline disabled:opacity-50"
+								data-testid="task-notice-retry"
+							>
 								Try again
 							</button>
 						)}
 						{task.status === "error" && task.retry && (
-							<button type="button" disabled={busy === task.id} onClick={() => void retry(task)} className="font-medium text-primary hover:underline disabled:opacity-50" data-testid="task-notice-retry">
+							<button
+								type="button"
+								disabled={busy === task.id}
+								onClick={() => void retry(task)}
+								className="font-medium text-primary hover:underline disabled:opacity-50"
+								data-testid="task-notice-retry"
+							>
 								{task.retry.label}
 							</button>
 						)}

@@ -24,10 +24,25 @@ function outcomeOf(mark: TrackMark | undefined, isCurrent: boolean): PipOutcome 
 	return isCurrent ? "now" : "ahead";
 }
 
-export function CheckTrack({ parts, marks, current = -1, large = false, className }: { parts: Part[]; marks: TrackMark[]; current?: number; large?: boolean; className?: string }) {
+export function CheckTrack({
+	parts,
+	marks,
+	current = -1,
+	large = false,
+	className,
+}: {
+	parts: Part[];
+	marks: TrackMark[];
+	current?: number;
+	large?: boolean;
+	className?: string;
+}) {
 	const total = parts.reduce((sum, part) => sum + part.count, 0);
 	const tally = (mark: TrackMark) => marks.filter((m) => m === mark).length;
-	const label = marks.length === 0 ? `${total} sentences, none answered yet` : `${marks.length} of ${total} answered: ${tally("right")} right, ${tally("partly")} partly, ${tally("miss")} missed`;
+	const label =
+		marks.length === 0
+			? `${total} sentences, none answered yet`
+			: `${marks.length} of ${total} answered: ${tally("right")} right, ${tally("partly")} partly, ${tally("miss")} missed`;
 	let offset = 0;
 	return (
 		<div role="img" aria-label={label} className={cn("flex min-w-0", large ? "gap-3" : "gap-2", className)}>
@@ -38,7 +53,11 @@ export function CheckTrack({ parts, marks, current = -1, large = false, classNam
 					<div key={p} className="min-w-0" style={{ flex: part.count }}>
 						<div className={cn("flex items-center", large ? "gap-1" : "gap-[3px]")}>
 							{Array.from({ length: part.count }, (_, i) => (
-								<Pip key={i} outcome={outcomeOf(marks[start + i], start + i === current)} className={cn("min-w-0 flex-1", large && "h-2")} />
+								<Pip
+									key={i}
+									outcome={outcomeOf(marks[start + i], start + i === current)}
+									className={cn("min-w-0 flex-1", large && "h-2")}
+								/>
 							))}
 						</div>
 						{part.caption && <p className="mt-2 font-ui text-[12.5px] text-ink-3">{part.caption}</p>}

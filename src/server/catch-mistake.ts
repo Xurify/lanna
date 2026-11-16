@@ -62,7 +62,10 @@ async function makeNext(opts: CatchOptions): Promise<CatchNext> {
 		record: progressStore.read().mixups ?? {},
 		lexicon,
 		pairs,
-		recentPairs: catchStore.list().slice(-CATCH_RECENT_ITEMS).map((i) => i.pair),
+		recentPairs: catchStore
+			.list()
+			.slice(-CATCH_RECENT_ITEMS)
+			.map((i) => i.pair),
 		speaker: CATCH_SPEAKER,
 	});
 	if (!target) return { view: null, reason: "No pair you mix up is ready yet. Keep practicing and check back." };
@@ -78,7 +81,15 @@ async function makeNext(opts: CatchOptions): Promise<CatchNext> {
 	});
 	const draft = parseCatchDraft(text);
 	if (!draft) return { view: null, reason: "The model did not answer in the shape asked for. Try again." };
-	const built = buildCatchItem({ id: randomUUID(), now: opts.now ?? new Date(), model: resolved.model, draft, target, lexicon, pairs });
+	const built = buildCatchItem({
+		id: randomUUID(),
+		now: opts.now ?? new Date(),
+		model: resolved.model,
+		draft,
+		target,
+		lexicon,
+		pairs,
+	});
 	if ("reason" in built) return { view: null, reason: `The item was not kept (${built.reason}). Try again.` };
 	catchStore.add(built.item);
 	return { view: viewOf(built.item) };
@@ -87,13 +98,24 @@ async function makeNext(opts: CatchOptions): Promise<CatchNext> {
 type CatchAnswerOutcome = { ok: true; result: CatchResult } | { ok: false; status: number; message: string };
 
 /** Grade one answer: the tapped word and the typed word. An item takes one answer. */
-export function answerCatch(id: string, input: { sentence: number; token: number; typed: string }, now = new Date()): CatchAnswerOutcome {
+export function answerCatch(
+	id: string,
+	input: { sentence: number; token: number; typed: string },
+	now = new Date(),
+): CatchAnswerOutcome {
 	const item = catchStore.find(id);
 	if (!item) return { ok: false, status: 404, message: "That item is not here any more." };
 	if (item.answer) return { ok: false, status: 409, message: "That item is already answered." };
 	const tapOk = isTapRight(item, input);
 	const verdict = gradeTyped(item.slip.right, input.typed, activeLanguage().tag);
-	item.answer = { sentence: input.sentence, token: input.token, typed: input.typed, tapOk, verdict, at: now.toISOString() };
+	item.answer = {
+		sentence: input.sentence,
+		token: input.token,
+		typed: input.typed,
+		tapOk,
+		verdict,
+		at: now.toISOString(),
+	};
 	catchStore.update(item);
 	// The answer counts toward the pair like a lesson's first try, so a mended pair can reopen and a caught one can mend.
 	try {

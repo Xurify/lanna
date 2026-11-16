@@ -11,7 +11,8 @@ import { BODY_LIMITS, bodyTooLarge, examFor, recordExam } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
-const fail = (err: unknown, status = 400) => Response.json({ message: err instanceof Error ? err.message : String(err) }, { status });
+const fail = (err: unknown, status = 400) =>
+	Response.json({ message: err instanceof Error ? err.message : String(err) }, { status });
 
 export async function GET(req: Request) {
 	const url = new URL(req.url);
@@ -29,8 +30,10 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { chapter?: unknown; seed?: unknown; answers?: unknown } | null;
-	if (!body || typeof body.chapter !== "string") return Response.json({ message: "chapter is required" }, { status: 400 });
-	if (typeof body.seed !== "number" || !Number.isFinite(body.seed)) return Response.json({ message: "seed is required" }, { status: 400 });
+	if (!body || typeof body.chapter !== "string")
+		return Response.json({ message: "chapter is required" }, { status: 400 });
+	if (typeof body.seed !== "number" || !Number.isFinite(body.seed))
+		return Response.json({ message: "seed is required" }, { status: 400 });
 	const answers = Array.isArray(body.answers) ? body.answers.slice(0, 64) : [];
 	try {
 		return Response.json(recordExam({ chapterId: body.chapter, seed: body.seed, answers }));

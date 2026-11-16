@@ -15,7 +15,47 @@ const dir = path.join(process.cwd(), "curriculum", "slovak");
 const S = JSON.parse(fs.readFileSync(path.join(dir, "seed-source.json"), "utf-8"));
 const L = JSON.parse(fs.readFileSync(path.join(dir, "lexicon.json"), "utf-8"));
 const lex = new Set(L.words.map((w) => w.sk.toLocaleLowerCase("sk-SK")));
-const glyph = {"lx-greetings":"hand","lx-questions":"circle-help","lx-family":"users","lx-people":"user","lx-body":"activity","lx-health":"stethoscope","lx-food":"apple","lx-drinks":"cup-soda","lx-meals":"utensils","lx-cafe":"coffee","lx-shopping":"shopping-bag","lx-clothes":"shirt","lx-home":"house","lx-city":"building-2","lx-transport":"bus","lx-directions":"compass","lx-time":"clock","lx-weekdays":"calendar-days","lx-seasons":"sun","lx-weather":"cloud-sun","lx-nature":"tree-pine","lx-animals":"paw-print","lx-colours":"palette","lx-work":"briefcase","lx-school":"graduation-cap","lx-hobbies":"gamepad-2","lx-feelings":"heart","lx-describe-people":"smile","lx-describe-things":"box","lx-routine":"alarm-clock","lx-motion":"footprints","lx-speaking":"message-square","lx-thinking":"brain","lx-core-verbs":"star","lx-when":"hourglass","lx-where":"map-pin","lx-tech":"laptop","lx-admin":"file-text","lx-languages":"globe"};
+const glyph = {
+	"lx-greetings": "hand",
+	"lx-questions": "circle-help",
+	"lx-family": "users",
+	"lx-people": "user",
+	"lx-body": "activity",
+	"lx-health": "stethoscope",
+	"lx-food": "apple",
+	"lx-drinks": "cup-soda",
+	"lx-meals": "utensils",
+	"lx-cafe": "coffee",
+	"lx-shopping": "shopping-bag",
+	"lx-clothes": "shirt",
+	"lx-home": "house",
+	"lx-city": "building-2",
+	"lx-transport": "bus",
+	"lx-directions": "compass",
+	"lx-time": "clock",
+	"lx-weekdays": "calendar-days",
+	"lx-seasons": "sun",
+	"lx-weather": "cloud-sun",
+	"lx-nature": "tree-pine",
+	"lx-animals": "paw-print",
+	"lx-colours": "palette",
+	"lx-work": "briefcase",
+	"lx-school": "graduation-cap",
+	"lx-hobbies": "gamepad-2",
+	"lx-feelings": "heart",
+	"lx-describe-people": "smile",
+	"lx-describe-things": "box",
+	"lx-routine": "alarm-clock",
+	"lx-motion": "footprints",
+	"lx-speaking": "message-square",
+	"lx-thinking": "brain",
+	"lx-core-verbs": "star",
+	"lx-when": "hourglass",
+	"lx-where": "map-pin",
+	"lx-tech": "laptop",
+	"lx-admin": "file-text",
+	"lx-languages": "globe",
+};
 let out = `/**
  * Word clusters (LangHarness) — the vocabulary units of the path, one per
  * lexical cluster of the hand-authored seed (curriculum/slovak/seed-source.json,

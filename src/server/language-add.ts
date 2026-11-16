@@ -19,9 +19,23 @@ import { StringDecoder } from "node:string_decoder";
 import { PassThrough, Readable } from "node:stream";
 import type { Usage } from "@earendil-works/pi-ai";
 import unbzip2 from "unbzip2-stream";
-import { activeProfile, LANGUAGE_PROFILES, PATHS, ROOT, addedLanguageIds, readProfileChoice, saveProfileChoice } from "../../config.ts";
+import {
+	activeProfile,
+	LANGUAGE_PROFILES,
+	PATHS,
+	ROOT,
+	addedLanguageIds,
+	readProfileChoice,
+	saveProfileChoice,
+} from "../../config.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
-import { catalogLanguage, LANGUAGE_CATALOG, LANGUAGE_ID_RE, languageById, type CatalogLanguage } from "../core/language.ts";
+import {
+	catalogLanguage,
+	LANGUAGE_CATALOG,
+	LANGUAGE_ID_RE,
+	languageById,
+	type CatalogLanguage,
+} from "../core/language.ts";
 import {
 	ExampleCollector,
 	frequencyFromSentences,
@@ -70,15 +84,25 @@ const buildDir = (id: string) => path.join(dirOf(id), "build");
 const languageAdded = (id: string) => addedLanguageIds().includes(id);
 
 /** What the course writer is told the dictionary holds. */
-function courseInventory(entries: ReadonlyArray<{ cat: string; lemma?: string; formTags?: Record<string, string[]> }>, tag: string, scenes: readonly string[]) {
+function courseInventory(
+	entries: ReadonlyArray<{ cat: string; lemma?: string; formTags?: Record<string, string[]> }>,
+	tag: string,
+	scenes: readonly string[],
+) {
 	const tags = new Map<string, number>();
 	const cats = new Map<string, number>();
 	for (const e of entries) {
 		cats.set(e.cat, (cats.get(e.cat) ?? 0) + 1);
-		for (const cells of Object.values(e.formTags ?? {})) for (const cell of cells) for (const t of cell.split(" ")) tags.set(t, (tags.get(t) ?? 0) + 1);
+		for (const cells of Object.values(e.formTags ?? {}))
+			for (const cell of cells) for (const t of cell.split(" ")) tags.set(t, (tags.get(t) ?? 0) + 1);
 	}
-	const top = <K,>(m: Map<K, number>) => [...m.entries()].sort((a, b) => b[1] - a[1]);
-	return { tags: top(tags).slice(0, 60), cats: top(cats), words: entries.slice(0, 400).map((e) => (e.lemma ?? "").toLocaleLowerCase(tag)), scenes };
+	const top = <K>(m: Map<K, number>) => [...m.entries()].sort((a, b) => b[1] - a[1]);
+	return {
+		tags: top(tags).slice(0, 60),
+		cats: top(cats),
+		words: entries.slice(0, 400).map((e) => (e.lemma ?? "").toLocaleLowerCase(tag)),
+		scenes,
+	};
 }
 
 interface CatalogRow {
@@ -98,7 +122,11 @@ const isBuiltIn = (id: string) => (LANGUAGE_PROFILES as readonly string[]).inclu
 const isHidden = (id: string) => readProfileChoice().hidden.includes(id);
 
 export function languageCatalog(): CatalogRow[] {
-	const running = new Set(listTasks().filter((t) => t.kind === "language" && t.status === "running").map((t) => t.id));
+	const running = new Set(
+		listTasks()
+			.filter((t) => t.kind === "language" && t.status === "running")
+			.map((t) => t.id),
+	);
 	const hidden = readProfileChoice().hidden;
 	const rows: CatalogRow[] = LANGUAGE_CATALOG.map((l) => ({
 		id: l.id,
@@ -113,7 +141,15 @@ export function languageCatalog(): CatalogRow[] {
 	for (const id of hidden) {
 		const info = languageById(id);
 		if (!info) continue;
-		rows.unshift({ id, english: info.english, endonym: info.endonym, tag: info.tag, ready: false, adding: false, restoreOnly: true });
+		rows.unshift({
+			id,
+			english: info.english,
+			endonym: info.endonym,
+			tag: info.tag,
+			ready: false,
+			adding: false,
+			restoreOnly: true,
+		});
 	}
 	return rows;
 }
@@ -140,7 +176,12 @@ interface AddDeps {
 /** One model call: the answer, what it used, the thinking level it ran at,
  *  and whether it stopped at `cap` (the most output tokens it may write)
  *  rather than finishing. */
-type Ask = (system: string, prompt: string, signal: AbortSignal, cap: number) => Promise<{ text: string; usage: StoryUsage; level?: string; cut?: boolean }>;
+type Ask = (
+	system: string,
+	prompt: string,
+	signal: AbortSignal,
+	cap: number,
+) => Promise<{ text: string; usage: StoryUsage; level?: string; cut?: boolean }>;
 
 type DraftKind = "course" | "world";
 
@@ -148,8 +189,19 @@ type DraftKind = "course" | "world";
  *  prompts are about 3,500 and 1,500 tokens, the answers as above, plus the
  *  thinking the level allows. Replaced by measured calls as soon as there
  *  are some (see addEstimate). */
-const FIRST_GUESS: Record<DraftKind, { input: number; output: number }> = { course: { input: 3_500, output: 8_000 }, world: { input: 1_500, output: 3_000 } };
-const THINKING_GUESS: Record<string, number> = { off: 0, minimal: 1_000, low: 3_000, medium: 8_000, high: 14_000, xhigh: 20_000 };
+const FIRST_GUESS: Record<DraftKind, { input: number; output: number }> = {
+	course: { input: 3_500, output: 8_000 },
+	world: { input: 1_500, output: 3_000 },
+};
+const THINKING_GUESS: Record<string, number> = {
+	off: 0,
+	minimal: 1_000,
+	low: 3_000,
+	medium: 8_000,
+	high: 14_000,
+	xhigh: 20_000,
+	max: 24_000,
+};
 
 interface AddEstimate {
 	/** The slot that would write it, or the dictionary alone. */
@@ -184,14 +236,17 @@ function pastCalls(kind: DraftKind): DraftCall[] {
 	} catch {
 		return [];
 	}
-	return names.flatMap((n) => readJson<{ calls?: DraftCall[] }>(path.join(PATHS.languages, n, "build", `${kind}-draft.json`))?.calls ?? []);
+	return names.flatMap(
+		(n) => readJson<{ calls?: DraftCall[] }>(path.join(PATHS.languages, n, "build", `${kind}-draft.json`))?.calls ?? [],
+	);
 }
 
 const median = (xs: number[]) => {
 	const s = [...xs].sort((a, b) => a - b);
 	return s.length ? s[Math.floor(s.length / 2)]! : 0;
 };
-const sum = (usage: StoryUsage, key: "inputTokens" | "outputTokens") => usage.steps.reduce((n, st) => n + (st[key] ?? 0), 0);
+const sum = (usage: StoryUsage, key: "inputTokens" | "outputTokens") =>
+	usage.steps.reduce((n, st) => n + (st[key] ?? 0), 0);
 
 /**
  * The output caps for one draft (thinking included). The provider stops a
@@ -207,7 +262,9 @@ export function capPlan(kind: DraftKind, writer: WriterSlot = "strong"): { first
 	const resolved = courseEngine(writer);
 	const level = resolved?.engine.level ?? "off";
 	const limit = resolved?.engine.model.maxTokens || Infinity;
-	const past = resolved ? pastCalls(kind).filter((c) => c.model === resolved.model && (c.level ?? "off") === level) : [];
+	const past = resolved
+		? pastCalls(kind).filter((c) => c.model === resolved.model && (c.level ?? "off") === level)
+		: [];
 	const room = 1.5 * FIRST_GUESS[kind].output + 2 * (THINKING_GUESS[level] ?? 0);
 	const seen = Math.max(0, ...past.map((c) => sum(c.usage, "outputTokens")));
 	const first = Math.round(Math.min(limit, Math.max(room, 2 * seen)));
@@ -232,14 +289,25 @@ export function addEstimate(writer: WriterSlot = "strong"): AddEstimate | null {
 		const same = pastCalls(kind).filter((c) => c.model === model && (c.level ?? "off") === level);
 		measured = Math.max(measured, same.length);
 		const input = same.length ? median(same.map((c) => sum(c.usage, "inputTokens"))) : FIRST_GUESS[kind].input;
-		const output = same.length ? median(same.map((c) => sum(c.usage, "outputTokens"))) : FIRST_GUESS[kind].output + (THINKING_GUESS[level] ?? 0);
+		const output = same.length
+			? median(same.map((c) => sum(c.usage, "outputTokens")))
+			: FIRST_GUESS[kind].output + (THINKING_GUESS[level] ?? 0);
 		const caps = capPlan(kind, writer);
 		const t = callCost({ inputTokens: input, outputTokens: Math.min(output, caps.first) }, model);
 		const m = callCost({ inputTokens: 2 * input, outputTokens: caps.first + caps.second }, model);
 		typical = t === null || typical === null ? null : typical + t;
 		most = m === null || most === null ? null : most + m;
 	}
-	return { slot: writer, model, name, level, typicalUsd: typical, mostUsd: most, measured, subscription: isSubscriptionModel(model) };
+	return {
+		slot: writer,
+		model,
+		name,
+		level,
+		typicalUsd: typical,
+		mostUsd: most,
+		measured,
+		subscription: isSubscriptionModel(model),
+	};
 }
 
 /** The choices the add dialog offers: the Strong slot's model and the
@@ -248,17 +316,31 @@ export function addEstimate(writer: WriterSlot = "strong"): AddEstimate | null {
 export function addEstimates(): AddEstimate[] {
 	const strong = aiSlot("strong")?.model ? addEstimate("strong") : null;
 	const cheap = aiSlot("cheap")?.model ? addEstimate("cheap") : null;
-	const models = strong && cheap && strong.model === cheap.model && strong.level === cheap.level ? [strong] : [strong, cheap].filter((e): e is AddEstimate => e !== null);
+	const models =
+		strong && cheap && strong.model === cheap.model && strong.level === cheap.level
+			? [strong]
+			: [strong, cheap].filter((e): e is AddEstimate => e !== null);
 	return [...models, DICTIONARY_ESTIMATE];
 }
 
 /** The free choice: the course is built from the dictionary alone. */
-const DICTIONARY_ESTIMATE: AddEstimate = { slot: "dictionary", model: "", name: "From the dictionary only", level: "none", typicalUsd: 0, mostUsd: 0, measured: 0, subscription: false };
+const DICTIONARY_ESTIMATE: AddEstimate = {
+	slot: "dictionary",
+	model: "",
+	name: "From the dictionary only",
+	level: "none",
+	typicalUsd: 0,
+	mostUsd: 0,
+	measured: 0,
+	subscription: false,
+};
 
 /** Why a language cannot be added with `writer` now, or null. */
 function addBlocker(writer: CourseWriter = "strong"): string | null {
 	if (writer === "dictionary") return null;
-	return aiStatus("strong").ready || aiStatus().ready ? null : "Writing the course with a model needs one in Settings → AI models. Pick \"From the dictionary only\" to build it without one.";
+	return aiStatus("strong").ready || aiStatus().ready
+		? null
+		: 'Writing the course with a model needs one in Settings → AI models. Pick "From the dictionary only" to build it without one.';
 }
 
 /** Start adding a catalog language in the background. Starting one that is
@@ -271,11 +353,18 @@ export function startLanguageAdd(id: string, deps: AddDeps = {}): { taskId: stri
 	if (other) throw new Error(`Wait for "${other.title}" to finish first.`);
 	const blocked = deps.ask ? null : addBlocker(deps.slot);
 	if (blocked) throw new Error(blocked);
-	const { signal, fresh } = startTask({ id: taskIdOf(id), kind: "language", title: `Adding ${lang.english}`, step: "Starting", language: { id, english: lang.english } });
+	const { signal, fresh } = startTask({
+		id: taskIdOf(id),
+		kind: "language",
+		title: `Adding ${lang.english}`,
+		step: "Starting",
+		language: { id, english: lang.english },
+	});
 	if (!fresh) return { taskId: taskIdOf(id), done: Promise.resolve() };
 	const done = addLanguage(lang, signal, deps).then(
 		(note) => finishTask(taskIdOf(id), { title: `${lang.english} is ready`, ...(note ? { note } : {}) }),
-		(err: unknown) => failTask(taskIdOf(id), signal.aborted ? "Stopped. Start it again to continue where it stopped." : friendly(err)),
+		(err: unknown) =>
+			failTask(taskIdOf(id), signal.aborted ? "Stopped. Start it again to continue where it stopped." : friendly(err)),
 	);
 	return { taskId: taskIdOf(id), done };
 }
@@ -299,7 +388,8 @@ export function removeLanguage(id: string): void {
 	const name = languageById(id)?.english ?? catalogLanguage(id)?.english ?? id;
 	if (id === activeProfile()) throw new Error(`${name} is the language running now. Switch to another one first.`);
 	const builtIn = isBuiltIn(id);
-	if (!LANGUAGE_ID_RE.test(id) || (builtIn ? isHidden(id) : !fs.existsSync(dirOf(id)))) throw new Error(`${name} has nothing to remove`);
+	if (!LANGUAGE_ID_RE.test(id) || (builtIn ? isHidden(id) : !fs.existsSync(dirOf(id))))
+		throw new Error(`${name} has nothing to remove`);
 	if (!languageRemovable(id)) throw new Error(`${name} is being added. Stop that first.`);
 	if (!builtIn) fs.rmSync(dirOf(id), { recursive: true, force: true });
 	const choice = readProfileChoice();
@@ -316,7 +406,8 @@ class SourceError extends Error {}
 function friendly(err: unknown): string {
 	if (err instanceof SourceError) return err.message;
 	const msg = err instanceof Error ? err.message : String(err);
-	if (/fetch failed|ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN/i.test(msg)) return "The download failed. Check the internet connection and try again; it continues where it stopped.";
+	if (/fetch failed|ENOTFOUND|ECONNRESET|ETIMEDOUT|EAI_AGAIN/i.test(msg))
+		return "The download failed. Check the internet connection and try again; it continues where it stopped.";
 	return msg;
 }
 
@@ -356,9 +447,17 @@ const PARSE_SLICE_BYTES = 8 * 1024;
  *  the decompressed total, for the progress line. Lines are split here, not
  *  by readline: readline keeps reading while its lines wait, and a 1 GB
  *  Wiktionary file then sits in memory whole. */
-export async function* lines(get: typeof fetch, url: string, signal: AbortSignal, opts: { bz2?: boolean; what: string; onBytes?: (n: number) => void }): AsyncGenerator<string> {
+export async function* lines(
+	get: typeof fetch,
+	url: string,
+	signal: AbortSignal,
+	opts: { bz2?: boolean; what: string; onBytes?: (n: number) => void },
+): AsyncGenerator<string> {
 	const res = await get(url, { signal, headers: { "user-agent": UA, "accept-encoding": "gzip" } });
-	if (!res.ok || !res.body) throw new SourceError(`Could not download ${opts.what} (HTTP ${res.status}). Try again later; it continues where it stopped.`);
+	if (!res.ok || !res.body)
+		throw new SourceError(
+			`Could not download ${opts.what} (HTTP ${res.status}). Try again later; it continues where it stopped.`,
+		);
 	const raw = Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]);
 	// unbzip2-stream is a classic `through` stream, which cannot be iterated; a PassThrough can.
 	const stream = opts.bz2 ? raw.pipe(unbzip2()).pipe(new PassThrough()) : raw;
@@ -408,17 +507,28 @@ function stepper(taskId: string) {
 
 const mb = (n: number) => `${Math.round(n / 1_000_000)} MB`;
 
-async function tatoebaSentences(get: typeof fetch, lang: CatalogLanguage, signal: AbortSignal, step: (s: string, force?: boolean) => void): Promise<TatoebaSentence[]> {
+async function tatoebaSentences(
+	get: typeof fetch,
+	lang: CatalogLanguage,
+	signal: AbortSignal,
+	step: (s: string, force?: boolean) => void,
+): Promise<TatoebaSentence[]> {
 	const iso = lang.tatoeba;
 	step("Downloading example sentences from Tatoeba", true);
 	const link = new Map<number, number>();
-	for await (const line of lines(get, `${TATOEBA}/${iso}/${iso}-eng_links.tsv.bz2`, signal, { bz2: true, what: "the Tatoeba links" })) {
+	for await (const line of lines(get, `${TATOEBA}/${iso}/${iso}-eng_links.tsv.bz2`, signal, {
+		bz2: true,
+		what: "the Tatoeba links",
+	})) {
 		const [a, b] = line.split("\t");
 		const from = Number(a);
 		if (from && !link.has(from)) link.set(from, Number(b));
 	}
 	const target = new Map<number, string>();
-	for await (const line of lines(get, `${TATOEBA}/${iso}/${iso}_sentences.tsv.bz2`, signal, { bz2: true, what: `the ${lang.english} sentences` })) {
+	for await (const line of lines(get, `${TATOEBA}/${iso}/${iso}_sentences.tsv.bz2`, signal, {
+		bz2: true,
+		what: `the ${lang.english} sentences`,
+	})) {
 		const [a, , text] = line.split("\t");
 		const sid = Number(a);
 		if (text && link.has(sid) && sentenceUsable(text)) target.set(sid, text.normalize("NFC"));
@@ -426,7 +536,11 @@ async function tatoebaSentences(get: typeof fetch, lang: CatalogLanguage, signal
 	const needed = new Set<number>();
 	for (const sid of target.keys()) needed.add(link.get(sid)!);
 	const english = new Map<number, string>();
-	for await (const line of lines(get, `${TATOEBA}/eng/eng_sentences.tsv.bz2`, signal, { bz2: true, what: "the English translations", onBytes: (n) => step(`Downloading English translations · ${mb(n)}`) })) {
+	for await (const line of lines(get, `${TATOEBA}/eng/eng_sentences.tsv.bz2`, signal, {
+		bz2: true,
+		what: "the English translations",
+		onBytes: (n) => step(`Downloading English translations · ${mb(n)}`),
+	})) {
 		const tab = line.indexOf("\t");
 		const sid = Number(line.slice(0, tab));
 		if (needed.has(sid)) english.set(sid, line.slice(line.indexOf("\t", tab + 1) + 1));
@@ -440,21 +554,38 @@ async function tatoebaSentences(get: typeof fetch, lang: CatalogLanguage, signal
 	return out.sort((a, b) => a.text.length - b.text.length || a.id - b.id);
 }
 
-async function frequency(get: typeof fetch, lang: CatalogLanguage, sentences: TatoebaSentence[], signal: AbortSignal): Promise<string[]> {
+async function frequency(
+	get: typeof fetch,
+	lang: CatalogLanguage,
+	sentences: TatoebaSentence[],
+	signal: AbortSignal,
+): Promise<string[]> {
 	if (!lang.frequency) return [...frequencyFromSentences(sentences, lang.tag, WANTED).keys()];
 	const url = `https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/${lang.frequency}/${lang.frequency}_50k.txt`;
 	const res = await get(url, { signal, headers: { "user-agent": UA } });
-	if (!res.ok) throw new SourceError(`Could not download the word frequency list (HTTP ${res.status}). Try again later; it continues where it stopped.`);
+	if (!res.ok)
+		throw new SourceError(
+			`Could not download the word frequency list (HTTP ${res.status}). Try again later; it continues where it stopped.`,
+		);
 	return [...parseFrequency(await res.text(), lang.tag, WANTED).keys()];
 }
 
-async function wiktionary(get: typeof fetch, lang: CatalogLanguage, wanted: Set<string>, signal: AbortSignal, step: (s: string, force?: boolean) => void): Promise<BuildWord[]> {
+async function wiktionary(
+	get: typeof fetch,
+	lang: CatalogLanguage,
+	wanted: Set<string>,
+	signal: AbortSignal,
+	step: (s: string, force?: boolean) => void,
+): Promise<BuildWord[]> {
 	const name = lang.wiktionary;
 	const url = `https://kaikki.org/dictionary/${encodeURIComponent(name)}/kaikki.org-dictionary-${encodeURIComponent(name.replace(/[\s-]/g, ""))}.jsonl`;
 	step("Reading Wiktionary", true);
 	const words = new Map<string, BuildWord>();
 	const formOf: FormOf[] = [];
-	for await (const line of lines(get, url, signal, { what: "the Wiktionary word list", onBytes: (n) => step(`Reading Wiktionary · ${mb(n)}`) })) {
+	for await (const line of lines(get, url, signal, {
+		what: "the Wiktionary word list",
+		onBytes: (n) => step(`Reading Wiktionary · ${mb(n)}`),
+	})) {
 		if (!lineMayMatter(line, wanted, lang.tag)) continue;
 		let raw: unknown;
 		try {
@@ -492,30 +623,49 @@ function courseEngine(writer: WriterSlot = "strong") {
 	const other: WriterSlot = writer === "strong" ? "cheap" : "strong";
 	const slot = aiSlot(writer)?.model ? aiSlot(writer) : aiSlot(other);
 	if (!slot?.model) return null;
-	const spec = { provider: slot.model.provider, id: slot.model.id, ...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}) };
+	const spec = {
+		provider: slot.model.provider,
+		id: slot.model.id,
+		...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}),
+	};
 	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
 }
 
-const askOn = (writer: WriterSlot): Ask => async (system, prompt, signal, cap) => {
-	const resolved = courseEngine(writer);
-	if (!resolved) throw new SourceError('No model is set. Pick one in Settings → AI models, or add the language again with "From the dictionary only".');
-	const usage: StoryUsage = { model: resolved.model, steps: [] };
-	const { engine } = resolved;
-	// The cap rides every request, so the provider ends the answer there.
-	const capped = { ...engine, streamFn: ((m, c, o) => engine.streamFn(m, c, { ...o, maxTokens: cap })) as typeof engine.streamFn };
-	const { text, newMessages } = await runSubagent([], {
-		role: "researcher",
-		engine: capped,
-		systemPrompt: system,
-		prompt,
-		maxTurns: 1,
-		shouldStop: () => signal.aborted,
-		onUsage: (u: Usage) =>
-			usage.steps.push({ inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning }),
-	});
-	const last = [...newMessages].reverse().find((m) => m.role === "assistant") as { stopReason?: string } | undefined;
-	return { text, usage, level: engine.level ?? "off", cut: last?.stopReason === "length" };
-};
+const askOn =
+	(writer: WriterSlot): Ask =>
+	async (system, prompt, signal, cap) => {
+		const resolved = courseEngine(writer);
+		if (!resolved)
+			throw new SourceError(
+				'No model is set. Pick one in Settings → AI models, or add the language again with "From the dictionary only".',
+			);
+		const usage: StoryUsage = { model: resolved.model, steps: [] };
+		const { engine } = resolved;
+		// The cap rides every request, so the provider ends the answer there.
+		const capped = {
+			...engine,
+			streamFn: ((m, c, o) => engine.streamFn(m, c, { ...o, maxTokens: cap })) as typeof engine.streamFn,
+		};
+		const { text, newMessages } = await runSubagent([], {
+			role: "researcher",
+			engine: capped,
+			systemPrompt: system,
+			prompt,
+			maxTurns: 1,
+			shouldStop: () => signal.aborted,
+			onUsage: (u: Usage) =>
+				usage.steps.push({
+					inputTokens: u.input,
+					outputTokens: u.output,
+					cacheReadTokens: u.cacheRead,
+					cacheWriteTokens: u.cacheWrite,
+					cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+					reasoningTokens: u.reasoning,
+				}),
+		});
+		const last = [...newMessages].reverse().find((m) => m.role === "assistant") as { stopReason?: string } | undefined;
+		return { text, usage, level: engine.level ?? "off", cut: last?.stopReason === "length" };
+	};
 
 function jsonOf(text: string): unknown {
 	const start = text.indexOf("{");
@@ -531,7 +681,15 @@ function jsonOf(text: string): unknown {
 /** One model draft, kept in build/<name>-draft.json with its cost (it shows
  *  in Settings → Spending), checked, and asked once more with what was
  *  wrong when the check fails. */
-async function drafted<T>(id: string, name: DraftKind, writer: WriterSlot, ask: Ask, signal: AbortSignal, first: { system: string; prompt: string }, check: (raw: unknown) => { value: T; problems: string[] } | null): Promise<T> {
+async function drafted<T>(
+	id: string,
+	name: DraftKind,
+	writer: WriterSlot,
+	ask: Ask,
+	signal: AbortSignal,
+	first: { system: string; prompt: string },
+	check: (raw: unknown) => { value: T; problems: string[] } | null,
+): Promise<T> {
 	const file = path.join(buildDir(id), `${name}-draft.json`);
 	const kept = readJson<{ value?: T }>(file);
 	if (kept?.value) return kept.value;
@@ -541,7 +699,13 @@ async function drafted<T>(id: string, name: DraftKind, writer: WriterSlot, ask: 
 	let cap = caps.first;
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const { text, usage, level, cut } = await ask(first.system, prompt, signal, cap);
-		calls.push({ model: usage.model, ...(level ? { level } : {}), usage, ...(cut ? { cut } : {}), createdAt: new Date().toISOString() });
+		calls.push({
+			model: usage.model,
+			...(level ? { level } : {}),
+			usage,
+			...(cut ? { cut } : {}),
+			createdAt: new Date().toISOString(),
+		});
 		if (cut) {
 			// Cut short, not wrong: the same question with twice the room.
 			cap = caps.second;
@@ -549,13 +713,22 @@ async function drafted<T>(id: string, name: DraftKind, writer: WriterSlot, ask: 
 		}
 		const result = check(jsonOf(text));
 		if (result) {
-			writeJson(file, { value: result.value, problems: result.problems, calls, model: usage.model, usage: mergeUsage(calls), createdAt: calls[0]!.createdAt });
+			writeJson(file, {
+				value: result.value,
+				problems: result.problems,
+				calls,
+				model: usage.model,
+				usage: mergeUsage(calls),
+				createdAt: calls[0]!.createdAt,
+			});
 			return result.value;
 		}
 		prompt = `${first.prompt}\n\nYour last answer could not be used: it was not valid JSON in the shape above, or too little of it held up against the dictionary. Write it again, complete.`;
 	}
 	writeJson(file, { calls, model: calls[0]!.model, usage: mergeUsage(calls), createdAt: calls[0]!.createdAt });
-	throw new SourceError(`The model's ${name === "world" ? "story world" : "course"} failed the dictionary check twice. Try again; the downloads are kept.`);
+	throw new SourceError(
+		`The model's ${name === "world" ? "story world" : "course"} failed the dictionary check twice. Try again; the downloads are kept.`,
+	);
 }
 
 function mergeUsage(calls: ReadonlyArray<{ usage: StoryUsage }>): StoryUsage {
@@ -566,14 +739,23 @@ function shippedJson<T>(id: string, name: string): T | null {
 	return readJson<T>(path.join(ROOT, "curriculum", id, name));
 }
 
-async function writeLexicon(lang: CatalogLanguage, sentences: TatoebaSentence[], freq: ReadonlyMap<string, number>, words: readonly BuildWord[], signal: AbortSignal) {
+async function writeLexicon(
+	lang: CatalogLanguage,
+	sentences: TatoebaSentence[],
+	freq: ReadonlyMap<string, number>,
+	words: readonly BuildWord[],
+	signal: AbortSignal,
+) {
 	const written = shippedJson<Course>(lang.id, "course.json");
 	const themeWords = new Set(written?.units.flatMap((u) => u.lemmas ?? []) ?? []);
 	const bad = new Set((written?.badSentences ?? []).map((b) => b.id));
 	sentences = sentences.filter((s) => !bad.has(s.id));
 	const merged = mergeHomographs(words, lang.tag);
 	const ranked = rankWords(merged, freq, lang.tag, WORD_LIMIT, themeWords);
-	const collector = new ExampleCollector(ranked, lang.tag, undefined, { names: namesIn(sentences, lang.tag), outside: merged });
+	const collector = new ExampleCollector(ranked, lang.tag, undefined, {
+		names: namesIn(sentences, lang.tag),
+		outside: merged,
+	});
 	// About 5 µs a sentence: 50 between yields is a quarter of a millisecond.
 	for (let i = 0; i < sentences.length; i++) {
 		collector.add(sentences[i]!);
@@ -585,7 +767,8 @@ async function writeLexicon(lang: CatalogLanguage, sentences: TatoebaSentence[],
 	const entries = toLexiconEntries(ranked, collector.examples, lang.tag);
 	writeJson(path.join(dirOf(lang.id), "lexicon.json"), {
 		source: "Wiktionary (kaikki.org), Tatoeba, FrequencyWords (OpenSubtitles 2018)",
-		license: "Words and glosses: Wiktionary, CC BY-SA 4.0. Example sentences: Tatoeba, CC BY 2.0 FR. Frequency: FrequencyWords, CC BY-SA 4.0.",
+		license:
+			"Words and glosses: Wiktionary, CC BY-SA 4.0. Example sentences: Tatoeba, CC BY 2.0 FR. Frequency: FrequencyWords, CC BY-SA 4.0.",
 		exportedAt: new Date().toISOString(),
 		words: entries,
 	});
@@ -598,8 +781,15 @@ export async function rebuildLexicon(id: string): Promise<{ words: number; examp
 	const sentences = readJson<{ value: TatoebaSentence[] }>(path.join(buildDir(id), "sentences.json"))?.value;
 	const freqWords = readJson<{ value: string[] }>(path.join(buildDir(id), "frequency.json"))?.value;
 	const words = readJson<{ value: BuildWord[] }>(path.join(buildDir(id), "words-v2.json"))?.value;
-	if (!sentences || !freqWords || !words) throw new Error(`${id} has no kept downloads under ${buildDir(id)}; add it from the app instead`);
-	const entries = await writeLexicon(lang, sentences, new Map(freqWords.map((w, i) => [w, i + 1])), words, new AbortController().signal);
+	if (!sentences || !freqWords || !words)
+		throw new Error(`${id} has no kept downloads under ${buildDir(id)}; add it from the app instead`);
+	const entries = await writeLexicon(
+		lang,
+		sentences,
+		new Map(freqWords.map((w, i) => [w, i + 1])),
+		words,
+		new AbortController().signal,
+	);
 	const written = shippedJson<Course>(id, "course.json");
 	if (written) {
 		const sceneIds = SPEAK_SCENES.map((x) => x.id);
@@ -633,34 +823,72 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	if (written) {
 		step("Checking the course written for this language", true);
 		const built = checkCourse(written, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
-		if (!built) throw new SourceError(`The ${lang.english} course that ships with the app does not fit these downloads. Try again later.`);
+		if (!built)
+			throw new SourceError(
+				`The ${lang.english} course that ships with the app does not fit these downloads. Try again later.`,
+			);
 		course = built.course;
 	} else if (writer === "dictionary") {
 		step("Building the course from the dictionary", true);
-		const built = checkCourse(proceduralCourse(entries, id, lang.english, lang.tag), id, entries, lang.tag, sceneIds, deps.minUnitSentences);
-		if (!built) throw new SourceError(`The dictionary has too few ${lang.english} sentences for a course. Try again with a model.`);
+		const built = checkCourse(
+			proceduralCourse(entries, id, lang.english, lang.tag),
+			id,
+			entries,
+			lang.tag,
+			sceneIds,
+			deps.minUnitSentences,
+		);
+		if (!built)
+			throw new SourceError(
+				`The dictionary has too few ${lang.english} sentences for a course. Try again with a model.`,
+			);
 		course = built.course;
 	} else {
 		const ask = deps.ask ?? askOn(writer);
 		step("Writing the course", true);
 		const inventory = courseInventory(entries, lang.tag, sceneIds);
-		course = await drafted<Course>(id, "course", writer, ask, signal, courseDraftPrompt(lang.english, inventory), (raw) => {
-			const checked = checkCourse(raw, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
-			return checked ? { value: checked.course, problems: checked.dropped } : null;
-		});
+		course = await drafted<Course>(
+			id,
+			"course",
+			writer,
+			ask,
+			signal,
+			courseDraftPrompt(lang.english, inventory),
+			(raw) => {
+				const checked = checkCourse(raw, id, entries, lang.tag, sceneIds, deps.minUnitSentences);
+				return checked ? { value: checked.course, problems: checked.dropped } : null;
+			},
+		);
 	}
 	writeJson(path.join(dirOf(id), "course.json"), course);
 
 	if (!written && writer !== "dictionary" && !shippedJson(id, "world.json")) {
 		const ask = deps.ask ?? askOn(writer);
 		step("Writing the story world", true);
-		const world = await drafted(id, "world", writer, ask, signal, worldDraftPrompt(lang.english, countryOf(lang), course.chapters, PURPOSES.map((p) => p.id).filter((p) => p !== "other"), sceneIds), (raw) => {
-			const w = checkWorld(raw, id, course.chapters, sceneIds);
-			return w ? { value: w, problems: [] } : null;
-		});
+		const world = await drafted(
+			id,
+			"world",
+			writer,
+			ask,
+			signal,
+			worldDraftPrompt(
+				lang.english,
+				countryOf(lang),
+				course.chapters,
+				PURPOSES.map((p) => p.id).filter((p) => p !== "other"),
+				sceneIds,
+			),
+			(raw) => {
+				const w = checkWorld(raw, id, course.chapters, sceneIds);
+				return w ? { value: w, problems: [] } : null;
+			},
+		);
 		writeJson(path.join(dirOf(id), "world.json"), world);
 	}
-	const note: string | undefined = !written && writer === "dictionary" ? "Built from the dictionary: plain rules, no word themes, no story world." : undefined;
+	const note: string | undefined =
+		!written && writer === "dictionary"
+			? "Built from the dictionary: plain rules, no word themes, no story world."
+			: undefined;
 
 	const withExamples = entries.filter((e) => e.examples.length > 0).length;
 	step("Saving", true);
@@ -670,7 +898,10 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 		code: lang.code,
 		endonym: lang.endonym,
 		english: lang.english,
-		specialLetters: specialLettersOf(entries.map((e) => e.lemma ?? ""), lang.tag),
+		specialLetters: specialLettersOf(
+			entries.map((e) => e.lemma ?? ""),
+			lang.tag,
+		),
 		edgeVoices: lang.edgeVoices,
 		referenceSite: lang.referenceSite,
 		...(lang.fsiCategory ? { fsiCategory: lang.fsiCategory } : {}),
@@ -682,4 +913,3 @@ async function addLanguage(lang: CatalogLanguage, signal: AbortSignal, deps: Add
 	const summary = `${course.chapters.length} chapters, ${grammar} grammar lessons, ${course.units.length - grammar} word themes, ${course.tutors.length} tutor sessions; ${entries.length.toLocaleString("en-US")} words, ${withExamples.toLocaleString("en-US")} with example sentences.`;
 	return note ? `${summary} ${note}` : summary;
 }
-

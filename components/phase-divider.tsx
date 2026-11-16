@@ -62,15 +62,11 @@ export function PhaseChip({ phase }: { phase: Phase3 }) {
 export function PhaseDivider({ phase, nodeCount }: { phase: Phase3; nodeCount?: number }) {
 	if (phase === "probe") return null;
 	const label =
-		phase === "plan" && nodeCount
-			? `Plan · ${nodeCount} node${nodeCount === 1 ? "" : "s"}`
-			: CHIP_LABEL[phase];
+		phase === "plan" && nodeCount ? `Plan · ${nodeCount} node${nodeCount === 1 ? "" : "s"}` : CHIP_LABEL[phase];
 	return (
 		<div className="my-4 flex w-full items-center gap-3" data-testid={`phase-divider-${phase}`}>
 			<span className="h-0 flex-1 border-t-2 border-dotted border-border/50" aria-hidden />
-			<span className="rounded-full bg-well-2 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-				{label}
-			</span>
+			<span className="rounded-full bg-well-2 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{label}</span>
 			<span className="h-0 flex-1 border-t-2 border-dotted border-border/50" aria-hidden />
 		</div>
 	);

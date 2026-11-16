@@ -47,7 +47,14 @@ type AccessStatus = {
 	enabled: boolean;
 	port: number;
 	serveCommand: string;
-	devices: { id: string; name: string; createdAt: string; lastSeenAt: string; current: boolean; via: "pairing" | "password" }[];
+	devices: {
+		id: string;
+		name: string;
+		createdAt: string;
+		lastSeenAt: string;
+		current: boolean;
+		via: "pairing" | "password";
+	}[];
 	pairing: { expiresAt: string } | null;
 };
 
@@ -72,7 +79,13 @@ function unreadableAccess(): AccessFile {
 
 function isDevice(value: unknown): value is DeviceRecord {
 	const d = value as Partial<DeviceRecord> | null;
-	return Boolean(d && typeof d.id === "string" && typeof d.tokenHash === "string" && typeof d.expiresAt === "string" && (d.via === undefined || d.via === "password"));
+	return Boolean(
+		d &&
+		typeof d.id === "string" &&
+		typeof d.tokenHash === "string" &&
+		typeof d.expiresAt === "string" &&
+		(d.via === undefined || d.via === "password"),
+	);
 }
 
 function isPairing(value: unknown): value is PairingRecord {
@@ -146,11 +159,16 @@ function findLiveDevice(access: AccessFile, token: string, at: Date): DeviceReco
 }
 
 /** Turns remote access on. The window that asked is handed a session as "This computer", unless it already has one or is the desktop window. */
-export function enableRemoteAccess(options: { issueThisComputer: boolean; at?: Date }): Promise<{ token: string | null; access: AccessFile }> {
+export function enableRemoteAccess(options: {
+	issueThisComputer: boolean;
+	at?: Date;
+}): Promise<{ token: string | null; access: AccessFile }> {
 	return exclusive(() => {
 		const at = options.at ?? new Date();
 		const current = readAccess();
-		let next: AccessFile = current.enabled ? current : { ...current, enabled: true, enabledAt: at.toISOString(), pairing: null };
+		let next: AccessFile = current.enabled
+			? current
+			: { ...current, enabled: true, enabledAt: at.toISOString(), pairing: null };
 		let token: string | null = null;
 		if (options.issueThisComputer) {
 			token = newToken();
@@ -228,7 +246,10 @@ export function resolveDevice(token: string, at: Date = new Date()): Promise<Dev
 }
 
 /** Signs a browser in after a right password (E93). Null while access is off, so a sign-in that raced a switch-off creates nothing. */
-export function issueSession(name: string, at: Date = new Date()): Promise<{ token: string; device: DeviceRecord } | null> {
+export function issueSession(
+	name: string,
+	at: Date = new Date(),
+): Promise<{ token: string; device: DeviceRecord } | null> {
 	return exclusive(() => {
 		const access = readAccess();
 		if (!access.enabled) return null;
@@ -280,8 +301,18 @@ export function accessStatus(headers: Headers, port: number, at: Date = new Date
 		enabled: access.enabled,
 		port,
 		serveCommand: `tailscale serve --bg ${port}`,
-		devices: live.map((d) => ({ id: d.id, name: d.name, createdAt: d.createdAt, lastSeenAt: d.lastSeenAt, current: d.id === me?.id, via: d.via ?? "pairing" })),
-		pairing: access.pairing && Date.parse(access.pairing.expiresAt) > at.getTime() ? { expiresAt: access.pairing.expiresAt } : null,
+		devices: live.map((d) => ({
+			id: d.id,
+			name: d.name,
+			createdAt: d.createdAt,
+			lastSeenAt: d.lastSeenAt,
+			current: d.id === me?.id,
+			via: d.via ?? "pairing",
+		})),
+		pairing:
+			access.pairing && Date.parse(access.pairing.expiresAt) > at.getTime()
+				? { expiresAt: access.pairing.expiresAt }
+				: null,
 	};
 }
 

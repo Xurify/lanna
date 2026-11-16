@@ -16,7 +16,20 @@ import type { DayLog } from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
 
 /** "Monday, November 2" for a YYYY-MM-DD key. */
 function dayTitle(day: string): string {
@@ -65,7 +78,13 @@ export function LogPage({ initial = null }: { initial?: { today: string; days: D
 				<p className="q-line dim mt-1">What you did each day, from your own records.</p>
 
 				<div className="mt-6 flex items-center gap-2" data-testid="log-switcher">
-					<button type="button" className="q-btn sec !px-2.5" onClick={() => setI((n) => Math.min(list.length - 1, n + 1))} disabled={i >= list.length - 1} aria-label="Earlier day">
+					<button
+						type="button"
+						className="q-btn sec !px-2.5"
+						onClick={() => setI((n) => Math.min(list.length - 1, n + 1))}
+						disabled={i >= list.length - 1}
+						aria-label="Earlier day"
+					>
 						<ChevronLeftIcon className="size-4" strokeWidth={1.6} />
 						<span className="max-sm:hidden">Earlier</span>
 					</button>
@@ -77,13 +96,22 @@ export function LogPage({ initial = null }: { initial?: { today: string; days: D
 								role="tab"
 								aria-selected={n === i}
 								onClick={() => setI(n)}
-								className={cn("q-num h-8 shrink-0 rounded-md px-3 text-[13px]", n === i ? "bg-teal-wash font-[600] text-teal-2" : "text-ink-3 hover:bg-well hover:text-ink-2")}
+								className={cn(
+									"q-num h-8 shrink-0 rounded-md px-3 text-[13px]",
+									n === i ? "bg-teal-wash font-[600] text-teal-2" : "text-ink-3 hover:bg-well hover:text-ink-2",
+								)}
 							>
 								{d.day === today ? "Today" : shortDay(d.day)}
 							</button>
 						))}
 					</div>
-					<button type="button" className="q-btn sec !px-2.5" onClick={() => setI((n) => Math.max(0, n - 1))} disabled={i <= 0} aria-label="Later day">
+					<button
+						type="button"
+						className="q-btn sec !px-2.5"
+						onClick={() => setI((n) => Math.max(0, n - 1))}
+						disabled={i <= 0}
+						aria-label="Later day"
+					>
 						<span className="max-sm:hidden">Later</span>
 						<ChevronRightIcon className="size-4" strokeWidth={1.6} />
 					</button>
@@ -99,7 +127,13 @@ export function LogPage({ initial = null }: { initial?: { today: string; days: D
 						</div>
 					</section>
 				) : (
-					<p className="q-line dim mt-6">{failed ? "The log could not be loaded. Check that LangHarness is still running, then reload." : days ? "No days yet. Each finished task shows up here." : "\u00a0"}</p>
+					<p className="q-line dim mt-6">
+						{failed
+							? "The log could not be loaded. Check that LangHarness is still running, then reload."
+							: days
+								? "No days yet. Each finished task shows up here."
+								: "\u00a0"}
+					</p>
 				)}
 			</main>
 		</div>

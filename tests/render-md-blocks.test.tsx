@@ -51,10 +51,7 @@ describe("md-blocks — mermaid", () => {
 	it("renders as the bare app-owned block (skeleton in static render), never a code block, source never leaks", () => {
 		const html = render("```mermaid\ngraph TD\nA --> B\n```");
 		assert.ok(html.includes('data-testid="md-mermaid"'), "the app-owned mermaid block mounts");
-		assert.ok(
-			!html.includes('data-streamdown="code-block"'),
-			"mermaid fences must not render as code blocks",
-		);
+		assert.ok(!html.includes('data-streamdown="code-block"'), "mermaid fences must not render as code blocks");
 		assert.ok(!html.includes("graph TD"), "chart source is not leaked as text");
 		// No chat page mounted → no overlay context → no expand button.
 		assert.ok(!html.includes('data-testid="md-mermaid-expand"'), "expand hidden without a session context");
@@ -120,10 +117,7 @@ describe("session-scoped overlays (chrome-melt wave, 2026-09-19)", () => {
 	});
 
 	it("chartSize reads the viewBox from a rendered svg (fallback for degenerate ones)", () => {
-		assert.deepEqual(
-			chartSize('<svg viewBox="0 0 900 700" xmlns="..."></svg>'),
-			{ w: 900, h: 700 },
-		);
+		assert.deepEqual(chartSize('<svg viewBox="0 0 900 700" xmlns="..."></svg>'), { w: 900, h: 700 });
 		assert.deepEqual(chartSize("<svg></svg>"), { w: 600, h: 400 });
 	});
 });
@@ -251,7 +245,9 @@ describe("ThinkingBlock — the document band + ⌘T sync (owner rounds, 2026-10
 
 describe("md-blocks — svg drawings", () => {
 	it("renders a drawing in the page with the theme tokens, never as a code block", () => {
-		const html = render('Near and far.\n\n```svg\n<svg viewBox="0 0 320 120"><title>near and far</title><text x="16" y="40" style="fill:var(--ink)">táto kniha</text><script>alert(1)</script></svg>\n```');
+		const html = render(
+			'Near and far.\n\n```svg\n<svg viewBox="0 0 320 120"><title>near and far</title><text x="16" y="40" style="fill:var(--ink)">táto kniha</text><script>alert(1)</script></svg>\n```',
+		);
 		assert.ok(html.includes('data-testid="md-sketch"'));
 		assert.ok(html.includes('aria-label="near and far"'));
 		assert.ok(html.includes("fill:var(--sk-ink)"));
@@ -267,7 +263,9 @@ describe("md-blocks — svg drawings", () => {
 	});
 
 	it("shows the first step of a stepped drawing with its caption and the step controls", () => {
-		const html = render('```svg\n<svg viewBox="0 0 100 60"><g data-step="1" data-caption="Near"><circle cx="5" cy="5" r="2"/></g><g data-step="2" data-caption="Far"><circle cx="50" cy="5" r="2"/></g></svg>\n```');
+		const html = render(
+			'```svg\n<svg viewBox="0 0 100 60"><g data-step="1" data-caption="Near"><circle cx="5" cy="5" r="2"/></g><g data-step="2" data-caption="Far"><circle cx="50" cy="5" r="2"/></g></svg>\n```',
+		);
 		assert.ok(html.includes(">Near</p>"));
 		assert.match(html, /Step 1 of 2/);
 		assert.match(html, /g\[data-step="2"\]\{opacity:0\}/);

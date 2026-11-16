@@ -54,7 +54,10 @@ if (PROD) {
 	if (built.status !== 0) process.exit(built.status ?? 1);
 }
 function startNext() {
-	const next = spawn(process.execPath, [nextBin, PROD ? "start" : "dev", "-H", "127.0.0.1", "-p", PORT], { cwd: root, stdio: "inherit" });
+	const next = spawn(process.execPath, [nextBin, PROD ? "start" : "dev", "-H", "127.0.0.1", "-p", PORT], {
+		cwd: root,
+		stdio: "inherit",
+	});
 	children.add(next);
 	next.on("exit", (code) => {
 		children.delete(next);
@@ -65,7 +68,11 @@ function startNext() {
 
 function startShell() {
 	const electronBin = require("electron");
-	const electron = spawn(electronBin, ["."], { cwd: root, stdio: "inherit", env: { ...process.env, LH_DEV_URL: URL_ } });
+	const electron = spawn(electronBin, ["."], {
+		cwd: root,
+		stdio: "inherit",
+		env: { ...process.env, LH_DEV_URL: URL_ },
+	});
 	children.add(electron);
 	electron.on("exit", (code) => {
 		children.delete(electron);

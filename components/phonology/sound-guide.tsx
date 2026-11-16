@@ -10,10 +10,22 @@ import { speak } from "@/components/speech";
 import { getPhonologyData, getSoundNote, getSoundNotes, type SoundNote } from "@/src/core";
 import { SoundPictures } from "./sound-pictures";
 
-export function SoundGuide({ languageId, languageCode, initialSound, onTrain }: { languageId: string; languageCode: string; initialSound?: string; onTrain: (family: string) => void }) {
+export function SoundGuide({
+	languageId,
+	languageCode,
+	initialSound,
+	onTrain,
+}: {
+	languageId: string;
+	languageCode: string;
+	initialSound?: string;
+	onTrain: (family: string) => void;
+}) {
 	const data = getSoundNotes(languageId);
 	const sounds = data?.sounds ?? [];
-	const [symbol, setSymbol] = useState(() => getSoundNote(initialSound ?? "", languageId)?.symbol ?? sounds[0]?.symbol ?? "");
+	const [symbol, setSymbol] = useState(
+		() => getSoundNote(initialSound ?? "", languageId)?.symbol ?? sounds[0]?.symbol ?? "",
+	);
 	const index = Math.max(
 		0,
 		sounds.findIndex((s) => s.symbol === symbol),
@@ -53,7 +65,13 @@ export function SoundGuide({ languageId, languageCode, initialSound, onTrain }: 
 							{sounds
 								.filter((s) => s.group === g.id)
 								.map((s) => (
-									<SoundChip key={s.symbol} sound={s} on={s.symbol === note.symbol} langCode={languageCode} onPick={() => setSymbol(s.symbol)} />
+									<SoundChip
+										key={s.symbol}
+										sound={s}
+										on={s.symbol === note.symbol}
+										langCode={languageCode}
+										onPick={() => setSymbol(s.symbol)}
+									/>
 								))}
 						</div>
 					</div>
@@ -64,14 +82,24 @@ export function SoundGuide({ languageId, languageCode, initialSound, onTrain }: 
 				<PracticeCard key={note.symbol} icon="sound" title="Sounds" sub={group?.label} className="lh-rise">
 					<div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
 						<h2 className="flex items-baseline gap-3">
-							<span className="font-prose text-[56px] font-semibold leading-[0.9] tracking-[-0.035em] text-foreground" lang={languageCode} data-testid="sound-symbol">
+							<span
+								className="font-prose text-[56px] font-semibold leading-[0.9] tracking-[-0.035em] text-foreground"
+								lang={languageCode}
+								data-testid="sound-symbol"
+							>
 								{note.symbol}
 							</span>
 							<span className="font-ui text-[14px] text-ink-3">[{note.ipa}]</span>
 						</h2>
 						<div className={cn("flex items-center gap-3", note.picture && "sr-only")}>
 							<span className="font-ui text-[13px] text-ink-3">{note.meaning}</span>
-							<button type="button" onClick={() => void speak(note.word).catch(() => {})} aria-label={`Play ${note.word}`} className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")} data-testid="sound-hear">
+							<button
+								type="button"
+								onClick={() => void speak(note.word).catch(() => {})}
+								aria-label={`Play ${note.word}`}
+								className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}
+								data-testid="sound-hear"
+							>
 								<Volume2Icon className="size-4 text-ink-3" strokeWidth={1.6} />
 								<span className="font-prose text-[16px] font-semibold" lang={languageCode}>
 									{note.word}
@@ -97,7 +125,12 @@ export function SoundGuide({ languageId, languageCode, initialSound, onTrain }: 
 
 					{family && (
 						<div className="mt-6">
-							<button type="button" onClick={() => onTrain(family.id)} className={cn(SECONDARY, SMALL, "pointer-coarse:h-11")} data-testid="sound-train">
+							<button
+								type="button"
+								onClick={() => onTrain(family.id)}
+								className={cn(SECONDARY, SMALL, "pointer-coarse:h-11")}
+								data-testid="sound-train"
+							>
 								Train your ear: {family.label}
 							</button>
 						</div>
@@ -124,7 +157,17 @@ function Line({ label, children }: { label: string; children: React.ReactNode })
 	);
 }
 
-function SoundChip({ sound, on, langCode, onPick }: { sound: SoundNote; on: boolean; langCode: string; onPick: () => void }) {
+function SoundChip({
+	sound,
+	on,
+	langCode,
+	onPick,
+}: {
+	sound: SoundNote;
+	on: boolean;
+	langCode: string;
+	onPick: () => void;
+}) {
 	return (
 		<button
 			type="button"
@@ -134,7 +177,9 @@ function SoundChip({ sound, on, langCode, onPick }: { sound: SoundNote; on: bool
 			data-testid="sound-chip"
 			className={cn(
 				"lh-press flex h-11 min-w-11 items-center justify-center rounded-[10px] px-2.5 font-prose text-[17px] font-semibold tracking-[-0.01em]",
-				on ? "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-card text-foreground shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well",
+				on
+					? "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
+					: "bg-card text-foreground shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well",
 			)}
 		>
 			<span lang={langCode}>{sound.symbol}</span>

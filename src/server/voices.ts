@@ -60,7 +60,10 @@ export async function availableVoiceIds(): Promise<Set<string> | null> {
 	const key = keyValue("ELEVENLABS_API_KEY");
 	if (!key) return null;
 	try {
-		const res = await fetch("https://api.elevenlabs.io/v1/voices", { headers: { "xi-api-key": key }, signal: AbortSignal.timeout(8_000) });
+		const res = await fetch("https://api.elevenlabs.io/v1/voices", {
+			headers: { "xi-api-key": key },
+			signal: AbortSignal.timeout(8_000),
+		});
 		if (!res.ok) throw new Error(String(res.status));
 		const body = (await res.json()) as { voices?: Array<{ voice_id?: string }> };
 		const ids = new Set((body.voices ?? []).map((v) => v.voice_id).filter((v): v is string => !!v));
@@ -80,7 +83,10 @@ function hashOf(name: string): number {
  *  one, else same gender; chosen by the name's hash so Martin is always
  *  Martin. Two characters of a story never share a voice while the palette
  *  allows. */
-export function assignVoices(cast: readonly StoryCharacter[], available: ReadonlySet<string> | null = null): StoryCharacter[] {
+export function assignVoices(
+	cast: readonly StoryCharacter[],
+	available: ReadonlySet<string> | null = null,
+): StoryCharacter[] {
 	const palette = available ? VOICE_PALETTE.filter((v) => available.has(v.id)) : [...VOICE_PALETTE];
 	const used = new Set<string>();
 	return cast.map((c) => {

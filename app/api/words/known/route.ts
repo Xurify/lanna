@@ -19,7 +19,8 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { slug?: unknown; known?: unknown } | null;
-	if (!body || typeof body.slug !== "string" || !body.slug.trim()) return Response.json({ message: "slug is required" }, { status: 400 });
+	if (!body || typeof body.slug !== "string" || !body.slug.trim())
+		return Response.json({ message: "slug is required" }, { status: 400 });
 	const slug = body.slug.trim();
 	const entry = loadLexicon()?.bySlug.get(slug);
 	if (!entry) return Response.json({ message: "The dictionary has no such word." }, { status: 404 });

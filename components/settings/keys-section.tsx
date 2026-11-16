@@ -144,7 +144,10 @@ function KeyTableRow({
 	if (expanded && !envOwned) {
 		return (
 			<div data-testid={testid}>
-				<div className="flex items-center gap-2.5 rounded-xl border border-border/80 bg-accent/25 p-2.5" data-testid={`${testid}-editor`}>
+				<div
+					className="flex items-center gap-2.5 rounded-xl border border-border/80 bg-accent/25 p-2.5"
+					data-testid={`${testid}-editor`}
+				>
 					<span className="flex shrink-0 items-center gap-2 font-ui text-xs font-semibold text-foreground">
 						<ProviderIcon provider={providerId ?? (status.id.replace(/_API_KEY|_KEY/g, "").toLowerCase() || label)} />
 						{label}
@@ -249,7 +252,11 @@ function KeyTableRow({
 				aria-expanded={expanded}
 				data-testid={`${testid}-row`}
 				onClick={() => !envOwned && onToggle()}
-				title={envOwned ? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.` : undefined}
+				title={
+					envOwned
+						? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.`
+						: undefined
+				}
 				className={`flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 text-left transition-colors ${
 					envOwned ? "cursor-default" : "cursor-pointer hover:border-border/80 hover:bg-accent"
 				}`}
@@ -354,7 +361,11 @@ function PlainSettingRow({
 					}}
 					disabled={envOwned}
 					placeholder={placeholder}
-					title={envOwned ? `Set by the ${status.id} environment variable, which wins over a saved value. Remove it from the environment and restart to edit it here.` : undefined}
+					title={
+						envOwned
+							? `Set by the ${status.id} environment variable, which wins over a saved value. Remove it from the environment and restart to edit it here.`
+							: undefined
+					}
 					aria-label={label}
 					autoComplete="off"
 					spellCheck={false}
@@ -372,13 +383,7 @@ function PlainSettingRow({
 }
 
 /** The Add-provider control: the table's last row, with the shared dropdown. */
-function AddProviderRow({
-	addable,
-	onPick,
-}: {
-	addable: ProviderKeyInfo[];
-	onPick: (p: ProviderKeyInfo) => void;
-}) {
+function AddProviderRow({ addable, onPick }: { addable: ProviderKeyInfo[]; onPick: (p: ProviderKeyInfo) => void }) {
 	const [open, setOpen] = useState(false);
 	const anchorRef = useRef<HTMLDivElement>(null);
 
@@ -577,61 +582,78 @@ export function KeysSection({
 					/>
 				)}
 				{adding && (
-					<div className="flex items-center gap-2.5 rounded-xl border border-border/80 bg-accent/25 p-2.5" data-testid={`key-${adding.id}-editor`}>
+					<div
+						className="flex items-center gap-2.5 rounded-xl border border-border/80 bg-accent/25 p-2.5"
+						data-testid={`key-${adding.id}-editor`}
+					>
 						<span className="flex shrink-0 items-center gap-2 font-ui text-xs font-semibold text-foreground">
 							<ProviderIcon provider={adding.id} />
 							{adding.label}
 						</span>
-						<AddProviderEditor provider={adding} onSave={(v) => void saveNewProvider(adding, v)} onCancel={() => setAdding(null)} error={addError} />
+						<AddProviderEditor
+							provider={adding}
+							onSave={(v) => void saveNewProvider(adding, v)}
+							onCancel={() => setAdding(null)}
+							error={addError}
+						/>
 					</div>
 				)}
-				{unknownRows.length > 0 && <div data-testid="group-unknown-keys" className="flex flex-col gap-2">
-					{unknownRows.map((status) => <UnknownKeyRow key={status.id} status={status} onDelete={() => deleteKey(status.id)} />)}
-				</div>}
+				{unknownRows.length > 0 && (
+					<div data-testid="group-unknown-keys" className="flex flex-col gap-2">
+						{unknownRows.map((status) => (
+							<UnknownKeyRow key={status.id} status={status} onDelete={() => deleteKey(status.id)} />
+						))}
+					</div>
+				)}
 			</SettingsGroup>
 
 			<SettingsGroup label="Subscriptions" testid="group-subscriptions">
 				<SubscriptionConnections />
 			</SettingsGroup>
 
-			{([
-				{ id: "Speech", label: "Speech (TTS)", testid: "group-speech" },
-				{ id: "Dictation", label: "Dictation (STT)", testid: "group-dictation" },
-				{ id: "Web search", label: "Web search", testid: "group-search" },
-			] as const).map(({ id, label, testid }) => <SettingsGroup key={id} label={label} testid={testid}>
-				{toolRows.filter((status) => TOOL_KEY_GROUP(status.id) === id).map((status) =>
-					isPlainAuthSetting(status.id) ? (
-						// The Azure region: a setting under the Azure key, not a key.
-						<PlainSettingRow
-							key={status.id}
-							label="Region"
-							placeholder="e.g. westeurope"
-							status={status}
-							onSave={(v) => saveKey(status.id, v)}
-							onClear={() => deleteKey(status.id)}
-							testid={`key-${status.id.toLowerCase()}`}
-						/>
-					) : (
-						<KeyTableRow
-							key={status.id}
-							label={status.info?.label ?? status.id}
-							docsUrl={status.info?.docsUrl}
-							status={status}
-							expanded={openRow === status.id}
-							onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
-							onSave={async (v) => {
-								const err = await saveKey(status.id, v);
-								if (!err) setOpenRow(null);
-								return err;
-							}}
-							onCancel={() => setOpenRow(null)}
-							onDelete={() => deleteKey(status.id)}
-							testid={`key-${status.id.toLowerCase()}`}
-						/>
-					),
-				)}
-			</SettingsGroup>)}
-
+			{(
+				[
+					{ id: "Speech", label: "Speech (TTS)", testid: "group-speech" },
+					{ id: "Dictation", label: "Dictation (STT)", testid: "group-dictation" },
+					{ id: "Web search", label: "Web search", testid: "group-search" },
+				] as const
+			).map(({ id, label, testid }) => (
+				<SettingsGroup key={id} label={label} testid={testid}>
+					{toolRows
+						.filter((status) => TOOL_KEY_GROUP(status.id) === id)
+						.map((status) =>
+							isPlainAuthSetting(status.id) ? (
+								// The Azure region: a setting under the Azure key, not a key.
+								<PlainSettingRow
+									key={status.id}
+									label="Region"
+									placeholder="e.g. westeurope"
+									status={status}
+									onSave={(v) => saveKey(status.id, v)}
+									onClear={() => deleteKey(status.id)}
+									testid={`key-${status.id.toLowerCase()}`}
+								/>
+							) : (
+								<KeyTableRow
+									key={status.id}
+									label={status.info?.label ?? status.id}
+									docsUrl={status.info?.docsUrl}
+									status={status}
+									expanded={openRow === status.id}
+									onToggle={() => setOpenRow(openRow === status.id ? null : status.id)}
+									onSave={async (v) => {
+										const err = await saveKey(status.id, v);
+										if (!err) setOpenRow(null);
+										return err;
+									}}
+									onCancel={() => setOpenRow(null)}
+									onDelete={() => deleteKey(status.id)}
+									testid={`key-${status.id.toLowerCase()}`}
+								/>
+							),
+						)}
+				</SettingsGroup>
+			))}
 		</>
 	);
 }
@@ -697,7 +719,10 @@ function UnknownKeyRow({ status, onDelete }: { status: AuthKeyStatus; onDelete: 
 	const [confirm, setConfirm] = useState(false);
 	const removable = status.source === "file";
 	return (
-		<div data-testid={`unknown-${status.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5">
+		<div
+			data-testid={`unknown-${status.id}`}
+			className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/10 px-3.5 py-2.5"
+		>
 			<span className="font-mono text-xs text-muted-foreground">{status.id}</span>
 			<span className="flex items-center gap-3">
 				<span className="font-mono text-[11px] text-muted-foreground">{status.masked}</span>
@@ -712,7 +737,10 @@ function UnknownKeyRow({ status, onDelete }: { status: AuthKeyStatus; onDelete: 
 					</button>
 				)}
 				{confirm && (
-					<span className="flex shrink-0 items-center gap-2 text-xs" data-testid={`unknown-${status.id}-delete-confirm`}>
+					<span
+						className="flex shrink-0 items-center gap-2 text-xs"
+						data-testid={`unknown-${status.id}-delete-confirm`}
+					>
 						<span className="text-muted-foreground">Delete this variable?</span>
 						<button
 							type="button"
@@ -725,7 +753,11 @@ function UnknownKeyRow({ status, onDelete }: { status: AuthKeyStatus; onDelete: 
 						>
 							Delete
 						</button>
-						<button type="button" onClick={() => setConfirm(false)} className="cursor-pointer text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+						<button
+							type="button"
+							onClick={() => setConfirm(false)}
+							className="cursor-pointer text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						>
 							Keep
 						</button>
 					</span>

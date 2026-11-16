@@ -28,7 +28,14 @@ interface WhyReuse {
  */
 export async function startTutorChat(
 	router: { push: (href: string) => void },
-	opts: { title: string; prompt: string; activity?: "tutor"; unit?: string; reuse?: WhyReuse; kind?: "practice" | "teach" },
+	opts: {
+		title: string;
+		prompt: string;
+		activity?: "tutor";
+		unit?: string;
+		reuse?: WhyReuse;
+		kind?: "practice" | "teach";
+	},
 ): Promise<void> {
 	// A tutor unit's session counts when the learner first types (the server,
 	// src/server/turn-service.ts), so the chat carries the unit.

@@ -45,8 +45,14 @@ describe("measureTree", () => {
 describe("storageReport", () => {
 	it("lists the three kept areas at their real folders, for the active language", async () => {
 		const report = await storageReport();
-		assert.deepEqual(report.areas.map((area) => area.id), ["clips", "progress", "backups"]);
-		assert.deepEqual(report.areas.map((area) => area.path), [PATHS.audio, PATHS.data, path.join(PATHS.base, "backups")]);
+		assert.deepEqual(
+			report.areas.map((area) => area.id),
+			["clips", "progress", "backups"],
+		);
+		assert.deepEqual(
+			report.areas.map((area) => area.path),
+			[PATHS.audio, PATHS.data, path.join(PATHS.base, "backups")],
+		);
 		assert.ok(["Slovak", "Russian"].includes(report.language));
 		for (const area of report.areas) assert.ok(area.bytes >= 0 && area.files >= 0);
 	});

@@ -53,12 +53,12 @@ Dependency arrows point **down only**. Each layer may import the core barrel; no
 
 **The import law** (`eslint.config.mjs`, four machine-enforced zones — a violation fails lint, and each zone was verified to fire):
 
-| Zone | May import | Rationale |
-|---|---|---|
-| `components/**` | `@/src/core` only (the barrel) | The UI renders domain data; it never runs domain logic or touches IO |
-| `app/**` | `@/src/core` + `@/src/server` (the barrels) | Route handlers are transport; they delegate to server entry points |
-| `src/core/**` | nothing below itself (never `agent`/`server`/`store`) | The core is pure; adapters implement its ports, never the reverse |
-| `src/agent/**` | never `server`/`store` | The agent layer receives its dependencies (storage ports, wiring) via factories/closures from the server |
+| Zone            | May import                                            | Rationale                                                                                                |
+| --------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `components/**` | `@/src/core` only (the barrel)                        | The UI renders domain data; it never runs domain logic or touches IO                                     |
+| `app/**`        | `@/src/core` + `@/src/server` (the barrels)           | Route handlers are transport; they delegate to server entry points                                       |
+| `src/core/**`   | nothing below itself (never `agent`/`server`/`store`) | The core is pure; adapters implement its ports, never the reverse                                        |
+| `src/agent/**`  | never `server`/`store`                                | The agent layer receives its dependencies (storage ports, wiring) via factories/closures from the server |
 
 Two rules are documentation-only by design: `src/server/stores.ts` is the only server module allowed to import adapters (the ESLint plugin's `except` can't express "all but one" cleanly), and `src/core/graph.ts` + `graph-context.ts` stay out of the core barrel so the barrel remains browser-safe (their types are barrelled via `ports.ts`/`contracts.ts`).
 
@@ -85,7 +85,7 @@ chat record ──▶ EXTRACTOR (LLM) ──▶ AUDITOR (LLM) ──▶ MERGER (
 
 **Tree-blind and post-hoc** (2026-09-02 redesign, docs/vision.md §1): the extractor reads ONLY the transcript — never the session's plan tree — and proposes free-form propositions (true statements with descriptions, misconception-free: a misconception is stated as its true correction), `follows`/`supports` edges, per-proposition understanding notes, and message-granular provenance. Every node is an objective, world-facing fact; the learner's relationship to it lives entirely in the event ledger.
 
-**Division of trust** (the pipeline's core rule): the LLM stages supply only judgment — *what was learned*, *what follows/supports what*, *which proposition each quiz tested* (retroactively, against the whole transcript), and — the auditor's — *identity*: whether a proposition IS an existing graph node (link-or-create). Everything the model could silently mis-copy — event kinds (`correct` / `miss` / `dont-know`), timestamps, idempotency refs, notes, provenance points — is rebuilt deterministically by the merger from the transcript's tool parts. The extractor files verbatim evidence quotes; the auditor (which sees the extractor's output PLUS the current graph) drops anything unbacked, logs every drop, and stamps each surviving proposition with its identity verdict (`linkTo`). Conservative throughout: duplicates over wrong merges, drop over invent.
+**Division of trust** (the pipeline's core rule): the LLM stages supply only judgment — _what was learned_, _what follows/supports what_, _which proposition each quiz tested_ (retroactively, against the whole transcript), and — the auditor's — _identity_: whether a proposition IS an existing graph node (link-or-create). Everything the model could silently mis-copy — event kinds (`correct` / `miss` / `dont-know`), timestamps, idempotency refs, notes, provenance points — is rebuilt deterministically by the merger from the transcript's tool parts. The extractor files verbatim evidence quotes; the auditor (which sees the extractor's output PLUS the current graph) drops anything unbacked, logs every drop, and stamps each surviving proposition with its identity verdict (`linkTo`). Conservative throughout: duplicates over wrong merges, drop over invent.
 
 **Merger invariants** (`src/core/graph.ts`, `mergeFindings`): idempotent and incremental — identity comes from the auditor's `linkTo` verdict alone (validated against the ledger; never string matching), one mapping line per (chat, sourceId) as the verdict audit trail (which also makes re-merging the same chat idempotent), link-appends: a linked proposition appends a node line whose phrasings join the node's `aliases` and whose provenance unions (reads merge by id), edge dedupe by `(from, to, type)`-already-asserted-by-this-chat with message-granular provenance, event dedupe by chat-scoped ref (quiz toolCallId, `obs:<sourceId>` for understanding observations), and a sessions.jsonl checkpoint (`foldedAt`) marking which turns are processed. Failure anywhere before the merger checkpoints nothing; the next trigger re-runs.
 

@@ -13,16 +13,14 @@ export function preloadSettingsDialog() {
 	void import("./settings-dialog.tsx");
 }
 
-const SettingsDialogOpen = dynamic(() => import("./settings-dialog.tsx").then((m) => m.SettingsDialogOpen), { ssr: false });
+const SettingsDialogOpen = dynamic(() => import("./settings-dialog.tsx").then((m) => m.SettingsDialogOpen), {
+	ssr: false,
+});
 
 /** AppShell-level mount: the sidebar row and the mod+, chord call this.
  *  `open(section)` lands the dialog on a specific section (the first-run
  *  setup flow deep-links to Keys when no provider key exists yet). */
-export function SettingsDialogProvider({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+export function SettingsDialogProvider({ children }: { children: React.ReactNode }) {
 	const [show, setShow] = useState(false);
 	const [landOn, setLandOn] = useState<SectionId | null>(null);
 	const [landOnRow, setLandOnRow] = useState<string | null>(null);

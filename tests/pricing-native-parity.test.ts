@@ -6,20 +6,47 @@ import { piModels } from "../src/agent/models.ts";
 import { callCost, jobCost } from "../src/server/pricing.ts";
 import { accumulateJobUsage, piUsageToStep } from "../src/core/contracts/jobs.ts";
 
-const models = piModels().getProviders().flatMap((p) => piModels().getModels(p.id));
-const nativeUsage = (input: number): Usage => ({ input, output: 1_000, cacheRead: 10_000, cacheWrite: 2_000, cacheWrite1h: 500, totalTokens: input + 13_000, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } });
-const saved = (u: Usage) => ({ inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h, reasoningTokens: 500 });
+const models = piModels()
+	.getProviders()
+	.flatMap((p) => piModels().getModels(p.id));
+const nativeUsage = (input: number): Usage => ({
+	input,
+	output: 1_000,
+	cacheRead: 10_000,
+	cacheWrite: 2_000,
+	cacheWrite1h: 500,
+	totalTokens: input + 13_000,
+	cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+});
+const saved = (u: Usage) => ({
+	inputTokens: u.input,
+	outputTokens: u.output,
+	cacheReadTokens: u.cacheRead,
+	cacheWriteTokens: u.cacheWrite,
+	cacheWrite1hTokens: u.cacheWrite1h,
+	reasoningTokens: 500,
+});
 
 test("all catalog models price through Pi, including every tier boundary; saved usage is never mutated", () => {
 	assert.ok(models.length > 100);
 	for (const model of models) {
-		const sizes = [1_000, ...(model.cost.tiers ?? []).flatMap((t) => [Math.max(0, t.inputTokensAbove - 12_000), Math.max(0, t.inputTokensAbove - 12_000 + 1)])];
+		const sizes = [
+			1_000,
+			...(model.cost.tiers ?? []).flatMap((t) => [
+				Math.max(0, t.inputTokensAbove - 12_000),
+				Math.max(0, t.inputTokensAbove - 12_000 + 1),
+			]),
+		];
 		for (const input of sizes) {
 			const usage = nativeUsage(input);
 			const call = Object.freeze(saved(usage));
 			const before = structuredClone(call);
 			const expected = calculateCost(model, usage).total;
-			assert.equal(callCost(call, `${model.provider}:${model.id}`), expected, `${model.provider}:${model.id} input=${input}`);
+			assert.equal(
+				callCost(call, `${model.provider}:${model.id}`),
+				expected,
+				`${model.provider}:${model.id} input=${input}`,
+			);
 			assert.deepEqual(call, before);
 		}
 	}

@@ -11,9 +11,7 @@ import { AbortTurnBody } from "@/components/abort-turn-dialog";
 
 describe("AbortTurnBody", () => {
 	it("turn mode: names the answer, the partial-stays promise, Stop", () => {
-		const html = renderToStaticMarkup(
-			<AbortTurnBody mode="turn" onClose={() => {}} onConfirm={() => {}} />,
-		);
+		const html = renderToStaticMarkup(<AbortTurnBody mode="turn" onClose={() => {}} onConfirm={() => {}} />);
 		assert.ok(html.includes('data-testid="abort-turn-dialog"'));
 		assert.match(html, /Stop the tutor&#x27;s answer\?/);
 		assert.match(html, /What it has written so far stays in the chat\./);
@@ -22,9 +20,7 @@ describe("AbortTurnBody", () => {
 	});
 
 	it("question mode: names the skip, Skip", () => {
-		const html = renderToStaticMarkup(
-			<AbortTurnBody mode="question" onClose={() => {}} onConfirm={() => {}} />,
-		);
+		const html = renderToStaticMarkup(<AbortTurnBody mode="question" onClose={() => {}} onConfirm={() => {}} />);
 		assert.match(html, /Skip this question\?/);
 		assert.match(html, /The tutor moves on without your answer\./);
 		assert.match(html, /Skip/);
@@ -33,9 +29,7 @@ describe("AbortTurnBody", () => {
 	});
 
 	it("the confirm action is the destructive pair, never the cancel", () => {
-		const html = renderToStaticMarkup(
-			<AbortTurnBody mode="turn" onClose={() => {}} onConfirm={() => {}} />,
-		);
+		const html = renderToStaticMarkup(<AbortTurnBody mode="turn" onClose={() => {}} onConfirm={() => {}} />);
 		const confirmAt = html.indexOf('data-testid="abort-turn-confirm"');
 		const cancelAt = html.indexOf('data-testid="abort-turn-cancel"');
 		assert.ok(confirmAt > -1 && cancelAt > -1);

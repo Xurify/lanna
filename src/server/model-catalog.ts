@@ -22,18 +22,42 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { piModels } from "../agent/models.ts";
 import { chatGPTConnected, chatGPTModel, chatGPTModels, refreshChatGPTModels } from "../agent/chatgpt-bridge.ts";
 import { NATIVE_SUBSCRIPTIONS } from "../core/contracts/subscriptions.ts";
-import { nativeSubscriptionId, nativeSubscriptionConnected, nativeSubscriptionModel, nativeSubscriptionModels, refreshSubscriptionModels } from "../agent/subscription-bridge.ts";
+import {
+	nativeSubscriptionId,
+	nativeSubscriptionConnected,
+	nativeSubscriptionModel,
+	nativeSubscriptionModels,
+	refreshSubscriptionModels,
+} from "../agent/subscription-bridge.ts";
 
 export async function refreshConnectionCatalog(provider?: string): Promise<void> {
 	await Promise.all([
-		!provider || provider === "chatgpt" ? refreshChatGPTModels(piModels().getModels("openai").filter((m): m is Model<"openai-responses"> => m.api === "openai-responses")) : Promise.resolve(),
+		!provider || provider === "chatgpt"
+			? refreshChatGPTModels(
+					piModels()
+						.getModels("openai")
+						.filter((m): m is Model<"openai-responses"> => m.api === "openai-responses"),
+				)
+			: Promise.resolve(),
 		!provider || nativeSubscriptionId(provider) ? refreshSubscriptionModels() : Promise.resolve(),
 	]);
 }
 function connectionModel(provider: string, id: string): Model<Api> | undefined {
-	return provider === "chatgpt" ? chatGPTModel(id) : nativeSubscriptionId(provider) ? nativeSubscriptionModel(provider, id) : piModels().getModel(provider, id);
+	return provider === "chatgpt"
+		? chatGPTModel(id)
+		: nativeSubscriptionId(provider)
+			? nativeSubscriptionModel(provider, id)
+			: piModels().getModel(provider, id);
 }
-function connectionProviderIds(): string[] { return [...piModels().getProviders().map((p) => p.id), "chatgpt", ...NATIVE_SUBSCRIPTIONS.map((p) => p.logicalId)]; }
+function connectionProviderIds(): string[] {
+	return [
+		...piModels()
+			.getProviders()
+			.map((p) => p.id),
+		"chatgpt",
+		...NATIVE_SUBSCRIPTIONS.map((p) => p.logicalId),
+	];
+}
 import { effectiveSettings } from "./stores.ts";
 import { keyValue } from "./keys.ts";
 import type { ChatSettings } from "../core/contracts/chat.ts";
@@ -47,7 +71,13 @@ import type {
 } from "../core/contracts/models.ts";
 import type { EffectiveModelSpec, EffectiveSlot } from "../core/settings-resolution.ts";
 import { AUTH_PROVIDER_KEYS } from "../core/auth-keys.ts";
-import { BACKGROUND_MODEL_ROLES, MODEL_SLOTS, type BackgroundModelRole, type ModelSlotName, type ModelsSettings } from "../core/settings.ts";
+import {
+	BACKGROUND_MODEL_ROLES,
+	MODEL_SLOTS,
+	type BackgroundModelRole,
+	type ModelSlotName,
+	type ModelsSettings,
+} from "../core/settings.ts";
 
 /** The picker's client-safe model entry (contract: core/contracts/models.ts). */
 type ModelDto = ModelCatalogEntry;
@@ -64,9 +94,7 @@ type ModelDto = ModelCatalogEntry;
  * envelope. An unset thinkingLevel resolves from DEFAULT_THINKING_ORDER at
  * engine build (reported as absent here).
  */
-export function catalogDefaultsFor(
-	strong: EffectiveSlot | null,
-): CatalogDefaults | null {
+export function catalogDefaultsFor(strong: EffectiveSlot | null): CatalogDefaults | null {
 	const model = strong ? { provider: strong.provider, id: strong.id } : undefined;
 	if (!model) return null;
 	const level = strong?.thinkingLevel;
@@ -86,9 +114,7 @@ function catalogDefaults(): CatalogDefaults | null {
  *  settings UI's "Default: <actual pinned model>" caption reads this).
  *  BYOK (owner, 2026-09-22): an empty chain projects to NULL — the caption
  *  honestly shows "not configured", never a phantom default. */
-export function rolePinsFor(
-	models: Record<BackgroundModelRole, EffectiveModelSpec | undefined>,
-): RolePins {
+export function rolePinsFor(models: Record<BackgroundModelRole, EffectiveModelSpec | undefined>): RolePins {
 	const pins = {} as RolePins;
 	for (const role of BACKGROUND_MODEL_ROLES) {
 		const spec = models[role];
@@ -138,17 +164,27 @@ export function catalogProviders(): CatalogProvider[] {
 		id: p.id,
 		envVar: p.envVar,
 		keyPresent: keyValue(p.envVar) !== undefined,
-	})).concat([
-		{ id: "chatgpt", envVar: "", keyPresent: chatGPTConnected() },
-		...NATIVE_SUBSCRIPTIONS.map((p) => ({ id: p.logicalId, envVar: "", keyPresent: nativeSubscriptionConnected(p.providerId) })),
-	]).sort((a, b) => a.id.localeCompare(b.id));
+	}))
+		.concat([
+			{ id: "chatgpt", envVar: "", keyPresent: chatGPTConnected() },
+			...NATIVE_SUBSCRIPTIONS.map((p) => ({
+				id: p.logicalId,
+				envVar: "",
+				keyPresent: nativeSubscriptionConnected(p.providerId),
+			})),
+		])
+		.sort((a, b) => a.id.localeCompare(b.id));
 }
 
 /** The providers whose key is present — the picker federates exactly
  *  these (a keyless provider's models are unreachable by design; the
  *  Keys page is the discovery surface, same discipline as search). */
 function keyedProviderIds(): Set<string> {
-	return new Set(catalogProviders().filter((p) => p.keyPresent).map((p) => p.id));
+	return new Set(
+		catalogProviders()
+			.filter((p) => p.keyPresent)
+			.map((p) => p.id),
+	);
 }
 
 /** Project one catalog model to the client DTO. */
@@ -187,7 +223,8 @@ export function catalogContextLimits(): Map<string, number> {
 			index.set(`${provider.id}:${model.id}`, model.contextWindow);
 		}
 	}
-	for (const model of [...chatGPTModels(), ...nativeSubscriptionModels()]) index.set(`${model.provider}:${model.id}`, model.contextWindow);
+	for (const model of [...chatGPTModels(), ...nativeSubscriptionModels()])
+		index.set(`${model.provider}:${model.id}`, model.contextWindow);
 	return index;
 }
 
@@ -214,9 +251,7 @@ export function modelCatalog(): ModelCatalogResponse {
 }
 
 /** One validated outcome for a settings write. */
-type SettingsValidation =
-	| { ok: true }
-	| { ok: false; error: string; supported?: ThinkingLevel[] };
+type SettingsValidation = { ok: true } | { ok: false; error: string; supported?: ThinkingLevel[] };
 
 /** Validate a picker write against the catalog (the settings route's gate).
  *  `settings` is replace-whole: absent fields mean "config default".
@@ -254,7 +289,10 @@ export function validateModelsSettings(settings: ModelsSettings): SettingsValida
 	return { ok: true };
 }
 
-function validateSlotSpec(name: ModelSlotName, slot: { model?: { provider: string; id: string }; thinkingLevel?: ThinkingLevel }): SettingsValidation {
+function validateSlotSpec(
+	name: ModelSlotName,
+	slot: { model?: { provider: string; id: string }; thinkingLevel?: ThinkingLevel },
+): SettingsValidation {
 	const providers = connectionProviderIds();
 	if (slot.model) {
 		const { provider, id } = slot.model;

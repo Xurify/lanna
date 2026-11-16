@@ -7,7 +7,31 @@ import { finishDictation, isDictationActive, joinDictation, useDictationTarget }
 import { useEnterSubmits } from "@/components/enter-submits";
 import { ToolContentResponse } from "@/components/ai-elements/message";
 import { cn } from "@/lib/utils";
-import { buildAnswer, normalizeQuizType, CONFIDENCE_STOPS, DEFAULT_CONFIDENCE_INDEX, emptyDockSelection, normalizeOptions, resolveCorrect, seededRandom, shuffleOptions, toolQuestionKind, toggleOption, toggleOther, type AnswerRequest, type AskToolInput, type DockSelection, type ExplainToolInput, type QuestionAnswerData, type QuestionFormDraft, type QuestionData, type QuestionMode, type QuizToolInput, type SelectMode, type Phase3 } from "@/src/core";
+import {
+	buildAnswer,
+	normalizeQuizType,
+	CONFIDENCE_STOPS,
+	DEFAULT_CONFIDENCE_INDEX,
+	emptyDockSelection,
+	normalizeOptions,
+	resolveCorrect,
+	seededRandom,
+	shuffleOptions,
+	toolQuestionKind,
+	toggleOption,
+	toggleOther,
+	type AnswerRequest,
+	type AskToolInput,
+	type DockSelection,
+	type ExplainToolInput,
+	type QuestionAnswerData,
+	type QuestionFormDraft,
+	type QuestionData,
+	type QuestionMode,
+	type QuizToolInput,
+	type SelectMode,
+	type Phase3,
+} from "@/src/core";
 import { parseAskInput, parseQuizInput, parseExplainInput } from "@/src/core/tutor";
 import { CONFIDENCE_COLORS, confidenceRailStyle } from "@/components/confidence-rail";
 
@@ -89,8 +113,7 @@ export function QuestionDock({
 	// teach twins for every dock concern — parse dispatch, labels, kinds:
 	// the probe quiz ("probe") is quiz-shaped, the probe free-recall
 	// ("recall") is explain-shaped. Old records keep the teach names.
-	const canonical =
-		toolName === "probe" ? "quiz" : toolName === "recall" ? "explain" : toolName;
+	const canonical = toolName === "probe" ? "quiz" : toolName === "recall" ? "explain" : toolName;
 	// The chip's display name carries the tool's OWN name (owner
 	// 2026-10-09): probe-phase questions label Probe/Recall in the
 	// composer; teach tools keep the standing labels.
@@ -102,10 +125,17 @@ export function QuestionDock({
 	// anything that slips through renders the quiet fallback, never a
 	// crash on `.map` over model-authored bytes.
 	const parsed =
-		canonical === "quiz" ? parseQuizInput(input) : canonical === "explain" ? parseExplainInput(input) : parseAskInput(input);
+		canonical === "quiz"
+			? parseQuizInput(input)
+			: canonical === "explain"
+				? parseExplainInput(input)
+				: parseAskInput(input);
 	if (!parsed) {
 		return (
-			<div data-testid="malformed-question" className="rounded-xl border border-dashed bg-card/60 p-3 text-sm text-muted-foreground">
+			<div
+				data-testid="malformed-question"
+				className="rounded-xl border border-dashed bg-card/60 p-3 text-sm text-muted-foreground"
+			>
 				This question could not be shown. The tutor’s next try is below.
 			</div>
 		);
@@ -204,9 +234,7 @@ function QuestionDockBar({
 			className="dock-variant flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors hover:bg-accent"
 		>
 			<span className="shrink-0 text-xs font-semibold text-muted-foreground">
-				{label ??
-							toolLabel ??
-							(toolName === "quiz" ? "Check" : toolName === "explain" ? "Explain" : "Question")}
+				{label ?? toolLabel ?? (toolName === "quiz" ? "Check" : toolName === "explain" ? "Explain" : "Question")}
 			</span>
 			<span className="min-w-0 flex-1 truncate text-muted-foreground">{teaserText(question)}</span>
 			<span className="flex shrink-0 items-center gap-1 text-xs font-medium">
@@ -250,7 +278,7 @@ function QuestionDockForm({
 					? multi
 						? "multi-select"
 						: "single-select"
-						: "text";
+					: "text";
 		const options = normalizeOptions(
 			(quizInput?.options ?? askInput?.options ?? []) as { label: string; value?: string }[],
 		);
@@ -344,7 +372,13 @@ function QuestionDockForm({
 	const pick = (idx: number) => {
 		const next = toggleOption(selectMode, sel, idx);
 		setSel(next);
-		if (selectMode === "single-select" && !explain && !compactionRunning && next.selected.size > 0 && !isDictationActive())
+		if (
+			selectMode === "single-select" &&
+			!explain &&
+			!compactionRunning &&
+			next.selected.size > 0 &&
+			!isDictationActive()
+		)
 			submitWith(next);
 	};
 
@@ -522,12 +556,7 @@ function QuestionDockForm({
 				// (the slider grays out and nothing is sent).
 				if (kind !== "quiz" || sel.dontKnow) return;
 				e.preventDefault();
-				setConfIdx((i) =>
-					Math.min(
-						CONFIDENCE_STOPS.length - 1,
-						Math.max(0, i + (e.key === "ArrowRight" ? 1 : -1)),
-					),
-				);
+				setConfIdx((i) => Math.min(CONFIDENCE_STOPS.length - 1, Math.max(0, i + (e.key === "ArrowRight" ? 1 : -1))));
 			} else if (e.key === " ") {
 				if (kbdIdx === null) return; // plain Space keeps scrolling the page
 				e.preventDefault();
@@ -545,9 +574,7 @@ function QuestionDockForm({
 	// Keep the walked row visible (the question area scrolls internally).
 	useEffect(() => {
 		if (kbdIdx === null) return;
-		rootRef.current
-			?.querySelector(`[data-kbdrow="${kbdIdx}"]`)
-			?.scrollIntoView({ block: "nearest" });
+		rootRef.current?.querySelector(`[data-kbdrow="${kbdIdx}"]`)?.scrollIntoView({ block: "nearest" });
 	}, [kbdIdx]);
 
 	return (
@@ -565,9 +592,9 @@ function QuestionDockForm({
 								? qd.questionType === "predict"
 									? "Prediction"
 									: "Check"
-									: kind === "explain"
-										? "Explain"
-											: "Question"}
+								: kind === "explain"
+									? "Explain"
+									: "Question"}
 					{qd.mode === "multi-select" && " · select all that apply"}
 				</div>
 				<div className="mb-3 font-medium">
@@ -605,7 +632,11 @@ function QuestionDockForm({
 										)}
 									>
 										{isSel && (
-											<span className={cn(qd.mode === "multi-select" ? "text-base leading-none" : "size-1.5 rounded-full bg-current")}>
+											<span
+												className={cn(
+													qd.mode === "multi-select" ? "text-base leading-none" : "size-1.5 rounded-full bg-current",
+												)}
+											>
 												{qd.mode === "multi-select" ? "✓" : ""}
 											</span>
 										)}
@@ -648,9 +679,7 @@ function QuestionDockForm({
 								<span
 									className={cn(
 										"mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border",
-										sel.dontKnow
-											? "border-primary bg-primary text-primary-foreground"
-											: "border-muted-foreground/40",
+										sel.dontKnow ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
 									)}
 								>
 									{sel.dontKnow && <span className="size-1.5 rounded-full bg-current" />}
@@ -682,7 +711,11 @@ function QuestionDockForm({
 									)}
 								>
 									{sel.otherSelected && (
-										<span className={cn(qd.mode === "multi-select" ? "text-base leading-none" : "size-1.5 rounded-full bg-current")}>
+										<span
+											className={cn(
+												qd.mode === "multi-select" ? "text-base leading-none" : "size-1.5 rounded-full bg-current",
+											)}
+										>
 											{qd.mode === "multi-select" ? "✓" : ""}
 										</span>
 									)}
@@ -709,17 +742,17 @@ function QuestionDockForm({
 											e.currentTarget.blur();
 											setKbdIdx(optionCount);
 										}
-											// Enter submits directly (owner, keyboard round 2026-10-06):
-											// the custom answer is a single-line input — no newline
-											// to protect, and typing has already selected the row, so
-											// the payload is ready. Every Enter (shift or not — nothing
-											// else could ever happen in a one-line field) rides the
-											// same submit seam as the button, dictation finish-first
-											// included.
-											if (e.key === "Enter") {
-												e.preventDefault();
-												submit();
-											}
+										// Enter submits directly (owner, keyboard round 2026-10-06):
+										// the custom answer is a single-line input — no newline
+										// to protect, and typing has already selected the row, so
+										// the payload is ready. Every Enter (shift or not — nothing
+										// else could ever happen in a one-line field) rides the
+										// same submit seam as the button, dictation finish-first
+										// included.
+										if (e.key === "Enter") {
+											e.preventDefault();
+											submit();
+										}
 									}}
 									placeholder="Type your own answer…"
 									className="lh-input w-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
@@ -859,98 +892,98 @@ function QuestionDockForm({
 					)}
 				</div>
 			) : (
-			<form
-				className="border-t border-border/60 p-1.5"
-				onSubmit={(e) => {
-					e.preventDefault();
-					submit();
-				}}
-			>
-				<div
-					data-testid={qd.mode === "text" ? "answer-field" : "thinking-field"}
-					className="rounded-[10px] border border-border/70 bg-background/60 transition-colors focus-within:border-primary/50"
+				<form
+					className="border-t border-border/60 p-1.5"
+					onSubmit={(e) => {
+						e.preventDefault();
+						submit();
+					}}
 				>
-					<div className="px-2.5 pt-2 text-xs font-semibold text-muted-foreground">
-						{qd.mode === "text" ? "Your answer" : "Your thinking"}
-					</div>
-					{qd.mode === "text" ? (
-						<textarea
-							value={text}
-							onChange={(e) => {
-								answerTextRef.current = e.target.value;
-								setText(e.target.value);
-							}}
-							onKeyDown={(e) => {
-								// Esc ends dictation (the dictate decisions: click-again
-								// or Esc) — stopPropagation claims it (keyboard wave
-								// A) so the window chain doesn't also abort a turn.
-								if (e.key === "Escape" && onEscape) {
-									e.preventDefault();
-									e.stopPropagation();
-									onEscape();
-									return;
-								}
-								// Chat convention: Enter submits, Shift+Enter is a newline;
-								// ⌘/Ctrl+Enter also submits (universal across the app).
-								if (e.key === "Enter" && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
-									e.preventDefault();
-									submit();
-								}
-							}}
-							placeholder="Type your answer…"
-							rows={1}
-							className="field-sizing-content lh-input max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
-						/>
-					) : (
-						<textarea
-							ref={thinkingRef}
-							value={thinking}
-							onChange={(e) => {
-								thinkingTextRef.current = e.target.value;
-								setThinking(e.target.value);
-							}}
-							onKeyDown={(e) => {
-								// Esc ends dictation (the dictate decisions: click-again
-								// or Esc) — stopPropagation claims it (keyboard wave
-								// A) so the window chain doesn't also abort a turn.
-								if (e.key === "Escape" && onEscape) {
-									e.preventDefault();
-									e.stopPropagation();
-									onEscape();
-									return;
-								}
-								// THE STANDARD CHORD (owner round 5, 2026-10-05): Enter
-								// submits, Shift+Enter is a newline, ⌘/Ctrl+Enter works
-								// too — identical to the practice dock and the composer.
-								if (e.key === "Enter" && (!e.shiftKey || e.metaKey || e.ctrlKey)) {
-									e.preventDefault();
-									submit();
-								}
-							}}
-							placeholder="Why this answer? Whatever comes to mind."
-							rows={1}
-							className={cn(
-								"field-sizing-content lh-input max-h-48 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
-								// Phase-scaled prominence: teaching invites depth,
-								// probing stays quick.
-								phase === "teach" ? "min-h-[4.5rem]" : "min-h-10",
-							)}
-						/>
-					)}
-					<div className="flex items-center justify-between gap-2 p-1">
-						<span aria-hidden className="pl-1.5 text-xs text-muted-foreground">
+					<div
+						data-testid={qd.mode === "text" ? "answer-field" : "thinking-field"}
+						className="rounded-[10px] border border-border/70 bg-background/60 transition-colors focus-within:border-primary/50"
+					>
+						<div className="px-2.5 pt-2 text-xs font-semibold text-muted-foreground">
+							{qd.mode === "text" ? "Your answer" : "Your thinking"}
+						</div>
+						{qd.mode === "text" ? (
+							<textarea
+								value={text}
+								onChange={(e) => {
+									answerTextRef.current = e.target.value;
+									setText(e.target.value);
+								}}
+								onKeyDown={(e) => {
+									// Esc ends dictation (the dictate decisions: click-again
+									// or Esc) — stopPropagation claims it (keyboard wave
+									// A) so the window chain doesn't also abort a turn.
+									if (e.key === "Escape" && onEscape) {
+										e.preventDefault();
+										e.stopPropagation();
+										onEscape();
+										return;
+									}
+									// Chat convention: Enter submits, Shift+Enter is a newline;
+									// ⌘/Ctrl+Enter also submits (universal across the app).
+									if (e.key === "Enter" && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
+										e.preventDefault();
+										submit();
+									}
+								}}
+								placeholder="Type your answer…"
+								rows={1}
+								className="field-sizing-content lh-input max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
+							/>
+						) : (
+							<textarea
+								ref={thinkingRef}
+								value={thinking}
+								onChange={(e) => {
+									thinkingTextRef.current = e.target.value;
+									setThinking(e.target.value);
+								}}
+								onKeyDown={(e) => {
+									// Esc ends dictation (the dictate decisions: click-again
+									// or Esc) — stopPropagation claims it (keyboard wave
+									// A) so the window chain doesn't also abort a turn.
+									if (e.key === "Escape" && onEscape) {
+										e.preventDefault();
+										e.stopPropagation();
+										onEscape();
+										return;
+									}
+									// THE STANDARD CHORD (owner round 5, 2026-10-05): Enter
+									// submits, Shift+Enter is a newline, ⌘/Ctrl+Enter works
+									// too — identical to the practice dock and the composer.
+									if (e.key === "Enter" && (!e.shiftKey || e.metaKey || e.ctrlKey)) {
+										e.preventDefault();
+										submit();
+									}
+								}}
+								placeholder="Why this answer? Whatever comes to mind."
+								rows={1}
+								className={cn(
+									"field-sizing-content lh-input max-h-48 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
+									// Phase-scaled prominence: teaching invites depth,
+									// probing stays quick.
+									phase === "teach" ? "min-h-[4.5rem]" : "min-h-10",
+								)}
+							/>
+						)}
+						<div className="flex items-center justify-between gap-2 p-1">
+							<span aria-hidden className="pl-1.5 text-xs text-muted-foreground">
 								{compactionRunning ? "Summarizing the chat…" : "↵ submits · ⇧↵ newline"}
-						</span>
-						<Button
-							type="submit"
-							disabled={!canSubmit || compactionRunning}
-							className="ml-auto h-9 rounded-[6px] bg-go px-4 font-ui text-sm font-semibold text-go-ink hover:bg-go/90"
-						>
-							Submit answer
-						</Button>
+							</span>
+							<Button
+								type="submit"
+								disabled={!canSubmit || compactionRunning}
+								className="ml-auto h-9 rounded-[6px] bg-go px-4 font-ui text-sm font-semibold text-go-ink hover:bg-go/90"
+							>
+								Submit answer
+							</Button>
+						</div>
 					</div>
-				</div>
-			</form>
+				</form>
 			)}
 		</div>
 	);

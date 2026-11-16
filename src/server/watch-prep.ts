@@ -20,7 +20,23 @@ import { knownCoverage, type StoryUsage } from "../core/reading.ts";
 import { dayKey } from "../core/review.ts";
 import { captionLanguageName } from "../core/language.ts";
 import { foreignCaptions, videoCoverage, type VideoRecord } from "../core/watch.ts";
-import { keyWords, parsePrep, parsePrepSummary, prepPrompt, prepReps, prepSystem, PREP_PROMPT_LINES, PREP_SUMMARY_FLOOR, PREP_SUMMARY_MIN, summaryAgainPrompt, summaryAgainSystem, type PrepKey, type PrepLine, type PrepRecord, type PrepSentence } from "../core/watch-prep.ts";
+import {
+	keyWords,
+	parsePrep,
+	parsePrepSummary,
+	prepPrompt,
+	prepReps,
+	prepSystem,
+	PREP_PROMPT_LINES,
+	PREP_SUMMARY_FLOOR,
+	PREP_SUMMARY_MIN,
+	summaryAgainPrompt,
+	summaryAgainSystem,
+	type PrepKey,
+	type PrepLine,
+	type PrepRecord,
+	type PrepSentence,
+} from "../core/watch-prep.ts";
 import { missedWatchReps } from "../core/watch-reps.ts";
 import type { GapResult } from "../core/watch-sections.ts";
 import { progressStore } from "../store/progress.ts";
@@ -33,7 +49,14 @@ import { enqueueWords } from "./review.ts";
 import { glossSegments, renderInLanguage } from "./watch.ts";
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
 function videoFor(id: string) {
@@ -49,14 +72,34 @@ const isForeign = (video: VideoRecord) => foreignCaptions({ lang: video.lang, tr
  *  on the lines since E70 and glossed here with no model call; a video kept
  *  before that is rendered once more (one chunked request, on the briefing's
  *  cost) and the rendering kept in the record. */
-async function linesFor(video: VideoRecord, engine: PiEngine, usage: StoryUsage, lexicon: Lexicon | null, k: KnownWords): Promise<{ lines: PrepLine[]; rendered: boolean }> {
+async function linesFor(
+	video: VideoRecord,
+	engine: PiEngine,
+	usage: StoryUsage,
+	lexicon: Lexicon | null,
+	k: KnownWords,
+): Promise<{ lines: PrepLine[]; rendered: boolean }> {
 	if (!isForeign(video)) return { lines: video.segments, rendered: false };
 	let sk = video.segments.map((s) => s.rendered ?? "");
 	if (sk.filter(Boolean).length < video.segments.length * 0.9) {
-		sk = await renderInLanguage(engine, video.segments.map((s) => s.sk), usage, video.title, video.source.trackLang);
-		if (sk.filter(Boolean).length < video.segments.length * 0.9) throw new Error(`The ${captionLanguageName(video.source.trackLang)} captions could not be rendered in ${activeLanguage().english}. Try again.`);
+		sk = await renderInLanguage(
+			engine,
+			video.segments.map((s) => s.sk),
+			usage,
+			video.title,
+			video.source.trackLang,
+		);
+		if (sk.filter(Boolean).length < video.segments.length * 0.9)
+			throw new Error(
+				`The ${captionLanguageName(video.source.trackLang)} captions could not be rendered in ${activeLanguage().english}. Try again.`,
+			);
 	}
-	const glossed = glossSegments(video.segments.map((s, i) => ({ start: s.start, end: s.end, sk: sk[i] || s.sk })), video.segments.map((s) => s.en), lexicon, k);
+	const glossed = glossSegments(
+		video.segments.map((s, i) => ({ start: s.start, end: s.end, sk: sk[i] || s.sk })),
+		video.segments.map((s) => s.en),
+		lexicon,
+		k,
+	);
 	return { lines: glossed.map((g, i) => ({ ...g, i: video.segments[i]!.i })), rendered: true };
 }
 
@@ -77,7 +120,13 @@ interface PrepOptions {
 /** The summary glossed and measured: the words the learner knows, the words
  *  the level expects (the keys counted as taught, so a summary that uses
  *  them is not punished for it). */
-function measureSummary(sentences: readonly { sk: string; en: string }[], lexicon: Lexicon | null, k: KnownWords, keys: readonly PrepKey[], videoLines: readonly { sk: string }[]): { summary: PrepSentence[]; known: number; expected: number } {
+function measureSummary(
+	sentences: readonly { sk: string; en: string }[],
+	lexicon: Lexicon | null,
+	k: KnownWords,
+	keys: readonly PrepKey[],
+	videoLines: readonly { sk: string }[],
+): { summary: PrepSentence[]; known: number; expected: number } {
 	const names = storyNames([...videoLines, ...sentences], lexicon);
 	const taught = keyWords(keys);
 	const summary = sentences.map((s) => {
@@ -101,23 +150,55 @@ export async function makePrep(id: string, opts: PrepOptions = {}): Promise<Prep
 	const name = activeLanguage().english;
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const ask = async (system: string, prompt: string) => {
-		const { text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: system, prompt, maxTurns: 1, onUsage: (u) => usage.steps.push(stepOf(u)) });
+		const { text } = await runSubagent([], {
+			role: "researcher",
+			engine: resolved.engine,
+			systemPrompt: system,
+			prompt,
+			maxTurns: 1,
+			onUsage: (u) => usage.steps.push(stepOf(u)),
+		});
 		return text;
 	};
 	const lexicon = opts.lexicon !== undefined ? opts.lexicon : loadLexicon();
 	const k = knownWords(lexicon);
 	const { lines, rendered } = await linesFor(video, resolved.engine, usage, lexicon, k);
 	const on = { title: video.title, ...(video.channel ? { channel: video.channel } : {}), segments: lines };
-	const parsed = parsePrep(await ask(prepSystem(name, video.level), prepPrompt(on, video.level, rendered ? { captions: captionLanguageName(video.source.trackLang), language: name } : undefined)), on);
+	const parsed = parsePrep(
+		await ask(
+			prepSystem(name, video.level),
+			prepPrompt(
+				on,
+				video.level,
+				rendered ? { captions: captionLanguageName(video.source.trackLang), language: name } : undefined,
+			),
+		),
+		on,
+	);
 	if (!parsed) throw new Error("The model's briefing did not hold against the video's own lines. Try again.");
 	let measured = measureSummary(parsed.summary, lexicon, k, parsed.keys, lines);
 	let drafts = parsed.summary.length ? 1 : 0;
 	if (parsed.summary.length >= PREP_SUMMARY_MIN && measured.expected < PREP_SUMMARY_FLOOR) {
 		// Written again once with the hard words named; the better draft stays.
 		const taught = new Set(keyWords(parsed.keys).map((w) => w.lemma.toLocaleLowerCase()));
-		const hard = [...new Set(measured.summary.flatMap((s) => s.tokens.filter((t) => t.word && t.fresh && !(t.lemma && taught.has(t.lemma.toLocaleLowerCase()))).map((t) => t.lemma ?? t.text)))].slice(0, 20);
+		const hard = [
+			...new Set(
+				measured.summary.flatMap((s) =>
+					s.tokens
+						.filter((t) => t.word && t.fresh && !(t.lemma && taught.has(t.lemma.toLocaleLowerCase())))
+						.map((t) => t.lemma ?? t.text),
+				),
+			),
+		].slice(0, 20);
 		try {
-			const raw = JSON.parse(firstObject(await ask(summaryAgainSystem(name, video.level), summaryAgainPrompt(video, parsed.summary, hard, [...taught])))) as { summary?: unknown };
+			const raw = JSON.parse(
+				firstObject(
+					await ask(
+						summaryAgainSystem(name, video.level),
+						summaryAgainPrompt(video, parsed.summary, hard, [...taught]),
+					),
+				),
+			) as { summary?: unknown };
 			const again = parsePrepSummary(raw.summary);
 			drafts = 2;
 			if (again.length >= PREP_SUMMARY_MIN) {
@@ -171,7 +252,10 @@ interface PrepOutcome {
  *  Review, missed lines to the Watch lines in Listen (as for a watching: not
  *  from foreign or automatic captions), and the record marked done. Only the
  *  briefing's own gaps count. */
-export function recordPrep(input: { videoId: string; results: readonly GapResult[]; activeMs?: number; tz?: number }, now = new Date()): PrepOutcome {
+export function recordPrep(
+	input: { videoId: string; results: readonly GapResult[]; activeMs?: number; tz?: number },
+	now = new Date(),
+): PrepOutcome {
 	const video = videoFor(input.videoId);
 	const kept = videoStore.prep(input.videoId);
 	if (!kept) throw new Error("No briefing for this video. Get ready first.");
@@ -190,7 +274,15 @@ export function recordPrep(input: { videoId: string; results: readonly GapResult
 	const queued = slugs.length ? enqueueWords(slugs, now) : [];
 	const day = dayKey(now, input.tz);
 	const toListen = !isForeign(video) && video.source.kind !== "auto-captions";
-	const lines = toListen ? watchRepStore.addNew(missedWatchReps(video, [...new Set(missed.map((r) => r.at))].map((i) => ({ i, got: "no" as const })), day)).length : 0;
+	const lines = toListen
+		? watchRepStore.addNew(
+				missedWatchReps(
+					video,
+					[...new Set(missed.map((r) => r.at))].map((i) => ({ i, got: "no" as const })),
+					day,
+				),
+			).length
+		: 0;
 	const p = progressStore.read();
 	const d = (p.days[day] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 });
 	d.xp += xp;

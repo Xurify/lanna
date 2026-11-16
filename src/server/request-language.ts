@@ -7,7 +7,10 @@ interface Hints {
 	cookies: { get(name: string): { value: string } | undefined };
 }
 
-export function languageOf(hints: Hints, isLanguage: (id: string) => boolean = isLanguageProfile): LanguageProfile | undefined {
+export function languageOf(
+	hints: Hints,
+	isLanguage: (id: string) => boolean = isLanguageProfile,
+): LanguageProfile | undefined {
 	const shown = hints.headers.get(SHOWN_LANGUAGE_HEADER);
 	if (shown && isLanguage(shown)) return shown;
 	const device = hints.cookies.get(DEVICE_LANGUAGE_COOKIE)?.value;

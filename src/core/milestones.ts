@@ -54,14 +54,64 @@ interface Genre {
 }
 
 export const GENRES: Record<GenreId, Genre> = {
-	conversation: { id: "conversation", title: "everyday conversation", n95: 2500, n98: 6500, source: "Adolphs & Schmitt 2003 (CANCODE: 2,000 families ≈ 95%); Nation 2006 (spoken: 6,000–7,000 for 98%). The 2,500 for 95% is the app's own figure between that and Nation's roughly 3,000" },
-	tv: { id: "tv", title: "TV and vlogs", n95: 3000, n98: 7000, source: "Webb & Rodgers 2009a, 88 TV programs: 3,000 families + proper nouns = 95.5%, 7,000 = 98.3%" },
-	film: { id: "film", title: "films", n95: 3000, n98: 6000, source: "Webb & Rodgers 2009b, 318 films: 3,000 families + proper nouns = 95.8%, 6,000 = 98.2%" },
-	news: { id: "news", title: "newspapers", n95: 4000, n98: 8000, source: "Nation 2006: newspapers need about 4,000 families for 95% and 8,000 for 98%" },
-	fiction: { id: "fiction", title: "novels", n95: 4000, n98: 9000, source: "Nation 2006: novels need about 4,000 families for 95% and 8,000–9,000 for 98%" },
-	formal: { id: "formal", title: "formal and official text", n95: 4500, n98: 9000, source: "Nation 2006 (academic and formal text sits above newspapers); Laufer & Ravenhorst-Kalovski 2010 (8,000 for 98%)" },
-	children: { id: "children", title: "children's shows", n95: 2000, n98: 5000, source: "No study behind this row: the app's own estimate, lower than adult TV" },
-	songs: { id: "songs", title: "songs", n95: 3000, n98: 6500, source: "Tegge 2017 (popular songs: about 3,000 families for 95%); 98% estimated between film and TV" },
+	conversation: {
+		id: "conversation",
+		title: "everyday conversation",
+		n95: 2500,
+		n98: 6500,
+		source:
+			"Adolphs & Schmitt 2003 (CANCODE: 2,000 families ≈ 95%); Nation 2006 (spoken: 6,000–7,000 for 98%). The 2,500 for 95% is the app's own figure between that and Nation's roughly 3,000",
+	},
+	tv: {
+		id: "tv",
+		title: "TV and vlogs",
+		n95: 3000,
+		n98: 7000,
+		source: "Webb & Rodgers 2009a, 88 TV programs: 3,000 families + proper nouns = 95.5%, 7,000 = 98.3%",
+	},
+	film: {
+		id: "film",
+		title: "films",
+		n95: 3000,
+		n98: 6000,
+		source: "Webb & Rodgers 2009b, 318 films: 3,000 families + proper nouns = 95.8%, 6,000 = 98.2%",
+	},
+	news: {
+		id: "news",
+		title: "newspapers",
+		n95: 4000,
+		n98: 8000,
+		source: "Nation 2006: newspapers need about 4,000 families for 95% and 8,000 for 98%",
+	},
+	fiction: {
+		id: "fiction",
+		title: "novels",
+		n95: 4000,
+		n98: 9000,
+		source: "Nation 2006: novels need about 4,000 families for 95% and 8,000–9,000 for 98%",
+	},
+	formal: {
+		id: "formal",
+		title: "formal and official text",
+		n95: 4500,
+		n98: 9000,
+		source:
+			"Nation 2006 (academic and formal text sits above newspapers); Laufer & Ravenhorst-Kalovski 2010 (8,000 for 98%)",
+	},
+	children: {
+		id: "children",
+		title: "children's shows",
+		n95: 2000,
+		n98: 5000,
+		source: "No study behind this row: the app's own estimate, lower than adult TV",
+	},
+	songs: {
+		id: "songs",
+		title: "songs",
+		n95: 3000,
+		n98: 6500,
+		source: "Tegge 2017 (popular songs: about 3,000 families for 95%); 98% estimated between film and TV",
+	},
 };
 
 /**
@@ -497,7 +547,10 @@ export interface MilestoneEstimate {
 		/** The real-pace date with outside listening added at its weight; null with none logged.
 		 *  On the learner's own trend it adds nothing: the slope is per hour in the app, so
 		 *  whatever the outside listening did is in it already. */
-		outside?: { basis: "added"; measuredPerDay: number; creditedPerDay: number; days: number; date: string } | { basis: "in-trend" } | null;
+		outside?:
+			| { basis: "added"; measuredPerDay: number; creditedPerDay: number; days: number; date: string }
+			| { basis: "in-trend" }
+			| null;
 	};
 	eta: Eta;
 	/** The one line under the title. */
@@ -599,7 +652,11 @@ export function estimateMilestone(def: MilestoneDef, facts: LearnerFacts, opts: 
 	const speedEta = etaFrom(
 		opts.now,
 		hoursToGo === 0 ? 0 : plannedWeekly > 0 ? (hoursToGo / plannedWeekly) * 7 : null,
-		hoursToGo === 0 ? 0 : facts.paceMinutes > 0 && facts.paceDays >= MIN_PACE_DAYS ? hoursToGo / (facts.paceMinutes / 60) : null,
+		hoursToGo === 0
+			? 0
+			: facts.paceMinutes > 0 && facts.paceDays >= MIN_PACE_DAYS
+				? hoursToGo / (facts.paceMinutes / 60)
+				: null,
 	);
 
 	const credited = facts.outside?.creditedPerDay ?? 0;
@@ -609,35 +666,78 @@ export function estimateMilestone(def: MilestoneDef, facts: LearnerFacts, opts: 
 		else {
 			const app = facts.paceMinutes > 0 && facts.paceDays >= MIN_PACE_DAYS ? facts.paceMinutes : 0;
 			const days = hoursToGo / ((app + credited) / 60);
-			outside = { basis: "added", measuredPerDay: Math.round(app), creditedPerDay: Math.round(credited * 10) / 10, days, date: addDaysIso(opts.now, days) };
+			outside = {
+				basis: "added",
+				measuredPerDay: Math.round(app),
+				creditedPerDay: Math.round(credited * 10) / 10,
+				days,
+				date: addDaysIso(opts.now, days),
+			};
 		}
 	}
 
 	const eta = later(wordsEta, speedEta);
 	const wordsDone = toGo === 0;
 	const speedDone = speedNeed === 0 || speedHave >= speedNeed;
-	const binding: Binding = wordsDone && speedDone ? "none" : (wordsEta.daysPlanned ?? Infinity) >= (speedEta.daysPlanned ?? Infinity) ? (wordsDone ? "speed" : "words") : speedDone ? "words" : "speed";
+	const binding: Binding =
+		wordsDone && speedDone
+			? "none"
+			: (wordsEta.daysPlanned ?? Infinity) >= (speedEta.daysPlanned ?? Infinity)
+				? wordsDone
+					? "speed"
+					: "words"
+				: speedDone
+					? "words"
+					: "speed";
 	const days = eta.daysPlanned;
-	const status: MilestoneStatus = wordsDone && speedDone ? "reached" : days !== null && days <= 120 ? "close" : days !== null && days <= 400 ? "on-the-way" : "far";
+	const status: MilestoneStatus =
+		wordsDone && speedDone
+			? "reached"
+			: days !== null && days <= 120
+				? "close"
+				: days !== null && days <= 400
+					? "on-the-way"
+					: "far";
 
 	const pct = (x: number) => `${Math.round(x * 100)}%`;
 	const missing: string[] = [];
-	if (!wordsDone) missing.push(`About ${toGo.toLocaleString("en-GB")} more words: the words you know cover about ${pct(coverageNow)} of ${genre.title}; this needs ${pct(def.coverage)} (≈${need.toLocaleString("en-GB")} lemmas).`);
+	if (!wordsDone)
+		missing.push(
+			`About ${toGo.toLocaleString("en-GB")} more words: the words you know cover about ${pct(coverageNow)} of ${genre.title}; this needs ${pct(def.coverage)} (≈${need.toLocaleString("en-GB")} lemmas).`,
+		);
 	if (!speedDone) {
 		const who = facts.speed.basis === "level" ? "a listener at your level" : "you";
-		missing.push(`Speed: ${who} understand${facts.speed.basis === "level" ? "s" : ""} about ${speedHave} word${speedHave === 1 ? "" : "s"} a minute; this needs about ${speedNeed} (${def.wpm} spoken, ${SUPPORT_LINE[def.support]}).`);
+		missing.push(
+			`Speed: ${who} understand${facts.speed.basis === "level" ? "s" : ""} about ${speedHave} word${speedHave === 1 ? "" : "s"} a minute; this needs about ${speedNeed} (${def.wpm} spoken, ${SUPPORT_LINE[def.support]}).`,
+		);
 	}
 	let verdict: string;
-	if (status === "reached") verdict = "The words and the speed are both there by this estimate. Go and try it; what you miss is the next lesson.";
-	else if (binding === "speed") verdict = wordsDone ? "You know the words for this. What is missing is speed: hearing them as meaning before the next ones arrive." : "Speed is the longer road here; the words will be there first.";
-	else verdict = speedDone ? "You hear fast enough for this. What is missing is words." : "Words are the longer road here; your speed will be ready first.";
+	if (status === "reached")
+		verdict =
+			"The words and the speed are both there by this estimate. Go and try it; what you miss is the next lesson.";
+	else if (binding === "speed")
+		verdict = wordsDone
+			? "You know the words for this. What is missing is speed: hearing them as meaning before the next ones arrive."
+			: "Speed is the longer road here; the words will be there first.";
+	else
+		verdict = speedDone
+			? "You hear fast enough for this. What is missing is words."
+			: "Words are the longer road here; your speed will be ready first.";
 
 	return {
 		def,
 		status,
 		binding,
 		words: { have, need, toGo, coverageNow, coverageTarget: def.coverage, eta: wordsEta },
-		speed: { have: speedHave, need: speedNeed, basis: facts.speed.basis, hoursToGo: Math.round(hoursToGo), hoursBasis, eta: speedEta, outside },
+		speed: {
+			have: speedHave,
+			need: speedNeed,
+			basis: facts.speed.basis,
+			hoursToGo: Math.round(hoursToGo),
+			hoursBasis,
+			eta: speedEta,
+			outside,
+		},
 		eta,
 		verdict,
 		missing,
@@ -661,7 +761,30 @@ export interface CustomMapping {
 	cefr?: string;
 }
 
-const ICONS = new Set(["monitor-play", "video", "headphones", "newspaper", "coffee", "users", "captions", "clapperboard", "radio", "book-open", "message-circle", "briefcase", "music", "phone", "mail", "landmark", "tv", "mic", "sparkles", "baby", "gamepad-2", "map"]);
+const ICONS = new Set([
+	"monitor-play",
+	"video",
+	"headphones",
+	"newspaper",
+	"coffee",
+	"users",
+	"captions",
+	"clapperboard",
+	"radio",
+	"book-open",
+	"message-circle",
+	"briefcase",
+	"music",
+	"phone",
+	"mail",
+	"landmark",
+	"tv",
+	"mic",
+	"sparkles",
+	"baby",
+	"gamepad-2",
+	"map",
+]);
 
 /** The model's answer, checked field by field; anything odd falls back to
  *  a sensible default rather than failing the whole milestone. */
@@ -681,7 +804,10 @@ export function parseCustomMapping(text: string, fallbackTitle: string): CustomM
 	const coverage: CustomMapping["coverage"] = cov >= 0.975 ? 0.98 : cov >= 0.925 ? 0.95 : cov > 0 ? 0.9 : 0.95;
 	const wpmRaw = Number(raw.wpm);
 	const wpm = Number.isFinite(wpmRaw) ? Math.max(0, Math.min(220, Math.round(wpmRaw))) : NATURAL_WPM;
-	const support: Support = raw.support === "visual" || raw.support === "subtitles" || raw.support === "interactive" || raw.support === "none" ? raw.support : "none";
+	const support: Support =
+		raw.support === "visual" || raw.support === "subtitles" || raw.support === "interactive" || raw.support === "none"
+			? raw.support
+			: "none";
 	const icon = str(raw.icon, 24);
 	return {
 		title: str(raw.title, 60) || fallbackTitle.slice(0, 60),
@@ -724,14 +850,54 @@ export function customMilestone(text: string, mapping: CustomMapping): Milestone
 
 /** The studies the page cites, in the order the numbers appear. */
 export const MILESTONE_SOURCES: Array<{ who: string; what: string; line: string }> = [
-	{ who: "van Zeeland & Schmitt (2013), Applied Linguistics", what: "How much of the words you need to follow speech", line: "Listeners followed informal narratives adequately at 95% of the words known, and many did at 90%; conversation here asks 90–95%. A film without subtitles is held to 98%: that is our own cautious choice, because the study used short narratives, not films." },
-	{ who: "Hu & Nation (2000); Laufer & Ravenhorst-Kalovski (2010)", what: "The reading thresholds", line: "Unassisted reading for pleasure needs about 98% of the words; 95% is the minimum where comprehension holds with some help, such as a dictionary tap." },
-	{ who: "Schmitt, Jiang & Grabe (2011), Modern Language Journal", what: "Coverage and comprehension", line: "Comprehension rises roughly in a straight line with the share of words known: there is no cliff, so every hundred words bought moves the needle." },
-	{ who: "Webb & Rodgers (2009a, 2009b)", what: "The vocabulary of TV and film", line: "Across 88 TV programs and 318 films, 3,000 word families plus proper nouns gave about 95% of the words, and 6,000–7,000 gave 98%. The vlog and film milestones take their counts from here." },
-	{ who: "Nation (2006), Canadian Modern Language Review", what: "How large a vocabulary for reading and listening", line: "Newspapers and novels need about 4,000 families for 95% and 8,000–9,000 for 98%; everyday speech about 3,000 and 6,000–7,000. The news and in-laws milestones take their counts from here." },
-	{ who: "Adolphs & Schmitt (2003), Applied Linguistics", what: "Everyday conversation", line: "In the CANCODE corpus of spoken English, 2,000 word families covered about 95% of the words, and 3,000 about 96%; conversation is the least demanding material there is." },
-	{ who: "Milton (2009), Measuring Second Language Vocabulary Acquisition", what: "Vocabulary size by CEFR level", line: "Learners placed at A2 know about 1,500–2,500 lemmas, at B1 2,750–3,250, at B2 3,250–3,750. The app uses these, raised by the same quarter as the word-family counts, to credit words your level implies but the deck has not tested. Milton's counts may already be lemma-based, so this can credit more words than you know." },
-	{ who: "Segalowitz (2010), Cognitive Bases of Second Language Fluency", what: "Why knowing a word is not hearing it", line: "Fluent comprehension is automatic retrieval: fast and stable, not just correct. That recalling a word slowly is not yet hearing it at speech pace is the app's reading of this, not Segalowitz's finding; his measure is how steady reaction times are, not words a minute. The speed column measures the pace directly." },
-	{ who: "DeKeyser (1997), Studies in Second Language Acquisition", what: "How speed grows", line: "Processing speed improves with practice along a power law: fast gains at first, then slower ones, over weeks of practice. The app's projections use straight lines, which overstate late gains. The speed dates use the guided-hours ladder until your own Listen trend has enough sessions to replace it." },
-	{ who: "Council of Europe, CEFR Companion Volume (2020)", what: "What each level can follow", line: "B1: clearly articulated speech directed at me, and films where pictures carry the story. B2: the majority of films in standard dialect, most TV on familiar topics. The speed ladder is anchored to these descriptors." },
+	{
+		who: "van Zeeland & Schmitt (2013), Applied Linguistics",
+		what: "How much of the words you need to follow speech",
+		line: "Listeners followed informal narratives adequately at 95% of the words known, and many did at 90%; conversation here asks 90–95%. A film without subtitles is held to 98%: that is our own cautious choice, because the study used short narratives, not films.",
+	},
+	{
+		who: "Hu & Nation (2000); Laufer & Ravenhorst-Kalovski (2010)",
+		what: "The reading thresholds",
+		line: "Unassisted reading for pleasure needs about 98% of the words; 95% is the minimum where comprehension holds with some help, such as a dictionary tap.",
+	},
+	{
+		who: "Schmitt, Jiang & Grabe (2011), Modern Language Journal",
+		what: "Coverage and comprehension",
+		line: "Comprehension rises roughly in a straight line with the share of words known: there is no cliff, so every hundred words bought moves the needle.",
+	},
+	{
+		who: "Webb & Rodgers (2009a, 2009b)",
+		what: "The vocabulary of TV and film",
+		line: "Across 88 TV programs and 318 films, 3,000 word families plus proper nouns gave about 95% of the words, and 6,000–7,000 gave 98%. The vlog and film milestones take their counts from here.",
+	},
+	{
+		who: "Nation (2006), Canadian Modern Language Review",
+		what: "How large a vocabulary for reading and listening",
+		line: "Newspapers and novels need about 4,000 families for 95% and 8,000–9,000 for 98%; everyday speech about 3,000 and 6,000–7,000. The news and in-laws milestones take their counts from here.",
+	},
+	{
+		who: "Adolphs & Schmitt (2003), Applied Linguistics",
+		what: "Everyday conversation",
+		line: "In the CANCODE corpus of spoken English, 2,000 word families covered about 95% of the words, and 3,000 about 96%; conversation is the least demanding material there is.",
+	},
+	{
+		who: "Milton (2009), Measuring Second Language Vocabulary Acquisition",
+		what: "Vocabulary size by CEFR level",
+		line: "Learners placed at A2 know about 1,500–2,500 lemmas, at B1 2,750–3,250, at B2 3,250–3,750. The app uses these, raised by the same quarter as the word-family counts, to credit words your level implies but the deck has not tested. Milton's counts may already be lemma-based, so this can credit more words than you know.",
+	},
+	{
+		who: "Segalowitz (2010), Cognitive Bases of Second Language Fluency",
+		what: "Why knowing a word is not hearing it",
+		line: "Fluent comprehension is automatic retrieval: fast and stable, not just correct. That recalling a word slowly is not yet hearing it at speech pace is the app's reading of this, not Segalowitz's finding; his measure is how steady reaction times are, not words a minute. The speed column measures the pace directly.",
+	},
+	{
+		who: "DeKeyser (1997), Studies in Second Language Acquisition",
+		what: "How speed grows",
+		line: "Processing speed improves with practice along a power law: fast gains at first, then slower ones, over weeks of practice. The app's projections use straight lines, which overstate late gains. The speed dates use the guided-hours ladder until your own Listen trend has enough sessions to replace it.",
+	},
+	{
+		who: "Council of Europe, CEFR Companion Volume (2020)",
+		what: "What each level can follow",
+		line: "B1: clearly articulated speech directed at me, and films where pictures carry the story. B2: the majority of films in standard dialect, most TV on familiar topics. The speed ladder is anchored to these descriptors.",
+	},
 ];

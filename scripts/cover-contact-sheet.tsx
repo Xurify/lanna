@@ -9,10 +9,17 @@ import type { CoverMotif } from "../src/core/cover.ts";
 const outDir = process.argv[2]!;
 const order = (process.argv[3] ?? "").split(",").filter(Boolean) as CoverMotif[];
 mkdirSync(outDir, { recursive: true });
-const papers = { day: ["#f3eee3", "#e8efe7", "#e6edf2", "#f3eae6", "#ecebe6"], night: ["#26241e", "#1f2621", "#1e242a", "#28211f", "#242422"] };
+const papers = {
+	day: ["#f3eee3", "#e8efe7", "#e6edf2", "#f3eae6", "#ecebe6"],
+	night: ["#26241e", "#1f2621", "#1e242a", "#28211f", "#242422"],
+};
 
 function sheet(night: boolean): string {
-	const ink = night ? "#ecedee" : "#16181b", ink2 = night ? "#c3c7cb" : "#3f444a", ink3 = night ? "#9399a0" : "#656b72", teal = night ? "#4cbdb7" : "#0d6764", teal2 = night ? "#7bd3ce" : "#0a5452";
+	const ink = night ? "#ecedee" : "#16181b",
+		ink2 = night ? "#c3c7cb" : "#3f444a",
+		ink3 = night ? "#9399a0" : "#656b72",
+		teal = night ? "#4cbdb7" : "#0d6764",
+		teal2 = night ? "#7bd3ce" : "#0a5452";
 	const cells = order.map((motif, i) => {
 		const svg = renderToStaticMarkup(<CoverScene motif={motif} seed={101 + i * 37} />);
 		return `<figure><div class="art" style="background:${papers[night ? "night" : "day"][i % 5]}">${svg}</div><figcaption>${i + 1}</figcaption></figure>`;

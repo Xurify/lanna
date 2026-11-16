@@ -22,7 +22,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { minutes?: unknown; attention?: unknown; what?: unknown; day?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as {
+		minutes?: unknown;
+		attention?: unknown;
+		what?: unknown;
+		day?: unknown;
+	} | null;
 	const out = logOutside(body, new Date(), tzOf(req));
 	if (!out.ok) return Response.json({ message: out.message }, { status: out.status });
 	return Response.json({ entry: out.entry, state: out.state });

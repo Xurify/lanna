@@ -3,7 +3,16 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIcon, BotIcon, ClapperboardIcon, FileTextIcon, GlobeIcon, PenToolIcon, SearchIcon, SquareIcon } from "lucide-react";
+import {
+	ActivityIcon,
+	BotIcon,
+	ClapperboardIcon,
+	FileTextIcon,
+	GlobeIcon,
+	PenToolIcon,
+	SearchIcon,
+	SquareIcon,
+} from "lucide-react";
 import type { CallUsage, JobKind, JobRecord } from "@/src/core";
 import { isModelsRefusal, isProviderKeyRefusal, subscriptionLabel, subscriptionLabels } from "@/src/core";
 import { formatTokens, planCostLabel } from "@/components/usage-format";
@@ -118,8 +127,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
 				const res = await fetch("/api/activity");
 				if (res.ok) {
 					const data = (await res.json()) as Partial<ActivityFeed>;
-					if (alive)
-						setFeed({ jobs: data.jobs ?? [], tasks: data.tasks ?? [] });
+					if (alive) setFeed({ jobs: data.jobs ?? [], tasks: data.tasks ?? [] });
 				}
 			} catch {
 				// transport blip: keep the last feed, announce again next event
@@ -250,7 +258,17 @@ export function toBlobs(feed: ActivityFeed): ActivityBlob[] {
 	});
 	for (const task of feed.tasks) {
 		if (task.status !== "running") continue;
-		blobs.push({ id: task.id, process: "task", taskKind: task.kind, title: task.title, chatId: "", startedAt: task.startedAt, cost: null, context: null, activity: task.step });
+		blobs.push({
+			id: task.id,
+			process: "task",
+			taskKind: task.kind,
+			title: task.title,
+			chatId: "",
+			startedAt: task.startedAt,
+			cost: null,
+			context: null,
+			activity: task.step,
+		});
 	}
 	blobs.sort((a, b) => a.startedAt - b.startedAt);
 	return blobs;
@@ -342,18 +360,31 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 	// alone (the cost span is population, not decoration).
 	return (
 		<section data-testid="activity-section" className="border-t border-border px-3 pb-3 pt-2.5">
-			<div className={cn("flex h-5 items-center gap-1.5 px-2.5 text-xs font-bold text-muted-foreground", blobs.length > 0 && "mb-1")}>
+			<div
+				className={cn(
+					"flex h-5 items-center gap-1.5 px-2.5 text-xs font-bold text-muted-foreground",
+					blobs.length > 0 && "mb-1",
+				)}
+			>
 				<ActivityIcon className="size-3" />
 				Background
 				{feed.tasks.length > 0 && (
-					<Link href="/tasks" className="ml-auto font-medium text-primary hover:underline" data-testid="activity-all-tasks">
+					<Link
+						href="/tasks"
+						className="ml-auto font-medium text-primary hover:underline"
+						data-testid="activity-all-tasks"
+					>
 						All tasks
 					</Link>
 				)}
 				{blobs.some((b) => b.process !== "task") && (
-					<span className={feed.tasks.length > 0 ? "tabular-nums" : "ml-auto tabular-nums"} data-testid="activity-total-cost" title="Total cost so far (estimated)">
+					<span
+						className={feed.tasks.length > 0 ? "tabular-nums" : "ml-auto tabular-nums"}
+						data-testid="activity-total-cost"
+						title="Total cost so far (estimated)"
+					>
 						{planCostLabel(totalCost, subscriptionLabels(blobs.map((blob) => blob.model)))}
-				</span>
+					</span>
 				)}
 			</div>
 			{blobs.length > 0 && (
@@ -369,7 +400,7 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 							onAbort={() => void abort(blob)}
 						/>
 					))}
-			</div>
+				</div>
 			)}
 		</section>
 	);
@@ -392,19 +423,24 @@ function ActivityBlobRow({
 	onAbort: () => void;
 }) {
 	const { catalog } = useModelCatalog();
-	const Icon = blob.process === "task" ? (blob.taskKind === "language" ? GlobeIcon : ClapperboardIcon) : (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
+	const Icon =
+		blob.process === "task"
+			? blob.taskKind === "language"
+				? GlobeIcon
+				: ClapperboardIcon
+			: (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
 	const label =
 		blob.process === "task"
 			? blob.taskKind === "language"
 				? "Adding a language"
 				: "Video preparation"
 			: blob.jobKind === "research"
-					? "Researcher"
-					: blob.jobKind === "visual"
-							? "Figure maker"
-							: blob.jobKind === "pdf"
-								? "PDF reader"
-								: "Helper";
+				? "Researcher"
+				: blob.jobKind === "visual"
+					? "Figure maker"
+					: blob.jobKind === "pdf"
+						? "PDF reader"
+						: "Helper";
 	const face = (
 		<>
 			<Icon className="size-3.5 shrink-0 text-muted-foreground" />
@@ -419,7 +455,9 @@ function ActivityBlobRow({
 				)}
 			</span>
 			<span className="flex shrink-0 items-center gap-2 tabular-nums text-muted-foreground">
-				{blob.process !== "task" && <span data-testid="activity-blob-cost">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>}
+				{blob.process !== "task" && (
+					<span data-testid="activity-blob-cost">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>
+				)}
 				<span data-testid="activity-blob-elapsed">{formatElapsed(now - blob.startedAt)}</span>
 			</span>
 		</>
@@ -436,7 +474,12 @@ function ActivityBlobRow({
 					{face}
 				</Link>
 			) : (
-				<button type="button" onClick={onToggleDetail} aria-expanded={detailOpen} className="flex w-full items-center gap-2 pr-7 text-left">
+				<button
+					type="button"
+					onClick={onToggleDetail}
+					aria-expanded={detailOpen}
+					className="flex w-full items-center gap-2 pr-7 text-left"
+				>
 					{face}
 				</button>
 			)}
@@ -463,9 +506,7 @@ function ActivityBlobRow({
 					<div className="mb-1.5 flex items-center gap-2">
 						<Icon className="size-3.5 text-muted-foreground" />
 						<span className="font-medium">{label}</span>
-						<span className="ml-auto tabular-nums text-muted-foreground">
-							{formatElapsed(now - blob.startedAt)}
-						</span>
+						<span className="ml-auto tabular-nums text-muted-foreground">{formatElapsed(now - blob.startedAt)}</span>
 					</div>
 					<div className="flex flex-col gap-1 text-muted-foreground">
 						<div className="truncate text-card-foreground" title={blob.title}>
@@ -474,12 +515,16 @@ function ActivityBlobRow({
 						{blob.activity && <div className="break-words">{blob.activity}</div>}
 						<div className="flex justify-between gap-2">
 							<span>Cost</span>
-							<span className="tabular-nums text-card-foreground">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>
+							<span className="tabular-nums text-card-foreground">
+								{planCostLabel(blob.cost, subscriptionLabel(blob.model))}
+							</span>
 						</div>
 						<div className="flex justify-between gap-2">
 							<span>Context</span>
 							<span className="tabular-nums text-card-foreground" data-testid="activity-blob-context">
-								{blob.context === null ? "—" : `${formatTokens(blob.context.used)} / ${formatTokens(blob.context.limit)}`}
+								{blob.context === null
+									? "—"
+									: `${formatTokens(blob.context.used)} / ${formatTokens(blob.context.limit)}`}
 							</span>
 						</div>
 						{blob.model && (
@@ -499,9 +544,9 @@ function ActivityBlobRow({
 						</a>
 					</div>
 					<div className="mt-2 text-muted-foreground/80">
-					{abortState === "failed" && "Couldn't stop it."}
-					{abortState === "pending" && "Stopping…"}
-				</div>
+						{abortState === "failed" && "Couldn't stop it."}
+						{abortState === "pending" && "Stopping…"}
+					</div>
 				</div>
 			)}
 		</div>

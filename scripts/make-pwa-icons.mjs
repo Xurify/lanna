@@ -19,9 +19,11 @@ const mark = readFileSync("build/mark.svg", "utf8");
 const glyph = mark.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
 
 function tile(scale) {
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">` +
+	return (
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">` +
 		`<rect width="1024" height="1024" fill="${BACKGROUND}"/>` +
-		`<g transform="translate(512 512) scale(${scale}) translate(-512 -512)">${glyph}</g></svg>`;
+		`<g transform="translate(512 512) scale(${scale}) translate(-512 -512)">${glyph}</g></svg>`
+	);
 }
 
 const outputs = [

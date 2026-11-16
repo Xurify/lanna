@@ -29,7 +29,14 @@
 
 import { Value } from "typebox/value";
 import type { TSchema } from "typebox";
-import { askOptionProblems, quizInputProblems, explainInputProblems, type AskToolInput, type QuizToolInput, type ExplainToolInput } from "./question-core.ts";
+import {
+	askOptionProblems,
+	quizInputProblems,
+	explainInputProblems,
+	type AskToolInput,
+	type QuizToolInput,
+	type ExplainToolInput,
+} from "./question-core.ts";
 import { quizDisplayInputSchema, askInputSchema, explainDisplayInputSchema } from "./question-schemas.ts";
 import { healEncodedArguments } from "./argument-heal.ts";
 import type { ProbeDoneInput } from "./contracts/probe.ts";

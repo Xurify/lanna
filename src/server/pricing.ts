@@ -5,7 +5,12 @@
 import { calculateCost, type Usage } from "@earendil-works/pi-ai";
 import { piModels } from "../agent/models.ts";
 import type { CallUsage, ChatRecord, JobRecord, TurnUsage } from "../core/contracts.ts";
-import { isSubscriptionModel, sessionCost as foldSessionCost, turnCost as foldTurnCost, jobCost as foldJobCost } from "../core/prices.ts";
+import {
+	isSubscriptionModel,
+	sessionCost as foldSessionCost,
+	turnCost as foldTurnCost,
+	jobCost as foldJobCost,
+} from "../core/prices.ts";
 
 function catalogModel(id: string) {
 	const colon = id.indexOf(":");
@@ -21,13 +26,25 @@ export function callCost(call: Partial<CallUsage>, modelId: string): number | nu
 	const cacheRead = call.cacheReadTokens ?? 0;
 	const cacheWrite = call.cacheWriteTokens ?? 0;
 	const cacheWrite1h = call.cacheWrite1hTokens ?? 0;
-	if ([input, output, cacheRead, cacheWrite, cacheWrite1h].some((v) => !Number.isFinite(v) || v < 0) || cacheWrite1h > cacheWrite) return null;
+	if (
+		[input, output, cacheRead, cacheWrite, cacheWrite1h].some((v) => !Number.isFinite(v) || v < 0) ||
+		cacheWrite1h > cacheWrite
+	)
+		return null;
 	// Old records discarded this split. Only price them if it cannot affect
 	// the result; do not invent short-retention precision from a missing field.
-	if (cacheWrite > 0 && call.cacheWrite1hTokens === undefined &&
-		[model.cost, ...(model.cost.tiers ?? [])].some((rate) => rate.cacheWrite !== 2 * rate.input)) return null;
+	if (
+		cacheWrite > 0 &&
+		call.cacheWrite1hTokens === undefined &&
+		[model.cost, ...(model.cost.tiers ?? [])].some((rate) => rate.cacheWrite !== 2 * rate.input)
+	)
+		return null;
 	const usage: Usage = {
-		input, output, cacheRead, cacheWrite, cacheWrite1h,
+		input,
+		output,
+		cacheRead,
+		cacheWrite,
+		cacheWrite1h,
 		totalTokens: input + output + cacheRead + cacheWrite,
 		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 	};

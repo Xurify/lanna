@@ -16,7 +16,7 @@ system-instruction alignment: neither agent carries the other phase's bulk
 philosophy so they share a view of the whole process).
 
 - **The prober** runs the probing phase: quiz + ask_user_question +
-  `probe_done`. Its quiz is a *different tool* (different schema: **no
+  `probe_done`. Its quiz is a _different tool_ (different schema: **no
   `nodeId` field at all**) under the same name, so the model is never shown a
   field it must not use. No plan tools, no jobs, no demos.
 - **The teacher** runs everything from planning onward: full tool set
@@ -60,7 +60,7 @@ The prober concludes explicitly:
 
 ## 3. `nodeId` semantics — position, not completion
 
-The old contract read a *correct* answer on a tagged check as "node done."
+The old contract read a _correct_ answer on a tagged check as "node done."
 That is the wrong signal and is **abolished**. The new contract:
 
 > **`nodeId` on a quiz means: "this question is about this node."**
@@ -75,7 +75,7 @@ That is the wrong signal and is **abolished**. The new contract:
   conclusion: `currentNodeId`/`doneNodeIds` are removed from the tree).
 - **A node spans multiple turns and multiple checks naturally.** Several
   questions may tag the same node — the map stays put. The teacher moving to
-  a new node *is* the teacher's judgment that the previous one is finished,
+  a new node _is_ the teacher's judgment that the previous one is finished,
   regardless of individual check outcomes (a failed check followed by a
   re-teach and a move-on is still a visited node).
 - **Failed checks move nothing.** Results no longer feed derivation at all.
@@ -171,6 +171,6 @@ which the author-once protocol never sets, so no session could reach
 "teach"; (3) with result-derived "done," one passed check would have
 falsely finished a node. Model-compliance issues (untagged checks,
 free-text correctAnswer) are expected to shrink with higher thinking
-budgets and runtime model control — but the *semantics* had to be right
+budgets and runtime model control — but the _semantics_ had to be right
 first. Model mistakes are good test material: they exercise the
 return-to-agent validation loops.

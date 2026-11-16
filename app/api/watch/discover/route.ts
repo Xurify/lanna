@@ -28,7 +28,26 @@
  */
 
 import { isChannelId, splitChannelInputs } from "@/src/core";
-import { addCreator, addCreators, BODY_LIMITS, bodyTooLarge, creatorVideos, discoverState, dismissPick, dismissSuggestion, fillAvatars, forgetYouTube, forgetYouTubeAccount, importYouTube, importYouTubeAccount, refreshDiscover, refreshIfStale, removeCreator, saveSuggestions, setKeepReady } from "@/src/server";
+import {
+	addCreator,
+	addCreators,
+	BODY_LIMITS,
+	bodyTooLarge,
+	creatorVideos,
+	discoverState,
+	dismissPick,
+	dismissSuggestion,
+	fillAvatars,
+	forgetYouTube,
+	forgetYouTubeAccount,
+	importYouTube,
+	importYouTubeAccount,
+	refreshDiscover,
+	refreshIfStale,
+	removeCreator,
+	saveSuggestions,
+	setKeepReady,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -43,10 +62,25 @@ export async function GET() {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.import);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { action?: unknown; input?: unknown; id?: unknown; list?: unknown; via?: unknown; html?: unknown; videos?: unknown; channels?: unknown; videoId?: unknown; on?: unknown; ids?: unknown; query?: unknown; text?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as {
+		action?: unknown;
+		input?: unknown;
+		id?: unknown;
+		list?: unknown;
+		via?: unknown;
+		html?: unknown;
+		videos?: unknown;
+		channels?: unknown;
+		videoId?: unknown;
+		on?: unknown;
+		ids?: unknown;
+		query?: unknown;
+		text?: unknown;
+	} | null;
 	if (!body) return Response.json({ message: "a JSON body is required" }, { status: 400 });
 	if (body.action === "add-creator") {
-		if (typeof body.input !== "string" || !body.input.trim()) return Response.json({ message: "input is required" }, { status: 400 });
+		if (typeof body.input !== "string" || !body.input.trim())
+			return Response.json({ message: "input is required" }, { status: 400 });
 		try {
 			const creator = await addCreator(body.input);
 			void refreshDiscover();
@@ -65,18 +99,22 @@ export async function POST(req: Request) {
 		return Response.json({ saved: saved.length, failed, state: discoverState() });
 	}
 	if (body.action === "save-suggestions") {
-		const ids = Array.isArray(body.ids) ? body.ids.filter((x): x is string => typeof x === "string" && isChannelId(x)) : undefined;
+		const ids = Array.isArray(body.ids)
+			? body.ids.filter((x): x is string => typeof x === "string" && isChannelId(x))
+			: undefined;
 		const saved = saveSuggestions(ids);
 		if (saved.length) void refreshDiscover();
 		return Response.json({ saved: saved.length, state: discoverState() });
 	}
 	if (body.action === "dismiss-channel") {
-		if (typeof body.id !== "string" || !isChannelId(body.id)) return Response.json({ message: "id is required" }, { status: 400 });
+		if (typeof body.id !== "string" || !isChannelId(body.id))
+			return Response.json({ message: "id is required" }, { status: 400 });
 		dismissSuggestion(body.id);
 		return Response.json(discoverState());
 	}
 	if (body.action === "remove-creator") {
-		if (typeof body.id !== "string" || !isChannelId(body.id)) return Response.json({ message: "id is required" }, { status: 400 });
+		if (typeof body.id !== "string" || !isChannelId(body.id))
+			return Response.json({ message: "id is required" }, { status: 400 });
 		removeCreator(body.id);
 		return Response.json(discoverState());
 	}
@@ -85,7 +123,8 @@ export async function POST(req: Request) {
 		return Response.json(discoverState());
 	}
 	if (body.action === "import") {
-		if (typeof body.list !== "string" || !LISTS.has(body.list)) return Response.json({ message: "list must be history, recommended or subscriptions" }, { status: 400 });
+		if (typeof body.list !== "string" || !LISTS.has(body.list))
+			return Response.json({ message: "list must be history, recommended or subscriptions" }, { status: 400 });
 		const list = body.list as "history" | "recommended" | "subscriptions";
 		try {
 			const count = importYouTube(
@@ -125,9 +164,13 @@ export async function POST(req: Request) {
 		return Response.json(discoverState());
 	}
 	if (body.action === "creator-videos") {
-		if (typeof body.id !== "string" || !isChannelId(body.id)) return Response.json({ message: "id is required" }, { status: 400 });
+		if (typeof body.id !== "string" || !isChannelId(body.id))
+			return Response.json({ message: "id is required" }, { status: 400 });
 		try {
-			const videos = await creatorVideos(body.id, { query: typeof body.query === "string" ? body.query : undefined, signal: AbortSignal.timeout(60_000) });
+			const videos = await creatorVideos(body.id, {
+				query: typeof body.query === "string" ? body.query : undefined,
+				signal: AbortSignal.timeout(60_000),
+			});
 			return Response.json({ videos });
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);

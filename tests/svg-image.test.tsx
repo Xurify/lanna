@@ -20,25 +20,33 @@ function assertImageBoundary(holder: Element, source: string) {
 	const image = holder.querySelector("img");
 	assert.ok(image, "figure is an image");
 	assert.equal(holder.children.length, 1, "no figure markup alongside the image");
-	assert.equal(holder.querySelector("svg, style, script, foreignObject, a, [onload], [onclick]"), null,
-		"generated elements and CSS never enter the app document");
+	assert.equal(
+		holder.querySelector("svg, style, script, foreignObject, a, [onload], [onclick]"),
+		null,
+		"generated elements and CSS never enter the app document",
+	);
 	assert.equal(image.getAttribute("alt"), "Figure");
 	assert.equal(image.getAttribute("draggable"), "false", "native image dragging must not interfere with panning");
 	const src = image.getAttribute("src")!;
 	assert.ok(src.startsWith(PREFIX));
-	assert.equal(decodeURIComponent(src.slice(PREFIX.length)), source, "image URL contains the expected SVG display source, not a raster");
+	assert.equal(
+		decodeURIComponent(src.slice(PREFIX.length)),
+		source,
+		"image URL contains the expected SVG display source, not a raster",
+	);
 	return image;
 }
 
 describe("SVG display compatibility", () => {
 	it("leaves standalone SVG unchanged, including comments and CDATA", () => {
-		const source = FIGURE.replace("</svg>", '<!-- &nbsp; <svg> --><![CDATA[&nbsp; <svg>]]></svg>');
+		const source = FIGURE.replace("</svg>", "<!-- &nbsp; <svg> --><![CDATA[&nbsp; <svg>]]></svg>");
 		assert.equal(svgImageSource(source), source);
 	});
 
 	it("adds only a missing root namespace, ignoring comments and attribute values", () => {
-		const source = '<?xml version="1.0"?><!-- <svg xmlns="wrong"> --><svg data-note=\' xmlns="not-a-declaration" >\' xmlns:xlink="http://www.w3.org/1999/xlink"><svg/></svg>';
-		const expected = source.replace('<svg data-note=', '<svg xmlns="http://www.w3.org/2000/svg" data-note=');
+		const source =
+			'<?xml version="1.0"?><!-- <svg xmlns="wrong"> --><svg data-note=\' xmlns="not-a-declaration" >\' xmlns:xlink="http://www.w3.org/1999/xlink"><svg/></svg>';
+		const expected = source.replace("<svg data-note=", '<svg xmlns="http://www.w3.org/2000/svg" data-note=');
 		assert.equal(svgImageSource(source), expected);
 		assert.equal(svgImageSource(expected), expected, "normalization is idempotent");
 	});
@@ -51,8 +59,11 @@ describe("SVG display compatibility", () => {
 	});
 
 	it("converts nbsp references in text and attributes, but not comments, CDATA or processing instructions", () => {
-		const source = '<?example &nbsp;?><svg xmlns="http://www.w3.org/2000/svg" aria-label="A&nbsp;B"><text>A&nbsp;B &amp;nbsp; &#160;</text><!-- &nbsp; --><![CDATA[&nbsp;]]></svg>';
-		const expected = source.replace('aria-label="A&nbsp;B"', 'aria-label="A&#160;B"').replace('<text>A&nbsp;B', '<text>A&#160;B');
+		const source =
+			'<?example &nbsp;?><svg xmlns="http://www.w3.org/2000/svg" aria-label="A&nbsp;B"><text>A&nbsp;B &amp;nbsp; &#160;</text><!-- &nbsp; --><![CDATA[&nbsp;]]></svg>';
+		const expected = source
+			.replace('aria-label="A&nbsp;B"', 'aria-label="A&#160;B"')
+			.replace("<text>A&nbsp;B", "<text>A&#160;B");
 		assert.equal(svgImageSource(source), expected);
 		assert.equal(svgImageSource(expected), expected);
 	});
@@ -60,40 +71,69 @@ describe("SVG display compatibility", () => {
 
 describe("generated SVG image boundary", () => {
 	for (const mode of ["inline", "fullscreen"] as const) {
-		for (const [name, source] of [["reported style rule and fragment IDs", FIGURE], ["active markup", ACTIVE_MARKUP]] as const) {
+		for (const [name, source] of [
+			["reported style rule and fragment IDs", FIGURE],
+			["active markup", ACTIVE_MARKUP],
+		] as const) {
 			it(`${mode}: isolates ${name} inside the image URL`, () => {
-				const html = renderToStaticMarkup(mode === "inline"
-					? <VisualOutputCard output={{ svg: source }} />
-					: <MermaidOverlay svg={source} onClose={() => {}} />);
+				const html = renderToStaticMarkup(
+					mode === "inline" ? (
+						<VisualOutputCard output={{ svg: source }} />
+					) : (
+						<MermaidOverlay svg={source} onClose={() => {}} />
+					),
+				);
 				const { document } = parseHTML(html);
-				const holder = document.querySelector(mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]")!;
+				const holder = document.querySelector(
+					mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]",
+				)!;
 				assertImageBoundary(holder, source);
 				assert.ok(holder.classList.contains("bg-white"), "white backing retained");
 			});
 		}
 
 		for (const [name, original, display] of [
-			["missing namespace", '<svg width="320" height="160"><text>Example</text></svg>', '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160"><text>Example</text></svg>'],
-			["HTML entity", '<svg xmlns="http://www.w3.org/2000/svg"><text>A&nbsp;B</text></svg>', '<svg xmlns="http://www.w3.org/2000/svg"><text>A&#160;B</text></svg>'],
+			[
+				"missing namespace",
+				'<svg width="320" height="160"><text>Example</text></svg>',
+				'<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160"><text>Example</text></svg>',
+			],
+			[
+				"HTML entity",
+				'<svg xmlns="http://www.w3.org/2000/svg"><text>A&nbsp;B</text></svg>',
+				'<svg xmlns="http://www.w3.org/2000/svg"><text>A&#160;B</text></svg>',
+			],
 		] as const) {
 			it(`${mode}: repairs ${name} only in the image source`, () => {
 				const output = { svg: original };
-				const html = renderToStaticMarkup(mode === "inline"
-					? <VisualOutputCard output={output} />
-					: <MermaidOverlay svg={output.svg} onClose={() => {}} />);
+				const html = renderToStaticMarkup(
+					mode === "inline" ? (
+						<VisualOutputCard output={output} />
+					) : (
+						<MermaidOverlay svg={output.svg} onClose={() => {}} />
+					),
+				);
 				const { document } = parseHTML(html);
-				const holder = document.querySelector(mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]")!;
+				const holder = document.querySelector(
+					mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]",
+				)!;
 				assertImageBoundary(holder, display);
 				assert.equal(output.svg, original, "artifact source was not mutated");
 			});
 		}
 
 		it(`${mode}: retains inversion on the white backing`, () => {
-			const html = renderToStaticMarkup(mode === "inline"
-				? <VisualOutputCard output={{ svg: FIGURE }} initialInverted />
-				: <MermaidOverlay svg={FIGURE} inverted onClose={() => {}} />);
+			const html = renderToStaticMarkup(
+				mode === "inline" ? (
+					<VisualOutputCard output={{ svg: FIGURE }} initialInverted />
+				) : (
+					<MermaidOverlay svg={FIGURE} inverted onClose={() => {}} />
+				),
+			);
 			const { document } = parseHTML(html);
-			const holder = document.querySelector(mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]")!;
+			const holder = document.querySelector(
+				mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]",
+			)!;
 			assert.match(holder.getAttribute("style")!, /invert\(1\) hue-rotate\(180deg\)/);
 			assert.ok(holder.classList.contains("bg-white"));
 			assertImageBoundary(holder, FIGURE);
@@ -131,7 +171,7 @@ describe("generated SVG image boundary", () => {
 });
 
 it("the fullscreen button opens the same SVG image and inversion; download keeps original bytes", async () => {
-	const originalSvg = FIGURE.replace(' xmlns="http://www.w3.org/2000/svg"', '').replace("θ &amp; φ", "θ&nbsp;&amp; φ");
+	const originalSvg = FIGURE.replace(' xmlns="http://www.w3.org/2000/svg"', "").replace("θ &amp; φ", "θ&nbsp;&amp; φ");
 	const displaySvg = FIGURE.replace("θ &amp; φ", "θ&#160;&amp; φ");
 	const dom = parseHTML("<html><body></body></html>");
 	const names = ["window", "document", "Element", "HTMLElement", "IS_REACT_ACT_ENVIRONMENT"] as const;
@@ -157,11 +197,15 @@ it("the fullscreen button opens the same SVG image and inversion; download keeps
 		downloaded = blob;
 		return "blob:figure-test";
 	};
-	URL.revokeObjectURL = (url) => { revoked = url; };
+	URL.revokeObjectURL = (url) => {
+		revoked = url;
+	};
 	function Harness() {
 		const [focus, setFocus] = useState<{ svg: string; inverted: boolean } | null>(null);
 		return (
-			<SessionMermaidContext.Provider value={{ openMermaid: () => {}, openFigure: (svg, inverted) => setFocus({ svg, inverted }) }}>
+			<SessionMermaidContext.Provider
+				value={{ openMermaid: () => {}, openFigure: (svg, inverted) => setFocus({ svg, inverted }) }}
+			>
 				<VisualOutputCard output={{ svg: originalSvg }} initialInverted />
 				{focus && <MermaidOverlay svg={focus.svg} inverted={focus.inverted} onClose={() => setFocus(null)} />}
 			</SessionMermaidContext.Provider>
@@ -169,7 +213,11 @@ it("the fullscreen button opens the same SVG image and inversion; download keeps
 	}
 	try {
 		await act(async () => root.render(<Harness />));
-		await act(async () => { host.querySelector('[data-testid="visual-open"]')!.dispatchEvent(new dom.window.Event("click", { bubbles: true })); });
+		await act(async () => {
+			host
+				.querySelector('[data-testid="visual-open"]')!
+				.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+		});
 		const inline = assertImageBoundary(host.querySelector('[data-testid="visual-svg"]')!, displaySvg);
 		const overlayHolder = host.querySelector("[data-lh-overlay-chart]")!;
 		const fullscreen = assertImageBoundary(overlayHolder, displaySvg);
@@ -180,11 +228,17 @@ it("the fullscreen button opens the same SVG image and inversion; download keeps
 		dom.document.createElement = ((...args: Parameters<typeof originalCreateElement>) => {
 			const element = originalCreateElement.apply(dom.document, args);
 			if (args[0] === "a") {
-				element.click = () => { clicked = { name: element.getAttribute("download")!, href: element.getAttribute("href")! }; };
+				element.click = () => {
+					clicked = { name: element.getAttribute("download")!, href: element.getAttribute("href")! };
+				};
 			}
 			return element;
 		}) as typeof originalCreateElement;
-		await act(async () => { host.querySelector('[data-testid="visual-download"]')!.dispatchEvent(new dom.window.Event("click", { bubbles: true })); });
+		await act(async () => {
+			host
+				.querySelector('[data-testid="visual-download"]')!
+				.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+		});
 		assert.ok(downloaded);
 		assert.equal(await downloaded.text(), originalSvg);
 		assert.equal(downloaded.type, "image/svg+xml");

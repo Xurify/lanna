@@ -11,7 +11,11 @@ export const dynamic = "force-dynamic";
 
 const VIEWS: readonly PhonologyView[] = ["pairs", "sounds", "rhythm"];
 
-export default async function PhonologyPage({ searchParams }: { searchParams: Promise<{ view?: string; sound?: string }> }) {
+export default async function PhonologyPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ view?: string; sound?: string }>;
+}) {
 	const { view, sound } = await searchParams;
 	const lang = activeLanguage();
 	return (

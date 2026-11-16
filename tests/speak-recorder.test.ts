@@ -12,7 +12,8 @@ test("encodeWav: a mono 16 kHz 16-bit header, and every sample intact", async ()
 	const frames = [new Int16Array([0, 1, -1, 32767, -32768]), new Int16Array([100, -100])];
 	const blob = encodeWav(frames, 16_000);
 	const bytes = new DataView(await blob.arrayBuffer());
-	const str = (at: number, n: number) => Array.from({ length: n }, (_, i) => String.fromCharCode(bytes.getUint8(at + i))).join("");
+	const str = (at: number, n: number) =>
+		Array.from({ length: n }, (_, i) => String.fromCharCode(bytes.getUint8(at + i))).join("");
 
 	assert.equal(blob.type, "audio/wav");
 	assert.equal(blob.size, 44 + 7 * 2);

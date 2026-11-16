@@ -10,7 +10,14 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
 
-type Device = { id: string; name: string; createdAt: string; lastSeenAt: string; current: boolean; via: "pairing" | "password" };
+type Device = {
+	id: string;
+	name: string;
+	createdAt: string;
+	lastSeenAt: string;
+	current: boolean;
+	via: "pairing" | "password";
+};
 type Status = {
 	enabled: boolean;
 	port: number;
@@ -25,7 +32,12 @@ const LOAD_FAILED = "Couldn’t read the remote access settings. Refresh to try 
 const COPY_FAILED = "Couldn’t copy. Select the command and copy it by hand.";
 
 function when(iso: string): string {
-	return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+	return new Date(iso).toLocaleString(undefined, {
+		day: "numeric",
+		month: "short",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
 }
 
 function clock(ms: number): string {
@@ -175,20 +187,25 @@ export function DevicesSection() {
 
 	if (!status) {
 		return (
-			<p role={loadFailed ? "alert" : "status"} className="min-h-24 text-xs text-muted-foreground" data-testid="devices-loading">
+			<p
+				role={loadFailed ? "alert" : "status"}
+				className="min-h-24 text-xs text-muted-foreground"
+				data-testid="devices-loading"
+			>
 				{loadFailed ? LOAD_FAILED : "Checking remote access…"}
 			</p>
 		);
 	}
 
 	const left = code ? Date.parse(code.expiresAt) - now : 0;
-	const codeLine = code && left > 0
-		? `Enter it on the device within ${clock(left)}. Open LangHarness there and type the code.`
-		: code
-			? "That code has expired. Make a new one."
-			: status.pairing
-				? "A code is waiting. Make a new one to see it."
-				: "No code is waiting.";
+	const codeLine =
+		code && left > 0
+			? `Enter it on the device within ${clock(left)}. Open LangHarness there and type the code.`
+			: code
+				? "That code has expired. Make a new one."
+				: status.pairing
+					? "A code is waiting. Make a new one to see it."
+					: "No code is waiting.";
 
 	return (
 		<>
@@ -207,13 +224,32 @@ export function DevicesSection() {
 					/>
 				</SettingsRow>
 				{confirming === "off" && (
-					<div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 px-4 py-3" data-testid="devices-confirm-off">
-						<span className="text-xs text-muted-foreground">Turning this off signs out every device, including phones and tablets.</span>
+					<div
+						className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 px-4 py-3"
+						data-testid="devices-confirm-off"
+					>
+						<span className="text-xs text-muted-foreground">
+							Turning this off signs out every device, including phones and tablets.
+						</span>
 						<span className="flex gap-2">
-							<Button type="button" size="xs" variant="destructive-soft" className="cursor-pointer" disabled={busy} onClick={() => void setEnabled(false)} data-testid="devices-turn-off">
+							<Button
+								type="button"
+								size="xs"
+								variant="destructive-soft"
+								className="cursor-pointer"
+								disabled={busy}
+								onClick={() => void setEnabled(false)}
+								data-testid="devices-turn-off"
+							>
 								Turn off
 							</Button>
-							<Button type="button" size="xs" variant="outline" className="cursor-pointer" onClick={() => setConfirming(null)}>
+							<Button
+								type="button"
+								size="xs"
+								variant="outline"
+								className="cursor-pointer"
+								onClick={() => setConfirming(null)}
+							>
 								Keep on
 							</Button>
 						</span>
@@ -229,36 +265,61 @@ export function DevicesSection() {
 						testid="devices-serve"
 					>
 						<div className="flex flex-wrap items-center gap-2">
-							<code className="min-w-0 flex-1 break-all rounded-lg border border-border/50 bg-accent/15 px-3 py-2 font-mono text-xs text-foreground" data-testid="devices-serve-command">
+							<code
+								className="min-w-0 flex-1 break-all rounded-lg border border-border/50 bg-accent/15 px-3 py-2 font-mono text-xs text-foreground"
+								data-testid="devices-serve-command"
+							>
 								{status.serveCommand}
 							</code>
-							<Button type="button" size="sm" variant="outline" className="min-w-20 cursor-pointer" onClick={() => void copyCommand(status.serveCommand)} data-testid="devices-copy">
+							<Button
+								type="button"
+								size="sm"
+								variant="outline"
+								className="min-w-20 cursor-pointer"
+								onClick={() => void copyCommand(status.serveCommand)}
+								data-testid="devices-copy"
+							>
 								{copied ? "Copied" : "Copy"}
 							</Button>
 						</div>
 						<p className="text-xs text-muted-foreground">
-							It serves port {status.port}, the port this window uses. Check it with <code className="font-mono">tailscale serve status</code>. The full steps are in docs/remote-access.md.
+							It serves port {status.port}, the port this window uses. Check it with{" "}
+							<code className="font-mono">tailscale serve status</code>. The full steps are in docs/remote-access.md.
 						</p>
 					</SettingsGroup>
 
 					<SettingsGroup label="Pair a device" testid="devices-pair">
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							<span className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground">{codeLine}</span>
-							<Button type="button" size="sm" className="min-w-28 cursor-pointer" disabled={busy} onClick={() => void makeCode()} data-testid="devices-make-code">
+							<Button
+								type="button"
+								size="sm"
+								className="min-w-28 cursor-pointer"
+								disabled={busy}
+								onClick={() => void makeCode()}
+								data-testid="devices-make-code"
+							>
 								{code || status.pairing ? "New code" : "Make a code"}
 							</Button>
 						</div>
 						{/* Holds its height with or without a code, so the list below never moves. */}
 						<div className="flex min-h-14 items-center" aria-live="polite">
 							{code && left > 0 && (
-								<span className="font-mono text-3xl font-semibold tracking-[0.2em] text-foreground tabular-nums" data-testid="devices-code">
+								<span
+									className="font-mono text-3xl font-semibold tracking-[0.2em] text-foreground tabular-nums"
+									data-testid="devices-code"
+								>
 									{code.code}
 								</span>
 							)}
 						</div>
 					</SettingsGroup>
 
-					<SettingsGroup label="Devices" hint="Each device stays signed in for 180 days, unless you sign it out here." testid="devices-list">
+					<SettingsGroup
+						label="Devices"
+						hint="Each device stays signed in for 180 days, unless you sign it out here."
+						testid="devices-list"
+					>
 						{status.devices.length === 0 && <p className="text-xs text-muted-foreground">No devices are paired yet.</p>}
 						{status.devices.map((device) => (
 							<SettingsRow
@@ -269,15 +330,37 @@ export function DevicesSection() {
 							>
 								{confirming === device.id ? (
 									<span className="flex gap-2">
-										<Button type="button" size="xs" variant="destructive-soft" className="cursor-pointer" disabled={busy} onClick={() => void signOut(device.id)} data-testid={`devices-confirm-${device.id}`}>
+										<Button
+											type="button"
+											size="xs"
+											variant="destructive-soft"
+											className="cursor-pointer"
+											disabled={busy}
+											onClick={() => void signOut(device.id)}
+											data-testid={`devices-confirm-${device.id}`}
+										>
 											Sign out
 										</Button>
-										<Button type="button" size="xs" variant="outline" className="cursor-pointer" onClick={() => setConfirming(null)}>
+										<Button
+											type="button"
+											size="xs"
+											variant="outline"
+											className="cursor-pointer"
+											onClick={() => setConfirming(null)}
+										>
 											Keep
 										</Button>
 									</span>
 								) : (
-									<Button type="button" size="xs" variant="outline" className="cursor-pointer" disabled={busy} onClick={() => setConfirming(device.id)} data-testid={`devices-revoke-${device.id}`}>
+									<Button
+										type="button"
+										size="xs"
+										variant="outline"
+										className="cursor-pointer"
+										disabled={busy}
+										onClick={() => setConfirming(device.id)}
+										data-testid={`devices-revoke-${device.id}`}
+									>
 										Sign out
 									</Button>
 								)}
@@ -287,7 +370,11 @@ export function DevicesSection() {
 				</>
 			)}
 			{/* At the end, where its reserved line is not a gap under the title. */}
-			<p role={notice?.tone === "error" ? "alert" : "status"} className="min-h-5 text-xs text-muted-foreground" data-testid="devices-notice">
+			<p
+				role={notice?.tone === "error" ? "alert" : "status"}
+				className="min-h-5 text-xs text-muted-foreground"
+				data-testid="devices-notice"
+			>
 				{notice?.text ?? ""}
 			</p>
 		</>

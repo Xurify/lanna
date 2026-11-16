@@ -64,8 +64,19 @@ const GOOD = {
 	slip: { sentence: 1, wrong: "Kde", right: "Kam" },
 };
 
-function build(draft: { sentences: Array<{ sk: string; en: string }>; slip: { sentence: number; wrong: string; right: string } }) {
-	return core.buildCatchItem({ id: "item-1", now: AT, model: "faux:catch", draft, target: kamTarget(), lexicon: slipLexicon, pairs: PAIRS });
+function build(draft: {
+	sentences: Array<{ sk: string; en: string }>;
+	slip: { sentence: number; wrong: string; right: string };
+}) {
+	return core.buildCatchItem({
+		id: "item-1",
+		now: AT,
+		model: "faux:catch",
+		draft,
+		target: kamTarget(),
+		lexicon: slipLexicon,
+		pairs: PAIRS,
+	});
 }
 
 function goodItem() {
@@ -76,7 +87,8 @@ function goodItem() {
 
 describe("the model's reply", () => {
 	it("reads the first JSON object, even inside a code fence", () => {
-		const text = 'Here it is:\n```json\n{"sentences":[{"sk":"A.","en":"a."},{"sk":"B.","en":"b."},{"sk":"C.","en":"c."}],"slip":{"sentence":1,"wrong":"Kde","right":"Kam"}}\n```';
+		const text =
+			'Here it is:\n```json\n{"sentences":[{"sk":"A.","en":"a."},{"sk":"B.","en":"b."},{"sk":"C.","en":"c."}],"slip":{"sentence":1,"wrong":"Kde","right":"Kam"}}\n```';
 		const d = core.parseCatchDraft(text);
 		assert.ok(d);
 		assert.equal(d.sentences.length, 3);
@@ -84,9 +96,17 @@ describe("the model's reply", () => {
 	});
 
 	it("refuses a reply with one sentence, no slip, or a slip index that is not a whole number", () => {
-		assert.equal(core.parseCatchDraft('{"sentences":[{"sk":"A.","en":""}],"slip":{"sentence":0,"wrong":"A","right":"B"}}'), null);
+		assert.equal(
+			core.parseCatchDraft('{"sentences":[{"sk":"A.","en":""}],"slip":{"sentence":0,"wrong":"A","right":"B"}}'),
+			null,
+		);
 		assert.equal(core.parseCatchDraft('{"sentences":[{"sk":"A.","en":""},{"sk":"B.","en":""}]}'), null);
-		assert.equal(core.parseCatchDraft('{"sentences":[{"sk":"A.","en":""},{"sk":"B.","en":""}],"slip":{"sentence":1.5,"wrong":"A","right":"B"}}'), null);
+		assert.equal(
+			core.parseCatchDraft(
+				'{"sentences":[{"sk":"A.","en":""},{"sk":"B.","en":""}],"slip":{"sentence":1.5,"wrong":"A","right":"B"}}',
+			),
+			null,
+		);
 		assert.equal(core.parseCatchDraft("no json here"), null);
 	});
 });
@@ -98,18 +118,28 @@ describe("building an item from a draft", () => {
 		assert.equal(item.slip.wrongSlug, kamTarget().wrong.slug);
 		const view = core.viewOf(item);
 		assert.equal(view.sentences.length, 2, "the context and the wrong sentence, not the correction");
-		assert.equal(view.sentences.flat().some((t) => t.text === "Kam"), false, "the right word is not shown before the answer");
+		assert.equal(
+			view.sentences.flat().some((t) => t.text === "Kam"),
+			false,
+			"the right word is not shown before the answer",
+		);
 		assert.equal("slip" in view, false, "the view carries no answer");
 	});
 
 	it("refuses a draft where the right word is in the wrong sentence", () => {
-		const built = build({ ...GOOD, sentences: [GOOD.sentences[0]!, { sk: "Kde ideme, kam?", en: "" }, GOOD.sentences[2]!] });
+		const built = build({
+			...GOOD,
+			sentences: [GOOD.sentences[0]!, { sk: "Kde ideme, kam?", en: "" }, GOOD.sentences[2]!],
+		});
 		assert.ok("reason" in built);
 		assert.match(built.reason, /right word/);
 	});
 
 	it("refuses a wrong sentence that holds the wrong word twice", () => {
-		const built = build({ ...GOOD, sentences: [GOOD.sentences[0]!, { sk: "Kde ideme, kde?", en: "" }, GOOD.sentences[2]!] });
+		const built = build({
+			...GOOD,
+			sentences: [GOOD.sentences[0]!, { sk: "Kde ideme, kde?", en: "" }, GOOD.sentences[2]!],
+		});
 		assert.ok("reason" in built);
 		assert.match(built.reason, /2 times/);
 	});
@@ -121,7 +151,10 @@ describe("building an item from a draft", () => {
 	});
 
 	it("refuses an item with no correction after the wrong sentence", () => {
-		const built = build({ sentences: [GOOD.sentences[0]!, GOOD.sentences[1]!], slip: { sentence: 1, wrong: "Kde", right: "Kam" } });
+		const built = build({
+			sentences: [GOOD.sentences[0]!, GOOD.sentences[1]!],
+			slip: { sentence: 1, wrong: "Kde", right: "Kam" },
+		});
 		assert.ok("reason" in built);
 		assert.match(built.reason, /correction/);
 	});
@@ -147,7 +180,10 @@ describe("tapping and typing", () => {
 describe("the server makes, keeps and grades items", () => {
 	/** A scripted engine that answers with the same draft each time it is asked. */
 	function scripted(draft: object) {
-		const steps: FauxResponseStep[] = [fauxAssistantMessage(JSON.stringify(draft)), fauxAssistantMessage(JSON.stringify(draft))];
+		const steps: FauxResponseStep[] = [
+			fauxAssistantMessage(JSON.stringify(draft)),
+			fauxAssistantMessage(JSON.stringify(draft)),
+		];
 		const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
 		faux.setResponses(steps);
 		return { model: faux.getModel(), streamFn: faux.streamSimple };
@@ -167,7 +203,11 @@ describe("the server makes, keeps and grades items", () => {
 		const first = await server.nextCatchItem({ engine: scripted(GOOD), model: "faux:catch", now: AT });
 		assert.ok(first.view, first.reason);
 		assert.equal(catchStore.list().length, 1);
-		const again = await server.nextCatchItem({ engine: scripted({ ...GOOD, slip: { sentence: 1, wrong: "Kde", right: "Kam" } }), model: "faux:catch", now: AT });
+		const again = await server.nextCatchItem({
+			engine: scripted({ ...GOOD, slip: { sentence: 1, wrong: "Kde", right: "Kam" } }),
+			model: "faux:catch",
+			now: AT,
+		});
 		assert.equal(again.view?.id, first.view.id, "the waiting item is served, not a new one");
 		assert.equal(catchStore.list().length, 1);
 	});

@@ -12,7 +12,8 @@ import { BODY_LIMITS, bodyTooLarge, finishPlacement, startPlacement } from "@/sr
 
 export const dynamic = "force-dynamic";
 
-const fail = (err: unknown, status = 400) => Response.json({ message: err instanceof Error ? err.message : String(err) }, { status });
+const fail = (err: unknown, status = 400) =>
+	Response.json({ message: err instanceof Error ? err.message : String(err) }, { status });
 
 export async function GET(req: Request) {
 	const url = new URL(req.url);
@@ -26,11 +27,23 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { id?: unknown; ms?: unknown; activeMs?: unknown; tz?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as {
+		id?: unknown;
+		ms?: unknown;
+		activeMs?: unknown;
+		tz?: unknown;
+	} | null;
 	if (!body || typeof body.id !== "string") return Response.json({ message: "id is required" }, { status: 400 });
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;
 	try {
-		return Response.json(finishPlacement({ id: body.id, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz }));
+		return Response.json(
+			finishPlacement({
+				id: body.id,
+				ms: typeof body.ms === "number" ? body.ms : undefined,
+				activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined,
+				tz,
+			}),
+		);
 	} catch (err) {
 		return fail(err);
 	}

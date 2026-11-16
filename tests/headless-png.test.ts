@@ -114,7 +114,11 @@ test("providerSafePng merges a Chrome-style split IDAT stream into ONE chunk, by
 	while (off < fixedBuf.length) {
 		const len = fixedBuf.readUInt32BE(off);
 		const crc = fixedBuf.readUInt32BE(off + 8 + len);
-		assert.equal(crc, crc32(fixedBuf.subarray(off + 4, off + 8 + len)), `valid CRC on ${fixedBuf.subarray(off + 4, off + 8).toString("ascii")}`);
+		assert.equal(
+			crc,
+			crc32(fixedBuf.subarray(off + 4, off + 8 + len)),
+			`valid CRC on ${fixedBuf.subarray(off + 4, off + 8).toString("ascii")}`,
+		);
 		off += 12 + len;
 	}
 	// And it is still a decodable image: the stream inflates to EXACTLY the

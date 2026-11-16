@@ -22,8 +22,25 @@ export const FSRS5_WEIGHTS = [
 
 /** The 19 FSRS-5 parameters. */
 type Weights = readonly [
-	number, number, number, number, number, number, number, number, number, number,
-	number, number, number, number, number, number, number, number, number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
+	number,
 ];
 
 const DECAY = -0.5;
@@ -133,7 +150,8 @@ export function previewIntervals(
 	const out = {} as Record<Rating, number>;
 	for (const rating of [1, 2, 3, 4] as Rating[]) {
 		const next = review(state, rating, elapsedDays, opts.weights);
-		out[rating] = rating === 1 ? RELEARN_MS / DAY_MS : intervalDays(next.stability, opts.retention ?? 0.9, opts.maxInterval);
+		out[rating] =
+			rating === 1 ? RELEARN_MS / DAY_MS : intervalDays(next.stability, opts.retention ?? 0.9, opts.maxInterval);
 	}
 	return out;
 }

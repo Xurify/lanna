@@ -26,7 +26,11 @@ export function SketchFigure({ source, incomplete }: { source: string; incomplet
 
 	if (incomplete) {
 		return (
-			<div data-testid="md-sketch" aria-busy="true" className="my-4 flex h-10 items-center text-sm text-muted-foreground">
+			<div
+				data-testid="md-sketch"
+				aria-busy="true"
+				className="my-4 flex h-10 items-center text-sm text-muted-foreground"
+			>
 				Drawing…
 			</div>
 		);
@@ -57,7 +61,14 @@ export function SketchFigure({ source, incomplete }: { source: string; incomplet
 				role="img"
 				aria-label={sketch.label || "Drawing"}
 				className="h-auto w-full"
-				style={{ maxWidth: displayWidth, aspectRatio: `${sketch.width} / ${sketch.height}`, fill: "none", strokeLinecap: "round", strokeLinejoin: "round", fontFamily: "var(--sk-font)" }}
+				style={{
+					maxWidth: displayWidth,
+					aspectRatio: `${sketch.width} / ${sketch.height}`,
+					fill: "none",
+					strokeLinecap: "round",
+					strokeLinejoin: "round",
+					fontFamily: "var(--sk-font)",
+				}}
 			>
 				<defs>
 					<filter id={`sketch-${id}`} x="-4%" y="-6%" width="108%" height="112%">
@@ -76,7 +87,12 @@ export function SketchFigure({ source, incomplete }: { source: string; incomplet
 						<span className="flex-1 font-ui text-xs tabular-nums text-muted-foreground">
 							Step {stepIndex + 1} of {steps.length}
 						</span>
-						<button type="button" className={cn(QUIET, SMALL)} disabled={stepIndex === 0} onClick={() => setStepIndex((i) => Math.max(0, i - 1))}>
+						<button
+							type="button"
+							className={cn(QUIET, SMALL)}
+							disabled={stepIndex === 0}
+							onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
+						>
 							Back
 						</button>
 						<button

@@ -23,17 +23,10 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-dismissal-park-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 
 const { chatStore } = await import("../src/store/chats.ts");
-const { applyParkedDismissal, parkDismissal, takeParkedDismissal } = await import(
-	"../src/server/dismissal-park.ts"
-);
+const { applyParkedDismissal, parkDismissal, takeParkedDismissal } = await import("../src/server/dismissal-park.ts");
 const { beginTurn, endTurn, isTurnRunning } = await import("../src/server/turn-liveness.ts");
 const { subscribe } = await import("../src/core/events.ts");
-const {
-	activeProblemOf,
-	answeredCallIds,
-	danglingQuestionOf,
-	dismissedAnswer,
-} = await import("../src/core/index.ts");
+const { activeProblemOf, answeredCallIds, danglingQuestionOf, dismissedAnswer } = await import("../src/core/index.ts");
 const newMessageId = (await import("../src/core/native-messages.ts")).newMessageId;
 
 after(() => {
@@ -44,19 +37,21 @@ after(() => {
  *  the settled state a mid-turn dismissal parks against. */
 function chatWithDanglingQuiz(id: string): string {
 	const chat = chatStore.createChat("park: dangling quiz");
-	chatStore.saveMessages(chat.id, [{
-		id: newMessageId(),
-		role: "assistant",
-		content: [
-			{ type: "text", text: "Quick check:" },
-			{
-				type: "toolCall",
-				id: `${id}-q1`,
-				name: "quiz",
-				arguments: { question: "What is a cyclic group?" },
-			},
-		],
-	} as never]);
+	chatStore.saveMessages(chat.id, [
+		{
+			id: newMessageId(),
+			role: "assistant",
+			content: [
+				{ type: "text", text: "Quick check:" },
+				{
+					type: "toolCall",
+					id: `${id}-q1`,
+					name: "quiz",
+					arguments: { question: "What is a cyclic group?" },
+				},
+			],
+		} as never,
+	]);
 	return chat.id;
 }
 

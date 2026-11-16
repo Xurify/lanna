@@ -46,16 +46,30 @@ const share = (g: { reps: number; right: number }) => `${pct(g.right / g.reps)} 
 /** The facts the deep read is written from, and what decides whether a saved one is still current. The same facts give the same digest, so a read is never paid for twice for the same evidence. */
 export function listenGuideFacts(l: ListenAnalysis): string {
 	const lines: string[] = [];
-	lines.push(`Listen sentences: ${l.sentences} over ${l.sessions} sessions${l.from ? ` (${l.from} to ${l.to})` : ""}; ${l.typed} typed, ${l.readable} typed and read for causes, ${l.read} of those with a miss.`);
-	lines.push(`Typed correctly (exactly right, text not shown first; this shows the typing matched, not that the meaning was understood): ${pct(l.right)}${l.range ? `, likely ${pct(l.range.low)} to ${pct(l.range.high)}` : ""}.`);
-	if (l.weeks.length) lines.push(`Typed correctly by week: ${l.weeks.map((w) => `${w.week} ${w.few ? `too few (${w.reps})` : `${pct(w.right / w.reps)} of ${w.reps}`}`).join("; ")}.`);
-	lines.push(`Causes, in sentences per 100 typed ones, the last 14 days against before. A trend is called only when it passes the test across all causes; otherwise it reads "no clear change", which is not "the same":`);
+	lines.push(
+		`Listen sentences: ${l.sentences} over ${l.sessions} sessions${l.from ? ` (${l.from} to ${l.to})` : ""}; ${l.typed} typed, ${l.readable} typed and read for causes, ${l.read} of those with a miss.`,
+	);
+	lines.push(
+		`Typed correctly (exactly right, text not shown first; this shows the typing matched, not that the meaning was understood): ${pct(l.right)}${l.range ? `, likely ${pct(l.range.low)} to ${pct(l.range.high)}` : ""}.`,
+	);
+	if (l.weeks.length)
+		lines.push(
+			`Typed correctly by week: ${l.weeks.map((w) => `${w.week} ${w.few ? `too few (${w.reps})` : `${pct(w.right / w.reps)} of ${w.reps}`}`).join("; ")}.`,
+		);
+	lines.push(
+		`Causes, in sentences per 100 typed ones, the last 14 days against before. A trend is called only when it passes the test across all causes; otherwise it reads "no clear change", which is not "the same":`,
+	);
 	for (const c of l.causes) {
 		const info = LISTEN_CAUSES[c.cause];
-		lines.push(`- ${info.label} [${LISTEN_KIND_LABEL[info.kind]}]: ${c.count} words${c.recent !== null && c.earlier !== null ? `; ${c.earlier} before, ${c.recent} lately; ${c.trend === "better" ? "less often (called)" : c.trend === "worse" ? "more often (called)" : "no clear change"}` : "; too few sentences to compare"}.`);
+		lines.push(
+			`- ${info.label} [${LISTEN_KIND_LABEL[info.kind]}]: ${c.count} words${c.recent !== null && c.earlier !== null ? `; ${c.earlier} before, ${c.recent} lately; ${c.trend === "better" ? "less often (called)" : c.trend === "worse" ? "more often (called)" : "no clear change"}` : "; too few sentences to compare"}.`,
+		);
 	}
 	if (l.rare > 0) lines.push(`${l.rare} more differences had a cause seen in too few sentences to list.`);
-	if (l.kinds.length) lines.push(`Share of all differences: ${l.kinds.map((k) => `${pct(k.share)} ${k.label.toLowerCase()}`).join(", ")}.`);
+	if (l.kinds.length)
+		lines.push(
+			`Share of all differences: ${l.kinds.map((k) => `${pct(k.share)} ${k.label.toLowerCase()}`).join(", ")}.`,
+		);
 	// A snapshot saved before the weekly series existed has none.
 	const weeks = l.causeWeeks ?? [];
 	if (weeks.length > 1) {
@@ -69,23 +83,51 @@ export function listenGuideFacts(l: ListenAnalysis): string {
 	}
 	const insights = l.insights ?? [];
 	if (insights.length) {
-		lines.push("Findings the app made by a test stricter than the trends' (each past chance, and none is made from a handful of sentences):");
+		lines.push(
+			"Findings the app made by a test stricter than the trends' (each past chance, and none is made from a handful of sentences):",
+		);
 		for (const i of insights) lines.push(`- ${i.title}: ${i.line}`);
 	}
-	for (const w of l.repeats ?? []) lines.push(`Keeps going wrong: "${w.word}", wrong in ${w.missed} of ${w.appeared} sentences it was in, over ${w.sessions} sessions${w.typedAs.length ? `, typed as ${w.typedAs.map((t) => `"${t}"`).join(", ")}` : ""}.`);
-	if (l.pace) lines.push(`By speed of the clip: slow ${share(l.pace.slow)} typed correctly, fast ${share(l.pace.fast)}; fast is harder past chance: ${l.pace.fastHarder ? "yes" : "no"}.`);
-	if (l.session) lines.push(`By place in the session: first half ${share(l.session.first)}, second half ${share(l.session.second)}; second half worse past chance: ${l.session.tiring ? "yes" : "no"}.`);
-	if (l.length) lines.push(`By sentence length: short ${share(l.length.short)}, long ${share(l.length.long)}; long is harder past chance: ${l.length.longHarder ? "yes" : "no"}.`);
-	if (l.replays.recent !== null) lines.push(`Plays after the first: ${l.replays.recent.toFixed(1)} a sentence lately${l.replays.earlier !== null ? `, ${l.replays.earlier.toFixed(1)} before` : ""}.`);
-	if (l.peeked.recent !== null) lines.push(`Text shown before answering: ${pct(l.peeked.recent)} of sentences lately${l.peeked.earlier !== null ? `, ${pct(l.peeked.earlier)} before` : ""}.`);
+	for (const w of l.repeats ?? [])
+		lines.push(
+			`Keeps going wrong: "${w.word}", wrong in ${w.missed} of ${w.appeared} sentences it was in, over ${w.sessions} sessions${w.typedAs.length ? `, typed as ${w.typedAs.map((t) => `"${t}"`).join(", ")}` : ""}.`,
+		);
+	if (l.pace)
+		lines.push(
+			`By speed of the clip: slow ${share(l.pace.slow)} typed correctly, fast ${share(l.pace.fast)}; fast is harder past chance: ${l.pace.fastHarder ? "yes" : "no"}.`,
+		);
+	if (l.session)
+		lines.push(
+			`By place in the session: first half ${share(l.session.first)}, second half ${share(l.session.second)}; second half worse past chance: ${l.session.tiring ? "yes" : "no"}.`,
+		);
+	if (l.length)
+		lines.push(
+			`By sentence length: short ${share(l.length.short)}, long ${share(l.length.long)}; long is harder past chance: ${l.length.longHarder ? "yes" : "no"}.`,
+		);
+	if (l.replays.recent !== null)
+		lines.push(
+			`Plays after the first: ${l.replays.recent.toFixed(1)} a sentence lately${l.replays.earlier !== null ? `, ${l.replays.earlier.toFixed(1)} before` : ""}.`,
+		);
+	if (l.peeked.recent !== null)
+		lines.push(
+			`Text shown before answering: ${pct(l.peeked.recent)} of sentences lately${l.peeked.earlier !== null ? `, ${pct(l.peeked.earlier)} before` : ""}.`,
+		);
 	for (const m of l.misses) {
-		const diffs = m.errors.map((e) => (e.target && e.given ? `${e.target} written ${e.given}` : e.target ? `${e.target} missed` : `${e.given} added`) + ` (${LISTEN_CAUSES[e.cause].label.toLowerCase()})`);
+		const diffs = m.errors.map(
+			(e) =>
+				(e.target && e.given
+					? `${e.target} written ${e.given}`
+					: e.target
+						? `${e.target} missed`
+						: `${e.given} added`) + ` (${LISTEN_CAUSES[e.cause].label.toLowerCase()})`,
+		);
 		lines.push(`Miss: "${m.sentence}" typed "${m.given || "nothing"}": ${diffs.join("; ")}.`);
 	}
 	return lines.join("\n");
 }
 
-const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
+const clip = (v: unknown, max: number): string =>
+	typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "";
 
 /** The deep read's JSON from the model's text, or null when it is not one: a reply wrapped in prose or fences is cut to its outermost braces; every field is a bounded string and every list is capped, so a bad reply cannot fill the page. */
 export function parseListenGuide(text: string): ListenGuideData | null {
@@ -98,10 +140,16 @@ export function parseListenGuide(text: string): ListenGuideData | null {
 	} catch {
 		return null;
 	}
-	const list = (v: unknown): Array<Record<string, unknown>> => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : []);
+	const list = (v: unknown): Array<Record<string, unknown>> =>
+		Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : [];
 	const patterns = list(raw.patterns)
 		.slice(0, 4)
-		.map((p) => ({ title: clip(p.title, 90), evidence: clip(p.evidence, 260), why: clip(p.why, 300), fix: clip(p.fix, 300) }))
+		.map((p) => ({
+			title: clip(p.title, 90),
+			evidence: clip(p.evidence, 260),
+			why: clip(p.why, 300),
+			fix: clip(p.fix, 300),
+		}))
 		.filter((p) => p.title && p.why);
 	const summary = clip(raw.summary, 420);
 	if (!patterns.length && !summary) return null;

@@ -129,7 +129,12 @@ async function cold(browser, base, route) {
 		const js = res.filter((e) => e.name.includes("/_next/static/") && e.name.endsWith(".js"));
 		const api = res
 			.filter((e) => e.name.includes("/api/"))
-			.map((e) => ({ url: e.name.replace(location.origin, ""), start: e.startTime, ttfb: e.responseStart - e.requestStart, dur: e.responseEnd - e.startTime }));
+			.map((e) => ({
+				url: e.name.replace(location.origin, ""),
+				start: e.startTime,
+				ttfb: e.responseStart - e.requestStart,
+				dur: e.responseEnd - e.startTime,
+			}));
 		return {
 			ttfb: nav.responseStart,
 			fcp: fcp ? fcp.startTime : null,
@@ -206,7 +211,13 @@ const click = (page, sel) => () => page.click(sel);
 
 async function interactions(browser, base) {
 	const out = [];
-	const add = (name, runs) => out.push({ name, paint: median(runs.map((r) => r?.paint)), done: median(runs.map((r) => r?.done)), n: runs.length });
+	const add = (name, runs) =>
+		out.push({
+			name,
+			paint: median(runs.map((r) => r?.paint)),
+			done: median(runs.map((r) => r?.done)),
+			n: runs.length,
+		});
 	const safe = async (name, fn) => {
 		const runs = [];
 		for (let i = 0; i < RUNS; i++) {
@@ -233,7 +244,13 @@ async function interactions(browser, base) {
 			try {
 				await page.focus('[data-testid="review-input"]');
 				await page.keyboard.type("x");
-				chk.push(await act(page, click(page, '[data-testid="review-check"]'), () => !!document.querySelector('[data-testid="review-verdict"]')));
+				chk.push(
+					await act(
+						page,
+						click(page, '[data-testid="review-check"]'),
+						() => !!document.querySelector('[data-testid="review-verdict"]'),
+					),
+				);
 				await sleep(200);
 				cont.push(
 					await act(
@@ -241,7 +258,10 @@ async function interactions(browser, base) {
 						click(page, '[data-testid="review-continue"]'),
 						(was) => {
 							const c = document.querySelector('[data-testid="review-card"]');
-							return (!!c && !document.querySelector('[data-testid="review-verdict"]') && c.textContent !== was) || !!document.querySelector('[data-testid="review-done"]');
+							return (
+								(!!c && !document.querySelector('[data-testid="review-verdict"]') && c.textContent !== was) ||
+								!!document.querySelector('[data-testid="review-done"]')
+							);
 						},
 						before,
 					),
@@ -265,7 +285,11 @@ async function interactions(browser, base) {
 		await sleep(600);
 		await safe("Settings: open", async () => {
 			await page.waitForSelector('[data-testid="settings-entry"]');
-			const r = await act(page, click(page, '[data-testid="settings-entry"]'), () => !!document.querySelector('[data-testid="settings-dialog"]'));
+			const r = await act(
+				page,
+				click(page, '[data-testid="settings-entry"]'),
+				() => !!document.querySelector('[data-testid="settings-dialog"]'),
+			);
 			await sleep(300);
 			await page.click('[data-testid="settings-close"]').catch(() => page.keyboard.press("Escape"));
 			await page.waitForSelector('[data-testid="settings-dialog"]', { hidden: true }).catch(() => {});
@@ -276,7 +300,9 @@ async function interactions(browser, base) {
 			await page.click('[data-testid="settings-entry"]');
 			await page.waitForSelector('[data-testid="settings-nav"]');
 			await sleep(400);
-			const ids = await page.$$eval('[data-testid^="settings-nav-"]', (els) => els.map((e) => e.getAttribute("data-testid")));
+			const ids = await page.$$eval('[data-testid^="settings-nav-"]', (els) =>
+				els.map((e) => e.getAttribute("data-testid")),
+			);
 			const target = ids[1] ?? ids[0];
 			const r = await act(page, click(page, `[data-testid="${target}"]`), () => true);
 			await page.keyboard.press("Escape");
@@ -303,19 +329,42 @@ async function interactions(browser, base) {
 			try {
 				if (await page.$('[data-testid="lesson-options"]')) {
 					lessons.push(
-						await act(page, async () => {
-							const b = await page.$('[data-testid="lesson-options"] button');
-							await b.click();
-						}, () => !!document.querySelector('[data-testid="lesson-feedback"], [data-testid="lesson-hint"], [data-testid="lesson-peek"]')),
+						await act(
+							page,
+							async () => {
+								const b = await page.$('[data-testid="lesson-options"] button');
+								await b.click();
+							},
+							() =>
+								!!document.querySelector(
+									'[data-testid="lesson-feedback"], [data-testid="lesson-hint"], [data-testid="lesson-peek"]',
+								),
+						),
 					);
 				} else {
 					await page.focus('[data-testid="lesson-input"]');
 					await page.keyboard.type("x");
-					lessons.push(await act(page, click(page, '[data-testid="lesson-check"]'), () => !!document.querySelector('[data-testid="lesson-feedback"], [data-testid="lesson-hint"], [data-testid="lesson-peek"]')));
+					lessons.push(
+						await act(
+							page,
+							click(page, '[data-testid="lesson-check"]'),
+							() =>
+								!!document.querySelector(
+									'[data-testid="lesson-feedback"], [data-testid="lesson-hint"], [data-testid="lesson-peek"]',
+								),
+						),
+					);
 				}
 				await sleep(250);
 				// A first miss gives a second try instead of feedback; Continue is timed when feedback is up.
-				if (await page.$('[data-testid="lesson-continue"]')) conts.push(await act(page, click(page, '[data-testid="lesson-continue"]'), () => !document.querySelector('[data-testid="lesson-feedback"]')));
+				if (await page.$('[data-testid="lesson-continue"]'))
+					conts.push(
+						await act(
+							page,
+							click(page, '[data-testid="lesson-continue"]'),
+							() => !document.querySelector('[data-testid="lesson-feedback"]'),
+						),
+					);
 			} catch (e) {
 				console.error(`  ! lesson: ${e.message.split("\n")[0]}`);
 			}
@@ -333,7 +382,14 @@ async function interactions(browser, base) {
 			await sleep(600);
 			const sel = (await page.$('[data-next="true"]')) ? '[data-next="true"]' : null;
 			if (!sel) throw new Error("no Start button on Today");
-			return act(page, click(page, sel), () => location.pathname !== "/" && !document.querySelector('[aria-busy="true"]') && document.body.innerText.length > 40);
+			return act(
+				page,
+				click(page, sel),
+				() =>
+					location.pathname !== "/" &&
+					!document.querySelector('[aria-busy="true"]') &&
+					document.body.innerText.length > 40,
+			);
 		});
 		await page.close();
 	}
@@ -343,7 +399,9 @@ async function interactions(browser, base) {
 async function main() {
 	const puppeteer = loadPuppeteer();
 	const srv = await startServer({ heavy: !flag("--light") });
-	console.log(`CPU x${CPU}; production build on ${srv.base}, scratch data ${srv.dir} (seeded demo week${flag("--light") ? "" : " + a year of reviews"})`);
+	console.log(
+		`CPU x${CPU}; production build on ${srv.base}, scratch data ${srv.dir} (seeded demo week${flag("--light") ? "" : " + a year of reviews"})`,
+	);
 	const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true, args: BROWSER_ARGS });
 	const result = { navs: [], colds: [], acts: [] };
 	try {
@@ -377,7 +435,13 @@ async function main() {
 					console.error(`  ! nav ${r.name}: ${e.message.split("\n")[0]}`);
 				}
 			}
-			if (ns.length) result.navs.push({ route: r.name, url: median(ns.map((n) => n.url)), stable: median(ns.map((n) => n.stable)), paint: median(ns.map((n) => n.paint)) });
+			if (ns.length)
+				result.navs.push({
+					route: r.name,
+					url: median(ns.map((n) => n.url)),
+					stable: median(ns.map((n) => n.stable)),
+					paint: median(ns.map((n) => n.paint)),
+				});
 		}
 		await navPage.close();
 		result.acts = await interactions(browser, srv.base);
@@ -387,9 +451,28 @@ async function main() {
 	}
 
 	console.log(`\nSidebar click -> new page (ms, median of ${RUNS})`);
-	console.log(table(result.navs.map((n) => [n.route, r0(n.paint), r0(n.url), r0(n.stable)]), ["route", "click->paint", "click->url", "click->stable"]));
+	console.log(
+		table(
+			result.navs.map((n) => [n.route, r0(n.paint), r0(n.url), r0(n.stable)]),
+			["route", "click->paint", "click->url", "click->stable"],
+		),
+	);
 	console.log(`\nFull page load (ms, median of ${RUNS}; jsKb = JS the route downloads, encoded)`);
-	console.log(table(result.colds.map((c) => [c.route, r0(c.ttfb), r0(c.fcp), r0(c.load), r0(c.stable), r0(c.jsKb), `${r0(c.longN)}/${r0(c.longMs)}`, c.api.length]), ["route", "ttfb", "fcp", "load", "stable", "jsKb", "long n/ms", "api"]));
+	console.log(
+		table(
+			result.colds.map((c) => [
+				c.route,
+				r0(c.ttfb),
+				r0(c.fcp),
+				r0(c.load),
+				r0(c.stable),
+				r0(c.jsKb),
+				`${r0(c.longN)}/${r0(c.longMs)}`,
+				c.api.length,
+			]),
+			["route", "ttfb", "fcp", "load", "stable", "jsKb", "long n/ms", "api"],
+		),
+	);
 	console.log("\nAPI waterfall on load (start = ms after navigation start, dur = start -> end)");
 	for (const c of result.colds) {
 		if (!c.api.length) continue;
@@ -397,7 +480,12 @@ async function main() {
 		for (const a of c.api) console.log(`    ${r0(a.start).padStart(5)} +${r0(a.dur).padStart(4)}  ${a.url}`);
 	}
 	console.log(`\nInteractions (ms, median of ${RUNS}; paint = pointerdown -> next frame, done = result on screen)`);
-	console.log(table(result.acts.map((a) => [a.name, r0(a.paint), r0(a.done), a.n]), ["interaction", "paint", "done", "n"]));
+	console.log(
+		table(
+			result.acts.map((a) => [a.name, r0(a.paint), r0(a.done), a.n]),
+			["interaction", "paint", "done", "n"],
+		),
+	);
 
 	const bad = [];
 	const over = (what, v, lim) => v != null && v > lim && bad.push(`${what}: ${r0(v)} > ${lim}`);
@@ -415,7 +503,8 @@ async function main() {
 		over(`act ${a.name} paint`, a.paint, BUDGETS.actPaintMs);
 		over(`act ${a.name} done`, a.done, BUDGETS.actDoneMs);
 	}
-	if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ at: new Date().toISOString(), runs: RUNS, ...result }, null, 2));
+	if (JSON_OUT)
+		fs.writeFileSync(JSON_OUT, JSON.stringify({ at: new Date().toISOString(), runs: RUNS, ...result }, null, 2));
 	if (bad.length) {
 		console.log(`\n${bad.length} budget${bad.length === 1 ? "" : "s"} broken:\n  ${bad.join("\n  ")}`);
 		if (CHECK) process.exit(1);

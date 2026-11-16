@@ -24,17 +24,33 @@ function PdfChips({ pdfs, className }: { pdfs: readonly AttachedPdf[]; className
 	return (
 		<ul data-testid="attached-pdfs" className={cn("flex flex-wrap gap-2", className)}>
 			{pdfs.map((pdf) => (
-				<li key={pdf.path} title={pdf.path} className="flex max-w-full items-center gap-1.5 rounded-md bg-well px-2.5 py-1 font-ui text-[13px] text-ink-2">
+				<li
+					key={pdf.path}
+					title={pdf.path}
+					className="flex max-w-full items-center gap-1.5 rounded-md bg-well px-2.5 py-1 font-ui text-[13px] text-ink-2"
+				>
 					<FileTextIcon className="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
 					<span className="truncate">{pdf.name}</span>
-					<span className="shrink-0 text-ink-3">· {pdf.pages} page{pdf.pages === 1 ? "" : "s"}</span>
+					<span className="shrink-0 text-ink-3">
+						· {pdf.pages} page{pdf.pages === 1 ? "" : "s"}
+					</span>
 				</li>
 			))}
 		</ul>
 	);
 }
 
-export function LearnerLineView({ line, text: raw, recede, titleRef }: { line: LearnerLine; text: string; recede?: boolean; titleRef?: Ref<HTMLHeadingElement> }) {
+export function LearnerLineView({
+	line,
+	text: raw,
+	recede,
+	titleRef,
+}: {
+	line: LearnerLine;
+	text: string;
+	recede?: boolean;
+	titleRef?: Ref<HTMLHeadingElement>;
+}) {
 	const step = recede ? "lh-recede" : undefined;
 	const { pdfs, rest } = splitAttachedPdfs(raw);
 	const text = rest || (pdfs[0]?.name ?? raw);
@@ -42,7 +58,15 @@ export function LearnerLineView({ line, text: raw, recede, titleRef }: { line: L
 		return (
 			<>
 				<PdfChips pdfs={pdfs} className={cn("mb-3", step)} />
-				<h1 ref={titleRef} data-testid="user-message" data-line="title" className={cn("font-ui text-[28px] leading-[1.18] font-semibold tracking-[-0.022em] text-balance whitespace-pre-wrap text-foreground max-sm:text-2xl", step)}>
+				<h1
+					ref={titleRef}
+					data-testid="user-message"
+					data-line="title"
+					className={cn(
+						"font-ui text-[28px] leading-[1.18] font-semibold tracking-[-0.022em] text-balance whitespace-pre-wrap text-foreground max-sm:text-2xl",
+						step,
+					)}
+				>
 					{text}
 				</h1>
 			</>
@@ -52,7 +76,15 @@ export function LearnerLineView({ line, text: raw, recede, titleRef }: { line: L
 		return (
 			<>
 				<PdfChips pdfs={pdfs} className={cn("mt-8", step)} />
-				<h2 data-testid="user-message" data-line="ask" className={cn(pdfs.length > 0 ? "mt-3" : "mt-8", "font-ui text-xl leading-snug font-semibold tracking-[-0.015em] text-balance whitespace-pre-wrap text-foreground", step)}>
+				<h2
+					data-testid="user-message"
+					data-line="ask"
+					className={cn(
+						pdfs.length > 0 ? "mt-3" : "mt-8",
+						"font-ui text-xl leading-snug font-semibold tracking-[-0.015em] text-balance whitespace-pre-wrap text-foreground",
+						step,
+					)}
+				>
 					{text}
 				</h2>
 			</>
@@ -60,7 +92,11 @@ export function LearnerLineView({ line, text: raw, recede, titleRef }: { line: L
 	}
 	if (line.kind === "request") {
 		return (
-			<p data-testid="user-message" data-line="request" className={cn("font-ui text-[13px] font-medium text-ink-3", step)}>
+			<p
+				data-testid="user-message"
+				data-line="request"
+				className={cn("font-ui text-[13px] font-medium text-ink-3", step)}
+			>
 				<span className="sr-only">You asked: </span>
 				{text}
 			</p>
@@ -68,13 +104,28 @@ export function LearnerLineView({ line, text: raw, recede, titleRef }: { line: L
 	}
 	const mark = line.kind === "answer" && line.grade ? answerMark(line.grade) : null;
 	return (
-		<p data-testid="user-message" data-line="answer" data-tone={mark?.tone} className={cn("mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1", step)}>
+		<p
+			data-testid="user-message"
+			data-line="answer"
+			data-tone={mark?.tone}
+			className={cn("mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1", step)}
+		>
 			<span className="sr-only">Your answer: </span>
 			<span className="font-ui text-lg leading-snug font-semibold whitespace-pre-wrap text-foreground">{text}</span>
 			{mark && (
-				<span data-testid="answer-mark" className={cn("inline-flex items-baseline gap-1 font-ui text-[13px] font-medium", TONE[mark.tone])}>
+				<span
+					data-testid="answer-mark"
+					className={cn("inline-flex items-baseline gap-1 font-ui text-[13px] font-medium", TONE[mark.tone])}
+				>
 					<svg viewBox="0 0 24 24" className="size-4 translate-y-[0.22em]" aria-hidden="true">
-						<path d={STROKE[mark.tone]} pathLength={1} className="fill-none stroke-current" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+						<path
+							d={STROKE[mark.tone]}
+							pathLength={1}
+							className="fill-none stroke-current"
+							strokeWidth={2.2}
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
 					</svg>
 					{mark.label}
 				</span>
@@ -94,10 +145,25 @@ export function HeldLine({ text }: { text: string }) {
 
 export function TutorWriting() {
 	return (
-		<span role="status" data-testid="tutor-writing" className="flex h-7 items-center gap-2.5 font-ui text-[13px] text-ink-3">
+		<span
+			role="status"
+			data-testid="tutor-writing"
+			className="flex h-7 items-center gap-2.5 font-ui text-[13px] text-ink-3"
+		>
 			<svg viewBox="0 0 44 12" className="h-3 w-11 text-teal" aria-hidden="true">
-				<path d="M2 8 C8 2 12 11 18 6 S28 3 32 7 S38 9 42 5" className="fill-none stroke-line-2" strokeWidth={1.6} strokeLinecap="round" />
-				<path d="M2 8 C8 2 12 11 18 6 S28 3 32 7 S38 9 42 5" pathLength={1} className="lh-pen fill-none stroke-current" strokeWidth={1.6} strokeLinecap="round" />
+				<path
+					d="M2 8 C8 2 12 11 18 6 S28 3 32 7 S38 9 42 5"
+					className="fill-none stroke-line-2"
+					strokeWidth={1.6}
+					strokeLinecap="round"
+				/>
+				<path
+					d="M2 8 C8 2 12 11 18 6 S28 3 32 7 S38 9 42 5"
+					pathLength={1}
+					className="lh-pen fill-none stroke-current"
+					strokeWidth={1.6}
+					strokeLinecap="round"
+				/>
 			</svg>
 			Writing…
 		</span>

@@ -47,8 +47,10 @@ type ParsedEntry = { ok: true; minutes: number; attention: Attention; what?: str
 export function parseEntry(body: { minutes?: unknown; attention?: unknown; what?: unknown } | null): ParsedEntry {
 	if (!body) return { ok: false, message: "minutes and attention are required" };
 	const minutes = typeof body.minutes === "number" && Number.isFinite(body.minutes) ? Math.round(body.minutes) : NaN;
-	if (!(minutes >= 1 && minutes <= MAX_ENTRY_MINUTES)) return { ok: false, message: `minutes must be 1 to ${MAX_ENTRY_MINUTES}` };
-	if (body.attention !== "focused" && body.attention !== "background") return { ok: false, message: "attention must be focused or background" };
+	if (!(minutes >= 1 && minutes <= MAX_ENTRY_MINUTES))
+		return { ok: false, message: `minutes must be 1 to ${MAX_ENTRY_MINUTES}` };
+	if (body.attention !== "focused" && body.attention !== "background")
+		return { ok: false, message: "attention must be focused or background" };
 	const what = typeof body.what === "string" ? body.what.replace(/\s+/g, " ").trim().slice(0, MAX_WHAT) : "";
 	return { ok: true, minutes, attention: body.attention, ...(what ? { what } : {}) };
 }

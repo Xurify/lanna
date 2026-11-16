@@ -32,7 +32,16 @@ function fauxEngine(steps: FauxResponseStep[]) {
 	return { model: faux.getModel(), streamFn: faux.streamSimple };
 }
 
-const POOL = ["Do you look like an actor?", "I look like my father.", "I speak German.", "The train leaves at six.", "I'm starting a new life.", "I don't like Tom at all.", "Do I look like a doctor?", "Why is the sky blue?"];
+const POOL = [
+	"Do you look like an actor?",
+	"I look like my father.",
+	"I speak German.",
+	"The train leaves at six.",
+	"I'm starting a new life.",
+	"I don't like Tom at all.",
+	"Do I look like a doctor?",
+	"Why is the sky blue?",
+];
 
 describe("neighbors", () => {
 	it("finds close translations and never the sentence itself or its paraphrase", () => {
@@ -71,19 +80,29 @@ describe("chooseOptions", () => {
 
 describe("parseNearMisses", () => {
 	it("needs one list per sentence", () => {
-		assert.deepEqual(parseNearMisses('{"near": [["a", "b"], ["c", "d"]]}', 2), [["a", "b"], ["c", "d"]]);
+		assert.deepEqual(parseNearMisses('{"near": [["a", "b"], ["c", "d"]]}', 2), [
+			["a", "b"],
+			["c", "d"],
+		]);
 		assert.equal(parseNearMisses('{"near": [["a", "b"]]}', 2), null);
 		assert.equal(parseNearMisses("sorry", 1), null);
 	});
 });
 
 describe("betterOptions", () => {
-	const item = () => ({ sentence: "Mám zvláštny zorblaxový kúsok.", translation: "I own a peculiar zorblax gadget.", options: ["I own a peculiar zorblax gadget.", "He sold the car.", "The sky is blue today."] });
+	const item = () => ({
+		sentence: "Mám zvláštny zorblaxový kúsok.",
+		translation: "I own a peculiar zorblax gadget.",
+		options: ["I own a peculiar zorblax gadget.", "He sold the car.", "The sky is blue today."],
+	});
 
 	it("asks the model once for a sentence with nothing close, keeps the answer, and never asks again", async () => {
 		const near = ["I owned a peculiar zorblax gadget.", "You own a peculiar zorblax gadget."];
 		const first = item();
-		await betterOptions([first], { engine: fauxEngine([fauxAssistantMessage(JSON.stringify({ near: [near] }))]), seed: 1 });
+		await betterOptions([first], {
+			engine: fauxEngine([fauxAssistantMessage(JSON.stringify({ near: [near] }))]),
+			seed: 1,
+		});
 		assert.deepEqual([...first.options].sort(), [first.translation, ...near].sort());
 		const kept = distractorStore.get(first.sentence);
 		assert.deepEqual(kept?.near, near);
@@ -92,11 +111,21 @@ describe("betterOptions", () => {
 		const again = item();
 		await betterOptions([again], { engine: fauxEngine([]), seed: 2 }); // a second call would find no scripted answer
 		assert.deepEqual([...again.options].sort(), [again.translation, ...near].sort());
-		assert.equal(fs.readFileSync(path.join(TMP_DATA, "profiles", "slovak", "distractors", "near-misses.jsonl"), "utf-8").trim().split("\n").length, 1);
+		assert.equal(
+			fs
+				.readFileSync(path.join(TMP_DATA, "profiles", "slovak", "distractors", "near-misses.jsonl"), "utf-8")
+				.trim()
+				.split("\n").length,
+			1,
+		);
 	});
 
 	it("keeps going without a model: a bad answer leaves the old options and writes nothing", async () => {
-		const odd = { sentence: "Nikto nevie, čo sa stalo včera večer.", translation: "Nobody knows what happened last night, quite honestly.", options: ["a", "b", "c"] };
+		const odd = {
+			sentence: "Nikto nevie, čo sa stalo včera večer.",
+			translation: "Nobody knows what happened last night, quite honestly.",
+			options: ["a", "b", "c"],
+		};
 		await betterOptions([odd], { engine: fauxEngine([fauxAssistantMessage("I cannot do that")]), seed: 3 });
 		assert.equal(odd.options.length, 3);
 		assert.equal(distractorStore.get(odd.sentence), undefined);

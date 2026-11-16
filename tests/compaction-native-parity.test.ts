@@ -7,15 +7,60 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { compactionCutIndex, estimateMessageTokens, newCompactionMarker, KEEP_RECENT_TOKENS, type LhMessage } from "../src/core/index.ts";
+import {
+	compactionCutIndex,
+	estimateMessageTokens,
+	newCompactionMarker,
+	KEEP_RECENT_TOKENS,
+	type LhMessage,
+} from "../src/core/index.ts";
 
 let serial = 0;
-const user = (chars: number): LhMessage => ({ id: `u${serial++}`, role: "user", content: "u".repeat(chars), timestamp: 1 });
-const assistant = (chars: number): LhMessage => ({ id: `a${serial++}`, role: "assistant", content: [{ type: "text", text: "a".repeat(chars) }], timestamp: 1 }) as LhMessage;
-const call = (chars: number): LhMessage => ({ ...assistant(chars), content: [{ type: "text", text: "a".repeat(chars) }, { type: "toolCall", name: "quiz", arguments: {}, id: "c" }] }) as LhMessage;
-const result = (chars: number): LhMessage => ({ id: `r${serial++}`, role: "toolResult", content: [{ type: "text", text: "r".repeat(chars) }], toolCallId: "c", toolName: "quiz", isError: false, timestamp: 1 });
-const image = (): LhMessage => ({ id: `i${serial++}`, role: "user", content: [{ type: "image", data: "fixture", mimeType: "image/png" }], timestamp: 1 });
-const metadata = (): LhMessage => ({ id: `m${serial++}`, role: "custom", customType: "plan-block", content: "invisible".repeat(1000), display: false, details: {}, timestamp: 1 });
+const user = (chars: number): LhMessage => ({
+	id: `u${serial++}`,
+	role: "user",
+	content: "u".repeat(chars),
+	timestamp: 1,
+});
+const assistant = (chars: number): LhMessage =>
+	({
+		id: `a${serial++}`,
+		role: "assistant",
+		content: [{ type: "text", text: "a".repeat(chars) }],
+		timestamp: 1,
+	}) as LhMessage;
+const call = (chars: number): LhMessage =>
+	({
+		...assistant(chars),
+		content: [
+			{ type: "text", text: "a".repeat(chars) },
+			{ type: "toolCall", name: "quiz", arguments: {}, id: "c" },
+		],
+	}) as LhMessage;
+const result = (chars: number): LhMessage => ({
+	id: `r${serial++}`,
+	role: "toolResult",
+	content: [{ type: "text", text: "r".repeat(chars) }],
+	toolCallId: "c",
+	toolName: "quiz",
+	isError: false,
+	timestamp: 1,
+});
+const image = (): LhMessage => ({
+	id: `i${serial++}`,
+	role: "user",
+	content: [{ type: "image", data: "fixture", mimeType: "image/png" }],
+	timestamp: 1,
+});
+const metadata = (): LhMessage => ({
+	id: `m${serial++}`,
+	role: "custom",
+	customType: "plan-block",
+	content: "invisible".repeat(1000),
+	display: false,
+	details: {},
+	timestamp: 1,
+});
 
 test("local cutoff matches published native golden boundaries and estimator values", () => {
 	const cases: [string, LhMessage[], number, number, number[]][] = [
@@ -33,23 +78,42 @@ test("local cutoff matches published native golden boundaries and estimator valu
 		assert.equal(compactionCutIndex(messages, budget), expected, name);
 		assert.deepEqual(messages.map(estimateMessageTokens), tokens, name);
 	}
-	assert.equal(compactionCutIndex([user(400), metadata(), assistant(40), metadata(), user(40)], 15), 1, "adjacent invisible metadata stays with the cut");
+	assert.equal(
+		compactionCutIndex([user(400), metadata(), assistant(40), metadata(), user(40)], 15),
+		1,
+		"adjacent invisible metadata stays with the cut",
+	);
 	assert.equal(KEEP_RECENT_TOKENS, 20_000);
 });
 
 test("chained cutoff operates on active retained history, never the previous summary or discarded prefix", () => {
 	const old = user(400_000);
 	const kept = user(40);
-	const marker = newCompactionMarker("summary".repeat(100_000), { firstKeptMessageId: kept.id, tokensBefore: 100_000, at: "fixture" });
+	const marker = newCompactionMarker("summary".repeat(100_000), {
+		firstKeptMessageId: kept.id,
+		tokensBefore: 100_000,
+		at: "fixture",
+	});
 	const messages = [old, kept, assistant(40), marker, user(40)];
 	assert.equal(compactionCutIndex(messages, 100), 1, "retained tail fits; no progress");
 	assert.equal(compactionCutIndex(messages, 15), 2, "old summary does not consume the kept-tail budget");
 });
 
 test("opaque signatures remain unmeasured and preserved; system/image allowances match native", () => {
-	const signed = { ...assistant(4), content: [{ type: "thinking", thinking: "", thinkingSignature: "opaque".repeat(100_000) }] } as LhMessage;
+	const signed = {
+		...assistant(4),
+		content: [{ type: "thinking", thinking: "", thinkingSignature: "opaque".repeat(100_000) }],
+	} as LhMessage;
 	assert.equal(estimateMessageTokens(signed), 0);
 	assert.equal((signed as { content: { thinkingSignature: string }[] }).content[0]!.thinkingSignature.length, 600_000);
-	const system = { role: "system", content: [{ type: "image", data: "fixture", mimeType: "image/png" }], sections: { a: "abcd" }, toolsAdded: [{ name: "fixture" }] };
-	assert.equal(estimateMessageTokens(system as never), Math.ceil((4800 + 4 + JSON.stringify(system.toolsAdded).length) / 4));
+	const system = {
+		role: "system",
+		content: [{ type: "image", data: "fixture", mimeType: "image/png" }],
+		sections: { a: "abcd" },
+		toolsAdded: [{ name: "fixture" }],
+	};
+	assert.equal(
+		estimateMessageTokens(system as never),
+		Math.ceil((4800 + 4 + JSON.stringify(system.toolsAdded).length) / 4),
+	);
 });

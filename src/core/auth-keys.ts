@@ -20,7 +20,8 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "ELEVENLABS_API_KEY",
 		label: "ElevenLabs",
-		description: "Premium speech for the language you are learning (first tier of the TTS cascade). Without it the app uses free Edge voices.",
+		description:
+			"Premium speech for the language you are learning (first tier of the TTS cascade). Without it the app uses free Edge voices.",
 		docsUrl: "https://elevenlabs.io/app/settings/api-keys",
 	},
 	{
@@ -32,7 +33,8 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "AZURE_SPEECH_KEY",
 		label: "Azure Speech",
-		description: "Pronunciation assessment for Speak and Speed: a sound-level score for every line you say (most European languages are covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
+		description:
+			"Pronunciation assessment for Speak and Speed: a sound-level score for every line you say (most European languages are covered). Needs the region below too. Without it, clarity is judged from the words speech-to-text could make out.",
 		docsUrl: "https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeechServices",
 	},
 	{
@@ -45,19 +47,22 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "CONTEXT_API_KEY",
 		label: "Context",
-		description: "Web-search engine for the researcher sub-agent (agent-focused search API with highlights and content). Setting the key activates it.",
+		description:
+			"Web-search engine for the researcher sub-agent (agent-focused search API with highlights and content). Setting the key activates it.",
 		docsUrl: "https://context.dev/signup",
 	},
 	{
 		id: "TAVILY_API_KEY",
 		label: "Tavily",
-		description: "Web-search engine for the researcher sub-agent (AI-native search API). Setting the key activates it — no engine toggle needed.",
+		description:
+			"Web-search engine for the researcher sub-agent (AI-native search API). Setting the key activates it — no engine toggle needed.",
 		docsUrl: "https://app.tavily.com/",
 	},
 	{
 		id: "BRAVE_API_KEY",
 		label: "Brave Search",
-		description: "Web-search engine for the researcher sub-agent — the alternative to Tavily. Setting the key activates it.",
+		description:
+			"Web-search engine for the researcher sub-agent — the alternative to Tavily. Setting the key activates it.",
 		docsUrl: "https://brave.com/search/api/",
 	},
 ] as const;
@@ -143,7 +148,10 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 	const nonEmpty = (min: number) =>
 		value.length >= min && !/\s/.test(value)
 			? { ok: true as const }
-			: { ok: false as const, error: `That doesn't look like a whole key: it needs at least ${min} characters and no spaces.` };
+			: {
+					ok: false as const,
+					error: `That doesn't look like a whole key: it needs at least ${min} characters and no spaces.`,
+				};
 	switch (id) {
 		case "TAVILY_API_KEY":
 			return value.startsWith("tvly-")
@@ -163,7 +171,9 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 			// 32 hex characters today; a length floor only.
 			return nonEmpty(20);
 		case "AZURE_SPEECH_REGION":
-			return /^[a-z0-9]{4,40}$/.test(value) ? { ok: true } : { ok: false, error: "Use a region name such as westeurope: lowercase letters and digits only." };
+			return /^[a-z0-9]{4,40}$/.test(value)
+				? { ok: true }
+				: { ok: false, error: "Use a region name such as westeurope: lowercase letters and digits only." };
 		default:
 			return { ok: false, error: `unknown key "${id}" (supported: ${[...AUTH_KEY_IDS].join(", ")})` };
 	}

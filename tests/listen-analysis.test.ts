@@ -1,16 +1,34 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { alignWords, analyzeListening, CAUSE_MIN_SENTENCES, causeOfSub, heardPieces, holm, LISTEN_MIN_TYPED, listenWords, readTyped, sentenceWordSpans, twoProportionZ, type LoggedListen } from "../src/core/listen-analysis.ts";
+import {
+	alignWords,
+	analyzeListening,
+	CAUSE_MIN_SENTENCES,
+	causeOfSub,
+	heardPieces,
+	holm,
+	LISTEN_MIN_TYPED,
+	listenWords,
+	readTyped,
+	sentenceWordSpans,
+	twoProportionZ,
+	type LoggedListen,
+} from "../src/core/listen-analysis.ts";
 import { scoreLine } from "../src/core/line.ts";
 
-const causes = (sentence: string, given: string, stretch: string[] = []) => readTyped(sentence, given, stretch).map((e) => e.cause);
+const causes = (sentence: string, given: string, stretch: string[] = []) =>
+	readTyped(sentence, given, stretch).map((e) => e.cause);
 
 describe("the words of a sentence line up with the typed ones", () => {
 	it("an apostrophe inside a word is part of the word: d'alej typed as dalej is right", () => {
 		assert.deepEqual(listenWords("Ide d'alej."), ["ide", "dalej"]);
 		assert.deepEqual(readTyped("Ide d'alej.", "ide dalej"), [], "typed without the apostrophe is right");
 		assert.deepEqual(readTyped("Ide d'alej.", "ide d'alej"), []);
-		assert.deepEqual(sentenceWordSpans("Ide d’alej.").map((w) => w.text), ["Ide", "d’alej"], "shown as written");
+		assert.deepEqual(
+			sentenceWordSpans("Ide d’alej.").map((w) => w.text),
+			["Ide", "d’alej"],
+			"shown as written",
+		);
 	});
 
 	it("a hyphen separates words, so dve-tri and dve tri are the same two words", () => {
@@ -19,12 +37,15 @@ describe("the words of a sentence line up with the typed ones", () => {
 	});
 
 	it("the words shown and the words compared have the same count, so a mark sits on its own word", () => {
-		for (const s of ["Ide d'alej, dve-tri mapy.", "Afrika je na mape malá.", "Čo by si poradila ľuďom, ktorí chcú zmenu?"]) {
+		for (const s of [
+			"Ide d'alej, dve-tri mapy.",
+			"Afrika je na mape malá.",
+			"Čo by si poradila ľuďom, ktorí chcú zmenu?",
+		]) {
 			assert.equal(sentenceWordSpans(s).length, listenWords(s).length, s);
 		}
 	});
 });
-
 
 describe("reading one typed sentence", () => {
 	it("calls a missing mark by the sound it stands for when the learner types marks", () => {
@@ -73,7 +94,10 @@ describe("reading one typed sentence", () => {
 	});
 	it("aligns a similar word as one substitution, not a drop and an add", () => {
 		const ops = alignWords(["peter", "varil", "veceru"], ["peter", "varel", "veceru"]);
-		assert.deepEqual(ops.map((o) => o.op), ["match", "sub", "match"]);
+		assert.deepEqual(
+			ops.map((o) => o.op),
+			["match", "sub", "match"],
+		);
 	});
 	it("reads a right sentence as no differences", () => {
 		assert.deepEqual(readTyped("Žila som v Ríme.", "žila som v ríme", []), []);
@@ -97,7 +121,13 @@ const rep = (sentence: string, given: string, extra: Partial<Rep> = {}): Rep => 
 	kind: "dictation",
 	sentence,
 	given,
-	verdict: given.trim().toLowerCase().replace(/[.!?,]/g, "") === sentence.toLowerCase().replace(/[.!?,]/g, "") ? "exact" : "wrong",
+	verdict:
+		given
+			.trim()
+			.toLowerCase()
+			.replace(/[.!?,]/g, "") === sentence.toLowerCase().replace(/[.!?,]/g, "")
+			? "exact"
+			: "wrong",
 	stretch: [],
 	...extra,
 });
@@ -108,7 +138,12 @@ const DROPPED = "Žila som Ríme.";
 /** Sessions of `size` sentences on the given days, `missed` of them in all with the short word dropped. */
 const sessions = (days: string[], size: number, missed: number) => {
 	let left = missed;
-	return days.map((d) => session(`${d}T10:00:00Z`, Array.from({ length: size }, () => (left-- > 0 ? rep(SAID, DROPPED) : rep(SAID, SAID)))));
+	return days.map((d) =>
+		session(
+			`${d}T10:00:00Z`,
+			Array.from({ length: size }, () => (left-- > 0 ? rep(SAID, DROPPED) : rep(SAID, SAID))),
+		),
+	);
 };
 
 describe("listening trends", () => {
@@ -120,7 +155,13 @@ describe("listening trends", () => {
 	});
 
 	it("calls a clear drop better once both windows have enough sentences and sessions", () => {
-		const a = analyzeListening([...sessions(["2026-10-20", "2026-10-22", "2026-10-25"], 20, 18), ...sessions(["2026-11-10", "2026-11-14", "2026-11-18"], 20, 3)], NOW);
+		const a = analyzeListening(
+			[
+				...sessions(["2026-10-20", "2026-10-22", "2026-10-25"], 20, 18),
+				...sessions(["2026-11-10", "2026-11-14", "2026-11-18"], 20, 3),
+			],
+			NOW,
+		);
 		assert.equal(a.typed, 120);
 		assert.equal(a.ready, true);
 		const small = a.causes.find((c) => c.cause === "small-word")!;
@@ -163,14 +204,25 @@ describe("listening trends", () => {
 	});
 
 	it("counts a sentence with only its marks off as understood, and a peeked one as neither understood nor read", () => {
-		const a = analyzeListening([session("2026-11-10T10:00:00Z", [rep("Videl ľudí.", "Videl ludi", { verdict: "accents" }), rep(SAID, DROPPED, { peeked: true })])], NOW);
+		const a = analyzeListening(
+			[
+				session("2026-11-10T10:00:00Z", [
+					rep("Videl ľudí.", "Videl ludi", { verdict: "accents" }),
+					rep(SAID, DROPPED, { peeked: true }),
+				]),
+			],
+			NOW,
+		);
 		assert.equal(a.right, 0.5);
 		assert.equal(a.readable, 1);
 		assert.equal(a.read, 0);
 	});
 
 	it("reads a picked meaning from before typing-only for accuracy but not for causes", () => {
-		const picked = [{ kind: "meaning", sentence: SAID, given: "I lived in Rome.", verdict: "exact" as const }, { kind: "meaning", sentence: "Peter varil.", given: "x", verdict: "wrong" as const }];
+		const picked = [
+			{ kind: "meaning", sentence: SAID, given: "I lived in Rome.", verdict: "exact" as const },
+			{ kind: "meaning", sentence: "Peter varil.", given: "x", verdict: "wrong" as const },
+		];
 		const a = analyzeListening([session("2026-11-10T10:00:00Z", picked)], NOW);
 		assert.equal(a.sentences, 2);
 		assert.equal(a.typed, 0);
@@ -179,20 +231,35 @@ describe("listening trends", () => {
 	});
 
 	it("says fast clips are harder only when the gap is past chance", () => {
-		const fast = Array.from({ length: 25 }, (_, i) => rep("Peter varil večeru a pritom telefonoval s mamou.", i < 10 ? "Peter varil večeru." : "Peter varil večeru a pritom telefonoval s mamou.", { heardMs: 3000 }));
-		const slow = Array.from({ length: 25 }, () => rep("Čím skôr začneš, tým skôr skončíš.", "Čím skôr začneš, tým skôr skončíš.", { heardMs: 3400 }));
+		const fast = Array.from({ length: 25 }, (_, i) =>
+			rep(
+				"Peter varil večeru a pritom telefonoval s mamou.",
+				i < 10 ? "Peter varil večeru." : "Peter varil večeru a pritom telefonoval s mamou.",
+				{ heardMs: 3000 },
+			),
+		);
+		const slow = Array.from({ length: 25 }, () =>
+			rep("Čím skôr začneš, tým skôr skončíš.", "Čím skôr začneš, tým skôr skončíš.", { heardMs: 3400 }),
+		);
 		const a = analyzeListening([session("2026-11-10T10:00:00Z", [...fast, ...slow])], NOW);
 		assert.equal(a.pace!.fast.reps, 25);
 		assert.equal(a.pace!.fast.right, 15);
 		assert.equal(a.pace!.fastHarder, true);
 		assert.equal(analyzeListening([session("2026-11-10T10:00:00Z", fast)], NOW).pace, null);
-		const close = Array.from({ length: 25 }, (_, i) => rep("Peter varil večeru a pritom telefonoval s mamou.", i < 2 ? "Peter varil večeru." : "Peter varil večeru a pritom telefonoval s mamou.", { heardMs: 3000 }));
+		const close = Array.from({ length: 25 }, (_, i) =>
+			rep(
+				"Peter varil večeru a pritom telefonoval s mamou.",
+				i < 2 ? "Peter varil večeru." : "Peter varil večeru a pritom telefonoval s mamou.",
+				{ heardMs: 3000 },
+			),
+		);
 		assert.equal(analyzeListening([session("2026-11-10T10:00:00Z", [...close, ...slow])], NOW).pace!.fastHarder, false);
 	});
 });
 
 describe("the sentence shown after an answer keeps its punctuation and marks its words", () => {
-	const shown = (pieces: ReturnType<typeof heardPieces>) => pieces.map((p) => `${p.mark === "missed" ? "✗" : p.mark === "almost" ? "~" : ""}${p.newWord ? "+" : ""}${p.text}`);
+	const shown = (pieces: ReturnType<typeof heardPieces>) =>
+		pieces.map((p) => `${p.mark === "missed" ? "✗" : p.mark === "almost" ? "~" : ""}${p.newWord ? "+" : ""}${p.text}`);
 
 	it("with nothing to mark, the pieces are the sentence as written", () => {
 		const pieces = heardPieces("Фото не совпадает.");
@@ -202,7 +269,16 @@ describe("the sentence shown after an answer keeps its punctuation and marks its
 
 	it("a missed word and a word with only an accent off are marked on their own word, punctuation is not", () => {
 		const { marks } = scoreLine("Mám dve mapy, áno.", "mam dve karty ano");
-		assert.deepEqual(shown(heardPieces("Mám dve mapy, áno.", { marks })), ["~Mám", " ", "dve", " ", "✗mapy", ", ", "~áno", "."]);
+		assert.deepEqual(shown(heardPieces("Mám dve mapy, áno.", { marks })), [
+			"~Mám",
+			" ",
+			"dve",
+			" ",
+			"✗mapy",
+			", ",
+			"~áno",
+			".",
+		]);
 	});
 
 	it("a caught word carries no mark", () => {
@@ -211,7 +287,21 @@ describe("the sentence shown after an answer keeps its punctuation and marks its
 	});
 
 	it("a new word is marked whatever its case, and a hyphenated one in one piece of color", () => {
-		assert.deepEqual(shown(heardPieces("Mapa je tu.", { newWords: ["mapa"], tag: "sk-SK" })), ["+Mapa", " ", "je", " ", "tu", "."]);
-		assert.deepEqual(shown(heardPieces("Hovorí po-slovensky.", { newWords: ["po-slovensky"], tag: "sk-SK" })), ["Hovorí", " ", "+po", "+-", "+slovensky", "."]);
+		assert.deepEqual(shown(heardPieces("Mapa je tu.", { newWords: ["mapa"], tag: "sk-SK" })), [
+			"+Mapa",
+			" ",
+			"je",
+			" ",
+			"tu",
+			".",
+		]);
+		assert.deepEqual(shown(heardPieces("Hovorí po-slovensky.", { newWords: ["po-slovensky"], tag: "sk-SK" })), [
+			"Hovorí",
+			" ",
+			"+po",
+			"+-",
+			"+slovensky",
+			".",
+		]);
 	});
 });

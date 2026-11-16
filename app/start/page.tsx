@@ -8,7 +8,11 @@ export const dynamic = "force-dynamic";
 
 /** Setup: the minute that replaces the placement chat (?edit=1 reopens it
  *  pre-filled). The Today page sends a fresh profile here once. */
-export default async function StartPage({ searchParams }: { searchParams: Promise<{ edit?: string; check?: string }> }) {
+export default async function StartPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ edit?: string; check?: string }>;
+}) {
 	const { edit, check } = await searchParams;
 	let goal: LearnerGoal | null = null;
 	let hours = 0;
@@ -23,5 +27,14 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
 	}
 	const { code, english } = activeLanguage();
 	// ?check=1 opens on the placement check itself, for a learner who is set up.
-	return <Start target={{ code, english }} goal={goal} edit={edit === "1"} hoursDone={hours} currentChapter={current} onCheck={edit === "1" && check === "1" && !!goal?.onboardedAt} />;
+	return (
+		<Start
+			target={{ code, english }}
+			goal={goal}
+			edit={edit === "1"}
+			hoursDone={hours}
+			currentChapter={current}
+			onCheck={edit === "1" && check === "1" && !!goal?.onboardedAt}
+		/>
+	);
 }

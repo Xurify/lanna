@@ -1,6 +1,6 @@
 # Working on LangHarness
 
-LangHarness is a Slovak-learning fork of LearnHarness. Read these before changing anything:
+LangHarness is a local-first, agent-assisted language learning harness. Read these before changing anything:
 
 1. This file: the product principles (P) and working rules (W) below.
 2. [docs/learner.md](docs/learner.md): what the app assumes about its learners and what makes them drop off.
@@ -8,7 +8,7 @@ LangHarness is a Slovak-learning fork of LearnHarness. Read these before changin
 4. [docs/corpus.md](docs/corpus.md): where generated data lives and the rules for adding more.
 5. [README.md](README.md): how to run it, the keys and commands, and the limits worth knowing.
 
-There is no decisions file and no changelog. Why something was built, what was checked and what is not verified yet goes in the pull request's description and the commit message. A rule the owner sets that every future change must follow goes in this file. An id such as E38 in an older comment or note points to `docs/DECISIONS.md` in git history (removed 2026-11-11): `git show 5ff5eb25:docs/DECISIONS.md`.
+There is no decisions file and no changelog. Why something was built, what was checked and what is not verified yet goes in the pull request's description and the commit message. A rule the owner sets that every future change must follow goes in this file. An id such as E38 in an older comment or note points to `docs/DECISIONS.md` in git history: `git show 5ff5eb25:docs/DECISIONS.md`.
 
 ## Product principles
 
@@ -24,16 +24,17 @@ There is no decisions file and no changelog. Why something was built, what was c
 
 ## Working rules
 
-- **W1. Take over, do not ask.** Pick the recommended option, build it, verify it in the running app, then send one short report with screenshots. This overrides the upstream "No guessing, always ask" rule in `AGENTS.md`.
+- **W1. Take over, do not ask.** Pick the recommended option, build it, verify it in the running app, then send one short report with screenshots. Ask only when a missing user decision would materially change the result.
 - **W2. Descriptive branch names; the owner merges.** Name branches after the work (`feat/desirable-difficulty`), never generated names. Open the PR, assign the owner, and stop, unless the owner says to merge.
 - **W3. Deploying to the PC.** The dev server hot-reloads, so a deploy is a `git fetch` plus checkout of the PR branch on a clean tree. GitHub Actions never runs on this repo, so red CI there is not a code failure.
 - **W4. Research notes live in the repo**, in `docs/research/` with their sources, and the index in `docs/research/README.md` is updated in the same PR.
 - **W5. A pull request shows the change before it asks for a review.** The description follows `.github/pull_request_template.md`: what changes for the learner, screenshots of every learner-facing change in Day and Night at 1280 and 390 px attached via `gh pr create/edit --attach`, how to try it, commit-pinned links to the changed code, and what was and was not checked. The steps are the `pr-description` skill.
+- **W6. Token & model discipline.** Use the model to invent, and deterministic code (`npm run typecheck`, `npm run lint`, `npm run fmt:check`, `npm test`) to enforce — never burn multi-turn LLM critic swarms on checks a script or test can verify in milliseconds. For delegated coding/mechanical edits and hill-climbing against test suites, use Haiku (High/Extra High effort) or Gemini Flash; **never use Claude Sonnet**. Verify all callers across the repo before deleting exports, routes, or dependencies.
 - **Keys stay out of chat.** A key is entered in Settings or `.env.local`, never pasted into a conversation.
 
 ## Engineering rules
 
-Every task is retrieval-first with graded, priced help; cache every model or TTS output to `data/` before calling an API; custom UI with no native widgets and no layout shift; full grammar words (accusative, not acc.); test with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile. A keydown handler on a typing field that calls `preventDefault()` lets a dead key (`key: "Dead"`) and IME composition through (`belongsToLayoutAccent`, `src/core/accent-keys.ts`): preventing them cancels the accent the learner's own keyboard layout is typing.
+Every task is retrieval-first with graded, priced help; cache every model or TTS output to `data/` before calling an API; custom UI with no native widgets and no layout shift; full grammar words (accusative, not acc.); test with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile. Run `npm run typecheck`, `npm run lint` (`oxlint` + `eslint`), `npm run fmt:check` (`oxfmt`), and `npm test` before calling work done. A keydown handler on a typing field that calls `preventDefault()` lets a dead key (`key: "Dead"`) and IME composition through (`belongsToLayoutAccent`, `src/core/accent-keys.ts`): preventing them cancels the accent the learner's own keyboard layout is typing.
 
 - **Story covers** are the one place with colour besides teal: ink scenes with loose watercolour washes in four low-chroma hues (`--q-wash-ochre`, `-rose`, `-sage`, `-sky`), one teal patch on the thing the story is about. The story writer picks the scene (`cover`); how a scene is drawn and reviewed is the `ink-drawing` skill, "Story covers".
 

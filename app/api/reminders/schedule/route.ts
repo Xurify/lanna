@@ -20,14 +20,7 @@ import {
 	type StudyTrendInsights,
 	type TodayExperimentStatus,
 } from "@/src/core";
-import {
-	dayLogDays,
-	languageDay,
-	progressSummary,
-	readSettingsRecord,
-	shownProfiles,
-	withProfile,
-} from "@/src/server";
+import { dayLogDays, languageDay, progressSummary, readSettingsRecord, shownProfiles, withProfile } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 

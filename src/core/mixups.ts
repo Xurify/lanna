@@ -24,8 +24,25 @@
 
 import mixupsJson from "../../curriculum/slovak/mixups.json";
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
-import { matchCase, rng, shortGloss, shuffle, type ItemKind, type LessonExplain, type LessonItem, type LessonPlan, type RepVerdict } from "./lesson.ts";
-import { formsOfEntry, getPairsForLanguage, MIN_PAIR_SENTENCES, PAIRS, twinSentences, type PairSentence } from "./pairs.ts";
+import {
+	matchCase,
+	rng,
+	shortGloss,
+	shuffle,
+	type ItemKind,
+	type LessonExplain,
+	type LessonItem,
+	type LessonPlan,
+	type RepVerdict,
+} from "./lesson.ts";
+import {
+	formsOfEntry,
+	getPairsForLanguage,
+	MIN_PAIR_SENTENCES,
+	PAIRS,
+	twinSentences,
+	type PairSentence,
+} from "./pairs.ts";
 import { dayKey, entryLemma, exampleText, type LexiconEntry, type ReviewCard } from "./review.ts";
 
 export interface MixupFamily {
@@ -164,7 +181,10 @@ export function mixupStatus(m: Pick<Mixup, "misses" | "hits" | "won" | "family" 
 	// mended. A probe family with no `won` yet has none on either side.
 	const probing = !!m.family && !!MIXUP_FAMILIES.find((f) => f.id === m.family)?.probes;
 	const bothSides = !probing || new Set(m.won ?? []).size >= 2;
-	if (m.misses > 0) return m.hits >= MIXUP_MEND_HITS && new Set(m.days ?? []).size >= MIXUP_MEND_DAYS && bothSides ? "mended" : "active";
+	if (m.misses > 0)
+		return m.hits >= MIXUP_MEND_HITS && new Set(m.days ?? []).size >= MIXUP_MEND_DAYS && bothSides
+			? "mended"
+			: "active";
 	return m.hits >= PROBE_CLEAR_HITS && bothSides ? "cleared" : "probe";
 }
 
@@ -208,10 +228,22 @@ function push(map: Map<string, LexiconEntry[]>, key: string, entry: LexiconEntry
 	else if (!list.includes(entry)) list.push(entry);
 }
 
-export function mixupLexicon(entries: readonly LexiconEntry[], frames: readonly MixupProbe[] = NO_FRAMES, families: readonly MixupFamily[] = MIXUP_FAMILIES): MixupLexicon {
+export function mixupLexicon(
+	entries: readonly LexiconEntry[],
+	frames: readonly MixupProbe[] = NO_FRAMES,
+	families: readonly MixupFamily[] = MIXUP_FAMILIES,
+): MixupLexicon {
 	const known = lexicons.get(entries);
 	if (known && known.source === frames && known.families === families) return known;
-	const lex: MixupLexicon = { bySlug: new Map(), byForm: new Map(), byLemma: new Map(), twins: new Map(), frames: new Map(), source: frames, families };
+	const lex: MixupLexicon = {
+		bySlug: new Map(),
+		byForm: new Map(),
+		byLemma: new Map(),
+		twins: new Map(),
+		frames: new Map(),
+		source: frames,
+		families,
+	};
 	for (const f of frames) if (f.src === "frame" && f.approved) push2(lex.frames, f.slug, f);
 	for (const entry of entries) {
 		lex.bySlug.set(entry.slug, entry);
@@ -233,7 +265,9 @@ function push2(map: Map<string, MixupProbe[]>, key: string, row: MixupProbe) {
  *  examples, after its own, so an id never clashes. A row whose sentence is
  *  already an own example only changes that example's English. */
 function shadowEntry(entry: LexiconEntry, lex: MixupLexicon, family: MixupFamily | undefined): LexiconEntry {
-	const rows = [...(family?.probes ?? []), ...(lex.frames.get(entry.slug) ?? [])].filter((r) => r.slug === entry.slug && !!r.approved && !!r.form);
+	const rows = [...(family?.probes ?? []), ...(lex.frames.get(entry.slug) ?? [])].filter(
+		(r) => r.slug === entry.slug && !!r.approved && !!r.form,
+	);
 	if (rows.length === 0) return entry;
 	const examples = entry.examples.map((x) => {
 		const row = rows.find((r) => r.sk === exampleText(x) && !!r.en);
@@ -243,7 +277,13 @@ function shadowEntry(entry: LexiconEntry, lex: MixupLexicon, family: MixupFamily
 		if (examples.some((x) => exampleText(x) === r.sk)) continue;
 		const at = r.at ?? r.sk.indexOf(r.form!);
 		if (at < 0) continue;
-		examples.push({ sk: r.sk, en: r.en ?? "", cloze: { answer: r.form!, at }, src: r.src ?? "frame", probe: true } as unknown as (typeof examples)[number]);
+		examples.push({
+			sk: r.sk,
+			en: r.en ?? "",
+			cloze: { answer: r.form!, at },
+			src: r.src ?? "frame",
+			probe: true,
+		} as unknown as (typeof examples)[number]);
 	}
 	return { ...entry, examples };
 }
@@ -294,7 +334,10 @@ export function wordGiven(lex: MixupLexicon, wanted: LexiconEntry, given: string
 	const lemma = entryLemma(wanted).toLocaleLowerCase("sk-SK");
 	const others = owners.filter((e) => entryLemma(e).toLocaleLowerCase("sk-SK") !== lemma);
 	if (others.length === 0) return null;
-	return others.find((e) => familyIn(lex, wanted.slug, e.slug)) ?? [...others].sort((x, y) => commonness(x) - commonness(y))[0]!;
+	return (
+		others.find((e) => familyIn(lex, wanted.slug, e.slug)) ??
+		[...others].sort((x, y) => commonness(x) - commonness(y))[0]!
+	);
 }
 
 /**
@@ -368,7 +411,11 @@ export interface MixupEvent {
 
 /** Whether a lesson rep is read as a mix-up event: one word was asked and
  *  this is the first, unaided try at it (the first-try rule, E18). */
-export function mixupEventOf(rep: { kind: string; again?: boolean; first?: { given: string; verdict: RepVerdict; peeked?: boolean } }): boolean {
+export function mixupEventOf(rep: {
+	kind: string;
+	again?: boolean;
+	first?: { given: string; verdict: RepVerdict; peeked?: boolean };
+}): boolean {
 	return WORD_KINDS.has(rep.kind) && rep.again !== true && !!rep.first && rep.first.peeked !== true;
 }
 
@@ -387,14 +434,26 @@ function predictMixups(record: MixupRecord, key: string, lex: MixupLexicon, at: 
 	const m = record[key];
 	if (!m) return record;
 	const family = m.family ? lex.families.find((f) => f.id === m.family) : undefined;
-	const candidates = family ? family.pairs.filter(([x, y]) => mixupKey(x, y) !== key) : ruleNeighbours(lex, m.a, m.b, PREDICT_CAP * 2);
+	const candidates = family
+		? family.pairs.filter(([x, y]) => mixupKey(x, y) !== key)
+		: ruleNeighbours(lex, m.a, m.b, PREDICT_CAP * 2);
 	const out = { ...record };
 	let added = 0;
 	for (const [x, y] of candidates) {
 		if (added >= PREDICT_CAP) break;
 		const k = mixupKey(x, y);
 		if (out[k] || !lex.bySlug.has(x) || !lex.bySlug.has(y) || !drillable(lex, x, y)) continue;
-		out[k] = { a: x, b: y, words: lemmaPair(lex, x, y), ...(family ? { family: family.id } : {}), since: at, lastAt: at, misses: 0, hits: 0, from: key };
+		out[k] = {
+			a: x,
+			b: y,
+			words: lemmaPair(lex, x, y),
+			...(family ? { family: family.id } : {}),
+			since: at,
+			lastAt: at,
+			misses: 0,
+			hits: 0,
+			from: key,
+		};
 		added++;
 	}
 	return out;
@@ -405,13 +464,28 @@ const GUIDE_SOURCE = "guide";
 
 /** Pairs the guide named become probes, like a family's (tested before they
  *  are taught). A pair already on record is left as it is. */
-export function addGuideProbes(record: MixupRecord, pairs: ReadonlyArray<[string, string]>, lex: MixupLexicon, at: string): MixupRecord {
+export function addGuideProbes(
+	record: MixupRecord,
+	pairs: ReadonlyArray<[string, string]>,
+	lex: MixupLexicon,
+	at: string,
+): MixupRecord {
 	const out = { ...record };
 	for (const [a, b] of pairs) {
 		const k = mixupKey(a, b);
 		if (out[k] || !lex.bySlug.has(a) || !lex.bySlug.has(b) || !drillable(lex, a, b)) continue;
 		const family = familyIn(lex, a, b);
-		out[k] = { a, b, words: lemmaPair(lex, a, b), ...(family ? { family: family.id } : {}), since: at, lastAt: at, misses: 0, hits: 0, from: GUIDE_SOURCE };
+		out[k] = {
+			a,
+			b,
+			words: lemmaPair(lex, a, b),
+			...(family ? { family: family.id } : {}),
+			since: at,
+			lastAt: at,
+			misses: 0,
+			hits: 0,
+			from: GUIDE_SOURCE,
+		};
 	}
 	return capRecord(out);
 }
@@ -424,7 +498,11 @@ function capRecord(record: MixupRecord): MixupRecord {
 	const rank: Record<MixupStatus, number> = { cleared: 0, mended: 1, probe: 2, active: 3 };
 	const drop = keys
 		.filter((k) => mixupStatus(record[k]!) !== "active")
-		.sort((x, y) => rank[mixupStatus(record[x]!)] - rank[mixupStatus(record[y]!)] || record[x]!.lastAt.localeCompare(record[y]!.lastAt))
+		.sort(
+			(x, y) =>
+				rank[mixupStatus(record[x]!)] - rank[mixupStatus(record[y]!)] ||
+				record[x]!.lastAt.localeCompare(record[y]!.lastAt),
+		)
 		.slice(0, keys.length - MIXUP_RECORD_CAP);
 	const out = { ...record };
 	for (const k of drop) delete out[k];
@@ -437,7 +515,11 @@ function capRecord(record: MixupRecord): MixupRecord {
  * counts toward every pair the wanted word is in. Returns the record and
  * the keys of the mix-ups found in these events.
  */
-export function tallyMixups(record: MixupRecord, events: readonly MixupEvent[], lex: MixupLexicon): { record: MixupRecord; found: string[] } {
+export function tallyMixups(
+	record: MixupRecord,
+	events: readonly MixupEvent[],
+	lex: MixupLexicon,
+): { record: MixupRecord; found: string[] } {
 	let out = { ...record };
 	const found: string[] = [];
 	for (const e of events) {
@@ -448,16 +530,34 @@ export function tallyMixups(record: MixupRecord, events: readonly MixupEvent[], 
 			if (!other) continue;
 			// A family that names probes records only the pairs it can drill on both
 			// sides, except a miss the learner made with both words in view (visible).
-			if (!e.visible && familyIn(lex, wanted.slug, other.slug)?.probes && twinsOfFamily(lex, wanted.slug, other.slug).length === 0) continue;
+			if (
+				!e.visible &&
+				familyIn(lex, wanted.slug, other.slug)?.probes &&
+				twinsOfFamily(lex, wanted.slug, other.slug).length === 0
+			)
+				continue;
 			const key = mixupKey(wanted.slug, other.slug);
 			const prev = out[key];
-			const seen = [...(prev?.seen ?? []), { at: e.at, sentence: e.sentence, answer: e.answer, given: e.given.trim() }].slice(-SEEN_CAP);
+			const seen = [
+				...(prev?.seen ?? []),
+				{ at: e.at, sentence: e.sentence, answer: e.answer, given: e.given.trim() },
+			].slice(-SEEN_CAP);
 			if (prev) {
 				const { from: _from, won: _won, days: _days, ...rest } = prev;
 				out[key] = { ...rest, misses: prev.misses + 1, hits: 0, lastAt: e.at, seen };
 			} else {
 				const family = familyIn(lex, wanted.slug, other.slug);
-				out[key] = { a: wanted.slug, b: other.slug, words: lemmaPair(lex, wanted.slug, other.slug), ...(family ? { family: family.id } : {}), since: e.at, lastAt: e.at, misses: 1, hits: 0, seen };
+				out[key] = {
+					a: wanted.slug,
+					b: other.slug,
+					words: lemmaPair(lex, wanted.slug, other.slug),
+					...(family ? { family: family.id } : {}),
+					since: e.at,
+					lastAt: e.at,
+					misses: 1,
+					hits: 0,
+					seen,
+				};
 			}
 			if (!found.includes(key)) found.push(key);
 			out = predictMixups(out, key, lex, e.at);
@@ -523,7 +623,11 @@ export function mixupList(record: MixupRecord | undefined): MixupSummary[] {
 		});
 	}
 	const order: Record<MixupStatus, number> = { active: 0, probe: 1, mended: 2, cleared: 3 };
-	return out.sort((x, y) => order[x.status] - order[y.status] || (x.status === "probe" ? x.since.localeCompare(y.since) : y.lastAt.localeCompare(x.lastAt)));
+	return out.sort(
+		(x, y) =>
+			order[x.status] - order[y.status] ||
+			(x.status === "probe" ? x.since.localeCompare(y.since) : y.lastAt.localeCompare(x.lastAt)),
+	);
 }
 
 /** The line in the tutor's "This learner" block, or null with nothing open. */
@@ -531,16 +635,30 @@ export function mixupsLine(list: readonly MixupSummary[]): string | null {
 	const active = list.filter((m) => m.status === "active").slice(0, 5);
 	if (!active.length) return null;
 	const probes = list.filter((m) => m.status === "probe").slice(0, 5);
-	const parts = active.map((m) => `${m.words.join(" / ")} (${m.misses} ${m.misses === 1 ? "miss" : "misses"}${m.last ? `; last wrote "${m.last.given}" in "${m.last.sentence}"` : ""})`);
-	const next = probes.length ? ` Not tested yet, but the same pattern: ${probes.map((m) => m.words.join(" / ")).join(", ")}.` : "";
+	const parts = active.map(
+		(m) =>
+			`${m.words.join(" / ")} (${m.misses} ${m.misses === 1 ? "miss" : "misses"}${m.last ? `; last wrote "${m.last.given}" in "${m.last.sentence}"` : ""})`,
+	);
+	const next = probes.length
+		? ` Not tested yet, but the same pattern: ${probes.map((m) => m.words.join(" / ")).join(", ")}.`
+		: "";
 	return `- Words they mix up (gave one where the other was wanted): ${parts.join("; ")}.${next} Contrast each pair in examples, and when they use one, check it is the one the sentence needs.`;
 }
 
 /** The rule and bridge shown after a miss on a pair: its family's, else a
  *  Dvojičky pair's, else the two meanings side by side. */
-export function mixupRule(m: Pick<Mixup, "a" | "b" | "family">, lex: MixupLexicon): { rule: string; bridge: string; cue?: string; explain?: LessonExplain } {
+export function mixupRule(
+	m: Pick<Mixup, "a" | "b" | "family">,
+	lex: MixupLexicon,
+): { rule: string; bridge: string; cue?: string; explain?: LessonExplain } {
 	const family = m.family ? lex.families.find((f) => f.id === m.family) : undefined;
-	if (family) return { rule: family.rule, bridge: family.bridge, ...(family.cue ? { cue: family.cue } : {}), ...(family.explain ? { explain: family.explain } : {}) };
+	if (family)
+		return {
+			rule: family.rule,
+			bridge: family.bridge,
+			...(family.cue ? { cue: family.cue } : {}),
+			...(family.explain ? { explain: family.explain } : {}),
+		};
 	const ea = lex.bySlug.get(m.a);
 	const eb = lex.bySlug.get(m.b);
 	const la = ea ? entryLemma(ea) : m.a;
@@ -551,10 +669,16 @@ export function mixupRule(m: Pick<Mixup, "a" | "b" | "family">, lex: MixupLexico
 }
 
 export function aspectRoles(language: string): { imperfective: string; perfective: string } | undefined {
-	return (mixupsJson as { language?: string }).language === language ? MIXUP_FAMILIES.find((f) => f.id === ASPECT_FAMILY_ID)?.roles : undefined;
+	return (mixupsJson as { language?: string }).language === language
+		? MIXUP_FAMILIES.find((f) => f.id === ASPECT_FAMILY_ID)?.roles
+		: undefined;
 }
 
-export function pairContrastRule(language: string, a: { slug: string; lemma: string }, b: { slug: string; lemma: string }): string | undefined {
+export function pairContrastRule(
+	language: string,
+	a: { slug: string; lemma: string },
+	b: { slug: string; lemma: string },
+): string | undefined {
 	const pair = getPairsForLanguage(language).find((p) => mixupKey(p.a, p.b) === mixupKey(a.lemma, b.lemma));
 	if (pair) return pair.rule;
 	return (mixupsJson as { language?: string }).language === language ? familyOf(a.slug, b.slug)?.rule : undefined;
@@ -585,7 +709,17 @@ const fold = (s: string) => foldDiacritics(s.toLowerCase());
  * verified sentence that holds only one of the two words (twinSentences).
  * `recent` sentence ids go to the back while fresher ones remain.
  */
-export function buildMixupLesson(entries: readonly LexiconEntry[], record: MixupRecord | undefined, opts: { seed: number; length?: number; recent?: ReadonlySet<string>; frames?: readonly MixupProbe[]; families?: readonly MixupFamily[] }): LessonPlan {
+export function buildMixupLesson(
+	entries: readonly LexiconEntry[],
+	record: MixupRecord | undefined,
+	opts: {
+		seed: number;
+		length?: number;
+		recent?: ReadonlySet<string>;
+		frames?: readonly MixupProbe[];
+		families?: readonly MixupFamily[];
+	},
+): LessonPlan {
 	const rand = rng(opts.seed);
 	const length = opts.length ?? 12;
 	const lex = mixupLexicon(entries, opts.frames ?? NO_FRAMES, opts.families ?? MIXUP_FAMILIES);
@@ -602,7 +736,17 @@ export function buildMixupLesson(entries: readonly LexiconEntry[], record: Mixup
 		};
 		const sides = { a: side("a"), b: side("b") };
 		if (sides.a.length + sides.b.length === 0) return [];
-		return [{ key: s.key, m, probe: s.status === "probe", weight: s.status === "active" ? 2 : 1, sides, turn: (rand() < 0.5 ? "a" : "b") as "a" | "b", ...mixupRule(m, lex) }];
+		return [
+			{
+				key: s.key,
+				m,
+				probe: s.status === "probe",
+				weight: s.status === "active" ? 2 : 1,
+				sides,
+				turn: (rand() < 0.5 ? "a" : "b") as "a" | "b",
+				...mixupRule(m, lex),
+			},
+		];
 	});
 	const items: LessonItem[] = [];
 	const used = new Set<string>();
@@ -657,8 +801,13 @@ function taggedSlots(forms: readonly string[]): Array<{ form: string; tag: SlotT
 /** A paradigm is in the lexicon's order (present, then imperatives, then past)
  *  and its present and past sit in the same slots as the twin's: the shape
  *  that the pairing by tag reads. */
-const inOrder = (slots: ReturnType<typeof taggedSlots>) => slots.every((s, i) => i === 0 || TAG_RANK[slots[i - 1]!.tag] <= TAG_RANK[s.tag]);
-const sharedShape = (slots: ReturnType<typeof taggedSlots>) => slots.filter((s) => s.tag !== "imperative").map((s) => (s.tag === "past" ? "P" : "N")).join("");
+const inOrder = (slots: ReturnType<typeof taggedSlots>) =>
+	slots.every((s, i) => i === 0 || TAG_RANK[slots[i - 1]!.tag] <= TAG_RANK[s.tag]);
+const sharedShape = (slots: ReturnType<typeof taggedSlots>) =>
+	slots
+		.filter((s) => s.tag !== "imperative")
+		.map((s) => (s.tag === "past" ? "P" : "N"))
+		.join("");
 
 /** The other twin's form with the same grammatical tag and ordinal. Two rules
  *  keep the pairing honest. The infinitive is not in a paradigm list, so the
@@ -669,8 +818,14 @@ const sharedShape = (slots: ReturnType<typeof taggedSlots>) => slots.filter((s) 
  *  no counterpart (ber, on brať, where vziať has none) gives null: it is dropped.
  *  A twin is verified when the lexicon says so or the family accepts it
  *  (`accepted`, slugs). Null when either list is not verified, or in any other case. */
-export function parallelForm(from: LexiconEntry, to: LexiconEntry, form: string, accepted: ReadonlySet<string> = new Set()): string | null {
-	const verified = (e: LexiconEntry) => (e as { formsVerified?: boolean }).formsVerified === true || accepted.has(e.slug);
+export function parallelForm(
+	from: LexiconEntry,
+	to: LexiconEntry,
+	form: string,
+	accepted: ReadonlySet<string> = new Set(),
+): string | null {
+	const verified = (e: LexiconEntry) =>
+		(e as { formsVerified?: boolean }).formsVerified === true || accepted.has(e.slug);
 	if (!verified(from) || !verified(to)) return null;
 	const want = form.toLocaleLowerCase("sk-SK");
 	if (want === entryLemma(from).toLocaleLowerCase("sk-SK")) return entryLemma(to) || null;
@@ -685,7 +840,12 @@ export function parallelForm(from: LexiconEntry, to: LexiconEntry, form: string,
 /** The word a probe offers in this sentence's place: the other twin's form in
  *  the same slot (a parallel family), else, when the sentence has the dictionary
  *  form, the other twin's lemma. Null: no choice is sure, so the rep is typed. */
-function choiceFor(family: MixupFamily | undefined, s: PairSentence, other: LexiconEntry, accepted: ReadonlySet<string>): string | null {
+function choiceFor(
+	family: MixupFamily | undefined,
+	s: PairSentence,
+	other: LexiconEntry,
+	accepted: ReadonlySet<string>,
+): string | null {
 	const parallel = family?.probeForm === "parallel" ? parallelForm(s.entry, other, s.form, accepted) : null;
 	if (parallel !== null) return parallel;
 	return fold(s.form) === fold(entryLemma(s.entry)) ? entryLemma(other) : null;
@@ -695,7 +855,13 @@ function choiceFor(family: MixupFamily | undefined, s: PairSentence, other: Lexi
  *  drills only rows that are approved, match a verified sentence of this pair,
  *  carry a cue type the license allows for that twin, and (for parallel probes)
  *  have a choice (choiceFor). Otherwise every verified twin sentence counts. */
-function probeSentences(lex: MixupLexicon, family: MixupFamily | undefined, a: string, b: string, raw: PairSentence[]): PairSentence[] {
+function probeSentences(
+	lex: MixupLexicon,
+	family: MixupFamily | undefined,
+	a: string,
+	b: string,
+	raw: PairSentence[],
+): PairSentence[] {
 	if (!family?.probes) return raw;
 	const accepted = new Set(family.formsAccepted ?? []);
 	const probes = [...family.probes, ...(lex.frames.get(a) ?? []), ...(lex.frames.get(b) ?? [])];
@@ -718,7 +884,20 @@ function probeSentences(lex: MixupLexicon, family: MixupFamily | undefined, a: s
 }
 
 /** One rep of a pair: typed when the pair is an open mix-up, a choice between the two words when it is a probe. */
-export function mixupItem(s: PairSentence, t: { key: string; m: Pick<Mixup, "a" | "b">; probe: boolean; rule: string; bridge: string; cue?: string; explain?: LessonExplain }, lex: MixupLexicon, rand: () => number): LessonItem {
+export function mixupItem(
+	s: PairSentence,
+	t: {
+		key: string;
+		m: Pick<Mixup, "a" | "b">;
+		probe: boolean;
+		rule: string;
+		bridge: string;
+		cue?: string;
+		explain?: LessonExplain;
+	},
+	lex: MixupLexicon,
+	rand: () => number,
+): LessonItem {
 	const ex = s.entry.examples[s.index]!;
 	const text = exampleText(ex);
 	const other = lex.bySlug.get(s.member === "a" ? t.m.b : t.m.a)!;
@@ -740,7 +919,13 @@ export function mixupItem(s: PairSentence, t: { key: string; m: Pick<Mixup, "a" 
 		before: text.slice(0, s.at),
 		after: text.slice(s.at + s.form.length),
 		hint: jointGloss(lex, t.m.a, t.m.b),
-		pair: { id: t.key, rule: t.rule, bridge: t.bridge, ...(t.cue ? { cue: t.cue } : {}), ...(t.explain ? { explain: t.explain } : {}) },
+		pair: {
+			id: t.key,
+			rule: t.rule,
+			bridge: t.bridge,
+			...(t.cue ? { cue: t.cue } : {}),
+			...(t.explain ? { explain: t.explain } : {}),
+		},
 	};
 	if (s.entry.rank !== undefined) item.rank = s.entry.rank;
 	if (s.entry.cat) item.cat = s.entry.cat;

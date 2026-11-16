@@ -14,7 +14,8 @@ process.env.LH_PROFILE = "slovak";
 
 const { calculateRetention, classifyWordState } = await import("../src/core/saved-phrases.ts");
 const { savedPhraseStore } = await import("../src/store/saved-phrases.ts");
-const { addWordToBank, getWordBank, lookupSelection, lookupSelectionAsync } = await import("../src/server/word-bank.ts");
+const { addWordToBank, getWordBank, lookupSelection, lookupSelectionAsync } =
+	await import("../src/server/word-bank.ts");
 
 after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
@@ -151,7 +152,9 @@ describe("getWordBank", () => {
 	it("filters by search term", () => {
 		const res = getWordBank({ search: "chlieb" });
 		assert.ok(res.items.length >= 1);
-		assert.ok(res.items.some((i) => i.lemma.toLowerCase().includes("chlieb") || i.gloss.toLowerCase().includes("bread")));
+		assert.ok(
+			res.items.some((i) => i.lemma.toLowerCase().includes("chlieb") || i.gloss.toLowerCase().includes("bread")),
+		);
 	});
 
 	it("filters by favorite status", () => {
@@ -225,10 +228,7 @@ describe("getWordBank", () => {
 		assert.ok(precoPlaceSync.gloss?.toLowerCase().includes("why"));
 		assert.ok(precoPlaceSync.formNote?.includes("prečo"));
 		assert.ok(precoPlaceSync.formNote?.includes("plače"));
-		assert.equal(
-			precoPlaceSync.referenceUrl,
-			"https://www.slovak.wiki/search?q=pre%C4%8Do%20pla%C4%8De",
-		);
+		assert.equal(precoPlaceSync.referenceUrl, "https://www.slovak.wiki/search?q=pre%C4%8Do%20pla%C4%8De");
 
 		const precoPlaceAsync = await lookupSelectionAsync("prečo plače");
 		assert.equal(precoPlaceAsync.found, true);

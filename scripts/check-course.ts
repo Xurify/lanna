@@ -9,7 +9,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { curriculumFile, PATHS } from "../config.ts";
-import { checkCourse, courseUnitsFor, formCaseCell, unitCaseCells, type Course, type CourseUnit } from "../src/core/course.ts";
+import {
+	checkCourse,
+	courseUnitsFor,
+	formCaseCell,
+	unitCaseCells,
+	type Course,
+	type CourseUnit,
+} from "../src/core/course.ts";
 import { SPEAK_SCENES } from "../src/core/speak.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
@@ -19,10 +26,18 @@ if (!id) {
 	console.error("Name an added language, e.g. estonian");
 	process.exit(1);
 }
-const lexicon: LexiconEntry[] = JSON.parse(fs.readFileSync(path.join(PATHS.languages, id, "lexicon.json"), "utf-8")).words;
+const lexicon: LexiconEntry[] = JSON.parse(
+	fs.readFileSync(path.join(PATHS.languages, id, "lexicon.json"), "utf-8"),
+).words;
 const raw = JSON.parse(fs.readFileSync(curriculumFile(id, "course.json"), "utf-8")) as Course;
 const tag = raw.tag;
-const checked = checkCourse(raw, id, lexicon, tag, SPEAK_SCENES.map((s) => s.id));
+const checked = checkCourse(
+	raw,
+	id,
+	lexicon,
+	tag,
+	SPEAK_SCENES.map((s) => s.id),
+);
 if (!checked) {
 	console.log("REFUSED: fewer than three chapters or three grammar lessons survive");
 	process.exit(1);
@@ -32,7 +47,8 @@ for (const d of checked.dropped) console.log(`DROPPED ${d}`);
 const kept = new Set(checked.course.units.map((u) => u.id));
 for (const u of raw.units) if (!kept.has(u.id)) console.log(`NOT KEPT ${u.id}`);
 const placed = new Set(raw.chapters.flatMap((c) => c.units));
-for (const x of [...raw.units, ...raw.tutors, ...raw.goals]) if (!placed.has(x.id)) console.log(`IN NO CHAPTER ${x.id}`);
+for (const x of [...raw.units, ...raw.tutors, ...raw.goals])
+	if (!placed.has(x.id)) console.log(`IN NO CHAPTER ${x.id}`);
 
 for (const unit of checked.course.units.filter((u): u is CourseUnit => u.kind === "grammar")) {
 	const hits: string[] = [];

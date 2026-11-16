@@ -13,7 +13,23 @@ import { chartData } from "@/components/quiet/chart-data";
 import type { QIconName } from "@/components/quiet/icon-paths";
 import { useSettingsDialog } from "@/components/settings/settings-context";
 import type { Goal } from "@/components/daily-plan";
-import type { AfterPlan, CurriculumState, DailyPlan as Plan, ExamSummary, MixupSummary, PlanTask, Projection, StampState, StrandBalance, TodayExperimentStatus, TrailLog, TrajectoryInput, UnitId, UnitKind, WeakSpotSummary } from "@/src/core";
+import type {
+	AfterPlan,
+	CurriculumState,
+	DailyPlan as Plan,
+	ExamSummary,
+	MixupSummary,
+	PlanTask,
+	Projection,
+	StampState,
+	StrandBalance,
+	TodayExperimentStatus,
+	TrailLog,
+	TrajectoryInput,
+	UnitId,
+	UnitKind,
+	WeakSpotSummary,
+} from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";
 
 export interface UnitSummary {
@@ -61,7 +77,6 @@ export interface Summary {
 	log?: TrailLog;
 	experiment?: TodayExperimentStatus | null;
 }
-
 
 export function greeting(now = new Date()): string {
 	const h = now.getHours();
@@ -170,7 +185,13 @@ export function DayRail({ s }: { s: Summary | null }) {
 						</p>
 					</div>
 
-					<div className="mt-3">{s ? <ProgressPanel data={chartData(s)} /> : <div className="q-well h-64 animate-pulse" aria-hidden="true" />}</div>
+					<div className="mt-3">
+						{s ? (
+							<ProgressPanel data={chartData(s)} />
+						) : (
+							<div className="q-well h-64 animate-pulse" aria-hidden="true" />
+						)}
+					</div>
 
 					{s?.projection && (
 						<div className="q-goal mt-4" data-testid="goal-line">
@@ -210,4 +231,3 @@ function goalLine(s: Summary): React.ReactNode {
 		</>
 	);
 }
-

@@ -34,7 +34,38 @@ import { EdgeStage, LadderStage, WordsStage, type CheckStart } from "@/component
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { HoursSheet } from "@/components/hours-sheet";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { CEFR_ORDER, allChapters, DEFAULT_DAYS_PER_WEEK, etaFromScratch, explanationLanguages, GUIDED_HOURS, knownLanguages, MAX_EXPLAIN, MAX_PURPOSE_NOTE, MAX_PURPOSES, MINUTE_CHOICES, MAX_MINUTES, priorsFor, PURPOSES, suggestedLevel, LEVEL_CAN_DO, levelFitLine, parallelsLine, unitInfo, type Cefr, type Lang, type LangLevel, type LearnerGoal, type LessonItem, type PlacementOutcome, type Prior, type ProbeVerdict, type Purpose, type UnitId, type VocabEstimate } from "@/src/core";
+import {
+	CEFR_ORDER,
+	allChapters,
+	DEFAULT_DAYS_PER_WEEK,
+	etaFromScratch,
+	explanationLanguages,
+	GUIDED_HOURS,
+	knownLanguages,
+	MAX_EXPLAIN,
+	MAX_PURPOSE_NOTE,
+	MAX_PURPOSES,
+	MINUTE_CHOICES,
+	MAX_MINUTES,
+	priorsFor,
+	PURPOSES,
+	suggestedLevel,
+	LEVEL_CAN_DO,
+	levelFitLine,
+	parallelsLine,
+	unitInfo,
+	type Cefr,
+	type Lang,
+	type LangLevel,
+	type LearnerGoal,
+	type LessonItem,
+	type PlacementOutcome,
+	type Prior,
+	type ProbeVerdict,
+	type Purpose,
+	type UnitId,
+	type VocabEstimate,
+} from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";
 
 type Step = 1 | 2 | 3 | 4;
@@ -80,7 +111,20 @@ function draftFrom(goal: LearnerGoal | null): Draft {
 	};
 }
 
-export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck = false }: { /** The language being learned (the running profile). */ target: { code: string; english: string }; goal: LearnerGoal | null; edit: boolean; hoursDone: number; currentChapter: string; /** Open on the check (the last screen), not the first. */ onCheck?: boolean }) {
+export function Start({
+	target,
+	goal,
+	edit,
+	hoursDone,
+	onCheck = false,
+}: {
+	/** The language being learned (the running profile). */ target: { code: string; english: string };
+	goal: LearnerGoal | null;
+	edit: boolean;
+	hoursDone: number;
+	currentChapter: string;
+	/** Open on the check (the last screen), not the first. */ onCheck?: boolean;
+}) {
 	const router = useRouter();
 	const [step, setStep] = useState<Step>(onCheck ? 4 : 1);
 	const [d, setD] = useState<Draft>(() => draftFrom(goal));
@@ -99,7 +143,8 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 	const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
 	const examLevel = d.examLevel ?? undefined;
 	const suggested = suggestedLevel(d.purposes, examLevel);
-	const blocked = step === 1 ? d.purposes.includes("exam") && !d.examLevel : step === 2 ? d.languages.length === 0 : false;
+	const blocked =
+		step === 1 ? d.purposes.includes("exam") && !d.examLevel : step === 2 ? d.languages.length === 0 : false;
 	const level = d.levelOverride ?? suggested;
 	const eta = etaFromScratch(level, d.minutes, d.days, hoursDone, new Date());
 	const tz = new Date().getTimezoneOffset();
@@ -164,7 +209,16 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 	};
 	const skipAll = async () => {
 		// Skipping still records that setup was seen, with sane defaults.
-		if (await fetch(`/api/progress?tz=${tz}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: { onboarded: true } }) }).then((r) => r.ok).catch(() => false)) router.push("/");
+		if (
+			await fetch(`/api/progress?tz=${tz}`, {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ goal: { onboarded: true } }),
+			})
+				.then((r) => r.ok)
+				.catch(() => false)
+		)
+			router.push("/");
 		else setError("Couldn't skip setup. Try again.");
 	};
 
@@ -196,7 +250,11 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 		if (!check) return;
 		setSaving(true);
 		try {
-			const res = await fetch("/api/placement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: check.id, ms: checkMs, activeMs: activeTime.finish(), tz }) });
+			const res = await fetch("/api/placement", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ id: check.id, ms: checkMs, activeMs: activeTime.finish(), tz }),
+			});
 			if (!res.ok) throw new Error(String(res.status));
 			setOutcome((await res.json()) as CheckResult);
 			setCheck(null);
@@ -212,14 +270,23 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 	/** The Socratic follow-up: a Learn session seeded with the misses. */
 	const goDeeper = () => {
 		const missed = outcome?.missed ?? [];
-		const lines = missed.slice(0, 6).map((r) => `- "${r.item.sentence}" (${r.item.translation}): I wrote "${r.given || "nothing"}", the form is "${r.item.answer}" — ${unitInfo(r.item.unit).title}.`);
+		const lines = missed
+			.slice(0, 6)
+			.map(
+				(r) =>
+					`- "${r.item.sentence}" (${r.item.translation}): I wrote "${r.given || "nothing"}", the form is "${r.item.answer}" — ${unitInfo(r.item.unit).title}.`,
+			);
 		const prompt = [
 			"Placement follow-up. In the app's placement check I missed these:",
 			...lines,
 			...(outcome?.probe.summary ? [`The placement tutor's reading of my edge: ${outcome.probe.summary}`] : []),
-			"Probe each point with one or two Socratic questions that make me produce the form and say what decided it, so you can tell a slip from a gap. Then teach the one that matters most for what I need " + target.english + " for.",
+			"Probe each point with one or two Socratic questions that make me produce the form and say what decided it, so you can tell a slip from a gap. Then teach the one that matters most for what I need " +
+				target.english +
+				" for.",
 		].join("\n");
-		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() => setError("Couldn't open the tutor. Check Settings → AI models."));
+		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() =>
+			setError("Couldn't open the tutor. Check Settings → AI models."),
+		);
 	};
 
 	const withoutTarget = (langs: readonly Lang[]) => langs.filter((l) => l !== target.code);
@@ -231,28 +298,50 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className={cn(COLUMN, "relative flex h-16 items-center gap-4 pt-2")}>
 				{step > 1 && !check && !outcome ? (
-					<button type="button" onClick={() => setStep((step - 1) as Step)} aria-label="Back" className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+					<button
+						type="button"
+						onClick={() => setStep((step - 1) as Step)}
+						aria-label="Back"
+						className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+					>
 						<ArrowLeftIcon className="size-5" />
 					</button>
 				) : goal?.onboardedAt ? (
-					<Link href="/" aria-label="Close" className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+					<Link
+						href="/"
+						aria-label="Close"
+						className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+					>
 						<XIcon className="size-5" />
 					</Link>
 				) : (
 					// First run: Today sends a fresh profile here, so closing
 					// is the same as skipping (the record is stamped either way).
-					<button type="button" onClick={() => void skipAll()} aria-label="Skip setup" className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+					<button
+						type="button"
+						onClick={() => void skipAll()}
+						aria-label="Skip setup"
+						className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+					>
 						<XIcon className="size-5" />
 					</button>
 				)}
 				<ol className="flex flex-1 items-center gap-1.5" aria-label={`Step ${step} of 4`}>
 					{[1, 2, 3, 4].map((i) => (
-						<li key={i} className={cn("h-2 flex-1 rounded-full transition-colors", i <= progress ? "bg-go" : "bg-accent")} />
+						<li
+							key={i}
+							className={cn("h-2 flex-1 rounded-full transition-colors", i <= progress ? "bg-go" : "bg-accent")}
+						/>
 					))}
 				</ol>
 				<span className="font-ui text-xs font-semibold tabular-nums text-muted-foreground">{step} of 4</span>
 				{!edit && !outcome && (
-					<button type="button" onClick={() => void skipAll()} className="lh-no-drag font-ui text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" data-testid="start-skip">
+					<button
+						type="button"
+						onClick={() => void skipAll()}
+						className="lh-no-drag font-ui text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						data-testid="start-skip"
+					>
 						Skip for now
 					</button>
 				)}
@@ -261,7 +350,10 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 			<main className={cn(COLUMN, "flex-1 py-6")}>
 				{step === 1 && (
 					<section className="lh-rise" data-testid="start-purposes">
-						<Heading title={`What is ${target.english} for?`} line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice, so the tutor does not have to ask.`} />
+						<Heading
+							title={`What is ${target.english} for?`}
+							line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice, so the tutor does not have to ask.`}
+						/>
 						<div className="mt-6 grid gap-3 sm:grid-cols-2">
 							{PURPOSES.map((p) => {
 								const on = d.purposes.includes(p.id);
@@ -280,13 +372,22 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 										)}
 										data-testid={`purpose-${p.id}`}
 									>
-										<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", on ? "bg-go text-go-ink" : "bg-accent text-foreground")}>
+										<span
+											className={cn(
+												"flex size-10 shrink-0 items-center justify-center rounded-xl",
+												on ? "bg-go text-go-ink" : "bg-accent text-foreground",
+											)}
+										>
 											<UnitIcon name={p.glyph} className="size-5" />
 										</span>
 										<span className="min-w-0">
 											<span className="flex items-center gap-2 font-ui text-base font-semibold text-foreground">
 												{p.title}
-												{p.id !== "other" && <span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[11px] font-semibold text-muted-foreground">{p.level}</span>}
+												{p.id !== "other" && (
+													<span className="rounded-md bg-accent px-1.5 py-0.5 font-ui text-[11px] font-semibold text-muted-foreground">
+														{p.level}
+													</span>
+												)}
 											</span>
 											<span className="block font-prose text-sm text-muted-foreground">{p.blurb}</span>
 										</span>
@@ -310,7 +411,13 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 						)}
 						{d.purposes.includes("exam") && (
 							<Field label="The exam's level">
-								<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l }))} value={d.examLevel} onPick={(v) => set("examLevel", v)} label="The exam's level" testid="exam-level" />
+								<Chips
+									items={CEFR_ORDER.map((l) => ({ id: l, title: l }))}
+									value={d.examLevel}
+									onPick={(v) => set("examLevel", v)}
+									label="The exam's level"
+									testid="exam-level"
+								/>
 							</Field>
 						)}
 					</section>
@@ -318,20 +425,44 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 
 				{step === 2 && (
 					<section className="lh-rise" data-testid="start-you">
-						<Heading title="What you bring" line={`The tutor explains in a language you choose, and knows which of your languages a ${target.english} rule resembles.`} />
-						<Field label="Languages you know" hint="any language you can read a simple text in; then your level, on the CEFR">
+						<Heading
+							title="What you bring"
+							line={`The tutor explains in a language you choose, and knows which of your languages a ${target.english} rule resembles.`}
+						/>
+						<Field
+							label="Languages you know"
+							hint="any language you can read a simple text in; then your level, on the CEFR"
+						>
 							<LanguagePicker
 								exclude={target.code}
 								value={d.languages}
 								levels={d.languageLevels}
-								onChange={(languages, languageLevels) => setD((x) => ({ ...x, languages, languageLevels, explainIn: keepExplain(withoutTarget(x.explainIn), languages) }))}
+								onChange={(languages, languageLevels) =>
+									setD((x) => ({
+										...x,
+										languages,
+										languageLevels,
+										explainIn: keepExplain(withoutTarget(x.explainIn), languages),
+									}))
+								}
 							/>
 							<p className="mt-3 font-prose text-sm text-muted-foreground" data-testid="parallels-line">
 								{parallelsLine({ languages: d.languages, languageLevels: d.languageLevels }, target)}
 							</p>
 						</Field>
-						<Field label="Explain to me in" hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}>
-							<PickSome items={explainChoices(withoutTarget(d.languages))} value={withoutTarget(d.explainIn)} onChange={(v) => set("explainIn", v)} max={MAX_EXPLAIN} fallback="en" label="Explain to me in" testid="explain-in" />
+						<Field
+							label="Explain to me in"
+							hint={`up to ${MAX_EXPLAIN}: the tutor explains in the first and adds the key line in the second`}
+						>
+							<PickSome
+								items={explainChoices(withoutTarget(d.languages))}
+								value={withoutTarget(d.explainIn)}
+								onChange={(v) => set("explainIn", v)}
+								max={MAX_EXPLAIN}
+								fallback="en"
+								label="Explain to me in"
+								testid="explain-in"
+							/>
 							<p className="mt-3 font-prose text-sm text-muted-foreground">Lesson rules stay in English for now.</p>
 						</Field>
 						<Field label={`${target.english} so far`}>
@@ -342,19 +473,41 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 
 				{step === 3 && (
 					<section className="lh-rise" data-testid="start-time">
-						<Heading title="How much time?" line="A short session every day beats a long one on Sunday. The plan is cut to fit this." />
+						<Heading
+							title="How much time?"
+							line="A short session every day beats a long one on Sunday. The plan is cut to fit this."
+						/>
 						<Field label="Minutes a day" hint="any number up to ten hours">
-							<NumberPicker value={d.minutes} onChange={(v) => set("minutes", v)} quick={MINUTE_CHOICES} min={5} max={MAX_MINUTES} step={5} unit="min" label="Minutes a day" testid="minutes" />
+							<NumberPicker
+								value={d.minutes}
+								onChange={(v) => set("minutes", v)}
+								quick={MINUTE_CHOICES}
+								min={5}
+								max={MAX_MINUTES}
+								step={5}
+								unit="min"
+								label="Minutes a day"
+								testid="minutes"
+							/>
 						</Field>
 						<Field label="Days a week">
-							<Chips items={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: n, title: String(n) }))} value={d.days} onPick={(v) => set("days", v)} label="Days a week" testid="days" />
+							<Chips
+								items={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ id: n, title: String(n) }))}
+								value={d.days}
+								onPick={(v) => set("days", v)}
+								label="Days a week"
+								testid="days"
+							/>
 						</Field>
 						<div className="mt-8 rounded-2xl border bg-card px-5 py-4" data-testid="start-target">
 							<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 								<FlagIcon className="size-4 text-flame" />
 								<p className="font-ui text-base font-semibold text-foreground">
 									Target {level}
-									<span className="font-normal text-muted-foreground"> · about {GUIDED_HOURS[level]} guided hours · at this pace around </span>
+									<span className="font-normal text-muted-foreground">
+										{" "}
+										· about {GUIDED_HOURS[level]} guided hours · at this pace around{" "}
+									</span>
 									{monthOf(eta)}
 								</p>
 							</div>
@@ -362,17 +515,40 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 								{LEVEL_CAN_DO[level]}
 							</p>
 							<p className="mt-1.5 font-prose text-sm text-muted-foreground" data-testid="start-level-fit">
-								{levelFitLine(level, d.purposes, examLevel) || (d.purposes.includes("other") ? "The map has no level for your own goal: pick the one that sounds like you." : "Nothing picked, so A2: enough to get by.")} The date moves as you finish units.
+								{levelFitLine(level, d.purposes, examLevel) ||
+									(d.purposes.includes("other")
+										? "The map has no level for your own goal: pick the one that sounds like you."
+										: "Nothing picked, so A2: enough to get by.")}{" "}
+								The date moves as you finish units.
 							</p>
 							<div className="mt-3 flex flex-wrap items-center gap-3">
 								<span className="font-ui text-sm text-foreground">Aim for</span>
-								<Chips items={CEFR_ORDER.map((l) => ({ id: l, title: l, hint: `${LEVEL_CAN_DO[l]} About ${GUIDED_HOURS[l]} guided hours${l === suggested ? " · suggested" : ""}` }))} value={level} onPick={(v) => set("levelOverride", v === suggested ? null : v)} label="Target level" testid="start-level" />
+								<Chips
+									items={CEFR_ORDER.map((l) => ({
+										id: l,
+										title: l,
+										hint: `${LEVEL_CAN_DO[l]} About ${GUIDED_HOURS[l]} guided hours${l === suggested ? " · suggested" : ""}`,
+									}))}
+									value={level}
+									onPick={(v) => set("levelOverride", v === suggested ? null : v)}
+									label="Target level"
+									testid="start-level"
+								/>
 								{level !== suggested && (
-									<button type="button" onClick={() => set("levelOverride", null)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
+									<button
+										type="button"
+										onClick={() => set("levelOverride", null)}
+										className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+									>
 										Back to {suggested}, the suggested one
 									</button>
 								)}
-								<button type="button" onClick={() => setHoursOpen(true)} className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground" data-testid="start-hours">
+								<button
+									type="button"
+									onClick={() => setHoursOpen(true)}
+									className="font-ui text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+									data-testid="start-hours"
+								>
 									How long does it take?
 								</button>
 							</div>
@@ -383,7 +559,13 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 				{step === 4 && !check && !outcome && (
 					<section className="lh-rise" data-testid="start-check">
 						<Heading
-							title={edit && goal?.placedAt ? "Re-check where you stand?" : d.prior === "none" ? "You start at the beginning" : "Where do you stand?"}
+							title={
+								edit && goal?.placedAt
+									? "Re-check where you stand?"
+									: d.prior === "none"
+										? "You start at the beginning"
+										: "Where do you stand?"
+							}
 							line={
 								edit && goal?.placedAt
 									? `Your last check (${goal.placedAt.slice(0, 10)}) found ${goal.placedLevel}. A re-check starts at your current chapter, never below it, and replaces that result.`
@@ -405,7 +587,13 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 								</>
 							) : (
 								<>
-									<button type="button" onClick={() => void loadDrill(!!(edit && goal?.placedAt))} disabled={drilling} className={PRIMARY} data-testid="start-drill">
+									<button
+										type="button"
+										onClick={() => void loadDrill(!!(edit && goal?.placedAt))}
+										disabled={drilling}
+										className={PRIMARY}
+										data-testid="start-drill"
+									>
 										{drilling ? <LoaderCircleIcon className="size-5 animate-spin" /> : null}
 										{edit && goal?.placedAt ? "Re-check my level" : "Start the check"}
 									</button>
@@ -415,15 +603,23 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 								</>
 							)}
 						</div>
-						<p className="mt-4 font-prose text-sm text-muted-foreground">About a dozen typed sentences, then the tutor's questions, then the words: five minutes or so, no hints. A typed answer the dictionary did not expect is judged by the tutor, not marked wrong. Every answer is kept in your lesson log.</p>
+						<p className="mt-4 font-prose text-sm text-muted-foreground">
+							About a dozen typed sentences, then the tutor's questions, then the words: five minutes or so, no hints. A
+							typed answer the dictionary did not expect is judged by the tutor, not marked wrong. Every answer is kept
+							in your lesson log.
+						</p>
 					</section>
 				)}
 
 				{step === 4 && check && (
 					<section>
-						{stage === "ladder" && <LadderStage key={check.id} start={check} onDone={ladderDone} onError={stageError} />}
+						{stage === "ladder" && (
+							<LadderStage key={check.id} start={check} onDone={ladderDone} onError={stageError} />
+						)}
 						{stage === "edge" && <EdgeStage id={check.id} onDone={edgeDone} onError={stageError} />}
-						{stage === "words" && !saving && <WordsStage id={check.id} onDone={() => void finishCheck()} onError={stageError} />}
+						{stage === "words" && !saving && (
+							<WordsStage id={check.id} onDone={() => void finishCheck()} onError={stageError} />
+						)}
 						{stage === "words" && saving && (
 							<p className="mt-8 flex items-center gap-2 font-prose text-lg text-muted-foreground" role="status">
 								<LoaderCircleIcon className="size-5 animate-spin" /> Working out where you stand…
@@ -435,13 +631,24 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 				{step === 4 && outcome && <Result outcome={outcome} edit={edit} onDeeper={goDeeper} target={target.english} />}
 
 				{error && (
-					<p className="mt-6 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 font-prose text-sm text-foreground" role="alert">
+					<p
+						className="mt-6 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3 font-prose text-sm text-foreground"
+						role="alert"
+					>
 						{error}
 					</p>
 				)}
 			</main>
 
-			<HoursSheet open={hoursOpen} onClose={() => setHoursOpen(false)} minutesPerDay={d.minutes} daysPerWeek={d.days} target={level} hoursDone={hoursDone} languages={d.languages} />
+			<HoursSheet
+				open={hoursOpen}
+				onClose={() => setHoursOpen(false)}
+				minutesPerDay={d.minutes}
+				daysPerWeek={d.days}
+				target={level}
+				hoursDone={hoursDone}
+				languages={d.languages}
+			/>
 
 			{step < 4 && (
 				<div className="border-t border-border">
@@ -457,7 +664,13 @@ export function Start({ target, goal, edit, hoursDone, currentChapter, onCheck =
 										: "Pick at least one, or just continue"
 									: "Enter continues"}
 						</p>
-						<button type="button" onClick={() => void next()} disabled={saving || blocked} className={PRIMARY} data-testid="start-next">
+						<button
+							type="button"
+							onClick={() => void next()}
+							disabled={saving || blocked}
+							className={PRIMARY}
+							data-testid="start-next"
+						>
 							{saving ? <LoaderCircleIcon className="size-5 animate-spin" /> : null}
 							{step === 3 ? "Save and continue" : "Continue"}
 						</button>
@@ -489,14 +702,40 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 	);
 }
 
-function Choices<T extends string>({ items, value, onPick }: { items: ReadonlyArray<{ id: T; title: string; line: string }>; value: T; onPick: (v: T) => void }) {
+function Choices<T extends string>({
+	items,
+	value,
+	onPick,
+}: {
+	items: ReadonlyArray<{ id: T; title: string; line: string }>;
+	value: T;
+	onPick: (v: T) => void;
+}) {
 	return (
 		<div className="grid gap-2 sm:grid-cols-2" role="radiogroup">
 			{items.map((it) => {
 				const on = it.id === value;
 				return (
-					<button key={it.id} type="button" role="radio" aria-checked={on} onClick={() => onPick(it.id)} className={cn("flex items-center gap-3 rounded-2xl border-2 bg-card px-4 py-3 text-left transition-colors", on ? "border-go bg-go/10" : "border-border hover:border-foreground/40")} data-testid={`choice-${it.id}`}>
-						<span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full border-2", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-4" strokeWidth={3} />}</span>
+					<button
+						key={it.id}
+						type="button"
+						role="radio"
+						aria-checked={on}
+						onClick={() => onPick(it.id)}
+						className={cn(
+							"flex items-center gap-3 rounded-2xl border-2 bg-card px-4 py-3 text-left transition-colors",
+							on ? "border-go bg-go/10" : "border-border hover:border-foreground/40",
+						)}
+						data-testid={`choice-${it.id}`}
+					>
+						<span
+							className={cn(
+								"flex size-6 shrink-0 items-center justify-center rounded-full border-2",
+								on ? "border-go bg-go text-go-ink" : "border-border",
+							)}
+						>
+							{on && <CheckIcon className="size-4" strokeWidth={3} />}
+						</span>
 						<span className="min-w-0">
 							<span className="block font-ui text-base font-semibold text-foreground">{it.title}</span>
 							<span className="block font-prose text-sm text-muted-foreground">{it.line}</span>
@@ -518,12 +757,36 @@ interface CheckResult extends PlacementOutcome {
 	missed: Array<{ item: LessonItem; given: string }>;
 }
 
-const RESULT_INK: Record<ProbeVerdict["result"], string> = { held: "bg-go-soft text-go", slip: "bg-warn-soft text-warn", gap: "bg-miss-soft text-miss" };
+const RESULT_INK: Record<ProbeVerdict["result"], string> = {
+	held: "bg-go-soft text-go",
+	slip: "bg-warn-soft text-warn",
+	gap: "bg-miss-soft text-miss",
+};
 
-function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edit: boolean; onDeeper: () => void; /** The language's English name. */ target: string }) {
+function Result({
+	outcome,
+	edit,
+	onDeeper,
+	target,
+}: {
+	outcome: CheckResult;
+	edit: boolean;
+	onDeeper: () => void;
+	/** The language's English name. */ target: string;
+}) {
 	const lang = useActiveLanguage();
 	const chapter = allChapters().find((c) => c.id === outcome.startChapter);
-	const skipped = useMemo(() => allChapters().slice(0, Math.max(0, allChapters().findIndex((c) => c.id === outcome.startChapter))).length, [outcome.startChapter]);
+	const skipped = useMemo(
+		() =>
+			allChapters().slice(
+				0,
+				Math.max(
+					0,
+					allChapters().findIndex((c) => c.id === outcome.startChapter),
+				),
+			).length,
+		[outcome.startChapter],
+	);
 	const title = (id: UnitId) => unitInfo(id).title;
 	const missed = outcome.missed;
 	return (
@@ -531,32 +794,65 @@ function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edi
 			<div className="lh-pop mx-auto flex size-20 items-center justify-center rounded-full bg-gold/15 text-gold">
 				<FlagIcon className="size-10" />
 			</div>
-			<h1 className="mt-5 text-center font-ui text-4xl font-semibold text-foreground">{skipped === 0 ? "Starting at the beginning" : outcome.ceiling ? "Beyond the check" : `You start at ${outcome.level}`}</h1>
+			<h1 className="mt-5 text-center font-ui text-4xl font-semibold text-foreground">
+				{skipped === 0
+					? "Starting at the beginning"
+					: outcome.ceiling
+						? "Beyond the check"
+						: `You start at ${outcome.level}`}
+			</h1>
 			<p className="mt-2 text-center font-prose text-lg text-muted-foreground">
-				{outcome.ceiling ? `The check stops at B1 grammar and you held all of it, so you start in “${chapter?.title ?? outcome.startChapter}” (${outcome.level}); the lessons measure you from here` : chapter ? `You start in “${chapter.title}”` : "You start at the top"}
+				{outcome.ceiling
+					? `The check stops at B1 grammar and you held all of it, so you start in “${chapter?.title ?? outcome.startChapter}” (${outcome.level}); the lessons measure you from here`
+					: chapter
+						? `You start in “${chapter.title}”`
+						: "You start at the top"}
 				{skipped > 0 && ` · ${skipped} chapter${skipped === 1 ? "" : "s"} behind you, open to revisit`}
 			</p>
 
 			<ol className="mt-6 flex flex-col gap-1 rounded-2xl border bg-card p-3" aria-label="Tiers">
 				{outcome.tiers.map((t) => (
 					<li key={t.id} className="flex items-center gap-3 px-2 py-1.5">
-						<span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-semibold", t.passed ? "bg-go text-go-ink" : "bg-accent text-muted-foreground")}>{t.passed ? <CheckIcon className="size-4" strokeWidth={3} /> : t.level}</span>
+						<span
+							className={cn(
+								"flex size-7 shrink-0 items-center justify-center rounded-full font-ui text-xs font-semibold",
+								t.passed ? "bg-go text-go-ink" : "bg-accent text-muted-foreground",
+							)}
+						>
+							{t.passed ? <CheckIcon className="size-4" strokeWidth={3} /> : t.level}
+						</span>
 						<span className="min-w-0 flex-1 font-ui text-sm font-semibold text-foreground">
 							{t.level} · {t.title}
 						</span>
-						<span className="font-ui text-xs tabular-nums text-muted-foreground">{t.held ? "held from before · not asked again" : t.reps === 0 ? (t.passed ? "held · below where you entered" : "not reached") : `${t.correct}/${t.reps} ${t.passed ? "· passed" : "· your edge"}`}</span>
+						<span className="font-ui text-xs tabular-nums text-muted-foreground">
+							{t.held
+								? "held from before · not asked again"
+								: t.reps === 0
+									? t.passed
+										? "held · below where you entered"
+										: "not reached"
+									: `${t.correct}/${t.reps} ${t.passed ? "· passed" : "· your edge"}`}
+						</span>
 					</li>
 				))}
 			</ol>
 
 			{(outcome.probe.summary || outcome.probe.verdicts.length > 0) && (
 				<div className="mt-4 rounded-2xl border bg-card p-4 text-left" data-testid="result-edge">
-					<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">The tutor's reading of your edge</p>
-					{outcome.probe.summary && <p className="mt-1 font-prose text-base text-foreground">{outcome.probe.summary}</p>}
+					<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">
+						The tutor's reading of your edge
+					</p>
+					{outcome.probe.summary && (
+						<p className="mt-1 font-prose text-base text-foreground">{outcome.probe.summary}</p>
+					)}
 					{outcome.probe.verdicts.length > 0 && (
 						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Verdicts">
 							{outcome.probe.verdicts.map((v, i) => (
-								<li key={i} className={cn("rounded-md px-2 py-0.5 font-ui text-xs font-semibold", RESULT_INK[v.result])} title={v.note}>
+								<li
+									key={i}
+									className={cn("rounded-md px-2 py-0.5 font-ui text-xs font-semibold", RESULT_INK[v.result])}
+									title={v.note}
+								>
 									{title(v.unit)}: {v.result}
 								</li>
 							))}
@@ -570,12 +866,18 @@ function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edi
 					<div className="rounded-2xl border bg-card p-4" data-testid="result-words">
 						<p className="font-ui text-xs font-semibold tracking-wide text-muted-foreground">Words</p>
 						<p className="mt-1 font-prose text-base text-foreground">
-							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized (a rough size from 40 words, off by a fifth or more){outcome.vocabulary.reliable ? "" : ` — you ticked words that are not ${target} words, so treat this as generous`}.
+							About <b>{outcome.vocabulary.size.toLocaleString("en-GB")}</b> words recognized (a rough size from 40
+							words, off by a fifth or more)
+							{outcome.vocabulary.reliable
+								? ""
+								: ` — you ticked words that are not ${target} words, so treat this as generous`}
+							.
 						</p>
 						<ul className="mt-2 flex flex-wrap gap-1.5" aria-label="By frequency band">
 							{outcome.vocabulary.bands.map((b) => (
 								<li key={b.id} className="rounded-md bg-accent px-2 py-0.5 font-ui text-xs text-foreground">
-									{b.from === 0 ? "top" : b.from.toLocaleString("en-GB")}–{b.to.toLocaleString("en-GB")}: {Math.round(b.share * 100)}%
+									{b.from === 0 ? "top" : b.from.toLocaleString("en-GB")}–{b.to.toLocaleString("en-GB")}:{" "}
+									{Math.round(b.share * 100)}%
 								</li>
 							))}
 						</ul>
@@ -625,7 +927,11 @@ function Result({ outcome, edit, onDeeper, target }: { outcome: CheckResult; edi
 					</button>
 				)}
 			</div>
-			<p className="mt-4 text-center font-prose text-sm text-muted-foreground">{missed.length > 0 ? `The tutor starts from these sentences and teaches the one that matters most for what you need ${target} for.` : "Nothing missed, so nothing for the tutor to probe: the lessons measure you from here."}</p>
+			<p className="mt-4 text-center font-prose text-sm text-muted-foreground">
+				{missed.length > 0
+					? `The tutor starts from these sentences and teaches the one that matters most for what you need ${target} for.`
+					: "Nothing missed, so nothing for the tutor to probe: the lessons measure you from here."}
+			</p>
 			<SourcesNote feature="placement" className="mt-6 text-left" />
 		</section>
 	);

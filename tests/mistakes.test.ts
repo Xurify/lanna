@@ -6,7 +6,20 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { analyzeMistakes, digest, GUIDE_MIN_REPS, GUIDE_MIN_WRONG, guideFacts, guideReadiness, parseGuide, SAMPLES_KEPT, trendOf, TREND_MIN_REPS, wilson, type LoggedLesson } from "../src/core/mistakes.ts";
+import {
+	analyzeMistakes,
+	digest,
+	GUIDE_MIN_REPS,
+	GUIDE_MIN_WRONG,
+	guideFacts,
+	guideReadiness,
+	parseGuide,
+	SAMPLES_KEPT,
+	trendOf,
+	TREND_MIN_REPS,
+	wilson,
+	type LoggedLesson,
+} from "../src/core/mistakes.ts";
 
 const NOW = new Date("2026-11-01T12:00:00Z");
 const day = (back: number) => new Date(NOW.getTime() - back * 86_400_000).toISOString();
@@ -23,7 +36,8 @@ const rep = (right: boolean, over: Partial<Rep> = {}): Rep => ({
 	...over,
 });
 const lesson = (back: number, reps: Rep[], mode = "lesson"): LoggedLesson => ({ at: day(back), mode, reps });
-const many = (n: number, right: number, over: Partial<Rep> = {}) => Array.from({ length: n }, (_, i) => rep(i < right, over));
+const many = (n: number, right: number, over: Partial<Rep> = {}) =>
+	Array.from({ length: n }, (_, i) => rep(i < right, over));
 
 test("only first tries count: not a retry, a meaning check, a word bank, a peek, or a rep with no first answer", () => {
 	const a = analyzeMistakes(
@@ -45,7 +59,11 @@ test("only first tries count: not a retry, a meaning check, a word bank, a peek,
 });
 
 test("a Mix-ups lesson, placement and Speak stay out of the unit figures", () => {
-	const a = analyzeMistakes([lesson(1, many(6, 0), "mixups"), lesson(1, many(6, 0), "placement"), lesson(1, many(6, 0), "speak")], undefined, NOW);
+	const a = analyzeMistakes(
+		[lesson(1, many(6, 0), "mixups"), lesson(1, many(6, 0), "placement"), lesson(1, many(6, 0), "speak")],
+		undefined,
+		NOW,
+	);
 	assert.equal(a.reps, 0);
 	assert.deepEqual(a.units, []);
 });
@@ -112,24 +130,56 @@ test("the guide's digest follows its facts, not the time the snapshot was taken"
 });
 
 test("the wrong first tries are kept for the guide: newest first, capped, with the sentence and what was written", () => {
-	const wrong = (n: number) => rep(false, { sentence: `Veta ${n}.`, answer: `a${n}`, first: { given: `g${n}`, verdict: "wrong" } });
-	const a = analyzeMistakes([lesson(3, Array.from({ length: 20 }, (_, i) => wrong(i))), lesson(1, [wrong(99), rep(false, { sentence: undefined })])], undefined, NOW);
+	const wrong = (n: number) =>
+		rep(false, { sentence: `Veta ${n}.`, answer: `a${n}`, first: { given: `g${n}`, verdict: "wrong" } });
+	const a = analyzeMistakes(
+		[
+			lesson(
+				3,
+				Array.from({ length: 20 }, (_, i) => wrong(i)),
+			),
+			lesson(1, [wrong(99), rep(false, { sentence: undefined })]),
+		],
+		undefined,
+		NOW,
+	);
 	assert.equal(a.samples?.length, SAMPLES_KEPT);
 	assert.equal(a.samples?.[0]?.sentence, "Veta 99.", "newest first");
-	assert.deepEqual(a.samples?.[0] && { answer: a.samples[0].answer, given: a.samples[0].given, slip: a.samples[0].slip }, { answer: "a99", given: "g99", slip: "base" });
+	assert.deepEqual(
+		a.samples?.[0] && { answer: a.samples[0].answer, given: a.samples[0].given, slip: a.samples[0].slip },
+		{ answer: "a99", given: "g99", slip: "base" },
+	);
 	assert.match(guideFacts(a), /Wrong: "Veta 99\." wanted "a99", wrote "g99" \(.*, base\)\./);
 });
 
 test("the guide's reply is read as patterns, guesses and a plan; anything else is not trusted", () => {
 	const reply = JSON.stringify({
-		patterns: [{ title: "Endings after v", evidence: '"Bývam v dom"', why: "The locative ending is dropped.", fix: "Say the -e out loud." }, { title: "", why: "x" }],
+		patterns: [
+			{
+				title: "Endings after v",
+				evidence: '"Bývam v dom"',
+				why: "The locative ending is dropped.",
+				fix: "Say the -e out loud.",
+			},
+			{ title: "", why: "x" },
+		],
 		next: [{ what: "nič / niečo", why: "Same pattern as nikto / niekto." }],
-		plan: [{ step: "Practice pairs", kind: "mixups" }, { step: "Lesson", kind: "unit", unit: "loc" }, { step: "Bad unit", kind: "unit", unit: "nope" }, { step: "Cards", kind: "review" }, { step: "", kind: "review" }],
+		plan: [
+			{ step: "Practice pairs", kind: "mixups" },
+			{ step: "Lesson", kind: "unit", unit: "loc" },
+			{ step: "Bad unit", kind: "unit", unit: "nope" },
+			{ step: "Cards", kind: "review" },
+			{ step: "", kind: "review" },
+		],
 	});
 	const data = parseGuide(`Here you go:\n\`\`\`json\n${reply}\n\`\`\``)!;
 	assert.equal(data.patterns.length, 1, "a pattern with no title is dropped");
 	assert.equal(data.plan.length, 4);
-	assert.deepEqual(data.plan.map((p) => p.kind), ["mixups", "unit", "other", "review"], "an unknown unit is not a link");
+	assert.deepEqual(
+		data.plan.map((p) => p.kind),
+		["mixups", "unit", "other", "review"],
+		"an unknown unit is not a link",
+	);
 	assert.equal(data.plan[1]!.unit, "loc");
 	assert.equal(data.next[0]!.what, "nič / niečo");
 	assert.equal(parseGuide("no json here"), null);
@@ -147,7 +197,11 @@ test("a unit's likely range: wide on few answers, weak only when the whole range
 	assert.ok(wide.high < 0.85);
 	assert.deepEqual(wilson(0, 0), { low: 0, high: 1 });
 	assert.equal(wilson(8, 8).high, 1);
-	const a = analyzeMistakes([lesson(1, [...many(8, 5), ...many(20, 10, { unit: "gen", slug: "ruka" })])], undefined, NOW);
+	const a = analyzeMistakes(
+		[lesson(1, [...many(8, 5), ...many(20, 10, { unit: "gen", slug: "ruka" })])],
+		undefined,
+		NOW,
+	);
 	assert.equal(a.units.find((u) => u.unit === "loc")?.weak, false, "63% on 8 is too few to call weak");
 	assert.equal(a.units.find((u) => u.unit === "gen")?.weak, true);
 	assert.match(guideFacts(a), /\[loc\]: 63% of 8 first tries \(likely \d+%–\d+%, too few answers to call weak\)/);
@@ -155,6 +209,10 @@ test("a unit's likely range: wide on few answers, weak only when the whole range
 
 test("the guide waits for enough evidence", () => {
 	assert.equal(guideReadiness({ reps: GUIDE_MIN_REPS - 1, wrong: 10 }).ready, false);
-	assert.equal(guideReadiness({ reps: 100, wrong: GUIDE_MIN_WRONG - 1 }).ready, false, "too few mistakes to find a pattern in");
+	assert.equal(
+		guideReadiness({ reps: 100, wrong: GUIDE_MIN_WRONG - 1 }).ready,
+		false,
+		"too few mistakes to find a pattern in",
+	);
 	assert.equal(guideReadiness({ reps: GUIDE_MIN_REPS, wrong: GUIDE_MIN_WRONG }).ready, true);
 });

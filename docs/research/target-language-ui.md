@@ -23,25 +23,25 @@ No study we found tested the interface language of a learning app. The findings 
 - The phrases come from the active language (`src/core/cheers.ts`), never from a model. A language without a checked set gets English, never another language's phrases.
 - The sets are Slovak, Estonian and Russian, the learner's three languages. The forms are backed by these sources:
 
-| Language | Phrase | Source |
-|---|---|---|
-| Slovak | Je to hotové! (it's done) | Lexicon: hotový with verified forms (hotové); curated example "Mýliš sa, ak sa nazdávaš, že to je hotové." |
-| Slovak | Bez chyby! (no mistakes) | Lexicon: chyba with verified forms (genitive chyby); curated example "Do formulára zadajte každý údaj bez chyby."; sk.wiktionary.org/wiki/chyba (genitive singular chyby) |
-| Slovak | Koniec! (the end) | Lexicon: koniec; Tatoeba "Koniec hry." |
-| Slovak | Nový rekord! (new record) | Lexicon: rekord, nový (verified forms); Tatoeba "Urobila nový svetový rekord." |
-| Slovak | Výborne! Super! Presne tak! Skvelé! | Lexicon: výborne ("Mám sa výborne!"), super, presne, skvelý (verified form skvelé). Already in the app before this change. |
-| Slovak | Bravo! Paráda! | Already in the app before this change. Not in the lexicon. No Slovak dictionary page could be read for them: the Slovak Academy portal answers automated reads with a browser check, and sk.wiktionary has no page. |
-| Estonian | Valmis! Vigadeta! Aeg on läbi! Uus rekord! | en.wiktionary.org: valmis ("completed, ready"), viga (abessive plural vigadeta), aeg ("time") and läbi ("finished, ended"), rekord |
-| Estonian | Tubli! Väga hea! Täpselt! Suurepärane! Õige! | en.wiktionary.org: tubli (interjection "Good for you!"), väga + hea, täpselt, suurepärane, õige ("right, correct") |
-| Russian | Готово! Без ошибок! Время вышло! Новый рекорд! | en.wiktionary.org: готовый (short neuter готово), ошибка (genitive plural ошибок), выйти (past neuter вышло, "to be used up") with время (neuter), рекорд |
-| Russian | Отлично! Молодец! Верно! Точно! Здорово! | en.wiktionary.org: отлично, молодец (interjection "well done!"), верно, точно, здо́рово (praise; здоро́во is the greeting) |
+| Language | Phrase                                         | Source                                                                                                                                                                                                              |
+| -------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Slovak   | Je to hotové! (it's done)                      | Lexicon: hotový with verified forms (hotové); curated example "Mýliš sa, ak sa nazdávaš, že to je hotové."                                                                                                          |
+| Slovak   | Bez chyby! (no mistakes)                       | Lexicon: chyba with verified forms (genitive chyby); curated example "Do formulára zadajte každý údaj bez chyby."; sk.wiktionary.org/wiki/chyba (genitive singular chyby)                                           |
+| Slovak   | Koniec! (the end)                              | Lexicon: koniec; Tatoeba "Koniec hry."                                                                                                                                                                              |
+| Slovak   | Nový rekord! (new record)                      | Lexicon: rekord, nový (verified forms); Tatoeba "Urobila nový svetový rekord."                                                                                                                                      |
+| Slovak   | Výborne! Super! Presne tak! Skvelé!            | Lexicon: výborne ("Mám sa výborne!"), super, presne, skvelý (verified form skvelé). Already in the app before this change.                                                                                          |
+| Slovak   | Bravo! Paráda!                                 | Already in the app before this change. Not in the lexicon. No Slovak dictionary page could be read for them: the Slovak Academy portal answers automated reads with a browser check, and sk.wiktionary has no page. |
+| Estonian | Valmis! Vigadeta! Aeg on läbi! Uus rekord!     | en.wiktionary.org: valmis ("completed, ready"), viga (abessive plural vigadeta), aeg ("time") and läbi ("finished, ended"), rekord                                                                                  |
+| Estonian | Tubli! Väga hea! Täpselt! Suurepärane! Õige!   | en.wiktionary.org: tubli (interjection "Good for you!"), väga + hea, täpselt, suurepärane, õige ("right, correct")                                                                                                  |
+| Russian  | Готово! Без ошибок! Время вышло! Новый рекорд! | en.wiktionary.org: готовый (short neuter готово), ошибка (genitive plural ошибок), выйти (past neuter вышло, "to be used up") with время (neuter), рекорд                                                           |
+| Russian  | Отлично! Молодец! Верно! Точно! Здорово!       | en.wiktionary.org: отлично, молодец (interjection "well done!"), верно, точно, здо́рово (praise; здоро́во is the greeting)                                                                                            |
 
 The Slovak "Hotovo!" and "Čas vypršal!" were the first choice and were dropped: neither is in the lexicon, and no Slovak source could be read to back them.
 
 ## Sources
 
-- Boers, F., Eyckmans, J., Kappel, J., Stengers, H. & Demecheleer, M. (2006). Formulaic sequences and perceived oral proficiency: putting a Lexical Approach to the test. *Language Teaching Research* 10(3), 245–261. doi:10.1191/1362168806lr195oa
-- Webb, S. (2007). The effects of repetition on vocabulary knowledge. *Applied Linguistics* 28(1), 46–65. doi:10.1093/applin/aml048
-- Yoshii, M. (2006). L1 and L2 glosses: their effects on incidental vocabulary learning. *Language Learning & Technology* 10(3), 85–101.
+- Boers, F., Eyckmans, J., Kappel, J., Stengers, H. & Demecheleer, M. (2006). Formulaic sequences and perceived oral proficiency: putting a Lexical Approach to the test. _Language Teaching Research_ 10(3), 245–261. doi:10.1191/1362168806lr195oa
+- Webb, S. (2007). The effects of repetition on vocabulary knowledge. _Applied Linguistics_ 28(1), 46–65. doi:10.1093/applin/aml048
+- Yoshii, M. (2006). L1 and L2 glosses: their effects on incidental vocabulary learning. _Language Learning & Technology_ 10(3), 85–101.
 
 The bibliographic records were checked on Crossref on 2026-11-08. The summaries above were not re-checked against the full papers for this note. The Wiktionary pages were read on 2026-11-08.

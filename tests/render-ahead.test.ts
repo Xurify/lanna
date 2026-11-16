@@ -9,7 +9,16 @@ import { FRESH_FOR_MS, NEXT_MAY_STILL_HOLD_MS, NEXT_REUSES_FOR_MS, createRenderA
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const STARTS_WORK_ON_RENDER = ["nextStory", "unitLesson", "lessonWithBetterOptions", "refreshIfStale", "refreshDiscover", "fillAvatars", "kickShelf", "keepOneReady"];
+const STARTS_WORK_ON_RENDER = [
+	"nextStory",
+	"unitLesson",
+	"lessonWithBetterOptions",
+	"refreshIfStale",
+	"refreshDiscover",
+	"fillAvatars",
+	"kickShelf",
+	"keepOneReady",
+];
 
 function clock(start = 1_000_000) {
 	let t = start;
@@ -30,8 +39,13 @@ describe("which pages render before the click", () => {
 		for (const item of NAV.flatMap((g) => g.items)) {
 			const source = fs.readFileSync(path.join(ROOT, "app", item.href, "page.tsx"), "utf8");
 			const starts = STARTS_WORK_ON_RENDER.filter((name) => source.includes(name));
-			assert.deepEqual(starts, [], `${item.href} is rendered when a pointer passes its link, and its page calls ${starts.join(", ")}`);
-			if (source.includes("readingState(")) assert.match(source, /topUpShelf: false/, `${item.href} reads the shelf without topping it up`);
+			assert.deepEqual(
+				starts,
+				[],
+				`${item.href} is rendered when a pointer passes its link, and its page calls ${starts.join(", ")}`,
+			);
+			if (source.includes("readingState("))
+				assert.match(source, /topUpShelf: false/, `${item.href} reads the shelf without topping it up`);
 		}
 	});
 });

@@ -7,10 +7,31 @@ import { SettingsLink } from "@/components/settings/settings-link";
  * empty, what still works, and offers ONE primary action (plus at most a text link). It never blames
  * the learner and never names an internal term (slot, token, strong, cheap).
  */
-export function EmptyState({ title, children, action, secondary, className, testid }: { title: string; children: React.ReactNode; action?: React.ReactNode; secondary?: React.ReactNode; className?: string; testid?: string }) {
+export function EmptyState({
+	title,
+	children,
+	action,
+	secondary,
+	className,
+	testid,
+}: {
+	title: string;
+	children: React.ReactNode;
+	action?: React.ReactNode;
+	secondary?: React.ReactNode;
+	className?: string;
+	testid?: string;
+}) {
 	return (
-		<section className={cn("max-w-[560px]", className)} data-testid={testid} aria-labelledby={testid ? `${testid}-title` : undefined}>
-			<h2 id={testid ? `${testid}-title` : undefined} className="text-[20px] font-semibold leading-[1.25] tracking-[-0.018em] text-foreground">
+		<section
+			className={cn("max-w-[560px]", className)}
+			data-testid={testid}
+			aria-labelledby={testid ? `${testid}-title` : undefined}
+		>
+			<h2
+				id={testid ? `${testid}-title` : undefined}
+				className="text-[20px] font-semibold leading-[1.25] tracking-[-0.018em] text-foreground"
+			>
 				{title}
 			</h2>
 			<div className="q-line dim mt-1.5 !text-[15px] [&_p+p]:mt-2">{children}</div>

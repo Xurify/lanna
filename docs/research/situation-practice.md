@@ -18,11 +18,11 @@ The owner is at A1 in Russian and wants to play the Roblox co-op game "Animal Ho
 
 Each product page was read once on 2026-11-09. What follows is only what the page states.
 
-| Tool | What it is | Output | Stated | Not stated |
-|---|---|---|---|---|
-| [Spline, 3D design](https://spline.design/3d-design) | A web-based 3D design tool | A published link, an embedded viewer, or exported code ("Drop your design into your React projects"); also images, video, GLTF and USDZ | States and events, variables, conditional actions, game controls, physics, webhooks and API requests, custom code, WebGPU with a WebGL fallback | Audio or speech, the size of its runtime, pricing |
-| [Spline Hana](https://spline.design/hana) | A 2D design canvas | A `<hana-viewer>` web component loaded from a CDN script; exports for site builders and HTML/JS | States and events, transitions | Audio or speech, variables, pricing, runtime size |
-| [Omma](https://omma.build/) | An AI builder for "3D scenes, websites, games, and apps using natural language" | The page does not say | Takes CSV, JSON, images, video and 3D files as input; runs parallel agents | What it outputs, how it is embedded, pricing |
+| Tool                                                 | What it is                                                                      | Output                                                                                                                                  | Stated                                                                                                                                          | Not stated                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| [Spline, 3D design](https://spline.design/3d-design) | A web-based 3D design tool                                                      | A published link, an embedded viewer, or exported code ("Drop your design into your React projects"); also images, video, GLTF and USDZ | States and events, variables, conditional actions, game controls, physics, webhooks and API requests, custom code, WebGPU with a WebGL fallback | Audio or speech, the size of its runtime, pricing |
+| [Spline Hana](https://spline.design/hana)            | A 2D design canvas                                                              | A `<hana-viewer>` web component loaded from a CDN script; exports for site builders and HTML/JS                                         | States and events, transitions                                                                                                                  | Audio or speech, variables, pricing, runtime size |
+| [Omma](https://omma.build/)                          | An AI builder for "3D scenes, websites, games, and apps using natural language" | The page does not say                                                                                                                   | Takes CSV, JSON, images, video and 3D files as input; runs parallel agents                                                                      | What it outputs, how it is embedded, pricing      |
 
 ## Why none of them is the answer
 
@@ -58,6 +58,6 @@ Listen on a sheet (E95): ten of the sheet's phrases, heard before they are seen 
 
 ## Sources
 
-- Goh, C. (2000). A cognitive perspective on language learners' listening comprehension problems. *System* 28(1). In the registry as `goh2000`.
-- Chang, A. C.-S. & Read, J. (2006). The effects of listening support on the listening performance of EFL learners. *TESOL Quarterly* 40(2). In the registry as `chang2006`.
+- Goh, C. (2000). A cognitive perspective on language learners' listening comprehension problems. _System_ 28(1). In the registry as `goh2000`.
+- Chang, A. C.-S. & Read, J. (2006). The effects of listening support on the listening performance of EFL learners. _TESOL Quarterly_ 40(2). In the registry as `chang2006`.
 - Product pages, read 2026-11-09: https://spline.design/3d-design, https://spline.design/hana, https://omma.build/

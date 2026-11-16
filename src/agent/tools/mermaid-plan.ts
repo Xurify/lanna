@@ -52,7 +52,7 @@ const ARROW_RE = /-->|==>|-\.->/;
 // with a generic parse error. The muscle-protein post-mortem: underscores
 // failed HERE, the actionable message never fired, and the teacher spent
 // four attempts hunting punctuation the parser didn't care about.
-const ENDPOINT_RE = /^([^\s()\[\]]+)\s*(?:\[([^\[\]]*)\]|\(\s*"([^"]*)"\s*\)|\(([^()]*)\))?$/;
+const ENDPOINT_RE = /^([^\s()[\]]+)\s*(?:\[([^[\]]*)\]|\(\s*"([^"]*)"\s*\)|\(([^()]*)\))?$/;
 
 interface Endpoint {
 	id: string;
@@ -81,7 +81,10 @@ export function parseMermaidPlan(mermaid: string): PlanParseResult {
 	// Header: required, first non-empty non-comment line.
 	const first = lines.findIndex((l) => l.trim().length > 0 && !l.trim().startsWith("%%"));
 	if (first === -1) {
-		return { ok: false, problems: ["The plan is empty — expected a `graph TD` block with nodes and `-->` requires-edges."] };
+		return {
+			ok: false,
+			problems: ["The plan is empty — expected a `graph TD` block with nodes and `-->` requires-edges."],
+		};
 	}
 	const header = lines[first]?.trim() ?? "";
 	if (!HEADER_RE.test(header)) {

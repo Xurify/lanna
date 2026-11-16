@@ -24,7 +24,8 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { text?: unknown } | null;
-	if (!body || typeof body.text !== "string") return Response.json({ message: "text must be a string" }, { status: 400 });
+	if (!body || typeof body.text !== "string")
+		return Response.json({ message: "text must be a string" }, { status: 400 });
 	try {
 		const { record, reused } = await addCustomMilestone(body.text);
 		return Response.json({ id: record.def.id, reused, report: milestonesReport(new Date(), tzOf(req)) });
@@ -37,7 +38,8 @@ export async function DELETE(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const id = new URL(req.url).searchParams.get("id") ?? "";
-	if (!id.startsWith("custom-")) return Response.json({ message: "only custom milestones can be removed" }, { status: 400 });
+	if (!id.startsWith("custom-"))
+		return Response.json({ message: "only custom milestones can be removed" }, { status: 400 });
 	const removed = removeCustomMilestone(id);
 	return Response.json({ removed, report: milestonesReport(new Date(), tzOf(req)) });
 }

@@ -1,4 +1,11 @@
-import { clientAddress, deviceCookie, deviceNameFromAgent, safeNext, secureRequest, signInWithPassword } from "@/src/server";
+import {
+	clientAddress,
+	deviceCookie,
+	deviceNameFromAgent,
+	safeNext,
+	secureRequest,
+	signInWithPassword,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +27,25 @@ export async function POST(request: Request) {
 				);
 			case "wrong":
 				return Response.json(
-					{ error: result.triesLeft > 0 ? "That password is not right." : "That password is not right. The next wrong try locks sign-in for a while.", triesLeft: result.triesLeft },
+					{
+						error:
+							result.triesLeft > 0
+								? "That password is not right."
+								: "That password is not right. The next wrong try locks sign-in for a while.",
+						triesLeft: result.triesLeft,
+					},
 					{ status: 401, headers: NO_STORE },
 				);
 			case "no-password":
-				return Response.json({ error: "No password is set. On the server, run npm run web:password." }, { status: 409, headers: NO_STORE });
+				return Response.json(
+					{ error: "No password is set. On the server, run npm run web:password." },
+					{ status: 409, headers: NO_STORE },
+				);
 			case "off":
-				return Response.json({ error: "Web access is off. Turn it on in Settings → Devices on the server." }, { status: 409, headers: NO_STORE });
+				return Response.json(
+					{ error: "Web access is off. Turn it on in Settings → Devices on the server." },
+					{ status: 409, headers: NO_STORE },
+				);
 			default:
 				return Response.json({ error: "Enter your password." }, { status: 400, headers: NO_STORE });
 		}

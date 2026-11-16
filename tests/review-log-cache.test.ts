@@ -23,7 +23,14 @@ type ReviewLogEntry = import("../src/core/review.ts").ReviewLogEntry;
 
 after(() => fs.rmSync(TMP_DATA, { recursive: true, force: true }));
 
-const entry = (at: string): ReviewLogEntry => ({ cardId: "c", rating: 3, given: "x", verdict: "exact", elapsedDays: 0, reviewedAt: at });
+const entry = (at: string): ReviewLogEntry => ({
+	cardId: "c",
+	rating: 3,
+	given: "x",
+	verdict: "exact",
+	elapsedDays: 0,
+	reviewedAt: at,
+});
 const LOG = () => path.join(PATHS.review, "log.jsonl");
 
 test("an append shows in the next read without a re-read of the file", () => {
@@ -46,7 +53,14 @@ test("a change to the file from outside drops the cache", () => {
 test("reviewedToday counts only the learner's local day, from the newest lines", () => {
 	const now = new Date("2026-11-02T15:00:00Z");
 	// 2 November is "today" at UTC; the older lines and the one at 01:00Z on 1 November are not.
-	for (const at of ["2026-10-01T08:00:00Z", "2026-10-30T10:00:00Z", "2026-11-01T01:00:00Z", "2026-11-02T09:00:00Z", "2026-11-02T10:00:00Z"]) reviewStore.appendLog(entry(at));
+	for (const at of [
+		"2026-10-01T08:00:00Z",
+		"2026-10-30T10:00:00Z",
+		"2026-11-01T01:00:00Z",
+		"2026-11-02T09:00:00Z",
+		"2026-11-02T10:00:00Z",
+	])
+		reviewStore.appendLog(entry(at));
 	assert.equal(reviewStatus(now, 0, { mint: false }).counts.reviewedToday, 2);
 	// A learner five hours behind UTC (offset 300): 09:00Z and 10:00Z are 2 November for them too.
 	assert.equal(reviewStatus(now, 300, { mint: false }).counts.reviewedToday, 2);
@@ -57,7 +71,10 @@ test("reviewedToday counts only the learner's local day, from the newest lines",
 test("cardsToday counts a card once however often it was answered, so the day's bar does not grow when a card comes back", () => {
 	fs.writeFileSync(LOG(), "", "utf-8");
 	const now = new Date("2026-11-02T15:00:00Z");
-	const at = (hour: number, cardId: string): ReviewLogEntry => ({ ...entry(`2026-11-02T${String(hour).padStart(2, "0")}:00:00Z`), cardId });
+	const at = (hour: number, cardId: string): ReviewLogEntry => ({
+		...entry(`2026-11-02T${String(hour).padStart(2, "0")}:00:00Z`),
+		cardId,
+	});
 	for (const e of [at(8, "a"), at(9, "a"), at(10, "a"), at(11, "b")]) reviewStore.appendLog(e);
 	const { counts } = reviewStatus(now, 0, { mint: false });
 	assert.equal(counts.reviewedToday, 4, "four answers");
@@ -66,7 +83,22 @@ test("cardsToday counts a card once however often it was answered, so the day's 
 
 test("the day's total holds still: unanswered new cards and cards due later today are counted from the morning", () => {
 	fs.writeFileSync(LOG(), "", "utf-8");
-	const card = (id: string, state: "new" | "review", due: string, extra: object = {}) => ({ id, slug: id, lemma: id, gloss: "", sentence: "x", translation: "", answer: "x", at: 0, state, due, reps: 0, lapses: 0, createdAt: "2026-11-01T00:00:00Z", ...extra });
+	const card = (id: string, state: "new" | "review", due: string, extra: object = {}) => ({
+		id,
+		slug: id,
+		lemma: id,
+		gloss: "",
+		sentence: "x",
+		translation: "",
+		answer: "x",
+		at: 0,
+		state,
+		due,
+		reps: 0,
+		lapses: 0,
+		createdAt: "2026-11-01T00:00:00Z",
+		...extra,
+	});
 	reviewStore.writeCards({
 		queued: card("queued", "new", "2026-11-02T08:00:00Z"),
 		now: card("now", "review", "2026-11-02T07:00:00Z"),
@@ -82,7 +114,10 @@ test("the day's total holds still: unanswered new cards and cards due later toda
 	reviewStore.appendLog({ ...entry("2026-11-02T08:30:00Z"), cardId: "afternoon" });
 	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 0, { mint: false }).counts.dueLater, 0);
 	// Five hours behind UTC the local day ends at 05:00Z on 3 November, so a card due at 04:00Z that day is still today's there and tomorrow's at 09:00Z is not.
-	reviewStore.writeCards({ ...reviewStore.readCards(), lateNight: card("lateNight", "review", "2026-11-03T04:00:00Z") } as never);
+	reviewStore.writeCards({
+		...reviewStore.readCards(),
+		lateNight: card("lateNight", "review", "2026-11-03T04:00:00Z"),
+	} as never);
 	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 300, { mint: false }).counts.dueLater, 1);
 	assert.equal(reviewStatus(new Date("2026-11-02T09:00:00Z"), 0, { mint: false }).counts.dueLater, 0);
 });
@@ -90,22 +125,54 @@ test("the day's total holds still: unanswered new cards and cards due later toda
 test("today's answers come back newest first, each sentence split at the card's word, and the list stops at its cap", async () => {
 	const { ANSWERED_LINES } = await import("../src/server/review.ts");
 	fs.writeFileSync(LOG(), "", "utf-8");
-	const card = (id: string, sentence: string, answer: string) => ({ id, slug: id, lemma: id, gloss: "", sentence, translation: `${id} in English`, answer, at: sentence.indexOf(answer), state: "review", due: "2026-11-09T00:00:00Z", reps: 1, lapses: 0, createdAt: "2026-11-01T00:00:00Z" });
-	reviewStore.writeCards({ stanica: card("stanica", "Je to od stanice ďaleko?", "stanice"), dom: card("dom", "Som doma.", "doma") } as never);
+	const card = (id: string, sentence: string, answer: string) => ({
+		id,
+		slug: id,
+		lemma: id,
+		gloss: "",
+		sentence,
+		translation: `${id} in English`,
+		answer,
+		at: sentence.indexOf(answer),
+		state: "review",
+		due: "2026-11-09T00:00:00Z",
+		reps: 1,
+		lapses: 0,
+		createdAt: "2026-11-01T00:00:00Z",
+	});
+	reviewStore.writeCards({
+		stanica: card("stanica", "Je to od stanice ďaleko?", "stanice"),
+		dom: card("dom", "Som doma.", "doma"),
+	} as never);
 	reviewStore.appendLog({ ...entry("2026-11-01T22:00:00Z"), cardId: "stanica" });
 	reviewStore.appendLog({ ...entry("2026-11-02T08:00:00Z"), cardId: "stanica", rating: 1, verdict: "wrong", hints: 1 });
 	reviewStore.appendLog({ ...entry("2026-11-02T09:00:00Z"), cardId: "dom" });
 	reviewStore.appendLog({ ...entry("2026-11-02T09:30:00Z"), cardId: "gone" });
 	const { answered } = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false });
 	assert.deepEqual(
-		answered.map(({ cardId, pieces, gaps, rating, verdict, helped }) => ({ cardId, pieces, gaps, rating, verdict, helped })),
+		answered.map(({ cardId, pieces, gaps, rating, verdict, helped }) => ({
+			cardId,
+			pieces,
+			gaps,
+			rating,
+			verdict,
+			helped,
+		})),
 		[
 			{ cardId: "dom", pieces: ["Som ", "."], gaps: ["doma"], rating: 3, verdict: "exact", helped: false },
-			{ cardId: "stanica", pieces: ["Je to od ", " ďaleko?"], gaps: ["stanice"], rating: 1, verdict: "wrong", helped: true },
+			{
+				cardId: "stanica",
+				pieces: ["Je to od ", " ďaleko?"],
+				gaps: ["stanice"],
+				rating: 1,
+				verdict: "wrong",
+				helped: true,
+			},
 		],
 		"yesterday's line and a card no longer in the deck are left out",
 	);
-	for (let i = 0; i < ANSWERED_LINES + 5; i++) reviewStore.appendLog({ ...entry(`2026-11-02T09:40:${String(i).padStart(2, "0")}Z`), cardId: "dom" });
+	for (let i = 0; i < ANSWERED_LINES + 5; i++)
+		reviewStore.appendLog({ ...entry(`2026-11-02T09:40:${String(i).padStart(2, "0")}Z`), cardId: "dom" });
 	const full = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false });
 	assert.equal(full.answered.length, ANSWERED_LINES);
 	assert.equal(full.counts.reviewedToday, ANSWERED_LINES + 5 + 3);
@@ -115,9 +182,41 @@ test("a line that hid several words marks every word it hid, and one whose spans
 	fs.writeFileSync(LOG(), "", "utf-8");
 	const sentence = "O kurz je veľký záujem medzi študentmi.";
 	const at = sentence.indexOf("záujem");
-	reviewStore.writeCards({ zaujem: { id: "zaujem", slug: "zaujem", lemma: "záujem", gloss: "interest", sentence, translation: "", answer: "záujem", at, state: "review", due: "2026-11-09T00:00:00Z", reps: 3, lapses: 0, createdAt: "2026-11-01T00:00:00Z" } } as never);
-	reviewStore.appendLog({ ...entry("2026-11-02T08:00:00Z"), cardId: "zaujem", words: 2, spans: [[at, at + 6], [at + 7, at + 12]] });
-	reviewStore.appendLog({ ...entry("2026-11-02T08:10:00Z"), cardId: "zaujem", words: 2, spans: [[2, 6], [90, 99]] });
+	reviewStore.writeCards({
+		zaujem: {
+			id: "zaujem",
+			slug: "zaujem",
+			lemma: "záujem",
+			gloss: "interest",
+			sentence,
+			translation: "",
+			answer: "záujem",
+			at,
+			state: "review",
+			due: "2026-11-09T00:00:00Z",
+			reps: 3,
+			lapses: 0,
+			createdAt: "2026-11-01T00:00:00Z",
+		},
+	} as never);
+	reviewStore.appendLog({
+		...entry("2026-11-02T08:00:00Z"),
+		cardId: "zaujem",
+		words: 2,
+		spans: [
+			[at, at + 6],
+			[at + 7, at + 12],
+		],
+	});
+	reviewStore.appendLog({
+		...entry("2026-11-02T08:10:00Z"),
+		cardId: "zaujem",
+		words: 2,
+		spans: [
+			[2, 6],
+			[90, 99],
+		],
+	});
 	const [stale, kept] = reviewStatus(new Date("2026-11-02T10:00:00Z"), 0, { mint: false }).answered;
 	assert.deepEqual(kept!.gaps, ["záujem", "medzi"]);
 	assert.deepEqual(kept!.pieces, ["O kurz je veľký ", " ", " študentmi."]);

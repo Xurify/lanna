@@ -23,10 +23,15 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
 	if (oversized) return oversized;
 	const { id } = await ctx.params;
 	const body = (await req.json().catch(() => null)) as { title?: unknown; text?: unknown } | null;
-	if (typeof body?.text !== "string" || !body.text.trim()) return Response.json({ message: "Add at least one phrase." }, { status: 400 });
-	if (body.text.length > CHEATSHEET_MAX_CHARS) return Response.json({ message: "The text is too long for one cheatsheet." }, { status: 413 });
+	if (typeof body?.text !== "string" || !body.text.trim())
+		return Response.json({ message: "Add at least one phrase." }, { status: 400 });
+	if (body.text.length > CHEATSHEET_MAX_CHARS)
+		return Response.json({ message: "The text is too long for one cheatsheet." }, { status: 413 });
 	try {
-		const sheet = cheatsheetStore.update(id, { title: typeof body.title === "string" ? body.title : undefined, text: body.text });
+		const sheet = cheatsheetStore.update(id, {
+			title: typeof body.title === "string" ? body.title : undefined,
+			text: body.text,
+		});
 		return sheet ? Response.json({ sheet }) : NOT_FOUND();
 	} catch (err) {
 		if (err instanceof CheatsheetParseError) return Response.json({ message: err.message }, { status: 422 });
@@ -36,7 +41,8 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
 
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
 	const { id } = await ctx.params;
-	if (id.startsWith(REPO_PREFIX)) return Response.json({ message: "This sheet is kept in the repo. Delete its file there." }, { status: 409 });
+	if (id.startsWith(REPO_PREFIX))
+		return Response.json({ message: "This sheet is kept in the repo. Delete its file there." }, { status: 409 });
 	const removed = cheatsheetStore.remove(id);
 	return Response.json({ removed }, { status: removed ? 200 : 404 });
 }

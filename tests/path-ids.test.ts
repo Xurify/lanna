@@ -50,7 +50,8 @@ const snapshot = () => {
 const before = snapshot();
 
 type Handler = (request: Request, context?: unknown) => Promise<Response> | Response;
-const load = async (route: string): Promise<Record<string, Handler>> => (await import(`../app/api/${route}/route.ts`)) as Record<string, Handler>;
+const load = async (route: string): Promise<Record<string, Handler>> =>
+	(await import(`../app/api/${route}/route.ts`)) as Record<string, Handler>;
 
 interface Call {
 	route: string;
@@ -134,15 +135,24 @@ describe("a hostile id never reaches a file outside the data folder", () => {
 					init.headers = { "content-type": "application/json" };
 				}
 				const request = new Request(urlFor(call, id), init);
-				const context = call.param ? { params: Promise.resolve({ [call.param[0]]: call.param[0] === "segment" ? id.split("/") : id }) } : undefined;
+				const context = call.param
+					? { params: Promise.resolve({ [call.param[0]]: call.param[0] === "segment" ? id.split("/") : id }) }
+					: undefined;
 				let status = 0;
 				try {
 					status = (await handler(request, context)).status;
 				} catch {
 					status = 500;
 				}
-				assert.ok(status > 0 && status < 500, `${call.method} ${call.route} answered ${status} for ${JSON.stringify(id).slice(0, 40)}`);
-				assert.deepEqual(snapshot(), before, `${call.method} ${call.route} with ${JSON.stringify(id).slice(0, 60)} touched a file outside the data folder`);
+				assert.ok(
+					status > 0 && status < 500,
+					`${call.method} ${call.route} answered ${status} for ${JSON.stringify(id).slice(0, 40)}`,
+				);
+				assert.deepEqual(
+					snapshot(),
+					before,
+					`${call.method} ${call.route} with ${JSON.stringify(id).slice(0, 60)} touched a file outside the data folder`,
+				);
 			}
 		});
 	}

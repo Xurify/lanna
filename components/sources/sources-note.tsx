@@ -25,9 +25,15 @@ export function SourceItem({ source }: { source: Source }) {
 	const url = sourceUrl(source);
 	return (
 		<li className="font-prose text-[14px] leading-snug text-ink-2" data-testid="source-item" id={`src-${source.id}`}>
-			<span className="font-[550] text-foreground">{source.cite}.</span> {source.title}. <span className="text-ink-3">{source.venue}.</span>{" "}
+			<span className="font-[550] text-foreground">{source.cite}.</span> {source.title}.{" "}
+			<span className="text-ink-3">{source.venue}.</span>{" "}
 			{url ? (
-				<a href={url} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-ink-2 underline decoration-line-2 underline-offset-[3px] hover:text-foreground">
+				<a
+					href={url}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="whitespace-nowrap text-ink-2 underline decoration-line-2 underline-offset-[3px] hover:text-foreground"
+				>
 					doi.org/{source.doi}
 				</a>
 			) : null}
@@ -46,8 +52,18 @@ export function SourcesNote({ feature, className }: { feature: string; className
 	if (!f) return null;
 	const sources = sourcesOf(f);
 	return (
-		<section className={cn("border-t border-[var(--q-line)] pt-3", className)} data-testid="sources-note" data-feature={f.id}>
-			<button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls={id} className="flex w-full items-center justify-between gap-3 rounded-md py-1 text-left font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 pointer-coarse:min-h-11">
+		<section
+			className={cn("border-t border-[var(--q-line)] pt-3", className)}
+			data-testid="sources-note"
+			data-feature={f.id}
+		>
+			<button
+				type="button"
+				onClick={() => setOpen((o) => !o)}
+				aria-expanded={open}
+				aria-controls={id}
+				className="flex w-full items-center justify-between gap-3 rounded-md py-1 text-left font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 pointer-coarse:min-h-11"
+			>
 				<span>
 					Why this works <span className="font-normal">· {sources.length} sources</span>
 				</span>
@@ -73,7 +89,10 @@ export function SourcesNote({ feature, className }: { feature: string; className
 						))}
 					</ul>
 					<p className="font-ui text-xs text-ink-3">
-						<Link href={`/sources#${f.id}`} className="underline decoration-line-2 underline-offset-[3px] hover:text-ink-2">
+						<Link
+							href={`/sources#${f.id}`}
+							className="underline decoration-line-2 underline-offset-[3px] hover:text-ink-2"
+						>
 							All sources, by feature
 						</Link>
 					</p>

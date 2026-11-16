@@ -16,7 +16,9 @@ for (let i = 0; i < args.length; i += 1) {
 
 const [baseUrl, outDir, ...shots] = positional;
 if (!baseUrl || !outDir || shots.length === 0) {
-	console.error("usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path] [--height px]");
+	console.error(
+		"usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path] [--height px]",
+	);
 	process.exit(1);
 }
 
@@ -43,7 +45,8 @@ for (const shot of shots) {
 	const name = shot.slice(0, separator);
 	const target = shot.slice(separator + 1);
 	const [route, selector] = target.split("@");
-	if (/^[A-Za-z]:[\/]/.test(route)) throw new Error(`${name}: Git Bash rewrote the route to ${route}; set MSYS_NO_PATHCONV=1`);
+	if (/^[A-Za-z]:[/]/.test(route))
+		throw new Error(`${name}: Git Bash rewrote the route to ${route}; set MSYS_NO_PATHCONV=1`);
 	for (const width of options.widths) {
 		await page.setViewport({ width, height: options.height || (width > 600 ? 860 : 844), deviceScaleFactor: 2 });
 		for (const theme of options.themes) {

@@ -13,7 +13,6 @@ import { providerKeyPresent } from "./keys.ts";
 
 import type { AiStatus } from "../core/ai-status.ts";
 
-
 /** Which slot a feature asks for first: most run on Cheap, falling back to
  *  Strong; the analysis of a learner's mistakes runs rarely and is reasoning,
  *  so it asks for Strong first and falls back to Cheap. */
@@ -45,7 +44,9 @@ export function aiMissing(status: AiStatus): string {
 export function friendlyAiError(err: unknown): string {
 	const message = err instanceof Error ? err.message : String(err);
 	const m = /Provider is not configured: (\S+)/.exec(message);
-	if (m) return `The ${m[1]} key is missing. Add it in Settings → API keys, or pick another model in Settings → AI models.`;
-	if (/\b(401|403)\b|invalid.*(api )?key|unauthori[sz]ed/i.test(message)) return "The model refused the key. Check it in Settings → API keys.";
+	if (m)
+		return `The ${m[1]} key is missing. Add it in Settings → API keys, or pick another model in Settings → AI models.`;
+	if (/\b(401|403)\b|invalid.*(api )?key|unauthori[sz]ed/i.test(message))
+		return "The model refused the key. Check it in Settings → API keys.";
 	return message;
 }

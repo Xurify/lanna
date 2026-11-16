@@ -9,11 +9,7 @@ import { useEffect, type RefObject } from "react";
  * pointerdown closes the open panel first, then the sibling's click opens
  * its own. Two dropdowns can therefore never be open at once.
  */
-export function usePopoverDismiss(
-	rootRef: RefObject<HTMLElement | null>,
-	open: boolean,
-	close: () => void,
-): void {
+export function usePopoverDismiss(rootRef: RefObject<HTMLElement | null>, open: boolean, close: () => void): void {
 	useEffect(() => {
 		if (!open) return;
 		const onPointerDown = (e: PointerEvent) => {

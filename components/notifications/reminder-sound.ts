@@ -17,7 +17,8 @@ let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
 	if (typeof window === "undefined") return null;
-	const Context = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+	const Context =
+		window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
 	if (!Context) return null;
 	if (!audioCtx || audioCtx.state === "closed") {
 		audioCtx = new Context();
@@ -50,7 +51,7 @@ export async function saveCustomSound(file: File): Promise<{ name: string; size:
 				localStorage.setItem(CUSTOM_SOUND_KEY, result);
 				localStorage.setItem(CUSTOM_SOUND_NAME_KEY, file.name);
 				resolve({ name: file.name, size: file.size });
-			} catch (err) {
+			} catch {
 				reject(new Error("Could not store audio file in browser storage: quota exceeded"));
 			}
 		};

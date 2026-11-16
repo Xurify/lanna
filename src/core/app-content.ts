@@ -19,7 +19,12 @@ export function tutorUnitAt(href: string): string | null {
 	return unit?.kind === "tutor" ? unit.id : null;
 }
 
-export type ChatLinkTarget = { kind: "app"; path: string } | { kind: "tutor"; unit: string } | { kind: "anchor"; href: string } | { kind: "web"; href: string } | { kind: "text" };
+export type ChatLinkTarget =
+	| { kind: "app"; path: string }
+	| { kind: "tutor"; unit: string }
+	| { kind: "anchor"; href: string }
+	| { kind: "web"; href: string }
+	| { kind: "text" };
 
 export function chatLinkTarget(href: string | undefined, origin: string): ChatLinkTarget {
 	if (!href) return { kind: "text" };
@@ -36,7 +41,9 @@ export function chatLinkTarget(href: string | undefined, origin: string): ChatLi
 		const unit = tutorUnitAt(path);
 		return unit ? { kind: "tutor", unit } : { kind: "app", path };
 	}
-	return url.protocol === "https:" || url.protocol === "http:" || url.protocol === "mailto:" ? { kind: "web", href: url.href } : { kind: "text" };
+	return url.protocol === "https:" || url.protocol === "http:" || url.protocol === "mailto:"
+		? { kind: "web", href: url.href }
+		: { kind: "text" };
 }
 
 const STATUS_WORD: Record<UnitState["status"], string> = {
@@ -64,16 +71,46 @@ export function appContentText(input: AppContentInput): string {
 	const { state } = input;
 	if (state) {
 		const current = state.chapters.find((c) => c.id === state.current);
-		lines.push("", `The course, chapter by chapter, with each unit's state for this learner${current ? ` (they are in "${current.title}")` : ""}:`);
+		lines.push(
+			"",
+			`The course, chapter by chapter, with each unit's state for this learner${current ? ` (they are in "${current.title}")` : ""}:`,
+		);
 		for (const ch of state.chapters) {
 			const level = STAGES.find((s) => s.id === ch.stage)?.level ?? "";
-			const where = ch.id === state.current ? "current chapter" : ch.done ? "done" : ch.open ? "open" : "opens later; its units are later on the path";
+			const where =
+				ch.id === state.current
+					? "current chapter"
+					: ch.done
+						? "done"
+						: ch.open
+							? "open"
+							: "opens later; its units are later on the path";
 			lines.push("", `${level} · ${ch.title}: ${ch.tagline} (${where})`, ...ch.units.map((u) => unitLine(u, ch.open)));
 		}
 	}
-	if (input.scenes.length) lines.push("", "Spoken scenes: " + input.scenes.map((s) => `[${linkText(s.title)}](/speak?scene=${s.id}) (${s.blurb})`).join(" · ") + ".");
-	if (input.sheets.length) lines.push("", "The learner's cheatsheets: " + input.sheets.map((s) => `[${linkText(s.title)}](/words?tab=cheatsheets&sheet=${encodeURIComponent(s.id)})`).join(" · ") + ".");
+	if (input.scenes.length)
+		lines.push(
+			"",
+			"Spoken scenes: " +
+				input.scenes.map((s) => `[${linkText(s.title)}](/speak?scene=${s.id}) (${s.blurb})`).join(" · ") +
+				".",
+		);
+	if (input.sheets.length)
+		lines.push(
+			"",
+			"The learner's cheatsheets: " +
+				input.sheets
+					.map((s) => `[${linkText(s.title)}](/words?tab=cheatsheets&sheet=${encodeURIComponent(s.id)})`)
+					.join(" · ") +
+				".",
+		);
 	const stories = input.stories.slice(-STORIES_LISTED);
-	if (stories.length) lines.push("", "Stories already in Read: " + stories.map((s) => `[${linkText(s.title)}](/read?id=${encodeURIComponent(s.id)})`).join(" · ") + ".");
+	if (stories.length)
+		lines.push(
+			"",
+			"Stories already in Read: " +
+				stories.map((s) => `[${linkText(s.title)}](/read?id=${encodeURIComponent(s.id)})`).join(" · ") +
+				".",
+		);
 	return lines.join("\n");
 }

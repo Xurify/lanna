@@ -20,14 +20,12 @@ const SETTINGS_SAVED_EVENT = "lh:settings-saved";
 // "keys" joined the roster (zero-keys wave, 2026-09-25): keys-section
 // dispatches it after save AND delete — deletions used to be invisible to
 // the zero-keys pill and the setup dialog's auto-advance.
-type SettingsSection = "general" | "keys" | "agent" | "models" | "appearance" | "graph" | "compaction" | "notifications";
+type SettingsSection = "general" | "keys" | "agent" | "models" | "appearance" | "compaction" | "notifications";
 
 /** Writers call this after the PUT resolves ok — never before (a failed
  *  write notifies nothing; the record is unchanged). */
 export function notifySettingsSaved(section: SettingsSection): void {
-	window.dispatchEvent(
-		new CustomEvent(SETTINGS_SAVED_EVENT, { detail: { section } }),
-	);
+	window.dispatchEvent(new CustomEvent(SETTINGS_SAVED_EVENT, { detail: { section } }));
 }
 
 /** Non-hook listener (imperative seams, tests). Returns an unsubscribe. */

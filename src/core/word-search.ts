@@ -79,6 +79,9 @@ export function matchWord(rawQuery: string, w: SearchableWord): WordSearchMatch 
 }
 
 /** Best match first, then the commoner word (lower frequency rank). */
-export function compareMatches(a: { match: WordSearchMatch; rank?: number }, b: { match: WordSearchMatch; rank?: number }): number {
+export function compareMatches(
+	a: { match: WordSearchMatch; rank?: number },
+	b: { match: WordSearchMatch; rank?: number },
+): number {
 	return a.match.rank - b.match.rank || (a.rank ?? 99999) - (b.rank ?? 99999);
 }

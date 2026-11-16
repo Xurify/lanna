@@ -14,7 +14,7 @@
  * (prompts/practice/10-doctrine.md).
  */
 
-import { Type, type Static } from "typebox";
+import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { readTool } from "./read.ts";
 import { lsTool } from "./ls.ts";
@@ -26,7 +26,6 @@ import type { LhMessage } from "../../core/native-messages.ts";
 import { concludeResult, invalidInputResult, problemResult } from "../tool-execute.ts";
 import { healEncodedArguments, healToolRecord } from "./heal.ts";
 import { languageTools, type ReviewSeam } from "./language.ts";
-
 
 /** The record-reading context the gates need (the plan-tools idiom). */
 export interface PracticeToolContext {
@@ -72,7 +71,8 @@ const problemInputObject = Type.Object({
 		description: "REQUIRED — the demand mode: recall, discrimination, or composition (bare words, no quotes).",
 	}),
 	modelSolution: Type.String({
-		description: "REQUIRED — the full solution, moves in order, committed BEFORE the learner sees the problem. This IS the reveal — conclude shows it verbatim; never re-author it.",
+		description:
+			"REQUIRED — the full solution, moves in order, committed BEFORE the learner sees the problem. This IS the reveal — conclude shows it verbatim; never re-author it.",
 	}),
 });
 function problemTool(gate: PracticeGate): AgentTool<typeof problemInputObject> {
@@ -87,7 +87,7 @@ function problemTool(gate: PracticeGate): AgentTool<typeof problemInputObject> {
 		parameters: problemInputObject,
 		executionMode: "sequential",
 		prepareArguments: (args: unknown) => healEncodedArguments(args, problemInputObject) as never,
-		execute: async (_toolCallId, input) => {
+		execute: async (_toolCallId, _input) => {
 			if (gate.problemActive) {
 				return invalidInputResult("problem", [
 					"a problem is already active — call conclude on it before posing the next one",
@@ -110,14 +110,29 @@ const concludeInputObject = Type.Object({
 			Type.Literal("surrendered"),
 			Type.Literal("dismissed"),
 		],
-		{ description: "REQUIRED — the outcome: solved, solvedWithHints, movedOn, or surrendered — bare words, no quotes (dismissed is synthesized, never yours)." },
+		{
+			description:
+				"REQUIRED — the outcome: solved, solvedWithHints, movedOn, or surrendered — bare words, no quotes (dismissed is synthesized, never yours).",
+		},
 	),
 	verdict: Type.String({
-		description: "REQUIRED — the plain-language verdict: what was credited, where it broke. On a wrong answer: localize the break, do NOT give the correction.",
+		description:
+			"REQUIRED — the plain-language verdict: what was credited, where it broke. On a wrong answer: localize the break, do NOT give the correction.",
 	}),
 	rung: Type.Union(
-		[Type.Literal("R0"), Type.Literal("R1"), Type.Literal("R2"), Type.Literal("R3"), Type.Literal("R4"), Type.Literal("R5"), Type.Null()],
-		{ description: "REQUIRED — the hint-ladder rung the problem needed: R0 through R5, or null = no hint was given (bare, no quotes)." },
+		[
+			Type.Literal("R0"),
+			Type.Literal("R1"),
+			Type.Literal("R2"),
+			Type.Literal("R3"),
+			Type.Literal("R4"),
+			Type.Literal("R5"),
+			Type.Null(),
+		],
+		{
+			description:
+				"REQUIRED — the hint-ladder rung the problem needed: R0 through R5, or null = no hint was given (bare, no quotes).",
+		},
 	),
 	missClass: Type.Union(
 		[
@@ -128,9 +143,14 @@ const concludeInputObject = Type.Object({
 			Type.Literal("structural"),
 			Type.Null(),
 		],
-		{ description: "REQUIRED — the miss classification: cue, discrimination, execution, careless, or structural — or null = no miss (bare, no quotes)." },
+		{
+			description:
+				"REQUIRED — the miss classification: cue, discrimination, execution, careless, or structural — or null = no miss (bare, no quotes).",
+		},
 	),
-	retest: Type.Boolean({ description: "REQUIRED — true marks the problem for a fresh-surface retest before the session ends." }),
+	retest: Type.Boolean({
+		description: "REQUIRED — true marks the problem for a fresh-surface retest before the session ends.",
+	}),
 	evidence: Type.Optional(
 		Type.Union([Type.Literal("checked"), Type.Literal("judgment")], {
 			description:

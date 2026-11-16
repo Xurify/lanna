@@ -17,7 +17,6 @@ export function UnitBadge({
 	active = false,
 	locked = false,
 	size = "md",
-	tone = "go",
 }: {
 	glyph: string;
 	progress: number;
@@ -34,7 +33,10 @@ export function UnitBadge({
 	const c = 2 * Math.PI * r;
 	const ring = "var(--q-teal)";
 	return (
-		<span className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-here-ring")} style={{ width: px, height: px }}>
+		<span
+			className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-here-ring")}
+			style={{ width: px, height: px }}
+		>
 			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
 				<circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--q-well-2)" strokeWidth={stroke} />
 				<circle
@@ -65,7 +67,11 @@ export function UnitBadge({
 									: "bg-well text-ink-3",
 				)}
 			>
-				<UnitIcon name={glyph} className={size === "lg" ? "size-8" : size === "sm" ? "size-4" : "size-5"} strokeWidth={1.6} />
+				<UnitIcon
+					name={glyph}
+					className={size === "lg" ? "size-8" : size === "sm" ? "size-4" : "size-5"}
+					strokeWidth={1.6}
+				/>
 			</span>
 			{done && (
 				<span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-card bg-teal text-[var(--q-on-teal)]">

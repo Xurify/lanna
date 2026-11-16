@@ -6,7 +6,11 @@ export interface ChatGPTStatus {
 	allowBackgroundUse: boolean;
 	activeId: string | null;
 	accounts: {
-		id: string; email: string; registration: string; connected: boolean; planEnabled?: boolean;
+		id: string;
+		email: string;
+		registration: string;
+		connected: boolean;
+		planEnabled?: boolean;
 		/** Main-owned authorization recovery eligibility. Missing means unknown, not eligible.
 		 * False for storage failures, paused/closed connections, and healthy authorization. */
 		canSignInAgain?: boolean;

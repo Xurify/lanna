@@ -12,7 +12,11 @@ export const dynamic = "force-dynamic";
 
 const TABS: readonly WordsTab[] = ["words", "phrases", "cheatsheets"];
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string; sheet?: string; search?: string }> }) {
+export default async function Page({
+	searchParams,
+}: {
+	searchParams: Promise<{ tab?: string; sheet?: string; search?: string }>;
+}) {
 	const { tab, sheet, search } = await searchParams;
 	const initialTab = TABS.find((t) => t === tab) ?? (sheet ? "cheatsheets" : "words");
 	const firstSearch = initialTab === "words" ? search : undefined;
@@ -28,5 +32,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
 	} catch {
 		firstEstimate = null;
 	}
-	return <WordBankPage initialWords={firstWords} initialEstimate={firstEstimate} initialTab={initialTab} initialSheet={initialTab === "cheatsheets" ? sheet : undefined} initialSearch={initialTab === "words" ? search : undefined} />;
+	return (
+		<WordBankPage
+			initialWords={firstWords}
+			initialEstimate={firstEstimate}
+			initialTab={initialTab}
+			initialSheet={initialTab === "cheatsheets" ? sheet : undefined}
+			initialSearch={initialTab === "words" ? search : undefined}
+		/>
+	);
 }

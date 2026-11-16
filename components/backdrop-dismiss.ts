@@ -15,9 +15,10 @@ export function useBackdropDismiss(onDismiss: () => void) {
 
 	return {
 		onPointerDownCapture(event: PointerEvent<HTMLDivElement>) {
-			gesture.current = event.isPrimary && event.button === 0 && event.target === event.currentTarget
-				? { pointerId: event.pointerId, backdrop: event.currentTarget, released: false }
-				: null;
+			gesture.current =
+				event.isPrimary && event.button === 0 && event.target === event.currentTarget
+					? { pointerId: event.pointerId, backdrop: event.currentTarget, released: false }
+					: null;
 			// Touch can implicitly capture the pointer on press. Let release
 			// target the actual hit element, not a backdrop left behind.
 			if (gesture.current && event.currentTarget.hasPointerCapture?.(event.pointerId)) {
@@ -26,11 +27,15 @@ export function useBackdropDismiss(onDismiss: () => void) {
 		},
 		onPointerUpCapture(event: PointerEvent<HTMLDivElement>) {
 			const press = gesture.current;
-			gesture.current = press && press.pointerId === event.pointerId &&
-				event.isPrimary && event.button === 0 && event.target === event.currentTarget &&
+			gesture.current =
+				press &&
+				press.pointerId === event.pointerId &&
+				event.isPrimary &&
+				event.button === 0 &&
+				event.target === event.currentTarget &&
 				press.backdrop === event.currentTarget
-				? { ...press, released: true }
-				: null;
+					? { ...press, released: true }
+					: null;
 		},
 		onPointerCancelCapture() {
 			gesture.current = null;
@@ -38,8 +43,12 @@ export function useBackdropDismiss(onDismiss: () => void) {
 		onClickCapture(event: MouseEvent<HTMLDivElement>) {
 			const press = gesture.current;
 			gesture.current = null;
-			if (press?.released && press.backdrop === event.currentTarget &&
-				event.button === 0 && event.target === event.currentTarget) {
+			if (
+				press?.released &&
+				press.backdrop === event.currentTarget &&
+				event.button === 0 &&
+				event.target === event.currentTarget
+			) {
 				// This render's callback preserves current busy guards and props.
 				onDismiss();
 			}

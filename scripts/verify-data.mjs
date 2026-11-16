@@ -4,7 +4,9 @@ import * as readline from "node:readline";
 
 const root = path.resolve(process.argv[2] ?? "");
 if (!process.argv[2] || !fs.existsSync(root)) {
-	console.error("usage: verify-data.mjs <folder>\nPrints one tab-separated line (path, json or jsonl, broken lines) for each JSON file that does not parse, then a # summary line. Changes nothing.");
+	console.error(
+		"usage: verify-data.mjs <folder>\nPrints one tab-separated line (path, json or jsonl, broken lines) for each JSON file that does not parse, then a # summary line. Changes nothing.",
+	);
 	process.exit(2);
 }
 

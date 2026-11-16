@@ -11,8 +11,23 @@ import {
 	validPublicHost,
 	type AccessInput,
 } from "../src/server/remote-access.ts";
-import { LOGIN_LIMITS, emptyThrottle, pruneThrottle, readThrottle, refundAttempt, reserveAttempt } from "../src/server/web-login-throttle.ts";
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, SCRYPT_DEFAULT, hashPassword, isPasswordRecord, passwordProblem, verifyPassword } from "../src/server/web-password.ts";
+import {
+	LOGIN_LIMITS,
+	emptyThrottle,
+	pruneThrottle,
+	readThrottle,
+	refundAttempt,
+	reserveAttempt,
+} from "../src/server/web-login-throttle.ts";
+import {
+	PASSWORD_MAX_LENGTH,
+	PASSWORD_MIN_LENGTH,
+	SCRYPT_DEFAULT,
+	hashPassword,
+	isPasswordRecord,
+	passwordProblem,
+	verifyPassword,
+} from "../src/server/web-password.ts";
 
 const HOST = "learn.example.com";
 const SECRET = "s".repeat(40);
@@ -20,7 +35,12 @@ const ENV = { LH_PUBLIC_HOST: HOST, LH_PROXY_SECRET: SECRET };
 
 const PROXIED = { host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https", [PROXY_SECRET_HEADER]: SECRET };
 
-function request(overrides: Partial<Omit<AccessInput, "headers" | "publicMode">> & { headers?: Record<string, string>; env?: Record<string, string | undefined> } = {}): AccessInput {
+function request(
+	overrides: Partial<Omit<AccessInput, "headers" | "publicMode">> & {
+		headers?: Record<string, string>;
+		env?: Record<string, string | undefined>;
+	} = {},
+): AccessInput {
 	const { headers, env, ...rest } = overrides;
 	const all = new Headers({ ...PROXIED, ...headers });
 	return {
@@ -44,13 +64,27 @@ describe("public mode is off unless LH_PUBLIC_HOST is set", () => {
 	});
 
 	it("leaves this computer's own request on the old rules when the variable is not set", () => {
-		const local = decideAccess({ ...request({ headers: { host: "localhost:3010" } }), publicMode: null, headers: new Headers(), host: "localhost:3010" });
+		const local = decideAccess({
+			...request({ headers: { host: "localhost:3010" } }),
+			publicMode: null,
+			headers: new Headers(),
+			host: "localhost:3010",
+		});
 		assert.deepEqual(local, { action: "allow" });
 	});
 
 	it("accepts only a host name: no scheme, port, path or single label", () => {
-		for (const good of ["learn.example.com", "a.b.example.co", "xn--n3h.example"]) assert.equal(validPublicHost(good), true, good);
-		for (const bad of ["https://learn.example.com", "learn.example.com:3010", "learn.example.com/", "localhost", "", "-a.example.com", "a b.example.com"]) {
+		for (const good of ["learn.example.com", "a.b.example.co", "xn--n3h.example"])
+			assert.equal(validPublicHost(good), true, good);
+		for (const bad of [
+			"https://learn.example.com",
+			"learn.example.com:3010",
+			"learn.example.com/",
+			"localhost",
+			"",
+			"-a.example.com",
+			"a b.example.com",
+		]) {
 			assert.equal(validPublicHost(bad), false, bad);
 		}
 	});
@@ -70,17 +104,29 @@ describe("a request at the public address", () => {
 	it("keeps only the sign-in page, its one POST and the static files public", () => {
 		const origin = { origin: `https://${HOST}` };
 		assert.deepEqual(decideAccess(request({ pathname: "/login" })), { action: "allow" });
-		assert.deepEqual(decideAccess(request({ pathname: "/api/access/login", method: "POST", headers: origin })), { action: "allow" });
+		assert.deepEqual(decideAccess(request({ pathname: "/api/access/login", method: "POST", headers: origin })), {
+			action: "allow",
+		});
 		assert.deepEqual(decideAccess(request({ pathname: "/_next/static/chunk.js" })), { action: "allow" });
 		assert.deepEqual(decideAccess(request({ pathname: "/manifest.webmanifest" })), { action: "allow" });
-		for (const [pathname, method] of [["/login", "POST"], ["/api/access/login", "GET"], ["/pair", "GET"], ["/api/access/pair", "POST"], ["/api/access", "GET"], ["/api/keys", "GET"]] as const) {
+		for (const [pathname, method] of [
+			["/login", "POST"],
+			["/api/access/login", "GET"],
+			["/pair", "GET"],
+			["/api/access/pair", "POST"],
+			["/api/access", "GET"],
+			["/api/keys", "GET"],
+		] as const) {
 			assert.equal(publicWebPath(pathname, method), false, `${method} ${pathname}`);
 		}
 	});
 
 	it("does not offer pairing there, because a code is a tailnet matter", () => {
 		assert.deepEqual(decideAccess(request({ pathname: "/pair" })), { action: "login" });
-		assert.deepEqual(decideAccess(request({ pathname: "/api/access/pair", method: "POST", headers: { origin: `https://${HOST}` } })), { action: "login" });
+		assert.deepEqual(
+			decideAccess(request({ pathname: "/api/access/pair", method: "POST", headers: { origin: `https://${HOST}` } })),
+			{ action: "login" },
+		);
 	});
 
 	it("refuses everything while web access is off, the sign-in page included", () => {
@@ -100,25 +146,42 @@ describe("what makes a request not the proxy's", () => {
 	it("refuses a request without the proxy secret, even one that names the right host over HTTPS", () => {
 		assert.match(refused({ headers: { [PROXY_SECRET_HEADER]: "" } }), /only through its reverse proxy/);
 		const noHeader = new Headers({ host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https" });
-		assert.equal(decideAccess({ ...request(), headers: noHeader, publicMode: publicModeFrom(noHeader, ENV) }).action, "refuse");
+		assert.equal(
+			decideAccess({ ...request(), headers: noHeader, publicMode: publicModeFrom(noHeader, ENV) }).action,
+			"refuse",
+		);
 	});
 
 	it("refuses a wrong secret, one of the wrong length, and a secret that is too short to be configured", () => {
 		assert.match(refused({ headers: { [PROXY_SECRET_HEADER]: "x".repeat(40) } }), /only through its reverse proxy/);
 		assert.match(refused({ headers: { [PROXY_SECRET_HEADER]: SECRET.slice(1) } }), /only through its reverse proxy/);
-		assert.match(refused({ env: { LH_PUBLIC_HOST: HOST, LH_PROXY_SECRET: "short" }, headers: { [PROXY_SECRET_HEADER]: "short" } }), /not set up/);
+		assert.match(
+			refused({ env: { LH_PUBLIC_HOST: HOST, LH_PROXY_SECRET: "short" }, headers: { [PROXY_SECRET_HEADER]: "short" } }),
+			/not set up/,
+		);
 		assert.match(refused({ env: { LH_PUBLIC_HOST: HOST } }), /not set up/);
 	});
 
 	it("looks like this computer to nobody: a default nginx Host of 127.0.0.1 is refused, with or without the secret", () => {
-		assert.match(refused({ host: "127.0.0.1:3010", headers: { host: "127.0.0.1:3010", "x-forwarded-host": "127.0.0.1:3010" } }), /Use the public address/);
+		assert.match(
+			refused({ host: "127.0.0.1:3010", headers: { host: "127.0.0.1:3010", "x-forwarded-host": "127.0.0.1:3010" } }),
+			/Use the public address/,
+		);
 		const bare = new Headers({ host: "localhost:3010" });
-		const decision = decideAccess({ ...request(), headers: bare, host: "localhost:3010", publicMode: publicModeFrom(bare, ENV) });
+		const decision = decideAccess({
+			...request(),
+			headers: bare,
+			host: "localhost:3010",
+			publicMode: publicModeFrom(bare, ENV),
+		});
 		assert.equal(decision.action, "refuse");
 	});
 
 	it("refuses another host name, in Host or in the original host a client may have sent", () => {
-		assert.match(refused({ headers: { host: "evil.example", "x-forwarded-host": "evil.example" } }), /Use the public address/);
+		assert.match(
+			refused({ headers: { host: "evil.example", "x-forwarded-host": "evil.example" } }),
+			/Use the public address/,
+		);
 		assert.match(refused({ headers: { "x-forwarded-host": "evil.example" } }), /Use the public address/);
 		assert.match(refused({ headers: { host: `${HOST}:8443` } }), /Use the public address/);
 	});
@@ -131,17 +194,30 @@ describe("what makes a request not the proxy's", () => {
 	it("refuses plain HTTP, and a client's own claim of HTTP, but never trusts a claim of HTTPS without the secret", () => {
 		assert.match(refused({ headers: { "x-forwarded-proto": "http" } }), /needs HTTPS/);
 		const spoofed = new Headers({ host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https" });
-		assert.equal(decideAccess({ ...request(), headers: spoofed, publicMode: publicModeFrom(spoofed, ENV) }).action, "refuse");
+		assert.equal(
+			decideAccess({ ...request(), headers: spoofed, publicMode: publicModeFrom(spoofed, ENV) }).action,
+			"refuse",
+		);
 	});
 
 	it("refuses a request that names no host at all", () => {
 		const nameless = new Headers({ "x-forwarded-proto": "https", [PROXY_SECRET_HEADER]: SECRET });
-		const decision = decideAccess({ ...request(), headers: nameless, host: null, publicMode: publicModeFrom(nameless, ENV) });
+		const decision = decideAccess({
+			...request(),
+			headers: nameless,
+			host: null,
+			publicMode: publicModeFrom(nameless, ENV),
+		});
 		assert.equal(decision.action, "refuse");
 	});
 
 	it("is case-insensitive about the host name, as DNS is", () => {
-		assert.deepEqual(decideAccess(request({ headers: { host: "Learn.Example.COM", "x-forwarded-host": "LEARN.example.com" }, paired: true })), { action: "allow" });
+		assert.deepEqual(
+			decideAccess(
+				request({ headers: { host: "Learn.Example.COM", "x-forwarded-host": "LEARN.example.com" }, paired: true }),
+			),
+			{ action: "allow" },
+		);
 	});
 });
 
@@ -150,11 +226,17 @@ describe("the origin of a request that changes something", () => {
 		for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {
 			const bare = decideAccess(request({ method, pathname: "/api/settings", paired: true }));
 			assert.equal(bare.action, "refuse", `${method} without Origin`);
-			const wrong = decideAccess(request({ method, pathname: "/api/settings", paired: true, headers: { origin: "https://evil.example" } }));
+			const wrong = decideAccess(
+				request({ method, pathname: "/api/settings", paired: true, headers: { origin: "https://evil.example" } }),
+			);
 			assert.equal(wrong.action, "refuse", `${method} from another origin`);
-			const plain = decideAccess(request({ method, pathname: "/api/settings", paired: true, headers: { origin: `http://${HOST}` } }));
+			const plain = decideAccess(
+				request({ method, pathname: "/api/settings", paired: true, headers: { origin: `http://${HOST}` } }),
+			);
 			assert.equal(plain.action, "refuse", `${method} from plain http`);
-			const ok = decideAccess(request({ method, pathname: "/api/settings", paired: true, headers: { origin: `https://${HOST}` } }));
+			const ok = decideAccess(
+				request({ method, pathname: "/api/settings", paired: true, headers: { origin: `https://${HOST}` } }),
+			);
 			assert.deepEqual(ok, { action: "allow" }, `${method} from the page`);
 		}
 	});
@@ -169,12 +251,21 @@ describe("the origin of a request that changes something", () => {
 });
 
 describe("the Tailscale path beside the public address", () => {
-	const phone = { host: "pc.tail1234.ts.net", "x-forwarded-host": "pc.tail1234.ts.net", "x-forwarded-proto": "https", "tailscale-user-login": "me@example.com" };
+	const phone = {
+		host: "pc.tail1234.ts.net",
+		"x-forwarded-host": "pc.tail1234.ts.net",
+		"x-forwarded-proto": "https",
+		"tailscale-user-login": "me@example.com",
+	};
 
 	it("still pairs a phone that names a tailnet host, and lets a paired one through", () => {
 		const unpaired = decideAccess({ ...request({ headers: phone }), host: phone.host, headers: new Headers(phone) });
 		assert.deepEqual(unpaired, { action: "pair" });
-		const paired = decideAccess({ ...request({ headers: phone, paired: true }), host: phone.host, headers: new Headers(phone) });
+		const paired = decideAccess({
+			...request({ headers: phone, paired: true }),
+			host: phone.host,
+			headers: new Headers(phone),
+		});
 		assert.deepEqual(paired, { action: "allow" });
 	});
 
@@ -186,7 +277,11 @@ describe("the Tailscale path beside the public address", () => {
 
 describe("inside Docker, where every connection comes from 172.17.0.1", () => {
 	const bridge = { "x-forwarded-for": "172.17.0.1" };
-	const raw = (headers: Record<string, string>, extra: Partial<Omit<AccessInput, "headers" | "publicMode" | "host">> = {}, env: Record<string, string | undefined> = ENV): AccessInput => {
+	const raw = (
+		headers: Record<string, string>,
+		extra: Partial<Omit<AccessInput, "headers" | "publicMode" | "host">> = {},
+		env: Record<string, string | undefined> = ENV,
+	): AccessInput => {
 		const all = new Headers(headers);
 		return {
 			pathname: "/",
@@ -204,7 +299,12 @@ describe("inside Docker, where every connection comes from 172.17.0.1", () => {
 	const refused = (input: AccessInput) => decideAccess(input).action === "refuse";
 
 	const loopbackNames = ["127.0.0.1:3010", "localhost:3010", "[::1]:3010", "127.0.0.1"];
-	const proxyMarks: Record<string, string>[] = [{}, { "x-real-ip": "203.0.113.9" }, { forwarded: "for=203.0.113.9" }, { "x-real-ip": "203.0.113.9", forwarded: "for=203.0.113.9", "x-forwarded-proto": "https" }];
+	const proxyMarks: Record<string, string>[] = [
+		{},
+		{ "x-real-ip": "203.0.113.9" },
+		{ forwarded: "for=203.0.113.9" },
+		{ "x-real-ip": "203.0.113.9", forwarded: "for=203.0.113.9", "x-forwarded-proto": "https" },
+	];
 	const requests = [
 		{ pathname: "/", method: "GET" },
 		{ pathname: "/api/settings", method: "GET" },
@@ -220,7 +320,11 @@ describe("inside Docker, where every connection comes from 172.17.0.1", () => {
 				for (const { pathname, method } of requests) {
 					const headers = { host, ...bridge, ...marks };
 					for (const signedIn of [false, true]) {
-						assert.equal(refused(raw(headers, { pathname, method, paired: signedIn })), true, `${method} ${pathname} host=${host} marks=${Object.keys(marks).join("+") || "none"} signedIn=${signedIn}`);
+						assert.equal(
+							refused(raw(headers, { pathname, method, paired: signedIn })),
+							true,
+							`${method} ${pathname} host=${host} marks=${Object.keys(marks).join("+") || "none"} signedIn=${signedIn}`,
+						);
 					}
 				}
 			}
@@ -229,20 +333,43 @@ describe("inside Docker, where every connection comes from 172.17.0.1", () => {
 
 	it("refuses a loopback Host even when the proxy secret is right, because the name is not the public one", () => {
 		for (const host of loopbackNames) {
-			const headers = { host, ...bridge, "x-real-ip": "203.0.113.9", "x-forwarded-proto": "https", [PROXY_SECRET_HEADER]: SECRET };
+			const headers = {
+				host,
+				...bridge,
+				"x-real-ip": "203.0.113.9",
+				"x-forwarded-proto": "https",
+				[PROXY_SECRET_HEADER]: SECRET,
+			};
 			assert.equal(refused(raw(headers)), true, host);
-			assert.equal(refused(raw({ ...headers, "x-forwarded-host": HOST })), true, `${host} with the original host named`);
+			assert.equal(
+				refused(raw({ ...headers, "x-forwarded-host": HOST })),
+				true,
+				`${host} with the original host named`,
+			);
 		}
 	});
 
 	it("refuses the public Host from the bridge when the secret is missing, whatever else the proxy sent", () => {
-		const headers = { host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https", "x-real-ip": "203.0.113.9", ...bridge };
+		const headers = {
+			host: HOST,
+			"x-forwarded-host": HOST,
+			"x-forwarded-proto": "https",
+			"x-real-ip": "203.0.113.9",
+			...bridge,
+		};
 		assert.equal(refused(raw(headers)), true);
 		assert.equal(refused(raw({ ...headers, forwarded: "for=203.0.113.9;proto=https" })), true);
 	});
 
 	it("lets only the public Host with the secret and HTTPS through, and then needs a session", () => {
-		const good = { host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https", "x-real-ip": "203.0.113.9", "x-forwarded-for": "203.0.113.9", [PROXY_SECRET_HEADER]: SECRET };
+		const good = {
+			host: HOST,
+			"x-forwarded-host": HOST,
+			"x-forwarded-proto": "https",
+			"x-real-ip": "203.0.113.9",
+			"x-forwarded-for": "203.0.113.9",
+			[PROXY_SECRET_HEADER]: SECRET,
+		};
 		assert.deepEqual(decideAccess(raw(good)), { action: "login" });
 		assert.deepEqual(decideAccess(raw(good, { paired: true })), { action: "allow" });
 		assert.deepEqual(decideAccess(raw(good, { pathname: "/login" })), { action: "allow" });
@@ -253,10 +380,26 @@ describe("inside Docker, where every connection comes from 172.17.0.1", () => {
 		const unset = {};
 		for (const host of loopbackNames) {
 			assert.deepEqual(decideAccess(raw({ host, ...bridge }, {}, unset)), { action: "allow" }, host);
-			assert.deepEqual(decideAccess(raw({ host, ...bridge }, { pathname: "/api/settings" }, unset)), { action: "allow" }, `${host} API`);
-			assert.deepEqual(decideAccess(raw({ host, ...bridge, "x-real-ip": "203.0.113.9" }, {}, unset)), { action: "pair" }, `${host} with X-Real-IP, access on`);
-			assert.equal(refused(raw({ host, ...bridge, "x-real-ip": "203.0.113.9" }, { enabled: false }, unset)), true, `${host} with X-Real-IP, access off`);
-			assert.equal(refused(raw({ host, ...bridge, forwarded: "for=203.0.113.9" }, { enabled: false }, unset)), true, `${host} with Forwarded, access off`);
+			assert.deepEqual(
+				decideAccess(raw({ host, ...bridge }, { pathname: "/api/settings" }, unset)),
+				{ action: "allow" },
+				`${host} API`,
+			);
+			assert.deepEqual(
+				decideAccess(raw({ host, ...bridge, "x-real-ip": "203.0.113.9" }, {}, unset)),
+				{ action: "pair" },
+				`${host} with X-Real-IP, access on`,
+			);
+			assert.equal(
+				refused(raw({ host, ...bridge, "x-real-ip": "203.0.113.9" }, { enabled: false }, unset)),
+				true,
+				`${host} with X-Real-IP, access off`,
+			);
+			assert.equal(
+				refused(raw({ host, ...bridge, forwarded: "for=203.0.113.9" }, { enabled: false }, unset)),
+				true,
+				`${host} with Forwarded, access off`,
+			);
 		}
 	});
 });
@@ -264,7 +407,20 @@ describe("inside Docker, where every connection comes from 172.17.0.1", () => {
 describe("where to go after signing in, and who is asking", () => {
 	it("keeps the redirect inside the app", () => {
 		assert.equal(safeNext("/read?id=3"), "/read?id=3");
-		for (const bad of ["https://evil.example", "//evil.example", "/\\evil.example", "evil", "", null, undefined, "/login", "/login?next=/", "/pair", "/a\nb", "/a\u0000b"]) {
+		for (const bad of [
+			"https://evil.example",
+			"//evil.example",
+			"/\\evil.example",
+			"evil",
+			"",
+			null,
+			undefined,
+			"/login",
+			"/login?next=/",
+			"/pair",
+			"/a\nb",
+			"/a\u0000b",
+		]) {
 			assert.equal(safeNext(bad), "/", String(bad));
 		}
 	});
@@ -334,7 +490,11 @@ describe("the limit on password tries", () => {
 		assert.equal(next.allowed === false && next.scope, "global");
 		const sameAgain = reserveAttempt(next.state, "198.51.100.2", T0 + LOGIN_LIMITS.globalTries * 1000 + 60_000);
 		assert.equal(sameAgain.allowed, false, "the global lock holds for every address");
-		const hourLater = reserveAttempt(sameAgain.state, "198.51.100.3", T0 + LOGIN_LIMITS.globalWindowMs + LOGIN_LIMITS.globalLockMs + 100_000);
+		const hourLater = reserveAttempt(
+			sameAgain.state,
+			"198.51.100.3",
+			T0 + LOGIN_LIMITS.globalWindowMs + LOGIN_LIMITS.globalLockMs + 100_000,
+		);
 		assert.equal(hourLater.allowed, true);
 	});
 
@@ -403,7 +563,17 @@ describe("the password record", () => {
 	it("reads back only a record whose parameters this server can run", async () => {
 		const good = await hashPassword("a long enough passphrase", SMALL);
 		assert.equal(isPasswordRecord(good), true);
-		for (const bad of [null, {}, { ...good, algo: "md5" }, { ...good, N: 1000 }, { ...good, N: 2 ** 25 }, { ...good, r: 0 }, { ...good, p: 99 }, { ...good, salt: "zz" }, { ...good, hash: 5 }]) {
+		for (const bad of [
+			null,
+			{},
+			{ ...good, algo: "md5" },
+			{ ...good, N: 1000 },
+			{ ...good, N: 2 ** 25 },
+			{ ...good, r: 0 },
+			{ ...good, p: 99 },
+			{ ...good, salt: "zz" },
+			{ ...good, hash: 5 },
+		]) {
 			assert.equal(isPasswordRecord(bad), false, JSON.stringify(bad));
 		}
 	});

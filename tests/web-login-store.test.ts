@@ -20,7 +20,8 @@ const T0 = new Date("2026-11-09T12:00:00Z");
 const at = (seconds: number) => new Date(T0.getTime() + seconds * 1000);
 const PASSWORD = "correct horse battery";
 const SMALL = { N: 1024, r: 8, p: 1, keyLength: 32, saltBytes: 16 };
-const attempt = (password: unknown, client = "203.0.113.1", seconds = 0) => login.signInWithPassword({ password, client, deviceName: "iPhone", at: at(seconds) });
+const attempt = (password: unknown, client = "203.0.113.1", seconds = 0) =>
+	login.signInWithPassword({ password, client, deviceName: "iPhone", at: at(seconds) });
 
 describe("setting the password", () => {
 	it("is unset at first, and a missing file means nobody can sign in", async () => {
@@ -69,14 +70,25 @@ describe("signing in", () => {
 		assert.equal(device?.name, "iPhone");
 		assert.equal(device?.via, "password");
 		assert.equal(Date.parse(device!.expiresAt) - Date.parse(device!.createdAt), 180 * 86_400_000);
-		assert.equal(fs.readFileSync(path.join(TMP_DATA, "access.json"), "utf8").includes(result.token), false, "only a digest is kept");
-		assert.equal(access.accessStatus(new Headers(), 3010, at(20)).devices.find((d) => d.id === device!.id)?.via, "password");
+		assert.equal(
+			fs.readFileSync(path.join(TMP_DATA, "access.json"), "utf8").includes(result.token),
+			false,
+			"only a digest is kept",
+		);
+		assert.equal(
+			access.accessStatus(new Headers(), 3010, at(20)).devices.find((d) => d.id === device!.id)?.via,
+			"password",
+		);
 	});
 
 	it("says nothing about why a wrong password was wrong, and counts down the tries", async () => {
 		const wrong = await attempt("not the password", "198.51.100.5", 100);
 		assert.deepEqual(wrong, { ok: false, reason: "wrong", triesLeft: LOGIN_LIMITS.perAddressTries - 1 });
-		assert.deepEqual(await attempt("", "198.51.100.5", 101), { ok: false, reason: "wrong", triesLeft: LOGIN_LIMITS.perAddressTries - 2 });
+		assert.deepEqual(await attempt("", "198.51.100.5", 101), {
+			ok: false,
+			reason: "wrong",
+			triesLeft: LOGIN_LIMITS.perAddressTries - 2,
+		});
 		assert.deepEqual(await attempt(42, "198.51.100.5", 102), { ok: false, reason: "invalid" });
 		assert.deepEqual(await attempt(undefined, "198.51.100.5", 102), { ok: false, reason: "invalid" });
 	});
@@ -90,7 +102,8 @@ describe("signing in", () => {
 
 	it("locks an address after five wrong tries in a minute, and then refuses even the right password", async () => {
 		const client = "198.51.100.77";
-		for (let i = 0; i < LOGIN_LIMITS.perAddressTries; i++) assert.equal((await attempt("nope nope nope", client, 1000 + i)).ok, false);
+		for (let i = 0; i < LOGIN_LIMITS.perAddressTries; i++)
+			assert.equal((await attempt("nope nope nope", client, 1000 + i)).ok, false);
 		const locked = await attempt(PASSWORD, client, 1006);
 		assert.equal(locked.ok, false);
 		assert.deepEqual(locked, { ok: false, reason: "locked", scope: "address", retryAfterSec: 900 });

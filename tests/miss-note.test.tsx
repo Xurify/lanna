@@ -32,7 +32,8 @@ const AT = new Date("2026-11-11T09:00:00Z");
 
 const RECORDED = {
 	zOd: '{"differ": true, "note": "*od* is used for a person as the source (*od mamy*), for distance from a place (*od centra*), and for a starting time (*od rána*, *od pondelka*). *z* is used for coming out of a place or container (*z domu*, *z vrecka*) and for where someone or something is from (*z Bratislavy*).", "cites": ["A1", "A2", "A3", "B1", "B2", "B4"]}',
-	istChodit: "{\"differ\": true, \"note\": \"*chodiť* is for habitual or repeated going, like *Chodím do školy* and *Často chodím*, and it also means 'to walk'. *ísť* is for going on a particular occasion, like *Idem do školy* ('I'm going to school').\", \"cites\": [\"A1\", \"A4\", \"B2\", \"B4\"]}",
+	istChodit:
+		'{"differ": true, "note": "*chodiť* is for habitual or repeated going, like *Chodím do školy* and *Často chodím*, and it also means \'to walk\'. *ísť* is for going on a particular occasion, like *Idem do školy* (\'I\'m going to school\').", "cites": ["A1", "A4", "B2", "B4"]}',
 	lenIba: '{"differ": false, "note": "", "cites": []}',
 };
 
@@ -46,7 +47,11 @@ describe("the evidence", () => {
 		for (const [i, w] of e.words.entries()) {
 			const other = e.words[1 - i]!;
 			assert.ok(w.sentences.length >= core.NOTE_MIN_SENTENCES && w.sentences.length <= core.NOTE_SENTENCES);
-			for (const s of w.sentences) assert.ok(!new RegExp(`(^|[^\\p{L}])${other.lemma}([^\\p{L}]|$)`, "iu").test(s.text), `${s.text} holds ${other.lemma}`);
+			for (const s of w.sentences)
+				assert.ok(
+					!new RegExp(`(^|[^\\p{L}])${other.lemma}([^\\p{L}]|$)`, "iu").test(s.text),
+					`${s.text} holds ${other.lemma}`,
+				);
 		}
 	});
 
@@ -55,7 +60,10 @@ describe("the evidence", () => {
 		const dobryDen = lexicon.entries.find((x) => x.sk === "dobrý deň")!;
 		assert.equal(core.enoughEvidence(core.missNoteEvidence(ahoj, dobryDen)), false);
 		const faux = createFauxCore({ tokenSize: { min: 8, max: 8 } });
-		assert.equal(await ensureMissNote(ahoj, dobryDen, { engine: { model: faux.getModel(), streamFn: faux.streamSimple } }), null);
+		assert.equal(
+			await ensureMissNote(ahoj, dobryDen, { engine: { model: faux.getModel(), streamFn: faux.streamSimple } }),
+			null,
+		);
 		assert.equal(missNoteStore.get(core.missNoteEvidence(ahoj, dobryDen).key), undefined);
 	});
 });
@@ -65,36 +73,56 @@ describe("the check on a model's note", () => {
 
 	it("keeps recorded notes whose every Slovak word is in the evidence", () => {
 		assert.deepEqual(core.verifyMissNote(core.parseMissNote(RECORDED.zOd)!, zOd), { ok: true });
-		assert.deepEqual(core.verifyMissNote(core.parseMissNote(RECORDED.istChodit)!, evidenceOf("ist", "chodit")), { ok: true });
+		assert.deepEqual(core.verifyMissNote(core.parseMissNote(RECORDED.istChodit)!, evidenceOf("ist", "chodit")), {
+			ok: true,
+		});
 	});
 
 	it("reads 'no clear difference' as a note of its own, not a rejection", () => {
-		const record = core.missNoteRecord(evidenceOf("len", "iba"), core.parseMissNote(RECORDED.lenIba), RECORDED.lenIba, { model: "faux", now: AT });
+		const record = core.missNoteRecord(evidenceOf("len", "iba"), core.parseMissNote(RECORDED.lenIba), RECORDED.lenIba, {
+			model: "faux",
+			now: AT,
+		});
 		assert.equal(record.status, "none");
 	});
 
 	it("refuses a Slovak word the evidence does not hold", () => {
-		const check = core.verifyMissNote(draft("*z* is for out of (*z domu*), *od* is for from a person (*od mamy*), like *zo školy*.", ["A1", "B1"]), zOd);
+		const check = core.verifyMissNote(
+			draft("*z* is for out of (*z domu*), *od* is for from a person (*od mamy*), like *zo školy*.", ["A1", "B1"]),
+			zOd,
+		);
 		assert.deepEqual(check, { ok: false, reason: '"zo" is not in the evidence' });
 	});
 
 	it("refuses Slovak text left outside the asterisks", () => {
-		const check = core.verifyMissNote(draft("*z* is for out of, as in z domu; *od* is from a person (*od mamy*).", ["A1", "B1"]), zOd);
+		const check = core.verifyMissNote(
+			draft("*z* is for out of, as in z domu; *od* is from a person (*od mamy*).", ["A1", "B1"]),
+			zOd,
+		);
 		assert.equal(check.ok, false);
 	});
 
 	it("refuses a grammar category the evidence does not name", () => {
-		const check = core.verifyMissNote(draft("*z* takes the genitive (*z domu*), and so does *od* (*od mamy*).", ["A1", "B1"]), zOd);
+		const check = core.verifyMissNote(
+			draft("*z* takes the genitive (*z domu*), and so does *od* (*od mamy*).", ["A1", "B1"]),
+			zOd,
+		);
 		assert.deepEqual(check, { ok: false, reason: 'names "genitive", which the evidence does not' });
 	});
 
 	it("refuses a note that names only one of the two words", () => {
-		assert.deepEqual(core.verifyMissNote(draft("*z* is for coming out of a place (*z domu*).", ["A1", "B1"]), zOd), { ok: false, reason: "does not name od" });
+		assert.deepEqual(core.verifyMissNote(draft("*z* is for coming out of a place (*z domu*).", ["A1", "B1"]), zOd), {
+			ok: false,
+			reason: "does not name od",
+		});
 	});
 
 	it("refuses citations that do not exist or leave one word unread", () => {
 		const note = "*z* is for out of (*z domu*); *od* is from a person (*od mamy*).";
-		assert.deepEqual(core.verifyMissNote(draft(note, ["A1", "B9"]), zOd), { ok: false, reason: "cites B9, which does not exist" });
+		assert.deepEqual(core.verifyMissNote(draft(note, ["A1", "B9"]), zOd), {
+			ok: false,
+			reason: "cites B9, which does not exist",
+		});
 		assert.equal(core.verifyMissNote(draft(note, ["A1", "A2"]), zOd).ok, false);
 	});
 
@@ -107,7 +135,10 @@ describe("the check on a model's note", () => {
 		const ahoj = lexicon.entries.find((x) => x.sk === "ahoj")!;
 		const dobryDen = lexicon.entries.find((x) => x.sk === "dobrý deň")!;
 		const e = core.missNoteEvidence(ahoj, dobryDen);
-		assert.deepEqual(core.verifyMissNote(draft("*ahoj* is also bye (*Ahoj, maj sa!*); *dobrý deň* is good day.", ["A1"]), e), { ok: true });
+		assert.deepEqual(
+			core.verifyMissNote(draft("*ahoj* is also bye (*Ahoj, maj sa!*); *dobrý deň* is good day.", ["A1"]), e),
+			{ ok: true },
+		);
 	});
 });
 
@@ -135,7 +166,12 @@ describe("the note is written once per pair and kept", () => {
 	});
 
 	it("a note the judge does not support is kept as rejected with its reason, written once more on a later miss, then never again", async () => {
-		const s = scripted(RECORDED.istChodit, '{"supported": false, "problem": "walk is not shown"}', RECORDED.istChodit, '{"supported": false, "problem": "still not shown"}');
+		const s = scripted(
+			RECORDED.istChodit,
+			'{"supported": false, "problem": "walk is not shown"}',
+			RECORDED.istChodit,
+			'{"supported": false, "problem": "still not shown"}',
+		);
 		const note = await ensureMissNote(entry("ist"), entry("chodit"), { engine: s.engine, now: AT });
 		assert.equal(note?.status, "rejected");
 		assert.equal(note?.reason, "judge: walk is not shown");
@@ -148,7 +184,15 @@ describe("the note is written once per pair and kept", () => {
 	});
 
 	it("a rejected note saved before attempts were counted is its first attempt", async () => {
-		missNoteStore.put({ key: "od~z", words: ["od", "z"], status: "rejected", reason: "judge: x", raw: "", model: "faux", created: AT.toISOString() });
+		missNoteStore.put({
+			key: "od~z",
+			words: ["od", "z"],
+			status: "rejected",
+			reason: "judge: x",
+			raw: "",
+			model: "faux",
+			created: AT.toISOString(),
+		});
 		const s = scripted(RECORDED.zOd, '{"supported": true, "problem": ""}');
 		const rewritten = await ensureMissNote(entry("od"), entry("z"), { engine: s.engine, now: AT });
 		assert.equal(rewritten?.status, "kept");
@@ -169,11 +213,34 @@ describe("the Review card", () => {
 		const e = entry(slug);
 		const example = e.examples.find((x) => exampleText(x) === sentence)!;
 		const id = `${slug}#${sentence}`;
-		reviewStore.writeCards({ ...reviewStore.readCards(), [id]: { id, slug, lemma: e.sk ?? "", gloss: "", sentence, translation: example.en, answer: example.cloze!.answer, at: example.cloze!.at, state: "new", due: NOW, reps: 0, lapses: 0, createdAt: NOW } as ReviewCard });
+		reviewStore.writeCards({
+			...reviewStore.readCards(),
+			[id]: {
+				id,
+				slug,
+				lemma: e.sk ?? "",
+				gloss: "",
+				sentence,
+				translation: example.en,
+				answer: example.cloze!.answer,
+				at: example.cloze!.at,
+				state: "new",
+				due: NOW,
+				reps: 0,
+				lapses: 0,
+				createdAt: NOW,
+			} as ReviewCard,
+		});
 		return id;
 	};
 	const cardAnswer = (id: string) => reviewStore.readCards()[id]!.answer;
-	const textOf = (html: string) => html.replace(/<\/p>/g, " ").replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/\s+/g, " ").trim();
+	const textOf = (html: string) =>
+		html
+			.replace(/<\/p>/g, " ")
+			.replace(/<[^>]+>/g, "")
+			.replace(/&#x27;/g, "'")
+			.replace(/\s+/g, " ")
+			.trim();
 
 	it("shows a kept note in place of the example, labeled as an unchecked AI note", () => {
 		const id = cardFor("z", exampleText(entry("z").examples.find((x) => x.cloze && !x.rejected)!));
@@ -197,18 +264,46 @@ describe("the Review card", () => {
 	});
 
 	it("never asks for a note where a curated rule or the parts of speech already explain the miss", () => {
-		const kam = missWordOf({ slug: "kde", lemma: "kde", entry: entry("kde") }, entry("kam"), { typed: "kam", isLemma: true, language: "slovak", noteCanBeWritten: true });
+		const kam = missWordOf({ slug: "kde", lemma: "kde", entry: entry("kde") }, entry("kam"), {
+			typed: "kam",
+			isLemma: true,
+			language: "slovak",
+			noteCanBeWritten: true,
+		});
 		assert.equal(kam.notePending, undefined);
 		const vodny = lexicon.entries.find((x) => x.sk === "vodný")!;
-		const water = missWordOf({ slug: "voda", lemma: "voda", entry: entry("voda") }, vodny, { typed: "vodný", isLemma: true, language: "slovak", noteCanBeWritten: true });
+		const water = missWordOf({ slug: "voda", lemma: "voda", entry: entry("voda") }, vodny, {
+			typed: "vodný",
+			isLemma: true,
+			language: "slovak",
+			noteCanBeWritten: true,
+		});
 		assert.equal(water.notePending, undefined);
-		const country = missWordOf({ slug: "krajina", lemma: "krajina", entry: entry("krajina") }, entry("stat-n"), { typed: "štát", isLemma: true, language: "slovak", noteCanBeWritten: true });
+		const country = missWordOf({ slug: "krajina", lemma: "krajina", entry: entry("krajina") }, entry("stat-n"), {
+			typed: "štát",
+			isLemma: true,
+			language: "slovak",
+			noteCanBeWritten: true,
+		});
 		assert.equal(country.notePending, true);
 	});
 
 	it("says a note is on its way while it is written", () => {
-		const other = missWordOf({ slug: "krajina", lemma: "krajina", entry: entry("krajina") }, entry("stat-n"), { typed: "štát", isLemma: true, language: "slovak", noteCanBeWritten: true });
-		const text = textOf(renderToStaticMarkup(<MissWhy reason={{ slip: "other", lemma: "krajina", gloss: "country", inflects: true, other }} given="štát" answer="krajina" />));
+		const other = missWordOf({ slug: "krajina", lemma: "krajina", entry: entry("krajina") }, entry("stat-n"), {
+			typed: "štát",
+			isLemma: true,
+			language: "slovak",
+			noteCanBeWritten: true,
+		});
+		const text = textOf(
+			renderToStaticMarkup(
+				<MissWhy
+					reason={{ slip: "other", lemma: "krajina", gloss: "country", inflects: true, other }}
+					given="štát"
+					answer="krajina"
+				/>,
+			),
+		);
 		assert.ok(text.includes("Comparing the two words in the dictionary's sentences…"), text);
 	});
 });

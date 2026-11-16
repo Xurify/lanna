@@ -22,10 +22,23 @@ import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { useActiveLanguage } from "@/components/speech";
-import { compareAnswer, missVerdict, PROBE_TURNS, unitInfo, type LessonItem, type ProbeReply, type ProbeVerdict, type RepVerdict, type VocabEstimate, type VocabItem, lessonLanguage } from "@/src/core";
+import {
+	compareAnswer,
+	missVerdict,
+	PROBE_TURNS,
+	unitInfo,
+	type LessonItem,
+	type ProbeReply,
+	type ProbeVerdict,
+	type RepVerdict,
+	type VocabEstimate,
+	type VocabItem,
+	lessonLanguage,
+} from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 
-const INPUT = "w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-xl text-foreground caret-go outline-none focus:border-go";
+const INPUT =
+	"w-full min-w-0 rounded-xl border-2 border-border bg-card px-4 py-3 font-prose text-xl text-foreground caret-go outline-none focus:border-go";
 
 export interface Progress {
 	asked: number;
@@ -53,20 +66,40 @@ interface AnswerOut {
 }
 
 async function post<T>(url: string, body: unknown): Promise<T> {
-	const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-	if (!res.ok) throw new Error(((await res.json().catch(() => null)) as { message?: string } | null)?.message ?? String(res.status));
+	const res = await fetch(url, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(body),
+	});
+	if (!res.ok)
+		throw new Error(
+			((await res.json().catch(() => null)) as { message?: string } | null)?.message ?? String(res.status),
+		);
 	return (await res.json()) as T;
 }
 
 // ─── Stage 1: the ladder ────────────────────────────────────────────────────
 
-export function LadderStage({ start, onDone, onError }: { start: CheckStart; onDone: (ms: number) => void; onError: (msg: string) => void }) {
+export function LadderStage({
+	start,
+	onDone,
+	onError,
+}: {
+	start: CheckStart;
+	onDone: (ms: number) => void;
+	onError: (msg: string) => void;
+}) {
 	const lang = useActiveLanguage();
 	const tag = lang?.tag ?? "sk-SK";
 	const [item, setItem] = useState<LessonItem>(start.item);
 	const [progress, setProgress] = useState<Progress>(start.progress);
 	const [given, setGiven] = useState("");
-	const [result, setResult] = useState<{ given: string; verdict: RepVerdict; judged?: AnswerOut["judged"]; next: LessonItem | null } | null>(null);
+	const [result, setResult] = useState<{
+		given: string;
+		verdict: RepVerdict;
+		judged?: AnswerOut["judged"];
+		next: LessonItem | null;
+	} | null>(null);
 	const [checking, setChecking] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const startedAt = useRef(Date.now());
@@ -95,22 +128,31 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 		const verdict = compareAnswer(item.answer, given, tag);
 		setChecking(true);
 		try {
-			const out = await post<AnswerOut>("/api/placement/answer", { id: start.id, itemId: item.id, given, verdict, ms: Date.now() - itemAt.current });
+			const out = await post<AnswerOut>("/api/placement/answer", {
+				id: start.id,
+				itemId: item.id,
+				given,
+				verdict,
+				ms: Date.now() - itemAt.current,
+			});
 			setProgress(out.progress);
 			const r = { given, verdict: out.verdict, judged: out.judged, next: out.item };
 			setResult(r);
 			// A hit moves on by itself; a miss waits so the right form is seen.
 			if (out.verdict !== "wrong") {
-				window.setTimeout(() => {
-					if (r.next) {
-						setItem(r.next);
-						setGiven("");
-						setResult(null);
-					} else if (!finished.current) {
-						finished.current = true;
-						onDone(Date.now() - startedAt.current);
-					}
-				}, out.judged?.accepted ? 1400 : 650);
+				window.setTimeout(
+					() => {
+						if (r.next) {
+							setItem(r.next);
+							setGiven("");
+							setResult(null);
+						} else if (!finished.current) {
+							finished.current = true;
+							onDone(Date.now() - startedAt.current);
+						}
+					},
+					out.judged?.accepted ? 1400 : 650,
+				);
 			}
 		} catch (err) {
 			onError(err instanceof Error ? err.message : "Couldn't check that answer. Try again.");
@@ -132,7 +174,13 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 		return () => window.removeEventListener("keydown", onKey);
 	}, [result, advance]);
 
-	const ink = result ? (result.verdict === "wrong" ? "text-miss bg-miss-soft" : result.verdict === "accents" ? "text-warn bg-warn-soft" : "text-go bg-go-soft") : "";
+	const ink = result
+		? result.verdict === "wrong"
+			? "text-miss bg-miss-soft"
+			: result.verdict === "accents"
+				? "text-warn bg-warn-soft"
+				: "text-go bg-go-soft"
+		: "";
 	const words = unitInfo(item.unit).kind === "words";
 	const share = Math.min(1, progress.asked / Math.max(10, Math.min(progress.max, 14)));
 
@@ -140,15 +188,21 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 		<div data-testid="placement-ladder" className="@container">
 			<div className="flex items-center justify-between gap-4">
 				<p className="font-ui text-sm font-semibold text-muted-foreground">
-					{progress.tier && <span className="rounded-md bg-accent px-2 py-0.5 text-foreground">{progress.tier.level}</span>} {progress.tier?.title}
+					{progress.tier && (
+						<span className="rounded-md bg-accent px-2 py-0.5 text-foreground">{progress.tier.level}</span>
+					)}{" "}
+					{progress.tier?.title}
 					<span className="text-muted-foreground"> · {unitInfo(item.unit).title}</span>
 				</p>
 				<p className="font-ui text-xs tabular-nums text-muted-foreground" data-testid="placement-progress">
-					{progress.asked} answered{progress.floor ? ` · holds ${unitInfo(progress.floor as LessonItem["unit"]).title}` : ""}{progress.ceiling ? ` · edge at ${unitInfo(progress.ceiling as LessonItem["unit"]).title}` : ""}
+					{progress.asked} answered
+					{progress.floor ? ` · holds ${unitInfo(progress.floor as LessonItem["unit"]).title}` : ""}
+					{progress.ceiling ? ` · edge at ${unitInfo(progress.ceiling as LessonItem["unit"]).title}` : ""}
 				</p>
 			</div>
 			<p className="mt-2 font-ui text-xs text-muted-foreground" data-testid="ladder-note">
-				You get the word; type the form this sentence needs. This stage measures grammar only: words are checked on their own after.
+				You get the word; type the form this sentence needs. This stage measures grammar only: words are checked on
+				their own after.
 			</p>
 			<div className="mt-3 h-2 overflow-hidden rounded-full bg-accent" aria-hidden="true">
 				<div className="lh-fill rounded-full bg-go" style={fillStyle(share)} />
@@ -163,14 +217,24 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 				className="lh-rise mt-8"
 				data-word-lookup-enabled={result !== null ? "true" : "false"}
 			>
-				<h2 className="font-prose text-2xl font-semibold text-foreground">{words ? "Type the word" : "Type the missing word"}</h2>
+				<h2 className="font-prose text-2xl font-semibold text-foreground">
+					{words ? "Type the word" : "Type the missing word"}
+				</h2>
 				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang={lessonLanguage()}>
 					<span>{item.before}</span>
 					{result ? (
-						<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-semibold", ink)}>{result.verdict === "wrong" ? result.given || "—" : result.judged?.accepted ? result.given : item.answer}</span>
+						<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-semibold", ink)}>
+							{result.verdict === "wrong" ? result.given || "—" : result.judged?.accepted ? result.given : item.answer}
+						</span>
 					) : (
-						<span className="mx-1 inline-grid max-w-full align-baseline" style={{ minWidth: `${Math.max(4, item.answer.length + 2)}ch` }}>
-							<span aria-hidden="true" className="invisible col-start-1 row-start-1 whitespace-pre border-2 px-3 font-semibold">
+						<span
+							className="mx-1 inline-grid max-w-full align-baseline"
+							style={{ minWidth: `${Math.max(4, item.answer.length + 2)}ch` }}
+						>
+							<span
+								aria-hidden="true"
+								className="invisible col-start-1 row-start-1 whitespace-pre border-2 px-3 font-semibold"
+							>
 								{given || " "}
 							</span>
 							<input
@@ -191,13 +255,20 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 					<span>{item.after}</span>
 				</p>
 				<p className="mt-2 font-prose text-lg text-muted-foreground">
-					<span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">{item.hint ?? item.lemma}</span>
+					<span className="mr-2 rounded-md bg-accent px-2 py-0.5 font-medium text-foreground">
+						{item.hint ?? item.lemma}
+					</span>
 					{item.translation}
 				</p>
 				{!result && (
 					<div className="mt-5 flex flex-wrap items-center justify-between gap-3">
 						<DiacriticBar variant="keys" className="basis-full sm:flex-1" />
-						<button type="submit" disabled={!given.trim() || checking} className={cn(PRIMARY, "ms-auto")} data-testid="placement-check">
+						<button
+							type="submit"
+							disabled={!given.trim() || checking}
+							className={cn(PRIMARY, "ms-auto")}
+							data-testid="placement-check"
+						>
 							{checking ? <LoaderCircleIcon className="size-5 animate-spin" /> : null}
 							{checking ? (start.judges ? "Judging…" : "Checking…") : "Check"}
 						</button>
@@ -206,12 +277,24 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 			</form>
 
 			{result && result.judged?.accepted && (
-				<p className="lh-rise mt-6 font-prose text-base text-muted-foreground" role="status" aria-live="polite" data-testid="placement-accepted">
-					Also right: the dictionary had <b lang={lessonLanguage()}>{item.answer}</b>, and the tutor accepts <b lang={lessonLanguage()}>{result.given}</b>{result.judged.note ? ` (${result.judged.note})` : ""}.
+				<p
+					className="lh-rise mt-6 font-prose text-base text-muted-foreground"
+					role="status"
+					aria-live="polite"
+					data-testid="placement-accepted"
+				>
+					Also right: the dictionary had <b lang={lessonLanguage()}>{item.answer}</b>, and the tutor accepts{" "}
+					<b lang={lessonLanguage()}>{result.given}</b>
+					{result.judged.note ? ` (${result.judged.note})` : ""}.
 				</p>
 			)}
 			{result && result.verdict === "wrong" && (
-				<div className="lh-rise mt-8 rounded-2xl border border-miss/40 bg-miss-soft px-5 py-4" role="status" aria-live="polite" data-testid="placement-miss">
+				<div
+					className="lh-rise mt-8 rounded-2xl border border-miss/40 bg-miss-soft px-5 py-4"
+					role="status"
+					aria-live="polite"
+					data-testid="placement-miss"
+				>
 					{(() => {
 						const v = missVerdict(item, result.judged && !result.judged.accepted ? result.judged.note : null);
 						return (
@@ -221,7 +304,10 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 									{item.trigger && (
 										<>
 											{" "}
-											— decided by <span lang={lessonLanguage()} className="font-semibold">{item.trigger}</span>
+											— decided by{" "}
+											<span lang={lessonLanguage()} className="font-semibold">
+												{item.trigger}
+											</span>
 										</>
 									)}
 									.{v.reason ? ` ${v.reason}` : ""}
@@ -235,7 +321,9 @@ export function LadderStage({ start, onDone, onError }: { start: CheckStart; onD
 						);
 					})()}
 					<div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-						<span className="font-ui text-xs text-muted-foreground">A check gives no hint before the answer; the lessons explain it.</span>
+						<span className="font-ui text-xs text-muted-foreground">
+							A check gives no hint before the answer; the lessons explain it.
+						</span>
 						<button type="button" onClick={advance} className={PRIMARY} data-testid="placement-continue">
 							Continue
 						</button>
@@ -257,10 +345,22 @@ interface ProbeOut {
 	skipped?: boolean;
 }
 
-const RESULT_INK: Record<ProbeVerdict["result"], string> = { held: "bg-go-soft text-go", slip: "bg-warn-soft text-warn", gap: "bg-miss-soft text-miss" };
+const RESULT_INK: Record<ProbeVerdict["result"], string> = {
+	held: "bg-go-soft text-go",
+	slip: "bg-warn-soft text-warn",
+	gap: "bg-miss-soft text-miss",
+};
 const RESULT_WORD: Record<ProbeVerdict["result"], string> = { held: "held", slip: "slip", gap: "gap" };
 
-export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summary: string, verdicts: ProbeVerdict[], skipped: boolean) => void; onError: (msg: string) => void }) {
+export function EdgeStage({
+	id,
+	onDone,
+	onError,
+}: {
+	id: string;
+	onDone: (summary: string, verdicts: ProbeVerdict[], skipped: boolean) => void;
+	onError: (msg: string) => void;
+}) {
 	const lang = useActiveLanguage();
 	const [turn, setTurn] = useState<ProbeOut | null>(null);
 	const [answer, setAnswer] = useState("");
@@ -275,7 +375,8 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 			try {
 				const out = await post<ProbeOut>("/api/placement/probe", { id, ...body });
 				setTurn(out);
-				if (out.reply.say || out.reply.verdict) setLog((l) => [...l, { say: out.reply.say, verdict: out.reply.verdict }]);
+				if (out.reply.say || out.reply.verdict)
+					setLog((l) => [...l, { say: out.reply.say, verdict: out.reply.verdict }]);
 				setAnswer("");
 				if (out.done) onDone(out.reply.done ?? out.reply.say, out.verdicts, !!out.skipped);
 			} catch (err) {
@@ -319,14 +420,24 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 				</p>
 			</div>
 			<p className="mt-2 font-ui text-xs text-muted-foreground" data-testid="edge-note">
-				Give the form and say why. In a drill, a lucky guess, a slip and a real gap look the same; your reason tells them apart.
+				Give the form and say why. In a drill, a lucky guess, a slip and a real gap look the same; your reason tells
+				them apart.
 			</p>
 
 			{log.length > 0 && (
 				<ol className="mt-5 flex flex-col gap-2" aria-label="So far">
 					{log.slice(-3).map((l, i) => (
 						<li key={i} className="font-prose text-base text-muted-foreground">
-							{l.verdict && <span className={cn("mr-2 rounded-md px-1.5 py-0.5 font-ui text-xs font-semibold", RESULT_INK[l.verdict.result])}>{unitInfo(l.verdict.unit).title}: {RESULT_WORD[l.verdict.result]}</span>}
+							{l.verdict && (
+								<span
+									className={cn(
+										"mr-2 rounded-md px-1.5 py-0.5 font-ui text-xs font-semibold",
+										RESULT_INK[l.verdict.result],
+									)}
+								>
+									{unitInfo(l.verdict.unit).title}: {RESULT_WORD[l.verdict.result]}
+								</span>
+							)}
 							{l.say}
 						</li>
 					))}
@@ -349,11 +460,26 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 					className="lh-rise mt-8"
 					data-word-lookup-enabled="false"
 				>
-					<h2 className="font-prose text-2xl font-semibold text-foreground">{ask.prompt || (ask.kind === "why" ? "What decided that?" : "Give the form")}</h2>
+					<h2 className="font-prose text-2xl font-semibold text-foreground">
+						{ask.prompt || (ask.kind === "why" ? "What decided that?" : "Give the form")}
+					</h2>
 					<p className="mt-4 font-prose text-[28px] leading-[1.5] text-foreground" lang={lessonLanguage()}>
 						{ask.sk}
 					</p>
-					<input ref={inputRef} value={answer} onChange={(e) => setAnswer(e.target.value)} aria-label="Your answer" data-testid="edge-input" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} disabled={busy} className={cn(INPUT, "mt-5")} lang={ask.kind === "why" ? undefined : lang?.code} />
+					<input
+						ref={inputRef}
+						value={answer}
+						onChange={(e) => setAnswer(e.target.value)}
+						aria-label="Your answer"
+						data-testid="edge-input"
+						autoComplete="off"
+						autoCorrect="off"
+						autoCapitalize="off"
+						spellCheck={false}
+						disabled={busy}
+						className={cn(INPUT, "mt-5")}
+						lang={ask.kind === "why" ? undefined : lang?.code}
+					/>
 					<div className="mt-5 flex flex-wrap items-center justify-between gap-3">
 						{ask.kind === "why" ? <span /> : <DiacriticBar variant="keys" className="basis-full sm:flex-1" />}
 						<div className="ms-auto flex gap-2">
@@ -374,7 +500,15 @@ export function EdgeStage({ id, onDone, onError }: { id: string; onDone: (summar
 
 // ─── Stage 3: words ─────────────────────────────────────────────────────────
 
-export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estimate: VocabEstimate | null) => void; onError: (msg: string) => void }) {
+export function WordsStage({
+	id,
+	onDone,
+	onError,
+}: {
+	id: string;
+	onDone: (estimate: VocabEstimate | null) => void;
+	onError: (msg: string) => void;
+}) {
 	const [items, setItems] = useState<VocabItem[] | null>(null);
 	const [yes, setYes] = useState<Set<string>>(new Set());
 	const [busy, setBusy] = useState(false);
@@ -405,7 +539,12 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 		if (!items || busy) return;
 		setBusy(true);
 		try {
-			onDone(await post<VocabEstimate>("/api/placement/words", { id, answers: items.map((i) => ({ id: i.id, yes: yes.has(i.id) })) }));
+			onDone(
+				await post<VocabEstimate>("/api/placement/words", {
+					id,
+					answers: items.map((i) => ({ id: i.id, yes: yes.has(i.id) })),
+				}),
+			);
 		} catch (err) {
 			onError(err instanceof Error ? err.message : "Couldn't save the word check.");
 		} finally {
@@ -425,7 +564,9 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 				Vocabulary, on its own: forty words from five frequency bands estimate how many you recognize.
 			</p>
 			<h2 className="mt-8 font-prose text-2xl font-semibold text-foreground">Tick every word whose meaning you know</h2>
-			<p className="mt-2 font-prose text-base text-muted-foreground">Be honest: some of these are not real words at all, and ticking them lowers the estimate. Two minutes.</p>
+			<p className="mt-2 font-prose text-base text-muted-foreground">
+				Be honest: some of these are not real words at all, and ticking them lowers the estimate. Two minutes.
+			</p>
 			{!items ? (
 				<p className="mt-8 flex items-center gap-2 font-prose text-lg text-muted-foreground" role="status">
 					<LoaderCircleIcon className="size-5 animate-spin" /> Picking words…
@@ -436,8 +577,27 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 						const on = yes.has(w.id);
 						return (
 							<li key={w.id}>
-								<button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(w.id)} data-testid="word-chip" className={cn("flex w-full items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left font-prose text-lg transition-colors", on ? "border-go bg-go-soft text-foreground" : "border-border bg-card text-foreground hover:border-foreground/40")}>
-									<span className={cn("flex size-5 shrink-0 items-center justify-center rounded-md border", on ? "border-go bg-go text-go-ink" : "border-border")}>{on && <CheckIcon className="size-3.5" strokeWidth={3} />}</span>
+								<button
+									type="button"
+									role="checkbox"
+									aria-checked={on}
+									onClick={() => toggle(w.id)}
+									data-testid="word-chip"
+									className={cn(
+										"flex w-full items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left font-prose text-lg transition-colors",
+										on
+											? "border-go bg-go-soft text-foreground"
+											: "border-border bg-card text-foreground hover:border-foreground/40",
+									)}
+								>
+									<span
+										className={cn(
+											"flex size-5 shrink-0 items-center justify-center rounded-md border",
+											on ? "border-go bg-go text-go-ink" : "border-border",
+										)}
+									>
+										{on && <CheckIcon className="size-3.5" strokeWidth={3} />}
+									</span>
 									<span lang={lessonLanguage()}>{w.word}</span>
 								</button>
 							</li>
@@ -446,7 +606,13 @@ export function WordsStage({ id, onDone, onError }: { id: string; onDone: (estim
 				</ul>
 			)}
 			<div className="mt-8 flex flex-wrap gap-3">
-				<button type="button" onClick={() => void finish()} disabled={!items || busy} className={PRIMARY} data-testid="words-done">
+				<button
+					type="button"
+					onClick={() => void finish()}
+					disabled={!items || busy}
+					className={PRIMARY}
+					data-testid="words-done"
+				>
 					{busy ? <LoaderCircleIcon className="size-5 animate-spin" /> : null}
 					Done
 				</button>

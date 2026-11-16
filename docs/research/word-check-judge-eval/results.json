@@ -22,9 +22,7 @@
 			"typed": "automobile",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"car"
-			],
+			"glosses": ["car"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Automobile is a synonym of car.",
@@ -35,9 +33,7 @@
 			"typed": "canine",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"dog"
-			],
+			"glosses": ["dog"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Canine is a synonym of dog.",
@@ -48,9 +44,7 @@
 			"typed": "kid",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"child"
-			],
+			"glosses": ["child"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'Kid' is a close synonym of 'child'.",
@@ -61,9 +55,7 @@
 			"typed": "inexpensive",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"cheap"
-			],
+			"glosses": ["cheap"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Inexpensive is a synonym of cheap.",
@@ -74,9 +66,7 @@
 			"typed": "unhappy",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"sad"
-			],
+			"glosses": ["sad"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'Unhappy' is a close synonym of 'sad'.",
@@ -87,9 +77,7 @@
 			"typed": "unwell",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"ill; sick"
-			],
+			"glosses": ["ill; sick"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'Unwell' is a close synonym of 'ill' and 'sick'.",
@@ -100,9 +88,7 @@
 			"typed": "buddy",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"friend; boyfriend"
-			],
+			"glosses": ["friend; boyfriend"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Buddy is a close synonym of friend.",
@@ -113,9 +99,7 @@
 			"typed": "to shut",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"to close; to shut"
-			],
+			"glosses": ["to close; to shut"],
 			"got": "accept",
 			"markedBy": "dictionary"
 		},
@@ -124,9 +108,7 @@
 			"typed": "to yell",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"to shout; to scream"
-			],
+			"glosses": ["to shout; to scream"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "\"To yell\" is a close synonym of \"to shout\" and \"to scream.\"",
@@ -137,9 +119,7 @@
 			"typed": "to purchase",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"to buy"
-			],
+			"glosses": ["to buy"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'To purchase' is a synonym of 'to buy'.",
@@ -150,9 +130,7 @@
 			"typed": "to assist",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"to help"
-			],
+			"glosses": ["to help"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "\"To assist\" is a close synonym of \"to help\".",
@@ -163,9 +141,7 @@
 			"typed": "to reside",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"to live; to reside"
-			],
+			"glosses": ["to live; to reside"],
 			"got": "accept",
 			"markedBy": "dictionary"
 		},
@@ -174,9 +150,7 @@
 			"typed": "rainfall",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"rain"
-			],
+			"glosses": ["rain"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Rainfall is a close synonym of rain.",
@@ -187,9 +161,7 @@
 			"typed": "a reply",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"answer"
-			],
+			"glosses": ["answer"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "\"Reply\" is a direct synonym of \"answer\".",
@@ -200,9 +172,7 @@
 			"typed": "rapidly",
 			"kind": "synonym",
 			"expected": "accept",
-			"glosses": [
-				"quickly"
-			],
+			"glosses": ["quickly"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'Rapidly' is a close synonym of 'quickly'.",
@@ -213,9 +183,7 @@
 			"typed": "morning meal",
 			"kind": "paraphrase",
 			"expected": "accept",
-			"glosses": [
-				"breakfast"
-			],
+			"glosses": ["breakfast"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "\"Morning meal\" is a close paraphrase of breakfast.",
@@ -226,9 +194,7 @@
 			"typed": "to be in agreement",
 			"kind": "paraphrase",
 			"expected": "accept",
-			"glosses": [
-				"to agree"
-			],
+			"glosses": ["to agree"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "\"To be in agreement\" is a close paraphrase of \"to agree\".",
@@ -239,9 +205,7 @@
 			"typed": "a person who teaches",
 			"kind": "paraphrase",
 			"expected": "accept",
-			"glosses": [
-				"teacher"
-			],
+			"glosses": ["teacher"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "A person who teaches is a close paraphrase of 'teacher'.",
@@ -252,9 +216,7 @@
 			"typed": "a place where you buy things",
 			"kind": "paraphrase",
 			"expected": "accept",
-			"glosses": [
-				"shop; trade; business"
-			],
+			"glosses": ["shop; trade; business"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Paraphrase of 'shop', a listed meaning of obchod.",
@@ -265,9 +227,7 @@
 			"typed": "a place for sick people with doctors",
 			"kind": "paraphrase",
 			"expected": "accept",
-			"glosses": [
-				"hospital"
-			],
+			"glosses": ["hospital"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Good paraphrase: a place with doctors for sick people means hospital.",
@@ -278,9 +238,7 @@
 			"typed": "not remember",
 			"kind": "paraphrase",
 			"expected": "accept",
-			"glosses": [
-				"to forget"
-			],
+			"glosses": ["to forget"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "\"Not remember\" is a close paraphrase of \"to forget\".",
@@ -291,9 +249,7 @@
 			"typed": "buying",
 			"kind": "other form",
 			"expected": "accept",
-			"glosses": [
-				"to buy"
-			],
+			"glosses": ["to buy"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Correct: 'buying' is a form of 'to buy'.",
@@ -304,9 +260,7 @@
 			"typed": "working",
 			"kind": "other form",
 			"expected": "accept",
-			"glosses": [
-				"to work"
-			],
+			"glosses": ["to work"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Correct: 'working' is a form of 'to work'.",
@@ -317,9 +271,7 @@
 			"typed": "seeing",
 			"kind": "other form",
 			"expected": "accept",
-			"glosses": [
-				"to see"
-			],
+			"glosses": ["to see"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'Seeing' is a form of 'to see', the meaning of vidieť.",
@@ -330,9 +282,7 @@
 			"typed": "forgot",
 			"kind": "other form",
 			"expected": "accept",
-			"glosses": [
-				"to forget"
-			],
+			"glosses": ["to forget"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'Forgot' is the past tense of 'to forget', which is the right meaning.",
@@ -343,9 +293,7 @@
 			"typed": "speaking",
 			"kind": "other form",
 			"expected": "accept",
-			"glosses": [
-				"to speak; to talk; to say (imperfective)"
-			],
+			"glosses": ["to speak; to talk; to say (imperfective)"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "'Speaking' is the -ing form of 'to speak', a listed meaning.",
@@ -356,9 +304,7 @@
 			"typed": "improvement",
 			"kind": "other form",
 			"expected": "accept",
-			"glosses": [
-				"to improve"
-			],
+			"glosses": ["to improve"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"Improvement\" is a noun; zlepšiť is the verb \"to improve\".",
@@ -369,9 +315,7 @@
 			"typed": "bred",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"bread"
-			],
+			"glosses": ["bread"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"bred\" is a different English word (from breed); bread is spelled b-r-e-a-d.",
@@ -382,9 +326,7 @@
 			"typed": "hospitol",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"hospital"
-			],
+			"glosses": ["hospital"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Minor spelling slip; 'hospitol' clearly means 'hospital'.",
@@ -395,9 +337,7 @@
 			"typed": "brekfast",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"breakfast"
-			],
+			"glosses": ["breakfast"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Minor spelling slip; 'brekfast' clearly means 'breakfast'.",
@@ -408,9 +348,7 @@
 			"typed": "libary",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"library"
-			],
+			"glosses": ["library"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Minor spelling slip; 'library' is clearly what you meant.",
@@ -421,9 +359,7 @@
 			"typed": "tommorow",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"tomorrow"
-			],
+			"glosses": ["tomorrow"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Correct: 'tommorow' is a spelling slip for 'tomorrow'.",
@@ -434,9 +370,7 @@
 			"typed": "intresting",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"interesting"
-			],
+			"glosses": ["interesting"],
 			"got": "accept",
 			"markedBy": "model",
 			"note": "Correct meaning; minor spelling slip of 'interesting'.",
@@ -454,9 +388,7 @@
 			"typed": "neighbour",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"neighbor; neighbour"
-			],
+			"glosses": ["neighbor; neighbour"],
 			"got": "accept",
 			"markedBy": "dictionary"
 		},
@@ -465,9 +397,7 @@
 			"typed": "colour",
 			"kind": "spelling slip",
 			"expected": "accept",
-			"glosses": [
-				"color; colour"
-			],
+			"glosses": ["color; colour"],
 			"got": "accept",
 			"markedBy": "dictionary"
 		},
@@ -476,9 +406,7 @@
 			"typed": "chair",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"table"
-			],
+			"glosses": ["table"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "A chair is a different object; 'stôl' means table.",
@@ -489,9 +417,7 @@
 			"typed": "uncle",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"aunt"
-			],
+			"glosses": ["aunt"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Teta means aunt; uncle is a different, opposite-gender relative.",
@@ -502,9 +428,7 @@
 			"typed": "sister",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"brother"
-			],
+			"glosses": ["brother"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "'sister' is the female sibling; 'brat' means 'brother'.",
@@ -515,9 +439,7 @@
 			"typed": "arm",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"leg; foot"
-			],
+			"glosses": ["leg; foot"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "'Arm' is a different body part; noha means leg or foot.",
@@ -528,9 +450,7 @@
 			"typed": "Tuesday",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"Monday"
-			],
+			"glosses": ["Monday"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Tuesday is a different day; pondelok means Monday.",
@@ -541,9 +461,7 @@
 			"typed": "bathroom",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"kitchen; cuisine"
-			],
+			"glosses": ["kitchen; cuisine"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Bathroom is a different room; kuchyňa means kitchen or cuisine.",
@@ -554,10 +472,7 @@
 			"typed": "evening",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"morning",
-				"in the morning"
-			],
+			"glosses": ["morning", "in the morning"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Evening is the opposite; ráno means morning.",
@@ -568,9 +483,7 @@
 			"typed": "tomorrow",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"yesterday"
-			],
+			"glosses": ["yesterday"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "'Tomorrow' is the opposite; včera means 'yesterday'.",
@@ -581,9 +494,7 @@
 			"typed": "pear",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"apple"
-			],
+			"glosses": ["apple"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "A pear is a different fruit; jablko means apple.",
@@ -594,9 +505,7 @@
 			"typed": "dog",
 			"kind": "different meaning",
 			"expected": "reject",
-			"glosses": [
-				"cat"
-			],
+			"glosses": ["cat"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Mačka means cat, not dog.",
@@ -607,9 +516,7 @@
 			"typed": "cheap",
 			"kind": "opposite",
 			"expected": "reject",
-			"glosses": [
-				"expensive; dear"
-			],
+			"glosses": ["expensive; dear"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "'Cheap' is the opposite of 'drahý'; it means expensive or dear.",
@@ -620,9 +527,7 @@
 			"typed": "to close",
 			"kind": "opposite",
 			"expected": "reject",
-			"glosses": [
-				"to open"
-			],
+			"glosses": ["to open"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"To close\" is the opposite; otvoriť means \"to open\".",
@@ -633,9 +538,7 @@
 			"typed": "to sell",
 			"kind": "opposite",
 			"expected": "reject",
-			"glosses": [
-				"to buy"
-			],
+			"glosses": ["to buy"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"To sell\" is the opposite; kúpiť means \"to buy\".",
@@ -646,10 +549,7 @@
 			"typed": "summer",
 			"kind": "opposite",
 			"expected": "reject",
-			"glosses": [
-				"winter; cold",
-				"it is cold"
-			],
+			"glosses": ["winter; cold", "it is cold"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Summer is the opposite; zima means winter or cold.",
@@ -660,9 +560,7 @@
 			"typed": "young",
 			"kind": "opposite",
 			"expected": "reject",
-			"glosses": [
-				"old"
-			],
+			"glosses": ["old"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"Young\" is the opposite of \"starý\", which means \"old\".",
@@ -673,9 +571,7 @@
 			"typed": "to be",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"apartment; flat"
-			],
+			"glosses": ["apartment; flat"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"Byt\" means apartment/flat; \"to be\" is \"byť\", a different word.",
@@ -686,9 +582,7 @@
 			"typed": "to swim",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"to cry; to weep"
-			],
+			"glosses": ["to cry; to weep"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"To swim\" is a different word (plávať); plakať means to cry or weep.",
@@ -699,9 +593,7 @@
 			"typed": "to see",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"to know (how/a fact)"
-			],
+			"glosses": ["to know (how/a fact)"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "'To see' is a different meaning; vedieť means 'to know'.",
@@ -712,10 +604,7 @@
 			"typed": "dinner",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"evening",
-				"in the evening; evening"
-			],
+			"glosses": ["evening", "in the evening; evening"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Večer means evening; dinner is 'večera', a different, similar-looking word.",
@@ -726,9 +615,7 @@
 			"typed": "cold",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"hunger"
-			],
+			"glosses": ["hunger"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "'hlad' means hunger, not cold.",
@@ -739,9 +626,7 @@
 			"typed": "list",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"letter; leaf"
-			],
+			"glosses": ["letter; leaf"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"list\" is the Slovak word itself; English \"list\" is a different meaning.",
@@ -752,9 +637,7 @@
 			"typed": "actual",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"current; topical"
-			],
+			"glosses": ["current; topical"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"Actual\" is a false friend; aktuálny means current or topical, not actual.",
@@ -765,9 +648,7 @@
 			"typed": "sympathetic",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"likeable; nice; pleasant"
-			],
+			"glosses": ["likeable; nice; pleasant"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "False friend: 'sympathetic' means compassionate; sympatický means likeable or nice.",
@@ -778,9 +659,7 @@
 			"typed": "gym",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"grammar school; gymnasium (secondary)"
-			],
+			"glosses": ["grammar school; gymnasium (secondary)"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "A gym is for exercise; gymnázium means a secondary grammar school.",
@@ -791,9 +670,7 @@
 			"typed": "host",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"guest"
-			],
+			"glosses": ["guest"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "'Host' is the opposite role; hosť means guest, not host.",
@@ -804,9 +681,7 @@
 			"typed": "chef",
 			"kind": "look-alike word",
 			"expected": "reject",
-			"glosses": [
-				"boss; chief"
-			],
+			"glosses": ["boss; chief"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"chef\" means a cook; šéf means boss or chief.",
@@ -817,9 +692,7 @@
 			"typed": "animal",
 			"kind": "too broad",
 			"expected": "reject",
-			"glosses": [
-				"dog"
-			],
+			"glosses": ["dog"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Too broad: 'animal' fits many words; 'pes' specifically means dog.",
@@ -830,9 +703,7 @@
 			"typed": "food",
 			"kind": "too broad",
 			"expected": "reject",
-			"glosses": [
-				"apple"
-			],
+			"glosses": ["apple"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Too broad: 'food' fits many words; jablko specifically means 'apple'.",
@@ -843,9 +714,7 @@
 			"typed": "to move",
 			"kind": "too broad",
 			"expected": "reject",
-			"glosses": [
-				"to run"
-			],
+			"glosses": ["to run"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Too broad: 'to move' fits many verbs; bežať specifically means 'to run'.",
@@ -856,9 +725,7 @@
 			"typed": "a building",
 			"kind": "too broad",
 			"expected": "reject",
-			"glosses": [
-				"hospital"
-			],
+			"glosses": ["hospital"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Too broad: 'a building' fits many words; the meaning is 'hospital'.",
@@ -869,9 +736,7 @@
 			"typed": "dog, cat, horse",
 			"kind": "several guesses",
 			"expected": "reject",
-			"glosses": [
-				"horse"
-			],
+			"glosses": ["horse"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Several guesses listed; 'dog' and 'cat' are wrong, so it's unclear.",
@@ -882,9 +747,7 @@
 			"typed": "Monday or Tuesday or Wednesday",
 			"kind": "several guesses",
 			"expected": "reject",
-			"glosses": [
-				"Wednesday"
-			],
+			"glosses": ["Wednesday"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Several guesses listed; only one day is correct. Pick one.",
@@ -895,9 +758,7 @@
 			"typed": "okno",
 			"kind": "not a meaning",
 			"expected": "reject",
-			"glosses": [
-				"window"
-			],
+			"glosses": ["window"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "You typed the Slovak word itself; give the English meaning instead.",
@@ -908,9 +769,7 @@
 			"typed": "noun",
 			"kind": "not a meaning",
 			"expected": "reject",
-			"glosses": [
-				"book"
-			],
+			"glosses": ["book"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "\"noun\" is a part of speech, not a meaning of the word.",
@@ -921,9 +780,7 @@
 			"typed": "idk maybe something",
 			"kind": "not a meaning",
 			"expected": "reject",
-			"glosses": [
-				"water"
-			],
+			"glosses": ["water"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "This isn't a meaning of the word; it shows no knowledge of it.",
@@ -934,9 +791,7 @@
 			"typed": "a Slovak word",
 			"kind": "not a meaning",
 			"expected": "reject",
-			"glosses": [
-				"city; town"
-			],
+			"glosses": ["city; town"],
 			"got": "reject",
 			"markedBy": "model",
 			"note": "Not a meaning; 'a Slovak word' doesn't translate 'mesto'. It means city or town.",

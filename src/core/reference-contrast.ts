@@ -44,15 +44,13 @@ const CASE_NAMES: Readonly<Record<string, string>> = {
 	I: "instrumental",
 };
 const withCaseNames = (text: string) =>
-	text.replace(/\+\s*(nom|gen|dat|acc|loc|instr)\.|\+\s*([NGDALI])\b/g, (_, short: string | undefined, letter: string | undefined) => `+ ${CASE_NAMES[(short ?? letter)!]}`);
+	text.replace(
+		/\+\s*(nom|gen|dat|acc|loc|instr)\.|\+\s*([NGDALI])\b/g,
+		(_, short: string | undefined, letter: string | undefined) => `+ ${CASE_NAMES[(short ?? letter)!]}`,
+	);
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const lettersOf = (text: string) => text.split(/[^\p{L}]+/u).filter(Boolean);
-const plain = (text: string) =>
-	text
-		.replace(/`/g, "")
-		.replace(/\*\*/g, "")
-		.replace(/\s+/g, " ")
-		.trim();
+const plain = (text: string) => text.replace(/`/g, "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
 const isSentence = (span: string) => /^\p{Lu}/u.test(span.trim()) && /\s/.test(span.trim());
 const codeSpans = (text: string) => [...text.matchAll(/`([^`]+)`/g)].map((m) => m[1]!);
 const REFLEXIVE = new Set(["sa", "si"]);
@@ -63,7 +61,8 @@ function headWordOf(span: string, inVersusRow: boolean, tag: string): string | u
 	const tokens = lettersOf(span.split("+")[0]!).map((w) => fold(w, tag));
 	const [first, ...rest] = tokens;
 	if (!first) return undefined;
-	const standsAlone = rest.length === 0 || rest.every((t) => REFLEXIVE.has(t)) || span.includes("+") || span.includes("/") || inVersusRow;
+	const standsAlone =
+		rest.length === 0 || rest.every((t) => REFLEXIVE.has(t)) || span.includes("+") || span.includes("/") || inVersusRow;
 	return standsAlone ? first : undefined;
 }
 
@@ -145,7 +144,8 @@ export interface AspectPair {
 	imperfective: string;
 }
 
-const aspectOfLabel = (label: string): "pf" | "ipf" | undefined => (/^(ipf|imperfective)\b/i.test(label) ? "ipf" : /^(pf|perfective)\b/i.test(label) ? "pf" : undefined);
+const aspectOfLabel = (label: string): "pf" | "ipf" | undefined =>
+	/^(ipf|imperfective)\b/i.test(label) ? "ipf" : /^(pf|perfective)\b/i.test(label) ? "pf" : undefined;
 
 /** The aspect pairs listed in tables whose columns are labeled perfective and
  *  imperfective, each cell read as one verb (with its sa or si). */
@@ -184,27 +184,47 @@ export function referenceAspectPairs(markdown: string): AspectPair[] {
 	return pairs;
 }
 
-export function aspectPairOf<P extends AspectPair>(pairs: readonly P[], a: string, b: string, tag = "sk-SK"): P | undefined {
+export function aspectPairOf<P extends AspectPair>(
+	pairs: readonly P[],
+	a: string,
+	b: string,
+	tag = "sk-SK",
+): P | undefined {
 	const verb = (cell: string) => fold(lettersOf(cell)[0] ?? "", tag);
 	const [fa, fb] = [fold(a, tag), fold(b, tag)];
-	return pairs.find((p) => (verb(p.perfective) === fa && verb(p.imperfective) === fb) || (verb(p.perfective) === fb && verb(p.imperfective) === fa));
+	return pairs.find(
+		(p) =>
+			(verb(p.perfective) === fa && verb(p.imperfective) === fb) ||
+			(verb(p.perfective) === fb && verb(p.imperfective) === fa),
+	);
 }
 
 /** The passage of the reference that best sets the two words side by side, cut
  *  down to the clauses that name one of them; undefined when none does. */
-export function referenceContrast(units: readonly ReferenceUnit[], a: string, b: string, tag = "sk-SK"): ReferenceContrast | undefined {
+export function referenceContrast(
+	units: readonly ReferenceUnit[],
+	a: string,
+	b: string,
+	tag = "sk-SK",
+): ReferenceContrast | undefined {
 	const fa = fold(a, tag);
 	const fb = fold(b, tag);
 	let best: (ReferenceContrast & { sideBySide: boolean; length: number }) | undefined;
-	const namesBoth = (cs: readonly ReferenceClause[]) => cs.some((c) => c.words.has(fa)) && cs.some((c) => c.words.has(fb));
+	const namesBoth = (cs: readonly ReferenceClause[]) =>
+		cs.some((c) => c.words.has(fa)) && cs.some((c) => c.words.has(fb));
 	for (const unit of units) {
 		const naming = unit.clauses.filter((c) => c.words.has(fa) || c.words.has(fb));
 		const wordListTable = unit.clauses.some((c) => c.headWords.size > 0);
 		const bigTable = wordListTable || new Set(unit.clauses.map((c) => c.row)).size > MAX_ROWS_TO_PAIR_ACROSS;
-		const rowsNamingBoth = new Set(naming.map((c) => c.row).filter((row) => namesBoth(naming.filter((c) => c.row === row))));
+		const rowsNamingBoth = new Set(
+			naming.map((c) => c.row).filter((row) => namesBoth(naming.filter((c) => c.row === row))),
+		);
 		const clauses = bigTable ? naming.filter((c) => rowsNamingBoth.has(c.row)) : naming;
 		if (!namesBoth(clauses)) continue;
-		const alternants = new RegExp(`(^|[^\\p{L}])(${escape(fa)}/${escape(fb)}|${escape(fb)}/${escape(fa)})([^\\p{L}]|$)`, "u");
+		const alternants = new RegExp(
+			`(^|[^\\p{L}])(${escape(fa)}/${escape(fb)}|${escape(fb)}/${escape(fa)})([^\\p{L}]|$)`,
+			"u",
+		);
 		if (clauses.some((c) => alternants.test(fold(c.text, tag)))) continue;
 		if (clauses.length > MAX_CLAUSES || clauses.some((c) => c.words.size > MAX_WORDS_PER_CLAUSE)) continue;
 		if (clauses.some((c) => c.headWords.size > 0 && !c.headWords.has(fa) && !c.headWords.has(fb))) continue;
@@ -214,7 +234,8 @@ export function referenceContrast(units: readonly ReferenceUnit[], a: string, b:
 			about: c.words.has(fa) && c.words.has(fb) ? "both" : c.words.has(fa) ? "a" : "b",
 		}));
 		const length = lines.map((l) => l.text).join(" ").length;
-		const better = !best || (sideBySide && !best.sideBySide) || (sideBySide === best.sideBySide && length < best.length);
+		const better =
+			!best || (sideBySide && !best.sideBySide) || (sideBySide === best.sideBySide && length < best.length);
 		if (better) best = { chapter: unit.chapter, lines, sideBySide, length };
 	}
 	return best && { chapter: best.chapter, lines: best.lines };

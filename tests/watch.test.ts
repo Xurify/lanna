@@ -50,15 +50,33 @@ function fauxEngine(steps: FauxResponseStep[]) {
 // ─── Pure rules ─────────────────────────────────────────────────────────────
 
 test("parseVideoUrl: watch, short, shorts, embed, bare id; nothing else", () => {
-	for (const u of ["https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10s", "youtu.be/dQw4w9WgXcQ", "https://m.youtube.com/shorts/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0", "dQw4w9WgXcQ", " https://music.youtube.com/watch?v=dQw4w9WgXcQ "]) {
+	for (const u of [
+		"https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10s",
+		"youtu.be/dQw4w9WgXcQ",
+		"https://m.youtube.com/shorts/dQw4w9WgXcQ",
+		"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0",
+		"dQw4w9WgXcQ",
+		" https://music.youtube.com/watch?v=dQw4w9WgXcQ ",
+	]) {
 		assert.equal(core.parseVideoUrl(u), "dQw4w9WgXcQ", u);
 	}
-	for (const u of ["https://vimeo.com/12345", "https://www.youtube.com/", "not a link", "https://www.youtube.com/watch?v=short"]) assert.equal(core.parseVideoUrl(u), null, u);
+	for (const u of [
+		"https://vimeo.com/12345",
+		"https://www.youtube.com/",
+		"not a link",
+		"https://www.youtube.com/watch?v=short",
+	])
+		assert.equal(core.parseVideoUrl(u), null, u);
 });
 
 test("parseVideoUrl and isVideoId: a Spotify track is its own id, kept apart from YouTube's", () => {
 	const spotifyId = "sp_0rgXffrQ2Fj9kCDotdURKQ";
-	for (const u of ["https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ?si=aa12017500d7499b", "open.spotify.com/intl-de/track/0rgXffrQ2Fj9kCDotdURKQ", "spotify:track:0rgXffrQ2Fj9kCDotdURKQ", spotifyId]) {
+	for (const u of [
+		"https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ?si=aa12017500d7499b",
+		"open.spotify.com/intl-de/track/0rgXffrQ2Fj9kCDotdURKQ",
+		"spotify:track:0rgXffrQ2Fj9kCDotdURKQ",
+		spotifyId,
+	]) {
 		assert.equal(core.parseVideoUrl(u), spotifyId, u);
 	}
 	assert.equal(core.parseVideoUrl("https://open.spotify.com/album/0rgXffrQ2Fj9kCDotdURKQ"), null);
@@ -67,7 +85,6 @@ test("parseVideoUrl and isVideoId: a Spotify track is its own id, kept apart fro
 	assert.equal(core.isSpotifyId("dQw4w9WgXcQ"), false);
 	assert.equal(core.videoUrl(spotifyId), "https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ");
 });
-
 
 test("the caption formats: json3 (rolling appends folded in), VTT, both XML shapes", () => {
 	const json = core.parseJson3(FIXTURE);
@@ -79,9 +96,13 @@ test("the caption formats: json3 (rolling appends folded in), VTT, both XML shap
 	assert.equal(vtt.length, 3);
 	assert.equal(vtt[1]!.start, 2.6);
 	assert.equal(vtt[1]!.text, "A dnes vám ukážem Bratislavu!");
-	const srv1 = core.parseTimedTextXml('<?xml version="1.0"?><transcript><text start="1.5" dur="2">Dobr&#253; de&#328; &amp; vitajte</text><text start="4" dur="1.5">[Hudba]</text></transcript>');
+	const srv1 = core.parseTimedTextXml(
+		'<?xml version="1.0"?><transcript><text start="1.5" dur="2">Dobr&#253; de&#328; &amp; vitajte</text><text start="4" dur="1.5">[Hudba]</text></transcript>',
+	);
 	assert.deepEqual(srv1, [{ start: 1.5, dur: 2, text: "Dobrý deň & vitajte" }]);
-	const srv3 = core.parseTimedTextXml('<timedtext format="3"><body><p t="1500" d="2000">Ahoj <s>svet</s></p></body></timedtext>');
+	const srv3 = core.parseTimedTextXml(
+		'<timedtext format="3"><body><p t="1500" d="2000">Ahoj <s>svet</s></p></body></timedtext>',
+	);
 	assert.deepEqual(srv3, [{ start: 1.5, dur: 2, text: "Ahoj svet" }]);
 	assert.equal(core.parseCaptions(FIXTURE).length, 20);
 	assert.equal(core.parseCaptions(VTT).length, 3);
@@ -114,20 +135,48 @@ test("segmentCues: punctuation closes a line, the word and time limits cut long 
 		["Ahojte, volám sa Zuzana.", "A dnes vám ukážem Bratislavu!", "Bratislava je hlavné mesto Slovenska."],
 	);
 	// A long run without punctuation is cut by words/time.
-	const run = core.segmentCues([{ start: 0, dur: 30, text: Array.from({ length: 40 }, (_, i) => `slovo${i}`).join(" ") }]);
+	const run = core.segmentCues([
+		{ start: 0, dur: 30, text: Array.from({ length: 40 }, (_, i) => `slovo${i}`).join(" ") },
+	]);
 	assert.ok(run.length >= 3);
 	assert.ok(run.every((l) => l.sk.split(" ").length <= core.SEGMENT_MAX_WORDS));
 	// A gap ends a line even without punctuation.
-	const gap = core.segmentCues([{ start: 0, dur: 1, text: "ahoj svet tu" }, { start: 5, dur: 1, text: "a ešte raz ahoj" }]);
+	const gap = core.segmentCues([
+		{ start: 0, dur: 1, text: "ahoj svet tu" },
+		{ start: 5, dur: 1, text: "a ešte raz ahoj" },
+	]);
 	assert.equal(gap.length, 2);
 });
 
 test("segmentCues: a line cut inside a cue starts at its first word, from the track's word times or spread over the cue", () => {
-	const timed = JSON.stringify({ events: [{ tStartMs: 0, dDurationMs: 3000, segs: [{ utf8: "a" }, { utf8: " b", tOffsetMs: 200 }, { utf8: " c", tOffsetMs: 400 }, { utf8: " d", tOffsetMs: 2000 }, { utf8: " e.", tOffsetMs: 2400 }] }] });
+	const timed = JSON.stringify({
+		events: [
+			{
+				tStartMs: 0,
+				dDurationMs: 3000,
+				segs: [
+					{ utf8: "a" },
+					{ utf8: " b", tOffsetMs: 200 },
+					{ utf8: " c", tOffsetMs: 400 },
+					{ utf8: " d", tOffsetMs: 2000 },
+					{ utf8: " e.", tOffsetMs: 2400 },
+				],
+			},
+		],
+	});
 	const withTimes = core.segmentCues(core.parseJson3(timed), { maxWords: 3, minWords: 2 });
-	assert.deepEqual(withTimes.map((l) => [l.sk, l.start]), [["a b c", 0], ["d e.", 2]]);
+	assert.deepEqual(
+		withTimes.map((l) => [l.sk, l.start]),
+		[
+			["a b c", 0],
+			["d e.", 2],
+		],
+	);
 	const spread = core.segmentCues([{ start: 0, dur: 4, text: "a b c d e f g h" }], { maxWords: 4, minWords: 2 });
-	assert.deepEqual(spread.map((l) => l.start), [0, 2]);
+	assert.deepEqual(
+		spread.map((l) => l.start),
+		[0, 2],
+	);
 });
 
 test("coverageBand, watchXp, watchMinutes, listeningSpeed, parseTranslations", () => {
@@ -157,20 +206,45 @@ test("coverageBand, watchXp, watchMinutes, listeningSpeed, parseTranslations", (
 
 test("dailyPlan: a waiting video is a Watch task; none when nothing waits", () => {
 	const state = curriculumState({}, "B2");
-	const base = { state, evidence: {}, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 }, review: { due: 0, newLeft: 0, available: false }, minutesPerDay: 60, next: state.chapters[0]!.units[0]!.id as UnitId, dayOfYear: 1 };
+	const base = {
+		state,
+		evidence: {},
+		day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 },
+		review: { due: 0, newLeft: 0, available: false },
+		minutesPerDay: 60,
+		next: state.chapters[0]!.units[0]!.id as UnitId,
+		dayOfYear: 1,
+	};
 	const without = dailyPlan(base);
 	assert.ok(!without.tasks.some((t) => t.id === "watch"));
-	const foreign = dailyPlan({ ...base, watch: { id: "CZCZCZCZCZC", title: "Česky", minutes: 4, captionLang: "Czech" } });
-	assert.match(foreign.tasks.find((t) => t.id === "watch")!.line, /^Czech captions/, "no known-word share for foreign captions that were not measured");
-	const estimate = dailyPlan({ ...base, watch: { id: "CZCZCZCZCZC", title: "Česky", minutes: 4, coverage: 0.84, estimated: true } });
+	const foreign = dailyPlan({
+		...base,
+		watch: { id: "CZCZCZCZCZC", title: "Česky", minutes: 4, captionLang: "Czech" },
+	});
+	assert.match(
+		foreign.tasks.find((t) => t.id === "watch")!.line,
+		/^Czech captions/,
+		"no known-word share for foreign captions that were not measured",
+	);
+	const estimate = dailyPlan({
+		...base,
+		watch: { id: "CZCZCZCZCZC", title: "Česky", minutes: 4, coverage: 0.84, estimated: true },
+	});
 	assert.match(estimate.tasks.find((t) => t.id === "watch")!.line, /^About 84 of every 100 words known/);
-	const withVideo = dailyPlan({ ...base, watch: { id: "dQw4w9WgXcQ", title: "Bratislava", minutes: 4, coverage: 0.91 } });
+	const withVideo = dailyPlan({
+		...base,
+		watch: { id: "dQw4w9WgXcQ", title: "Bratislava", minutes: 4, coverage: 0.91 },
+	});
 	const task = withVideo.tasks.find((t) => t.id === "watch");
 	assert.ok(task);
 	assert.equal(task.href, "/watch?id=dQw4w9WgXcQ");
 	assert.match(task.line, /91 of every 100/);
 	assert.equal(task.done, false);
-	const done = dailyPlan({ ...base, day: { ...base.day, watches: 1 }, watch: { id: "dQw4w9WgXcQ", title: "Bratislava", minutes: 4, coverage: 0.91 } });
+	const done = dailyPlan({
+		...base,
+		day: { ...base.day, watches: 1 },
+		watch: { id: "dQw4w9WgXcQ", title: "Bratislava", minutes: 4, coverage: 0.91 },
+	});
 	assert.equal(done.tasks.find((t) => t.id === "watch")!.done, true);
 	assert.equal(strandMinutes({ watches: 2 }).input, 16);
 });
@@ -179,7 +253,14 @@ test("extractJsonAfter reads a player response out of a watch page whole", () =>
 	const html = `<script>var ytInitialPlayerResponse = {"videoDetails":{"title":"A \\"quoted\\" {title}","lengthSeconds":"61"},"captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[{"baseUrl":"https://x/?v=1","languageCode":"sk","kind":"asr"}]}}};var other = 1;</script>`;
 	const got = watch.extractJsonAfter(html, /ytInitialPlayerResponse\s*=\s*/) as { videoDetails: { title: string } };
 	assert.equal(got.videoDetails.title, 'A "quoted" {title}');
-	assert.equal(watch.pickTrack([{ baseUrl: "a", languageCode: "en" }, { baseUrl: "b", languageCode: "sk", kind: "asr" }, { baseUrl: "c", languageCode: "sk-SK" }])!.baseUrl, "c");
+	assert.equal(
+		watch.pickTrack([
+			{ baseUrl: "a", languageCode: "en" },
+			{ baseUrl: "b", languageCode: "sk", kind: "asr" },
+			{ baseUrl: "c", languageCode: "sk-SK" },
+		])!.baseUrl,
+		"c",
+	);
 	assert.equal(watch.pickTrack([{ baseUrl: "a", languageCode: "en" }]), null);
 });
 
@@ -200,7 +281,11 @@ test("spokenLanguage: the automatic track names the spoken language; human track
 	const ruAsr = { baseUrl: "ru-asr", languageCode: "ru", kind: "asr" };
 	const en = { baseUrl: "en", languageCode: "en" };
 	assert.equal(watch.spokenLanguage([ruAsr]), "ru");
-	assert.equal(watch.spokenLanguage([en, ruAsr, { baseUrl: "sk", languageCode: "sk" }]), "ru", "a translated human track does not change what is spoken");
+	assert.equal(
+		watch.spokenLanguage([en, ruAsr, { baseUrl: "sk", languageCode: "sk" }]),
+		"ru",
+		"a translated human track does not change what is spoken",
+	);
 	assert.equal(watch.spokenLanguage([ru, { baseUrl: "ru-RU", languageCode: "ru-RU" }]), "ru");
 	assert.equal(watch.spokenLanguage([ru, en]), null, "two human languages could be a translation");
 	assert.equal(watch.spokenLanguage([]), null);
@@ -210,7 +295,10 @@ test("elsewhereProfile: a video spoken in another ready profile of the learner's
 	const languages = path.join(TMP_DATA, "languages");
 	const make = (id: string, tag: string, english: string, lexicon: boolean) => {
 		fs.mkdirSync(path.join(languages, id), { recursive: true });
-		fs.writeFileSync(path.join(languages, id, "language.json"), JSON.stringify({ id, tag, code: tag.split("-")[0], endonym: english, english }));
+		fs.writeFileSync(
+			path.join(languages, id, "language.json"),
+			JSON.stringify({ id, tag, code: tag.split("-")[0], endonym: english, english }),
+		);
 		fs.writeFileSync(path.join(languages, id, "course.json"), JSON.stringify({ language: id }));
 		if (lexicon) fs.writeFileSync(path.join(languages, id, "lexicon.json"), "{}");
 	};
@@ -227,7 +315,10 @@ test("notThisLanguage: a track spoken in another language is refused, naming the
 	const languages = path.join(TMP_DATA, "languages");
 	const make = (id: string, tag: string, english: string, lexicon: boolean) => {
 		fs.mkdirSync(path.join(languages, id), { recursive: true });
-		fs.writeFileSync(path.join(languages, id, "language.json"), JSON.stringify({ id, tag, code: tag.split("-")[0], endonym: english, english }));
+		fs.writeFileSync(
+			path.join(languages, id, "language.json"),
+			JSON.stringify({ id, tag, code: tag.split("-")[0], endonym: english, english }),
+		);
 		fs.writeFileSync(path.join(languages, id, "course.json"), JSON.stringify({ language: id }));
 		if (lexicon) fs.writeFileSync(path.join(languages, id, "lexicon.json"), "{}");
 	};
@@ -239,14 +330,22 @@ test("notThisLanguage: a track spoken in another language is refused, naming the
 	assert.deepEqual(russian.elsewhere, { profile: "russian", english: "Russian" });
 	assert.equal(russian.canTranscribe, false, "a transcript in the wrong language is not offered again");
 	const estonian = watch.notThisLanguage("et", track);
-	assert.equal(estonian.message, "This video is in Estonian, not Slovak or Czech.", "no profile is named when its words are not ready");
+	assert.equal(
+		estonian.message,
+		"This video is in Estonian, not Slovak or Czech.",
+		"no profile is named when its words are not ready",
+	);
 	assert.equal(estonian.elsewhere, null);
 });
 
 test("captionLanguageName: the profile's language and its Czech fallback by name, anything else by code", () => {
 	assert.equal(captionLanguageName("sk"), "Slovak");
 	assert.equal(captionLanguageName("cs"), "Czech");
-	assert.equal(captionLanguageName("ru"), "Russian", "a language in the catalog is named even when no profile has it yet");
+	assert.equal(
+		captionLanguageName("ru"),
+		"Russian",
+		"a language in the catalog is named even when no profile has it yet",
+	);
 	assert.equal(captionLanguageName("de"), "de");
 });
 
@@ -258,7 +357,12 @@ const QUESTIONS = {
 	questions: [
 		{ kind: "recall", q: "Ako sa volá sprievodkyňa?", options: ["Zuzana", "Mária", "Eva"], answer: 0 },
 		{ kind: "recall", q: "Kde bývajú jej rodičia?", options: ["V Petržalke", "Na hrade", "V Rakúsku"], answer: 0 },
-		{ kind: "inference", q: "Prečo idú večer do divadla?", options: ["Hrá tam jej sestra", "Je tam kaviareň", "Je zima"], answer: 0 },
+		{
+			kind: "inference",
+			q: "Prečo idú večer do divadla?",
+			options: ["Hrá tam jej sestra", "Je tam kaviareň", "Je zima"],
+			answer: 0,
+		},
 		{ kind: "vocab", q: "Čo znamená „sídlisko“?", options: ["Časť mesta s panelákmi", "Hrad", "Kaviareň"], answer: 0 },
 	],
 };
@@ -274,8 +378,16 @@ describe("a video on a scripted engine", () => {
 	const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
 	test("prepareVideo: lines cut, translated in one call, glossed, pre-taught, questioned, kept", async () => {
-		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
-		const v = await watch.prepareVideo(url, { engine, model: "faux:watch", captions, now: new Date("2026-10-28T10:00:00Z") });
+		const engine = fauxEngine([
+			fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+			fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+		]);
+		const v = await watch.prepareVideo(url, {
+			engine,
+			model: "faux:watch",
+			captions,
+			now: new Date("2026-10-28T10:00:00Z"),
+		});
 		assert.equal(v.id, "dQw4w9WgXcQ");
 		assert.equal(v.title, "Bratislava za jeden deň");
 		assert.equal(v.segments.length, lines.length);
@@ -284,7 +396,10 @@ describe("a video on a scripted engine", () => {
 		// Glossed against the lexicon: "mesto" is a dictionary word.
 		const mesto = v.segments.flatMap((s) => s.tokens).find((t) => t.text === "mesto");
 		assert.ok(mesto?.slug, "mesto resolves to a lexicon entry");
-		assert.ok(v.expected! <= 1 && v.coverage >= 0 && v.coverage < v.expected!, `an empty deck knows less (${v.coverage}) than the beginner set adds (${v.expected})`);
+		assert.ok(
+			v.expected! <= 1 && v.coverage >= 0 && v.coverage < v.expected!,
+			`an empty deck knows less (${v.coverage}) than the beginner set adds (${v.expected})`,
+		);
 		assert.ok(v.wordCount > 60);
 		// As many as the plan at the learner's level asks for (A1: three).
 		assert.equal(v.questions.length, QUESTION_PLAN[v.level].count);
@@ -293,7 +408,10 @@ describe("a video on a scripted engine", () => {
 		for (const w of v.preTeach) assert.ok(w.gloss && w.count >= 1 && w.example);
 		// A word used twice comes before one used once.
 		const counts = v.preTeach.map((w) => w.count);
-		assert.deepEqual(counts, [...counts].sort((a, b) => b - a));
+		assert.deepEqual(
+			counts,
+			[...counts].sort((a, b) => b - a),
+		);
 		assert.equal(v.usage.model, "faux:watch");
 		assert.equal(v.usage.steps.length, 2);
 		assert.equal(v.source.kind, "auto-captions");
@@ -310,7 +428,13 @@ describe("a video on a scripted engine", () => {
 	test("a video kept under an older measuring rule is measured again from its stored lines, with no model call", () => {
 		const fresh = videoStore.get("dQw4w9WgXcQ")!;
 		assert.equal(fresh.measure, core.MEASURE_VERSION);
-		const old = { ...fresh, coverage: 0.99, expected: undefined, measure: undefined, segments: fresh.segments.map((s) => ({ ...s, tokens: s.tokens.map(({ fresh: _f, assumed: _a, ...t }) => t) })) };
+		const old = {
+			...fresh,
+			coverage: 0.99,
+			expected: undefined,
+			measure: undefined,
+			segments: fresh.segments.map((s) => ({ ...s, tokens: s.tokens.map(({ fresh: _f, assumed: _a, ...t }) => t) })),
+		};
 		videoStore.put(old as typeof fresh);
 		assert.equal(videoStore.list().find((e) => e.id === fresh.id)!.measure, undefined);
 		const lib = watch.videoLibrary();
@@ -319,7 +443,10 @@ describe("a video on a scripted engine", () => {
 		assert.equal(entry.coverage, fresh.coverage, "the share is back to what the rule gives");
 		const again = watch.currentVideo(fresh.id)!;
 		assert.equal(again.expected, fresh.expected);
-		assert.ok(again.segments.flatMap((s) => s.tokens).some((t) => t.fresh || t.assumed), "the words are marked again");
+		assert.ok(
+			again.segments.flatMap((s) => s.tokens).some((t) => t.fresh || t.assumed),
+			"the words are marked again",
+		);
 	});
 
 	test("a kept video's channel links to its id: from the record, else the picks' check of the same video, else a saved creator of the same name", async () => {
@@ -330,9 +457,23 @@ describe("a video on a scripted engine", () => {
 		const CH2 = "UC" + "b".repeat(22);
 		videoStore.put({ ...kept, channel: "Rick", channelId: undefined });
 		assert.equal(watch.videoLibrary().find((e) => e.id === id)!.channelId, undefined, "nothing says whose it is");
-		discoverStore.putCreators({ creators: [{ id: CH2, name: "Rick", addedAt: "2026-11-07T00:00:00Z", from: "link" }], keepReady: true });
+		discoverStore.putCreators({
+			creators: [{ id: CH2, name: "Rick", addedAt: "2026-11-07T00:00:00Z", from: "link" }],
+			keepReady: true,
+		});
 		assert.equal(watch.videoLibrary().find((e) => e.id === id)!.channelId, CH2, "a saved creator of the same name");
-		discoverStore.putScans({ [id]: { id, title: "t", channelId: CH, durationSec: 100, scannedAt: "2026-11-07T00:00:00Z", tracks: [], spoken: "yes", sources: [] } });
+		discoverStore.putScans({
+			[id]: {
+				id,
+				title: "t",
+				channelId: CH,
+				durationSec: 100,
+				scannedAt: "2026-11-07T00:00:00Z",
+				tracks: [],
+				spoken: "yes",
+				sources: [],
+			},
+		});
 		assert.equal(watch.currentVideo(id)!.channelId, CH, "the check of the same video wins");
 		videoStore.put({ ...kept, channel: "Rick", channelId: CH2 });
 		assert.equal(watch.videoLibrary().find((e) => e.id === id)!.channelId, CH2, "the record's own id wins over both");
@@ -356,18 +497,47 @@ describe("a video on a scripted engine", () => {
 	});
 
 	test("a translation with the wrong count is asked for once more", async () => {
-		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.slice(1) })), fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
-		const v = await watch.prepareVideo("https://youtu.be/AAAAAAAAAAA", { engine, model: "faux:watch", captions, now: new Date("2026-10-28T11:00:00Z") });
+		const engine = fauxEngine([
+			fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.slice(1) })),
+			fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+			fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+		]);
+		const v = await watch.prepareVideo("https://youtu.be/AAAAAAAAAAA", {
+			engine,
+			model: "faux:watch",
+			captions,
+			now: new Date("2026-10-28T11:00:00Z"),
+		});
 		assert.equal(v.usage.steps.length, 3);
 		assert.equal(v.segments[0]!.en, TRANSLATIONS[0]);
 	});
 
 	test("recordWatch: the day's watching, XP, the first-listen stats, the words into the deck, the log the milestone page reads", () => {
 		const v = videoStore.get("dQw4w9WgXcQ")!;
-		const stats = v.segments.map((s, i) => ({ i, words: s.tokens.filter((t) => t.word).length, sec: Math.round((s.end - s.start) * 100) / 100, replays: i % 4 === 1 ? 1 : 0, slow: i % 5 === 2, revealed: i % 7 === 3, got: i % 4 === 1 || i % 5 === 2 || i % 7 === 3 ? ("after" as const) : i === 6 ? ("no" as const) : ("first" as const) }));
+		const stats = v.segments.map((s, i) => ({
+			i,
+			words: s.tokens.filter((t) => t.word).length,
+			sec: Math.round((s.end - s.start) * 100) / 100,
+			replays: i % 4 === 1 ? 1 : 0,
+			slow: i % 5 === 2,
+			revealed: i % 7 === 3,
+			got:
+				i % 4 === 1 || i % 5 === 2 || i % 7 === 3 ? ("after" as const) : i === 6 ? ("no" as const) : ("first" as const),
+		}));
 		const before = Object.keys(reviewStore.readCards()).length;
 		const answers = v.questions.map((q, i) => (i === 1 ? (q.answer + 1) % q.options.length : q.answer));
-		const out = watch.recordWatch({ videoId: v.id, mode: "step", stats, answers, tapped: [v.segments[1]!.tokens.find((t) => t.slug)!.slug!], ms: 6 * 60_000, tz: 0 }, new Date("2026-10-28T12:00:00Z"));
+		const out = watch.recordWatch(
+			{
+				videoId: v.id,
+				mode: "step",
+				stats,
+				answers,
+				tapped: [v.segments[1]!.tokens.find((t) => t.slug)!.slug!],
+				ms: 6 * 60_000,
+				tz: 0,
+			},
+			new Date("2026-10-28T12:00:00Z"),
+		);
 		assert.equal(out.total, v.questions.length);
 		assert.equal(out.correct, v.questions.length - 1);
 		assert.equal(out.gotFirst, stats.filter((s) => s.got === "first").length);
@@ -397,7 +567,10 @@ describe("a video on a scripted engine", () => {
 		// The watching's own 6 measured minutes, not the plan's 8.
 		assert.equal(out.summary.balance.minutes.input, 6);
 		// A rewatch earns the bonuses only.
-		const twice = watch.recordWatch({ videoId: v.id, mode: "flow", stats: [], answers: v.questions.map((q) => q.answer), tapped: [] }, new Date("2026-10-29T12:00:00Z"));
+		const twice = watch.recordWatch(
+			{ videoId: v.id, mode: "flow", stats: [], answers: v.questions.map((q) => q.answer), tapped: [] },
+			new Date("2026-10-29T12:00:00Z"),
+		);
 		assert.equal(twice.rewatch, true);
 		assert.equal(twice.xp, v.questions.length * 5);
 	});
@@ -406,28 +579,49 @@ describe("a video on a scripted engine", () => {
 test("recordWatch counts the measured playing time, and the log keeps the minutes the day counted", () => {
 	const v = videoStore.get("dQw4w9WgXcQ")!;
 	const answers = v.questions.map((q) => q.answer);
-	watch.recordWatch({ videoId: v.id, mode: "flow", stats: [], answers, tapped: [], ms: 60 * 60_000, activeMs: 5 * 60_000, tz: 0 }, new Date("2026-11-04T12:00:00Z"));
-	watch.recordWatch({ videoId: v.id, mode: "flow", stats: [], answers, tapped: [], ms: 4 * 3_600_000, activeMs: 3 * 3_600_000, tz: 0 }, new Date("2026-11-04T13:00:00Z"));
+	watch.recordWatch(
+		{ videoId: v.id, mode: "flow", stats: [], answers, tapped: [], ms: 60 * 60_000, activeMs: 5 * 60_000, tz: 0 },
+		new Date("2026-11-04T12:00:00Z"),
+	);
+	watch.recordWatch(
+		{ videoId: v.id, mode: "flow", stats: [], answers, tapped: [], ms: 4 * 3_600_000, activeMs: 3 * 3_600_000, tz: 0 },
+		new Date("2026-11-04T13:00:00Z"),
+	);
 	const log = videoStore.watches().filter((w) => w.day === "2026-11-04");
-	assert.deepEqual(log.map((w) => [w.activeMs, w.ms, w.minutes]), [
-		[5 * 60_000, 60 * 60_000, 5],
-		[3 * 3_600_000, 4 * 3_600_000, 90],
-	]);
+	assert.deepEqual(
+		log.map((w) => [w.activeMs, w.ms, w.minutes]),
+		[
+			[5 * 60_000, 60 * 60_000, 5],
+			[3 * 3_600_000, 4 * 3_600_000, 90],
+		],
+	);
 	assert.equal(progressStore.read().days["2026-11-04"]!.minutesBy!.watch, 95);
 });
 
-const czechCaptions = async (id: string) => ({ ...(await captions(id)), source: { kind: "auto-captions" as const, trackLang: "cs", via: "test" as const } });
+const czechCaptions = async (id: string) => ({
+	...(await captions(id)),
+	source: { kind: "auto-captions" as const, trackLang: "cs", via: "test" as const },
+});
 
 test("Prepare in the background answers once the lines are being translated, and the task finishes the video", async () => {
 	// A slow model: the translation streams for a moment, and the answer must not wait for it.
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 }, tokensPerSecond: 200 });
-	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	faux.setResponses([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
 	const engine = { model: faux.getModel(), streamFn: faux.streamSimple };
 	const id = "BGBGBGBGBG1";
-	const out = await watch.prepareVideoInBackground(`https://youtu.be/${id}`, { engine, model: "faux:watch", captions, pollMs: 5 });
+	const out = await watch.prepareVideoInBackground(`https://youtu.be/${id}`, {
+		engine,
+		model: "faux:watch",
+		captions,
+		pollMs: 5,
+	});
 	assert.deepEqual(out, { background: true, id });
 	assert.equal(videoStore.get(id), null, "not kept yet when the answer comes");
-	for (let i = 0; i < 400 && !["done", "error"].includes(watch.prepareStage(id)?.stage ?? ""); i++) await new Promise((r) => setTimeout(r, 25));
+	for (let i = 0; i < 400 && !["done", "error"].includes(watch.prepareStage(id)?.stage ?? ""); i++)
+		await new Promise((r) => setTimeout(r, 25));
 	assert.equal(watch.prepareStage(id)?.error, undefined);
 	assert.equal(videoStore.get(id)?.title, "Bratislava za jeden deň");
 
@@ -437,44 +631,89 @@ test("Prepare in the background answers once the lines are being translated, and
 	const noCaptions = async () => {
 		throw new Error("The captions are empty.");
 	};
-	await assert.rejects(watch.prepareVideoInBackground("https://youtu.be/BGBGBGBGBG2", { engine: fauxEngine([]), captions: noCaptions }), /captions are empty/, "a captions error is the answer, not a silent task");
+	await assert.rejects(
+		watch.prepareVideoInBackground("https://youtu.be/BGBGBGBGBG2", { engine: fauxEngine([]), captions: noCaptions }),
+		/captions are empty/,
+		"a captions error is the answer, not a silent task",
+	);
 });
 
 test("a video with only Czech captions is prepared, kept as Czech, and the translator is told it is Czech", async () => {
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify({ t: lines.map(() => "Ahoj") })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	faux.setResponses([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+		fauxAssistantMessage(JSON.stringify({ t: lines.map(() => "Ahoj") })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
 	const sent: string[] = [];
 	const streamFn: typeof faux.streamSimple = (...args) => {
 		sent.push(JSON.stringify(args[1]));
 		return faux.streamSimple(...args);
 	};
-	const v = await watch.prepareVideo("https://youtu.be/CZCZCZCZCZC", { engine: { model: faux.getModel(), streamFn }, model: "faux:watch", captions: czechCaptions, now: new Date("2026-11-03T10:00:00Z") });
+	const v = await watch.prepareVideo("https://youtu.be/CZCZCZCZCZC", {
+		engine: { model: faux.getModel(), streamFn },
+		model: "faux:watch",
+		captions: czechCaptions,
+		now: new Date("2026-11-03T10:00:00Z"),
+	});
 	assert.equal(v.lang, "sk", "the video belongs to the Slovak profile");
 	assert.equal(v.source.trackLang, "cs");
 	assert.equal(v.segments.length, lines.length);
-	assert.ok(sent[0]!.includes("These subtitles are in Czech, not Slovak"), "the first call says the subtitles are Czech");
-	assert.ok(sent[1]!.includes("Rewrite these") && sent[1]!.includes("These subtitles are in Czech"), "the second call asks for a Slovak rendering");
+	assert.ok(
+		sent[0]!.includes("These subtitles are in Czech, not Slovak"),
+		"the first call says the subtitles are Czech",
+	);
+	assert.ok(
+		sent[1]!.includes("Rewrite these") && sent[1]!.includes("These subtitles are in Czech"),
+		"the second call asks for a Slovak rendering",
+	);
 	assert.equal(v.segments[0]!.sk, lines[0]!.sk, "the lines shown stay as captioned");
 	assert.equal(v.coverageEstimated, true);
-	assert.equal(v.wordCount, lines.length, "the share is measured on the rendering (one word a line here), not on the Czech text");
+	assert.equal(
+		v.wordCount,
+		lines.length,
+		"the share is measured on the rendering (one word a line here), not on the Czech text",
+	);
 	const entry = videoStore.list().find((e) => e.id === v.id)!;
-	assert.deepEqual({ lang: entry.lang, trackLang: entry.trackLang, estimated: entry.estimated }, { lang: "sk", trackLang: "cs", estimated: true });
+	assert.deepEqual(
+		{ lang: entry.lang, trackLang: entry.trackLang, estimated: entry.estimated },
+		{ lang: "sk", trackLang: "cs", estimated: true },
+	);
 	assert.equal(core.coverageKind(entry), "estimated");
-	assert.equal(core.coverageKind({ lang: "sk", trackLang: "cs" }), "none", "Czech kept before the rendering existed has no share until it is regenerated");
+	assert.equal(
+		core.coverageKind({ lang: "sk", trackLang: "cs" }),
+		"none",
+		"Czech kept before the rendering existed has no share until it is regenerated",
+	);
 	assert.equal(core.coverageKind({ lang: "sk", trackLang: "sk" }), "exact");
-	assert.equal(core.coverageKind({}), "exact", "an old line with no caption language is not foreign until it is filled in");
+	assert.equal(
+		core.coverageKind({}),
+		"exact",
+		"an old line with no caption language is not foreign until it is filled in",
+	);
 });
 
 test("when the Slovak rendering cannot be had, Czech captions keep no share instead of a low guess", async () => {
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-	faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
+	faux.setResponses([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
 	const streamFn: typeof faux.streamSimple = (...args) => {
 		if (JSON.stringify(args[1]).includes("Rewrite these")) throw new Error("boom");
 		return faux.streamSimple(...args);
 	};
-	const v = await watch.prepareVideo("https://youtu.be/CZNORENDER1", { engine: { model: faux.getModel(), streamFn }, model: "faux:watch", captions: czechCaptions, now: new Date("2026-11-05T10:00:00Z") });
+	const v = await watch.prepareVideo("https://youtu.be/CZNORENDER1", {
+		engine: { model: faux.getModel(), streamFn },
+		model: "faux:watch",
+		captions: czechCaptions,
+		now: new Date("2026-11-05T10:00:00Z"),
+	});
 	assert.equal(v.coverageEstimated, undefined);
-	assert.equal(core.coverageKind({ lang: v.lang, trackLang: v.source.trackLang, estimated: v.coverageEstimated }), "none");
+	assert.equal(
+		core.coverageKind({ lang: v.lang, trackLang: v.source.trackLang, estimated: v.coverageEstimated }),
+		"none",
+	);
 	assert.equal(v.segments.length, lines.length, "the video is still prepared");
 });
 
@@ -489,12 +728,17 @@ test("an index line written before the caption language was kept gets it from th
 
 test("the sentence step: a model verdict is kept and reused, XP once per accepted word, the program refuses without a model, a Czech video has no step", async () => {
 	const v = videoStore.get("dQw4w9WgXcQ")!;
-	const target = v.segments.flatMap((s) => s.tokens).find((t) => t.word && t.lemma && sentences.usesLemma([t.text], t.lemma));
+	const target = v.segments
+		.flatMap((s) => s.tokens)
+		.find((t) => t.word && t.lemma && sentences.usesLemma([t.text], t.lemma));
 	assert.ok(target, "the fixture has a word whose form the stem finds");
 	const lemma = target.lemma!;
 	const sentence = `Mám ${target.text}.`;
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-	faux.setResponses([fauxAssistantMessage(JSON.stringify({ ok: true, corrected: sentence, why: "Correct." })), fauxAssistantMessage(JSON.stringify({ ok: true, corrected: "x", why: "Fine." }))]);
+	faux.setResponses([
+		fauxAssistantMessage(JSON.stringify({ ok: true, corrected: sentence, why: "Correct." })),
+		fauxAssistantMessage(JSON.stringify({ ok: true, corrected: "x", why: "Fine." })),
+	]);
 	let calls = 0;
 	const streamFn: typeof faux.streamSimple = (...args) => {
 		calls++;
@@ -502,7 +746,10 @@ test("the sentence step: a model verdict is kept and reused, XP once per accepte
 	};
 	const engine = { model: faux.getModel(), streamFn };
 	const xpBefore = progressStore.read().xp;
-	const first = await watch.checkSentence({ videoId: v.id, lemma, sentence }, { engine, model: "faux:sentence", now: new Date("2026-11-03T12:00:00Z") });
+	const first = await watch.checkSentence(
+		{ videoId: v.id, lemma, sentence },
+		{ engine, model: "faux:sentence", now: new Date("2026-11-03T12:00:00Z") },
+	);
 	assert.equal(first.ok, true);
 	assert.equal(first.cached, false);
 	assert.equal(first.xp, sentences.SENTENCE_XP);
@@ -520,8 +767,14 @@ test("the sentence step: a model verdict is kept and reused, XP once per accepte
 	assert.equal(short.ok, false);
 	assert.equal(short.cached, false);
 	assert.equal(calls, 2, "a sentence the program refuses never reaches the model");
-	await assert.rejects(watch.checkSentence({ videoId: "CZCZCZCZCZC", lemma, sentence }, { engine }), /not in the language you learn/);
-	assert.ok(videoStore.sentences().filter((s) => s.videoId === v.id && s.lemma === lemma).length >= 2, "the verdicts are kept on disk");
+	await assert.rejects(
+		watch.checkSentence({ videoId: "CZCZCZCZCZC", lemma, sentence }, { engine }),
+		/not in the language you learn/,
+	);
+	assert.ok(
+		videoStore.sentences().filter((s) => s.videoId === v.id && s.lemma === lemma).length >= 2,
+		"the verdicts are kept on disk",
+	);
 });
 
 test("a translation the model miscounts twice is split in halves, each half asked on its own", async () => {
@@ -533,26 +786,61 @@ test("a translation the model miscounts twice is split in halves, each half aske
 		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.slice(half) })),
 		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
 	]);
-	const v = await watch.prepareVideo("https://youtu.be/BBBBBBBBBBB", { engine, model: "faux:watch", captions, now: new Date("2026-10-28T13:00:00Z") });
-	assert.deepEqual(v.segments.map((s) => s.en), TRANSLATIONS);
+	const v = await watch.prepareVideo("https://youtu.be/BBBBBBBBBBB", {
+		engine,
+		model: "faux:watch",
+		captions,
+		now: new Date("2026-10-28T13:00:00Z"),
+	});
+	assert.deepEqual(
+		v.segments.map((s) => s.en),
+		TRANSLATIONS,
+	);
 	assert.equal(v.usage.steps.length, 5, "two asks for the whole, one each for the halves, one for the questions");
 });
 
 test("a kept video is prepared again when forced, and removing it leaves its watchings", async () => {
 	const url = "https://youtu.be/DDDDDDDDDDD";
-	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
-	const first = await watch.prepareVideo(url, { engine, model: "faux:watch", captions, now: new Date("2026-11-04T09:00:00Z") });
-	const redo = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.map((t) => `${t} (again)`) })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
-	const again = await watch.prepareVideo(url, { engine: redo, model: "faux:watch", captions, force: true, now: new Date("2026-11-04T09:30:00Z") });
-	assert.equal(again.segments[0]!.en, `${TRANSLATIONS[0]} (again)`, "forcing asks the model again instead of reusing the kept video");
+	const engine = fauxEngine([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
+	const first = await watch.prepareVideo(url, {
+		engine,
+		model: "faux:watch",
+		captions,
+		now: new Date("2026-11-04T09:00:00Z"),
+	});
+	const redo = fauxEngine([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS.map((t) => `${t} (again)`) })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
+	const again = await watch.prepareVideo(url, {
+		engine: redo,
+		model: "faux:watch",
+		captions,
+		force: true,
+		now: new Date("2026-11-04T09:30:00Z"),
+	});
+	assert.equal(
+		again.segments[0]!.en,
+		`${TRANSLATIONS[0]} (again)`,
+		"forcing asks the model again instead of reusing the kept video",
+	);
 	assert.equal(videoStore.list().filter((e) => e.id === first.id).length, 1, "one index line per video");
 	videoStore.putCaptions(first.id, "sk", "json", "{}");
 	videoStore.appendWatch({ id: "w-keep", videoId: first.id } as never);
 	assert.equal(videoStore.remove(first.id), true);
 	assert.equal(videoStore.get(first.id), null);
-	assert.equal(videoStore.list().some((e) => e.id === first.id), false);
+	assert.equal(
+		videoStore.list().some((e) => e.id === first.id),
+		false,
+	);
 	assert.equal(videoStore.captions(first.id, "sk"), null);
-	assert.ok(videoStore.watches().some((w) => w.videoId === first.id), "the watchings stay");
+	assert.ok(
+		videoStore.watches().some((w) => w.videoId === first.id),
+		"the watchings stay",
+	);
 	assert.equal(videoStore.remove(first.id), false, "a second removal finds nothing");
 	assert.throws(() => videoStore.remove("not an id"));
 });
@@ -566,10 +854,21 @@ test("a translation chunk is asked with the lines on both sides as context", asy
 		asks.push(asked);
 		const [, from, to] = asked.match(/Lines (\d+)–(\d+) of/)!;
 		const one = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-		one.setResponses([fauxAssistantMessage(JSON.stringify({ t: Array.from({ length: Number(to) - Number(from) + 1 }, (_, i) => `line ${Number(from) + i}`) }))]);
+		one.setResponses([
+			fauxAssistantMessage(
+				JSON.stringify({
+					t: Array.from({ length: Number(to) - Number(from) + 1 }, (_, i) => `line ${Number(from) + i}`),
+				}),
+			),
+		]);
 		return one.streamSimple(...args);
 	};
-	const out = await watch.translateLines({ model: base.getModel(), streamFn }, many, { model: "faux:watch", steps: [] }, "Test");
+	const out = await watch.translateLines(
+		{ model: base.getModel(), streamFn },
+		many,
+		{ model: "faux:watch", steps: [] },
+		"Test",
+	);
 	assert.equal(out.length, 43);
 	assert.equal(asks.length, 2);
 	assert.match(asks[0]!, /lines just after[\s\S]*riadok41[\s\S]*riadok43/);
@@ -595,11 +894,19 @@ test("a line the model never translates stays in the video with no English, and 
 		one.setResponses([fauxAssistantMessage(JSON.stringify({ t: out }))]);
 		return one.streamSimple(...args);
 	};
-	const v = await watch.prepareVideo("https://youtu.be/CCCCCCCCCCC", { engine: { model: base.getModel(), streamFn }, model: "faux:watch", captions, now: new Date("2026-10-28T14:00:00Z") });
+	const v = await watch.prepareVideo("https://youtu.be/CCCCCCCCCCC", {
+		engine: { model: base.getModel(), streamFn },
+		model: "faux:watch",
+		captions,
+		now: new Date("2026-10-28T14:00:00Z"),
+	});
 	assert.equal(v.segments.length, lines.length);
 	assert.equal(v.segments[bad]!.sk, missing);
 	assert.equal(v.segments[bad]!.en, "", "the line keeps its Slovak and has no English");
-	assert.deepEqual(v.segments.filter((_, i) => i !== bad).map((s) => s.en), TRANSLATIONS.filter((_, i) => i !== bad));
+	assert.deepEqual(
+		v.segments.filter((_, i) => i !== bad).map((s) => s.en),
+		TRANSLATIONS.filter((_, i) => i !== bad),
+	);
 	assert.equal(v.untranslated, 1);
 });
 
@@ -607,16 +914,31 @@ test("a preparation is a background task: running with its step, done with where
 	const { listTasks, resetTasks, abortTask } = await import("../src/server/tasks.ts");
 	resetTasks();
 	const url = "https://youtu.be/EEEEEEEEEEE";
-	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
-	const slow = watch.prepareVideo(url, { engine, model: "faux:watch", captions: async (id) => ({ ...(await captions(id)), meta: { id, title: "Slow one", durationSec: 58 } }), now: new Date("2026-11-05T09:00:00Z") });
+	const engine = fauxEngine([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
+	const slow = watch.prepareVideo(url, {
+		engine,
+		model: "faux:watch",
+		captions: async (id) => ({ ...(await captions(id)), meta: { id, title: "Slow one", durationSec: 58 } }),
+		now: new Date("2026-11-05T09:00:00Z"),
+	});
 	const [running] = listTasks();
 	assert.equal(running!.id, "video:EEEEEEEEEEE");
 	assert.equal(running!.status, "running");
 	const v = await slow;
 	const [done] = listTasks();
-	assert.deepEqual({ status: done!.status, title: done!.title, href: done!.href }, { status: "done", title: "Slow one", href: `/watch?id=${v.id}` });
+	assert.deepEqual(
+		{ status: done!.status, title: done!.title, href: done!.href },
+		{ status: "done", title: "Slow one", href: `/watch?id=${v.id}` },
+	);
 
-	const failing = watch.prepareVideo("https://youtu.be/FFFFFFFFFFF", { engine: fauxEngine([]), model: "faux:watch", captions: async () => Promise.reject(new Error("YouTube said no.")) });
+	const failing = watch.prepareVideo("https://youtu.be/FFFFFFFFFFF", {
+		engine: fauxEngine([]),
+		model: "faux:watch",
+		captions: async () => Promise.reject(new Error("YouTube said no.")),
+	});
 	await assert.rejects(failing, /YouTube said no/);
 	const failed = listTasks().find((t) => t.id === "video:FFFFFFFFFFF")!;
 	assert.deepEqual({ status: failed.status, error: failed.error }, { status: "error", error: "YouTube said no." });
@@ -635,8 +957,16 @@ test("a preparation is a background task: running with its step, done with where
 });
 
 test("a prepared track becomes one Read episode: its lines, questions and words, once", async () => {
-	const engine = fauxEngine([fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })), fauxAssistantMessage(JSON.stringify(QUESTIONS))]);
-	const v = await watch.prepareVideo("https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ", { engine, model: "faux:watch", captions, now: new Date("2026-11-10T10:00:00Z") });
+	const engine = fauxEngine([
+		fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+		fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+	]);
+	const v = await watch.prepareVideo("https://open.spotify.com/track/0rgXffrQ2Fj9kCDotdURKQ", {
+		engine,
+		model: "faux:watch",
+		captions,
+		now: new Date("2026-11-10T10:00:00Z"),
+	});
 	const story = watch.importVideoToRead(v.id, new Date("2026-11-10T10:05:00Z"));
 	assert.equal(story.id, "watch-sp-0rgxffrq2fj9kcdotdurkq");
 	assert.equal(story.lang, v.lang);
@@ -645,7 +975,11 @@ test("a prepared track becomes one Read episode: its lines, questions and words,
 	assert.equal(story.questions.length, v.questions.length);
 	assert.equal(story.newWords.length, v.preTeach.length);
 	assert.equal(storyStore.get(story.id)?.title, v.title);
-	assert.equal(watch.importVideoToRead(v.id, new Date("2026-11-11T10:00:00Z")).createdAt, story.createdAt, "asking again returns the episode already made");
+	assert.equal(
+		watch.importVideoToRead(v.id, new Date("2026-11-11T10:00:00Z")).createdAt,
+		story.createdAt,
+		"asking again returns the episode already made",
+	);
 	assert.throws(() => watch.importVideoToRead("sp_AAAAAAAAAAAAAAAAAAAAAA"), /unknown video/);
 	videoStore.remove(v.id);
 });

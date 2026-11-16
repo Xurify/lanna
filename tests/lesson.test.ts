@@ -31,7 +31,8 @@ import type { LexiconEntry } from "../src/core/review.ts";
 const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] };
 const entries = lexicon.words;
 
-const noun = (sk: string, gender: string): LexiconEntry => ({ slug: sk, sk, en: sk, cat: "Nouns", gender }) as LexiconEntry;
+const noun = (sk: string, gender: string): LexiconEntry =>
+	({ slug: sk, sk, en: sk, cat: "Nouns", gender }) as LexiconEntry;
 const ex = (sk: string, answer: string) => ({ sk, cloze: { answer, at: sk.indexOf(answer) } });
 
 test("classifyExample: feminine accusative, locative and genitive by trigger", () => {
@@ -55,8 +56,16 @@ test("classifyExample: places decline like nouns (od Košíc is the genitive), a
 	assert.equal(classifyExample(place("Košice"), ex("Z Košíc do Bratislavy cestujeme vlakom.", "Košíc")), "gen");
 	assert.equal(classifyExample(place("Praha"), ex("Do Prahy ideme vlakom cez Brno.", "Prahy")), "gen");
 	assert.equal(classifyExample(place("Bratislava"), ex("V Bratislave býva už päť rokov.", "Bratislave")), "loc");
-	assert.deepEqual(classifyAll(place("Bratislava"), ex("V Bratislave býva už päť rokov.", "Bratislave")), ["loc", "kam-kde"], "the place and the where/where-to choice");
-	assert.equal(classifyExample(place("Bratislava"), ex("Bratislava je hlavné mesto Slovenska.", "Bratislava")), null, "the dictionary form drills nothing");
+	assert.deepEqual(
+		classifyAll(place("Bratislava"), ex("V Bratislave býva už päť rokov.", "Bratislave")),
+		["loc", "kam-kde"],
+		"the place and the where/where-to choice",
+	);
+	assert.equal(
+		classifyExample(place("Bratislava"), ex("Bratislava je hlavné mesto Slovenska.", "Bratislava")),
+		null,
+		"the dictionary form drills nothing",
+	);
 });
 
 test("buildLesson is deterministic per seed and never repeats a word", () => {
@@ -67,7 +76,10 @@ test("buildLesson is deterministic per seed and never repeats a word", () => {
 	const slugs = a.items.map((i) => i.slug);
 	assert.equal(new Set(slugs).size, slugs.length);
 	const c = buildLesson(entries, "acc-fem", { seed: 43 });
-	assert.notDeepEqual(a.items.map((i) => i.id), c.items.map((i) => i.id));
+	assert.notDeepEqual(
+		a.items.map((i) => i.id),
+		c.items.map((i) => i.id),
+	);
 });
 
 test("every unit has enough material for a full lesson", () => {
@@ -113,7 +125,16 @@ test("streakOf counts back from today and forgives one rest day after six", () =
 	// Not active yet today: the streak from yesterday still stands.
 	assert.equal(streakOf(new Set(["2026-10-26"]), "2026-10-27").days, 1);
 	// Six days, a gap, then today and yesterday.
-	const days = new Set(["2026-10-18", "2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-25", "2026-10-26"]);
+	const days = new Set([
+		"2026-10-18",
+		"2026-10-19",
+		"2026-10-20",
+		"2026-10-21",
+		"2026-10-22",
+		"2026-10-23",
+		"2026-10-25",
+		"2026-10-26",
+	]);
 	const s = streakOf(days, "2026-10-26");
 	assert.equal(s.restUsed, true);
 	assert.equal(s.days, 8);
@@ -125,7 +146,17 @@ test("streakOf counts back from today and forgives one rest day after six", () =
 	assert.equal(streakOf(afterRest, "2026-10-29", 1).days, 0, "two missed days in a row end the streak");
 	assert.deepEqual(streakOf(new Set<string>(), "2026-10-28", 6), { days: 0, restUsed: false, activeToday: false });
 	// A six-day plan rests one day a week: that rest day keeps the streak.
-	const sixDays = new Set(["2026-10-18", "2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-25", "2026-10-26", "2026-10-27"]);
+	const sixDays = new Set([
+		"2026-10-18",
+		"2026-10-19",
+		"2026-10-20",
+		"2026-10-21",
+		"2026-10-22",
+		"2026-10-23",
+		"2026-10-25",
+		"2026-10-26",
+		"2026-10-27",
+	]);
 	assert.equal(streakOf(sixDays, "2026-10-27", 1).days, 9);
 	// A seven-day plan has no rest day to spend.
 	assert.equal(streakOf(sixDays, "2026-10-27", 0).days, 3);
@@ -225,8 +256,15 @@ test("a strong unit is production only, interleaved more, and the plan says so",
 	const strong = buildLesson(entries, "gen", { seed: 5, stage: "strong", mix: ["loc", "acc-people"] });
 	assert.equal(strong.stage, "strong");
 	assert.equal(held.stage, "practiced");
-	assert.equal(strong.items.filter((i) => i.kind === "choose" || i.kind === "meaning").length, 0, "no recognition reps");
-	assert.ok(strong.items.filter((i) => i.mixed).length > held.items.filter((i) => i.mixed).length, "more of the contrast units");
+	assert.equal(
+		strong.items.filter((i) => i.kind === "choose" || i.kind === "meaning").length,
+		0,
+		"no recognition reps",
+	);
+	assert.ok(
+		strong.items.filter((i) => i.mixed).length > held.items.filter((i) => i.mixed).length,
+		"more of the contrast units",
+	);
 	assert.ok(strong.items.filter((i) => i.kind === "type").length >= 7);
 });
 
@@ -236,7 +274,8 @@ test("a right answer after the hint earns half", () => {
 });
 
 test("every grammar unit carries an Estonian bridge", () => {
-	for (const u of allUnits()) if (u.kind !== "words" && u.kind !== "pairs" && !u.union) assert.ok(u.bridge && u.bridge.length > 10, u.id);
+	for (const u of allUnits())
+		if (u.kind !== "words" && u.kind !== "pairs" && !u.union) assert.ok(u.bridge && u.bridge.length > 10, u.id);
 });
 
 test("formOptions always includes base lemma as distractor when inflected", () => {
@@ -258,7 +297,10 @@ test("buildLesson supports gender-targeted drilling", () => {
 	assert.equal(plan.gender, "fem");
 	assert.ok(plan.items.length >= 10);
 	const feminineItems = plan.items.filter((it) => it.gender === "feminine");
-	assert.ok(feminineItems.length >= 8, `Expected mostly feminine items in gen-fem drill, got ${feminineItems.length}/${plan.items.length}`);
+	assert.ok(
+		feminineItems.length >= 8,
+		`Expected mostly feminine items in gen-fem drill, got ${feminineItems.length}/${plan.items.length}`,
+	);
 });
 
 test("buildLesson prioritizes weakGender candidates when unit is practiced", () => {
@@ -268,10 +310,12 @@ test("buildLesson prioritizes weakGender candidates when unit is practiced", () 
 	const standardFemCount = standardPlan.items.filter((it) => it.gender === "feminine").length;
 	const weakFemCount = weakPlan.items.filter((it) => it.gender === "feminine").length;
 
-	assert.ok(weakFemCount >= standardFemCount, `Weak plan feminine items (${weakFemCount}) should be >= standard (${standardFemCount})`);
+	assert.ok(
+		weakFemCount >= standardFemCount,
+		`Weak plan feminine items (${weakFemCount}) should be >= standard (${standardFemCount})`,
+	);
 	assert.ok(weakFemCount >= 6, `Expected at least 6 feminine items when weakGender is fem, got ${weakFemCount}`);
 });
-
 
 test("a present-tense blank names its person unless a subject pronoun does", () => {
 	assert.equal(unstatedPerson("Bývam v Groningene.", "I form of bývať"), "I");

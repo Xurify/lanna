@@ -11,11 +11,41 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DATED_CHOICES, dateForChoice, dateInWords, daysLeftWords, datedDateProblem, isoAddMonths, isoAddYears, isoDaysBetween } from "@/src/core";
+import {
+	DATED_CHOICES,
+	dateForChoice,
+	dateInWords,
+	daysLeftWords,
+	datedDateProblem,
+	isoAddMonths,
+	isoAddYears,
+	isoDaysBetween,
+} from "@/src/core";
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
 
-export function DatePicker({ value, today, onChange }: { value: string | null; today: string; onChange: (iso: string) => void }) {
+export function DatePicker({
+	value,
+	today,
+	onChange,
+}: {
+	value: string | null;
+	today: string;
+	onChange: (iso: string) => void;
+}) {
 	// With nothing chosen, the steppers start from today, so one step is the next month.
 	const shown = value ?? today;
 	const allowed = (iso: string) => (datedDateProblem(iso, today) === null ? iso : null);
@@ -30,7 +60,14 @@ export function DatePicker({ value, today, onChange }: { value: string | null; t
 					const iso = dateForChoice(c.id, today);
 					const on = value === iso;
 					return (
-						<button key={c.id} type="button" aria-pressed={on} onClick={() => onChange(iso)} className={cn("q-btn sec pointer-coarse:h-11", on && "t")} data-testid={`date-choice-${c.id}`}>
+						<button
+							key={c.id}
+							type="button"
+							aria-pressed={on}
+							onClick={() => onChange(iso)}
+							className={cn("q-btn sec pointer-coarse:h-11", on && "t")}
+							data-testid={`date-choice-${c.id}`}
+						>
 							{c.label}
 						</button>
 					);
@@ -38,21 +75,56 @@ export function DatePicker({ value, today, onChange }: { value: string | null; t
 			</div>
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 				<span className="w-full font-ui text-xs text-muted-foreground sm:w-auto">Or another month</span>
-				<Stepper label="month" text={MONTHS[Number(shown.slice(5, 7)) - 1]!} width="w-24" prev={prevMonth} next={nextMonth} onChange={onChange} />
-				<Stepper label="year" text={shown.slice(0, 4)} width="w-14" prev={prevYear} next={nextYear} onChange={onChange} />
+				<Stepper
+					label="month"
+					text={MONTHS[Number(shown.slice(5, 7)) - 1]!}
+					width="w-24"
+					prev={prevMonth}
+					next={nextMonth}
+					onChange={onChange}
+				/>
+				<Stepper
+					label="year"
+					text={shown.slice(0, 4)}
+					width="w-14"
+					prev={prevYear}
+					next={nextYear}
+					onChange={onChange}
+				/>
 			</div>
 			<p aria-live="polite" className="min-h-6 font-ui text-sm text-foreground" data-testid="date-words">
-				{value ? `${dateInWords(value)} · ${daysLeftWords(isoDaysBetween(today, value))}` : "Pick a day above, or a month and year."}
+				{value
+					? `${dateInWords(value)} · ${daysLeftWords(isoDaysBetween(today, value))}`
+					: "Pick a day above, or a month and year."}
 			</p>
 		</div>
 	);
 }
 
-const ARROW = "inline-flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-well disabled:opacity-40 pointer-coarse:size-11";
+const ARROW =
+	"inline-flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-well disabled:opacity-40 pointer-coarse:size-11";
 
-function Stepper({ label, text, width, prev, next, onChange }: { label: string; text: string; width: string; prev: string | null; next: string | null; onChange: (iso: string) => void }) {
+function Stepper({
+	label,
+	text,
+	width,
+	prev,
+	next,
+	onChange,
+}: {
+	label: string;
+	text: string;
+	width: string;
+	prev: string | null;
+	next: string | null;
+	onChange: (iso: string) => void;
+}) {
 	return (
-		<div role="group" aria-label={label} className="inline-flex items-center rounded-lg bg-card p-0.5 shadow-[0_0_0_1px_var(--q-line-2)]">
+		<div
+			role="group"
+			aria-label={label}
+			className="inline-flex items-center rounded-lg bg-card p-0.5 shadow-[0_0_0_1px_var(--q-line-2)]"
+		>
 			<button
 				type="button"
 				aria-label={`Previous ${label}`}
@@ -64,7 +136,9 @@ function Stepper({ label, text, width, prev, next, onChange }: { label: string; 
 			>
 				<ChevronLeftIcon className="size-4" />
 			</button>
-			<span className={cn("text-center font-ui text-sm font-semibold tabular-nums text-foreground", width)}>{text}</span>
+			<span className={cn("text-center font-ui text-sm font-semibold tabular-nums text-foreground", width)}>
+				{text}
+			</span>
 			<button
 				type="button"
 				aria-label={`Next ${label}`}

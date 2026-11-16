@@ -24,7 +24,8 @@ globalThis.fetch = (async (url: unknown, init?: RequestInit) => {
 	return new Response(JSON.stringify({ xp: 10 }), { status: 200 });
 }) as typeof fetch;
 
-const { _resetSessionsForTests, keepSession, onSessionSaved, RefusedError, sendSession } = await import("../components/session-save.ts");
+const { _resetSessionsForTests, keepSession, onSessionSaved, RefusedError, sendSession } =
+	await import("../components/session-save.ts");
 const waiting = () => JSON.parse(store.get("lh-session-outbox") ?? "[]") as Array<{ id: string; lang: string }>;
 
 beforeEach(() => {
@@ -41,7 +42,10 @@ after(() => {
 describe("a Listen, Read or Watch session is kept until the server has it (E77)", () => {
 	it("is kept from the moment it ends, sent with its id, and dropped once recorded", async () => {
 		const session = keepSession("sk", "/api/listen", { reps: [] });
-		assert.deepEqual(waiting().map((s) => s.id), [session.id]);
+		assert.deepEqual(
+			waiting().map((s) => s.id),
+			[session.id],
+		);
 		assert.deepEqual(await sendSession(session), { xp: 10 });
 		assert.deepEqual(sent, [{ url: "/api/listen", clientId: session.id }]);
 		assert.deepEqual(waiting(), []);

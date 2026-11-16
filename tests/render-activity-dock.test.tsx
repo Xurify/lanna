@@ -1,7 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { ActivitySection, formatElapsed, toBlobs, type ActivityFeed, type FeedTask } from "../components/activity-dock.tsx";
+import {
+	ActivitySection,
+	formatElapsed,
+	toBlobs,
+	type ActivityFeed,
+	type FeedTask,
+} from "../components/activity-dock.tsx";
 import { TaskNotice } from "../components/task-notice.tsx";
 import { TasksPage } from "../components/tasks-page.tsx";
 import { formatTokens, formatUsd } from "../components/usage-format.ts";
@@ -15,7 +21,13 @@ const NOW = Date.parse("2026-09-09T12:00:00Z");
 
 /** A full CallUsage (its fields are undefined-valued, not optional). */
 function step(inputTokens: number, outputTokens: number) {
-	return { inputTokens, outputTokens, cacheReadTokens: undefined, cacheWriteTokens: undefined, reasoningTokens: undefined };
+	return {
+		inputTokens,
+		outputTokens,
+		cacheReadTokens: undefined,
+		cacheWriteTokens: undefined,
+		reasoningTokens: undefined,
+	};
 }
 
 function job(over: Partial<ActivityFeed["jobs"][number]> = {}): ActivityFeed["jobs"][number] {
@@ -107,7 +119,7 @@ describe("activity dock pure layer", () => {
 		// Model missing from the live catalog (historical session,
 		// package update) → the feed carries null → no context line.
 		const uncatalogued = toBlobs({
-			jobs: [job({ usage: { ...base, model: "nope/unknown", lastStep: step(5, 5), } })],
+			jobs: [job({ usage: { ...base, model: "nope/unknown", lastStep: step(5, 5) } })],
 			tasks: [],
 		})[0]!;
 		assert.equal(uncatalogued.context, null);
@@ -190,13 +202,22 @@ describe("activity section render", () => {
 		assert.match(html, /title="drawing figure…"/);
 	});
 
-
 	it("a background task's row opens the Tasks page instead of a detail that repeats it", () => {
 		const html = renderToStaticMarkup(
 			<ActivitySection
 				feed={{
 					jobs: [],
-					tasks: [{ id: "language:estonian", kind: "language", title: "Adding Estonian", step: "Downloading English translations · 3 MB", status: "running", startedAt: NOW - 7_000, language: { id: "estonian", english: "Estonian" } }],
+					tasks: [
+						{
+							id: "language:estonian",
+							kind: "language",
+							title: "Adding Estonian",
+							step: "Downloading English translations · 3 MB",
+							status: "running",
+							startedAt: NOW - 7_000,
+							language: { id: "estonian", english: "Estonian" },
+						},
+					],
 				}}
 			/>,
 		);
@@ -219,10 +240,7 @@ describe("activity section render", () => {
 		const html = renderToStaticMarkup(
 			<ActivitySection
 				feed={{
-					jobs: [
-						job({ id: "a", usage }),
-						job({ id: "b", usage, createdAt: new Date(NOW - 20_000).toISOString() }),
-					],
+					jobs: [job({ id: "a", usage }), job({ id: "b", usage, createdAt: new Date(NOW - 20_000).toISOString() })],
 					tasks: [],
 				}}
 			/>,
@@ -233,11 +251,23 @@ describe("activity section render", () => {
 	});
 });
 describe("background tasks in the dock and the notice", () => {
-	const task = (over: Partial<FeedTask> = {}): FeedTask => ({ id: "video:aaaaaaaaaaa", kind: "video", title: "Bratislava za jeden deň", step: "Translating", status: "running", startedAt: NOW - 20_000, ...over });
+	const task = (over: Partial<FeedTask> = {}): FeedTask => ({
+		id: "video:aaaaaaaaaaa",
+		kind: "video",
+		title: "Bratislava za jeden deň",
+		step: "Translating",
+		status: "running",
+		startedAt: NOW - 20_000,
+		...over,
+	});
 
 	it("a running task is a blob with its step; a finished one is not", () => {
 		const blobs = toBlobs({ jobs: [job()], tasks: [task(), task({ id: "video:bbbbbbbbbbb", status: "done" })] });
-		assert.deepEqual(blobs.map((b) => b.process), ["job", "task"], "oldest first");
+		assert.deepEqual(
+			blobs.map((b) => b.process),
+			["job", "task"],
+			"oldest first",
+		);
 		assert.equal(blobs[1]!.activity, "Translating");
 		assert.equal(blobs[1]!.cost, null);
 	});
@@ -253,19 +283,43 @@ describe("background tasks in the dock and the notice", () => {
 
 	it("the notice shows a finished video with Open, a failure with its reason and retry, and nothing for a running task", () => {
 		assert.equal(renderToStaticMarkup(<TaskNotice tasks={[task()]} />), "");
-		const done = renderToStaticMarkup(<TaskNotice tasks={[task({ status: "done", href: "/watch?id=aaaaaaaaaaa", step: "Ready" })]} />);
+		const done = renderToStaticMarkup(
+			<TaskNotice tasks={[task({ status: "done", href: "/watch?id=aaaaaaaaaaa", step: "Ready" })]} />,
+		);
 		assert.match(done, /Video ready/);
 		assert.match(done, /href="\/watch\?id=aaaaaaaaaaa"/);
-		const failed = renderToStaticMarkup(<TaskNotice tasks={[task({ status: "error", error: "No captions.", retry: { label: "Transcribe the audio", url: "u", transcribe: true } })]} />);
+		const failed = renderToStaticMarkup(
+			<TaskNotice
+				tasks={[
+					task({
+						status: "error",
+						error: "No captions.",
+						retry: { label: "Transcribe the audio", url: "u", transcribe: true },
+					}),
+				]}
+			/>,
+		);
 		assert.match(failed, /No captions\./);
 		assert.match(failed, /Transcribe the audio/);
 		assert.doesNotMatch(failed, /task-notice-open/);
 	});
 
 	it("a closed notice stays off the screen but on the Tasks page, which lists running first and finished with their actions", () => {
-		const closed = task({ id: "video:ccccccccccc", status: "done", href: "/watch?id=ccccccccccc", dismissed: true, finishedAt: NOW - 1000 });
+		const closed = task({
+			id: "video:ccccccccccc",
+			status: "done",
+			href: "/watch?id=ccccccccccc",
+			dismissed: true,
+			finishedAt: NOW - 1000,
+		});
 		assert.equal(renderToStaticMarkup(<TaskNotice tasks={[closed]} />), "");
-		const failed = task({ id: "video:ddddddddddd", status: "error", error: "No captions.", finishedAt: NOW - 500, retry: { label: "Transcribe the audio", url: "u", transcribe: true } });
+		const failed = task({
+			id: "video:ddddddddddd",
+			status: "error",
+			error: "No captions.",
+			finishedAt: NOW - 500,
+			retry: { label: "Transcribe the audio", url: "u", transcribe: true },
+		});
 		const html = renderToStaticMarkup(<TasksPage tasks={[closed, task(), failed]} />);
 		assert.ok(html.indexOf("tasks-running") < html.indexOf("tasks-finished"), "running first");
 		assert.match(html, /data-testid="task-stop"/);
@@ -277,7 +331,9 @@ describe("background tasks in the dock and the notice", () => {
 	});
 
 	it("the sidebar section links to the Tasks page while any task is listed", () => {
-		const finishedOnly = renderToStaticMarkup(<ActivitySection feed={{ jobs: [], tasks: [task({ status: "done" })] }} />);
+		const finishedOnly = renderToStaticMarkup(
+			<ActivitySection feed={{ jobs: [], tasks: [task({ status: "done" })] }} />,
+		);
 		assert.match(finishedOnly, /href="\/tasks"/);
 		assert.doesNotMatch(renderToStaticMarkup(<ActivitySection feed={{ jobs: [], tasks: [] }} />), /\/tasks/);
 	});

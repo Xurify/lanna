@@ -27,7 +27,16 @@ after(() => {
 });
 
 const { createChatAgent, composeInstructions } = await import("../src/agent/teacher-agent.ts");
-const { closesChatReply, needsContinuation, appContentText, unitHref, tutorUnitAt, chatLinkTarget, curriculumState, curriculumUnits } = await import("../src/core/index.ts");
+const {
+	closesChatReply,
+	needsContinuation,
+	appContentText,
+	unitHref,
+	tutorUnitAt,
+	chatLinkTarget,
+	curriculumState,
+	curriculumUnits,
+} = await import("../src/core/index.ts");
 const { svgOf, latestReplyText } = await import("../src/server/drawing.ts");
 const { appContentNow } = await import("../src/server/app-content.ts");
 
@@ -35,7 +44,10 @@ const POSE = { answer: "táto kniha", focus: "feminine this" };
 const GRADE = { verdict: "right", given: "tento muž", expected: "tento muž", focus: "masculine this" };
 
 /** A scripted model: each step is one model call; the count says how many calls the turn made. */
-function scripted(steps: Array<() => ReturnType<typeof fauxAssistantMessage>>): { engine: PiEngine; calls: () => number } {
+function scripted(steps: Array<() => ReturnType<typeof fauxAssistantMessage>>): {
+	engine: PiEngine;
+	calls: () => number;
+} {
 	let calls = 0;
 	const faux = createFauxCore({ provider: "anthropic", models: [{ id: "claude-haiku-5-5" }] });
 	faux.setResponses(
@@ -50,7 +62,12 @@ function scripted(steps: Array<() => ReturnType<typeof fauxAssistantMessage>>): 
 describe("a chat reply that ends on its record", () => {
 	it("takes one model call: the text, then grade and pose, and the turn is over", async () => {
 		const model = scripted([
-			() => fauxAssistantMessage([fauxText("Correct: `say: tento muž` = \"this man\". Now: \"this book\"?"), fauxToolCall("grade", GRADE, { id: "g1" }), fauxToolCall("pose", POSE, { id: "p1" })]),
+			() =>
+				fauxAssistantMessage([
+					fauxText('Correct: `say: tento muž` = "this man". Now: "this book"?'),
+					fauxToolCall("grade", GRADE, { id: "g1" }),
+					fauxToolCall("pose", POSE, { id: "p1" }),
+				]),
 			() => fauxAssistantMessage([fauxText("This must never be asked for.")]),
 		]);
 		const recorded: unknown[] = [];
@@ -65,7 +82,11 @@ describe("a chat reply that ends on its record", () => {
 
 	it("ends even when a record call fails, so the reply is never written twice", async () => {
 		const model = scripted([
-			() => fauxAssistantMessage([fauxText("`say: do mesta` = \"to the city\". Now: \"to the shop\"?"), fauxToolCall("pose", {}, { id: "p1" })]),
+			() =>
+				fauxAssistantMessage([
+					fauxText('`say: do mesta` = "to the city". Now: "to the shop"?'),
+					fauxToolCall("pose", {}, { id: "p1" }),
+				]),
 			() => fauxAssistantMessage([fauxText("The same reply again.")]),
 		]);
 		const agent = createChatAgent({}, { engine: model.engine });
@@ -77,7 +98,10 @@ describe("a chat reply that ends on its record", () => {
 	});
 
 	it("still takes a second call when the record comes before any text", async () => {
-		const model = scripted([() => fauxAssistantMessage([fauxToolCall("pose", POSE, { id: "p1" })]), () => fauxAssistantMessage([fauxText("Say \"this book\".")])]);
+		const model = scripted([
+			() => fauxAssistantMessage([fauxToolCall("pose", POSE, { id: "p1" })]),
+			() => fauxAssistantMessage([fauxText('Say "this book".')]),
+		]);
 		const agent = createChatAgent({}, { engine: model.engine });
 		await agent.prompt({ role: "user", content: "Explain this and that", timestamp: Date.now() });
 		assert.equal(model.calls(), 2);
@@ -85,8 +109,9 @@ describe("a chat reply that ends on its record", () => {
 
 	it("still takes a second call after a check, whose answer the reply needs", async () => {
 		const model = scripted([
-			() => fauxAssistantMessage([fauxText("Let me check."), fauxToolCall("lookup_word", { word: "kniha" }, { id: "l1" })]),
-			() => fauxAssistantMessage([fauxText("`say: kniha` = \"book\".")]),
+			() =>
+				fauxAssistantMessage([fauxText("Let me check."), fauxToolCall("lookup_word", { word: "kniha" }, { id: "l1" })]),
+			() => fauxAssistantMessage([fauxText('`say: kniha` = "book".')]),
 		]);
 		const agent = createChatAgent({}, { engine: model.engine });
 		await agent.prompt({ role: "user", content: "What is kniha?", timestamp: Date.now() });
@@ -96,13 +121,53 @@ describe("a chat reply that ends on its record", () => {
 
 describe("closesChatReply", () => {
 	it("needs text and only record calls", () => {
-		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "pose" }]), true);
-		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "add_to_review" }]), true);
-		assert.equal(closesChatReply([{ type: "text", text: "  " }, { type: "toolCall", name: "pose" }]), false);
+		assert.equal(
+			closesChatReply([
+				{ type: "text", text: "Hi" },
+				{ type: "toolCall", name: "pose" },
+			]),
+			true,
+		);
+		assert.equal(
+			closesChatReply([
+				{ type: "text", text: "Hi" },
+				{ type: "toolCall", name: "add_to_review" },
+			]),
+			true,
+		);
+		assert.equal(
+			closesChatReply([
+				{ type: "text", text: "  " },
+				{ type: "toolCall", name: "pose" },
+			]),
+			false,
+		);
 		assert.equal(closesChatReply([{ type: "text", text: "Hi" }]), false, "no calls: the loop ends on its own");
-		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "pose" }, { type: "toolCall", name: "check_slovak" }]), false);
-		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "research" }, { type: "toolCall", name: "pose" }]), true, "a dispatched job only acknowledges");
-		assert.equal(closesChatReply([{ type: "text", text: "Hi" }, { type: "toolCall", name: "read" }]), false, "a file read is a check the reply needs");
+		assert.equal(
+			closesChatReply([
+				{ type: "text", text: "Hi" },
+				{ type: "toolCall", name: "pose" },
+				{ type: "toolCall", name: "check_slovak" },
+			]),
+			false,
+		);
+		assert.equal(
+			closesChatReply([
+				{ type: "text", text: "Hi" },
+				{ type: "toolCall", name: "research" },
+				{ type: "toolCall", name: "pose" },
+			]),
+			true,
+			"a dispatched job only acknowledges",
+		);
+		assert.equal(
+			closesChatReply([
+				{ type: "text", text: "Hi" },
+				{ type: "toolCall", name: "read" },
+			]),
+			false,
+			"a file read is a check the reply needs",
+		);
 	});
 });
 
@@ -186,29 +251,45 @@ describe("chatLinkTarget", () => {
 });
 
 describe("a drawing asked for after the reply", () => {
-	const SVG = '<svg viewBox="0 0 320 80" style="fill:none"><text x="16" y="40" style="fill:var(--ink);font-family:var(--font-sans);font-size:15">v meste</text></svg>';
+	const SVG =
+		'<svg viewBox="0 0 320 80" style="fill:none"><text x="16" y="40" style="fill:var(--ink);font-family:var(--font-sans);font-size:15">v meste</text></svg>';
 
 	it("is made by the drawer with the reply in hand, kept off the model's next prompt, and ends the turn", async () => {
 		const model = scripted([
-			() => fauxAssistantMessage([fauxText("`say: v meste` = \"in town\"."), fauxToolCall("draw", { brief: "v meste in a box" }, { id: "d1" }), fauxToolCall("pose", POSE, { id: "p1" })]),
+			() =>
+				fauxAssistantMessage([
+					fauxText('`say: v meste` = "in town".'),
+					fauxToolCall("draw", { brief: "v meste in a box" }, { id: "d1" }),
+					fauxToolCall("pose", POSE, { id: "p1" }),
+				]),
 			() => fauxAssistantMessage([fauxText("Never asked for.")]),
 		]);
 		const seen: Array<{ brief: string; reply: string }> = [];
 		let agent: ReturnType<typeof createChatAgent>;
-		agent = createChatAgent({ drawing: { draw: async (brief) => (seen.push({ brief, reply: latestReplyText(agent.state.messages) }), SVG) } }, { engine: model.engine });
+		agent = createChatAgent(
+			{ drawing: { draw: async (brief) => (seen.push({ brief, reply: latestReplyText(agent.state.messages) }), SVG) } },
+			{ engine: model.engine },
+		);
 		await agent.prompt({ role: "user", content: "Where is it?", timestamp: Date.now() });
 		assert.equal(model.calls(), 1);
-		assert.deepEqual(seen, [{ brief: "v meste in a box", reply: "`say: v meste` = \"in town\"." }]);
-		const result = agent.state.messages.find((m) => (m as { toolName?: string }).toolName === "draw") as { details: unknown; content: Array<{ text: string }> };
+		assert.deepEqual(seen, [{ brief: "v meste in a box", reply: '`say: v meste` = "in town".' }]);
+		const result = agent.state.messages.find((m) => (m as { toolName?: string }).toolName === "draw") as {
+			details: unknown;
+			content: Array<{ text: string }>;
+		};
 		assert.deepEqual(result.details, { svg: SVG });
 		assert.ok(!result.content[0]!.text.includes("<svg"));
 	});
 
 	it("says so when the drawer fails, and the reply stands", async () => {
-		const model = scripted([() => fauxAssistantMessage([fauxText("Text."), fauxToolCall("draw", { brief: "x" }, { id: "d1" })])]);
+		const model = scripted([
+			() => fauxAssistantMessage([fauxText("Text."), fauxToolCall("draw", { brief: "x" }, { id: "d1" })]),
+		]);
 		const agent = createChatAgent({ drawing: { draw: async () => null } }, { engine: model.engine });
 		await agent.prompt({ role: "user", content: "Draw it", timestamp: Date.now() });
-		const result = agent.state.messages.find((m) => (m as { toolName?: string }).toolName === "draw") as { details: unknown };
+		const result = agent.state.messages.find((m) => (m as { toolName?: string }).toolName === "draw") as {
+			details: unknown;
+		};
 		assert.deepEqual(result.details, { failed: true });
 	});
 
@@ -254,6 +335,7 @@ describe("a drawing asked for after the reply", () => {
 			return {
 				async *[Symbol.asyncIterator]() {
 					await new Promise((resolve) => setTimeout(resolve, 500));
+					if (Date.now() < 0) yield undefined;
 				},
 			} as any;
 		};
@@ -293,12 +375,16 @@ describe("the board's glossed forms", () => {
 			{ phrase: "v meste", meaning: "in town" },
 		]);
 		assert.deepEqual(
-			boardPhrases(['Its table shows `say: na stole` (p. 1) and `say: v dome` (pp. 1–2), and `say: v škole` (p. 1) ("in the school").']),
+			boardPhrases([
+				'Its table shows `say: na stole` (p. 1) and `say: v dome` (pp. 1–2), and `say: v škole` (p. 1) ("in the school").',
+			]),
 			[{ phrase: "v škole", meaning: "in the school" }],
 			"a page citation is not a meaning",
 		);
 		assert.deepEqual(
-			boardPhrases(['`say: na stole` (masculine), `say: v meste` (neuter). `say: Som na ___` (ulica, street) = "I am on the street"']),
+			boardPhrases([
+				'`say: na stole` (masculine), `say: v meste` (neuter). `say: Som na ___` (ulica, street) = "I am on the street"',
+			]),
 			[],
 			"a grammar label is not a meaning, and a gap prompt is not a word",
 		);

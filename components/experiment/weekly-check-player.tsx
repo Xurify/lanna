@@ -7,7 +7,23 @@ import { LoaderCircleIcon, MicIcon, Volume2Icon, XIcon } from "lucide-react";
 import { micSupported, Recorder, transcribeClip } from "@/components/speak/recorder";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { QIcon } from "@/components/quiet/icon";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PracticeCard, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, VerdictDisc } from "@/components/task-frame";
+import {
+	COLUMN,
+	Dock,
+	endEnterBlocked,
+	EnterHint,
+	NotSaved,
+	PracticeCard,
+	PRIMARY,
+	SECONDARY,
+	SentenceRow,
+	SentenceRows,
+	Stat,
+	Stats,
+	TaskEnd,
+	TaskFrame as Frame,
+	VerdictDisc,
+} from "@/components/task-frame";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { cn } from "@/lib/utils";
 import { CheckTrack, CLEAR_SCORE, markOf, PARTIAL_SCORE, TrackLegend } from "@/components/experiment/check-track";
@@ -35,7 +51,8 @@ interface Answer {
 	extra: string[];
 }
 
-const FIELD = "w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] disabled:opacity-70 dark:bg-background";
+const FIELD =
+	"w-full rounded-lg bg-well px-4 py-3.5 font-prose text-[26px] font-[550] tracking-[-0.02em] text-foreground shadow-[inset_0_0_0_1.5px_var(--q-line-2)] outline-none transition-shadow placeholder:font-normal placeholder:text-ink-3 focus:shadow-[inset_0_0_0_2px_var(--q-teal)] disabled:opacity-70 dark:bg-background";
 
 function clipUrl(text: string, language: StudyLanguage): string {
 	const q = new URLSearchParams({ text });
@@ -43,7 +60,17 @@ function clipUrl(text: string, language: StudyLanguage): string {
 	return `/api/tts?${q.toString()}`;
 }
 
-export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt }: { initialWeek: number; initialLanguage: string; languages: string[]; stt: string | null }) {
+export function WeeklyCheckPlayer({
+	initialWeek,
+	initialLanguage,
+	languages,
+	stt,
+}: {
+	initialWeek: number;
+	initialLanguage: string;
+	languages: string[];
+	stt: string | null;
+}) {
 	const router = useRouter();
 	const [week, setWeek] = useState(initialWeek);
 	const [languageId, setLanguageId] = useState(initialLanguage);
@@ -101,7 +128,9 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 	};
 	useEffect(() => () => clip.current?.pause(), []);
 
-	const total = items ? items.probes.length + items.production.length : EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK + EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
+	const total = items
+		? items.probes.length + items.production.length
+		: EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK + EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
 	const item = step === "probes" ? items?.probes[index] : step === "production" ? items?.production[index] : undefined;
 
 	const begin = (nextLanguage = languageId) => {
@@ -130,7 +159,8 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 		clip.current = audio;
 		const drainRing = () => {
 			if (clip.current !== audio || audio.ended) return;
-			if (playRing.current && audio.duration > 0) playRing.current.style.strokeDashoffset = String(Math.min(1, audio.currentTime / audio.duration));
+			if (playRing.current && audio.duration > 0)
+				playRing.current.style.strokeDashoffset = String(Math.min(1, audio.currentTime / audio.duration));
 			requestAnimationFrame(drainRing);
 		};
 		audio.onended = () => {
@@ -151,16 +181,38 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 
 	const answerWith = (response: string, engine = TYPED_ENGINE) => {
 		if (!item || answer) return;
-		const base = { date: dayKey(new Date()), week, dayNumber: week * 7, language: languageId, itemId: item.id, expected: item.targetSentence, response };
+		const base = {
+			date: dayKey(new Date()),
+			week,
+			dayNumber: week * 7,
+			language: languageId,
+			itemId: item.id,
+			expected: item.targetSentence,
+			response,
+		};
 		if (step === "probes") {
 			const verdict = response ? judgeTyped(response, item.targetSentence, language.tag) : "wrong";
-			setAnswer({ record: { ...base, type: "probe", prompt: "Listening Dictation (single play)", score: verdict === "wrong" ? 0 : 1, verdict }, missing: [], extra: [] });
+			setAnswer({
+				record: {
+					...base,
+					type: "probe",
+					prompt: "Listening Dictation (single play)",
+					score: verdict === "wrong" ? 0 : 1,
+					verdict,
+				},
+				missing: [],
+				extra: [],
+			});
 			return;
 		}
 		const match = wordMatch(item.targetSentence, response);
 		const score = response ? Math.round(match.score * 100) / 100 : 0;
 		const verdict = score >= CLEAR_SCORE ? "clear" : score >= PARTIAL_SCORE ? "partial" : "not-yet";
-		setAnswer({ record: { ...base, type: "production", prompt: item.englishTranslation, score, verdict, engine }, missing: response ? match.missing : [], extra: response ? match.extra : [] });
+		setAnswer({
+			record: { ...base, type: "production", prompt: item.englishTranslation, score, verdict, engine },
+			missing: response ? match.missing : [],
+			extra: response ? match.extra : [],
+		});
 	};
 
 	const typeInstead = (note: string) => {
@@ -185,7 +237,9 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 			setMicNote(null);
 			answerWith(heard, `stt:${stt}`);
 		} catch (err) {
-			typeInstead(`What you said could not be written down (${err instanceof Error ? err.message : String(err)}), so type this one. The study notes that it was typed.`);
+			typeInstead(
+				`What you said could not be written down (${err instanceof Error ? err.message : String(err)}), so type this one. The study notes that it was typed.`,
+			);
 		}
 	};
 
@@ -210,7 +264,11 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 	const send = async (all: CheckItemRecord[]) => {
 		setSave("saving");
 		try {
-			const res = await fetch("/api/experiments/input-first/check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: all }) });
+			const res = await fetch("/api/experiments/input-first/check", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ items: all }),
+			});
 			setSave(res.ok ? "saved" : "failed");
 		} catch {
 			setSave("failed");
@@ -283,7 +341,15 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 	if (step === "end") {
 		return (
 			<Frame>
-				<EndScreen week={week} language={language} other={languages.find((l) => l !== languageId)} records={records} save={save} onRetrySave={() => void send(records)} onOther={(id) => begin(id)} />
+				<EndScreen
+					week={week}
+					language={language}
+					other={languages.find((l) => l !== languageId)}
+					records={records}
+					save={save}
+					onRetrySave={() => void send(records)}
+					onOther={(id) => begin(id)}
+				/>
 			</Frame>
 		);
 	}
@@ -304,7 +370,8 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 							Week {week} in {language.name}
 						</h1>
 						<p className="q-line dim mt-3 max-w-2xl">
-							{probeCount} sentences to hear and type, then {productionCount} to {canSpeak ? "say" : "write"} yourself. It measures where you are this week, so it gives no XP.
+							{probeCount} sentences to hear and type, then {productionCount} to {canSpeak ? "say" : "write"} yourself.
+							It measures where you are this week, so it gives no XP.
 						</p>
 						<CheckTrack
 							large
@@ -318,21 +385,42 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 						<div className="mt-7 grid max-w-md grid-cols-2 gap-3">
 							<div>
 								<p className="mb-1.5 font-ui text-xs font-semibold text-muted-foreground">Language</p>
-								<ChoiceMenu ariaLabel="Language" value={languageId} options={languages.map((id) => ({ value: id, label: studyLanguage(id).name }))} onChange={setLanguageId} />
+								<ChoiceMenu
+									ariaLabel="Language"
+									value={languageId}
+									options={languages.map((id) => ({ value: id, label: studyLanguage(id).name }))}
+									onChange={setLanguageId}
+								/>
 							</div>
 							<div>
 								<p className="mb-1.5 font-ui text-xs font-semibold text-muted-foreground">Week</p>
-								<ChoiceMenu ariaLabel="Week" value={String(week)} options={Array.from({ length: EXPERIMENT_CONSTANTS.TOTAL_WEEKS }, (_, i) => ({ value: String(i + 1), label: `Week ${i + 1}` }))} onChange={(w) => setWeek(Number(w))} />
+								<ChoiceMenu
+									ariaLabel="Week"
+									value={String(week)}
+									options={Array.from({ length: EXPERIMENT_CONSTANTS.TOTAL_WEEKS }, (_, i) => ({
+										value: String(i + 1),
+										label: `Week ${i + 1}`,
+									}))}
+									onChange={(w) => setWeek(Number(w))}
+								/>
 							</div>
 						</div>
 						<ul className="mt-6 flex max-w-2xl flex-col gap-1.5 font-prose text-sm leading-relaxed text-muted-foreground">
 							<li>There is no replay and no slow play.</li>
 							{stt === null ? (
-								<li>Speech to text is not set up, so the last {productionCount} are written. Add a speech-to-text key in Settings → API keys to say them. The study notes which way each was answered.</li>
+								<li>
+									Speech to text is not set up, so the last {productionCount} are written. Add a speech-to-text key in
+									Settings → API keys to say them. The study notes which way each was answered.
+								</li>
 							) : micOk === false ? (
-								<li>This browser cannot record, so the last {productionCount} are written. The study notes which way each was answered.</li>
+								<li>
+									This browser cannot record, so the last {productionCount} are written. The study notes which way each
+									was answered.
+								</li>
 							) : (
-								<li>For the last {productionCount}, press the microphone and say the sentence. It stops when you pause.</li>
+								<li>
+									For the last {productionCount}, press the microphone and say the sentence. It stops when you pause.
+								</li>
 							)}
 							<li>Your answers are saved after the last sentence, so finish in one sitting.</li>
 						</ul>
@@ -343,7 +431,14 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 						<Link href={STUDY_ROUTE} className={SECONDARY}>
 							Back to Study
 						</Link>
-						<button type="button" onClick={() => begin()} disabled={!items} className={PRIMARY} data-testid="check-start" autoFocus>
+						<button
+							type="button"
+							onClick={() => begin()}
+							disabled={!items}
+							className={PRIMARY}
+							data-testid="check-start"
+							autoFocus
+						>
 							{items ? "Start" : "Loading…"}
 							<span className="q-kbd">
 								<QIcon name="enter" />
@@ -369,13 +464,35 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 	return (
 		<Frame strip={false}>
 			<CheckTop count={`${records.length + 1}/${total}`}>
-				<CheckTrack className="flex-1" parts={[{ count: items.probes.length }, { count: items.production.length }]} marks={[...records, ...(answer ? [answer.record] : [])].map(markOf)} current={answer ? -1 : records.length} />
+				<CheckTrack
+					className="flex-1"
+					parts={[{ count: items.probes.length }, { count: items.production.length }]}
+					marks={[...records, ...(answer ? [answer.record] : [])].map(markOf)}
+					current={answer ? -1 : records.length}
+				/>
 			</CheckTop>
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
-					<PracticeCard icon={listening ? "listen" : "check"} title="Weekly check" sub={`${index + 1} of ${stepCount}`} right={`Week ${week} · ${language.name}`}>
-						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">{listening ? (!answer ? "Type what you hear" : good ? "Understood" : "It said…") : !answer ? `${speaking ? "Say" : "Write"} this in ${language.name}` : score === 1 ? "That is it" : "It is…"}</h2>
+					<PracticeCard
+						icon={listening ? "listen" : "check"}
+						title="Weekly check"
+						sub={`${index + 1} of ${stepCount}`}
+						right={`Week ${week} · ${language.name}`}
+					>
+						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+							{listening
+								? !answer
+									? "Type what you hear"
+									: good
+										? "Understood"
+										: "It said…"
+								: !answer
+									? `${speaking ? "Say" : "Write"} this in ${language.name}`
+									: score === 1
+										? "That is it"
+										: "It is…"}
+						</h2>
 
 						{listening ? (
 							<div className="flex items-center gap-4">
@@ -390,21 +507,52 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 								>
 									<svg viewBox="0 0 72 72" className="absolute inset-0 size-full -rotate-90" aria-hidden="true">
 										<circle cx="36" cy="36" r="34" fill="none" stroke="var(--q-well-2)" strokeWidth="3" />
-										<circle ref={playRing} cx="36" cy="36" r="34" fill="none" stroke="var(--q-teal)" strokeWidth="3" pathLength={1} strokeDasharray="1" strokeDashoffset={played && !playing ? 1 : 0} />
+										<circle
+											ref={playRing}
+											cx="36"
+											cy="36"
+											r="34"
+											fill="none"
+											stroke="var(--q-teal)"
+											strokeWidth="3"
+											pathLength={1}
+											strokeDasharray="1"
+											strokeDashoffset={played && !playing ? 1 : 0}
+										/>
 									</svg>
-									<span className={cn("flex size-14 items-center justify-center rounded-full transition-colors duration-150", played && !playing ? "bg-well-2 text-ink-4" : "bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] group-hover:group-enabled:bg-teal-2")}>
+									<span
+										className={cn(
+											"flex size-14 items-center justify-center rounded-full transition-colors duration-150",
+											played && !playing
+												? "bg-well-2 text-ink-4"
+												: "bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] group-hover:group-enabled:bg-teal-2",
+										)}
+									>
 										<Volume2Icon className="size-6" strokeWidth={1.6} />
 									</span>
 								</button>
 								<div className="min-w-0" aria-live="polite">
-									<p className="font-ui text-sm font-semibold text-foreground">{answer ? "Played" : playing ? "Playing…" : played ? "Played" : "One play"}</p>
+									<p className="font-ui text-sm font-semibold text-foreground">
+										{answer ? "Played" : playing ? "Playing…" : played ? "Played" : "One play"}
+									</p>
 									<p className="mt-0.5 font-ui text-[13px] leading-snug text-ink-3">
-										{answer ? "This sentence had its one play." : playing ? "Listen. It does not play again." : played ? "It does not play again. Type what you heard." : playFailed ? "The sentence could not be played, so it does not count as heard. Press play again." : "Press play when you are ready."}
+										{answer
+											? "This sentence had its one play."
+											: playing
+												? "Listen. It does not play again."
+												: played
+													? "It does not play again. Type what you heard."
+													: playFailed
+														? "The sentence could not be played, so it does not count as heard. Press play again."
+														: "Press play when you are ready."}
 									</p>
 								</div>
 							</div>
 						) : (
-							<p className="font-prose text-[26px] font-[550] leading-[1.35] tracking-[-0.02em] text-foreground" data-testid="check-prompt">
+							<p
+								className="font-prose text-[26px] font-[550] leading-[1.35] tracking-[-0.02em] text-foreground"
+								data-testid="check-prompt"
+							>
 								{item.englishTranslation}
 							</p>
 						)}
@@ -423,41 +571,80 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 										data-testid="check-mic"
 									>
 										<svg viewBox="0 0 72 72" className="absolute inset-0 size-full" aria-hidden="true">
-											<circle cx="36" cy="36" r="34" fill="none" stroke={mic === "recording" ? "var(--q-teal)" : "var(--q-well-2)"} strokeWidth="3" />
+											<circle
+												cx="36"
+												cy="36"
+												r="34"
+												fill="none"
+												stroke={mic === "recording" ? "var(--q-teal)" : "var(--q-well-2)"}
+												strokeWidth="3"
+											/>
 										</svg>
-										<span className={cn("flex size-14 items-center justify-center rounded-full transition-colors duration-150", answer || mic === "transcribing" ? "bg-well-2 text-ink-4" : mic === "recording" ? "bg-teal-2 text-sun-ink" : "bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] group-hover:group-enabled:bg-teal-2")}>
-											{mic === "transcribing" ? <LoaderCircleIcon className="size-6 animate-spin motion-reduce:animate-none" strokeWidth={1.6} /> : <MicIcon className="size-6" strokeWidth={1.6} />}
+										<span
+											className={cn(
+												"flex size-14 items-center justify-center rounded-full transition-colors duration-150",
+												answer || mic === "transcribing"
+													? "bg-well-2 text-ink-4"
+													: mic === "recording"
+														? "bg-teal-2 text-sun-ink"
+														: "bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] group-hover:group-enabled:bg-teal-2",
+											)}
+										>
+											{mic === "transcribing" ? (
+												<LoaderCircleIcon
+													className="size-6 animate-spin motion-reduce:animate-none"
+													strokeWidth={1.6}
+												/>
+											) : (
+												<MicIcon className="size-6" strokeWidth={1.6} />
+											)}
 										</span>
 									</button>
 									<div className="min-w-0" aria-live="polite">
-										<p className="font-ui text-sm font-semibold text-foreground">{answer ? "Said" : mic === "recording" ? "Listening…" : mic === "transcribing" ? "Writing down what you said…" : "Say it"}</p>
-										<p className="mt-0.5 font-ui text-[13px] leading-snug text-ink-3">{answer ? "This sentence had its one try." : mic === "recording" ? "It stops when you pause, or press again." : micNote ?? "Press the microphone, then say the whole sentence."}</p>
+										<p className="font-ui text-sm font-semibold text-foreground">
+											{answer
+												? "Said"
+												: mic === "recording"
+													? "Listening…"
+													: mic === "transcribing"
+														? "Writing down what you said…"
+														: "Say it"}
+										</p>
+										<p className="mt-0.5 font-ui text-[13px] leading-snug text-ink-3">
+											{answer
+												? "This sentence had its one try."
+												: mic === "recording"
+													? "It stops when you pause, or press again."
+													: (micNote ?? "Press the microphone, then say the whole sentence.")}
+										</p>
 									</div>
 								</div>
 							) : (
 								<>
-									{micNote && !listening && <p className="mb-3 font-ui text-[13px] leading-snug text-ink-3">{micNote}</p>}
+									{micNote && !listening && (
+										<p className="mb-3 font-ui text-[13px] leading-snug text-ink-3">{micNote}</p>
+									)}
 									<input
-								ref={field}
-								type="text"
-								lang={language.code}
-								autoComplete="off"
-								autoCapitalize="off"
-								spellCheck={false}
-								autoFocus={!listening}
-								value={draft}
-								onChange={(e) => setDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key !== "Enter") return;
-									e.preventDefault();
-									if (canCheck) answerWith(draft.trim());
-								}}
-								disabled={!!answer}
-								aria-label={listening ? "Type the sentence you heard" : `Write the sentence in ${language.name}`}
-								placeholder={listening ? "Type what you hear" : `In ${language.name}`}
-								className={FIELD}
-								data-testid="check-input"
-							/>
+										ref={field}
+										type="text"
+										lang={language.code}
+										autoComplete="off"
+										autoCapitalize="off"
+										spellCheck={false}
+										autoFocus={!listening}
+										value={draft}
+										onChange={(e) => setDraft(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key !== "Enter") return;
+											e.preventDefault();
+											if (canCheck) answerWith(draft.trim());
+										}}
+										disabled={!!answer}
+										aria-label={listening ? "Type the sentence you heard" : `Write the sentence in ${language.name}`}
+										placeholder={listening ? "Type what you hear" : `In ${language.name}`}
+										className={FIELD}
+										data-testid="check-input"
+									/>
 								</>
 							)}
 						</div>
@@ -465,14 +652,18 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 						<div className="mt-6 min-h-[4.5rem]" data-testid="check-feedback">
 							{answer ? (
 								<div className="lh-rise">
-									<p className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground" lang={language.code}>
+									<p
+										className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground"
+										lang={language.code}
+									>
 										{item.targetSentence}
 									</p>
 									{!good && (
 										<p className="mt-2 font-prose text-base text-ink-3">
 											{answer.record.response ? (
 												<>
-													{wasSpoken(answer.record) ? "You said" : "You typed"} · <span lang={language.code}>{answer.record.response}</span>
+													{wasSpoken(answer.record) ? "You said" : "You typed"} ·{" "}
+													<span lang={language.code}>{answer.record.response}</span>
 												</>
 											) : listening ? (
 												"Not caught"
@@ -497,7 +688,11 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 									{listening && <p className="mt-3 font-prose text-base text-ink-2">{item.englishTranslation}</p>}
 								</div>
 							) : (
-								<p className="font-ui text-[13px] leading-relaxed text-ink-3">{listening ? "The text appears once you have typed what you heard." : `The sentence appears once you have ${speaking ? "said" : "written"} yours.`}</p>
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">
+									{listening
+										? "The text appears once you have typed what you heard."
+										: `The sentence appears once you have ${speaking ? "said" : "written"} yours.`}
+								</p>
 							)}
 						</div>
 					</PracticeCard>
@@ -508,13 +703,34 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 					{answer ? (
 						<>
-							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", good ? "text-teal-2" : partly ? "text-ink-2" : "text-miss")} data-testid="check-verdict">
+							<p
+								className={cn(
+									"flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]",
+									good ? "text-teal-2" : partly ? "text-ink-2" : "text-miss",
+								)}
+								data-testid="check-verdict"
+							>
 								<VerdictDisc ok={good || partly} />
-								{listening ? (good ? (answer.record.verdict === "accents" ? "Understood on the first play · only an accent is missing" : "Understood on the first play") : answer.record.response ? "Not quite" : "Not caught this time") : `${Math.round(score * 100)}% of the words`}
+								{listening
+									? good
+										? answer.record.verdict === "accents"
+											? "Understood on the first play · only an accent is missing"
+											: "Understood on the first play"
+										: answer.record.response
+											? "Not quite"
+											: "Not caught this time"
+									: `${Math.round(score * 100)}% of the words`}
 							</p>
-							<button type="button" onClick={advance} onKeyDown={(e) => {
+							<button
+								type="button"
+								onClick={advance}
+								onKeyDown={(e) => {
 									if (e.repeat) e.preventDefault();
-								}} className={PRIMARY} data-testid="check-continue" autoFocus>
+								}}
+								className={PRIMARY}
+								data-testid="check-continue"
+								autoFocus
+							>
 								{answered >= total ? "Finish" : "Continue"}
 								<span className="q-kbd">
 									<QIcon name="enter" />
@@ -523,16 +739,34 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 						</>
 					) : (
 						<>
-							<button type="button" onClick={() => answerWith("")} disabled={(listening && !played) || micBusy} className={SECONDARY} data-testid="check-give-up">
+							<button
+								type="button"
+								onClick={() => answerWith("")}
+								disabled={(listening && !played) || micBusy}
+								className={SECONDARY}
+								data-testid="check-give-up"
+							>
 								{listening ? "I didn't catch it" : "I don't know"}
 							</button>
 							{speaking ? (
-								<button type="button" onClick={() => void toggleRecording()} disabled={mic === "transcribing"} className={PRIMARY} data-testid="check-speak-toggle">
+								<button
+									type="button"
+									onClick={() => void toggleRecording()}
+									disabled={mic === "transcribing"}
+									className={PRIMARY}
+									data-testid="check-speak-toggle"
+								>
 									<MicIcon className="size-4" strokeWidth={1.8} aria-hidden="true" />
 									{micLabel}
 								</button>
 							) : (
-								<button type="button" onClick={() => answerWith(draft.trim())} disabled={!canCheck} className={PRIMARY} data-testid="check-check">
+								<button
+									type="button"
+									onClick={() => answerWith(draft.trim())}
+									disabled={!canCheck}
+									className={PRIMARY}
+									data-testid="check-check"
+								>
 									Check
 									<span className="q-kbd">
 										<QIcon name="enter" />
@@ -547,11 +781,28 @@ export function WeeklyCheckPlayer({ initialWeek, initialLanguage, languages, stt
 	);
 }
 
-function EndScreen({ week, language, other, records, save, onRetrySave, onOther }: { week: number; language: StudyLanguage; other: string | undefined; records: CheckItemRecord[]; save: SaveState; onRetrySave: () => void; onOther: (id: string) => void }) {
+function EndScreen({
+	week,
+	language,
+	other,
+	records,
+	save,
+	onRetrySave,
+	onOther,
+}: {
+	week: number;
+	language: StudyLanguage;
+	other: string | undefined;
+	records: CheckItemRecord[];
+	save: SaveState;
+	onRetrySave: () => void;
+	onOther: (id: string) => void;
+}) {
 	const probes = records.filter((r) => r.type === "probe");
 	const production = records.filter((r) => r.type === "production");
 	const understood = probes.filter((r) => r.score === 1).length;
-	const wordsRight = production.length > 0 ? Math.round((production.reduce((sum, r) => sum + r.score, 0) / production.length) * 100) : 0;
+	const wordsRight =
+		production.length > 0 ? Math.round((production.reduce((sum, r) => sum + r.score, 0) / production.length) * 100) : 0;
 	const missed = records.filter((r) => (r.type === "probe" ? r.score < 1 : r.score < CLEAR_SCORE));
 	return (
 		<TaskEnd
@@ -583,12 +834,19 @@ function EndScreen({ week, language, other, records, save, onRetrySave, onOther 
 				marks={records.map(markOf)}
 				parts={[
 					{ count: probes.length, caption: `${understood} of ${probes.length} heard right` },
-					{ count: production.length, caption: `${wordsRight}% of the words ${production.some(wasSpoken) ? "said" : "written"}` },
+					{
+						count: production.length,
+						caption: `${wordsRight}% of the words ${production.some(wasSpoken) ? "said" : "written"}`,
+					},
 				]}
 			/>
 			<TrackLegend className="!mt-3" />
 			<Stats className="mt-6 max-w-none">
-				<Stat label="Saved to the study" value={save === "saving" ? null : save === "saved" ? "Yes" : "Not yet"} ink={save === "failed" ? "text-ink-3" : undefined} />
+				<Stat
+					label="Saved to the study"
+					value={save === "saving" ? null : save === "saved" ? "Yes" : "Not yet"}
+					ink={save === "failed" ? "text-ink-3" : undefined}
+				/>
 			</Stats>
 			{missed.length > 0 && (
 				<div className="mt-8">
@@ -626,7 +884,11 @@ function CheckTop({ count, children }: { count: string; children?: React.ReactNo
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-				<Link href={STUDY_ROUTE} aria-label="Leave" className="-ml-1.5 rounded-lg p-1.5 text-ink-3 transition-colors hover:bg-well hover:text-ink-2 pointer-coarse:-ml-3 pointer-coarse:p-3">
+				<Link
+					href={STUDY_ROUTE}
+					aria-label="Leave"
+					className="-ml-1.5 rounded-lg p-1.5 text-ink-3 transition-colors hover:bg-well hover:text-ink-2 pointer-coarse:-ml-3 pointer-coarse:p-3"
+				>
 					<XIcon className="size-5" strokeWidth={1.6} />
 				</Link>
 				{children ?? <span className="flex-1" />}

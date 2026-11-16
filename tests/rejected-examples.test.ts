@@ -37,7 +37,13 @@ describe("rejected examples", () => {
 	it("pick the next sentence when the best one is rejected", () => {
 		const entry = {
 			examples: [
-				{ sk: "Dom je veľký.", en: "The house is big.", src: "tatoeba", cloze: { answer: "Dom", at: 0 }, rejected: true },
+				{
+					sk: "Dom je veľký.",
+					en: "The house is big.",
+					src: "tatoeba",
+					cloze: { answer: "Dom", at: 0 },
+					rejected: true,
+				},
 				{ sk: "Ten dom je malý.", en: "That house is small.", src: "tatoeba", cloze: { answer: "dom", at: 4 } },
 			],
 		} as any;

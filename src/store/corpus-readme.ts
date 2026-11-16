@@ -213,7 +213,7 @@ story at your level, each paid for once and kept here for good.
   named \`<id>-pNN.json\`, with \`source\` (which text and which part) and
   \`original\` (the section of your text it was written from).
 
-The sentences\' audio is in \`../../../audio/\` like every other clip.
+The sentences' audio is in \`../../../audio/\` like every other clip.
 `;
 
 const SPEAK = `# speak/
@@ -320,7 +320,6 @@ everything the app made of its captions, paid for once.
   lines got first time is the listening-speed signal.
 `;
 
-
 const DISTRACTORS = `# Distractors
 
 Wrong answers for the meaning questions (Lesson meaning reps and Listen),
@@ -352,4 +351,16 @@ Phrase lists you made under Words → Cheatsheets, one JSON file per sheet:
   that measures your listening reads them.
 `;
 
-export const DATA_READMES = { root: ROOT, audio: AUDIO, profile: PROFILE, lessons: LESSONS, chats: CHATS, stories: STORIES, speak: SPEAK, fluency: FLUENCY, videos: VIDEOS, distractors: DISTRACTORS, cheatsheets: CHEATSHEETS } as const;
+export const DATA_READMES = {
+	root: ROOT,
+	audio: AUDIO,
+	profile: PROFILE,
+	lessons: LESSONS,
+	chats: CHATS,
+	stories: STORIES,
+	speak: SPEAK,
+	fluency: FLUENCY,
+	videos: VIDEOS,
+	distractors: DISTRACTORS,
+	cheatsheets: CHEATSHEETS,
+} as const;

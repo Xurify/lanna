@@ -24,7 +24,10 @@ after(() => {
 	fs.rmSync(TMP, { recursive: true, force: true });
 });
 
-const call = (id: string) => route.DELETE(new Request(`http://localhost/api/keys/${id}`, { method: "DELETE" }), { params: Promise.resolve({ id }) });
+const call = (id: string) =>
+	route.DELETE(new Request(`http://localhost/api/keys/${id}`, { method: "DELETE" }), {
+		params: Promise.resolve({ id }),
+	});
 
 describe("auth file test fence", () => {
 	it("resolves inside the test data folder, never the repo-root auth.json", () => {

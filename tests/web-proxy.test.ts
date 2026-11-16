@@ -30,7 +30,12 @@ const proxied = (overrides: Record<string, string> = {}) => ({
 	...overrides,
 });
 const call = (pathname: string, init: { method?: string; headers?: Record<string, string> } = {}) =>
-	proxy(new NextRequest(`http://127.0.0.1:3010${pathname}`, { method: init.method ?? "GET", headers: init.headers ?? proxied() }));
+	proxy(
+		new NextRequest(`http://127.0.0.1:3010${pathname}`, {
+			method: init.method ?? "GET",
+			headers: init.headers ?? proxied(),
+		}),
+	);
 const passes = (response: Response) => response.headers.get("x-middleware-next") === "1";
 
 describe("proxy.ts at the public address", () => {
@@ -58,7 +63,10 @@ describe("proxy.ts at the public address", () => {
 
 	it("lets the sign-in page, its POST and the static files through without a session", async () => {
 		assert.equal(passes(await call("/login")), true);
-		assert.equal(passes(await call("/api/access/login", { method: "POST", headers: proxied({ origin: `https://${HOST}` }) })), true);
+		assert.equal(
+			passes(await call("/api/access/login", { method: "POST", headers: proxied({ origin: `https://${HOST}` }) })),
+			true,
+		);
 		assert.equal(passes(await call("/_next/static/chunks/app.js")), true);
 	});
 
@@ -76,7 +84,10 @@ describe("proxy.ts at the public address", () => {
 	});
 
 	it("refuses a page request that comes from another site's form", async () => {
-		const response = await call("/api/access/login", { method: "POST", headers: proxied({ origin: "https://evil.example" }) });
+		const response = await call("/api/access/login", {
+			method: "POST",
+			headers: proxied({ origin: "https://evil.example" }),
+		});
 		assert.equal(response.status, 403);
 	});
 
@@ -88,8 +99,17 @@ describe("proxy.ts at the public address", () => {
 		const cookie = { cookie: `lh_device=${result.token}` };
 		assert.equal(passes(await call("/", { headers: proxied(cookie) })), true);
 		assert.equal(passes(await call("/api/progress", { headers: proxied(cookie) })), true);
-		assert.equal(passes(await call("/api/settings", { method: "PUT", headers: proxied({ ...cookie, origin: `https://${HOST}` }) })), true);
-		assert.equal((await call("/api/settings", { method: "PUT", headers: proxied(cookie) })).status, 403, "a change without the page's Origin");
+		assert.equal(
+			passes(
+				await call("/api/settings", { method: "PUT", headers: proxied({ ...cookie, origin: `https://${HOST}` }) }),
+			),
+			true,
+		);
+		assert.equal(
+			(await call("/api/settings", { method: "PUT", headers: proxied(cookie) })).status,
+			403,
+			"a change without the page's Origin",
+		);
 		await access.revokeToken(result.token);
 		assert.equal((await call("/", { headers: proxied(cookie) })).status, 307);
 	});

@@ -70,7 +70,15 @@ describe("estimateContextTokens (usage-anchored, pi's law)", () => {
 			id,
 			role: "assistant",
 			content: [{ type: "text", text: "ok" }],
-			usage: { input: total - 10, output: 10, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: total, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+			usage: {
+				input: total - 10,
+				output: 10,
+				cacheRead: 0,
+				cacheWrite: 0,
+				reasoning: 0,
+				totalTokens: total,
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+			},
 			stopReason: trailing ? "aborted" : "toolUse",
 			timestamp: 1,
 		}) as never;
@@ -129,7 +137,15 @@ describe("estimateMessageTokens (wire text only — the 3x-inflation fix)", () =
 				{ type: "thinking", thinking: "y".repeat(800), thinkingSignature: "sig" },
 				{ type: "toolCall", id: "c1", name: "quiz", arguments: { q: "z".repeat(200) } },
 			],
-			usage: { input: 9_999_999, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 10_000_000, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+			usage: {
+				input: 9_999_999,
+				output: 1,
+				cacheRead: 0,
+				cacheWrite: 0,
+				reasoning: 0,
+				totalTokens: 10_000_000,
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+			},
 			responseId: "r".repeat(300),
 			timestamp: 1,
 		} as never as LhMessage;
@@ -153,7 +169,11 @@ describe("compactionCutIndex", () => {
 		const cut = compactionCutIndex(messages, 4_500);
 		// check-at-loop-top: kept = [m2, m3, m4, recent] ≈ 6.2k — the first
 		// end-prefix whose estimate reaches the budget (overshoot = one message)
-		assert.equal((messages[cut] as { content: string }).content.startsWith("m2"), true, "the oldest kept message sits at the cut");
+		assert.equal(
+			(messages[cut] as { content: string }).content.startsWith("m2"),
+			true,
+			"the oldest kept message sits at the cut",
+		);
 	});
 
 	it("native cut after an oversized result drops both call and result, never keeps an orphan", () => {
@@ -178,7 +198,10 @@ describe("compactionCutIndex", () => {
 		const messages = [big("m1"), big("m2"), big("m3"), assistantWithCall("a_pending", "call_p")];
 		const cut = compactionCutIndex(messages, 100); // tiny budget
 		const kept = messages.slice(cut);
-		assert.ok(kept.some((m) => m.id === "a_pending"), "the pending pose is never dropped");
+		assert.ok(
+			kept.some((m) => m.id === "a_pending"),
+			"the pending pose is never dropped",
+		);
 	});
 
 	it("whole history within budget keeps everything (zero cut)", () => {
@@ -215,12 +238,20 @@ describe("the compaction marker", () => {
 	});
 
 	it("keptIndexFor: found by id; missing → -1 (the honest-fallback signal)", () => {
-		const marker = newCompactionMarker("s", { firstKeptMessageId: "m2", tokensBefore: 1, at: "t" }) as LhMarkerMessage & { details: { firstKeptMessageId: string } };
+		const marker = newCompactionMarker("s", {
+			firstKeptMessageId: "m2",
+			tokensBefore: 1,
+			at: "t",
+		}) as LhMarkerMessage & { details: { firstKeptMessageId: string } };
 		const messages = [newUserMessage("a"), newUserMessage("b"), newUserMessage("c")];
 		messages[0]!.id = "m1";
 		messages[1]!.id = "m2";
 		assert.equal(keptIndexFor(messages as never, marker as never), 1);
-		const gone = newCompactionMarker("s", { firstKeptMessageId: "zzz", tokensBefore: 1, at: "t" }) as LhMarkerMessage & { details: { firstKeptMessageId: string } };
+		const gone = newCompactionMarker("s", {
+			firstKeptMessageId: "zzz",
+			tokensBefore: 1,
+			at: "t",
+		}) as LhMarkerMessage & { details: { firstKeptMessageId: string } };
 		assert.equal(keptIndexFor(messages as never, gone as never), -1);
 	});
 });
@@ -239,8 +270,10 @@ describe("toLlmMessages honors the cut", () => {
 		const out = toLlmMessages([...span, ...kept, marker] as never);
 		assert.equal(out.length, 3, "head + two kept messages");
 		assert.equal((out[0] as { role: string }).role, "user");
-		assert.ok(((out[0] as { content: Array<{ type: string; text: string }> }).content[0]!.text).includes("SUMMARY TEXT"));
-		assert.ok(((out[0] as never as { content: Array<{ text: string }> }).content[0]!.text).includes(COMPACTED_HISTORY_HEADER));
+		assert.ok((out[0] as { content: Array<{ type: string; text: string }> }).content[0]!.text.includes("SUMMARY TEXT"));
+		assert.ok(
+			(out[0] as never as { content: Array<{ text: string }> }).content[0]!.text.includes(COMPACTED_HISTORY_HEADER),
+		);
 		assert.equal((out[1] as never as { content: string }).content, "m2", "kept user message rides verbatim");
 		// The dropped span is nowhere.
 		const flat = JSON.stringify(out);
@@ -253,7 +286,11 @@ describe("toLlmMessages honors the cut", () => {
 		const after = [newUserMessage("later")];
 		const out = toLlmMessages([...kept, marker, ...after] as never);
 		assert.equal(out.length, 3, "head + kept + later — the marker's own position skipped");
-		assert.equal(JSON.stringify(out).indexOf("COMPACTED]"), JSON.stringify(out).lastIndexOf("COMPACTED]"), "header appears exactly once");
+		assert.equal(
+			JSON.stringify(out).indexOf("COMPACTED]"),
+			JSON.stringify(out).lastIndexOf("COMPACTED]"),
+			"header appears exactly once",
+		);
 	});
 
 	it("a pending (dangling) question call in the KEPT tail still gets the interrupted synthesis", () => {
@@ -292,7 +329,15 @@ describe("serializeForSummary + buildCompactionPrompt", () => {
 			newUserMessage("hello"),
 			assistantText("a1", "lecture"),
 			resultFor("c1", long),
-			{ id: "pb", role: "custom", customType: "plan-block", content: "", display: true, details: {}, timestamp: 1 } as never,
+			{
+				id: "pb",
+				role: "custom",
+				customType: "plan-block",
+				content: "",
+				display: true,
+				details: {},
+				timestamp: 1,
+			} as never,
 		];
 		const text = serializeForSummary(messages);
 		assert.ok(text.includes("[LEARNER] hello"));
@@ -304,11 +349,22 @@ describe("serializeForSummary + buildCompactionPrompt", () => {
 	});
 
 	it("the prompt demands the four sections in order and carries the plan tree verbatim", () => {
-		const prompt = buildCompactionPrompt({ spanText: "TRANSCRIPT", planTreeText: "- [done] A (a1)\n- A → B", kind: "teach" });
-		const order = ["The learner's understanding", "The teaching arc", "The plan dependency tree", "The current moment"].map(
-			(s) => prompt.indexOf(s),
+		const prompt = buildCompactionPrompt({
+			spanText: "TRANSCRIPT",
+			planTreeText: "- [done] A (a1)\n- A → B",
+			kind: "teach",
+		});
+		const order = [
+			"The learner's understanding",
+			"The teaching arc",
+			"The plan dependency tree",
+			"The current moment",
+		].map((s) => prompt.indexOf(s));
+		assert.deepEqual(
+			order,
+			[...order].sort((a, b) => a - b),
+			"sections appear in the ruled order",
 		);
-		assert.deepEqual(order, [...order].sort((a, b) => a - b), "sections appear in the ruled order");
 		assert.ok(prompt.includes("TRANSCRIPT"));
 		assert.ok(prompt.includes("- [done] A (a1)"));
 	});
@@ -402,17 +458,13 @@ describe("toLlmMessages carries the leading system message (request chrome)", ()
 		assert.equal(out[1]!.role, "user");
 		assert.ok((out[1]!.content as { text: string }[])[0]!.text.includes("SUMMARY"));
 		const textOf = (m: (typeof out)[number]): string =>
-			typeof m.content === "string"
-				? m.content
-				: ((m.content as { text?: string }[])[0]?.text ?? "");
+			typeof m.content === "string" ? m.content : ((m.content as { text?: string }[])[0]?.text ?? "");
 		assert.ok(out.slice(2).some((m) => m.role === "user" && textOf(m) === "kept tail"));
 		assert.ok(!out.some((m) => m.role === "user" && textOf(m) === "dropped history"));
 	});
 
 	it("without a cut the chrome renders EXACTLY ONCE (no duplicate)", () => {
-		const plain = [
-			{ id: "u1", role: "user", content: "hello", timestamp: 1 },
-		] as unknown as LhMessage[];
+		const plain = [{ id: "u1", role: "user", content: "hello", timestamp: 1 }] as unknown as LhMessage[];
 		const out = toLlmMessages([chrome, ...plain] as never);
 		assert.equal(out.filter((m) => m.role === "system").length, 1);
 		assert.equal(out[0]!.role, "system");
@@ -422,9 +474,7 @@ describe("toLlmMessages carries the leading system message (request chrome)", ()
 		const out = toLlmMessages(record());
 		assert.notEqual(out[0]!.role, "system");
 		const headText =
-			typeof out[0]!.content === "string"
-				? out[0]!.content
-				: ((out[0]!.content as { text?: string }[])[0]?.text ?? "");
+			typeof out[0]!.content === "string" ? out[0]!.content : ((out[0]!.content as { text?: string }[])[0]?.text ?? "");
 		assert.ok(headText.includes("SUMMARY"));
 	});
 });

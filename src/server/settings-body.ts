@@ -30,13 +30,16 @@ import type {
 	ModelsSettings,
 	RoleModelOverride,
 } from "../core/settings.ts";
-import { BACKGROUND_MODEL_ROLES, COMPACTION_THRESHOLD_FLOOR, MODEL_SLOTS, RETIRED_MODEL_ROLES } from "../core/settings.ts";
+import {
+	BACKGROUND_MODEL_ROLES,
+	COMPACTION_THRESHOLD_FLOOR,
+	MODEL_SLOTS,
+	RETIRED_MODEL_ROLES,
+} from "../core/settings.ts";
 import { RETIRED_TOOL_KEYS, WRITABLE_TOOL_KEYS } from "../core/pending.ts";
 
 /** Parsed-or-rejected — `ok: false` carries the 400's error message. */
-export type SettingsBodyResult<T> =
-	| { ok: true; settings: T }
-	| { ok: false; error: string };
+export type SettingsBodyResult<T> = { ok: true; settings: T } | { ok: false; error: string };
 
 export function parseSettingsBody(body: unknown): SettingsBodyResult<ChatSettings> {
 	if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -94,7 +97,10 @@ function parseGeneralSettingsBody(body: unknown): SettingsBodyResult<GeneralSett
 
 /** agent.models: only the six known background roles; each override's
  *  fields mirror ChatSettings (model pair + independent thinkingLevel). */
-function parseRoleOverride(value: unknown, role: string): { ok: true; override: RoleModelOverride } | { ok: false; error: string } {
+function parseRoleOverride(
+	value: unknown,
+	role: string,
+): { ok: true; override: RoleModelOverride } | { ok: false; error: string } {
 	const raw = asRecord(value);
 	if (!raw) return { ok: false, error: `${role} must be an object` };
 	const override: RoleModelOverride = {};
@@ -222,7 +228,7 @@ function parseAppearanceSettingsBody(body: unknown): SettingsBodyResult<Appearan
 	const settings: AppearanceSettings = {};
 	if (raw.mode !== undefined) {
 		if (raw.mode !== "dark" && raw.mode !== "light") {
-			return { ok: false, error: "mode must be \"dark\" or \"light\"" };
+			return { ok: false, error: 'mode must be "dark" or "light"' };
 		}
 		settings.mode = raw.mode;
 	}
@@ -305,7 +311,10 @@ function parseModelsSettingsBody(body: unknown): SettingsBodyResult<ModelsSettin
 		// write must carry the model (the level is an optional rider). An
 		// absent slot key clears the tier (replace-whole section).
 		if (!parsed.override.model) {
-			return { ok: false, error: `slot "${key}" must set a model (thinkingLevel alone cannot run — absent slot = unset)` };
+			return {
+				ok: false,
+				error: `slot "${key}" must set a model (thinkingLevel alone cannot run — absent slot = unset)`,
+			};
 		}
 		settings[key as (typeof MODEL_SLOTS)[number]] = parsed.override;
 	}

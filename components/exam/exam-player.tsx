@@ -19,15 +19,41 @@ import { readOrigin } from "@/components/origin";
 import { RotateCcwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop, VerdictDisc } from "@/components/task-frame";
+import {
+	COLUMN,
+	Dock,
+	endEnterBlocked,
+	EnterHint,
+	OptionTile,
+	PracticeCard,
+	SentenceRow,
+	SentenceRows,
+	Stat,
+	Stats,
+	TaskEnd,
+	TaskFrame,
+	TaskTop,
+	VerdictDisc,
+} from "@/components/task-frame";
 import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { QIcon } from "@/components/quiet/icon";
 import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
 import { speak, useActiveLanguage } from "@/components/speech";
 
-type Phase = { state: "playing" } | { state: "saving"; score: ExamScore } | { state: "result"; score: ExamScore; recorded: boolean };
+type Phase =
+	| { state: "playing" }
+	| { state: "saving"; score: ExamScore }
+	| { state: "result"; score: ExamScore; recorded: boolean };
 
-export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; title: string; initial: ExamDraw | null }) {
+export function ExamPlayer({
+	chapterId,
+	title,
+	initial,
+}: {
+	chapterId: string;
+	title: string;
+	initial: ExamDraw | null;
+}) {
 	const router = useRouter();
 	const lang = useActiveLanguage();
 	const [draw, setDraw] = useState<ExamDraw | null>(initial);
@@ -70,7 +96,11 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 		// for the server's own grade from the seed — the record.
 		const score = scoreExam(items, answers);
 		setPhase({ state: "saving", score });
-		fetch("/api/exam", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chapter: chapterId, seed: draw.seed, answers }) })
+		fetch("/api/exam", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ chapter: chapterId, seed: draw.seed, answers }),
+		})
 			.then((res) => setPhase({ state: "result", score, recorded: res.ok }))
 			.catch(() => setPhase({ state: "result", score, recorded: false }));
 	}, [phase, picked, index, items, answers, chapterId, draw]);
@@ -126,17 +156,19 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto py-10")}>
 					<p className="q-date">Chapter exam · {title}</p>
-						<h1 className="q-hello">{draw ? "No exam for this chapter yet" : "The exam did not load"}</h1>
-						<p className="q-sub max-w-md">
-						{draw ? "This chapter has no words or drills to draw from. The rest of the curriculum still works." : "Check the connection, then try again."}
+					<h1 className="q-hello">{draw ? "No exam for this chapter yet" : "The exam did not load"}</h1>
+					<p className="q-sub max-w-md">
+						{draw
+							? "This chapter has no words or drills to draw from. The rest of the curriculum still works."
+							: "Check the connection, then try again."}
 					</p>
 					{error && (
 						<p className="mt-3 font-ui text-sm text-miss" role="alert">
-								{error}
-							</p>
-						)}
-						<div className="q-acts mt-6">
-							{!draw && (
+							{error}
+						</p>
+					)}
+					<div className="q-acts mt-6">
+						{!draw && (
 							<button type="button" onClick={retry} disabled={drawing} className={PRIMARY}>
 								Try again
 							</button>
@@ -161,7 +193,13 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 						<>
 							{score.passed ? (
 								<>
-									<button type="button" onClick={retry} disabled={drawing} className={SECONDARY} data-testid="exam-retry">
+									<button
+										type="button"
+										onClick={retry}
+										disabled={drawing}
+										className={SECONDARY}
+										data-testid="exam-retry"
+									>
 										<RotateCcwIcon className="size-4" strokeWidth={1.6} />
 										Try again
 									</button>
@@ -189,35 +227,50 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 					</p>
 					<h1 className="q-hello">{score.passed ? "Passed." : "Not passed."}</h1>
 					<Stats className="mt-7 max-w-none">
-							<Stat label="Score" value={`${score.correct} of ${score.total}`} ink={score.passed ? "text-teal-2" : "text-foreground"} />
-							<Stat label="Pass mark" value={`${Math.ceil(EXAM_PASS_MARK * score.total)} of ${score.total}`} ink="text-ink-2" />
-						</Stats>
-						<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="exam-saved">
-						{phase.state === "saving" ? "Saving…" : phase.recorded ? "Saved. It shows in Curriculum." : "This attempt was not saved, so Curriculum will not show it."}
+						<Stat
+							label="Score"
+							value={`${score.correct} of ${score.total}`}
+							ink={score.passed ? "text-teal-2" : "text-foreground"}
+						/>
+						<Stat
+							label="Pass mark"
+							value={`${Math.ceil(EXAM_PASS_MARK * score.total)} of ${score.total}`}
+							ink="text-ink-2"
+						/>
+					</Stats>
+					<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="exam-saved">
+						{phase.state === "saving"
+							? "Saving…"
+							: phase.recorded
+								? "Saved. It shows in Curriculum."
+								: "This attempt was not saved, so Curriculum will not show it."}
 					</p>
 					{score.misses.length > 0 && (
 						<div className="mt-8" data-testid="exam-misses" data-word-lookup-enabled="true">
-								<h2 className="q-sh">Missed</h2>
-								<SentenceRows>
-									{score.misses.map((id) => {
-										const missed = items.find((i) => i.id === id);
-										if (!missed) return null;
-										return (
-											<SentenceRow
-												key={id}
-												sentence={missed.sentence}
-												lang={lang?.code}
-												translation={missed.translation}
-												onPlay={() => void speak(missed.sentence).catch(() => {})}
-												note={
-													<span>
-														The answer is <span className="font-semibold text-teal-2" lang={lang?.code}>{missed.answer}</span>
+							<h2 className="q-sh">Missed</h2>
+							<SentenceRows>
+								{score.misses.map((id) => {
+									const missed = items.find((i) => i.id === id);
+									if (!missed) return null;
+									return (
+										<SentenceRow
+											key={id}
+											sentence={missed.sentence}
+											lang={lang?.code}
+											translation={missed.translation}
+											onPlay={() => void speak(missed.sentence).catch(() => {})}
+											note={
+												<span>
+													The answer is{" "}
+													<span className="font-semibold text-teal-2" lang={lang?.code}>
+														{missed.answer}
 													</span>
-												}
-											/>
-										);
-									})}
-								</SentenceRows>
+												</span>
+											}
+										/>
+									);
+								})}
+							</SentenceRows>
 						</div>
 					)}
 					{error && (
@@ -233,11 +286,21 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 	// ── playing ──
 	return (
 		<TaskFrame>
-			<TaskTop progress={(index + (picked !== null ? 1 : 0)) / items.length} label={`Question ${index + 1} of ${items.length}`} count={`${index + 1}/${items.length}`}  href="/curriculum" />
+			<TaskTop
+				progress={(index + (picked !== null ? 1 : 0)) / items.length}
+				label={`Question ${index + 1} of ${items.length}`}
+				count={`${index + 1}/${items.length}`}
+				href="/curriculum"
+			/>
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
 				<div className={COLUMN}>
 					<PracticeCard icon="grammar" title={`Chapter exam · ${title}`} right={`${index + 1} of ${items.length}`}>
-						<p className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]" lang={lang?.code} data-testid="exam-sentence" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
+						<p
+							className="font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[44px] sm:leading-[64px]"
+							lang={lang?.code}
+							data-testid="exam-sentence"
+							data-word-lookup-enabled={picked !== null ? "true" : "false"}
+						>
 							{item!.before}
 							<span className="q-blank mx-0.5 w-[5ch]" aria-label="blank" />
 							{item!.after}
@@ -248,7 +311,15 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 								const chosen = picked === i;
 								const isAnswer = o === item!.answer;
 								return (
-									<OptionTile key={i} n={i + 1} lang={lang?.code} testId={`exam-option-${i}`} disabled={picked !== null} onClick={() => pick(i)} state={picked === null ? "idle" : isAnswer ? "right" : chosen ? "wrong" : "dim"}>
+									<OptionTile
+										key={i}
+										n={i + 1}
+										lang={lang?.code}
+										testId={`exam-option-${i}`}
+										disabled={picked !== null}
+										onClick={() => pick(i)}
+										state={picked === null ? "idle" : isAnswer ? "right" : chosen ? "wrong" : "dim"}
+									>
 										{o}
 									</OptionTile>
 								);
@@ -273,16 +344,29 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 								<VerdictDisc ok={right} />
 							</span>
 							<div className="min-w-0">
-								<p className={cn("font-ui text-[19px] font-semibold leading-tight tracking-[-0.015em]", right ? "text-teal-2" : "text-miss")}>{right ? "Right" : "Not quite"}</p>
+								<p
+									className={cn(
+										"font-ui text-[19px] font-semibold leading-tight tracking-[-0.015em]",
+										right ? "text-teal-2" : "text-miss",
+									)}
+								>
+									{right ? "Right" : "Not quite"}
+								</p>
 								{!right && (
 									<p className="mt-1 font-prose text-[15px] text-foreground">
-										The answer is <span className="font-semibold" lang={lang?.code}>{item!.answer}</span>.
+										The answer is{" "}
+										<span className="font-semibold" lang={lang?.code}>
+											{item!.answer}
+										</span>
+										.
 									</p>
 								)}
 								<p className="mt-1 font-prose text-[15px] text-foreground" lang={lang?.code}>
 									{item!.sentence}
 								</p>
-								<p data-no-word-lookup="true" className="font-prose text-sm text-ink-3">{item!.translation}</p>
+								<p data-no-word-lookup="true" className="font-prose text-sm text-ink-3">
+									{item!.translation}
+								</p>
 							</div>
 						</div>
 					)}
@@ -293,6 +377,6 @@ export function ExamPlayer({ chapterId, title, initial }: { chapterId: string; t
 					)}
 				</div>
 			</Dock>
-			</TaskFrame>
+		</TaskFrame>
 	);
 }

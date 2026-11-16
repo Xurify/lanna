@@ -1,40 +1,38 @@
 # LangHarness
 
-A fork of LearnHarness 0.3.8 for learning Slovak, and any language added from the app,
-with bridges from the languages you already know. Built on branch `slovak` from the plan in
-`wayfinder-slovak-harness-spec.md`.
+Version 0.1.0 — a local-first, agent-assisted language learning harness (Slovak built in, plus any language added from the app), with bridges from the languages you already know.
 
 What each page does is on the page, and the research behind each task is on **Sources** (`/sources`). This file holds what the app cannot show you: how to run it, keys, commands and limits. The rules for working on it are in [CLAUDE.md](CLAUDE.md).
 
 ## Pages
 
-| Page | Route |
-|---|---|
-| Today | `/` |
-| Setup | `/start` |
-| Lesson, Blitz | `/lesson?unit=<id>`, `/lesson?mode=blitz` |
-| Chapter exam | `/exam?chapter=<id>` |
-| Curriculum | `/curriculum` |
-| Review | `/review` |
-| Words, Phrases, Cheatsheets | `/words`, `/words?tab=cheatsheets` |
-| Grammar | `/grammar` |
-| Mistakes | `/mistakes` |
-| Catch the mistake | `/catch` |
-| Listen | `/listen` |
-| Today's line | `/line` |
-| Read | `/read`: the library of stories, and your own articles and newsletters (a link or pasted text), retold at your level or not simplified |
-| Speak, Talk in writing | `/speak`, `/speak?mode=typed` |
-| Speed | `/speed` |
-| Sound | `/sound?id=<id>` |
-| Ear gym | `/phonology` |
-| Media (Watch, Get ready) | `/watch` |
-| Chat | `/chat/new`, `/chat/<id>` |
-| When can I…? | `/milestones` |
-| Progress, Stamps | `/progress`, `/progress#stamps` |
-| Sources | `/sources` |
-| Tasks | `/tasks` |
-| Log (what was done each day) | `/log` |
-| Pair a device | `/pair` |
+| Page                         | Route                                                                                                                                  |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Today                        | `/`                                                                                                                                    |
+| Setup                        | `/start`                                                                                                                               |
+| Lesson, Blitz                | `/lesson?unit=<id>`, `/lesson?mode=blitz`                                                                                              |
+| Chapter exam                 | `/exam?chapter=<id>`                                                                                                                   |
+| Curriculum                   | `/curriculum`                                                                                                                          |
+| Review                       | `/review`                                                                                                                              |
+| Words, Phrases, Cheatsheets  | `/words`, `/words?tab=cheatsheets`                                                                                                     |
+| Grammar                      | `/grammar`                                                                                                                             |
+| Mistakes                     | `/mistakes`                                                                                                                            |
+| Catch the mistake            | `/catch`                                                                                                                               |
+| Listen                       | `/listen`                                                                                                                              |
+| Today's line                 | `/line`                                                                                                                                |
+| Read                         | `/read`: the library of stories, and your own articles and newsletters (a link or pasted text), retold at your level or not simplified |
+| Speak, Talk in writing       | `/speak`, `/speak?mode=typed`                                                                                                          |
+| Speed                        | `/speed`                                                                                                                               |
+| Sound                        | `/sound?id=<id>`                                                                                                                       |
+| Ear gym                      | `/phonology`                                                                                                                           |
+| Media (Watch, Get ready)     | `/watch`                                                                                                                               |
+| Chat                         | `/chat/new`, `/chat/<id>`                                                                                                              |
+| When can I…?                 | `/milestones`                                                                                                                          |
+| Progress, Stamps             | `/progress`, `/progress#stamps`                                                                                                        |
+| Sources                      | `/sources`                                                                                                                             |
+| Tasks                        | `/tasks`                                                                                                                               |
+| Log (what was done each day) | `/log`                                                                                                                                 |
+| Pair a device                | `/pair`                                                                                                                                |
 
 Languages: Slovak is built in. Every other language is added from the language menu, **Add a language…**, which builds its course in the background ([docs/adding-a-language.md](docs/adding-a-language.md)). Each language keeps its own data under `data/profiles/<language>/`, and each device keeps its own language.
 
@@ -53,7 +51,7 @@ A phone or iPad reaches the app over your own Tailscale network. It is off by de
 - [docs/research/README.md](docs/research/README.md): the research note behind each task.
 - `.claude/skills/gamification-loops/`: the agent skill behind the stamps and streaks, with its origin in `SOURCE.md`; read it before changing any reward mechanic.
 - [docs/corpus.md](docs/corpus.md): where every generated thing is kept under `data/`.
-- [docs/development.md](docs/development.md), [docs/adding-a-language.md](docs/adding-a-language.md), [docs/desktop-release.md](docs/desktop-release.md): the upstream guides.
+- [docs/development.md](docs/development.md), [docs/adding-a-language.md](docs/adding-a-language.md), [docs/desktop-release.md](docs/desktop-release.md): development, language-addition, and desktop-release guides.
 
 ## Run it
 
@@ -62,7 +60,7 @@ npm install
 npm run dev          # http://localhost:3010
 ```
 
-Add a model key in Settings → API keys as in LearnHarness.
+Add an AI key or connect a subscription directly in Settings → API keys (AI keys and Subscriptions both work directly).
 
 Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 
@@ -74,8 +72,7 @@ Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 - Edge voices need no key, only internet.
 - Piper works offline: set `PIPER_PATH` to the binary and `PIPER_MODEL_SK` to a Slovak `.onnx` voice.
 
-On Windows, `npm test` and `npm run desktop:dev` use Unix-style env syntax
-inherited from upstream. Run them from Git Bash, or once run
+On Windows, `npm test` and `npm run desktop:dev` use Unix-style env syntax. Run them from Git Bash, or once run
 `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
 
 ## Refresh the curriculum
@@ -103,4 +100,4 @@ fresh, delete `data/profiles/slovak/`.
 
 ## License
 
-Upstream: [LearnHarness](https://github.com/amosblomqvist/learnharness). [AGPL-3.0](LICENSE).
+[AGPL-3.0](LICENSE).

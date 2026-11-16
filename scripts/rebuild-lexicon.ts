@@ -24,7 +24,12 @@ if (ids.length === 0) {
 for (const id of ids) {
 	const file = path.join(PATHS.languages, id, "lexicon.json");
 	if (fs.existsSync(file)) {
-		const kept = path.join(PATHS.languages, id, "build", `lexicon-before-${new Date().toISOString().slice(0, 10)}.json`);
+		const kept = path.join(
+			PATHS.languages,
+			id,
+			"build",
+			`lexicon-before-${new Date().toISOString().slice(0, 10)}.json`,
+		);
 		if (!fs.existsSync(kept)) fs.copyFileSync(file, kept);
 	}
 	const { words, examples } = await rebuildLexicon(id);

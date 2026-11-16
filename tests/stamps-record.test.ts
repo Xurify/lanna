@@ -27,7 +27,15 @@ const rep = (slug: string, verdict: "exact" | "wrong") => ({
 	kind: "type" as const,
 	verdict,
 	first: { given: slug, verdict },
-	detail: { unit: "words", lemma: slug, gloss: slug, sentence: `${slug}.`, translation: `${slug}.`, answer: slug, given: slug },
+	detail: {
+		unit: "words",
+		lemma: slug,
+		gloss: slug,
+		sentence: `${slug}.`,
+		translation: `${slug}.`,
+		answer: slug,
+		given: slug,
+	},
 });
 
 test("a fresh learner has no stamps; the first lesson without a miss earns the first step and 'Bez chyby', dated that day, once", () => {
@@ -37,7 +45,15 @@ test("a fresh learner has no stamps; the first lesson without a miss earns the f
 	assert.equal(before.stamps.next.length, 3, "three stamps to aim for from the start");
 	assert.equal(progressStore.read().stamps, undefined, "nothing on record yet");
 
-	const out = recordLesson({ unit: "words", mode: "lesson", reps: ["dom", "pes", "voda", "chlieb", "mesto", "ruka"].map((w) => rep(w, "exact")), tz: 0 }, new Date("2026-11-02T09:00:00Z"));
+	const out = recordLesson(
+		{
+			unit: "words",
+			mode: "lesson",
+			reps: ["dom", "pes", "voda", "chlieb", "mesto", "ruka"].map((w) => rep(w, "exact")),
+			tz: 0,
+		},
+		new Date("2026-11-02T09:00:00Z"),
+	);
 	assert.ok(out.perfect, "every answer right");
 	const ids = (out.newStamps ?? []).map((s) => s.id).sort();
 	assert.deepEqual(ids, ["first-step", "perfect-1"]);
@@ -51,7 +67,10 @@ test("a fresh learner has no stamps; the first lesson without a miss earns the f
 	assert.deepEqual(onDisk.stamps, { "first-step": "2026-11-02", "perfect-1": "2026-11-02" });
 	assert.equal(onDisk.days["2026-11-02"]?.perfect, 1, "the day counts the perfect lesson");
 
-	const again = recordLesson({ unit: "words", mode: "lesson", reps: [rep("dom", "exact"), rep("pes", "wrong")], tz: 0 }, new Date("2026-11-02T10:00:00Z"));
+	const again = recordLesson(
+		{ unit: "words", mode: "lesson", reps: [rep("dom", "exact"), rep("pes", "wrong")], tz: 0 },
+		new Date("2026-11-02T10:00:00Z"),
+	);
 	assert.equal(again.perfect, false);
 	assert.equal(again.newStamps, undefined, "nothing new the second time");
 	assert.equal(again.summary.stamps.earned, 2);
@@ -79,7 +98,10 @@ test("a stamp on record keeps its day when judged again, and syncStamps only wri
 		stages: new Map<string, number>(),
 	};
 	const { report, minted } = syncStamps(p, curriculum, evidence, "2026-11-09");
-	assert.deepEqual(minted.map((s) => s.id), ["stories-1"]);
+	assert.deepEqual(
+		minted.map((s) => s.id),
+		["stories-1"],
+	);
 	assert.equal(p.stamps?.["stories-1"], "2026-11-09");
 	assert.equal(p.stamps?.["first-step"], "2026-11-02", "the earlier day stays");
 	const first = report.all.find((s) => s.id === "first-step")!;
@@ -109,5 +131,9 @@ test("the trail log counts the minutes measured, apart from the guided hours the
 	progressStore.write(p);
 	const thin = progressSummary(0, new Date("2026-11-02T20:00:00Z"));
 	assert.equal(thin.xpPerHour, null);
-	assert.equal(thin.dailyGoal, Math.round(((thin.goal.minutesPerDay / 60) * 120) / 10) * 10, "a typical rate until one is measured");
+	assert.equal(
+		thin.dailyGoal,
+		Math.round(((thin.goal.minutesPerDay / 60) * 120) / 10) * 10,
+		"a typical rate until one is measured",
+	);
 });

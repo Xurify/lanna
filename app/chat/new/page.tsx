@@ -15,11 +15,7 @@ export const dynamic = "force-dynamic";
  * default); the session the first send creates is stamped from it
  * server-side (per-session models, owner 2026-09-28).
  */
-export default async function NewSessionPage({
-	searchParams,
-}: {
-	searchParams: Promise<{ mode?: string }>;
-}) {
+export default async function NewSessionPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
 	const { mode } = await searchParams;
 	return (
 		<NewSession

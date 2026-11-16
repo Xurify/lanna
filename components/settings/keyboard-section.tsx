@@ -24,7 +24,6 @@ import { SettingsRow } from "./controls.tsx";
 const SCOPES: { scope: KeyScope; label: string }[] = [
 	{ scope: "global", label: "Global" },
 	{ scope: "chat", label: "Chat" },
-	{ scope: "graph", label: "Skill map" },
 ];
 
 /** One change to the overrides map. binding null resets the action to its default. */

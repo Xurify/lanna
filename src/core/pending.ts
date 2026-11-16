@@ -42,13 +42,7 @@ interface PendingToolCall {
  *  probe-phase names (probe/recall, owner 2026-10-09) join their teach
  *  twins — old records keep the teach names; new probe-phase calls carry
  *  the phase names. */
-export const QUESTION_TOOLS = [
-	"quiz",
-	"probe",
-	"ask_user_question",
-	"explain",
-	"recall",
-] as const;
+export const QUESTION_TOOLS = ["quiz", "probe", "ask_user_question", "explain", "recall"] as const;
 
 /** The tool→kind map (the dock's own fold, named once — the dismissal
  *  path and the dock must never disagree on what a tool is). The probe
@@ -173,5 +167,3 @@ export function streamingToolActivity(messages: UIMessage[]): string | null {
 	}
 	return null;
 }
-
-

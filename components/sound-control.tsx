@@ -23,7 +23,15 @@ const HOVER_INTENT_MS = 700;
  *  when the pointer rests on the button for a moment, on a right-click, on a
  *  press and hold on a touch screen, or from the keyboard (Up and Down change
  *  it). Moving the wheel over the button changes it too. */
-export function SoundControl({ className, iconClass = "size-5", testid = "sound-toggle" }: { className?: string; iconClass?: string; testid?: string }) {
+export function SoundControl({
+	className,
+	iconClass = "size-5",
+	testid = "sound-toggle",
+}: {
+	className?: string;
+	iconClass?: string;
+	testid?: string;
+}) {
 	const { on, level } = useSound();
 	const [open, setOpen] = useState(false);
 	const root = useRef<HTMLDivElement>(null);
@@ -143,10 +151,24 @@ export function SoundControl({ className, iconClass = "size-5", testid = "sound-
 			</button>
 			{/* Absolute, so opening it never moves the header. The padding keeps the hover alive across the gap. */}
 			{open && (
-				<div role="group" aria-label="Volume" data-testid="volume-popover" className="absolute right-0 top-full z-30 pt-2">
+				<div
+					role="group"
+					aria-label="Volume"
+					data-testid="volume-popover"
+					className="absolute right-0 top-full z-30 pt-2"
+				>
 					<div className="flex w-48 items-center gap-3 rounded-xl border border-border/70 bg-card px-3.5 py-2.5 shadow-raise">
-						<Slider value={on ? level : 0} onChange={move} onCommit={() => sfx.tap()} label="Volume" className="flex-1" testid="volume-slider" />
-						<span className="w-9 text-right font-ui text-xs font-semibold tabular-nums text-muted-foreground">{on ? Math.round(level * 100) : 0}%</span>
+						<Slider
+							value={on ? level : 0}
+							onChange={move}
+							onCommit={() => sfx.tap()}
+							label="Volume"
+							className="flex-1"
+							testid="volume-slider"
+						/>
+						<span className="w-9 text-right font-ui text-xs font-semibold tabular-nums text-muted-foreground">
+							{on ? Math.round(level * 100) : 0}%
+						</span>
 					</div>
 				</div>
 			)}

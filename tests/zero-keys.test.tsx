@@ -17,7 +17,11 @@ import { DICTATION_KEYLESS, DEEPGRAM_KEY_ID } from "../components/dictation.tsx"
 import type { AuthKeyStatus } from "../src/core/auth-keys.ts";
 import type { ProviderKeyInfo } from "../components/settings/keys-section.tsx";
 
-const status = (id: string, present: boolean, source: AuthKeyStatus["source"] = present ? "file" : "none"): AuthKeyStatus => ({
+const status = (
+	id: string,
+	present: boolean,
+	source: AuthKeyStatus["source"] = present ? "file" : "none",
+): AuthKeyStatus => ({
 	id,
 	info: null,
 	present,
@@ -73,10 +77,11 @@ describe("SetupKeysBody — stage 1's self-contained first-key screen", () => {
 	};
 
 	it("before a pick: the provider trigger, no key input yet", () => {
-		const html = renderToStaticMarkup(
-			createElement(SetupKeysBody, { ...base, providers: PROVIDERS, provider: null }),
+		const html = renderToStaticMarkup(createElement(SetupKeysBody, { ...base, providers: PROVIDERS, provider: null }));
+		assert.ok(
+			html.indexOf('data-testid="setup-key-provider"') < html.indexOf('data-testid="chatgpt-login"'),
+			"API keys remain primary, ChatGPT is secondary",
 		);
-		assert.ok(html.indexOf('data-testid="setup-key-provider"') < html.indexOf('data-testid="chatgpt-login"'), "API keys remain primary, ChatGPT is secondary");
 		assert.doesNotMatch(html, /chatgpt-privacy-notice|OpenAI privacy|Manage usage/);
 		assert.ok(html.includes("Choose your AI provider and paste its API key. You’ll pick your models next."));
 		assert.doesNotMatch(html, /First, add|keys unlock|—/);
@@ -100,7 +105,7 @@ describe("SetupKeysBody — stage 1's self-contained first-key screen", () => {
 			createElement(SetupKeysBody, {
 				...base,
 				providers: PROVIDERS,
-				provider: PROVIDERS[0]!!,
+				provider: PROVIDERS[0]!,
 				error: "Expected 20+ characters",
 			}),
 		);

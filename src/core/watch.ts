@@ -179,7 +179,11 @@ export function foreignCaptions(v: { lang?: string; trackLang?: string }): boole
  *  rendering of them (src/server/watch.ts renderInLanguage); "none" for
  *  foreign captions kept before that existed (Czech words matched against
  *  Slovak would read far too low). */
-export function coverageKind(v: { lang?: string; trackLang?: string; estimated?: boolean }): "exact" | "estimated" | "none" {
+export function coverageKind(v: {
+	lang?: string;
+	trackLang?: string;
+	estimated?: boolean;
+}): "exact" | "estimated" | "none" {
 	return !foreignCaptions(v) ? "exact" : v.estimated ? "estimated" : "none";
 }
 
@@ -280,7 +284,13 @@ export function isSpotifyId(id: string): boolean {
 export function isYouTubeCaptionUrl(raw: string): boolean {
 	try {
 		const url = new URL(raw);
-		return url.protocol === "https:" && !url.username && !url.password && (url.hostname === "youtube.com" || url.hostname.endsWith(".youtube.com")) && url.pathname.startsWith("/api/timedtext");
+		return (
+			url.protocol === "https:" &&
+			!url.username &&
+			!url.password &&
+			(url.hostname === "youtube.com" || url.hostname.endsWith(".youtube.com")) &&
+			url.pathname.startsWith("/api/timedtext")
+		);
 	} catch {
 		return false;
 	}
@@ -407,7 +417,11 @@ export function parseVtt(text: string): CaptionCue[] {
 	const time = (t: string) => {
 		const parts = t.trim().split(":").map(Number);
 		if (parts.some((n) => !Number.isFinite(n))) return NaN;
-		return parts.length === 3 ? parts[0]! * 3600 + parts[1]! * 60 + parts[2]! : parts.length === 2 ? parts[0]! * 60 + parts[1]! : NaN;
+		return parts.length === 3
+			? parts[0]! * 3600 + parts[1]! * 60 + parts[2]!
+			: parts.length === 2
+				? parts[0]! * 60 + parts[1]!
+				: NaN;
 	};
 	const blocks = text.replace(/\r/g, "").split(/\n\n+/);
 	for (const b of blocks) {
@@ -462,7 +476,13 @@ export function stripOverlap(prev: string, next: string): string {
 	if (next === prev || prev.endsWith(next)) return "";
 	const max = Math.min(a.length, b.length);
 	for (let n = max; n > 0; n--) {
-		if (a.slice(a.length - n).join(" ").toLowerCase() === b.slice(0, n).join(" ").toLowerCase()) return b.slice(n).join(" ");
+		if (
+			a
+				.slice(a.length - n)
+				.join(" ")
+				.toLowerCase() === b.slice(0, n).join(" ").toLowerCase()
+		)
+			return b.slice(n).join(" ");
 	}
 	return next;
 }
@@ -477,13 +497,18 @@ const PUNCTUATED_SHARE = 0.2;
  *  (automatic captions) it closes at the cue boundary once it holds a few
  *  words. A line too short is carried into the next. Times are the cues'
  *  own; a line's end never passes the next line's start. */
-export function segmentCues(cues: readonly CaptionCue[], opts: { maxWords?: number; maxSec?: number; minWords?: number; gapSec?: number } = {}): Array<{ start: number; end: number; sk: string }> {
+export function segmentCues(
+	cues: readonly CaptionCue[],
+	opts: { maxWords?: number; maxSec?: number; minWords?: number; gapSec?: number } = {},
+): Array<{ start: number; end: number; sk: string }> {
 	const maxWords = opts.maxWords ?? SEGMENT_MAX_WORDS;
 	const maxSec = opts.maxSec ?? SEGMENT_MAX_SEC;
 	const minWords = opts.minWords ?? SEGMENT_MIN_WORDS;
 	const gapSec = opts.gapSec ?? SEGMENT_GAP_SEC;
 	const sorted = [...cues].filter((c) => c.text.trim()).sort((a, b) => a.start - b.start);
-	const punctuated = sorted.length > 0 && sorted.filter((c) => /[.!?…]["»”)]?\s*$/.test(c.text)).length / sorted.length >= PUNCTUATED_SHARE;
+	const punctuated =
+		sorted.length > 0 &&
+		sorted.filter((c) => /[.!?…]["»”)]?\s*$/.test(c.text)).length / sorted.length >= PUNCTUATED_SHARE;
 	const out: Array<{ start: number; end: number; sk: string }> = [];
 	let buf: string[] = [];
 	let bufStart = 0;
@@ -508,7 +533,9 @@ export function segmentCues(cues: readonly CaptionCue[], opts: { maxWords?: numb
 		// span spread over its words, so a line cut inside a cue starts at
 		// its first word and not at the cue's end.
 		const own = cue.at && cue.at.length === total ? cue.at : undefined;
-		const starts = words.map((_, k) => own ? own[dropped + k]! : cue.start + (Math.max(0, cue.dur) * (dropped + k)) / total);
+		const starts = words.map((_, k) =>
+			own ? own[dropped + k]! : cue.start + (Math.max(0, cue.dur) * (dropped + k)) / total,
+		);
 		// A silence before this cue ends the open line.
 		if (buf.length && cue.start - bufEnd > gapSec) flush();
 		// The cue's words, one line at a time: punctuation inside a cue
@@ -518,7 +545,12 @@ export function segmentCues(cues: readonly CaptionCue[], opts: { maxWords?: numb
 		words.forEach((w, k) => {
 			if (!buf.length) bufStart = starts[k]!;
 			buf.push(w);
-			bufEnd = k + 1 < words.length ? starts[k + 1]! : nextStart !== undefined && cueEnd > nextStart ? Math.max(starts[k]! + 0.4, nextStart) : cueEnd;
+			bufEnd =
+				k + 1 < words.length
+					? starts[k + 1]!
+					: nextStart !== undefined && cueEnd > nextStart
+						? Math.max(starts[k]! + 0.4, nextStart)
+						: cueEnd;
 			const closes = /[.!?…]["»”)]?$/.test(w);
 			if ((closes && buf.length >= minWords) || buf.length >= maxWords || bufEnd - bufStart >= maxSec) flush();
 		});
@@ -567,7 +599,11 @@ export function videoExpected(segments: readonly { tokens: readonly StoryToken[]
 /** The unknown words worth meeting before the video: the ones that recur
  *  (every meeting then counts), then the commonest. Only dictionary words
  *  with a gloss; one entry per word. */
-export function pickPreTeach(segments: readonly VideoSegment[], max = PRE_TEACH_MAX, rankOf: (slug: string) => number | undefined = () => undefined): PreTeachWord[] {
+export function pickPreTeach(
+	segments: readonly VideoSegment[],
+	max = PRE_TEACH_MAX,
+	rankOf: (slug: string) => number | undefined = () => undefined,
+): PreTeachWord[] {
 	const seen = new Map<string, PreTeachWord & { score: number }>();
 	segments.forEach((s) => {
 		for (const t of s.tokens) {
@@ -578,7 +614,17 @@ export function pickPreTeach(segments: readonly VideoSegment[], max = PRE_TEACH_
 				continue;
 			}
 			const rank = rankOf(t.slug);
-			seen.set(t.slug, { lemma: t.lemma, gloss: t.gloss, slug: t.slug, count: 1, ...(rank !== undefined ? { rank } : {}), ...(t.cat ? { cat: t.cat } : {}), at: s.i, example: s.sk, score: 0 });
+			seen.set(t.slug, {
+				lemma: t.lemma,
+				gloss: t.gloss,
+				slug: t.slug,
+				count: 1,
+				...(rank !== undefined ? { rank } : {}),
+				...(t.cat ? { cat: t.cat } : {}),
+				at: s.i,
+				example: s.sk,
+				score: 0,
+			});
 		}
 	});
 	const ranked = [...seen.values()];
@@ -588,12 +634,35 @@ export function pickPreTeach(segments: readonly VideoSegment[], max = PRE_TEACH_
 }
 
 /** What the coverage means for the ear, in one word and one line. */
-export function coverageBand(coverage: number): { band: "comfortable" | "stretch" | "hard" | "too-hard"; title: string; line: string } {
+export function coverageBand(coverage: number): {
+	band: "comfortable" | "stretch" | "hard" | "too-hard";
+	title: string;
+	line: string;
+} {
 	const pct = Math.round(coverage * 100);
-	if (coverage >= LISTEN_FLOOR) return { band: "comfortable", title: "Comfortable", line: `You know ${pct} of every 100 words — the range where listening works on its own.` };
-	if (coverage >= 0.88) return { band: "stretch", title: "Within reach", line: `${pct} of every 100 words known. Below ${Math.round(LISTEN_FLOOR * 100)} you work out the words more than follow them; learning the new words first and watching line by line close the gap.` };
-	if (coverage >= 0.8) return { band: "hard", title: "Hard", line: `${pct} of every 100 words known. Expect to lean on the text: get ready first, then watch it line by line.` };
-	return { band: "too-hard", title: "Too hard for now", line: `Only ${pct} of every 100 words known. It will be noise at the moment: get ready first, keep it for later, or watch with both subtitles on.` };
+	if (coverage >= LISTEN_FLOOR)
+		return {
+			band: "comfortable",
+			title: "Comfortable",
+			line: `You know ${pct} of every 100 words — the range where listening works on its own.`,
+		};
+	if (coverage >= 0.88)
+		return {
+			band: "stretch",
+			title: "Within reach",
+			line: `${pct} of every 100 words known. Below ${Math.round(LISTEN_FLOOR * 100)} you work out the words more than follow them; learning the new words first and watching line by line close the gap.`,
+		};
+	if (coverage >= 0.8)
+		return {
+			band: "hard",
+			title: "Hard",
+			line: `${pct} of every 100 words known. Expect to lean on the text: get ready first, then watch it line by line.`,
+		};
+	return {
+		band: "too-hard",
+		title: "Too hard for now",
+		line: `Only ${pct} of every 100 words known. It will be noise at the moment: get ready first, keep it for later, or watch with both subtitles on.`,
+	};
 }
 
 // ─── XP, the listening-speed summary ────────────────────────────────────────
@@ -601,7 +670,13 @@ export function coverageBand(coverage: number): { band: "comfortable" | "stretch
 /** A first watching earns a point a line; every line got on the first
  *  listen two more, after help one more; each question right five. A
  *  rewatch earns the lines' bonuses and the questions only. */
-export function watchXp(segments: number, gotFirst: number, gotAfter: number, correct: number, rewatch: boolean): number {
+export function watchXp(
+	segments: number,
+	gotFirst: number,
+	gotAfter: number,
+	correct: number,
+	rewatch: boolean,
+): number {
 	return (rewatch ? 0 : Math.min(60, segments)) + gotFirst * 2 + gotAfter + correct * 5;
 }
 
@@ -627,7 +702,11 @@ export function listeningSpeed(stats: readonly SegmentStat[]): ListeningSpeed {
 		const sec = list.reduce((n, s) => n + s.sec, 0);
 		return sec > 0 ? Math.round((list.reduce((n, s) => n + s.words, 0) / sec) * 60) : 0;
 	};
-	return { wpmFirst: first.length ? wpm(first) : null, wpmAll: wpm(judged), shareFirst: judged.length ? first.length / judged.length : 0 };
+	return {
+		wpmFirst: first.length ? wpm(first) : null,
+		wpmAll: wpm(judged),
+		shareFirst: judged.length ? first.length / judged.length : 0,
+	};
 }
 
 // ─── The model's answers ────────────────────────────────────────────────────
@@ -646,7 +725,13 @@ export function parseTranslations(text: string, count: number): string[] {
 	}
 	const list = Array.isArray(raw) ? raw : (raw as { t?: unknown })?.t;
 	if (!Array.isArray(list)) throw new Error("the model's answer has no list of translations");
-	const out = list.map((v) => (typeof v === "string" ? v.trim() : typeof v === "object" && v && typeof (v as { en?: unknown }).en === "string" ? ((v as { en: string }).en).trim() : ""));
+	const out = list.map((v) =>
+		typeof v === "string"
+			? v.trim()
+			: typeof v === "object" && v && typeof (v as { en?: unknown }).en === "string"
+				? (v as { en: string }).en.trim()
+				: "",
+	);
 	if (out.length !== count) throw new Error(`the model returned ${out.length} translations for ${count} lines`);
 	return out;
 }

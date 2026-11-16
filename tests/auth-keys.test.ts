@@ -9,7 +9,13 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { AUTH_KEYS, genericProviderKeyGuard, isKnownAuthKey, maskKey, validateKeyShape } from "../src/core/auth-keys.ts";
+import {
+	AUTH_KEYS,
+	genericProviderKeyGuard,
+	isKnownAuthKey,
+	maskKey,
+	validateKeyShape,
+} from "../src/core/auth-keys.ts";
 
 describe("the catalog", () => {
 	it("is exactly the seven CURATED app-service keys (provider keys live in the provider table)", () => {
@@ -17,7 +23,15 @@ describe("the catalog", () => {
 			AUTH_KEYS.map((k) => k.id),
 			// LangHarness adds ElevenLabs (the first TTS tier), the Azure
 			// Speech pair (pronunciation assessment, 2026-10-28), and Context (2026-11-09).
-			["ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION", "CONTEXT_API_KEY", "TAVILY_API_KEY", "BRAVE_API_KEY"],
+			[
+				"ELEVENLABS_API_KEY",
+				"DEEPGRAM_API_KEY",
+				"AZURE_SPEECH_KEY",
+				"AZURE_SPEECH_REGION",
+				"CONTEXT_API_KEY",
+				"TAVILY_API_KEY",
+				"BRAVE_API_KEY",
+			],
 		);
 		for (const k of AUTH_KEYS) {
 			assert.ok(k.label.length > 0, `${k.id} has a label`);

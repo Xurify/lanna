@@ -155,7 +155,12 @@ function scriptedEngine(): { engine: PiEngine; model: string } | null {
 			streamFn: (model, context, options) => {
 				// A new scene starts the script over.
 				const last = context.messages[context.messages.length - 1];
-				const text = last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "";
+				const text =
+					last && typeof last.content === "string"
+						? last.content
+						: Array.isArray(last?.content)
+							? last.content.map((c) => ("text" in c ? c.text : "")).join("")
+							: "";
 				if (/Open the scene with your first line/.test(text)) i = 0;
 				faux.setResponses([fauxAssistantMessage(JSON.stringify(next()))]);
 				return faux.streamSimple(model, context, options);
@@ -227,7 +232,10 @@ const ISO3: Record<string, string> = { sk: "slk", ru: "rus" };
  *  Throws when the engine refuses; returns "" for silence. */
 export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ text: string; engine: SttEngine }> {
 	const engine = sttEngine();
-	if (!engine) throw new Error("No speech-to-text key: add an ElevenLabs, Groq, or Deepgram key in Settings → API keys, or type your line.");
+	if (!engine)
+		throw new Error(
+			"No speech-to-text key: add an ElevenLabs, Groq, or Deepgram key in Settings → API keys, or type your line.",
+		);
 	if (audio.byteLength === 0) return { text: "", engine };
 	if (sttScript()) return { text: sttScript()!, engine };
 	if (engine === "groq") {
@@ -241,7 +249,10 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 			headers: { Authorization: `Bearer ${keyValue("GROQ_API_KEY")!}` },
 			body: form,
 		});
-		if (!res.ok) throw new Error(`Groq Whisper speech-to-text failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`);
+		if (!res.ok)
+			throw new Error(
+				`Groq Whisper speech-to-text failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`,
+			);
 		const data = (await res.json()) as { text?: string };
 		return { text: (data.text ?? "").trim(), engine };
 	}
@@ -252,15 +263,28 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 		form.set("tag_audio_events", "false");
 		form.set("diarize", "false");
 		form.set("file", new Blob([audio as BlobPart], { type: "audio/wav" }), "line.wav");
-		const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", { method: "POST", headers: { "xi-api-key": keyValue("ELEVENLABS_API_KEY")! }, body: form });
-		if (!res.ok) throw new Error(`ElevenLabs speech-to-text failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`);
+		const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+			method: "POST",
+			headers: { "xi-api-key": keyValue("ELEVENLABS_API_KEY")! },
+			body: form,
+		});
+		if (!res.ok)
+			throw new Error(
+				`ElevenLabs speech-to-text failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`,
+			);
 		const data = (await res.json()) as { text?: string };
 		return { text: (data.text ?? "").trim(), engine };
 	}
 	const url = `https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(lang)}&smart_format=true&punctuate=true`;
-	const res = await fetch(url, { method: "POST", headers: { Authorization: `Token ${keyValue("DEEPGRAM_API_KEY")!}`, "Content-Type": "audio/wav" }, body: audio as BodyInit });
+	const res = await fetch(url, {
+		method: "POST",
+		headers: { Authorization: `Token ${keyValue("DEEPGRAM_API_KEY")!}`, "Content-Type": "audio/wav" },
+		body: audio as BodyInit,
+	});
 	if (!res.ok) throw new Error(`Deepgram failed (${res.status}): ${redactSecrets(await res.text()).slice(0, 200)}`);
-	const data = (await res.json()) as { results?: { channels?: Array<{ alternatives?: Array<{ transcript?: string }> }> } };
+	const data = (await res.json()) as {
+		results?: { channels?: Array<{ alternatives?: Array<{ transcript?: string }> }> };
+	};
 	return { text: (data.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "").trim(), engine };
 }
 
@@ -289,7 +313,10 @@ export function speakState(): SpeakState {
 	const goalScenes = new Set(purposeScenes(goal.purposes ?? []));
 	const lang = activeLanguage().id;
 	const scenes = SPEAK_SCENES.map((x) => sceneFor(x.id)!)
-		.sort((a, b) => Number(wanted.includes(b.id)) - Number(wanted.includes(a.id)) || wanted.indexOf(a.id) - wanted.indexOf(b.id))
+		.sort(
+			(a, b) =>
+				Number(wanted.includes(b.id)) - Number(wanted.includes(a.id)) || wanted.indexOf(a.id) - wanted.indexOf(b.id),
+		)
 		.map((s) => {
 			const last = done.filter((d) => d.scene === s.id).at(-1);
 			return {
@@ -307,7 +334,10 @@ export function speakState(): SpeakState {
 		canSpeak: storyEngine() !== null || scriptedEngine() !== null,
 		stt: sttEngine(),
 		pron: pronounceEngine(),
-		unfinished: open && open.turns.some((t) => t.role === "learner") ? { id: open.id, scene: open.scene, sceneTitle: open.sceneTitle, turns: speakCounts(open.turns).learner } : null,
+		unfinished:
+			open && open.turns.some((t) => t.role === "learner")
+				? { id: open.id, scene: open.scene, sceneTitle: open.sceneTitle, turns: speakCounts(open.turns).learner }
+				: null,
 		recent: done.slice(-8).reverse(),
 	};
 }
@@ -351,7 +381,9 @@ export function speakStart(sceneId: string, opts: SpeakOptions = {}): Promise<Sp
 			turns: [],
 			usage: { model, steps: [] },
 		};
-		const reply = parseTutorReply(await ask(engine, speakSystem(), `${sceneBrief(scene, s)}\n\nOpen the scene with your first line.`, s.usage));
+		const reply = parseTutorReply(
+			await ask(engine, speakSystem(), `${sceneBrief(scene, s)}\n\nOpen the scene with your first line.`, s.usage),
+		);
 		s.turns.push(tutorTurn(reply, now));
 		speakStore.put(s);
 		ensureReadmes();
@@ -400,7 +432,14 @@ export function speakTurn(input: SpeakTurnInput, opts: SpeakOptions = {}): Promi
 		const text = input.text.replace(/\s+/g, " ").trim().slice(0, 600);
 		if (!text) throw new Error("say something first");
 		const n = speakCounts(s.turns).learner + 1;
-		const turn: SpeakTurn = { role: "learner", text, via: input.via, at: now.toISOString(), ...(input.ms ? { ms: input.ms } : {}), ...(input.pron ? { pron: input.pron } : {}) };
+		const turn: SpeakTurn = {
+			role: "learner",
+			text,
+			via: input.via,
+			at: now.toISOString(),
+			...(input.ms ? { ms: input.ms } : {}),
+			...(input.pron ? { pron: input.pron } : {}),
+		};
 		if (input.audio && input.audio.data.byteLength > 0) {
 			try {
 				turn.audio = speakStore.putRecording(s.id, n, input.audio.data);
@@ -459,13 +498,27 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		const s = speakStore.get(input.id);
 		if (!s) throw new Error(`unknown scene ${input.id}`);
 		const now = opts.now ?? new Date();
-		if (s.endedAt) return { session: s, xp: s.xp ?? 0, queued: s.queued ?? [], summary: progressSummary(input.tz, now), report: pronunciationReport() };
+		if (s.endedAt)
+			return {
+				session: s,
+				xp: s.xp ?? 0,
+				queued: s.queued ?? [],
+				summary: progressSummary(input.tz, now),
+				report: pronunciationReport(),
+			};
 		const learner = speakCounts(s.turns).learner;
 		if (learner === 0) throw new Error("nothing was said");
 		const scene = sceneFor(s.scene)!;
 		const { engine } = resolveEngine({ ...opts, model: s.usage.model });
 		const lexicon = loadLexicon();
-		let summary = parseSummary(await ask(engine, speakSummarySystem(), `${sceneBrief(scene, s)}\n\nThe scene:\n${transcript(s)}\n\nSum it up.`, s.usage));
+		let summary = parseSummary(
+			await ask(
+				engine,
+				speakSummarySystem(),
+				`${sceneBrief(scene, s)}\n\nThe scene:\n${transcript(s)}\n\nSum it up.`,
+				s.usage,
+			),
+		);
 		summary = { ...summary, corrections: summary.corrections.map((c) => withSlug(c, lexicon)) };
 		s.summary = summary;
 		s.endedAt = now.toISOString();
@@ -474,7 +527,13 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		const xp = speakXp(counts.learner, counts.repaired, counts.clear);
 		s.xp = xp;
 		const scored = s.turns.filter((t) => t.role === "learner" && t.pron);
-		if (scored.length) s.pron = { average: Math.round(scored.reduce((n, t) => n + t.pron!.overall, 0) / scored.length), lines: scored.length, clear: counts.clear, engine: scored[scored.length - 1]!.pron!.engine };
+		if (scored.length)
+			s.pron = {
+				average: Math.round(scored.reduce((n, t) => n + t.pron!.overall, 0) / scored.length),
+				lines: scored.length,
+				clear: counts.clear,
+				engine: scored[scored.length - 1]!.pron!.engine,
+			};
 		const slugs = [...new Set(summary.corrections.map((c) => c.slug).filter((x): x is string => !!x))];
 		const queued = slugs.length ? enqueueWords(slugs, now) : [];
 		s.queued = queued;
@@ -491,7 +550,12 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
 		// The slips on case forms, said in Speak, go to their drill and atlas cell.
 		const slips = summary.corrections.map((c) => correctionSlip(c, lexicon));
 		for (const hit of slips) {
-			if (hit) p.units[hit.drill] = recordSpokenSlip(p.units[hit.drill] ?? { lessons: 0, reps: 0, correct: 0 }, hit.cell, hit.slip);
+			if (hit)
+				p.units[hit.drill] = recordSpokenSlip(
+					p.units[hit.drill] ?? { lessons: 0, reps: 0, correct: 0 },
+					hit.cell,
+					hit.slip,
+				);
 		}
 		progressStore.write(p);
 		try {
@@ -538,11 +602,19 @@ export function speakEnd(input: SpeakEndInput, opts: SpeakOptions = {}): Promise
  *  phrase puts the word in, the cell its gender fills (null when the gender
  *  has no column), and the slip. Null when the correction is not about a
  *  case form. */
-export function correctionSlip(c: SpeakCorrection, lexicon: Lexicon | null): { drill: UnitId; slip: FormSlip; cell: FirstTryCell; gender?: string } | null {
+export function correctionSlip(
+	c: SpeakCorrection,
+	lexicon: Lexicon | null,
+): { drill: UnitId; slip: FormSlip; cell: FirstTryCell; gender?: string } | null {
 	const entry = c.slug ? lexicon?.bySlug.get(c.slug) : undefined;
 	const hit = entry ? spokenSlip(entry, c.yours, c.right, tag()) : undefined;
 	if (!entry || !hit) return null;
-	return { drill: hit.drill, slip: hit.slip, cell: atlasCellOf(hit.drill, entry.gender), ...(entry.gender ? { gender: entry.gender } : {}) };
+	return {
+		drill: hit.drill,
+		slip: hit.slip,
+		cell: atlasCellOf(hit.drill, entry.gender),
+		...(entry.gender ? { gender: entry.gender } : {}),
+	};
 }
 
 /** The dictionary word a correction is about, so it can join the deck:

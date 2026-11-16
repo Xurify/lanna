@@ -4,34 +4,35 @@ Russian verbs inflect for person, number, tense, aspect, mood, and voice. Finite
 
 ## 1. Present and Simple Future Conjugation
 
-| Form | 1st Conjugation (*читать, жить*) | 2nd Conjugation (*говорить, учить*) |
-| --- | --- | --- |
-| **Infinitive** | чита́ть / жить | говори́ть / учи́ть |
-| **1sg (*я*)** | чита́-**ю** / жив-**у́** | говор-**ю́** / уч-**у́** (after sibilant) |
-| **2sg (*ты*)** | чита́-**ешь** / жив-**ёшь** | говор-**и́шь** / у́ч-**ишь** |
-| **3sg (*он/она/оно*)** | чита́-**ет** / жив-**ёт** | говор-**и́т** / у́ч-**ит** |
-| **1pl (*мы*)** | чита́-**ем** / жив-**ём** | говор-**и́м** / у́ч-**им** |
-| **2pl (*вы*)** | чита́-**ете** / жив-**ёте** | говор-**и́те** / у́ч-**ите** |
-| **3pl (*они*)** | чита́-**ют** / жив-**у́т** | говор-**я́т** / у́ч-**ат** (after sibilant) |
+| Form                   | 1st Conjugation (_читать, жить_) | 2nd Conjugation (_говорить, учить_)       |
+| ---------------------- | -------------------------------- | ----------------------------------------- |
+| **Infinitive**         | чита́ть / жить                    | говори́ть / учи́ть                          |
+| **1sg (_я_)**          | чита́-**ю** / жив-**у́**           | говор-**ю́** / уч-**у́** (after sibilant)   |
+| **2sg (_ты_)**         | чита́-**ешь** / жив-**ёшь**       | говор-**и́шь** / у́ч-**ишь**                |
+| **3sg (_он/она/оно_)** | чита́-**ет** / жив-**ёт**         | говор-**и́т** / у́ч-**ит**                  |
+| **1pl (_мы_)**         | чита́-**ем** / жив-**ём**         | говор-**и́м** / у́ч-**им**                  |
+| **2pl (_вы_)**         | чита́-**ете** / жив-**ёте**       | говор-**и́те** / у́ч-**ите**                |
+| **3pl (_они_)**        | чита́-**ют** / жив-**у́т**         | говор-**я́т** / у́ч-**ат** (after sibilant) |
 
 ### Conjugation Identification Rules
+
 1. **Unstressed Endings (School Rule):** When personal endings are unstressed, determine conjugation from the infinitive:
-   - **2nd Conjugation:** Verbs in `-ить` (except *брить, стелить, зиждиться*), plus 7 verbs in `-еть` (*видеть, смотреть, ненавидеть, обидеть, терпеть, вертеть, зависеть*) and 4 verbs in `-ать` (*слышать, дышать, держать, гнать*).
+   - **2nd Conjugation:** Verbs in `-ить` (except _брить, стелить, зиждиться_), plus 7 verbs in `-еть` (_видеть, смотреть, ненавидеть, обидеть, терпеть, вертеть, зависеть_) and 4 verbs in `-ать` (_слышать, дышать, держать, гнать_).
    - **1st Conjugation:** All other unstressed verbs (`-ать/-ять` not in the 4 above, `-еть` not in the 7 above, `-овать/-евать`, `-нуть`, `-ть/ти`).
 2. **Stressed Endings:** When personal endings are stressed, determine conjugation directly from the endings (or 3pl form), **not** the infinitive suffix (Розенталь § 61):
-   - Stressed `-и́шь / -я́т (-а́т)` = **2nd Conjugation**: *спать → спят*, *стоять → стоят*, *сидеть → сидят*, *лежать → лежат*, *лететь → летят*.
-   - Stressed `-ёшь / -у́т (-ю́т)` = **1st Conjugation**: *жить → живут*, *пить → пьют*, *петь → поют*, *идти → идут*.
-3. **Consonant Alternations in 2nd Conjugation:** 1sg (*я*) regularly mutates:
-   - `д → ж` (*ходить → хожу*)
-   - `т → ч / щ` (*платить → плачу, простить → прощу*)
-   - `з → ж` (*возить → вожу*)
-   - `с → ш` (*просить → прошу*)
-   - Labials `б, п, в, ф, м → бл, пл, вл, фл, мл` (*любить → люблю, купить → куплю, готовить → готовлю*).
+   - Stressed `-и́шь / -я́т (-а́т)` = **2nd Conjugation**: _спать → спят_, _стоять → стоят_, _сидеть → сидят_, _лежать → лежат_, _лететь → летят_.
+   - Stressed `-ёшь / -у́т (-ю́т)` = **1st Conjugation**: _жить → живут_, _пить → пьют_, _петь → поют_, _идти → идут_.
+3. **Consonant Alternations in 2nd Conjugation:** 1sg (_я_) regularly mutates:
+   - `д → ж` (_ходить → хожу_)
+   - `т → ч / щ` (_платить → плачу, простить → прощу_)
+   - `з → ж` (_возить → вожу_)
+   - `с → ш` (_просить → прошу_)
+   - Labials `б, п, в, ф, м → бл, пл, вл, фл, мл` (_любить → люблю, купить → куплю, готовить → готовлю_).
 4. **Consonant Alternations in 1st Conjugation:**
-   - In dental/sibilant stems like *писать*, mutation applies across **all** personal forms: `с → ш` (*писать → пишу, пишешь, пишут*).
+   - In dental/sibilant stems like _писать_, mutation applies across **all** personal forms: `с → ш` (_писать → пишу, пишешь, пишут_).
    - In velar stems (`-чь`), mutation occurs in 2sg, 3sg, 1pl, 2pl, while 1sg and 3pl retain the velar stop:
-     - `к → ч`: *печь → пеку, печёшь, печёт, печём, печёте, пекут*
-     - `г → ж`: *мочь → могу, можешь, может, можем, можете, могут*.
+     - `к → ч`: _печь → пеку, печёшь, печёт, печём, печёте, пекут_
+     - `г → ж`: _мочь → могу, можешь, может, можем, можете, могут_.
 
 ---
 
@@ -39,66 +40,71 @@ Russian verbs inflect for person, number, tense, aspect, mood, and voice. Finite
 
 The past tense is formed from the infinitive stem by dropping `-ть` and adding gender/number suffixes. It inflects for gender in the singular, not for person:
 
-| Gender / Number | Suffix | Example (*читать*) | Example (*быть*) | Example (*жить*) |
-| --- | --- | --- | --- | --- |
-| **Masculine (*он*)** | `-л` | чита́л | был | жил |
-| **Feminine (*она*)** | `-ла` | чита́ла | была́ | жила́ |
-| **Neuter (*оно*)** | `-ло` | чита́ло | бы́ло | жи́ло |
-| **Plural (*они, мы, вы*)** | `-ли` | чита́ли | бы́ли | жи́ли |
+| Gender / Number            | Suffix | Example (_читать_) | Example (_быть_) | Example (_жить_) |
+| -------------------------- | ------ | ------------------ | ---------------- | ---------------- |
+| **Masculine (_он_)**       | `-л`   | чита́л              | был              | жил              |
+| **Feminine (_она_)**       | `-ла`  | чита́ла             | была́             | жила́             |
+| **Neuter (_оно_)**         | `-ло`  | чита́ло             | бы́ло             | жи́ло             |
+| **Plural (_они, мы, вы_)** | `-ли`  | чита́ли             | бы́ли             | жи́ли             |
 
 ### Irregular Past Tense Stems
+
 - Stems in consonant without `-л` in masculine:
-  - *нести → нёс, несла́, несли́*
-  - *везти → вёз, везла́, везли́*
-  - *мочь → мог, могла́, могли́*
-  - *умереть → у́мер, умерла́, у́мерли*
-- Verbs in `-йти` (suppletive stem *шед-*):
-  - *идти → шёл, шла, шло, шли*
-  - *пойти → пошёл, пошла́, пошли́*
-  - *прийти → пришёл, пришла́, пришли́*
+  - _нести → нёс, несла́, несли́_
+  - _везти → вёз, везла́, везли́_
+  - _мочь → мог, могла́, могли́_
+  - _умереть → у́мер, умерла́, у́мерли_
+- Verbs in `-йти` (suppletive stem _шед-_):
+  - _идти → шёл, шла, шло, шли_
+  - _пойти → пошёл, пошла́, пошли́_
+  - _прийти → пришёл, пришла́, пришли́_
 - Stems in `-сть / -сться`:
-  - *сесть → сел, се́ла, се́ли*
-  - *лечь → лёг, легла́, легли́*
+  - _сесть → сел, се́ла, се́ли_
+  - _лечь → лёг, легла́, легли́_
 
 ---
 
-## 3. Imperative Mood (*Повелительное наклонение*)
+## 3. Imperative Mood (_Повелительное наклонение_)
 
 Formed from the 3pl present/future stem by dropping the 3pl ending (`чита-ют → чита-`, `говор-ят → говор-`):
 
-| Condition | Suffix (2sg) | Suffix (2pl / Formal) | Examples |
-| --- | --- | --- | --- |
-| **After vowel stem** | `-й` | `-йте` | *чита́й, чита́йте*; *де́лай, де́лайте*; *пей, пе́йте* |
-| **After consonant with stress on ending** | `-и` | `-ите` | *говори́, говори́те*; *пиши́, пиши́те*; *иди́, иди́те* |
-| **After consonant with stress on root** | `-ь` | `-ьте` | *режь, ре́жьте*; *поста́вь, поста́вьте*; *испра́вь, испра́вьте* |
+| Condition                                 | Suffix (2sg) | Suffix (2pl / Formal) | Examples                                                   |
+| ----------------------------------------- | ------------ | --------------------- | ---------------------------------------------------------- |
+| **After vowel stem**                      | `-й`         | `-йте`                | _чита́й, чита́йте_; _де́лай, де́лайте_; _пей, пе́йте_           |
+| **After consonant with stress on ending** | `-и`         | `-ите`                | _говори́, говори́те_; _пиши́, пиши́те_; _иди́, иди́те_           |
+| **After consonant with stress on root**   | `-ь`         | `-ьте`                | _режь, ре́жьте_; _поста́вь, поста́вьте_; _испра́вь, испра́вьте_ |
 
-*Irregular Imperatives:*
-- *быть → будь, бу́дьте*
-- *дать → дай, да́йте*
-- *есть → ешь, е́шьте*
-- *ехать → поезжа́й, поезжа́йте* (never *еди* or *ехай*).
+_Irregular Imperatives:_
 
----
-
-## 4. Conditional Mood (*Сослагательное наклонение*)
-
-Expresses hypothetical situations, polite requests, or unfulfilled wishes. Formed with **Past Tense + particle *бы***:
-- *Я прочитал бы эту книгу.* (I would read this book.)
-- *Она помогла бы нам, если бы знала.* (She would have helped us if she had known.)
-- *Я хотел бы заказать столик.* (I would like to reserve a table.)
-
-*Rule:* *Если бы* introduces counterfactual conditions, and both main and subordinate clauses take the past tense + *бы*.
+- _быть → будь, бу́дьте_
+- _дать → дай, да́йте_
+- _есть → ешь, е́шьте_
+- _ехать → поезжа́й, поезжа́йте_ (never _еди_ or _ехай_).
 
 ---
 
-## 5. Reflexive Verbs (*Возвратные глаголы*)
+## 4. Conditional Mood (_Сослагательное наклонение_)
+
+Expresses hypothetical situations, polite requests, or unfulfilled wishes. Formed with **Past Tense + particle _бы_**:
+
+- _Я прочитал бы эту книгу._ (I would read this book.)
+- _Она помогла бы нам, если бы знала._ (She would have helped us if she had known.)
+- _Я хотел бы заказать столик._ (I would like to reserve a table.)
+
+_Rule:_ _Если бы_ introduces counterfactual conditions, and both main and subordinate clauses take the past tense + _бы_.
+
+---
+
+## 5. Reflexive Verbs (_Возвратные глаголы_)
 
 Formed with the postfix `-ся / -сь`. Stays attached to the very end of the inflected form:
-- After consonant: `-ся` (*учу́сь, у́чишься, у́чится, у́чимся, у́читесь, у́чатся*).
-- After vowel: `-сь` (*учи́лась, учи́лись, занима́юсь, познако́мьтесь*).
+
+- After consonant: `-ся` (_учу́сь, у́чишься, у́чится, у́чимся, у́читесь, у́чатся_).
+- After vowel: `-сь` (_учи́лась, учи́лись, занима́юсь, познако́мьтесь_).
 
 ### Meaning Categories
-1. **True reflexive (action on oneself):** *мыться* (to wash oneself), *одеваться* (to dress oneself).
-2. **Reciprocal (mutual action):** *встречаться* (to meet each other), *целоваться* (to kiss each other).
-3. **Passive / Middle:** *Книга читается легко.* *Дом строится рабочими.*
-4. **Intransitive state / Emotion:** *бояться* (to fear), *надеяться* (to hope), *смеяться* (to laugh), *радоваться* (to rejoice).
+
+1. **True reflexive (action on oneself):** _мыться_ (to wash oneself), _одеваться_ (to dress oneself).
+2. **Reciprocal (mutual action):** _встречаться_ (to meet each other), _целоваться_ (to kiss each other).
+3. **Passive / Middle:** _Книга читается легко._ _Дом строится рабочими._
+4. **Intransitive state / Emotion:** _бояться_ (to fear), _надеяться_ (to hope), _смеяться_ (to laugh), _радоваться_ (to rejoice).

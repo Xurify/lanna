@@ -46,7 +46,13 @@ export function recordExam(input: ExamRecordInput, now = new Date()): ExamRecord
 	const draw = examItems(input.chapterId, input.seed, entries());
 	if (!draw) throw new Error(`no such chapter: ${input.chapterId}`);
 	const score = scoreExam(draw.items, input.answers ?? []);
-	const attempt: ExamAttempt = { at: now.toISOString(), score: score.correct, total: score.total, passed: score.passed, misses: score.misses };
+	const attempt: ExamAttempt = {
+		at: now.toISOString(),
+		score: score.correct,
+		total: score.total,
+		passed: score.passed,
+		misses: score.misses,
+	};
 	const p = progressStore.read();
 	const attempts = [...(p.exams[input.chapterId] ?? []), attempt];
 	p.exams = { ...p.exams, [input.chapterId]: attempts };

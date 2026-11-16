@@ -2,14 +2,35 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
-import { CASE_TAGS, checkCourse, courseUnitsFor, formCaseCell, sameCellForms, unitCaseCells, type Course, type CourseUnit } from "../src/core/course.ts";
+import {
+	CASE_TAGS,
+	checkCourse,
+	courseUnitsFor,
+	formCaseCell,
+	sameCellForms,
+	unitCaseCells,
+	type Course,
+	type CourseUnit,
+} from "../src/core/course.ts";
 import { caseTable } from "../src/core/course-grammar.ts";
 import { SPEAK_SCENES } from "../src/core/speak.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
-const unit = (u: Partial<CourseUnit> & Pick<CourseUnit, "id">): CourseUnit => ({ kind: "grammar", title: u.id, tagline: "", rule: "", glyph: "book", ...u });
+const unit = (u: Partial<CourseUnit> & Pick<CourseUnit, "id">): CourseUnit => ({
+	kind: "grammar",
+	title: u.id,
+	tagline: "",
+	rule: "",
+	glyph: "book",
+	...u,
+});
 
-const entry = (lemma: string, formTags: Record<string, string[]>, sentences: Array<[string, string]>, cat = "Nouns"): LexiconEntry => ({
+const entry = (
+	lemma: string,
+	formTags: Record<string, string[]>,
+	sentences: Array<[string, string]>,
+	cat = "Nouns",
+): LexiconEntry => ({
 	slug: lemma,
 	lemma,
 	en: lemma,
@@ -18,13 +39,24 @@ const entry = (lemma: string, formTags: Record<string, string[]>, sentences: Arr
 	forms: Object.keys(formTags).filter((f) => f !== lemma),
 	formTags,
 	related: [],
-	examples: sentences.map(([text, answer]) => ({ text, en: text, src: "tatoeba", cloze: { answer, at: text.indexOf(answer) } })),
+	examples: sentences.map(([text, answer]) => ({
+		text,
+		en: text,
+		src: "tatoeba",
+		cloze: { answer, at: text.indexOf(answer) },
+	})),
 });
 
 const MAJA = entry(
 	"maja",
 	{
-		maja: ["nominative singular", "accusative nominative singular", "accusative genitive singular", "genitive singular", "partitive singular"],
+		maja: [
+			"nominative singular",
+			"accusative nominative singular",
+			"accusative genitive singular",
+			"genitive singular",
+			"partitive singular",
+		],
 		majad: ["nominative plural", "accusative nominative plural", "accusative genitive plural"],
 		majja: ["illative singular"],
 		majasse: ["illative singular"],
@@ -44,7 +76,8 @@ const TEA = entry("tee", { tee: ["nominative singular"], teed: ["partitive singu
 	["Kaks teed, palun.", "teed"],
 ]);
 
-const units = (e: LexiconEntry, us: CourseUnit[], tag = "et-EE") => e.examples.map((ex) => courseUnitsFor(us, e, ex, tag));
+const units = (e: LexiconEntry, us: CourseUnit[], tag = "et-EE") =>
+	e.examples.map((ex) => courseUnitsFor(us, e, ex, tag));
 
 describe("a course unit's tag sets", () => {
 	test("the object's second name for a form does not make it ambiguous: majad is a nominative plural", () => {
@@ -53,15 +86,30 @@ describe("a course unit's tag sets", () => {
 	});
 
 	test("a unit with variants drills any of its sets, and names the cell each form fills", () => {
-		const places = unit({ id: "places", cat: "Nouns", tags: ["inessive", "singular"], variants: [["inessive", "singular"], ["illative", "singular"], ["inessive", "plural"]] });
-		assert.deepEqual(units(MAJA, [places]).map((u) => u.length), [0, 1, 1, 1]);
+		const places = unit({
+			id: "places",
+			cat: "Nouns",
+			tags: ["inessive", "singular"],
+			variants: [
+				["inessive", "singular"],
+				["illative", "singular"],
+				["inessive", "plural"],
+			],
+		});
+		assert.deepEqual(
+			units(MAJA, [places]).map((u) => u.length),
+			[0, 1, 1, 1],
+		);
 		assert.deepEqual(unitCaseCells(places).sort(), ["illative singular", "inessive plural", "inessive singular"]);
 		assert.equal(formCaseCell(places, MAJA, "majades", "et-EE"), "inessive plural");
 		assert.equal(formCaseCell(places, MAJA, "majja", "et-EE"), "illative singular");
 	});
 
 	test("a unit without a number covers both numbers in the case table", () => {
-		assert.deepEqual(unitCaseCells(unit({ id: "x", cat: "Nouns", tags: ["genitive"] })).sort(), ["genitive plural", "genitive singular"]);
+		assert.deepEqual(unitCaseCells(unit({ id: "x", cat: "Nouns", tags: ["genitive"] })).sort(), [
+			"genitive plural",
+			"genitive singular",
+		]);
 		assert.deepEqual(unitCaseCells(unit({ id: "y", cat: "Adjectives", tags: ["genitive"] })), []);
 	});
 
@@ -72,22 +120,49 @@ describe("a course unit's tag sets", () => {
 	});
 
 	test("a unit can leave out forms it should not drill", () => {
-		const present = unit({ id: "present", cat: "Verbs", tags: ["present", "second-person", "singular"], skipForms: ["еси"] });
+		const present = unit({
+			id: "present",
+			cat: "Verbs",
+			tags: ["present", "second-person", "singular"],
+			skipForms: ["еси"],
+		});
 		const byt = entry("быть", { еси: ["present second-person singular"] }, [["Пригож еси.", "еси"]], "Verbs");
 		assert.deepEqual(units(byt, [present], "ru-RU"), [[]]);
 	});
 
 	test("a unit can rule out a form that could also be another case", () => {
-		const night = entry("ночь", { ночь: ["nominative singular", "accusative singular"], ночи: ["genitive singular", "prepositional singular", "nominative plural", "accusative plural"], ночью: ["instrumental singular"] }, [["Мы ушли в ночи.", "ночи"]]);
+		const night = entry(
+			"ночь",
+			{
+				ночь: ["nominative singular", "accusative singular"],
+				ночи: ["genitive singular", "prepositional singular", "nominative plural", "accusative plural"],
+				ночью: ["instrumental singular"],
+			},
+			[["Мы ушли в ночи.", "ночи"]],
+		);
 		const whereTo = unit({ id: "where-to", cat: "Nouns", tags: ["accusative"], after: ["в"] });
 		assert.deepEqual(units(night, [whereTo], "ru-RU"), [["where-to"]]);
 		assert.deepEqual(units(night, [{ ...whereTo, notWith: [["prepositional"]] }], "ru-RU"), [[]]);
 	});
 
 	test("a unit can ask for forms that fill only one of its sets", () => {
-		const tea = entry("tee", { tee: ["nominative singular"], teed: ["partitive singular"] }, [["Ma joon teed.", "teed"]]);
-		const kiri = entry("kiri", { kiri: ["nominative singular"], kirja: ["genitive singular", "partitive singular"] }, [["Ma kirjutan kirja.", "kirja"]]);
-		const object = unit({ id: "object", cat: "Nouns", tags: ["genitive", "singular"], variants: [["genitive", "singular"], ["partitive", "singular"]], after: ["joon", "kirjutan"], distinct: true });
+		const tea = entry("tee", { tee: ["nominative singular"], teed: ["partitive singular"] }, [
+			["Ma joon teed.", "teed"],
+		]);
+		const kiri = entry("kiri", { kiri: ["nominative singular"], kirja: ["genitive singular", "partitive singular"] }, [
+			["Ma kirjutan kirja.", "kirja"],
+		]);
+		const object = unit({
+			id: "object",
+			cat: "Nouns",
+			tags: ["genitive", "singular"],
+			variants: [
+				["genitive", "singular"],
+				["partitive", "singular"],
+			],
+			after: ["joon", "kirjutan"],
+			distinct: true,
+		});
 		assert.deepEqual(units(tea, [object]), [["object"]]);
 		assert.deepEqual(units(kiri, [object]), [[]]);
 		assert.deepEqual(units(kiri, [{ ...object, distinct: false }]), [["object"]]);
@@ -113,22 +188,49 @@ describe("the case table of a course", () => {
 		version: 1,
 		draft: true,
 		cases: [
-			{ tag: "nominative", native: "nimetav", means: "the subject", noDrill: { singular: { short: "dictionary form", why: "The dictionary gives it." } } },
+			{
+				tag: "nominative",
+				native: "nimetav",
+				means: "the subject",
+				noDrill: { singular: { short: "dictionary form", why: "The dictionary gives it." } },
+			},
 			{ tag: "inessive", native: "seesütlev", means: "in", tutor: "tutor-places" },
 		],
 		units: [
 			unit({ id: "nom-pl", cat: "Nouns", tags: ["nominative", "plural"] }),
-			unit({ id: "inner", cat: "Nouns", tags: ["inessive", "singular"], variants: [["inessive", "singular"], ["illative", "singular"]] }),
+			unit({
+				id: "inner",
+				cat: "Nouns",
+				tags: ["inessive", "singular"],
+				variants: [
+					["inessive", "singular"],
+					["illative", "singular"],
+				],
+			}),
 			unit({ id: "in", cat: "Nouns", tags: ["inessive", "singular"] }),
 		],
 		tutors: [{ id: "tutor-places", title: "Places", tagline: "", glyph: "map-pin", brief: "Teach me." }],
 		goals: [{ id: "can-go", title: "Can go", tagline: "" }],
-		chapters: [{ id: "town", stage: "a1", title: "Town", tagline: "", units: ["nom-pl", "inner", "in", "tutor-places", "can-go"] }],
+		chapters: [
+			{
+				id: "town",
+				stage: "a1",
+				title: "Town",
+				tagline: "",
+				units: ["nom-pl", "inner", "in", "tutor-places", "can-go"],
+			},
+		],
 	};
 
 	test("rows are the course's cases; a cell opens the lesson that drills only it before a lesson that mixes it, and counts the first tries of both", () => {
-		const rows = caseTable(course, { in: { first: { reps: 4, right: 3, accents: 0, slips: {} } }, inner: { byForm: { "inessive singular": { reps: 2, right: 1, accents: 0, slips: {} } } } });
-		assert.deepEqual(rows.map((r) => r.tag), ["nominative", "inessive"]);
+		const rows = caseTable(course, {
+			in: { first: { reps: 4, right: 3, accents: 0, slips: {} } },
+			inner: { byForm: { "inessive singular": { reps: 2, right: 1, accents: 0, slips: {} } } },
+		});
+		assert.deepEqual(
+			rows.map((r) => r.tag),
+			["nominative", "inessive"],
+		);
 		const [nomSg, nomPl] = rows[0]!.cells;
 		assert.equal(nomSg!.unit, null);
 		assert.equal(nomSg!.noDrill?.short, "dictionary form");
@@ -144,12 +246,16 @@ describe("the case table of a course", () => {
 
 	test("a course without its own case list gets one from its lessons, in the usual case order", () => {
 		const { cases: _cases, ...bare } = course;
-		assert.deepEqual(caseTable(bare, {}).map((r) => r.tag), ["nominative", "illative", "inessive"]);
+		assert.deepEqual(
+			caseTable(bare, {}).map((r) => r.tag),
+			["nominative", "illative", "inessive"],
+		);
 	});
 });
 
 const REPO = path.resolve(import.meta.dirname, "..");
-const shipped = (id: string, name: string) => JSON.parse(fs.readFileSync(path.join(REPO, "curriculum", id, name), "utf-8"));
+const shipped = (id: string, name: string) =>
+	JSON.parse(fs.readFileSync(path.join(REPO, "curriculum", id, name), "utf-8"));
 
 for (const id of ["estonian", "russian"]) {
 	describe(`the ${id} course that ships with the app`, () => {
@@ -168,7 +274,14 @@ for (const id of ["estonian", "russian"]) {
 			const tags = new Set(course.units.flatMap((u) => [...(u.tags ?? []), ...(u.variants ?? []).flat()]));
 			const lemmas = course.units.flatMap((u) => u.lemmas ?? []);
 			const fake: LexiconEntry[] = lemmas.map((l) => entry(l, { [l]: [[...tags].join(" ")] }, []));
-			const checked = checkCourse(course, id, fake, course.tag, SPEAK_SCENES.map((s) => s.id), 0);
+			const checked = checkCourse(
+				course,
+				id,
+				fake,
+				course.tag,
+				SPEAK_SCENES.map((s) => s.id),
+				0,
+			);
 			assert.ok(checked);
 			assert.deepEqual(checked.dropped, []);
 			assert.equal(checked.course.units.length, course.units.length);
@@ -196,7 +309,11 @@ for (const id of ["estonian", "russian"]) {
 		});
 
 		test("no line a learner reads names a lesson by its id", () => {
-			const prose = [...course.units.map((u) => `${u.title} ${u.tagline} ${u.rule}`), ...course.tutors.map((t) => `${t.title} ${t.tagline} ${t.brief}`), ...course.goals.map((g) => `${g.title} ${g.tagline}`)].join("\n");
+			const prose = [
+				...course.units.map((u) => `${u.title} ${u.tagline} ${u.rule}`),
+				...course.tutors.map((t) => `${t.title} ${t.tagline} ${t.brief}`),
+				...course.goals.map((g) => `${g.title} ${g.tagline}`),
+			].join("\n");
 			for (const x of ids) if (x.includes("-")) assert.ok(!prose.includes(x), x);
 		});
 	});

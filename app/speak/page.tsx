@@ -12,7 +12,11 @@ export const dynamic = "force-dynamic";
  *  opens it with the keyboard on (Today's "Talk in writing"); ?mode=script
  *  walks the scene on its rails first (E13) — no model, graded locally.
  *  The state is read with the page so the scenes are in the first HTML. */
-export default async function SpeakPage({ searchParams }: { searchParams: Promise<{ scene?: string; mode?: string }> }) {
+export default async function SpeakPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ scene?: string; mode?: string }>;
+}) {
 	const { scene, mode } = await searchParams;
 	const sceneId = scene && /^[a-z]+$/.test(scene) ? scene : null;
 	// Script mode runs its own player and must never auto-start the live
@@ -29,5 +33,13 @@ export default async function SpeakPage({ searchParams }: { searchParams: Promis
 	} catch {
 		state = null;
 	}
-	return <SpeakPlayer key={scene ?? "pick"} initialState={state} sceneId={sceneId} typed={mode === "typed"} sceneLang={lang} />;
+	return (
+		<SpeakPlayer
+			key={scene ?? "pick"}
+			initialState={state}
+			sceneId={sceneId}
+			typed={mode === "typed"}
+			sceneLang={lang}
+		/>
+	);
 }

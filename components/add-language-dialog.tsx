@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { addLanguage } from "@/components/switch-language";
+import { thinkingLabel } from "@/components/thinking-default";
 
 interface CatalogRow {
 	id: string;
@@ -49,10 +50,20 @@ function priceLine(e: Estimate): string {
 
 function basisLine(e: Estimate): string {
 	if (e.slot === "dictionary") return "Plainer: rules from templates, no word themes or story world.";
-	return e.measured > 0 ? `From ${e.measured} earlier ${e.measured === 1 ? "course" : "courses"} on this model.` : "A first guess: no course has been written on this model yet.";
+	return e.measured > 0
+		? `From ${e.measured} earlier ${e.measured === 1 ? "course" : "courses"} on this model.`
+		: "A first guess: no course has been written on this model yet.";
 }
 
-export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: () => void; onStarted: () => void; initial?: string }) {
+export function AddLanguageDialog({
+	onClose,
+	onStarted,
+	initial,
+}: {
+	onClose: () => void;
+	onStarted: () => void;
+	initial?: string;
+}) {
 	const [rows, setRows] = useState<CatalogRow[] | null>(null);
 	const [picked, setPicked] = useState<string | null>(initial ?? null);
 	const [busy, setBusy] = useState(false);
@@ -118,7 +129,10 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 		) : null;
 
 	return createPortal(
-		<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...dismiss}>
+		<div
+			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
+			{...dismiss}
+		>
 			<div
 				role="dialog"
 				aria-modal="true"
@@ -132,17 +146,29 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 							Add a language
 						</h3>
 						<p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-							LangHarness builds the whole course: about 3,000 common words from Wiktionary with example sentences from Tatoeba, then lessons, chapters, tutor sessions, goals and a story world written by your model. It runs in the background, so you can keep studying.
+							LangHarness builds the whole course: about 3,000 common words from Wiktionary with example sentences from
+							Tatoeba, then lessons, chapters, tutor sessions, goals and a story world written by your model. It runs in
+							the background, so you can keep studying.
 						</p>
 					</div>
-					<button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+					<button
+						type="button"
+						onClick={onClose}
+						aria-label="Close"
+						className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+					>
 						<XIcon className="size-4" />
 					</button>
 				</div>
 
 				{/* One scroll for the whole middle: the title and the buttons stay in view, and no list scrolls inside another. */}
 				<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-1">
-					<div role="listbox" aria-label="Languages you can add" className={cn("flex flex-col gap-0.5", rows === null && "min-h-[17rem]")} data-testid="add-language-list">
+					<div
+						role="listbox"
+						aria-label="Languages you can add"
+						className={cn("flex flex-col gap-0.5", rows === null && "min-h-[17rem]")}
+						data-testid="add-language-list"
+					>
 						{rows === null && !error && <p className="px-2.5 py-2 text-xs text-muted-foreground">Loading…</p>}
 						{rows?.map((r) => {
 							const unavailable = r.ready || r.adding;
@@ -159,7 +185,9 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 									onClick={() => setPicked(r.id)}
 									className={cn(
 										"flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
-										selected ? "bg-accent font-semibold text-foreground ring-1 ring-inset ring-primary/50" : "text-foreground hover:bg-accent",
+										selected
+											? "bg-accent font-semibold text-foreground ring-1 ring-inset ring-primary/50"
+											: "text-foreground hover:bg-accent",
 										unavailable && "cursor-default text-muted-foreground hover:bg-transparent",
 									)}
 								>
@@ -173,15 +201,23 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 					</div>
 
 					<p className="text-xs leading-relaxed text-muted-foreground">
-						The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and the stories in two calls, each capped, so it cannot cost more than shown; or the app builds plainer lessons from the dictionary for free.
+						The sentences are never written by a model: they are real Tatoeba sentences. A model writes the lessons and
+						the stories in two calls, each capped, so it cannot cost more than shown; or the app builds plainer lessons
+						from the dictionary for free.
 					</p>
 					{choice?.writtenCourse ? (
 						<p className="pb-3 text-xs leading-relaxed text-foreground" data-testid="add-language-written">
-							{choice.english} comes with a course written by hand: its lessons, tutor sessions and story world ship with the app, so no model writes them and adding it is free.
+							{choice.english} comes with a course written by hand: its lessons, tutor sessions and story world ship
+							with the app, so no model writes them and adding it is free.
 						</p>
 					) : null}
 					{writers.length > 0 && !choice?.restoreOnly && !choice?.writtenCourse && (
-						<div role="radiogroup" aria-label="Model that writes the course" className="flex flex-col gap-1 pb-3" data-testid="add-language-writers">
+						<div
+							role="radiogroup"
+							aria-label="Model that writes the course"
+							className="flex flex-col gap-1 pb-3"
+							data-testid="add-language-writers"
+						>
 							<p className="pb-1 text-xs font-semibold text-foreground">Written by</p>
 							{writers.map((w) => {
 								const on = w.slot === writer;
@@ -195,13 +231,22 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 										onClick={() => setWriter(w.slot)}
 										className={cn(
 											"flex w-full items-start justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
-											on ? "bg-accent text-foreground ring-1 ring-inset ring-primary/50" : "text-muted-foreground hover:bg-accent",
+											on
+												? "bg-accent text-foreground ring-1 ring-inset ring-primary/50"
+												: "text-muted-foreground hover:bg-accent",
 										)}
 									>
 										<span className="min-w-0">
 											<span className="block font-semibold">{w.name}</span>
 											<span className="mt-0.5 block leading-relaxed text-muted-foreground">
-												{w.slot === "dictionary" ? basisLine(w) : <>{w.slot === "strong" ? "Strong" : "Cheap"} slot · {w.level} thinking · {basisLine(w)}</>}
+												{w.slot === "dictionary" ? (
+													basisLine(w)
+												) : (
+													<>
+														{w.slot === "strong" ? "Strong" : "Cheap"} slot · {thinkingLabel(w.level)} thinking ·{" "}
+														{basisLine(w)}
+													</>
+												)}
 											</span>
 										</span>
 										<span className="shrink-0 tabular-nums font-semibold">{priceLine(w)}</span>
@@ -219,7 +264,11 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 						</p>
 					)}
 					<div className="flex items-center justify-end gap-2">
-						<button type="button" onClick={onClose} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+						<button
+							type="button"
+							onClick={onClose}
+							className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						>
 							Cancel
 						</button>
 						<button
@@ -229,7 +278,13 @@ export function AddLanguageDialog({ onClose, onStarted, initial }: { onClose: ()
 							onClick={() => void start()}
 							className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
 						>
-							{choice?.restoreOnly ? `Put ${choice.english} back` : anyAdding ? "Another language is being added" : choice ? `Add ${choice.english}` : "Pick a language"}
+							{choice?.restoreOnly
+								? `Put ${choice.english} back`
+								: anyAdding
+									? "Another language is being added"
+									: choice
+										? `Add ${choice.english}`
+										: "Pick a language"}
 						</button>
 					</div>
 				</div>

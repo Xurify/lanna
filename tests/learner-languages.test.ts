@@ -23,18 +23,44 @@ fs.writeFileSync(
 		code: "cs",
 		tag: "cs-CZ",
 		version: 1,
-		units: [{ id: "acc", kind: "grammar", title: "Objects", tagline: "What you have", rule: "The accusative.", glyph: "coffee", cat: "Nouns", tags: ["accusative", "singular"] }],
+		units: [
+			{
+				id: "acc",
+				kind: "grammar",
+				title: "Objects",
+				tagline: "What you have",
+				rule: "The accusative.",
+				glyph: "coffee",
+				cat: "Nouns",
+				tags: ["accusative", "singular"],
+			},
+		],
 		tutors: [],
 		goals: [],
 		chapters: [{ id: "cafe", stage: "a1", title: "At the café", tagline: "Objects", units: ["acc"] }],
 	}),
 );
-fs.writeFileSync(path.join(czech, "language.json"), JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }));
+fs.writeFileSync(
+	path.join(czech, "language.json"),
+	JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }),
+);
 // A Slovak profile set up before the fields were shared: its languages are the learner's.
 fs.mkdirSync(path.join(dir, "profiles", "slovak"), { recursive: true });
 fs.writeFileSync(
 	path.join(dir, "profiles", "slovak", "progress.json"),
-	JSON.stringify({ xp: 0, days: {}, units: {}, goal: { level: "B1", minutesPerDay: 60, languages: ["en", "cs", "et"], languageLevels: { en: "native", cs: "A1", et: "A2" }, explainIn: ["en", "et"], onboardedAt: "2026-10-30T00:00:00Z" } }),
+	JSON.stringify({
+		xp: 0,
+		days: {},
+		units: {},
+		goal: {
+			level: "B1",
+			minutesPerDay: 60,
+			languages: ["en", "cs", "et"],
+			languageLevels: { en: "native", cs: "A1", et: "A2" },
+			explainIn: ["en", "et"],
+			onboardedAt: "2026-10-30T00:00:00Z",
+		},
+	}),
 );
 
 const config = await import("../config.ts");
@@ -50,7 +76,11 @@ describe("the learner's languages, once for every language", () => {
 		const goal = progressStore.read().goal!;
 		assert.deepEqual(goal.languages, ["en", "cs", "et"]);
 		assert.ok(fs.existsSync(learnerFile));
-		assert.deepEqual(JSON.parse(fs.readFileSync(learnerFile, "utf-8")).languageLevels, { en: "native", cs: "A1", et: "A2" });
+		assert.deepEqual(JSON.parse(fs.readFileSync(learnerFile, "utf-8")).languageLevels, {
+			en: "native",
+			cs: "A1",
+			et: "A2",
+		});
 	});
 
 	test("a new language starts from them, and its fresh goal does not wipe them", () => {
@@ -64,7 +94,9 @@ describe("the learner's languages, once for every language", () => {
 
 	test("a list saved in one language reaches the others, and keeps the running language it cannot show", () => {
 		// The Czech picker leaves Czech out; the shared list keeps it for Slovak.
-		config.withProfile("czech", () => setGoal({ languages: ["en", "et", "sk"], languageLevels: { en: "native", et: "B1", sk: "B1" }, onboarded: true }));
+		config.withProfile("czech", () =>
+			setGoal({ languages: ["en", "et", "sk"], languageLevels: { en: "native", et: "B1", sk: "B1" }, onboarded: true }),
+		);
 		const slovak = progressStore.read().goal!;
 		assert.deepEqual(slovak.languages, ["en", "et", "sk", "cs"]);
 		assert.deepEqual(slovak.languageLevels, { en: "native", et: "B1", sk: "B1", cs: "A1" });

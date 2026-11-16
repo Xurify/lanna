@@ -28,7 +28,9 @@ function hostsInCode(): Map<string, string> {
 describe("Settings → Sources", () => {
 	it("credits every outside host the app fetches from", () => {
 		const credited = new Set(CREDITS.flatMap((c) => c.fetchedHosts ?? []));
-		const missing = [...hostsInCode()].filter(([host]) => !credited.has(host) && !HOSTS_THAT_ARE_NOT_SOURCES.has(host)).map(([host, file]) => `${host} (${file})`);
+		const missing = [...hostsInCode()]
+			.filter(([host]) => !credited.has(host) && !HOSTS_THAT_ARE_NOT_SOURCES.has(host))
+			.map(([host, file]) => `${host} (${file})`);
 		assert.deepEqual(missing, [], "add a credit in src/core/credits.ts, or list the host as not a source");
 	});
 

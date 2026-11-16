@@ -108,8 +108,12 @@ html[data-keyboard] :focus-visible {
 	--q-hair: 0 0 0 1px var(--q-line);
 	/* A text field's surface (.q-field). Day sits it on the well; Night uses the next step up (well-2), so a field on a well still shows. */
 	--q-field: var(--q-well);
-	--q-raise: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 6px 16px -8px rgb(var(--q-shadow-rgb) / 0.1);
-	--q-raise-hi: 0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05), 0 16px 36px -14px rgb(var(--q-shadow-rgb) / 0.16);
+	--q-raise:
+		0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05),
+		0 6px 16px -8px rgb(var(--q-shadow-rgb) / 0.1);
+	--q-raise-hi:
+		0 0 0 1px rgb(var(--q-shadow-rgb) / 0.06), 0 1px 2px rgb(var(--q-shadow-rgb) / 0.05),
+		0 16px 36px -14px rgb(var(--q-shadow-rgb) / 0.16);
 	/* The selected segment of a segmented control (.q-segc): the card in Day; Night lifts it above its well-2 track, which is lighter than the card. */
 	--q-seg-on: var(--q-card);
 	--q-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1095,21 +1099,33 @@ body {
 /* The climb's trail (components/climb.tsx): the done stretch draws itself
    once, like a pen; a walked trail, not a loading bar. */
 @keyframes lh-trail-draw {
-	from { stroke-dashoffset: var(--lh-trail-len, 0); }
-	to { stroke-dashoffset: 0; }
+	from {
+		stroke-dashoffset: var(--lh-trail-len, 0);
+	}
+	to {
+		stroke-dashoffset: 0;
+	}
 }
-.lh-trail-draw { animation: lh-trail-draw 900ms var(--ease-in-out) both; }
+.lh-trail-draw {
+	animation: lh-trail-draw 900ms var(--ease-in-out) both;
+}
 @media (prefers-reduced-motion: reduce) {
-	.lh-trail-draw { animation: none; }
+	.lh-trail-draw {
+		animation: none;
+	}
 }
 
 /* An ink stroke draws itself along its length: pathLength is 1, and the start
    offset is a little past 1 so a round cap leaves no dot before the pen moves. */
 @keyframes ink-draw {
-	to { stroke-dashoffset: 0; }
+	to {
+		stroke-dashoffset: 0;
+	}
 }
 @keyframes ink-fade {
-	to { opacity: 1; }
+	to {
+		opacity: 1;
+	}
 }
 .ink-draw {
 	stroke-dasharray: 1 2;
@@ -1121,57 +1137,128 @@ body {
 	animation: ink-fade 350ms var(--ease-out) var(--ink-delay, 0s) forwards;
 }
 @media (prefers-reduced-motion: reduce) {
-	.ink-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
-	.ink-fade { opacity: 1; animation: none; }
+	.ink-draw {
+		stroke-dasharray: none;
+		stroke-dashoffset: 0;
+		animation: none;
+	}
+	.ink-fade {
+		opacity: 1;
+		animation: none;
+	}
 }
 
 /* Nothing in the real world appears from nothing: a pop starts at 0.94, not
    0, and the overshoot comes from the curve, not an extra keyframe. */
 @keyframes lh-pop {
-	from { transform: scale(0.94); opacity: 0; }
-	to { transform: none; opacity: 1; }
+	from {
+		transform: scale(0.94);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
 }
 @keyframes lh-shake {
-	0%, 100% { transform: translateX(0); }
-	20% { transform: translateX(-6px); }
-	40% { transform: translateX(6px); }
-	60% { transform: translateX(-4px); }
-	80% { transform: translateX(3px); }
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	20% {
+		transform: translateX(-6px);
+	}
+	40% {
+		transform: translateX(6px);
+	}
+	60% {
+		transform: translateX(-4px);
+	}
+	80% {
+		transform: translateX(3px);
+	}
 }
 @keyframes lh-rise {
-	from { transform: translateY(8px); opacity: 0; }
-	to { transform: none; opacity: 1; }
+	from {
+		transform: translateY(8px);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
 }
 @keyframes lh-fade {
-	from { opacity: 0; }
-	to { opacity: 1; }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 @keyframes lh-float-up {
-	0% { transform: translateY(0); opacity: 0; }
-	20% { opacity: 1; }
-	100% { transform: translateY(-28px); opacity: 0; }
+	0% {
+		transform: translateY(0);
+		opacity: 0;
+	}
+	20% {
+		opacity: 1;
+	}
+	100% {
+		transform: translateY(-28px);
+		opacity: 0;
+	}
 }
 @keyframes lh-flicker {
-	0%, 100% { transform: scale(1) rotate(0deg); }
-	50% { transform: scale(1.08) rotate(-3deg); }
+	0%,
+	100% {
+		transform: scale(1) rotate(0deg);
+	}
+	50% {
+		transform: scale(1.08) rotate(-3deg);
+	}
 }
 @keyframes lh-confetti {
-	0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
-	100% { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)); opacity: 0; }
+	0% {
+		transform: translate3d(0, 0, 0) rotate(0deg);
+		opacity: 1;
+	}
+	100% {
+		transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot));
+		opacity: 0;
+	}
 }
-.lh-pop { animation: lh-pop var(--dur-base) var(--ease-spring) both; }
-.lh-shake { animation: lh-shake var(--dur-slow) var(--ease-in-out); }
-.lh-rise { animation: lh-rise var(--dur-base) var(--ease-out) both; }
-.lh-fade { animation: lh-fade var(--dur-fast) var(--ease-out) both; }
+.lh-pop {
+	animation: lh-pop var(--dur-base) var(--ease-spring) both;
+}
+.lh-shake {
+	animation: lh-shake var(--dur-slow) var(--ease-in-out);
+}
+.lh-rise {
+	animation: lh-rise var(--dur-base) var(--ease-out) both;
+}
+.lh-fade {
+	animation: lh-fade var(--dur-fast) var(--ease-out) both;
+}
 /* A popover or dialog grows out of where it was opened: a short scale from
    0.96 with no overshoot. The element sets its transform-origin (origin-*
    utilities) to the side its trigger is on. */
 @keyframes lh-menu-in {
-	from { transform: scale(0.96); opacity: 0; }
-	to { transform: none; opacity: 1; }
+	from {
+		transform: scale(0.96);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
 }
-.lh-menu-in { animation: lh-menu-in var(--dur-fast) var(--ease-out) both; }
-.lh-float-up { animation: lh-float-up 800ms var(--ease-out) forwards; }
+.lh-menu-in {
+	animation: lh-menu-in var(--dur-fast) var(--ease-out) both;
+}
+.lh-float-up {
+	animation: lh-float-up 800ms var(--ease-out) forwards;
+}
 /* The active unit: a still hairline ring set off from the badge, not a pulse
    or a glow (the anti-slop list: no colored glows, no looping effects). */
 .lh-here-ring::after {
@@ -1182,8 +1269,12 @@ body {
 	box-shadow: 0 0 0 1.5px var(--q-teal-line);
 	pointer-events: none;
 }
-.lh-flicker { animation: lh-flicker 1.6s ease-in-out infinite; }
-.lh-confetti-bit { animation: lh-confetti 1100ms var(--ease-out) forwards; }
+.lh-flicker {
+	animation: lh-flicker 1.6s ease-in-out infinite;
+}
+.lh-confetti-bit {
+	animation: lh-confetti 1100ms var(--ease-out) forwards;
+}
 
 @media (prefers-reduced-motion: reduce) {
 	.lh-pop,
@@ -1202,38 +1293,80 @@ body {
    grows and fades, on HTML spans and on SVG circles alike. */
 /* A stamp pressed onto the page: comes down a little large and askew, settles. */
 @keyframes lh-stamp {
-	0% { transform: scale(1.5) rotate(-10deg); opacity: 0; }
-	55% { transform: scale(0.96) rotate(1.5deg); opacity: 1; }
-	100% { transform: none; opacity: 1; }
+	0% {
+		transform: scale(1.5) rotate(-10deg);
+		opacity: 0;
+	}
+	55% {
+		transform: scale(0.96) rotate(1.5deg);
+		opacity: 1;
+	}
+	100% {
+		transform: none;
+		opacity: 1;
+	}
 }
-.lh-stamp { animation: lh-stamp 0.5s var(--ease-out) both; }
+.lh-stamp {
+	animation: lh-stamp 0.5s var(--ease-out) both;
+}
 @media (prefers-reduced-motion: reduce) {
-	.lh-stamp { animation: none; }
+	.lh-stamp {
+		animation: none;
+	}
 }
 
 /* A grid area with no item in it is an auto row of zero height (CSS Grid), so
    the stamp area costs nothing when there is no stamp. An auto column shrinks
    to its content's min-content width before a minmax() floor gives way. */
-.lh-end { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "score" "stamp" "list"; }
+.lh-end {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas: "head" "score" "stamp" "list";
+}
 @media (min-width: 40rem) {
-	.lh-end { grid-template-columns: minmax(min(100%, 23rem), 1fr) auto; column-gap: 32px; grid-template-areas: "head stamp" "score score" "list list"; }
+	.lh-end {
+		grid-template-columns: minmax(min(100%, 23rem), 1fr) auto;
+		column-gap: 32px;
+		grid-template-areas: "head stamp" "score score" "list list";
+	}
 }
 @media (min-width: 64rem) {
-	.lh-end.lh-end-split { grid-template-columns: minmax(0, 20rem) minmax(0, 1fr) auto; column-gap: 56px; grid-template-areas: "head head stamp" "score list list"; }
+	.lh-end.lh-end-split {
+		grid-template-columns: minmax(0, 20rem) minmax(0, 1fr) auto;
+		column-gap: 56px;
+		grid-template-areas: "head head stamp" "score list list";
+	}
 }
 
 @keyframes lh-tile {
-	from { transform: scaleY(0.25); opacity: 0; }
-	to { transform: none; opacity: 1; }
+	from {
+		transform: scaleY(0.25);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
 }
-.lh-tile { transform-origin: bottom; animation: lh-tile var(--dur-base) var(--ease-out) both; }
+.lh-tile {
+	transform-origin: bottom;
+	animation: lh-tile var(--dur-base) var(--ease-out) both;
+}
 @media (prefers-reduced-motion: reduce) {
-	.lh-tile { animation: none; }
+	.lh-tile {
+		animation: none;
+	}
 }
 
 @keyframes lh-ring {
-	from { transform: scale(1); opacity: 0.55; }
-	to { transform: scale(2.4); opacity: 0; }
+	from {
+		transform: scale(1);
+		opacity: 0.55;
+	}
+	to {
+		transform: scale(2.4);
+		opacity: 0;
+	}
 }
 .lh-ring {
 	transform-box: fill-box;
@@ -1241,7 +1374,10 @@ body {
 	animation: lh-ring 1.8s var(--ease-out) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-	.lh-ring { animation: none; opacity: 0; }
+	.lh-ring {
+		animation: none;
+		opacity: 0;
+	}
 }
 
 /* While the sidebar's edge is dragged the width follows the pointer with no transition, and the text under it is not selected. */
@@ -1276,8 +1412,15 @@ html[data-sidebar-resizing] .sidebar-motion {
 	color: var(--q-teal-2);
 }
 @keyframes lh-nib {
-	0%, 100% { transform: scaleX(0.35); opacity: 0.5; }
-	50% { transform: scaleX(1); opacity: 1; }
+	0%,
+	100% {
+		transform: scaleX(0.35);
+		opacity: 0.5;
+	}
+	50% {
+		transform: scaleX(1);
+		opacity: 1;
+	}
 }
 .lh-writing .lh-prose > :last-child::after {
 	content: "";
@@ -1296,16 +1439,33 @@ html[data-sidebar-resizing] .sidebar-motion {
 	transition: opacity var(--dur-base) var(--ease-out);
 }
 @media (hover: hover) {
-	.lh-recede:hover { opacity: 1; }
+	.lh-recede:hover {
+		opacity: 1;
+	}
 }
 @media (prefers-reduced-motion: reduce) {
-	.lh-writing .lh-prose > :last-child::after { animation: none; transform: none; opacity: 1; }
-	.lh-recede { transition: none; }
+	.lh-writing .lh-prose > :last-child::after {
+		animation: none;
+		transform: none;
+		opacity: 1;
+	}
+	.lh-recede {
+		transition: none;
+	}
 }
 @keyframes lh-pen {
-	0% { stroke-dashoffset: 1; opacity: 1; }
-	60% { stroke-dashoffset: 0; opacity: 1; }
-	100% { stroke-dashoffset: 0; opacity: 0; }
+	0% {
+		stroke-dashoffset: 1;
+		opacity: 1;
+	}
+	60% {
+		stroke-dashoffset: 0;
+		opacity: 1;
+	}
+	100% {
+		stroke-dashoffset: 0;
+		opacity: 0;
+	}
 }
 .lh-pen {
 	stroke-dasharray: 1 2;
@@ -1313,7 +1473,10 @@ html[data-sidebar-resizing] .sidebar-motion {
 	animation: lh-pen 1.6s var(--ease-in-out) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-	.lh-pen { stroke-dashoffset: 0; animation: none; }
+	.lh-pen {
+		stroke-dashoffset: 0;
+		animation: none;
+	}
 }
 .lh-fade-out {
 	mask-image: linear-gradient(to bottom, #000 calc(100% - 9rem), transparent calc(100% - 2rem));

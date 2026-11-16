@@ -9,7 +9,13 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, before, describe, it } from "node:test";
-import { createFauxCore, fauxAssistantMessage, fauxText, fauxToolCall, type FauxResponseStep } from "@earendil-works/pi-ai";
+import {
+	createFauxCore,
+	fauxAssistantMessage,
+	fauxText,
+	fauxToolCall,
+	type FauxResponseStep,
+} from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 import { runPdfReaderAgent } from "../src/agent/subagents/pdf-reader.ts";
 import type { HeadlessApi } from "../src/agent/subagents/headless.ts";
@@ -23,14 +29,15 @@ function fauxEngine(steps: FauxResponseStep[]): PiEngine {
 }
 
 const PNG_1PX = Buffer.from([
-	0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-	0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
-	0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
-	0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
-	0x42, 0x60, 0x82,
+	0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00,
+	0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49,
+	0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00,
+	0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
 ]);
 
-function fakeHeadless(rendered: { pages: number[] } = { pages: [] }): HeadlessApi & { calls: string[]; paths: string[] } {
+function fakeHeadless(
+	rendered: { pages: number[] } = { pages: [] },
+): HeadlessApi & { calls: string[]; paths: string[] } {
 	const calls: string[] = [];
 	const paths: string[] = [];
 	return {
@@ -38,9 +45,6 @@ function fakeHeadless(rendered: { pages: number[] } = { pages: [] }): HeadlessAp
 		paths,
 		available: () => true,
 		unavailableReason: () => null,
-		renderSvg: async () => {
-			throw new Error("unused");
-		},
 		renderPdfPages: async (pdfPath, pages) => {
 			paths.push(pdfPath);
 			calls.push(`render:${pages.join(",")}`);
@@ -82,7 +86,9 @@ describe("pdf-reader source paths", () => {
 			const headless = fakeHeadless();
 			const engine = fauxEngine([
 				fauxAssistantMessage([fauxToolCall("pdf_info", {}, { id: "i1" })], { stopReason: "toolUse" }),
-				fauxAssistantMessage([fauxToolCall("pdf_search", { query: "integral", literal: true }, { id: "s1" })], { stopReason: "toolUse" }),
+				fauxAssistantMessage([fauxToolCall("pdf_search", { query: "integral", literal: true }, { id: "s1" })], {
+					stopReason: "toolUse",
+				}),
 				fauxAssistantMessage([fauxToolCall("pdf_extract", { pages: "2" }, { id: "e1" })], { stopReason: "toolUse" }),
 				fauxAssistantMessage([fauxToolCall("pdf_render", { pages: "3" }, { id: "r1" })], { stopReason: "toolUse" }),
 				fauxAssistantMessage([fauxText("Read the requested document (p. 1, p. 2, p. 3).")]),
@@ -93,10 +99,7 @@ describe("pdf-reader source paths", () => {
 				lastContext = JSON.stringify(args[1]);
 				return stream(...args);
 			};
-			const result = await runPdfReaderAgent(
-				{ path: inputPath, question: "Read the document" },
-				{ engine, headless },
-			);
+			const result = await runPdfReaderAgent({ path: inputPath, question: "Read the document" }, { engine, headless });
 			assert.equal(result.path, absolutePath);
 			assert.match(result.brief, /^Read the requested document/);
 			assert.match(lastContext, /Pages: 3/, "metadata opened the home-anchored PDF");
@@ -127,16 +130,10 @@ describe("pdf-reader loop (faux engine)", () => {
 	it("triage → extract → final brief: pagesConsulted tracks the extract", async () => {
 		const engine = fauxEngine([
 			fauxAssistantMessage([fauxToolCall("pdf_info", {}, { id: "i1" })], { stopReason: "toolUse" }),
-			fauxAssistantMessage(
-				[fauxToolCall("pdf_extract", { pages: "1-2" }, { id: "e1" })],
-				{ stopReason: "toolUse" },
-			),
+			fauxAssistantMessage([fauxToolCall("pdf_extract", { pages: "1-2" }, { id: "e1" })], { stopReason: "toolUse" }),
 			fauxAssistantMessage([fauxText("The integral rule appears on page 1 (p. 1). Pages consulted: 1, 2")]),
 		]);
-		const result = await runPdfReaderAgent(
-			{ path: FIXTURE, question: "what is the integral of x?" },
-			{ engine },
-		);
+		const result = await runPdfReaderAgent({ path: FIXTURE, question: "what is the integral of x?" }, { engine });
 		assert.equal(result.path, FIXTURE);
 		assert.match(result.brief, /integral rule/);
 		assert.deepEqual(result.pagesRead, [1, 2], "extracted pages are read pages");
@@ -150,10 +147,9 @@ describe("pdf-reader loop (faux engine)", () => {
 			// nudge and keep going rather than deliver invention
 			fauxAssistantMessage([fauxText("The answer is 42, trust me.")]),
 			// after the nudge: consult, then brief honestly
-			fauxAssistantMessage(
-				[fauxToolCall("pdf_search", { query: "integral", literal: false }, { id: "s1" })],
-				{ stopReason: "toolUse" },
-			),
+			fauxAssistantMessage([fauxToolCall("pdf_search", { query: "integral", literal: false }, { id: "s1" })], {
+				stopReason: "toolUse",
+			}),
 			fauxAssistantMessage([fauxText("Found it on page 1 (p. 1): the integral of x dx.")]),
 		]);
 		const result = await runPdfReaderAgent(
@@ -203,9 +199,6 @@ describe("pdf-reader loop (faux engine)", () => {
 				headless: {
 					available: () => false,
 					unavailableReason: () => "No Chrome found",
-					renderSvg: async () => {
-						throw new Error("unused");
-					},
 					renderPdfPages: async () => {
 						throw new Error("should not render");
 					},

@@ -24,7 +24,7 @@ A model is **not** trusted to write the language (E27, E44). Every exercise is b
 
 ## Sources
 
-- Nation, I.S.P. (2007). The four strands. *Innovation in Language Learning and Teaching*, 1(1), 2–13.
-- Long, M.H. (1991). Focus on form: A design feature in language teaching methodology. In de Bot, Ginsberg & Kramsch (eds.), *Foreign Language Research in Cross-Cultural Perspective*, 39–52.
-- Laufer, B. & Hulstijn, J. (2001). Incidental vocabulary acquisition in a second language: the construct of task-induced involvement. *Applied Linguistics*, 22(1), 1–26.
-- Karpicke, J.D. & Roediger, H.L. (2008). The critical importance of retrieval for learning. *Science*, 319, 966–968.
+- Nation, I.S.P. (2007). The four strands. _Innovation in Language Learning and Teaching_, 1(1), 2–13.
+- Long, M.H. (1991). Focus on form: A design feature in language teaching methodology. In de Bot, Ginsberg & Kramsch (eds.), _Foreign Language Research in Cross-Cultural Perspective_, 39–52.
+- Laufer, B. & Hulstijn, J. (2001). Incidental vocabulary acquisition in a second language: the construct of task-induced involvement. _Applied Linguistics_, 22(1), 1–26.
+- Karpicke, J.D. & Roediger, H.L. (2008). The critical importance of retrieval for learning. _Science_, 319, 966–968.

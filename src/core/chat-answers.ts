@@ -36,7 +36,10 @@ export function closesChatReply(content: readonly ReplyBlock[]): boolean {
 }
 
 export function chatTurnEnded(content: readonly ReplyBlock[]): boolean {
-	return closesChatReply(content) && content.some((b) => b.type === "toolCall" && b.name !== undefined && CHAT_ONLY_TOOLS.has(b.name));
+	return (
+		closesChatReply(content) &&
+		content.some((b) => b.type === "toolCall" && b.name !== undefined && CHAT_ONLY_TOOLS.has(b.name))
+	);
 }
 
 export function chatScore(messages: ReadonlyArray<{ role: string; parts: readonly ToolPart[] }>): ChatScore {
@@ -69,7 +72,8 @@ export function questionOpen(messages: ReadonlyArray<{ role: string; parts: read
 		if (message.role !== "assistant") continue;
 		for (const part of message.parts) {
 			if (part.type === "tool-pose") open = true;
-			else if (part.type === "tool-grade") open = (part.input as { verdict?: ChatVerdict } | undefined)?.verdict === "wrong";
+			else if (part.type === "tool-grade")
+				open = (part.input as { verdict?: ChatVerdict } | undefined)?.verdict === "wrong";
 		}
 	}
 	return open;

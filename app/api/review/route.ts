@@ -24,21 +24,46 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { cardId?: unknown; given?: unknown; ms?: unknown; activeMs?: unknown; rating?: unknown; hints?: unknown; picked?: unknown; words?: unknown; tz?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as {
+		cardId?: unknown;
+		given?: unknown;
+		ms?: unknown;
+		activeMs?: unknown;
+		rating?: unknown;
+		hints?: unknown;
+		picked?: unknown;
+		words?: unknown;
+		tz?: unknown;
+	} | null;
 	if (typeof body?.cardId !== "string" || typeof body.given !== "string") {
 		return Response.json({ message: "cardId and given are required strings" }, { status: 400 });
 	}
-	const rating = body.rating === 1 || body.rating === 2 || body.rating === 3 || body.rating === 4 ? body.rating : undefined;
+	const rating =
+		body.rating === 1 || body.rating === 2 || body.rating === 3 || body.rating === 4 ? body.rating : undefined;
 	const ms = typeof body.ms === "number" && Number.isFinite(body.ms) ? body.ms : undefined;
 	try {
 		const hints = typeof body.hints === "number" && body.hints > 0 ? Math.min(2, Math.floor(body.hints)) : undefined;
 		const words = typeof body.words === "number" && body.words >= 1 ? Math.floor(body.words) : undefined;
-		const outcome = answerReview({ cardId: body.cardId, given: body.given, ms, rating, hints, picked: body.picked === true, words });
+		const outcome = answerReview({
+			cardId: body.cardId,
+			given: body.given,
+			ms,
+			rating,
+			hints,
+			picked: body.picked === true,
+			words,
+		});
 		// Reviews count toward the day's XP and the streak (Today screen).
 		const activeMs = typeof body.activeMs === "number" && Number.isFinite(body.activeMs) ? body.activeMs : undefined;
 		const xp = recordReviewXp(outcome.verdict, tzOf(req), new Date(), ms, activeMs);
 		// The deck after this answer rides along, so the next card needs no second request.
-		return Response.json({ ...outcome, xp, status: reviewStatus(new Date(), tzOf(req) ?? (typeof body.tz === "number" ? body.tz : undefined), { mint: true }) });
+		return Response.json({
+			...outcome,
+			xp,
+			status: reviewStatus(new Date(), tzOf(req) ?? (typeof body.tz === "number" ? body.tz : undefined), {
+				mint: true,
+			}),
+		});
 	} catch (err) {
 		return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 	}

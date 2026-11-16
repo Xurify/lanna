@@ -7,7 +7,16 @@
  * The tutor reads all of it as a profile block (learnerProfileText). Pure and browser-safe.
  */
 
-import { CEFR_ORDER, allChapters, curriculumUnit, GUIDED_HOURS, STAGES, type Cefr, type CurriculumState, type UnitEvidence } from "./curriculum.ts";
+import {
+	CEFR_ORDER,
+	allChapters,
+	curriculumUnit,
+	GUIDED_HOURS,
+	STAGES,
+	type Cefr,
+	type CurriculumState,
+	type UnitEvidence,
+} from "./curriculum.ts";
 import { lessonLanguage, lessonsHaveBridges, unitInfo, type LessonItem, type UnitId } from "./lesson.ts";
 import { perCourse, type Course } from "./course.ts";
 import { entryLemma, exampleText } from "./review.ts";
@@ -41,7 +50,15 @@ export const PURPOSES: PurposeInfo[] = [
 		blurb: "In-laws, a partner's family, friends who switch to the language",
 		glyph: "users",
 		level: "B1",
-		goals: ["can-introduce", "can-family", "can-describe-day", "can-tell-day", "can-describe-people", "can-narrate", "can-opinion"],
+		goals: [
+			"can-introduce",
+			"can-family",
+			"can-describe-day",
+			"can-tell-day",
+			"can-describe-people",
+			"can-narrate",
+			"can-opinion",
+		],
 		scenes: ["family", "colleague"],
 	},
 	{
@@ -154,7 +171,11 @@ function purposeLevel(id: Purpose, examLevel?: Cefr): Cefr {
 }
 
 /** Which purposes a level covers and which need a higher one. "Something else" is skipped. */
-export function levelFit(level: Cefr, purposes: readonly Purpose[], examLevel?: Cefr): { covered: Purpose[]; short: Array<{ purpose: Purpose; level: Cefr }> } {
+export function levelFit(
+	level: Cefr,
+	purposes: readonly Purpose[],
+	examLevel?: Cefr,
+): { covered: Purpose[]; short: Array<{ purpose: Purpose; level: Cefr }> } {
 	const covered: Purpose[] = [];
 	const short: Array<{ purpose: Purpose; level: Cefr }> = [];
 	for (const p of purposes) {
@@ -174,7 +195,9 @@ export function levelFitLine(level: Cefr, purposes: readonly Purpose[], examLeve
 	if (covered.length) parts.push(`Enough for ${list(covered)}.`);
 	if (short.length) {
 		const line = short.map((x) => `${purposePhrase(x.purpose)} needs ${x.level}`).join(", ");
-		parts.push(`${line.charAt(0).toUpperCase()}${line.slice(1)}: at ${level} ${short.length === 1 ? "that part stays" : "those stay"} out of reach.`);
+		parts.push(
+			`${line.charAt(0).toUpperCase()}${line.slice(1)}: at ${level} ${short.length === 1 ? "that part stays" : "those stay"} out of reach.`,
+		);
 	}
 	return parts.join(" ");
 }
@@ -192,14 +215,69 @@ export function purposeScenes(purposes: readonly Purpose[]): string[] {
 
 /** A language the learner may know. The `primary` ones are chips; the rest sit behind a searchable panel. */
 export type Lang =
-	| "et" | "fi" | "ru" | "de"
-	| "sk" | "cs" | "pl" | "uk" | "sl" | "hr" | "bg"
-	| "hu" | "lv" | "lt"
-	| "en" | "sv" | "nl" | "fr" | "es" | "it" | "pt"
-	| "sr" | "mk" | "be" | "ro" | "el" | "tr" | "no" | "da" | "is" | "ga" | "cy" | "eu" | "ca" | "gl" | "sq" | "mt"
-	| "ar" | "he" | "fa" | "hi" | "ur" | "bn" | "pa" | "ta" | "te" | "ml"
-	| "ja" | "ko" | "zh" | "vi" | "th" | "id" | "ms" | "tl"
-	| "sw" | "am" | "ka" | "hy" | "az" | "kk" | "uz" | "mn";
+	| "et"
+	| "fi"
+	| "ru"
+	| "de"
+	| "sk"
+	| "cs"
+	| "pl"
+	| "uk"
+	| "sl"
+	| "hr"
+	| "bg"
+	| "hu"
+	| "lv"
+	| "lt"
+	| "en"
+	| "sv"
+	| "nl"
+	| "fr"
+	| "es"
+	| "it"
+	| "pt"
+	| "sr"
+	| "mk"
+	| "be"
+	| "ro"
+	| "el"
+	| "tr"
+	| "no"
+	| "da"
+	| "is"
+	| "ga"
+	| "cy"
+	| "eu"
+	| "ca"
+	| "gl"
+	| "sq"
+	| "mt"
+	| "ar"
+	| "he"
+	| "fa"
+	| "hi"
+	| "ur"
+	| "bn"
+	| "pa"
+	| "ta"
+	| "te"
+	| "ml"
+	| "ja"
+	| "ko"
+	| "zh"
+	| "vi"
+	| "th"
+	| "id"
+	| "ms"
+	| "tl"
+	| "sw"
+	| "am"
+	| "ka"
+	| "hy"
+	| "az"
+	| "kk"
+	| "uz"
+	| "mn";
 
 export type Prior = "none" | "words" | "sentences" | "reading";
 
@@ -258,7 +336,12 @@ export const KNOWN_LANGUAGES: readonly KnownLanguageInfo[] = [
 	{ id: "sv", title: "Swedish", line: "Gender and verb-second word order", primary: true },
 	{ id: "nl", title: "Dutch", line: "Gender and verb-second word order", primary: true },
 	{ id: "fr", title: "French", line: "Gender, agreement and verb endings", primary: true },
-	{ id: "es", title: "Spanish", line: "Gender, agreement, verb endings and a perfective/imperfective past", primary: true },
+	{
+		id: "es",
+		title: "Spanish",
+		line: "Gender, agreement, verb endings and a perfective/imperfective past",
+		primary: true,
+	},
 	{ id: "it", title: "Italian", line: "Gender, agreement and verb endings", primary: true },
 	{ id: "pt", title: "Portuguese", line: "Gender, agreement and verb endings", primary: true },
 	{ id: "sr", title: "Serbian", line: "Seven cases and aspect" },
@@ -334,7 +417,9 @@ export function languageName(id: Lang): string {
 const LEGACY_FIRST: Record<string, Lang | undefined> = { et: "et", en: "en" };
 
 /** Every language the learner knows, strongest first. A profile that never said reads as Estonian and English. */
-export function knownLanguages(goal: Pick<LearnerGoal, "languages" | "firstLanguage" | "bridges"> | null | undefined): Lang[] {
+export function knownLanguages(
+	goal: Pick<LearnerGoal, "languages" | "firstLanguage" | "bridges"> | null | undefined,
+): Lang[] {
 	if (goal?.languages) return goal.languages;
 	if (goal?.firstLanguage || goal?.bridges?.length) {
 		const first = LEGACY_FIRST[goal.firstLanguage ?? ""];
@@ -351,7 +436,9 @@ function languageLevel(goal: Pick<LearnerGoal, "languageLevels"> | null | undefi
 /** The known languages the lessons can show a form in: the best-known
  *  first (a native or C-level one leads the retry hint, an A-level one is
  *  an aside), ties in the learner's own order. */
-export function bridgeLanguages(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined): BridgeLang[] {
+export function bridgeLanguages(
+	goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined,
+): BridgeLang[] {
 	return knownLanguages(goal)
 		.filter(isBridgeLang)
 		.map((l, i) => ({ l, i, rank: LEVEL_RANK[languageLevel(goal, l)] }))
@@ -367,12 +454,26 @@ export function parallelsOn(goal: Pick<LearnerGoal, "showParallels"> | null | un
 }
 
 /** One-line explanation of parallels, naming the learner's own languages that the lessons have a line for. `target` is the language being learned; only the lessons' own language has parallels. */
-export function parallelsLine(goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined, target: { code: string; english: string }): string {
-	const langs = lessonsHaveBridges() && target.code === lessonLanguage() ? bridgeLanguages(goal).filter((l) => l !== target.code) : [];
-	if (langs.length === 0) return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
+export function parallelsLine(
+	goal: Pick<LearnerGoal, "languages" | "languageLevels" | "firstLanguage" | "bridges"> | null | undefined,
+	target: { code: string; english: string },
+): string {
+	const langs =
+		lessonsHaveBridges() && target.code === lessonLanguage()
+			? bridgeLanguages(goal).filter((l) => l !== target.code)
+			: [];
+	if (langs.length === 0)
+		return "Explanations stay in English (or the language you pick below); no other language shows up in the lessons.";
 	const names = langs.map(languageName);
 	const list = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-	const example = langs[0] === "et" ? "v meste ≈ linnas" : langs[0] === "fi" ? "v meste ≈ kaupungissa" : langs[0] === "ru" ? "v meste ≈ в городе" : "v meste ≈ in der Stadt";
+	const example =
+		langs[0] === "et"
+			? "v meste ≈ linnas"
+			: langs[0] === "fi"
+				? "v meste ≈ kaupungissa"
+				: langs[0] === "ru"
+					? "v meste ≈ в городе"
+					: "v meste ≈ in der Stadt";
 	return `When a ${target.english} rule mirrors one in ${list}, the Why? panel and the tutor's hints show the matching line as a memory aid (${example}), ${names.length === 1 ? "" : "best-known first, "}never a lesson in ${names.length === 1 ? "that language" : "those languages"}. You can turn it off in Settings → Learning.`;
 }
 
@@ -445,7 +546,15 @@ export interface LearnerGoal {
  *  they know and how they want it explained. Every language reads the same
  *  copy (<data>/learner.json, 2026-11-05), so a learner of three languages
  *  states them once. */
-export const LEARNER_FIELDS = ["languages", "languageLevels", "otherLanguages", "explainIn", "firstLanguage", "bridges", "showParallels"] as const;
+export const LEARNER_FIELDS = [
+	"languages",
+	"languageLevels",
+	"otherLanguages",
+	"explainIn",
+	"firstLanguage",
+	"bridges",
+	"showParallels",
+] as const;
 export type LearnerFields = Pick<LearnerGoal, (typeof LEARNER_FIELDS)[number]>;
 
 /** The learner's fields of a goal, the ones that are set. */
@@ -486,7 +595,13 @@ export function weeklyHours(minutesPerDay: number, daysPerWeek = DEFAULT_DAYS_PE
 }
 
 /** The month the target is reached from zero, at the planned pace. */
-export function etaFromScratch(level: Cefr, minutesPerDay: number, daysPerWeek: number, hoursDone: number, now: Date): string | null {
+export function etaFromScratch(
+	level: Cefr,
+	minutesPerDay: number,
+	daysPerWeek: number,
+	hoursDone: number,
+	now: Date,
+): string | null {
 	const weekly = weeklyHours(minutesPerDay, daysPerWeek);
 	if (weekly <= 0) return null;
 	const left = Math.max(0, GUIDED_HOURS[level] - hoursDone);
@@ -508,10 +623,34 @@ interface PlacementTier {
 
 /** Slovak's four tiers, each the grammar of a stretch of the map. */
 const SLOVAK_TIERS: PlacementTier[] = [
-	{ id: "a1a", level: "A1", title: "First steps", units: ["words", "present", "acc-fem", "loc"], chapters: ["hello", "cafe", "town"] },
-	{ id: "a1b", level: "A1", title: "Everyday A1", units: ["acc-people", "gen", "ins", "past"], chapters: ["family", "everyday", "yesterday"] },
-	{ id: "a2", level: "A2", title: "Getting around", units: ["present-ujem", "plural", "cond", "motion"], chapters: ["health", "shopping", "plans", "moving", "people", "work"] },
-	{ id: "b1", level: "B1", title: "Independence", units: ["adj-cases", "numbers", "cases-mix", "verbs-mix"], chapters: ["stories", "opinions", "offices", "world"] },
+	{
+		id: "a1a",
+		level: "A1",
+		title: "First steps",
+		units: ["words", "present", "acc-fem", "loc"],
+		chapters: ["hello", "cafe", "town"],
+	},
+	{
+		id: "a1b",
+		level: "A1",
+		title: "Everyday A1",
+		units: ["acc-people", "gen", "ins", "past"],
+		chapters: ["family", "everyday", "yesterday"],
+	},
+	{
+		id: "a2",
+		level: "A2",
+		title: "Getting around",
+		units: ["present-ujem", "plural", "cond", "motion"],
+		chapters: ["health", "shopping", "plans", "moving", "people", "work"],
+	},
+	{
+		id: "b1",
+		level: "B1",
+		title: "Independence",
+		units: ["adj-cases", "numbers", "cases-mix", "verbs-mix"],
+		chapters: ["stories", "opinions", "offices", "world"],
+	},
 ];
 
 /** A generated course's tiers, cut the way Slovak's are: the A1 chapters
@@ -532,7 +671,8 @@ function courseTiers(course: Course): PlacementTier[] {
 	for (const span of spans) {
 		const ids = span.from.flatMap((c) => c.units.filter((u) => grammar.has(u)));
 		const room = tiers.length === 0 ? 3 : 4;
-		const picked = ids.length <= room ? ids : Array.from({ length: room }, (_, i) => ids[Math.floor((i * ids.length) / room)]!);
+		const picked =
+			ids.length <= room ? ids : Array.from({ length: room }, (_, i) => ids[Math.floor((i * ids.length) / room)]!);
 		const units = (tiers.length === 0 ? ["words", ...picked] : picked) as UnitId[];
 		if (units.length === 0) continue;
 		tiers.push({ id: span.id, level: span.level, title: span.title, units, chapters: span.from.map((c) => c.id) });
@@ -607,11 +747,6 @@ export interface PlacementOutcome {
 /** Does a verdict count as right? Accent slips do, as in lessons. */
 const isHit = (v: PlacementRep["verdict"]) => v !== "wrong";
 
-/** The hits a tier needs from `reps` answers. */
-function tierNeed(reps: number): number {
-	return Math.ceil(reps * PASS_SHARE);
-}
-
 /**
  * Fold answered reps into the outcome. Pure. Tiers below `from` (a re-check start) were not asked and count as held.
  */
@@ -627,7 +762,14 @@ export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: n
 		const mine = reps.filter((r) => r.tier === t.id);
 		if (mine.length === 0) break;
 		const correct = mine.filter((r) => isHit(r.verdict)).length;
-		tiers.push({ id: t.id, level: t.level, title: t.title, reps: mine.length, correct, passed: mine.length >= t.units.length && correct / mine.length >= PASS_SHARE });
+		tiers.push({
+			id: t.id,
+			level: t.level,
+			title: t.title,
+			reps: mine.length,
+			correct,
+			passed: mine.length >= t.units.length && correct / mine.length >= PASS_SHARE,
+		});
 		for (const u of t.units) {
 			const ours = mine.filter((r) => r.unit === u);
 			if (ours.length === 0) continue;
@@ -639,7 +781,11 @@ export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: n
 		if (tiers[i]!.passed) lastPassed = i;
 		else break;
 	}
-	const startChapter = lastPassed >= 0 ? (allChapters()[allChapters().findIndex((c) => c.id === placementTiers()[lastPassed]!.chapters.at(-1)) + 1]?.id ?? allChapters().at(-1)!.id) : allChapters()[0]!.id;
+	const startChapter =
+		lastPassed >= 0
+			? (allChapters()[allChapters().findIndex((c) => c.id === placementTiers()[lastPassed]!.chapters.at(-1)) + 1]
+					?.id ?? allChapters().at(-1)!.id)
+			: allChapters()[0]!.id;
 	const level: Cefr = STAGES.find((st) => st.id === allChapters().find((c) => c.id === startChapter)!.stage)!.level;
 	const testedOut = Object.entries(units)
 		.filter(([, e]) => e.reps >= REPS_PER_UNIT && e.correct === e.reps)
@@ -647,14 +793,23 @@ export function placementOutcome(reps: readonly PlacementRep[], opts: { from?: n
 	const weak = Object.entries(units)
 		.filter(([, e]) => e.correct < e.reps)
 		.map(([id]) => id as UnitId);
-	return { level, tiers, from, ceiling: lastPassed === placementTiers().length - 1, startChapter, units, testedOut, weak };
+	return {
+		level,
+		tiers,
+		from,
+		ceiling: lastPassed === placementTiers().length - 1,
+		startChapter,
+		units,
+		testedOut,
+		weak,
+	};
 }
 
 /** Should the staircase climb after this tier's reps? */
 export function tierPassed(tier: PlacementTier, reps: readonly PlacementRep[]): boolean {
 	const mine = reps.filter((r) => r.tier === tier.id);
 	return mine.length >= tier.units.length && mine.filter((r) => isHit(r.verdict)).length / mine.length >= PASS_SHARE;
-}/** The tier a unit belongs to (undefined for a unit no tier probes). */
+} /** The tier a unit belongs to (undefined for a unit no tier probes). */
 export function tierOfUnit(unit: UnitId): PlacementTier | undefined {
 	return placementTiers().find((t) => t.units.includes(unit));
 }
@@ -715,7 +870,9 @@ export function probeUnits(outcome: PlacementOutcome, luck: UnitId | null = null
 	const after = stopped >= 0 ? undefined : next;
 	for (const u of after?.units ?? []) if (!out.includes(u)) out.push(u);
 	// A failed tier's untested-out units too: the drill asked two reps each.
-	if (stopped >= 0) for (const u of placementTiers()[stopped]!.units) if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
+	if (stopped >= 0)
+		for (const u of placementTiers()[stopped]!.units)
+			if (!out.includes(u) && !outcome.testedOut.includes(u)) out.push(u);
 	return out.slice(0, 8);
 }
 
@@ -733,15 +890,36 @@ export function parseProbeReply(text: string, units: readonly UnitId[]): ProbeRe
 			o = null;
 		}
 	}
-	if (!o) return { say: text.trim().replace(/^```[a-z]*\s*|\s*```$/g, "").slice(0, 600), done: "" };
+	if (!o)
+		return {
+			say: text
+				.trim()
+				.replace(/^```[a-z]*\s*|\s*```$/g, "")
+				.slice(0, 600),
+			done: "",
+		};
 	const reply: ProbeReply = { say: str(o.say, 600) };
 	const v = o.verdict as Record<string, unknown> | null | undefined;
-	if (v && typeof v === "object" && units.includes(str(v.unit, 40) as UnitId) && ["held", "slip", "gap"].includes(str(v.result, 10))) {
-		reply.verdict = { unit: str(v.unit, 40) as UnitId, result: str(v.result, 10) as ProbeResult, note: str(v.note, 300) };
+	if (
+		v &&
+		typeof v === "object" &&
+		units.includes(str(v.unit, 40) as UnitId) &&
+		["held", "slip", "gap"].includes(str(v.result, 10))
+	) {
+		reply.verdict = {
+			unit: str(v.unit, 40) as UnitId,
+			result: str(v.result, 10) as ProbeResult,
+			note: str(v.note, 300),
+		};
 	}
 	const a = o.ask as Record<string, unknown> | null | undefined;
 	if (a && typeof a === "object" && units.includes(str(a.unit, 40) as UnitId) && str(a.sk, 400)) {
-		reply.ask = { unit: str(a.unit, 40) as UnitId, prompt: str(a.prompt, 300), sk: str(a.sk, 400), kind: str(a.kind, 10) === "why" ? "why" : "produce" };
+		reply.ask = {
+			unit: str(a.unit, 40) as UnitId,
+			prompt: str(a.prompt, 300),
+			sk: str(a.sk, 400),
+			kind: str(a.kind, 10) === "why" ? "why" : "produce",
+		};
 	}
 	if (typeof o.done === "string" || o.done === true) reply.done = str(o.done, 600) || reply.say;
 	if (!reply.ask && reply.done === undefined) reply.done = reply.say;
@@ -756,7 +934,8 @@ export function probeReps(verdicts: readonly ProbeVerdict[]): PlacementRep[] {
 		const tier = tierOfUnit(v.unit);
 		if (!tier) continue;
 		const hits = v.result === "held" ? 2 : v.result === "slip" ? 1 : 0;
-		for (let i = 0; i < REPS_PER_UNIT; i++) out.push({ tier: tier.id, unit: v.unit, verdict: i < hits ? "exact" : "wrong", source: "probe" });
+		for (let i = 0; i < REPS_PER_UNIT; i++)
+			out.push({ tier: tier.id, unit: v.unit, verdict: i < hits ? "exact" : "wrong", source: "probe" });
 	}
 	return out;
 }
@@ -788,7 +967,10 @@ interface MeasuredWeak {
 	text: string;
 }
 
-export function measuredWeakPoints(state: CurriculumState, tries?: Record<string, FirstTally | undefined>): Array<MeasuredWeak & { title: string }> {
+export function measuredWeakPoints(
+	state: CurriculumState,
+	tries?: Record<string, FirstTally | undefined>,
+): Array<MeasuredWeak & { title: string }> {
 	return state.chapters
 		.flatMap((c) => c.units)
 		.filter((u) => u.kind === "drill" || u.kind === "words")
@@ -800,13 +982,20 @@ export function measuredWeakPoints(state: CurriculumState, tries?: Record<string
 		.sort((a, b) => a.accuracy - b.accuracy);
 }
 
-export function measuredWeak(u: { title: string; reps: number; accuracy: number | null }, tally: FirstTally | undefined): MeasuredWeak | null {
+export function measuredWeak(
+	u: { title: string; reps: number; accuracy: number | null },
+	tally: FirstTally | undefined,
+): MeasuredWeak | null {
 	if (tally && tally.reps >= 6) {
 		const accuracy = tally.right / tally.reps;
 		const slips = slipLine(tally.slips);
-		return { accuracy, text: `${u.title} ${Math.round(accuracy * 100)}% on first tries (${tally.right} of ${tally.reps} right${slips ? `; wrong: ${slips}` : ""})` };
+		return {
+			accuracy,
+			text: `${u.title} ${Math.round(accuracy * 100)}% on first tries (${tally.right} of ${tally.reps} right${slips ? `; wrong: ${slips}` : ""})`,
+		};
 	}
-	if (u.reps >= 6 && u.accuracy !== null) return { accuracy: u.accuracy, text: `${u.title} ${Math.round(u.accuracy * 100)}% on lesson answers` };
+	if (u.reps >= 6 && u.accuracy !== null)
+		return { accuracy: u.accuracy, text: `${u.title} ${Math.round(u.accuracy * 100)}% on lesson answers` };
 	return null;
 }
 
@@ -831,7 +1020,17 @@ export function studiedLine(studied: readonly StudiedLanguage[]): string | null 
 }
 
 /** The learner as a short profile block for the tutor's system prompt, for learning `target`. Null when nothing is known yet. `tries_` is each unit's first tries (src/core/first-try.ts); `mixups_` the pairs of words they confuse (src/core/mixups.ts). */
-export function learnerProfileText(target: { code: string; english: string }, goal: LearnerGoal | undefined, state: CurriculumState | null, evidence: Record<string, UnitEvidence | undefined>, weak_?: WeakRecord, pace_?: { dailyAverage: number; days: number }, tries_?: Record<string, FirstTally | undefined>, mixups_?: MixupRecord, studied_: readonly StudiedLanguage[] = []): string | null {
+export function learnerProfileText(
+	target: { code: string; english: string },
+	goal: LearnerGoal | undefined,
+	state: CurriculumState | null,
+	evidence: Record<string, UnitEvidence | undefined>,
+	weak_?: WeakRecord,
+	pace_?: { dailyAverage: number; days: number },
+	tries_?: Record<string, FirstTally | undefined>,
+	mixups_?: MixupRecord,
+	studied_: readonly StudiedLanguage[] = [],
+): string | null {
 	if (!goal?.onboardedAt && !state) return null;
 	const lines: string[] = [];
 	const purposes = goal?.purposes ?? [];
@@ -839,9 +1038,14 @@ export function learnerProfileText(target: { code: string; english: string }, go
 	if (purposes.length || note) {
 		const named = purposes.filter((p) => p !== "other").map(purposePhrase);
 		const goals = [...purposeGoals(purposes)].map((g) => `"${curriculumUnit(g)?.title ?? g}"`).slice(0, 5);
-		lines.push(`- ${target.english} is for: ${[...named, ...(note ? [`in the learner's own words, "${note}"`] : purposes.includes("other") ? ["something the cards did not cover"] : [])].join("; ")}.${goals.length ? ` The goal is concrete: the map's can-do goals ${goals.join(", ")}.` : ""}${note ? " Shape examples and scenes around those words." : ""}`);
+		lines.push(
+			`- ${target.english} is for: ${[...named, ...(note ? [`in the learner's own words, "${note}"`] : purposes.includes("other") ? ["something the cards did not cover"] : [])].join("; ")}.${goals.length ? ` The goal is concrete: the map's can-do goals ${goals.join(", ")}.` : ""}${note ? " Shape examples and scenes around those words." : ""}`,
+		);
 	}
-	if (goal) lines.push(`- Target: ${goal.level} (about ${GUIDED_HOURS[goal.level]} guided hours), at ${goal.minutesPerDay} minutes a day, ${goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} days a week.${pace_ ? ` Over the last ${pace_.days} days they actually averaged ${pace_.dailyAverage} minutes a day.` : ""}`);
+	if (goal)
+		lines.push(
+			`- Target: ${goal.level} (about ${GUIDED_HOURS[goal.level]} guided hours), at ${goal.minutesPerDay} minutes a day, ${goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK} days a week.${pace_ ? ` Over the last ${pace_.days} days they actually averaged ${pace_.dailyAverage} minutes a day.` : ""}`,
+		);
 	if (goal) {
 		const known = knownLanguages(goal).filter((l) => l !== target.code);
 		const other = (goal.otherLanguages ?? []).filter(Boolean);
@@ -857,35 +1061,69 @@ export function learnerProfileText(target: { code: string; english: string }, go
 		lines.push(
 			`- Knows: ${names.join(", ")}.${notes.length ? ` ${notes.join(". ")}.` : ""}${parallelsOn(goal) ? " When a form has a parallel in one of these, show it that way too, not only in English." : ` The learner turned parallels off: do not compare ${target.english} to these languages unless asked; use them only to understand what the learner means.`}`,
 		);
-		const lead = first === "en" ? "- Explanations in English." : `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, ${target.english} examples in ${target.english}, English only when asked.`;
-		const simple = (l: Lang) => (isLowLevel(languageLevel(goal, l)) ? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.` : "");
-		lines.push((second ? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.${simple(second)}` : lead) + (first !== "en" ? simple(first!) : ""));
+		const lead =
+			first === "en"
+				? "- Explanations in English."
+				: `- Explain in ${languageName(first!)} (the learner's choice): prose and rules in ${languageName(first!)}, ${target.english} examples in ${target.english}, English only when asked.`;
+		const simple = (l: Lang) =>
+			isLowLevel(languageLevel(goal, l))
+				? ` The learner knows ${languageName(l)} only at ${languageLevel(goal, l)}: keep those lines short and simple, and gloss a hard word.`
+				: "";
+		lines.push(
+			(second
+				? `${lead} Also ${languageName(second)}, which the learner is still learning and wants to see more of: after each rule, add its key line and the grammar terms in ${languageName(second)} (one short line, in parentheses or on its own line), not a second copy of everything.${simple(second)}`
+				: lead) + (first !== "en" ? simple(first!) : ""),
+		);
 	}
 	const studied = studiedLine(studied_);
 	if (studied) lines.push(studied);
 	if (goal?.prior) lines.push(`- Before the app: ${PRIOR_LINE[goal.prior]}.`);
 	if (goal?.placedAt && goal.placedLevel) {
 		const placed = Object.entries(evidence).filter(([, e]) => e?.placed);
-		const out = placed.filter(([, e]) => e!.reps > 0 && e!.correct === e!.reps).map(([id]) => unitInfo(id as UnitId).title);
-		const missed = placed.filter(([, e]) => e!.correct < e!.reps).map(([id, e]) => `${unitInfo(id as UnitId).title} (${e!.correct}/${e!.reps})`);
-		lines.push(`- Placement check on ${goal.placedAt.slice(0, 10)}: works at ${goal.placedLevel}${out.length ? `; tested out of ${out.join(", ")}` : ""}${missed.length ? `; missed ${missed.join(", ")}` : ""}.${goal.placedNote ? ` The tutor's reading of the edge: ${goal.placedNote}` : ""}`);
+		const out = placed
+			.filter(([, e]) => e!.reps > 0 && e!.correct === e!.reps)
+			.map(([id]) => unitInfo(id as UnitId).title);
+		const missed = placed
+			.filter(([, e]) => e!.correct < e!.reps)
+			.map(([id, e]) => `${unitInfo(id as UnitId).title} (${e!.correct}/${e!.reps})`);
+		lines.push(
+			`- Placement check on ${goal.placedAt.slice(0, 10)}: works at ${goal.placedLevel}${out.length ? `; tested out of ${out.join(", ")}` : ""}${missed.length ? `; missed ${missed.join(", ")}` : ""}.${goal.placedNote ? ` The tutor's reading of the edge: ${goal.placedNote}` : ""}`,
+		);
 	}
-	if (goal?.vocabulary) lines.push(`- Vocabulary check on ${goal.vocabulary.at.slice(0, 10)}: about ${goal.vocabulary.size.toLocaleString("en-GB")} lemmas recognized${goal.vocabulary.reliable ? "" : " (over-claimed on the pseudowords: treat as generous)"}.`);
+	if (goal?.vocabulary)
+		lines.push(
+			`- Vocabulary check on ${goal.vocabulary.at.slice(0, 10)}: about ${goal.vocabulary.size.toLocaleString("en-GB")} lemmas recognized${goal.vocabulary.reliable ? "" : " (over-claimed on the pseudowords: treat as generous)"}.`,
+		);
 	if (state) {
 		const cur = state.chapters.find((c) => c.id === state.current);
 		const stage = STAGES.find((s) => s.id === cur?.stage);
-		if (cur && stage) lines.push(`- Working now at ${stage.level}, chapter "${cur.title}" (${cur.doneCount}/${cur.total} units done; ${state.done}/${state.total} on the road to the target).`);
+		if (cur && stage)
+			lines.push(
+				`- Working now at ${stage.level}, chapter "${cur.title}" (${cur.doneCount}/${cur.total} units done; ${state.done}/${state.total} on the road to the target).`,
+			);
 		const weak = measuredWeakPoints(state, tries_).slice(0, 5);
 		if (weak.length) lines.push(`- Measured weak points: ${weak.map((m) => m.text).join(", ")}.`);
 		const spots = weakSpotsLine(weakSpotList(weak_));
 		if (spots) lines.push(spots);
 		const mixed = mixupsLine(mixupList(mixups_));
 		if (mixed) lines.push(mixed);
-		const done = state.chapters.flatMap((c) => c.units).filter((u) => u.status === "done" && (u.kind === "drill" || u.kind === "words"));
-		if (done.length) lines.push(`- Holds (units done on the map): ${done.slice(0, 12).map((u) => u.title).join(", ")}${done.length > 12 ? `, and ${done.length - 12} more` : ""}.`);
+		const done = state.chapters
+			.flatMap((c) => c.units)
+			.filter((u) => u.status === "done" && (u.kind === "drill" || u.kind === "words"));
+		if (done.length)
+			lines.push(
+				`- Holds (units done on the map): ${done
+					.slice(0, 12)
+					.map((u) => u.title)
+					.join(", ")}${done.length > 12 ? `, and ${done.length - 12} more` : ""}.`,
+			);
 	}
 	if (lines.length === 0) return null;
-	return ["# This learner (from the app's profile and the lesson ledger)", ...lines, "Treat the goal as concrete and the level as measured: do not ask for either. Build from the units held, work on the weak points, and keep the purposes in the examples you choose."].join("\n");
+	return [
+		"# This learner (from the app's profile and the lesson ledger)",
+		...lines,
+		"Treat the goal as concrete and the level as measured: do not ask for either. Build from the units held, work on the weak points, and keep the purposes in the examples you choose.",
+	].join("\n");
 }
 
 // ─── The verdict on a missed item ───────────────────────────────────────────
@@ -934,14 +1172,17 @@ export function missVerdict(item: Pick<LessonItem, "answer" | "unit" | "trigger"
 // ─── Calm items for the check ───────────────────────────────────────────────
 
 /** Grim vocabulary (crime, violence, death) kept out of the check's items. Matches Slovak and English. */
-const GRIM = /\b(murder|kill|corpse|blood|weapon|gun|knife|war|rape|suicide|terror|bomb|hostage|victim|prison|jail|crime|criminal|thie(?:f|ves)|st(?:eal|ole|olen)|die[ds]?|dying|dead|death|police|shoot|shot|stab|attack|drugs?)\b|\b(vrah|vražd|zabi|zabíj|mŕtv|krv|zbra[ňn]|nož|vojn|znásil|samovra|teror|bomb|rukojem|obe[ťt]|väzen|väzn|zloči|trestn|zlode|ukrad|krádež|zomr|zomier|smrť|smrti|políc|strie[ľl]|zastrel|bodn|útok|útoč|drog)/iu;
+const GRIM =
+	/\b(murder|kill|corpse|blood|weapon|gun|knife|war|rape|suicide|terror|bomb|hostage|victim|prison|jail|crime|criminal|thie(?:f|ves)|st(?:eal|ole|olen)|die[ds]?|dying|dead|death|police|shoot|shot|stab|attack|drugs?)\b|\b(vrah|vražd|zabi|zabíj|mŕtv|krv|zbra[ňn]|nož|vojn|znásil|samovra|teror|bomb|rukojem|obe[ťt]|väzen|väzn|zloči|trestn|zlode|ukrad|krádež|zomr|zomier|smrť|smrti|políc|strie[ľl]|zastrel|bodn|útok|útoč|drog)/iu;
 
 export function isGrim(text: string): boolean {
 	return GRIM.test(text.normalize("NFC"));
 }
 
 /** The lexicon without grim examples; entries left with no examples are dropped. */
-export function calmEntries<E extends { lemma?: string; sk?: string; en: string; examples: Array<{ text?: string; sk?: string; en: string }> }>(entries: readonly E[]): E[] {
+export function calmEntries<
+	E extends { lemma?: string; sk?: string; en: string; examples: Array<{ text?: string; sk?: string; en: string }> },
+>(entries: readonly E[]): E[] {
 	const out: E[] = [];
 	for (const e of entries) {
 		if (isGrim(entryLemma(e)) || isGrim(e.en)) continue;

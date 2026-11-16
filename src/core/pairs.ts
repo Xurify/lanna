@@ -45,7 +45,8 @@ export const PAIRS: PairDef[] = (pairsJson as { pairs: PairDef[] }).pairs;
 /** Verified sentences that are wrong or misleading, excluded from every drill
  *  (curriculum/slovak/pairs.json, `excluded`), each with its reason. The
  *  lexicon file itself is never edited. */
-const EXCLUDED: ReadonlyArray<{ slug: string; sk: string; why: string }> = (pairsJson as { excluded?: Array<{ slug: string; sk: string; why: string }> }).excluded ?? [];
+const EXCLUDED: ReadonlyArray<{ slug: string; sk: string; why: string }> =
+	(pairsJson as { excluded?: Array<{ slug: string; sk: string; why: string }> }).excluded ?? [];
 
 /** Sentences a pair must have on the two sides together, or it is dropped. */
 export const MIN_PAIR_SENTENCES = 3;
@@ -67,7 +68,12 @@ export interface PairSentence {
 export function formsOfEntry(entry: LexiconEntry, tag = "sk-SK"): string[] {
 	const out = new Set<string>();
 	const lemma = entryLemma(entry);
-	for (const form of [lemma, ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])]) {
+	for (const form of [
+		lemma,
+		...(entry.forms ?? []),
+		...(entry.declension?.singular ?? []),
+		...(entry.declension?.plural ?? []),
+	]) {
 		if (form) out.add(form.toLocaleLowerCase(tag));
 	}
 	for (const example of entry.examples) {

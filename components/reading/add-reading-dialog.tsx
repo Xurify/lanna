@@ -27,12 +27,33 @@ export function linksIn(value: string): string[] {
 }
 
 export function difficultyInfo(difficulty: ReadingDifficulty, language: string): { label: string; line: string } {
-	if (difficulty === "harder") return { label: "A step up", line: `Retold in ${language} one level above yours. More new words, longer sentences.` };
-	if (difficulty === "full") return { label: "Not simplified", line: `The whole text in ${language} as a native speaker would write it. Slow going with many words to tap, and the screen says how many you know.` };
-	return { label: "My level", line: `Retold in ${language} with the words you know, in parts of a few minutes each. Easy enough to read without stopping.` };
+	if (difficulty === "harder")
+		return {
+			label: "A step up",
+			line: `Retold in ${language} one level above yours. More new words, longer sentences.`,
+		};
+	if (difficulty === "full")
+		return {
+			label: "Not simplified",
+			line: `The whole text in ${language} as a native speaker would write it. Slow going with many words to tap, and the screen says how many you know.`,
+		};
+	return {
+		label: "My level",
+		line: `Retold in ${language} with the words you know, in parts of a few minutes each. Easy enough to read without stopping.`,
+	};
 }
 
-export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initial: ReadingDraft; error: string | null; onClose: () => void; onSubmit: (draft: ReadingDraft) => void }) {
+export function AddReadingDialog({
+	initial,
+	error,
+	onClose,
+	onSubmit,
+}: {
+	initial: ReadingDraft;
+	error: string | null;
+	onClose: () => void;
+	onSubmit: (draft: ReadingDraft) => void;
+}) {
 	const language = useActiveLanguage()?.english ?? "the language you are learning";
 	const [draft, setDraft] = useState<ReadingDraft>(initial);
 	const dismiss = useBackdropDismiss(onClose);
@@ -53,7 +74,10 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 	}, [onClose]);
 
 	return createPortal(
-		<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...dismiss}>
+		<div
+			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
+			{...dismiss}
+		>
 			<form
 				role="dialog"
 				aria-modal="true"
@@ -70,9 +94,16 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 						<h2 id="add-reading-title" className="text-base font-semibold text-foreground">
 							Add something to read
 						</h2>
-						<p className="mt-1 text-[13px] leading-relaxed text-ink-3">An article, a newsletter, an email. The first part takes about a minute to write, then it is kept.</p>
+						<p className="mt-1 text-[13px] leading-relaxed text-ink-3">
+							An article, a newsletter, an email. The first part takes about a minute to write, then it is kept.
+						</p>
 					</div>
-					<button type="button" onClick={onClose} aria-label="Close" className="-mr-1.5 -mt-1.5 rounded-md p-2.5 text-ink-3 hover:bg-well hover:text-foreground">
+					<button
+						type="button"
+						onClick={onClose}
+						aria-label="Close"
+						className="-mr-1.5 -mt-1.5 rounded-md p-2.5 text-ink-3 hover:bg-well hover:text-foreground"
+					>
 						<XIcon className="size-4" />
 					</button>
 				</div>
@@ -92,7 +123,9 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 
 				{links.length > 1 && (
 					<p className="mt-2 text-[13px] leading-relaxed text-ink-3" data-testid="add-reading-links">
-						{tooManyLinks ? `That is ${links.length} links. Add at most ${MAX_LINKS_PER_ADD} at a time.` : `${links.length} links. Each becomes a book on your shelf, and their first parts are written in the background while you do something else.`}
+						{tooManyLinks
+							? `That is ${links.length} links. Add at most ${MAX_LINKS_PER_ADD} at a time.`
+							: `${links.length} links. Each becomes a book on your shelf, and their first parts are written in the background while you do something else.`}
 					</p>
 				)}
 
@@ -101,21 +134,42 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 						<label htmlFor="add-reading-name" className="mt-3 text-[13px] font-[550] text-ink-2">
 							Title (optional)
 						</label>
-						<input id="add-reading-name" type="text" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="q-field mt-1.5 h-10 w-full px-3 text-[14px]" data-testid="add-reading-name" />
+						<input
+							id="add-reading-name"
+							type="text"
+							value={draft.title}
+							onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+							className="q-field mt-1.5 h-10 w-full px-3 text-[14px]"
+							data-testid="add-reading-name"
+						/>
 					</>
 				)}
 
 				<p id="add-reading-difficulty" className="mt-4 text-[13px] font-[550] text-ink-2">
 					How hard
 				</p>
-				<div className="q-segc mt-1.5 self-start whitespace-nowrap" role="radiogroup" aria-labelledby="add-reading-difficulty">
+				<div
+					className="q-segc mt-1.5 self-start whitespace-nowrap"
+					role="radiogroup"
+					aria-labelledby="add-reading-difficulty"
+				>
 					{READING_DIFFICULTIES.map((difficulty) => (
-						<button key={difficulty} type="button" role="radio" aria-checked={draft.difficulty === difficulty} className={cn(draft.difficulty === difficulty && "on")} onClick={() => setDraft({ ...draft, difficulty })} data-testid={`add-reading-${difficulty}`}>
+						<button
+							key={difficulty}
+							type="button"
+							role="radio"
+							aria-checked={draft.difficulty === difficulty}
+							className={cn(draft.difficulty === difficulty && "on")}
+							onClick={() => setDraft({ ...draft, difficulty })}
+							data-testid={`add-reading-${difficulty}`}
+						>
 							{difficultyInfo(difficulty, language).label}
 						</button>
 					))}
 				</div>
-				<p className="mt-2 min-h-[2.75rem] text-[13px] leading-relaxed text-ink-3">{difficultyInfo(draft.difficulty, language).line}</p>
+				<p className="mt-2 min-h-[2.75rem] text-[13px] leading-relaxed text-ink-3">
+					{difficultyInfo(draft.difficulty, language).line}
+				</p>
 
 				{error && (
 					<p role="alert" className="mt-2 text-[13px] text-[var(--q-miss)]" data-testid="add-reading-error">
@@ -127,7 +181,12 @@ export function AddReadingDialog({ initial, error, onClose, onSubmit }: { initia
 					<button type="button" onClick={onClose} className="q-btn ghost">
 						Cancel
 					</button>
-					<button type="submit" disabled={empty || tooManyLinks} className="q-btn primary" data-testid="add-reading-submit">
+					<button
+						type="submit"
+						disabled={empty || tooManyLinks}
+						className="q-btn primary"
+						data-testid="add-reading-submit"
+					>
 						{links.length > 1 ? `Add ${links.length} texts` : "Add to my reading"}
 					</button>
 				</div>

@@ -141,7 +141,10 @@ export function channelUrl(c: { id: string; handle?: string }): string {
 	return c.handle ? `https://www.youtube.com/${c.handle}` : `https://www.youtube.com/channel/${c.id}`;
 }
 
-type ChannelInput = { kind: "channel"; id: string } | { kind: "page"; url: string; handle?: string } | { kind: "video"; id: string };
+type ChannelInput =
+	| { kind: "channel"; id: string }
+	| { kind: "page"; url: string; handle?: string }
+	| { kind: "video"; id: string };
 
 /** What a pasted creator is: a channel id or link, an @handle or a channel
  *  page (resolved on the server), or one of their videos. Null for anything
@@ -161,10 +164,19 @@ export function parseChannelInput(input: string): ChannelInput | null {
 	}
 	const host = u.hostname.toLowerCase().replace(/^(www|m)\./, "");
 	if (host !== "youtube.com") return null;
-	const parts = u.pathname.split("/").filter(Boolean).map((p) => decodeURIComponent(p));
+	const parts = u.pathname
+		.split("/")
+		.filter(Boolean)
+		.map((p) => decodeURIComponent(p));
 	if (parts[0] === "channel" && parts[1] && CHANNEL_ID.test(parts[1])) return { kind: "channel", id: parts[1] };
-	if (parts[0]?.startsWith("@")) return { kind: "page", url: `https://www.youtube.com/${encodeURIComponent(parts[0]).replace(/^%40/, "@")}`, handle: parts[0] };
-	if ((parts[0] === "c" || parts[0] === "user") && parts[1]) return { kind: "page", url: `https://www.youtube.com/${parts[0]}/${encodeURIComponent(parts[1])}` };
+	if (parts[0]?.startsWith("@"))
+		return {
+			kind: "page",
+			url: `https://www.youtube.com/${encodeURIComponent(parts[0]).replace(/^%40/, "@")}`,
+			handle: parts[0],
+		};
+	if ((parts[0] === "c" || parts[0] === "user") && parts[1])
+		return { kind: "page", url: `https://www.youtube.com/${parts[0]}/${encodeURIComponent(parts[1])}` };
 	return null;
 }
 
@@ -253,7 +265,14 @@ function parseClock(s: string): number | undefined {
 }
 
 /** The video renderers YouTube has used for a list item, old and new. */
-const VIDEO_RENDERERS = new Set(["videoRenderer", "gridVideoRenderer", "compactVideoRenderer", "playlistVideoRenderer", "videoWithContextRenderer", "playlistPanelVideoRenderer"]);
+const VIDEO_RENDERERS = new Set([
+	"videoRenderer",
+	"gridVideoRenderer",
+	"compactVideoRenderer",
+	"playlistVideoRenderer",
+	"videoWithContextRenderer",
+	"playlistPanelVideoRenderer",
+]);
 
 function fromRenderer(v: Json): FoundVideo | null {
 	const id = v.videoId;
@@ -263,22 +282,51 @@ function fromRenderer(v: Json): FoundVideo | null {
 	const owner = v.ownerText ?? v.shortBylineText ?? v.longBylineText;
 	const channel = textOf(owner);
 	const channelId = channelIdIn(owner);
-	const durationSec = typeof v.lengthSeconds === "string" || typeof v.lengthSeconds === "number" ? Number(v.lengthSeconds) : textOf(v.lengthText) ? parseClock(textOf(v.lengthText)!) : undefined;
-	return { id, title, ...(channel ? { channel } : {}), ...(channelId ? { channelId } : {}), ...(durationSec ? { durationSec } : {}) };
+	const durationSec =
+		typeof v.lengthSeconds === "string" || typeof v.lengthSeconds === "number"
+			? Number(v.lengthSeconds)
+			: textOf(v.lengthText)
+				? parseClock(textOf(v.lengthText)!)
+				: undefined;
+	return {
+		id,
+		title,
+		...(channel ? { channel } : {}),
+		...(channelId ? { channelId } : {}),
+		...(durationSec ? { durationSec } : {}),
+	};
 }
 
 /** The lockup view model (2024 on): title and channel in its metadata rows. */
 function fromLockup(v: Json): FoundVideo | null {
-	if (v.contentType !== "LOCKUP_CONTENT_TYPE_VIDEO" || typeof v.contentId !== "string" || !/^[A-Za-z0-9_-]{11}$/.test(v.contentId)) return null;
-	const meta = isObj(v.metadata) && isObj(v.metadata.lockupMetadataViewModel) ? v.metadata.lockupMetadataViewModel : null;
+	if (
+		v.contentType !== "LOCKUP_CONTENT_TYPE_VIDEO" ||
+		typeof v.contentId !== "string" ||
+		!/^[A-Za-z0-9_-]{11}$/.test(v.contentId)
+	)
+		return null;
+	const meta =
+		isObj(v.metadata) && isObj(v.metadata.lockupMetadataViewModel) ? v.metadata.lockupMetadataViewModel : null;
 	const title = textOf(meta?.title);
 	if (!title) return null;
-	const rows = (isObj(meta?.metadata) && isObj(meta.metadata.contentMetadataViewModel) && Array.isArray(meta.metadata.contentMetadataViewModel.metadataRows) ? meta.metadata.contentMetadataViewModel.metadataRows : []) as Json[];
+	const rows = (
+		isObj(meta?.metadata) &&
+		isObj(meta.metadata.contentMetadataViewModel) &&
+		Array.isArray(meta.metadata.contentMetadataViewModel.metadataRows)
+			? meta.metadata.contentMetadataViewModel.metadataRows
+			: []
+	) as Json[];
 	const firstPart = Array.isArray(rows[0]?.metadataParts) ? (rows[0]!.metadataParts as Json[])[0] : undefined;
 	const channel = textOf(firstPart?.text);
 	const channelId = channelIdIn(meta);
 	const durationSec = clockIn(v.contentImage);
-	return { id: v.contentId, title, ...(channel ? { channel } : {}), ...(channelId ? { channelId } : {}), ...(durationSec ? { durationSec } : {}) };
+	return {
+		id: v.contentId,
+		title,
+		...(channel ? { channel } : {}),
+		...(channelId ? { channelId } : {}),
+		...(durationSec ? { durationSec } : {}),
+	};
 }
 
 /** Every video listed on a YouTube page's data (ytInitialData, or an
@@ -326,7 +374,12 @@ export interface YouTubeAccount {
 function accountImage(thumbnails: unknown): string | undefined {
 	const yt = channelImage(thumbnails);
 	if (yt) return yt;
-	const list = isObj(thumbnails) && Array.isArray(thumbnails.thumbnails) ? thumbnails.thumbnails : Array.isArray(thumbnails) ? thumbnails : [];
+	const list =
+		isObj(thumbnails) && Array.isArray(thumbnails.thumbnails)
+			? thumbnails.thumbnails
+			: Array.isArray(thumbnails)
+				? thumbnails
+				: [];
 	let best: { url: string; width: number } | undefined;
 	for (const t of list) {
 		if (!isObj(t) || typeof t.url !== "string") continue;
@@ -378,7 +431,11 @@ export function accountFromSwitcher(text: string): YouTubeAccount | null {
 	const handle = textOf(item.channelHandle)?.trim();
 	const photo = accountImage(item.accountPhoto);
 	if (!name && !photo) return null;
-	return { ...(name ? { name } : {}), ...(handle && HANDLE.test(handle) ? { handle } : {}), ...(photo ? { photo } : {}) };
+	return {
+		...(name ? { name } : {}),
+		...(handle && HANDLE.test(handle) ? { handle } : {}),
+		...(photo ? { photo } : {}),
+	};
 }
 
 /** The signed-in account's picture in the top bar of a YouTube page's data
@@ -407,7 +464,12 @@ export function accountFromPage(data: unknown): YouTubeAccount | null {
  *  hosts, resized to a small round crop. Anything else is dropped, so a page
  *  cannot make the app load an image from another site. */
 export function channelImage(thumbnails: unknown): string | undefined {
-	const list = isObj(thumbnails) && Array.isArray(thumbnails.thumbnails) ? thumbnails.thumbnails : Array.isArray(thumbnails) ? thumbnails : [];
+	const list =
+		isObj(thumbnails) && Array.isArray(thumbnails.thumbnails)
+			? thumbnails.thumbnails
+			: Array.isArray(thumbnails)
+				? thumbnails
+				: [];
 	let best: { url: string; width: number } | undefined;
 	for (const t of list) {
 		if (!isObj(t) || typeof t.url !== "string") continue;
@@ -437,11 +499,22 @@ export function extractChannels(data: unknown): FoundChannel[] {
 			return;
 		}
 		for (const [k, x] of Object.entries(v)) {
-			if ((k === "channelRenderer" || k === "gridChannelRenderer") && isObj(x) && typeof x.channelId === "string" && CHANNEL_ID.test(x.channelId)) {
+			if (
+				(k === "channelRenderer" || k === "gridChannelRenderer") &&
+				isObj(x) &&
+				typeof x.channelId === "string" &&
+				CHANNEL_ID.test(x.channelId)
+			) {
 				const name = textOf(x.title);
 				const handle = textOf(x.subscriberCountText)?.trim();
 				const avatar = channelImage(x.thumbnail);
-				if (name && !out.has(x.channelId)) out.set(x.channelId, { id: x.channelId, name, ...(handle?.startsWith("@") ? { handle } : {}), ...(avatar ? { avatar } : {}) });
+				if (name && !out.has(x.channelId))
+					out.set(x.channelId, {
+						id: x.channelId,
+						name,
+						...(handle?.startsWith("@") ? { handle } : {}),
+						...(avatar ? { avatar } : {}),
+					});
 				continue;
 			}
 			walk(x, depth + 1);
@@ -454,7 +527,8 @@ export function extractChannels(data: unknown): FoundChannel[] {
 // ─── Google Takeout ─────────────────────────────────────────────────────────
 
 /** "Watched <title>" in the export's language; only the title is kept. */
-const WATCHED_PREFIX = /^(Watched|Pozreli ste si|Zhlédnuto|Vaadatud|Просмотрено:?|Viděli jste|Obejrzano:?|Angesehen:?|Vous avez regardé)\s+/i;
+const WATCHED_PREFIX =
+	/^(Watched|Pozreli ste si|Zhlédnuto|Vaadatud|Просмотрено:?|Viděli jste|Obejrzano:?|Angesehen:?|Vous avez regardé)\s+/i;
 
 /** A Takeout watch history, JSON or HTML (Takeout's default), newest first.
  *  Ads ("From Google Ads") and removed videos are left out. */
@@ -477,11 +551,16 @@ export function parseTakeoutHistory(text: string): FoundVideo[] {
 		if (!Array.isArray(items)) return [];
 		for (const raw of items) {
 			if (!isObj(raw) || typeof raw.titleUrl !== "string") continue;
-			if (Array.isArray(raw.details) && raw.details.some((d) => isObj(d) && typeof d.name === "string" && /Google Ads/i.test(d.name))) continue;
+			if (
+				Array.isArray(raw.details) &&
+				raw.details.some((d) => isObj(d) && typeof d.name === "string" && /Google Ads/i.test(d.name))
+			)
+				continue;
 			const id = parseVideoUrl(raw.titleUrl);
 			if (!id) continue;
 			const sub = Array.isArray(raw.subtitles) && isObj(raw.subtitles[0]) ? raw.subtitles[0] : null;
-			const channelId = typeof sub?.url === "string" ? /\/channel\/(UC[A-Za-z0-9_-]{22})/.exec(sub.url)?.[1] : undefined;
+			const channelId =
+				typeof sub?.url === "string" ? /\/channel\/(UC[A-Za-z0-9_-]{22})/.exec(sub.url)?.[1] : undefined;
 			push({
 				id,
 				title: typeof raw.title === "string" ? raw.title.replace(WATCHED_PREFIX, "") : id,
@@ -499,7 +578,11 @@ export function parseTakeoutHistory(text: string): FoundVideo[] {
 		const id = parseVideoUrl(decodeEntities(video[1]!));
 		if (!id) continue;
 		const channel = /<a href="https:\/\/www\.youtube\.com\/channel\/(UC[A-Za-z0-9_-]{22})">([\s\S]*?)<\/a>/.exec(cell);
-		push({ id, title: decodeEntities(video[2]!.replace(/<[^>]+>/g, "")).trim() || id, ...(channel ? { channelId: channel[1]!, channel: decodeEntities(channel[2]!).trim() } : {}) });
+		push({
+			id,
+			title: decodeEntities(video[2]!.replace(/<[^>]+>/g, "")).trim() || id,
+			...(channel ? { channelId: channel[1]!, channel: decodeEntities(channel[2]!).trim() } : {}),
+		});
 	}
 	return out;
 }
@@ -569,7 +652,13 @@ const TRANSLATED_SET = 5;
  *   - a fifth or less: no (a German cooking video with uploaded Slovak
  *     subtitles);
  *   - otherwise, or with under three words to go on: unsure. */
-export function judgeSpoken(input: { tracks: readonly string[]; lang: string; fallbacks?: readonly string[]; titleShare?: number; titleWords?: number }): "yes" | "no" | "unsure" {
+export function judgeSpoken(input: {
+	tracks: readonly string[];
+	lang: string;
+	fallbacks?: readonly string[];
+	titleShare?: number;
+	titleWords?: number;
+}): "yes" | "no" | "unsure" {
 	const own = new Set([input.lang, ...(input.fallbacks ?? [])]);
 	const asr = input.tracks.filter((t) => t.endsWith(":asr")).map((t) => t.split(":")[0]!.split("-")[0]!);
 	if (asr.length < TRANSLATED_SET && asr.some((l) => own.has(l))) return "yes";
@@ -584,7 +673,12 @@ export function judgeSpoken(input: { tracks: readonly string[]; lang: string; fa
  *  the strength of that set is judged again by the title it was measured
  *  with. The word count was not kept, so the title is taken to have enough. */
 export function rejudgeSpoken(v: ScannedVideo): ScannedVideo {
-	if (v.spoken !== "yes" || v.titleShare === undefined || v.tracks.filter((t) => t.endsWith(":asr")).length < TRANSLATED_SET) return v;
+	if (
+		v.spoken !== "yes" ||
+		v.titleShare === undefined ||
+		v.tracks.filter((t) => t.endsWith(":asr")).length < TRANSLATED_SET
+	)
+		return v;
 	const spoken = judgeSpoken({ tracks: v.tracks, lang: v.trackLang ?? "", titleShare: v.titleShare, titleWords: 3 });
 	return spoken === v.spoken ? v : { ...v, spoken };
 }
@@ -595,7 +689,9 @@ export const SPARSE_SPEECH_WPM = 30;
 
 /** The tracks in the "sk" / "sk:asr" shape. */
 export function trackTags(tracks: readonly { languageCode: string; kind?: string }[]): string[] {
-	return [...new Set(tracks.map((t) => `${t.languageCode.toLowerCase().split("-")[0]}${t.kind === "asr" ? ":asr" : ""}`))];
+	return [
+		...new Set(tracks.map((t) => `${t.languageCode.toLowerCase().split("-")[0]}${t.kind === "asr" ? ":asr" : ""}`)),
+	];
 }
 
 // ─── The offer ──────────────────────────────────────────────────────────────
@@ -646,17 +742,32 @@ function pickable(v: ScannedVideo): boolean {
 
 /** The videos to offer, best first: checked, spoken in the language (or not
  *  ruled out), not in the library, not dismissed. */
-export function rankPicks(videos: readonly ScannedVideo[], opts: { exclude?: ReadonlySet<string>; now?: Date } = {}): PickedVideo[] {
+export function rankPicks(
+	videos: readonly ScannedVideo[],
+	opts: { exclude?: ReadonlySet<string>; now?: Date } = {},
+): PickedVideo[] {
 	return videos
 		.filter((v) => pickable(v) && !opts.exclude?.has(v.id))
-		.map((v) => ({ ...v, score: pickScore(v, opts.now), band: v.coverage === undefined ? "unmeasured" : coverageBand(v.coverage).band }))
+		.map((v) => ({
+			...v,
+			score: pickScore(v, opts.now),
+			band: v.coverage === undefined ? "unmeasured" : coverageBand(v.coverage).band,
+		}))
 		.sort((a, b) => b.score - a.score || (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
 }
 
 // ─── One creator's videos ────────────────────────────────────────────────────
 
 const AGO = /(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/i;
-const AGO_UNITS: Record<string, number> = { second: 1 / 86_400, minute: 1 / 1_440, hour: 1 / 24, day: 1, week: 7, month: 30, year: 365 };
+const AGO_UNITS: Record<string, number> = {
+	second: 1 / 86_400,
+	minute: 1 / 1_440,
+	hour: 1 / 24,
+	day: 1,
+	week: 7,
+	month: 30,
+	year: 365,
+};
 
 /** YouTube's English relative date ("3 weeks ago", "Streamed 2 days ago")
  *  as the date that far back. Only as exact as the text: good enough to sort
@@ -712,11 +823,27 @@ export interface CreatorVideo extends PickedVideo {
 
 /** A creator's videos as checked, in the order given, each with why it is
  *  or is not offered. Only offered ones carry a score; the rest score 0. */
-export function creatorVideoRows(videos: readonly ScannedVideo[], opts: { library: ReadonlySet<string>; dismissed: ReadonlySet<string>; now?: Date }): CreatorVideo[] {
+export function creatorVideoRows(
+	videos: readonly ScannedVideo[],
+	opts: { library: ReadonlySet<string>; dismissed: ReadonlySet<string>; now?: Date },
+): CreatorVideo[] {
 	return videos.map((v) => {
-		const status: CreatorVideoStatus = opts.library.has(v.id) ? "in-library" : opts.dismissed.has(v.id) ? "dismissed" : v.skip ? v.skip : v.spoken === "no" || !v.trackLang ? "not-in-language" : "offered";
+		const status: CreatorVideoStatus = opts.library.has(v.id)
+			? "in-library"
+			: opts.dismissed.has(v.id)
+				? "dismissed"
+				: v.skip
+					? v.skip
+					: v.spoken === "no" || !v.trackLang
+						? "not-in-language"
+						: "offered";
 		const offered = status === "offered";
-		return { ...v, status, score: offered ? pickScore(v, opts.now) : 0, band: v.coverage === undefined ? "unmeasured" : coverageBand(v.coverage).band };
+		return {
+			...v,
+			status,
+			score: offered ? pickScore(v, opts.now) : 0,
+			band: v.coverage === undefined ? "unmeasured" : coverageBand(v.coverage).band,
+		};
 	});
 }
 
@@ -736,18 +863,31 @@ export interface CreatorSuggestion extends FoundChannel {
 /** Channels worth saving: the ones whose videos turned out to be spoken in
  *  the language, from the history, the recommendations and searches, most
  *  such videos first. Saved channels are left out. */
-export function suggestCreators(videos: readonly ScannedVideo[], saved: ReadonlySet<string>, subscriptions: readonly FoundChannel[] = []): CreatorSuggestion[] {
+export function suggestCreators(
+	videos: readonly ScannedVideo[],
+	saved: ReadonlySet<string>,
+	subscriptions: readonly FoundChannel[] = [],
+): CreatorSuggestion[] {
 	const subs = new Map(subscriptions.map((c) => [c.id, c]));
 	const by = new Map<string, CreatorSuggestion>();
 	for (const v of videos) {
 		if (!v.channelId || saved.has(v.channelId) || v.spoken !== "yes" || !v.trackLang || v.skip) continue;
 		if (v.wordsPerMin !== undefined && v.wordsPerMin < SPARSE_SPEECH_WPM) continue;
-		const c = by.get(v.channelId) ?? { id: v.channelId, name: v.channel ?? subs.get(v.channelId)?.name ?? v.channelId, videos: 0, from: [], subscribed: subs.has(v.channelId), ...(subs.get(v.channelId)?.avatar ? { avatar: subs.get(v.channelId)!.avatar } : {}) };
+		const c = by.get(v.channelId) ?? {
+			id: v.channelId,
+			name: v.channel ?? subs.get(v.channelId)?.name ?? v.channelId,
+			videos: 0,
+			from: [],
+			subscribed: subs.has(v.channelId),
+			...(subs.get(v.channelId)?.avatar ? { avatar: subs.get(v.channelId)!.avatar } : {}),
+		};
 		c.videos++;
 		for (const s of v.sources) if (s !== "creator" && !c.from.includes(s)) c.from.push(s);
 		by.set(v.channelId, c);
 	}
-	return [...by.values()].sort((a, b) => Number(b.subscribed) - Number(a.subscribed) || b.videos - a.videos || a.name.localeCompare(b.name));
+	return [...by.values()].sort(
+		(a, b) => Number(b.subscribed) - Number(a.subscribed) || b.videos - a.videos || a.name.localeCompare(b.name),
+	);
 }
 
 /** The read from YouTube that the Watch page shows: which lists, when, how many. */

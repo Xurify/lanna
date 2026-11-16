@@ -18,7 +18,11 @@ describe("turn liveness registry", () => {
 		const id = "chat_failure_notice_unit";
 		rememberTurnFailure(id, "The reply could not be saved.");
 		assert.match(await settledTurnResponse(id).text(), /The reply could not be saved\./);
-		assert.match(await settledTurnResponse(id).text(), /The reply could not be saved\./, "reading does not consume the notice");
+		assert.match(
+			await settledTurnResponse(id).text(),
+			/The reply could not be saved\./,
+			"reading does not consume the notice",
+		);
 		assert.equal(beginTurn(id), true);
 		assert.doesNotMatch(await settledTurnResponse(id).text(), /"type":"error"/);
 		endTurn(id);

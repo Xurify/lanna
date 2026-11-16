@@ -6,7 +6,13 @@
 
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { parseVerdict, SENTENCE_TARGETS, sentenceProblems, sentenceTargets, usesLemma } from "../src/core/watch-sentences.ts";
+import {
+	parseVerdict,
+	SENTENCE_TARGETS,
+	sentenceProblems,
+	sentenceTargets,
+	usesLemma,
+} from "../src/core/watch-sentences.ts";
 import type { VideoRecord } from "../src/core/watch.ts";
 
 const tok = (text: string, lemma?: string, slug?: string, gloss?: string) => ({
@@ -23,7 +29,14 @@ function video(trackLang = "sk"): VideoRecord {
 		lang: "sk",
 		source: { kind: "captions", trackLang, via: "test" },
 		segments: [
-			{ i: 0, start: 0, end: 2, sk: "Ide do mesta.", en: "", tokens: [tok("Ide", "ísť", "ist", "goes"), tok("mesta", "mesto", "mesto", "city")] },
+			{
+				i: 0,
+				start: 0,
+				end: 2,
+				sk: "Ide do mesta.",
+				en: "",
+				tokens: [tok("Ide", "ísť", "ist", "goes"), tok("mesta", "mesto", "mesto", "city")],
+			},
 			{ i: 1, start: 2, end: 4, sk: "Mám knihu.", en: "", tokens: [tok("knihu", "kniha", "kniha", "book")] },
 		],
 		preTeach: [
@@ -36,12 +49,18 @@ function video(trackLang = "sk"): VideoRecord {
 
 describe("sentenceTargets", () => {
 	test("the tapped words come first, in the order of the video; then the pre-teach words; no repeats; at most three", () => {
-		assert.deepEqual(sentenceTargets(video(), ["kniha", "mesto"]).map((t) => t.lemma), ["mesto", "kniha", "dom"]);
+		assert.deepEqual(
+			sentenceTargets(video(), ["kniha", "mesto"]).map((t) => t.lemma),
+			["mesto", "kniha", "dom"],
+		);
 		assert.equal(SENTENCE_TARGETS, 3);
 	});
 
 	test("with nothing tapped, the pre-teach words", () => {
-		assert.deepEqual(sentenceTargets(video()).map((t) => t.lemma), ["dom", "kniha", "voda"]);
+		assert.deepEqual(
+			sentenceTargets(video()).map((t) => t.lemma),
+			["dom", "kniha", "voda"],
+		);
 	});
 
 	test("each target carries its meaning and the Slovak line it was met in", () => {
@@ -92,11 +111,19 @@ describe("sentenceProblems", () => {
 describe("parseVerdict", () => {
 	test("reads the JSON object, even inside a code fence", () => {
 		const text = '```json\n{"ok": false, "corrected": "Mám knihu.", "why": "Use the accusative."}\n```';
-		assert.deepEqual(parseVerdict(text, "Mám knihu"), { ok: false, corrected: "Mám knihu.", why: "Use the accusative." });
+		assert.deepEqual(parseVerdict(text, "Mám knihu"), {
+			ok: false,
+			corrected: "Mám knihu.",
+			why: "Use the accusative.",
+		});
 	});
 
 	test("without a corrected sentence, the sentence as written stands", () => {
-		assert.deepEqual(parseVerdict('{"ok": true, "why": "Looks right."}', "Mám knihu."), { ok: true, corrected: "Mám knihu.", why: "Looks right." });
+		assert.deepEqual(parseVerdict('{"ok": true, "why": "Looks right."}', "Mám knihu."), {
+			ok: true,
+			corrected: "Mám knihu.",
+			why: "Looks right.",
+		});
 	});
 
 	test("anything else is no verdict", () => {

@@ -69,8 +69,7 @@ export function calculateContextTokens(usage: {
 	cacheWrite?: number;
 }): number {
 	return (
-		usage.totalTokens ||
-		(usage.input ?? 0) + (usage.output ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0)
+		usage.totalTokens || (usage.input ?? 0) + (usage.output ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0)
 	);
 }
 
@@ -92,7 +91,8 @@ export function estimateMessageTokens(message: LhMessage | AgentMessage): number
 		}>) {
 			if (block.type === "text") chars += block.text?.length ?? 0;
 			else if (block.type === "thinking") chars += block.thinking?.length ?? 0;
-			else if (block.type === "toolCall") chars += (block.name?.length ?? 0) + JSON.stringify(block.arguments ?? {}).length;
+			else if (block.type === "toolCall")
+				chars += (block.name?.length ?? 0) + JSON.stringify(block.arguments ?? {}).length;
 		}
 	} else {
 		chars += textCharsOfContent(content);
@@ -128,9 +128,7 @@ function textCharsOfContent(content: unknown): number {
  * so pre-marker usage is not a valid anchor (pi's "don't trust usage
  * captured before a later compaction" law). Index into messages, or
  * null. */
-function lastAssistantUsageIndex(
-	messages: readonly (LhMessage | AgentMessage)[],
-): number | null {
+function lastAssistantUsageIndex(messages: readonly (LhMessage | AgentMessage)[]): number | null {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const m = messages[i]!;
 		if ((m as { role?: string }).role === "custom" && (m as LhMarkerMessage).customType === "compaction") return null;
@@ -160,9 +158,7 @@ interface ContextTokenEstimate {
  * it. The heuristic never re-estimates history the provider already
  * counted (the relational-databases bug: full-record JSON.stringify/4
  * tripled the true context and fired a 30k session at an 80k threshold). */
-export function estimateContextTokens(
-	messages: readonly (LhMessage | AgentMessage)[],
-): ContextTokenEstimate {
+export function estimateContextTokens(messages: readonly (LhMessage | AgentMessage)[]): ContextTokenEstimate {
 	const anchor = lastAssistantUsageIndex(messages);
 	if (anchor === null) {
 		let trailing = 0;
@@ -209,7 +205,8 @@ export function compactionCutIndex(messages: readonly LhMessage[], keepRecentTok
 	const points: number[] = [];
 	for (let i = start; i < messages.length; i++) {
 		const message = cutMessage(messages[i]!);
-		if (message && (message.role === "user" || message.role === "assistant" || message.role === "custom")) points.push(i);
+		if (message && (message.role === "user" || message.role === "assistant" || message.role === "custom"))
+			points.push(i);
 	}
 	if (!points.length) return start;
 	let cut = points[0]!;
@@ -271,7 +268,9 @@ export function newCompactionMarker(summary: string, details: CompactionDetails)
 /** The ACTIVE compaction marker: the newest one in the record (chained
  * compactions — the last one rules; older markers fall inside the
  * dropped span and never render). */
-export function activeCompactionOf(messages: readonly LhMessage[]): (LhMarkerMessage & { details: CompactionDetails }) | null {
+export function activeCompactionOf(
+	messages: readonly LhMessage[],
+): (LhMarkerMessage & { details: CompactionDetails }) | null {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const m = messages[i]!;
 		if ((m as { role?: string }).role !== "custom") continue;
@@ -289,7 +288,10 @@ export function activeCompactionOf(messages: readonly LhMessage[]): (LhMarkerMes
 /** The index of the first KEPT message, or -1 when the record's active
  * marker names an id that no longer exists (corrupt/foreign) — callers
  * fall back to rendering everything (honest degradation, never throw). */
-export function keptIndexFor(messages: readonly LhMessage[], marker: LhMarkerMessage & { details: CompactionDetails }): number {
+export function keptIndexFor(
+	messages: readonly LhMessage[],
+	marker: LhMarkerMessage & { details: CompactionDetails },
+): number {
 	const id = marker.details.firstKeptMessageId;
 	for (let i = 0; i < messages.length; i++) {
 		if (messages[i]!.id === id) return i;
@@ -320,12 +322,12 @@ export function serializeForSummary(messages: readonly LhMessage[]): string {
 			if (blocks.length > 0) lines.push(`[TUTOR] ${blocks.join("\n")}`);
 		} else if (role === "toolResult") {
 			const result = m as ToolResultMessage;
-			const text = result.content
-				.map((c) => (c.type === "text" ? c.text : JSON.stringify(c)))
-				.join("\n");
+			const text = result.content.map((c) => (c.type === "text" ? c.text : JSON.stringify(c))).join("\n");
 			lines.push(
 				`[RESULT for ${result.toolName}${result.isError ? " (error)" : ""}] ${
-					text.length > SUMMARY_TOOL_RESULT_TRUNCATE ? `${text.slice(0, SUMMARY_TOOL_RESULT_TRUNCATE)}…[truncated]` : text
+					text.length > SUMMARY_TOOL_RESULT_TRUNCATE
+						? `${text.slice(0, SUMMARY_TOOL_RESULT_TRUNCATE)}…[truncated]`
+						: text
 				}`,
 			);
 		} else if (role === "custom") {
@@ -374,8 +376,7 @@ export function buildCompactionPrompt(input: {
 	/** The session kind (wording: tutor vs practice agent). */
 	kind: "teach" | "practice" | "probe";
 }): string {
-	const planSection =
-		input.planTreeText ?? "No plan tree exists in this session (nothing was persisted).";
+	const planSection = input.planTreeText ?? "No plan tree exists in this session (nothing was persisted).";
 	return `You are compacting the earlier part of a tutoring session — writing the summary your future self will read INSTEAD of that transcript. Everything before the cut is replaced by what you write; everything after stays verbatim. The learner's transcript below labels the learner as [LEARNER], the tutoring agent as [TUTOR], tool traffic as [RESULT …]/[SYSTEM NOTE].
 
 Write the summary with EXACTLY these sections, in this order:

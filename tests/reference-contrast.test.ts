@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { aspectPairOf, referenceAspectPairs, referenceContrast, referenceUnits } from "../src/core/reference-contrast.ts";
+import {
+	aspectPairOf,
+	referenceAspectPairs,
+	referenceContrast,
+	referenceUnits,
+} from "../src/core/reference-contrast.ts";
 
 const SPATIAL = `
 | Situation             | Frame         | Example          |
@@ -39,21 +44,36 @@ test("a table whose rows are headed by words never pairs across rows", () => {
 });
 
 test("a word that only opens a longer phrase is not the word", () => {
-	const units = referenceUnits("| Type | Words |\n| --- | --- |\n| as soon as | `len čo` |\n| only when | `iba keď` |", "Conjunctions");
+	const units = referenceUnits(
+		"| Type | Words |\n| --- | --- |\n| as soon as | `len čo` |\n| only when | `iba keď` |",
+		"Conjunctions",
+	);
 	assert.equal(referenceContrast(units, "len", "iba"), undefined);
 	const plainList = referenceUnits("| restriction | `iba`, `len` — only |\n| --- | --- |", "Discourse");
 	assert.ok(referenceContrast(plainList, "len", "iba"));
 });
 
 test("a reflexive verb and an explicit 'vs.' row still name their word", () => {
-	const units = referenceUnits("| happen | `stať sa` (`Čo sa stalo?`); be going on `diať sa` |\n| --- | --- |\n| `čakať na` vs. `očakávať` | wait / expect |", "Lexical choice");
-	assert.deepEqual(texts(referenceContrast(units, "stať", "diať")), ["happen: stať sa (Čo sa stalo?)", "happen: be going on diať sa"]);
+	const units = referenceUnits(
+		"| happen | `stať sa` (`Čo sa stalo?`); be going on `diať sa` |\n| --- | --- |\n| `čakať na` vs. `očakávať` | wait / expect |",
+		"Lexical choice",
+	);
+	assert.deepEqual(texts(referenceContrast(units, "stať", "diať")), [
+		"happen: stať sa (Čo sa stalo?)",
+		"happen: be going on diať sa",
+	]);
 	assert.match(texts(referenceContrast(units, "čakať", "očakávať"))?.[0] ?? "", /^čakať na vs\. očakávať/);
 });
 
 test("case abbreviations are spelled out, as the app names cases in full", () => {
-	const units = referenceUnits("| at home | `doma` — `v/vo + loc.` |\n| --- | --- |\n| homeward | `domov` — `do + G` |", "Place");
-	assert.deepEqual(texts(referenceContrast(units, "doma", "domov")), ["at home: doma — v/vo + locative", "homeward: domov — do + genitive"]);
+	const units = referenceUnits(
+		"| at home | `doma` — `v/vo + loc.` |\n| --- | --- |\n| homeward | `domov` — `do + G` |",
+		"Place",
+	);
+	assert.deepEqual(texts(referenceContrast(units, "doma", "domov")), [
+		"at home: doma — v/vo + locative",
+		"homeward: domov — do + genitive",
+	]);
 });
 
 test("two spellings of one word written as alternants are not contrasted", () => {
@@ -66,14 +86,18 @@ test("a long list of words in one clause is not a contrast", () => {
 });
 
 test("aspect pairs come from tables whose columns are labeled perfective and imperfective", () => {
-	const md = "| ipf. | pf. | ipf. | pf. |\n| --- | --- | --- | --- |\n| `písať` | `napísať` | `volať` | `zavolať` |\n\n| pf. | ipf. |\n| --- | --- |\n| `rozhodnúť sa` | `rozhodovať sa` |\n\n| Imperfective process | Perfective result |\n| --- | --- |\n| `liečenie (treatment)` | `vyliečenie (cure)` |";
+	const md =
+		"| ipf. | pf. | ipf. | pf. |\n| --- | --- | --- | --- |\n| `písať` | `napísať` | `volať` | `zavolať` |\n\n| pf. | ipf. |\n| --- | --- |\n| `rozhodnúť sa` | `rozhodovať sa` |\n\n| Imperfective process | Perfective result |\n| --- | --- |\n| `liečenie (treatment)` | `vyliečenie (cure)` |";
 	const pairs = referenceAspectPairs(md);
 	assert.deepEqual(pairs, [
 		{ perfective: "napísať", imperfective: "písať" },
 		{ perfective: "zavolať", imperfective: "volať" },
 		{ perfective: "rozhodnúť sa", imperfective: "rozhodovať sa" },
 	]);
-	assert.deepEqual(aspectPairOf(pairs, "rozhodovať", "rozhodnúť"), { perfective: "rozhodnúť sa", imperfective: "rozhodovať sa" });
+	assert.deepEqual(aspectPairOf(pairs, "rozhodovať", "rozhodnúť"), {
+		perfective: "rozhodnúť sa",
+		imperfective: "rozhodovať sa",
+	});
 	assert.deepEqual(aspectPairOf(pairs, "zavolať", "volať"), { perfective: "zavolať", imperfective: "volať" });
 	assert.equal(aspectPairOf(pairs, "písať", "volať"), undefined);
 });

@@ -29,8 +29,13 @@ const counts = new Map<CoverMotif, number>();
 for (const row of rows) counts.set(row.cover, (counts.get(row.cover) ?? 0) + 1);
 
 console.log(`${rows.length} stories\n`);
-for (const row of rows) console.log(`${row.origin.padEnd(8)} ${row.cover.padEnd(10)} ${row.title}${row.topic ? `  (${row.topic})` : ""}`);
+for (const row of rows)
+	console.log(`${row.origin.padEnd(8)} ${row.cover.padEnd(10)} ${row.title}${row.topic ? `  (${row.topic})` : ""}`);
 console.log("\nStories per scene:");
 for (const [cover, n] of [...counts].sort((a, b) => b[1] - a[1])) console.log(`  ${cover.padEnd(10)} ${n}`);
 const general = rows.filter((row) => row.origin === "general");
-console.log(general.length ? `\n${general.length} with no fitting scene; their topics are the next scenes to draw:\n${general.map((row) => `  ${row.topic || row.title}`).join("\n")}` : "\nEvery story has a fitting scene.");
+console.log(
+	general.length
+		? `\n${general.length} with no fitting scene; their topics are the next scenes to draw:\n${general.map((row) => `  ${row.topic || row.title}`).join("\n")}`
+		: "\nEvery story has a fitting scene.",
+);

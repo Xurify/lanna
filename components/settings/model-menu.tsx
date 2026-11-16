@@ -128,22 +128,35 @@ export function ModelMenuList({
 							className="flex w-full flex-col gap-0.5 outline-none"
 						>
 							<span className="flex items-center justify-between gap-2">
-								<span className={`truncate ${m.id === effectiveId && m.provider === (effectiveProvider ?? m.provider) ? "text-go" : "text-card-foreground"}`}>{m.name}</span>
-								<span className="shrink-0 tabular-nums text-muted-foreground" title={subscriptionLabel(`${m.provider}:${m.id}`) ? "Subscription connection" : "Price per million tokens, in and out"}>
+								<span
+									className={`truncate ${m.id === effectiveId && m.provider === (effectiveProvider ?? m.provider) ? "text-go" : "text-card-foreground"}`}
+								>
+									{m.name}
+								</span>
+								<span
+									className="shrink-0 tabular-nums text-muted-foreground"
+									title={
+										subscriptionLabel(`${m.provider}:${m.id}`)
+											? "Subscription connection"
+											: "Price per million tokens, in and out"
+									}
+								>
 									{subscriptionLabel(`${m.provider}:${m.id}`) ?? priceLabel(m.cost)}
 								</span>
 							</span>
 							<span className="flex items-center justify-between gap-2 text-muted-foreground">
-								<span className="truncate">{subscriptionLabel(`${m.provider}:${m.id}`) ? `${subscriptionLabel(`${m.provider}:${m.id}`)} (subscription)` : providerLabel(m.provider)}</span>
+								<span className="truncate">
+									{subscriptionLabel(`${m.provider}:${m.id}`)
+										? `${subscriptionLabel(`${m.provider}:${m.id}`)} (subscription)`
+										: providerLabel(m.provider)}
+								</span>
 								<span className="shrink-0 tabular-nums">{formatTokens(m.contextWindow)} context</span>
 							</span>
 						</MenuOption>
 					</li>
 				))}
 			</ul>
-			{footer && (
-				<div className="mt-1 border-t px-2 pt-1.5 text-xs text-muted-foreground">{footer}</div>
-			)}
+			{footer && <div className="mt-1 border-t px-2 pt-1.5 text-xs text-muted-foreground">{footer}</div>}
 		</>
 	);
 }
@@ -180,9 +193,7 @@ export function ThinkingMenuList({
 					</MenuOption>
 				))
 			)}
-			{footer && (
-				<div className="mt-1 border-t px-2 pt-1.5 text-xs text-muted-foreground">{footer}</div>
-			)}
+			{footer && <div className="mt-1 border-t px-2 pt-1.5 text-xs text-muted-foreground">{footer}</div>}
 		</>
 	);
 }
@@ -247,9 +258,7 @@ export function ProviderMenuList({
 				placeholder="Search providers…"
 				className="lh-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
 			/>
-			{results.length === 0 && (
-				<div className="px-2 py-3 text-center text-muted-foreground">No providers match.</div>
-			)}
+			{results.length === 0 && <div className="px-2 py-3 text-center text-muted-foreground">No providers match.</div>}
 			<ul ref={listRef} data-testid="provider-list" className="flex max-h-72 flex-col overflow-y-auto px-1">
 				{results.map((p, i) => (
 					<li key={p.id}>

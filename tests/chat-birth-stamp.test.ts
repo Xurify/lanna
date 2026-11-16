@@ -31,11 +31,13 @@ after(() => {
 });
 
 function post(): Promise<Response> {
-	return POST(new Request("http://test/api/chats", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ title: "teach me the chain rule" }),
-	}));
+	return POST(
+		new Request("http://test/api/chats", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ title: "teach me the chain rule" }),
+		}),
+	);
 }
 
 describe("POST /api/chats — the birth stamp", () => {

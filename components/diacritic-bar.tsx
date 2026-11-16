@@ -58,10 +58,31 @@ function setFieldValue(field: Field, value: string, caret: number): void {
 	field.setSelectionRange(caret, caret);
 }
 
-function KeyGrid({ letters, english, tag, live, grab, press, className }: { letters: string[]; english: string; tag: string; live: string | null; grab: () => void; press: (letter: string, shift: boolean) => void; className?: string }) {
+function KeyGrid({
+	letters,
+	english,
+	tag,
+	live,
+	grab,
+	press,
+	className,
+}: {
+	letters: string[];
+	english: string;
+	tag: string;
+	live: string | null;
+	grab: () => void;
+	press: (letter: string, shift: boolean) => void;
+	className?: string;
+}) {
 	const families = useMemo(() => letterFamilies(letters, tag), [letters, tag]);
 	return (
-		<div data-testid="diacritic-bar" role="group" aria-label={`${english} letters`} className={cn("flex min-w-0 flex-wrap gap-1.5 font-prose", className)}>
+		<div
+			data-testid="diacritic-bar"
+			role="group"
+			aria-label={`${english} letters`}
+			className={cn("flex min-w-0 flex-wrap gap-1.5 font-prose", className)}
+		>
 			{families.map((family) => {
 				const on = family.base === live;
 				return (
@@ -69,7 +90,12 @@ function KeyGrid({ letters, english, tag, live, grab, press, className }: { lett
 						key={family.base}
 						data-family={family.base}
 						data-live={on ? "true" : undefined}
-						className={cn("flex rounded-[10px] transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none", on ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)]")}
+						className={cn(
+							"flex rounded-[10px] transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
+							on
+								? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
+								: "bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)]",
+						)}
 					>
 						{family.letters.map((letter, i) => (
 							<button
@@ -78,7 +104,11 @@ function KeyGrid({ letters, english, tag, live, grab, press, className }: { lett
 								onPointerDown={grab}
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={(e) => press(letter, e.shiftKey)}
-								title={on ? `Change ${family.base} to ${letter}` : `Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`}
+								title={
+									on
+										? `Change ${family.base} to ${letter}`
+										: `Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`
+								}
 								className={cn(
 									"lh-press flex h-10 min-w-9 items-center justify-center px-1.5 text-[17px] font-medium first:rounded-l-[10px] last:rounded-r-[10px] pointer-coarse:h-11 pointer-coarse:min-w-[42px]",
 									i > 0 && "shadow-[inset_1px_0_0_var(--q-line-2)]",
@@ -123,7 +153,16 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		if (variant !== "keys") return;
 		const onKeyDown = (e: KeyboardEvent) => {
 			// The physical key left of 1, whatever the layout types there (` or ;). Chrome on Windows cancels a dead key's pending accent when its keydown is prevented, and the cancel can take earlier letters with it.
-			if (e.code !== "Backquote" || belongsToLayoutAccent(e) || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
+			if (
+				e.code !== "Backquote" ||
+				belongsToLayoutAccent(e) ||
+				e.metaKey ||
+				e.ctrlKey ||
+				e.altKey ||
+				e.defaultPrevented ||
+				!window.matchMedia("(pointer: fine)").matches
+			)
+				return;
 			if (!keyboardRef.current?.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return;
 			e.preventDefault();
 			toggleKeyboard();
@@ -185,7 +224,9 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		if (variant !== "keys" || !lang) return;
 		const update = () => {
 			const field = fieldInUse(lastField.current);
-			setLive(field ? liveFamily(families, field.value, field.selectionStart ?? 0, field.selectionEnd ?? 0, lang.tag) : null);
+			setLive(
+				field ? liveFamily(families, field.value, field.selectionStart ?? 0, field.selectionEnd ?? 0, lang.tag) : null,
+			);
 		};
 		update();
 		const events = ["selectionchange", "input", "keyup", "pointerup", "focusin"] as const;
@@ -222,7 +263,9 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	// A tap moves the caret of an input to its start between pointerdown and click in Chrome on touch screens, so the caret is read on pointerdown.
 	const grab = () => {
 		const field = fieldInUse(lastField.current);
-		grabbed.current = field ? { field, start: field.selectionStart ?? field.value.length, end: field.selectionEnd ?? field.value.length } : null;
+		grabbed.current = field
+			? { field, start: field.selectionStart ?? field.value.length, end: field.selectionEnd ?? field.value.length }
+			: null;
 	};
 	const press = (letter: string, shift: boolean) => {
 		const target = fieldInUse(lastField.current);
@@ -246,13 +289,20 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		const before = start > 0 ? ([...field.value.slice(0, start)].at(-1) ?? "") : "";
 		if (!before || baseLetter(before, lang.tag) !== held) return insertAtCaret(field, letter);
 		const typed = before === before.toLocaleLowerCase(lang.tag) ? letter : letter.toLocaleUpperCase(lang.tag);
-		setFieldValue(field, field.value.slice(0, start - before.length) + typed + field.value.slice(start), start - before.length + typed.length);
+		setFieldValue(
+			field,
+			field.value.slice(0, start - before.length) + typed + field.value.slice(start),
+			start - before.length + typed.length,
+		);
 	};
 	useEffect(() => {
 		pickRef.current = pick;
 	});
 
-	if (!lang) return variant === "keys" ? <div aria-hidden="true" className={cn("h-[144px] pointer-fine:h-8", className)} /> : null;
+	if (!lang)
+		return variant === "keys" ? (
+			<div aria-hidden="true" className={cn("h-[144px] pointer-fine:h-8", className)} />
+		) : null;
 	const type = (letter: string, upper: boolean) => {
 		const target = fieldInUse(lastField.current);
 		if (!target) return;
@@ -281,17 +331,37 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 							<kbd className="q-kbd">`</kbd>
 						</button>
 						{menu ? (
-							<AccentChoices accents={accentsOf(families.find((f) => f.base === menu.base))} onPick={pick} grab={grab} className="lh-menu-in origin-left -my-1.5" />
+							<AccentChoices
+								accents={accentsOf(families.find((f) => f.base === menu.base))}
+								onPick={pick}
+								grab={grab}
+								className="lh-menu-in origin-left -my-1.5"
+							/>
 						) : (
 							<span>Hold a letter for its accents</span>
 						)}
 					</div>
 					<div className={cn(keyboardOpen ? "mt-2" : "invisible h-0")}>
-						<AccentKeyboard letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} menu={menu} onKey={onKey} grab={grab} />
+						<AccentKeyboard
+							letters={lang.specialLetters}
+							english={lang.english}
+							tag={lang.tag}
+							live={live}
+							menu={menu}
+							onKey={onKey}
+							grab={grab}
+						/>
 					</div>
 				</div>
 				<div className="pointer-fine:hidden">
-					<KeyGrid letters={lang.specialLetters} english={lang.english} tag={lang.tag} live={live} grab={grab} press={press} />
+					<KeyGrid
+						letters={lang.specialLetters}
+						english={lang.english}
+						tag={lang.tag}
+						live={live}
+						grab={grab}
+						press={press}
+					/>
 				</div>
 			</div>
 		);
@@ -302,7 +372,10 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 			data-testid="diacritic-bar"
 			// On a phone the strip is wider than the card: it starts at the left
 			// and scrolls sideways (justify-end would push the first letters off-screen).
-			className={cn("pointer-events-auto flex items-center justify-start gap-0.5 overflow-x-auto px-1 pb-1 font-ui sm:justify-end", className)}
+			className={cn(
+				"pointer-events-auto flex items-center justify-start gap-0.5 overflow-x-auto px-1 pb-1 font-ui sm:justify-end",
+				className,
+			)}
 			aria-label={`${lang.english} letters`}
 		>
 			{open &&
@@ -328,7 +401,13 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 				title={open ? "Hide letter bar" : `${lang.english} letters`}
 				className="ml-0.5 flex shrink-0 items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
 			>
-				{open ? <ChevronDownIcon className="size-3" /> : <>{lang.specialLetters.slice(0, 3).join(" ")} <ChevronUpIcon className="size-3" /></>}
+				{open ? (
+					<ChevronDownIcon className="size-3" />
+				) : (
+					<>
+						{lang.specialLetters.slice(0, 3).join(" ")} <ChevronUpIcon className="size-3" />
+					</>
+				)}
 			</button>
 		</div>
 	);

@@ -84,7 +84,10 @@ export function DeleteSessionsDialog({
 	if (!open) return null;
 
 	return createPortal(
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...backdropDismiss}>
+		<div
+			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
+			{...backdropDismiss}
+		>
 			<div
 				role="dialog"
 				aria-modal="true"
@@ -96,7 +99,10 @@ export function DeleteSessionsDialog({
 				<h2 className="text-sm font-semibold text-destructive">
 					Delete {chats.length} {chats.length === 1 ? "chat" : "chats"}?
 				</h2>
-				<ul className="mt-2 max-h-40 overflow-y-auto font-mono text-xs text-foreground" data-testid="delete-sessions-list">
+				<ul
+					className="mt-2 max-h-40 overflow-y-auto font-mono text-xs text-foreground"
+					data-testid="delete-sessions-list"
+				>
 					{chats.map((c) => (
 						<li key={c.id} className="truncate py-0.5">
 							{c.title}
@@ -104,18 +110,37 @@ export function DeleteSessionsDialog({
 					))}
 				</ul>
 				<p className="mt-3 text-sm text-muted-foreground">
-					They leave your list and any background work in them stops. They are kept in the trash, with their spending record.
+					They leave your list and any background work in them stops. They are kept in the trash, with their spending
+					record.
 				</p>
 				{failure && (
-					<div role="alert" data-testid="delete-sessions-failure" className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs text-foreground">
+					<div
+						role="alert"
+						data-testid="delete-sessions-failure"
+						className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs text-foreground"
+					>
 						{failure}. Press Delete to try the rest again.
 					</div>
 				)}
 				<div className="mt-4 flex justify-end gap-2">
-					<Button type="button" variant="ghost" size="sm" data-testid="delete-sessions-cancel" onClick={onClose} disabled={busy}>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						data-testid="delete-sessions-cancel"
+						onClick={onClose}
+						disabled={busy}
+					>
 						Cancel
 					</Button>
-					<Button type="button" variant="destructive" size="sm" data-testid="delete-sessions-confirm" onClick={() => void run()} disabled={busy || chats.length === 0}>
+					<Button
+						type="button"
+						variant="destructive"
+						size="sm"
+						data-testid="delete-sessions-confirm"
+						onClick={() => void run()}
+						disabled={busy || chats.length === 0}
+					>
 						{busy ? "Deleting…" : `Delete ${chats.length} ${chats.length === 1 ? "chat" : "chats"}`}
 					</Button>
 				</div>

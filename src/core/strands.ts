@@ -54,7 +54,20 @@ export interface StrandDay {
 /** Minutes an activity is planned for (src/core/curriculum.ts TASK_MINUTES
  *  and the reading/listening modules), kept here so the balance never
  *  drifts from the plan. Reviews are per card. */
-export const STRAND_MINUTES = { lesson: 3, review: 0.25, blitz: 1, talk: 6, story: 6, tutor: 6, read: 4, listen: 4, watch: 8, speak: 6, reread: 3, fast: 3 } as const;
+export const STRAND_MINUTES = {
+	lesson: 3,
+	review: 0.25,
+	blitz: 1,
+	talk: 6,
+	story: 6,
+	tutor: 6,
+	read: 4,
+	listen: 4,
+	watch: 8,
+	speak: 6,
+	reread: 3,
+	fast: 3,
+} as const;
 
 export interface StrandBalance {
 	minutes: Record<Strand, number>;
@@ -91,10 +104,20 @@ export function strandParts(day: StrandDay): { minutes: Record<Strand, number>; 
 	};
 	return {
 		minutes: {
-			input: timed("listen", day.listens, STRAND_MINUTES.listen) + timed("read", day.reads, STRAND_MINUTES.read) + timed("watch", day.watches, STRAND_MINUTES.watch) + untimed(day.stories, STRAND_MINUTES.story),
+			input:
+				timed("listen", day.listens, STRAND_MINUTES.listen) +
+				timed("read", day.reads, STRAND_MINUTES.read) +
+				timed("watch", day.watches, STRAND_MINUTES.watch) +
+				untimed(day.stories, STRAND_MINUTES.story),
 			output: untimed(day.talks, STRAND_MINUTES.talk) + timed("speak", day.speaks, STRAND_MINUTES.speak),
-			form: timed("lesson", day.lessons, STRAND_MINUTES.lesson) + timed("review", day.reviews, STRAND_MINUTES.review) + untimed(day.tutors, STRAND_MINUTES.tutor),
-			fluency: timed("blitz", day.blitz, STRAND_MINUTES.blitz) + timed("reread", day.rereads, STRAND_MINUTES.reread) + timed("fast", day.fasts, STRAND_MINUTES.fast),
+			form:
+				timed("lesson", day.lessons, STRAND_MINUTES.lesson) +
+				timed("review", day.reviews, STRAND_MINUTES.review) +
+				untimed(day.tutors, STRAND_MINUTES.tutor),
+			fluency:
+				timed("blitz", day.blitz, STRAND_MINUTES.blitz) +
+				timed("reread", day.rereads, STRAND_MINUTES.reread) +
+				timed("fast", day.fasts, STRAND_MINUTES.fast),
 		},
 		estimated,
 	};
@@ -117,7 +140,14 @@ export function strandBalance(days: readonly StrandDay[]): StrandBalance {
 	const share: Record<Strand, number> = { input: 0, output: 0, form: 0, fluency: 0 };
 	if (total > 0) for (const s of STRANDS) share[s.id] = minutes[s.id] / total;
 	const behind = total > 0 ? STRANDS.map((s) => s.id).sort((a, b) => share[a] - share[b])[0]! : null;
-	return { minutes, total, estimated: Math.min(total, Math.round(estimated * 10) / 10), share, behind: behind !== null && share[behind] < STRAND_TARGET ? behind : null, target: STRAND_TARGET };
+	return {
+		minutes,
+		total,
+		estimated: Math.min(total, Math.round(estimated * 10) / 10),
+		share,
+		behind: behind !== null && share[behind] < STRAND_TARGET ? behind : null,
+		target: STRAND_TARGET,
+	};
 }
 
 /** How the minutes were counted, in one honest line: measured while the
@@ -135,7 +165,8 @@ export function strandCaption(b: StrandBalance): string {
 
 /** One line under the bars: what the week says to do next. */
 export function strandAdvice(b: StrandBalance): string {
-	if (b.total === 0) return "Nothing counted yet this week. Nation's four strands suggest about a quarter of the time in each.";
+	if (b.total === 0)
+		return "Nothing counted yet this week. Nation's four strands suggest about a quarter of the time in each.";
 	const over = STRANDS.filter((s) => b.share[s.id] > 0.5).map((s) => s.title);
 	const name = (s: Strand) => STRANDS.find((x) => x.id === s)!.title;
 	if (!b.behind) return "Close to a quarter each, the balance Nation suggests for a course.";

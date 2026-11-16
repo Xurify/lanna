@@ -87,7 +87,11 @@ export function Composer({
 	return (
 		<form
 			data-testid="composer"
-			className={toolbar ? "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-2 px-2 pt-2 pb-2" : "flex items-end gap-1.5 p-1.5"}
+			className={
+				toolbar
+					? "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-2 px-2 pt-2 pb-2"
+					: "flex items-end gap-1.5 p-1.5"
+			}
 			onSubmit={(e) => {
 				e.preventDefault();
 				act();
@@ -140,32 +144,32 @@ export function Composer({
 				 (click and Enter share one lane), and typing anything
 				 returns the regular send. The green is the app's correct-
 				 answer register (answered-card's green-500/600). */}
-				{nextProblem && !busy && !canSend ? (
-					<button
-						type="submit"
-						data-testid="next-problem-button"
-						aria-label="Next problem"
-						className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-teal px-4 font-ui text-sm font-[550] text-primary-foreground transition-colors hover:bg-teal-2"
-					>
-						Next problem
-						<ArrowRightIcon className="size-4" />
-					</button>
-				) : (
-					<button
-						type="submit"
-						aria-label={busy && !canSend ? "Stop" : "Send"}
-						disabled={!busy && !canSend}
-						className={cn(
-							"flex shrink-0 items-center justify-center transition-colors",
-							toolbar ? "size-9 rounded-full" : "size-10 rounded-lg",
-							busy && !canSend
-								? "bg-well-2 text-foreground hover:bg-well"
-								: "bg-teal text-primary-foreground hover:bg-teal-2 disabled:opacity-40",
-						)}
-					>
-						{busy && !canSend ? <SquareIcon className="size-4" /> : <CornerDownLeftIcon className="size-5" />}
-					</button>
-				)}
+			{nextProblem && !busy && !canSend ? (
+				<button
+					type="submit"
+					data-testid="next-problem-button"
+					aria-label="Next problem"
+					className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-teal px-4 font-ui text-sm font-[550] text-primary-foreground transition-colors hover:bg-teal-2"
+				>
+					Next problem
+					<ArrowRightIcon className="size-4" />
+				</button>
+			) : (
+				<button
+					type="submit"
+					aria-label={busy && !canSend ? "Stop" : "Send"}
+					disabled={!busy && !canSend}
+					className={cn(
+						"flex shrink-0 items-center justify-center transition-colors",
+						toolbar ? "size-9 rounded-full" : "size-10 rounded-lg",
+						busy && !canSend
+							? "bg-well-2 text-foreground hover:bg-well"
+							: "bg-teal text-primary-foreground hover:bg-teal-2 disabled:opacity-40",
+					)}
+				>
+					{busy && !canSend ? <SquareIcon className="size-4" /> : <CornerDownLeftIcon className="size-5" />}
+				</button>
+			)}
 		</form>
 	);
 }

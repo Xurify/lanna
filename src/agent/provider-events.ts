@@ -67,7 +67,11 @@ function writeLine(file: string, line: Record<string, unknown>): void {
 		const bytes = before + Buffer.byteLength(text);
 		if (bytes > providerEventsCap.current) {
 			files.set(file, { bytes, capped: true });
-			fs.appendFileSync(file, `${JSON.stringify({ t: Date.now(), note: `cap ${providerEventsCap.current} bytes reached — recording stopped` })}\n`, "utf-8");
+			fs.appendFileSync(
+				file,
+				`${JSON.stringify({ t: Date.now(), note: `cap ${providerEventsCap.current} bytes reached — recording stopped` })}\n`,
+				"utf-8",
+			);
 		} else {
 			files.set(file, { bytes, capped: false });
 		}

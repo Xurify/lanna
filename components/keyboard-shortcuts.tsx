@@ -71,8 +71,7 @@ export function KeyboardShortcuts() {
 				// composer-bearing page answers with its own chain. The quiz
 				// dock's rows↔thinking claim stops propagation at document
 				// level, so a claimed Tab never reaches this dispatch.
-				else if (!e.metaKey && !e.ctrlKey && !e.altKey)
-					window.dispatchEvent(new CustomEvent("lh:kbd-cycle-fields"));
+				else if (!e.metaKey && !e.ctrlKey && !e.altKey) window.dispatchEvent(new CustomEvent("lh:kbd-cycle-fields"));
 				return;
 			}
 
@@ -150,11 +149,10 @@ export function KeyboardShortcuts() {
 function CheatSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const backdropDismiss = useBackdropDismiss(onClose);
 	if (!open) return null;
-	const scopes = ["global", "chat", "graph"] as const;
+	const scopes = ["global", "chat"] as const;
 	const scopeLabels: Record<(typeof scopes)[number], string> = {
 		global: "Global",
 		chat: "Chat",
-		graph: "Skill map",
 	};
 	return (
 		<div
@@ -175,9 +173,7 @@ function CheatSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 					if (actions.length === 0) return null;
 					return (
 						<div key={scope} className="mb-4">
-							<div className="mb-1.5 text-xs text-muted-foreground">
-								{scopeLabels[scope]}
-							</div>
+							<div className="mb-1.5 text-xs text-muted-foreground">{scopeLabels[scope]}</div>
 							<div className="flex flex-col gap-1">
 								{actions.map((a) => (
 									<div key={a.id} className="flex items-center justify-between gap-4 text-sm">

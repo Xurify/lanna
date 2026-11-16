@@ -16,13 +16,32 @@ after(() => fs.rmSync(scratch, { recursive: true, force: true }));
 test("chat GET supplies derived Pi costs without persisting dollars or changing native history", async () => {
 	const record = chatStore.createChat("price projection fixture");
 	chatStore.saveMessages(record.id, [{ id: "fixture-input", role: "user", content: "synthetic", timestamp: 1 }]);
-	const step = { inputTokens: 10_000, outputTokens: 1_000, cacheReadTokens: 70_000, cacheWriteTokens: 0, cacheWrite1hTokens: 0, reasoningTokens: 500 };
-	for (const [id, model] of [["api", "openrouter:openai/gpt-6.1-sol"], ["plan", "chatgpt:fixture"], ["unknown", "missing:fixture"]]) {
-		chatStore.appendTurnUsage(record.id, { id: id!, model: model!, messageId: "fixture-input", at: "fixture", steps: [step] });
+	const step = {
+		inputTokens: 10_000,
+		outputTokens: 1_000,
+		cacheReadTokens: 70_000,
+		cacheWriteTokens: 0,
+		cacheWrite1hTokens: 0,
+		reasoningTokens: 500,
+	};
+	for (const [id, model] of [
+		["api", "openrouter:openai/gpt-6.1-sol"],
+		["plan", "chatgpt:fixture"],
+		["unknown", "missing:fixture"],
+	]) {
+		chatStore.appendTurnUsage(record.id, {
+			id: id!,
+			model: model!,
+			messageId: "fixture-input",
+			at: "fixture",
+			steps: [step],
+		});
 	}
 	const file = path.join(scratch, "profiles", "slovak", "chats", `${record.id}.json`);
 	const before = fs.readFileSync(file, "utf8");
-	const response = await GET(new Request(`http://localhost/api/chats/${record.id}`), { params: Promise.resolve({ id: record.id }) });
+	const response = await GET(new Request(`http://localhost/api/chats/${record.id}`), {
+		params: Promise.resolve({ id: record.id }),
+	});
 	assert.equal(response.status, 200);
 	const body = await response.json();
 	assert.deepEqual(body.messages, chatStore.getChat(record.id)!.messages);

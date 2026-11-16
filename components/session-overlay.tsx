@@ -54,7 +54,7 @@ export function chartSize(svg: string): { w: number; h: number } {
 		if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) return { w, h };
 	}
 	const attr = (name: string): number | null => {
-		const a = new RegExp(`<svg\\b[^>]*?\\b${name}\\s*=\\s*["'](\\d+(?:\\.\d+)?)(?:px)?["']`, "i").exec(svg);
+		const a = new RegExp(`<svg\\b[^>]*?\\b${name}\\s*=\\s*["'](\\d+(?:\\.\\d+)?)(?:px)?["']`, "i").exec(svg);
 		if (!a) return null;
 		const n = Number.parseFloat(a[1]!);
 		return Number.isFinite(n) && n > 0 ? n : null;
@@ -186,9 +186,7 @@ export function MermaidOverlay({
 		const d = dragRef.current;
 		if (!d) return;
 		d.moved = true;
-		setView((v) =>
-			v.zoom <= fitZoom + 1e-9 ? v : { ...v, x: d.x + (e.clientX - d.px), y: d.y + (e.clientY - d.py) },
-		);
+		setView((v) => (v.zoom <= fitZoom + 1e-9 ? v : { ...v, x: d.x + (e.clientX - d.px), y: d.y + (e.clientY - d.py) }));
 	};
 	const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
 		const d = dragRef.current;
@@ -225,16 +223,16 @@ export function MermaidOverlay({
 				<span className="text-sm font-medium">Diagram</span>
 				<span className="text-xs text-muted-foreground">from this lesson</span>
 				<Hint label="Close" binding="escape" side="left">
-<button
-					type="button"
-					onClick={onClose}
-					aria-label="Close"
-					data-testid="mermaid-overlay-close"
-					className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-				>
-					<XIcon className="size-4" />
-				</button>
-</Hint>
+					<button
+						type="button"
+						onClick={onClose}
+						aria-label="Close"
+						data-testid="mermaid-overlay-close"
+						className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					>
+						<XIcon className="size-4" />
+					</button>
+				</Hint>
 			</div>
 			<div
 				ref={viewportRef}
@@ -259,15 +257,12 @@ export function MermaidOverlay({
 								width: `${box.w}px`,
 								transform: `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`,
 								// Hidden until the first fit has APPLIED: the fit runs in an
-							// effect (after paint), and the chart would otherwise flash
-							// at the initial top-left zoom:1 state for a frame (the
-							// owner saw exactly that; transition-gating alone doesn't
-							// hide it — VISIBILITY must be gated on settled too).
+								// effect (after paint), and the chart would otherwise flash
+								// at the initial top-left zoom:1 state for a frame (the
+								// owner saw exactly that; transition-gating alone doesn't
+								// hide it — VISIBILITY must be gated on settled too).
 								opacity: settled ? 1 : 0,
-								transition:
-									panning || !settled
-										? "none"
-										: "transform 180ms ease-out, opacity 160ms ease-out",
+								transition: panning || !settled ? "none" : "transform 180ms ease-out, opacity 160ms ease-out",
 							}}
 						>
 							{/* Figures share the card's image boundary and white backing.
@@ -293,35 +288,35 @@ export function MermaidOverlay({
 							<span className="text-xs text-muted-foreground">Drag to pan · scroll to zoom</span>
 							<div className="flex gap-1">
 								<Hint label="Zoom out" side="bottom">
-<button
-									type="button"
-									aria-label="Zoom out"
-									onClick={() => stepZoom(1 / 1.25)}
-									className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-								>
-									<MinusIcon className="size-3.5" />
-								</button>
-</Hint>
+									<button
+										type="button"
+										aria-label="Zoom out"
+										onClick={() => stepZoom(1 / 1.25)}
+										className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									>
+										<MinusIcon className="size-3.5" />
+									</button>
+								</Hint>
 								<Hint label="Fit diagram to view" side="bottom">
-<button
-									type="button"
-									aria-label="Fit diagram to view"
-									onClick={fitView}
-									className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-								>
-									<MaximizeIcon className="size-3.5" />
-								</button>
-</Hint>
+									<button
+										type="button"
+										aria-label="Fit diagram to view"
+										onClick={fitView}
+										className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									>
+										<MaximizeIcon className="size-3.5" />
+									</button>
+								</Hint>
 								<Hint label="Zoom in" side="bottom">
-<button
-									type="button"
-									aria-label="Zoom in"
-									onClick={() => stepZoom(1.25)}
-									className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-								>
-									<PlusIcon className="size-3.5" />
-								</button>
-</Hint>
+									<button
+										type="button"
+										aria-label="Zoom in"
+										onClick={() => stepZoom(1.25)}
+										className="pointer-events-auto flex size-7 items-center justify-center rounded-md border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									>
+										<PlusIcon className="size-3.5" />
+									</button>
+								</Hint>
 							</div>
 						</div>
 					</>

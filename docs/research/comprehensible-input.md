@@ -1,6 +1,6 @@
 # Comprehensible Input and LangHarness
 
-*LangHarness research note, 28 October 2026. The same note as a page: https://claude.ai/artifact/Tt3n8CesrkeKGfwt1fMErK.*
+_LangHarness research note, 28 October 2026. The same note as a page: https://claude.ai/artifact/Tt3n8CesrkeKGfwt1fMErK._
 
 What the comprehensible-input school claims, what forty years of research kept and threw out, where the app stands against it, and what changed in the app as a result.
 
@@ -8,7 +8,7 @@ What the comprehensible-input school claims, what forty years of research kept a
 
 ## What comprehensible input is
 
-Stephen Krashen's input hypothesis (1982, 1985) says we acquire a language in one way only: by understanding messages that are a little beyond our current level. He wrote that as *i+1*. Everything else in his model follows from it. Conscious study of rules ("learning") produces knowledge that can only edit output after the fact. Speaking and writing are the result of acquisition, not its cause. Anxiety and pressure raise an "affective filter" that blocks input. A beginner is allowed a silent period.
+Stephen Krashen's input hypothesis (1982, 1985) says we acquire a language in one way only: by understanding messages that are a little beyond our current level. He wrote that as _i+1_. Everything else in his model follows from it. Conscious study of rules ("learning") produces knowledge that can only edit output after the fact. Speaking and writing are the result of acquisition, not its cause. Anxiety and pressure raise an "affective filter" that blocks input. A beginner is allowed a silent period.
 
 The methods built on this idea all put a large volume of easy, interesting listening and reading at the centre:
 
@@ -29,11 +29,11 @@ Lichtman and VanPatten's review "Was Krashen right? Forty years later" (2021) fi
 Nobody has found a way to test whether a text is exactly one step beyond a learner. What has been measured is the share of running words a reader knows. Hu and Nation (2000) put comfortable unassisted reading at about 98% known words. Schmitt, Jiang and Grabe (2011) found no cliff, just a straight line: each extra percent of words known buys about 2.3 points of comprehension.
 
 | Words known | Comprehension (Schmitt, Jiang & Grabe 2011) |
-|---|---|
-| 90% | 50% |
-| 95% | 60% |
-| 98% | 68% |
-| 100% | 75% |
+| ----------- | ------------------------------------------- |
+| 90%         | 50%                                         |
+| 95%         | 60%                                         |
+| 98%         | 68%                                         |
+| 100%        | 75%                                         |
 
 661 readers of two academic texts. The relationship is linear in the measured range; even knowing every word gave only 75%, because background knowledge does the rest. LangHarness aims its input at 95 to 98% known words: hard enough to carry something new, easy enough to read instead of decode.
 
@@ -69,26 +69,26 @@ TPRS has a handful of small classroom studies, mostly positive for vocabulary an
 
 Every activity in the app sorted into Nation's strands, with the minutes a full day's plan gives each one. The minutes are the plan's own estimates; the share is what matters.
 
-| Activity | Strand | Minutes in a day's plan | Comprehensible input? |
-|---|---|---|---|
-| Review deck (FSRS cloze cards) | Language-focused | 2 to 10 | No: one blank per sentence, graded. |
-| Lesson (choose, type, build, listen) | Language-focused | 3 | Partly: real sentences with audio, but the first contact with a new form was a test. |
-| Strengthen (typed lesson, mixed units) | Language-focused | 3 | No. |
-| Words (a cluster or frequency band) | Language-focused | 3 | Partly: words in sentences, but tested, not read. |
-| Blitz (60 s of choose) | Fluency | 1 | No, and it only appears when nothing needs strengthening. |
-| Talk (role-play, corrections at the end) | Output | 6, every other day | No: it is output, which is right. |
-| Story (tutor chat, ~98% known words) | Input | 6, every other day | Yes. The one CI activity before today. |
-| Read (graded episode, tap-to-gloss, audio) | Input | 4 | Yes. Added today in the reading thread. |
-| Why? and tutor units | Language-focused | on demand | No: explanation, which is what they are for. |
+| Activity                                   | Strand           | Minutes in a day's plan | Comprehensible input?                                                                |
+| ------------------------------------------ | ---------------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| Review deck (FSRS cloze cards)             | Language-focused | 2 to 10                 | No: one blank per sentence, graded.                                                  |
+| Lesson (choose, type, build, listen)       | Language-focused | 3                       | Partly: real sentences with audio, but the first contact with a new form was a test. |
+| Strengthen (typed lesson, mixed units)     | Language-focused | 3                       | No.                                                                                  |
+| Words (a cluster or frequency band)        | Language-focused | 3                       | Partly: words in sentences, but tested, not read.                                    |
+| Blitz (60 s of choose)                     | Fluency          | 1                       | No, and it only appears when nothing needs strengthening.                            |
+| Talk (role-play, corrections at the end)   | Output           | 6, every other day      | No: it is output, which is right.                                                    |
+| Story (tutor chat, ~98% known words)       | Input            | 6, every other day      | Yes. The one CI activity before today.                                               |
+| Read (graded episode, tap-to-gloss, audio) | Input            | 4                       | Yes. Added today in the reading thread.                                              |
+| Why? and tutor units                       | Language-focused | on demand               | No: explanation, which is what they are for.                                         |
 
 Share of a full day's planned minutes, averaged over a Talk day and a Story day:
 
-| | Input | Output | Language-focused | Fluency |
-|---|---|---|---|---|
-| Yesterday | 12% | 12% | 76% | 0% |
-| With Read | 24% | 10% | 66% | 0% |
-| Now | 40% | 11% | 46% | 3% |
-| Nation's target | 25% | 25% | 25% | 25% |
+|                 | Input | Output | Language-focused | Fluency |
+| --------------- | ----- | ------ | ---------------- | ------- |
+| Yesterday       | 12%   | 12%    | 76%              | 0%      |
+| With Read       | 24%   | 10%    | 66%              | 0%      |
+| Now             | 40%   | 11%    | 46%              | 3%      |
+| Nation's target | 25%   | 25%    | 25%              | 25%     |
 
 "Now" counts the Listen step (4 min), the two input reps that open every new unit's lesson, and Read. Deliberate study still runs over Nation's quarter; the next moves are a real fluency strand and more output, not less grammar. The app now draws these bars itself, from the week's real ledger, under the daily plan.
 
@@ -122,15 +122,15 @@ Where it lives in the code: `src/core/listen.ts`, `src/server/listen.ts`, `app/l
 
 ## Sources
 
-- Krashen, S. (1982). *Principles and Practice in Second Language Acquisition*; (1985) *The Input Hypothesis: Issues and Implications*.
-- Lichtman, K. & VanPatten, B. (2021). Was Krashen right? Forty years later. *Foreign Language Annals* 54(2). https://doi.org/10.1111/flan.12552
-- Swain, M. (1985). Communicative competence: some roles of comprehensible input and comprehensible output in its development. In Gass & Madden (eds), *Input in Second Language Acquisition*.
-- Hu, M. & Nation, P. (2000). Unknown vocabulary density and reading comprehension. *Reading in a Foreign Language* 13(1).
-- Schmitt, N., Jiang, X. & Grabe, W. (2011). The percentage of words known in a text and reading comprehension. *Modern Language Journal* 95(1). https://www.lextutor.ca/cover/papers/schmitt_etal_2011.pdf
-- van Zeeland, H. & Schmitt, N. (2013). Lexical coverage in L1 and L2 listening comprehension. *Applied Linguistics* 34(4).
-- Nakanishi, T. (2015). A meta-analysis of extensive reading research. *TESOL Quarterly* 49(1). Jeon, E.-Y. & Day, R. (2016). The effectiveness of ER on reading proficiency: a meta-analysis. *Reading in a Foreign Language* 28(2).
-- Norris, J. & Ortega, L. (2000). Effectiveness of L2 instruction: a research synthesis and quantitative meta-analysis. *Language Learning* 50(3). Spada, N. & Tomita, Y. (2010). *Language Learning* 60(2). Goo, J., Granena, G., Yilmaz, Y. & Novella, M. (2015). Implicit and explicit instruction in L2 learning: Norris & Ortega (2000) revisited. In Rebuschat (ed.), *Implicit and Explicit Learning of Languages*.
-- Nation, P. (2007). The four strands. *Innovation in Language Learning and Teaching* 1(1); (2013) *Learning Vocabulary in Another Language*, 2nd ed.
-- Karpicke, J. & Roediger, H. (2008). The critical importance of retrieval for learning. *Science* 319. Kim, S. K. & Webb, S. (2022). The effects of spaced practice on second language learning: a meta-analysis. *Language Learning* 72(1).
-- Lichtman, K. (2018). *Teaching Proficiency Through Reading and Storytelling (TPRS): An Input-Based Approach*. Routledge.
+- Krashen, S. (1982). _Principles and Practice in Second Language Acquisition_; (1985) _The Input Hypothesis: Issues and Implications_.
+- Lichtman, K. & VanPatten, B. (2021). Was Krashen right? Forty years later. _Foreign Language Annals_ 54(2). https://doi.org/10.1111/flan.12552
+- Swain, M. (1985). Communicative competence: some roles of comprehensible input and comprehensible output in its development. In Gass & Madden (eds), _Input in Second Language Acquisition_.
+- Hu, M. & Nation, P. (2000). Unknown vocabulary density and reading comprehension. _Reading in a Foreign Language_ 13(1).
+- Schmitt, N., Jiang, X. & Grabe, W. (2011). The percentage of words known in a text and reading comprehension. _Modern Language Journal_ 95(1). https://www.lextutor.ca/cover/papers/schmitt_etal_2011.pdf
+- van Zeeland, H. & Schmitt, N. (2013). Lexical coverage in L1 and L2 listening comprehension. _Applied Linguistics_ 34(4).
+- Nakanishi, T. (2015). A meta-analysis of extensive reading research. _TESOL Quarterly_ 49(1). Jeon, E.-Y. & Day, R. (2016). The effectiveness of ER on reading proficiency: a meta-analysis. _Reading in a Foreign Language_ 28(2).
+- Norris, J. & Ortega, L. (2000). Effectiveness of L2 instruction: a research synthesis and quantitative meta-analysis. _Language Learning_ 50(3). Spada, N. & Tomita, Y. (2010). _Language Learning_ 60(2). Goo, J., Granena, G., Yilmaz, Y. & Novella, M. (2015). Implicit and explicit instruction in L2 learning: Norris & Ortega (2000) revisited. In Rebuschat (ed.), _Implicit and Explicit Learning of Languages_.
+- Nation, P. (2007). The four strands. _Innovation in Language Learning and Teaching_ 1(1); (2013) _Learning Vocabulary in Another Language_, 2nd ed.
+- Karpicke, J. & Roediger, H. (2008). The critical importance of retrieval for learning. _Science_ 319. Kim, S. K. & Webb, S. (2022). The effects of spaced practice on second language learning: a meta-analysis. _Language Learning_ 72(1).
+- Lichtman, K. (2018). _Teaching Proficiency Through Reading and Storytelling (TPRS): An Input-Based Approach_. Routledge.
 - Dreaming Spanish roadmap and method pages; Palteca's review of Dreaming Spanish (a competitor's critique, read as such). https://palteca.com/dreaming-spanish-review

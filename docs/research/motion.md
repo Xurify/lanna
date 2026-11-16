@@ -6,24 +6,24 @@
 
 ## Sources
 
-- Raphael Salaja, *12 principles of animation* (ui-skills.com): Disney's principles applied to interfaces. The page carries only the summary; the principles used here are the standard ones (anticipation, slow in and slow out, follow-through, timing, staging, exaggeration).
-- Wes Hobson, *Interaction design* (ui-skills.com): a timing scale (100–150 ms for press and hover, 200–300 ms for small swaps, 300–500 ms for larger ones), ease-out to enter and ease-in to leave, motion only for feedback, orientation, focus or continuity, reduced motion always honored, never block input during an animation.
-- iart-ai, *60fps animation* (ui-skills.com): animate only `transform` and `opacity`; replace width and left with transforms; no layout reads between writes; `will-change` only just in time; the grid `0fr → 1fr` trick for auto heights.
-- Emil Kowalski, *Animation performance* (ui-skills.com): a 16.7 ms frame budget (8 ms at 120 Hz); never `transition: all`; never animate a `box-shadow`; CSS and the Web Animations API stay smooth while the main thread is busy, `requestAnimationFrame` and React state per frame do not.
+- Raphael Salaja, _12 principles of animation_ (ui-skills.com): Disney's principles applied to interfaces. The page carries only the summary; the principles used here are the standard ones (anticipation, slow in and slow out, follow-through, timing, staging, exaggeration).
+- Wes Hobson, _Interaction design_ (ui-skills.com): a timing scale (100–150 ms for press and hover, 200–300 ms for small swaps, 300–500 ms for larger ones), ease-out to enter and ease-in to leave, motion only for feedback, orientation, focus or continuity, reduced motion always honored, never block input during an animation.
+- iart-ai, _60fps animation_ (ui-skills.com): animate only `transform` and `opacity`; replace width and left with transforms; no layout reads between writes; `will-change` only just in time; the grid `0fr → 1fr` trick for auto heights.
+- Emil Kowalski, _Animation performance_ (ui-skills.com): a 16.7 ms frame budget (8 ms at 120 Hz); never `transition: all`; never animate a `box-shadow`; CSS and the Web Animations API stay smooth while the main thread is busy, `requestAnimationFrame` and React state per frame do not.
 
 ## What the audit found (main, 2026-11-03)
 
-| Finding | Where | Cost |
-|---|---|---|
-| Eleven progress bars animated `width` | lesson blitz bar, task frame, Read, Watch, Review, Curriculum, stamps, Milestones, strand balance, placement, Words | layout and paint on every frame of a 300–700 ms move; the row reflows |
-| Fifteen `transition-all` | shadcn `Button`, settings, onboarding chips, Words cards, setup dialog | animates whatever changes, including layout properties |
-| The active unit's ring animated `box-shadow` forever | `unit-badge.tsx` | a repaint every frame while Curriculum is open |
-| Nine durations and five easings for the same kind of move | `globals.css`, `quiet.css` | Today rose over 500 ms, a lesson rep over 220 ms with Tailwind's soft `ease-out`, which reads as slow |
-| Press dimmed to 78 % opacity | `press.css` | a pressed button looks disabled, not pushed |
-| The learn buttons listed `transform` in their transition, but Tailwind 4's `translate-y-px` sets `translate` | `learn-buttons.ts` | the press nudge snapped instead of easing |
-| The gloss popover popped from 85 % with a bounce, from its centre | `reading/word.tsx` | a popover should grow from its word, quietly |
-| Review had no motion on a verdict | `review-session.tsx` | a miss and a hit felt the same until the colour was read; the next card swapped with no sign it changed |
-| `:hover` rules in `quiet.css` were not gated by `(hover: hover)` | buttons, letters, gear | a tapped button on the iPad keeps its hover colour |
+| Finding                                                                                                      | Where                                                                                                               | Cost                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Eleven progress bars animated `width`                                                                        | lesson blitz bar, task frame, Read, Watch, Review, Curriculum, stamps, Milestones, strand balance, placement, Words | layout and paint on every frame of a 300–700 ms move; the row reflows                                   |
+| Fifteen `transition-all`                                                                                     | shadcn `Button`, settings, onboarding chips, Words cards, setup dialog                                              | animates whatever changes, including layout properties                                                  |
+| The active unit's ring animated `box-shadow` forever                                                         | `unit-badge.tsx`                                                                                                    | a repaint every frame while Curriculum is open                                                          |
+| Nine durations and five easings for the same kind of move                                                    | `globals.css`, `quiet.css`                                                                                          | Today rose over 500 ms, a lesson rep over 220 ms with Tailwind's soft `ease-out`, which reads as slow   |
+| Press dimmed to 78 % opacity                                                                                 | `press.css`                                                                                                         | a pressed button looks disabled, not pushed                                                             |
+| The learn buttons listed `transform` in their transition, but Tailwind 4's `translate-y-px` sets `translate` | `learn-buttons.ts`                                                                                                  | the press nudge snapped instead of easing                                                               |
+| The gloss popover popped from 85 % with a bounce, from its centre                                            | `reading/word.tsx`                                                                                                  | a popover should grow from its word, quietly                                                            |
+| Review had no motion on a verdict                                                                            | `review-session.tsx`                                                                                                | a miss and a hit felt the same until the colour was read; the next card swapped with no sign it changed |
+| `:hover` rules in `quiet.css` were not gated by `(hover: hover)`                                             | buttons, letters, gear                                                                                              | a tapped button on the iPad keeps its hover colour                                                      |
 
 ## What changed
 

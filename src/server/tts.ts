@@ -34,7 +34,13 @@ import { languageByCode, LANGUAGES, type LanguageInfo } from "../core/language.t
 import { activeLanguage } from "./active-language.ts";
 import { entryLemma, exampleText } from "../core/review.ts";
 import { chatStore } from "../store/chats.ts";
-import { audioKey, findAudioClip, migrateLegacyAudio, storeAudioClip, type MigrationCandidate } from "../store/corpus.ts";
+import {
+	audioKey,
+	findAudioClip,
+	migrateLegacyAudio,
+	storeAudioClip,
+	type MigrationCandidate,
+} from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
 import { keyValue, redactSecrets } from "./keys.ts";
 import { wikiClip } from "./wiki-audio.ts";
@@ -80,9 +86,126 @@ const DEFAULT_ELEVENLABS_VOICE: Record<string, string> = { sk: "YJsJ2Mt3VRr0gCiT
 /** The languages ElevenLabs' models read (elevenlabs.io/docs/overview/models,
  *  read 2026-11-07). Multilingual v2 reads 29 and not Estonian; flash v2.5 adds Hungarian, Norwegian and Vietnamese; v3 reads
  *  70+ and v4 90+, both with Estonian. */
-const ELEVENLABS_V2 = new Set(["en", "ja", "zh", "de", "hi", "fr", "ko", "pt", "it", "es", "id", "nl", "tr", "fil", "pl", "sv", "bg", "ro", "ar", "cs", "el", "fi", "hr", "ms", "sk", "da", "ta", "uk", "ru"]);
+const ELEVENLABS_V2 = new Set([
+	"en",
+	"ja",
+	"zh",
+	"de",
+	"hi",
+	"fr",
+	"ko",
+	"pt",
+	"it",
+	"es",
+	"id",
+	"nl",
+	"tr",
+	"fil",
+	"pl",
+	"sv",
+	"bg",
+	"ro",
+	"ar",
+	"cs",
+	"el",
+	"fi",
+	"hr",
+	"ms",
+	"sk",
+	"da",
+	"ta",
+	"uk",
+	"ru",
+]);
 const ELEVENLABS_V25 = new Set([...ELEVENLABS_V2, "hu", "no", "nb", "vi"]);
-const ELEVENLABS_V3 = new Set(["af", "ar", "hy", "as", "ast", "az", "be", "bn", "bs", "bg", "my", "yue", "ca", "ceb", "ny", "hr", "cs", "da", "nl", "en", "et", "fil", "fi", "fr", "gl", "ka", "de", "el", "gu", "ha", "he", "hi", "hu", "is", "id", "ga", "it", "ja", "jv", "kn", "kk", "ky", "ko", "lv", "ln", "lt", "lb", "mk", "ms", "ml", "mt", "zh", "mi", "mr", "mn", "ne", "no", "nb", "oc", "or", "ps", "fa", "pl", "pt", "pa", "ro", "ru", "sr", "sd", "sk", "sl", "so", "es", "sw", "sv", "tg", "ta", "te", "th", "tr", "uk", "ur", "uz", "vi", "cy", "yo"]);
+const ELEVENLABS_V3 = new Set([
+	"af",
+	"ar",
+	"hy",
+	"as",
+	"ast",
+	"az",
+	"be",
+	"bn",
+	"bs",
+	"bg",
+	"my",
+	"yue",
+	"ca",
+	"ceb",
+	"ny",
+	"hr",
+	"cs",
+	"da",
+	"nl",
+	"en",
+	"et",
+	"fil",
+	"fi",
+	"fr",
+	"gl",
+	"ka",
+	"de",
+	"el",
+	"gu",
+	"ha",
+	"he",
+	"hi",
+	"hu",
+	"is",
+	"id",
+	"ga",
+	"it",
+	"ja",
+	"jv",
+	"kn",
+	"kk",
+	"ky",
+	"ko",
+	"lv",
+	"ln",
+	"lt",
+	"lb",
+	"mk",
+	"ms",
+	"ml",
+	"mt",
+	"zh",
+	"mi",
+	"mr",
+	"mn",
+	"ne",
+	"no",
+	"nb",
+	"oc",
+	"or",
+	"ps",
+	"fa",
+	"pl",
+	"pt",
+	"pa",
+	"ro",
+	"ru",
+	"sr",
+	"sd",
+	"sk",
+	"sl",
+	"so",
+	"es",
+	"sw",
+	"sv",
+	"tg",
+	"ta",
+	"te",
+	"th",
+	"tr",
+	"uk",
+	"ur",
+	"uz",
+	"vi",
+	"cy",
+	"yo",
+]);
 const ELEVENLABS_V4 = new Set([...ELEVENLABS_V3, "am", "ff", "kam", "lg", "ckb", "sn", "wo", "zu"]);
 
 /** The model every language is read with: v4, the newest, unless ELEVENLABS_MODEL_ID names another. */
@@ -112,7 +235,9 @@ const REFUSED_MS = 3_600_000;
  *  fallbacks, each only if it reads the language and was not refused within
  *  the hour. Empty: ElevenLabs is skipped and Edge reads the line. */
 export function elevenLabsModelsFor(code: string, now = Date.now()): string[] {
-	return [...new Set([configuredModel(), ...FALLBACK_MODELS])].filter((m) => elevenLabsReads(code, m) && !((refused.get(m) ?? 0) > now));
+	return [...new Set([configuredModel(), ...FALLBACK_MODELS])].filter(
+		(m) => elevenLabsReads(code, m) && !((refused.get(m) ?? 0) > now),
+	);
 }
 
 /** What a tier made: the audio, and for ElevenLabs the model that spoke it. */
@@ -175,7 +300,8 @@ export function migrateAudioOnce(): { moved: number; matched: number } | null {
 	migrated = true;
 	try {
 		const result = migrateLegacyAudio(spokenPhrases);
-		if (result.moved > 0) console.log(`[tts] moved ${result.moved} clips into data/audio (${result.matched} texts recovered)`);
+		if (result.moved > 0)
+			console.log(`[tts] moved ${result.moved} clips into data/audio (${result.matched} texts recovered)`);
 		return result;
 	} catch (err) {
 		console.warn("[tts] audio migration failed:", err instanceof Error ? err.message : err);
@@ -219,21 +345,27 @@ export async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<S
 	if (!voice) return null;
 	// A line of speech wants more expression than narration; stability
 	// down, style up. Narration keeps the steady slovak.wiki reading.
-	const settings = req.style === "dialogue" ? { stability: 0.45, similarity_boost: 0.75, style: 0.4, use_speaker_boost: true } : { stability: 0.65, similarity_boost: 0.75, style: 0.15, use_speaker_boost: true };
+	const settings =
+		req.style === "dialogue"
+			? { stability: 0.45, similarity_boost: 0.75, style: 0.4, use_speaker_boost: true }
+			: { stability: 0.65, similarity_boost: 0.75, style: 0.15, use_speaker_boost: true };
 	let last: Error | null = null;
 	for (const model of models) {
-		const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`, {
-			method: "POST",
-			headers: { "xi-api-key": key, "content-type": "application/json", accept: "audio/mpeg" },
-			body: JSON.stringify({
-				text: req.text,
-				model_id: model,
-				// multilingual v2 does not take language_code and infers the language; the others are told.
-				...(model.includes("multilingual") ? {} : { language_code: lang.code }),
-				voice_settings: settings,
-			}),
-			signal: AbortSignal.timeout(20_000),
-		});
+		const res = await fetch(
+			`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`,
+			{
+				method: "POST",
+				headers: { "xi-api-key": key, "content-type": "application/json", accept: "audio/mpeg" },
+				body: JSON.stringify({
+					text: req.text,
+					model_id: model,
+					// multilingual v2 does not take language_code and infers the language; the others are told.
+					...(model.includes("multilingual") ? {} : { language_code: lang.code }),
+					voice_settings: settings,
+				}),
+				signal: AbortSignal.timeout(20_000),
+			},
+		);
 		if (res.ok) return { data: Buffer.from(await res.arrayBuffer()), model };
 		last = new Error(`ElevenLabs ${model} ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
 		// A refusal of the model is remembered; a rate limit or a server hiccup is not.
@@ -310,7 +442,9 @@ async function piper(req: TtsRequest, lang: LanguageInfo): Promise<Spoken | null
 		let err = "";
 		child.stderr.on("data", (d) => (err += String(d)));
 		child.on("error", reject);
-		child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`piper exited ${code}: ${err.slice(-200)}`))));
+		child.on("close", (code) =>
+			code === 0 ? resolve() : reject(new Error(`piper exited ${code}: ${err.slice(-200)}`)),
+		);
 		child.stdin.end(req.text);
 	});
 	try {
@@ -324,7 +458,11 @@ function escapeXml(s: string): string {
 	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-const TIERS: Array<{ tier: TtsTier; ext: "mp3" | "wav"; run: (req: TtsRequest, lang: LanguageInfo) => Promise<Spoken | null> }> = [
+const TIERS: Array<{
+	tier: TtsTier;
+	ext: "mp3" | "wav";
+	run: (req: TtsRequest, lang: LanguageInfo) => Promise<Spoken | null>;
+}> = [
 	{ tier: "elevenlabs", ext: "mp3", run: elevenLabs },
 	{ tier: "edge", ext: "mp3", run: edge },
 	{ tier: "piper", ext: "wav", run: piper },
@@ -359,7 +497,16 @@ async function synthesizeFresh(req: TtsRequest, lang: LanguageInfo, key: string)
 		try {
 			const spoken = await run(req, lang);
 			if (spoken && spoken.data.length > 0) {
-				const stored = storeAudioClip({ key, lang: lang.code, voice: req.voice ?? "female", tier, text: req.text, ext, data: spoken.data, ...(spoken.model ? { model: spoken.model } : {}) });
+				const stored = storeAudioClip({
+					key,
+					lang: lang.code,
+					voice: req.voice ?? "female",
+					tier,
+					text: req.text,
+					ext,
+					data: spoken.data,
+					...(spoken.model ? { model: spoken.model } : {}),
+				});
 				return { file: stored.absolute, contentType: EXT_TYPES[ext] ?? "audio/mpeg", tier };
 			}
 		} catch (err) {

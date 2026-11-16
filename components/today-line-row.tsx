@@ -38,7 +38,12 @@ export function TodayLineRow({ line }: { line: LineState }) {
 		);
 	}
 	return (
-		<Link href="/line" className={cn(ROW, "hover:bg-well-2")} data-testid="today-line-row" aria-label={`Today's line: ${row.pill}`}>
+		<Link
+			href="/line"
+			className={cn(ROW, "hover:bg-well-2")}
+			data-testid="today-line-row"
+			aria-label={`Today's line: ${row.pill}`}
+		>
 			{inner}
 		</Link>
 	);

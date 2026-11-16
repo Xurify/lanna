@@ -88,7 +88,7 @@ export function planTools(ctx: PlanToolContext): Record<string, AgentTool<any>> 
 					const next = createTree(parsed.plan.nodes, parsed.plan.edges);
 					chatStore.saveTree(chatId, next);
 					// Context diet: content = the validated nodeIds + the reminder (the
-				// ids just became binding for every quiz/explain call); details =
+					// ids just became binding for every quiz/explain call); details =
 					// the full tree for the record/UI — the plan popup's latestTree
 					// seam, agent-invisible (the serializer sends content only).
 					return {

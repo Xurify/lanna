@@ -59,9 +59,8 @@ process.env.OPENAI_API_KEY = "sk-openai-env-env-env";
 process.env.LH_IGNORE_ENV_KEYS = "1";
 
 // Import AFTER env setup — module init runs the boot deletion + fill-gap.
-const { deleteKey, envKeysIgnored, initAuthEnv, keyStatuses, keyValue, saveKey } = await import(
-	"../src/server/keys.ts"
-);
+const { deleteKey, envKeysIgnored, initAuthEnv, keyStatuses, keyValue, saveKey } =
+	await import("../src/server/keys.ts");
 const { authStore } = await import("../src/store/auth.ts");
 
 after(() => {
@@ -78,7 +77,11 @@ describe("the fresh-user switch (boot under LH_IGNORE_ENV_KEYS=1)", () => {
 	});
 
 	it("the env copy of a file-backed var is deleted; the FILE value is what fills the env (only auth.json counts)", () => {
-		assert.equal(process.env.OPENAI_API_KEY, "sk-file-fresh-file-fresh", "the env copy died; the fill-gap reflected the file value");
+		assert.equal(
+			process.env.OPENAI_API_KEY,
+			"sk-file-fresh-file-fresh",
+			"the env copy died; the fill-gap reflected the file value",
+		);
 		assert.equal(authStore.authVars().OPENAI_API_KEY, "sk-file-fresh-file-fresh");
 	});
 
@@ -117,8 +120,16 @@ describe("the fresh-user switch (boot under LH_IGNORE_ENV_KEYS=1)", () => {
 		assert.equal(openai!.present, true);
 		assert.equal(openai!.source, "file", "realEnv is empty under the switch — nothing reports as env");
 		assert.equal(openai!.shadowedByEnv, false);
-		assert.equal(rows.some((r) => r.id === "OPENROUTER_API_KEY"), false, "the env-only key is gone everywhere — no row");
-		assert.equal(rows.some((r) => r.source === "env"), false, "no env-owned key under the switch");
+		assert.equal(
+			rows.some((r) => r.id === "OPENROUTER_API_KEY"),
+			false,
+			"the env-only key is gone everywhere — no row",
+		);
+		assert.equal(
+			rows.some((r) => r.source === "env"),
+			false,
+			"no env-owned key under the switch",
+		);
 	});
 
 	it("a fresh user CAN add keys mid-session: save reflects file → env (engines see it, no restart)", () => {

@@ -3,7 +3,9 @@ import { createPairingCode, enableRemoteAccess, readAccess } from "../src/server
 
 if (!readAccess().enabled) {
 	if (!process.argv.includes("--enable")) {
-		console.error("Remote access is off, so there is nothing to pair. Run npm run remote:code -- --enable to turn it on and make a code.");
+		console.error(
+			"Remote access is off, so there is nothing to pair. Run npm run remote:code -- --enable to turn it on and make a code.",
+		);
 		process.exit(1);
 	}
 	await enableRemoteAccess({ issueThisComputer: false });

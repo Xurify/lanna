@@ -71,7 +71,9 @@ export function firstTryAccuracy(t: FirstTally | undefined): number | null {
  *  answer was not helped by a peek, and it is the first try at the sentence,
  *  not the retry of a missed rep at the end of the lesson. */
 export function countsAsFirstTry(rep: { kind: string; again?: boolean; first?: FirstAnswer }): boolean {
-	return !!rep.first && rep.kind !== "meaning" && rep.kind !== "build" && rep.again !== true && rep.first.peeked !== true;
+	return (
+		!!rep.first && rep.kind !== "meaning" && rep.kind !== "build" && rep.again !== true && rep.first.peeked !== true
+	);
 }
 
 /** An atlas cell: a case drill's case and the gender column of its word. */
@@ -109,13 +111,27 @@ export interface FirstTryCount {
 export function firstTryOf(rep: FirstTryRep, tag = "sk-SK"): FirstTryCount | null {
 	if (!rep.first || !countsAsFirstTry(rep)) return null;
 	const { given, verdict } = rep.first;
-	const slip = verdict === "wrong" ? formSlip({ answer: rep.answer, lemma: entryLemma(rep.entry), given, forms: knownForms(rep.entry) }, tag) : undefined;
+	const slip =
+		verdict === "wrong"
+			? formSlip({ answer: rep.answer, lemma: entryLemma(rep.entry), given, forms: knownForms(rep.entry) }, tag)
+			: undefined;
 	const match = allUnits().find((u) => u.id === rep.unit)?.match;
 	const form = match ? formCaseCell({ kind: "grammar", ...match }, rep.entry, rep.answer, tag) : null;
-	return { unit: rep.unit, cell: atlasCellOf(rep.unit, rep.entry.gender), verdict, ...(form ? { form } : {}), ...(slip ? { slip } : {}) };
+	return {
+		unit: rep.unit,
+		cell: atlasCellOf(rep.unit, rep.entry.gender),
+		verdict,
+		...(form ? { form } : {}),
+		...(slip ? { slip } : {}),
+	};
 }
 
-function bump<T extends FirstTryStats>(s: T, cell: FirstTryCell, step: (t: FirstTally) => FirstTally, form?: string): T {
+function bump<T extends FirstTryStats>(
+	s: T,
+	cell: FirstTryCell,
+	step: (t: FirstTally) => FirstTally,
+	form?: string,
+): T {
 	let out: T = { ...s, first: step(s.first ?? emptyTally()) };
 	if (cell) out = { ...out, byGender: { ...s.byGender, [cell.col]: step(s.byGender?.[cell.col] ?? emptyTally()) } };
 	if (form) out = { ...out, byForm: { ...s.byForm, [form]: step(s.byForm?.[form] ?? emptyTally()) } };
@@ -146,7 +162,9 @@ interface SpokenSlip {
 export function spokenSlip(entry: LexiconEntry, said: string, right: string, tag = "sk-SK"): SpokenSlip | undefined {
 	const heard = [...said.matchAll(/\p{L}+/gu)].map((m) => m[0].toLocaleLowerCase(tag));
 	const forms = knownForms(entry);
-	const hit = [...right.matchAll(/\p{L}+/gu)].find((m) => !heard.includes(m[0].toLocaleLowerCase(tag)) && isFormOf(m[0], entryLemma(entry), forms, tag));
+	const hit = [...right.matchAll(/\p{L}+/gu)].find(
+		(m) => !heard.includes(m[0].toLocaleLowerCase(tag)) && isFormOf(m[0], entryLemma(entry), forms, tag),
+	);
 	if (!hit || hit.index === undefined) return undefined;
 	const answer = hit[0];
 	const drill = classifyAll(entry, { sk: right, cloze: { answer, at: hit.index } }).find((u) => caseDrill(u) !== null);

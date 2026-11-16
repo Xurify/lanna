@@ -13,21 +13,21 @@
  * emits for this repo's electron-builder.yml, not pattern guesses:
  *
  *   mac (dmg + zip, arm64; no user artifactName there):
- *     dmg    LearnHarness-<v>-arm64.dmg       + .blockmap (createBlockmap)
- *     zip    LearnHarness-<v>-arm64-mac.zip   + .blockmap (createBlockmap;
+ *     dmg    LangHarness-<v>-arm64.dmg       + .blockmap (createBlockmap)
+ *     zip    LangHarness-<v>-arm64-mac.zip   + .blockmap (createBlockmap;
  *            Squirrel.Mac updates from the ZIP — it IS the updater payload)
  *     feed   latest-mac.yml — files[0] is the ZIP (writeUpdateInfoFiles
  *            sorts zip first) and the legacy top-level path/sha512 point
  *            at it.
  *   win (nsis x64; artifactName "${productName}-${version}-${arch}-setup.${ext}"):
- *     exe    LearnHarness-<v>-x64-setup.exe   + .blockmap (createBlockmap)
+ *     exe    LangHarness-<v>-x64-setup.exe   + .blockmap (createBlockmap)
  *     feed   latest.yml — a single file entry, the exe.
  *   linux (AppImage + deb, x64; artifactName "${productName}-${version}-${arch}.${ext}"
  *            is user-forced at the linux level, so it overrides BOTH targets'
  *            default name formats, and ${arch} expands per target ext:
  *            x64→x86_64 for AppImage, x64→amd64 for deb):
- *     image  LearnHarness-<v>-x86_64.AppImage (no blockmap in 26.15.3)
- *     deb    LearnHarness-<v>-amd64.deb       (no blockmap)
+ *     image  LangHarness-<v>-x86_64.AppImage (no blockmap in 26.15.3)
+ *     deb    LangHarness-<v>-amd64.deb       (no blockmap)
  *     feed   latest-linux.yml — the AppImage and deb entries merged by
  *            writeUpdateInfoFiles (order not deterministic; checked as a set).
  *
@@ -83,9 +83,7 @@ export type ReleaseAsset = { id: number; name: string; size: number; state: stri
 export type ReleaseRecord = { id: number; tag_name: string; draft: boolean; assets: ReleaseAsset[] };
 
 export type Failures = { ok: false; errors: string[] };
-export type DraftSelection =
-	| { ok: true; release: ReleaseRecord; warnings: string[] }
-	| Failures;
+export type DraftSelection = { ok: true; release: ReleaseRecord; warnings: string[] } | Failures;
 
 /** The full expected asset inventory for one version (11 files). */
 export type ExpectedAssets = {
@@ -111,7 +109,10 @@ const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
 
 export function checkVersion(version: unknown): { ok: true; version: string } | { ok: false; errors: Issues } {
 	if (typeof version !== "string" || !VERSION_PATTERN.test(version)) {
-		return { ok: false, errors: [`package.json version must be a plain semver string, got ${JSON.stringify(version)}`] };
+		return {
+			ok: false,
+			errors: [`package.json version must be a plain semver string, got ${JSON.stringify(version)}`],
+		};
 	}
 	return { ok: true, version };
 }
@@ -153,7 +154,9 @@ export function expectedAssets(version: string): ExpectedAssets {
  * hand-made single page is a plain array. Both are accepted, everything
  * else fails.
  */
-export function normalizeReleasePages(input: unknown): { ok: true; releases: unknown[] } | { ok: false; errors: Issues } {
+export function normalizeReleasePages(
+	input: unknown,
+): { ok: true; releases: unknown[] } | { ok: false; errors: Issues } {
 	if (!Array.isArray(input)) {
 		return { ok: false, errors: ["release list is not a JSON array"] };
 	}
@@ -165,7 +168,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function parseReleases(entries: unknown[]): { ok: true; releases: ReleaseRecord[] } | { ok: false; errors: Issues } {
+export function parseReleases(
+	entries: unknown[],
+): { ok: true; releases: ReleaseRecord[] } | { ok: false; errors: Issues } {
 	const errors: Issues = [];
 	const releases: ReleaseRecord[] = [];
 	entries.forEach((entry, index) => {
@@ -193,10 +198,14 @@ export function parseReleases(entries: unknown[]): { ok: true; releases: Release
 				}
 				const { id: assetId, name, size, state } = asset;
 				const assetOk =
-					typeof assetId === "number" && Number.isFinite(assetId) &&
-					typeof name === "string" && name !== "" &&
-					typeof size === "number" && Number.isFinite(size) &&
-					typeof state === "string" && state !== "";
+					typeof assetId === "number" &&
+					Number.isFinite(assetId) &&
+					typeof name === "string" &&
+					name !== "" &&
+					typeof size === "number" &&
+					Number.isFinite(size) &&
+					typeof state === "string" &&
+					state !== "";
 				if (!assetOk) {
 					errors.push(`${assetLabel}: needs numeric id, non-empty string name, numeric size, non-empty string state`);
 					return;
@@ -227,22 +236,29 @@ export function selectDraft(releases: ReleaseRecord[], tag: string, version: str
 		};
 	}
 	if (matches.length > 1) {
-		const list = matches.map((release) => `#${release.id} (${release.tag_name}, ${release.draft ? "draft" : "published"})`).join(", ");
-		return { ok: false, errors: [`${matches.length} releases match ${tag}: ${list} — resolve to exactly one before publishing`] };
+		const list = matches
+			.map((release) => `#${release.id} (${release.tag_name}, ${release.draft ? "draft" : "published"})`)
+			.join(", ");
+		return {
+			ok: false,
+			errors: [`${matches.length} releases match ${tag}: ${list} — resolve to exactly one before publishing`],
+		};
 	}
 	const [match] = matches;
 	if (!match) return { ok: false, errors: ["internal: empty match"] };
 	if (!match.draft) {
 		return {
 			ok: false,
-			errors: [`release #${match.id} (${match.tag_name}) is already published — the workflow never modifies a published release`],
+			errors: [
+				`release #${match.id} (${match.tag_name}) is already published — the workflow never modifies a published release`,
+			],
 		};
 	}
 	const warnings: string[] = [];
 	if (match.tag_name !== tag) {
 		warnings.push(
 			`draft #${match.id} carries the unprefixed tag "${match.tag_name}" instead of "${tag}": electron-builder matches both spellings, ` +
-			`so a future run could create a SECOND draft under "${tag}" and split the assets — rename the release to "${tag}" before publishing`,
+				`so a future run could create a SECOND draft under "${tag}" and split the assets — rename the release to "${tag}" before publishing`,
 		);
 	}
 	return { ok: true, release: match, warnings };
@@ -259,18 +275,25 @@ export function verifyConfigAssumptions(config: unknown, pkg: unknown): { ok: tr
 	const errors: Issues = [];
 	const bad = (message: string) => errors.push(message);
 	if (!isPlainObject(pkg) || typeof pkg.version !== "string") bad("package.json has no string version");
-	if (!isPlainObject(pkg) || pkg.name !== "learnharness") bad("package.json name is no longer \"learnharness\"");
+	if (!isPlainObject(pkg) || pkg.name !== "langharness") bad('package.json name is no longer "langharness"');
 	if (!isPlainObject(config)) {
 		return { ok: false, errors: ["electron-builder.yml did not parse to a mapping", ...errors] };
 	}
-	if (config.productName !== PRODUCT_NAME) bad(`productName is ${JSON.stringify(config.productName)}, expected "${PRODUCT_NAME}"`);
-	if (config.artifactName != null) bad("a top-level artifactName now overrides target defaults — expected names no longer hold");
+	if (config.productName !== PRODUCT_NAME)
+		bad(`productName is ${JSON.stringify(config.productName)}, expected "${PRODUCT_NAME}"`);
+	if (config.artifactName != null)
+		bad("a top-level artifactName now overrides target defaults — expected names no longer hold");
 	const sameTargets = (actual: unknown, expected: Array<Record<string, unknown>>) =>
 		JSON.stringify(actual) === JSON.stringify(expected);
 	if (!isPlainObject(config.mac)) bad("mac section missing");
 	else {
 		if (config.mac.artifactName != null) bad("mac.artifactName set — expected names no longer hold");
-		if (!sameTargets(config.mac.target, [{ target: "dmg", arch: ["arm64"] }, { target: "zip", arch: ["arm64"] }])) {
+		if (
+			!sameTargets(config.mac.target, [
+				{ target: "dmg", arch: ["arm64"] },
+				{ target: "zip", arch: ["arm64"] },
+			])
+		) {
 			bad(`mac.target changed (${JSON.stringify(config.mac.target)}) — expected names no longer hold`);
 		}
 	}
@@ -288,16 +311,25 @@ export function verifyConfigAssumptions(config: unknown, pkg: unknown): { ok: tr
 		if (config.linux.artifactName !== "${productName}-${version}-${arch}.${ext}") {
 			bad(`linux.artifactName changed (${JSON.stringify(config.linux.artifactName)}) — expected names no longer hold`);
 		}
-		if (!sameTargets(config.linux.target, [{ target: "AppImage", arch: ["x64"] }, { target: "deb", arch: ["x64"] }])) {
+		if (
+			!sameTargets(config.linux.target, [
+				{ target: "AppImage", arch: ["x64"] },
+				{ target: "deb", arch: ["x64"] },
+			])
+		) {
 			bad(`linux.target changed (${JSON.stringify(config.linux.target)}) — expected names no longer hold`);
 		}
 	}
 	const publish = Array.isArray(config.publish) ? config.publish[0] : undefined;
 	if (!isPlainObject(publish) || publish.provider !== "github" || publish.releaseType !== "draft") {
-		bad(`publish[0] must be the github provider with releaseType "draft" (${JSON.stringify(config.publish)}) — uploads would not land in the draft`);
+		bad(
+			`publish[0] must be the github provider with releaseType "draft" (${JSON.stringify(config.publish)}) — uploads would not land in the draft`,
+		);
 	}
 	if (errors.length > 0) {
-		errors.push("packaging config drifted from the verified shapes — re-derive the expected assets in scripts/verify-release.ts");
+		errors.push(
+			"packaging config drifted from the verified shapes — re-derive the expected assets in scripts/verify-release.ts",
+		);
 		return { ok: false, errors };
 	}
 	return { ok: true };
@@ -307,7 +339,10 @@ export function verifyConfigAssumptions(config: unknown, pkg: unknown): { ok: tr
 // Asset inventory
 // ---------------------------------------------------------------------------
 
-export function verifyAssets(release: ReleaseRecord, expected: ExpectedAssets): { ok: true } | { ok: false; errors: Issues } {
+export function verifyAssets(
+	release: ReleaseRecord,
+	expected: ExpectedAssets,
+): { ok: true } | { ok: false; errors: Issues } {
 	const errors: Issues = [];
 	const seen = new Map<string, ReleaseAsset>();
 	for (const asset of release.assets) {
@@ -351,8 +386,18 @@ export function feedExpectations(expected: ExpectedAssets): FeedExpectation[] {
  *  traversal, no URI scheme, no query/fragment. Anything else is a path the
  *  updater could be steered with. */
 export function isPlainAssetName(url: unknown): url is string {
-	return typeof url === "string" && url !== "" && url !== "." && url !== ".." &&
-		!url.includes("/") && !url.includes("\\") && !url.includes(":") && !url.includes("?") && !url.includes("#") && !url.startsWith("~");
+	return (
+		typeof url === "string" &&
+		url !== "" &&
+		url !== "." &&
+		url !== ".." &&
+		!url.includes("/") &&
+		!url.includes("\\") &&
+		!url.includes(":") &&
+		!url.includes("?") &&
+		!url.includes("#") &&
+		!url.startsWith("~")
+	);
 }
 
 const SHA512_BASE64 = /^[A-Za-z0-9+/]{80,}={0,2}$/;
@@ -402,7 +447,9 @@ export function verifyMetadataFiles(
 			}
 			const { url, sha512, size } = entry;
 			if (!isPlainAssetName(url)) {
-				errors.push(`${expectation.file}: files[${index}].url is not a bare asset name (${JSON.stringify(entry.url)}) — traversal or untrusted origin`);
+				errors.push(
+					`${expectation.file}: files[${index}].url is not a bare asset name (${JSON.stringify(entry.url)}) — traversal or untrusted origin`,
+				);
 				malformed = true;
 				return;
 			}
@@ -425,13 +472,17 @@ export function verifyMetadataFiles(
 			if (asset == null) {
 				errors.push(`${expectation.file}: references "${url}" which is not an asset of release #${release.id}`);
 			} else if (asset.size !== entries.find((entry) => entry.url === url)?.size) {
-				errors.push(`${expectation.file}: "${url}" size ${entries.find((entry) => entry.url === url)?.size} ≠ release asset size ${asset.size}`);
+				errors.push(
+					`${expectation.file}: "${url}" size ${entries.find((entry) => entry.url === url)?.size} ≠ release asset size ${asset.size}`,
+				);
 			}
 		}
 		const expectedSet = [...expectation.urls].sort().join("\n");
 		const actualSet = [...urls].sort().join("\n");
 		if (actualSet !== expectedSet) {
-			errors.push(`${expectation.file}: references [${urls.join(", ")}] but must reference exactly [${expectation.urls.join(", ")}]`);
+			errors.push(
+				`${expectation.file}: references [${urls.join(", ")}] but must reference exactly [${expectation.urls.join(", ")}]`,
+			);
 		}
 		if (expectation.first != null && urls[0] !== expectation.first) {
 			errors.push(`${expectation.file}: files[0] must be "${expectation.first}" (got "${urls[0] ?? "nothing"}")`);
@@ -510,7 +561,9 @@ function fail(errors: Issues): number {
 	return 1;
 }
 
-function parseArgs(argv: string[]): { ok: true; command: string; positional: string[]; tag?: string } | { ok: false; errors: Issues } {
+function parseArgs(
+	argv: string[],
+): { ok: true; command: string; positional: string[]; tag?: string } | { ok: false; errors: Issues } {
 	const positional: string[] = [];
 	let tag: string | undefined;
 	for (let i = 0; i < argv.length; i++) {
@@ -529,7 +582,15 @@ function parseArgs(argv: string[]): { ok: true; command: string; positional: str
 
 /** Tag ↔ version agreement + release-list load, shared by both commands. */
 function startGate(argv: string[]):
-	| { ok: true; tag: string; version: string; releases: ReleaseRecord[]; config: unknown; pkg: unknown; positional: string[] }
+	| {
+			ok: true;
+			tag: string;
+			version: string;
+			releases: ReleaseRecord[];
+			config: unknown;
+			pkg: unknown;
+			positional: string[];
+	  }
 	| { ok: false; errors: Issues } {
 	const parsed = parseArgs(argv);
 	if (!parsed.ok) return parsed;
@@ -571,7 +632,12 @@ function main(argv: string[]): number {
 			tag: start.tag,
 			matchedTagName: selection.release.tag_name,
 			warnings: selection.warnings,
-			assets: selection.release.assets.map((asset) => ({ id: asset.id, name: asset.name, size: asset.size, state: asset.state })),
+			assets: selection.release.assets.map((asset) => ({
+				id: asset.id,
+				name: asset.name,
+				size: asset.size,
+				state: asset.state,
+			})),
 		};
 		process.stdout.write(`${JSON.stringify(report, null, "\t")}\n`);
 		return 0;
@@ -601,8 +667,12 @@ function main(argv: string[]): number {
 	if (!metadata.ok) errors.push(...metadata.errors);
 	if (errors.length > 0) return fail(errors);
 	const present = expected.files.filter((name) => selection.release.assets.some((asset) => asset.name === name));
-	console.log(`assets: ${present.length}/${expected.files.length} expected files present, non-zero size, and "uploaded"`);
-	console.log(`feeds: ${expected.mac.feed}, ${expected.win.feed}, ${expected.linux.feed} parse, carry version ${start.version}, and reference only uploaded assets by exact name`);
+	console.log(
+		`assets: ${present.length}/${expected.files.length} expected files present, non-zero size, and "uploaded"`,
+	);
+	console.log(
+		`feeds: ${expected.mac.feed}, ${expected.win.feed}, ${expected.linux.feed} parse, carry version ${start.version}, and reference only uploaded assets by exact name`,
+	);
 	console.log(`OK: draft for ${start.tag} is complete and consistent — ready for the owner to review and publish.`);
 	return 0;
 }

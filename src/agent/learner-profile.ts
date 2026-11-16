@@ -14,7 +14,15 @@ import path from "node:path";
 import { activeProfile, PATHS, shownProfiles, withProfile } from "../../config.ts";
 import { curriculumState, STAGES, type UnitEvidence } from "../core/curriculum.ts";
 import type { FirstTryStats } from "../core/first-try.ts";
-import { LEARNER_FIELDS, learnerProfileText, measuredWeakPoints, withLearnerFields, type LearnerFields, type LearnerGoal, type StudiedLanguage } from "../core/onboarding.ts";
+import {
+	LEARNER_FIELDS,
+	learnerProfileText,
+	measuredWeakPoints,
+	withLearnerFields,
+	type LearnerFields,
+	type LearnerGoal,
+	type StudiedLanguage,
+} from "../core/onboarding.ts";
 import { activeLanguage, profileLanguage } from "./profile-language.ts";
 import { RECENT_DAYS } from "../core/carry-over.ts";
 import { dayKey } from "../core/review.ts";
@@ -50,7 +58,9 @@ function withShared(goal: LearnerGoal | undefined): LearnerGoal | undefined {
 	if (!goal) return goal;
 	try {
 		const raw = JSON.parse(fs.readFileSync(path.join(PATHS.base, "learner.json"), "utf-8")) as Record<string, unknown>;
-		const fields = Object.fromEntries(LEARNER_FIELDS.filter((k) => raw[k] !== undefined).map((k) => [k, raw[k]])) as LearnerFields;
+		const fields = Object.fromEntries(
+			LEARNER_FIELDS.filter((k) => raw[k] !== undefined).map((k) => [k, raw[k]]),
+		) as LearnerFields;
 		return withLearnerFields(goal, fields);
 	} catch {
 		return goal;
@@ -72,7 +82,14 @@ function otherStudied(): StudiedLanguage[] {
 				if (!goal?.onboardedAt) return [{ english }];
 				const state = curriculumState(record?.units ?? {}, goal.level, { startChapter: goal.startChapter });
 				const stage = STAGES.find((s) => s.id === state.chapters.find((c) => c.id === state.current)?.stage);
-				return [{ english, working: stage?.level ?? "A1", target: goal.level, ...(goal.placedLevel ? { placed: goal.placedLevel } : {}) }];
+				return [
+					{
+						english,
+						working: stage?.level ?? "A1",
+						target: goal.level,
+						...(goal.placedLevel ? { placed: goal.placedLevel } : {}),
+					},
+				];
 			});
 		});
 }
@@ -87,7 +104,9 @@ export function weakestTopics(limit = 3): Array<{ title: string; accuracy: numbe
 	const goal = withShared(record.goal);
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
 	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
-	return measuredWeakPoints(state, tries).slice(0, limit).map(({ title, accuracy }) => ({ title, accuracy }));
+	return measuredWeakPoints(state, tries)
+		.slice(0, limit)
+		.map(({ title, accuracy }) => ({ title, accuracy }));
 }
 
 export function learnerProfileSegment(): string | null {
@@ -99,5 +118,15 @@ export function learnerProfileSegment(): string | null {
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
 	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
-	return learnerProfileText(activeLanguage(), goal, state, units, record.weak, { dailyAverage: recentAverage(record.days), days: RECENT_DAYS }, tries, record.mixups, otherStudied());
+	return learnerProfileText(
+		activeLanguage(),
+		goal,
+		state,
+		units,
+		record.weak,
+		{ dailyAverage: recentAverage(record.days), days: RECENT_DAYS },
+		tries,
+		record.mixups,
+		otherStudied(),
+	);
 }

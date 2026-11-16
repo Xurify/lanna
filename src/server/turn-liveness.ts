@@ -75,8 +75,3 @@ export function isTurnRunning(chatId: string): boolean {
 	}
 	return true;
 }
-
-/** Whether any chat's turn is in flight. */
-export function anyTurnRunning(): boolean {
-	return [...inFlight.keys()].some(isTurnRunning);
-}

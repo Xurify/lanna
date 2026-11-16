@@ -28,7 +28,7 @@ import type { Cefr } from "./curriculum.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { judgeSentence, type ListenLookup } from "./listen.ts";
 import type { PronScore } from "./pronounce.ts";
-import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";// ─── Re-reading against the clock ───────────────────────────────────────────
+import { entryLemma, exampleText, type LexiconEntry } from "./review.ts"; // ─── Re-reading against the clock ───────────────────────────────────────────
 
 /** First-run pace to beat, words a minute, by level. The app's own
  *  guess, not a published norm: the timed-reading studies report gains
@@ -132,7 +132,17 @@ export interface FastRep {
 	 *  inside it, the transcript heard and the pronunciation score (when
 	 *  the microphone ran). `made` is the verdict: in the window AND clear
 	 *  (src/core/pronounce.ts passMade). */
-	passes: Array<{ ms: number; window: number; made: boolean; inWindow?: boolean; unchecked?: boolean; speechMs?: number; heard?: string; match?: number; pron?: PronScore }>;
+	passes: Array<{
+		ms: number;
+		window: number;
+		made: boolean;
+		inWindow?: boolean;
+		unchecked?: boolean;
+		speechMs?: number;
+		heard?: string;
+		match?: number;
+		pron?: PronScore;
+	}>;
 }
 
 /** Words a second, first pass and last pass, over the sentences whose
@@ -210,7 +220,11 @@ export function pickKnown(entries: readonly LexiconEntry[], lookup: ListenLookup
 	const rest: Found[] = [];
 	const usedSlug = new Set<string>();
 	const usedText = new Set<string>();
-	const textOf = (sk: string) => sk.toLocaleLowerCase("sk-SK").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+	const textOf = (sk: string) =>
+		sk
+			.toLocaleLowerCase("sk-SK")
+			.replace(/[^\p{L}\p{N}]+/gu, " ")
+			.trim();
 	/** A sentence that qualifies, or null. */
 	const judge = (entry: LexiconEntry, i: number): Found | null => {
 		const ex = entry.examples[i];

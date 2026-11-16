@@ -6,7 +6,12 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it } from "node:test";
-import { learnerPdfDir, learnerPdfFileName, LEARNER_PDF_MAX_BYTES, saveLearnerPdf } from "../src/server/learner-pdfs.ts";
+import {
+	learnerPdfDir,
+	learnerPdfFileName,
+	LEARNER_PDF_MAX_BYTES,
+	saveLearnerPdf,
+} from "../src/server/learner-pdfs.ts";
 
 const FIXTURE = path.join(import.meta.dirname, "fixtures", "sample-3page.pdf");
 
@@ -34,7 +39,10 @@ describe("saving a learner's PDF", () => {
 
 	it("removes a file that claims to be a PDF but cannot be opened", async () => {
 		const before = fs.existsSync(learnerPdfDir()) ? fs.readdirSync(learnerPdfDir()).length : 0;
-		await assert.rejects(saveLearnerPdf(new TextEncoder().encode("%PDF-1.4 broken"), "broken.pdf"), /could not be opened/);
+		await assert.rejects(
+			saveLearnerPdf(new TextEncoder().encode("%PDF-1.4 broken"), "broken.pdf"),
+			/could not be opened/,
+		);
 		assert.equal(fs.readdirSync(learnerPdfDir()).length, before);
 	});
 });

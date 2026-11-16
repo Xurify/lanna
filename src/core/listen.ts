@@ -127,7 +127,11 @@ export function almostCount(reps: readonly { verdict: ListenVerdict; peeked?: bo
 
 /** Strip the punctuation a dictation is not graded on: a comma the
  *  learner did not hear is not a wrong word. */
-const bareWords = (s: string) => s.normalize("NFC").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+const bareWords = (s: string) =>
+	s
+		.normalize("NFC")
+		.replace(/[^\p{L}\p{N}]+/gu, " ")
+		.trim();
 
 /** Grade a typed sentence against the one that was heard. Case, spacing
  *  and punctuation are forgiven; accents are not (vina ≠ vína). */
@@ -193,7 +197,17 @@ export function judgeSentence(sentence: string, lookup: ListenLookup): Judged {
 			known++;
 			continue;
 		}
-		stretch.push(entry ? { text: t.text, lemma: entryLemma(entry), gloss: entry.en, slug: entry.slug, ...(entry.rank !== undefined ? { rank: entry.rank } : {}) } : { text: t.text, lemma: t.text, gloss: "" });
+		stretch.push(
+			entry
+				? {
+						text: t.text,
+						lemma: entryLemma(entry),
+						gloss: entry.en,
+						slug: entry.slug,
+						...(entry.rank !== undefined ? { rank: entry.rank } : {}),
+					}
+				: { text: t.text, lemma: t.text, gloss: "" },
+		);
 	}
 	return { coverage: words === 0 ? 1 : known / words, words, stretch, hardest };
 }
@@ -261,7 +275,10 @@ export function pickListen(entries: readonly LexiconEntry[], lookup: ListenLooku
 			if (looked > scan) break outer;
 			const n = exampleText(ex).split(/\s+/).length;
 			if (n < MIN_WORDS || n > MAX_WORDS) continue;
-			const text = exampleText(ex).toLocaleLowerCase("sk-SK").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+			const text = exampleText(ex)
+				.toLocaleLowerCase("sk-SK")
+				.replace(/[^\p{L}\p{N}]+/gu, " ")
+				.trim();
 			if (usedText.has(text)) continue;
 			const judged = judgeSentence(exampleText(ex), lookup);
 			if (judged.words < MIN_WORDS) continue;
@@ -269,7 +286,11 @@ export function pickListen(entries: readonly LexiconEntry[], lookup: ListenLooku
 			if (judged.stretch.length === 0) {
 				if (full.length >= count * 2) continue;
 				full.push(found);
-			} else if (judged.stretch.length <= STRETCH_MAX && judged.words >= STRETCH_MIN_WORDS && judged.stretch.every((w) => w.gloss)) {
+			} else if (
+				judged.stretch.length <= STRETCH_MAX &&
+				judged.words >= STRETCH_MIN_WORDS &&
+				judged.stretch.every((w) => w.gloss)
+			) {
 				if (stretch.length >= count * 3) continue;
 				stretch.push(found);
 			} else continue;
@@ -281,7 +302,10 @@ export function pickListen(entries: readonly LexiconEntry[], lookup: ListenLooku
 	}
 	// The most useful new words first: the commonest, then the shorter
 	// sentence around them.
-	stretch.sort((a, b) => (a.judged.stretch[0]!.rank ?? 1e9) - (b.judged.stretch[0]!.rank ?? 1e9) || a.judged.hardest - b.judged.hardest);
+	stretch.sort(
+		(a, b) =>
+			(a.judged.stretch[0]!.rank ?? 1e9) - (b.judged.stretch[0]!.rank ?? 1e9) || a.judged.hardest - b.judged.hardest,
+	);
 	// Fully-known sentences: the ones built from the commonest words first,
 	// so a beginner hears "Bratislava je hlavné mesto", not legal phrasing
 	// that happens to sit inside the frequency bound.
@@ -294,7 +318,12 @@ export function pickListen(entries: readonly LexiconEntry[], lookup: ListenLooku
 			if (chosen.length >= count) break;
 			chosen.push(extra);
 		}
-		if (take === 0 || sessionCoverage(chosen.map((f) => ({ words: f.judged.words, stretch: f.judged.stretch }))) >= LISTEN_FLOOR || full.length <= count - take) break;
+		if (
+			take === 0 ||
+			sessionCoverage(chosen.map((f) => ({ words: f.judged.words, stretch: f.judged.stretch }))) >= LISTEN_FLOOR ||
+			full.length <= count - take
+		)
+			break;
 		take--;
 	}
 	const pool = [...stretch, ...full].map((f) => f.entry.examples[f.index]!.en);

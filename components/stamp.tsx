@@ -14,7 +14,22 @@
 
 import type { ComponentType } from "react";
 import Link from "next/link";
-import { BookAIcon, BookOpenIcon, CheckCheckIcon, FlagIcon, FootprintsIcon, GraduationCapIcon, HeadphonesIcon, HourglassIcon, MicIcon, MountainSnowIcon, RepeatIcon, RotateCcwIcon, SignpostIcon, ZapIcon } from "lucide-react";
+import {
+	BookAIcon,
+	BookOpenIcon,
+	CheckCheckIcon,
+	FlagIcon,
+	FootprintsIcon,
+	GraduationCapIcon,
+	HeadphonesIcon,
+	HourglassIcon,
+	MicIcon,
+	MountainSnowIcon,
+	RepeatIcon,
+	RotateCcwIcon,
+	SignpostIcon,
+	ZapIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { nextStamps, recentStamps, STRANDS, type StampKind, type StampState } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
@@ -50,7 +65,17 @@ function FourMarks({ className }: { className?: string }) {
 
 const SIZE = { sm: 48, md: 72, lg: 112 } as const;
 
-export function StampDisc({ state, size = "md", pressed = false, className }: { state: StampState; size?: keyof typeof SIZE; pressed?: boolean; className?: string }) {
+export function StampDisc({
+	state,
+	size = "md",
+	pressed = false,
+	className,
+}: {
+	state: StampState;
+	size?: keyof typeof SIZE;
+	pressed?: boolean;
+	className?: string;
+}) {
 	const px = SIZE[size];
 	const earned = !!state.earned;
 	const stroke = size === "lg" ? 4 : 3;
@@ -60,19 +85,60 @@ export function StampDisc({ state, size = "md", pressed = false, className }: { 
 	const iconCls = size === "lg" ? "size-11" : size === "sm" ? "size-5" : "size-7";
 	return (
 		<span
-			className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", pressed && "lh-stamp", className)}
+			className={cn(
+				"relative inline-flex shrink-0 items-center justify-center rounded-full",
+				pressed && "lh-stamp",
+				className,
+			)}
 			style={{ width: px, height: px }}
 			data-testid={`stamp-${state.id}`}
 			data-earned={earned ? "true" : "false"}
 		>
 			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">
-				<circle cx={px / 2} cy={px / 2} r={r} fill={earned ? "var(--q-teal-wash)" : "var(--q-card)"} stroke={earned ? "var(--q-teal)" : "var(--border)"} strokeWidth={stroke} strokeDasharray={earned ? undefined : "3 5"} strokeLinecap="round" />
-				{!earned && state.progress > 0 && <circle cx={px / 2} cy={px / 2} r={r} fill="none" stroke="var(--q-teal)" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - state.progress)} />}
-				{earned && <circle cx={px / 2} cy={px / 2} r={r - stroke * 2.2} fill="none" stroke="var(--q-teal)" strokeOpacity={0.35} strokeWidth={1} />}
+				<circle
+					cx={px / 2}
+					cy={px / 2}
+					r={r}
+					fill={earned ? "var(--q-teal-wash)" : "var(--q-card)"}
+					stroke={earned ? "var(--q-teal)" : "var(--border)"}
+					strokeWidth={stroke}
+					strokeDasharray={earned ? undefined : "3 5"}
+					strokeLinecap="round"
+				/>
+				{!earned && state.progress > 0 && (
+					<circle
+						cx={px / 2}
+						cy={px / 2}
+						r={r}
+						fill="none"
+						stroke="var(--q-teal)"
+						strokeWidth={stroke}
+						strokeLinecap="round"
+						strokeDasharray={c}
+						strokeDashoffset={c * (1 - state.progress)}
+					/>
+				)}
+				{earned && (
+					<circle
+						cx={px / 2}
+						cy={px / 2}
+						r={r - stroke * 2.2}
+						fill="none"
+						stroke="var(--q-teal)"
+						strokeOpacity={0.35}
+						strokeWidth={1}
+					/>
+				)}
 			</svg>
 			<Icon className={cn("relative", iconCls, earned ? "text-teal" : "text-ink-4")} strokeWidth={2} />
 			{(state.kind === "chapter" || state.kind === "summit") && state.level && size !== "sm" && (
-				<span className={cn("absolute bottom-[14%] font-ui text-[9px] font-semibold leading-none tracking-wide", earned ? "text-teal" : "text-ink-4")} aria-hidden="true">
+				<span
+					className={cn(
+						"absolute bottom-[14%] font-ui text-[9px] font-semibold leading-none tracking-wide",
+						earned ? "text-teal" : "text-ink-4",
+					)}
+					aria-hidden="true"
+				>
 					{state.level}
 				</span>
 			)}
@@ -85,12 +151,23 @@ function StampTile({ state, size = "md" }: { state: StampState; size?: "sm" | "m
 	const lang = useActiveLanguage();
 	const earned = !!state.earned;
 	return (
-		<li className={cn("flex flex-col items-center text-center", size === "sm" ? "w-20" : "w-28")} title={`${state.name} — ${state.line}${earned ? ` · earned ${state.earned}` : state.goal > 1 ? ` · ${fmt(state.have)} of ${fmt(state.goal)}` : ""}`}>
+		<li
+			className={cn("flex flex-col items-center text-center", size === "sm" ? "w-20" : "w-28")}
+			title={`${state.name} — ${state.line}${earned ? ` · earned ${state.earned}` : state.goal > 1 ? ` · ${fmt(state.have)} of ${fmt(state.goal)}` : ""}`}
+		>
 			<StampDisc state={state} size={size} />
-			<span className={cn("mt-2 line-clamp-2 font-ui text-xs font-semibold leading-tight", earned ? "text-foreground" : "text-muted-foreground")} lang={lang?.code}>
+			<span
+				className={cn(
+					"mt-2 line-clamp-2 font-ui text-xs font-semibold leading-tight",
+					earned ? "text-foreground" : "text-muted-foreground",
+				)}
+				lang={lang?.code}
+			>
 				{state.name}
 			</span>
-			<span className="mt-0.5 line-clamp-2 font-ui text-[11px] leading-tight text-muted-foreground">{earned ? state.line : state.goal > 1 ? `${fmt(state.have)} of ${fmt(state.goal)}` : state.line}</span>
+			<span className="mt-0.5 line-clamp-2 font-ui text-[11px] leading-tight text-muted-foreground">
+				{earned ? state.line : state.goal > 1 ? `${fmt(state.have)} of ${fmt(state.goal)}` : state.line}
+			</span>
 		</li>
 	);
 }
@@ -104,7 +181,12 @@ export function StampBook({ stamps, className }: { stamps: StampState[]; classNa
 	const groups: Array<{ id: string; title: string; size: "sm" | "md"; items: StampState[] }> = [
 		{ id: "summits", title: "Summits", size: "md", items: stamps.filter((s) => s.kind === "summit") },
 		{ id: "chapters", title: "Chapters", size: "sm", items: stamps.filter((s) => s.kind === "chapter") },
-		{ id: "deeds", title: "On the trail", size: "md", items: stamps.filter((s) => s.kind !== "summit" && s.kind !== "chapter") },
+		{
+			id: "deeds",
+			title: "On the trail",
+			size: "md",
+			items: stamps.filter((s) => s.kind !== "summit" && s.kind !== "chapter"),
+		},
 	];
 	const earned = stamps.filter((s) => s.earned).length;
 	return (
@@ -143,7 +225,11 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 					Stamps
 				</h2>
 				{stamps && (
-					<Link href="/progress#stamps" className="font-ui text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="stamps-all">
+					<Link
+						href="/progress#stamps"
+						className="font-ui text-sm font-semibold text-muted-foreground hover:text-foreground"
+						data-testid="stamps-all"
+					>
 						{earned} of {stamps.length} · all
 					</Link>
 				)}
@@ -160,7 +246,11 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 				</div>
 			)}
 			{next.length > 0 && (
-				<ol className={cn("flex flex-col gap-3", recent[0] ? "mt-4 border-t border-border pt-4" : "mt-3")} aria-label="Next stamps" data-testid="stamps-next">
+				<ol
+					className={cn("flex flex-col gap-3", recent[0] ? "mt-4 border-t border-border pt-4" : "mt-3")}
+					aria-label="Next stamps"
+					data-testid="stamps-next"
+				>
 					{next.map((s) => (
 						<li key={s.id} className="flex items-center gap-3">
 							<StampDisc state={s} size="sm" />
@@ -169,11 +259,18 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 									<span className="truncate font-ui text-sm font-semibold text-foreground" lang={lang?.code}>
 										{s.name}
 									</span>
-									<span className="shrink-0 font-ui text-xs font-semibold tabular-nums text-muted-foreground">{s.goal > 1 ? `${fmt(s.have)} of ${fmt(s.goal)}` : s.line}</span>
+									<span className="shrink-0 font-ui text-xs font-semibold tabular-nums text-muted-foreground">
+										{s.goal > 1 ? `${fmt(s.have)} of ${fmt(s.goal)}` : s.line}
+									</span>
 								</p>
-								<p className="truncate font-ui text-xs text-muted-foreground">{s.goal > 1 ? s.line : "Next on the trail"}</p>
+								<p className="truncate font-ui text-xs text-muted-foreground">
+									{s.goal > 1 ? s.line : "Next on the trail"}
+								</p>
 								<span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-well-2" aria-hidden="true">
-									<span className="lh-fill block rounded-full bg-teal" style={fillStyle(Math.max(s.progress > 0 ? 0.03 : 0, s.progress))} />
+									<span
+										className="lh-fill block rounded-full bg-teal"
+										style={fillStyle(Math.max(s.progress > 0 ? 0.03 : 0, s.progress))}
+									/>
 								</span>
 							</div>
 						</li>

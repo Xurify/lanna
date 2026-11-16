@@ -29,7 +29,10 @@ test("the manifest opens full screen at the root, in the app's colors", () => {
 test("every manifest icon exists at the size it declares, and one is maskable", () => {
 	const icons = manifest().icons ?? [];
 	assert.ok(icons.length >= 3, "an any-purpose 192 and 512, plus a maskable 512");
-	assert.ok(icons.some((icon) => icon.purpose === "maskable"), "a maskable icon");
+	assert.ok(
+		icons.some((icon) => icon.purpose === "maskable"),
+		"a maskable icon",
+	);
 	for (const icon of icons) {
 		const src = String(icon.src);
 		const [width, height] = String(icon.sizes).split("x").map(Number);

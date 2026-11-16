@@ -52,15 +52,71 @@ export interface SpeakScene {
  *  versions; a language's story bible (world.json `scenes`) sets them in
  *  its own places, with the title in the language. */
 export const SPEAK_SCENES: SpeakScene[] = [
-	{ id: "cafe", title: "At the café", blurb: "Order coffee and cake", brief: "a waiter in a small café in the old town; I want to order coffee and something sweet, and ask what's good", task: "Order a coffee and something sweet, and ask what is good." },
-	{ id: "way", title: "On the street", blurb: "Ask a stranger the way to the station", brief: "a friendly local in the town center; I am lost and need to get to the main train station", task: "You are lost. Find out how to get to the main station." },
-	{ id: "colleague", title: "A new colleague", blurb: "Meet a new colleague on day one", brief: "my new colleague at the office; we meet at the coffee machine on my first day and get to know each other", task: "It is your first day. Get to know your new colleague." },
-	{ id: "shop", title: "At the market", blurb: "Buy vegetables at the market", brief: "a stallholder at the market; I want vegetables and fruit for a soup, and to ask about prices", task: "Buy what you need for a soup, and ask about prices." },
-	{ id: "doctor", title: "At the doctor's", blurb: "Explain to a doctor what hurts", brief: "a GP at a local clinic; I have a sore throat and a headache since yesterday", task: "Tell the doctor what hurts and since when." },
-	{ id: "family", title: "Family", blurb: "Talk about your family with a new friend", brief: "a new friend at a party who asks about my family, where they live and what they do", task: "Tell a new friend about your family." },
-	{ id: "station", title: "At the station", blurb: "Buy a train ticket to the mountains", brief: "a ticket counter clerk at the main train station; I need a return ticket to a town in the mountains with a seat reservation", task: "Buy a return train ticket and ask which platform the train leaves from." },
-	{ id: "restaurant", title: "At a restaurant", blurb: "Order a traditional dinner", brief: "a waiter in a traditional restaurant; I want to try a local dish and a local drink, and pay by card", task: "Order a traditional dish and a drink, and pay by card." },
-	{ id: "hotel", title: "At the hotel", blurb: "Check into a guest house", brief: "a receptionist at a guest house in the mountains; I have a reservation for two nights, need the wifi and breakfast info", task: "Check into your room, ask about breakfast times and the wifi password." },
+	{
+		id: "cafe",
+		title: "At the café",
+		blurb: "Order coffee and cake",
+		brief: "a waiter in a small café in the old town; I want to order coffee and something sweet, and ask what's good",
+		task: "Order a coffee and something sweet, and ask what is good.",
+	},
+	{
+		id: "way",
+		title: "On the street",
+		blurb: "Ask a stranger the way to the station",
+		brief: "a friendly local in the town center; I am lost and need to get to the main train station",
+		task: "You are lost. Find out how to get to the main station.",
+	},
+	{
+		id: "colleague",
+		title: "A new colleague",
+		blurb: "Meet a new colleague on day one",
+		brief: "my new colleague at the office; we meet at the coffee machine on my first day and get to know each other",
+		task: "It is your first day. Get to know your new colleague.",
+	},
+	{
+		id: "shop",
+		title: "At the market",
+		blurb: "Buy vegetables at the market",
+		brief: "a stallholder at the market; I want vegetables and fruit for a soup, and to ask about prices",
+		task: "Buy what you need for a soup, and ask about prices.",
+	},
+	{
+		id: "doctor",
+		title: "At the doctor's",
+		blurb: "Explain to a doctor what hurts",
+		brief: "a GP at a local clinic; I have a sore throat and a headache since yesterday",
+		task: "Tell the doctor what hurts and since when.",
+	},
+	{
+		id: "family",
+		title: "Family",
+		blurb: "Talk about your family with a new friend",
+		brief: "a new friend at a party who asks about my family, where they live and what they do",
+		task: "Tell a new friend about your family.",
+	},
+	{
+		id: "station",
+		title: "At the station",
+		blurb: "Buy a train ticket to the mountains",
+		brief:
+			"a ticket counter clerk at the main train station; I need a return ticket to a town in the mountains with a seat reservation",
+		task: "Buy a return train ticket and ask which platform the train leaves from.",
+	},
+	{
+		id: "restaurant",
+		title: "At a restaurant",
+		blurb: "Order a traditional dinner",
+		brief: "a waiter in a traditional restaurant; I want to try a local dish and a local drink, and pay by card",
+		task: "Order a traditional dish and a drink, and pay by card.",
+	},
+	{
+		id: "hotel",
+		title: "At the hotel",
+		blurb: "Check into a guest house",
+		brief:
+			"a receptionist at a guest house in the mountains; I have a reservation for two nights, need the wifi and breakfast info",
+		task: "Check into your room, ask about breakfast times and the wifi password.",
+	},
 ];
 
 /** A scene as the Speak screen lists it: why it is offered, how often it was
@@ -87,7 +143,13 @@ export function briefParts(brief: string): { role: string; situation: string } {
 	const stop = /\.\s+(?=\p{Lu})/u.exec(b);
 	const cut = semi >= 0 && (!stop || semi < stop.index) ? semi : stop ? stop.index : -1;
 	const role = (cut >= 0 ? b.slice(0, cut) : b).trim().replace(/\.$/, "");
-	const situation = cut >= 0 ? b.slice(cut + 1).trim().replace(/\.$/, "") : "";
+	const situation =
+		cut >= 0
+			? b
+					.slice(cut + 1)
+					.trim()
+					.replace(/\.$/, "")
+			: "";
 	return { role, situation };
 }
 
@@ -222,7 +284,7 @@ export interface SpeakIndexEntry {
 export function speakId(now: Date, scene: string): string {
 	const day = now.toISOString().slice(0, 10);
 	return `sp-${day}-${scene}-${now.getTime().toString(36).slice(-4)}${Math.random().toString(36).slice(2, 5)}`;
-}/** Learner lines in a scene before the tutor wraps it up. */
+} /** Learner lines in a scene before the tutor wraps it up. */
 export const SPEAK_TURNS = 8;
 const SPEAK_TURN_XP = 3;
 export const SPEAK_REPAIR_XP = 5;
@@ -235,11 +297,22 @@ export const SPEAK_CLEAR_XP = 2;
 
 export function speakXp(learnerTurns: number, repaired: number, clear = 0): number {
 	if (learnerTurns === 0) return 0;
-	return Math.min(learnerTurns, SPEAK_XP_TURNS_CAP) * SPEAK_TURN_XP + repaired * SPEAK_REPAIR_XP + Math.min(clear, SPEAK_XP_TURNS_CAP) * SPEAK_CLEAR_XP + SPEAK_BONUS;
+	return (
+		Math.min(learnerTurns, SPEAK_XP_TURNS_CAP) * SPEAK_TURN_XP +
+		repaired * SPEAK_REPAIR_XP +
+		Math.min(clear, SPEAK_XP_TURNS_CAP) * SPEAK_CLEAR_XP +
+		SPEAK_BONUS
+	);
 }
 
 /** The counts the index and the end screen show. */
-export function speakCounts(turns: readonly SpeakTurn[]): { learner: number; prompts: number; repaired: number; spoken: number; clear: number } {
+export function speakCounts(turns: readonly SpeakTurn[]): {
+	learner: number;
+	prompts: number;
+	repaired: number;
+	spoken: number;
+	clear: number;
+} {
 	let learner = 0;
 	let prompts = 0;
 	let repaired = 0;
@@ -352,10 +425,20 @@ export function parseSummary(text: string): SpeakSummary {
 			const right = str(x.right, 200);
 			if (!yours || !right) continue;
 			const lemma = str(x.lemma, 60);
-			out.corrections.push({ yours, right, rule: str(x.rule, 200), kind: slipKind(x.kind), ...(lemma ? { lemma } : {}) });
+			out.corrections.push({
+				yours,
+				right,
+				rule: str(x.rule, 200),
+				kind: slipKind(x.kind),
+				...(lemma ? { lemma } : {}),
+			});
 		}
 	}
-	if (Array.isArray(r.keep)) out.keep = r.keep.map((k) => str(k, 200)).filter(Boolean).slice(0, 3);
+	if (Array.isArray(r.keep))
+		out.keep = r.keep
+			.map((k) => str(k, 200))
+			.filter(Boolean)
+			.slice(0, 3);
 	const note = str(r.note, 300);
 	if (note) out.note = note;
 	return out;

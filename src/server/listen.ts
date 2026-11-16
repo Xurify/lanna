@@ -12,11 +12,30 @@
  */
 
 import { loadLexicon } from "../agent/lexicon.ts";
-import { almostCount, judgeTyped, listenXp, pickListen, sessionCoverage, understood, type ListenAnswer, type ListenItem, type ListenPlan, type ListenVerdict } from "../core/listen.ts";
+import {
+	almostCount,
+	judgeTyped,
+	listenXp,
+	pickListen,
+	sessionCoverage,
+	understood,
+	type ListenAnswer,
+	type ListenItem,
+	type ListenPlan,
+	type ListenVerdict,
+} from "../core/listen.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { rng } from "../core/lesson.ts";
 import { dayKey } from "../core/review.ts";
-import { dueWatchReps, isWatchItem, scheduleWatchRep, watchListenItem, watchRepOfItem, WATCH_REP_PER_SESSION, type WatchRep } from "../core/watch-reps.ts";
+import {
+	dueWatchReps,
+	isWatchItem,
+	scheduleWatchRep,
+	watchListenItem,
+	watchRepOfItem,
+	WATCH_REP_PER_SESSION,
+	type WatchRep,
+} from "../core/watch-reps.ts";
 import { appendLessonLog } from "../store/corpus.ts";
 import { progressStore } from "../store/progress.ts";
 import { watchRepStore } from "../store/watch-reps.ts";
@@ -43,7 +62,11 @@ export function listenFor(seed = Date.now(), now = new Date(), tz?: number): Lis
 		{ seed, recent: new Set(progress.recent) },
 	);
 	// Watch lines are left out of the coverage: their words are assumed, not measured.
-	return { items: mixIn(items, watch, seed), known: k.known.size, coverage: Math.round(sessionCoverage(items) * 1000) / 1000 };
+	return {
+		items: mixIn(items, watch, seed),
+		known: k.known.size,
+		coverage: Math.round(sessionCoverage(items) * 1000) / 1000,
+	};
 }
 
 function mixIn(items: readonly ListenItem[], extra: readonly ListenItem[], seed: number): ListenItem[] {
@@ -119,12 +142,24 @@ export function recordListen(input: ListenResultInput, now = new Date()): Listen
 		if (!line || served.has(line.id)) continue;
 		served.add(line.id);
 		const verdict = r.answer === "type" ? judgeTyped(r.given, line.text) : "wrong";
-		reps.push({ ...r, sentence: line.text, translation: line.en ?? "", slug: "", lemma: "", gloss: "", verdict, stretch: [], stretchText: [] });
+		reps.push({
+			...r,
+			sentence: line.text,
+			translation: line.en ?? "",
+			slug: "",
+			lemma: "",
+			gloss: "",
+			verdict,
+			stretch: [],
+			stretchText: [],
+		});
 	}
 	// A line already answered is no longer due, so a repeated submission does not move it twice.
 	const moved = reps.flatMap((r): WatchRep[] => {
 		const line = isWatchItem(r.itemId) ? watchLines.get(watchRepOfItem(r.itemId)) : undefined;
-		return line && !line.retiredAt && line.due <= key ? [scheduleWatchRep(line, r, { day: key, at: now.toISOString() })] : [];
+		return line && !line.retiredAt && line.due <= key
+			? [scheduleWatchRep(line, r, { day: key, at: now.toISOString() })]
+			: [];
 	});
 	if (moved.length) watchRepStore.replace(moved);
 	const total = reps.length;
@@ -143,7 +178,12 @@ export function recordListen(input: ListenResultInput, now = new Date()): Listen
 	// Only lexicon words go to the deck; a watch line's id is not one.
 	const lexicon = loadLexicon();
 	const lexical = reps.filter((r) => !isWatchItem(r.itemId));
-	const slugs = [...new Set([...lexical.flatMap((r) => r.stretch), ...lexical.filter((r) => r.verdict === "wrong").map((r) => r.slug)])].filter((s) => lexicon?.bySlug.has(s) === true);
+	const slugs = [
+		...new Set([
+			...lexical.flatMap((r) => r.stretch),
+			...lexical.filter((r) => r.verdict === "wrong").map((r) => r.slug),
+		]),
+	].filter((s) => lexicon?.bySlug.has(s) === true);
 	const queued = slugs.length ? enqueueWords(slugs, now) : [];
 	try {
 		appendLessonLog({

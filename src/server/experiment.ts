@@ -98,14 +98,23 @@ function getSystemProvenance(): { protocolHash: string; gitCommit: string } {
 
 /** Extracts probe and production pools from lexicon. */
 function extractLanguagePool(lexiconPath: string, rand: () => number): LanguagePools {
-	let data: { words?: Array<{ lemma?: string; slug?: string; sk?: string; rank?: number; examples?: Array<{ text?: string; sk?: string; en?: string }> }> } = {};
+	let data: {
+		words?: Array<{
+			lemma?: string;
+			slug?: string;
+			sk?: string;
+			rank?: number;
+			examples?: Array<{ text?: string; sk?: string; en?: string }>;
+		}>;
+	} = {};
 	try {
 		data = JSON.parse(fs.readFileSync(lexiconPath, "utf8"));
 	} catch {
 		return { probePool: [], productionPool: [] };
 	}
 
-	const candidates: Array<{ lemma: string; sentence: string; translation: string; wordCount: number; rank?: number }> = [];
+	const candidates: Array<{ lemma: string; sentence: string; translation: string; wordCount: number; rank?: number }> =
+		[];
 	const seenSentences = new Set<string>();
 
 	for (const w of data.words || []) {
@@ -196,7 +205,11 @@ function findSlovakLexiconPath(): string {
 }
 
 /** Ensures experiment files exist before Day 1 starts. */
-export function ensureExperimentInitialized(): { config: ExperimentConfig; schedule: DaySchedule[]; pool: ProbePoolData } {
+export function ensureExperimentInitialized(): {
+	config: ExperimentConfig;
+	schedule: DaySchedule[];
+	pool: ProbePoolData;
+} {
 	const dir = experimentDir();
 	ensureDir(dir);
 
@@ -238,7 +251,8 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 		},
 		protocolHash: provenance.protocolHash,
 		gitCommit: provenance.gitCommit,
-		decisionRule: "Confirmed benefit if immediate level shift b2 >= +10 pp and randomization test p-value = 1/11 (0.0909) with >= 8 valid days per phase.",
+		decisionRule:
+			"Confirmed benefit if immediate level shift b2 >= +10 pp and randomization test p-value = 1/11 (0.0909) with >= 8 valid days per phase.",
 	};
 
 	schedule = buildSchedule(EXPERIMENT_CONSTANTS.START_DATE, onsetDay, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
@@ -263,61 +277,10 @@ export function ensureExperimentInitialized(): { config: ExperimentConfig; sched
 	if (!fs.existsSync(path.join(dir, "checks.jsonl"))) writeExperimentFile("checks.jsonl", "");
 	if (!fs.existsSync(path.join(dir, "deviations.jsonl"))) writeExperimentFile("deviations.jsonl", "");
 
-	writeExperimentFile("summary.md", generateSummaryMarkdown(config, schedule, [], [], analyzeStudy(config, [], [], 0), config.startDate));
-
-	return { config, schedule, pool };
-}
-
-/** Resets experiment state and schedule to a fresh start date. */
-export function resetExperiment(newStartDate?: string): { config: ExperimentConfig; schedule: DaySchedule[]; pool: ProbePoolData } {
-	const dir = experimentDir();
-	ensureDir(dir);
-	const startDate = newStartDate || EXPERIMENT_CONSTANTS.START_DATE;
-	const onsetDay = drawOnsetDay(EXPERIMENT_SEED);
-	const onsetDate = dateForDayNumber(startDate, onsetDay);
-	const endDate = dateForDayNumber(startDate, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
-	const provenance = getSystemProvenance();
-
-	const config: ExperimentConfig = {
-		id: EXPERIMENT_CONSTANTS.ID,
-		title: "Input-First Russian vs Slovak Control (SCED 42-day study)",
-		version: "v3",
-		startDate,
-		endDate,
-		days: EXPERIMENT_CONSTANTS.TOTAL_DAYS,
-		seed: EXPERIMENT_SEED,
-		onsetDay,
-		onsetDate,
-		languages: {
-			treatment: "russian",
-			control: "slovak",
-		},
-		protocolHash: provenance.protocolHash,
-		gitCommit: provenance.gitCommit,
-		decisionRule: "Confirmed benefit if immediate level shift b2 >= +10 pp and randomization test p-value = 1/11 (0.0909) with >= 8 valid days per phase.",
-	};
-
-	const schedule = buildSchedule(startDate, onsetDay, EXPERIMENT_CONSTANTS.TOTAL_DAYS);
-	const rand = createRng(EXPERIMENT_SEED);
-	const skPool = extractLanguagePool(findSlovakLexiconPath(), rand);
-	const ruPool = extractLanguagePool(findRussianLexiconPath(), rand);
-
-	const pool: ProbePoolData = {
-		seed: EXPERIMENT_SEED,
-		createdAt: new Date().toISOString(),
-		russian: ruPool,
-		slovak: skPool,
-	};
-
-	writeExperimentFile("experiment.json", JSON.stringify(config, null, 2));
-	writeExperimentFile("schedule.json", JSON.stringify(schedule, null, 2));
-	writeExperimentFile("probe-pool.json", JSON.stringify(pool, null, 2));
-	writeExperimentFile("daily.jsonl", "");
-	writeExperimentFile("checks.jsonl", "");
-	writeExperimentFile("deviations.jsonl", "");
-	fs.rmSync(path.join(dir, MEASURE_FILE), { force: true });
-
-	writeExperimentFile("summary.md", generateSummaryMarkdown(config, schedule, [], [], analyzeStudy(config, [], [], 0), config.startDate));
+	writeExperimentFile(
+		"summary.md",
+		generateSummaryMarkdown(config, schedule, [], [], analyzeStudy(config, [], [], 0), config.startDate),
+	);
 
 	return { config, schedule, pool };
 }
@@ -450,7 +413,10 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 	const todayDateStr = dayKey(now);
 	const currentDayNumber = dayNumberForDate(config.startDate, todayDateStr);
 
-	const existingDaily = dailyRowsWithinSchedule(readJsonl<DailyExperimentRecord>(path.join(experimentDir(), "daily.jsonl")), schedule);
+	const existingDaily = dailyRowsWithinSchedule(
+		readJsonl<DailyExperimentRecord>(path.join(experimentDir(), "daily.jsonl")),
+		schedule,
+	);
 	const dailyMap = new Map<string, DailyExperimentRecord>();
 	for (const r of existingDaily) {
 		dailyMap.set(`${r.date}:${r.language}`, r);
@@ -477,16 +443,25 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 
 			const repCount = dictationReps.length;
 			const understoodCount = understoodReps.length;
-			const firstPlayShare = repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY ? Math.round((understoodCount / repCount) * 1000) / 1000 : null;
+			const firstPlayShare =
+				repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY
+					? Math.round((understoodCount / repCount) * 1000) / 1000
+					: null;
 
-			const totalWords = dictationReps.reduce((acc: number, r: any) => acc + (r.sentence ? r.sentence.split(/\s+/).length : 5), 0);
+			const totalWords = dictationReps.reduce(
+				(acc: number, r: any) => acc + (r.sentence ? r.sentence.split(/\s+/).length : 5),
+				0,
+			);
 			const meanWords = repCount > 0 ? Math.round((totalWords / repCount) * 10) / 10 : 0;
 
 			const minutesBy = dayProgress?.minutesBy || {};
 			const minutes = dayProgress?.minutes || Object.values(minutesBy).reduce((a: number, b: any) => a + Number(b), 0);
 			const isTreatment = lang === config.languages.treatment;
 			const compliance = isTreatment && s.russianArm === "input-first" ? calculateCompliance(minutesBy) : 100;
-			const rank = meanFrequencyRank(lang, dictationReps.map((r: any) => String(r.sentence ?? "")));
+			const rank = meanFrequencyRank(
+				lang,
+				dictationReps.map((r: any) => String(r.sentence ?? "")),
+			);
 
 			const record: DailyExperimentRecord = {
 				date: dateStr,
@@ -508,7 +483,9 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 		}
 	}
 
-	const updatedDaily = Array.from(dailyMap.values()).sort((a, b) => a.dayNumber - b.dayNumber || a.language.localeCompare(b.language));
+	const updatedDaily = Array.from(dailyMap.values()).sort(
+		(a, b) => a.dayNumber - b.dayNumber || a.language.localeCompare(b.language),
+	);
 	const jsonlLines = updatedDaily.map((r) => JSON.stringify(r)).join("\n") + "\n";
 	writeExperimentFile("daily.jsonl", jsonlLines);
 
@@ -516,7 +493,13 @@ export function syncDailyExperimentData(now = new Date()): { daily: DailyExperim
 	const study = analyzeStudy(config, updatedDaily, checkRecords, currentDayNumber);
 
 	if (currentDayNumber >= 1) {
-		appendDeviations([...scheduleDeviations(config, schedule, updatedDaily, checkRecords, currentDayNumber), ...(currentDayNumber <= config.days ? measureDeviations(config, todayDateStr) : [])], now);
+		appendDeviations(
+			[
+				...scheduleDeviations(config, schedule, updatedDaily, checkRecords, currentDayNumber),
+				...(currentDayNumber <= config.days ? measureDeviations(config, todayDateStr) : []),
+			],
+			now,
+		);
 	}
 
 	const summary = generateSummaryMarkdown(config, schedule, updatedDaily, checkRecords, study, todayDateStr);
@@ -625,7 +608,10 @@ export function getTodayExperimentStatus(now = new Date(), runningLanguage = "ru
 				dictationReps: repCount,
 				understoodReps: understoodCount,
 				validDay: repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY,
-				firstPlayShare: repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY ? Math.round((understoodCount / repCount) * 1000) / 1000 : null,
+				firstPlayShare:
+					repCount >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY
+						? Math.round((understoodCount / repCount) * 1000) / 1000
+						: null,
 			};
 		};
 
@@ -638,7 +624,8 @@ export function getTodayExperimentStatus(now = new Date(), runningLanguage = "ru
 		const checks = readJsonl<CheckItemRecord>(path.join(experimentDir(), "checks.jsonl"));
 		const checkRows = weeklyCheckRows(config, checks, dayNumber);
 		const openCheck = checkRows.find((r) => r.state === "open");
-		const weekNumber = openCheck?.week ?? Math.min(EXPERIMENT_CONSTANTS.TOTAL_WEEKS, Math.max(1, Math.ceil(dayNumber / 7)));
+		const weekNumber =
+			openCheck?.week ?? Math.min(EXPERIMENT_CONSTANTS.TOTAL_WEEKS, Math.max(1, Math.ceil(dayNumber / 7)));
 		const weeklyCheckDue = Boolean(openCheck);
 		const weeklyCheckCompleted = checkRows.filter((r) => r.week === weekNumber).every((r) => r.state === "done");
 

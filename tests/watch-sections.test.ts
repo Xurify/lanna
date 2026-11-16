@@ -47,7 +47,11 @@ function video(id = "secsecsec01", trackLang = "sk"): VideoRecord {
 		createdAt: "2026-11-07T08:00:00Z",
 		segments: [
 			line(0, [["Ahoj"]], "Hi."),
-			line(1, [["Dám"], ["si"], ["kávu", { lemma: "káva", slug: "kava", gloss: "coffee", fresh: true }]], "I'll have a coffee."),
+			line(
+				1,
+				[["Dám"], ["si"], ["kávu", { lemma: "káva", slug: "kava", gloss: "coffee", fresh: true }]],
+				"I'll have a coffee.",
+			),
 			line(2, [["S"], ["mliekom", { lemma: "mlieko", slug: "mlieko", gloss: "milk", fresh: true }]], "With milk."),
 			line(3, [["Koľko"], ["to"], ["stojí", { lemma: "stáť", slug: "stat", gloss: "to cost" }]], "How much is it?"),
 			line(4, [["Dve"], ["eurá", { lemma: "euro", slug: "euro", gloss: "euro" }]], "Two euros."),
@@ -72,7 +76,19 @@ function fauxEngine(steps: FauxResponseStep[]) {
 
 const ANSWER = {
 	sections: [
-		{ from: 1, to: 4, title: "Ordering a coffee", why: "Ordering and paying in a café.", focus: [{ line: 1, word: "kávu" }, { line: 2, word: "Mliekom" }, { line: 3, word: "stoji" }, { line: 9, word: "eurá" }, { line: 4, word: "eurá" }] },
+		{
+			from: 1,
+			to: 4,
+			title: "Ordering a coffee",
+			why: "Ordering and paying in a café.",
+			focus: [
+				{ line: 1, word: "kávu" },
+				{ line: 2, word: "Mliekom" },
+				{ line: 3, word: "stoji" },
+				{ line: 9, word: "eurá" },
+				{ line: 4, word: "eurá" },
+			],
+		},
 	],
 };
 
@@ -81,7 +97,14 @@ describe("the model's answer is held against the video", () => {
 		const [s] = core.parseSections(JSON.stringify(ANSWER), video());
 		assert.ok(s);
 		assert.equal(s.title, "Ordering a coffee");
-		assert.deepEqual(s.focus.map((f) => [f.at, f.word, f.slug]), [[1, "kávu", "kava"], [2, "mliekom", "mlieko"], [4, "eurá", "euro"]]);
+		assert.deepEqual(
+			s.focus.map((f) => [f.at, f.word, f.slug]),
+			[
+				[1, "kávu", "kava"],
+				[2, "mliekom", "mlieko"],
+				[4, "eurá", "euro"],
+			],
+		);
 	});
 
 	test("too short, out of range and overlapping sections are dropped; a long one is cut", () => {
@@ -94,12 +117,21 @@ describe("the model's answer is held against the video", () => {
 				{ from: 2, to: 99, title: "Also overlaps", focus: [{ line: 6, word: "Dovidenia" }] },
 			],
 		})}`;
-		assert.deepEqual(core.parseSections(text, video()).map((s) => s.title), ["Kept"]);
+		assert.deepEqual(
+			core.parseSections(text, video()).map((s) => s.title),
+			["Kept"],
+		);
 		assert.deepEqual(core.parseSections("no json at all", video()), []);
 	});
 
 	test("a section with no usable word is dropped", () => {
-		assert.deepEqual(core.parseSections(JSON.stringify({ sections: [{ from: 1, to: 4, title: "x", focus: [{ line: 1, word: "čaj" }] }] }), video()), []);
+		assert.deepEqual(
+			core.parseSections(
+				JSON.stringify({ sections: [{ from: 1, to: 4, title: "x", focus: [{ line: 1, word: "čaj" }] }] }),
+				video(),
+			),
+			[],
+		);
 	});
 
 	test("the prompt numbers the lines and marks the words not studied", () => {
@@ -131,7 +163,14 @@ describe("the gaps come from the stored lines", () => {
 describe("finding and practicing sections", () => {
 	test("one request, kept with its cost; asked again only when forced", async () => {
 		videoStore.put(video());
-		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify(ANSWER)), fauxAssistantMessage(JSON.stringify({ sections: [{ from: 4, to: 6, title: "Saying goodbye", why: "", focus: [{ line: 6, word: "Dovidenia" }] }] }))]);
+		const engine = fauxEngine([
+			fauxAssistantMessage(JSON.stringify(ANSWER)),
+			fauxAssistantMessage(
+				JSON.stringify({
+					sections: [{ from: 4, to: 6, title: "Saying goodbye", why: "", focus: [{ line: 6, word: "Dovidenia" }] }],
+				}),
+			),
+		]);
 		const first = await server.findSections("secsecsec01", { engine, model: "faux:sections" });
 		assert.equal(first.sections.length, 1);
 		assert.equal(first.model, "faux:sections");
@@ -145,12 +184,18 @@ describe("finding and practicing sections", () => {
 
 	test("captions in another language have no sections", async () => {
 		videoStore.put(video("secsecsec02", "cs"));
-		await assert.rejects(server.findSections("secsecsec02", { engine: fauxEngine([]), model: "x" }), /not in the language/);
+		await assert.rejects(
+			server.findSections("secsecsec02", { engine: fauxEngine([]), model: "x" }),
+			/not in the language/,
+		);
 	});
 
 	test("a finished section: XP per gap, misses to Review and back in Listen, unknown gaps ignored", async () => {
 		videoStore.put(video("secsecsec03"));
-		await server.findSections("secsecsec03", { engine: fauxEngine([fauxAssistantMessage(JSON.stringify(ANSWER))]), model: "faux:sections" });
+		await server.findSections("secsecsec03", {
+			engine: fauxEngine([fauxAssistantMessage(JSON.stringify(ANSWER))]),
+			model: "faux:sections",
+		});
 		const xpBefore = progressStore.read().xp;
 		const out = server.recordSection(
 			{
@@ -173,7 +218,13 @@ describe("finding and practicing sections", () => {
 		assert.equal(out.xp, 10 + 0 + 5);
 		assert.equal(progressStore.read().xp - xpBefore, 15);
 		assert.equal(out.lines, 1);
-		assert.deepEqual(watchRepStore.read().lines.filter((l) => l.videoId === "secsecsec03").map((l) => l.text), ["S mliekom."]);
+		assert.deepEqual(
+			watchRepStore
+				.read()
+				.lines.filter((l) => l.videoId === "secsecsec03")
+				.map((l) => l.text),
+			["S mliekom."],
+		);
 		assert.throws(() => server.recordSection({ videoId: "secsecsec03", section: 5, results: [] }), /No such section/);
 	});
 });

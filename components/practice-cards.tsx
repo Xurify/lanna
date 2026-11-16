@@ -79,12 +79,21 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 	// below in the quiz-explanation register (small, muted, low-key).
 	// Nothing collapsible. Legacy inputs (pre-slim records) that carry
 	// their own solutionReveal fall back to it.
-	const input = (part.input ?? {}) as { outcome?: string; verdict?: string; solutionReveal?: string; evidence?: string };
+	const input = (part.input ?? {}) as {
+		outcome?: string;
+		verdict?: string;
+		solutionReveal?: string;
+		evidence?: string;
+	};
 	const outcome = typeof input.outcome === "string" ? input.outcome : "";
 	const evidence = input.evidence === "checked" || input.evidence === "judgment" ? input.evidence : null;
 	const verdict = typeof input.verdict === "string" ? input.verdict : "";
 	const reveal =
-		typeof part.reveal === "string" ? part.reveal : typeof input.solutionReveal === "string" ? input.solutionReveal : "";
+		typeof part.reveal === "string"
+			? part.reveal
+			: typeof input.solutionReveal === "string"
+				? input.solutionReveal
+				: "";
 
 	// The dismissal synthesis: no verdict, no reveal — one muted line (the
 	// learner clicked; the record needs only the fact).
@@ -113,7 +122,10 @@ export function ConcludeCard({ part }: ArtifactPartProps) {
 				{evidence && (
 					<span
 						data-testid="conclude-evidence"
-						className={cn("ml-auto rounded px-1.5 py-0.5 normal-case tracking-normal", evidence === "checked" ? "bg-teal-wash text-teal-2" : "bg-well-2 text-ink-3")}
+						className={cn(
+							"ml-auto rounded px-1.5 py-0.5 normal-case tracking-normal",
+							evidence === "checked" ? "bg-teal-wash text-teal-2" : "bg-well-2 text-ink-3",
+						)}
 					>
 						{evidence === "checked" ? "Checked in the dictionary" : "Tutor's judgment, not checked"}
 					</span>
@@ -174,7 +186,7 @@ function MetadataPopover({
 	// the trigger's viewport rect AT OPEN TIME — any scroll closes the
 	// box, so there is nothing to track.
 	const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
-	const [names, setNames] = useState<Record<string, string> | null>(null);
+	const [names] = useState<Record<string, string> | null>(null);
 	const targets = Array.isArray(problemInput.target)
 		? problemInput.target.filter((t): t is string => typeof t === "string")
 		: [];
@@ -233,33 +245,33 @@ function MetadataPopover({
 						style={{ position: "fixed", top: anchor.top, left: anchor.left }}
 						className="z-50 w-80 max-w-[calc(100vw-1rem)] q-card p-4 text-left shadow-raise-hi"
 					>
-				<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-						<dt className="text-muted-foreground">Mode</dt>
-						<dd className="font-mono">{mode || "—"}</dd>
-						<dt className="text-muted-foreground">Targets</dt>
-						<dd className="font-mono">
-							{targets.length === 0 ? (
-								"untagged"
-							) : (
-								<span>
-									{targets.map((t, i) => (
-										<span key={t}>
-											{i > 0 && ", "}
-											{names?.[t] ?? t}
-										</span>
-									))}
-								</span>
-							)}
-						</dd>
-						<dt className="text-muted-foreground">Outcome</dt>
-						<dd className="font-mono">{outcome || "—"}</dd>
-						<dt className="text-muted-foreground">Hint rung</dt>
-						<dd className="font-mono">{rung || "none"}</dd>
-						<dt className="text-muted-foreground">Miss class</dt>
-						<dd className="font-mono">{miss || "none"}</dd>
-						<dt className="text-muted-foreground">Retest</dt>
-						<dd className="font-mono">{retest === undefined ? "—" : retest ? "yes" : "no"}</dd>
-					</dl>
+						<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+							<dt className="text-muted-foreground">Mode</dt>
+							<dd className="font-mono">{mode || "—"}</dd>
+							<dt className="text-muted-foreground">Targets</dt>
+							<dd className="font-mono">
+								{targets.length === 0 ? (
+									"untagged"
+								) : (
+									<span>
+										{targets.map((t, i) => (
+											<span key={t}>
+												{i > 0 && ", "}
+												{names?.[t] ?? t}
+											</span>
+										))}
+									</span>
+								)}
+							</dd>
+							<dt className="text-muted-foreground">Outcome</dt>
+							<dd className="font-mono">{outcome || "—"}</dd>
+							<dt className="text-muted-foreground">Hint rung</dt>
+							<dd className="font-mono">{rung || "none"}</dd>
+							<dt className="text-muted-foreground">Miss class</dt>
+							<dd className="font-mono">{miss || "none"}</dd>
+							<dt className="text-muted-foreground">Retest</dt>
+							<dd className="font-mono">{retest === undefined ? "—" : retest ? "yes" : "no"}</dd>
+						</dl>
 					</div>,
 					document.body,
 				)}

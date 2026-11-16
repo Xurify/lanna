@@ -60,7 +60,15 @@ interface ExportedDialogue {
 	createdAt: string;
 	updatedAt: string;
 	messages: ExportedMessage[];
-	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number | null; models: string[] };
+	usage: {
+		turns: number;
+		inputTokens: number;
+		outputTokens: number;
+		cacheReadTokens: number;
+		cacheWriteTokens: number;
+		costUsd: number | null;
+		models: string[];
+	};
 }
 
 interface ExportedExplanation {
@@ -94,8 +102,35 @@ interface CorpusSummary {
 	exportedAt: string;
 	profile: string;
 	language: string;
-	counts: { audioClips: number; lessons: number; reps: number; sentences: number; dialogues: number; explanations: number; reviewCards: number; reviewAnswers: number; stories: number; readings: number; spokenScenes: number; fluencyRounds: number; videos: number; watchings: number; cheatsheets: number };
-	usage: { turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; unpricedTurns: number; /** Story generations (the Read task), USD. */ storiesUsd: number; /** Spoken scenes (the Speak task), USD. */ speakUsd: number; /** Videos prepared for the Watch task (translation + questions), USD. */ videosUsd: number };
+	counts: {
+		audioClips: number;
+		lessons: number;
+		reps: number;
+		sentences: number;
+		dialogues: number;
+		explanations: number;
+		reviewCards: number;
+		reviewAnswers: number;
+		stories: number;
+		readings: number;
+		spokenScenes: number;
+		fluencyRounds: number;
+		videos: number;
+		watchings: number;
+		cheatsheets: number;
+	};
+	usage: {
+		turns: number;
+		inputTokens: number;
+		outputTokens: number;
+		cacheReadTokens: number;
+		cacheWriteTokens: number;
+		costUsd: number;
+		unpricedTurns: number;
+		/** Story generations (the Read task), USD. */ storiesUsd: number;
+		/** Spoken scenes (the Speak task), USD. */ speakUsd: number;
+		/** Videos prepared for the Watch task (translation + questions), USD. */ videosUsd: number;
+	};
 }
 
 const SAY_SPAN = /`say:\s*([^`]+)`/g;
@@ -111,12 +146,36 @@ export function exportDialogue(chat: ChatRecord, deleted = false): ExportedDialo
 		if (m.role !== "user" && m.role !== "assistant") continue;
 		const text = userFacingTextOf(m.content, failed).join("\n\n").trim();
 		if (!text) continue;
-		const at = typeof (m as { timestamp?: unknown }).timestamp === "number" ? new Date((m as { timestamp: number }).timestamp).toISOString() : undefined;
+		const at =
+			typeof (m as { timestamp?: unknown }).timestamp === "number"
+				? new Date((m as { timestamp: number }).timestamp).toISOString()
+				: undefined;
 		messages.push({ role: m.role, text, spoken: spokenIn(text), ...(at ? { at } : {}) });
 	}
 	const first = messages.find((m) => m.role === "user")?.text ?? "";
-	const practiceMode = chat.kind === "chat" ? (/^why\b/i.test((first || chat.title).trim()) ? "why" : null) : chat.kind !== "practice" ? null : /^why\?/i.test(first) ? "why" : /^talk:/i.test(first) ? "talk" : /^story:/i.test(first) ? "story" : "practice";
-	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: null as number | null, models: [] as string[] };
+	const practiceMode =
+		chat.kind === "chat"
+			? /^why\b/i.test((first || chat.title).trim())
+				? "why"
+				: null
+			: chat.kind !== "practice"
+				? null
+				: /^why\?/i.test(first)
+					? "why"
+					: /^talk:/i.test(first)
+						? "talk"
+						: /^story:/i.test(first)
+							? "story"
+							: "practice";
+	const usage = {
+		turns: 0,
+		inputTokens: 0,
+		outputTokens: 0,
+		cacheReadTokens: 0,
+		cacheWriteTokens: 0,
+		costUsd: null as number | null,
+		models: [] as string[],
+	};
 	const models = new Set<string>();
 	for (const turn of chat.turns ?? []) {
 		usage.turns++;
@@ -175,7 +234,18 @@ export function sentencesFrom(lessons: LessonLogEntry[]): ExportedSentence[] {
 			const key = `${rep.sentence}\u0000${rep.answer}`;
 			let s = map.get(key);
 			if (!s) {
-				s = { sentence: rep.sentence, translation: rep.translation, answer: rep.answer, lemma: rep.lemma, gloss: rep.gloss, unit: rep.unit, ...(rep.trigger ? { trigger: rep.trigger } : {}), timesSeen: 0, timesRight: 0, answers: [] };
+				s = {
+					sentence: rep.sentence,
+					translation: rep.translation,
+					answer: rep.answer,
+					lemma: rep.lemma,
+					gloss: rep.gloss,
+					unit: rep.unit,
+					...(rep.trigger ? { trigger: rep.trigger } : {}),
+					timesSeen: 0,
+					timesRight: 0,
+					answers: [],
+				};
 				map.set(key, s);
 			}
 			s.timesSeen++;
@@ -223,7 +293,9 @@ interface ExportResult {
 /** Write the export; `stamp` defaults to the current minute (local time). */
 export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportResult {
 	const now = opts.now ?? new Date();
-	const stamp = opts.stamp ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+	const stamp =
+		opts.stamp ??
+		`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
 	const dir = path.join(/*turbopackIgnore: true*/ PATHS.exports, stamp);
 	fs.mkdirSync(dir, { recursive: true });
 
@@ -243,7 +315,17 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 			const d = byId.get(w.chatId);
 			const question = d?.messages.find((m) => m.role === "user")?.text ?? "";
 			const explanation = d?.messages.find((m) => m.role === "assistant")?.text ?? "";
-			return { sentence: w.sentence, answer: w.answer, lemma: w.lemma, learnerWrote: w.given, question, explanation, chatId: w.chatId, askedAt: w.createdAt, reopened: w.reused ?? 0 };
+			return {
+				sentence: w.sentence,
+				answer: w.answer,
+				lemma: w.lemma,
+				learnerWrote: w.given,
+				question,
+				explanation,
+				chatId: w.chatId,
+				askedAt: w.createdAt,
+				reopened: w.reused ?? 0,
+			};
 		})
 		.sort((a, b) => a.askedAt.localeCompare(b.askedAt));
 	const cards = Object.values(reviewStore.readCards()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -290,7 +372,18 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		}
 	}
 
-	const usage = { turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, unpricedTurns: 0, storiesUsd: Math.round(storiesUsd * 10000) / 10000, speakUsd: Math.round(speakUsd * 10000) / 10000, videosUsd: Math.round(videosUsd * 10000) / 10000 };
+	const usage = {
+		turns: 0,
+		inputTokens: 0,
+		outputTokens: 0,
+		cacheReadTokens: 0,
+		cacheWriteTokens: 0,
+		costUsd: 0,
+		unpricedTurns: 0,
+		storiesUsd: Math.round(storiesUsd * 10000) / 10000,
+		speakUsd: Math.round(speakUsd * 10000) / 10000,
+		videosUsd: Math.round(videosUsd * 10000) / 10000,
+	};
 	for (const d of dialogues) {
 		usage.turns += d.usage.turns;
 		usage.inputTokens += d.usage.inputTokens;
@@ -331,7 +424,8 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		usage,
 	};
 
-	const write = (name: string, value: unknown) => fs.writeFileSync(path.join(/*turbopackIgnore: true*/ dir, name), JSON.stringify(value, null, "\t"), "utf-8");
+	const write = (name: string, value: unknown) =>
+		fs.writeFileSync(path.join(/*turbopackIgnore: true*/ dir, name), JSON.stringify(value, null, "\t"), "utf-8");
 	write("summary.json", summary);
 	write("audio.json", audio);
 	write("sentences.json", sentences);
@@ -340,13 +434,21 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("explanations.json", explanations);
 	write("review.json", { cards, answers });
 	write("known.json", knownWordStore.read());
-	write("word-check.json", { answers: wordCheckStore.answers(), sessions: wordCheckStore.sessions(), history: wordCheckStore.history(), judgements: wordCheckStore.judgements() });
+	write("word-check.json", {
+		answers: wordCheckStore.answers(),
+		sessions: wordCheckStore.sessions(),
+		history: wordCheckStore.history(),
+		judgements: wordCheckStore.judgements(),
+	});
 	const readingSources = readingSourceStore.list().filter((s) => !s.removedAt);
 	write("stories.json", { stories, readings, sources: readingSources });
 	write("spoken.json", { scenes, fluency });
 	write("videos.json", { videos, watchings, sections, preps });
 	write("cheatsheets.json", cheatsheets);
-	write("cheatsheet-practice.json", { phrases: Object.fromEntries(cheatsheets.map((s) => [s.id, sheetPracticeStore.read(s.id)])), sessions: sheetPracticeStore.readLog() });
+	write("cheatsheet-practice.json", {
+		phrases: Object.fromEntries(cheatsheets.map((s) => [s.id, sheetPracticeStore.read(s.id)])),
+		sessions: sheetPracticeStore.readLog(),
+	});
 	write("outside-listening.json", outsideStore.read().entries);
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };

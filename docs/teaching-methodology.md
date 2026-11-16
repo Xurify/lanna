@@ -1,12 +1,12 @@
 # The theory of learning and teaching
 
-*(Owner theory, formulated 2026-09-24. This document is the canonical theory layer — the system prompts are a compression of it. Scope: the theory itself, and what it demands of the implementation. Not an implementation spec.)*
+_(Owner theory, formulated 2026-09-24. This document is the canonical theory layer — the system prompts are a compression of it. Scope: the theory itself, and what it demands of the implementation. Not an implementation spec.)_
 
 ## 1. Two knowledge states
 
 A session is bounded by two states:
 
-- **Current understanding** — everything the learner currently holds. What a learner *holds* is, by definition, what they accept as obviously true. The current state is the set of held propositions: accepted, self-evident, safe to build on.
+- **Current understanding** — everything the learner currently holds. What a learner _holds_ is, by definition, what they accept as obviously true. The current state is the set of held propositions: accepted, self-evident, safe to build on.
 - **Goal understanding** — the target of the session: what the learner wants to hold that they don't yet. It is often hard for the learner to articulate; pinning it down is part of defining it.
 
 The probing phase defines both states precisely: it brackets the current understanding (what is held, and where it ends) and makes the goal concrete. Teaching then moves the learner from the first state to the second.
@@ -15,7 +15,7 @@ The probing phase defines both states precisely: it brackets the current underst
 
 The terminal condition of a session is not recall, not being able to answer questions, not coverage — it is that the **goal understanding feels obviously true** to the learner. The strength of understanding is measured in self-evidence. A fact that can be recited but doesn't feel self-evident is not learned; it is memorized, and memorized facts rot. A fact that feels obviously true is held.
 
-This is also the mechanism of retention: the brain commits fully to a fact only when it is safe to lock in (nothing more fundamental might later contradict it) and when it is connected (held in place by its relations, not by rehearsal). Feeling obviously true *is* the felt experience of both conditions being met.
+This is also the mechanism of retention: the brain commits fully to a fact only when it is safe to lock in (nothing more fundamental might later contradict it) and when it is connected (held in place by its relations, not by rehearsal). Feeling obviously true _is_ the felt experience of both conditions being met.
 
 ## 3. The click — loose facts collapsing into generators
 
@@ -31,16 +31,16 @@ Understanding is a graph: **propositions as nodes, connections as edges**. The c
 
 The atomic act of teaching is exposing the learner to a fact. The whole of a lesson is: **facts, in the right order, each presented in the clearest possible way.**
 
-The order is governed by one rule: **move one reasoning step at a time.** Start from what the learner holds (obviously true by definition — Section 1). Each new fact is attached to what is already held by a *single* reasoning step. A single step is small enough to be fully understood at once — and because it follows from what is held, it doesn't merely follow logically; it lands as obviously true itself.
+The order is governed by one rule: **move one reasoning step at a time.** Start from what the learner holds (obviously true by definition — Section 1). Each new fact is attached to what is already held by a _single_ reasoning step. A single step is small enough to be fully understood at once — and because it follows from what is held, it doesn't merely follow logically; it lands as obviously true itself.
 
 Two consequences follow immediately:
 
 - **Every landing is self-evident.** Each step extends the held structure by one connection, so the new fact inherits the obviousness of what it rests on. The whole session is a chain of small "of course" moments, ending at the goal.
-- **Errors surface instantly.** A gap or misconception reveals itself the moment it's stepped on — not three nodes later, when everything built on it is corrupted. Because the step was small, the failure is precisely localized; strengthen or repair the weak spot *before continuing*, and never build on anything not yet held as obviously true.
+- **Errors surface instantly.** A gap or misconception reveals itself the moment it's stepped on — not three nodes later, when everything built on it is corrupted. Because the step was small, the failure is precisely localized; strengthen or repair the weak spot _before continuing_, and never build on anything not yet held as obviously true.
 
 ## 6. Foundations
 
-Most facts are derived from what is held. But some propositions the lesson needs cannot be derived from anything the learner holds — they need **foundational nodes**: the bottom of the dependency tree. A foundational fact must be accepted *as-is*, which is why foundations should be **unconditionally true** — simple enough to take at face value, with no caveats or hedging.
+Most facts are derived from what is held. But some propositions the lesson needs cannot be derived from anything the learner holds — they need **foundational nodes**: the bottom of the dependency tree. A foundational fact must be accepted _as-is_, which is why foundations should be **unconditionally true** — simple enough to take at face value, with no caveats or hedging.
 
 Foundations can also be **motivated**: a problem, a question, a condition that demands the fact makes acceptance easier. Motivation is not derivation — it eases acceptance without making the fact follow — but it is the same machinery of obviousness: a fact that answers a felt question is easier to hold as self-evident than one that arrives from nowhere.
 
@@ -55,7 +55,7 @@ The learner has finite mental effort per session. Optimize its **proportion**, n
 - **Maximize** the fraction going into direct contact with the material — the actual installation of understanding: following steps, answering checks, holding the new facts.
 - **Minimize** everything that is not direct installation: logistics. Figuring out what to learn, in what order, from what source. Researching, fact-checking, planning, resource-finding, judging reliability.
 
-The point is *not* to reduce the learner's effort — struggle with the material is how it locks in. The point is that all of it goes into the material. The system absorbs the logistics; the learner never does.
+The point is _not_ to reduce the learner's effort — struggle with the material is how it locks in. The point is that all of it goes into the material. The system absorbs the logistics; the learner never does.
 
 ### 7b. The minimal tree — the smallest dependency graph from current to goal
 
@@ -74,16 +74,16 @@ Each reasoning step should be presented in the most optimal way for absorption: 
 Presentation mode is chosen **per step**, as a means to clarity — never as a ritual:
 
 - Some steps are best stated explicitly. Unconditional truths, for instance, are often best asserted plainly as facts ("this is true; take it").
-- Most connective tissue is better woven into the flow than announced. A derivation that says out loud "now I will establish X, and then connect it to Y" forces the learner to process the *lesson's choreography* instead of the material — logistics the theory says to eliminate. The reasoning should carry itself: smooth prose where the next fact arrives as the obvious consequence of the last.
+- Most connective tissue is better woven into the flow than announced. A derivation that says out loud "now I will establish X, and then connect it to Y" forces the learner to process the _lesson's choreography_ instead of the material — logistics the theory says to eliminate. The reasoning should carry itself: smooth prose where the next fact arrives as the obvious consequence of the last.
 - The failure mode this corrects is not explicitness but **verbosity**: performing the method (labeled segments, restated structure, meta-narration) instead of doing the work. Every sentence is either installing understanding or it is overhead; overhead must earn its place.
 
-Explicitness is a tool. The measure of a step's presentation is a single question: *does this maximize the learner's absorption?*
+Explicitness is a tool. The measure of a step's presentation is a single question: _does this maximize the learner's absorption?_
 
 ## 9. Checks — after every reasoning step
 
 Every reasoning step ends with a check: a graded question verifying that the step actually landed. This is not bookkeeping; it is the error-catching mechanism of Section 5 — a step that didn't land is found the moment it's stepped on, precisely localized by the check, and strengthened before anything is built on it.
 
-The cadence also shapes the session's rhythm: each check pauses the lesson for the learner's answer, so teaching advances in a rhythm of step → check → repair-or-continue. *(Locked decision, 2026-09-24: one check per reasoning step. If the rhythm proves unpleasant in practice, revisit — but the default is every step.)*
+The cadence also shapes the session's rhythm: each check pauses the lesson for the learner's answer, so teaching advances in a rhythm of step → check → repair-or-continue. _(Locked decision, 2026-09-24: one check per reasoning step. If the rhythm proves unpleasant in practice, revisit — but the default is every step.)_
 
 ## 10. What this demands of the implementation
 

@@ -17,7 +17,10 @@ export function SpeakModes({ current }: { current: (typeof MODES)[number]["id"] 
 						href={m.href}
 						aria-current={on ? "page" : undefined}
 						data-testid={`speak-mode-${m.id}`}
-						className={cn("rounded-[8px] px-3 py-1.5 font-ui text-[13px] font-[550] transition-colors pointer-coarse:py-2.5", on ? "bg-card text-foreground shadow-[0_0_0_1px_var(--q-line-2)]" : "text-ink-3 hover:text-ink-2")}
+						className={cn(
+							"rounded-[8px] px-3 py-1.5 font-ui text-[13px] font-[550] transition-colors pointer-coarse:py-2.5",
+							on ? "bg-card text-foreground shadow-[0_0_0_1px_var(--q-line-2)]" : "text-ink-3 hover:text-ink-2",
+						)}
 					>
 						{m.label}
 					</Link>

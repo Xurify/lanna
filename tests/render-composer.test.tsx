@@ -13,9 +13,7 @@ import { describe, it } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Composer, enterAction } from "../components/composer.tsx";
 
-function render(
-	opts: { busy?: boolean; canSend?: boolean; placeholder?: string; nextProblem?: boolean } = {},
-) {
+function render(opts: { busy?: boolean; canSend?: boolean; placeholder?: string; nextProblem?: boolean } = {}) {
 	return renderToStaticMarkup(
 		<Composer
 			busy={opts.busy ?? false}

@@ -2,10 +2,26 @@ import { createHash } from "node:crypto";
 import { Readability } from "@mozilla/readability";
 import { parseHTML } from "linkedom";
 import { safeFetch } from "../agent/safe-fetch.ts";
-import { MAX_LINKS_PER_ADD, MAX_SOURCE_WORDS, MIN_SOURCE_WORDS, ownStoryId, splitIntoSections, storyId, type ReadingDifficulty, type StoryRecord } from "../core/reading.ts";
+import {
+	MAX_LINKS_PER_ADD,
+	MAX_SOURCE_WORDS,
+	MIN_SOURCE_WORDS,
+	ownStoryId,
+	splitIntoSections,
+	storyId,
+	type ReadingDifficulty,
+	type StoryRecord,
+} from "../core/reading.ts";
 import { readingSourceStore, type ReadingSource } from "../store/reading-sources.ts";
 import { storyStore } from "../store/stories.ts";
-import { kickSourceParts, knownWords, sourcePart, storyEngine, writeFirstParts, type GenerateOptions } from "./reading.ts";
+import {
+	kickSourceParts,
+	knownWords,
+	sourcePart,
+	storyEngine,
+	writeFirstParts,
+	type GenerateOptions,
+} from "./reading.ts";
 
 export class ReadImportError extends Error {
 	constructor(message: string) {
@@ -94,7 +110,8 @@ function withinWordLimit(text: string): { text: string; truncated: boolean } {
 async function fetchWithGuard(url: string): Promise<FetchedPage> {
 	const res = await safeFetch(url, {
 		headers: {
-			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+			"User-Agent":
+				"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
 			Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 		},
 		timeoutMs: PAGE_TIMEOUT_MS,
@@ -104,7 +121,10 @@ async function fetchWithGuard(url: string): Promise<FetchedPage> {
 	return { html: await res.text(), contentType: res.headers.get("content-type") ?? "", finalUrl: res.url || url };
 }
 
-async function readPage(url: string, fetchPage: FetchPage): Promise<{ title: string; text: string; site: string; url: string }> {
+async function readPage(
+	url: string,
+	fetchPage: FetchPage,
+): Promise<{ title: string; text: string; site: string; url: string }> {
 	let page: FetchedPage;
 	try {
 		page = await fetchPage(url);
@@ -130,7 +150,8 @@ const MAILCHIMP_ARCHIVE = /(^|\.)campaign-archive\.com$/i;
 
 function withoutTracking(url: URL): URL {
 	for (const name of [...url.searchParams.keys()]) {
-		if (TRACKING_PARAMS.test(name) || (name === "e" && MAILCHIMP_ARCHIVE.test(url.hostname))) url.searchParams.delete(name);
+		if (TRACKING_PARAMS.test(name) || (name === "e" && MAILCHIMP_ARCHIVE.test(url.hostname)))
+			url.searchParams.delete(name);
 	}
 	return url;
 }
@@ -147,7 +168,10 @@ function httpLink(raw: string): string {
 }
 
 function sourceIdOf(title: string, text: string, difficulty: ReadingDifficulty): string {
-	const slug = storyId(0, title).replace(/^ep-000-/, "").slice(0, 32).replace(/-+$/, "");
+	const slug = storyId(0, title)
+		.replace(/^ep-000-/, "")
+		.slice(0, 32)
+		.replace(/-+$/, "");
 	const hash = createHash("sha256").update(`${difficulty}\n${text}`).digest("hex").slice(0, 8);
 	return `src-${slug || "text"}-${hash}`;
 }
@@ -165,7 +189,10 @@ export interface AddSourceInput {
 	difficulty?: ReadingDifficulty;
 }
 
-export async function addSource(input: AddSourceInput, opts: { now?: Date; fetchPage?: FetchPage } = {}): Promise<ReadingSource> {
+export async function addSource(
+	input: AddSourceInput,
+	opts: { now?: Date; fetchPage?: FetchPage } = {},
+): Promise<ReadingSource> {
 	const difficulty = input.difficulty ?? "level";
 	const pasted = cleanPastedText(input.text ?? "");
 	const link = input.url?.trim() ? httpLink(input.url) : undefined;
@@ -214,7 +241,10 @@ function firstUnreadPart(source: ReadingSource): number {
 	return unread < 0 ? 1 : unread + 1;
 }
 
-export async function importReading(input: AddSourceInput, opts: GenerateOptions & { fetchPage?: FetchPage } = {}): Promise<{ source: ReadingSource; story: StoryRecord }> {
+export async function importReading(
+	input: AddSourceInput,
+	opts: GenerateOptions & { fetchPage?: FetchPage } = {},
+): Promise<{ source: ReadingSource; story: StoryRecord }> {
 	if (!opts.engine && !storyEngine()) throw new Error("No model is configured. Pick one in Settings → AI models.");
 	const { fetchPage, ...generate } = opts;
 	const source = await addSource(input, { now: opts.now, fetchPage });
@@ -232,7 +262,11 @@ export interface LinksImport {
 	firstParts: Promise<void>;
 }
 
-export async function importLinks(urls: readonly string[], difficulty: ReadingDifficulty = "level", opts: GenerateOptions & { fetchPage?: FetchPage } = {}): Promise<LinksImport> {
+export async function importLinks(
+	urls: readonly string[],
+	difficulty: ReadingDifficulty = "level",
+	opts: GenerateOptions & { fetchPage?: FetchPage } = {},
+): Promise<LinksImport> {
 	if (!opts.engine && !storyEngine()) throw new Error("No model is configured. Pick one in Settings → AI models.");
 	const { fetchPage, ...generate } = opts;
 	const links = [...new Set(urls.map((url) => url.trim()).filter(Boolean))].slice(0, MAX_LINKS_PER_ADD);
@@ -251,7 +285,11 @@ export async function importLinks(urls: readonly string[], difficulty: ReadingDi
 	};
 	await Promise.all(Array.from({ length: LINKS_READ_AT_ONCE }, readNext));
 	const inOrder = (a: { url: string }, b: { url: string }) => links.indexOf(a.url) - links.indexOf(b.url);
-	return { added: [...new Set(added)], failed: failed.sort(inOrder), firstParts: writeFirstParts([...new Set(added)], generate) };
+	return {
+		added: [...new Set(added)],
+		failed: failed.sort(inOrder),
+		firstParts: writeFirstParts([...new Set(added)], generate),
+	};
 }
 
 export function removeSource(id: string, now = new Date()): void {

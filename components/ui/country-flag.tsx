@@ -285,9 +285,7 @@ export function CountryFlag({ lang, code, className, title }: CountryFlagProps) 
 			{Flag ? (
 				<Flag className="block h-full w-full" preserveAspectRatio="xMidYMid slice" />
 			) : ready ? (
-				<span className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground select-none">
-					{c}
-				</span>
+				<span className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground select-none">{c}</span>
 			) : null}
 			<span
 				aria-hidden="true"

@@ -20,14 +20,14 @@ Use it twice: once **before** you write (sources, scope), once **after** (the ch
 
 A rule that holds for "most" words is incomplete until its patterns are listed. For nouns, every table has a row for each of these, or says why it has none:
 
-| Row | Test word |
-|---|---|
+| Row                                                | Test word                                            |
+| -------------------------------------------------- | ---------------------------------------------------- |
 | masculine animate (životný: a person or an animal) | brat, lekár, pes (and the few in -a: hrdina, kolega) |
-| masculine inanimate (neživotný: a thing) | dom, stôl |
-| feminine in -a after a hard consonant | škola, ruka, Žilina |
-| feminine in -a after a soft consonant | ulica, práca |
-| feminine ending in a consonant | noc, radosť, pieseň |
-| neuter | mesto, srdce, námestie, dievča |
+| masculine inanimate (neživotný: a thing)           | dom, stôl                                            |
+| feminine in -a after a hard consonant              | škola, ruka, Žilina                                  |
+| feminine in -a after a soft consonant              | ulica, práca                                         |
+| feminine ending in a consonant                     | noc, radosť, pieseň                                  |
+| neuter                                             | mesto, srdce, námestie, dievča                       |
 
 Run every test word through the table you wrote, in every case it covers, before you call it done. Audit **every** unit that shares the pattern, not only the one you were editing. List what is left out on purpose (plural, dievča) in the pull request's description.
 

@@ -26,5 +26,14 @@ for (const [hash, m] of Object.entries(manifest)) {
 	clips[text] = { kind: m.kind, hash };
 }
 fs.mkdirSync(path.dirname(out), { recursive: true });
-fs.writeFileSync(out, JSON.stringify({ source: "slovak.wiki", base: "https://audio.slovak.wiki/audio", voiceId, exportedAt: new Date().toISOString(), clips }));
+fs.writeFileSync(
+	out,
+	JSON.stringify({
+		source: "slovak.wiki",
+		base: "https://audio.slovak.wiki/audio",
+		voiceId,
+		exportedAt: new Date().toISOString(),
+		clips,
+	}),
+);
 console.log(`${Object.keys(clips).length} clips → ${out}`);

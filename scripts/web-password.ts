@@ -7,7 +7,11 @@ function promptHidden(question: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const { stdin, stdout } = process;
 		if (!stdin.isTTY) {
-			reject(new Error("There is no terminal to type in. Set LH_WEB_PASSWORD_FILE to a file that holds the password, or - for standard input."));
+			reject(
+				new Error(
+					"There is no terminal to type in. Set LH_WEB_PASSWORD_FILE to a file that holds the password, or - for standard input.",
+				),
+			);
 			return;
 		}
 		stdout.write(question);
@@ -37,7 +41,9 @@ function promptHidden(question: string): Promise<string> {
 async function readPassword(): Promise<string> {
 	const file = process.env.LH_WEB_PASSWORD_FILE;
 	if (file) return fs.readFileSync(file === "-" ? 0 : file, "utf8").replace(/\r?\n$/, "");
-	console.log(`Choose a password of ${PASSWORD_MIN_LENGTH} to ${PASSWORD_MAX_LENGTH} characters. A few ordinary words in a row is a good one.`);
+	console.log(
+		`Choose a password of ${PASSWORD_MIN_LENGTH} to ${PASSWORD_MAX_LENGTH} characters. A few ordinary words in a row is a good one.`,
+	);
 	const first = await promptHidden("New password: ");
 	const again = await promptHidden("Again: ");
 	if (first !== again) throw new Error("The two passwords are not the same. Nothing was changed.");
@@ -51,7 +57,8 @@ try {
 		console.log("Password set. Web access is on: open the public address and sign in.");
 	} else {
 		console.log("Password changed. Every device was signed out, and the sign-in limits were cleared.");
-		if (!readAccess().enabled) console.log("Web access is off, so nobody can sign in. Turn it on in Settings → Devices.");
+		if (!readAccess().enabled)
+			console.log("Web access is off, so nobody can sign in. Turn it on in Settings → Devices.");
 	}
 } catch (err) {
 	console.error(err instanceof Error ? err.message : String(err));

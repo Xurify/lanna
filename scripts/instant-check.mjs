@@ -48,7 +48,10 @@ const quiet = (page, ms = 250, atMost = 4000) =>
 				let last = from;
 				const seen = new MutationObserver(() => (last = performance.now()));
 				seen.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
-				const tick = () => (performance.now() - last >= q || performance.now() - from >= cap ? (seen.disconnect(), res()) : setTimeout(tick, 25));
+				const tick = () =>
+					performance.now() - last >= q || performance.now() - from >= cap
+						? (seen.disconnect(), res())
+						: setTimeout(tick, 25);
 				tick();
 			}),
 		ms,
@@ -69,7 +72,8 @@ const WATCH_PRESS = (want, heldFor) => {
 					const loading = !!document.querySelector('[data-testid="route-loading"]');
 					if (arrived && !loading) return res({ shows: "page", ms: now - pressedAt });
 					if (arrived && shellAt === null) shellAt = now;
-					if (now - pressedAt > heldFor) return res(shellAt === null ? { shows: "blocked", ms: null } : { shows: "shell", ms: shellAt - pressedAt });
+					if (now - pressedAt > heldFor)
+						return res(shellAt === null ? { shows: "blocked", ms: null } : { shows: "shell", ms: shellAt - pressedAt });
 					setTimeout(look, 4);
 				};
 				look();
@@ -108,7 +112,9 @@ async function press(page, base, from, door) {
 async function main() {
 	const puppeteer = loadPuppeteer();
 	const srv = await startServer({ heavy: false, dev: DEV });
-	console.log(`CPU x${CPU}; ${DEV ? "next dev" : "production build"} on ${srv.base}, scratch data ${srv.dir}; the pointer rests ${REST_MS} ms on a row, the button is down ${PRESS_MS} ms`);
+	console.log(
+		`CPU x${CPU}; ${DEV ? "next dev" : "production build"} on ${srv.base}, scratch data ${srv.dir}; the pointer rests ${REST_MS} ms on a row, the button is down ${PRESS_MS} ms`,
+	);
 	const browser = await puppeteer.launch({ executablePath: findBrowser(), headless: true, args: BROWSER_ARGS });
 	const rows = [];
 	try {
@@ -117,7 +123,13 @@ async function main() {
 		if (CPU > 1) await (await page.createCDPSession()).send("Emulation.setCPUThrottlingRate", { rate: CPU });
 		await page.goto(srv.base + "/", { waitUntil: "load" });
 		await page.waitForSelector('nav[aria-label="Main"] a[data-testid$="-door"]');
-		const doors = await page.$$eval('nav[aria-label="Main"] a[data-testid$="-door"]', (as) => as.map((a) => ({ testid: a.dataset.testid, path: a.pathname, label: a.textContent.trim().replace(/\s*\d+( new)?$/, "") })));
+		const doors = await page.$$eval('nav[aria-label="Main"] a[data-testid$="-door"]', (as) =>
+			as.map((a) => ({
+				testid: a.dataset.testid,
+				path: a.pathname,
+				label: a.textContent.trim().replace(/\s*\d+( new)?$/, ""),
+			})),
+		);
 		// `next dev` compiles a route the first time it is asked for; that wait is not what this measures.
 		if (DEV) for (const d of doors) await page.goto(srv.base + d.path, { waitUntil: "load" }).catch(() => {});
 		for (const door of doors.filter((d) => !ONLY || d.path === ONLY)) {
@@ -135,7 +147,19 @@ async function main() {
 	}
 
 	console.log("\nClick a sidebar row with the server held (ms from the button going down)");
-	console.log(table(rows.map((r) => [r.door.label, r.door.path, r.shows, r.ms == null ? "-" : String(Math.round(r.ms)), r.wants, RANK[r.shows] >= RANK[r.wants] ? "ok" : "LESS"]), ["row", "path", "on screen", "ms", "should show", ""]));
+	console.log(
+		table(
+			rows.map((r) => [
+				r.door.label,
+				r.door.path,
+				r.shows,
+				r.ms == null ? "-" : String(Math.round(r.ms)),
+				r.wants,
+				RANK[r.shows] >= RANK[r.wants] ? "ok" : "LESS",
+			]),
+			["row", "path", "on screen", "ms", "should show", ""],
+		),
+	);
 	for (const r of rows) if (r.error) console.log(`  ! ${r.door.label}: ${r.error}`);
 	const less = rows.filter((r) => RANK[r.shows] < RANK[r.wants]);
 	if (less.length) {

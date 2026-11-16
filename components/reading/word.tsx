@@ -39,7 +39,19 @@ interface LookupFallback {
 /** One tappable word. A fresh word (not met before) carries a dotted
  *  underline so the eye knows where the new ground is; a word looked up
  *  keeps a faint mark. The popover opens above or under the word depending on viewport space. */
-export function Word({ token, looked, open, onOpen, onClose }: { token: StoryToken; looked: boolean; open: boolean; onOpen: () => void; onClose: () => void }) {
+export function Word({
+	token,
+	looked,
+	open,
+	onOpen,
+	onClose,
+}: {
+	token: StoryToken;
+	looked: boolean;
+	open: boolean;
+	onOpen: () => void;
+	onClose: () => void;
+}) {
 	const ref = useRef<HTMLSpanElement>(null);
 	const [side, setSide] = useState<"left" | "right">("left");
 	const popRef = useRef<HTMLSpanElement>(null);
@@ -81,8 +93,8 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 	const dictGloss = token.gloss ?? lookupData?.gloss;
 	const resolvedGloss =
 		translationMode === "google"
-			? lookupData?.googleTranslation ?? dictGloss
-			: dictGloss ?? lookupData?.googleTranslation;
+			? (lookupData?.googleTranslation ?? dictGloss)
+			: (dictGloss ?? lookupData?.googleTranslation);
 	const secondaryGoogleGloss =
 		translationMode === "hybrid" &&
 		lookupData?.googleTranslation &&
@@ -111,7 +123,11 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 		const next = !known;
 		setKnown(next);
 		try {
-			const res = await fetch("/api/words/known", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: resolvedSlug, known: next }) });
+			const res = await fetch("/api/words/known", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ slug: resolvedSlug, known: next }),
+			});
 			if (!res.ok) setKnown(!next);
 		} catch {
 			setKnown(!next);
@@ -146,7 +162,9 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 		const updatePosition = () => {
 			if (!ref.current) return;
 			const r = ref.current.getBoundingClientRect();
-			const column = (ref.current.closest("[data-word-column]") ?? ref.current.closest("article"))?.getBoundingClientRect();
+			const column = (
+				ref.current.closest("[data-word-column]") ?? ref.current.closest("article")
+			)?.getBoundingClientRect();
 			if (column) setSide(r.left - column.left > column.width * 0.55 ? "right" : "left");
 			setPlaceAbove(r.bottom > window.innerHeight - 250 && r.top > 220);
 		};
@@ -177,9 +195,17 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 		// The open animation scales the card, so its size comes from the layout box
 		// and its edge from the anchor word: the card hangs off the word's left or right.
 		const width = pop.offsetWidth;
-		const r = { left: side === "left" ? anchor.left : anchor.right - width, right: side === "left" ? anchor.left + width : anchor.right };
+		const r = {
+			left: side === "left" ? anchor.left : anchor.right - width,
+			right: side === "left" ? anchor.left + width : anchor.right,
+		};
 		const margin = 8;
-		const dx = r.right > window.innerWidth - margin ? window.innerWidth - margin - r.right : r.left < margin ? margin - r.left : 0;
+		const dx =
+			r.right > window.innerWidth - margin
+				? window.innerWidth - margin - r.right
+				: r.left < margin
+					? margin - r.left
+					: 0;
 		if (dx) pop.style.translate = `${dx}px`;
 	}, [open, side, placeAbove]);
 
@@ -204,7 +230,9 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 				className={cn(
 					"transition-colors hover:text-teal-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-go pointer-coarse:py-2",
 					token.fresh && "underline decoration-dotted decoration-xp decoration-2 underline-offset-[5px]",
-					looked && !token.fresh && "underline decoration-dotted decoration-foreground/30 decoration-2 underline-offset-[5px]",
+					looked &&
+						!token.fresh &&
+						"underline decoration-dotted decoration-foreground/30 decoration-2 underline-offset-[5px]",
 					open && "text-teal-2 underline decoration-teal decoration-2 underline-offset-[5px]",
 				)}
 			>
@@ -220,7 +248,13 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 						"lh-menu-in absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-lg border bg-card p-4 text-left font-prose text-base shadow-raise-hi",
 						placeAbove ? "bottom-full mb-2" : "top-full mt-2",
 						side === "left" ? "left-0" : "right-0",
-						placeAbove ? (side === "left" ? "origin-bottom-left" : "origin-bottom-right") : side === "left" ? "origin-top-left" : "origin-top-right",
+						placeAbove
+							? side === "left"
+								? "origin-bottom-left"
+								: "origin-bottom-right"
+							: side === "left"
+								? "origin-top-left"
+								: "origin-top-right",
 					)}
 					data-testid="word-popover"
 				>
@@ -236,7 +270,12 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 								onClick={() => void toggleFav()}
 								aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
 								title={isFav ? "Remove from favorites" : "Add to favorites"}
-								className={cn("rounded-md p-1.5 transition-colors", isFav ? "text-teal-2 hover:bg-teal-wash" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+								className={cn(
+									"rounded-md p-1.5 transition-colors",
+									isFav
+										? "text-teal-2 hover:bg-teal-wash"
+										: "text-muted-foreground hover:bg-accent hover:text-foreground",
+								)}
 							>
 								<StarIcon className={cn("size-4", isFav && "fill-gold")} />
 							</button>
@@ -253,7 +292,10 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 					</span>
 					{(resolvedLemma.toLocaleLowerCase(langTag) !== token.text.toLocaleLowerCase(langTag) || resolvedFormNote) && (
 						<span className="block font-ui text-xs text-muted-foreground">
-							here: <span className="font-semibold text-ink-2" lang={langCode}>{token.text}</span>
+							here:{" "}
+							<span className="font-semibold text-ink-2" lang={langCode}>
+								{token.text}
+							</span>
 							{resolvedFormNote ? ` (${resolvedFormNote})` : ""}
 						</span>
 					)}
@@ -262,9 +304,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							<>
 								<span className="block">{resolvedGloss}</span>
 								{secondaryGoogleGloss && (
-									<span className="mt-0.5 block font-ui text-xs text-muted-foreground">
-										{secondaryGoogleGloss}
-									</span>
+									<span className="mt-0.5 block font-ui text-xs text-muted-foreground">{secondaryGoogleGloss}</span>
 								)}
 							</>
 						) : loadingLookup ? (
@@ -293,7 +333,9 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 								>
 									{referenceLabel} <ExternalLinkIcon className="size-3" />
 								</a>
-								<span aria-hidden="true" className="text-ink-4">·</span>
+								<span aria-hidden="true" className="text-ink-4">
+									·
+								</span>
 							</>
 						)}
 						{/* The language's own reference can already be Wiktionary (Estonian); one link is enough. */}
@@ -307,7 +349,9 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 								>
 									Wiktionary <ExternalLinkIcon className="size-3" />
 								</a>
-								<span aria-hidden="true" className="text-ink-4">·</span>
+								<span aria-hidden="true" className="text-ink-4">
+									·
+								</span>
 							</>
 						)}
 						<a
@@ -318,7 +362,9 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 						>
 							DeepL <ExternalLinkIcon className="size-3" />
 						</a>
-						<span aria-hidden="true" className="text-ink-4">·</span>
+						<span aria-hidden="true" className="text-ink-4">
+							·
+						</span>
 						<a
 							href={googleTranslateUrl}
 							target="_blank"
@@ -327,7 +373,9 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 						>
 							Google Translate <ExternalLinkIcon className="size-3" />
 						</a>
-						<span aria-hidden="true" className="text-ink-4">·</span>
+						<span aria-hidden="true" className="text-ink-4">
+							·
+						</span>
 						<a
 							href={forvoUrl}
 							target="_blank"
@@ -361,9 +409,7 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 							data-testid="word-popover-add-bank"
 							className={cn(
 								"lh-press flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
-								inDeck && isFav
-									? "bg-teal-wash text-teal-2"
-									: "bg-well text-foreground hover:bg-well-2",
+								inDeck && isFav ? "bg-teal-wash text-teal-2" : "bg-well text-foreground hover:bg-well-2",
 							)}
 						>
 							{inDeck && isFav ? (
@@ -386,5 +432,9 @@ export function Word({ token, looked, open, onOpen, onClose }: { token: StoryTok
 }
 
 export function Tag({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <span className={cn("rounded-md bg-well-2 px-1.5 py-0.5 font-ui text-xs font-[550] text-ink-2", className)}>{children}</span>;
+	return (
+		<span className={cn("rounded-md bg-well-2 px-1.5 py-0.5 font-ui text-xs font-[550] text-ink-2", className)}>
+			{children}
+		</span>
+	);
 }

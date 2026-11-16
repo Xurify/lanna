@@ -3,9 +3,24 @@ import assert from "node:assert/strict";
 import { compareMatches, fold, matchWord, type SearchableWord } from "@/src/core/word-search";
 
 const W = {
-	clovek: { lemma: "človek", gloss: "person; human", forms: ["človeka", "ľudia"], examples: [{ sk: "Je to dobrý človek.", en: "He is a good person." }] },
-	hovorit: { lemma: "hovoriť", gloss: "to speak; to talk; to say (imperfective)", forms: ["hovorím", "hovorí"], examples: [{ sk: "Hovorím po slovensky.", en: "I speak Slovak." }] },
-	dom: { lemma: "dom", gloss: "house; home", forms: ["domy"], examples: [{ sk: "Môj dom je veľký.", en: "My house is big." }] },
+	clovek: {
+		lemma: "človek",
+		gloss: "person; human",
+		forms: ["človeka", "ľudia"],
+		examples: [{ sk: "Je to dobrý človek.", en: "He is a good person." }],
+	},
+	hovorit: {
+		lemma: "hovoriť",
+		gloss: "to speak; to talk; to say (imperfective)",
+		forms: ["hovorím", "hovorí"],
+		examples: [{ sk: "Hovorím po slovensky.", en: "I speak Slovak." }],
+	},
+	dom: {
+		lemma: "dom",
+		gloss: "house; home",
+		forms: ["domy"],
+		examples: [{ sk: "Môj dom je veľký.", en: "My house is big." }],
+	},
 	slovo: { lemma: "slovo", gloss: "word", forms: ["slová"], examples: [] },
 	cas: { lemma: "čas", gloss: "time", forms: ["času"], examples: [] },
 	chlieb: { lemma: "chlieb", gloss: "bread", forms: [], examples: [{ sk: "Kúpim chlieb.", en: "I will buy bread." }] },
@@ -14,7 +29,13 @@ const W = {
 } satisfies Record<string, SearchableWord>;
 
 const ALL = Object.values(W);
-const search = (q: string) => ALL.flatMap((w) => { const match = matchWord(q, w); return match ? [{ w, match }] : []; }).sort(compareMatches).map((r) => r.w.lemma);
+const search = (q: string) =>
+	ALL.flatMap((w) => {
+		const match = matchWord(q, w);
+		return match ? [{ w, match }] : [];
+	})
+		.sort(compareMatches)
+		.map((r) => r.w.lemma);
 
 describe("word search ranking", () => {
 	it("folds case and diacritics one character at a time", () => {
@@ -73,11 +94,20 @@ describe("word search ranking", () => {
 			{ match: matchWord("s", { lemma: "stôl", gloss: "table" })!, rank: 300 },
 			{ match: matchWord("s", { lemma: "sa", gloss: "self" })!, rank: 2 },
 		];
-		assert.deepEqual(rows.sort(compareMatches).map((r) => r.rank), [2, 300]);
+		assert.deepEqual(
+			rows.sort(compareMatches).map((r) => r.rank),
+			[2, 300],
+		);
 	});
 
 	it("a phrase finds the sentence that has its words side by side", () => {
-		const zaujem: SearchableWord = { lemma: "záujem", gloss: "interest", examples: [{ sk: "O kurz je veľký záujem medzi študentmi.", en: "There is great interest in the course among students." }] };
+		const zaujem: SearchableWord = {
+			lemma: "záujem",
+			gloss: "interest",
+			examples: [
+				{ sk: "O kurz je veľký záujem medzi študentmi.", en: "There is great interest in the course among students." },
+			],
+		};
 		assert.equal(matchWord("veľký záujem", zaujem)?.kind, "example");
 		assert.equal(matchWord("velky zaujem medzi", zaujem)?.kind, "example");
 		assert.equal(matchWord("je  veľký zauj", zaujem)?.kind, "example");
@@ -86,7 +116,11 @@ describe("word search ranking", () => {
 	});
 
 	it("a phrase needs its words in a row, from a word start", () => {
-		const zaujem: SearchableWord = { lemma: "záujem", gloss: "interest", examples: [{ sk: "O kurz je veľký záujem medzi študentmi.", en: "" }] };
+		const zaujem: SearchableWord = {
+			lemma: "záujem",
+			gloss: "interest",
+			examples: [{ sk: "O kurz je veľký záujem medzi študentmi.", en: "" }],
+		};
 		assert.equal(matchWord("záujem veľký", zaujem), null);
 		assert.equal(matchWord("kurz veľký", zaujem), null);
 		assert.equal(matchWord("urz je", zaujem), null);

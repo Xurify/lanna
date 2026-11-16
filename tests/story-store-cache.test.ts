@@ -39,7 +39,10 @@ test("a story is parsed once and the same frozen record is shared until the file
 	const first = storyStore.get("ep-001-cache");
 	assert.equal(first?.title, "Martin je doma");
 	assert.equal(storyStore.get("ep-001-cache"), first, "the second read reuses the parsed record");
-	assert.ok(Object.isFrozen(first) && Object.isFrozen(first!.sentences[0]), "a shared record cannot be changed by one caller for all");
+	assert.ok(
+		Object.isFrozen(first) && Object.isFrozen(first!.sentences[0]),
+		"a shared record cannot be changed by one caller for all",
+	);
 
 	storyStore.put(story("Martin je zase doma"));
 	assert.equal(storyStore.get("ep-001-cache")?.title, "Martin je zase doma", "a rewrite on disk is read again");

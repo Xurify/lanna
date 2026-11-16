@@ -48,7 +48,9 @@ describe("ToolCallIdUniquifier", () => {
 			const e = u.event(asEvent({ type: t, message: m1 }));
 			assert.equal(firstCallId(e), "call_0~2", `${t} shows the mint`);
 		}
-		const exec = u.event(asEvent({ type: "tool_execution_end", toolCallId: "call_0", toolName: "quiz", result: null, isError: false })) as { toolCallId: string };
+		const exec = u.event(
+			asEvent({ type: "tool_execution_end", toolCallId: "call_0", toolName: "quiz", result: null, isError: false }),
+		) as { toolCallId: string };
 		assert.equal(exec.toolCallId, "call_0~2");
 		// settle: the SAME mint, paired call + result (m1 is the state object)
 		const settled = u.remapSettled([m1, toolResultMsg("call_0")]) as Array<{
@@ -82,12 +84,17 @@ describe("ToolCallIdUniquifier", () => {
 
 	it("mint candidates skip ids already used (a provider that counts globally can't be ambushed)", () => {
 		const u = new ToolCallIdUniquifier(["call_0", "call_0~2"]);
-		assert.equal(firstCallId(u.event(asEvent({ type: "message_end", message: assistantMsg("m1", ["call_0"]) }))), "call_0~3");
+		assert.equal(
+			firstCallId(u.event(asEvent({ type: "message_end", message: assistantMsg("m1", ["call_0"]) }))),
+			"call_0~3",
+		);
 	});
 
 	it("parallel calls in one message keep their distinct provider ids unless they collide", () => {
 		const u = new ToolCallIdUniquifier(["call_1"]);
-		const e = u.event(asEvent({ type: "message_end", message: assistantMsg("m1", ["call_0", "call_1"]) })) as unknown as {
+		const e = u.event(
+			asEvent({ type: "message_end", message: assistantMsg("m1", ["call_0", "call_1"]) }),
+		) as unknown as {
 			message: { content: Array<{ id: string }> };
 		};
 		assert.equal(e.message.content[0]!.id, "call_0", "non-colliding sibling untouched");
@@ -100,7 +107,9 @@ describe("ToolCallIdUniquifier", () => {
 		const u = new ToolCallIdUniquifier(collectToolCallIds(priorTurn));
 		const m1 = assistantMsg("m1", ["call_0"]);
 		u.event(asEvent({ type: "message_end", message: m1 }));
-		const e = u.event(asEvent({ type: "agent_end", messages: [...priorTurn, m1, toolResultMsg("call_0")] })) as unknown as {
+		const e = u.event(
+			asEvent({ type: "agent_end", messages: [...priorTurn, m1, toolResultMsg("call_0")] }),
+		) as unknown as {
 			messages: Array<{ id?: string; role: string; content?: Array<{ id: string }>; toolCallId?: string }>;
 		};
 		// history is NEVER rewritten (its dupes heal at the fold, view.ts)
@@ -115,7 +124,9 @@ describe("ToolCallIdUniquifier", () => {
 		const u = new ToolCallIdUniquifier(["call_0"]);
 		const m1 = assistantMsg("m1", ["call_0"]);
 		u.event(asEvent({ type: "message_end", message: m1 }));
-		const e = u.event(asEvent({ type: "turn_end", message: m1, toolResults: [toolResultMsg("call_0")] })) as unknown as {
+		const e = u.event(
+			asEvent({ type: "turn_end", message: m1, toolResults: [toolResultMsg("call_0")] }),
+		) as unknown as {
 			message: { content: Array<{ id: string }> };
 			toolResults: Array<{ toolCallId: string }>;
 		};

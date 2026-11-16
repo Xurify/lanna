@@ -24,9 +24,7 @@ function readMap(): Record<string, string> {
 	try {
 		const raw = JSON.parse(fs.readFileSync(AUTH_FILE, "utf-8"));
 		if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-		return Object.fromEntries(
-			Object.entries(raw).filter(([, v]) => typeof v === "string") as [string, string][],
-		);
+		return Object.fromEntries(Object.entries(raw).filter(([, v]) => typeof v === "string") as [string, string][]);
 	} catch {
 		return {}; // absent or corrupt — the documented state is "no keys yet"
 	}

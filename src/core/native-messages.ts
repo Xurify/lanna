@@ -37,12 +37,7 @@ import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage, Message, ToolResultMessage, UserMessage } from "@earendil-works/pi-ai";
 import { QUESTION_TOOLS } from "./pending.ts";
 import { chatTurnEnded } from "./chat-answers.ts";
-import {
-	CONCLUDE_ACK_TEXT,
-	HANDOFF_TEXT,
-	NEXT_PROBLEM_TEXT,
-	THINKING_LABEL,
-} from "./contracts/chat.ts";
+import { CONCLUDE_ACK_TEXT, HANDOFF_TEXT, NEXT_PROBLEM_TEXT, THINKING_LABEL } from "./contracts/chat.ts";
 import { compactAnswerForModel, type QuestionAnswerData } from "./question-core.ts";
 import { activeCompactionOf, keptIndexFor } from "./compaction.ts";
 
@@ -183,11 +178,7 @@ export function newUserSteer(text: string, id: string): LhMessage & UserMessage 
  *  arguments already carry the question/options/explanation/commitment;
  *  restating them doubled every answer's tokens), while `details` keeps
  *  the FULL graded QuestionAnswerData for the record and the UI. */
-export function newAnswerResult(
-	toolCallId: string,
-	toolName: string,
-	answer: unknown,
-): LhMessage & ToolResultMessage {
+export function newAnswerResult(toolCallId: string, toolName: string, answer: unknown): LhMessage & ToolResultMessage {
 	return {
 		id: newMessageId(),
 		role: "toolResult",
@@ -219,10 +210,7 @@ export function newHandoffMessage(chatId: string): LhMarkerMessage {
 /** The plan presentation block: pure UI history (a frozen snapshot), no
  *  model face — toLlmMessages filters it. `planCallId` keys idempotent
  *  emission (one block per successful plan_init call). */
-export function newPlanBlockMessage(
-	planCallId: string,
-	block: unknown,
-): LhMarkerMessage {
+export function newPlanBlockMessage(planCallId: string, block: unknown): LhMarkerMessage {
 	return {
 		id: `pb_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`,
 		role: "custom",
@@ -369,10 +357,7 @@ function cleanToolCallIds(messages: readonly LhMessage[]): Set<string> {
  *  re-authored (the slim schema dropped solutionReveal); legacy conclude
  *  inputs that still carry their own solutionReveal fall back to it at the
  *  card. Undefined when the pose carries no string solution. */
-export function modelSolutionForConclude(
-	messages: readonly LhMessage[],
-	concludeCallId: string,
-): string | undefined {
+export function modelSolutionForConclude(messages: readonly LhMessage[], concludeCallId: string): string | undefined {
 	const input = problemInputForConclude(messages, concludeCallId);
 	return typeof input?.modelSolution === "string" ? input.modelSolution : undefined;
 }
@@ -390,9 +375,7 @@ export function problemInputForConclude(
 	let mi = messages.findIndex(
 		(m) =>
 			(m as { role?: string }).role === "assistant" &&
-			(m as AssistantMessage).content.some(
-				(b) => b.type === "toolCall" && b.id === concludeCallId,
-			),
+			(m as AssistantMessage).content.some((b) => b.type === "toolCall" && b.id === concludeCallId),
 	);
 	if (mi < 0) return undefined;
 	const clean = cleanToolCallIds(messages);
@@ -412,9 +395,7 @@ export function problemInputForConclude(
 	return undefined;
 }
 
-export function activeProblemOf(
-	messages: readonly LhMessage[],
-): { toolCallId: string; input: unknown } | null {
+export function activeProblemOf(messages: readonly LhMessage[]): { toolCallId: string; input: unknown } | null {
 	// HONEST ACTIVATION (owner ruling, 2026-10-05 — the BKT incident):
 	// calls count only through their RESULTS — a problem activates on its
 	// clean ack, a conclude frees on its clean ack; errored and dangling
@@ -546,8 +527,7 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
 	// when [0] is the chrome it must carry through AHEAD of the
 	// compaction head, exactly as pi's own prepareRequest re-applies
 	// context.systemPrompt + context.tools around its projection.
-	const leading =
-		(messages[0] as { role?: string } | undefined)?.role === "system" ? (messages[0] as Message) : null;
+	const leading = (messages[0] as { role?: string } | undefined)?.role === "system" ? (messages[0] as Message) : null;
 	const out: Message[] = [];
 	if (leading) out.push(leading);
 	if (head) out.push(head);
@@ -567,7 +547,7 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
 			out.push({
 				role: "user",
 				content: [{ type: "text", text: marker.content }],
-			timestamp: marker.timestamp,
+				timestamp: marker.timestamp,
 			});
 			continue;
 		}
@@ -688,14 +668,33 @@ export function nativeInputCause(message: AgentMessage, history: readonly AgentM
 	if (message.role === "custom") {
 		if (["probe-handoff", "subagent-steer", "subagent-abort"].includes(message.customType)) return "automatic";
 		if (["practice-thinking", "practice-next"].includes(message.customType)) return "learner";
-		return ["graph-context", "plan-block", "problem-dismissed", "compaction"].includes(message.customType) ? "neutral" : "unrecognizable";
+		return ["graph-context", "plan-block", "problem-dismissed", "compaction"].includes(message.customType)
+			? "neutral"
+			: "unrecognizable";
 	}
 	if (message.role === "toolResult") {
-		if (!(QUESTION_TOOLS as readonly string[]).includes(message.toolName) || message.isError || message.details == null || (message.details as { dismissed?: boolean }).dismissed) return "neutral";
+		if (
+			!(QUESTION_TOOLS as readonly string[]).includes(message.toolName) ||
+			message.isError ||
+			message.details == null ||
+			(message.details as { dismissed?: boolean }).dismissed
+		)
+			return "neutral";
 		const details = message.details as Partial<QuestionAnswerData>;
-		if (!["quiz", "ask", "explain"].includes(details.kind ?? "") || typeof details.questionText !== "string" || typeof details.dontKnow !== "boolean" || !Array.isArray(details.answers) || typeof details.answeredAt !== "string") return "unrecognizable";
-		const calls = history.flatMap((m) => m.role === "assistant" ? m.content.filter((b) => b.type === "toolCall" && b.id === message.toolCallId) : []);
-		return calls.length === 1 && calls[0]?.type === "toolCall" && calls[0].name === message.toolName ? "learner" : "unrecognizable";
+		if (
+			!["quiz", "ask", "explain"].includes(details.kind ?? "") ||
+			typeof details.questionText !== "string" ||
+			typeof details.dontKnow !== "boolean" ||
+			!Array.isArray(details.answers) ||
+			typeof details.answeredAt !== "string"
+		)
+			return "unrecognizable";
+		const calls = history.flatMap((m) =>
+			m.role === "assistant" ? m.content.filter((b) => b.type === "toolCall" && b.id === message.toolCallId) : [],
+		);
+		return calls.length === 1 && calls[0]?.type === "toolCall" && calls[0].name === message.toolName
+			? "learner"
+			: "unrecognizable";
 	}
 	return "unrecognizable";
 }
@@ -707,7 +706,8 @@ export function reconstructRequestCause(messages: readonly LhMessage[]): Reconst
 	const history: AgentMessage[] = [];
 	const resolve = (): ReconstructedCause => {
 		if (triggers.includes("unrecognizable")) return "ambiguous";
-		const lastLearner = triggers.lastIndexOf("learner"), lastAutomatic = triggers.lastIndexOf("automatic");
+		const lastLearner = triggers.lastIndexOf("learner"),
+			lastAutomatic = triggers.lastIndexOf("automatic");
 		if (lastLearner < 0 && lastAutomatic < 0) return inherited;
 		if (lastAutomatic < 0) return "foreground";
 		if (lastLearner < lastAutomatic) return "background";
@@ -718,11 +718,25 @@ export function reconstructRequestCause(messages: readonly LhMessage[]): Reconst
 		const id = (message as { id?: string }).id;
 		if (id) {
 			const value = JSON.stringify(message);
-			if (seen.has(id)) { if (seen.get(id) !== value) triggers.push("unrecognizable"); continue; }
+			if (seen.has(id)) {
+				if (seen.get(id) !== value) triggers.push("unrecognizable");
+				continue;
+			}
 			seen.set(id, value);
 		} else if (cause !== "neutral") triggers.push("unrecognizable");
-		if (message.role === "assistant" && !(message.provider === "synthetic" && message.api === "faux" && message.model === "synthetic-conclude" && message.content.some((b) => b.type === "toolCall" && b.name === "conclude" && b.arguments?.outcome === "dismissed"))) {
-			inherited = resolve(); triggers = [];
+		if (
+			message.role === "assistant" &&
+			!(
+				message.provider === "synthetic" &&
+				message.api === "faux" &&
+				message.model === "synthetic-conclude" &&
+				message.content.some(
+					(b) => b.type === "toolCall" && b.name === "conclude" && b.arguments?.outcome === "dismissed",
+				)
+			)
+		) {
+			inherited = resolve();
+			triggers = [];
 		} else if (cause !== "neutral") triggers.push(cause);
 		history.push(message);
 	}
@@ -736,10 +750,7 @@ export function needsContinuation(messages: readonly LhMessage[]): boolean {
 	// appends its batch; the question gate keeps a quiz call and its
 	// learner answer adjacent).
 	let start = messages.length - 1;
-	while (
-		start > 0 &&
-		(messages[start - 1] as { role?: string } | undefined)?.role === "toolResult"
-	) {
+	while (start > 0 && (messages[start - 1] as { role?: string } | undefined)?.role === "toolResult") {
 		start--;
 	}
 	// The dismissal rule (A2 + owner ruling 2026-10-03, round-1 incident):
@@ -763,9 +774,7 @@ export function needsContinuation(messages: readonly LhMessage[]): boolean {
 	// question's placeholder this ack PERSISTS (the model reads its own
 	// "Problem posed" result later). Without this fold a reload after a
 	// pose would wake a phantom continuation turn.
-	const posedProblem = results.some(
-		(m) => m.toolName === PRACTICE_PROBLEM_TOOL && !m.isError && m.details == null,
-	);
+	const posedProblem = results.some((m) => m.toolName === PRACTICE_PROBLEM_TOOL && !m.isError && m.details == null);
 	if (posedProblem) return false;
 	if (chatTurnEnded(content as Array<{ type: string; name?: string; text?: string }>)) return false;
 	const answered = new Set(results.map((m) => m.toolCallId));

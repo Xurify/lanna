@@ -2,11 +2,11 @@
 
 Synthesized directly from foundational linguistic sources and official Estonian pedagogical corpora for LangHarness:
 
-1. **Erelt & Metslang (eds.), *Eesti keele süntaks*** (Eesti keele varamu III, Tartu Ülikooli Kirjastus 2017): The definitive academic reference on Estonian syntax, clause structures, secondary predicates, converbs, information structure, and word order.
-2. ***Eesti keele grammatika tabelid***: Standard paradigm tables for noun declensions (14 cases, grade alternation patterns) and verb conjugations.
-3. ***Eesti keele käsiraamat* (EKKR)** (Mati Erelt, Tiiu Erelt, Kristiina Ross; Institute of the Estonian Language / EKI): Normative reference for phonology, morphology, syntax, and orthography.
+1. **Erelt & Metslang (eds.), _Eesti keele süntaks_** (Eesti keele varamu III, Tartu Ülikooli Kirjastus 2017): The definitive academic reference on Estonian syntax, clause structures, secondary predicates, converbs, information structure, and word order.
+2. _**Eesti keele grammatika tabelid**_: Standard paradigm tables for noun declensions (14 cases, grade alternation patterns) and verb conjugations.
+3. **_Eesti keele käsiraamat_ (EKKR)** (Mati Erelt, Tiiu Erelt, Kristiina Ross; Institute of the Estonian Language / EKI): Normative reference for phonology, morphology, syntax, and orthography.
 4. **Keeleklikk & Keeletee** (Ministry of Education and Research / Hydrargyrum): Modern communicative curriculum maps, thematic situational dialogues, and practical frequency-based structures (A1–B1).
-5. **Harno (Haridus- ja Noorteamet) Reference Level Descriptions**: Official CEFR exam specifications and empirical learner error profiles (*Algaja keelekasutaja. A2-taseme eesti keele oskus*, *Iseseisev keelekasutaja. B1- ja B2-taseme eesti keele oskus*).
+5. **Harno (Haridus- ja Noorteamet) Reference Level Descriptions**: Official CEFR exam specifications and empirical learner error profiles (_Algaja keelekasutaja. A2-taseme eesti keele oskus_, _Iseseisev keelekasutaja. B1- ja B2-taseme eesti keele oskus_).
 
 ## Keeping it in step
 

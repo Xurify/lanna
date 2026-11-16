@@ -46,7 +46,10 @@ export interface TatoebaSentence {
  *  with a combining acute or grave; running text never has it. Only marks
  *  on Cyrillic letters go, so Latin é or ŕ are untouched. */
 export function stripStress(text: string): string {
-	return text.normalize("NFD").replace(/([Ѐ-ӿ])[̀́]/gu, "$1").normalize("NFC");
+	return text
+		.normalize("NFD")
+		.replace(/([Ѐ-ӿ])[̀́]/gu, "$1")
+		.normalize("NFC");
 }
 
 function normWord(text: string, tag: string): string {
@@ -67,12 +70,17 @@ export function parseFrequency(text: string, tag: string, max = 30_000): Map<str
 }
 
 /** Rank by use in the sentences themselves, for a language with no list. */
-export function frequencyFromSentences(sentences: Iterable<{ text: string }>, tag: string, max = 30_000): Map<string, number> {
+export function frequencyFromSentences(
+	sentences: Iterable<{ text: string }>,
+	tag: string,
+	max = 30_000,
+): Map<string, number> {
 	const counts = new Map<string, number>();
-	for (const s of sentences) for (const t of tokenize(s.text)) {
-		const w = normWord(t.token, tag);
-		counts.set(w, (counts.get(w) ?? 0) + 1);
-	}
+	for (const s of sentences)
+		for (const t of tokenize(s.text)) {
+			const w = normWord(t.token, tag);
+			counts.set(w, (counts.get(w) ?? 0) + 1);
+		}
 	const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, max);
 	return new Map(sorted.map(([w], i) => [w, i + 1]));
 }
@@ -119,10 +127,36 @@ function catOf(pos: string): string | null {
 
 /** Table cells that are not forms (headers, template names, romanizations)
  *  and forms not to drill (pre-reform spellings such as кошкѣ, rare ones). */
-const NOT_A_FORM = new Set(["error-unrecognized-form", "table-tags", "inflection-template", "class", "romanization", "error-unknown-tag", "canonical", "transliteration", "dated", "archaic", "obsolete", "rare", "nonstandard", "misspelling"]);
+const NOT_A_FORM = new Set([
+	"error-unrecognized-form",
+	"table-tags",
+	"inflection-template",
+	"class",
+	"romanization",
+	"error-unknown-tag",
+	"canonical",
+	"transliteration",
+	"dated",
+	"archaic",
+	"obsolete",
+	"rare",
+	"nonstandard",
+	"misspelling",
+]);
 
 /** A "form of" sense that names another word, not an inflection of it. */
-const RELATED_WORD = new Set(["diminutive", "augmentative", "endearing", "pejorative", "abbreviation", "alt-of", "misspelling", "dated", "archaic", "obsolete"]);
+const RELATED_WORD = new Set([
+	"diminutive",
+	"augmentative",
+	"endearing",
+	"pejorative",
+	"abbreviation",
+	"alt-of",
+	"misspelling",
+	"dated",
+	"archaic",
+	"obsolete",
+]);
 
 /** The name of a letter of the alphabet is not the word it is spelled like. */
 const LETTER_NAME = /\bname of the\b.*\bletter\b/i;
@@ -139,7 +173,8 @@ function scriptOf(text: string): string | null {
 
 function genderOf(tags: readonly string[]): string | undefined {
 	const t = new Set(tags);
-	if (t.has("masculine")) return t.has("animate") ? "masculine-animate" : t.has("inanimate") ? "masculine-inanimate" : "masculine";
+	if (t.has("masculine"))
+		return t.has("animate") ? "masculine-animate" : t.has("inanimate") ? "masculine-inanimate" : "masculine";
 	if (t.has("feminine")) return "feminine";
 	if (t.has("neuter")) return "neuter";
 	return undefined;
@@ -173,10 +208,12 @@ export function readKaikkiEntry(raw: unknown): { word: BuildWord | null; formOf:
 		const tags = s.tags ?? [];
 		const target = s.form_of?.[0]?.word;
 		if (target) {
-			if (!tags.some((t) => RELATED_WORD.has(t))) formOf.push({ form: lemma, lemma: stripStress(target), pos, tags: grammarTags(tags) });
+			if (!tags.some((t) => RELATED_WORD.has(t)))
+				formOf.push({ form: lemma, lemma: stripStress(target), pos, tags: grammarTags(tags) });
 			continue;
 		}
-		if (s.alt_of?.length || tags.includes("form-of") || tags.includes("alt-of") || tags.includes("misspelling")) continue;
+		if (s.alt_of?.length || tags.includes("form-of") || tags.includes("alt-of") || tags.includes("misspelling"))
+			continue;
 		// Nested senses list the parent's gloss first ("[with prepositional]", "in, at").
 		const g = s.glosses?.at(-1)?.trim();
 		if (g && LETTER_NAME.test(g)) continue;
@@ -199,7 +236,15 @@ export function readKaikkiEntry(raw: unknown): { word: BuildWord | null; formOf:
 		if (form !== lemma) forms.add(form);
 	}
 	return {
-		word: { key: `${lemma}\u0000${pos}`, lemma, pos, glosses: glosses.slice(0, 3), gender: pos === "noun" ? genderOf(senseTags) : undefined, forms: [...forms], ...(Object.keys(formTags).length ? { formTags } : {}) },
+		word: {
+			key: `${lemma}\u0000${pos}`,
+			lemma,
+			pos,
+			glosses: glosses.slice(0, 3),
+			gender: pos === "noun" ? genderOf(senseTags) : undefined,
+			forms: [...forms],
+			...(Object.keys(formTags).length ? { formTags } : {}),
+		},
 		formOf,
 	};
 }
@@ -307,10 +352,19 @@ export function mergeHomographs(words: readonly BuildWord[], tag: string): Build
 // Russian print and subtitles mostly write ё as е (зеленый for зелёный), so a
 // frequency list may hold only the е spelling.
 function frequencyOf(freq: ReadonlyMap<string, number>, word: string): number {
-	return Math.min(freq.get(word) ?? Infinity, word.includes("ё") ? (freq.get(word.replaceAll("ё", "е")) ?? Infinity) : Infinity);
+	return Math.min(
+		freq.get(word) ?? Infinity,
+		word.includes("ё") ? (freq.get(word.replaceAll("ё", "е")) ?? Infinity) : Infinity,
+	);
 }
 
-export function rankWords(words: readonly BuildWord[], freq: ReadonlyMap<string, number>, tag: string, limit: number, keep: ReadonlySet<string> = new Set()): Array<BuildWord & { rank: number }> {
+export function rankWords(
+	words: readonly BuildWord[],
+	freq: ReadonlyMap<string, number>,
+	tag: string,
+	limit: number,
+	keep: ReadonlySet<string> = new Set(),
+): Array<BuildWord & { rank: number }> {
 	const index = formIndex(words, tag);
 	const spellings = new Map<string, number>();
 	for (const w of words) spellings.set(normWord(w.lemma, tag), (spellings.get(normWord(w.lemma, tag)) ?? 0) + 1);
@@ -408,7 +462,9 @@ export class ExampleCollector {
 		if (!owners) return null;
 		const only = (key: string) => (this.listed.has(key) ? key : null);
 		if (owners.size === 1) return only(owners.values().next().value!);
-		const exact = [...owners].filter((k) => this.lemmaOf.get(k) === token).sort((a, b) => this.rankOf.get(a)! - this.rankOf.get(b)!);
+		const exact = [...owners]
+			.filter((k) => this.lemmaOf.get(k) === token)
+			.sort((a, b) => this.rankOf.get(a)! - this.rankOf.get(b)!);
 		if (exact.length === 0) return null;
 		if (exact.length > 1 && this.rankOf.get(exact[0]!) === this.rankOf.get(exact[1]!)) return null;
 		return only(exact[0]!);
@@ -421,7 +477,12 @@ export class ExampleCollector {
 			if (text[at - 1] === "-" || text[at + token.length] === "-") continue;
 			const key = this.ownerOf(normWord(token, this.tag));
 			if (!key) continue;
-			if (this.lowercaseLemma.has(key) && startsUppercase(token) && (!startsSentence(text, at) || this.names.has(normWord(token, this.tag)))) continue;
+			if (
+				this.lowercaseLemma.has(key) &&
+				startsUppercase(token) &&
+				(!startsSentence(text, at) || this.names.has(normWord(token, this.tag)))
+			)
+				continue;
 			if (used.has(key)) continue;
 			used.add(key);
 			const example: LexiconExample = { text, en: s.en, src: "tatoeba", tatoebaId: s.id, cloze: { answer: token, at } };
@@ -454,7 +515,7 @@ export class ExampleCollector {
 			}
 			const pending = [...(this.more.get(key) ?? [])];
 			for (let round = 1; round <= this.perForm && list.length < this.maxPerWord && pending.length; round++) {
-				for (let i = 0; i < pending.length && list.length < this.maxPerWord; ) {
+				for (let i = 0; i < pending.length && list.length < this.maxPerWord;) {
 					const form = normWord(pending[i]!.cloze!.answer, this.tag);
 					if ((rounds.get(form) ?? 0) < round) {
 						rounds.set(form, (rounds.get(form) ?? 0) + 1);
@@ -484,11 +545,19 @@ export function specialLettersOf(lemmas: readonly string[], tag: string): string
 }
 
 function slugOf(lemma: string, tag: string): string {
-	return foldDiacritics(lemma.toLocaleLowerCase(tag)).replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "word";
+	return (
+		foldDiacritics(lemma.toLocaleLowerCase(tag))
+			.replace(/[^\p{L}\p{N}]+/gu, "-")
+			.replace(/^-|-$/g, "") || "word"
+	);
 }
 
 /** The lexicon file's word rows, commonest first. */
-export function toLexiconEntries(ranked: ReadonlyArray<BuildWord & { rank: number }>, examples: ReadonlyMap<string, LexiconExample[]>, tag: string): LexiconEntry[] {
+export function toLexiconEntries(
+	ranked: ReadonlyArray<BuildWord & { rank: number }>,
+	examples: ReadonlyMap<string, LexiconExample[]>,
+	tag: string,
+): LexiconEntry[] {
 	const slugs = new Set<string>();
 	return ranked.map((w) => {
 		let slug = slugOf(w.lemma, tag);
@@ -538,4 +607,3 @@ Write every ${english} example the learner should hear as inline code prefixed w
 Prefer checks where the learner produces ${english} (transformations, sentence completion, short translations) over recognition. Every answer card already has a thinking field, so never write "Thinking field:" or other instructions into the question text. To steer the reasoning, end the question with one short plain question, such as "Which word decides the ending?".
 `;
 }
-

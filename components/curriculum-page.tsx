@@ -17,9 +17,35 @@ import { Climb } from "@/components/climb";
 import { CLIMB_VIEWS, saveClimbView, type ClimbView } from "@/lib/climb-view";
 import { cn } from "@/lib/utils";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { curriculumUnit, purposeGoals, speakScene, tutorUnitPrompt, type CurriculumState, type ExamSummary, type LearnerGoal, type UnitState, type WeakSpotSummary } from "@/src/core";
+import {
+	curriculumUnit,
+	purposeGoals,
+	speakScene,
+	tutorUnitPrompt,
+	type CurriculumState,
+	type ExamSummary,
+	type LearnerGoal,
+	type UnitState,
+	type WeakSpotSummary,
+} from "@/src/core";
 
-export function CurriculumPage({ initialView = "chapters", initialConfigured, state, next, goal, weak = [], exams = {} }: { initialView?: ClimbView; initialConfigured: boolean; state: CurriculumState | null; next: string; goal: LearnerGoal; weak?: WeakSpotSummary[]; exams?: Record<string, ExamSummary> }) {
+export function CurriculumPage({
+	initialView = "chapters",
+	initialConfigured,
+	state,
+	next,
+	goal,
+	weak = [],
+	exams = {},
+}: {
+	initialView?: ClimbView;
+	initialConfigured: boolean;
+	state: CurriculumState | null;
+	next: string;
+	goal: LearnerGoal;
+	weak?: WeakSpotSummary[];
+	exams?: Record<string, ExamSummary>;
+}) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const [view, setView] = useState<ClimbView>(initialView);
@@ -31,7 +57,16 @@ export function CurriculumPage({ initialView = "chapters", initialConfigured, st
 		window.history.replaceState(null, "", next === "chapters" ? pathname : `${pathname}?view=${next}`);
 	};
 	const onTabKey = (e: React.KeyboardEvent, i: number) => {
-		const to = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? CLIMB_VIEWS.length - 1 : null;
+		const to =
+			e.key === "ArrowRight"
+				? i + 1
+				: e.key === "ArrowLeft"
+					? i - 1
+					: e.key === "Home"
+						? 0
+						: e.key === "End"
+							? CLIMB_VIEWS.length - 1
+							: null;
 		if (to === null) return;
 		e.preventDefault();
 		const target = CLIMB_VIEWS[(to + CLIMB_VIEWS.length) % CLIMB_VIEWS.length]!;
@@ -57,7 +92,14 @@ export function CurriculumPage({ initialView = "chapters", initialConfigured, st
 	const onTutor = (u: UnitState) => {
 		const unit = curriculumUnit(u.id);
 		if (!unit) return;
-		withTutor(() => startTutorChat(router, { title: `Tutor: ${unit.title}`, prompt: tutorUnitPrompt(unit), activity: "tutor", unit: unit.id }));
+		withTutor(() =>
+			startTutorChat(router, {
+				title: `Tutor: ${unit.title}`,
+				prompt: tutorUnitPrompt(unit),
+				activity: "tutor",
+				unit: unit.id,
+			}),
+		);
 	};
 	const onScene = (sceneId: string) => {
 		if (speakScene(sceneId)) router.push(`/speak?scene=${sceneId}`);
@@ -74,10 +116,13 @@ export function CurriculumPage({ initialView = "chapters", initialConfigured, st
 					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
 					Today
 				</Link>
-				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Curriculum</h1>
+				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">
+					Curriculum
+				</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Your climb to {goal.level}. {state ? `${state.done} of ${state.total} units done. ` : ""}
-					Each level is a stretch of the climb, and each chapter a stop on it. A chapter opens when the one before is nearly done. One lesson you ace finishes its unit.
+					Each level is a stretch of the climb, and each chapter a stop on it. A chapter opens when the one before is
+					nearly done. One lesson you ace finishes its unit.
 				</p>
 				<div role="tablist" aria-label="How to read the climb" className="q-segc mt-6" data-testid="climb-views">
 					{CLIMB_VIEWS.map((v, i) => (
@@ -102,7 +147,19 @@ export function CurriculumPage({ initialView = "chapters", initialConfigured, st
 					))}
 				</div>
 				<div className="mt-6" role="tabpanel" id="climb-panel" aria-labelledby={`climb-tab-${view}`}>
-					<Climb view={view} state={state} next={next} mode="full" goalLevel={goal.level} goals={purposeGoals(goal.purposes ?? [])} weak={weak} exams={exams} busy={busy} onTutor={onTutor} onScene={onScene} />
+					<Climb
+						view={view}
+						state={state}
+						next={next}
+						mode="full"
+						goalLevel={goal.level}
+						goals={purposeGoals(goal.purposes ?? [])}
+						weak={weak}
+						exams={exams}
+						busy={busy}
+						onTutor={onTutor}
+						onScene={onScene}
+					/>
 				</div>
 			</main>
 			<SetupDialog

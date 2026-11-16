@@ -92,7 +92,11 @@ export function lineSeed(language: string, day: string): number {
 /** The first sentence, in a seeded order, that has a translation, five to
  *  twelve words and one or two glossed words the learner does not know.
  *  Returns null when the dictionary has none (the page then says so). */
-export function pickLine(entries: readonly LexiconEntry[], lookup: ListenLookup, opts: { seed: number; recent?: ReadonlySet<string>; scan?: number }): LineItem | null {
+export function pickLine(
+	entries: readonly LexiconEntry[],
+	lookup: ListenLookup,
+	opts: { seed: number; recent?: ReadonlySet<string>; scan?: number },
+): LineItem | null {
 	const rand = rng(opts.seed);
 	const scan = opts.scan ?? 4000;
 	const order = shuffle(
@@ -153,9 +157,18 @@ export function scoreLine(sentence: string, typed: string): LineScore {
 	const typedSpans = sentenceWordSpans(typed);
 	const marks: LineMark[] = [];
 	let at = 0;
-	for (const op of alignWords(target, typedSpans.map((s) => s.word))) {
+	for (const op of alignWords(
+		target,
+		typedSpans.map((s) => s.word),
+	)) {
 		if (op.op === "match") marks.push({ word: op.target!, caught: true, almost: false });
-		else if (op.op === "sub") marks.push({ word: op.target!, caught: false, almost: unaccented(op.target!) === unaccented(op.given!), given: typedSpans[at]!.text });
+		else if (op.op === "sub")
+			marks.push({
+				word: op.target!,
+				caught: false,
+				almost: unaccented(op.target!) === unaccented(op.given!),
+				given: typedSpans[at]!.text,
+			});
 		else if (op.op === "del") marks.push({ word: op.target!, caught: false, almost: false });
 		if (op.op !== "del") at++;
 	}
@@ -198,14 +211,17 @@ interface LineRow {
 /** What the row on Today says about the line. Counts only; the learner's own
  *  numbers, never called a score. */
 export function lineRow(input: LineCardInput): LineRow {
-	if (!input.hasLine) return { line: "The dictionary has no sentence that fits yet.", pill: "No line today", tone: "none" };
+	if (!input.hasLine)
+		return { line: "The dictionary has no sentence that fits yet.", pill: "No line today", tone: "none" };
 	const m = input.morning;
-	if (!m) return { line: "One sentence, no text. Listen, then type what you caught.", pill: "Not heard yet", tone: "idle" };
+	if (!m)
+		return { line: "One sentence, no text. Listen, then type what you caught.", pill: "Not heard yet", tone: "idle" };
 	const first = `First hearing ${m.caught} of ${m.words} words`;
 	if (input.evening) {
 		const e = input.evening;
 		return { line: `${first}, second hearing ${e.caught} of ${e.words}.`, pill: "Both heard", tone: "done" };
 	}
-	if (input.eveningOpen) return { line: `${first}. Hear it again, now that you have practiced.`, pill: "Hear it again", tone: "open" };
+	if (input.eveningOpen)
+		return { line: `${first}. Hear it again, now that you have practiced.`, pill: "Hear it again", tone: "open" };
 	return { line: `${first}. It comes back once you have practiced today.`, pill: "Back later", tone: "idle" };
 }

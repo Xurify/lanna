@@ -50,10 +50,12 @@ ipcRenderer.on("lh:open-settings", (_event, section) => {
 
 contextBridge.exposeInMainWorld("lh", {
 	platform: process.platform,
-	...(process.argv?.includes("--lh-web-subscriptions") ? {
-		subscriptionTransport: "web",
-		openSubscriptionBrowser: (action) => ipcRenderer.invoke("lh:subscriptions:web-browser", action),
-	} : {}),
+	...(process.argv?.includes("--lh-web-subscriptions")
+		? {
+				subscriptionTransport: "web",
+				openSubscriptionBrowser: (action) => ipcRenderer.invoke("lh:subscriptions:web-browser", action),
+			}
+		: {}),
 	chatgpt: {
 		status: () => ipcRenderer.invoke("lh:chatgpt:control", { op: "status" }),
 		login: (id) => ipcRenderer.invoke("lh:chatgpt:control", { op: "login", id }),
@@ -70,13 +72,17 @@ contextBridge.exposeInMainWorld("lh", {
 	},
 	subscriptions: {
 		status: () => ipcRenderer.invoke("lh:subscriptions:control", { op: "status" }),
-		login: (providerId, enabled) => ipcRenderer.invoke("lh:subscriptions:control", { op: "login", providerId, enabled }),
+		login: (providerId, enabled) =>
+			ipcRenderer.invoke("lh:subscriptions:control", { op: "login", providerId, enabled }),
 		cancel: (providerId) => ipcRenderer.invoke("lh:subscriptions:control", { op: "cancel", providerId }),
-		respond: (providerId, attemptId, promptId, value) => ipcRenderer.invoke("lh:subscriptions:control", { op: "respond", providerId, attemptId, promptId, value }),
-		open: (providerId, attemptId, actionId) => ipcRenderer.invoke("lh:subscriptions:control", { op: "open", providerId, attemptId, actionId }),
+		respond: (providerId, attemptId, promptId, value) =>
+			ipcRenderer.invoke("lh:subscriptions:control", { op: "respond", providerId, attemptId, promptId, value }),
+		open: (providerId, attemptId, actionId) =>
+			ipcRenderer.invoke("lh:subscriptions:control", { op: "open", providerId, attemptId, actionId }),
 		retry: (providerId) => ipcRenderer.invoke("lh:subscriptions:control", { op: "retry", providerId }),
 		disconnect: (providerId) => ipcRenderer.invoke("lh:subscriptions:control", { op: "disconnect", providerId }),
-		consent: (providerId, enabled) => ipcRenderer.invoke("lh:subscriptions:control", { op: "consent", providerId, enabled }),
+		consent: (providerId, enabled) =>
+			ipcRenderer.invoke("lh:subscriptions:control", { op: "consent", providerId, enabled }),
 		onChange: (cb) => {
 			const listener = () => cb();
 			ipcRenderer.on("lh:subscriptions:changed", listener);

@@ -67,7 +67,10 @@ const TOGGLE_TOOLS = ["research", "pdf"] as const;
 
 /** Learner-facing copy. The ids stay the engine's names. */
 const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: string }> = {
-	research: { label: "Web research", hint: "Looks up facts and current data online. Needs a search key in Settings → API keys." },
+	research: {
+		label: "Web research",
+		hint: "Looks up facts and current data online. Needs a search key in Settings → API keys.",
+	},
 	pdf: { label: "Read PDFs", hint: "Reads the PDFs you add with the PDF button and cites their pages." },
 };
 
@@ -102,7 +105,13 @@ function composeTool(agent: AgentSettings | undefined, id: string, on: boolean):
 
 /** Exactly one mechanic is active: `explain: true` is free recall, anything else multiple choice. `quiz` is never written here (see quizMechanics in agent/tools.ts). */
 /** Lives under Learning: it is how the learner is quizzed, stored with the tutor's tools. */
-export function QuizStyleRow({ agent, onSectionChange }: { agent: AgentSettings | undefined; onSectionChange: (next: AgentSettings) => void }) {
+export function QuizStyleRow({
+	agent,
+	onSectionChange,
+}: {
+	agent: AgentSettings | undefined;
+	onSectionChange: (next: AgentSettings) => void;
+}) {
 	return (
 		<SettingsRow
 			label="Quiz style"
@@ -238,7 +247,9 @@ function MenuTrigger({
 				if (!disabled) onClick();
 			}}
 			className={`flex h-8.5 items-center justify-between gap-1.5 rounded-xl border border-border/80 bg-background px-2.5 font-ui text-xs text-foreground transition-colors ${
-				disabled ? "cursor-not-allowed opacity-50" : "hover:border-border hover:bg-background focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
+				disabled
+					? "cursor-not-allowed opacity-50"
+					: "hover:border-border hover:bg-background focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
 			} ${widthClass}`}
 		>
 			<span className="min-w-0 flex-1 truncate text-left">{value || emptyLabel}</span>
@@ -272,14 +283,19 @@ export function AiSection({
 	/** Live search state; feeds the row's reason line. */
 	const [search, setSearch] = useState<{ available: boolean; engine: string | null; reason: string } | null>(null);
 	/** Which search engines have a key. With none, the row grays. */
-	const [engineKeys, setEngineKeys] = useState<Partial<Record<(typeof SEARCH_ENGINES)[number] | "elevenlabs", boolean>>>({});
+	const [engineKeys, setEngineKeys] = useState<
+		Partial<Record<(typeof SEARCH_ENGINES)[number] | "elevenlabs", boolean>>
+	>({});
 	const [prompts, setPrompts] = useState<{ prober: SegmentInfo[]; teacher: SegmentInfo[] } | null>(null);
 	const [openSegment, setOpenSegment] = useState<string | null>(null);
 	const [segmentDraft, setSegmentDraft] = useState<Record<string, string>>({});
 	const [segmentStatus, setSegmentStatus] = useState<string | null>(null);
 	const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(null);
 	/** One open dropdown per section: the slot or search row, and the kind. */
-	const [openMenu, setOpenMenu] = useState<{ target: ModelSlotName | "search" | "transcription"; kind: "model" | "thinking" | "engine" } | null>(null);
+	const [openMenu, setOpenMenu] = useState<{
+		target: ModelSlotName | "search" | "transcription";
+		kind: "model" | "thinking" | "engine";
+	} | null>(null);
 	const menuAnchorRef = useRef<HTMLSpanElement>(null);
 
 	const refreshSearch = () =>
@@ -303,13 +319,18 @@ export function AiSection({
 		const request = ++modelsRequest.current;
 		if (connectionChanged) setCatalog(null);
 		fetch("/api/models")
-			.then((r) => { if (!r.ok) throw new Error("Catalog unavailable"); return r.json(); })
+			.then((r) => {
+				if (!r.ok) throw new Error("Catalog unavailable");
+				return r.json();
+			})
 			.then((body: ModelsBody) => {
 				if (!modelsMounted.current || request !== modelsRequest.current) return;
 				setCatalog(body.models);
 				setSlots(body.slots);
 			})
-			.catch(() => { if (modelsMounted.current && request === modelsRequest.current) setCatalog(null); });
+			.catch(() => {
+				if (modelsMounted.current && request === modelsRequest.current) setCatalog(null);
+			});
 	}, []);
 
 	useSettingsSaved((section) => {
@@ -337,7 +358,10 @@ export function AiSection({
 				setEngineKeys(present);
 			})
 			.catch(() => {});
-		return () => { modelsMounted.current = false; modelsRequest.current++; };
+		return () => {
+			modelsMounted.current = false;
+			modelsRequest.current++;
+		};
 	}, []);
 
 	// Re-read after an engine write lands, so the reason never contradicts the trigger.
@@ -406,13 +430,7 @@ export function AiSection({
 	}
 
 	/** Search-engine menu row: label, a has-key mark, and a check on the chosen engine. */
-	const engineOption = (
-		id: string,
-		label: string,
-		active: boolean,
-		live: boolean | null,
-		onPick: () => void,
-	) => (
+	const engineOption = (id: string, label: string, active: boolean, live: boolean | null, onPick: () => void) => (
 		<MenuOption
 			key={id}
 			data-testid={`engine-option-${id}`}
@@ -516,7 +534,9 @@ export function AiSection({
 							)}
 							{fileExists && confirmDeletePath === info.path && (
 								<span className="flex items-center gap-2 text-xs" data-testid="segment-delete-confirm">
-									<span className="text-muted-foreground">Delete your version? The original instructions are used again.</span>
+									<span className="text-muted-foreground">
+										Delete your version? The original instructions are used again.
+									</span>
 									<button
 										type="button"
 										onClick={() => {
@@ -550,9 +570,7 @@ export function AiSection({
 	};
 
 	// Same core resolver as the server, so the hint reports the number the trigger uses.
-	const resolvedCompaction = resolveSettings(
-		compaction === undefined ? null : { version: 1, compaction },
-	).compaction;
+	const resolvedCompaction = resolveSettings(compaction === undefined ? null : { version: 1, compaction }).compaction;
 	// The hint's "Default" is the factory threshold; the stored one is the effective value.
 	const factoryCompaction = resolveSettings(null).compaction.thresholdTokens;
 
@@ -572,8 +590,7 @@ export function AiSection({
 					const levels = chosen ? chosen.supportedLevels : THINKING_LEVELS;
 					const thisMenuOpen = openMenu?.target === slot ? openMenu.kind : null;
 					// Vision slots pick from image-capable models only.
-					const slotCatalog =
-						slot === "vision" ? catalog?.filter((m) => m.input.includes("image")) : catalog;
+					const slotCatalog = slot === "vision" ? catalog?.filter((m) => m.input.includes("image")) : catalog;
 					return (
 						<SettingsRow
 							key={slot}
@@ -583,11 +600,13 @@ export function AiSection({
 							stack={false}
 						>
 							{/* Outside-click anchor: the span holding both triggers. */}
-							<span
-								ref={thisMenuOpen ? menuAnchorRef : undefined}
-								className="relative flex items-center gap-2"
-							>
-								{slot !== "strong" && <><ChatGPTBackgroundAccess provider={coord?.provider} /><NativeSubscriptionBackgroundAccess provider={coord?.provider} /></>}
+							<span ref={thisMenuOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
+								{slot !== "strong" && (
+									<>
+										<ChatGPTBackgroundAccess provider={coord?.provider} />
+										<NativeSubscriptionBackgroundAccess provider={coord?.provider} />
+									</>
+								)}
 								<MenuTrigger
 									value={modelId ? modelName(catalog, provider, modelId) : ""}
 									emptyLabel="—"
@@ -610,7 +629,7 @@ export function AiSection({
 								{thisMenuOpen === "model" && (
 									<MenuShell
 										preferredSide="down"
-											anchorTestid={`slot-model-${slot}`}
+										anchorTestid={`slot-model-${slot}`}
 										testid={`slot-model-menu-${slot}`}
 										menuClass="flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 									>
@@ -635,7 +654,7 @@ export function AiSection({
 								{thisMenuOpen === "thinking" && (
 									<MenuShell
 										preferredSide="down"
-											anchorTestid={`slot-thinking-${slot}`}
+										anchorTestid={`slot-thinking-${slot}`}
 										testid={`slot-thinking-menu-${slot}`}
 										menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 									>
@@ -698,7 +717,7 @@ export function AiSection({
 								{open && (
 									<MenuShell
 										preferredSide="down"
-											anchorTestid="search-engine-trigger"
+										anchorTestid="search-engine-trigger"
 										testid="search-engine-menu"
 										menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 									>
@@ -744,10 +763,16 @@ export function AiSection({
 										testid="transcription-engine-menu"
 										menuClass="flex w-56 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
 									>
-										{engineOption("auto-transcription", "Automatic (Whisper → ElevenLabs)", engine === null, null, () => {
-											onSectionChange(composeTranscriptionEngine(agent, null));
-											setOpenMenu(null);
-										})}
+										{engineOption(
+											"auto-transcription",
+											"Automatic (Whisper → ElevenLabs)",
+											engine === null,
+											null,
+											() => {
+												onSectionChange(composeTranscriptionEngine(agent, null));
+												setOpenMenu(null);
+											},
+										)}
 										{TRANSCRIPTION_ENGINES.map((id) =>
 											engineOption(
 												id,
@@ -773,57 +798,51 @@ export function AiSection({
 				hint="Long chats and the instructions the tutor follows. Most people never need to open this."
 				testid="advanced-tutor"
 			>
-			<SettingsGroup label="Long chats" testid="group-context">
-				<SettingsRow
-					label="Summarize long chats after"
-					hint={`Tokens of conversation before older messages are summarized. Default ${factoryCompaction.toLocaleString("en-GB")}.`}
-					testid="compaction-row-threshold"
-				>
-					<CommitInput
-						type="number"
-						value={String(compaction?.thresholdTokens ?? "")}
-						placeholder={String(resolvedCompaction.thresholdTokens)}
-						ariaLabel="Summarize long chats after"
-						testid="input-compaction-threshold"
-						onCommit={(v) => {
-							// Empty = factory default. Absence is the unset for numbers.
-							if (v === "") {
-								onCompactionChange({ ...compaction, thresholdTokens: undefined });
-								return;
-							}
-							const n = Number(v);
-							if (!Number.isFinite(n) || n <= 0) return; // bad input: no write
-							// Mirror the server floor (each compaction keeps a ~20k-token tail). No ceiling.
-							onCompactionChange({
-								...compaction,
-								thresholdTokens: Math.max(COMPACTION_THRESHOLD_FLOOR, Math.round(n)),
-							});
-						}}
-					/>
-				</SettingsRow>
-			</SettingsGroup>
+				<SettingsGroup label="Long chats" testid="group-context">
+					<SettingsRow
+						label="Summarize long chats after"
+						hint={`Tokens of conversation before older messages are summarized. Default ${factoryCompaction.toLocaleString("en-GB")}.`}
+						testid="compaction-row-threshold"
+					>
+						<CommitInput
+							type="number"
+							value={String(compaction?.thresholdTokens ?? "")}
+							placeholder={String(resolvedCompaction.thresholdTokens)}
+							ariaLabel="Summarize long chats after"
+							testid="input-compaction-threshold"
+							onCommit={(v) => {
+								// Empty = factory default. Absence is the unset for numbers.
+								if (v === "") {
+									onCompactionChange({ ...compaction, thresholdTokens: undefined });
+									return;
+								}
+								const n = Number(v);
+								if (!Number.isFinite(n) || n <= 0) return; // bad input: no write
+								// Mirror the server floor (each compaction keeps a ~20k-token tail). No ceiling.
+								onCompactionChange({
+									...compaction,
+									thresholdTokens: Math.max(COMPACTION_THRESHOLD_FLOOR, Math.round(n)),
+								});
+							}}
+						/>
+					</SettingsRow>
+				</SettingsGroup>
 
-			<SettingsGroup label="System prompts" testid="group-prompts">
-				{prompts === null ? (
-					<p className="text-xs text-muted-foreground">Loading prompt segments…</p>
-				) : (
-					<div className="flex flex-col gap-4">
-						{sectionedSegments(prompts).map((section) => (
-							<div key={section.id} data-testid={`prompt-section-${section.id}`}>
-								<p className="mb-1 text-xs text-muted-foreground">
-									{section.label}
-								</p>
-								{section.hint && (
-									<p className="mb-1 text-xs text-muted-foreground">{section.hint}</p>
-								)}
-								<div className="flex flex-col gap-2">
-									{section.segments.map((info) => segmentRow(info))}
+				<SettingsGroup label="System prompts" testid="group-prompts">
+					{prompts === null ? (
+						<p className="text-xs text-muted-foreground">Loading prompt segments…</p>
+					) : (
+						<div className="flex flex-col gap-4">
+							{sectionedSegments(prompts).map((section) => (
+								<div key={section.id} data-testid={`prompt-section-${section.id}`}>
+									<p className="mb-1 text-xs text-muted-foreground">{section.label}</p>
+									{section.hint && <p className="mb-1 text-xs text-muted-foreground">{section.hint}</p>}
+									<div className="flex flex-col gap-2">{section.segments.map((info) => segmentRow(info))}</div>
 								</div>
-							</div>
-						))}
-					</div>
-				)}
-			</SettingsGroup>
+							))}
+						</div>
+					)}
+				</SettingsGroup>
 			</SettingsDisclosure>
 		</>
 	);

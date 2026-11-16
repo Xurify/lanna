@@ -58,9 +58,36 @@ const BUDEM = new Set(["budem", "budeš", "budeme", "budete", "budú"]);
 
 /** Common perfective infinitives (each one checked against KSSJ "dok."). */
 const PERFECTIVE = new Set([
-	"urobiť", "spraviť", "napísať", "prečítať", "kúpiť", "predať", "povedať", "prísť", "odísť", "dať",
-	"vziať", "zobrať", "zavolať", "pomôcť", "zjesť", "vypiť", "nájsť", "otvoriť", "zatvoriť", "začať",
-	"skončiť", "stretnúť", "poslať", "pozrieť", "uvariť", "zaplatiť", "vrátiť", "zistiť", "zabudnúť", "naučiť",
+	"urobiť",
+	"spraviť",
+	"napísať",
+	"prečítať",
+	"kúpiť",
+	"predať",
+	"povedať",
+	"prísť",
+	"odísť",
+	"dať",
+	"vziať",
+	"zobrať",
+	"zavolať",
+	"pomôcť",
+	"zjesť",
+	"vypiť",
+	"nájsť",
+	"otvoriť",
+	"zatvoriť",
+	"začať",
+	"skončiť",
+	"stretnúť",
+	"poslať",
+	"pozrieť",
+	"uvariť",
+	"zaplatiť",
+	"vrátiť",
+	"zistiť",
+	"zabudnúť",
+	"naučiť",
 ]);
 
 const CLITICS = new Set(["sa", "si", "to", "ho", "mu", "mi", "ti", "ju", "ich", "ma", "ťa", "nám", "vám", "im", "jej"]);
@@ -82,15 +109,29 @@ export function checkSlovak(text: string, lookup?: SlovakLookup): SlovakCheck {
 	for (let i = 0; i < words.length - 1; i++) {
 		const rule = VOCALIZE[lower[i]!];
 		if (rule && rule.before.test(lower[i + 1]!)) {
-			issues.push({ rule: "vocalized-preposition", found: `${words[i]} ${words[i + 1]}`, fix: `${capitalized(rule.full, words[i]!)} ${words[i + 1]}`, why: `Before a word starting with ${rule.letters} the preposition is written "${rule.full}".` });
+			issues.push({
+				rule: "vocalized-preposition",
+				found: `${words[i]} ${words[i + 1]}`,
+				fix: `${capitalized(rule.full, words[i]!)} ${words[i + 1]}`,
+				why: `Before a word starting with ${rule.letters} the preposition is written "${rule.full}".`,
+			});
 		}
 	}
 
-	for (const w of words) if (w.toLocaleLowerCase("sk") === "nieje") issues.push({ rule: "nie-je", found: w, fix: capitalized("nie je", w), why: '"nie je" is always two words.' });
+	for (const w of words)
+		if (w.toLocaleLowerCase("sk") === "nieje")
+			issues.push({ rule: "nie-je", found: w, fix: capitalized("nie je", w), why: '"nie je" is always two words.' });
 
 	// A capitalized word after the first is a name: "Počúvam Dvořáka." is right.
-	const czech = words.find((w, i) => (i === 0 || w[0] === w[0]!.toLocaleLowerCase("sk")) && /[řěůŘĚŮ]/u.test(w))?.match(/[řěůŘĚŮ]/u);
-	if (czech) issues.push({ rule: "czech-letter", found: czech[0], why: `"${czech[0]}" is a Czech letter; Slovak has no ř, ě or ů.` });
+	const czech = words
+		.find((w, i) => (i === 0 || w[0] === w[0]!.toLocaleLowerCase("sk")) && /[řěůŘĚŮ]/u.test(w))
+		?.match(/[řěůŘĚŮ]/u);
+	if (czech)
+		issues.push({
+			rule: "czech-letter",
+			found: czech[0],
+			why: `"${czech[0]}" is a Czech letter; Slovak has no ř, ě or ů.`,
+		});
 
 	for (let i = 0; i < words.length; i++) {
 		if (!BUDEM.has(lower[i]!)) continue;
@@ -98,7 +139,12 @@ export function checkSlovak(text: string, lookup?: SlovakLookup): SlovakCheck {
 		let j = i + 1;
 		while (j < lower.length && CLITICS.has(lower[j]!)) j++;
 		const inf = PERFECTIVE.has(lower[j] ?? "") ? lower[j]! : null;
-		if (inf) issues.push({ rule: "budem-perfective", found: `${words[i]} … ${inf}`, why: `"${words[i]}" takes an imperfective infinitive; "${inf}" is perfective, so its present form already means the future.` });
+		if (inf)
+			issues.push({
+				rule: "budem-perfective",
+				found: `${words[i]} … ${inf}`,
+				why: `"${words[i]}" takes an imperfective infinitive; "${inf}" is perfective, so its present form already means the future.`,
+			});
 	}
 
 	if (lookup) {
@@ -111,8 +157,19 @@ export function checkSlovak(text: string, lookup?: SlovakLookup): SlovakCheck {
 			if (genders.size !== 1 || !GENDERS.has([...genders][0]!)) continue;
 			const gender = [...genders][0]!;
 			const femNeut = gender === "feminine" || gender === "neuter";
-			if (femNeut && num !== "dve") issues.push({ rule: "numeral-gender", found: `${words[i]} ${noun}`, fix: `${capitalized("dve", words[i]!)} ${noun}`, why: `"${noun}" is ${gender}, and feminine and neuter nouns take "dve".` });
-			else if (!femNeut && num === "dve") issues.push({ rule: "numeral-gender", found: `${words[i]} ${noun}`, why: `"${noun}" is masculine: "dva" for things and animals, "dvaja" for male persons.` });
+			if (femNeut && num !== "dve")
+				issues.push({
+					rule: "numeral-gender",
+					found: `${words[i]} ${noun}`,
+					fix: `${capitalized("dve", words[i]!)} ${noun}`,
+					why: `"${noun}" is ${gender}, and feminine and neuter nouns take "dve".`,
+				});
+			else if (!femNeut && num === "dve")
+				issues.push({
+					rule: "numeral-gender",
+					found: `${words[i]} ${noun}`,
+					why: `"${noun}" is masculine: "dva" for things and animals, "dvaja" for male persons.`,
+				});
 		}
 	}
 
@@ -121,7 +178,8 @@ export function checkSlovak(text: string, lookup?: SlovakLookup): SlovakCheck {
 
 /** The checker's findings as one line for the tutor, or null when it has nothing to say. */
 export function checkerNote(check: SlovakCheck): string | null {
-	if (check.verified) return "[Checker: this is a verified dictionary example sentence. Its Slovak is correct; do not mark its Slovak wrong. Whether it answers the task is still yours to judge.]";
+	if (check.verified)
+		return "[Checker: this is a verified dictionary example sentence. Its Slovak is correct; do not mark its Slovak wrong. Whether it answers the task is still yours to judge.]";
 	if (check.issues.length === 0) return null;
 	const lines = check.issues.map((i) => `${i.found}${i.fix ? ` → ${i.fix}` : ""}: ${i.why}`);
 	return `[Checker, certain rules only: ${lines.join(" ")}]`;

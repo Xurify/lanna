@@ -18,7 +18,12 @@ export async function GET(req: Request) {
 	const tz = Number(url.searchParams.get("tz"));
 	if (url.searchParams.get("mode") === "reread") {
 		const id = url.searchParams.get("id") ?? undefined;
-		return Response.json(rereadFor({ id: id && /^[a-z0-9][a-z0-9-]*$/.test(id) ? id : undefined, tz: Number.isFinite(tz) ? tz : undefined }));
+		return Response.json(
+			rereadFor({
+				id: id && /^[a-z0-9][a-z0-9-]*$/.test(id) ? id : undefined,
+				tz: Number.isFinite(tz) ? tz : undefined,
+			}),
+		);
 	}
 	return Response.json(fastFor());
 }
@@ -36,8 +41,17 @@ export async function POST(req: Request) {
 		if (body.mode === "reread") {
 			const storyId = str(body.storyId, 120);
 			const ms = num(body.ms);
-			if (!/^[a-z0-9][a-z0-9-]*$/.test(storyId) || ms === undefined) return Response.json({ message: "storyId and ms are required" }, { status: 400 });
-			return Response.json(recordReread({ storyId, ms, questionIndex: num(body.questionIndex) ?? 0, answer: num(body.answer) ?? -1, tz: tzOk }));
+			if (!/^[a-z0-9][a-z0-9-]*$/.test(storyId) || ms === undefined)
+				return Response.json({ message: "storyId and ms are required" }, { status: 400 });
+			return Response.json(
+				recordReread({
+					storyId,
+					ms,
+					questionIndex: num(body.questionIndex) ?? 0,
+					answer: num(body.answer) ?? -1,
+					tz: tzOk,
+				}),
+			);
 		}
 		if (body.mode === "fast") {
 			if (!Array.isArray(body.reps)) return Response.json({ message: "reps must be an array" }, { status: 400 });

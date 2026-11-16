@@ -21,11 +21,20 @@ function Meter({ label, meter, unit, hot }: { label: string; meter: StageMeter; 
 	return (
 		<div className="contents" data-testid={`stage-meter-${label.toLowerCase()}`}>
 			<span className={cn("text-[13px]", hot ? "font-[600] text-teal-2" : "text-ink-2")}>{label}</span>
-			<span className={cn("q-bar block", hot && "hot")} role="meter" aria-valuemin={0} aria-valuemax={meter.need} aria-valuenow={meter.have} aria-label={`${label}: ${meter.have} of ${meter.need}${unit}`}>
+			<span
+				className={cn("q-bar block", hot && "hot")}
+				role="meter"
+				aria-valuemin={0}
+				aria-valuemax={meter.need}
+				aria-valuenow={meter.have}
+				aria-label={`${label}: ${meter.have} of ${meter.need}${unit}`}
+			>
 				<i style={{ width: `${fill * 100}%` }} />
 				<span className="target" style={{ left: `${target * 100}%` }} aria-hidden="true" />
 			</span>
-			<span className={cn("q-num whitespace-nowrap text-right text-[13px]", hot ? "font-[600] text-teal-2" : "text-ink-2")}>
+			<span
+				className={cn("q-num whitespace-nowrap text-right text-[13px]", hot ? "font-[600] text-teal-2" : "text-ink-2")}
+			>
 				{meter.have}
 				<span className="font-[450] text-ink-4"> / {meter.need}</span>
 				{unit && <span className="font-[450] text-ink-3">{unit}</span>}
@@ -38,7 +47,12 @@ function Meter({ label, meter, unit, hot }: { label: string; meter: StageMeter; 
 export function WhereYouAre({ stage, scene }: { stage: StageView | null; scene: DatedSceneView | null }) {
 	if (!stage && !scene) return null;
 	return (
-		<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".06s" }} data-testid="where-you-are" aria-label="Where you are">
+		<section
+			className="mt-6 q-rise @max-6xl:mt-5"
+			style={{ animationDelay: ".06s" }}
+			data-testid="where-you-are"
+			aria-label="Where you are"
+		>
 			<h2 className="q-sh">
 				<QIcon name="flag" />
 				Where you are
@@ -50,7 +64,9 @@ export function WhereYouAre({ stage, scene }: { stage: StageView | null; scene: 
 						{(stage.words || stage.speed) && (
 							<div className="mt-4 grid grid-cols-[56px_1fr_auto] items-center gap-x-3 gap-y-2.5">
 								{stage.words && <Meter label="Words" meter={stage.words} unit="" hot={stage.binding === "words"} />}
-								{stage.speed && <Meter label="Speed" meter={stage.speed} unit=" w/min" hot={stage.binding === "speed"} />}
+								{stage.speed && (
+									<Meter label="Speed" meter={stage.speed} unit=" w/min" hot={stage.binding === "speed"} />
+								)}
 							</div>
 						)}
 						{stage.detail && <p className="mt-3 text-[12.5px] text-ink-3">{stage.detail}</p>}

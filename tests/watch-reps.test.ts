@@ -41,11 +41,33 @@ const storeFile = () => path.join(PATHS.data, "watch-reps.json");
 const resetStore = () => fs.rmSync(storeFile(), { force: true });
 
 function line(over: Partial<WatchRep> = {}): WatchRep {
-	return { id: "vid00000001:3", text: "Dobrý deň, ako sa máte?", en: "Good day, how are you?", videoId: "vid00000001", title: "Test video", added: "2026-11-04", step: 0, due: DAY, ...over };
+	return {
+		id: "vid00000001:3",
+		text: "Dobrý deň, ako sa máte?",
+		en: "Good day, how are you?",
+		videoId: "vid00000001",
+		title: "Test video",
+		added: "2026-11-04",
+		step: 0,
+		due: DAY,
+		...over,
+	};
 }
 
 function rep(itemId: string, over: Partial<ListenRep> = {}): ListenRep {
-	return { itemId, slug: "", lemma: "", gloss: "", sentence: "", translation: "", given: "", verdict: "wrong", answer: "type", stretch: [], ...over };
+	return {
+		itemId,
+		slug: "",
+		lemma: "",
+		gloss: "",
+		sentence: "",
+		translation: "",
+		given: "",
+		verdict: "wrong",
+		answer: "type",
+		stretch: [],
+		...over,
+	};
 }
 
 describe("scheduling", () => {
@@ -119,13 +141,20 @@ describe("the lines a Watch save keeps", () => {
 	};
 
 	test("a line not understood on the first unaided listen is kept; one understood first time is not", () => {
-		const out = reps.missedWatchReps(video, [
-			{ i: 0, got: "first" },
-			{ i: 1, got: "no" },
-			{ i: 2, got: "after" },
-			{ i: 3, got: "after" },
-		], DAY);
-		assert.deepEqual(out.map((r) => r.id), ["vid00000001:1", "vid00000001:3"]);
+		const out = reps.missedWatchReps(
+			video,
+			[
+				{ i: 0, got: "first" },
+				{ i: 1, got: "no" },
+				{ i: 2, got: "after" },
+				{ i: 3, got: "after" },
+			],
+			DAY,
+		);
+		assert.deepEqual(
+			out.map((r) => r.id),
+			["vid00000001:1", "vid00000001:3"],
+		);
 		assert.equal(out[0]!.en, undefined, "an empty translation is not kept");
 		assert.equal(out[1]!.en, "We are home.");
 		assert.equal(out[0]!.step, 0);
@@ -134,7 +163,9 @@ describe("the lines a Watch save keeps", () => {
 	});
 
 	test("a watch line becomes a Listen item with no options, no stretch words and its own words counted", () => {
-		const item = reps.watchListenItem(line({ id: "vid00000001:3", text: "Mám 2 deti, dve mačky.", en: "I have 2 kids, two cats." }));
+		const item = reps.watchListenItem(
+			line({ id: "vid00000001:3", text: "Mám 2 deti, dve mačky.", en: "I have 2 kids, two cats." }),
+		);
 		assert.equal(item.id, "watch:vid00000001:3");
 		assert.equal(reps.isWatchItem(item.id), true);
 		assert.equal(reps.watchRepOfItem(item.id), "vid00000001:3");
@@ -167,7 +198,10 @@ describe("the store", () => {
 		const b = line({ id: "vid00000002:1" });
 		watchRepStore.addNew([a, b]);
 		watchRepStore.replace([{ ...a, retiredAt: AT }]);
-		assert.deepEqual(watchRepStore.active().map((l) => l.id), ["vid00000002:1"]);
+		assert.deepEqual(
+			watchRepStore.active().map((l) => l.id),
+			["vid00000002:1"],
+		);
 		assert.equal(watchRepStore.read().lines.find((l) => l.id === "vid00000002:0")!.retiredAt, AT);
 	});
 });
@@ -207,7 +241,10 @@ describe("a Watch save queues its missed lines", () => {
 		recordWatch({ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 }, watchedAt);
 		recordWatch({ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 }, watchedAt);
 		const kept = watchRepStore.read().lines.filter((l) => l.videoId === record.id);
-		assert.deepEqual(kept.map((l) => [l.id, l.text, l.en, l.added, l.step, l.due]), [["vid00000003:1", "Koľko stojí chlieb?", "How much is the bread?", DAY, 0, "2026-11-06"]]);
+		assert.deepEqual(
+			kept.map((l) => [l.id, l.text, l.en, l.added, l.step, l.due]),
+			[["vid00000003:1", "Koľko stojí chlieb?", "How much is the bread?", DAY, 0, "2026-11-06"]],
+		);
 	});
 
 	test("a Czech-caption video queues nothing, since its lines would be spoken in Slovak", () => {
@@ -238,8 +275,14 @@ describe("a Watch save queues its missed lines", () => {
 			{ i: 0, words: 4, sec: 3, replays: 0, slow: false, revealed: false, got: "no" as const },
 			{ i: 1, words: 4, sec: 3, replays: 0, slow: false, revealed: false, got: "no" as const },
 		];
-		recordWatch({ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 }, new Date("2026-11-05T09:00:00Z"));
-		assert.deepEqual(watchRepStore.read().lines.filter((l) => l.videoId === record.id), []);
+		recordWatch(
+			{ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 },
+			new Date("2026-11-05T09:00:00Z"),
+		);
+		assert.deepEqual(
+			watchRepStore.read().lines.filter((l) => l.videoId === record.id),
+			[],
+		);
 	});
 
 	test("a video with automatic captions queues nothing, since their text can be wrong", () => {
@@ -253,7 +296,9 @@ describe("a Watch save queues its missed lines", () => {
 			source: { kind: "auto-captions", trackLang: "sk", via: "test" },
 			level: "A2",
 			createdAt: "2026-11-04T09:00:00.000Z",
-			segments: [{ i: 0, start: 0, end: 3, sk: "Dobrý deň, pani predavačka.", en: "Good day, shopkeeper.", tokens: [] }],
+			segments: [
+				{ i: 0, start: 0, end: 3, sk: "Dobrý deň, pani predavačka.", en: "Good day, shopkeeper.", tokens: [] },
+			],
 			questions: [],
 			preTeach: [],
 			coverage: 0.9,
@@ -264,8 +309,14 @@ describe("a Watch save queues its missed lines", () => {
 		};
 		videoStore.put(record);
 		const stats = [{ i: 0, words: 4, sec: 3, replays: 0, slow: false, revealed: false, got: "no" as const }];
-		recordWatch({ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 }, new Date("2026-11-05T09:00:00Z"));
-		assert.deepEqual(watchRepStore.read().lines.filter((l) => l.videoId === record.id), []);
+		recordWatch(
+			{ videoId: record.id, mode: "step", stats, answers: [], tapped: [], tz: 0 },
+			new Date("2026-11-05T09:00:00Z"),
+		);
+		assert.deepEqual(
+			watchRepStore.read().lines.filter((l) => l.videoId === record.id),
+			[],
+		);
 	});
 });
 
@@ -275,20 +326,56 @@ describe("Listen serves the due watch lines", () => {
 		const seed = 11;
 		const before = listenFor(seed, NOW, 0);
 		assert.equal(before.items.length, LISTEN_COUNT);
-		assert.equal(before.items.some((i) => reps.isWatchItem(i.id)), false);
+		assert.equal(
+			before.items.some((i) => reps.isWatchItem(i.id)),
+			false,
+		);
 
 		watchRepStore.addNew([
-			line({ id: "vid00000004:0", text: "Chcem kúpiť chlieb.", en: "I want to buy bread.", added: "2026-11-04", due: DAY }),
-			line({ id: "vid00000004:1", text: "Je to drahé.", en: "It is expensive.", added: "2026-11-03", due: "2026-11-03" }),
+			line({
+				id: "vid00000004:0",
+				text: "Chcem kúpiť chlieb.",
+				en: "I want to buy bread.",
+				added: "2026-11-04",
+				due: DAY,
+			}),
+			line({
+				id: "vid00000004:1",
+				text: "Je to drahé.",
+				en: "It is expensive.",
+				added: "2026-11-03",
+				due: "2026-11-03",
+			}),
 			line({ id: "vid00000004:2", text: "Mám čas.", en: "I have time.", added: "2026-11-03", due: "2026-11-04" }),
 			line({ id: "vid00000004:3", text: "Ďakujem pekne.", en: "Thank you kindly.", added: "2026-11-02", due: DAY }),
-			line({ id: "vid00000004:4", text: "Nie som hladný.", en: "I am not hungry.", added: "2026-11-01", due: "2026-11-06" }),
-			line({ id: "vid00000004:5", text: "Dnes je pekne.", en: "Today is nice.", added: "2026-11-01", due: DAY, retiredAt: AT }),
+			line({
+				id: "vid00000004:4",
+				text: "Nie som hladný.",
+				en: "I am not hungry.",
+				added: "2026-11-01",
+				due: "2026-11-06",
+			}),
+			line({
+				id: "vid00000004:5",
+				text: "Dnes je pekne.",
+				en: "Today is nice.",
+				added: "2026-11-01",
+				due: DAY,
+				retiredAt: AT,
+			}),
 		]);
 		const after = listenFor(seed, NOW, 0);
 		const watch = after.items.filter((i) => reps.isWatchItem(i.id));
-		assert.deepEqual(watch.map((i) => i.id).sort(), ["watch:vid00000004:1", "watch:vid00000004:2", "watch:vid00000004:3"]);
-		assert.deepEqual(after.items.filter((i) => !reps.isWatchItem(i.id)), before.items, "the sentences are the same, in the same order");
+		assert.deepEqual(watch.map((i) => i.id).sort(), [
+			"watch:vid00000004:1",
+			"watch:vid00000004:2",
+			"watch:vid00000004:3",
+		]);
+		assert.deepEqual(
+			after.items.filter((i) => !reps.isWatchItem(i.id)),
+			before.items,
+			"the sentences are the same, in the same order",
+		);
 		assert.equal(after.coverage, before.coverage, "watch lines are not counted in the coverage");
 		const one = watch.find((i) => i.id === "watch:vid00000004:1") as ListenItem;
 		assert.equal(one.sentence, "Je to drahé.");
@@ -302,12 +389,30 @@ describe("a Listen answer moves its watch line", () => {
 	test("a typed answer is graded against the stored line; right moves it on, wrong resets it, a repeat does not move it twice", () => {
 		resetStore();
 		watchRepStore.addNew([
-			line({ id: "vid00000005:0", text: "Chcem kúpiť chlieb.", en: "I want to buy bread.", added: "2026-11-04", due: DAY }),
-			line({ id: "vid00000005:1", text: "Je to drahé.", en: "It is expensive.", added: "2026-11-04", due: DAY, step: 1 }),
+			line({
+				id: "vid00000005:0",
+				text: "Chcem kúpiť chlieb.",
+				en: "I want to buy bread.",
+				added: "2026-11-04",
+				due: DAY,
+			}),
+			line({
+				id: "vid00000005:1",
+				text: "Je to drahé.",
+				en: "It is expensive.",
+				added: "2026-11-04",
+				due: DAY,
+				step: 1,
+			}),
 			line({ id: "vid00000005:2", text: "Ďakujem.", en: "Thank you.", added: "2026-11-04", due: "2026-11-09" }),
 		]);
 		const answers = [
-			rep("watch:vid00000005:0", { sentence: "something the client sent", given: "Chcem kúpiť chlieb.", answer: "type", verdict: "wrong" }),
+			rep("watch:vid00000005:0", {
+				sentence: "something the client sent",
+				given: "Chcem kúpiť chlieb.",
+				answer: "type",
+				verdict: "wrong",
+			}),
 			rep("watch:vid00000005:0", { sentence: "again", given: "Chcem kúpiť chlieb.", answer: "type", verdict: "exact" }),
 			rep("watch:vid00000005:1", { given: "Je to lacné.", answer: "type", verdict: "exact" }),
 			rep("watch:vid00000005:2", { given: "Ďakujem.", answer: "type", verdict: "exact" }),
@@ -333,10 +438,16 @@ describe("a Listen answer moves its watch line", () => {
 	test("the review deck gets no watch id, and the log keeps the line with an empty stretch", () => {
 		resetStore();
 		watchRepStore.addNew([line({ id: "vid00000006:0", text: "Idem domov.", en: "I am going home.", due: DAY })]);
-		recordListen({ reps: [rep("watch:vid00000006:0", { given: "Nejdem.", answer: "type", verdict: "exact" })], tz: 0 }, NOW);
+		recordListen(
+			{ reps: [rep("watch:vid00000006:0", { given: "Nejdem.", answer: "type", verdict: "exact" })], tz: 0 },
+			NOW,
+		);
 		const deck = Object.values(reviewStore.readCards());
 		assert.equal(deck.filter((c) => c.slug.includes(":")).length, 0);
-		const logged = readLessonLog().filter((e) => e.mode === "listen").flatMap((e) => e.reps).find((r) => r.itemId === "watch:vid00000006:0");
+		const logged = readLessonLog()
+			.filter((e) => e.mode === "listen")
+			.flatMap((e) => e.reps)
+			.find((r) => r.itemId === "watch:vid00000006:0");
 		assert.ok(logged, "the answer is in the Listen log");
 		assert.deepEqual(logged!.stretch, []);
 		assert.equal(logged!.verdict, "wrong");
@@ -344,7 +455,9 @@ describe("a Listen answer moves its watch line", () => {
 
 	test("an answer that was not typed counts as a miss, whatever the client said", () => {
 		resetStore();
-		watchRepStore.addNew([line({ id: "vid00000007:0", text: "Idem domov.", en: "I am going home.", due: DAY, step: 2 })]);
+		watchRepStore.addNew([
+			line({ id: "vid00000007:0", text: "Idem domov.", en: "I am going home.", due: DAY, step: 2 }),
+		]);
 		recordListen({ reps: [rep("watch:vid00000007:0", { answer: "pick", verdict: "exact" })], tz: 0 }, NOW);
 		const r = watchRepStore.read().lines[0]!;
 		assert.equal(r.step, 0);

@@ -50,7 +50,10 @@ describe("remote access file", () => {
 		assert.equal(status.port, 3010);
 		assert.equal(status.serveCommand, "tailscale serve --bg 3010");
 		assert.equal(status.devices.length, 1);
-		assert.deepEqual(status.devices.map((d) => d.current), [false]);
+		assert.deepEqual(
+			status.devices.map((d) => d.current),
+			[false],
+		);
 	});
 });
 
@@ -66,7 +69,10 @@ describe("pairing codes", () => {
 		assert.equal(result.device.name, "iPhone");
 		assert.equal(text().includes(result.token), false);
 		assert.equal((await store.resolveDevice(result.token, at(11)))?.id, result.device.id);
-		assert.deepEqual(await store.redeemPairingCode({ code: made.code, name: "again", at: at(11) }), { ok: false, reason: "no-code" });
+		assert.deepEqual(await store.redeemPairingCode({ code: made.code, name: "again", at: at(11) }), {
+			ok: false,
+			reason: "no-code",
+		});
 	});
 
 	it("spends five wrong tries, then the code is used up", async () => {
@@ -80,14 +86,19 @@ describe("pairing codes", () => {
 			if (!result.ok && result.reason === "wrong") left.push(result.attemptsLeft);
 		}
 		assert.deepEqual(left, [4, 3, 2, 1, 0]);
-		assert.deepEqual(await store.redeemPairingCode({ code: made.code, name: "x", at: at(21) }), { ok: false, reason: "no-code" });
+		assert.deepEqual(await store.redeemPairingCode({ code: made.code, name: "x", at: at(21) }), {
+			ok: false,
+			reason: "no-code",
+		});
 	});
 
 	it("counts concurrent wrong guesses exactly, so parallel requests cannot exceed the limit", async () => {
 		const made = await store.createPairingCode(at(30));
 		if (made === "off") throw new Error("expected a code");
 		const wrong = made.code === "000000" ? "111111" : "000000";
-		const results = await Promise.all(Array.from({ length: 8 }, () => store.redeemPairingCode({ code: wrong, name: "x", at: at(31) })));
+		const results = await Promise.all(
+			Array.from({ length: 8 }, () => store.redeemPairingCode({ code: wrong, name: "x", at: at(31) })),
+		);
 		const wrongs = results.flatMap((r) => (!r.ok && r.reason === "wrong" ? [r.attemptsLeft] : []));
 		const noCode = results.filter((r) => !r.ok && r.reason === "no-code").length;
 		assert.deepEqual(wrongs.sort(), [0, 1, 2, 3, 4]);
@@ -97,7 +108,10 @@ describe("pairing codes", () => {
 	it("expires after five minutes, even with the right code", async () => {
 		const made = await store.createPairingCode(at(40));
 		if (made === "off") throw new Error("expected a code");
-		assert.deepEqual(await store.redeemPairingCode({ code: made.code, name: "late", at: at(46) }), { ok: false, reason: "expired" });
+		assert.deepEqual(await store.redeemPairingCode({ code: made.code, name: "late", at: at(46) }), {
+			ok: false,
+			reason: "expired",
+		});
 	});
 });
 
@@ -110,7 +124,11 @@ describe("device sessions", () => {
 		assert.equal(later?.lastSeenAt, at(120).toISOString());
 		const expired = new Date(at(100).getTime() + 181 * 86_400_000);
 		assert.equal(await store.resolveDevice(token!, expired), null);
-		assert.equal(store.readAccess().devices.some((d) => d.id === first?.id), false, "an expired device is dropped");
+		assert.equal(
+			store.readAccess().devices.some((d) => d.id === first?.id),
+			false,
+			"an expired device is dropped",
+		);
 	});
 
 	it("revokes one device, and says so when there is nothing to revoke", async () => {

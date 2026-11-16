@@ -9,11 +9,16 @@ import { curriculumState } from "@/src/core";
 
 const noop = () => {};
 const render = (view: "chapters" | "mountain", state: ReturnType<typeof curriculumState> | null) =>
-	renderToStaticMarkup(createElement(Climb, { view, mode: "full", state, goalLevel: "B2", onTutor: noop, onScene: noop }));
+	renderToStaticMarkup(
+		createElement(Climb, { view, mode: "full", state, goalLevel: "B2", onTutor: noop, onScene: noop }),
+	);
 
 describe("the climb's two views", () => {
 	it("has two real-word options and Chapters is the default", () => {
-		assert.deepEqual(CLIMB_VIEWS.map((v) => v.label), ["Chapters", "Mountain"]);
+		assert.deepEqual(
+			CLIMB_VIEWS.map((v) => v.label),
+			["Chapters", "Mountain"],
+		);
 		assert.equal(resolveClimbView(undefined, undefined), "chapters");
 	});
 
@@ -65,6 +70,15 @@ describe("the climb's two views", () => {
 
 	it("the switcher is a tab list with arrow-key support", () => {
 		const src = fs.readFileSync("components/curriculum-page.tsx", "utf8");
-		for (const needle of ['role="tablist"', 'role="tab"', "aria-selected", 'role="tabpanel"', "ArrowRight", "ArrowLeft", "saveClimbView"]) assert.ok(src.includes(needle), needle);
+		for (const needle of [
+			'role="tablist"',
+			'role="tab"',
+			"aria-selected",
+			'role="tabpanel"',
+			"ArrowRight",
+			"ArrowLeft",
+			"saveClimbView",
+		])
+			assert.ok(src.includes(needle), needle);
 	});
 });

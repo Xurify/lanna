@@ -1,5 +1,26 @@
 /** Every scene a story cover can show; the story writer picks one by name (components/reading/cover-scene.tsx draws them). */
-export const COVER_MOTIFS = ["market", "friends", "train", "cup", "clinic", "mountains", "office", "tree", "home", "table", "bike", "family", "plate", "books", "city", "leaves", "baking", "moving", "wedding", "clock"] as const;
+export const COVER_MOTIFS = [
+	"market",
+	"friends",
+	"train",
+	"cup",
+	"clinic",
+	"mountains",
+	"office",
+	"tree",
+	"home",
+	"table",
+	"bike",
+	"family",
+	"plate",
+	"books",
+	"city",
+	"leaves",
+	"baking",
+	"moving",
+	"wedding",
+	"clock",
+] as const;
 
 export type CoverMotif = (typeof COVER_MOTIFS)[number];
 

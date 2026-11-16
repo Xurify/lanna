@@ -27,9 +27,20 @@ import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { processWide } from "../core/process-wide.ts";
 import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
-import { FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, FRAGMENT_SOURCE_MAX_SEC, type FragmentRange } from "../core/fragments.ts";
+import {
+	FRAGMENT_PICK_MAX_SEC,
+	FRAGMENT_PICK_MIN_SEC,
+	FRAGMENT_SOURCE_MAX_SEC,
+	type FragmentRange,
+} from "../core/fragments.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
-import { QUESTION_PLAN, questionsFrom, type StoryQuestion, type StoryRecord, type StoryUsage } from "../core/reading.ts";
+import {
+	QUESTION_PLAN,
+	questionsFrom,
+	type StoryQuestion,
+	type StoryRecord,
+	type StoryUsage,
+} from "../core/reading.ts";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
 import type { TranscriptionEngineId } from "../core/settings.ts";
@@ -61,7 +72,13 @@ import {
 	type WatchMode,
 	type WatchState,
 } from "../core/watch.ts";
-import { parseVerdict, SENTENCE_MAX_CHARS, SENTENCE_XP, sentenceProblems, type SentenceCheckEntry } from "../core/watch-sentences.ts";
+import {
+	parseVerdict,
+	SENTENCE_MAX_CHARS,
+	SENTENCE_XP,
+	sentenceProblems,
+	type SentenceCheckEntry,
+} from "../core/watch-sentences.ts";
 import { missedWatchReps } from "../core/watch-reps.ts";
 import { ensureReadmes } from "../store/corpus.ts";
 import { discoverStore } from "../store/discover.ts";
@@ -73,7 +90,15 @@ import { knownWordStore } from "../store/known-words.ts";
 import { watchRepStore } from "../store/watch-reps.ts";
 import { keyValue, redactSecrets } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
-import { commonness, glossSentence, knownWords, questionLine, storyEngine, storyNames, type KnownWords } from "./reading.ts";
+import {
+	commonness,
+	glossSentence,
+	knownWords,
+	questionLine,
+	storyEngine,
+	storyNames,
+	type KnownWords,
+} from "./reading.ts";
 import { enqueueWords } from "./review.ts";
 import { failTask, finishTask, startTask, updateTask } from "./tasks.ts";
 
@@ -81,7 +106,8 @@ const run = promisify(execFile);
 const code = () => activeLanguage().code;
 /** The caption languages taken, the learner's own first. */
 const captionLangs = (): string[] => [code(), ...(activeLanguage().captionFallbacks ?? []).map((f) => f.code)];
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+const UA =
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 const ANDROID_VERSION = "20.10.38";
 
 // ─── Captions from YouTube ──────────────────────────────────────────────────
@@ -146,17 +172,56 @@ export function extractJsonAfter(html: string, marker: RegExp): unknown {
 
 function metaOf(player: unknown, id: string, via: VideoMeta["via"]): VideoMeta | null {
 	const p = player as {
-		videoDetails?: { videoId?: string; title?: string; author?: string; channelId?: string; shortDescription?: string; lengthSeconds?: string | number; isLive?: boolean; isUpcoming?: boolean };
-		captions?: { playerCaptionsTracklistRenderer?: { captionTracks?: Array<{ baseUrl?: string; languageCode?: string; kind?: string; name?: { simpleText?: string; runs?: Array<{ text?: string }> } }> } };
+		videoDetails?: {
+			videoId?: string;
+			title?: string;
+			author?: string;
+			channelId?: string;
+			shortDescription?: string;
+			lengthSeconds?: string | number;
+			isLive?: boolean;
+			isUpcoming?: boolean;
+		};
+		captions?: {
+			playerCaptionsTracklistRenderer?: {
+				captionTracks?: Array<{
+					baseUrl?: string;
+					languageCode?: string;
+					kind?: string;
+					name?: { simpleText?: string; runs?: Array<{ text?: string }> };
+				}>;
+			};
+		};
 		playabilityStatus?: { status?: string; reason?: string };
 	} | null;
 	if (!p || typeof p !== "object") return null;
 	const status = p.playabilityStatus?.status;
-	if (status && status !== "OK" && !p.videoDetails?.title) throw new Error(p.playabilityStatus?.reason ? `YouTube says: ${p.playabilityStatus.reason}` : `YouTube will not serve this video (${status})`);
+	if (status && status !== "OK" && !p.videoDetails?.title)
+		throw new Error(
+			p.playabilityStatus?.reason
+				? `YouTube says: ${p.playabilityStatus.reason}`
+				: `YouTube will not serve this video (${status})`,
+		);
 	const d = p.videoDetails ?? {};
 	const tracks: CaptionTrack[] = (p.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [])
-		.filter((t): t is { baseUrl: string; languageCode: string; kind?: string; name?: { simpleText?: string; runs?: Array<{ text?: string }> } } => typeof t.baseUrl === "string" && typeof t.languageCode === "string")
-		.map((t) => ({ baseUrl: t.baseUrl, languageCode: t.languageCode, ...(t.kind ? { kind: t.kind } : {}), ...(t.name?.simpleText || t.name?.runs?.[0]?.text ? { name: t.name?.simpleText ?? t.name?.runs?.map((r) => r.text ?? "").join("") } : {}) }));
+		.filter(
+			(
+				t,
+			): t is {
+				baseUrl: string;
+				languageCode: string;
+				kind?: string;
+				name?: { simpleText?: string; runs?: Array<{ text?: string }> };
+			} => typeof t.baseUrl === "string" && typeof t.languageCode === "string",
+		)
+		.map((t) => ({
+			baseUrl: t.baseUrl,
+			languageCode: t.languageCode,
+			...(t.kind ? { kind: t.kind } : {}),
+			...(t.name?.simpleText || t.name?.runs?.[0]?.text
+				? { name: t.name?.simpleText ?? t.name?.runs?.map((r) => r.text ?? "").join("") }
+				: {}),
+		}));
 	return {
 		id,
 		title: (d.title ?? "").trim() || `YouTube ${id}`,
@@ -181,7 +246,21 @@ async function metaFromInnertube(id: string, signal?: AbortSignal): Promise<Vide
 			"x-youtube-client-name": "3",
 			"x-youtube-client-version": ANDROID_VERSION,
 		},
-		body: JSON.stringify({ context: { client: { clientName: "ANDROID", clientVersion: ANDROID_VERSION, androidSdkVersion: 30, hl: "en", gl: "US", utcOffsetMinutes: 0 } }, videoId: id, contentCheckOk: true, racyCheckOk: true }),
+		body: JSON.stringify({
+			context: {
+				client: {
+					clientName: "ANDROID",
+					clientVersion: ANDROID_VERSION,
+					androidSdkVersion: 30,
+					hl: "en",
+					gl: "US",
+					utcOffsetMinutes: 0,
+				},
+			},
+			videoId: id,
+			contentCheckOk: true,
+			racyCheckOk: true,
+		}),
 		signal,
 	});
 	if (!res.ok) return null;
@@ -191,7 +270,11 @@ async function metaFromInnertube(id: string, signal?: AbortSignal): Promise<Vide
 /** The player response as the watch page embeds it. */
 async function metaFromWatchPage(id: string, signal?: AbortSignal): Promise<VideoMeta | null> {
 	const res = await fetch(`https://www.youtube.com/watch?v=${id}&hl=en&bpctr=9999999999&has_verified=1`, {
-		headers: { "user-agent": UA, "accept-language": "en-US,en;q=0.9", cookie: "CONSENT=YES+cb; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg" },
+		headers: {
+			"user-agent": UA,
+			"accept-language": "en-US,en;q=0.9",
+			cookie: "CONSENT=YES+cb; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg",
+		},
 		signal,
 	});
 	if (!res.ok) return null;
@@ -202,7 +285,10 @@ async function metaFromWatchPage(id: string, signal?: AbortSignal): Promise<Vide
 /** The track to use, in the order of `langs`: for each language a
  *  human-made track first, then YouTube's automatic one. Null when the
  *  video has none in any of them. */
-export function pickTrack(tracks: readonly CaptionTrack[], langs: readonly string[] = captionLangs()): CaptionTrack | null {
+export function pickTrack(
+	tracks: readonly CaptionTrack[],
+	langs: readonly string[] = captionLangs(),
+): CaptionTrack | null {
 	for (const lang of langs) {
 		const of = (t: CaptionTrack) => t.languageCode.toLowerCase().split("-")[0] === lang;
 		const track = tracks.find((t) => of(t) && t.kind !== "asr") ?? tracks.find((t) => of(t));
@@ -229,12 +315,21 @@ export async function fetchVideoMeta(id: string, signal?: AbortSignal): Promise<
 	}
 }
 
-export async function fetchTrack(track: CaptionTrack, signal?: AbortSignal): Promise<{ ext: "json" | "xml"; text: string; cues: CaptionCue[] } | null> {
+export async function fetchTrack(
+	track: CaptionTrack,
+	signal?: AbortSignal,
+): Promise<{ ext: "json" | "xml"; text: string; cues: CaptionCue[] } | null> {
 	if (!isYouTubeCaptionUrl(track.baseUrl)) return null;
 	const base = track.baseUrl.replace(/&fmt=[^&]*/g, "");
-	for (const [fmt, ext] of [["json3", "json"], ["", "xml"]] as const) {
+	for (const [fmt, ext] of [
+		["json3", "json"],
+		["", "xml"],
+	] as const) {
 		try {
-			const res = await fetch(fmt ? `${base}&fmt=${fmt}` : base, { headers: { "user-agent": UA, "accept-language": "en-US,en;q=0.9" }, signal });
+			const res = await fetch(fmt ? `${base}&fmt=${fmt}` : base, {
+				headers: { "user-agent": UA, "accept-language": "en-US,en;q=0.9" },
+				signal,
+			});
 			if (!res.ok) continue;
 			const text = await res.text();
 			const cues = parseCaptions(text);
@@ -256,11 +351,7 @@ export interface FetchedCaptions {
 
 function extraPathEntries(): string[] {
 	const home = os.homedir();
-	return [
-		path.join(home, ".spotdl"),
-		"C:\\Python313",
-		"C:\\Python313\\Scripts",
-	].filter((d) => {
+	return [path.join(home, ".spotdl"), "C:\\Python313", "C:\\Python313\\Scripts"].filter((d) => {
 		try {
 			return fs.statSync(/*turbopackIgnore: true*/ d).isDirectory();
 		} catch {
@@ -283,7 +374,8 @@ function subprocessEnv(): NodeJS.ProcessEnv {
 function pythonPath(): string | null {
 	const configured = process.env.PYTHON_PATH?.trim();
 	if (configured && fs.existsSync(configured)) return configured;
-	const candidates = process.platform === "win32" ? ["C:\\Python313\\python.exe", "python.exe", "python"] : ["python3", "python"];
+	const candidates =
+		process.platform === "win32" ? ["C:\\Python313\\python.exe", "python.exe", "python"] : ["python3", "python"];
 	const searchDirs = [...extraPathEntries(), ...(process.env.PATH ?? "").split(path.delimiter)];
 	for (const c of candidates) {
 		if (path.isAbsolute(c)) {
@@ -307,7 +399,10 @@ function pythonPath(): string | null {
 	return null;
 }
 
-const fasterWhisper = processWide("watch.fasterWhisper", () => ({ found: null as boolean | null, checking: null as Promise<boolean> | null }));
+const fasterWhisper = processWide("watch.fasterWhisper", () => ({
+	found: null as boolean | null,
+	checking: null as Promise<boolean> | null,
+}));
 
 function checkFasterWhisper(): Promise<boolean> {
 	if (process.env.VITEST) return Promise.resolve(false);
@@ -318,7 +413,12 @@ function checkFasterWhisper(): Promise<boolean> {
 		let found = false;
 		if (py && fs.existsSync(helper)) {
 			try {
-				const { stdout } = await run(/*turbopackIgnore: true*/ py, [helper, "check"], { encoding: "utf8", timeout: 60_000, windowsHide: true, env: subprocessEnv() });
+				const { stdout } = await run(/*turbopackIgnore: true*/ py, [helper, "check"], {
+					encoding: "utf8",
+					timeout: 60_000,
+					windowsHide: true,
+					env: subprocessEnv(),
+				});
 				found = (JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { whisper?: boolean }).whisper === true;
 			} catch {
 				found = false;
@@ -380,14 +480,43 @@ export function warmTranscriptionCheck(): void {
 /** The captions through yt-dlp: it keeps up with YouTube's changes better
  *  than any hand-written fetch. Subtitles only; nothing else is written.
  *  The first of `langs` the video has captions in wins. */
-async function captionsViaYtDlp(id: string, langs: readonly string[], signal?: AbortSignal): Promise<FetchedCaptions | null> {
+async function captionsViaYtDlp(
+	id: string,
+	langs: readonly string[],
+	signal?: AbortSignal,
+): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin) return null;
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-captions-"));
 	try {
 		const subLangs = langs.map((lang) => `${lang},${lang}-orig,${lang}.*`).join(",");
-		const { stdout } = await run(bin, ["--skip-download", "--write-subs", "--write-auto-subs", "--sub-langs", subLangs, "--sub-format", "json3/srv3/vtt/best", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 120_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true, env: subprocessEnv() });
-		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { title?: string; channel?: string; uploader?: string; duration?: number; subtitles?: Record<string, unknown>; automatic_captions?: Record<string, unknown> };
+		const { stdout } = await run(
+			bin,
+			[
+				"--skip-download",
+				"--write-subs",
+				"--write-auto-subs",
+				"--sub-langs",
+				subLangs,
+				"--sub-format",
+				"json3/srv3/vtt/best",
+				"--no-warnings",
+				"--no-playlist",
+				"--print-json",
+				"-o",
+				path.join(dir, "%(id)s.%(ext)s"),
+				videoUrl(id),
+			],
+			{ timeout: 120_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true, env: subprocessEnv() },
+		);
+		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as {
+			title?: string;
+			channel?: string;
+			uploader?: string;
+			duration?: number;
+			subtitles?: Record<string, unknown>;
+			automatic_captions?: Record<string, unknown>;
+		};
 		const files = fs.readdirSync(dir).filter((f) => f.startsWith(`${id}.`) && /\.(json3|srv3|xml|vtt)$/.test(f));
 		for (const lang of langs) {
 			const file = files.find((f) => f.startsWith(`${id}.${lang}.`) || f.startsWith(`${id}.${lang}-`));
@@ -398,7 +527,12 @@ async function captionsViaYtDlp(id: string, langs: readonly string[], signal?: A
 			const ext = file.endsWith(".json3") ? "json" : file.endsWith(".vtt") ? "vtt" : "xml";
 			const manual = Object.keys(info.subtitles ?? {}).some((k) => k.split("-")[0] === lang);
 			return {
-				meta: { id, title: info.title?.trim() || `YouTube ${id}`, ...(info.channel || info.uploader ? { channel: (info.channel ?? info.uploader)! } : {}), durationSec: Number(info.duration) || 0 },
+				meta: {
+					id,
+					title: info.title?.trim() || `YouTube ${id}`,
+					...(info.channel || info.uploader ? { channel: (info.channel ?? info.uploader)! } : {}),
+					durationSec: Number(info.duration) || 0,
+				},
 				cues,
 				source: { kind: manual ? "captions" : "auto-captions", trackLang: lang, via: "yt-dlp" },
 				raw: { ext, text },
@@ -416,7 +550,11 @@ interface Transcript {
 	durationSec: number;
 }
 
-async function transcribeFileViaWhisper(audioPath: string, accepted: readonly string[], signal?: AbortSignal): Promise<Transcript | null> {
+async function transcribeFileViaWhisper(
+	audioPath: string,
+	accepted: readonly string[],
+	signal?: AbortSignal,
+): Promise<Transcript | null> {
 	const py = pythonPath();
 	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
 	if (!py || !fs.existsSync(helper)) return null;
@@ -485,7 +623,11 @@ function groupWordsIntoCues(words: readonly ElevenLabsWord[]): CaptionCue[] {
 	return cues;
 }
 
-async function transcribeFileViaElevenLabs(audioPath: string, lang: string, signal?: AbortSignal): Promise<Transcript | null> {
+async function transcribeFileViaElevenLabs(
+	audioPath: string,
+	lang: string,
+	signal?: AbortSignal,
+): Promise<Transcript | null> {
 	const key = keyValue("ELEVENLABS_API_KEY");
 	if (!key) return null;
 	const audio = fs.readFileSync(audioPath);
@@ -504,7 +646,12 @@ async function transcribeFileViaElevenLabs(audioPath: string, lang: string, sign
 	}
 	const body = (await res.json()) as { text?: string; words?: ElevenLabsWord[] };
 	const words = Array.isArray(body.words) ? body.words : [];
-	const cues = words.length > 0 ? groupWordsIntoCues(words) : body.text?.trim() ? [{ start: 0, dur: 5, text: body.text.trim() }] : [];
+	const cues =
+		words.length > 0
+			? groupWordsIntoCues(words)
+			: body.text?.trim()
+				? [{ start: 0, dur: 5, text: body.text.trim() }]
+				: [];
 	if (!cues.length) return null;
 	const last = cues[cues.length - 1]!;
 	return { language: lang, cues, durationSec: Math.ceil(last.start + last.dur) };
@@ -554,15 +701,22 @@ async function transcribeAudioFile(
 	const dgKey = keyValue("DEEPGRAM_API_KEY");
 	if (dgKey) {
 		const audio = fs.readFileSync(audioPath);
-		const res = await fetch(`https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(cloudLang)}&smart_format=true&punctuate=true&utterances=true`, {
-			method: "POST",
-			headers: { authorization: `Token ${dgKey}`, "content-type": "audio/mpeg" },
-			body: new Uint8Array(audio),
-			signal,
-		});
+		const res = await fetch(
+			`https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(cloudLang)}&smart_format=true&punctuate=true&utterances=true`,
+			{
+				method: "POST",
+				headers: { authorization: `Token ${dgKey}`, "content-type": "audio/mpeg" },
+				body: new Uint8Array(audio),
+				signal,
+			},
+		);
 		if (!res.ok) throw new Error(`Deepgram answered ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
-		const body = (await res.json()) as { results?: { utterances?: Array<{ start: number; end: number; transcript: string }> } };
-		const cues: CaptionCue[] = (body.results?.utterances ?? []).filter((u) => u.transcript?.trim()).map((u) => ({ start: u.start, dur: Math.max(0, u.end - u.start), text: u.transcript.trim() }));
+		const body = (await res.json()) as {
+			results?: { utterances?: Array<{ start: number; end: number; transcript: string }> };
+		};
+		const cues: CaptionCue[] = (body.results?.utterances ?? [])
+			.filter((u) => u.transcript?.trim())
+			.map((u) => ({ start: u.start, dur: Math.max(0, u.end - u.start), text: u.transcript.trim() }));
 		if (cues.length) {
 			const last = cues[cues.length - 1]!;
 			return { language: cloudLang, cues, via: "deepgram", durationSec: Math.ceil(last.start + last.dur) };
@@ -573,7 +727,12 @@ async function transcribeAudioFile(
 	return null;
 }
 
-async function captionsForSpotify(id: string, accepted: readonly string[], signal?: AbortSignal, onStage?: (s: PrepareStage) => void): Promise<FetchedCaptions> {
+async function captionsForSpotify(
+	id: string,
+	accepted: readonly string[],
+	signal?: AbortSignal,
+	onStage?: (s: PrepareStage) => void,
+): Promise<FetchedCaptions> {
 	const py = pythonPath();
 	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
 	if (!py || !fs.existsSync(helper)) {
@@ -624,13 +783,39 @@ async function captionsForSpotify(id: string, accepted: readonly string[], signa
 	};
 }
 
-async function captionsViaAudioTranscription(id: string, meta: VideoMeta | null, accepted: readonly string[], signal?: AbortSignal): Promise<FetchedCaptions | null> {
+async function captionsViaAudioTranscription(
+	id: string,
+	meta: VideoMeta | null,
+	accepted: readonly string[],
+	signal?: AbortSignal,
+): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin || !(await canTranscribeAudio())) return null;
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-"));
 	try {
-		const { stdout } = await run(bin, ["-x", "--audio-format", "mp3", "--audio-quality", "6", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 300_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true, env: subprocessEnv() });
-		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { title?: string; channel?: string; uploader?: string; duration?: number };
+		const { stdout } = await run(
+			bin,
+			[
+				"-x",
+				"--audio-format",
+				"mp3",
+				"--audio-quality",
+				"6",
+				"--no-warnings",
+				"--no-playlist",
+				"--print-json",
+				"-o",
+				path.join(dir, "%(id)s.%(ext)s"),
+				videoUrl(id),
+			],
+			{ timeout: 300_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true, env: subprocessEnv() },
+		);
+		const info = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as {
+			title?: string;
+			channel?: string;
+			uploader?: string;
+			duration?: number;
+		};
 		const file = fs.readdirSync(dir).find((f) => f.endsWith(".mp3"));
 		if (!file) return null;
 		const transcribed = await transcribeAudioFile(path.join(dir, file), accepted, signal);
@@ -639,10 +824,27 @@ async function captionsViaAudioTranscription(id: string, meta: VideoMeta | null,
 		if (!transcribed.cues.length) return null;
 		const { cues, via } = transcribed;
 		return {
-			meta: { id, title: meta?.title ?? info.title?.trim() ?? `YouTube ${id}`, ...(meta?.channel || info.channel || info.uploader ? { channel: (meta?.channel ?? info.channel ?? info.uploader)! } : {}), ...(meta?.channelId ? { channelId: meta.channelId } : {}), durationSec: meta?.durationSec || Number(info.duration) || transcribed.durationSec || 0 },
+			meta: {
+				id,
+				title: meta?.title ?? info.title?.trim() ?? `YouTube ${id}`,
+				...(meta?.channel || info.channel || info.uploader
+					? { channel: (meta?.channel ?? info.channel ?? info.uploader)! }
+					: {}),
+				...(meta?.channelId ? { channelId: meta.channelId } : {}),
+				durationSec: meta?.durationSec || Number(info.duration) || transcribed.durationSec || 0,
+			},
 			cues,
 			source: { kind: "transcription", trackLang: transcribed.language, via },
-			raw: { ext: "json", text: JSON.stringify({ events: cues.map((c) => ({ tStartMs: Math.round(c.start * 1000), dDurationMs: Math.round(c.dur * 1000), segs: [{ utf8: c.text }] })) }) },
+			raw: {
+				ext: "json",
+				text: JSON.stringify({
+					events: cues.map((c) => ({
+						tStartMs: Math.round(c.start * 1000),
+						dDurationMs: Math.round(c.dur * 1000),
+						segs: [{ utf8: c.text }],
+					})),
+				}),
+			},
 		};
 	} finally {
 		fs.rmSync(dir, { recursive: true, force: true });
@@ -685,7 +887,8 @@ function elsewhereFor(spoken: string): ElsewhereProfile | null {
 	for (const id of shownProfiles()) {
 		if (id === activeProfile()) continue;
 		const info = profileLanguage(id);
-		if (info?.code === spoken && fs.existsSync(curriculumFile(id, "lexicon.json"))) return { profile: id, english: info.english };
+		if (info?.code === spoken && fs.existsSync(curriculumFile(id, "lexicon.json")))
+			return { profile: id, english: info.english };
 	}
 	return null;
 }
@@ -695,7 +898,10 @@ export function elsewhereProfile(tracks: readonly CaptionTrack[]): ElsewhereProf
 	return spoken ? elsewhereFor(spoken) : null;
 }
 
-export function notThisLanguage(spoken: string, meta: { title: string; channel?: string; durationSec: number } | null): NoCaptionsError {
+export function notThisLanguage(
+	spoken: string,
+	meta: { title: string; channel?: string; durationSec: number } | null,
+): NoCaptionsError {
 	const elsewhere = elsewhereFor(spoken);
 	const wanted = captionLangs().map(captionLanguageName).join(" or ");
 	const why = elsewhere
@@ -708,7 +914,10 @@ export function notThisLanguage(spoken: string, meta: { title: string; channel?:
  *  (Slovak, then Czech), from the first source that has them: YouTube's
  *  player API, the watch page, yt-dlp; then, only when asked, a
  *  transcription of the audio, which must be spoken in one of them. A kept track is reused. */
-export async function fetchCaptions(id: string, opts: { transcribe?: boolean; lang?: string; signal?: AbortSignal; onStage?: (s: PrepareStage) => void } = {}): Promise<FetchedCaptions> {
+export async function fetchCaptions(
+	id: string,
+	opts: { transcribe?: boolean; lang?: string; signal?: AbortSignal; onStage?: (s: PrepareStage) => void } = {},
+): Promise<FetchedCaptions> {
 	const langs = opts.lang ? [opts.lang] : captionLangs();
 	if (isSpotifyId(id)) {
 		return captionsForSpotify(id, langs, opts.signal, opts.onStage);
@@ -722,7 +931,24 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 				const track = pickTrack(meta.tracks, langs);
 				if (track) {
 					const got = await fetchTrack(track, opts.signal);
-					if (got) return { meta: { id, title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), ...(meta.channelId ? { channelId: meta.channelId } : {}), durationSec: meta.durationSec }, cues: got.cues, source: { kind: track.kind === "asr" ? "auto-captions" : "captions", trackLang: track.languageCode, ...(track.name ? { trackName: track.name } : {}), via: meta.via }, raw: { ext: got.ext, text: got.text } };
+					if (got)
+						return {
+							meta: {
+								id,
+								title: meta.title,
+								...(meta.channel ? { channel: meta.channel } : {}),
+								...(meta.channelId ? { channelId: meta.channelId } : {}),
+								durationSec: meta.durationSec,
+							},
+							cues: got.cues,
+							source: {
+								kind: track.kind === "asr" ? "auto-captions" : "captions",
+								trackLang: track.languageCode,
+								...(track.name ? { trackName: track.name } : {}),
+								via: meta.via,
+							},
+							raw: { ext: got.ext, text: got.text },
+						};
 					errors.push(`${meta.via}: the caption track came back empty`);
 				} else if (meta.tracks.length === 0 && meta.via === "innertube") {
 					// The app client sometimes lists no tracks at all: the
@@ -731,7 +957,9 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 				} else break;
 			}
 		} catch (err) {
-			errors.push(`${get === metaFromInnertube ? "innertube" : "watch-page"}: ${err instanceof Error ? err.message : String(err)}`);
+			errors.push(
+				`${get === metaFromInnertube ? "innertube" : "watch-page"}: ${err instanceof Error ? err.message : String(err)}`,
+			);
 		}
 	}
 	try {
@@ -757,7 +985,14 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 				? `This video has captions in ${[...new Set(meta.tracks.map((t) => t.languageCode))].join(", ")} but none in ${wanted}.`
 				: `This video has no captions at all.`
 			: `YouTube did not answer for this video${errors.length ? ` (${errors[errors.length - 1]})` : ""}.`;
-	throw new NoCaptionsError(`${why}${!elsewhere && (!meta || meta.tracks.length === 0) ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and local Whisper or an ElevenLabs/Deepgram key.") : ""}`, meta ? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec } : null, canTranscribe, elsewhere);
+	throw new NoCaptionsError(
+		`${why}${!elsewhere && (!meta || meta.tracks.length === 0) ? (canTranscribe ? " The audio can be transcribed instead." : " Transcribing the audio needs yt-dlp on the PATH and local Whisper or an ElevenLabs/Deepgram key.") : ""}`,
+		meta
+			? { title: meta.title, ...(meta.channel ? { channel: meta.channel } : {}), durationSec: meta.durationSec }
+			: null,
+		canTranscribe,
+		elsewhere,
+	);
 }
 
 // ─── Translation and questions on the cheap slot ────────────────────────────
@@ -815,11 +1050,25 @@ interface PrepareOptions {
 }
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
 async function ask(engine: PiEngine, system: string, prompt: string, usage: StoryUsage): Promise<string> {
-	const { text } = await runSubagent([], { role: "researcher", engine, systemPrompt: system, prompt, maxTurns: 1, onUsage: (u) => usage.steps.push(stepOf(u)) });
+	const { text } = await runSubagent([], {
+		role: "researcher",
+		engine,
+		systemPrompt: system,
+		prompt,
+		maxTurns: 1,
+		onUsage: (u) => usage.steps.push(stepOf(u)),
+	});
 	return text;
 }
 
@@ -839,26 +1088,76 @@ interface ChunkJob {
 	/** What the context lines are not asked for. */
 	skip: string;
 }
-const TRANSLATE_JOB: ChunkJob = { system: () => translateSystem(), ask: (n) => `Translate these ${n} lines, one English string each, same order`, skip: "translate" };
-const RENDER_JOB: ChunkJob = { system: () => renderSystem(), ask: (n) => `Rewrite these ${n} lines in ${activeLanguage().english}, one string each, same order`, skip: "rewrite" };
+const TRANSLATE_JOB: ChunkJob = {
+	system: () => translateSystem(),
+	ask: (n) => `Translate these ${n} lines, one English string each, same order`,
+	skip: "translate",
+};
+const RENDER_JOB: ChunkJob = {
+	system: () => renderSystem(),
+	ask: (n) => `Rewrite these ${n} lines in ${activeLanguage().english}, one string each, same order`,
+	skip: "rewrite",
+};
 
-export async function translateLines(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, trackLang: string = code()): Promise<string[]> {
-	const foreign = trackLang !== code() ? `These subtitles are in ${captionLanguageName(trackLang)}, not ${activeLanguage().english}: translate what is said.` : "";
+export async function translateLines(
+	engine: PiEngine,
+	lines: readonly string[],
+	usage: StoryUsage,
+	title: string,
+	trackLang: string = code(),
+): Promise<string[]> {
+	const foreign =
+		trackLang !== code()
+			? `These subtitles are in ${captionLanguageName(trackLang)}, not ${activeLanguage().english}: translate what is said.`
+			: "";
 	return askInChunks(engine, lines, usage, title, foreign, TRANSLATE_JOB);
 }
 
 /** Foreign captions only: each line said in Slovak, so the known-word share can
  *  be measured on Slovak words. One line per line; "" for a line the model
  *  could not count back. */
-export async function renderInLanguage(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, trackLang: string): Promise<string[]> {
-	return askInChunks(engine, lines, usage, title, `These subtitles are in ${captionLanguageName(trackLang)}.`, RENDER_JOB);
+export async function renderInLanguage(
+	engine: PiEngine,
+	lines: readonly string[],
+	usage: StoryUsage,
+	title: string,
+	trackLang: string,
+): Promise<string[]> {
+	return askInChunks(
+		engine,
+		lines,
+		usage,
+		title,
+		`These subtitles are in ${captionLanguageName(trackLang)}.`,
+		RENDER_JOB,
+	);
 }
 
-async function askInChunks(engine: PiEngine, lines: readonly string[], usage: StoryUsage, title: string, foreign: string, job: ChunkJob): Promise<string[]> {
+async function askInChunks(
+	engine: PiEngine,
+	lines: readonly string[],
+	usage: StoryUsage,
+	title: string,
+	foreign: string,
+	job: ChunkJob,
+): Promise<string[]> {
 	const out: string[] = [];
 	for (let at = 0; at < lines.length; at += TRANSLATE_CHUNK) {
 		const chunk = lines.slice(at, at + TRANSLATE_CHUNK);
-		out.push(...(await translateChunk(engine, chunk, lines.slice(Math.max(0, at - 3), at), lines.slice(at + chunk.length, at + chunk.length + 3), at + 1, lines.length, title, usage, foreign, job)));
+		out.push(
+			...(await translateChunk(
+				engine,
+				chunk,
+				lines.slice(Math.max(0, at - 3), at),
+				lines.slice(at + chunk.length, at + chunk.length + 3),
+				at + 1,
+				lines.length,
+				title,
+				usage,
+				foreign,
+				job,
+			)),
+		);
 	}
 	return out;
 }
@@ -866,12 +1165,27 @@ async function askInChunks(engine: PiEngine, lines: readonly string[], usage: St
 /** One chunk asked for as a whole, then once more. A chunk the model still
  *  miscounts is split in two, and each half is asked on its own with the
  *  lines around it as context: a shorter ask miscounts less often. */
-async function translateChunk(engine: PiEngine, chunk: readonly string[], before: readonly string[], after: readonly string[], from: number, total: number, title: string, usage: StoryUsage, foreign: string, job: ChunkJob): Promise<string[]> {
+async function translateChunk(
+	engine: PiEngine,
+	chunk: readonly string[],
+	before: readonly string[],
+	after: readonly string[],
+	from: number,
+	total: number,
+	title: string,
+	usage: StoryUsage,
+	foreign: string,
+	job: ChunkJob,
+): Promise<string[]> {
 	const prompt = [
 		`Video: "${title}". Lines ${from}–${from + chunk.length - 1} of ${total}.`,
 		foreign,
-		before.length ? `For context, the lines just before (do not ${job.skip} these):\n${before.map((l) => `  ${l}`).join("\n")}` : "",
-		after.length ? `For context, the lines just after (do not ${job.skip} these):\n${after.map((l) => `  ${l}`).join("\n")}` : "",
+		before.length
+			? `For context, the lines just before (do not ${job.skip} these):\n${before.map((l) => `  ${l}`).join("\n")}`
+			: "",
+		after.length
+			? `For context, the lines just after (do not ${job.skip} these):\n${after.map((l) => `  ${l}`).join("\n")}`
+			: "",
 		`${job.ask(chunk.length)}:\n${JSON.stringify(chunk, null, 0)}`,
 	]
 		.filter(Boolean)
@@ -879,7 +1193,17 @@ async function translateChunk(engine: PiEngine, chunk: readonly string[], before
 	let lastError: unknown;
 	for (let attempt = 0; attempt < 2; attempt++) {
 		try {
-			return parseTranslations(await ask(engine, job.system(), attempt ? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.` : prompt, usage), chunk.length);
+			return parseTranslations(
+				await ask(
+					engine,
+					job.system(),
+					attempt
+						? `${prompt}\n\nYour last answer had the wrong number of lines. Return exactly ${chunk.length}.`
+						: prompt,
+					usage,
+				),
+				chunk.length,
+			);
 		} catch (err) {
 			lastError = err;
 		}
@@ -893,17 +1217,56 @@ async function translateChunk(engine: PiEngine, chunk: readonly string[], before
 		throw failed;
 	}
 	const half = Math.ceil(chunk.length / 2);
-	const first = await translateChunk(engine, chunk.slice(0, half), before, [...chunk.slice(half), ...after].slice(0, 3), from, total, title, usage, foreign, job);
-	const second = await translateChunk(engine, chunk.slice(half), [...before, ...chunk.slice(0, half)].slice(-3), after, from + half, total, title, usage, foreign, job);
+	const first = await translateChunk(
+		engine,
+		chunk.slice(0, half),
+		before,
+		[...chunk.slice(half), ...after].slice(0, 3),
+		from,
+		total,
+		title,
+		usage,
+		foreign,
+		job,
+	);
+	const second = await translateChunk(
+		engine,
+		chunk.slice(half),
+		[...before, ...chunk.slice(0, half)].slice(-3),
+		after,
+		from + half,
+		total,
+		title,
+		usage,
+		foreign,
+		job,
+	);
 	return [...first, ...second];
 }
 
-async function questionsFor(engine: PiEngine, segments: readonly { sk: string; en: string }[], k: KnownWords, title: string, usage: StoryUsage): Promise<StoryQuestion[]> {
+async function questionsFor(
+	engine: PiEngine,
+	segments: readonly { sk: string; en: string }[],
+	k: KnownWords,
+	title: string,
+	usage: StoryUsage,
+): Promise<StoryQuestion[]> {
 	const plan = QUESTION_PLAN[k.level];
 	// The whole transcript when it fits; the Slovak alone past that.
 	const full = segments.map((s) => `${s.sk} — ${s.en}`).join("\n");
-	const transcript = full.length <= 24_000 ? full : segments.map((s) => s.sk).join("\n").slice(0, 30_000);
-	const prompt = [`Video: "${title}".`, `Learner level: ${k.level}.`, questionLine(k.level), `Transcript (${activeLanguage().english}${full.length <= 24_000 ? " — English" : ""}):\n${transcript}`].join("\n\n");
+	const transcript =
+		full.length <= 24_000
+			? full
+			: segments
+					.map((s) => s.sk)
+					.join("\n")
+					.slice(0, 30_000);
+	const prompt = [
+		`Video: "${title}".`,
+		`Learner level: ${k.level}.`,
+		questionLine(k.level),
+		`Transcript (${activeLanguage().english}${full.length <= 24_000 ? " — English" : ""}):\n${transcript}`,
+	].join("\n\n");
 	const text = await ask(engine, questionsSystem(), prompt, usage);
 	const start = text.indexOf("{");
 	const end = text.lastIndexOf("}");
@@ -920,13 +1283,20 @@ async function questionsFor(engine: PiEngine, segments: readonly { sk: string; e
 
 // ─── Preparing a video ──────────────────────────────────────────────────────
 
-const stages = processWide("watch.stages", () => new Map<string, { stage: PrepareStage; error?: string; at: number }>());
+const stages = processWide(
+	"watch.stages",
+	() => new Map<string, { stage: PrepareStage; error?: string; at: number }>(),
+);
 const inFlight = processWide("watch.inFlight", () => new Map<string, Promise<VideoRecord>>());
 
 /** Is the kept record the cut asked for: the whole video, or this stretch? */
 function sameCut(kept: VideoRecord, range: FragmentRange | undefined): boolean {
 	if (!range) return !kept.fragment;
-	return !!kept.fragment && Math.abs(kept.fragment.startSec - range.startSec) < 1.5 && Math.abs(kept.fragment.endSec - range.endSec) < 1.5;
+	return (
+		!!kept.fragment &&
+		Math.abs(kept.fragment.startSec - range.startSec) < 1.5 &&
+		Math.abs(kept.fragment.endSec - range.endSec) < 1.5
+	);
 }
 
 export function prepareStage(id: string): { stage: PrepareStage; error?: string } | null {
@@ -941,13 +1311,19 @@ function setStage(id: string, stage: PrepareStage, error?: string) {
 	if (stage !== "done" && stage !== "error") updateTask(taskIdOf(id), { step: PREPARE_STAGE_LINE[stage] });
 	// Finished entries fade after a minute, so the library's "preparing"
 	// list stays honest.
-	if (stage === "done" || stage === "error") setTimeout(() => stages.get(id)?.stage === stage && stages.delete(id), 60_000).unref?.();
+	if (stage === "done" || stage === "error")
+		setTimeout(() => stages.get(id)?.stage === stage && stages.delete(id), 60_000).unref?.();
 }
 
 /** Gloss every line against the lexicon and the learner's words: `fresh`
  *  is a word beyond what the level expects, `assumed` one the level expects
  *  but the learner has not studied. */
-export function glossSegments(lines: readonly { start: number; end: number; sk: string }[], en: readonly string[], lexicon: Lexicon | null, k: KnownWords): VideoSegment[] {
+export function glossSegments(
+	lines: readonly { start: number; end: number; sk: string }[],
+	en: readonly string[],
+	lexicon: Lexicon | null,
+	k: KnownWords,
+): VideoSegment[] {
 	const names = storyNames(lines, lexicon);
 	return lines.map((l, i) => {
 		const g = glossSentence(l.sk, en[i] ?? "", lexicon, k.expected, [], names, k.met);
@@ -960,10 +1336,28 @@ export function glossSegments(lines: readonly { start: number; end: number; sk: 
  *  waits for the first. */
 export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<VideoRecord> {
 	const id = parseVideoUrl(url);
-	if (!id) return Promise.reject(new Error("That is not a YouTube or Spotify link. Paste a youtube.com/watch, youtu.be, shorts, or open.spotify.com/track link."));
+	if (!id)
+		return Promise.reject(
+			new Error(
+				"That is not a YouTube or Spotify link. Paste a youtube.com/watch, youtu.be, shorts, or open.spotify.com/track link.",
+			),
+		);
 	const range = opts.range;
-	if (range && !(Number.isFinite(range.startSec) && Number.isFinite(range.endSec) && range.startSec >= 0 && range.endSec - range.startSec >= FRAGMENT_PICK_MIN_SEC && range.endSec - range.startSec <= FRAGMENT_PICK_MAX_SEC)) {
-		return Promise.reject(new Error(`A fragment is between ${FRAGMENT_PICK_MIN_SEC} seconds and ${FRAGMENT_PICK_MAX_SEC / 60} minutes long.`));
+	if (
+		range &&
+		!(
+			Number.isFinite(range.startSec) &&
+			Number.isFinite(range.endSec) &&
+			range.startSec >= 0 &&
+			range.endSec - range.startSec >= FRAGMENT_PICK_MIN_SEC &&
+			range.endSec - range.startSec <= FRAGMENT_PICK_MAX_SEC
+		)
+	) {
+		return Promise.reject(
+			new Error(
+				`A fragment is between ${FRAGMENT_PICK_MIN_SEC} seconds and ${FRAGMENT_PICK_MAX_SEC / 60} minutes long.`,
+			),
+		);
 	}
 	const key = range ? `${id}@${Math.round(range.startSec)}-${Math.round(range.endSec)}` : id;
 	const existing = inFlight.get(key);
@@ -974,17 +1368,30 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			const kept = videoStore.get(id);
 			if (kept && sameCut(kept, range)) return kept;
 		}
-		const task = startTask({ id: taskIdOf(id), kind: "video", title: videoStore.get(id)?.title ?? (isSpotifyId(id) ? `Spotify ${id.slice(3)}` : `Video ${id}`), step: PREPARE_STAGE_LINE.captions });
+		const task = startTask({
+			id: taskIdOf(id),
+			kind: "video",
+			title: videoStore.get(id)?.title ?? (isSpotifyId(id) ? `Spotify ${id.slice(3)}` : `Video ${id}`),
+			step: PREPARE_STAGE_LINE.captions,
+		});
 		const signal = opts.signal ? AbortSignal.any([opts.signal, task.signal]) : task.signal;
 		setStage(id, "captions");
 		const lexicon = loadLexicon();
 		const k = knownWords(lexicon);
-		const fetched = await (opts.captions ? opts.captions(id) : fetchCaptions(id, { transcribe: opts.transcribe, signal, onStage: (s) => setStage(id, s) }));
-		if (range ? fetched.meta.durationSec > FRAGMENT_SOURCE_MAX_SEC : fetched.meta.durationSec > MAX_VIDEO_SEC) throw new Error(`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Pick one under ${MAX_VIDEO_SEC / 60} minutes; a session is one video.`);
+		const fetched = await (opts.captions
+			? opts.captions(id)
+			: fetchCaptions(id, { transcribe: opts.transcribe, signal, onStage: (s) => setStage(id, s) }));
+		if (range ? fetched.meta.durationSec > FRAGMENT_SOURCE_MAX_SEC : fetched.meta.durationSec > MAX_VIDEO_SEC)
+			throw new Error(
+				`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Pick one under ${MAX_VIDEO_SEC / 60} minutes; a session is one video.`,
+			);
 		signal.throwIfAborted();
 		updateTask(taskIdOf(id), { title: fetched.meta.title });
-		const lines = range ? segmentCues(fetched.cues).filter((l) => l.start >= range.startSec - 0.5 && l.end <= range.endSec + 0.5) : segmentCues(fetched.cues).slice(0, MAX_SEGMENTS);
-		if (lines.length === 0) throw new Error(range ? "The captions have no speech in that stretch." : "The captions are empty.");
+		const lines = range
+			? segmentCues(fetched.cues).filter((l) => l.start >= range.startSec - 0.5 && l.end <= range.endSec + 0.5)
+			: segmentCues(fetched.cues).slice(0, MAX_SEGMENTS);
+		if (lines.length === 0)
+			throw new Error(range ? "The captions have no speech in that stretch." : "The captions are empty.");
 		if (fetched.raw) {
 			try {
 				videoStore.putCaptions(id, fetched.source.trackLang, fetched.raw.ext, fetched.raw.text);
@@ -1002,7 +1409,13 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		}
 		const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
 		setStage(id, "translating");
-		const en = await translateLines(engine, lines.map((l) => l.sk), usage, fetched.meta.title, fetched.source.trackLang);
+		const en = await translateLines(
+			engine,
+			lines.map((l) => l.sk),
+			usage,
+			fetched.meta.title,
+			fetched.source.trackLang,
+		);
 		signal.throwIfAborted();
 		const untranslated = en.filter((t) => t === "").length;
 		const segments = glossSegments(lines, en, lexicon, k);
@@ -1013,10 +1426,21 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		let estimated = false;
 		if (fetched.source.trackLang !== code()) {
 			try {
-				const sk = await renderInLanguage(engine, lines.map((l) => l.sk), usage, fetched.meta.title, fetched.source.trackLang);
+				const sk = await renderInLanguage(
+					engine,
+					lines.map((l) => l.sk),
+					usage,
+					fetched.meta.title,
+					fetched.source.trackLang,
+				);
 				signal.throwIfAborted();
 				if (sk.filter(Boolean).length >= lines.length * 0.9) {
-					measured = glossSegments(lines.map((l, i) => ({ ...l, sk: sk[i] || l.sk })), en, lexicon, k);
+					measured = glossSegments(
+						lines.map((l, i) => ({ ...l, sk: sk[i] || l.sk })),
+						en,
+						lexicon,
+						k,
+					);
 					estimated = true;
 				}
 			} catch (err) {
@@ -1024,7 +1448,8 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			}
 		}
 		setStage(id, "questions");
-		const questions = opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);
+		const questions =
+			opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);
 		setStage(id, "saving");
 		const rankOf = commonness(lexicon);
 		const preTeach = pickPreTeach(measured, undefined, rankOf);
@@ -1036,8 +1461,18 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			title: fetched.meta.title,
 			...(fetched.meta.channel ? { channel: fetched.meta.channel } : {}),
 			...(fetched.meta.channelId ? { channelId: fetched.meta.channelId } : {}),
-			durationSec: range ? Math.ceil(lines[lines.length - 1]!.end - lines[0]!.start) : fetched.meta.durationSec || Math.ceil(lines[lines.length - 1]!.end),
-			...(range ? { fragment: { startSec: lines[0]!.start, endSec: lines[lines.length - 1]!.end, ofSec: fetched.meta.durationSec || Math.ceil(fetched.cues[fetched.cues.length - 1]?.start ?? 0) } } : {}),
+			durationSec: range
+				? Math.ceil(lines[lines.length - 1]!.end - lines[0]!.start)
+				: fetched.meta.durationSec || Math.ceil(lines[lines.length - 1]!.end),
+			...(range
+				? {
+						fragment: {
+							startSec: lines[0]!.start,
+							endSec: lines[lines.length - 1]!.end,
+							ofSec: fetched.meta.durationSec || Math.ceil(fetched.cues[fetched.cues.length - 1]?.start ?? 0),
+						},
+					}
+				: {}),
 			source: fetched.source,
 			level: k.level,
 			createdAt: now.toISOString(),
@@ -1051,7 +1486,9 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			measure: MEASURE_VERSION,
 			measuredAt: now.toISOString(),
 			wordCount: words.length,
-			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK"))).size,
+			unknownCount: new Set(
+				words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK")),
+			).size,
 			usage,
 			translatedBy: "model",
 			...(untranslated ? { untranslated } : {}),
@@ -1067,9 +1504,20 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 	inFlight.set(key, job);
 	return job
 		.catch((err) => {
-			const message = err instanceof Error && err.name === "AbortError" ? "Stopped." : err instanceof Error ? err.message : String(err);
+			const message =
+				err instanceof Error && err.name === "AbortError"
+					? "Stopped."
+					: err instanceof Error
+						? err.message
+						: String(err);
 			setStage(id, "error", message);
-			failTask(taskIdOf(id), message, err instanceof NoCaptionsError && err.canTranscribe ? { label: "Transcribe the audio", url, transcribe: true } : undefined);
+			failTask(
+				taskIdOf(id),
+				message,
+				err instanceof NoCaptionsError && err.canTranscribe
+					? { label: "Transcribe the audio", url, transcribe: true }
+					: undefined,
+			);
 			throw err;
 		})
 		.finally(() => inFlight.delete(key));
@@ -1082,7 +1530,10 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
  *  Before, the route ignored `background` and held the request through the
  *  whole translation, so the shelf showed its own "Adding" row next to the
  *  task's row for the same video until the end. */
-export async function prepareVideoInBackground(url: string, opts: PrepareOptions & { pollMs?: number } = {}): Promise<VideoRecord | { background: true; id: string }> {
+export async function prepareVideoInBackground(
+	url: string,
+	opts: PrepareOptions & { pollMs?: number } = {},
+): Promise<VideoRecord | { background: true; id: string }> {
 	const id = parseVideoUrl(url);
 	const job = prepareVideo(url, opts);
 	// A failure after the answer is on the task (failTask), not unhandled here.
@@ -1123,7 +1574,14 @@ export function remeasureVideo(rec: VideoRecord, now = new Date()): VideoRecord 
 		const k = knownWords(lexicon);
 		const en = rec.segments.map((s) => s.en);
 		const segments = foreign ? rec.segments : glossSegments(rec.segments, en, lexicon, k);
-		const measured = foreign ? glossSegments(rec.segments.map((s) => ({ start: s.start, end: s.end, sk: s.rendered! })), en, lexicon, k) : segments;
+		const measured = foreign
+			? glossSegments(
+					rec.segments.map((s) => ({ start: s.start, end: s.end, sk: s.rendered! })),
+					en,
+					lexicon,
+					k,
+				)
+			: segments;
 		const words = measured.flatMap((s) => s.tokens.filter((t) => t.word));
 		const next: VideoRecord = {
 			...rec,
@@ -1131,7 +1589,9 @@ export function remeasureVideo(rec: VideoRecord, now = new Date()): VideoRecord 
 			coverage: Math.round(videoCoverage(measured) * 1000) / 1000,
 			expected: Math.round(videoExpected(measured) * 1000) / 1000,
 			wordCount: words.length,
-			unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(activeLanguage().tag))).size,
+			unknownCount: new Set(
+				words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(activeLanguage().tag)),
+			).size,
 			preTeach: pickPreTeach(measured, undefined, commonness(lexicon)),
 			measure: MEASURE_VERSION,
 			measuredAt: now.toISOString(),
@@ -1146,8 +1606,14 @@ export function remeasureVideo(rec: VideoRecord, now = new Date()): VideoRecord 
 
 /** A kept video as the page should show it. */
 /** The channel a kept video belongs to, for a link to it. Videos kept before the id was kept take it from the picks' check of the same video, or from a saved creator of the same name. */
-function channelIdOf(v: { id: string; channel?: string; channelId?: string }, scans: ReturnType<typeof discoverStore.scans>, creators: Array<{ id: string; name: string }>): string | undefined {
-	return v.channelId ?? scans[v.id]?.channelId ?? (v.channel ? creators.find((c) => c.name === v.channel)?.id : undefined);
+function channelIdOf(
+	v: { id: string; channel?: string; channelId?: string },
+	scans: ReturnType<typeof discoverStore.scans>,
+	creators: Array<{ id: string; name: string }>,
+): string | undefined {
+	return (
+		v.channelId ?? scans[v.id]?.channelId ?? (v.channel ? creators.find((c) => c.name === v.channel)?.id : undefined)
+	);
 }
 
 export function currentVideo(id: string): VideoRecord | null {
@@ -1175,7 +1641,15 @@ export function videoLibrary(): VideoLibraryEntry[] {
 			...v,
 			...(channelId ? { channelId } : {}),
 			watches: mine.length,
-			...(last ? { lastWatchedAt: last.at, lastScore: { correct: last.correct, total: last.total }, ...(last.mode === "step" && last.segments ? { lastGotFirst: Math.round((last.gotFirst / last.segments) * 100) / 100 } : {}) } : {}),
+			...(last
+				? {
+						lastWatchedAt: last.at,
+						lastScore: { correct: last.correct, total: last.total },
+						...(last.mode === "step" && last.segments
+							? { lastGotFirst: Math.round((last.gotFirst / last.segments) * 100) / 100 }
+							: {}),
+					}
+				: {}),
 		};
 	});
 }
@@ -1186,7 +1660,9 @@ export function watchState(tz?: number, now = new Date()): WatchState {
 		library: videoLibrary(),
 		canPrepare: storyEngine() !== null,
 		canTranscribe: canTranscribeAudioNow(),
-		preparing: [...stages.entries()].filter(([, s]) => s.stage !== "done" && s.stage !== "error").map(([id, s]) => ({ id, stage: s.stage })),
+		preparing: [...stages.entries()]
+			.filter(([, s]) => s.stage !== "done" && s.stage !== "error")
+			.map(([id, s]) => ({ id, stage: s.stage })),
 		watchedToday: videoStore.watches().filter((w) => w.day === today).length,
 	};
 }
@@ -1240,9 +1716,17 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 	const gotAfter = stats.filter((s) => s.got === "after").length;
 	const missed = stats.filter((s) => s.got === "no").length;
 	const xp = watchXp(video.segments.length, gotFirst, gotAfter, correct, rewatch);
-	const missedWords = stats.filter((s) => s.got === "no").flatMap((s) => video.segments[s.i]!.tokens.filter((t) => t.fresh && t.slug).map((t) => t.slug!));
+	const missedWords = stats
+		.filter((s) => s.got === "no")
+		.flatMap((s) => video.segments[s.i]!.tokens.filter((t) => t.fresh && t.slug).map((t) => t.slug!));
 	// The words the learner asked about come first, so a long video cannot crowd them out.
-	const slugs = [...new Set([...input.tapped.filter((s) => /^[a-z0-9-]+$/.test(s)), ...missedWords, ...video.preTeach.map((w) => w.slug).filter((s): s is string => !!s)])].slice(0, WATCH_WORDS_MAX);
+	const slugs = [
+		...new Set([
+			...input.tapped.filter((s) => /^[a-z0-9-]+$/.test(s)),
+			...missedWords,
+			...video.preTeach.map((w) => w.slug).filter((s): s is string => !!s),
+		]),
+	].slice(0, WATCH_WORDS_MAX);
 	const queued = slugs.length ? enqueueWords(slugs, now) : [];
 	const p = progressStore.read();
 	const day = dayKey(now, input.tz);
@@ -1278,7 +1762,11 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 	// The lines not understood on the first listen come back in Listen (docs/research/creator-hooks.md, proposal 7).
 	try {
 		// Foreign captions (Czech for Slovak) would be played in another language, and automatic ones can misspell what was said, so their lines do not come back.
-		if (!foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang }) && video.source.kind !== "auto-captions") watchRepStore.addNew(missedWatchReps(video, stats, day));
+		if (
+			!foreignCaptions({ lang: video.lang, trackLang: video.source.trackLang }) &&
+			video.source.kind !== "auto-captions"
+		)
+			watchRepStore.addNew(missedWatchReps(video, stats, day));
 	} catch (err) {
 		console.warn("[watch] could not queue the missed lines:", err instanceof Error ? err.message : err);
 	}
@@ -1288,7 +1776,10 @@ export function recordWatch(input: WatchResultInput, now = new Date()): WatchOut
 export function importVideoToRead(videoId: string, now = new Date()): StoryRecord {
 	const video = currentVideo(videoId);
 	if (!video) throw new Error(`unknown video ${videoId}`);
-	const safeSlug = video.id.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+	const safeSlug = video.id
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
 	const storyId = `watch-${safeSlug}`;
 	const existing = storyStore.get(storyId);
 	if (existing) return existing;
@@ -1355,15 +1846,22 @@ interface SentenceAnswer {
  *  the rest and every verdict is kept. The same sentence for the same word
  *  is answered from the kept verdict. XP the first time a word is accepted
  *  for a video. */
-export async function checkSentence(input: { videoId: string; lemma: string; sentence: string; tz?: number }, opts: { engine?: PiEngine; model?: string; now?: Date } = {}): Promise<SentenceAnswer> {
+export async function checkSentence(
+	input: { videoId: string; lemma: string; sentence: string; tz?: number },
+	opts: { engine?: PiEngine; model?: string; now?: Date } = {},
+): Promise<SentenceAnswer> {
 	const video = videoStore.get(input.videoId);
 	if (!video) throw new Error(`unknown video ${input.videoId}`);
-	if (video.source.trackLang !== video.lang) throw new Error("This video's captions are not in the language you learn, so it has no sentence step.");
+	if (video.source.trackLang !== video.lang)
+		throw new Error("This video's captions are not in the language you learn, so it has no sentence step.");
 	const lemma = input.lemma.trim();
 	const sentence = input.sentence.trim();
-	const isWord = video.preTeach.some((w) => w.lemma === lemma) || video.segments.some((s) => s.tokens.some((t) => t.lemma === lemma));
+	const isWord =
+		video.preTeach.some((w) => w.lemma === lemma) ||
+		video.segments.some((s) => s.tokens.some((t) => t.lemma === lemma));
 	if (!isWord) throw new Error(`"${lemma}" is not a word of this video`);
-	if (!sentence || sentence.length > SENTENCE_MAX_CHARS) throw new Error(`Write one sentence, up to ${SENTENCE_MAX_CHARS} characters.`);
+	if (!sentence || sentence.length > SENTENCE_MAX_CHARS)
+		throw new Error(`Write one sentence, up to ${SENTENCE_MAX_CHARS} characters.`);
 	const problems = sentenceProblems(sentence, lemma);
 	if (problems.length) return { ok: false, corrected: sentence, why: problems[0]!, cached: false, xp: 0 };
 	const earlier = videoStore.sentences().filter((s) => s.videoId === video.id && s.lemma === lemma);
@@ -1371,13 +1869,30 @@ export async function checkSentence(input: { videoId: string; lemma: string; sen
 	if (same) return { ok: same.ok, corrected: same.corrected, why: same.why, cached: true, xp: 0 };
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "test" } : storyEngine();
 	if (!resolved) throw new Error("No model is configured. Pick one in Settings → AI models.");
-	const gloss = video.preTeach.find((w) => w.lemma === lemma)?.gloss ?? video.segments.flatMap((s) => s.tokens).find((t) => t.lemma === lemma)?.gloss ?? "";
+	const gloss =
+		video.preTeach.find((w) => w.lemma === lemma)?.gloss ??
+		video.segments.flatMap((s) => s.tokens).find((t) => t.lemma === lemma)?.gloss ??
+		"";
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
-	const text = await ask(resolved.engine, sentenceSystem(), `The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`, usage);
+	const text = await ask(
+		resolved.engine,
+		sentenceSystem(),
+		`The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`,
+		usage,
+	);
 	const verdict = parseVerdict(text, sentence);
 	if (!verdict) throw new Error("The check did not answer in the form it should. Try again.");
 	const now = opts.now ?? new Date();
-	const entry: SentenceCheckEntry = { videoId: video.id, lemma, sentence, ok: verdict.ok, corrected: verdict.corrected, why: verdict.why, model: resolved.model, at: now.toISOString() };
+	const entry: SentenceCheckEntry = {
+		videoId: video.id,
+		lemma,
+		sentence,
+		ok: verdict.ok,
+		corrected: verdict.corrected,
+		why: verdict.why,
+		model: resolved.model,
+		at: now.toISOString(),
+	};
 	videoStore.appendSentence(entry);
 	const xp = verdict.ok && !earlier.some((s) => s.ok) ? SENTENCE_XP : 0;
 	if (xp) {

@@ -34,7 +34,27 @@ import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { curriculumState, GUIDED_HOURS, hoursDone, PACE_WINDOW_DAYS, type Cefr } from "../core/curriculum.ts";
 import { allUnits } from "../core/lesson.ts";
-import { creditedSpeed, customId, customMilestone, estimateMilestone, GENRES, creditedWords, MILESTONES, normalizeCustomText, parseCustomMapping, speedFromSamples, speedTrend, type CustomMapping, type LearnerFacts, type MilestoneDef, type MilestoneEstimate, type MilestonesReport, type NextWord, type SpeedSample, type TrendPoint } from "../core/milestones.ts";
+import {
+	creditedSpeed,
+	customId,
+	customMilestone,
+	estimateMilestone,
+	GENRES,
+	creditedWords,
+	MILESTONES,
+	normalizeCustomText,
+	parseCustomMapping,
+	speedFromSamples,
+	speedTrend,
+	type CustomMapping,
+	type LearnerFacts,
+	type MilestoneDef,
+	type MilestoneEstimate,
+	type MilestonesReport,
+	type NextWord,
+	type SpeedSample,
+	type TrendPoint,
+} from "../core/milestones.ts";
 import { datedSceneView, isIsoDate, type DatedSceneView } from "../core/dated-scene.ts";
 import { grammarWord } from "../core/reading.ts";
 import { isWatchItem } from "../core/watch-reps.ts";
@@ -97,11 +117,23 @@ export function wordSets(lexicon: Lexicon | null): WordSets {
 	}
 	for (const u of allUnits()) {
 		if (u.kind !== "words" || (p.units[u.id]?.lessons ?? 0) === 0) continue;
-		for (const lemma of u.lemmas ?? []) for (const e of lexicon?.byForm.get(lemma.toLocaleLowerCase("sk-SK")) ?? []) met.add(e.slug);
+		for (const lemma of u.lemmas ?? [])
+			for (const e of lexicon?.byForm.get(lemma.toLocaleLowerCase("sk-SK")) ?? []) met.add(e.slug);
 	}
 	const assumed = new Set<string>();
 	if (lexicon) for (const slug of frequencyOrder(lexicon).slice(0, credited)) if (!met.has(slug)) assumed.add(slug);
-	return { met, solid, assumed, known: new Set([...met, ...assumed]), level, levelProgress: state.levelProgress, placed, credited, basis: measured ? "measured" : "level", ...(measured ? { measuredAt: measured.at, measuredReliable: measured.reliable } : {}) };
+	return {
+		met,
+		solid,
+		assumed,
+		known: new Set([...met, ...assumed]),
+		level,
+		levelProgress: state.levelProgress,
+		placed,
+		credited,
+		basis: measured ? "measured" : "level",
+		...(measured ? { measuredAt: measured.at, measuredReliable: measured.reliable } : {}),
+	};
 }
 
 // ─── Speed evidence ─────────────────────────────────────────────────────────
@@ -180,11 +212,27 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 			// understood at the clip's own pace when it took one play, at half that pace when it took two.
 			if (r.kind === "dictation") {
 				if (r.heardMs === undefined) continue;
-				own.push({ words: r.words ?? r.sentence.split(/\s+/).length, ms: r.heardMs * (1 + (r.replays ?? 0)), heardMs: r.heardMs, replays: r.replays, correct: r.verdict !== "wrong", peeked: r.peeked, at: e.at });
+				own.push({
+					words: r.words ?? r.sentence.split(/\s+/).length,
+					ms: r.heardMs * (1 + (r.replays ?? 0)),
+					heardMs: r.heardMs,
+					replays: r.replays,
+					correct: r.verdict !== "wrong",
+					peeked: r.peeked,
+					at: e.at,
+				});
 				continue;
 			}
 			if (r.ms === undefined) continue;
-			own.push({ words: r.words ?? r.sentence.split(/\s+/).length, ms: r.ms, heardMs: r.heardMs, replays: r.replays, correct: r.verdict === "exact", peeked: r.peeked, at: e.at });
+			own.push({
+				words: r.words ?? r.sentence.split(/\s+/).length,
+				ms: r.ms,
+				heardMs: r.heardMs,
+				replays: r.replays,
+				correct: r.verdict === "exact",
+				peeked: r.peeked,
+				at: e.at,
+			});
 		}
 		samples.push(...own);
 		const reading = speedFromSamples(own);
@@ -218,7 +266,14 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 			for (const s of w.stats ?? []) {
 				if (!s.words || !s.sec) continue;
 				const audio = s.sec * 1000;
-				wsamples.push({ words: s.words, ms: audio * (1 + (s.replays ?? 0)) * (s.got === "first" ? 1 : s.got === "after" ? 1.5 : 3), heardMs: audio, replays: s.replays, correct: s.got === "first" || s.got === "after", at: w.at ?? now.toISOString() });
+				wsamples.push({
+					words: s.words,
+					ms: audio * (1 + (s.replays ?? 0)) * (s.got === "first" ? 1 : s.got === "after" ? 1.5 : 3),
+					heardMs: audio,
+					replays: s.replays,
+					correct: s.got === "first" || s.got === "after",
+					at: w.at ?? now.toISOString(),
+				});
 			}
 		}
 		watch = { videos: watches.length, segments, gotFirst, reading: speedFromSamples(wsamples) };
@@ -228,7 +283,11 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 		level: sets.level,
 		levelProgress: sets.levelProgress,
 		placed: sets.placed,
-		words: { basis: sets.basis, credited: sets.credited, ...(sets.measuredAt ? { measuredAt: sets.measuredAt, reliable: sets.measuredReliable ?? true } : {}) },
+		words: {
+			basis: sets.basis,
+			credited: sets.credited,
+			...(sets.measuredAt ? { measuredAt: sets.measuredAt, reliable: sets.measuredReliable ?? true } : {}),
+		},
 		met: sets.met.size,
 		solid: sets.solid,
 		assumed: sets.assumed.size,
@@ -241,7 +300,12 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 		paceDays,
 		hoursDone: hoursDone(state),
 		hoursLogged: Math.round(hoursLogged * 10) / 10,
-		listen: { sessions: log.length, reading: listenReading, trend: trend ? { slope: trend.slope, points: trend.points } : null, knownSentences },
+		listen: {
+			sessions: log.length,
+			reading: listenReading,
+			trend: trend ? { slope: trend.slope, points: trend.points } : null,
+			knownSentences,
+		},
 		watch,
 		outside: outsideSummaryNow(now, tz),
 	};
@@ -272,7 +336,13 @@ export function milestonesReport(now = new Date(), tz?: number): MilestonesRepor
 			const e = lexicon.bySlug.get(slug) as LexiconEntry | undefined;
 			// Not vocabulary to learn: places, names and their adjectives
 			// (Ježišov), and the grammar words the dictionary happens to hold.
-			if (!e || e.cat === "Places" || grammarWord(entryLemma(e)) || entryLemma(e).charAt(0) !== entryLemma(e).charAt(0).toLocaleLowerCase("sk-SK")) continue;
+			if (
+				!e ||
+				e.cat === "Places" ||
+				grammarWord(entryLemma(e)) ||
+				entryLemma(e).charAt(0) !== entryLemma(e).charAt(0).toLocaleLowerCase("sk-SK")
+			)
+				continue;
 			nextWords.push({ slug, lemma: entryLemma(e), gloss: e.en, cat: e.cat, rank: i + 1 });
 		}
 	}
@@ -280,18 +350,47 @@ export function milestonesReport(now = new Date(), tz?: number): MilestonesRepor
 	const goal = p.goal ?? defaultGoal();
 	const state = curriculumState(p.units, goal.level, { startChapter: goal.startChapter });
 	const goals: MilestonesReport["goals"] = {};
-	for (const c of state.chapters) for (const u of c.units) if (u.kind === "goal") goals[u.id] = { title: u.title, done: u.status === "done" || u.status === "skipped", open: u.status === "open" || u.status === "started" };
+	for (const c of state.chapters)
+		for (const u of c.units)
+			if (u.kind === "goal")
+				goals[u.id] = {
+					title: u.title,
+					done: u.status === "done" || u.status === "skipped",
+					open: u.status === "open" || u.status === "started",
+				};
 	const today = dayKey(now, tz ?? now.getTimezoneOffset());
-	return { facts, milestones, nextWords, goals, guidedHours: GUIDED_HOURS, generatedAt: now.toISOString(), today, scenes: datedSceneViews(milestones, today) };
+	return {
+		facts,
+		milestones,
+		nextWords,
+		goals,
+		guidedHours: GUIDED_HOURS,
+		generatedAt: now.toISOString(),
+		today,
+		scenes: datedSceneViews(milestones, today),
+	};
 }
 
 /** Each dated scene on the list, read against its estimate, by milestone id. */
-export function datedSceneViews(estimates: readonly MilestoneEstimate[], today: string): Record<string, DatedSceneView> {
+export function datedSceneViews(
+	estimates: readonly MilestoneEstimate[],
+	today: string,
+): Record<string, DatedSceneView> {
 	const views: Record<string, DatedSceneView> = {};
 	for (const rec of milestoneStore.active()) {
 		const estimate = estimates.find((m) => m.def.id === rec.def.id);
 		if (!rec.date || !isIsoDate(rec.date) || !estimate) continue;
-		views[rec.def.id] = datedSceneView({ id: rec.def.id, title: rec.def.title, words: rec.def.custom ?? rec.text ?? null, date: rec.date, outcome: rec.outcome }, estimate, today);
+		views[rec.def.id] = datedSceneView(
+			{
+				id: rec.def.id,
+				title: rec.def.title,
+				words: rec.def.custom ?? rec.text ?? null,
+				date: rec.date,
+				outcome: rec.outcome,
+			},
+			estimate,
+			today,
+		);
 	}
 	return views;
 }
@@ -319,12 +418,22 @@ export interface CustomOptions {
 }
 
 function stepOf(u: Usage) {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
 /** A milestone in the learner's words: mapped once by the cheap model,
  *  kept on disk; the same words again (or a removed one) cost nothing. */
-export async function addCustomMilestone(textRaw: string, opts: CustomOptions = {}): Promise<{ record: CustomMilestoneRecord; reused: boolean }> {
+export async function addCustomMilestone(
+	textRaw: string,
+	opts: CustomOptions = {},
+): Promise<{ record: CustomMilestoneRecord; reused: boolean }> {
 	const text = normalizeCustomText(textRaw);
 	if (text.length < 3) throw new Error("Say what you want to be able to do, in a few words.");
 	const id = customId(text);
@@ -355,7 +464,14 @@ export async function addCustomMilestone(textRaw: string, opts: CustomOptions = 
 		throw new Error(friendlyAiError(err));
 	}
 	const mapping: CustomMapping = parseCustomMapping(answer, text);
-	const record: CustomMilestoneRecord = { def: customMilestone(text, mapping), text, mapping, model: resolved.model, usage, createdAt: now.toISOString() };
+	const record: CustomMilestoneRecord = {
+		def: customMilestone(text, mapping),
+		text,
+		mapping,
+		model: resolved.model,
+		usage,
+		createdAt: now.toISOString(),
+	};
 	milestoneStore.upsert(record);
 	return { record, reused: false };
 }

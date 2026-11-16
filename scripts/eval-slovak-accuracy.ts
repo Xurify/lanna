@@ -25,7 +25,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const [outDir, ...configArgs] = process.argv.slice(2);
 if (!outDir || configArgs.length === 0 || !process.env.LH_DATA_DIR) {
-	console.error("usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<sandbox>/auth.json tsx scripts/eval-slovak-accuracy.ts <out-dir> <model>:<level>[:skill] ...");
+	console.error(
+		"usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<sandbox>/auth.json tsx scripts/eval-slovak-accuracy.ts <out-dir> <model>:<level>[:skill] ...",
+	);
 	process.exit(1);
 }
 
@@ -45,7 +47,11 @@ type Item =
 // EVAL_SET=hard reads slovak-accuracy-hard.json; EVAL_REPS asks every item that many times.
 const SET = process.env.EVAL_SET ?? "base";
 const REPS = Math.max(1, Number(process.env.EVAL_REPS ?? 1));
-const items = (JSON.parse(fs.readFileSync(path.join(ROOT, `scripts/eval/slovak-accuracy${SET === "base" ? "" : `-${SET}`}.json`), "utf8")) as { items: Item[] }).items;
+const items = (
+	JSON.parse(
+		fs.readFileSync(path.join(ROOT, `scripts/eval/slovak-accuracy${SET === "base" ? "" : `-${SET}`}.json`), "utf8"),
+	) as { items: Item[] }
+).items;
 const SKILL_DIR = path.join(ROOT, ".claude/skills/slovak-language");
 const skillCore = fs.readFileSync(path.join(SKILL_DIR, "SKILL.md"), "utf8").replace(/^---[\s\S]*?---\s*/, "");
 const reference = (name: string) => fs.readFileSync(path.join(SKILL_DIR, "references", name), "utf8");
@@ -76,7 +82,13 @@ function userPrompt(item: Item): string {
 	}
 }
 
-const norm = (s: string) => s.normalize("NFC").toLocaleLowerCase("sk").replace(/[.!?,"„“]/g, "").replace(/\s+/g, " ").trim();
+const norm = (s: string) =>
+	s
+		.normalize("NFC")
+		.toLocaleLowerCase("sk")
+		.replace(/[.!?,"„“]/g, "")
+		.replace(/\s+/g, " ")
+		.trim();
 
 function parse(text: string): Record<string, unknown> | null {
 	const start = text.indexOf("{");
@@ -101,11 +113,16 @@ function grade(item: Item, out: Record<string, unknown> | null): { pass: boolean
 	}
 	if (item.kind === "translate") {
 		const said = typeof out.slovak === "string" ? out.slovak.normalize("NFC") : "";
-		return new RegExp(item.check, "i").test(said) ? { pass: true } : { pass: false, miss: `wrong translation (${said || "none"})` };
+		return new RegExp(item.check, "i").test(said)
+			? { pass: true }
+			: { pass: false, miss: `wrong translation (${said || "none"})` };
 	}
-	if (item.kind === "choice") return Number(out.answer) === item.answer ? { pass: true } : { pass: false, miss: "wrong rule" };
+	if (item.kind === "choice")
+		return Number(out.answer) === item.answer ? { pass: true } : { pass: false, miss: "wrong rule" };
 	const form = typeof out.form === "string" ? norm(out.form) : "";
-	return item.answer.map(norm).includes(form) ? { pass: true } : { pass: false, miss: `wrong form (${form || "none"})` };
+	return item.answer.map(norm).includes(form)
+		? { pass: true }
+		: { pass: false, miss: `wrong form (${form || "none"})` };
 }
 
 // Every call's cost goes to spend.jsonl as it lands, so a run that is
@@ -125,7 +142,18 @@ let halted: string | null = null;
 async function ask(model: string, level: string, skill: boolean, item: Item) {
 	if (halted || spent >= BUDGET) {
 		halted ??= `budget of $${BUDGET} reached ($${spent.toFixed(4)} spent)`;
-		return { id: item.id, kind: item.kind, text: "", out: null, pass: null, miss: `skipped: ${halted}`, cost: 0, output: 0, reasoning: 0, ms: 0 };
+		return {
+			id: item.id,
+			kind: item.kind,
+			text: "",
+			out: null,
+			pass: null,
+			miss: `skipped: ${halted}`,
+			cost: 0,
+			output: 0,
+			reasoning: 0,
+			ms: 0,
+		};
 	}
 	const engine = piEngineForSpec({ provider: "anthropic", id: model, thinkingLevel: level as never }, true);
 	let cost = 0;
@@ -134,7 +162,10 @@ async function ask(model: string, level: string, skill: boolean, item: Item) {
 	const started = Date.now();
 	const record = (c: number) => {
 		spent += c;
-		fs.appendFileSync(SPEND, `${JSON.stringify({ at: new Date().toISOString(), config: `${model}:${level}${skill ? ":skill" : ""}`, id: item.id, cost: c })}\n`);
+		fs.appendFileSync(
+			SPEND,
+			`${JSON.stringify({ at: new Date().toISOString(), config: `${model}:${level}${skill ? ":skill" : ""}`, id: item.id, cost: c })}\n`,
+		);
 	};
 	try {
 		const { text } = await runSubagent([], {
@@ -151,12 +182,33 @@ async function ask(model: string, level: string, skill: boolean, item: Item) {
 			},
 		});
 		const out = parse(text);
-		return { id: item.id, kind: item.kind, text, out, ...grade(item, out), cost, output, reasoning, ms: Date.now() - started };
+		return {
+			id: item.id,
+			kind: item.kind,
+			text,
+			out,
+			...grade(item, out),
+			cost,
+			output,
+			reasoning,
+			ms: Date.now() - started,
+		};
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
 		// A spending limit or a missing key fails every call after it: stop asking.
 		if (/usage limits|credit balance|not configured|authentication/i.test(message)) halted ??= message.slice(0, 160);
-		return { id: item.id, kind: item.kind, text: "", out: null, pass: null, miss: `error: ${message}`, cost, output, reasoning, ms: Date.now() - started };
+		return {
+			id: item.id,
+			kind: item.kind,
+			text: "",
+			out: null,
+			pass: null,
+			miss: `error: ${message}`,
+			cost,
+			output,
+			reasoning,
+			ms: Date.now() - started,
+		};
 	}
 }
 

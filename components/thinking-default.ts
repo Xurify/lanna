@@ -46,9 +46,6 @@ export function defaultOrderLevel(supported: readonly ThinkingLevel[]): Thinking
  *  truth displays. The ordering only assigns FIRST: when no explicit
  *  level exists, a fresh model pick populates the ordering's level for
  *  that model (chunk 2: the unset state can never re-enter). */
-export function populateLevel(
-	explicit: ThinkingLevel | undefined,
-	supported: readonly ThinkingLevel[],
-): ThinkingLevel {
+export function populateLevel(explicit: ThinkingLevel | undefined, supported: readonly ThinkingLevel[]): ThinkingLevel {
 	return explicit ?? defaultOrderLevel(supported);
 }

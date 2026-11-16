@@ -1,6 +1,6 @@
 # Your own reading: articles and newsletters, retold at the learner's level
 
-*LangHarness, 2026-11-11. Thread "Read opens the library; import articles, links and emails". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/server/read-import.ts`, `src/store/reading-sources.ts`, `components/reading/`.*
+_LangHarness, 2026-11-11. Thread "Read opens the library; import articles, links and emails". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/server/read-import.ts`, `src/store/reading-sources.ts`, `components/reading/`._
 
 ## The question
 
@@ -23,12 +23,12 @@ The owner has newsletters and articles they mean to read and do not. Can the Rea
 
 ## Options considered
 
-| Option | What it is | Verdict |
-|---|---|---|
-| Not simplified, every word tappable | The text in the language as written (or translated in full when it is in another language), glossed by the lexicon, with the share of known words shown | **Built, as the learner's choice.** The owner does not accept that a text under 95% is not worth reading, and the evidence above does not say it is |
-| Retold at the learner's level, or one level up | The Cheap slot rewrites each section in the language with the learner's known words, the same rules as an episode | **Built, the default.** The easy end of the choice: fluent reading on a text the learner picked |
-| Weave (words of the language inside the original text) | The text stays in its own language and more and more words are swapped | Not built. The learner reads the other language's sentences, so it is not input in the language, and P2 keeps input at the word level |
-| Pull emails from the mailbox | Gmail or IMAP access, a label to read from | Not built. It needs mail credentials held by the app and a security review of its own; paste and links cover the first use, and show whether the habit holds |
+| Option                                                 | What it is                                                                                                                                              | Verdict                                                                                                                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Not simplified, every word tappable                    | The text in the language as written (or translated in full when it is in another language), glossed by the lexicon, with the share of known words shown | **Built, as the learner's choice.** The owner does not accept that a text under 95% is not worth reading, and the evidence above does not say it is          |
+| Retold at the learner's level, or one level up         | The Cheap slot rewrites each section in the language with the learner's known words, the same rules as an episode                                       | **Built, the default.** The easy end of the choice: fluent reading on a text the learner picked                                                              |
+| Weave (words of the language inside the original text) | The text stays in its own language and more and more words are swapped                                                                                  | Not built. The learner reads the other language's sentences, so it is not input in the language, and P2 keeps input at the word level                        |
+| Pull emails from the mailbox                           | Gmail or IMAP access, a label to read from                                                                                                              | Not built. It needs mail credentials held by the app and a security review of its own; paste and links cover the first use, and show whether the habit holds |
 
 ## Design
 
@@ -63,9 +63,9 @@ A second batch of nine links, 2026-11-12: eight were read (109 to 5,990 words, 1
 
 ## Sources
 
-- Day, R. & Bamford, J. (2002). Top ten principles for teaching extensive reading. *Reading in a Foreign Language* 14(2), 136–141. doi:10.64152/10125/66761
-- Krashen, S. (2004). The case for narrow reading. *Language Magazine* 3(5), 17–19.
-- Lee, S. & Pulido, D. (2017). The impact of topic interest, L2 proficiency, and gender on EFL incidental vocabulary acquisition through reading. *Language Teaching Research* 21(1), 118–135. doi:10.1177/1362168816637381
-- Pulido, D. (2004). The relationship between text comprehension and second language incidental vocabulary acquisition: a matter of topic familiarity? *Language Learning* 54(3), 469–523. doi:10.1111/j.0023-8333.2004.00263.x
-- Pulido, D. (2007). The effects of topic familiarity and passage sight vocabulary on L2 lexical inferencing and retention through reading. *Applied Linguistics* 28(1), 66–86. doi:10.1093/applin/aml049
-- Yano, Y., Long, M. H. & Ross, S. (1994). The effects of simplified and elaborated texts on foreign language reading comprehension. *Language Learning* 44(2), 189–219. doi:10.1111/j.1467-1770.1994.tb01100.x
+- Day, R. & Bamford, J. (2002). Top ten principles for teaching extensive reading. _Reading in a Foreign Language_ 14(2), 136–141. doi:10.64152/10125/66761
+- Krashen, S. (2004). The case for narrow reading. _Language Magazine_ 3(5), 17–19.
+- Lee, S. & Pulido, D. (2017). The impact of topic interest, L2 proficiency, and gender on EFL incidental vocabulary acquisition through reading. _Language Teaching Research_ 21(1), 118–135. doi:10.1177/1362168816637381
+- Pulido, D. (2004). The relationship between text comprehension and second language incidental vocabulary acquisition: a matter of topic familiarity? _Language Learning_ 54(3), 469–523. doi:10.1111/j.0023-8333.2004.00263.x
+- Pulido, D. (2007). The effects of topic familiarity and passage sight vocabulary on L2 lexical inferencing and retention through reading. _Applied Linguistics_ 28(1), 66–86. doi:10.1093/applin/aml049
+- Yano, Y., Long, M. H. & Ross, S. (1994). The effects of simplified and elaborated texts on foreign language reading comprehension. _Language Learning_ 44(2), 189–219. doi:10.1111/j.1467-1770.1994.tb01100.x

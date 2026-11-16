@@ -72,12 +72,16 @@ export function listSourceSegments(agent: PromptAgent): Array<{ path: string; sh
 	// file mechanics stay out (the doctrine contradicts them; 00-base.md
 	// plays the base role), but the FORMATTING guide composes for every
 	// agent (owner, 2026-10-04 late): markdown applies in all settings.
-	const segments: Array<{ path: string; shared: boolean; file: string }> = agent === "practice" || agent === "chat" ? [] : [
-		{ path: "system-prompt.md", shared: true, file: PATHS.teacherPrompt },
-	];
+	const segments: Array<{ path: string; shared: boolean; file: string }> =
+		agent === "practice" || agent === "chat"
+			? []
+			: [{ path: "system-prompt.md", shared: true, file: PATHS.teacherPrompt }];
 	const dir = path.join(PROMPTS_DIR, agent);
 	if (fs.existsSync(dir)) {
-		const fragments = fs.readdirSync(dir).filter((f) => FRAGMENT_RE.test(f)).sort();
+		const fragments = fs
+			.readdirSync(dir)
+			.filter((f) => FRAGMENT_RE.test(f))
+			.sort();
 		for (const f of fragments) {
 			segments.push({ path: `${agent}/${f}`, shared: false, file: path.join(dir, f) });
 		}
@@ -120,10 +124,7 @@ export function listSourceSegments(agent: PromptAgent): Array<{ path: string; sh
  * settings record's agent.prompts map (absent key = off); enabled =
  * switch on AND the override file exists.
  */
-export function effectivePromptSegments(
-	agent: PromptAgent,
-	switches: Record<string, boolean>,
-): PromptSegmentInfo[] {
+export function effectivePromptSegments(agent: PromptAgent, switches: Record<string, boolean>): PromptSegmentInfo[] {
 	return listSourceSegments(agent).map((segment) => {
 		let sourceText: string;
 		try {

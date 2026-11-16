@@ -1,6 +1,5 @@
 /** The probe_done input schema, split from probe.ts so TypeBox stays out of the browser shell. */
-import { Type, type Static } from "typebox";
-import type { ProbeDoneInput } from "./probe.ts";
+import { Type } from "typebox";
 
 // The TypeBox schema of that input — SINGLE SOURCE OF TRUTH, lived by the
 // tool (src/agent/tools/probe.ts) and by the UI parse seam (src/core/tool-parts.ts):
@@ -23,7 +22,10 @@ export const probeDoneInputSchema = Type.Object({
 							"misconceptions found, and what the lesson should build from.",
 					}),
 				}),
-				{ minItems: 1, description: "Every strand the planned lesson will depend on, each with your read of his edge on it." },
+				{
+					minItems: 1,
+					description: "Every strand the planned lesson will depend on, each with your read of his edge on it.",
+				},
 			),
 			summary: Type.Optional(
 				Type.String({

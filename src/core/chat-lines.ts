@@ -35,7 +35,8 @@ export function learnerLines(messages: readonly Line[]): Map<number, LearnerLine
 				if (part.type !== "tool-grade") continue;
 				const input = part.input as { verdict?: ChatVerdict; hinted?: boolean } | undefined;
 				if (!input?.verdict) continue;
-				if (awaitingGrade && !awaitingGrade.grade) awaitingGrade.grade = { verdict: input.verdict, hinted: input.hinted === true };
+				if (awaitingGrade && !awaitingGrade.grade)
+					awaitingGrade.grade = { verdict: input.verdict, hinted: input.hinted === true };
 				questionOpen = input.verdict === "wrong";
 			}
 			continue;

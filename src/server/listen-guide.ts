@@ -20,7 +20,9 @@ import type { LanguageInfo } from "../core/language.ts";
 
 function listenGuideSystem(lang: Pick<LanguageInfo, "english" | "promptExamples"> = activeLanguage()): string {
 	const name = lang.english;
-	const spelling = lang.promptExamples?.spellingSlips ?? "A letter written as it is said rather than as the spelling has it is a spelling rule";
+	const spelling =
+		lang.promptExamples?.spellingSlips ??
+		"A letter written as it is said rather than as the spelling has it is a spelling rule";
 	return `You are a ${name} teacher reading a learner's Listen results: they heard a sentence, typed what they heard, and the app compared the two word by word and gave every difference one cause. The facts below are the app's own figures, with every trend already called, or not, by a statistical test.
 
 Rules:
@@ -43,16 +45,29 @@ At most 4 patterns, 3 noticed, 4 tips, 4 trends and 4 next steps.`;
 function readEngine(): { engine: PiEngine; model: string } | null {
 	const slot = aiSlot("strong");
 	if (!slot?.model) return null;
-	const spec = { provider: slot.model.provider, id: slot.model.id, ...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}) };
+	const spec = {
+		provider: slot.model.provider,
+		id: slot.model.id,
+		...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}),
+	};
 	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
 }
 
 function stepOf(u: Usage) {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
 /** Write the deep read from the saved analysis. The same facts reuse the saved read at no cost; `force` writes again. `say` stands in for the model in tests. */
-export async function writeListenGuide(opts: { force?: boolean; now?: Date; say?: (system: string, prompt: string) => Promise<string> } = {}): Promise<MistakesReport> {
+export async function writeListenGuide(
+	opts: { force?: boolean; now?: Date; say?: (system: string, prompt: string) => Promise<string> } = {},
+): Promise<MistakesReport> {
 	const saved = analysisStore.read();
 	const analysis = saved.analysis ?? analyzeNow(opts.now).analysis;
 	const l = analysis.listening;
@@ -63,7 +78,8 @@ export async function writeListenGuide(opts: { force?: boolean; now?: Date; say?
 	}
 	const facts = listenGuideFacts(l);
 	const key = digest(facts);
-	if (saved.listenGuide?.digest === key && !opts.force) return mistakesReportOf(analysis, saved.guide, saved.listenGuide);
+	if (saved.listenGuide?.digest === key && !opts.force)
+		return mistakesReportOf(analysis, saved.guide, saved.listenGuide);
 	const at = (opts.now ?? new Date()).toISOString();
 	const steps: ReturnType<typeof stepOf>[] = [];
 	let text: string;
@@ -77,12 +93,26 @@ export async function writeListenGuide(opts: { force?: boolean; now?: Date; say?
 		if (!resolved) throw new Error(aiMissing({ ready: false, reason: "no-model" }));
 		model = resolved.model;
 		try {
-			({ text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: listenGuideSystem(), prompt: `Facts:\n${facts}`, maxTurns: 1, onUsage: (u) => steps.push(stepOf(u)) }));
+			({ text } = await runSubagent([], {
+				role: "researcher",
+				engine: resolved.engine,
+				systemPrompt: listenGuideSystem(),
+				prompt: `Facts:\n${facts}`,
+				maxTurns: 1,
+				onUsage: (u) => steps.push(stepOf(u)),
+			}));
 		} catch (err) {
 			throw new Error(friendlyAiError(err));
 		}
 	}
-	const listenGuide: ListenGuideRecord = { text: text.trim(), data: parseListenGuide(text), at, digest: key, model, usage: { model, steps } };
+	const listenGuide: ListenGuideRecord = {
+		text: text.trim(),
+		data: parseListenGuide(text),
+		at,
+		digest: key,
+		model,
+		usage: { model, steps },
+	};
 	const kept = analysisStore.update((latest) => ({ ...latest, analysis: latest.analysis ?? analysis, listenGuide }));
 	return mistakesReportOf(analysis, kept.guide, listenGuide);
 }

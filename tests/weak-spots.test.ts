@@ -7,22 +7,45 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { cleanNote, missVerdict } from "../src/core/onboarding.ts";
-import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotGroups, weakSpotList, weakSpotsLine, WEAK_MEND_REPS, type WeakRecord } from "../src/core/weak-spots.ts";
+import {
+	clearWeak,
+	flagWeak,
+	lessonFlagsWeak,
+	tallyWeak,
+	weakSpotGroups,
+	weakSpotList,
+	weakSpotsLine,
+	WEAK_MEND_REPS,
+	type WeakRecord,
+} from "../src/core/weak-spots.ts";
 
 const t0 = new Date("2026-10-28T06:00:00Z");
 const t1 = new Date("2026-10-29T06:00:00Z");
 
 test("a spot is flagged with its evidence, tallied by later reps, and dropped once enough come back right", () => {
 	let weak: WeakRecord = {};
-	weak = flagWeak(weak, "acc-people", "check", "Animate masculine accusative is kuchára; kucháru is dative/locative, wrong case..", t0);
+	weak = flagWeak(
+		weak,
+		"acc-people",
+		"check",
+		"Animate masculine accusative is kuchára; kucháru is dative/locative, wrong case..",
+		t0,
+	);
 	assert.equal(weak["acc-people"]!.source, "check");
-	assert.equal(weak["acc-people"]!.note, "Animate masculine accusative is kuchára; kucháru is dative/locative, wrong case", "trailing full stops are trimmed");
+	assert.equal(
+		weak["acc-people"]!.note,
+		"Animate masculine accusative is kuchára; kucháru is dative/locative, wrong case",
+		"trailing full stops are trimmed",
+	);
 	assert.equal(weak["acc-people"]!.since, t0.toISOString());
 	// Not a unit: ignored.
 	assert.deepEqual(flagWeak(weak, "nope", "lesson", undefined, t0), weak);
 	// A lesson note never overwrites the check's; a check note replaces an older one and restarts the tally.
 	weak = flagWeak(weak, "acc-people", "lesson", "60% right", t1);
-	assert.equal(weak["acc-people"]!.note, "Animate masculine accusative is kuchára; kucháru is dative/locative, wrong case");
+	assert.equal(
+		weak["acc-people"]!.note,
+		"Animate masculine accusative is kuchára; kucháru is dative/locative, wrong case",
+	);
 	assert.equal(weak["acc-people"]!.since, t0.toISOString(), "keeps its first date");
 	// Six right of eight: not yet; then two more right: mended.
 	let r = tallyWeak(weak, "acc-people", 6, 2, t1);
@@ -54,7 +77,10 @@ test("the list orders check gaps first, folds a family into one row, and the tut
 		["acc-fem", "acc-people", "loc"],
 	);
 	assert.equal(list[2]!.line, "from your lessons: 62% right over 2 lessons · since then 1/3 right");
-	assert.equal(list[0]!.line, "from the level check: After prijal the object is accusative, and feminine -a nouns take -u");
+	assert.equal(
+		list[0]!.line,
+		"from the level check: After prijal the object is accusative, and feminine -a nouns take -u",
+	);
 	const groups = weakSpotGroups(list);
 	assert.equal(groups.length, 2, "the two accusative units are one struggle");
 	assert.equal(groups[0]!.id, "accusative");
@@ -68,23 +94,38 @@ test("the list orders check gaps first, folds a family into one row, and the tut
 	// One accusative unit alone stays its own row.
 	assert.equal(weakSpotGroups(weakSpotList(flagWeak({}, "acc-fem", "check", undefined, t0)))[0]!.id, "acc-fem");
 	const line = weakSpotsLine(list)!;
-	assert.match(line, /^- Weak spots on record: The accusative by noun class \(feminine -a → -u, people \+a, things unchanged; Objects: -a → -u: from the level check: After prijal/);
-	assert.match(line, /Where\? v, na, o \(Kde\? The locative; from your lessons: 62% right over 2 lessons · since then 1\/3 right\)/);
+	assert.match(
+		line,
+		/^- Weak spots on record: The accusative by noun class \(feminine -a → -u, people \+a, things unchanged; Objects: -a → -u: from the level check: After prijal/,
+	);
+	assert.match(
+		line,
+		/Where\? v, na, o \(Kde\? The locative; from your lessons: 62% right over 2 lessons · since then 1\/3 right\)/,
+	);
 	assert.match(line, /cleared once 8 reps since the flag come back 85% right\.$/);
 	assert.equal(weakSpotsLine([]), null);
 	assert.deepEqual(weakSpotList(undefined), []);
 });
 
 test("the miss verdict: the judge's note becomes clean sentences and the unit's rule is the pattern", () => {
-	assert.equal(cleanNote("Verb 'prijal' requires accusative 'ponuku'; nominative 'ponuka' is the wrong case.."), "Verb prijal requires accusative ponuku. Nominative ponuka is the wrong case.");
-	assert.equal(cleanNote("  animate masculine accusative is kuchára; kucháru is dative/locative, wrong case.  "), "Animate masculine accusative is kuchára. Kucháru is dative/locative, wrong case.");
-	assert.equal(cleanNote("\"wrong case\""), "Wrong case.");
+	assert.equal(
+		cleanNote("Verb 'prijal' requires accusative 'ponuku'; nominative 'ponuka' is the wrong case.."),
+		"Verb prijal requires accusative ponuku. Nominative ponuka is the wrong case.",
+	);
+	assert.equal(
+		cleanNote("  animate masculine accusative is kuchára; kucháru is dative/locative, wrong case.  "),
+		"Animate masculine accusative is kuchára. Kucháru is dative/locative, wrong case.",
+	);
+	assert.equal(cleanNote('"wrong case"'), "Wrong case.");
 	assert.equal(cleanNote("Right form, wrong diacritic: víno not vino"), "Right form, wrong diacritic: víno not vino.");
 	assert.equal(cleanNote("it's the dative"), "It's the dative.", "an apostrophe inside a word is not a quote");
 	assert.equal(cleanNote(""), null);
 	assert.equal(cleanNote("..."), null);
 	assert.equal(cleanNote(undefined), null);
-	const v = missVerdict({ answer: "ponuku", unit: "acc-fem", trigger: "prijal" }, "Verb 'prijal' requires accusative 'ponuku'; nominative 'ponuka' is the wrong case..");
+	const v = missVerdict(
+		{ answer: "ponuku", unit: "acc-fem", trigger: "prijal" },
+		"Verb 'prijal' requires accusative 'ponuku'; nominative 'ponuka' is the wrong case..",
+	);
 	assert.equal(v.form, "ponuku");
 	assert.equal(v.reason, "Verb prijal requires accusative ponuku. Nominative ponuka is the wrong case.");
 	assert.equal(v.pattern, "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.");
@@ -106,7 +147,14 @@ test("the check's items leave out crime, violence and death", async () => {
 	assert.equal(isGrim("Kde je bazén?"), false);
 	const ex = (sk: string, en: string) => ({ sk, en });
 	const calm = calmEntries([
-		{ sk: "chytiť", en: "to catch", examples: [ex("Polícia chytila vraha.", "The police caught the murderer."), ex("Chytil som loptu.", "I caught the ball.")] },
+		{
+			sk: "chytiť",
+			en: "to catch",
+			examples: [
+				ex("Polícia chytila vraha.", "The police caught the murderer."),
+				ex("Chytil som loptu.", "I caught the ball."),
+			],
+		},
 		{ sk: "vrah", en: "murderer", examples: [ex("Vrah utiekol.", "The murderer fled.")] },
 		{ sk: "zomrieť", en: "to die", examples: [ex("Chcem zomrieť.", "I want to die.")] },
 	]);

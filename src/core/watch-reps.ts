@@ -70,7 +70,11 @@ export function dayAfter(day: string, days: number): string {
  *  listen. Watch's `got` is "first" only for a line heard once with no help;
  *  "after" needed a replay, a slow play or the text, and "no" was not
  *  understood. A line with no text is skipped. */
-export function missedWatchReps(video: { id: string; title: string; segments: readonly { i: number; sk: string; en: string }[] }, stats: readonly { i: number; got: "first" | "after" | "no" }[], day: string): WatchRep[] {
+export function missedWatchReps(
+	video: { id: string; title: string; segments: readonly { i: number; sk: string; en: string }[] },
+	stats: readonly { i: number; got: "first" | "after" | "no" }[],
+	day: string,
+): WatchRep[] {
 	const out: WatchRep[] = [];
 	for (const s of stats) {
 		if (s.got === "first") continue;
@@ -78,14 +82,27 @@ export function missedWatchReps(video: { id: string; title: string; segments: re
 		const text = seg?.sk.trim();
 		if (!seg || !text) continue;
 		const en = seg.en.trim();
-		out.push({ id: watchRepId(video.id, seg.i), text, ...(en ? { en } : {}), videoId: video.id, title: video.title, added: day, step: 0, due: dayAfter(day, TOMORROW) });
+		out.push({
+			id: watchRepId(video.id, seg.i),
+			text,
+			...(en ? { en } : {}),
+			videoId: video.id,
+			title: video.title,
+			added: day,
+			step: 0,
+			due: dayAfter(day, TOMORROW),
+		});
 	}
 	return out;
 }
 
 /** The line after one answer. A peeked answer is a miss, as understood() does
  *  not count it; an accents-only answer keeps the step. */
-export function scheduleWatchRep(rep: WatchRep, answer: { verdict: ListenVerdict; peeked?: boolean }, now: { day: string; at: string }): WatchRep {
+export function scheduleWatchRep(
+	rep: WatchRep,
+	answer: { verdict: ListenVerdict; peeked?: boolean },
+	now: { day: string; at: string },
+): WatchRep {
 	if (understood([answer]) > 0) {
 		if (rep.step >= LAST_STEP) return { ...rep, retiredAt: now.at };
 		const step = (rep.step + 1) as WatchStep;
@@ -107,5 +124,17 @@ export function dueWatchReps(reps: readonly WatchRep[], day: string, max = WATCH
 /** Coverage is assumed, not measured: a missed line may hold words the learner does not know. */
 export function watchListenItem(rep: WatchRep): ListenItem {
 	const words = tokenize(rep.text).filter((t) => t.word && !/^\p{N}+$/u.test(t.text)).length;
-	return { id: watchItemId(rep.id), slug: "", lemma: "", gloss: "", sentence: rep.text, translation: rep.en ?? "", options: [], stretch: [], coverage: 1, words, source: { kind: "watch", title: rep.title } };
+	return {
+		id: watchItemId(rep.id),
+		slug: "",
+		lemma: "",
+		gloss: "",
+		sentence: rep.text,
+		translation: rep.en ?? "",
+		options: [],
+		stretch: [],
+		coverage: 1,
+		words,
+		source: { kind: "watch", title: rep.title },
+	};
 }

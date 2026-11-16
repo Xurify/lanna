@@ -15,7 +15,16 @@
  */
 
 import { isAtlasGender, isUnitId, type FirstAnswer } from "@/src/core";
-import { BODY_LIMITS, bodyTooLarge, blitzFor, mixupsFor, personalFor, recordLesson, unitLesson, type RepResult } from "@/src/server";
+import {
+	BODY_LIMITS,
+	bodyTooLarge,
+	blitzFor,
+	mixupsFor,
+	personalFor,
+	recordLesson,
+	unitLesson,
+	type RepResult,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +47,8 @@ export async function GET(req: Request) {
 const KINDS = new Set(["meaning", "choose", "type", "build", "listen"]);
 
 const str = (v: unknown, max = 600) => (typeof v === "string" ? v.slice(0, max) : undefined);
-const num = (v: unknown, min = 0, max = 300000) => (typeof v === "number" && Number.isFinite(v) && v >= min && v <= max ? Math.round(v) : undefined);
+const num = (v: unknown, min = 0, max = 300000) =>
+	typeof v === "number" && Number.isFinite(v) && v >= min && v <= max ? Math.round(v) : undefined;
 
 /** The optional per-rep record for the lesson log: strings only, bounded. */
 function repDetail(v: unknown): RepResult["detail"] {
@@ -53,7 +63,9 @@ function repDetail(v: unknown): RepResult["detail"] {
 		answer: str(d.answer, 120),
 		given: str(d.given),
 		trigger: str(d.trigger, 40),
-		options: Array.isArray(d.options) ? d.options.filter((o): o is string => typeof o === "string").slice(0, 8) : undefined,
+		options: Array.isArray(d.options)
+			? d.options.filter((o): o is string => typeof o === "string").slice(0, 8)
+			: undefined,
 		mixed: d.mixed === true,
 		again: d.again === true,
 		latencyMs: num(d.latencyMs),
@@ -88,13 +100,32 @@ export async function POST(req: Request) {
 	}
 	const reps: RepResult[] = body.reps.flatMap((r: unknown) => {
 		const x = r as Partial<RepResult> | null;
-		if (!x || typeof x.itemId !== "string" || typeof x.slug !== "string" || !KINDS.has(x.kind as string) || !VERDICTS.has(x.verdict as string)) return [];
+		if (
+			!x ||
+			typeof x.itemId !== "string" ||
+			typeof x.slug !== "string" ||
+			!KINDS.has(x.kind as string) ||
+			!VERDICTS.has(x.verdict as string)
+		)
+			return [];
 		const first = firstOf(x.first);
 		const latencyMs = num(x.latencyMs);
-		return [{ itemId: x.itemId, slug: x.slug, kind: x.kind!, verdict: x.verdict!, ...(x.assisted === true ? { assisted: true } : {}), ...(first ? { first } : {}), ...(latencyMs !== undefined ? { latencyMs } : {}), detail: repDetail(x.detail) }];
+		return [
+			{
+				itemId: x.itemId,
+				slug: x.slug,
+				kind: x.kind!,
+				verdict: x.verdict!,
+				...(x.assisted === true ? { assisted: true } : {}),
+				...(first ? { first } : {}),
+				...(latencyMs !== undefined ? { latencyMs } : {}),
+				detail: repDetail(x.detail),
+			},
+		];
 	});
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;
-	const clientId = typeof body.clientId === "string" && /^[A-Za-z0-9-]{8,64}$/.test(body.clientId) ? body.clientId : undefined;
+	const clientId =
+		typeof body.clientId === "string" && /^[A-Za-z0-9-]{8,64}$/.test(body.clientId) ? body.clientId : undefined;
 	return Response.json(
 		recordLesson({
 			unit: body.unit,

@@ -47,9 +47,7 @@ export const CURRENT_SETTINGS_VERSION = 1;
 /** The background-agent roles whose models the Agent settings expose.
  *  The conversation pair (prober/teacher) stays out — chat-controlled via
  *  the strong slot (one controller, the model picker). Tests pin the set. */
-export const BACKGROUND_MODEL_ROLES = [
-	"researcher",
-] as const;
+export const BACKGROUND_MODEL_ROLES = ["researcher"] as const;
 
 export const RETIRED_MODEL_ROLES = ["visualMaker"] as const;
 
@@ -68,8 +66,7 @@ export interface RoleModelOverride {
 
 /** The capability tiers a user can pin models into (owner-settled mapping):
  *  strong = prober + teacher (also the per-session default-teacher
- *  starting point); cheap = researcher,
-; vision = pdf-reader. Resolution per role:
+ *  starting point); cheap = researcher; vision = pdf-reader. Resolution per role:
  *  ROLE OVERRIDE → slot → factory pin. */
 export const MODEL_SLOTS = ["strong", "cheap", "vision"] as const;
 export type ModelSlotName = (typeof MODEL_SLOTS)[number];
@@ -324,7 +321,6 @@ export const FACTORY_SETTINGS: FactorySettings = {
 	notifications: DEFAULT_NOTIFICATION_SETTINGS,
 };
 
-
 // ─── Sanitizer ─────────────────────────────────────────────────────────────
 
 const PROSE_FONT_MIN = 12;
@@ -345,8 +341,7 @@ function sanitizeHexOrNull(value: unknown): string | null {
 	return null;
 }
 
-const boolOrDrop = (value: unknown): boolean | undefined =>
-	typeof value === "boolean" ? value : undefined;
+const boolOrDrop = (value: unknown): boolean | undefined => (typeof value === "boolean" ? value : undefined);
 
 function sanitizeGeneral(raw: Record<string, unknown>): GeneralSettings {
 	const out: GeneralSettings = {};
@@ -355,15 +350,7 @@ function sanitizeGeneral(raw: Record<string, unknown>): GeneralSettings {
 	return out;
 }
 
-const THINKING_LEVELS: readonly ThinkingLevel[] = [
-	"off",
-	"minimal",
-	"low",
-	"medium",
-	"high",
-	"xhigh",
-	"max",
-];
+const THINKING_LEVELS: readonly ThinkingLevel[] = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
 
 function sanitizeRoleOverride(raw: unknown): RoleModelOverride | undefined {
 	if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return undefined;
@@ -491,8 +478,7 @@ function sanitizeNotifications(raw: Record<string, unknown>): NotificationSettin
 					.slice(0, 10)
 			: [...DEFAULT_NOTIFICATION_SETTINGS.times],
 		soundPreset:
-			typeof raw.soundPreset === "string" &&
-			(NOTIFICATION_SOUND_PRESETS as readonly string[]).includes(raw.soundPreset)
+			typeof raw.soundPreset === "string" && (NOTIFICATION_SOUND_PRESETS as readonly string[]).includes(raw.soundPreset)
 				? (raw.soundPreset as NotificationSoundPreset)
 				: DEFAULT_NOTIFICATION_SETTINGS.soundPreset,
 		customSoundName:
@@ -525,7 +511,10 @@ export function sanitizeUserSettings(raw: unknown): UserSettings | null {
 	if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return null;
 	const r = raw as Record<string, unknown>;
 	const out: UserSettings = {
-		version: typeof r.version === "number" && Number.isInteger(r.version) && r.version >= 1 ? r.version : CURRENT_SETTINGS_VERSION,
+		version:
+			typeof r.version === "number" && Number.isInteger(r.version) && r.version >= 1
+				? r.version
+				: CURRENT_SETTINGS_VERSION,
 	};
 	if (r.general !== null && typeof r.general === "object" && !Array.isArray(r.general)) {
 		out.general = sanitizeGeneral(r.general as Record<string, unknown>);
@@ -543,7 +532,12 @@ export function sanitizeUserSettings(raw: unknown): UserSettings | null {
 	if (r.compaction !== undefined && r.compaction !== null && typeof r.compaction === "object") {
 		out.compaction = sanitizeCompaction(r.compaction as Record<string, unknown>);
 	}
-	if (r.notifications !== undefined && r.notifications !== null && typeof r.notifications === "object" && !Array.isArray(r.notifications)) {
+	if (
+		r.notifications !== undefined &&
+		r.notifications !== null &&
+		typeof r.notifications === "object" &&
+		!Array.isArray(r.notifications)
+	) {
 		out.notifications = sanitizeNotifications(r.notifications as Record<string, unknown>);
 	}
 	// Unknown top-level keys ride along untouched (forward-compat). One

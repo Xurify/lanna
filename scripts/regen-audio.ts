@@ -35,8 +35,11 @@ const clips = (count: number) => `${count} ${count === 1 ? "clip" : "clips"}`;
 const cost = regenCost(plan.chars);
 console.log(`Model: ${plan.model}`);
 console.log(`To make again: ${clips(plan.items.length)}, ${plan.chars.toLocaleString("en")} characters`);
-for (const [k, g] of [...byGroup].sort((a, b) => b[1].chars - a[1].chars)) console.log(`  ${k}: ${clips(g.clips)}, ${g.chars.toLocaleString("en")} characters`);
-console.log(`Cost: ${cost.credits.toLocaleString("en")} credits on a plan, or ${money(cost.usdLow)} to ${money(cost.usdHigh)} on the API ($${USD_PER_1K_CHARS.low} to $${USD_PER_1K_CHARS.high} per 1,000 characters; check elevenlabs.io/pricing/api)`);
+for (const [k, g] of [...byGroup].sort((a, b) => b[1].chars - a[1].chars))
+	console.log(`  ${k}: ${clips(g.clips)}, ${g.chars.toLocaleString("en")} characters`);
+console.log(
+	`Cost: ${cost.credits.toLocaleString("en")} credits on a plan, or ${money(cost.usdLow)} to ${money(cost.usdHigh)} on the API ($${USD_PER_1K_CHARS.low} to $${USD_PER_1K_CHARS.high} per 1,000 characters; check elevenlabs.io/pricing/api)`,
+);
 if (Object.keys(plan.kept).length) {
 	console.log("Left as they are:");
 	for (const [why, n] of Object.entries(plan.kept)) console.log(`  ${why}: ${n}`);
@@ -56,9 +59,12 @@ const result = await regenerate(plan, {
 	concurrency,
 	onClip: (item, ok) => {
 		n++;
-		if (n % 25 === 0 || !ok) console.log(`${n}/${plan.items.length} ${ok ? "" : "FAILED "}${item.entry.text.slice(0, 60)}`);
+		if (n % 25 === 0 || !ok)
+			console.log(`${n}/${plan.items.length} ${ok ? "" : "FAILED "}${item.entry.text.slice(0, 60)}`);
 	},
 });
-console.log(`\nMade again: ${clips(result.done)}, ${result.chars.toLocaleString("en")} characters. Failed: ${result.failed.length}.`);
+console.log(
+	`\nMade again: ${clips(result.done)}, ${result.chars.toLocaleString("en")} characters. Failed: ${result.failed.length}.`,
+);
 for (const f of result.failed.slice(0, 10)) console.log(`  ${f.text.slice(0, 60)}: ${f.error}`);
 if (result.stoppedAt) console.log("Stopped at the --max-chars limit; run again to go on.");

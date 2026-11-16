@@ -36,7 +36,7 @@ export function SubagentSteerCard({ message }: { message: LhViewMessage }) {
 			| undefined;
 		if (aborted?.data) return <AbortedBadge kind={aborted.data.kind ?? "job"} />;
 		return (
-				<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+			<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
 				A background agent finished, but its result could not be displayed.
 			</div>
 		);
@@ -55,7 +55,9 @@ export function SubagentSteerCard({ message }: { message: LhViewMessage }) {
 				<PdfCompleteBadge result={data.result as PdfResult} />
 			);
 		case "visual":
-			return <VisualOutputCard output={data.result} messageId={message.id} initialInverted={data.ui?.inverted ?? false} />;
+			return (
+				<VisualOutputCard output={data.result} messageId={message.id} initialInverted={data.ui?.inverted ?? false} />
+			);
 	}
 	return (
 		<div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
@@ -67,7 +69,12 @@ export function SubagentSteerCard({ message }: { message: LhViewMessage }) {
 /** The aborted-job chip: mirrors the complete-badge one-liner — the
  * teacher's wake turn acknowledges the abort in the lesson itself,
  * this just marks what happened. */
-const ABORTED_LABEL: Record<string, string> = { research: "Research", pdf: "PDF reading", visual: "Figure", job: "Background work" };
+const ABORTED_LABEL: Record<string, string> = {
+	research: "Research",
+	pdf: "PDF reading",
+	visual: "Figure",
+	job: "Background work",
+};
 
 function AbortedBadge({ kind }: { kind: string }) {
 	return (

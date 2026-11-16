@@ -19,7 +19,16 @@ import { PronChip } from "@/components/speak/pron";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { COLUMN, Dock, OptionTile, PracticeCard, TaskFrame, TaskTop } from "@/components/task-frame";
 import { PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
-import { LISTEN_ITEMS, listenOrder, SHADOW_GAP_MS, SHADOW_MAX_MS, SHADOW_TRIES, shadowVerdict, type PronScore, type SoundDef } from "@/src/core";
+import {
+	LISTEN_ITEMS,
+	listenOrder,
+	SHADOW_GAP_MS,
+	SHADOW_MAX_MS,
+	SHADOW_TRIES,
+	shadowVerdict,
+	type PronScore,
+	type SoundDef,
+} from "@/src/core";
 
 type Phase = "listen" | "shadow" | "done";
 type Stage = "ready" | "playing" | "gap" | "saying" | "scoring" | "scored";
@@ -32,7 +41,7 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 	const [order, setOrder] = useState<string[] | null>(null);
 	const [item, setItem] = useState(0);
 	const [chosen, setChosen] = useState<string | null>(null);
-	const [heardRight, setHeardRight] = useState(0);
+	const [, setHeardRight] = useState(0);
 	const [micOk, setMicOk] = useState(false);
 
 	const [line, setLine] = useState(0);
@@ -218,8 +227,18 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 
 	// ── Views ──────────────────────────────────────────────────────────
 
-	const progress = phase === "listen" ? item / (LISTEN_ITEMS + sound.lines.length) : phase === "shadow" ? (LISTEN_ITEMS + line) / (LISTEN_ITEMS + sound.lines.length) : 1;
-	const count = phase === "listen" ? `Listen ${item + 1} of ${LISTEN_ITEMS}` : phase === "shadow" ? `Line ${line + 1} of ${sound.lines.length}` : "Done";
+	const progress =
+		phase === "listen"
+			? item / (LISTEN_ITEMS + sound.lines.length)
+			: phase === "shadow"
+				? (LISTEN_ITEMS + line) / (LISTEN_ITEMS + sound.lines.length)
+				: 1;
+	const count =
+		phase === "listen"
+			? `Listen ${item + 1} of ${LISTEN_ITEMS}`
+			: phase === "shadow"
+				? `Line ${line + 1} of ${sound.lines.length}`
+				: "Done";
 	const rightIs = (sk: string) => chosen !== null && sk === word;
 	const wrongPicked = (sk: string) => chosen === sk && sk !== word;
 
@@ -234,7 +253,11 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 
 					{phase === "listen" && order && (
 						<div className="flex flex-col gap-4">
-							<button type="button" onClick={() => void speak(word).catch(() => undefined)} className={cn(SECONDARY, "self-start")}>
+							<button
+								type="button"
+								onClick={() => void speak(word).catch(() => undefined)}
+								className={cn(SECONDARY, "self-start")}
+							>
 								Play the word
 							</button>
 							<div className="grid grid-cols-2 gap-3">
@@ -253,7 +276,12 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 								))}
 							</div>
 							{chosen !== null && (
-								<div className={cn("rounded-[10px] px-4 py-3 text-sm leading-relaxed", chosen === word ? "bg-teal-wash text-foreground" : "bg-miss-soft text-foreground")}>
+								<div
+									className={cn(
+										"rounded-[10px] px-4 py-3 text-sm leading-relaxed",
+										chosen === word ? "bg-teal-wash text-foreground" : "bg-miss-soft text-foreground",
+									)}
+								>
 									<p className="font-[550]">{chosen === word ? "Yes, that one." : `No, it was ${word}.`}</p>
 									{chosen !== word && <p className="mt-1 text-ink-2">{sound.bridge}</p>}
 								</div>
@@ -300,7 +328,10 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 							<ul className="flex flex-col gap-1 text-sm text-ink-2">
 								{sound.lines.map((l, i) => (
 									<li key={l} className="font-prose" lang="sk">
-										{l} <span className="text-ink-3">· {results[i] === "clear" ? "clear" : results[i] === "not-yet" ? "not yet" : "not scored"}</span>
+										{l}{" "}
+										<span className="text-ink-3">
+											· {results[i] === "clear" ? "clear" : results[i] === "not-yet" ? "not yet" : "not scored"}
+										</span>
 									</li>
 								))}
 							</ul>
@@ -344,7 +375,11 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 								</button>
 							)}
 							<button type="button" onClick={nextLine} className={PRIMARY} data-testid="sound-next">
-								{scoreIsClear() || tries >= SHADOW_TRIES ? (line + 1 >= sound.lines.length ? "Finish" : "Next line") : "Skip this line"}
+								{scoreIsClear() || tries >= SHADOW_TRIES
+									? line + 1 >= sound.lines.length
+										? "Finish"
+										: "Next line"
+									: "Skip this line"}
 							</button>
 						</>
 					)}

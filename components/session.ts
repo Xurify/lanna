@@ -74,7 +74,7 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 	}, [initiallyInFlight, model]);
 
 	// The view + state, derived per model change from the model.
-	const state = useMemo<SessionState>(() => model.getState(), [model, version] as const);
+	const state = useMemo<SessionState>(() => model.getState(), [model, version]);
 
 	// THE TURN-STATE BROADCAST (owner, sidebar round 2026-10-02): the same
 	// optimistic machine, propagated — the instant a turn starts locally
@@ -106,21 +106,24 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 	const continueIfOwed = useCallback((record: readonly LhMessage[]) => void model.continueIfOwed(record), [model]);
 	const steer = useCallback((text: string) => void model.steer(text), [model]);
 	const submitAnswer = useCallback(
-		(tool: string, toolCallId: string, output: QuestionAnswerData) =>
-			void model.submitAnswer(tool, toolCallId, output),
+		(tool: string, toolCallId: string, output: QuestionAnswerData) => void model.submitAnswer(tool, toolCallId, output),
 		[model],
 	);
 	const dismissQuestion = useCallback(
 		(toolCallId: string, answer: QuestionAnswerData) => void model.dismissQuestion(toolCallId, answer),
 		[model],
 	);
-	const dismissProblem = useCallback(
-		(problemCallId: string) => void model.dismissProblem(problemCallId),
+	const dismissProblem = useCallback((problemCallId: string) => void model.dismissProblem(problemCallId), [model]);
+	const questionDraft = useCallback((toolCallId: string) => model.questionDraft(toolCallId), [model]);
+	const saveQuestionDraft = useCallback(
+		(toolCallId: string, draft: Parameters<SessionModel["saveQuestionDraft"]>[1]) =>
+			model.saveQuestionDraft(toolCallId, draft),
 		[model],
 	);
-	const questionDraft = useCallback((toolCallId: string) => model.questionDraft(toolCallId), [model]);
-	const saveQuestionDraft = useCallback((toolCallId: string, draft: Parameters<SessionModel["saveQuestionDraft"]>[1]) => model.saveQuestionDraft(toolCallId, draft), [model]);
-	const setMessages = useCallback((record: LhMessage[], turnError?: string) => model.setMessages(record, turnError), [model]);
+	const setMessages = useCallback(
+		(record: LhMessage[], turnError?: string) => model.setMessages(record, turnError),
+		[model],
+	);
 	const adoptRecord = useCallback((record: LhMessage[]) => model.adoptRecord(record), [model]);
 	const stop = useCallback(() => model.stop(), [model]);
 	const clearError = useCallback(() => model.clearError(), [model]);

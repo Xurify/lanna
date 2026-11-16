@@ -11,18 +11,30 @@ export const dynamic = "force-dynamic";
  *  drill loop. The plan is built here, with the page, so the first question
  *  is in the first HTML and never swaps after load. A unit lesson opens on
  *  the learn-first case sketch when the unit has one, before rep 1. */
-export default async function LessonPage({ searchParams }: { searchParams: Promise<{ unit?: string; mode?: string; gender?: string }> }) {
+export default async function LessonPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ unit?: string; mode?: string; gender?: string }>;
+}) {
 	const { unit, mode, gender } = await searchParams;
 	const id = isUnitId(unit) ? unit : "words";
 	const gen = isAtlasGender(gender) ? gender : undefined;
 	let plan: LessonPlan | null = null;
 	try {
-		plan = mode === "blitz" ? blitzFor() : mode === "mixups" ? mixupsFor() : mode === "personal" ? personalFor() : await unitLesson(id, { gender: gen });
+		plan =
+			mode === "blitz"
+				? blitzFor()
+				: mode === "mixups"
+					? mixupsFor()
+					: mode === "personal"
+						? personalFor()
+						: await unitLesson(id, { gender: gen });
 		if (plan.items.length === 0) plan = null;
 	} catch {
 		plan = null;
 	}
 	if (mode === "blitz") return <LessonPlayer mode="blitz" initialPlan={plan} />;
-	if (mode === "mixups" || mode === "personal") return <LessonPlayer key={mode} mode="lesson" focus={mode} initialPlan={plan} />;
+	if (mode === "mixups" || mode === "personal")
+		return <LessonPlayer key={mode} mode="lesson" focus={mode} initialPlan={plan} />;
 	return <LessonPlayer key={`${id}-${gen ?? "all"}`} mode="lesson" unit={id} gender={gen} initialPlan={plan} />;
 }

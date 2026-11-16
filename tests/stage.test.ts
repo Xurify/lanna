@@ -23,12 +23,19 @@ function estimate(title: string, over: Partial<MilestoneEstimate> = {}): Milesto
 test("speed is the limit: the sentence names the milestone and both numbers, measured without a detail", () => {
 	const view = stageSentence([estimate("A casual vlog")]);
 	assert.equal(view.title, "A casual vlog");
-	assert.equal(view.line, 'Speed limits "A casual vlog": about 40 words a minute are understood, and this needs about 100.');
+	assert.equal(
+		view.line,
+		'Speed limits "A casual vlog": about 40 words a minute are understood, and this needs about 100.',
+	);
 	assert.match(view.detail ?? "", /grows with hours/);
 });
 
 test("speed from the level, not measured, says so in the detail line and on the meter", () => {
-	const view = stageSentence([estimate("A film", { speed: { have: 60, need: 150, basis: "level", hoursToGo: 30, hoursBasis: "ladder", eta: noEta } })]);
+	const view = stageSentence([
+		estimate("A film", {
+			speed: { have: 60, need: 150, basis: "level", hoursToGo: 30, hoursBasis: "ladder", eta: noEta },
+		}),
+	]);
 	assert.match(view.detail ?? "", /estimate/);
 	assert.equal(view.speed?.estimated, true);
 });
@@ -38,7 +45,12 @@ test("the meters carry the sentence's numbers; a milestone read at your own pace
 	assert.equal(view.binding, "speed");
 	assert.deepEqual(view.words, { have: 900, need: 1800, estimated: false });
 	assert.deepEqual(view.speed, { have: 40, need: 100, estimated: false });
-	const read = stageSentence([estimate("The news", { binding: "words", speed: { have: 0, need: 0, basis: "level", hoursToGo: 0, hoursBasis: "ladder", eta: noEta } })]);
+	const read = stageSentence([
+		estimate("The news", {
+			binding: "words",
+			speed: { have: 0, need: 0, basis: "level", hoursToGo: 0, hoursBasis: "ladder", eta: noEta },
+		}),
+	]);
 	assert.equal(read.binding, "words");
 	assert.equal(read.speed, null);
 	assert.equal(stageSentence([]).words, null);
@@ -54,7 +66,10 @@ test("words are the limit: the sentence gives the known and needed words, and wh
 test("the milestone to talk about is the unreached one with the nearest date", () => {
 	const far = estimate("Far", { eta: { planned: null, pace: "2028-01-01", daysPlanned: null, daysPace: 400 } });
 	const near = estimate("Near", { eta: { planned: null, pace: "2027-01-01", daysPlanned: null, daysPace: 60 } });
-	const reached = estimate("Done", { status: "reached", eta: { planned: null, pace: null, daysPlanned: 0, daysPace: 0 } });
+	const reached = estimate("Done", {
+		status: "reached",
+		eta: { planned: null, pace: null, daysPlanned: 0, daysPace: 0 },
+	});
 	assert.equal(nearestOpen([far, near, reached])?.def.title, "Near");
 	assert.equal(stageSentence([far, near]).title, "Near");
 });

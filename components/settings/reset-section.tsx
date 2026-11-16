@@ -29,7 +29,11 @@ export function ResetSection({ language }: { language?: string }) {
 		setBusy(true);
 		setError(null);
 		try {
-			const res = await fetch("/api/reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirm: CONFIRM_WORD }) });
+			const res = await fetch("/api/reset", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ confirm: CONFIRM_WORD }),
+			});
 			const body = (await res.json()) as { error?: string; backup?: string };
 			if (!res.ok) throw new Error(body.error ?? `Couldn't reset (error ${res.status}). Try again.`);
 			setBackup(body.backup ?? null);
@@ -51,7 +55,9 @@ export function ResetSection({ language }: { language?: string }) {
 	return (
 		<div className="flex flex-col gap-3" data-testid="reset-section">
 			<p className="text-sm text-muted-foreground">
-				Start over{language ? ` in ${language}` : ""}: progress, level, goal, chats, review cards, skill map, speaking sessions and stories move into a backup folder, so you can put them back. Your API keys, settings and voice clips stay.
+				Start over{language ? ` in ${language}` : ""}: progress, level, goal, chats, review cards, skill map, speaking
+				sessions and stories move into a backup folder, so you can put them back. Your API keys, settings and voice
+				clips stay.
 			</p>
 			{where && (
 				<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs" data-testid="reset-locations">
@@ -60,7 +66,9 @@ export function ResetSection({ language }: { language?: string }) {
 					<dt className="text-muted-foreground">Backups</dt>
 					<dd className="min-w-0 break-all font-mono text-foreground">
 						{where.backups}
-						<span className="font-sans text-muted-foreground">{where.backupCount === 0 ? " (none yet)" : ` (${where.backupCount} saved)`}</span>
+						<span className="font-sans text-muted-foreground">
+							{where.backupCount === 0 ? " (none yet)" : ` (${where.backupCount} saved)`}
+						</span>
 					</dd>
 				</dl>
 			)}
@@ -91,7 +99,14 @@ export function ResetSection({ language }: { language?: string }) {
 						</p>
 					)}
 					<div className="flex gap-2">
-						<Button type="button" variant="destructive" size="sm" data-testid="reset-confirm" disabled={busy || typed !== CONFIRM_WORD} onClick={() => void run()}>
+						<Button
+							type="button"
+							variant="destructive"
+							size="sm"
+							data-testid="reset-confirm"
+							disabled={busy || typed !== CONFIRM_WORD}
+							onClick={() => void run()}
+						>
 							{busy ? "Resetting…" : "Reset my data"}
 						</Button>
 						<Button

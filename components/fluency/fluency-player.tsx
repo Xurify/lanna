@@ -23,19 +23,62 @@ import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckIcon, LoaderCircleIcon, MicIcon, MicOffIcon, RepeatIcon, TimerIcon, Volume2Icon, XIcon } from "lucide-react";
+import {
+	CheckIcon,
+	LoaderCircleIcon,
+	MicIcon,
+	MicOffIcon,
+	RepeatIcon,
+	TimerIcon,
+	Volume2Icon,
+	XIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
-import { ACTIVE_TIME_HOW, COLUMN, Centered, Dock, endEnterBlocked, EnterHint, OptionTile, PracticeCard, PracticeTime, PRIMARY, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import {
+	ACTIVE_TIME_HOW,
+	COLUMN,
+	Centered,
+	Dock,
+	endEnterBlocked,
+	EnterHint,
+	OptionTile,
+	PracticeCard,
+	PracticeTime,
+	PRIMARY,
+	SECONDARY,
+	SentenceRow,
+	SentenceRows,
+	Stat,
+	Stats,
+	TaskEnd,
+	TaskFrame,
+	TaskTop,
+} from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { Recorder, micSupported, scoreClip } from "@/components/speak/recorder";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { FAST_PASSES, fastWindows, passMade, PRON_CLEAR, QUESTION_KIND_INFO, wordsPerMinute, type FastItem, type FastPace, type FastRep, type PronEngine, type PronReport, type PronScore, type StoryQuestion, type StoryRecord } from "@/src/core";
+import {
+	FAST_PASSES,
+	fastWindows,
+	passMade,
+	PRON_CLEAR,
+	QUESTION_KIND_INFO,
+	wordsPerMinute,
+	type FastItem,
+	type FastPace,
+	type FastRep,
+	type PronEngine,
+	type PronReport,
+	type PronScore,
+	type StoryQuestion,
+	type StoryRecord,
+} from "@/src/core";
 
 type FluencyMode = "reread" | "fast";
 
@@ -61,7 +104,19 @@ interface Summary {
 	streak: { days: number };
 }
 
-export function FluencyPlayer({ mode, initialReread = null, initialFast = null, stt = false, pron = null }: { mode: FluencyMode; initialReread?: RereadPlan | null; initialFast?: FastPlan | null; stt?: boolean; pron?: PronEngine | null }) {
+export function FluencyPlayer({
+	mode,
+	initialReread = null,
+	initialFast = null,
+	stt = false,
+	pron = null,
+}: {
+	mode: FluencyMode;
+	initialReread?: RereadPlan | null;
+	initialFast?: FastPlan | null;
+	stt?: boolean;
+	pron?: PronEngine | null;
+}) {
 	if (mode === "reread") return <Reread initial={initialReread} />;
 	return <Fast initial={initialFast} stt={stt} pron={pron} />;
 }
@@ -137,7 +192,14 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 			const res = await fetch("/api/fluency", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ mode: "reread", storyId: plan.story.id, ms: readMs.current, questionIndex: plan.questionIndex, answer: i, tz: new Date().getTimezoneOffset() }),
+				body: JSON.stringify({
+					mode: "reread",
+					storyId: plan.story.id,
+					ms: readMs.current,
+					questionIndex: plan.questionIndex,
+					answer: i,
+					tz: new Date().getTimezoneOffset(),
+				}),
 			});
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			setOutcome((await res.json()) as RereadOutcome);
@@ -174,10 +236,12 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 				<Centered testId="reread-empty">
 					{error ? (
 						<p className="font-prose text-lg text-foreground">{error}</p>
-						) : (
+					) : (
 						<>
 							<p className="font-prose text-lg text-foreground">Nothing to re-read yet.</p>
-							<p className="mt-2 font-prose text-base text-muted-foreground">Read an episode first. Once you have, it comes back here against the clock.</p>
+							<p className="mt-2 font-prose text-base text-muted-foreground">
+								Read an episode first. Once you have, it comes back here against the clock.
+							</p>
 						</>
 					)}
 					<div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -219,91 +283,129 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 					}
 				>
 					<p className="q-date flex items-center gap-1.5">
-							<QIcon name="read" className="text-teal" />
-							Read it faster · done
-						</p>
-						<h1 className="q-hello">
-							{outcome.wpm} words a minute{outcome.faster ? ", faster." : "."}
-						</h1>
-						<Stats className="mt-7 max-w-none">
-							<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
-							<Stat label={outcome.previousWpm !== null ? "Your recent pace" : "Starting target"} value={`${outcome.targetWpm} wpm`} ink="text-ink-2" />
-							{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />}
-							<Stat label="The question" value={outcome.right ? "right" : "missed"} ink={outcome.right ? "text-teal-2" : "text-miss"} />
-						</Stats>
+						<QIcon name="read" className="text-teal" />
+						Read it faster · done
+					</p>
+					<h1 className="q-hello">
+						{outcome.wpm} words a minute{outcome.faster ? ", faster." : "."}
+					</h1>
+					<Stats className="mt-7 max-w-none">
+						<Stat label="XP" value={`+${outcome.xp}`} ink="text-teal-2" />
+						<Stat
+							label={outcome.previousWpm !== null ? "Your recent pace" : "Starting target"}
+							value={`${outcome.targetWpm} wpm`}
+							ink="text-ink-2"
+						/>
+						{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />}
+						<Stat
+							label="The question"
+							value={outcome.right ? "right" : "missed"}
+							ink={outcome.right ? "text-teal-2" : "text-miss"}
+						/>
+					</Stats>
 					<History history={[...plan.history, { at: "now", wpm: outcome.wpm }]} target={plan.targetWpm} />
 					<p className="q-sub mt-4">
-							{outcome.faster
-								? "Timed re-reading of easy text raised reading speed in classroom studies, mostly on the texts that were practiced. Same episode again in a few days."
-								: !outcome.right
-									? "No speed bonus when the question is missed: a fast read you did not follow is not the goal."
-									: "No bonus this time. The point is the climb over weeks, not one run."}
+						{outcome.faster
+							? "Timed re-reading of easy text raised reading speed in classroom studies, mostly on the texts that were practiced. Same episode again in a few days."
+							: !outcome.right
+								? "No speed bonus when the question is missed: a fast read you did not follow is not the goal."
+								: "No bonus this time. The point is the climb over weeks, not one run."}
 					</p>
 					<SourcesNote feature="speed-reread" className="mt-14" />
 				</TaskEnd>
-				</TaskFrame>
-			);
-		}
+			</TaskFrame>
+		);
+	}
 
-		return (
+	return (
 		<TaskFrame strip={false}>
-			<TaskTop progress={phase === "intro" ? 0 : phase === "reading" ? 0.5 : 0.9} label="Read it faster" count={phase === "question" ? "question" : phase === "reading" ? `${seconds} s` : `${plan.words} words`}  />
+			<TaskTop
+				progress={phase === "intro" ? 0 : phase === "reading" ? 0.5 : 0.9}
+				label="Read it faster"
+				count={phase === "question" ? "question" : phase === "reading" ? `${seconds} s` : `${plan.words} words`}
+			/>
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div className={cn(COLUMN, "lh-rise")}>
 					<PracticeCard icon="read" title="Read it faster" sub={`episode ${story.episode} · ${plan.words} words`}>
-					<h2 className="mb-5 font-prose text-[28px] font-semibold leading-tight tracking-[-0.028em] text-foreground" lang={lang?.code}>
-						{story.title}
-					</h2>
+						<h2
+							className="mb-5 font-prose text-[28px] font-semibold leading-tight tracking-[-0.028em] text-foreground"
+							lang={lang?.code}
+						>
+							{story.title}
+						</h2>
 
-
-					{phase === "intro" && (
-						<div data-testid="reread-intro">
-							<p className="font-prose text-[17px] leading-relaxed text-ink-2">You have read this one. Read it again, as fast as you can while still following it. Press Start, read, press Done. One question follows, and the speed bonus needs it right. The first target is a guess for your level; after that the bar is your own recent pace.</p>
-							<Stats className="mt-5">
-								<Stat label={plan.previousWpm !== null ? "Your recent pace" : `Starting target at ${story.level}`} value={`${plan.targetWpm} wpm`} ink="text-teal-2" />
-								{plan.firstWpm !== null && <Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />}
-								<Stat label="Re-reads" value={String(plan.history.length)} ink="text-ink-2" />
-							</Stats>
-							<button type="button" onClick={begin} className={cn(PRIMARY, "mt-6")} data-testid="reread-start">
-								<TimerIcon className="size-4" strokeWidth={1.6} />
-								Start the clock
-							</button>
-							<span className="ml-3 font-ui text-xs text-ink-3">or Enter</span>
+						{phase === "intro" && (
+							<div data-testid="reread-intro">
+								<p className="font-prose text-[17px] leading-relaxed text-ink-2">
+									You have read this one. Read it again, as fast as you can while still following it. Press Start, read,
+									press Done. One question follows, and the speed bonus needs it right. The first target is a guess for
+									your level; after that the bar is your own recent pace.
+								</p>
+								<Stats className="mt-5">
+									<Stat
+										label={plan.previousWpm !== null ? "Your recent pace" : `Starting target at ${story.level}`}
+										value={`${plan.targetWpm} wpm`}
+										ink="text-teal-2"
+									/>
+									{plan.firstWpm !== null && (
+										<Stat label="First reading" value={`${plan.firstWpm} wpm`} ink="text-ink-2" />
+									)}
+									<Stat label="Re-reads" value={String(plan.history.length)} ink="text-ink-2" />
+								</Stats>
+								<button type="button" onClick={begin} className={cn(PRIMARY, "mt-6")} data-testid="reread-start">
+									<TimerIcon className="size-4" strokeWidth={1.6} />
+									Start the clock
+								</button>
+								<span className="ml-3 font-ui text-xs text-ink-3">or Enter</span>
 								<SourcesNote feature="speed-reread" className="mt-6" />
-						</div>
-					)}
-
-					{phase === "reading" && (
-						<div data-testid="reread-text" data-word-lookup-enabled="true">
-							<div className="rounded-[10px] bg-well px-5 py-4">
-								{story.sentences.map((s, i) => (
-									<p key={i} className="font-prose text-[21px] leading-[1.7] tracking-[-0.008em] text-foreground" lang={lang?.code}>
-										{s.sk}
-									</p>
-								))}
 							</div>
-						</div>
-					)}
+						)}
 
-					{phase === "question" && (
-						<div data-testid="reread-question" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
-							<p className="q-lbl">{QUESTION_KIND_INFO[plan.question.kind ?? "recall"].label}</p>
-							<p className="mt-2 font-prose text-[22px] font-semibold leading-snug tracking-[-0.018em] text-foreground" lang={lang?.code}>
-								{plan.question.q}
-							</p>
-							<div className="mt-5 grid gap-3">
-								{plan.question.options.map((o, i) => {
-									const right = picked !== null && i === plan.question.answer;
-									const wrong = picked === i && !right;
-									return (
-										<OptionTile key={o} n={i + 1} lang={lang?.code} disabled={picked !== null} onClick={() => void answer(i)} state={picked === null ? "idle" : right ? "right" : wrong ? "wrong" : "dim"}>
-											{o}
-										</OptionTile>
-									);
-								})}
+						{phase === "reading" && (
+							<div data-testid="reread-text" data-word-lookup-enabled="true">
+								<div className="rounded-[10px] bg-well px-5 py-4">
+									{story.sentences.map((s, i) => (
+										<p
+											key={i}
+											className="font-prose text-[21px] leading-[1.7] tracking-[-0.008em] text-foreground"
+											lang={lang?.code}
+										>
+											{s.sk}
+										</p>
+									))}
+								</div>
 							</div>
-						</div>
-					)}
+						)}
+
+						{phase === "question" && (
+							<div data-testid="reread-question" data-word-lookup-enabled={picked !== null ? "true" : "false"}>
+								<p className="q-lbl">{QUESTION_KIND_INFO[plan.question.kind ?? "recall"].label}</p>
+								<p
+									className="mt-2 font-prose text-[22px] font-semibold leading-snug tracking-[-0.018em] text-foreground"
+									lang={lang?.code}
+								>
+									{plan.question.q}
+								</p>
+								<div className="mt-5 grid gap-3">
+									{plan.question.options.map((o, i) => {
+										const right = picked !== null && i === plan.question.answer;
+										const wrong = picked === i && !right;
+										return (
+											<OptionTile
+												key={o}
+												n={i + 1}
+												lang={lang?.code}
+												disabled={picked !== null}
+												onClick={() => void answer(i)}
+												state={picked === null ? "idle" : right ? "right" : wrong ? "wrong" : "dim"}
+											>
+												{o}
+											</OptionTile>
+										);
+									})}
+								</div>
+							</div>
+						)}
 					</PracticeCard>
 					{error && (
 						<p className="mt-4 rounded-[10px] bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert">
@@ -316,19 +418,32 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 					{phase === "reading" ? (
 						<>
-							<p className="font-ui text-[22px] font-semibold tracking-[-0.015em] tabular-nums text-foreground" data-testid="reread-clock">
-								{seconds} s{liveWpm !== null && <span className="ml-3 text-sm font-[450] text-ink-3">{liveWpm} wpm</span>}
+							<p
+								className="font-ui text-[22px] font-semibold tracking-[-0.015em] tabular-nums text-foreground"
+								data-testid="reread-clock"
+							>
+								{seconds} s
+								{liveWpm !== null && <span className="ml-3 text-sm font-[450] text-ink-3">{liveWpm} wpm</span>}
 							</p>
-							<button type="button" onClick={stop} className={PRIMARY} data-testid="reread-done" ref={(el) => el?.focus()}>
+							<button
+								type="button"
+								onClick={stop}
+								className={PRIMARY}
+								data-testid="reread-done"
+								ref={(el) => el?.focus()}
+							>
 								Done reading
 							</button>
 						</>
 					) : phase === "question" ? (
 						<p className="font-prose text-[13px] text-ink-3">
-							{seconds} s · {wordsPerMinute(plan.words, readMs.current)} words a minute · pick an answer, or press its number
+							{seconds} s · {wordsPerMinute(plan.words, readMs.current)} words a minute · pick an answer, or press its
+							number
 						</p>
 					) : (
-						<p className="font-prose text-[13px] text-ink-3">Nothing new here on purpose: speed grows on text you already own.</p>
+						<p className="font-prose text-[13px] text-ink-3">
+							Nothing new here on purpose: speed grows on text you already own.
+						</p>
 					)}
 				</div>
 			</Dock>
@@ -344,19 +459,31 @@ function History({ history, target }: { history: Array<{ at: string; wpm: number
 		<div className="mt-6" data-testid="reread-history">
 			<h2 className="q-sh">Your pace on this episode</h2>
 			<div className="relative mt-2 h-[72px]">
-				<div className="absolute inset-x-0 border-t border-dashed border-[var(--q-ink-4)]" style={{ bottom: `${(target / max) * h}px` }}>
+				<div
+					className="absolute inset-x-0 border-t border-dashed border-[var(--q-ink-4)]"
+					style={{ bottom: `${(target / max) * h}px` }}
+				>
 					<span className="absolute right-0 bottom-0.5 font-ui text-xs text-ink-3">target {target} wpm</span>
 				</div>
 				<div className="absolute inset-0 flex items-end gap-1" aria-hidden="true">
 					{history.map((x, i) => (
 						<div key={i} className="flex w-9 justify-center">
-							<span className={cn("w-7 rounded-t-md", i === history.length - 1 ? "bg-teal" : "bg-[var(--q-bar)]")} style={{ height: `${Math.max(4, (x.wpm / max) * h)}px` }} />
+							<span
+								className={cn("w-7 rounded-t-md", i === history.length - 1 ? "bg-teal" : "bg-[var(--q-bar)]")}
+								style={{ height: `${Math.max(4, (x.wpm / max) * h)}px` }}
+							/>
 						</div>
 					))}
 				</div>
 			</div>
 			<p className="sr-only">
-				{history.length > 1 ? `Earlier: ${history.slice(0, -1).map((x) => `${x.wpm}`).join(", ")} words a minute. ` : ""}This time: {history[history.length - 1]?.wpm} words a minute. Target: {target} words a minute.
+				{history.length > 1
+					? `Earlier: ${history
+							.slice(0, -1)
+							.map((x) => `${x.wpm}`)
+							.join(", ")} words a minute. `
+					: ""}
+				This time: {history[history.length - 1]?.wpm} words a minute. Target: {target} words a minute.
 			</p>
 			<div className="mt-1 flex gap-1" aria-hidden="true">
 				{history.map((x, i) => (
@@ -491,7 +618,10 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 	// The countdown (frozen while paused).
 	useEffect(() => {
 		if (phase !== "running" || paused) return;
-		const t = setInterval(() => setElapsed((pausedAt.current || Date.now()) - passStart.current - pausedMs.current), 50);
+		const t = setInterval(
+			() => setElapsed((pausedAt.current || Date.now()) - passStart.current - pausedMs.current),
+			50,
+		);
 		return () => clearInterval(t);
 	}, [phase, paused]);
 
@@ -507,7 +637,13 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				const res = await fetch("/api/fluency", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ mode: "fast", reps: all, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() }),
+					body: JSON.stringify({
+						mode: "fast",
+						reps: all,
+						ms: Date.now() - startedAt.current,
+						activeMs,
+						tz: new Date().getTimezoneOffset(),
+					}),
 				});
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				setOutcome((await res.json()) as FastOutcome);
@@ -565,7 +701,12 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 					const speechMs = Math.max(0, clip.ms - clip.spokeAt - (auto ? SILENCE_MS : 0));
 					const score = await scoreClip(clip.wav, item.sentence);
 					if (!score) return settle({ silent: true, heard: "" });
-					settle({ pron: score, heard: score.heard ?? "", match: score.accuracy / 100, ...(speechMs > 0 ? { speechMs } : {}) });
+					settle({
+						pron: score,
+						heard: score.heard ?? "",
+						match: score.accuracy / 100,
+						...(speechMs > 0 ? { speechMs } : {}),
+					});
 				})
 				.catch(() => settle({ unchecked: true }))
 				.finally(() => clearTimeout(timer));
@@ -581,12 +722,19 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		if (useMic) {
 			const rec = new Recorder();
 			try {
-				await rec.start({ onLevel: setLevel, silenceMs: SILENCE_MS, maxMs: win * 3, onAutoStop: () => void endRef.current(true) });
+				await rec.start({
+					onLevel: setLevel,
+					silenceMs: SILENCE_MS,
+					maxMs: win * 3,
+					onAutoStop: () => void endRef.current(true),
+				});
 				recorder.current = rec;
 			} catch {
 				setUseMic(false);
 				setMicDenied(true);
-				setError("The browser did not allow the microphone. Space marks the end of each pass instead, and nothing checks what you said.");
+				setError(
+					"The browser did not allow the microphone. Space marks the end of each pass instead, and nothing checks what you said.",
+				);
 			}
 		}
 		passStart.current = Date.now();
@@ -620,7 +768,13 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			return;
 		}
 		// The sentence is done: keep its reps (what was heard may still arrive; the log takes what it has).
-		const rep: FastRep = { itemId: item.id, slug: item.slug, sentence: item.sentence, translation: item.translation, passes };
+		const rep: FastRep = {
+			itemId: item.id,
+			slug: item.slug,
+			sentence: item.sentence,
+			translation: item.translation,
+			passes,
+		};
 		const all = [...reps, rep];
 		setReps(all);
 		setPasses([]);
@@ -647,7 +801,8 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 				if (phase === "ready") void startPass();
 				else if (phase === "running") void endPass();
 				else if (phase === "between") advance();
-			} else if ((e.key === "r" || e.key === "R") && item && phase !== "running") void speak(item.sentence).catch(() => {});
+			} else if ((e.key === "r" || e.key === "R") && item && phase !== "running")
+				void speak(item.sentence).catch(() => {});
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
@@ -671,7 +826,13 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 								</button>
 							)
 						}
-						secondary={/yet/i.test(error) ? undefined : <Link href="/" className="q-btn ghost">Back to Today</Link>}
+						secondary={
+							/yet/i.test(error) ? undefined : (
+								<Link href="/" className="q-btn ghost">
+									Back to Today
+								</Link>
+							)
+						}
 					>
 						{/yet/i.test(error) ? (
 							<>
@@ -705,7 +866,9 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		const clean = reps.filter((r) => r.passes[r.passes.length - 1]?.made).length;
 		const scoredPasses = reps.flatMap((r) => r.passes.filter((p) => p.pron));
 		const clearPasses = scoredPasses.filter((p) => (p.pron?.overall ?? 0) >= PRON_CLEAR).length;
-		const avg = scoredPasses.length ? Math.round(scoredPasses.reduce((n, p) => n + (p.pron?.overall ?? 0), 0) / scoredPasses.length) : null;
+		const avg = scoredPasses.length
+			? Math.round(scoredPasses.reduce((n, p) => n + (p.pron?.overall ?? 0), 0) / scoredPasses.length)
+			: null;
 		return (
 			<TaskFrame>
 				<TaskEnd
@@ -724,55 +887,93 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 					}
 				>
 					<p className="q-date flex items-center gap-1.5">
-							<QIcon name="fast" className="text-teal" />
-							Speed · done
-						</p>
-						<h1 className="q-hello">
-							{scoredPasses.length ? `${clean} of ${reps.length} said clearly enough in the last window.` : `${clean} of ${reps.length} finished inside the last window.`}
-						</h1>
-						<PracticeTime ms={practiceMs} how={ACTIVE_TIME_HOW} />
-						<Stats className="mt-7 max-w-none">
-							<Stat label="XP" value={outcome ? `+${outcome.xp}` : null} ink="text-teal-2" />
-							<Stat label={scoredPasses.length ? "Passes in the window and clear enough (70+)" : "Passes in the window (self-timed)"} value={`${made} of ${reps.length * FAST_PASSES}`} ink={made === reps.length * FAST_PASSES ? "text-teal-2" : undefined} />
-							{outcome?.pace && <Stat label="Pace, first pass to last" value={`${outcome.pace.first} → ${outcome.pace.last} words/s`} ink={outcome.pace.last > outcome.pace.first ? "text-teal-2" : undefined} />}
-							{avg !== null && <Stat label="Pronunciation" value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear enough`} ink={avg >= PRON_CLEAR ? "text-teal-2" : "text-miss"} />}
-						</Stats>
+						<QIcon name="fast" className="text-teal" />
+						Speed · done
+					</p>
+					<h1 className="q-hello">
+						{scoredPasses.length
+							? `${clean} of ${reps.length} said clearly enough in the last window.`
+							: `${clean} of ${reps.length} finished inside the last window.`}
+					</h1>
+					<PracticeTime ms={practiceMs} how={ACTIVE_TIME_HOW} />
+					<Stats className="mt-7 max-w-none">
+						<Stat label="XP" value={outcome ? `+${outcome.xp}` : null} ink="text-teal-2" />
+						<Stat
+							label={
+								scoredPasses.length
+									? "Passes in the window and clear enough (70+)"
+									: "Passes in the window (self-timed)"
+							}
+							value={`${made} of ${reps.length * FAST_PASSES}`}
+							ink={made === reps.length * FAST_PASSES ? "text-teal-2" : undefined}
+						/>
+						{outcome?.pace && (
+							<Stat
+								label="Pace, first pass to last"
+								value={`${outcome.pace.first} → ${outcome.pace.last} words/s`}
+								ink={outcome.pace.last > outcome.pace.first ? "text-teal-2" : undefined}
+							/>
+						)}
+						{avg !== null && (
+							<Stat
+								label="Pronunciation"
+								value={`${avg} · ${clearPasses} of ${scoredPasses.length} clear enough`}
+								ink={avg >= PRON_CLEAR ? "text-teal-2" : "text-miss"}
+							/>
+						)}
+					</Stats>
 					{outcome?.pace && (
-							<p className="q-sub mt-3" data-testid="fast-pace-note">
-								Same sentences, said again: {outcome.pace.sentences} of {reps.length} got quicker, from {outcome.pace.first} to {outcome.pace.last} words a second.
-								{outcome.previousPace ? ` Last round: ${outcome.previousPace.first} → ${outcome.previousPace.last}.` : ""} That is repetition on the same lines; it does not show you are quicker on new ones.
-							</p>
-						)}
-						{scoredPasses.length === 0 && (
-							<p className="q-sub mt-3" data-testid="fast-selftimed-note">
-								Self-timed round: you pressed the button, and nothing checked what you said. A pass counted when you finished inside its window.
-							</p>
-						)}
-						{reps.some((r) => r.passes.some((x) => x.unchecked)) && (
-							<p className="q-sub mt-3">
-								Some passes could not be checked because the speech check did not answer; they counted by time alone.
-							</p>
-						)}
-						<PronWorkOn report={outcome?.report} />
-						<SentenceRows className="mt-8">
-							{reps.map((r) => (
-								<SentenceRow
-									key={r.itemId}
-									sentence={r.sentence}
-									lang={lang?.code}
-									translation={r.translation}
-									onPlay={() => void speak(r.sentence).catch(() => {})}
-									note={r.passes.map((p, i) => (
-										<span key={i} className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold tabular-nums", p.made ? "bg-teal-wash text-teal-2" : "bg-miss-soft text-miss")}>
-											{p.made ? <CheckIcon className="size-3" strokeWidth={2.4} aria-hidden="true" /> : <XIcon className="size-3" strokeWidth={2.4} aria-hidden="true" />}
-											<span className="sr-only">{p.made ? "Made it:" : "Missed:"} </span>
-											{(p.ms / 1000).toFixed(1)} of {(p.window / 1000).toFixed(1)} s{p.pron ? ` · clear ${p.pron.overall}` : ""}
-											{p.inWindow && !p.made ? " · not clear" : ""}
-										</span>
-									))}
-								/>
-							))}
-						</SentenceRows>
+						<p className="q-sub mt-3" data-testid="fast-pace-note">
+							Same sentences, said again: {outcome.pace.sentences} of {reps.length} got quicker, from{" "}
+							{outcome.pace.first} to {outcome.pace.last} words a second.
+							{outcome.previousPace
+								? ` Last round: ${outcome.previousPace.first} → ${outcome.previousPace.last}.`
+								: ""}{" "}
+							That is repetition on the same lines; it does not show you are quicker on new ones.
+						</p>
+					)}
+					{scoredPasses.length === 0 && (
+						<p className="q-sub mt-3" data-testid="fast-selftimed-note">
+							Self-timed round: you pressed the button, and nothing checked what you said. A pass counted when you
+							finished inside its window.
+						</p>
+					)}
+					{reps.some((r) => r.passes.some((x) => x.unchecked)) && (
+						<p className="q-sub mt-3">
+							Some passes could not be checked because the speech check did not answer; they counted by time alone.
+						</p>
+					)}
+					<PronWorkOn report={outcome?.report} />
+					<SentenceRows className="mt-8">
+						{reps.map((r) => (
+							<SentenceRow
+								key={r.itemId}
+								sentence={r.sentence}
+								lang={lang?.code}
+								translation={r.translation}
+								onPlay={() => void speak(r.sentence).catch(() => {})}
+								note={r.passes.map((p, i) => (
+									<span
+										key={i}
+										className={cn(
+											"inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold tabular-nums",
+											p.made ? "bg-teal-wash text-teal-2" : "bg-miss-soft text-miss",
+										)}
+									>
+										{p.made ? (
+											<CheckIcon className="size-3" strokeWidth={2.4} aria-hidden="true" />
+										) : (
+											<XIcon className="size-3" strokeWidth={2.4} aria-hidden="true" />
+										)}
+										<span className="sr-only">{p.made ? "Made it:" : "Missed:"} </span>
+										{(p.ms / 1000).toFixed(1)} of {(p.window / 1000).toFixed(1)} s
+										{p.pron ? ` · clear ${p.pron.overall}` : ""}
+										{p.inWindow && !p.made ? " · not clear" : ""}
+									</span>
+								))}
+							/>
+						))}
+					</SentenceRows>
 					{error && (
 						<p className="mt-4 rounded-[10px] bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert">
 							{error}
@@ -780,84 +981,166 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 					)}
 					<SourcesNote feature="speed-fast" className="mt-14" />
 				</TaskEnd>
-				</TaskFrame>
-			);
-		}
+			</TaskFrame>
+		);
+	}
 
-		const last = passes[passes.length - 1];
+	const last = passes[passes.length - 1];
 	const left = Math.max(0, win - elapsed);
 	const progress = (index + (pass + (phase === "between" ? 1 : 0)) / FAST_PASSES) / total;
 
 	return (
 		<TaskFrame strip={false}>
-			<TaskTop progress={progress} label={`${index} of ${total} sentences`} count={`${index + 1}/${total}`}  />
+			<TaskTop progress={progress} label={`${index} of ${total} sentences`} count={`${index + 1}/${total}`} />
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
-					<PracticeCard icon="fast" title="Speed" sub={`pass ${Math.min(pass + 1, FAST_PASSES)} of ${FAST_PASSES} · ${item.practiced ? "a sentence you got right in a lesson" : "every word is yours"}`}>
-					<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground">
-						{phase === "ready" ? "Hear it, then say it" : phase === "running" ? (paused ? "Paused" : "Say it now") : last?.pending ? "Listening back…" : last?.silent ? "Nothing heard" : last?.made ? (last.pron ? ["Made it!", "Faster!", "Full speed!"][pass] : "In time") : last?.inWindow ? "Fast, but not clear" : "Over time"}
-					</h2>
-					<div className="flex items-start gap-3">
-						<button type="button" onClick={() => void speak(item.sentence).catch(() => {})} aria-label="Play" className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2" data-testid="fast-play">
-							<Volume2Icon className="size-6" strokeWidth={1.6} />
-						</button>
-						<div>
-							<p className="font-prose text-[28px] font-semibold leading-[1.4] tracking-[-0.03em] text-foreground sm:text-[36px]" lang={lang?.code} data-testid="fast-sentence" data-word-lookup-enabled={phase === "between" ? "true" : "false"}>
-								{item.sentence}
-							</p>
-							<p data-no-word-lookup="true" className="mt-2 font-prose text-base text-ink-2">{item.translation}</p>
+					<PracticeCard
+						icon="fast"
+						title="Speed"
+						sub={`pass ${Math.min(pass + 1, FAST_PASSES)} of ${FAST_PASSES} · ${item.practiced ? "a sentence you got right in a lesson" : "every word is yours"}`}
+					>
+						<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.018em] text-foreground">
+							{phase === "ready"
+								? "Hear it, then say it"
+								: phase === "running"
+									? paused
+										? "Paused"
+										: "Say it now"
+									: last?.pending
+										? "Listening back…"
+										: last?.silent
+											? "Nothing heard"
+											: last?.made
+												? last.pron
+													? ["Made it!", "Faster!", "Full speed!"][pass]
+													: "In time"
+												: last?.inWindow
+													? "Fast, but not clear"
+													: "Over time"}
+						</h2>
+						<div className="flex items-start gap-3">
+							<button
+								type="button"
+								onClick={() => void speak(item.sentence).catch(() => {})}
+								aria-label="Play"
+								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
+								data-testid="fast-play"
+							>
+								<Volume2Icon className="size-6" strokeWidth={1.6} />
+							</button>
+							<div>
+								<p
+									className="font-prose text-[28px] font-semibold leading-[1.4] tracking-[-0.03em] text-foreground sm:text-[36px]"
+									lang={lang?.code}
+									data-testid="fast-sentence"
+									data-word-lookup-enabled={phase === "between" ? "true" : "false"}
+								>
+									{item.sentence}
+								</p>
+								<p data-no-word-lookup="true" className="mt-2 font-prose text-base text-ink-2">
+									{item.translation}
+								</p>
+							</div>
 						</div>
-					</div>
 
-					{/* The three windows: done passes, the live one, the ones to come. */}
-					<div className="mt-7 grid grid-cols-3 gap-2 sm:gap-3" data-testid="fast-passes">
-						{windows.map((w, i) => {
-							const p = passes[i];
-							const live = i === pass && phase === "running";
-							return (
-								<div key={i} className={cn("rounded-[10px] px-3 py-2", p ? (p.pending ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : p.made ? "bg-teal-wash shadow-[inset_0_0_0_1px_var(--q-teal-line)]" : "bg-miss-soft shadow-[inset_0_0_0_1px_var(--q-miss)]") : live ? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]" : "bg-well")}>
-									<p className="font-ui text-xs text-ink-3">{["Say it", "Faster", "Full speed"][i]}</p>
-									<p className="font-ui text-xl font-semibold tracking-[-0.015em] tabular-nums text-foreground">{p ? `${(p.ms / 1000).toFixed(1)} s` : live ? `${(left / 1000).toFixed(1)} s` : `${(w / 1000).toFixed(1)} s`}</p>
-									{live && (
-										<div className="mt-1.5 h-1 overflow-hidden rounded-full bg-well-2">
-											<div className="h-full rounded-full bg-teal" style={{ width: `${(left / w) * 100}%`, transition: "width 50ms linear" }} />
-										</div>
-									)}
-									{p?.pending && (
-										<p className="mt-1 flex items-center gap-1 font-ui text-xs text-ink-3">
-											<LoaderCircleIcon className="size-3 animate-spin" strokeWidth={1.6} /> scoring
+						{/* The three windows: done passes, the live one, the ones to come. */}
+						<div className="mt-7 grid grid-cols-3 gap-2 sm:gap-3" data-testid="fast-passes">
+							{windows.map((w, i) => {
+								const p = passes[i];
+								const live = i === pass && phase === "running";
+								return (
+									<div
+										key={i}
+										className={cn(
+											"rounded-[10px] px-3 py-2",
+											p
+												? p.pending
+													? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
+													: p.made
+														? "bg-teal-wash shadow-[inset_0_0_0_1px_var(--q-teal-line)]"
+														: "bg-miss-soft shadow-[inset_0_0_0_1px_var(--q-miss)]"
+												: live
+													? "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
+													: "bg-well",
+										)}
+									>
+										<p className="font-ui text-xs text-ink-3">{["Say it", "Faster", "Full speed"][i]}</p>
+										<p className="font-ui text-xl font-semibold tracking-[-0.015em] tabular-nums text-foreground">
+											{p
+												? `${(p.ms / 1000).toFixed(1)} s`
+												: live
+													? `${(left / 1000).toFixed(1)} s`
+													: `${(w / 1000).toFixed(1)} s`}
 										</p>
-									)}
-									{p?.pron && (
-										<p className="mt-1">
-											<PronChip score={p.pron} />
-										</p>
-									)}
-									{p && !p.pending && !p.pron && p.heard !== undefined && (
-										<p className="mt-1 truncate font-prose text-xs text-ink-3" title={p.heard} data-testid="fast-heard">
-											heard: {p.heard || "—"}
-										</p>
-									)}
-								</div>
-							);
-						})}
-					</div>
-					{error && (
-						<p className="mt-4 rounded-[10px] bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert">
-							{error}
-						</p>
-					)}
+										{live && (
+											<div className="mt-1.5 h-1 overflow-hidden rounded-full bg-well-2">
+												<div
+													className="h-full rounded-full bg-teal"
+													style={{ width: `${(left / w) * 100}%`, transition: "width 50ms linear" }}
+												/>
+											</div>
+										)}
+										{p?.pending && (
+											<p className="mt-1 flex items-center gap-1 font-ui text-xs text-ink-3">
+												<LoaderCircleIcon className="size-3 animate-spin" strokeWidth={1.6} /> scoring
+											</p>
+										)}
+										{p?.pron && (
+											<p className="mt-1">
+												<PronChip score={p.pron} />
+											</p>
+										)}
+										{p && !p.pending && !p.pron && p.heard !== undefined && (
+											<p
+												className="mt-1 truncate font-prose text-xs text-ink-3"
+												title={p.heard}
+												data-testid="fast-heard"
+											>
+												heard: {p.heard || "—"}
+											</p>
+										)}
+									</div>
+								);
+							})}
+						</div>
+						{error && (
+							<p className="mt-4 rounded-[10px] bg-miss-soft px-4 py-2 font-ui text-sm text-miss" role="alert">
+								{error}
+							</p>
+						)}
 					</PracticeCard>
 				</div>
 			</div>
-			<Dock tone={phase === "between" ? (last?.pending ? "wait" : last?.made ? "right" : "miss") : phase === "running" ? "wait" : "plain"}>
+			<Dock
+				tone={
+					phase === "between"
+						? last?.pending
+							? "wait"
+							: last?.made
+								? "right"
+								: "miss"
+						: phase === "running"
+							? "wait"
+							: "plain"
+				}
+			>
 				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 					{phase === "running" ? (
 						<>
 							<div className="flex items-center gap-3">
-								{useMic ? <MicIcon className="size-5 text-teal" strokeWidth={1.6} /> : <TimerIcon className="size-5 text-teal" strokeWidth={1.6} />}
-								<p className="font-ui text-[15px] font-semibold tracking-[-0.01em] text-foreground">{useMic ? "Listening — it stops when you stop" : "Self-timed: press Space the moment you finish"}</p>
-								{useMic && <span className="h-1 w-16 overflow-hidden rounded-full bg-well-2"><span className="block h-full bg-teal" style={{ width: `${level * 100}%` }} /></span>}
+								{useMic ? (
+									<MicIcon className="size-5 text-teal" strokeWidth={1.6} />
+								) : (
+									<TimerIcon className="size-5 text-teal" strokeWidth={1.6} />
+								)}
+								<p className="font-ui text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+									{useMic ? "Listening — it stops when you stop" : "Self-timed: press Space the moment you finish"}
+								</p>
+								{useMic && (
+									<span className="h-1 w-16 overflow-hidden rounded-full bg-well-2">
+										<span className="block h-full bg-teal" style={{ width: `${level * 100}%` }} />
+									</span>
+								)}
 							</div>
 							<div className="flex items-center gap-3">
 								{!useMic && (
@@ -872,7 +1155,13 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 						</>
 					) : phase === "between" ? (
 						<>
-							<p className={cn("flex items-center gap-2 font-ui text-[15px] font-semibold tracking-[-0.01em]", last?.pending ? "text-foreground" : last?.made ? "text-teal-2" : "text-miss")} data-testid="fast-verdict">
+							<p
+								className={cn(
+									"flex items-center gap-2 font-ui text-[15px] font-semibold tracking-[-0.01em]",
+									last?.pending ? "text-foreground" : last?.made ? "text-teal-2" : "text-miss",
+								)}
+								data-testid="fast-verdict"
+							>
 								{last?.pending ? (
 									<>
 										<LoaderCircleIcon className="size-5 animate-spin" strokeWidth={1.6} /> Listening back…
@@ -882,12 +1171,26 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 								) : last?.made ? (
 									`In the window · ${((last?.ms ?? 0) / 1000).toFixed(1)} s${last.pron ? ` · ${last.pron.overall}, clear enough` : last.unchecked ? " · the check did not come back" : " · self-timed, not checked"}`
 								) : last?.inWindow ? (
-									`In the window, but ${last.pron ? `${last.pron.overall} — ` : ""}not clear enough${last.pron?.words.some((w) => w.error === "omission") ? ` · missed: ${last.pron.words.filter((w) => w.error === "omission").map((w) => w.word).join(", ")}` : ""}`
+									`In the window, but ${last.pron ? `${last.pron.overall} — ` : ""}not clear enough${
+										last.pron?.words.some((w) => w.error === "omission")
+											? ` · missed: ${last.pron.words
+													.filter((w) => w.error === "omission")
+													.map((w) => w.word)
+													.join(", ")}`
+											: ""
+									}`
 								) : (
 									`${(((last?.ms ?? 0) - win) / 1000).toFixed(1)} s over`
 								)}
 							</p>
-							<button type="button" onClick={advance} disabled={!!last?.pending} className={cn(PRIMARY, "disabled:opacity-50")} data-testid="fast-continue" ref={(el) => el?.focus()}>
+							<button
+								type="button"
+								onClick={advance}
+								disabled={!!last?.pending}
+								className={cn(PRIMARY, "disabled:opacity-50")}
+								data-testid="fast-continue"
+								ref={(el) => el?.focus()}
+							>
 								{pass + 1 < FAST_PASSES ? "Next pass" : index + 1 >= total ? "Finish" : "Next sentence"}
 							</button>
 						</>
@@ -905,7 +1208,11 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 									aria-pressed={useMic}
 									data-testid="fast-mic"
 								>
-									{useMic ? <MicIcon className="size-4" strokeWidth={1.6} /> : <MicOffIcon className="size-4" strokeWidth={1.6} />}
+									{useMic ? (
+										<MicIcon className="size-4" strokeWidth={1.6} />
+									) : (
+										<MicOffIcon className="size-4" strokeWidth={1.6} />
+									)}
 									{useMic ? "Mic on" : "Mic off"}
 								</button>
 								<div className="font-prose text-[13px] leading-snug text-ink-3" data-testid="fast-mic-why">
@@ -927,10 +1234,18 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 											</SettingsLink>
 										)}
 									</p>
-									<p className="pointer-coarse:hidden">Space starts the pass{useMic ? "" : " and ends it"} · R plays it again</p>
+									<p className="pointer-coarse:hidden">
+										Space starts the pass{useMic ? "" : " and ends it"} · R plays it again
+									</p>
 								</div>
 							</div>
-							<button type="button" onClick={() => void startPass()} className={PRIMARY} data-testid="fast-start" ref={(el) => el?.focus()}>
+							<button
+								type="button"
+								onClick={() => void startPass()}
+								className={PRIMARY}
+								data-testid="fast-start"
+								ref={(el) => el?.focus()}
+							>
 								{pass === 0 ? "Go" : "Again, faster"}
 							</button>
 						</>

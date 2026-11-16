@@ -8,8 +8,20 @@ import { carriedTasks } from "../src/core/carry-over.ts";
 
 test("carriedTasks: an unfinished task carries; finishing it later drops it; today's finish drops it", () => {
 	const days = [
-		{ day: "2026-10-27", tasks: [{ id: "review", title: "Review", done: false }, { id: "listen", title: "Listen", done: true }] },
-		{ day: "2026-10-28", tasks: [{ id: "review", title: "Review", done: true }, { id: "read", title: "Read", done: false }] },
+		{
+			day: "2026-10-27",
+			tasks: [
+				{ id: "review", title: "Review", done: false },
+				{ id: "listen", title: "Listen", done: true },
+			],
+		},
+		{
+			day: "2026-10-28",
+			tasks: [
+				{ id: "review", title: "Review", done: true },
+				{ id: "read", title: "Read", done: false },
+			],
+		},
 	];
 	assert.deepEqual(carriedTasks(days, "2026-10-29", new Set()), [{ id: "read", title: "Read", from: "2026-10-28" }]);
 	assert.deepEqual(carriedTasks(days, "2026-10-29", new Set(["read"])), []);

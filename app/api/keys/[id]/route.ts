@@ -37,7 +37,12 @@ export async function PUT(req: Request, { params }: Params) {
 	} catch {
 		return Response.json({ error: "body must be JSON" }, { status: 400 });
 	}
-	if (!body || typeof body !== "object" || Array.isArray(body) || typeof (body as { value?: unknown }).value !== "string") {
+	if (
+		!body ||
+		typeof body !== "object" ||
+		Array.isArray(body) ||
+		typeof (body as { value?: unknown }).value !== "string"
+	) {
 		return Response.json({ error: "body must be {value: string}" }, { status: 400 });
 	}
 	const result = saveKey(id, (body as { value: string }).value);

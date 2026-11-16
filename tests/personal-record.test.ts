@@ -36,19 +36,44 @@ const rep = (given: string, verdict: "exact" | "wrong") => ({
 	kind: "type" as const,
 	verdict,
 	first: { given, verdict },
-	detail: { unit: "words", lemma: "nikto", gloss: "no one", sentence: "Nikto mi nezavolal.", translation: "Nobody called me.", answer: "Nikto", given },
+	detail: {
+		unit: "words",
+		lemma: "nikto",
+		gloss: "no one",
+		sentence: "Nikto mi nezavolal.",
+		translation: "Nobody called me.",
+		answer: "Nikto",
+		given,
+	},
 });
 
 describe("the personal lesson on disk", () => {
 	it("a guide's targets are kept, its pairs become probes, and the plan offers the lesson", async () => {
-const many = [...Array.from({ length: 30 }, () => rep("Nikto", "exact")), ...Array.from({ length: 5 }, () => rep("Niekto", "wrong"))];
+		const many = [
+			...Array.from({ length: 30 }, () => rep("Nikto", "exact")),
+			...Array.from({ length: 5 }, () => rep("Niekto", "wrong")),
+		];
 		recordLesson({ unit: "words", mode: "lesson", reps: many, tz: 0 }, new Date("2026-11-01T09:00:00Z"));
 		analyzeNow(NOW);
 		const reply = JSON.stringify({
-			patterns: [{ title: "ni- and nie- words", evidence: '"Niekto" for "Nikto"', why: "Both start the same.", fix: "Check for ne- on the verb." }],
+			patterns: [
+				{
+					title: "ni- and nie- words",
+					evidence: '"Niekto" for "Nikto"',
+					why: "Both start the same.",
+					fix: "Check for ne- on the verb.",
+				},
+			],
 			next: [{ what: "kam / kde", why: "A guess." }],
 			plan: [{ step: "Practice the pairs", kind: "mixups" }],
-			practice: { words: ["nikto"], units: ["loc"], pairs: [["nikto", "niekto"], ["kam", "kde"]] },
+			practice: {
+				words: ["nikto"],
+				units: ["loc"],
+				pairs: [
+					["nikto", "niekto"],
+					["kam", "kde"],
+				],
+			},
 		});
 		const r = await writeGuide({ now: NOW, engine: fauxEngine(`Here it is:\n${reply}`), model: "faux:faux" });
 		assert.equal(r.guide?.data?.patterns[0]?.title, "ni- and nie- words");
@@ -57,7 +82,10 @@ const many = [...Array.from({ length: 30 }, () => rep("Nikto", "exact")), ...Arr
 		const probe = progressStore.read().mixups?.[mixupKey("kam", "kde")];
 		assert.equal(probe?.from, "guide", "kam / kde is a probe the guide suggested");
 		assert.equal(probe?.misses, 0);
-		const plan = recordLesson({ unit: "words", mode: "lesson", reps: [rep("Nikto", "exact")], tz: 0 }, new Date("2026-11-01T10:30:00Z")).summary.plan;
+		const plan = recordLesson(
+			{ unit: "words", mode: "lesson", reps: [rep("Nikto", "exact")], tz: 0 },
+			new Date("2026-11-01T10:30:00Z"),
+		).summary.plan;
 		const task = plan.tasks.find((t) => t.id === "strengthen");
 		assert.equal(task?.href, "/lesson?mode=personal");
 		assert.match(task?.title ?? "", /Your plan · ni- and nie- words/);
@@ -68,7 +96,10 @@ const many = [...Array.from({ length: 30 }, () => rep("Nikto", "exact")), ...Arr
 		assert.equal(plan.focus, "personal");
 		assert.ok(plan.items.length >= 8, `${plan.items.length} reps`);
 		const loc = progressStore.read().units.loc;
-		const out = recordLesson({ unit: "words", mode: "lesson", focus: "personal", reps: [rep("Nikto", "exact")], tz: 0 }, new Date("2026-11-01T11:00:00Z"));
+		const out = recordLesson(
+			{ unit: "words", mode: "lesson", focus: "personal", reps: [rep("Nikto", "exact")], tz: 0 },
+			new Date("2026-11-01T11:00:00Z"),
+		);
 		assert.deepEqual(progressStore.read().units.loc, loc, "no unit moves");
 		assert.equal(progressStore.read().days["2026-11-01"]?.personal, 1);
 		assert.equal(out.summary.plan.tasks.find((t) => t.id === "strengthen")?.done, true);
@@ -78,7 +109,10 @@ const many = [...Array.from({ length: 30 }, () => rep("Nikto", "exact")), ...Arr
 	});
 
 	it("the plan stops offering it a week after the guide", () => {
-		const plan = recordLesson({ unit: "words", mode: "lesson", reps: [rep("Nikto", "exact")], tz: 0 }, new Date("2026-11-09T10:00:00Z")).summary.plan;
+		const plan = recordLesson(
+			{ unit: "words", mode: "lesson", reps: [rep("Nikto", "exact")], tz: 0 },
+			new Date("2026-11-09T10:00:00Z"),
+		).summary.plan;
 		assert.notEqual(plan.tasks.find((t) => t.id === "strengthen")?.href, "/lesson?mode=personal");
 	});
 });

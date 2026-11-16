@@ -96,7 +96,10 @@ type CatchCheck = { slip: CatchMark } | { reason: string };
 
 /** The model may wrap a form in punctuation, so the match ignores it. */
 function clean(form: string): string {
-	return form.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "").toLowerCase();
+	return form
+		.trim()
+		.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
+		.toLowerCase();
 }
 
 function formsOf(bySlug: ReadonlyMap<string, LexiconEntry>, slug: string): Set<string> {
@@ -111,9 +114,23 @@ function catchWord(lexicon: CatchLexicon, slug: string): CatchWord {
 
 /** The verified pair two lexicon entries make: their lemmas are the pair's
  *  twins, and the pair has the sentences the drop rule asks for (E11). */
-function verifiedPairFor(lexicon: CatchLexicon, pairs: readonly PairDef[], ea: LexiconEntry, eb: LexiconEntry): PairDef | null {
-	const key = [entryLemma(ea), entryLemma(eb)].map((s) => s.toLowerCase()).sort().join("~");
-	const def = pairs.find((p) => [p.a, p.b].map((s) => s.toLowerCase()).sort().join("~") === key);
+function verifiedPairFor(
+	lexicon: CatchLexicon,
+	pairs: readonly PairDef[],
+	ea: LexiconEntry,
+	eb: LexiconEntry,
+): PairDef | null {
+	const key = [entryLemma(ea), entryLemma(eb)]
+		.map((s) => s.toLowerCase())
+		.sort()
+		.join("~");
+	const def = pairs.find(
+		(p) =>
+			[p.a, p.b]
+				.map((s) => s.toLowerCase())
+				.sort()
+				.join("~") === key,
+	);
 	if (!def) return null;
 	return pairSentences(lexicon.entries, def).length >= MIN_PAIR_SENTENCES ? def : null;
 }
@@ -176,7 +193,13 @@ function resolvesOnly(form: string, own: string, other: string, lexicon: CatchLe
 }
 
 /** Check the mistake the model returned against the target the brief named. */
-export function verifyCatch(draft: CatchDraftMark | undefined, target: CatchTarget, sentences: readonly StorySentence[], lexicon: CatchLexicon, pairs: readonly PairDef[]): CatchCheck {
+export function verifyCatch(
+	draft: CatchDraftMark | undefined,
+	target: CatchTarget,
+	sentences: readonly StorySentence[],
+	lexicon: CatchLexicon,
+	pairs: readonly PairDef[],
+): CatchCheck {
 	if (!draft) return { reason: "the model gave no mistake" };
 	const ea = lexicon.bySlug.get(target.wrong.slug);
 	const eb = lexicon.bySlug.get(target.right.slug);
@@ -186,12 +209,27 @@ export function verifyCatch(draft: CatchDraftMark | undefined, target: CatchTarg
 	const mistakeAt = sentences[draft.sentence];
 	const repairAt = sentences[draft.sentence + 1];
 	if (!mistakeAt || !repairAt) return { reason: "the mistake has no sentence to hold it, or no correction after it" };
-	if (mistakeAt.who !== target.speaker || repairAt.who !== target.speaker) return { reason: "the mistake and its correction are not both the speaker's lines" };
+	if (mistakeAt.who !== target.speaker || repairAt.who !== target.speaker)
+		return { reason: "the mistake and its correction are not both the speaker's lines" };
 	const rightForms = formsOf(lexicon.bySlug, target.right.slug);
-	if (mistakeAt.tokens.some((t) => t.word && rightForms.has(t.text.toLowerCase()))) return { reason: "the mistaken sentence also holds the right word" };
+	if (mistakeAt.tokens.some((t) => t.word && rightForms.has(t.text.toLowerCase())))
+		return { reason: "the mistaken sentence also holds the right word" };
 	const wrong = wordOf(mistakeAt, draft.wrong);
-	if (!wrong || !resolvesOnly(draft.wrong, target.wrong.slug, target.right.slug, lexicon)) return { reason: `"${draft.wrong}" is not a form of ${target.wrong.lemma} in the slip sentence` };
+	if (!wrong || !resolvesOnly(draft.wrong, target.wrong.slug, target.right.slug, lexicon))
+		return { reason: `"${draft.wrong}" is not a form of ${target.wrong.lemma} in the slip sentence` };
 	const right = wordOf(repairAt, draft.right);
-	if (!right || !resolvesOnly(draft.right, target.right.slug, target.wrong.slug, lexicon)) return { reason: `the repair does not say a form of ${target.right.lemma}` };
-	return { slip: { pair: pair.id, sentence: draft.sentence, wrong, right, wrongSlug: target.wrong.slug, rightSlug: target.right.slug, rule: pair.rule, speaker: target.speaker } };
+	if (!right || !resolvesOnly(draft.right, target.right.slug, target.wrong.slug, lexicon))
+		return { reason: `the repair does not say a form of ${target.right.lemma}` };
+	return {
+		slip: {
+			pair: pair.id,
+			sentence: draft.sentence,
+			wrong,
+			right,
+			wrongSlug: target.wrong.slug,
+			rightSlug: target.right.slug,
+			rule: pair.rule,
+			speaker: target.speaker,
+		},
+	};
 }

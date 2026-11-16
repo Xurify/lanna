@@ -118,7 +118,8 @@ const KIND_ROLE: Record<RunnableJobKind, ModelRole> = {
 };
 
 type RunnableJobKind = Exclude<JobKind, "visual">;
-const RETIRED_VISUAL_NOTES = "FAILED: Precise figures was removed. Explain in prose or a markdown table, or draw inline in the reply.";
+const RETIRED_VISUAL_NOTES =
+	"FAILED: Precise figures was removed. Explain in prose or a markdown table, or draw inline in the reply.";
 
 export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 	const { chatStore, jobStore, deliver } = deps;
@@ -209,11 +210,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 		// instead of waiting forever on a job it already dispatched.
 		const refuse = async (reason: string): Promise<void> => {
 			if (stillRunning(jobId)) jobStore.updateJob(jobId, { error: reason });
-			const resolved = resolveInput(job, input) as
-				| ResearchToolInput
-				| VisualToolInput
-				| PdfToolInput
-				| undefined;
+			const resolved = resolveInput(job, input) as ResearchToolInput | VisualToolInput | PdfToolInput | undefined;
 			const pdf = resolved as PdfToolInput | undefined;
 			const failure: ResearchResult | PdfResult =
 				kind === "research"
@@ -238,8 +235,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 		// key may be gone — refuse the spawn BEFORE the loop, same
 		// convention (the injected check reads the key store; absent in
 		// engine-injecting tests).
-		const keyRefusal =
-			deps.providerKeyMissing?.(engine.model.provider, ROLE_SLOT[KIND_ROLE[kind]]) ?? null;
+		const keyRefusal = deps.providerKeyMissing?.(engine.model.provider, ROLE_SLOT[KIND_ROLE[kind]]) ?? null;
 		if (keyRefusal) {
 			console.info(`[job ${jobId}] refused — ${JSON.stringify(keyRefusal)}`);
 			await refuse(keyRefusal.error);
@@ -261,10 +257,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 	/** Dispatch input wins, then the job's saved arguments. Legacy jobs
 	 * without saved input fall back to the durable transcript, which may
 	 * lack a call if the dispatching turn died before settlement. */
-	function resolveInput(
-		job: JobRecord,
-		input: JobToolInput | undefined,
-	): JobToolInput | undefined {
+	function resolveInput(job: JobRecord, input: JobToolInput | undefined): JobToolInput | undefined {
 		if (input) return input;
 		if (job.input !== undefined) return job.input as JobToolInput;
 		const chat = chatStore.getChat(job.chatId);
@@ -366,7 +359,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 				// Money channel: each agent step is one model call — fold its
 				// usage into the record as it completes (progress write).
 				onUsage: (usage) => loop.onUsage(piUsageToStep(usage)),
-					onToolStart: (toolName, args) => {
+				onToolStart: (toolName, args) => {
 					const input = args as { query?: string; url?: string } | undefined;
 					if (typeof input?.url === "string" && (toolName === "web_fetch" || toolName === "web_fetch_pdf")) {
 						fetchedUrls.push(input.url);
@@ -410,13 +403,13 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 			jobStore.updateJob(jobId, { activity: "reading pdf" });
 			const result = await runPdfReaderAgent(
 				{ path, question },
-			{
-				engine: model,
-				abortSignal: loop.abortSignal,
-				chatId: loop.chatId,
-				onUsage: (usage) => loop.onUsage(piUsageToStep(usage)),
-				onActivity: (line) => jobStore.updateJob(jobId, { activity: line }),
-			},
+				{
+					engine: model,
+					abortSignal: loop.abortSignal,
+					chatId: loop.chatId,
+					onUsage: (usage) => loop.onUsage(piUsageToStep(usage)),
+					onActivity: (line) => jobStore.updateJob(jobId, { activity: line }),
+				},
 			);
 			if (isPdfFailure(result) && stillRunning(jobId))
 				jobStore.updateJob(jobId, { error: result.brief.replace(/^PDF failed:\s*/i, "") });

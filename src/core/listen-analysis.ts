@@ -36,26 +36,88 @@
 import { countSyllables } from "./pace.ts";
 import { TREND_DAYS, TREND_Z, wilson, type Trend } from "./mistakes.ts";
 
-export type ListenCause = "new-word" | "length" | "diphthong" | "palatal" | "hushing" | "voicing" | "small-word" | "word-missed" | "extra-word" | "mishear" | "ending" | "spelling" | "assimilation" | "slip";
+export type ListenCause =
+	| "new-word"
+	| "length"
+	| "diphthong"
+	| "palatal"
+	| "hushing"
+	| "voicing"
+	| "small-word"
+	| "word-missed"
+	| "extra-word"
+	| "mishear"
+	| "ending"
+	| "spelling"
+	| "assimilation"
+	| "slip";
 
 /** The larger reading of a cause: what kind of trouble it is. */
 export type ListenKind = "vocabulary" | "hearing" | "grammar" | "spelling" | "typing";
 
 export const LISTEN_CAUSES: Record<ListenCause, { label: string; kind: ListenKind; line: string }> = {
-	"new-word": { label: "A word you had not met", kind: "vocabulary", line: "The sentence's one new word. It is in your review deck now." },
-	length: { label: "Long and short vowels", kind: "hearing", line: "á, é, í, ó, ú, ý, ŕ, ĺ heard as short, or the reverse: the length is the part that is easy to miss." },
-	diphthong: { label: "ô against o", kind: "hearing", line: "ô is a diphthong, said roughly like uo, not a long o: it was heard, or typed, as a plain o." },
-	palatal: { label: "Soft ľ ň ď ť", kind: "hearing", line: "A soft consonant heard as a hard one (l, n, d, t), or the reverse." },
-	hushing: { label: "š ž č against s z c", kind: "hearing", line: "A hushing sound heard as the plain one, or the reverse." },
-	voicing: { label: "Voiced and unvoiced", kind: "hearing", line: "d and t, b and p, z and s, g and k, v and f, h and ch: the same sound with and without voice." },
-	"small-word": { label: "Short words dropped", kind: "hearing", line: "v, z, s, k, sa, si, je and the like are quick and unstressed, so they vanish." },
+	"new-word": {
+		label: "A word you had not met",
+		kind: "vocabulary",
+		line: "The sentence's one new word. It is in your review deck now.",
+	},
+	length: {
+		label: "Long and short vowels",
+		kind: "hearing",
+		line: "á, é, í, ó, ú, ý, ŕ, ĺ heard as short, or the reverse: the length is the part that is easy to miss.",
+	},
+	diphthong: {
+		label: "ô against o",
+		kind: "hearing",
+		line: "ô is a diphthong, said roughly like uo, not a long o: it was heard, or typed, as a plain o.",
+	},
+	palatal: {
+		label: "Soft ľ ň ď ť",
+		kind: "hearing",
+		line: "A soft consonant heard as a hard one (l, n, d, t), or the reverse.",
+	},
+	hushing: {
+		label: "š ž č against s z c",
+		kind: "hearing",
+		line: "A hushing sound heard as the plain one, or the reverse.",
+	},
+	voicing: {
+		label: "Voiced and unvoiced",
+		kind: "hearing",
+		line: "d and t, b and p, z and s, g and k, v and f, h and ch: the same sound with and without voice.",
+	},
+	"small-word": {
+		label: "Short words dropped",
+		kind: "hearing",
+		line: "v, z, s, k, sa, si, je and the like are quick and unstressed, so they vanish.",
+	},
 	"word-missed": { label: "A word not caught", kind: "hearing", line: "A word you know that did not register at all." },
 	"extra-word": { label: "A word added", kind: "hearing", line: "A word written that was not said." },
-	mishear: { label: "A different word heard", kind: "hearing", line: "A known word heard as another word: the sounds ran together." },
-	ending: { label: "The right word, the wrong ending", kind: "grammar", line: "You caught the word and not its case or person ending: grammar, more than hearing." },
-	spelling: { label: "i and y, e and ä", kind: "spelling", line: "i and y sound the same in Slovak, and ä is said like e, so this is spelling, not ear." },
-	assimilation: { label: "Written as it sounds", kind: "spelling", line: "A consonant takes the voice of the next one, and loses it at the end of a word (had sounds like hat, v škole like fškole): the ear was right, the spelling rule is the gap." },
-	slip: { label: "A one-letter slip", kind: "typing", line: "One letter off in a way that sounds the same: usually a typing slip, not a hearing one." },
+	mishear: {
+		label: "A different word heard",
+		kind: "hearing",
+		line: "A known word heard as another word: the sounds ran together.",
+	},
+	ending: {
+		label: "The right word, the wrong ending",
+		kind: "grammar",
+		line: "You caught the word and not its case or person ending: grammar, more than hearing.",
+	},
+	spelling: {
+		label: "i and y, e and ä",
+		kind: "spelling",
+		line: "i and y sound the same in Slovak, and ä is said like e, so this is spelling, not ear.",
+	},
+	assimilation: {
+		label: "Written as it sounds",
+		kind: "spelling",
+		line: "A consonant takes the voice of the next one, and loses it at the end of a word (had sounds like hat, v škole like fškole): the ear was right, the spelling rule is the gap.",
+	},
+	slip: {
+		label: "A one-letter slip",
+		kind: "typing",
+		line: "One letter off in a way that sounds the same: usually a typing slip, not a hearing one.",
+	},
 };
 
 export const LISTEN_KIND_LABEL: Record<ListenKind, string> = {
@@ -167,7 +229,13 @@ export interface ListenAnalysis {
 	replays: { recent: number | null; earlier: number | null };
 	peeked: { recent: number | null; earlier: number | null };
 	/** Accuracy by how fast the clip was spoken, when each group has enough sentences. */
-	pace: { slow: { reps: number; right: number }; fast: { reps: number; right: number }; slowBelow: number; fastAbove: number; fastHarder: boolean } | null;
+	pace: {
+		slow: { reps: number; right: number };
+		fast: { reps: number; right: number };
+		slowBelow: number;
+		fastAbove: number;
+		fastHarder: boolean;
+	} | null;
 	/** Accuracy by place in a session: the first half against the second. Null without enough sentences in each. */
 	session: { first: { reps: number; right: number }; second: { reps: number; right: number }; tiring: boolean } | null;
 	/** Accuracy by sentence length: short (up to SHORT_WORDS words) against long (LONG_WORDS and up). Null without enough in each. */
@@ -236,9 +304,51 @@ const DAY_MS = 86_400_000;
 const PALATAL = new Set(["ľ", "ň", "ď", "ť"]);
 const HUSHING = new Set(["š", "ž", "č"]);
 /** Pairs that differ only in voice (after the accents are folded). "χ" stands in for the two letters "ch" so the pair is one character long. */
-const VOICING: Array<[string, string]> = [["b", "p"], ["d", "t"], ["g", "k"], ["z", "s"], ["v", "f"], ["h", "χ"]];
+const VOICING: Array<[string, string]> = [
+	["b", "p"],
+	["d", "t"],
+	["g", "k"],
+	["z", "s"],
+	["v", "f"],
+	["h", "χ"],
+];
 const joinCh = (s: string) => s.replace(/ch/g, "χ");
-const SMALL_WORDS = new Set(["a", "i", "k", "o", "s", "u", "v", "z", "na", "do", "po", "od", "za", "sa", "si", "je", "to", "by", "že", "aj", "ma", "mi", "ti", "som", "si", "sme", "ste", "so", "zo", "ku", "vo", "ho", "ju", "ich"]);
+const SMALL_WORDS = new Set([
+	"a",
+	"i",
+	"k",
+	"o",
+	"s",
+	"u",
+	"v",
+	"z",
+	"na",
+	"do",
+	"po",
+	"od",
+	"za",
+	"sa",
+	"si",
+	"je",
+	"to",
+	"by",
+	"že",
+	"aj",
+	"ma",
+	"mi",
+	"ti",
+	"som",
+	"si",
+	"sme",
+	"ste",
+	"so",
+	"zo",
+	"ku",
+	"vo",
+	"ho",
+	"ju",
+	"ich",
+]);
 
 function fold(s: string): string {
 	return s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
@@ -256,7 +366,10 @@ const WORD_SPAN = /[\p{L}\p{N}]+(?:['’ʼ][\p{L}\p{N}]+)*/gu;
 
 /** Each word of the sentence as written (for display) and as compared (lower-case, no apostrophe). */
 export function sentenceWordSpans(text: string): Array<{ text: string; word: string }> {
-	return [...text.normalize("NFC").matchAll(WORD_SPAN)].map((m) => ({ text: m[0], word: m[0].replace(/['’ʼ]/g, "").toLowerCase() }));
+	return [...text.normalize("NFC").matchAll(WORD_SPAN)].map((m) => ({
+		text: m[0],
+		word: m[0].replace(/['’ʼ]/g, "").toLowerCase(),
+	}));
 }
 
 export interface HeardPiece {
@@ -269,17 +382,35 @@ export interface HeardPiece {
 
 const HYPHENATED_WORD = /\p{L}+(?:[-'’]\p{L}+)*/gu;
 
-export function heardPieces(sentence: string, opts: { newWords?: readonly string[]; marks?: ReadonlyArray<{ caught: boolean; almost: boolean; given?: string }>; tag?: string } = {}): HeardPiece[] {
+export function heardPieces(
+	sentence: string,
+	opts: {
+		newWords?: readonly string[];
+		marks?: ReadonlyArray<{ caught: boolean; almost: boolean; given?: string }>;
+		tag?: string;
+	} = {},
+): HeardPiece[] {
 	const text = sentence.normalize("NFC");
 	const wanted = new Set((opts.newWords ?? []).map((w) => w.normalize("NFC").toLocaleLowerCase(opts.tag)));
-	const newRanges = [...text.matchAll(HYPHENATED_WORD)].filter((m) => wanted.has(m[0].toLocaleLowerCase(opts.tag))).map((m) => [m.index, m.index + m[0].length] as const);
+	const newRanges = [...text.matchAll(HYPHENATED_WORD)]
+		.filter((m) => wanted.has(m[0].toLocaleLowerCase(opts.tag)))
+		.map((m) => [m.index, m.index + m[0].length] as const);
 	const isNew = (at: number) => newRanges.some(([from, to]) => at >= from && at < to);
 	const pieces: HeardPiece[] = [];
 	let at = 0;
 	[...text.matchAll(WORD_SPAN)].forEach((m, i) => {
 		if (m.index > at) pieces.push({ text: text.slice(at, m.index), newWord: isNew(at) });
 		const mark = opts.marks?.[i];
-		pieces.push({ text: m[0], newWord: isNew(m.index), ...(mark && !mark.caught ? { mark: mark.almost ? ("almost" as const) : ("missed" as const), ...(mark.given ? { given: mark.given } : {}) } : {}) });
+		pieces.push({
+			text: m[0],
+			newWord: isNew(m.index),
+			...(mark && !mark.caught
+				? {
+						mark: mark.almost ? ("almost" as const) : ("missed" as const),
+						...(mark.given ? { given: mark.given } : {}),
+					}
+				: {}),
+		});
 		at = m.index + m[0].length;
 	});
 	if (at < text.length) pieces.push({ text: text.slice(at), newWord: false });
@@ -297,7 +428,8 @@ function editDistance(a: string, b: string): number {
 	let prev = Array.from({ length: n + 1 }, (_, j) => j);
 	for (let i = 1; i <= m; i++) {
 		const cur = [i];
-		for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j]! + 1, cur[j - 1]! + 1, prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1));
+		for (let j = 1; j <= n; j++)
+			cur[j] = Math.min(prev[j]! + 1, cur[j - 1]! + 1, prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1));
 		prev = cur;
 	}
 	return prev[n]!;
@@ -309,11 +441,20 @@ type Op = { op: "match" | "sub" | "del" | "ins"; target?: string; given?: string
 export function alignWords(target: string[], given: string[]): Op[] {
 	const n = target.length;
 	const m = given.length;
-	const cost = (t: string, g: string) => (t === g ? 0 : Math.min(1, editDistance(fold(t), fold(g)) / Math.max(t.length, g.length) + (fold(t) === fold(g) ? 0 : 0.05)));
+	const cost = (t: string, g: string) =>
+		t === g
+			? 0
+			: Math.min(1, editDistance(fold(t), fold(g)) / Math.max(t.length, g.length) + (fold(t) === fold(g) ? 0 : 0.05));
 	const d: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
 	for (let i = 1; i <= n; i++) d[i]![0] = i;
 	for (let j = 1; j <= m; j++) d[0]![j] = j;
-	for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) d[i]![j] = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost(target[i - 1]!, given[j - 1]!));
+	for (let i = 1; i <= n; i++)
+		for (let j = 1; j <= m; j++)
+			d[i]![j] = Math.min(
+				d[i - 1]![j]! + 1,
+				d[i]![j - 1]! + 1,
+				d[i - 1]![j - 1]! + cost(target[i - 1]!, given[j - 1]!),
+			);
 	const ops: Op[] = [];
 	let i = n;
 	let j = m;
@@ -361,7 +502,10 @@ export function causeOfSub(target: string, given: string, stretch: ReadonlySet<s
 	const vg = joinCh(fg);
 	if (vt.length === vg.length) {
 		const diff = [...vt].map((c, i) => [c, vg[i]!, i] as const).filter(([a, b]) => a !== b);
-		if (diff.length > 0 && diff.every(([a, b]) => VOICING.some(([x, y]) => (a === x && b === y) || (a === y && b === x)))) {
+		if (
+			diff.length > 0 &&
+			diff.every(([a, b]) => VOICING.some(([x, y]) => (a === x && b === y) || (a === y && b === x)))
+		) {
 			// At the end of a word or before another consonant the letter is said with its neighbor's voice, so it was heard right.
 			const assimilated = diff.every(([, , i]) => i === vt.length - 1 || !VOWELS.has(vt[i + 1]!));
 			return assimilated ? "assimilation" : "voicing";
@@ -389,15 +533,29 @@ export function readTyped(sentence: string, given: string, stretch: readonly str
 		const here = at++;
 		if (o.op === "match") continue;
 		if (o.op === "sub" && !marks && fold(o.target!) === fold(o.given!)) continue;
-		if (o.op === "sub") errors.push({ cause: causeOfSub(o.target!, o.given!, known), target: o.target!, given: o.given!, at: here });
-		else errors.push({ cause: known.has(o.target!) ? "new-word" : SMALL_WORDS.has(o.target!) ? "small-word" : "word-missed", target: o.target!, given: "", at: here });
+		if (o.op === "sub")
+			errors.push({ cause: causeOfSub(o.target!, o.given!, known), target: o.target!, given: o.given!, at: here });
+		else
+			errors.push({
+				cause: known.has(o.target!) ? "new-word" : SMALL_WORDS.has(o.target!) ? "small-word" : "word-missed",
+				target: o.target!,
+				given: "",
+				at: here,
+			});
 	}
 	return errors;
 }
 
 // ─── What the figures show together ─────────────────────────────────────────
 
-type Counted = { session: number; words: number; stretchN: number; errors: WordError[] | null; sentence: string; half: 0 | 1 | null };
+type Counted = {
+	session: number;
+	words: number;
+	stretchN: number;
+	errors: WordError[] | null;
+	sentence: string;
+	half: 0 | 1 | null;
+};
 
 /** z of `hits` of `n` against a share `p0` expected by chance alone. */
 function oneProportionZ(hits: number, n: number, p0: number): number {
@@ -408,7 +566,11 @@ function oneProportionZ(hits: number, n: number, p0: number): number {
 const third = (at: number, n: number) => Math.min(2, Math.floor((at * 3) / Math.max(1, n)));
 
 /** The findings a learner would not see in the figures one at a time. Each needs INSIGHT_Z, and the sentences or differences to back it. */
-function findInsights(readable: readonly Counted[], first: { reps: number; right: number }, second: { reps: number; right: number }): ListenInsight[] {
+function findInsights(
+	readable: readonly Counted[],
+	first: { reps: number; right: number },
+	second: { reps: number; right: number },
+): ListenInsight[] {
 	const out: ListenInsight[] = [];
 	const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -425,8 +587,18 @@ function findInsights(readable: readonly Counted[], first: { reps: number; right
 		const z = (k: 0 | 2) => oneProportionZ(found[k]!, diffs, exposure[k]! / words);
 		const endShare = found[2]! / diffs;
 		const startShare = found[0]! / diffs;
-		if (z(2) >= INSIGHT_Z && z(2) >= z(0)) out.push({ id: "ends", title: "You lose the ends of sentences", line: `${pct(endShare)} of the words you miss are in the last third of a sentence, which holds ${pct(exposure[2]! / words)} of the words.` });
-		else if (z(0) >= INSIGHT_Z) out.push({ id: "start", title: "You lose the starts of sentences", line: `${pct(startShare)} of the words you miss are in the first third of a sentence, which holds ${pct(exposure[0]! / words)} of the words.` });
+		if (z(2) >= INSIGHT_Z && z(2) >= z(0))
+			out.push({
+				id: "ends",
+				title: "You lose the ends of sentences",
+				line: `${pct(endShare)} of the words you miss are in the last third of a sentence, which holds ${pct(exposure[2]! / words)} of the words.`,
+			});
+		else if (z(0) >= INSIGHT_Z)
+			out.push({
+				id: "start",
+				title: "You lose the starts of sentences",
+				line: `${pct(startShare)} of the words you miss are in the first third of a sentence, which holds ${pct(exposure[0]! / words)} of the words.`,
+			});
 	}
 
 	// A new word taking the words around it with it.
@@ -437,14 +609,29 @@ function findInsights(readable: readonly Counted[], first: { reps: number; right
 	const b = without.filter(other).length;
 	if (withNew.length >= CUT_MIN_REPS && without.length >= CUT_MIN_REPS) {
 		const z = twoProportionZ(a, withNew.length, b, without.length);
-		if (z !== null && z >= INSIGHT_Z) out.push({ id: "spillover", title: "A new word costs the words around it", line: `${pct(a / withNew.length)} of sentences with a new word had another word wrong, against ${pct(b / without.length)} of sentences with none.` });
+		if (z !== null && z >= INSIGHT_Z)
+			out.push({
+				id: "spillover",
+				title: "A new word costs the words around it",
+				line: `${pct(a / withNew.length)} of sentences with a new word had another word wrong, against ${pct(b / without.length)} of sentences with none.`,
+			});
 	}
 
 	// The two halves of a session.
 	if (first.reps >= CUT_MIN_REPS && second.reps >= CUT_MIN_REPS) {
 		const z = twoProportionZ(first.right, first.reps, second.right, second.reps);
-		if (z !== null && z <= -INSIGHT_Z) out.push({ id: "warm-up", title: "Your ear needs a few sentences to warm up", line: `${pct(second.right / second.reps)} of the second half of a session is typed correctly, against ${pct(first.right / first.reps)} of the first.` });
-		else if (z !== null && z >= INSIGHT_Z) out.push({ id: "tiring", title: "The second half of a session goes worse", line: `${pct(second.right / second.reps)} of the second half of a session is typed correctly, against ${pct(first.right / first.reps)} of the first.` });
+		if (z !== null && z <= -INSIGHT_Z)
+			out.push({
+				id: "warm-up",
+				title: "Your ear needs a few sentences to warm up",
+				line: `${pct(second.right / second.reps)} of the second half of a session is typed correctly, against ${pct(first.right / first.reps)} of the first.`,
+			});
+		else if (z !== null && z >= INSIGHT_Z)
+			out.push({
+				id: "tiring",
+				title: "The second half of a session goes worse",
+				line: `${pct(second.right / second.reps)} of the second half of a session is typed correctly, against ${pct(first.right / first.reps)} of the first.`,
+			});
 	}
 	return out;
 }
@@ -471,10 +658,25 @@ function findRepeats(readable: readonly Counted[]): RepeatedWord[] {
 		}
 	}
 	return [...by.entries()]
-		.filter(([, t]) => t.appeared >= REPEAT_MIN_APPEARED && t.missed >= REPEAT_MIN_MISSED && t.sessions.size >= REPEAT_MIN_SESSIONS && t.missed / t.appeared >= REPEAT_RATE)
+		.filter(
+			([, t]) =>
+				t.appeared >= REPEAT_MIN_APPEARED &&
+				t.missed >= REPEAT_MIN_MISSED &&
+				t.sessions.size >= REPEAT_MIN_SESSIONS &&
+				t.missed / t.appeared >= REPEAT_RATE,
+		)
 		.sort((x, y) => y[1].missed - x[1].missed || y[1].missed / y[1].appeared - x[1].missed / x[1].appeared)
 		.slice(0, REPEATS_KEPT)
-		.map(([word, t]) => ({ word, appeared: t.appeared, missed: t.missed, sessions: t.sessions.size, typedAs: [...t.typed.entries()].sort((p, q) => q[1] - p[1]).map(([g]) => g).slice(0, 3) }));
+		.map(([word, t]) => ({
+			word,
+			appeared: t.appeared,
+			missed: t.missed,
+			sessions: t.sessions.size,
+			typedAs: [...t.typed.entries()]
+				.sort((p, q) => q[1] - p[1])
+				.map(([g]) => g)
+				.slice(0, 3),
+		}));
 }
 
 // ─── The trends ─────────────────────────────────────────────────────────────
@@ -485,13 +687,16 @@ function weekOf(at: number): string {
 	return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back)).toISOString().slice(0, 10);
 }
 
-const mean = (v: number[]): number | null => (v.length >= EFFORT_MIN_REPS ? v.reduce((a, b) => a + b, 0) / v.length : null);
+const mean = (v: number[]): number | null =>
+	v.length >= EFFORT_MIN_REPS ? v.reduce((a, b) => a + b, 0) / v.length : null;
 
 /** Standard normal CDF (Abramowitz & Stegun 7.1.26, error under 1.5e-7). */
 function normalCdf(z: number): number {
 	const x = Math.abs(z) / Math.SQRT2;
 	const t = 1 / (1 + 0.3275911 * x);
-	const erf = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+	const erf =
+		1 -
+		((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
 	return z >= 0 ? (1 + erf) / 2 : (1 - erf) / 2;
 }
 
@@ -520,7 +725,23 @@ export function holm(ps: readonly number[], alpha = TREND_ALPHA): boolean[] {
 
 export function analyzeListening(lessons: readonly LoggedListen[], now: Date): ListenAnalysis {
 	const cut = now.getTime() - TREND_DAYS * DAY_MS;
-	type Rep = { at: number; day: string; session: number; half: 0 | 1 | null; words: number; stretchN: number; typed: boolean; right: boolean; replays: number; peeked: boolean; pace: number | null; errors: WordError[] | null; sentence: string; given: string; atIso: string };
+	type Rep = {
+		at: number;
+		day: string;
+		session: number;
+		half: 0 | 1 | null;
+		words: number;
+		stretchN: number;
+		typed: boolean;
+		right: boolean;
+		replays: number;
+		peeked: boolean;
+		pace: number | null;
+		errors: WordError[] | null;
+		sentence: string;
+		given: string;
+		atIso: string;
+	};
 	const reps: Rep[] = [];
 	let sessions = 0;
 	for (const lesson of lessons) {
@@ -533,11 +754,32 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 			// The words were heard: only the marks are off. Counted as right, as long as the text was not shown first.
 			const right = r.verdict !== "wrong" && !r.peeked;
 			// Causes need the stretch word as logged; an older typed miss without it, or a copied one, is not read.
-			const errors = typed && !r.peeked && r.stretch !== undefined ? (r.verdict === "exact" ? [] : readTyped(r.sentence, r.given, r.stretch)) : null;
+			const errors =
+				typed && !r.peeked && r.stretch !== undefined
+					? r.verdict === "exact"
+						? []
+						: readTyped(r.sentence, r.given, r.stretch)
+					: null;
 			const syl = countSyllables(r.sentence);
 			// A session of under six sentences has no first and second half worth comparing.
 			const half = lesson.reps.length >= 6 ? (i < lesson.reps.length / 2 ? 0 : 1) : null;
-			reps.push({ at, day: lesson.at.slice(0, 10), session, half, words: listenWords(r.sentence).length, stretchN: r.stretch?.length ?? 0, typed, right, replays: r.replays ?? 0, peeked: !!r.peeked, pace: r.heardMs && r.heardMs >= 800 && syl >= 3 ? syl / (r.heardMs / 1000) : null, errors, sentence: r.sentence, given: r.given, atIso: lesson.at });
+			reps.push({
+				at,
+				day: lesson.at.slice(0, 10),
+				session,
+				half,
+				words: listenWords(r.sentence).length,
+				stretchN: r.stretch?.length ?? 0,
+				typed,
+				right,
+				replays: r.replays ?? 0,
+				peeked: !!r.peeked,
+				pace: r.heardMs && r.heardMs >= 800 && syl >= 3 ? syl / (r.heardMs / 1000) : null,
+				errors,
+				sentence: r.sentence,
+				given: r.given,
+				atIso: lesson.at,
+			});
 		}
 	}
 	reps.sort((a, b) => a.at - b.at);
@@ -548,10 +790,15 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 	const readSessions = sessionsOf(readable);
 	const recentTyped = readable.filter((r) => r.at >= cut);
 	const earlierTyped = readable.filter((r) => r.at < cut);
-	const windowsOk = [recentTyped, earlierTyped].every((w) => w.length >= CAUSE_TREND_MIN_SENTENCES && sessionsOf(w) >= CAUSE_TREND_MIN_SESSIONS);
+	const windowsOk = [recentTyped, earlierTyped].every(
+		(w) => w.length >= CAUSE_TREND_MIN_SENTENCES && sessionsOf(w) >= CAUSE_TREND_MIN_SESSIONS,
+	);
 
 	// Causes: words, and sentences with the cause in each window.
-	const tally = new Map<ListenCause, { count: number; sentences: number; sessions: Set<number>; recent: number; earlier: number }>();
+	const tally = new Map<
+		ListenCause,
+		{ count: number; sentences: number; sessions: Set<number>; recent: number; earlier: number }
+	>();
 	for (const r of readable) {
 		const seen = new Set<ListenCause>();
 		for (const e of r.errors!) {
@@ -567,10 +814,14 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 			tally.set(e.cause, t);
 		}
 	}
-	const listed = [...tally.entries()].filter(([, t]) => t.sentences >= CAUSE_MIN_SENTENCES && t.sessions.size >= CAUSE_MIN_SESSIONS);
+	const listed = [...tally.entries()].filter(
+		([, t]) => t.sentences >= CAUSE_MIN_SENTENCES && t.sessions.size >= CAUSE_MIN_SESSIONS,
+	);
 	const rare = [...tally.values()].reduce((n, t) => n + t.count, 0) - listed.reduce((n, [, t]) => n + t.count, 0);
 	// Every listed cause is tested at once, so the bar is held across all of them.
-	const zs = listed.map(([, t]) => (windowsOk ? twoProportionZ(t.recent, recentTyped.length, t.earlier, earlierTyped.length) : null));
+	const zs = listed.map(([, t]) =>
+		windowsOk ? twoProportionZ(t.recent, recentTyped.length, t.earlier, earlierTyped.length) : null,
+	);
 	const tested = zs.flatMap((z, i) => (z === null ? [] : [i]));
 	const passed = holm(tested.map((i) => 2 * (1 - normalCdf(Math.abs(zs[i]!)))));
 	const causes: CauseTrend[] = listed
@@ -625,7 +876,11 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 	const shortS = rate(reps.filter((r) => r.words > 0 && r.words <= SHORT_WORDS));
 	const longS = rate(reps.filter((r) => r.words >= LONG_WORDS));
 	const lengthZ = twoProportionZ(shortS.right, shortS.reps, longS.right, longS.reps);
-	const insights = findInsights(readable, rate(reps.filter((r) => r.half === 0)), rate(reps.filter((r) => r.half === 1)));
+	const insights = findInsights(
+		readable,
+		rate(reps.filter((r) => r.half === 0)),
+		rate(reps.filter((r) => r.half === 1)),
+	);
 	const repeats = findRepeats(readable);
 	const causeWeeks = [...new Set(readable.map((r) => weekOf(r.at)))]
 		.sort()
@@ -652,20 +907,47 @@ export function analyzeListening(lessons: readonly LoggedListen[], now: Date): L
 		rare,
 		kinds,
 		replays: { recent: mean(recentAll.map((r) => r.replays)), earlier: mean(earlierAll.map((r) => r.replays)) },
-		peeked: { recent: mean(recentAll.map((r) => (r.peeked ? 1 : 0))), earlier: mean(earlierAll.map((r) => (r.peeked ? 1 : 0))) },
+		peeked: {
+			recent: mean(recentAll.map((r) => (r.peeked ? 1 : 0))),
+			earlier: mean(earlierAll.map((r) => (r.peeked ? 1 : 0))),
+		},
 		pace:
 			slow.length >= PACE_MIN_REPS && fast.length >= PACE_MIN_REPS
-				? { slow: { reps: slow.length, right: slowRight }, fast: { reps: fast.length, right: fastRight }, slowBelow: SLOW_PACE, fastAbove: FAST_PACE, fastHarder: paceZ !== null && paceZ >= TREND_Z }
+				? {
+						slow: { reps: slow.length, right: slowRight },
+						fast: { reps: fast.length, right: fastRight },
+						slowBelow: SLOW_PACE,
+						fastAbove: FAST_PACE,
+						fastHarder: paceZ !== null && paceZ >= TREND_Z,
+					}
 				: null,
-		session: firstHalf.reps >= CUT_MIN_REPS && secondHalf.reps >= CUT_MIN_REPS ? { first: firstHalf, second: secondHalf, tiring: halfZ !== null && halfZ >= TREND_Z } : null,
-		length: shortS.reps >= CUT_MIN_REPS && longS.reps >= CUT_MIN_REPS ? { short: shortS, long: longS, longHarder: lengthZ !== null && lengthZ >= TREND_Z } : null,
+		session:
+			firstHalf.reps >= CUT_MIN_REPS && secondHalf.reps >= CUT_MIN_REPS
+				? { first: firstHalf, second: secondHalf, tiring: halfZ !== null && halfZ >= TREND_Z }
+				: null,
+		length:
+			shortS.reps >= CUT_MIN_REPS && longS.reps >= CUT_MIN_REPS
+				? { short: shortS, long: longS, longHarder: lengthZ !== null && lengthZ >= TREND_Z }
+				: null,
 		causeWeeks,
-		insights: [...insights, ...(repeats.length ? [{ id: "repeat" as const, title: "Words that keep going wrong", line: repeats.map((w) => `${w.word} (${w.missed} of ${w.appeared} sentences)`).join(", ") + "." }] : [])],
+		insights: [
+			...insights,
+			...(repeats.length
+				? [
+						{
+							id: "repeat" as const,
+							title: "Words that keep going wrong",
+							line: repeats.map((w) => `${w.word} (${w.missed} of ${w.appeared} sentences)`).join(", ") + ".",
+						},
+					]
+				: []),
+		],
 		repeats,
 		misses: missed
 			.slice(-MISSES_KEPT)
 			.reverse()
 			.map((r) => ({ at: r.atIso, sentence: r.sentence, given: r.given, errors: r.errors! })),
-		ready: readable.length >= LISTEN_MIN_TYPED && missed.length >= LISTEN_MIN_MISSED && readSessions >= LISTEN_MIN_SESSIONS,
+		ready:
+			readable.length >= LISTEN_MIN_TYPED && missed.length >= LISTEN_MIN_MISSED && readSessions >= LISTEN_MIN_SESSIONS,
 	};
 }

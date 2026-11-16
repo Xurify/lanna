@@ -6,5 +6,16 @@ export const dynamic = "force-dynamic";
 
 export default function InputFirstExperimentPage() {
 	const { config, schedule, daily, checks, study, deviations, today } = getExperimentState();
-	return <StudyPage config={config} schedule={schedule} daily={daily} checks={checks} study={study} deviations={deviations} today={today} runningLanguage={activeProfile()} />;
+	return (
+		<StudyPage
+			config={config}
+			schedule={schedule}
+			daily={daily}
+			checks={checks}
+			study={study}
+			deviations={deviations}
+			today={today}
+			runningLanguage={activeProfile()}
+		/>
+	);
 }

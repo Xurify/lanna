@@ -20,7 +20,11 @@
  */
 
 const PARTITION = "persist:lh-youtube";
-const SIGN_IN = "https://accounts.google.com/ServiceLogin?service=youtube&passive=true&continue=" + encodeURIComponent("https://www.youtube.com/signin?action_handle_signin=true&app=desktop&next=https%3A%2F%2Fwww.youtube.com%2F");
+const SIGN_IN =
+	"https://accounts.google.com/ServiceLogin?service=youtube&passive=true&continue=" +
+	encodeURIComponent(
+		"https://www.youtube.com/signin?action_handle_signin=true&app=desktop&next=https%3A%2F%2Fwww.youtube.com%2F",
+	);
 const LISTS = {
 	history: "https://www.youtube.com/feed/history",
 	recommended: "https://www.youtube.com/",
@@ -36,7 +40,9 @@ function allowedUrl(target) {
 	try {
 		const u = new URL(target);
 		if (u.protocol !== "https:") return false;
-		return /(^|\.)(google\.com|google\.[a-z]{2,3}(\.[a-z]{2})?|youtube\.com|gstatic\.com|googleusercontent\.com)$/.test(u.hostname);
+		return /(^|\.)(google\.com|google\.[a-z]{2,3}(\.[a-z]{2})?|youtube\.com|gstatic\.com|googleusercontent\.com)$/.test(
+			u.hostname,
+		);
 	} catch {
 		return false;
 	}
@@ -118,7 +124,10 @@ function createYouTube({ session, BrowserWindow, userAgent }) {
 	/** The account switcher's answer, fetched through the signed-in session. */
 	async function account() {
 		if (!(await signedIn())) return { signedIn: false };
-		const res = await ses().fetch(ACCOUNT, { credentials: "include", headers: { "accept-language": "en-US,en;q=0.9", "x-origin": "https://www.youtube.com" } });
+		const res = await ses().fetch(ACCOUNT, {
+			credentials: "include",
+			headers: { "accept-language": "en-US,en;q=0.9", "x-origin": "https://www.youtube.com" },
+		});
 		if (!res.ok) throw new Error(`YouTube answered ${res.status}.`);
 		const text = await res.text();
 		return { signedIn: true, text: text.length > MAX_ACCOUNT ? text.slice(0, MAX_ACCOUNT) : text };
@@ -147,7 +156,8 @@ function registerYouTubeIPC(ipcMain, { trusted, youtube, BrowserWindow }) {
 		const op = command && command.op;
 		if (op === "status") return youtube.status();
 		if (op === "connect") return youtube.connect(BrowserWindow.fromWebContents(event.sender) ?? undefined);
-		if (op === "read" && typeof command.list === "string" && Object.hasOwn(LISTS, command.list)) return youtube.read(command.list);
+		if (op === "read" && typeof command.list === "string" && Object.hasOwn(LISTS, command.list))
+			return youtube.read(command.list);
 		if (op === "account") return youtube.account();
 		if (op === "disconnect") return youtube.disconnect();
 		throw new Error("Unsupported YouTube request.");

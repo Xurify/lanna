@@ -27,7 +27,13 @@ function contextMenuTemplate(params, ownOrigin, act) {
 	}
 	const editing = [];
 	if (params.isEditable) {
-		editing.push({ role: "cut", enabled: !!params.editFlags?.canCut }, { role: "copy", enabled: !!params.editFlags?.canCopy }, { role: "paste", enabled: !!params.editFlags?.canPaste }, { type: "separator" }, { role: "selectAll" });
+		editing.push(
+			{ role: "cut", enabled: !!params.editFlags?.canCut },
+			{ role: "copy", enabled: !!params.editFlags?.canCopy },
+			{ role: "paste", enabled: !!params.editFlags?.canPaste },
+			{ type: "separator" },
+			{ role: "selectAll" },
+		);
 	} else if ((params.selectionText ?? "").trim()) {
 		editing.push({ role: "copy" });
 	}

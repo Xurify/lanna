@@ -18,7 +18,16 @@ import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { COLUMN, endEnterBlocked, EnterHint, PRIMARY, SECONDARY, TaskEnd, TaskFrame, TaskTop } from "@/components/task-frame";
+import {
+	COLUMN,
+	endEnterBlocked,
+	EnterHint,
+	PRIMARY,
+	SECONDARY,
+	TaskEnd,
+	TaskFrame,
+	TaskTop,
+} from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { scriptFor, grade, sceneOptionText, tutorLineText, type SceneOption } from "@/src/core";
 
@@ -147,7 +156,8 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 					</p>
 					<h1 className="q-hello">Now say it yourself</h1>
 					<p className="q-line dim mt-3 max-w-xl">
-						You walked through all {total} lines. Now say the same scene out loud. The tutor will follow what you say, not the script.
+						You walked through all {total} lines. Now say the same scene out loud. The tutor will follow what you say,
+						not the script.
 					</p>
 				</TaskEnd>
 			</TaskFrame>
@@ -156,12 +166,23 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 
 	return (
 		<TaskFrame>
-			<TaskTop progress={turnIndex / total} label={`line ${turnIndex + 1} of ${total}`} count={`${turnIndex + 1}/${total}`} ink="bg-teal" href="/speak" />
+			<TaskTop
+				progress={turnIndex / total}
+				label={`line ${turnIndex + 1} of ${total}`}
+				count={`${turnIndex + 1}/${total}`}
+				ink="bg-teal"
+				href="/speak"
+			/>
 
 			<div ref={listRef} className="flex flex-1 flex-col overflow-y-auto pb-6 pt-4">
 				<div className={cn(COLUMN, "flex flex-col gap-4")}>
 					<p className="font-ui text-sm font-[600] text-muted-foreground">Speak · step by step</p>
-					<ol className="flex flex-col gap-3" data-testid="script-turns" data-word-lookup-enabled="true" aria-live="polite">
+					<ol
+						className="flex flex-col gap-3"
+						data-testid="script-turns"
+						data-word-lookup-enabled="true"
+						aria-live="polite"
+					>
 						{said.map((line, i) => (
 							<li key={i} className={cn("flex", line.role === "learner" ? "justify-end" : "justify-start")}>
 								<div
@@ -179,7 +200,12 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 						))}
 					</ol>
 
-					<p className="font-prose text-xl text-foreground" lang={lang?.code} data-testid="script-tutor" data-word-lookup-enabled="true">
+					<p
+						className="font-prose text-xl text-foreground"
+						lang={lang?.code}
+						data-testid="script-tutor"
+						data-word-lookup-enabled="true"
+					>
 						{turn.tutor.sk}
 					</p>
 					<p className="-mt-2 font-prose text-sm text-muted-foreground">{turn.tutor.en}</p>
@@ -199,7 +225,9 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 									)}
 									data-testid={`script-option-${i}`}
 								>
-									<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">{i + 1}</span>
+									<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border font-ui text-sm text-muted-foreground">
+										{i + 1}
+									</span>
 									<span lang={lang?.code} className="text-foreground">
 										{o.sk}
 									</span>
@@ -210,7 +238,11 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 					</div>
 
 					{miss && (
-						<p className="rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss" data-testid="script-why" role="alert">
+						<p
+							className="rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss"
+							data-testid="script-why"
+							role="alert"
+						>
 							{miss.explanation} Try once more.
 						</p>
 					)}

@@ -6,10 +6,10 @@
 
 <!-- Learner-facing UI only; delete the section when no learner sees a difference. Day and Night, 1280 and 390 px, of the state the PR is about. Taken with scripts/pr-shots.mjs from `npm run dev:sandbox -- --seed`, looked at, and attached via `gh pr create/edit --attach <path>`. Rule: W5 in CLAUDE.md. -->
 
-| Day | Night |
-| --- | --- |
+| Day                                       | Night                                         |
+| ----------------------------------------- | --------------------------------------------- |
 | ![Day Desktop](./shots/page-day-1280.png) | ![Night Desktop](./shots/page-night-1280.png) |
-| ![Day Mobile](./shots/page-day-390.png) | ![Night Mobile](./shots/page-night-390.png) |
+| ![Day Mobile](./shots/page-day-390.png)   | ![Night Mobile](./shots/page-night-390.png)   |
 
 ## Try it
 

@@ -61,7 +61,11 @@ const ERROR_CHARS = 240;
 
 /** What a Tasks row shows for a failure: the last line, with terminal codes removed and a length cap. */
 export function briefError(message: string): string {
-	const lines = message.replace(TERMINAL_CODES, "").split(/\r\n|\r|\n/).map((line) => line.trim()).filter(Boolean);
+	const lines = message
+		.replace(TERMINAL_CODES, "")
+		.split(/\r\n|\r|\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
 	const last = lines.length ? lines[lines.length - 1]! : "Something went wrong";
 	return last.length > ERROR_CHARS ? `${last.slice(0, ERROR_CHARS - 3)}...` : last;
 }
@@ -70,12 +74,27 @@ const changed = () => emit("activity-changed", {});
 
 /** Start a task. One task per id: starting a running id returns it with
  *  its abort signal unchanged, so a second request shares the first. */
-export function startTask(init: { id: string; kind: TaskKind; title: string; step: string; now?: number; language?: TaskRecord["language"] }): { task: TaskRecord; signal: AbortSignal; fresh: boolean } {
+export function startTask(init: {
+	id: string;
+	kind: TaskKind;
+	title: string;
+	step: string;
+	now?: number;
+	language?: TaskRecord["language"];
+}): { task: TaskRecord; signal: AbortSignal; fresh: boolean } {
 	const s = state();
 	const running = s.tasks.get(init.id);
 	if (running?.status === "running") return { task: running, signal: s.aborts.get(init.id)!.signal, fresh: false };
 	const controller = new AbortController();
-	const task: TaskRecord = { id: init.id, kind: init.kind, title: init.title, step: init.step, status: "running", startedAt: init.now ?? Date.now(), ...(init.language ? { language: init.language } : {}) };
+	const task: TaskRecord = {
+		id: init.id,
+		kind: init.kind,
+		title: init.title,
+		step: init.step,
+		status: "running",
+		startedAt: init.now ?? Date.now(),
+		...(init.language ? { language: init.language } : {}),
+	};
 	s.tasks.set(init.id, task);
 	s.aborts.set(init.id, controller);
 	changed();
@@ -97,7 +116,9 @@ function end(id: string, patch: Partial<TaskRecord> & { status: "done" | "error"
 	const shown = patch.error === undefined ? patch : { ...patch, error: briefError(patch.error) };
 	Object.assign(task, shown, { finishedAt: Date.now() });
 	s.aborts.delete(id);
-	const finished = [...s.tasks.values()].filter((t) => t.status !== "running").sort((a, b) => (a.finishedAt ?? 0) - (b.finishedAt ?? 0));
+	const finished = [...s.tasks.values()]
+		.filter((t) => t.status !== "running")
+		.sort((a, b) => (a.finishedAt ?? 0) - (b.finishedAt ?? 0));
 	for (const old of finished.slice(0, Math.max(0, finished.length - TASKS_KEPT))) s.tasks.delete(old.id);
 	changed();
 }

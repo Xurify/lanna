@@ -6,7 +6,19 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, test } from "node:test";
 
-const { abortTask, clearFinishedTasks, dismissTask, removeTask, failTask, finishTask, listTasks, resetTasks, startTask, TASKS_KEPT, updateTask } = await import("../src/server/tasks.ts");
+const {
+	abortTask,
+	clearFinishedTasks,
+	dismissTask,
+	removeTask,
+	failTask,
+	finishTask,
+	listTasks,
+	resetTasks,
+	startTask,
+	TASKS_KEPT,
+	updateTask,
+} = await import("../src/server/tasks.ts");
 const { subscribe } = await import("../src/core/events.ts");
 
 beforeEach(() => resetTasks());
@@ -21,7 +33,10 @@ describe("task registry", () => {
 		updateTask("video:a", { step: "Translating", title: "Real title" });
 		finishTask("video:a", { href: "/watch?id=a" });
 		const [t] = listTasks();
-		assert.deepEqual({ status: t!.status, step: t!.step, title: t!.title, href: t!.href }, { status: "done", step: "Ready", title: "Real title", href: "/watch?id=a" });
+		assert.deepEqual(
+			{ status: t!.status, step: t!.step, title: t!.title, href: t!.href },
+			{ status: "done", step: "Ready", title: "Real title", href: "/watch?id=a" },
+		);
 		assert.ok(t!.finishedAt);
 	});
 
@@ -70,7 +85,10 @@ describe("task registry", () => {
 		assert.equal(removeTask("video:a"), true);
 		assert.equal(removeTask("video:a"), false);
 		assert.equal(clearFinishedTasks(), 1);
-		assert.deepEqual(listTasks().map((t) => t.id), ["video:c"]);
+		assert.deepEqual(
+			listTasks().map((t) => t.id),
+			["video:c"],
+		);
 		assert.equal(clearFinishedTasks(), 0);
 	});
 

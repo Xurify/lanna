@@ -20,7 +20,10 @@ function toolPart(tool: string, state: string) {
 
 describe("streamingToolActivity (the turn-activity label)", () => {
 	it("question tools keep their question shimmer", () => {
-		assert.equal(streamingToolActivity([msg("assistant", [toolPart("quiz", "input-streaming")])]), "Writing a question…");
+		assert.equal(
+			streamingToolActivity([msg("assistant", [toolPart("quiz", "input-streaming")])]),
+			"Writing a question…",
+		);
 		assert.equal(
 			streamingToolActivity([msg("assistant", [toolPart("ask_user_question", "input-streaming")])]),
 			"Writing a question…",
@@ -28,18 +31,21 @@ describe("streamingToolActivity (the turn-activity label)", () => {
 	});
 
 	it("local tools name their actual activity", () => {
-		assert.equal(streamingToolActivity([msg("assistant", [toolPart("grep", "input-streaming")])]), "Searching file contents…");
+		assert.equal(
+			streamingToolActivity([msg("assistant", [toolPart("grep", "input-streaming")])]),
+			"Searching file contents…",
+		);
 		assert.equal(streamingToolActivity([msg("assistant", [toolPart("read", "input-streaming")])]), "Reading a file…");
 		assert.equal(streamingToolActivity([msg("assistant", [toolPart("find", "input-streaming")])]), "Finding files…");
-		assert.equal(streamingToolActivity([msg("assistant", [toolPart("ls", "input-streaming")])]), "Listing a directory…");
+		assert.equal(
+			streamingToolActivity([msg("assistant", [toolPart("ls", "input-streaming")])]),
+			"Listing a directory…",
+		);
 	});
 
 	it("job dispatch tools get their own labels; unknown tools stay generic", () => {
 		assert.equal(streamingToolActivity([msg("assistant", [toolPart("pdf", "input-streaming")])]), "Reading a PDF…");
-		assert.equal(
-			streamingToolActivity([msg("assistant", [toolPart("mystery_tool", "input-streaming")])]),
-			"Working…",
-		);
+		assert.equal(streamingToolActivity([msg("assistant", [toolPart("mystery_tool", "input-streaming")])]), "Working…");
 	});
 
 	it("no activity once the call settles or the turn ends", () => {

@@ -47,10 +47,7 @@ export function DispatchCard({ toolCallId, kind }: { toolCallId: string; kind: J
 	}
 	const failed = job.status === "error";
 	return (
-		<div
-			className="flex items-center gap-2 text-xs text-muted-foreground"
-			data-testid="dispatch-settled"
-		>
+		<div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="dispatch-settled">
 			{failed ? <XIcon className="size-3.5 text-red-500" /> : <CheckIcon className="size-3.5" />}
 			<span className="font-medium">{label}</span>
 			<span>{failed ? "failed" : "finished"}</span>
@@ -62,10 +59,7 @@ export function DispatchCard({ toolCallId, kind }: { toolCallId: string; kind: J
 function DispatchRefusedCard({ label, line, button }: { label: string; line: string; button: string }) {
 	const ctx = useContext(ChatActionsContext);
 	return (
-		<div
-			className="flex items-center gap-2 text-xs text-muted-foreground"
-			data-testid="dispatch-refused"
-		>
+		<div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="dispatch-refused">
 			<SettingsIcon className="size-3.5" />
 			<span className="font-medium">{label}</span>
 			<span>{line}</span>
@@ -89,10 +83,7 @@ function DispatchActivityCard({ job, label }: { job: JobRecord | null; label: st
 	const elapsed =
 		job && job.createdAt ? Math.max(0, Math.round((Date.now() - Date.parse(job.createdAt)) / 1000)) : null;
 	return (
-		<div
-			className="rounded-xl border bg-card p-4 text-card-foreground"
-			data-testid="dispatch-card"
-		>
+		<div className="rounded-xl border bg-card p-4 text-card-foreground" data-testid="dispatch-card">
 			<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
 				{/* The working-state grammar (owner, streaming round 2026-10-01):
 				    the Braille spinner replaces the pulsing dot — one indicator

@@ -24,7 +24,10 @@ Object.assign(globalThis, {
 	cancelAnimationFrame: (id: number) => clearTimeout(id),
 });
 Object.assign(dom.window, { innerWidth: 1280, innerHeight: 800 });
-const rectProto = dom.window.HTMLElement.prototype as unknown as { getBoundingClientRect?: () => unknown; focus?: () => void };
+const rectProto = dom.window.HTMLElement.prototype as unknown as {
+	getBoundingClientRect?: () => unknown;
+	focus?: () => void;
+};
 rectProto.getBoundingClientRect ??= () => ({ top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 });
 rectProto.focus ??= () => {};
 
@@ -35,7 +38,9 @@ type Levels = Partial<Record<Lang, LangLevel>>;
 /** The picker with a record of every change it asks for; its props never move. */
 function recorded(value: Lang[], levels: Levels) {
 	const calls: [Lang[], Levels][] = [];
-	const element = <LanguagePicker value={value} levels={levels} onChange={(langs, next) => calls.push([langs, next])} />;
+	const element = (
+		<LanguagePicker value={value} levels={levels} onChange={(langs, next) => calls.push([langs, next])} />
+	);
 	return { element, calls };
 }
 
@@ -90,7 +95,12 @@ describe("Languages you know: the language being learned is not one you know", (
 	it("leaves its row out, but it rides along on every change for the other languages", async () => {
 		const calls: [Lang[], Levels][] = [];
 		const host = await mount(
-			<LanguagePicker value={["en", "ru", "et"]} levels={{ en: "native", ru: "A1", et: "A2" }} exclude="et" onChange={(langs, next) => calls.push([langs, next])} />,
+			<LanguagePicker
+				value={["en", "ru", "et"]}
+				levels={{ en: "native", ru: "A1", et: "A2" }}
+				exclude="et"
+				onChange={(langs, next) => calls.push([langs, next])}
+			/>,
 		);
 		assert.equal(q(host, "level-et"), null, "no row for the language being learned");
 		assert.ok(q(host, "level-ru"), "the other languages keep their rows");
@@ -101,7 +111,12 @@ describe("Languages you know: the language being learned is not one you know", (
 	it("removing another language still keeps the one being learned", async () => {
 		const calls: [Lang[], Levels][] = [];
 		const host = await mount(
-			<LanguagePicker value={["en", "et", "sv"]} levels={{ en: "native", et: "A2", sv: "C1" }} exclude="et" onChange={(langs, next) => calls.push([langs, next])} />,
+			<LanguagePicker
+				value={["en", "et", "sv"]}
+				levels={{ en: "native", et: "A2", sv: "C1" }}
+				exclude="et"
+				onChange={(langs, next) => calls.push([langs, next])}
+			/>,
 		);
 		await click(host.querySelector<HTMLElement>("[aria-label='Remove Swedish']"));
 		assert.deepEqual(calls.at(-1), [["en", "et"], { en: "native", et: "A2" }]);
@@ -112,7 +127,8 @@ describe("Languages you know: a language you add has no level until you press on
 	it("shows no level pressed and asks for one", async () => {
 		const host = await mount(<Stateful initial={["et"]} initialLevels={{ et: "native" }} />);
 		await click(q(host, "languages-sv"));
-		for (const lv of ["A1", "A2", "B1", "B2", "C1", "C2", "native"]) assert.equal(pressed(host, `level-sv-${lv}`), "false", lv);
+		for (const lv of ["A1", "A2", "B1", "B2", "C1", "C2", "native"])
+			assert.equal(pressed(host, `level-sv-${lv}`), "false", lv);
 		assert.ok(q(host, "level-sv-unset"), "the row says a level is still to pick");
 	});
 

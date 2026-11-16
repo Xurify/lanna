@@ -87,8 +87,7 @@ function readTextSlice(text: string, offset: number | undefined, limit: number |
 		return selected.join("\n");
 	}
 	const endLineDisplay = startLine + selected.length;
-	const reason =
-		truncatedBy === "lines" ? `${MAX_LINES} line limit` : `${formatSize(MAX_BYTES)} limit`;
+	const reason = truncatedBy === "lines" ? `${MAX_LINES} line limit` : `${formatSize(MAX_BYTES)} limit`;
 	return `${selected.join("\n")}\n\n[Showing lines ${startLine + 1}-${endLineDisplay} of ${totalLines} (${reason}). Use offset=${endLineDisplay + 1} to continue.]`;
 }
 
@@ -104,25 +103,29 @@ export const readTool: AgentTool<typeof readInput> = {
 	label: "read",
 	description: `Read the contents of a file. Supports text files, images (jpg, png, gif, webp, bmp) and short PDFs. Images are sent as attachments. A PDF of up to ${INLINE_PDF_MAX_PAGES} pages with real text comes back as text marked "--- Page N ---"; a longer or scanned PDF returns a note to dispatch the pdf job instead. For text files, output is truncated to 2000 lines or 50.0KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.`,
 	parameters: readInput,
-	execute: serverExecute("read", readInput, async ({ path: rawPath, offset, limit }): Promise<string | ImageFileResult> => {
-		const absolute = resolveSourcePath(rawPath);
-		await assertNotSecret(absolute);
-		const ext = path.extname(absolute).toLowerCase();
-		const mime = IMAGE_MIME[ext];
-		if (ext === ".pdf") return readPdf(absolute);
-		const buffer = await fs.readFile(absolute); // ENOENT/EACCES → error result the model sees
-		if (mime) {
-			// NOTE v0: no resize — raw bytes as base64. Learner files are study
-			// material (screenshots, figures), not adversarial payloads; a resize
-			// step (sharp) can land later if large images prove wasteful.
-			return {
-				text: `Read image file [${mime}] — ${path.basename(absolute)} (${formatSize(buffer.byteLength)}), attached as an image.`,
-				images: [{ data: buffer.toString("base64"), mimeType: mime }],
-			};
-		}
-		const text = buffer.toString("utf-8");
-		return readTextSlice(text, offset, limit);
-	}),
+	execute: serverExecute(
+		"read",
+		readInput,
+		async ({ path: rawPath, offset, limit }): Promise<string | ImageFileResult> => {
+			const absolute = resolveSourcePath(rawPath);
+			await assertNotSecret(absolute);
+			const ext = path.extname(absolute).toLowerCase();
+			const mime = IMAGE_MIME[ext];
+			if (ext === ".pdf") return readPdf(absolute);
+			const buffer = await fs.readFile(absolute); // ENOENT/EACCES → error result the model sees
+			if (mime) {
+				// NOTE v0: no resize — raw bytes as base64. Learner files are study
+				// material (screenshots, figures), not adversarial payloads; a resize
+				// step (sharp) can land later if large images prove wasteful.
+				return {
+					text: `Read image file [${mime}] — ${path.basename(absolute)} (${formatSize(buffer.byteLength)}), attached as an image.`,
+					images: [{ data: buffer.toString("base64"), mimeType: mime }],
+				};
+			}
+			const text = buffer.toString("utf-8");
+			return readTextSlice(text, offset, limit);
+		},
+	),
 };
 
 async function readPdf(absolute: string): Promise<string> {

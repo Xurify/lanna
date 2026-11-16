@@ -96,7 +96,11 @@ export function piUsageToStep(usage: {
 	return {
 		inputTokens: usage.input,
 		outputTokens: usage.output,
-		inputTokenDetails: { cacheReadTokens: usage.cacheRead, cacheWriteTokens: usage.cacheWrite, cacheWrite1hTokens: usage.cacheWrite1h ?? 0 },
+		inputTokenDetails: {
+			cacheReadTokens: usage.cacheRead,
+			cacheWriteTokens: usage.cacheWrite,
+			cacheWrite1hTokens: usage.cacheWrite1h ?? 0,
+		},
 		outputTokenDetails: usage.reasoning !== undefined ? { reasoningTokens: usage.reasoning } : undefined,
 	};
 }
@@ -105,11 +109,7 @@ export function piUsageToStep(usage: {
  * field neither the total nor the step reported stays undefined; once
  * reported, later unreported calls contribute 0. The `steps` counter is
  * the billing count: one per model call, reported or not. */
-export function accumulateJobUsage(
-	total: JobUsage | undefined,
-	model: string,
-	step: UsageStepLike,
-): JobUsage {
+export function accumulateJobUsage(total: JobUsage | undefined, model: string, step: UsageStepLike): JobUsage {
 	const add = (a: number | undefined, b: number | undefined): number | undefined =>
 		a === undefined && b === undefined ? undefined : (a ?? 0) + (b ?? 0);
 	const call: CallUsage = {
@@ -127,9 +127,11 @@ export function accumulateJobUsage(
 		cacheReadTokens: add(total?.cacheReadTokens, step.inputTokenDetails?.cacheReadTokens),
 		cacheWriteTokens: add(total?.cacheWriteTokens, step.inputTokenDetails?.cacheWriteTokens),
 		reasoningTokens: add(total?.reasoningTokens, step.outputTokenDetails?.reasoningTokens),
-		cacheWrite1hTokens: ((total?.cacheWriteTokens ?? 0) > 0 && total?.cacheWrite1hTokens === undefined) ||
+		cacheWrite1hTokens:
+			((total?.cacheWriteTokens ?? 0) > 0 && total?.cacheWrite1hTokens === undefined) ||
 			((call.cacheWriteTokens ?? 0) > 0 && call.cacheWrite1hTokens === undefined)
-			? undefined : add(total?.cacheWrite1hTokens, call.cacheWrite1hTokens),
+				? undefined
+				: add(total?.cacheWrite1hTokens, call.cacheWrite1hTokens),
 		steps: (total?.steps ?? 0) + 1,
 		...(!total || total.calls ? { calls: [...(total?.calls ?? []), call] } : {}),
 		lastStep: call,
@@ -282,11 +284,7 @@ export interface SteerDetails extends SubagentResultMeta {
  *  with the target's details updated — no-op (same array) when the message
  *  is missing or not an invertible artifact steer. The silent route's
  *  whole body. */
-export function setSteerUiInverted(
-	messages: readonly LhMessage[],
-	messageId: string,
-	inverted: boolean,
-): LhMessage[] {
+export function setSteerUiInverted(messages: readonly LhMessage[], messageId: string, inverted: boolean): LhMessage[] {
 	return messages.map((m) => {
 		if (m.id !== messageId) return m;
 		const d = (m as LhMarkerMessage).details as Partial<SteerDetails> | undefined;
@@ -299,10 +297,7 @@ export function setSteerUiInverted(
 export type SteerMessage = LhMarkerMessage;
 
 /** Whether a result is the failure shape (svg empty, failure brief). */
-export function isSubagentFailure(
-	kind: JobKind,
-	result: ResearchResult | VisualResult | PdfResult,
-): boolean {
+export function isSubagentFailure(kind: JobKind, result: ResearchResult | VisualResult | PdfResult): boolean {
 	if (kind === "research") {
 		const r = result as ResearchResult;
 		return r.sources.length === 0 && /^Research failed:/i.test(r.brief);
@@ -361,9 +356,7 @@ export function buildSubagentSteer(
 /** Build the abort steer for an aborted job (pure — shared by the
  * abort path in src/server/jobs.ts and tests). Same id space as the result
  * steer (same id space — exactly one delivers). */
-export function buildAbortSteer(
-	job: Pick<JobRecord, "id" | "kind" | "toolCallId">,
-): SteerMessage {
+export function buildAbortSteer(job: Pick<JobRecord, "id" | "kind" | "toolCallId">): SteerMessage {
 	const meta = { jobId: job.id, kind: job.kind, toolCallId: job.toolCallId, aborted: true } as const;
 	return {
 		id: `steer_${job.id}`,
@@ -406,4 +399,3 @@ export function buildProbeHandoffSteer(chatId: string): SteerMessage {
 export function steerDelivered(messages: LhMessage[], steerId: string): boolean {
 	return messages.some((m) => m.id === steerId);
 }
-

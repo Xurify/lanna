@@ -26,14 +26,33 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { action?: unknown; videoId?: unknown; force?: unknown; results?: unknown; activeMs?: unknown; tz?: unknown } | null;
-	if (!body || typeof body.videoId !== "string" || !isVideoId(body.videoId)) return Response.json({ message: "videoId is required" }, { status: 400 });
+	const body = (await req.json().catch(() => null)) as {
+		action?: unknown;
+		videoId?: unknown;
+		force?: unknown;
+		results?: unknown;
+		activeMs?: unknown;
+		tz?: unknown;
+	} | null;
+	if (!body || typeof body.videoId !== "string" || !isVideoId(body.videoId))
+		return Response.json({ message: "videoId is required" }, { status: 400 });
 	if (body.action === "make") {
 		try {
 			return Response.json({ prep: await makePrep(body.videoId, { force: body.force === true }) });
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
-			return Response.json({ message }, { status: /No model is configured/.test(message) ? 503 : /unknown video/.test(message) ? 404 : /not in the language/.test(message) ? 400 : 502 });
+			return Response.json(
+				{ message },
+				{
+					status: /No model is configured/.test(message)
+						? 503
+						: /unknown video/.test(message)
+							? 404
+							: /not in the language/.test(message)
+								? 400
+								: 502,
+				},
+			);
 		}
 	}
 	if (body.action === "finish") {
@@ -42,7 +61,11 @@ export async function POST(req: Request) {
 					.slice(0, 50)
 					.filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
 					.filter((r) => typeof r.id === "string" && VERDICTS.has(String(r.verdict)))
-					.map((r) => ({ id: r.id as string, verdict: r.verdict as GapResult["verdict"], assisted: r.assisted === true }))
+					.map((r) => ({
+						id: r.id as string,
+						verdict: r.verdict as GapResult["verdict"],
+						assisted: r.assisted === true,
+					}))
 			: [];
 		const tz = Number(body.tz);
 		try {

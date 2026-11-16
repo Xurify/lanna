@@ -19,7 +19,9 @@ export async function POST(req: Request) {
 			skipProbe(body.id);
 			return Response.json({ ok: true });
 		}
-		return Response.json(await probePlacement({ id: body.id, answer: typeof body.answer === "string" ? body.answer : undefined }));
+		return Response.json(
+			await probePlacement({ id: body.id, answer: typeof body.answer === "string" ? body.answer : undefined }),
+		);
 	} catch (err) {
 		return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 400 });
 	}

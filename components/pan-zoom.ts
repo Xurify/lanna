@@ -32,7 +32,11 @@ export function fitZoomFor(box: { w: number; h: number }, viewport: { w: number;
 }
 
 /** Centers a box (at the given zoom) in the viewport. Pure. */
-export function fitGraphView(box: { w: number; h: number }, viewport: { w: number; h: number }, zoom: number): Viewport {
+export function fitGraphView(
+	box: { w: number; h: number },
+	viewport: { w: number; h: number },
+	zoom: number,
+): Viewport {
 	return { zoom, x: (viewport.w - box.w * zoom) / 2, y: (viewport.h - box.h * zoom) / 2 };
 }
 

@@ -11,7 +11,12 @@ import { Arrow, Box, Figure, Line, Loop, Note, Patch, Sheet } from "@/components
 import { SidebarToggle } from "@/components/sidebar";
 import { cn } from "@/lib/utils";
 
-const IDEAS = ["Explain the cases with a drawing", "This, that and that over there", "The past tense", "How do I say that I like something?"];
+const IDEAS = [
+	"Explain the cases with a drawing",
+	"This, that and that over there",
+	"The past tense",
+	"How do I say that I like something?",
+];
 
 export type ChatStarterTopic = { title: string; accuracy: number };
 export type ChatStarterRecent = { id: string; title: string; when: string };
@@ -98,13 +103,29 @@ export function ChatDraft({
 			<main className="min-h-0 flex-1 overflow-y-auto">
 				<div className="mx-auto flex w-full max-w-[44rem] flex-col px-6 pt-16 pb-20 max-sm:px-4 max-sm:pt-14">
 					<DeskSketch />
-					<h1 className="mt-6 font-ui text-4xl leading-tight font-semibold tracking-[-0.025em] text-foreground max-sm:text-3xl">What's on your mind?</h1>
+					<h1 className="mt-6 font-ui text-4xl leading-tight font-semibold tracking-[-0.025em] text-foreground max-sm:text-3xl">
+						What's on your mind?
+					</h1>
 					<p className="mt-3 max-w-xl text-base leading-relaxed text-ink-2">
 						A {language} word you keep forgetting, a sentence you got wrong, a rule that won’t stick.
 					</p>
 
-					<div data-testid="composer" className="mt-8 rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3">
-						<DraftPdfChips pdfs={draft.pdfs} onRemove={(pdf) => onChange(joinDraft(draft.pdfs.filter((p) => p !== pdf), draft.rest))} className="px-4 pt-3" />
+					<div
+						data-testid="composer"
+						className="mt-8 rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3"
+					>
+						<DraftPdfChips
+							pdfs={draft.pdfs}
+							onRemove={(pdf) =>
+								onChange(
+									joinDraft(
+										draft.pdfs.filter((p) => p !== pdf),
+										draft.rest,
+									),
+								)
+							}
+							className="px-4 pt-3"
+						/>
 						<textarea
 							ref={inputRef}
 							value={draft.rest}
@@ -137,7 +158,10 @@ export function ChatDraft({
 								onClick={send}
 								disabled={!canSend}
 								aria-label="Ask"
-								className={cn("lh-press flex size-9 items-center justify-center rounded-full transition-colors", canSend ? "bg-sun text-sun-ink" : "bg-well text-ink-4")}
+								className={cn(
+									"lh-press flex size-9 items-center justify-center rounded-full transition-colors",
+									canSend ? "bg-sun text-sun-ink" : "bg-well text-ink-4",
+								)}
 							>
 								<ArrowUpIcon className="size-4" />
 							</button>
@@ -149,11 +173,17 @@ export function ChatDraft({
 
 					<div className="mt-10 grid gap-x-8 gap-y-8 sm:grid-cols-2" data-testid="draft-suggestions">
 						<section>
-							<h2 className="px-3 font-ui text-xs font-semibold text-muted-foreground">{weakTopics.length > 0 ? "From your mistakes" : "Try one of these"}</h2>
+							<h2 className="px-3 font-ui text-xs font-semibold text-muted-foreground">
+								{weakTopics.length > 0 ? "From your mistakes" : "Try one of these"}
+							</h2>
 							<div className="mt-1.5 flex flex-col">
 								{weakTopics.length > 0
 									? weakTopics.map((t) => (
-											<Starter key={t.title} detail={`${Math.round(t.accuracy * 100)}% right`} onPick={() => pick(`Help me with ${t.title}: why do I get it wrong?`)}>
+											<Starter
+												key={t.title}
+												detail={`${Math.round(t.accuracy * 100)}% right`}
+												onPick={() => pick(`Help me with ${t.title}: why do I get it wrong?`)}
+											>
 												{t.title}
 											</Starter>
 										))
@@ -169,9 +199,15 @@ export function ChatDraft({
 								<h2 className="px-3 font-ui text-xs font-semibold text-muted-foreground">Pick up again</h2>
 								<div className="mt-1.5 flex flex-col">
 									{recent.map((r) => (
-										<Link key={r.id} href={`/chat/${r.id}`} className="flex items-baseline justify-between gap-4 rounded-lg px-3 py-2.5 transition-colors hover:bg-well">
+										<Link
+											key={r.id}
+											href={`/chat/${r.id}`}
+											className="flex items-baseline justify-between gap-4 rounded-lg px-3 py-2.5 transition-colors hover:bg-well"
+										>
 											<span className="truncate font-ui text-[15px] text-foreground">{r.title}</span>
-											<span className="shrink-0 font-ui text-xs text-muted-foreground" suppressHydrationWarning>{r.when}</span>
+											<span className="shrink-0 font-ui text-xs text-muted-foreground" suppressHydrationWarning>
+												{r.when}
+											</span>
 										</Link>
 									))}
 								</div>

@@ -7,7 +7,19 @@ import type { StudyLanguage } from "@/components/experiment/study-language";
 
 const LISTEN_ROUTE = "/listen";
 
-export function ListenInLanguage({ language, running, className, children, testId }: { language: StudyLanguage; running: string; className: string; children: ReactNode; testId?: string }) {
+export function ListenInLanguage({
+	language,
+	running,
+	className,
+	children,
+	testId,
+}: {
+	language: StudyLanguage;
+	running: string;
+	className: string;
+	children: ReactNode;
+	testId?: string;
+}) {
 	const [error, setError] = useState<string | null>(null);
 	const [switching, setSwitching] = useState(false);
 	if (language.id === running) {

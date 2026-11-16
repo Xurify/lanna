@@ -18,11 +18,11 @@
 
 The app was moved to Next.js 16.4.4, whose bundle analyzer ([post](https://nextjs.org/blog/ship-less-javascript-with-ai)) lists what each route loads. In the shared client bundle:
 
-| Package | gzipped | What fixed it |
-|---|---|---|
-| `next` (framework) | 338 KB | nothing to do |
-| `typebox` | 118 KB | the tool-input schemas moved to `question-schemas.ts` and `contracts/probe-schema.ts`; the parsers (`typebox/value`) behind `@/src/core/tutor` |
-| KaTeX on `/map` | 75 KB | `LatexGlyph` loads KaTeX on first use and shows the plain character until then |
+| Package            | gzipped | What fixed it                                                                                                                                  |
+| ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `next` (framework) | 338 KB  | nothing to do                                                                                                                                  |
+| `typebox`          | 118 KB  | the tool-input schemas moved to `question-schemas.ts` and `contracts/probe-schema.ts`; the parsers (`typebox/value`) behind `@/src/core/tutor` |
+| KaTeX on `/map`    | 75 KB   | `LatexGlyph` loads KaTeX on first use and shows the plain character until then                                                                 |
 
 Per-route JS fell from about 561 KB to about 480 KB gzipped. The chat route keeps KaTeX, Markdown and the parsers statically: its messages are on screen at once, so deferring them there would only delay the first paint, and it would break server rendering of the cards.
 

@@ -54,10 +54,17 @@ if (isMain) {
 	const texts = FILES.map((file) => fs.readFileSync(path.join(dir, file), "utf8"));
 	const forms = verbFormsFromConllu(texts);
 	const out = {
-		source: "Universal Dependencies, UD_Slovak-SNK (sk_snk-ud-train/dev/test.conllu): lemmas and morphology assigned manually; only sentences where two annotators agreed are included.",
+		source:
+			"Universal Dependencies, UD_Slovak-SNK (sk_snk-ud-train/dev/test.conllu): lemmas and morphology assigned manually; only sentences where two annotators agreed are included.",
 		license: "CC BY-SA 4.0",
 		forms,
 	};
 	fs.writeFileSync(outPath, JSON.stringify(out, null, 1) + "\n");
-	console.log(JSON.stringify({ lemmas: Object.keys(forms).length, forms: Object.values(forms).reduce((n, list) => n + list.length, 0), out: outPath }));
+	console.log(
+		JSON.stringify({
+			lemmas: Object.keys(forms).length,
+			forms: Object.values(forms).reduce((n, list) => n + list.length, 0),
+			out: outPath,
+		}),
+	);
 }

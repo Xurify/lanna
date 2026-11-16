@@ -33,7 +33,25 @@ interface Case {
 
 const CASES: Case[] = [
 	{ name: "a perfect lesson", mode: "lesson", verdicts: Array(12).fill("exact") },
-	{ name: "misses, accents and a helped rep", mode: "lesson", verdicts: ["exact", "wrong", "accents", "exact", "exact", "wrong", "exact", "exact", "exact", "exact", "exact", "exact"], assisted: [3] },
+	{
+		name: "misses, accents and a helped rep",
+		mode: "lesson",
+		verdicts: [
+			"exact",
+			"wrong",
+			"accents",
+			"exact",
+			"exact",
+			"wrong",
+			"exact",
+			"exact",
+			"exact",
+			"exact",
+			"exact",
+			"exact",
+		],
+		assisted: [3],
+	},
 	{ name: "a blitz gets no lesson bonus", mode: "blitz", verdicts: ["exact", "exact", "wrong", "exact", "accents"] },
 	{ name: "nothing answered", mode: "lesson", verdicts: [] },
 ];
@@ -42,7 +60,11 @@ describe("lesson score", () => {
 	for (const c of CASES) {
 		it(`matches what the server records: ${c.name}`, () => {
 			const items = lessonFor("loc", 7).items.slice(0, c.verdicts.length);
-			const reps = items.map((item, i) => ({ item, verdict: c.verdicts[i] as RepVerdict, assisted: c.assisted?.includes(i) === true }));
+			const reps = items.map((item, i) => ({
+				item,
+				verdict: c.verdicts[i] as RepVerdict,
+				assisted: c.assisted?.includes(i) === true,
+			}));
 			const local = lessonScore(
 				reps.map((r) => ({ kind: r.item.kind, verdict: r.verdict, assisted: r.assisted })),
 				c.mode,
@@ -50,7 +72,13 @@ describe("lesson score", () => {
 			const server = recordLesson({
 				unit: "loc",
 				mode: c.mode,
-				reps: reps.map((r) => ({ itemId: r.item.id, slug: r.item.slug, kind: r.item.kind, verdict: r.verdict, assisted: r.assisted })),
+				reps: reps.map((r) => ({
+					itemId: r.item.id,
+					slug: r.item.slug,
+					kind: r.item.kind,
+					verdict: r.verdict,
+					assisted: r.assisted,
+				})),
 				tz: -60,
 			});
 			assert.deepEqual(
