@@ -68,4 +68,4 @@ Known gaps to close _before_ release (proposals, unruled):
 - Release engineering outside code: signing/notarization await Apple
   Developer enrollment (DMG is unsigned today); no auto-updater (manual
   download acceptable for 0.3.0 if stated); packaged-app data location
-  already correct (LH_DATA_DIR → userData).
+  already correct (LANNA_DATA_DIR → userData).

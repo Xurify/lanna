@@ -1,10 +1,10 @@
 /**
- * THE LESSON OUTBOX ON THE SERVER (LangHarness, 2026-10-30): a lesson saved
+ * THE LESSON OUTBOX ON THE SERVER (2026-10-30): a lesson saved
  * twice with the same id is recorded once. The retry gets the first answer
  * back and the progress is not counted again. A save without an id is always
  * recorded, as before.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -13,9 +13,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-lesson-ack-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-lesson-ack-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { lessonFor, recordLesson } = await import("../src/server/lesson.ts");
 const { progressStore } = await import("../src/store/progress.ts");

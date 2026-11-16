@@ -268,7 +268,7 @@ export interface ProberToolContext extends ProbeDoneContext {
 	spawn: (job: JobRecord, input: ResearchInput | PdfInput) => void;
 	/** Retained search-status seam; research dispatch is available keylessly. */
 	searchAvailable?: () => boolean;
-	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
+	/** Lanna: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
 
@@ -388,7 +388,7 @@ export interface TeacherToolContext extends PlanToolContext {
 	spawn: (job: JobRecord, input: ResearchInput | PdfInput) => void;
 	/** Retained search-status seam; research dispatch is available keylessly. */
 	searchAvailable?: () => boolean;
-	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
+	/** Lanna: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
 

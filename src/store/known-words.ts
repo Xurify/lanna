@@ -1,5 +1,5 @@
 /**
- * Words the learner marked as known (LangHarness, 2026-11-07; E71): the
+ * Words the learner marked as known (2026-11-07; E71): the
  * active profile's data/profiles/<language>/known.json. The owner, on a
  * Watch preview listing "že", "nie", "dobrý" and "mať" as words not met:
  * "I actually do know all of these. Is it possible to mark words as known?"

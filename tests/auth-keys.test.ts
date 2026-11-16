@@ -21,7 +21,7 @@ describe("the catalog", () => {
 	it("is exactly the seven CURATED app-service keys (provider keys live in the provider table)", () => {
 		assert.deepEqual(
 			AUTH_KEYS.map((k) => k.id),
-			// LangHarness adds ElevenLabs (the first TTS tier), the Azure
+			// Lanna adds ElevenLabs (the first TTS tier), the Azure
 			// Speech pair (pronunciation assessment, 2026-10-28), and Context (2026-11-09).
 			[
 				"ELEVENLABS_API_KEY",

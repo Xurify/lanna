@@ -4,10 +4,10 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-path-ids-"));
-process.env.LH_DATA_DIR = path.join(TMP, "data");
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-path-ids-"));
+process.env.LANNA_DATA_DIR = path.join(TMP, "data");
 const REPO_SHEETS = path.join(TMP, "repo-sheets");
-process.env.LH_REPO_CHEATSHEETS_DIR = REPO_SHEETS;
+process.env.LANNA_REPO_CHEATSHEETS_DIR = REPO_SHEETS;
 fs.mkdirSync(REPO_SHEETS, { recursive: true });
 
 const OUTSIDE = path.join(TMP, "outside");
@@ -35,7 +35,7 @@ const HOSTILE = [
 
 const snapshot = () => {
 	const out: Record<string, string> = {};
-	const inside = [process.env.LH_DATA_DIR!, REPO_SHEETS];
+	const inside = [process.env.LANNA_DATA_DIR!, REPO_SHEETS];
 	const walk = (dir: string) => {
 		for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
 			const full = path.join(dir, entry.name);

@@ -1,5 +1,5 @@
 /**
- * Language profiles (LangHarness, spec D7 / WF-01) — which language the
+ * Language profiles (spec D7 / WF-01) — which language the
  * server runs and switching it.
  *
  */

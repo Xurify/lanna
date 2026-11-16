@@ -47,14 +47,14 @@ describe("remote access off (the default): the old rules, plus two refusals", ()
 	it("keeps the desktop check on the API, as before", () => {
 		const decision = decideAccess(input({ pathname: "/api/settings", desktopApiOk: false }));
 		assert.equal(decision.action, "refuse");
-		assert.match(decision.action === "refuse" ? decision.message : "", /trusted LangHarness window/);
+		assert.match(decision.action === "refuse" ? decision.message : "", /trusted Lanna window/);
 	});
 
 	it("refuses another host, on pages and on the API", () => {
 		const page = decideAccess(input({ host: "evil.example" }));
-		assert.deepEqual(page, { action: "refuse", message: "LangHarness only answers this computer." });
+		assert.deepEqual(page, { action: "refuse", message: "Lanna only answers this computer." });
 		const api = decideAccess(input({ host: "evil.example", pathname: "/api/chats" }));
-		assert.deepEqual(api, { action: "refuse", message: "The LangHarness API only answers this computer." });
+		assert.deepEqual(api, { action: "refuse", message: "The Lanna API only answers this computer." });
 	});
 
 	it("reads the original name from x-forwarded-host, because the router rewrites Host on the way in", () => {
@@ -122,7 +122,7 @@ describe("remote access on: this computer always passes; a proxied request needs
 	it("keeps the desktop API check for this computer, with remote access on as with it off", () => {
 		const decision = decideAccess(input({ ...on, pathname: "/api/settings", desktopApiOk: false }));
 		assert.equal(decision.action, "refuse");
-		assert.match(decision.action === "refuse" ? decision.message : "", /trusted LangHarness window/);
+		assert.match(decision.action === "refuse" ? decision.message : "", /trusted Lanna window/);
 	});
 
 	it("lets the packaged desktop window through", () => {
@@ -217,13 +217,13 @@ describe("host and proxy helpers", () => {
 	it("reads one cookie from a Cookie header", () => {
 		const headers = new Headers({ cookie: `theme=dark; ${DEVICE_COOKIE}=abc_DEF-123; other=x` });
 		assert.equal(readCookie(headers, DEVICE_COOKIE), "abc_DEF-123");
-		assert.equal(readCookie(new Headers({ cookie: "lh_device_old=1" }), DEVICE_COOKIE), null);
+		assert.equal(readCookie(new Headers({ cookie: "lanna_device_old=1" }), DEVICE_COOKIE), null);
 		assert.equal(readCookie(new Headers(), DEVICE_COOKIE), null);
 	});
 
 	it("writes the device cookie HttpOnly and Lax, and Secure only over HTTPS", () => {
 		const plain = deviceCookie("tok", false);
-		assert.match(plain, /^lh_device=tok; /);
+		assert.match(plain, /^lanna_device=tok; /);
 		assert.match(plain, /HttpOnly/);
 		assert.match(plain, /SameSite=Lax/);
 		assert.match(plain, /Max-Age=15552000/);

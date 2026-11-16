@@ -18,7 +18,7 @@ export const STRAND_STYLE: Record<
 		tile: "bg-trail-red/15 text-trail-red",
 		soft: "bg-trail-red/5 hover:bg-trail-red/10",
 		border: "border-trail-red/40",
-		stripe: "var(--lh-trail-red)",
+		stripe: "var(--lanna-trail-red)",
 	},
 	output: {
 		text: "text-trail-blue",
@@ -26,7 +26,7 @@ export const STRAND_STYLE: Record<
 		tile: "bg-trail-blue/15 text-trail-blue",
 		soft: "bg-trail-blue/5 hover:bg-trail-blue/10",
 		border: "border-trail-blue/40",
-		stripe: "var(--lh-trail-blue)",
+		stripe: "var(--lanna-trail-blue)",
 	},
 	form: {
 		text: "text-trail-green",
@@ -34,7 +34,7 @@ export const STRAND_STYLE: Record<
 		tile: "bg-trail-green/15 text-trail-green",
 		soft: "bg-trail-green/5 hover:bg-trail-green/10",
 		border: "border-trail-green/40",
-		stripe: "var(--lh-trail-green)",
+		stripe: "var(--lanna-trail-green)",
 	},
 	fluency: {
 		text: "text-trail-yellow",
@@ -42,7 +42,7 @@ export const STRAND_STYLE: Record<
 		tile: "bg-trail-yellow/15 text-trail-yellow",
 		soft: "bg-trail-yellow/5 hover:bg-trail-yellow/10",
 		border: "border-trail-yellow/40",
-		stripe: "var(--lh-trail-yellow)",
+		stripe: "var(--lanna-trail-yellow)",
 	},
 };
 

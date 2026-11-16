@@ -1,5 +1,5 @@
 /**
- * The curriculum (LangHarness, 2026-10-28) — the whole road from A1 to B2
+ * The curriculum (2026-10-28) — the whole road from A1 to B2
  * as one map, and the day's plan on it. Pure and browser-safe.
  *
  * Why a map: the path used to be the ten units a local lesson could drill,

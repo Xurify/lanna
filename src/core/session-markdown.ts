@@ -10,7 +10,7 @@
  * serve only the future user-facing export; `anchors: false` mints the
  * same document without them.
  *
- * Pure core: native messages in (LhMessage), string out. Content parity
+ * Pure core: native messages in (LannaMessage), string out. Content parity
  * with the coverage line builder (core/coverage.ts messageViewLines) is
  * deliberate — every message that produces view lines produces a markdown
  * block, in the same order — but the formats are SEPARATE by design
@@ -20,7 +20,7 @@
  * learning evidence); custom markers are invisible, same as the view.
  */
 
-import type { LhMessage } from "./native-messages.ts";
+import type { LannaMessage } from "./native-messages.ts";
 import {
 	failedOutputCallIds,
 	PRACTICE_CONCLUDE_TOOL,
@@ -38,13 +38,13 @@ import type { ToolResultMessage } from "@earendil-works/pi-ai";
  *  view seam folds cards (clean-only: a refused pose's result is errored
  *  and renders nothing before this join is ever reached). */
 interface MarkdownContext {
-	messages: ReadonlyArray<LhMessage>;
+	messages: ReadonlyArray<LannaMessage>;
 	/** toolCallId → the call part's name + arguments. */
 	calls: Map<string, { name: string; args: Record<string, unknown> | undefined }>;
 	failedOutputCalls?: ReadonlySet<string>;
 }
 
-function markdownContext(messages: ReadonlyArray<LhMessage>): MarkdownContext {
+function markdownContext(messages: ReadonlyArray<LannaMessage>): MarkdownContext {
 	const calls: MarkdownContext["calls"] = new Map();
 	for (const message of messages) {
 		if ((message as { role?: string }).role !== "assistant") continue;
@@ -159,7 +159,7 @@ function toolResultBody(result: ToolResultMessage, ctx?: MarkdownContext): { hea
  * nothing (a failed tool call, a bare marker, an empty text part set).
  * `mid` is the provenance anchor shown when `anchors` is on.
  */
-function messageMarkdown(message: LhMessage, mid: string, anchors = true, ctx?: MarkdownContext): string | null {
+function messageMarkdown(message: LannaMessage, mid: string, anchors = true, ctx?: MarkdownContext): string | null {
 	const role = (message as { role?: string }).role;
 	const anchor = anchors ? ` · ${mid}` : "";
 	const parts: string[] = [];
@@ -193,7 +193,7 @@ function messageMarkdown(message: LhMessage, mid: string, anchors = true, ctx?: 
  * mints the document header (`# <title>`).
  */
 export function sessionMarkdown(
-	messages: ReadonlyArray<LhMessage>,
+	messages: ReadonlyArray<LannaMessage>,
 	opts: { title?: string; anchors?: boolean } = {},
 ): string {
 	const blocks: string[] = [];

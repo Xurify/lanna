@@ -1,5 +1,5 @@
 /**
- * The story library (LangHarness reading, 2026-10-28) — the active
+ * The story library (reading, 2026-10-28) — the active
  * profile's data/profiles/<language>/stories/:
  *
  *   <id>.json      one story as generated: every sentence with its

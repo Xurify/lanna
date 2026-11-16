@@ -1,5 +1,5 @@
 /**
- * The learner profile block (LangHarness onboarding, 2026-10-28): the
+ * The learner profile block (onboarding, 2026-10-28): the
  * goal, the pace, the first language, placement and the lesson ledger,
  * composed into every agent's system prompt so a session never has to
  * ask what the app already knows. The text is pure (src/core/

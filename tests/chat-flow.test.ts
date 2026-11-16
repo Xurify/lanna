@@ -58,7 +58,7 @@ import {
 } from "../src/core/native-messages.ts";
 import { projectView } from "../src/core/view.ts";
 import type { PiEngine } from "../src/agent/models.ts";
-import type { LhMessage } from "../src/core/native-messages.ts";
+import type { LannaMessage } from "../src/core/native-messages.ts";
 
 // Route-level pin (the chat-birth-stamp pattern): the dismiss route's
 // handler, driven directly. Env is the runner's (the same the static
@@ -592,7 +592,7 @@ describe("teacher chat flow (scripted model)", () => {
 			// Record shape: the marker sits BETWEEN completed turn units — after
 			// the toolResult it must never split, adjacent to it.
 			const record = chatStore.getChat(chat.id)!;
-			const at = (role: string, pred: (m: LhMessage) => boolean) =>
+			const at = (role: string, pred: (m: LannaMessage) => boolean) =>
 				record.messages.findIndex((m) => (m as { role?: string }).role === role && pred(m as never));
 			const callAt = record.messages.findIndex(
 				(m) =>
@@ -639,7 +639,7 @@ describe("teacher chat flow (scripted model)", () => {
 			usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
 			timestamp: 1,
 		};
-		const trailingThink: LhMessage = {
+		const trailingThink: LannaMessage = {
 			...baseMessage,
 			id: "a_trail",
 			content: [
@@ -662,7 +662,7 @@ describe("teacher chat flow (scripted model)", () => {
 		assert.ok(order.indexOf("text") > order.indexOf("reasoning"), "text follows the reasoning");
 		assert.equal(order[order.length - 1], "tool-quiz", "the tool call stays last");
 		// The canonical think-first shape is unchanged.
-		const leadingThink: LhMessage = {
+		const leadingThink: LannaMessage = {
 			...baseMessage,
 			id: "a_lead",
 			stopReason: "stop",
@@ -680,7 +680,7 @@ describe("teacher chat flow (scripted model)", () => {
 	});
 
 	it("an arrived-but-empty STREAMING message projects the thinking row; a settled empty one stays hidden (optimistic round 3)", () => {
-		const emptyArrived: LhMessage = {
+		const emptyArrived: LannaMessage = {
 			id: "a_empty",
 			role: "assistant",
 			content: [],
@@ -1052,9 +1052,9 @@ describe("canonical persistence failures", () => {
 				chatStore.getChat(chat.id)!.messages.some((m) => m.id === steer.id),
 				"the steer was saved before bookkeeping failed",
 			);
-			const delivered: LhMessage[] = [];
+			const delivered: LannaMessage[] = [];
 			const next = {
-				steer: (message: LhMessage) => delivered.push(message),
+				steer: (message: LannaMessage) => delivered.push(message),
 				state: { model: { provider: "faux" } },
 			} as unknown as Parameters<typeof registerLiveAgent>[1];
 			registerLiveAgent(chat.id, next);

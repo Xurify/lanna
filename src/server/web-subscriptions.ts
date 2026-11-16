@@ -27,7 +27,7 @@ interface BrowserAction {
 	expires: number;
 	current(): Promise<boolean>;
 }
-const KEY = Symbol.for("lh.webSubscriptions");
+const KEY = Symbol.for("lanna.webSubscriptions");
 interface Registry {
 	owner?: ReturnType<typeof createWebSubscriptionOwner>;
 }
@@ -68,7 +68,7 @@ export function createWebSubscriptionOwner(options: {
 		store: options.chatgptStore ?? fileStore(path.join(options.directory, "chatgpt-credentials.json")),
 		openExternal,
 		onChange: (packet?: Packet) => {
-			if (packet) notify("lh:chatgpt", packet);
+			if (packet) notify("lanna:chatgpt", packet);
 		},
 	});
 	const native = createSubscriptions({
@@ -77,7 +77,7 @@ export function createWebSubscriptionOwner(options: {
 		loadSDK,
 		openExternal,
 		onChange: (snapshot: NativeSubscriptionSnapshot) =>
-			notify("lh:subscriptions", { channel: "lh:subscriptions", op: "changed", snapshot }),
+			notify("lanna:subscriptions", { channel: "lanna:subscriptions", op: "changed", snapshot }),
 	});
 	return {
 		chatgpt,
@@ -139,7 +139,7 @@ export function webSubscriptionOwner() {
 async function webSubscriptionRequest<T>(channel: Channel, op: string, fields: Record<string, unknown>): Promise<T> {
 	const owner = webSubscriptionOwner();
 	let value: unknown;
-	if (channel === "lh:chatgpt") {
+	if (channel === "lanna:chatgpt") {
 		if (op === "status") value = { status: await owner.chatgpt.status(), ...owner.chatgpt.stamp() };
 		else if (op === "models") value = await owner.chatgpt.models();
 		else if (op === "lease" && typeof fields.background === "boolean")

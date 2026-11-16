@@ -1,5 +1,5 @@
 /**
- * Bring .claude/skills/slovak-language up to date with slovak.wiki (LangHarness,
+ * Bring .claude/skills/slovak-language up to date with slovak.wiki (Lanna,
  * 2026-11-01). slovak.wiki is the source of truth; this copy only follows. The
  * same files are then mirrored to .agents/skills/slovak-language.
  *

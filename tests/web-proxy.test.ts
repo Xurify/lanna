@@ -5,12 +5,12 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import { NextRequest } from "next/server";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-web-proxy-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-web-proxy-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
 const HOST = "learn.example.com";
 const SECRET = "p".repeat(48);
-process.env.LH_PUBLIC_HOST = HOST;
-process.env.LH_PROXY_SECRET = SECRET;
+process.env.LANNA_PUBLIC_HOST = HOST;
+process.env.LANNA_PROXY_SECRET = SECRET;
 
 const { proxy } = await import("../proxy.ts");
 const access = await import("../src/server/remote-access-store.ts");
@@ -26,7 +26,7 @@ const proxied = (overrides: Record<string, string> = {}) => ({
 	"x-forwarded-host": HOST,
 	"x-forwarded-proto": "https",
 	"x-forwarded-for": "203.0.113.7",
-	"x-lh-proxy-secret": SECRET,
+	"x-lanna-proxy-secret": SECRET,
 	...overrides,
 });
 const call = (pathname: string, init: { method?: string; headers?: Record<string, string> } = {}) =>
@@ -75,7 +75,7 @@ describe("proxy.ts at the public address", () => {
 			{ host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https" },
 			{ host: "127.0.0.1:3010" },
 			{ host: "localhost:3010", "x-forwarded-for": "203.0.113.7" },
-			proxied({ "x-lh-proxy-secret": "wrong".repeat(10) }),
+			proxied({ "x-lanna-proxy-secret": "wrong".repeat(10) }),
 		];
 		for (const headers of withoutSecret) {
 			assert.equal((await call("/login", { headers })).status, 403, JSON.stringify(headers));
@@ -96,7 +96,7 @@ describe("proxy.ts at the public address", () => {
 		const result = await login.signInWithPassword({ password: PASSWORD, client: "203.0.113.7", deviceName: "iPhone" });
 		assert.ok(result.ok);
 		if (!result.ok) return;
-		const cookie = { cookie: `lh_device=${result.token}` };
+		const cookie = { cookie: `lanna_device=${result.token}` };
 		assert.equal(passes(await call("/", { headers: proxied(cookie) })), true);
 		assert.equal(passes(await call("/api/progress", { headers: proxied(cookie) })), true);
 		assert.equal(
@@ -120,6 +120,6 @@ describe("proxy.ts at the public address", () => {
 		assert.ok(result.ok);
 		if (!result.ok) return;
 		await access.disableRemoteAccess();
-		assert.equal((await call("/", { headers: proxied({ cookie: `lh_device=${result.token}` }) })).status, 403);
+		assert.equal((await call("/", { headers: proxied({ cookie: `lanna_device=${result.token}` }) })).status, 403);
 	});
 });

@@ -194,7 +194,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 	const dayXp = xpForPlan(shown.minutesPerDay, shown.xpPerHour);
 
 	return (
-		<div className="lh-rise flex flex-col gap-2">
+		<div className="lanna-rise flex flex-col gap-2">
 			{profile && profile.profiles.length > 0 && (
 				<SettingsGroup
 					label="Languages you are learning"
@@ -280,7 +280,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 			</SettingsGroup>
 			<SettingsGroup label="Parallels from my languages" testid="learner-parallels">
 				<div className="flex items-center justify-between gap-4 py-1">
-					<span className="font-prose text-(length:--lh-prose-size)" data-testid="parallels-line">
+					<span className="font-prose text-(length:--lanna-prose-size)" data-testid="parallels-line">
 						{target && parallelsLine(state, target).replace(/ You can turn it off in Settings → Learning\.$/, "")}
 					</span>
 					<Toggle
@@ -378,7 +378,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 			</SettingsGroup>
 			<SettingsGroup label="Purpose and starting level" testid="learner-goal">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1">
-					<span className="min-w-0 flex-1 font-prose text-(length:--lh-prose-size)">
+					<span className="min-w-0 flex-1 font-prose text-(length:--lanna-prose-size)">
 						Why you are learning and where you started are set in setup.
 					</span>
 					<span className="flex min-w-0 flex-wrap gap-2">

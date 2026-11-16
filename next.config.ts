@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
 		staleTimes: { static: 30 },
 	},
 	// Public build metadata only; no new runtime Electron version API.
-	env: { LH_VERSION: pkg.version, LH_HOMEPAGE: pkg.homepage },
+	env: { LANNA_VERSION: pkg.version, LANNA_HOMEPAGE: pkg.homepage },
 	// Desktop target (Electron wrapper, 2026-09-17): standalone output = a
 	// self-contained .next/standalone/server.js the Electron shell spawns
 	// on 127.0.0.1. Harmless for plain web deploys (extra build output).
@@ -93,7 +93,9 @@ const nextConfig: NextConfig = {
 	// never hydrates and pairing does nothing. The name lives in .env.local, which is
 	// not committed, and only the dev server reads it, so a build never carries it.
 	allowedDevOrigins:
-		process.env.NODE_ENV === "development" && process.env.LH_TAILNET_HOST ? [process.env.LH_TAILNET_HOST] : undefined,
+		process.env.NODE_ENV === "development" && process.env.LANNA_TAILNET_HOST
+			? [process.env.LANNA_TAILNET_HOST]
+			: undefined,
 	// SAFETY (empirically verified 2026-09-17): without this, output file
 	// tracing sweeps the repo's real data/ — chat records, graph ledgers —
 	// INTO the standalone bundle. A shipped desktop app would carry the
@@ -102,7 +104,7 @@ const nextConfig: NextConfig = {
 	// SECRETS (2026-10-08, caught in the payload audit): the same sweep
 	// ships the repo-root auth.json — the DEV BYOK key store — byte-identical
 	// into the DMG (the packaged app never reads it: the shell passes
-	// LH_AUTH_FILE → userData). Excluded here; build-server.mjs also REFUSES
+	// LANNA_AUTH_FILE → userData). Excluded here; build-server.mjs also REFUSES
 	// to package any standalone still containing it. .env* belt-and-braces
 	// the same class. Next also copies loaded bare .env after tracing;
 	// the build-server refusal remains required even with these excludes.

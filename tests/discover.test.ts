@@ -1,11 +1,11 @@
 /**
- * WATCH PICKS PINS (LangHarness, 2026-11-05): creators saved from a link,
+ * WATCH PICKS PINS (2026-11-05): creators saved from a link,
  * a handle or a video; a channel's feed; the videos and channels on a
  * YouTube page; a Takeout export; whether a video is spoken in the
  * language; the ranking; and the refresh end to end against a scripted
  * YouTube (no network).
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -15,9 +15,9 @@ import * as path from "node:path";
 import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-discover-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-discover-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const core = await import("../src/core/discover.ts");
 const discover = await import("../src/server/discover.ts");

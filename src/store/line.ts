@@ -1,5 +1,5 @@
 /**
- * Today's line record (LangHarness, 2026-11-05) — the active profile's
+ * Today's line record (2026-11-05) — the active profile's
  * data/profiles/<language>/line/log.jsonl: one line per hearing, morning or
  * evening, with the sentence that was played and what was typed. Append-only,
  * like the fluency log (src/store/speak.ts); a torn line is skipped, never fatal.

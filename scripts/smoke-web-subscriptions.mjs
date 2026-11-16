@@ -25,7 +25,7 @@ const model = models.getModels("openai").find((entry) => entry.api === "openai-r
 const copilot = githubCopilotProvider().getModels()[0];
 assert(model && copilot, "Installed SDK catalogs required.");
 
-const profile = await fs.mkdtemp(path.join(os.tmpdir(), "lh-web-runtime-"));
+const profile = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-web-runtime-"));
 await fs.chmod(profile, 0o700);
 for (const name of ["home", "config", "cache", "xdg-data", "data", "pi", "claude", "codex", "tmp"])
 	await fs.mkdir(path.join(profile, name), { mode: 0o700 });
@@ -54,8 +54,8 @@ const env = {
 	CLAUDE_CONFIG_DIR: path.join(profile, "claude"),
 	CODEX_HOME: path.join(profile, "codex"),
 	TMPDIR: path.join(profile, "tmp"),
-	LH_AUTH_FILE: path.join(profile, "auth.json"),
-	LH_DATA_DIR: path.join(profile, "data"),
+	LANNA_AUTH_FILE: path.join(profile, "auth.json"),
+	LANNA_DATA_DIR: path.join(profile, "data"),
 	NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
 	NEXT_TELEMETRY_DISABLED: "1",
 };
@@ -155,7 +155,7 @@ async function run(mode) {
 				headers: {
 					origin,
 					"sec-fetch-site": "same-origin",
-					"x-langharness-subscriptions": "1",
+					"x-lanna-subscriptions": "1",
 					"content-type": "application/json",
 				},
 				signal: AbortSignal.timeout(60000),
@@ -229,7 +229,7 @@ async function run(mode) {
 					headers: {
 						origin: "https://unrelated.invalid",
 						"content-type": "application/json",
-						"x-langharness-subscriptions": "1",
+						"x-lanna-subscriptions": "1",
 					},
 					body: JSON.stringify({ providerId: "chatgpt", op: "disconnect", id: "offline-account" }),
 				})

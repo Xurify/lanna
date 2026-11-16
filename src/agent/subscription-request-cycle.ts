@@ -1,6 +1,6 @@
 import type { AgentEvent, AgentMessage, PrepareRequestContext } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import { nativeInputCause, needsContinuation, type LhMessage } from "../core/native-messages.ts";
+import { nativeInputCause, needsContinuation, type LannaMessage } from "../core/native-messages.ts";
 
 export interface AdmissionScope {
 	accountId: string;
@@ -9,7 +9,7 @@ export interface AdmissionScope {
 	selectedModelId: string;
 }
 export type NoDispatchKind = "background" | "all" | "other";
-const USAGE_KEY = Symbol.for("lh.subscription.unadmittedUsage");
+const USAGE_KEY = Symbol.for("lanna.subscription.unadmittedUsage");
 const usageGlobal = globalThis as typeof globalThis & { [USAGE_KEY]?: WeakSet<object> };
 const unadmittedUsage = (usageGlobal[USAGE_KEY] ??= new WeakSet<object>());
 /** Transient identity only: no new provenance field enters saved native messages. */
@@ -95,7 +95,7 @@ export class SubscriptionRequestCycle implements SubscriptionDispatchLifecycle {
 		}
 		if (this.automatic.size > 0) this.options.purpose.background = true;
 		const retained = messages.filter((m) => !this.automatic.has(idOf(m) ?? ""));
-		this.foregroundOwed ||= learner || (!this.inheritedBackground && needsContinuation(retained as LhMessage[]));
+		this.foregroundOwed ||= learner || (!this.inheritedBackground && needsContinuation(retained as LannaMessage[]));
 	}
 	hold(event: AgentEvent): boolean {
 		if (event.type === "agent_start") {

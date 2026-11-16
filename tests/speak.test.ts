@@ -1,11 +1,11 @@
 /**
- * SPEAK PINS (LangHarness, 2026-10-28): the spoken-scene task — the
+ * SPEAK PINS (2026-10-28): the spoken-scene task — the
  * tutor's JSON read into turns and prompts, the summary, the XP, word
  * matching for speech-to-text, and the server round trip on a scripted
  * engine (start → turns → end: the record on disk, the day's ledger, the
  * slips' words into the review deck, the lesson log, the index).
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -15,9 +15,9 @@ import * as path from "node:path";
 import { after, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-speak-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-speak-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
 const { parseSummary, parseTutorReply, SPEAK_SCENES, SPEAK_TURNS, speakCounts, speakXp, wordMatch, foldedWords } =

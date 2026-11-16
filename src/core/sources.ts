@@ -1,5 +1,5 @@
 /**
- * Sources (LangHarness, 2026-11-06) — the research behind every task, in
+ * Sources (2026-11-06) — the research behind every task, in
  * one place the pages can link to. The rule (decision E63): a
  * feature that says it comes from research shows, on its own page, what
  * the research found, what it did not show, and which numbers are the

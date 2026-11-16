@@ -3,7 +3,7 @@
  * length with ffprobe, and prints the pace in syllables a second per engine and
  * voice. Measuring only: playback is not changed by it (decision E37).
  *
- *   LH_DATA_DIR=/path/to/data npx tsx scripts/audio-pace.ts      (default: ./data)
+ *   LANNA_DATA_DIR=/path/to/data npx tsx scripts/audio-pace.ts      (default: ./data)
  *
  * Needs ffprobe on the PATH. Run it on a real profile: the ElevenLabs and Edge
  * clips only exist there. Research: docs/research/voice-pace.md.
@@ -13,7 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { countSyllables } from "../src/core/pace.ts";
 
-const root = path.join(process.env.LH_DATA_DIR ?? path.join(process.cwd(), "data"), "audio");
+const root = path.join(process.env.LANNA_DATA_DIR ?? path.join(process.cwd(), "data"), "audio");
 const index = path.join(root, "index.jsonl");
 if (!fs.existsSync(index)) {
 	console.error(`no audio index at ${index}`);

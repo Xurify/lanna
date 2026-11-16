@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Watch (LangHarness, 2026-10-28) — the Watch task's screen. Paste a
+ * Watch (2026-10-28) — the Watch task's screen. Paste a
  * YouTube link; the app fetches the Slovak captions, cuts them into
  * lines, translates and glosses them once (src/server/watch.ts), then:
  *
@@ -627,7 +627,7 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
-				{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
+				{strip && <div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
 				{children}
 			</div>
 		</>
@@ -649,7 +649,7 @@ function TopBar({
 }) {
 	const lang = useActiveLanguage();
 	return (
-		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+		<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 				<button
 					type="button"
@@ -672,7 +672,7 @@ function TopBar({
 						aria-valuenow={Math.round(progress * 100)}
 						className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent"
 					>
-						<div className="lh-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
+						<div className="lanna-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
 					</div>
 				</div>
 				{right}
@@ -752,7 +752,7 @@ function Preview({
 	}, [onStart]);
 	return (
 		<div className="flex flex-1 flex-col overflow-y-auto pb-10 pt-[4vh]">
-			<div className={cn(COLUMN, "lh-rise")} data-testid="watch-preview">
+			<div className={cn(COLUMN, "lanna-rise")} data-testid="watch-preview">
 				<p className="font-ui text-sm font-[600] text-muted-foreground">
 					{video.channel && (
 						<>

@@ -33,7 +33,7 @@
  */
 
 import type { AssistantMessage, ToolResultMessage } from "@earendil-works/pi-ai";
-import type { LhMarkerMessage, LhMessage } from "./native-messages.ts";
+import type { LannaMarkerMessage, LannaMessage } from "./native-messages.ts";
 import {
 	modelSolutionForConclude,
 	PRACTICE_CONCLUDE_TOOL,
@@ -52,7 +52,7 @@ import type { PlanBlockData } from "./contracts/chat.ts";
  *  fields are optional-typed so the pre-Wave-D renderer code compiles
  *  against it with minimal casts; anything else stays `unknown` through
  *  the index signature. */
-export interface LhViewPart extends Record<string, unknown> {
+export interface LannaViewPart extends Record<string, unknown> {
 	type: string;
 	id?: string;
 	text?: string;
@@ -66,10 +66,10 @@ export interface LhViewPart extends Record<string, unknown> {
 }
 
 /** A view message: user (bubble) or assistant (one continuous run). */
-export interface LhViewMessage {
+export interface LannaViewMessage {
 	id: string;
 	role: "user" | "assistant";
-	parts: LhViewPart[];
+	parts: LannaViewPart[];
 	/** The subagentResult meta the steer cards read (marker details). */
 	metadata?: unknown;
 }
@@ -98,12 +98,12 @@ interface LiveTurnState {
 	streamingIds: ReadonlySet<string>;
 }
 
-function textPart(text: string): LhViewPart {
+function textPart(text: string): LannaViewPart {
 	return { type: "text", text, state: "done" };
 }
 
 /** The result a tool part should show, from a native toolResult. */
-function applyResult(part: LhViewPart, result: ToolResultMessage): void {
+function applyResult(part: LannaViewPart, result: ToolResultMessage): void {
 	if (result.isError) {
 		part.state = "output-error";
 		part.rawInput = part.input;
@@ -116,7 +116,7 @@ function applyResult(part: LhViewPart, result: ToolResultMessage): void {
 }
 
 /** Does this assistant group carry a successful plan_init (the splice target)? */
-function lastSuccessfulPlanInit(parts: LhViewPart[]): number {
+function lastSuccessfulPlanInit(parts: LannaViewPart[]): number {
 	let idx = -1;
 	parts.forEach((p, i) => {
 		if (p.type !== "tool-plan_init") return;
@@ -128,8 +128,8 @@ function lastSuccessfulPlanInit(parts: LhViewPart[]): number {
 
 /** Project the native record (+ live turn working list) into the client's
  *  view messages. Pure: the same input always projects to the same list. */
-export function projectView(messages: readonly LhMessage[], live?: LiveTurnState): LhViewMessage[] {
-	const out: LhViewMessage[] = [];
+export function projectView(messages: readonly LannaMessage[], live?: LiveTurnState): LannaViewMessage[] {
+	const out: LannaViewMessage[] = [];
 	// Output calls become text rather than tool parts, so read settled
 	// failures up front: a failed call must retain the normal error path.
 	const outputErrors = new Map<string, ToolResultMessage>();
@@ -139,11 +139,11 @@ export function projectView(messages: readonly LhMessage[], live?: LiveTurnState
 		}
 	}
 
-	const lastAssistant = (): LhViewMessage | undefined => {
+	const lastAssistant = (): LannaViewMessage | undefined => {
 		const last = out[out.length - 1];
 		return last && last.role === "assistant" ? last : undefined;
 	};
-	const findToolPart = (toolCallId: string): LhViewPart | undefined => {
+	const findToolPart = (toolCallId: string): LannaViewPart | undefined => {
 		for (let i = out.length - 1; i >= 0; i--) {
 			// NEWEST-FIRST part scan within a group (the Lacan heal, 2026-10-04):
 			// a result pairs with the most RECENT call carrying its id. Unique
@@ -195,7 +195,7 @@ export function projectView(messages: readonly LhMessage[], live?: LiveTurnState
 		}
 
 		if (role === "custom") {
-			projectMarker(m as LhMarkerMessage, out);
+			projectMarker(m as LannaMarkerMessage, out);
 			continue;
 		}
 
@@ -214,8 +214,8 @@ export function projectView(messages: readonly LhMessage[], live?: LiveTurnState
 			// UNDER the message. The view canon owns presentation order:
 			// stable-partition each assistant message, reasoning parts first
 			// (their own order kept), then everything else.
-			const rest: LhViewPart[] = [];
-			const reasoning: LhViewPart[] = [];
+			const rest: LannaViewPart[] = [];
+			const reasoning: LannaViewPart[] = [];
 			let textN = 0;
 			let reasoningN = 0;
 			// LIVE IS POSITIVE EVIDENCE (owner, 2026-10-05): a call renders
@@ -260,7 +260,7 @@ export function projectView(messages: readonly LhMessage[], live?: LiveTurnState
 					rest.push(part);
 				}
 			}
-			const parts: LhViewPart[] = [...reasoning, ...rest];
+			const parts: LannaViewPart[] = [...reasoning, ...rest];
 			if (parts.length === 0) {
 				// An arrived-but-silent STREAMING message (owner, optimistic
 				// round 3, 2026-10-02): the turn's first applied event can
@@ -311,8 +311,8 @@ function toolPartOf(
 	block: { id: string; name: string; arguments?: unknown },
 	live: LiveTurnState | undefined,
 	streamingMessage: boolean,
-): LhViewPart {
-	const part: LhViewPart = {
+): LannaViewPart {
+	const part: LannaViewPart = {
 		type: `tool-${block.name}`,
 		toolCallId: block.id,
 		input: block.arguments,
@@ -346,7 +346,7 @@ function toolPartOf(
 	return part;
 }
 
-function applyResultTo(part: LhViewPart | undefined, result: ToolResultMessage): void {
+function applyResultTo(part: LannaViewPart | undefined, result: ToolResultMessage): void {
 	if (part) {
 		// Fork 2 (owner, Wave D): the clean "Question posed" placeholder
 		// (details: null — tool-execute questionResult) is client-owned
@@ -374,7 +374,7 @@ function applyResultTo(part: LhViewPart | undefined, result: ToolResultMessage):
 }
 
 /** A marker's projected message (handoff/steers) or splice (plan block). */
-function projectMarker(marker: LhMarkerMessage, out: LhViewMessage[]): void {
+function projectMarker(marker: LannaMarkerMessage, out: LannaViewMessage[]): void {
 	switch (marker.customType) {
 		case "graph-context": {
 			// The session's map context (owner, 2026-10-04): user-side —

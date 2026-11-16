@@ -7,13 +7,13 @@
 #   update-server.sh rollback [image-tag]
 #   update-server.sh status
 #
-# Settings come from the environment, else from KEY=value lines in $LH_REPO/.env:
-#   LH_HOME               required: the folder with data/, keys/, sheets/ (state/ and logs/ are made here)
-#   LH_REPO               the git checkout (default: the folder above this script)
-#   LH_REMOTE             git remote to follow (default: origin)
-#   LH_IMAGE_NAME         image repository name (default: langharness)
-#   LH_KEEP_IMAGES        how many built images to keep (default: 3)
-#   LH_DOCKER_BUILD_ARGS  extra `docker build` arguments, for example --build-arg NODE_IMAGE=...
+# Settings come from the environment, else from KEY=value lines in $LANNA_REPO/.env:
+#   LANNA_HOME               required: the folder with data/, keys/, sheets/ (state/ and logs/ are made here)
+#   LANNA_REPO               the git checkout (default: the folder above this script)
+#   LANNA_REMOTE             git remote to follow (default: origin)
+#   LANNA_IMAGE_NAME         image repository name (default: lanna)
+#   LANNA_KEEP_IMAGES        how many built images to keep (default: 3)
+#   LANNA_DOCKER_BUILD_ARGS  extra `docker build` arguments, for example --build-arg NODE_IMAGE=...
 #
 # Exit codes: 0 done or nothing to do, 1 usage, 2 missing tool or setting,
 # 3 the checkout has local changes, 4 build failed, 5 boot check failed,
@@ -21,15 +21,15 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LH_REPO="${LH_REPO:-$(cd "$HERE/.." && pwd)}"
+LANNA_REPO="${LANNA_REPO:-$(cd "$HERE/.." && pwd)}"
 
 . "$HERE/lib/server-env.sh"
 
-LH_HOME="$(env_value LH_HOME)"
-LH_REMOTE="$(env_value LH_REMOTE)"; LH_REMOTE="${LH_REMOTE:-origin}"
-LH_IMAGE_NAME="$(env_value LH_IMAGE_NAME)"; LH_IMAGE_NAME="${LH_IMAGE_NAME:-langharness}"
-LH_KEEP_IMAGES="$(env_value LH_KEEP_IMAGES)"; LH_KEEP_IMAGES="${LH_KEEP_IMAGES:-3}"
-LH_DOCKER_BUILD_ARGS="$(env_value LH_DOCKER_BUILD_ARGS)"
+LANNA_HOME="$(env_value LANNA_HOME)"
+LANNA_REMOTE="$(env_value LANNA_REMOTE)"; LANNA_REMOTE="${LANNA_REMOTE:-origin}"
+LANNA_IMAGE_NAME="$(env_value LANNA_IMAGE_NAME)"; LANNA_IMAGE_NAME="${LANNA_IMAGE_NAME:-lanna}"
+LANNA_KEEP_IMAGES="$(env_value LANNA_KEEP_IMAGES)"; LANNA_KEEP_IMAGES="${LANNA_KEEP_IMAGES:-3}"
+LANNA_DOCKER_BUILD_ARGS="$(env_value LANNA_DOCKER_BUILD_ARGS)"
 
 COMMAND="update"
 REF="main"
@@ -52,15 +52,15 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-[ -n "$LH_HOME" ] || { echo "update-server: set LH_HOME (in $LH_REPO/.env or the environment)" >&2; exit 2; }
+[ -n "$LANNA_HOME" ] || { echo "update-server: set LANNA_HOME (in $LANNA_REPO/.env or the environment)" >&2; exit 2; }
 for tool in git docker flock; do
 	command -v "$tool" >/dev/null || { echo "update-server: $tool is not installed" >&2; exit 2; }
 done
-[ -d "$LH_REPO/.git" ] || { echo "update-server: $LH_REPO is not a git checkout" >&2; exit 2; }
+[ -d "$LANNA_REPO/.git" ] || { echo "update-server: $LANNA_REPO is not a git checkout" >&2; exit 2; }
 
-STATE="$LH_HOME/state"
-LOG="$LH_HOME/logs/update.log"
-mkdir -p "$STATE" "$LH_HOME/logs" "$LH_HOME/sheets"
+STATE="$LANNA_HOME/state"
+LOG="$LANNA_HOME/logs/update.log"
+mkdir -p "$STATE" "$LANNA_HOME/logs" "$LANNA_HOME/sheets"
 
 log() {
 	local line
@@ -82,16 +82,16 @@ if ! flock -n 9; then
 fi
 
 compose() {
-	docker compose --project-directory "$LH_REPO" -f "$LH_REPO/compose.yaml" "$@"
+	docker compose --project-directory "$LANNA_REPO" -f "$LANNA_REPO/compose.yaml" "$@"
 }
 
 set_image_in_env() {
-	local tag="$1" file="$LH_REPO/.env"
+	local tag="$1" file="$LANNA_REPO/.env"
 	touch "$file"
-	if grep -q '^LH_IMAGE=' "$file"; then
-		sed -i -E "s|^LH_IMAGE=.*|LH_IMAGE=${tag}|" "$file"
+	if grep -q '^LANNA_IMAGE=' "$file"; then
+		sed -i -E "s|^LANNA_IMAGE=.*|LANNA_IMAGE=${tag}|" "$file"
 	else
-		printf 'LH_IMAGE=%s\n' "$tag" >>"$file"
+		printf 'LANNA_IMAGE=%s\n' "$tag" >>"$file"
 	fi
 }
 
@@ -105,12 +105,12 @@ short() {
 
 wait_healthy() {
 	local container status i
-	container="$(compose ps -q langharness | head -n 1)"
+	container="$(compose ps -q lanna | head -n 1)"
 	[ -n "$container" ] || return 1
 	for i in $(seq 1 60); do
 		status="$(docker inspect --format '{{.State.Health.Status}}' "$container" 2>/dev/null || true)"
 		[ "$status" = "healthy" ] && return 0
-		sleep "${LH_HEALTH_POLL_SECONDS:-2}"
+		sleep "${LANNA_HEALTH_POLL_SECONDS:-2}"
 	done
 	return 1
 }
@@ -118,8 +118,8 @@ wait_healthy() {
 switch_to() {
 	local tag="$1" sha="$2"
 	set_image_in_env "$tag"
-	git -C "$LH_REPO" checkout -q "$sha"
-	LH_IMAGE="$tag" compose up -d --remove-orphans
+	git -C "$LANNA_REPO" checkout -q "$sha"
+	LANNA_IMAGE="$tag" compose up -d --remove-orphans
 }
 
 record_deployed() {
@@ -134,18 +134,18 @@ record_deployed() {
 }
 
 prune_images() {
-	local keep="$LH_KEEP_IMAGES" count=0 tag current previous
+	local keep="$LANNA_KEEP_IMAGES" count=0 tag current previous
 	current="$(cat "$STATE/deployed-image" 2>/dev/null || true)"
 	previous="$(cat "$STATE/previous-image" 2>/dev/null || true)"
 	while read -r tag; do
 		[[ "$tag" =~ ^[0-9a-f]{12}$ ]] || continue
 		count=$((count + 1))
 		[ "$count" -le "$keep" ] && continue
-		[ "$LH_IMAGE_NAME:$tag" = "$current" ] && continue
-		[ "$LH_IMAGE_NAME:$tag" = "$previous" ] && continue
-		log "removing old image $LH_IMAGE_NAME:$tag"
-		docker image rm "$LH_IMAGE_NAME:$tag" >/dev/null || log "could not remove $LH_IMAGE_NAME:$tag"
-	done < <(docker image ls "$LH_IMAGE_NAME" --format '{{.Tag}}')
+		[ "$LANNA_IMAGE_NAME:$tag" = "$current" ] && continue
+		[ "$LANNA_IMAGE_NAME:$tag" = "$previous" ] && continue
+		log "removing old image $LANNA_IMAGE_NAME:$tag"
+		docker image rm "$LANNA_IMAGE_NAME:$tag" >/dev/null || log "could not remove $LANNA_IMAGE_NAME:$tag"
+	done < <(docker image ls "$LANNA_IMAGE_NAME" --format '{{.Tag}}')
 }
 
 sheet_hash() {
@@ -153,17 +153,17 @@ sheet_hash() {
 }
 
 push_sheet_edits() {
-	local base="$LH_REMOTE/$REF" pending=() file lang name rel hash remote_hash
+	local base="$LANNA_REMOTE/$REF" pending=() file lang name rel hash remote_hash
 	local pushed_list="$STATE/sheets-pushed"
 	touch "$pushed_list"
-	for file in "$LH_HOME"/sheets/*/*.txt; do
+	for file in "$LANNA_HOME"/sheets/*/*.txt; do
 		[ -f "$file" ] || continue
 		name="$(basename "$file")"
 		lang="$(basename "$(dirname "$file")")"
 		rel="curriculum/$lang/cheatsheets/$name"
 		hash="$(sheet_hash "$file")"
-		remote_hash="$(git -C "$LH_REPO" show "$base:$rel" 2>/dev/null | sha256sum | cut -d' ' -f1 || true)"
-		if git -C "$LH_REPO" cat-file -e "$base:$rel" 2>/dev/null && [ "$hash" = "$remote_hash" ]; then
+		remote_hash="$(git -C "$LANNA_REPO" show "$base:$rel" 2>/dev/null | sha256sum | cut -d' ' -f1 || true)"
+		if git -C "$LANNA_REPO" cat-file -e "$base:$rel" 2>/dev/null && [ "$hash" = "$remote_hash" ]; then
 			continue
 		fi
 		grep -qxF "$rel $hash" "$pushed_list" && continue
@@ -173,18 +173,18 @@ push_sheet_edits() {
 		return 0
 	fi
 	local branch="sheets/$(date -u +%F)" n=1
-	while git -C "$LH_REPO" ls-remote --exit-code --heads "$LH_REMOTE" "$branch" >/dev/null 2>&1 \
-		|| git -C "$LH_REPO" show-ref --verify --quiet "refs/heads/$branch"; do
+	while git -C "$LANNA_REPO" ls-remote --exit-code --heads "$LANNA_REMOTE" "$branch" >/dev/null 2>&1 \
+		|| git -C "$LANNA_REPO" show-ref --verify --quiet "refs/heads/$branch"; do
 		n=$((n + 1))
 		branch="sheets/$(date -u +%F)-$n"
 	done
 	if [ "$DRY_RUN" = 1 ]; then
-		log "dry run: would push ${#pending[@]} edited cheatsheet(s) to $LH_REMOTE $branch"
+		log "dry run: would push ${#pending[@]} edited cheatsheet(s) to $LANNA_REMOTE $branch"
 		return 0
 	fi
 	local tree
 	tree="$(mktemp -d)"
-	git -C "$LH_REPO" worktree add -q -b "$branch" "$tree" "$base"
+	git -C "$LANNA_REPO" worktree add -q -b "$branch" "$tree" "$base"
 	for file in "${pending[@]}"; do
 		name="$(basename "$file")"
 		lang="$(basename "$(dirname "$file")")"
@@ -192,21 +192,21 @@ push_sheet_edits() {
 		cp "$file" "$tree/curriculum/$lang/cheatsheets/$name"
 	done
 	git -C "$tree" add curriculum
-	git -C "$tree" -c user.name="LangHarness server" -c user.email="server@langharness.invalid" commit -q -m "Save the cheatsheets edited on the server
+	git -C "$tree" -c user.name="Lanna server" -c user.email="server@lanna.invalid" commit -q -m "Save the cheatsheets edited on the server
 
 The server writes a cheatsheet edit to its own folder. This branch holds
 those edits so they can be merged into the repo."
-	if git -C "$tree" push -q "$LH_REMOTE" "$branch"; then
+	if git -C "$tree" push -q "$LANNA_REMOTE" "$branch"; then
 		for file in "${pending[@]}"; do
 			name="$(basename "$file")"
 			lang="$(basename "$(dirname "$file")")"
 			printf '%s %s\n' "curriculum/$lang/cheatsheets/$name" "$(sheet_hash "$file")" >>"$pushed_list"
 		done
-		log "pushed ${#pending[@]} edited cheatsheet(s) to $LH_REMOTE $branch"
+		log "pushed ${#pending[@]} edited cheatsheet(s) to $LANNA_REMOTE $branch"
 	else
 		log "WARNING: could not push $branch; the edits stay on the server and are tried again next run"
 	fi
-	git -C "$LH_REPO" worktree remove --force "$tree"
+	git -C "$LANNA_REPO" worktree remove --force "$tree"
 }
 
 pull_sheets_from_repo() {
@@ -215,23 +215,23 @@ pull_sheets_from_repo() {
 		[[ "$rel" =~ ^curriculum/([^/]+)/cheatsheets/([^/]+\.txt)$ ]] || continue
 		lang="${BASH_REMATCH[1]}"
 		name="${BASH_REMATCH[2]}"
-		target="$LH_HOME/sheets/$lang/$name"
-		mkdir -p "$LH_HOME/sheets/$lang"
-		new_hash="$(git -C "$LH_REPO" show "$sha:$rel" | sha256sum | cut -d' ' -f1)"
+		target="$LANNA_HOME/sheets/$lang/$name"
+		mkdir -p "$LANNA_HOME/sheets/$lang"
+		new_hash="$(git -C "$LANNA_REPO" show "$sha:$rel" | sha256sum | cut -d' ' -f1)"
 		if [ ! -f "$target" ]; then
-			git -C "$LH_REPO" show "$sha:$rel" >"$target"
+			git -C "$LANNA_REPO" show "$sha:$rel" >"$target"
 			continue
 		fi
 		cur_hash="$(sheet_hash "$target")"
 		[ "$cur_hash" = "$new_hash" ] && continue
 		old_hash=""
 		if [ -n "$prev" ]; then
-			old_hash="$(git -C "$LH_REPO" show "$prev:$rel" 2>/dev/null | sha256sum | cut -d' ' -f1 || true)"
+			old_hash="$(git -C "$LANNA_REPO" show "$prev:$rel" 2>/dev/null | sha256sum | cut -d' ' -f1 || true)"
 		fi
 		if [ "$cur_hash" = "$old_hash" ]; then
-			git -C "$LH_REPO" show "$sha:$rel" >"$target"
+			git -C "$LANNA_REPO" show "$sha:$rel" >"$target"
 		fi
-	done < <(git -C "$LH_REPO" ls-tree -r --name-only "$sha" -- curriculum)
+	done < <(git -C "$LANNA_REPO" ls-tree -r --name-only "$sha" -- curriculum)
 }
 
 run_boot_check() {
@@ -244,7 +244,7 @@ run_boot_check() {
 do_status() {
 	echo "deployed:  $(cat "$STATE/deployed" 2>/dev/null || echo none) ($(cat "$STATE/deployed-image" 2>/dev/null || echo no image))"
 	echo "previous:  $(cat "$STATE/previous" 2>/dev/null || echo none) ($(cat "$STATE/previous-image" 2>/dev/null || echo no image))"
-	echo "images:    $(docker image ls "$LH_IMAGE_NAME" --format '{{.Tag}}' | tr '\n' ' ')"
+	echo "images:    $(docker image ls "$LANNA_IMAGE_NAME" --format '{{.Tag}}' | tr '\n' ' ')"
 	echo "container: $(compose ps --format '{{.Name}} {{.Status}}' 2>/dev/null | head -n 1)"
 	echo "log:       $LOG"
 }
@@ -253,7 +253,7 @@ do_rollback() {
 	local tag="${ROLLBACK_TO:-}" sha
 	[ -z "$tag" ] && tag="$(cat "$STATE/previous-image" 2>/dev/null || true)"
 	[ -n "$tag" ] || { log "nothing to roll back to"; exit 1; }
-	[[ "$tag" == *:* ]] || tag="$LH_IMAGE_NAME:$tag"
+	[[ "$tag" == *:* ]] || tag="$LANNA_IMAGE_NAME:$tag"
 	image_exists "$tag" || { log "image $tag is not on this machine"; exit 1; }
 	sha="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$tag")"
 	[ -n "$sha" ] || { log "image $tag has no revision label"; exit 1; }
@@ -272,15 +272,15 @@ do_rollback() {
 }
 
 do_update() {
-	if [ -n "$(git -C "$LH_REPO" status --porcelain --untracked-files=no)" ]; then
-		log "the checkout at $LH_REPO has local changes; commit or discard them first"
+	if [ -n "$(git -C "$LANNA_REPO" status --porcelain --untracked-files=no)" ]; then
+		log "the checkout at $LANNA_REPO has local changes; commit or discard them first"
 		exit 3
 	fi
-	git -C "$LH_REPO" fetch -q --prune "$LH_REMOTE" "$REF"
+	git -C "$LANNA_REPO" fetch -q --prune "$LANNA_REMOTE" "$REF"
 	local new new_short tag deployed prev_deployed
-	new="$(git -C "$LH_REPO" rev-parse "$LH_REMOTE/$REF^{commit}")"
+	new="$(git -C "$LANNA_REPO" rev-parse "$LANNA_REMOTE/$REF^{commit}")"
 	new_short="$(short "$new")"
-	tag="$LH_IMAGE_NAME:$new_short"
+	tag="$LANNA_IMAGE_NAME:$new_short"
 	deployed="$(cat "$STATE/deployed" 2>/dev/null || true)"
 	prev_deployed="$deployed"
 
@@ -289,7 +289,7 @@ do_update() {
 	if [ "$new" = "$deployed" ] && [ "$FORCE" = 0 ] && image_exists "$tag"; then
 		if [ -z "$(compose ps -q --status running 2>/dev/null)" ]; then
 			log "$new_short is deployed but not running; starting it"
-			[ "$DRY_RUN" = 1 ] || LH_IMAGE="$tag" compose up -d --remove-orphans
+			[ "$DRY_RUN" = 1 ] || LANNA_IMAGE="$tag" compose up -d --remove-orphans
 		fi
 		exit 0
 	fi
@@ -298,16 +298,16 @@ do_update() {
 		exit 0
 	fi
 	if [ "$DRY_RUN" = 1 ]; then
-		log "dry run: would build $tag from $LH_REMOTE/$REF, boot-check it and switch to it (now: $(short "${deployed:-none}"))"
+		log "dry run: would build $tag from $LANNA_REMOTE/$REF, boot-check it and switch to it (now: $(short "${deployed:-none}"))"
 		exit 0
 	fi
 
 	log "updating ${deployed:+$(short "$deployed") }to $new_short"
 	if ! image_exists "$tag"; then
 		BUILD_CONTEXT="$(mktemp -d)"
-		git -C "$LH_REPO" archive "$new" | tar -x -C "$BUILD_CONTEXT"
+		git -C "$LANNA_REPO" archive "$new" | tar -x -C "$BUILD_CONTEXT"
 		# shellcheck disable=SC2086
-		if ! docker build $LH_DOCKER_BUILD_ARGS --label "org.opencontainers.image.revision=$new" -t "$tag" "$BUILD_CONTEXT" >>"$LOG" 2>&1; then
+		if ! docker build $LANNA_DOCKER_BUILD_ARGS --label "org.opencontainers.image.revision=$new" -t "$tag" "$BUILD_CONTEXT" >>"$LOG" 2>&1; then
 			: >"$STATE/failed-$new"
 			log "ERROR: the build failed; the running version is untouched (details in $LOG)"
 			exit 4

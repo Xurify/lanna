@@ -39,7 +39,7 @@ async function fixture(
 		stores?: Record<string, unknown>;
 	} = {},
 ) {
-	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "lh-subscription-auth-"));
+	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-subscription-auth-"));
 	let refreshes = 0;
 	const factory = (id: string) => {
 		const native = id === "xai" ? xaiProvider() : githubCopilotProvider();

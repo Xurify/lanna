@@ -246,7 +246,7 @@ export function MissWhy({
 	const why = [formContrast, shared, contrast, asksHere].filter(Boolean);
 
 	return (
-		<div className={cn("lh-fade text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
+		<div className={cn("lanna-fade text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
 			<div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 gap-y-2.5 @md:grid-cols-[auto_auto_minmax(0,1fr)] @md:gap-x-5">
 				{typed && (
 					<Row

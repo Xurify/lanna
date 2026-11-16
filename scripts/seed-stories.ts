@@ -1,10 +1,10 @@
 /**
  * Writes the hand-made series episodes (scripts/fixtures/series-episodes.ts) into a scratch profile, in the
- * format the app writes under data/profiles/slovak/stories/. Run it with LH_DATA_DIR set to a scratch
+ * format the app writes under data/profiles/slovak/stories/. Run it with LANNA_DATA_DIR set to a scratch
  * folder; it refuses a folder inside this repository, where the real data/ lives, and skips episodes
  * that are already there.
  *
- *   LH_DATA_DIR=<scratch folder> LH_PROFILE=slovak npx tsx scripts/seed-stories.ts
+ *   LANNA_DATA_DIR=<scratch folder> LANNA_PROFILE=slovak npx tsx scripts/seed-stories.ts
  *
  * `npm run dev:sandbox -- --seed` runs it after the demo week.
  */
@@ -14,12 +14,12 @@ import { fileURLToPath } from "node:url";
 import { ROBO_EPISODES, type FixtureEpisode } from "./fixtures/series-episodes.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const dataDir = process.env.LH_DATA_DIR;
-if (!dataDir) throw new Error("set LH_DATA_DIR to a scratch folder first");
+const dataDir = process.env.LANNA_DATA_DIR;
+if (!dataDir) throw new Error("set LANNA_DATA_DIR to a scratch folder first");
 const rel = path.relative(ROOT, path.resolve(dataDir));
 if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel)))
 	throw new Error(`refusing ${dataDir}: it is inside the repo, where your real data/ lives`);
-process.env.LH_PROFILE ??= "slovak";
+process.env.LANNA_PROFILE ??= "slovak";
 
 const { storyStore } = await import("../src/store/stories.ts");
 type Token = { text: string; word: boolean; slug?: string; lemma?: string; gloss?: string; fresh?: boolean };

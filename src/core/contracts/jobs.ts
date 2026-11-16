@@ -7,7 +7,7 @@
  * of "ai" (safe everywhere: server, client, tests). See docs/vision.md.
  */
 import type { CallUsage } from "./chat.ts";
-import type { LhMessage, LhMarkerMessage } from "../native-messages.ts";
+import type { LannaMessage, LannaMarkerMessage } from "../native-messages.ts";
 import { newHandoffMessage } from "../native-messages.ts";
 
 // ─── Async sub-agent jobs (vision §2.5; plan.md Wave 0 protocol) ────────────
@@ -242,7 +242,7 @@ export interface PdfResult {
 // ─── Sub-agent steer messages (THE ASYNC PROTOCOL §3–4) ─────────────────────
 //
 // Wave B (owner-approved 2026-09-26): steers are NATIVE record messages —
-// LhMarkerMessage customs (role "custom"), the custom-message taxonomy's
+// LannaMarkerMessage customs (role "custom"), the custom-message taxonomy's
 // wake members. The model-facing text rides `content` (single-sourced
 // below); the UI payload (the artifact, the abort badge) rides `details`
 // and never reaches the model (toLlmMessages maps the marker to a user
@@ -284,17 +284,21 @@ export interface SteerDetails extends SubagentResultMeta {
  *  with the target's details updated — no-op (same array) when the message
  *  is missing or not an invertible artifact steer. The silent route's
  *  whole body. */
-export function setSteerUiInverted(messages: readonly LhMessage[], messageId: string, inverted: boolean): LhMessage[] {
+export function setSteerUiInverted(
+	messages: readonly LannaMessage[],
+	messageId: string,
+	inverted: boolean,
+): LannaMessage[] {
 	return messages.map((m) => {
 		if (m.id !== messageId) return m;
-		const d = (m as LhMarkerMessage).details as Partial<SteerDetails> | undefined;
+		const d = (m as LannaMarkerMessage).details as Partial<SteerDetails> | undefined;
 		if (!d || d.kind !== "visual") return m;
-		return { ...m, details: { ...d, ui: { ...d.ui, inverted } } } as LhMessage;
+		return { ...m, details: { ...d, ui: { ...d.ui, inverted } } } as LannaMessage;
 	});
 }
 
 /** Anything the wake pipeline may queue and deliver — a native marker. */
-export type SteerMessage = LhMarkerMessage;
+export type SteerMessage = LannaMarkerMessage;
 
 /** Whether a result is the failure shape (svg empty, failure brief). */
 export function isSubagentFailure(kind: JobKind, result: ResearchResult | VisualResult | PdfResult): boolean {
@@ -396,6 +400,6 @@ export function buildProbeHandoffSteer(chatId: string): SteerMessage {
 /** True when the transcript already carries this steer — idempotent
  *  delivery for ANY steer kind: every steer id is deterministic per its
  *  event (steer_<jobId> for jobs, steer_probe_<chatId> for the handoff). */
-export function steerDelivered(messages: LhMessage[], steerId: string): boolean {
+export function steerDelivered(messages: LannaMessage[], steerId: string): boolean {
 	return messages.some((m) => m.id === steerId);
 }

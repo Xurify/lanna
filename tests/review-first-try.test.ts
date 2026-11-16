@@ -1,11 +1,11 @@
 /**
- * REVIEW FIRST TRIES (LangHarness, 2026-10-31): a review answer on a form
+ * REVIEW FIRST TRIES (2026-10-31): a review answer on a form
  * card counts as a first try on the drill its sentence practices — unless
  * a hint came before the answer — and the log line carries the drill, the
  * word's gender and the slip. A card whose cloze is the dictionary form
  * drills nothing and counts toward nothing.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -14,9 +14,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-review-first-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-review-first-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { answerReview } = await import("../src/server/review.ts");
 const { progressStore } = await import("../src/store/progress.ts");

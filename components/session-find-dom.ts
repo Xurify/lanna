@@ -19,7 +19,7 @@ const EXCLUDED = [
 	".sr-only",
 	"[hidden]",
 	"[data-session-find-exclude]",
-	"[data-lh-menu]",
+	"[data-lanna-menu]",
 	'[role="menu"]',
 	'[role="dialog"]',
 	'[role="tooltip"]',

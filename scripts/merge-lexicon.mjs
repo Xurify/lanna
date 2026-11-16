@@ -1,6 +1,6 @@
 /**
  * Merge a fresh slovak.wiki lexicon export into the shipped one without
- * moving any example (LangHarness, 2026-10-30). Card and lesson ids are
+ * moving any example (2026-10-30). Card and lesson ids are
  * word#position, so an export that reorders a word's examples would point
  * existing cards at other sentences. Here every example the shipped lexicon
  * has keeps its position, new examples are appended after them, and examples

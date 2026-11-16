@@ -12,8 +12,8 @@ import {
 } from "../src/agent/chatgpt-bridge.ts";
 const send = Object.getOwnPropertyDescriptor(process, "send"),
 	connected = Object.getOwnPropertyDescriptor(process, "connected");
-const desktopMarker = process.env.LH_DESKTOP_SERVER,
-	desktopSecret = process.env.LH_DESKTOP_API_SECRET;
+const desktopMarker = process.env.LANNA_DESKTOP_SERVER,
+	desktopSecret = process.env.LANNA_DESKTOP_API_SECRET;
 const pending: any[] = [];
 const model = piModels()
 	.getModels("openai")
@@ -36,11 +36,11 @@ const value = (name: string, revision: number, account = "A", authorityRevision 
 	models: [{ id: model.id, name }],
 });
 function reply(request: any, v: unknown) {
-	ipc({ channel: "lh:chatgpt", id: request.id, op: request.op, ok: true, value: v });
+	ipc({ channel: "lanna:chatgpt", id: request.id, op: request.op, ok: true, value: v });
 }
 before(() => {
-	process.env.LH_DESKTOP_SERVER = "1";
-	process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+	process.env.LANNA_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
 	Object.defineProperty(process, "send", {
 		configurable: true,
@@ -52,10 +52,10 @@ before(() => {
 	});
 });
 after(() => {
-	if (desktopMarker === undefined) delete process.env.LH_DESKTOP_SERVER;
-	else process.env.LH_DESKTOP_SERVER = desktopMarker;
-	if (desktopSecret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-	else process.env.LH_DESKTOP_API_SECRET = desktopSecret;
+	if (desktopMarker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+	else process.env.LANNA_DESKTOP_SERVER = desktopMarker;
+	if (desktopSecret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+	else process.env.LANNA_DESKTOP_API_SECRET = desktopSecret;
 	if (send) Object.defineProperty(process, "send", send);
 	else delete process.send;
 	if (connected) Object.defineProperty(process, "connected", connected);
@@ -74,7 +74,7 @@ test("consent-only status does not discard current-authority catalog or overwrit
 	const refresh = refreshChatGPTModels([model as never]);
 	const request = pending.at(-1);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 3 },
 		status: status("A", false),
@@ -89,14 +89,14 @@ test("consent-only status does not discard current-authority catalog or overwrit
 	const foreground = chatGPTAbortController(false),
 		background = chatGPTAbortController(true);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 4 },
 		status: status("A", false),
 		invalidate: "background",
 	});
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 5 },
 		status: status("A", true),
@@ -113,7 +113,7 @@ test("account/full and catalog authority changes reject outstanding old leases w
 	const lease = chatGPTLease(scope, false);
 	const request = pending.at(-1);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 2, authorityRevision: 2, revision: 6 },
 		status: status("B"),
@@ -129,7 +129,7 @@ test("account/full and catalog authority changes reject outstanding old leases w
 	const newScope = chatGPTScope(model.id);
 	assert.equal(newScope.accountId, "B");
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 2, authorityRevision: 3, revision: 8 },
 		status: status("B"),

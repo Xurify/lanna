@@ -122,7 +122,7 @@ export function RhythmicVisualizer() {
 								aria-pressed={typed === w}
 								lang={lang?.code}
 								className={cn(
-									"lh-press rounded-md px-2.5 py-1 font-prose text-[15px] font-medium pointer-coarse:py-2.5",
+									"lanna-press rounded-md px-2.5 py-1 font-prose text-[15px] font-medium pointer-coarse:py-2.5",
 									typed === w ? "bg-teal-wash text-teal-2" : "bg-well text-ink-2 hover:bg-well-2",
 								)}
 							>

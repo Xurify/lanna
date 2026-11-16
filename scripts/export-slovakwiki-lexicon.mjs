@@ -1,6 +1,6 @@
 /**
  * Export the slovak.wiki dictionary into curriculum/slovak/lexicon.json
- * (LangHarness). Runs slovak.wiki's OWN catalog code (its words, verified
+ *. Runs slovak.wiki's OWN catalog code (its words, verified
  * form generator and example-lemma matcher) through jiti, so the cloze
  * blanks and form lists are exactly what the site shows:
  *

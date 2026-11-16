@@ -1,7 +1,7 @@
 /**
  * What the speed scripts share (perf-check.mjs, instant-check.mjs): a server on a
  * seeded scratch profile, and a headless browser. It never uses your own data:
- * LH_DATA_DIR is a new folder under the OS temp dir, seeded with the demo week
+ * LANNA_DATA_DIR is a new folder under the OS temp dir, seeded with the demo week
  * (scripts/demo-measured-minutes.ts, as `npm run dev:sandbox -- --seed` does),
  * with keys hidden and a free port. Nothing is deleted afterwards.
  *
@@ -73,16 +73,16 @@ export const BROWSER_ARGS = [
 export async function startServer({ heavy = true, dev = false } = {}) {
 	if (!dev && !fs.existsSync(path.join(ROOT, ".next", "BUILD_ID")))
 		throw new Error("no production build; run `npm run build` first");
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-perf-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-perf-"));
 	const env = {
 		...process.env,
-		LH_DATA_DIR: dir,
-		LH_AUTH_FILE: path.join(dir, "auth.json"),
-		LH_IGNORE_ENV_KEYS: "1",
+		LANNA_DATA_DIR: dir,
+		LANNA_AUTH_FILE: path.join(dir, "auth.json"),
+		LANNA_IGNORE_ENV_KEYS: "1",
 		NODE_ENV: dev ? "development" : "production",
 	};
-	delete env.LH_DESKTOP_SERVER;
-	delete env.LH_DESKTOP_API_SECRET;
+	delete env.LANNA_DESKTOP_SERVER;
+	delete env.LANNA_DESKTOP_API_SECRET;
 	const seed = spawnSync(
 		process.execPath,
 		["--import", "tsx", path.join(ROOT, "scripts", "demo-measured-minutes.ts")],

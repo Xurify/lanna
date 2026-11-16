@@ -1,10 +1,10 @@
 /**
- * PLACEMENT PINS (LangHarness, 2026-10-28): the adaptive ladder (every
+ * PLACEMENT PINS (2026-10-28): the adaptive ladder (every
  * item from the answers before it; ~90% right placement in ~11 items on a
  * noisy learner), the model's judgement of typed misses, the Socratic
  * stage's JSON and how its verdicts move the outcome, the word check's
  * scoring and pseudowords, and the whole check through the server into
- * progress.json. Runs under an isolated LH_DATA_DIR.
+ * progress.json. Runs under an isolated LANNA_DATA_DIR.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -13,8 +13,8 @@ import * as path from "node:path";
 import { after, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-placement-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-placement-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { PATHS } = await import("../config.ts");
 import type { UnitId } from "../src/core/lesson.ts";

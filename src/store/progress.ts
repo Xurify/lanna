@@ -1,5 +1,5 @@
 /**
- * Progress persistence (LangHarness redesign) — the active profile's
+ * Progress persistence (redesign) — the active profile's
  * data/profiles/<language>/progress.json: XP, the days you practiced,
  * each unit's lessons and best blitz, and the item ids of recent lessons
  * (so the next lesson picks fresh sentences). One small JSON file,

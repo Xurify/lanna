@@ -1,5 +1,5 @@
 /**
- * The chapter arc (LangHarness, 2026-10-30): the seven steps every chapter
+ * The chapter arc (2026-10-30): the seven steps every chapter
  * goes through, in the same order. Phase 1 says which units already provide
  * each step, computed from the map (allChapters() and curriculumUnits()), so no unit
  * list is copied here. A step with no unit is "not yet". Tutor units stay

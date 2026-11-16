@@ -3,7 +3,7 @@
  * A Talk or tutor day keeps the streak; a lesson with no reps is not a
  * lesson; a tutor session counts when the learner types, once; yesterday's
  * unfinished tasks come back on top; the pace line carries the logged
- * minutes. Runs under an isolated LH_DATA_DIR, so every app import is dynamic.
+ * minutes. Runs under an isolated LANNA_DATA_DIR, so every app import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -13,9 +13,9 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-plan-feedback-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-plan-feedback-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { RECENT_DAYS } = await import("../src/core/carry-over.ts");
 const { chatStore } = await import("../src/store/chats.ts");

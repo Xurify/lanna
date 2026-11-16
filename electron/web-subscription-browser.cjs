@@ -10,7 +10,7 @@ async function openWebSubscriptionBrowser(action, origin, { fetch: request = glo
 		method: "POST",
 		redirect: "manual",
 		credentials: "omit",
-		headers: { origin, "x-langharness-subscriptions": "1" },
+		headers: { origin, "x-lanna-subscriptions": "1" },
 		signal: AbortSignal.timeout(15000),
 	});
 	const target = response.headers.get("location");

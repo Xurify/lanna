@@ -1,17 +1,17 @@
 /**
- * Demo data for measured minutes (LangHarness, 2026-10-29).
+ * Demo data for measured minutes (2026-10-29).
  *
- *   LH_DATA_DIR=<an empty folder> tsx scripts/demo-measured-minutes.ts
+ *   LANNA_DATA_DIR=<an empty folder> tsx scripts/demo-measured-minutes.ts
  *
  * Seeds one week into that folder's Slovak profile: three older days that
  * only have counts (how every day was recorded before minutes were
  * measured) and three newer days with minutes measured per activity, then
  * prints the same week counted both ways. Start the app against the same
- * folder (LH_DATA_DIR=<folder> npm run dev) to try the live behavior.
+ * folder (LANNA_DATA_DIR=<folder> npm run dev) to try the live behavior.
  *
  * `npm run dev:sandbox -- --seed` does both steps in a throwaway folder.
  *
- * Refuses to run without LH_DATA_DIR, and refuses a folder that already has
+ * Refuses to run without LANNA_DATA_DIR, and refuses a folder that already has
  * any profile data in it, so it can never overwrite your own days.
  */
 
@@ -26,10 +26,10 @@ function hasFiles(dir: string): boolean {
 		.some((e) => (e.isDirectory() ? hasFiles(path.join(dir, e.name)) : true));
 }
 
-const dir = process.env.LH_DATA_DIR;
+const dir = process.env.LANNA_DATA_DIR;
 if (!dir) {
 	console.error(
-		"Set LH_DATA_DIR to an empty folder first: this script writes a demo profile and must not touch your real data.",
+		"Set LANNA_DATA_DIR to an empty folder first: this script writes a demo profile and must not touch your real data.",
 	);
 	process.exit(1);
 }
@@ -39,7 +39,7 @@ if (hasFiles(path.join(dir, "profiles"))) {
 	);
 	process.exit(1);
 }
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_PROFILE = "slovak";
 
 const { dayKey } = await import("../src/core/review.ts");
 const { STRANDS, strandBalance, strandCaption } = await import("../src/core/strands.ts");

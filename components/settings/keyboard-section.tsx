@@ -1,7 +1,7 @@
 "use client";
 /**
  * The Keyboard section: view, rebind and reset shortcuts over core/keyboard.ts.
- * Overrides persist in localStorage (lh:keymap, overrides only, merged over
+ * Overrides persist in localStorage (lanna:keymap, overrides only, merged over
  * DEFAULT_BINDINGS), so a rebind applies on the next keydown with no reload.
  *
  * Rebind captures the next keydown (capture phase). Escape cancels. displayOnly

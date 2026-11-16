@@ -1,6 +1,6 @@
 /**
  * Where the app's sentences come from, and how each one gets its audio
- * (LangHarness, 2026-10-30). Reads the lexicon, the slovak.wiki clip map and
+ * (2026-10-30). Reads the lexicon, the slovak.wiki clip map and
  * manifest (for sizes), and the local data, prints the numbers and writes one
  * self-contained HTML report that opens offline.
  *
@@ -15,7 +15,7 @@ import path from "node:path";
 import { foldDiacritics } from "../src/core/language.ts";
 
 const REPO = path.resolve(import.meta.dirname, "..");
-const BASE = process.env.LH_DATA_DIR ? path.resolve(process.env.LH_DATA_DIR) : path.join(REPO, "data");
+const BASE = process.env.LANNA_DATA_DIR ? path.resolve(process.env.LANNA_DATA_DIR) : path.join(REPO, "data");
 const PROFILE = path.join(BASE, "profiles", "slovak");
 const OUT = path.resolve(process.argv[2] ?? path.join(BASE, "reports", "sentence-sources.html"));
 const WIKI = path.resolve(process.argv[3] ?? path.join(REPO, "..", "slovak.wiki"));

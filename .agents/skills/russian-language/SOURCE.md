@@ -1,6 +1,6 @@
 # Where this skill comes from
 
-Synthesized directly from foundational linguistic sources, state standards, and official Russian pedagogical corpora for LangHarness:
+Synthesized directly from foundational linguistic sources, state standards, and official Russian pedagogical corpora for Lanna:
 
 1. **Государственный образовательный стандарт по русскому языку как иностранному (ТРКИ / TORFL)** (Минобрнауки РФ, ред. «Златоуст», 2001–2015): The official certification standards, situational competencies, grammatical lists, and lexical minimums (780 for A1, 1300 for A2, 2300 for B1, 5000+ for B2).
 2. **_Русская грамматика_ (Грамматика-80)** (Академия наук СССР, Институт русского языка, ред. Н. Ю. Шведова, 1980): The exhaustive two-volume descriptive standard for Russian phonology, inflectional morphology, syntax, and intonational constructions (Е. А. Брызгунова).

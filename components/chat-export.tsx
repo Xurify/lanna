@@ -10,8 +10,8 @@ import {
 	exportChatMarkdown,
 	slugifyTitle,
 	triggerFileDownload,
-	type LhMessage,
-	type LhViewMessage,
+	type LannaMessage,
+	type LannaViewMessage,
 } from "@/src/core";
 import { MenuShell } from "@/components/menu-shell";
 import { Hint } from "@/components/ui/hint";
@@ -29,8 +29,8 @@ function ClozemasterIcon({ className }: { className?: string }) {
 export interface ChatExportMenuProps {
 	chatId: string;
 	title: string;
-	messages: readonly LhViewMessage[];
-	nativeMessages?: readonly LhMessage[];
+	messages: readonly LannaViewMessage[];
+	nativeMessages?: readonly LannaMessage[];
 	plain?: boolean;
 }
 
@@ -95,7 +95,7 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 		const onPointerDown = (e: PointerEvent) => {
 			const target = e.target;
 			if (!(target instanceof Element)) return;
-			if (target.closest("[data-lh-menu]") || triggerRef.current?.contains(target)) return;
+			if (target.closest("[data-lanna-menu]") || triggerRef.current?.contains(target)) return;
 			setOpen(false);
 		};
 		const onKeyDown = (e: KeyboardEvent) => {
@@ -151,7 +151,7 @@ export function ChatExportMenu({ chatId, title, messages, nativeMessages, plain 
 						setOpen((v) => !v);
 					}}
 					className={cn(
-						"lh-no-drag flex shrink-0 items-center gap-1.5 text-xs font-semibold transition-colors",
+						"lanna-no-drag flex shrink-0 items-center gap-1.5 text-xs font-semibold transition-colors",
 						plain
 							? cn(
 									"h-8 rounded-lg px-2.5",

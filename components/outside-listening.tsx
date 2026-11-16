@@ -115,7 +115,7 @@ export function OutsideListening() {
 						type="button"
 						onClick={() => setOpen(true)}
 						data-testid="outside-open"
-						className="lh-press order-3 -my-1 inline-flex h-7 items-center rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground pointer-coarse:h-11"
+						className="lanna-press order-3 -my-1 inline-flex h-7 items-center rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground pointer-coarse:h-11"
 					>
 						Log listening
 					</button>

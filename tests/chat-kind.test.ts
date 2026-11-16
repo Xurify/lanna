@@ -6,15 +6,15 @@ import { after, describe, it } from "node:test";
 import { createFauxCore } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chat-kind-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chat-kind-"));
 const originalEnv = process.env;
 const originalFetch = globalThis.fetch;
 process.env = {
 	...(originalEnv.NODE_TEST_CONTEXT ? { NODE_TEST_CONTEXT: originalEnv.NODE_TEST_CONTEXT } : {}),
 	...(originalEnv.NODE_OPTIONS ? { NODE_OPTIONS: originalEnv.NODE_OPTIONS } : {}),
 	NODE_ENV: "test",
-	LH_DATA_DIR: path.join(scratch, "data"),
-	LH_AUTH_FILE: path.join(scratch, "auth.json"),
+	LANNA_DATA_DIR: path.join(scratch, "data"),
+	LANNA_AUTH_FILE: path.join(scratch, "auth.json"),
 	HOME: path.join(scratch, "home"),
 };
 globalThis.fetch = async () => {

@@ -25,7 +25,7 @@ function subscriptionRequestOrigin(request: Request): string | undefined {
 }
 function authorized(request: Request): boolean {
 	const origin = subscriptionRequestOrigin(request);
-	if (!origin || request.headers.get("x-langharness-subscriptions") !== "1") return false;
+	if (!origin || request.headers.get("x-lanna-subscriptions") !== "1") return false;
 	if (request.headers.get("sec-fetch-site") === "cross-site") return false;
 	const supplied = request.headers.get("origin");
 	return request.method === "GET" ? !supplied || supplied === origin : supplied === origin;
@@ -34,14 +34,14 @@ function error(message: string, status: number) {
 	return Response.json({ error: message }, { status, headers: HEADERS });
 }
 const PUBLIC_DEPLOYMENT =
-	"Subscription sign-ins are off when LangHarness is served at a public address. Add an API key in Settings → API keys instead.";
+	"Subscription sign-ins are off when Lanna is served at a public address. Add an API key in Settings → API keys instead.";
 function publicDeployment(): boolean {
-	return Boolean(process.env.LH_PUBLIC_HOST?.trim());
+	return Boolean(process.env.LANNA_PUBLIC_HOST?.trim());
 }
 export async function subscriptionControlsResponse(request: Request): Promise<Response> {
 	if (publicDeployment()) return error(PUBLIC_DEPLOYMENT, 403);
 	if (!webSubscriptionsEnabled()) return error("Web subscription controls are unavailable in desktop-owned mode.", 404);
-	if (!authorized(request)) return error("Subscription controls require a same-origin LangHarness request.", 403);
+	if (!authorized(request)) return error("Subscription controls require a same-origin Lanna request.", 403);
 	try {
 		if (request.method === "GET") return Response.json(await webSubscriptionStatus(), { headers: HEADERS });
 		if (request.method !== "POST") return error("Unsupported method.", 405);
@@ -96,7 +96,7 @@ export async function subscriptionBrowserResponse(request: Request): Promise<Res
 		!origin ||
 		(request.method === "POST" ? !authorized(request) : request.headers.get("sec-fetch-site") !== "same-origin")
 	)
-		return error("Open sign-in from LangHarness.", 403);
+		return error("Open sign-in from Lanna.", 403);
 	const id = new URL(request.url).searchParams.get("id");
 	if (!id || !/^[0-9a-f-]{36}$/.test(id)) return error("This sign-in action is no longer available.", 410);
 	const target = await webSubscriptionOwner().takeBrowserAction(id, origin);

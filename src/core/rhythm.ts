@@ -1,5 +1,5 @@
 /**
- * Slovak Rhythmic Law & Suprasegmental Cadence Engine (LangHarness, 2026-11).
+ * Slovak Rhythmic Law & Suprasegmental Cadence Engine (2026-11).
  *
  * Implements:
  * 1. Syllable segmentation and quantity classification (short vs long mora).

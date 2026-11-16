@@ -1,10 +1,10 @@
 /**
- * THE CORPUS (LangHarness, 2026-10-27): everything generated is kept,
+ * THE CORPUS (2026-10-27): everything generated is kept,
  * indexed, and found again before it is regenerated. Pins: the audio
  * library (named files + index, legacy migration with text recovery), the
  * lesson log (every answer on disk), the Why? index (a repeat question
  * reopens its chat), chat deletion as a move to trash, READMEs next to the
- * data, and the export's shape. Runs under an isolated LH_DATA_DIR, so
+ * data, and the export's shape. Runs under an isolated LANNA_DATA_DIR, so
  * every app-module import is dynamic.
  */
 
@@ -14,9 +14,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-corpus-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-corpus-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
 const corpus = await import("../src/store/corpus.ts");

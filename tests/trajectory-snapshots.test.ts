@@ -1,10 +1,10 @@
 /**
- * TRAJECTORY SNAPSHOT PINS (LangHarness, 2026-10-29): the progress summary
+ * TRAJECTORY SNAPSHOT PINS (2026-10-29): the progress summary
  * writes the day's hours, units and words snapshots, rewrites them as a
  * lesson moves them, and hands the days to the trajectory with the
  * placement day flagged.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -13,9 +13,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, beforeEach, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-trajectory-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-trajectory-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { progressSummary, recordLesson } = await import("../src/server/lesson.ts");
 const { emptyProgress, progressStore } = await import("../src/store/progress.ts");

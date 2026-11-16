@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The scripted scene (LangHarness, 2026-10-30, E13): the scene walked
+ * The scripted scene (2026-10-30, E13): the scene walked
  * through on its rails before saying it live. The tutor's line is shown
  * (and read out), the learner picks the next line from three — one right,
  * two plausible slips. A slip is explained once and may be retried once;

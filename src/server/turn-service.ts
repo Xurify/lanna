@@ -14,7 +14,7 @@
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { ToolResultMessage } from "@earendil-works/pi-ai";
-import type { LhMessage } from "../core/native-messages.ts";
+import type { LannaMessage } from "../core/native-messages.ts";
 import { newMessageId } from "../core/native-messages.ts";
 import { QUESTION_TOOLS } from "../core/pending.ts";
 import { planBlocksFor } from "../core/plan-blocks.ts";
@@ -60,13 +60,13 @@ export function persistTurn(
 	baseCount: number,
 	turnMessages: readonly AgentMessage[],
 	isAborted: boolean,
-): LhMessage[] {
+): LannaMessage[] {
 	try {
 		const record = chatStore.getChat(chatId);
 		if (!record) throw new Error(`Chat not found: ${chatId}`);
-		const stamped: LhMessage[] = [];
+		const stamped: LannaMessage[] = [];
 		for (const m of turnMessages.slice(baseCount)) {
-			const message = m as LhMessage;
+			const message = m as LannaMessage;
 			// The placeholder question result: loop device, never a record fact.
 			if (
 				(message as { role?: string }).role === "toolResult" &&
@@ -75,7 +75,7 @@ export function persistTurn(
 			) {
 				continue;
 			}
-			stamped.push(message.id ? message : ({ ...message, id: newMessageId() } as LhMessage));
+			stamped.push(message.id ? message : ({ ...message, id: newMessageId() } as LannaMessage));
 		}
 		const tree = record.tree;
 		const blocks = planBlocksFor(record.messages, stamped, tree, [...record.messages, ...stamped]);

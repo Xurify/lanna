@@ -1,10 +1,10 @@
 /**
- * THE END SCREEN'S SCORE (LangHarness, 2026-10-30): a finished lesson's XP,
+ * THE END SCREEN'S SCORE (2026-10-30): a finished lesson's XP,
  * correct count and perfect flag come from core's lessonScore, so the end
  * screen can show them the moment the last answer is given. The server
  * records the same score; this pins that the two agree.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -13,9 +13,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-lesson-score-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-lesson-score-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { lessonScore } = await import("../src/core/lesson.ts");
 const { lessonFor, recordLesson } = await import("../src/server/lesson.ts");

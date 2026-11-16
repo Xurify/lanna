@@ -1,6 +1,6 @@
 # Where this skill comes from
 
-Synthesized directly from foundational linguistic sources and official Estonian pedagogical corpora for LangHarness:
+Synthesized directly from foundational linguistic sources and official Estonian pedagogical corpora for Lanna:
 
 1. **Erelt & Metslang (eds.), _Eesti keele süntaks_** (Eesti keele varamu III, Tartu Ülikooli Kirjastus 2017): The definitive academic reference on Estonian syntax, clause structures, secondary predicates, converbs, information structure, and word order.
 2. _**Eesti keele grammatika tabelid**_: Standard paradigm tables for noun declensions (14 cases, grade alternation patterns) and verb conjugations.

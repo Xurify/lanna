@@ -1,5 +1,5 @@
 /**
- * My mistakes (LangHarness, 2026-11-01): what the lesson log says about
+ * My mistakes (2026-11-01): what the lesson log says about
  * where the learner goes wrong and whether it is getting better. Pure and
  * browser-safe: it reads the logged reps and the mix-up record and returns
  * plain numbers, no model call. The page (`/mistakes`) saves the result as

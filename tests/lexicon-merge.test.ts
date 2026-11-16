@@ -1,5 +1,5 @@
 /**
- * THE LEXICON MERGE (LangHarness, 2026-10-30): a fresh slovak.wiki export
+ * THE LEXICON MERGE (2026-10-30): a fresh slovak.wiki export
  * is merged into the shipped lexicon without moving any example, because
  * card and lesson ids are word#position. Pins: every shipped example keeps
  * its position; new examples are appended; examples the wiki dropped stay;

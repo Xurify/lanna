@@ -47,7 +47,7 @@ describe("YouTube sign-in window", () => {
 		};
 		const trusted = (event: { trusted?: boolean }) => event.trusted === true;
 		yt.registerYouTubeIPC(ipcMain, { trusted, youtube, BrowserWindow: { fromWebContents: () => null } });
-		const call = handlers.get("lh:youtube")!;
+		const call = handlers.get("lanna:youtube")!;
 		await assert.rejects(call({ trusted: false, sender: {} }, { op: "status" }), /Untrusted/);
 		assert.deepEqual(await call({ trusted: true, sender: {} }, { op: "read", list: "history" }), {
 			signedIn: true,

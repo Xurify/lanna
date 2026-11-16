@@ -102,7 +102,7 @@ export function AccentKeyboard({
 									data-key={key}
 									data-live={isLive ? "true" : undefined}
 									className={cn(
-										"lh-press relative grid h-10 w-11 place-items-center rounded-[9px] text-[16px] transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
+										"lanna-press relative grid h-10 w-11 place-items-center rounded-[9px] text-[16px] transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
 										accents.length
 											? "bg-well font-medium text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well-2"
 											: "text-ink-3 shadow-[inset_0_0_0_1px_var(--q-line)] hover:bg-well",

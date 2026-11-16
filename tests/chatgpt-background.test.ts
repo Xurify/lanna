@@ -8,10 +8,10 @@ import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-s
 import { piModels } from "../src/agent/models.ts";
 import { toLlmMessages } from "../src/core/native-messages.ts";
 import { buildSubagentSteer } from "../src/core/contracts.ts";
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chatgpt-background-"));
-process.env.LH_DATA_DIR = path.join(dir, "data");
-process.env.LH_AUTH_FILE = path.join(dir, "scratch-auth.json");
-fs.writeFileSync(process.env.LH_AUTH_FILE, "{}");
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chatgpt-background-"));
+process.env.LANNA_DATA_DIR = path.join(dir, "data");
+process.env.LANNA_AUTH_FILE = path.join(dir, "scratch-auth.json");
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
 const { stores } = await import("../src/server/stores.ts");
 const { beginTurn, endTurn } = await import("../src/server/turn-liveness.ts");
 const { deliverJobResult, registerLiveAgent, unregisterLiveAgent, setTurnRunner, settleSteers, steerLiveChat } =
@@ -21,7 +21,7 @@ const ipc = (value: unknown) => (process.emit as (name: string, value: unknown) 
 let revision = 1;
 function connection(background: boolean) {
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: revision++ },
 		invalidate: background ? "none" : "background",
@@ -37,11 +37,11 @@ function connection(background: boolean) {
 }
 const originalSend = Object.getOwnPropertyDescriptor(process, "send"),
 	originalConnected = Object.getOwnPropertyDescriptor(process, "connected");
-const desktopMarker = process.env.LH_DESKTOP_SERVER,
-	desktopSecret = process.env.LH_DESKTOP_API_SECRET;
+const desktopMarker = process.env.LANNA_DESKTOP_SERVER,
+	desktopSecret = process.env.LANNA_DESKTOP_API_SECRET;
 before(() => {
-	process.env.LH_DESKTOP_SERVER = "1";
-	process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+	process.env.LANNA_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
 	Object.defineProperty(process, "send", {
 		configurable: true,
@@ -57,10 +57,10 @@ after(() => {
 	else delete process.send;
 	if (originalConnected) Object.defineProperty(process, "connected", originalConnected);
 	else delete (process as { connected?: boolean }).connected;
-	if (desktopMarker === undefined) delete process.env.LH_DESKTOP_SERVER;
-	else process.env.LH_DESKTOP_SERVER = desktopMarker;
-	if (desktopSecret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-	else process.env.LH_DESKTOP_API_SECRET = desktopSecret;
+	if (desktopMarker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+	else process.env.LANNA_DESKTOP_SERVER = desktopMarker;
+	if (desktopSecret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+	else process.env.LANNA_DESKTOP_API_SECRET = desktopSecret;
 });
 
 for (const revokedAfterQueue of [false, true]) {
@@ -143,7 +143,11 @@ for (const revokedAfterQueue of [false, true]) {
 			assert(!agent.hasQueuedMessages());
 			// Ordinary lease/catalog replies are not consent changes and must never
 			// reset/replay a learner steer that the agent has already consumed.
-			ipc({ channel: "lh:chatgpt", id: "ordinary-reply-with-no-pending-call", value: { accessToken: "scratch-only" } });
+			ipc({
+				channel: "lanna:chatgpt",
+				id: "ordinary-reply-with-no-pending-call",
+				value: { accessToken: "scratch-only" },
+			});
 			assert(!agent.hasQueuedMessages());
 			const persisted = persistTurn(stores.chatStore, chat.id, 0, agent.state.messages, false);
 			unregisterLiveAgent(chat.id);

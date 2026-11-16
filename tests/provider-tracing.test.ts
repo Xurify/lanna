@@ -14,7 +14,7 @@ const patterns = nextConfig.outputFileTracingExcludes!["*"];
 
 describe("standalone JavaScript tracing exclusions and native workaround policy", () => {
 	for (const windows of [false, true]) {
-		const root = windows ? "C:\\build\\langharness" : "/build/langharness";
+		const root = windows ? "C:\\build\\lanna" : "/build/lanna";
 		const file = (relative: string) =>
 			root + (windows ? "\\" : "/") + (windows ? relative.replaceAll("/", "\\") : relative);
 		const ignored = picomatch(patterns, { contains: true, dot: true, windows });

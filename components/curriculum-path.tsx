@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The path (LangHarness, 2026-10-28) — the whole A1→B2 map as stages and
+ * The path (2026-10-28) — the whole A1→B2 map as stages and
  * chapters, each unit a node whose ring fills as it is done, locked until
  * its chapter opens. The Today page shows it compact (the current chapter
  * open, the rest folded); /curriculum shows every chapter open. An open

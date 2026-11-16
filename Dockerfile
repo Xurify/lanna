@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# docker buildx build --platform linux/amd64,linux/arm64 -t langharness:local .
+# docker buildx build --platform linux/amd64,linux/arm64 -t lanna:local .
 # The base image comes from Docker Hub, which rate-limits shared addresses:
 # --build-arg NODE_IMAGE=mirror.gcr.io/library/node:26-bookworm-slim uses Google's mirror of it.
 ARG NODE_IMAGE=node:26-bookworm-slim
@@ -35,9 +35,9 @@ RUN npm run build \
 FROM ${NODE_IMAGE} AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends chromium ca-certificates \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& groupadd --gid 10001 lh \
-	&& useradd --uid 10001 --gid 10001 --home-dir /home/lh --create-home --shell /usr/sbin/nologin lh \
-	&& chmod 0777 /home/lh \
+	&& groupadd --gid 10001 lanna \
+	&& useradd --uid 10001 --gid 10001 --home-dir /home/lanna --create-home --shell /usr/sbin/nologin lanna \
+	&& chmod 0777 /home/lanna \
 	&& mkdir -p /data /keys /sheets \
 	&& chown 10001:10001 /data /keys /sheets
 COPY --from=ytdlp /yt-dlp /usr/local/bin/yt-dlp
@@ -45,21 +45,21 @@ ENV NODE_ENV=production \
 	NEXT_TELEMETRY_DISABLED=1 \
 	PORT=3010 \
 	HOSTNAME=0.0.0.0 \
-	HOME=/home/lh \
-	LH_DATA_DIR=/data \
-	LH_AUTH_FILE=/keys/auth.json \
-	LH_REPO_CHEATSHEETS_DIR=/sheets \
+	HOME=/home/lanna \
+	LANNA_DATA_DIR=/data \
+	LANNA_AUTH_FILE=/keys/auth.json \
+	LANNA_REPO_CHEATSHEETS_DIR=/sheets \
 	CHROME_PATH=/usr/bin/chromium
 WORKDIR /app
 COPY --from=build /src/.next/standalone ./
 COPY --from=build /src/.claude/skills/slovak-language ./.claude/skills/slovak-language
 COPY --from=build /src/scripts/boot-check.mjs /src/scripts/verify-data.mjs ./
 COPY --from=build /src/cli ./cli
-COPY docker/entrypoint.sh /usr/local/bin/lh-entrypoint
-RUN chmod 0755 /usr/local/bin/lh-entrypoint \
+COPY docker/entrypoint.sh /usr/local/bin/lanna-entrypoint
+RUN chmod 0755 /usr/local/bin/lanna-entrypoint \
 	&& mkdir -p /app/.next/cache \
 	&& chmod 1777 /app/.next/cache
 USER 10001:10001
 EXPOSE 3010
-ENTRYPOINT ["lh-entrypoint"]
+ENTRYPOINT ["lanna-entrypoint"]
 CMD ["node", "server.js"]

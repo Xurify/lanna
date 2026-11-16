@@ -1,5 +1,5 @@
 /**
- * ACCENT KEYS (LangHarness, 2026-11-11): the special letters are grouped by
+ * ACCENT KEYS (2026-11-11): the special letters are grouped by
  * their plain letter, and a key changes the letter before the caret when it
  * is the same letter, so "c" then "č" gives "č".
  */

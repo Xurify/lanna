@@ -129,7 +129,7 @@ export function Composer({
 				autoFocus={autoFocus}
 				rows={1}
 				className={cn(
-					"field-sizing-content lh-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
+					"field-sizing-content lanna-input max-h-48 min-h-10 flex-1 resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
 					toolbar && "col-span-2 px-3 pt-2 pb-1",
 				)}
 			/>

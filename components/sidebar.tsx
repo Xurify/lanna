@@ -20,7 +20,7 @@ import {
 	XIcon,
 } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
-import { LhMark } from "@/components/lh-mark";
+import { LannaMark } from "@/components/lanna-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
@@ -58,7 +58,7 @@ import { stopSpeaking } from "@/components/speech";
  * rendered = pref && !narrow, where pref is the persisted user choice.
  * Manual closes persist and stay closed; auto-close does not touch the
  * preference. Opening the sidebar while narrow asks the Electron shell to
- * widen the window to the threshold (window.lh.expandWindow, IPC in
+ * widen the window to the threshold (window.lanna.expandWindow, IPC in
  * electron/main.cjs) — the resize listener flips `narrow` and the sidebar
  * appears. In the plain browser there is no window to widen and no
  * suppression — a narrow tab opens the sidebar if the user says so.
@@ -86,12 +86,12 @@ const PHONE_QUERY = "(width < 48rem), (pointer: coarse) and (width < 64rem)";
 // The preload bridge is the shell's identity: the user agent no longer
 // names Electron (electron/main.cjs strips it so embedded YouTube plays).
 const IS_ELECTRON =
-	typeof window !== "undefined" && (!!window.lh?.platform || navigator.userAgent.includes("Electron"));
+	typeof window !== "undefined" && (!!window.lanna?.platform || navigator.userAgent.includes("Electron"));
 
 declare global {
 	interface Window {
 		/** Preload bridge (electron/preload.cjs) — Electron only, absent in the browser. */
-		lh?: {
+		lanna?: {
 			/** Read-only host OS; determines the native-control gutter. */
 			platform?: string;
 			/** External Next desktop-dev uses the server's web connections. */
@@ -102,7 +102,7 @@ declare global {
 			expandWindow: () => void;
 			/** Tells the Electron frame which theme the page is in. */
 			setTheme?: (night: boolean) => void;
-			/** The zoom truth (owner round 7): subscribes to "lh:zoom" pushes; returns unsubscribe. */
+			/** The zoom truth (owner round 7): subscribes to "lanna:zoom" pushes; returns unsubscribe. */
 			onZoom?: (cb: (factor: number) => void) => () => void;
 			getZoom?: () => Promise<number>;
 			/** Observational update events and a snapshot for late subscribers. */
@@ -203,12 +203,12 @@ export function SidebarProvider({
 			return;
 		}
 		setCollapsed((c) => {
-			document.cookie = `lh-sidebar=${c ? "open" : "collapsed"}; path=/; max-age=31536000; samesite=lax`;
+			document.cookie = `lanna-sidebar=${c ? "open" : "collapsed"}; path=/; max-age=31536000; samesite=lax`;
 			return !c;
 		});
 	}, [forcedFolded, pathname]);
 	useEffect(() => {
-		const bridge = window.lh?.chatgpt;
+		const bridge = window.lanna?.chatgpt;
 		if (!bridge) return;
 		const off = bridge.onChange(() => notifySettingsSaved("keys"));
 		notifySettingsSaved("keys"); // cover changes missed before this root-lifetime subscription
@@ -229,23 +229,23 @@ export function SidebarProvider({
 
 	useEffect(() => {
 		// Electron shell detection (merged chrome, 2026-09-17): keys the
-		// .lh-electron CSS (app/globals.css) that turns the header bands
+		// .lanna-electron CSS (app/globals.css) that turns the header bands
 		// into the window's drag surface. Post-mount only — server HTML
 		// and first client render must agree (no hydration mismatch),
 		// and in the plain browser the class never appears.
 		if (IS_ELECTRON) {
-			document.documentElement.classList.add("lh-electron");
-			document.documentElement.dataset.lhPlatform = window.lh?.platform ?? "";
+			document.documentElement.classList.add("lanna-electron");
+			document.documentElement.dataset.lannaPlatform = window.lanna?.platform ?? "";
 		}
 
 		// THE ZOOM TRUTH (owner round 7, 2026-10-05): ⌘±/⌘0 zoom the UI
 		// (Electron zoomFactor) while the native traffic lights stay
 		// physical-fixed — the CSS gutter lengths divide by this factor so
 		// their RENDERED size never moves. getZoom covers the first-paint
-		// race; every later change arrives as an lh:zoom push.
-		const setZoomVar = (factor: number) => document.documentElement.style.setProperty("--lh-zoom", String(factor));
-		const off = window.lh?.onZoom?.(setZoomVar);
-		void window.lh?.getZoom?.().then(setZoomVar);
+		// race; every later change arrives as an lanna:zoom push.
+		const setZoomVar = (factor: number) => document.documentElement.style.setProperty("--lanna-zoom", String(factor));
+		const off = window.lanna?.onZoom?.(setZoomVar);
+		void window.lanna?.getZoom?.().then(setZoomVar);
 
 		// Arm the width transition only after the first frames have painted,
 		// so nothing applied at mount animates.
@@ -301,7 +301,7 @@ export function SidebarProvider({
 		// An Electron window narrower than the threshold hides the sidebar:
 		// ask the shell to widen it, and the resize listener brings it back.
 		if (narrow) {
-			window.lh?.expandWindow();
+			window.lanna?.expandWindow();
 			return;
 		}
 		toggleCollapsed();
@@ -310,8 +310,8 @@ export function SidebarProvider({
 	// ⌘B: the global shortcut dispatches kbdEventForAction("toggle-sidebar")
 	// and the context answers on exactly that name — the shared spelling
 	// is the fix for the interlude bug (the listener sat on the pre-
-	// convention name "lh:toggle-sidebar" while the dispatcher sent
-	// "lh:kbd-toggle-sidebar", so ⌘B silently did nothing; owner
+	// convention name "lanna:toggle-sidebar" while the dispatcher sent
+	// "lanna:kbd-toggle-sidebar", so ⌘B silently did nothing; owner
 	// 2026-09-25).
 	useEffect(() => {
 		const event = kbdEventForAction("toggle-sidebar");
@@ -356,7 +356,7 @@ export function SidebarToggle() {
 	return (
 		<span
 			className={cn(
-				"sidebar-motion lh-no-drag relative flex h-9 shrink-0 overflow-hidden pointer-coarse:overflow-visible duration-200",
+				"sidebar-motion lanna-no-drag relative flex h-9 shrink-0 overflow-hidden pointer-coarse:overflow-visible duration-200",
 				// On a desktop window the open button is the fixed one in AppShell; this slot is only the phone's menu button.
 				"w-0 -mr-3",
 				// Phone widths follow the drawer, decided in CSS so the first
@@ -501,7 +501,7 @@ function SessionRow({
 			<SessionStatus busy={chat.busy || chat.compacting} />
 			<span className="min-w-0 flex-1">
 				{/* Titles are the learner's/teacher's WORDS — Source Sans 3, the
-				    same voice the words were typed in (every input is lh-prose);
+				    same voice the words were typed in (every input is lanna-prose);
 				    the meta line below stays JetBrains Mono (machine data). One
 				    rule, finally applied to the picker too (owner, typography
 				    round): mono = chrome, Source Sans = human words. */}
@@ -568,7 +568,7 @@ function RenameRow({
 					}}
 					aria-label="Rename chat"
 					data-testid="session-rename-input"
-					className="lh-input w-full min-w-0 truncate border-0 border-b border-border bg-transparent px-0 text-foreground outline-none"
+					className="lanna-input w-full min-w-0 truncate border-0 border-b border-border bg-transparent px-0 text-foreground outline-none"
 				/>
 				<span className="block truncate text-xs text-muted-foreground">{sessionMeta(chat)}</span>
 			</span>
@@ -642,19 +642,19 @@ function SessionsSidebar() {
 	}, []);
 
 	/* Instant rename propagation (2026-09-17): the chat header's rename
-	   commits dispatch lh:chat-renamed; patch the snapshot in place instead
+	   commits dispatch lanna:chat-renamed; patch the snapshot in place instead
 	   of waiting for the 2.5s poll. */
 	useEffect(() => {
 		const onRenamed = (e: Event) => {
 			const { id, title } = (e as CustomEvent<{ id: string; title: string }>).detail;
 			setChats((prev) => (prev ? prev.map((c) => (c.id === id ? { ...c, title } : c)) : prev));
 		};
-		window.addEventListener("lh:chat-renamed", onRenamed);
-		return () => window.removeEventListener("lh:chat-renamed", onRenamed);
+		window.addEventListener("lanna:chat-renamed", onRenamed);
+		return () => window.removeEventListener("lanna:chat-renamed", onRenamed);
 	}, []);
 
 	/* INSTANT TURN-STATE (owner, sidebar round 2026-10-02): the open
-	   session broadcasts lh:turn-state the instant its turn starts
+	   session broadcasts lanna:turn-state the instant its turn starts
 	   (submitted — the optimistic machine's own flip) and at settle —
 	   busy mirrors the server's own definition (isTurnRunning), so the
 	   patch is exact: spinner up the moment the action happens, cleared
@@ -679,8 +679,8 @@ function SessionsSidebar() {
 			setChats((prev) => (prev ? prev.map((c) => (c.id === id ? { ...c, busy: false } : c)) : prev));
 			void refresh(); // settle: the server snapshot is now truthful — land it now
 		};
-		window.addEventListener("lh:turn-state", onTurnState);
-		return () => window.removeEventListener("lh:turn-state", onTurnState);
+		window.addEventListener("lanna:turn-state", onTurnState);
+		return () => window.removeEventListener("lanna:turn-state", onTurnState);
 	}, [refresh]);
 
 	/* PUSH (architecture S6, 2026-10-02): the 2.5s poll is RETIRED — the
@@ -689,8 +689,8 @@ function SessionsSidebar() {
 	   writes), and turn-started/turn-settled for EVERY chat (unfiltered:
 	   any chat's turn flips busy/order/phase in this list). Announced
 	   fetches ride the 250ms trailing debounce (the S4/S5 law); resync
-	   (reconnect / dev-restart) is immediate. lh:turn-state +
-	   lh:chat-renamed stay for same-tab INSTANTS — local beats any
+	   (reconnect / dev-restart) is immediate. lanna:turn-state +
+	   lanna:chat-renamed stay for same-tab INSTANTS — local beats any
 	   round-trip. */
 	const refreshRef = useRef(refresh);
 	refreshRef.current = refresh;
@@ -812,7 +812,7 @@ function SessionsSidebar() {
 		if (ctxChatId === null) return;
 		const onPointerDown = (e: PointerEvent) => {
 			const target = e.target as Node;
-			if (target instanceof Element && target.closest("[data-lh-menu]")) return;
+			if (target instanceof Element && target.closest("[data-lanna-menu]")) return;
 			if (ctxAnchorRef.current?.contains(target)) return;
 			setCtxChatId(null);
 		};
@@ -832,7 +832,7 @@ function SessionsSidebar() {
 
 	// Inline rename (owner ruling, wave 6): the row swaps to a text input;
 	// commit rides the SAME plumbing as the header rename — PUT the title,
-	// then lh:chat-renamed patches every listener (this sidebar's own
+	// then lanna:chat-renamed patches every listener (this sidebar's own
 	// listener patches the snapshot instantly; an open chat header hears
 	// it too). Esc discards; empty commit discards (the header's rules).
 	const commitRename = useCallback(async (id: string, next: string) => {
@@ -846,7 +846,7 @@ function SessionsSidebar() {
 				body: JSON.stringify({ title: t }),
 			});
 			if (!res.ok) throw new Error(`rename failed: ${res.status}`);
-			window.dispatchEvent(new CustomEvent("lh:chat-renamed", { detail: { id, title: t } }));
+			window.dispatchEvent(new CustomEvent("lanna:chat-renamed", { detail: { id, title: t } }));
 		} catch (err) {
 			console.error("rename failed:", err); // keep the old title
 		}
@@ -883,8 +883,8 @@ function SessionsSidebar() {
 			setSearching(true);
 			requestAnimationFrame(() => searchRef.current?.focus());
 		};
-		window.addEventListener("lh:kbd-sessions-search", onFocusSearch);
-		return () => window.removeEventListener("lh:kbd-sessions-search", onFocusSearch);
+		window.addEventListener("lanna:kbd-sessions-search", onFocusSearch);
+		return () => window.removeEventListener("lanna:kbd-sessions-search", onFocusSearch);
 	}, [visible, toggle]);
 
 	// The phone drawer closes on navigation and on Esc.
@@ -923,7 +923,7 @@ function SessionsSidebar() {
 				className={cn(
 					"sidebar-motion shrink-0 overflow-hidden duration-200 md:relative",
 					open ? "w-72 md:w-[var(--sw)]" : "w-0 md:w-13",
-					collapsed && "lh-collapsed-col",
+					collapsed && "lanna-collapsed-col",
 					// Below md the sidebar floats over the page as a drawer instead of
 					// squeezing it. CSS makes the call before hydration, so a phone
 					// never paints the open column first.
@@ -936,7 +936,7 @@ function SessionsSidebar() {
 				{/* Folded: a narrow column that holds only the button to open it. It is a real column (the page moves over), not a floating button, so nothing on the page sits under it. */}
 				{collapsed && (
 					<div
-						className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side lh-side pt-3 md:flex"
+						className="lanna-drag hidden h-full w-full flex-col items-center border-r bg-side lanna-side pt-3 md:flex"
 						data-testid="sidebar-folded"
 					>
 						<Hint label="Open sidebar" action="toggle-sidebar" side="right">
@@ -946,7 +946,7 @@ function SessionsSidebar() {
 								aria-label="Open sidebar"
 								onClick={toggle}
 								data-testid="sidebar-open"
-								className="lh-no-drag text-ink-3 hover:text-foreground"
+								className="lanna-no-drag text-ink-3 hover:text-foreground"
 							>
 								<PanelLeftOpenIcon className="size-4" />
 							</Button>
@@ -956,29 +956,29 @@ function SessionsSidebar() {
 				<div
 					inert={!visible}
 					className={cn(
-						"@container flex h-full w-72 flex-col border-r bg-side lh-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]",
+						"@container flex h-full w-72 flex-col border-r bg-side lanna-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]",
 						collapsed && "md:hidden",
 					)}
 				>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
-					    (.lh-lights-gutter); in the browser those classes are inert. */}
-					<div className="lh-drag lh-lights-gutter flex items-center justify-between px-4 py-3">
+					    (.lanna-lights-gutter); in the browser those classes are inert. */}
+					<div className="lanna-drag lanna-lights-gutter flex items-center justify-between px-4 py-3">
 						<Hint label="Home" side="right">
 							<Link
 								href="/"
 								aria-label="Home"
-								className="lh-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
+								className="lanna-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
 							>
-								<LhMark className="size-6" />
+								<LannaMark className="size-6" />
 							</Link>
 						</Hint>
 						<Link
 							href="/"
 							tabIndex={-1}
-							className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight"
+							className="lanna-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight"
 						>
-							Lang<span className="text-sun">Harness</span>
+							Lanna
 						</Link>
 						<Hint label="Collapse sidebar" action="toggle-sidebar">
 							<Button
@@ -987,7 +987,7 @@ function SessionsSidebar() {
 								aria-label="Collapse sidebar"
 								onClick={toggleCollapsed}
 								data-testid="sidebar-collapse"
-								className="lh-no-drag max-md:hidden touch-narrow:hidden"
+								className="lanna-no-drag max-md:hidden touch-narrow:hidden"
 							>
 								<PanelLeftCloseIcon className="size-4" />
 							</Button>
@@ -998,7 +998,7 @@ function SessionsSidebar() {
 								size="icon"
 								aria-label="Close menu"
 								onClick={toggle}
-								className="lh-no-drag md:hidden touch-narrow:inline-flex"
+								className="lanna-no-drag md:hidden touch-narrow:inline-flex"
 							>
 								<PanelLeftCloseIcon className="size-4" />
 							</Button>
@@ -1405,7 +1405,7 @@ function SidebarResizer({ width, setWidth }: { width: number; setWidth: (px: num
 				setWidth(next);
 				save(next);
 			}}
-			className="lh-no-drag absolute inset-y-0 right-0 z-10 hidden w-1.5 cursor-col-resize touch-none transition-colors hover:bg-teal/30 focus-visible:bg-teal/40 active:bg-teal/50 max-md:hidden md:block"
+			className="lanna-no-drag absolute inset-y-0 right-0 z-10 hidden w-1.5 cursor-col-resize touch-none transition-colors hover:bg-teal/30 focus-visible:bg-teal/40 active:bg-teal/50 max-md:hidden md:block"
 		/>
 	);
 }
@@ -1434,12 +1434,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				    so they ride off-screen with it and a scrolled page has no
 				    grab point left. This one is sticky inside the scroll frame —
 				    glued to the top of the visible area at every scroll depth.
-				    FIRST child so later lh-no-drag elements still subtract (the
+				    FIRST child so later lanna-no-drag elements still subtract (the
 				    DOM-order mask law), INSIDE main so it never spans the
 				    sidebar, and -mb-13 pulls the page up over it so nothing
 				    moves. The per-page strips stay for the surfaces they were
 				    tuned for; this is the floor every page stands on. */}
-					<div className="lh-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
+					<div className="lanna-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
 					{children}
 				</main>
 				<SelectionWordBankBar />

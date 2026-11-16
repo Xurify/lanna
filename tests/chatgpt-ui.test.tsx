@@ -69,7 +69,7 @@ afterEach(async () => {
 	root = undefined;
 	host = undefined;
 	globalThis.fetch = originalFetch;
-	delete window.lh;
+	delete window.lanna;
 	snapshots = {};
 });
 
@@ -124,7 +124,7 @@ test("root-lifetime safe bridge publishes with Connections unmounted; commands/p
 		],
 		error: null,
 	};
-	window.lh = {
+	window.lanna = {
 		expandWindow() {},
 		chatgpt: {
 			status: async () => safe,

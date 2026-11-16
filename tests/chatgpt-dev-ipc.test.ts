@@ -3,10 +3,10 @@ import test, { after } from "node:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-dev-ipc-"));
-process.env.LH_DATA_DIR = scratch;
-process.env.LH_AUTH_FILE = path.join(scratch, "auth.json");
-fs.writeFileSync(process.env.LH_AUTH_FILE, "{}", { mode: 0o600 });
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-dev-ipc-"));
+process.env.LANNA_DATA_DIR = scratch;
+process.env.LANNA_AUTH_FILE = path.join(scratch, "auth.json");
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}", { mode: 0o600 });
 process.env.OPENAI_API_KEY = "sk-fixture-not-used-for-generation";
 const { GET } = await import("../app/api/models/route.ts");
 const { chatGPTRequest, chatGPTConnected, chatGPTModels } = await import("../src/agent/chatgpt-bridge.ts");
@@ -15,8 +15,8 @@ after(() => fs.rmSync(scratch, { recursive: true, force: true }));
 test("Next-style IPC is not desktop transport; web ownership works without delaying keyed catalogs", async () => {
 	const send = Object.getOwnPropertyDescriptor(process, "send");
 	const connected = Object.getOwnPropertyDescriptor(process, "connected");
-	const marker = process.env.LH_DESKTOP_SERVER,
-		secret = process.env.LH_DESKTOP_API_SECRET;
+	const marker = process.env.LANNA_DESKTOP_SERVER,
+		secret = process.env.LANNA_DESKTOP_API_SECRET;
 	const originalFetch = globalThis.fetch;
 	let sends = 0;
 	try {
@@ -38,13 +38,13 @@ test("Next-style IPC is not desktop transport; web ownership works without delay
 			[undefined, "d".repeat(64)],
 			["1", "short"],
 		]) {
-			if (mode === undefined) delete process.env.LH_DESKTOP_SERVER;
-			else process.env.LH_DESKTOP_SERVER = mode;
-			if (capability === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-			else process.env.LH_DESKTOP_API_SECRET = capability;
+			if (mode === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+			else process.env.LANNA_DESKTOP_SERVER = mode;
+			if (capability === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+			else process.env.LANNA_DESKTOP_API_SECRET = capability;
 			// A framework parent cannot establish ChatGPT state by sharing only IPC.
 			(process.emit as (name: string, value: unknown) => boolean)("message", {
-				channel: "lh:chatgpt",
+				channel: "lanna:chatgpt",
 				kind: "state",
 				stamp: { epoch: 1, authorityRevision: 1, revision: 1 },
 				status: {
@@ -68,8 +68,8 @@ test("Next-style IPC is not desktop transport; web ownership works without delay
 			} else await assert.rejects(chatGPTRequest("status"), /available only in the desktop app/);
 			assert.equal(sends, 0, "no desktop request/timer may be started over framework IPC");
 		}
-		process.env.LH_DESKTOP_SERVER = "1";
-		process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+		process.env.LANNA_DESKTOP_SERVER = "1";
+		process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 		Object.defineProperty(process, "connected", { configurable: true, value: false });
 		await GET();
 		await assert.rejects(chatGPTRequest("status"), /available only in the desktop app/);
@@ -80,9 +80,9 @@ test("Next-style IPC is not desktop transport; web ownership works without delay
 		else delete process.send;
 		if (connected) Object.defineProperty(process, "connected", connected);
 		else delete (process as { connected?: boolean }).connected;
-		if (marker === undefined) delete process.env.LH_DESKTOP_SERVER;
-		else process.env.LH_DESKTOP_SERVER = marker;
-		if (secret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-		else process.env.LH_DESKTOP_API_SECRET = secret;
+		if (marker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+		else process.env.LANNA_DESKTOP_SERVER = marker;
+		if (secret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+		else process.env.LANNA_DESKTOP_API_SECRET = secret;
 	}
 });

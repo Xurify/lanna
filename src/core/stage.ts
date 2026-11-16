@@ -1,5 +1,5 @@
 /**
- * The stage sentence (LangHarness, 2026-11-05; docs/research/creator-hooks.md,
+ * The stage sentence (2026-11-05; docs/research/creator-hooks.md,
  * proposal 4): one line on Today that names what limits the learner right now,
  * in the app's own numbers. The words gap and the speed gap are already
  * measured by the milestones (src/core/milestones.ts); this only says which

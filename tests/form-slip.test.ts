@@ -1,5 +1,5 @@
 /**
- * FORM SLIP PINS (LangHarness, 2026-10-31): a wrong answer on a form drill
+ * FORM SLIP PINS (2026-10-31): a wrong answer on a form drill
  * is named from the word's dictionary form — "base" (the dictionary form
  * where an inflected one was needed: "stanica" for "stanice"), "same-word"
  * (another ending of the same word: "stanicu"), "other" (a different

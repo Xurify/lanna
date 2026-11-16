@@ -28,11 +28,11 @@
 ## What changed
 
 - **One timing scale and one curve** (`app/globals.css`): `--dur-press` 100 ms, `--dur-fast` 160 ms, `--dur-base` 220 ms, `--dur-slow` 320 ms; `--ease-out` is `cubic-bezier(0.23, 1, 0.32, 1)`, `--ease-in-out` and a mild `--ease-spring` beside it. They override Tailwind's own `--ease-out` and default transition, so every existing `ease-out` and bare `transition-*` utility picks them up without an edit.
-- **Press** (`.lh-press`, `.q-btn`): a pushed control scales to 0.97 in 100 ms and comes back in 160 ms. Learn buttons, option tiles, play buttons, the Speak microphone and the shadcn `Button` use it. Links and rows keep the old dim.
-- **Bars on the compositor** (`.lh-fill`, `components/ui/fill.ts`): the fill is full width and moved with `translateX`, inside the track that already clipped it. On first paint the bar fills from empty (`@starting-style`, where supported).
+- **Press** (`.lanna-press`, `.q-btn`): a pushed control scales to 0.97 in 100 ms and comes back in 160 ms. Learn buttons, option tiles, play buttons, the Speak microphone and the shadcn `Button` use it. Links and rows keep the old dim.
+- **Bars on the compositor** (`.lanna-fill`, `components/ui/fill.ts`): the fill is full width and moved with `translateX`, inside the track that already clipped it. On first paint the bar fills from empty (`@starting-style`, where supported).
 - **Explicit transitions:** no `transition-all` is left in `components/`.
 - **The ring** is a pseudo-element scaled and faded, the same keyframes as the climb's ring.
-- **Popovers and dialogs** (`.lh-menu-in`, `.lh-fade`): scale from 0.96 with no overshoot, from the side of the trigger; backdrops fade. The jump palette, the gloss card, the selection word card and the leave-lesson dialog use it.
+- **Popovers and dialogs** (`.lanna-menu-in`, `.lanna-fade`): scale from 0.96 with no overshoot, from the side of the trigger; backdrops fade. The jump palette, the gloss card, the selection word card and the leave-lesson dialog use it.
 - **Review feedback** (`components/motion.ts`): a miss shakes the sentence (the lesson already did); the answer pops into the blank; the verdict line fades in; the next card settles in over 200 ms. The Web Animations API plays them without remounting, so the typed text and focus stay.
 - **Shorter moves:** reps and the feedback sheet rise 8 px, not 16; Today's sections 320 ms, not 500.
 - **Hover only where there is hover**, in `quiet.css` (Tailwind 4 already gates its `hover:` variant).

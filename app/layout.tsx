@@ -69,9 +69,9 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export const metadata: Metadata = {
-	title: { default: "LangHarness", template: "%s · LangHarness" },
-	applicationName: "LangHarness",
-	appleWebApp: { capable: true, title: "LangHarness", statusBarStyle: "default" },
+	title: { default: "Lanna", template: "%s · Lanna" },
+	applicationName: "Lanna",
+	appleWebApp: { capable: true, title: "Lanna", statusBarStyle: "default" },
 	// Next 16 emits the standard mobile-web-app-capable tag for capable: true;
 	// iOS Safari still reads the Apple name to launch full screen, so both go out.
 	other: { "apple-mobile-web-app-capable": "yes" },
@@ -82,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	// The saved theme goes into the first HTML, so a Night learner never sees a Day frame (or the reverse) while the scripts load.
 	const jar = await cookies();
 	const theme = themeFromCookie(jar.get(THEME_COOKIE)?.value);
-	const sidebarCollapsed = jar.get("lh-sidebar")?.value === "collapsed";
+	const sidebarCollapsed = jar.get("lanna-sidebar")?.value === "collapsed";
 	const sidebarWidth = Number(jar.get(SIDEBAR_WIDTH_COOKIE)?.value) || SIDEBAR_MAX;
 	// Saved appearance goes into the first HTML (no flash of the factory
 	// palette or font before the client provider would have applied it).
@@ -100,7 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 			lang="en"
 			className={`${geist.variable} ${mono.variable} ${read.variable}${theme === "night" ? " dark" : ""}`}
 			data-theme={theme === "system" ? undefined : theme}
-			data-lh-language={activeProfile()}
+			data-lanna-language={activeProfile()}
 			style={vars as React.CSSProperties}
 			suppressHydrationWarning
 		>
@@ -110,7 +110,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 			    (src/core/course.ts). */}
 				{course && (
 					<Script
-						id="lh-course"
+						id="lanna-course"
 						strategy="beforeInteractive"
 					>{`globalThis.__lhCourse=${JSON.stringify(course).replace(/</g, "\\u003c")};`}</Script>
 				)}

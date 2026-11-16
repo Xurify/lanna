@@ -1,5 +1,5 @@
 /**
- * The deep read of the learner's listening (LangHarness, 2026-11-03): one model
+ * The deep read of the learner's listening (2026-11-03): one model
  * call over the facts src/core/listen-analysis.ts has already worked out, to
  * find what several of them share and say what to practice. The figures stay
  * the analysis's: the model is handed them, with every trend already called or

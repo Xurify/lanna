@@ -22,7 +22,7 @@ import { findTool } from "./find.ts";
 import { grepTool } from "./grep.ts";
 import { jobTools, type JobToolContext } from "./jobs.ts";
 import { activeProblemOf } from "../../core/native-messages.ts";
-import type { LhMessage } from "../../core/native-messages.ts";
+import type { LannaMessage } from "../../core/native-messages.ts";
 import { concludeResult, invalidInputResult, problemResult } from "../tool-execute.ts";
 import { healEncodedArguments, healToolRecord } from "./heal.ts";
 import { languageTools, type ReviewSeam } from "./language.ts";
@@ -30,11 +30,11 @@ import { languageTools, type ReviewSeam } from "./language.ts";
 /** The record-reading context the gates need (the plan-tools idiom). */
 export interface PracticeToolContext {
 	chatId: string;
-	chatStore: { getChat(id: string): { messages: LhMessage[]; kind?: string } | null };
+	chatStore: { getChat(id: string): { messages: LannaMessage[]; kind?: string } | null };
 	/** THE RARELY-NEEDED SET (owner round 10, 2026-10-05): the research +
 	 *  pdf jobs (both keyless). Absent (tests) = absent from the registry. */
 	jobs?: JobToolContext;
-	/** LangHarness: the spaced-review seam (add_to_review / review_status). */
+	/** Lanna: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
 

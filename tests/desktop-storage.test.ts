@@ -37,15 +37,15 @@ function mainProcess(trusted = true) {
 describe("registerStorageIPC", () => {
 	it("reports the HTTP cache size, clears it, and answers with the size afterwards", async () => {
 		const { handlers, cleared } = mainProcess();
-		assert.equal(await handlers.get("lh:storage:cache-size")!({}), 4096);
-		assert.equal(await handlers.get("lh:storage:clear-cache")!({}), 0);
+		assert.equal(await handlers.get("lanna:storage:cache-size")!({}), 4096);
+		assert.equal(await handlers.get("lanna:storage:clear-cache")!({}), 0);
 		assert.deepEqual(cleared, [4096]);
 	});
 
 	it("refuses both channels for any sender but the app's own window, and clears nothing", async () => {
 		const { handlers, cleared } = mainProcess(false);
-		await assert.rejects(async () => handlers.get("lh:storage:cache-size")!({}), /Untrusted desktop request/);
-		await assert.rejects(async () => handlers.get("lh:storage:clear-cache")!({}), /Untrusted desktop request/);
+		await assert.rejects(async () => handlers.get("lanna:storage:cache-size")!({}), /Untrusted desktop request/);
+		await assert.rejects(async () => handlers.get("lanna:storage:clear-cache")!({}), /Untrusted desktop request/);
 		assert.deepEqual(cleared, []);
 	});
 });
@@ -73,6 +73,6 @@ describe("preload storage bridge", () => {
 		});
 		await bridge.storage.cacheSize();
 		await bridge.storage.clearCache();
-		assert.deepEqual(invoked, ["lh:storage:cache-size", "lh:storage:clear-cache"]);
+		assert.deepEqual(invoked, ["lanna:storage:cache-size", "lanna:storage:clear-cache"]);
 	});
 });

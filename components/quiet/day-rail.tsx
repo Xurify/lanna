@@ -171,7 +171,7 @@ export function DayRail({ s }: { s: Summary | null }) {
 						<span className="q-mark">
 							<QPie frac={0.7} size={14} className="mk" />
 						</span>
-						<b>LangHarness</b>
+						<b>Lanna</b>
 						<small>{lang?.english}</small>
 						<button type="button" className="gear" aria-label="Settings" onClick={() => settings.open()}>
 							<QIcon name="gear" className="size-4" />

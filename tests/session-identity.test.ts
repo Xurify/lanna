@@ -78,7 +78,7 @@ async function closed<T>(run: () => Promise<T>): Promise<T> {
 describe("native app and conversation identity", { concurrency: false }, () => {
 	it("shares one deeply frozen metadata-derived identity, without mutable conversation state", () => {
 		assert.deepEqual(APP_IDENTITY, {
-			userAgent: { custom: `langharness/${metadata.version}` },
+			userAgent: { custom: `lanna/${metadata.version}` },
 			attribution: { name: metadata.name, url: metadata.homepage },
 		});
 		for (const value of [APP_IDENTITY, APP_IDENTITY.userAgent, APP_IDENTITY.attribution])
@@ -171,7 +171,7 @@ describe("native app and conversation identity", { concurrency: false }, () => {
 				assert.equal(requests.length, 3);
 				for (const request of requests) {
 					assert.equal(new URL(request.url).pathname, endpoint);
-					assert.equal(request.headers.get("user-agent"), `langharness/${metadata.version}`);
+					assert.equal(request.headers.get("user-agent"), `lanna/${metadata.version}`);
 					if (provider === "opencode-go") {
 						assert.equal(new URL(request.url).origin, "https://opencode.ai");
 						assert.equal(request.headers.get("x-opencode-client"), metadata.name);

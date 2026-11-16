@@ -1,5 +1,5 @@
 /**
- * Fluency (LangHarness, 2026-10-28) — Nation's fourth strand: getting
+ * Fluency (2026-10-28) — Nation's fourth strand: getting
  * faster with what is ALREADY known. Nothing new is taught here; every
  * word is one the learner has met, and the only variable is time.
  *

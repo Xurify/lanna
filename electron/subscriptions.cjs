@@ -358,7 +358,7 @@ function createSubscriptions(options) {
 							changed(entry);
 						}),
 				},
-				{ agentName: "LangHarness" },
+				{ agentName: "Lanna" },
 			);
 			if (!active()) throw failure("cancel");
 			validateCredential(providerId, credential);

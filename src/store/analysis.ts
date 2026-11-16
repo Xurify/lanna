@@ -1,5 +1,5 @@
 /**
- * Mistake-analysis persistence (LangHarness, 2026-11-01) — the active
+ * Mistake-analysis persistence (2026-11-01) — the active
  * profile's data/profiles/<language>/analysis.json: the latest snapshot of
  * src/core/mistakes.ts (with the time it was taken) and the guide written
  * from it, so a guide is paid for once per set of facts and read from disk

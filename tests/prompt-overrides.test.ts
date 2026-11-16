@@ -8,7 +8,7 @@
  * TEST-DIR ISOLATION (contract fix, interlude 2026-09-26): data/prompts
  * holds REAL user override files — this suite must never touch it (the
  * old after() wiped it as "disposable scratch", killing real overrides
- * and orphaning their ON switches). LH_DATA_DIR is the established
+ * and orphaning their ON switches). LANNA_DATA_DIR is the established
  * data-location seam (Electron contract, 2026-09-17; see
  * data-dir-seam.test.ts), evaluated at config.ts's MODULE LOAD — so it
  * must be set before the first import that (transitively) loads config.
@@ -32,8 +32,8 @@ import { createFauxCore } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 
 // ── the seam, BEFORE any config-loading import ──────────────────────────────
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-prompt-overrides-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-prompt-overrides-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { PROMPTS_OVERRIDE_DIR } = await import("../config.ts");
 const teacherAgent = await import("../src/agent/teacher-agent.ts");
@@ -41,7 +41,7 @@ const { allSegmentPaths, effectivePromptSegments } = await import("../src/agent/
 const { isValidSegmentPath } = await import("../src/core/prompt-segments.ts");
 const { promptOverrides } = await import("../src/store/prompt-overrides.ts");
 // Route-level pins drive the actual app/api handlers (framework-free
-// Request/Response), isolated under the same temp LH_DATA_DIR.
+// Request/Response), isolated under the same temp LANNA_DATA_DIR.
 const { PUT: putSettingsSection } = await import("../app/api/settings/[section]/route.ts");
 const { DELETE: deletePromptText } = await import("../app/api/settings/prompts/[...segment]/route.ts");
 const { readSettingsRecord } = await import("../src/server/index.ts");
@@ -179,11 +179,11 @@ describe("the source-derived segment list", () => {
 			prober.map((s) => s.path),
 			[
 				"system-prompt.md",
-				// LangHarness onboarding (2026-10-28): start from the measured profile.
+				// Lanna onboarding (2026-10-28): start from the measured profile.
 				"prober/05-the-profile.md",
 				"prober/10-probe-doctrine.md",
 				"prober/20-language-probe.md",
-				// LangHarness: the active language's doctrine, before the appendix.
+				// Lanna: the active language's doctrine, before the appendix.
 				"language/10-slovak.md",
 				"shared/10-voice.md",
 				"shared/15-accuracy.md",
@@ -308,7 +308,7 @@ describe("composeInstructions: override honoring + the byte-identical source pat
 			return [
 				base,
 				...fragmentsOf(`src/agent/prompts/${kind}`),
-				// LangHarness: the active (default: slovak) language doctrine.
+				// Lanna: the active (default: slovak) language doctrine.
 				fs.readFileSync("src/agent/prompts/language/10-slovak.md", "utf-8").trim(),
 				...fragmentsOf("src/agent/prompts/shared"),
 			].join("\n\n---\n\n");
@@ -460,7 +460,7 @@ describe("an orphaned ON heals to OFF on write — never a 400 (the invariant: a
 });
 
 describe("test isolation (the suite must never touch real user data)", () => {
-	it("every write this suite makes lands under the LH_DATA_DIR seam, not the repo data dir", () => {
+	it("every write this suite makes lands under the LANNA_DATA_DIR seam, not the repo data dir", () => {
 		assert.ok(
 			PROMPTS_OVERRIDE_DIR.startsWith(TMP_DATA),
 			`PROMPTS_OVERRIDE_DIR (${PROMPTS_OVERRIDE_DIR}) must live under the temp seam (${TMP_DATA})`,

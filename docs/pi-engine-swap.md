@@ -38,7 +38,7 @@ Verified package facts (all three scouts + npm registry):
 runs it, persists the resulting parts back into the record, discards the
 Agent. pi's `steer()`/`followUp()` queues are **in-memory** (plain arrays on
 the instance) and die with the process — they are for a _held-live_ agent
-(pi-coding-agent holds one Agent per session lifetime). lh's architecture is
+(pi-coding-agent holds one Agent per session lifetime). lanna's architecture is
 the opposite: HTTP request-scoped turns, durable wake pipeline, write-ahead
 persistence, 409 one-turn guard. Those stay exactly as they are.
 
@@ -68,7 +68,7 @@ What we deliberately do **not** adopt:
 
 ## 2. The quiz/ask pattern — the heart of the swap
 
-Three shapes were found across pi itself and the prototype; lh needs a third
+Three shapes were found across pi itself and the prototype; lanna needs a third
 variant because its question tools are **client-answered** and turn-scoped:
 
 - pi's own `ask_question` (interactive-subagents ext): execute writes a
@@ -78,7 +78,7 @@ variant because its question tools are **client-answered** and turn-scoped:
   verdict as the result. Fits a TUI, not HTTP — would hold a POST open for
   the minutes a learner takes to answer.
 
-**lh's variant (the design):** question tools (`quiz`, `ask_user_question`)
+**lanna's variant (the design):** question tools (`quiz`, `ask_user_question`)
 are `AgentTool`s whose `execute()` returns _immediately_ with a synthetic
 result:
 

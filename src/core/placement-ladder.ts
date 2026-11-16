@@ -1,5 +1,5 @@
 /**
- * The adaptive placement ladder (LangHarness, 2026-10-28).
+ * The adaptive placement ladder (2026-10-28).
  *
  * Why: the first check was a fixed staircase — four tiers of eight items,
  * pass at six — and Xurify called it "clearly wrong … this test should be

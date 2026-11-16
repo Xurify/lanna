@@ -1,5 +1,5 @@
 /**
- * FIRST-TRY PINS (LangHarness, 2026-10-31): what counts as a first try
+ * FIRST-TRY PINS (2026-10-31): what counts as a first try
  * (a form rep's first answer, unaided, the first ask of the sentence), how
  * a tally steps, and how a Speak correction becomes a slip on a case
  * drill. Pure core: no data dir, no network.

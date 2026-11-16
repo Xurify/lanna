@@ -1,5 +1,5 @@
 /**
- * Speak (LangHarness, 2026-10-28) — the output strand's voice-first task:
+ * Speak (2026-10-28) — the output strand's voice-first task:
  * a role-play scene from what Slovak is for, where the learner SAYS each
  * line (dictation into text; typing is the fallback), the tutor answers
  * in Slovak out loud and in writing, and every slip in a case, verb or

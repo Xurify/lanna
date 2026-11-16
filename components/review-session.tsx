@@ -105,7 +105,7 @@ interface Status {
 }
 
 type Mode = "type" | "choice";
-const MODE_KEY = "lh-review-mode";
+const MODE_KEY = "lanna-review-mode";
 /** How long the loading skeleton waits before it shows, so a deck that
  *  lands inside this window never flashes one. */
 const SKELETON_DELAY_MS = 300;
@@ -301,7 +301,7 @@ function AnsweredRow({
 		<li
 			className={cn(
 				"relative grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-x-3 py-3 @xl:grid-cols-[minmax(0,1fr)_auto]",
-				fresh && "lh-fade",
+				fresh && "lanna-fade",
 			)}
 		>
 			<span className="mt-[3px] @xl:absolute @xl:-left-7 @xl:top-3">
@@ -583,7 +583,7 @@ export function ReviewSession() {
 			if (after) show(after);
 			else await load();
 			// The sidebar's due badge counts the same deck.
-			window.dispatchEvent(new Event("lh:review-changed"));
+			window.dispatchEvent(new Event("lanna:review-changed"));
 		} finally {
 			setSaving(false);
 		}
@@ -733,7 +733,7 @@ export function ReviewSession() {
 	return (
 		<div className="@container h-dvh" data-testid="review-session">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
-				<header className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
+				<header className="lanna-drag lanna-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
 					<SidebarToggle />
 					<QPie frac={day.s && day.s.dailyGoal > 0 ? day.s.todayXp / day.s.dailyGoal : 0} size={28} />
 					<div className="flex min-w-0 flex-col leading-[1.2]">
@@ -772,7 +772,7 @@ export function ReviewSession() {
 								className="relative h-[3px] min-w-8 flex-1 overflow-hidden rounded-full bg-well-2"
 								data-testid="review-progress"
 							>
-								<div className="lh-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
+								<div className="lanna-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
 							</div>
 							<span
 								className="min-w-[52px] whitespace-nowrap text-right @sm:min-w-[88px] text-[12.5px] text-ink-3"
@@ -812,7 +812,7 @@ export function ReviewSession() {
 								id="review-settings"
 								role="group"
 								aria-label="Review settings"
-								className="lh-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8"
+								className="lanna-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8"
 							>
 								<DeckSettings
 									mode={mode}
@@ -861,7 +861,7 @@ export function ReviewSession() {
 							)}
 
 							{caughtUp && (
-								<section className="lh-fade pt-8 @xl:pt-12" data-testid="review-done">
+								<section className="lanna-fade pt-8 @xl:pt-12" data-testid="review-done">
 									<h1 className="text-[34px] leading-[44px] font-semibold tracking-[-0.032em] text-foreground @xl:text-[44px] @xl:leading-[60px]">
 										{done > 0 ? "All caught up." : "Nothing is due right now."}
 									</h1>
@@ -987,7 +987,7 @@ export function ReviewSession() {
 																</span>
 																{verdict ? (
 																	<span
-																		className="lh-pop col-start-1 row-start-1 whitespace-pre text-center"
+																		className="lanna-pop col-start-1 row-start-1 whitespace-pre text-center"
 																		data-testid="review-answer"
 																	>
 																		<span
@@ -1103,12 +1103,12 @@ export function ReviewSession() {
 										<div className={cn("col-start-1 row-start-1", verdict && "invisible")}>
 											<p className="mb-3 flex min-h-6 flex-wrap gap-x-6 gap-y-1" data-testid="review-hints">
 												{hint > 0 && (
-													<span className="lh-fade">
+													<span className="lanna-fade">
 														<Note label="means">{prompt.card.gloss}</Note>
 													</span>
 												)}
 												{hint > 1 && (
-													<span className="lh-fade">
+													<span className="lanna-fade">
 														<Note label="base form" lang={lang?.code}>
 															{prompt.card.lemma}
 														</Note>
@@ -1140,7 +1140,7 @@ export function ReviewSession() {
 										</div>
 
 										{verdict && (
-											<div className="lh-fade col-start-1 row-start-1" data-testid="review-feedback">
+											<div className="lanna-fade col-start-1 row-start-1" data-testid="review-feedback">
 												<p
 													className={cn("q-result !text-[15px]", verdict === "wrong" && "miss")}
 													data-testid="review-verdict"

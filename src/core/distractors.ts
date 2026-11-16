@@ -1,5 +1,5 @@
 /**
- * Wrong answers worth reading (LangHarness, 2026-10-30, from "a lot of these
+ * Wrong answers worth reading (2026-10-30, from "a lot of these
  * questions are very easy"). A meaning question is only a test when the
  * wrong meanings are close to the right one: the same sentence with the
  * person, tense or polarity changed. Three sources, best first:

@@ -146,7 +146,7 @@ export function AddLanguageDialog({
 							Add a language
 						</h3>
 						<p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-							LangHarness builds the whole course: about 3,000 common words from Wiktionary with example sentences from
+							Lanna builds the whole course: about 3,000 common words from Wiktionary with example sentences from
 							Tatoeba, then lessons, chapters, tutor sessions, goals and a story world written by your model. It runs in
 							the background, so you can keep studying.
 						</p>

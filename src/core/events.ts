@@ -75,7 +75,7 @@ export type ServerEvent<K extends ServerEventType = ServerEventType> = {
 
 type ServerEventListener = (event: ServerEvent) => void;
 
-interface LhEventsGlobal {
+interface LannaEventsGlobal {
 	__lhEventBus?: Set<ServerEventListener>;
 }
 
@@ -83,7 +83,7 @@ interface LhEventsGlobal {
  *  (and every layer) sees ONE bus. Ephemeral by design: a process restart
  *  drops the listeners with their connections; emitters never queue. */
 function listeners(): Set<ServerEventListener> {
-	const g = globalThis as typeof globalThis & LhEventsGlobal;
+	const g = globalThis as typeof globalThis & LannaEventsGlobal;
 	return (g.__lhEventBus ??= new Set());
 }
 

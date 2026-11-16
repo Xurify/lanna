@@ -12,6 +12,6 @@ crowding, leaderboard demoralization) and `references/validations.md` (the check
 pass: an off-ramp, intrinsic value, hard-to-game rewards, no notification spam, completion states).
 It passed the registry's three security audits and had 580 installs at the time.
 
-How LangHarness uses it: read `SKILL.md` and the three references before adding or changing any
+How Lanna uses it: read `SKILL.md` and the three references before adding or changing any
 streak, stamp, goal or reward (docs/research/gamification.md records how the current design
 measures against the validations). The repo's own rules in CLAUDE.md win where they differ.

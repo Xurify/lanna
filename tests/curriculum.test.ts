@@ -1,5 +1,5 @@
 /**
- * curriculumUnits() PINS (LangHarness r5): the map's shape, its locks, the Continue
+ * curriculumUnits() PINS (r5): the map's shape, its locks, the Continue
  * choice, the hours projection and the daily plan are all pure, so the
  * tests pin them from hand-made ledgers.
  */

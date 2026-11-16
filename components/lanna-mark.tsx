@@ -1,5 +1,5 @@
 /**
- * LhMark — the app mark, inlined as JSX so it rides along with the
+ * LannaMark — the app mark, inlined as JSX so it rides along with the
  * components (no network fetch, recolorable, crisp at any size).
  *
  * A text cursor waiting at an empty answer line: the cursor takes
@@ -11,7 +11,7 @@
  * build/icon-flat.svg, app/icon.svg and the Icon Composer layers). Keep them
  * in step. Rationale: docs/brand.md.
  */
-export function LhMark({ className = "" }: { className?: string }) {
+export function LannaMark({ className = "" }: { className?: string }) {
 	return (
 		<svg viewBox="212 212 600 600" className={className} aria-hidden="true">
 			<rect x="262" y="212" width="116" height="600" rx="22" fill="currentColor" />
@@ -21,12 +21,12 @@ export function LhMark({ className = "" }: { className?: string }) {
 }
 
 /**
- * LhAppIcon: the rounded app icon (build/icon-flat.svg, the same drawing as
+ * LannaAppIcon: the rounded app icon (build/icon-flat.svg, the same drawing as
  * app/icon.svg) inlined, for a page that must not fetch a file: behind the
  * sign-in gate a request for /icon.svg is turned away. The colors are the
  * icon's own and do not follow Day and Night.
  */
-export function LhAppIcon({ className = "" }: { className?: string }) {
+export function LannaAppIcon({ className = "" }: { className?: string }) {
 	return (
 		<svg viewBox="0 0 1024 1024" className={className} aria-hidden="true">
 			<path

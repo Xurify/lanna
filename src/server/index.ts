@@ -43,7 +43,7 @@ export * from "./tasks.ts";
 export * from "./model-catalog.ts";
 export { subscriptionControlsResponse, subscriptionBrowserResponse } from "./web-subscription-http.ts";
 export { sessionCost } from "./pricing.ts";
-// LangHarness: language profiles + curriculum seeding, speech synthesis,
+// Lanna: language profiles + curriculum seeding, speech synthesis,
 // spaced review, and the lexicon lookup the review page and tutor share.
 export * from "./language.ts";
 export { addEstimates, languageCatalog, removeLanguage, restoreLanguage, startLanguageAdd } from "./language-add.ts";

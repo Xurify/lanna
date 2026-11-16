@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { describe, it } from "node:test";
 
-process.env.LH_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "lh-tts-retries-"));
+process.env.LANNA_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-tts-retries-"));
 
 const { withRetries } = await import("../src/server/tts.ts");
 

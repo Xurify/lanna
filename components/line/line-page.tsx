@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Today's line (LangHarness, 2026-11-06; docs/research/creator-hooks.md,
+ * Today's line (2026-11-06; docs/research/creator-hooks.md,
  * proposal 1), in the task frame the lessons and Listen use: a focus mode
  * (Escape leaves), one card, one bar at the bottom. The sentence plays as the
  * card opens and nothing is shown until the learner has typed what they
@@ -193,7 +193,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 			<TaskTop progress={heard / 2} label="First and second hearing" count={`${heard}/2`} />
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-				<div key={asking ? `ask-${askPhase}` : `shown-${shown?.phase ?? "none"}`} className={cn(COLUMN, "lh-rise")}>
+				<div key={asking ? `ask-${askPhase}` : `shown-${shown?.phase ?? "none"}`} className={cn(COLUMN, "lanna-rise")}>
 					<LineCard
 						icon="ear"
 						title="Today's line"
@@ -215,7 +215,7 @@ export function LinePage({ initial }: { initial: LineState }) {
 										type="button"
 										onClick={() => play()}
 										aria-label="Play the sentence"
-										className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
+										className="lanna-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 										data-testid="line-play"
 									>
 										<Volume2Icon className="size-6" strokeWidth={1.6} />

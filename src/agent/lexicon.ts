@@ -1,5 +1,5 @@
 /**
- * The lexicon (LangHarness) — the read-only dictionary bundled under
+ * The lexicon — the read-only dictionary bundled under
  * curriculum/<profile>/lexicon.json, exported from slovak.wiki by
  * scripts/export-slovakwiki-lexicon.mjs. It is the GROUND TRUTH the tutor
  * checks word forms against (the lookup_word tool) and the sentence source

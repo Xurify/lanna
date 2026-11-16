@@ -79,7 +79,7 @@ export function SoundGuide({
 			</nav>
 
 			<div className="min-w-0">
-				<PracticeCard key={note.symbol} icon="sound" title="Sounds" sub={group?.label} className="lh-rise">
+				<PracticeCard key={note.symbol} icon="sound" title="Sounds" sub={group?.label} className="lanna-rise">
 					<div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
 						<h2 className="flex items-baseline gap-3">
 							<span
@@ -176,7 +176,7 @@ function SoundChip({
 			aria-label={`${sound.symbol}, as in ${sound.word}`}
 			data-testid="sound-chip"
 			className={cn(
-				"lh-press flex h-11 min-w-11 items-center justify-center rounded-[10px] px-2.5 font-prose text-[17px] font-semibold tracking-[-0.01em]",
+				"lanna-press flex h-11 min-w-11 items-center justify-center rounded-[10px] px-2.5 font-prose text-[17px] font-semibold tracking-[-0.01em]",
 				on
 					? "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]"
 					: "bg-card text-foreground shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well",

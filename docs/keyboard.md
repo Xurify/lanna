@@ -12,9 +12,9 @@ second pillar of input).
 - **Provider**: `components/keyboard-shortcuts.tsx` — one window-level
   keydown listener (bubble phase, mounted once in AppShell). Normalizes
   keys to `mod+d`-style strings, resolves overrides, dispatches
-  `lh:kbd-<action-id>` window CustomEvents. Surfaces listen for their
-  own events (matching the pre-existing `lh:chat-renamed` seam style).
-- **Persistence**: overrides live under localStorage `lh:keymap` as
+  `lanna:kbd-<action-id>` window CustomEvents. Surfaces listen for their
+  own events (matching the pre-existing `lanna:chat-renamed` seam style).
+- **Persistence**: overrides live under localStorage `lanna:keymap` as
   `{actionId: binding}` merged over defaults. No editor yet — the
   settings milestone owns key map editing.
 - **displayOnly entries**: the registry also lists SURFACE-owned keys
@@ -40,22 +40,22 @@ second pillar of input).
 
 ## Key map (Wave A — global)
 
-| Action                    | Binding                     | Seam                                                                                                |
-| ------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
-| Toggle dictation          | ⌘D                          | `lh:kbd-toggle-dictation` (dictation.tsx)                                                           |
-| Model selector            | ⌘K                          | `lh:kbd-open-model-picker` (model-picker.tsx)                                                       |
-| Cycle thinking level      | Shift+Tab                   | `lh:kbd-cycle-thinking` (model-picker.tsx)                                                          |
-| Toggle sidebar            | ⌘B                          | `lh:toggle-sidebar` (sidebar.tsx)                                                                   |
-| Sessions search           | ⌘⇧F                         | `lh:kbd-sessions-search` (sidebar.tsx)                                                              |
-| Walk search results       | ↑ / ↓ _in the search field_ | sidebar.tsx (cycles the filtered rows, wraps)                                                       |
-| Open search result        | Enter _in the search field_ | sidebar.tsx (walked row, else the first match)                                                      |
-| ~~Cycle session~~         | ~~⌥↑ / ⌥↓~~                 | RETIRED (owner, 2026-10-10) — the search walk above replaces it                                     |
-| ~~Open selected session~~ | ~~⌥Enter~~                  | RETIRED (owner, 2026-10-10) — the search Enter above replaces it                                    |
-| Jump to graph (home)      | ⌘G                          | router.push in keyboard-shortcuts.tsx                                                               |
-| New session               | ⌘N                          | router.push in keyboard-shortcuts.tsx                                                               |
-| Rename session            | F2                          | `lh:kbd-rename-session` (chat.tsx)                                                                  |
-| Cheat sheet               | ?                           | keyboard-shortcuts.tsx                                                                              |
-| Find (graph: node search) | ⌘F                          | `lh:kbd-find` (graph-view.tsx; chat transcript search rides the same event when that feature lands) |
+| Action                    | Binding                     | Seam                                                                                                   |
+| ------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Toggle dictation          | ⌘D                          | `lanna:kbd-toggle-dictation` (dictation.tsx)                                                           |
+| Model selector            | ⌘K                          | `lanna:kbd-open-model-picker` (model-picker.tsx)                                                       |
+| Cycle thinking level      | Shift+Tab                   | `lanna:kbd-cycle-thinking` (model-picker.tsx)                                                          |
+| Toggle sidebar            | ⌘B                          | `lanna:toggle-sidebar` (sidebar.tsx)                                                                   |
+| Sessions search           | ⌘⇧F                         | `lanna:kbd-sessions-search` (sidebar.tsx)                                                              |
+| Walk search results       | ↑ / ↓ _in the search field_ | sidebar.tsx (cycles the filtered rows, wraps)                                                          |
+| Open search result        | Enter _in the search field_ | sidebar.tsx (walked row, else the first match)                                                         |
+| ~~Cycle session~~         | ~~⌥↑ / ⌥↓~~                 | RETIRED (owner, 2026-10-10) — the search walk above replaces it                                        |
+| ~~Open selected session~~ | ~~⌥Enter~~                  | RETIRED (owner, 2026-10-10) — the search Enter above replaces it                                       |
+| Jump to graph (home)      | ⌘G                          | router.push in keyboard-shortcuts.tsx                                                                  |
+| New session               | ⌘N                          | router.push in keyboard-shortcuts.tsx                                                                  |
+| Rename session            | F2                          | `lanna:kbd-rename-session` (chat.tsx)                                                                  |
+| Cheat sheet               | ?                           | keyboard-shortcuts.tsx                                                                                 |
+| Find (graph: node search) | ⌘F                          | `lanna:kbd-find` (graph-view.tsx; chat transcript search rides the same event when that feature lands) |
 
 ## Model menu keyboard machine (owner polish, 2026-09-17)
 

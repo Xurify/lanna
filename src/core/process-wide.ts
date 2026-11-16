@@ -3,6 +3,6 @@
 // globalThis is the one object they all share.
 export function processWide<T>(name: string, create: () => T): T {
 	const shared = globalThis as typeof globalThis & Record<symbol, T | undefined>;
-	const key = Symbol.for(`lh.${name}`);
+	const key = Symbol.for(`lanna.${name}`);
 	return (shared[key] ??= create());
 }

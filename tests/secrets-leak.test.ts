@@ -5,12 +5,12 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import { pathToFileURL } from "node:url";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-secrets-"));
-process.env.LH_DATA_DIR = path.join(TMP, "data");
-process.env.LH_AUTH_FILE = path.join(TMP, "auth.json");
-process.env.LH_IGNORE_ENV_KEYS = "1";
-delete process.env.LH_DESKTOP_SERVER;
-delete process.env.LH_DESKTOP_API_SECRET;
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-secrets-"));
+process.env.LANNA_DATA_DIR = path.join(TMP, "data");
+process.env.LANNA_AUTH_FILE = path.join(TMP, "auth.json");
+process.env.LANNA_IGNORE_ENV_KEYS = "1";
+delete process.env.LANNA_DESKTOP_SERVER;
+delete process.env.LANNA_DESKTOP_API_SECRET;
 
 const canary = (name: string) => `canary-${name}-7f3a9c2e51b84d60a1c3e5f70912ab34-wxyz`;
 const SECRETS: Record<string, string> = {
@@ -32,8 +32,8 @@ const CREDENTIAL_TOKENS = [
 	canary("xai-access"),
 ];
 
-fs.mkdirSync(process.env.LH_DATA_DIR, { recursive: true });
-fs.writeFileSync(process.env.LH_AUTH_FILE, JSON.stringify(SECRETS), { mode: 0o600 });
+fs.mkdirSync(process.env.LANNA_DATA_DIR, { recursive: true });
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, JSON.stringify(SECRETS), { mode: 0o600 });
 fs.writeFileSync(
 	path.join(TMP, "chatgpt-credentials.json"),
 	JSON.stringify({
@@ -184,7 +184,7 @@ describe("no route answers with a key or a sign-in token", () => {
 					host: "localhost:3010",
 					origin,
 					"sec-fetch-site": "same-origin",
-					"x-langharness-subscriptions": "1",
+					"x-lanna-subscriptions": "1",
 				},
 			}),
 		);
@@ -221,7 +221,7 @@ describe("redactSecrets", () => {
 	});
 
 	it("does not treat a short value as a secret to cut out of the text", () => {
-		fs.writeFileSync(process.env.LH_AUTH_FILE!, JSON.stringify({ ...SECRETS, SHORT_VAR: "abc" }), { mode: 0o600 });
+		fs.writeFileSync(process.env.LANNA_AUTH_FILE!, JSON.stringify({ ...SECRETS, SHORT_VAR: "abc" }), { mode: 0o600 });
 		assert.equal(redactSecrets("abc abc"), "abc abc");
 	});
 });

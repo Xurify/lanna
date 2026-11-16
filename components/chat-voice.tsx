@@ -101,7 +101,7 @@ export function LearnerLineView({
 	recede?: boolean;
 	titleRef?: Ref<HTMLHeadingElement>;
 }) {
-	const step = recede ? "lh-recede" : undefined;
+	const step = recede ? "lanna-recede" : undefined;
 	const { pdfs, images, rest } = splitAttachedPdfs(raw);
 	const text = rest || (pdfs[0]?.name ?? images[0]?.name ?? raw);
 	if (line.kind === "title") {
@@ -212,7 +212,7 @@ export function TutorWriting() {
 				<path
 					d="M2 8 C8 2 12 11 18 6 S28 3 32 7 S38 9 42 5"
 					pathLength={1}
-					className="lh-pen fill-none stroke-current"
+					className="lanna-pen fill-none stroke-current"
 					strokeWidth={1.6}
 					strokeLinecap="round"
 				/>

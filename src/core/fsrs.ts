@@ -1,5 +1,5 @@
 /**
- * FSRS-5 scheduler (LangHarness spaced review) — pure, browser-safe.
+ * FSRS-5 scheduler (spaced review) — pure, browser-safe.
  *
  * The Free Spaced Repetition Scheduler models each card's memory with two
  * numbers: STABILITY (days until recall probability falls to 90%) and

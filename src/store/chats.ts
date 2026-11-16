@@ -14,7 +14,7 @@ import { emit } from "../core/events.ts";
 import type { ChatStore } from "../core/ports.ts";
 import type { ChatRecord, ChatSettings, ChatSummary, PlanTree, TurnUsage } from "../core/contracts.ts";
 import { CURRENT_CHAT_VERSION } from "../core/contracts.ts";
-import type { LhMessage } from "../core/native-messages.ts";
+import type { LannaMessage } from "../core/native-messages.ts";
 import { danglingQuestionOf } from "../core/native-messages.ts";
 import { phaseAt3Lh } from "../core/phases.ts";
 
@@ -129,7 +129,7 @@ function listChats(): ChatSummary[] {
 /** Persist the full native message list (the record IS the agent state —
  *  Wave B: replay is state.messages = record.messages). SILENT by the
  *  events law — see the SILENCE LAW comment at createChat. */
-function saveMessages(id: string, messages: LhMessage[]): void {
+function saveMessages(id: string, messages: LannaMessage[]): void {
 	const record = getChat(id);
 	if (!record) throw new Error(`Chat not found: ${id}`);
 	record.messages = messages;
@@ -192,7 +192,7 @@ function renameChat(id: string, title: string): ChatRecord {
  *  2026-09-22). False when the id is unknown — the route turns that into
  *  a 404. The record's graph traces and jobs are the route's choreography
  *  (core/graph-deletion.ts), not the store's.
- *  LangHarness (Xurify, 2026-10-27: every generated thing is kept): the
+ *  Lanna (Xurify, 2026-10-27: every generated thing is kept): the
  *  file is MOVED to chats/trash/, not unlinked — a deleted session leaves
  *  the app but stays on disk for the corpus. Move it back up to restore. */
 function deleteChat(id: string): boolean {

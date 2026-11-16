@@ -4,7 +4,7 @@
  * Honest refusal: records stamped NEWER than this build are refused on
  * read (the downgrade scenario) — never misparsed, never rewritten.
  *
- * Runs under an isolated LH_DATA_DIR (the chat-birth-stamp discipline:
+ * Runs under an isolated LANNA_DATA_DIR (the chat-birth-stamp discipline:
  * the seam is set before any config-loading import, so every app-module
  * import is dynamic).
  */
@@ -16,9 +16,9 @@ import * as path from "node:path";
 import test from "node:test";
 
 // ── the seam, BEFORE any config-loading import ──────────────────────────────
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-stamps-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-stamps-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { chatStore } = await import("../src/store/chats.ts");
 

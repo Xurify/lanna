@@ -73,7 +73,7 @@ interface PdfReaderOptions {
 	onActivity?: (line: string) => void;
 	headless?: HeadlessApi;
 	maxIterations?: number;
-	/** Debug: raw provider-event recording key (LH_PROVIDER_EVENTS=1). */
+	/** Debug: raw provider-event recording key (LANNA_PROVIDER_EVENTS=1). */
 	chatId?: string;
 }
 

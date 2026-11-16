@@ -8,9 +8,9 @@ import { after, beforeEach, describe, test } from "node:test";
 // Next's server sets this before any request; without it Next's request store is a stub.
 (globalThis as { AsyncLocalStorage?: unknown }).AsyncLocalStorage ??= AsyncLocalStorage;
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-language-guard-"));
-process.env.LH_DATA_DIR = dir;
-delete process.env.LH_PROFILE;
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-language-guard-"));
+process.env.LANNA_DATA_DIR = dir;
+delete process.env.LANNA_PROFILE;
 
 const czech = path.join(dir, "languages", "czech");
 fs.mkdirSync(czech, { recursive: true });
@@ -193,7 +193,7 @@ describe("a page left open while another device switches", () => {
 	test("the Slovak phone's lesson and minutes land in Slovak after the PC switched to Czech", async () => {
 		const pc = await send("/api/profile", { active: "czech" }, { device: "slovak" });
 		assert.equal(pc.status, 200);
-		assert.match(pc.headers.get("set-cookie") ?? "", /lh-language=czech/);
+		assert.match(pc.headers.get("set-cookie") ?? "", /lanna-language=czech/);
 		assert.equal(config.defaultProfile(), "czech", "a new device starts in Czech");
 
 		const phone = { page: "slovak", device: "slovak" };
@@ -231,12 +231,12 @@ describe("the device's language cookie", () => {
 
 	test("a device that never chose gets the default on its first page", async () => {
 		config.switchProfile("czech");
-		assert.match((await page())?.headers.get("set-cookie") ?? "", /lh-language=czech/);
+		assert.match((await page())?.headers.get("set-cookie") ?? "", /lanna-language=czech/);
 	});
 
 	test("a device that chose keeps its choice, and one naming a removed language gets the default", async () => {
-		assert.equal((await page("lh-language=czech"))?.headers.get("set-cookie"), null);
-		assert.match((await page("lh-language=estonian"))?.headers.get("set-cookie") ?? "", /lh-language=slovak/);
+		assert.equal((await page("lanna-language=czech"))?.headers.get("set-cookie"), null);
+		assert.match((await page("lanna-language=estonian"))?.headers.get("set-cookie") ?? "", /lanna-language=slovak/);
 	});
 
 	test("an API call never sets it", async () => {

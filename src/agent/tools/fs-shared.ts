@@ -36,7 +36,7 @@ export const WALK_TIMEOUT_MS = 10_000;
 const EXCLUDED_DIR_NAMES = new Set(["node_modules", ".git", "Library", ".Trash"]);
 
 /**
- * Credential locations the fs tools never read, list or search (LangHarness,
+ * Credential locations the fs tools never read, list or search (Lanna,
  * 2026-10-26): whatever a tool returns goes to the model provider, and a
  * fetched page can talk the agent into reading a file. Directories are
  * matched by name anywhere in the path; files by basename.

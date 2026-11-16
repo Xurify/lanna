@@ -9,10 +9,10 @@ import { piModels } from "../src/agent/models.ts";
 import { toLlmMessages } from "../src/core/native-messages.ts";
 import { buildSubagentSteer } from "../src/core/contracts.ts";
 import { NATIVE_SUBSCRIPTIONS } from "../src/core/contracts/subscriptions.ts";
-const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lh-subscription-background-"));
-process.env.LH_DATA_DIR = path.join(directory, "data");
-process.env.LH_AUTH_FILE = path.join(directory, "auth.json");
-fs.writeFileSync(process.env.LH_AUTH_FILE, "{}");
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-subscription-background-"));
+process.env.LANNA_DATA_DIR = path.join(directory, "data");
+process.env.LANNA_AUTH_FILE = path.join(directory, "auth.json");
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
 const { stores } = await import("../src/server/stores.ts");
 const { beginTurn, endTurn } = await import("../src/server/turn-liveness.ts");
 const {
@@ -27,13 +27,13 @@ const {
 const { persistTurn } = await import("../src/server/turn-service.ts");
 const originalSend = Object.getOwnPropertyDescriptor(process, "send"),
 	originalConnected = Object.getOwnPropertyDescriptor(process, "connected");
-const marker = process.env.LH_DESKTOP_SERVER,
-	secret = process.env.LH_DESKTOP_API_SECRET;
+const marker = process.env.LANNA_DESKTOP_SERVER,
+	secret = process.env.LANNA_DESKTOP_API_SECRET;
 let revision = 0;
 function connection(providerId: string, background: boolean) {
 	revision++;
 	(process.emit as (event: string, value: unknown) => boolean)("message", {
-		channel: "lh:subscriptions",
+		channel: "lanna:subscriptions",
 		op: "changed",
 		snapshot: {
 			statuses: NATIVE_SUBSCRIPTIONS.map((p) => ({
@@ -52,8 +52,8 @@ function connection(providerId: string, background: boolean) {
 	});
 }
 before(() => {
-	process.env.LH_DESKTOP_SERVER = "1";
-	process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+	process.env.LANNA_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
 	Object.defineProperty(process, "send", {
 		configurable: true,
@@ -69,10 +69,10 @@ after(() => {
 	else delete process.send;
 	if (originalConnected) Object.defineProperty(process, "connected", originalConnected);
 	else delete (process as { connected?: boolean }).connected;
-	if (marker === undefined) delete process.env.LH_DESKTOP_SERVER;
-	else process.env.LH_DESKTOP_SERVER = marker;
-	if (secret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-	else process.env.LH_DESKTOP_API_SECRET = secret;
+	if (marker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+	else process.env.LANNA_DESKTOP_SERVER = marker;
+	if (secret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+	else process.env.LANNA_DESKTOP_API_SECRET = secret;
 });
 for (const p of NATIVE_SUBSCRIPTIONS)
 	for (const revokeAfterQueue of [false, true])

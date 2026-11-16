@@ -100,10 +100,10 @@ export function parseBrowserServiceLine(line: string): number | null {
 export function browserServiceSpawnEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
 	const out: Record<string, string | undefined> = { ...env };
 	delete out.ELECTRON_RUN_AS_NODE;
-	delete out.LH_DEV_URL;
+	delete out.LANNA_DEV_URL;
 	// The artifact renderer is not an authorized app API client.
-	delete out.LH_DESKTOP_API_SECRET;
-	delete out.LH_DESKTOP_SERVER;
+	delete out.LANNA_DESKTOP_API_SECRET;
+	delete out.LANNA_DESKTOP_SERVER;
 	return out;
 }
 

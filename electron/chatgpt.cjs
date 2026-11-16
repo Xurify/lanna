@@ -1,6 +1,6 @@
 "use strict";
 
-// LangHarness-owned public-client OAuth. Never import pi's bundled login.
+// Lanna-owned public-client OAuth. Never import pi's bundled login.
 // This module is main-process-only; dependencies are injectable for scratch tests.
 const crypto = require("node:crypto");
 const http = require("node:http");
@@ -187,7 +187,7 @@ function createChatGPT({
 	const backgroundAllowed = () => state?.allowBackgroundUse !== false && backgroundIntent?.enabled !== false;
 	const notify = (invalidate = "none") => {
 		revision++;
-		onChange({ channel: "lh:chatgpt", kind: "state", stamp: stamp(), status: snapshot(), invalidate });
+		onChange({ channel: "lanna:chatgpt", kind: "state", stamp: stamp(), status: snapshot(), invalidate });
 	};
 	function stop(backgroundOnly = false) {
 		if (backgroundOnly) {
@@ -447,7 +447,7 @@ function createChatGPT({
 				consumed = true;
 				res
 					.writeHead(200, { "content-type": "text/plain; charset=utf-8" })
-					.end("Return to LangHarness to view the sign-in result. You may close this tab.");
+					.end("Return to Lanna to view the sign-in result. You may close this tab.");
 				cleanup();
 				try {
 					if (params.has("error")) throw fail(params.get("error") === "access_denied" ? "cancelled" : "identity");
@@ -512,7 +512,7 @@ function createChatGPT({
 			const url = new URL(AUTHORIZE);
 			url.search = new URLSearchParams({
 				client_id: selected?.clientId ?? "dynamic_agent_client",
-				...(selected ? {} : { agent_name_hint: "LangHarness" }),
+				...(selected ? {} : { agent_name_hint: "Lanna" }),
 				ext_agent_host_id: state.hostId,
 				...(selected?.tokens?.idToken ? { id_token_hint: selected.tokens.idToken } : {}),
 				...(selected?.email ? { login_hint: selected.email } : {}),

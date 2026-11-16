@@ -9,8 +9,8 @@ import { chatGPTHistory, chatGPTPayload } from "../src/agent/chatgpt-stream.ts";
 const originalSend = Object.getOwnPropertyDescriptor(process, "send");
 const originalConnected = Object.getOwnPropertyDescriptor(process, "connected");
 const realFetch = globalThis.fetch;
-const desktopMarker = process.env.LH_DESKTOP_SERVER,
-	desktopSecret = process.env.LH_DESKTOP_API_SECRET;
+const desktopMarker = process.env.LANNA_DESKTOP_SERVER,
+	desktopSecret = process.env.LANNA_DESKTOP_API_SECRET;
 const originalKey = process.env.OPENAI_API_KEY;
 let leaseError: string | null = null;
 let requests: { authorization: string | null; body: Record<string, any>; url: string }[] = [];
@@ -35,8 +35,8 @@ const status = {
 	error: null,
 };
 before(async () => {
-	process.env.LH_DESKTOP_SERVER = "1";
-	process.env.LH_DESKTOP_API_SECRET = "d".repeat(64);
+	process.env.LANNA_DESKTOP_SERVER = "1";
+	process.env.LANNA_DESKTOP_API_SECRET = "d".repeat(64);
 	assert(model);
 	process.env.OPENAI_API_KEY = "sk-scratch-must-never-be-used";
 	Object.defineProperty(process, "connected", { configurable: true, value: true });
@@ -45,7 +45,7 @@ before(async () => {
 		value: (message: any, callback?: () => void) => {
 			queueMicrotask(() => {
 				ipc({
-					channel: "lh:chatgpt",
+					channel: "lanna:chatgpt",
 					id: message.id,
 					op: message.op,
 					...(message.op === "lease" && leaseError
@@ -93,10 +93,10 @@ before(async () => {
 	};
 });
 after(() => {
-	if (desktopMarker === undefined) delete process.env.LH_DESKTOP_SERVER;
-	else process.env.LH_DESKTOP_SERVER = desktopMarker;
-	if (desktopSecret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-	else process.env.LH_DESKTOP_API_SECRET = desktopSecret;
+	if (desktopMarker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+	else process.env.LANNA_DESKTOP_SERVER = desktopMarker;
+	if (desktopSecret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+	else process.env.LANNA_DESKTOP_API_SECRET = desktopSecret;
 	globalThis.fetch = realFetch;
 	if (originalSend) Object.defineProperty(process, "send", originalSend);
 	else delete process.send;
@@ -148,7 +148,7 @@ test("alias resolves only OAuth; native Responses body is stateless/namespaced, 
 		id: "fc_scratch",
 		call_id: "call_scratch",
 		name: "scratch_tool",
-		namespace: "langharness",
+		namespace: "lanna",
 		arguments: '{"value":"yes"}',
 		status: "completed",
 	};
@@ -200,11 +200,11 @@ test("alias resolves only OAuth; native Responses body is stateless/namespaced, 
 	assert.equal(body.input[0].role, "developer");
 	assert.equal(body.input[1].content[1].type, "input_image");
 	assert.equal(body.tools[0].type, "namespace");
-	assert.equal(body.tools[0].name, "langharness");
+	assert.equal(body.tools[0].name, "lanna");
 	assert.equal(body.tools[0].tools[0].name, "scratch_tool");
 	const call = result.content.find((block) => block.type === "toolCall")!;
 	assert.equal(call.id, "call_scratch|fc_scratch");
-	assert.equal(call.namespace, "langharness");
+	assert.equal(call.namespace, "lanna");
 	const thinking = result.content.find((block) => block.type === "thinking")!;
 	assert.equal(thinking.thinkingSignature, JSON.stringify(reasoning));
 	const history = normalizeContext({
@@ -226,47 +226,9 @@ test("alias resolves only OAuth; native Responses body is stateless/namespaced, 
 	const replay = requests[1]!.body.input;
 	assert(replay.some((item: any) => item.encrypted_content === "scratch-encrypted-reasoning"));
 	assert(
-		replay.some(
-			(item: any) => item.type === "function_call" && item.id === "fc_scratch" && item.namespace === "langharness",
-		),
+		replay.some((item: any) => item.type === "function_call" && item.id === "fc_scratch" && item.namespace === "lanna"),
 	);
 	assert(replay.some((item: any) => item.type === "function_call_output" && item.call_id === "call_scratch"));
-});
-
-test("legacy learnharness toolCall namespace normalizes to langharness on replay without mutating source", () => {
-	const legacyCall = {
-		type: "toolCall" as const,
-		id: "call_legacy|fc_legacy",
-		name: "scratch_tool",
-		namespace: "learnharness",
-		arguments: { value: "yes" },
-	};
-	const legacyAssistant: AssistantMessage = {
-		role: "assistant",
-		provider: "chatgpt",
-		api: "openai-responses",
-		model: model.id,
-		content: [legacyCall],
-		stopReason: "toolUse",
-		usage: {
-			input: 1,
-			output: 0,
-			cacheRead: 0,
-			cacheWrite: 0,
-			totalTokens: 1,
-			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-		},
-		timestamp: 1,
-	};
-	const transformed = chatGPTHistory(normalizeContext({ messages: [legacyAssistant] }), {
-		...model,
-		provider: "chatgpt",
-	});
-	const replayed = transformed.messages[0] as AssistantMessage;
-	assert.equal(replayed.provider, "openai");
-	assert.equal(replayed.content[0]!.type, "toolCall");
-	assert.equal((replayed.content[0] as { namespace?: string }).namespace, "langharness");
-	assert.equal(legacyCall.namespace, "learnharness", "source toolCall must not be mutated");
 });
 
 test("mixed history never blanket-relabels API providers or reuses foreign reasoning signatures", () => {
@@ -351,7 +313,7 @@ test("consent revocation cancels only applicable background streams and preserve
 	const foreground = chatGPTAbortController(false);
 	const background = chatGPTAbortController(true);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 2 },
 		status,
@@ -463,7 +425,7 @@ test("full credential-storage invalidation aborts foreground and background cont
 	const foreground = chatGPTAbortController(false),
 		background = chatGPTAbortController(true);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 2, authorityRevision: 2, revision: 3 },
 		status: { ...status, available: false },

@@ -1,5 +1,5 @@
 /**
- * Milestones persistence (LangHarness, 2026-10-28) — the active profile's
+ * Milestones persistence (2026-10-28) — the active profile's
  * data/profiles/<language>/milestones.json: the milestones the learner
  * wrote in their own words, with the cheap model's mapping of each to a
  * genre, a coverage target and a speed, so a milestone is paid for once

@@ -272,7 +272,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 							onClick={() => void finish()}
 							aria-label="Done talking"
 							className={cn(
-								"lh-press relative flex size-16 shrink-0 items-center justify-center rounded-full text-sun-ink",
+								"lanna-press relative flex size-16 shrink-0 items-center justify-center rounded-full text-sun-ink",
 								listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
 							)}
 							data-testid="self-talk-stop"
@@ -328,7 +328,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 				<div className="mx-auto w-full max-w-5xl px-5 pt-[5vh] pb-12 @md:px-6">
 					<Link
 						href="/"
-						className="lh-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
+						className="lanna-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
 					>
 						<ArrowLeftIcon className="size-3.5" />
 						Today
@@ -369,7 +369,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 														data-prompt-row={p.id}
 														data-testid={`prompt-${p.id}`}
 														className={cn(
-															"lh-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors",
+															"lanna-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors",
 															on ? "bg-well" : "hover:bg-well",
 														)}
 													>
@@ -427,7 +427,7 @@ function PromptSheet({
 	return (
 		<article
 			className={cn(
-				inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lh-rise border-l border-[var(--q-line)] pl-8",
+				inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lanna-rise border-l border-[var(--q-line)] pl-8",
 			)}
 			data-testid={tid("self-talk-sheet")}
 			aria-label={prompt.title}
@@ -518,7 +518,7 @@ function WordList({ words, lang, used }: { words: UsefulChunk[]; lang?: string; 
 							onClick={() => void speak(w.sk).catch(() => {})}
 							aria-label={`Play: ${w.sk}, ${w.en}`}
 							className={cn(
-								"lh-press flex items-baseline gap-1.5 rounded-md px-2.5 py-1 transition-colors pointer-coarse:py-2",
+								"lanna-press flex items-baseline gap-1.5 rounded-md px-2.5 py-1 transition-colors pointer-coarse:py-2",
 								hit ? "bg-teal-wash text-teal-2" : "bg-well text-foreground hover:bg-well-2",
 							)}
 						>

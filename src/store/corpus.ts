@@ -1,5 +1,5 @@
 /**
- * The corpus store (LangHarness, Xurify 2026-10-27: "will all of this be
+ * The corpus store (Xurify 2026-10-27: "will all of this be
  * saved? … I could use it to build a language learning app and save money
  * by not regenerating everything") — everything the app pays a provider
  * for, or the learner produces, is kept on disk in open formats, indexed,

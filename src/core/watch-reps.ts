@@ -1,5 +1,5 @@
 /**
- * Watch lines that come back in Listen (LangHarness, 2026-11-05; proposal 7
+ * Watch lines that come back in Listen (2026-11-05; proposal 7
  * in docs/research/creator-hooks.md). A line the learner did not understand
  * on the first unaided listen in Watch is kept, and Listen plays it again
  * over the next days until it has been understood three times.

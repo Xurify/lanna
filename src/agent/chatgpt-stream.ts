@@ -59,9 +59,7 @@ export function chatGPTPayload(raw: unknown, selectedModelId: string): Record<st
 	if (Array.isArray(payload.tools) && payload.tools.length) {
 		if (payload.tools.some((tool) => tool.type !== "function" && tool.type !== "custom"))
 			throw new Error("Unsupported ChatGPT tool capability");
-		out.tools = [
-			{ type: "namespace", name: "langharness", description: "LangHarness local learning tools", tools: payload.tools },
-		];
+		out.tools = [{ type: "namespace", name: "lanna", description: "Lanna local learning tools", tools: payload.tools }];
 	}
 	return out;
 }
@@ -73,21 +71,9 @@ export function chatGPTHistory(context: TranscriptContext, logicalModel: Model<A
 	const messages = transformMessages(context.messages, logicalModel);
 	return {
 		...context,
-		messages: messages.map((m) => {
-			if (m.role !== "assistant") return m;
-			const hasLegacyNamespace = m.content.some(
-				(item) => item.type === "toolCall" && item.namespace === "learnharness",
-			);
-			const content = hasLegacyNamespace
-				? m.content.map((item) =>
-						item.type === "toolCall" && item.namespace === "learnharness"
-							? { ...item, namespace: "langharness" }
-							: item,
-					)
-				: m.content;
-			if (m.provider !== "chatgpt" && !hasLegacyNamespace) return m;
-			return { ...m, ...(m.provider === "chatgpt" ? { provider: "openai" } : {}), content };
-		}),
+		messages: messages.map((m) =>
+			m.role === "assistant" && m.provider === "chatgpt" ? { ...m, provider: "openai" } : m,
+		),
 	};
 }
 function empty(model: Model<Api>): AssistantMessage {

@@ -27,7 +27,7 @@ xai-credentials.json*
 _backup-before-redesign/
 _backup-before-curriculum/
 *.bundle
-langharness-2.tar.gz
+lanna-2.tar.gz
 
 # Deploy leftovers from assistant threads (never needed)
 _handoff/

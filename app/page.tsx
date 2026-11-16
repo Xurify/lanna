@@ -11,7 +11,7 @@ import {
 } from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
-export const metadata = { title: { absolute: "Today · LangHarness" } };
+export const metadata = { title: { absolute: "Today · Lanna" } };
 
 // Dynamic: the configured state is server-rendered into the page (Talk and
 // Story need a model; without one they open the setup dialog first).

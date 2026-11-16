@@ -1,5 +1,5 @@
 /**
- * Measured minutes (LangHarness, 2026-10-29) — how long the learner was
+ * Measured minutes (2026-10-29) — how long the learner was
  * actually practicing, per activity, instead of one wall-clock number.
  *
  * Two rules, because the tasks behave differently:

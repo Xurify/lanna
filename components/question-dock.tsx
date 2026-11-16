@@ -332,7 +332,7 @@ function QuestionDockForm({
 	// between questions, so each question starts fresh at 50.
 	const [confIdx, setConfIdx] = useState<number>(initialDraft?.confidenceIndex ?? DEFAULT_CONFIDENCE_INDEX);
 	const selectMode: SelectMode = qd.mode === "multi-select" ? "multi-select" : "single-select";
-	/* ONE TAP (LangHarness redesign): the confidence slider and the thinking
+	/* ONE TAP (redesign): the confidence slider and the thinking
 	 * field cost ~60 s a question and were left untouched most of the time,
 	 * so they sit behind "Explain my reasoning". Closed, a single-select
 	 * click IS the answer; open, the dock is the full reasoning surface. */
@@ -651,7 +651,7 @@ function QuestionDockForm({
 											// records must not leak either. Same MessageResponse path as the
 											// label (owner, 2026-10-12): descriptions are full markdown,
 											// not plain text.
-											<ToolContentResponse className="lh-prose block text-xs text-muted-foreground">
+											<ToolContentResponse className="lanna-prose block text-xs text-muted-foreground">
 												{opt.description}
 											</ToolContentResponse>
 										)}
@@ -755,7 +755,7 @@ function QuestionDockForm({
 										}
 									}}
 									placeholder="Type your own answer…"
-									className="lh-input w-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+									className="lanna-input w-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
 									onClick={(e) => e.stopPropagation()}
 								/>
 							</div>
@@ -932,7 +932,7 @@ function QuestionDockForm({
 								}}
 								placeholder="Type your answer…"
 								rows={1}
-								className="field-sizing-content lh-input max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
+								className="field-sizing-content lanna-input max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground"
 							/>
 						) : (
 							<textarea
@@ -963,7 +963,7 @@ function QuestionDockForm({
 								placeholder="Why this answer? Whatever comes to mind."
 								rows={1}
 								className={cn(
-									"field-sizing-content lh-input max-h-48 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
+									"field-sizing-content lanna-input max-h-48 w-full resize-none bg-transparent px-2.5 py-2 outline-none placeholder:text-muted-foreground",
 									// Phase-scaled prominence: teaching invites depth,
 									// probing stays quick.
 									phase === "teach" ? "min-h-[4.5rem]" : "min-h-10",

@@ -1,5 +1,5 @@
 /**
- * The four strands (LangHarness, 2026-10-28) — Paul Nation's balance for
+ * The four strands (2026-10-28) — Paul Nation's balance for
  * a language course, and the app's week measured against it.
  *
  * Nation (2007): a well-balanced course gives roughly a quarter of its

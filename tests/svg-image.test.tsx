@@ -85,7 +85,7 @@ describe("generated SVG image boundary", () => {
 				);
 				const { document } = parseHTML(html);
 				const holder = document.querySelector(
-					mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]",
+					mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lanna-overlay-chart]",
 				)!;
 				assertImageBoundary(holder, source);
 				assert.ok(holder.classList.contains("bg-white"), "white backing retained");
@@ -115,7 +115,7 @@ describe("generated SVG image boundary", () => {
 				);
 				const { document } = parseHTML(html);
 				const holder = document.querySelector(
-					mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]",
+					mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lanna-overlay-chart]",
 				)!;
 				assertImageBoundary(holder, display);
 				assert.equal(output.svg, original, "artifact source was not mutated");
@@ -132,7 +132,7 @@ describe("generated SVG image boundary", () => {
 			);
 			const { document } = parseHTML(html);
 			const holder = document.querySelector(
-				mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lh-overlay-chart]",
+				mode === "inline" ? '[data-testid="visual-svg"]' : "[data-lanna-overlay-chart]",
 			)!;
 			assert.match(holder.getAttribute("style")!, /invert\(1\) hue-rotate\(180deg\)/);
 			assert.ok(holder.classList.contains("bg-white"));
@@ -161,7 +161,7 @@ describe("generated SVG image boundary", () => {
 
 	it("fullscreen: keeps the natural-size box and zoom controls", () => {
 		const { document } = parseHTML(renderToStaticMarkup(<MermaidOverlay svg={FIGURE} onClose={() => {}} />));
-		const holder = document.querySelector("[data-lh-overlay-chart]")!;
+		const holder = document.querySelector("[data-lanna-overlay-chart]")!;
 		assert.equal(assertImageBoundary(holder, FIGURE).className, "block h-auto w-full");
 		assert.match(holder.parentElement!.getAttribute("style")!, /width:320px/);
 		for (const label of ["Zoom in", "Zoom out", "Fit diagram to view", "Close"]) {
@@ -219,7 +219,7 @@ it("the fullscreen button opens the same SVG image and inversion; download keeps
 				.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
 		});
 		const inline = assertImageBoundary(host.querySelector('[data-testid="visual-svg"]')!, displaySvg);
-		const overlayHolder = host.querySelector("[data-lh-overlay-chart]")!;
+		const overlayHolder = host.querySelector("[data-lanna-overlay-chart]")!;
 		const fullscreen = assertImageBoundary(overlayHolder, displaySvg);
 		assert.equal(fullscreen.getAttribute("src"), inline.getAttribute("src"));
 		assert.match(overlayHolder.getAttribute("style")!, /invert\(1\) hue-rotate\(180deg\)/);

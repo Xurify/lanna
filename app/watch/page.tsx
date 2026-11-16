@@ -5,7 +5,7 @@ export const metadata = { title: "Media" };
 
 export const dynamic = "force-dynamic";
 
-/** Watch (LangHarness): a YouTube video the learner chose, with both
+/** Watch: a YouTube video the learner chose, with both
  *  subtitles, one line at a time, every word tappable, questions at the
  *  end. ?id=<video> opens a prepared video from the library; ?url=<link>
  *  prepares one. The state and the picks are read with the page so the

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /progress — everything about the road, in one place (LangHarness,
+ * /progress — everything about the road, in one place (Lanna,
  * 2026-10-28). Xurify: the goal line on Today was crowded and its tools
  * hard to find, the date should move "seamlessly" as you tweak the time
  * you give it (the way Acorns shows when you will reach a sum), and the
@@ -157,7 +157,7 @@ export function PlanPage({
 
 	return (
 		<div className="relative min-h-dvh bg-background">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>

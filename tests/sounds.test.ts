@@ -1,5 +1,5 @@
 /**
- * ZVUK PINS (LangHarness, phase 7): the sounds file's shape, the drop rule
+ * ZVUK PINS (phase 7): the sounds file's shape, the drop rule
  * (the twins differ in exactly one sound, every shadow line is a verified
  * example of one twin and holds only that twin), the listening check's
  * order, the shadowing verdict, and the clarity thresholds the verdict reads

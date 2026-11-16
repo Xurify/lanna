@@ -44,7 +44,7 @@ test("desktop capability injects only trusted app mainframe exact-origin API req
 		{ initiatorOrigin: "null" },
 	]) {
 		const result = desktopAPIHeaders(
-			{ ...details, ...mutation, requestHeaders: { "X-LangHarness-Desktop": secret } },
+			{ ...details, ...mutation, requestHeaders: { "X-Lanna-Desktop": secret } },
 			origin,
 			secret,
 			[win],
@@ -72,19 +72,22 @@ test("desktop capability injects only trusted app mainframe exact-origin API req
 test("all methods fail closed for desktop missing/wrong secret; the matcher covers API and pages, not static assets", async () => {
 	assert(desktopAPIAuthorized(new Headers(), {}), "browser-only API-key mode unchanged");
 	assert(
-		!desktopAPIAuthorized(new Headers({ [HEADER]: secret }), { LH_DESKTOP_SERVER: "1" }),
+		!desktopAPIAuthorized(new Headers({ [HEADER]: secret }), { LANNA_DESKTOP_SERVER: "1" }),
 		"missing server secret must not disable authorization",
 	);
 	for (const value of [undefined, "", "wrong", secret + ", " + secret]) {
 		assert(
 			!desktopAPIAuthorized(new Headers(value === undefined ? {} : { [HEADER]: value }), {
-				LH_DESKTOP_SERVER: "1",
-				LH_DESKTOP_API_SECRET: secret,
+				LANNA_DESKTOP_SERVER: "1",
+				LANNA_DESKTOP_API_SECRET: secret,
 			}),
 		);
 	}
 	assert(
-		desktopAPIAuthorized(new Headers({ [HEADER]: secret }), { LH_DESKTOP_SERVER: "1", LH_DESKTOP_API_SECRET: secret }),
+		desktopAPIAuthorized(new Headers({ [HEADER]: secret }), {
+			LANNA_DESKTOP_SERVER: "1",
+			LANNA_DESKTOP_API_SECRET: secret,
+		}),
 	);
 	for (const pathname of ["/api/events", "/api/chat", "/api/settings/models", "/api/chats/scratch/markdown"])
 		assert(unstable_doesProxyMatch({ config, nextConfig: {}, url: origin + pathname }));
@@ -98,11 +101,11 @@ test("all methods fail closed for desktop missing/wrong secret; the matcher cove
 		"/favicon.ico",
 	])
 		assert(!unstable_doesProxyMatch({ config, nextConfig: {}, url: origin + pathname }), pathname);
-	const originalMarker = process.env.LH_DESKTOP_SERVER;
-	const originalSecret = process.env.LH_DESKTOP_API_SECRET;
+	const originalMarker = process.env.LANNA_DESKTOP_SERVER;
+	const originalSecret = process.env.LANNA_DESKTOP_API_SECRET;
 	try {
-		process.env.LH_DESKTOP_SERVER = "1";
-		process.env.LH_DESKTOP_API_SECRET = secret;
+		process.env.LANNA_DESKTOP_SERVER = "1";
+		process.env.LANNA_DESKTOP_API_SECRET = secret;
 		for (const method of ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]) {
 			assert.equal((await proxy(new NextRequest(origin + "/api/settings", { method }))).status, 403);
 			assert.equal(
@@ -113,10 +116,10 @@ test("all methods fail closed for desktop missing/wrong secret; the matcher cove
 			);
 		}
 	} finally {
-		if (originalMarker === undefined) delete process.env.LH_DESKTOP_SERVER;
-		else process.env.LH_DESKTOP_SERVER = originalMarker;
-		if (originalSecret === undefined) delete process.env.LH_DESKTOP_API_SECRET;
-		else process.env.LH_DESKTOP_API_SECRET = originalSecret;
+		if (originalMarker === undefined) delete process.env.LANNA_DESKTOP_SERVER;
+		else process.env.LANNA_DESKTOP_SERVER = originalMarker;
+		if (originalSecret === undefined) delete process.env.LANNA_DESKTOP_API_SECRET;
+		else process.env.LANNA_DESKTOP_API_SECRET = originalSecret;
 	}
 });
 
@@ -161,7 +164,7 @@ test("renderer controls have no lease or general token bridge, and require the t
 	mainFrame.url = "https://thirdparty.invalid/";
 	assert(!trustedSender({ sender: contents, senderFrame: mainFrame }, origin, BrowserWindow));
 	assert.equal(
-		browserServiceSpawnEnv({ LH_DESKTOP_API_SECRET: secret, LH_DESKTOP_SERVER: "1" }).LH_DESKTOP_API_SECRET,
+		browserServiceSpawnEnv({ LANNA_DESKTOP_API_SECRET: secret, LANNA_DESKTOP_SERVER: "1" }).LANNA_DESKTOP_API_SECRET,
 		undefined,
 	);
 });

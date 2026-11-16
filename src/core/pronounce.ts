@@ -1,5 +1,5 @@
 /**
- * Pronunciation (LangHarness, 2026-10-28) — the accuracy side of speaking.
+ * Pronunciation (2026-10-28) — the accuracy side of speaking.
  * Saying a line fast is worth nothing if it cannot be followed, so a
  * spoken pass in "say it faster" and every spoken turn in a scene get a
  * score as well as a time.

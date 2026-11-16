@@ -1,6 +1,6 @@
 # Your own reading: articles and newsletters, retold at the learner's level
 
-_LangHarness, 2026-11-11. Thread "Read opens the library; import articles, links and emails". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/server/read-import.ts`, `src/store/reading-sources.ts`, `components/reading/`._
+_Lanna, 2026-11-11. Thread "Read opens the library; import articles, links and emails". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/server/read-import.ts`, `src/store/reading-sources.ts`, `components/reading/`._
 
 ## The question
 

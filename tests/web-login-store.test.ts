@@ -4,8 +4,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-web-login-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-web-login-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const login = await import("../src/server/web-login-store.ts");
 const access = await import("../src/server/remote-access-store.ts");

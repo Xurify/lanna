@@ -1,5 +1,5 @@
 /**
- * Watch service (LangHarness, 2026-10-28) — behind /watch and /api/watch.
+ * Watch service (2026-10-28) — behind /watch and /api/watch.
  * Turns a pasted YouTube link into a guided video: the Slovak caption
  * track is fetched (YouTube's own, through the player API or the watch
  * page; yt-dlp when the app cannot; a Deepgram transcription of the
@@ -487,7 +487,7 @@ async function captionsViaYtDlp(
 ): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin) return null;
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-captions-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-captions-"));
 	try {
 		const subLangs = langs.map((lang) => `${lang},${lang}-orig,${lang}.*`).join(",");
 		const { stdout } = await run(
@@ -791,7 +791,7 @@ async function captionsViaAudioTranscription(
 ): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin || !(await canTranscribeAudio())) return null;
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-audio-"));
 	try {
 		const { stdout } = await run(
 			bin,

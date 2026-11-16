@@ -1,5 +1,5 @@
 /**
- * First tries (LangHarness, 2026-10-31): the first answer a learner gave to
+ * First tries (2026-10-31): the first answer a learner gave to
  * a form, before any help. A lesson records its final answer for XP and the
  * path, and a cue lets a miss come back right, so the final verdict hides how
  * the form went. The grammar atlas and the tutor read this measure instead:

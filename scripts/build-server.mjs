@@ -86,7 +86,7 @@ for (const extra of ["dist", path.join("node_modules", "electron")]) {
 for (const asset of [
 	path.join("src", "agent", "system-prompt.md"),
 	path.join("src", "agent", "prompts", "teacher", "20-teaching.md"),
-	// LangHarness: the language segments and the Slovak curriculum are read
+	// Lanna: the language segments and the Slovak curriculum are read
 	// from disk too (prompt composition, lexicon lookups, first-run seeding).
 	path.join("src", "agent", "prompts", "language", "10-slovak.md"),
 	path.join("src", "agent", "prompts", "language", "10-estonian.md"),

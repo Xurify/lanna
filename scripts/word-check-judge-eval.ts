@@ -3,7 +3,7 @@
  * first, then the Cheap slot) and saves each verdict beside the verdict
  * expected, for a person to read.
  *
- *   LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> \
+ *   LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<auth.json> \
  *     tsx scripts/word-check-judge-eval.ts <out-dir>
  *   ... tsx scripts/word-check-judge-eval.ts <out-dir> --dry   prints the prompts, calls nothing
  *
@@ -16,9 +16,9 @@ import path from "node:path";
 
 const [outDir, flag] = process.argv.slice(2);
 const dry = flag === "--dry";
-if (!outDir || !process.env.LH_DATA_DIR) {
+if (!outDir || !process.env.LANNA_DATA_DIR) {
 	console.error(
-		"usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> tsx scripts/word-check-judge-eval.ts <out-dir> [--dry]",
+		"usage: LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<auth.json> tsx scripts/word-check-judge-eval.ts <out-dir> [--dry]",
 	);
 	process.exit(1);
 }

@@ -1,5 +1,5 @@
 /**
- * Milestones service (LangHarness, 2026-10-28) — behind /milestones and
+ * Milestones service (2026-10-28) — behind /milestones and
  * /api/milestones. Gathers what the app knows about the learner into
  * LearnerFacts (src/core/milestones.ts) and estimates each milestone:
  *

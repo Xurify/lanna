@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /milestones — "When can I…?" (LangHarness, 2026-10-28). Xurify asked for
+ * /milestones — "When can I…?" (2026-10-28). Xurify asked for
  * a calculator with a memory: one that knows what they know and says when
  * they will understand most of a Slovak YouTube video. The page shows,
  * for each situation, the two gaps the research separates — words
@@ -242,7 +242,7 @@ export function MilestonesPage({
 
 	return (
 		<div className="relative min-h-dvh bg-background">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>
@@ -832,7 +832,7 @@ function MilestoneCard({
 			{scene && onSaveOutcome && <SceneDates scene={scene} onSave={onSaveOutcome} />}
 			{open && (
 				<div
-					className="border-t px-4 pb-4 pt-3 font-prose text-sm leading-relaxed text-muted-foreground lh-rise"
+					className="border-t px-4 pb-4 pt-3 font-prose text-sm leading-relaxed text-muted-foreground lanna-rise"
 					data-testid={`milestone-${m.def.id}-details`}
 				>
 					<p className="text-foreground">{m.verdict}</p>
@@ -1087,7 +1087,7 @@ function Meter({
 				aria-label={`${label}: ${line}`}
 			>
 				<span
-					className={cn("lh-fill absolute inset-0 rounded-full", full ? "bg-teal" : dim ? "bg-teal/50" : "bg-teal")}
+					className={cn("lanna-fill absolute inset-0 rounded-full", full ? "bg-teal" : dim ? "bg-teal/50" : "bg-teal")}
 					style={fillStyle(share)}
 				/>
 			</span>

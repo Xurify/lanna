@@ -1,6 +1,6 @@
 # When can I…? — the research behind the milestones page
 
-_LangHarness, 2026-10-28. Code: `src/core/milestones.ts` (the model), `src/server/milestones.ts` (the evidence), `components/milestones/milestones-page.tsx` (the page)._
+_Lanna, 2026-10-28. Code: `src/core/milestones.ts` (the model), `src/server/milestones.ts` (the evidence), `components/milestones/milestones-page.tsx` (the page)._
 
 The owner asked for a calculator that "has a memory and a brain, so it knows what we know" and says when they will "understand most of what I hear when I watch a Slovak YouTube video. Right now I get a lot of words, but I can't put them together into meaning fast enough, unless it's something I heard countless times or something basic."
 

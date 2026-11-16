@@ -36,7 +36,7 @@ export function PairForm({ next }: { next: string }) {
 			const body = (await res.json().catch(() => null)) as { error?: string } | null;
 			setError(body?.error ?? "This device could not be paired. Try again.");
 		} catch {
-			setError("LangHarness could not be reached. Check that Tailscale is on, then try again.");
+			setError("Lanna could not be reached. Check that Tailscale is on, then try again.");
 		} finally {
 			setBusy(false);
 		}

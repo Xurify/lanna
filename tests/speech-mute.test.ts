@@ -148,7 +148,7 @@ test("the snail plays slower than the speed setting, and leaves the setting alon
 	void speak("Ahoj", undefined, { slow: true });
 	await waitFor(() => made.length === 2);
 	stopSpeaking();
-	assert.equal(store.get("lh-tts-speed"), "1");
+	assert.equal(store.get("lanna-tts-speed"), "1");
 	void speak("Ahoj");
 	await waitFor(() => made.length === 3);
 	assert.equal(made[2]!.playbackRate, 1);
@@ -183,6 +183,6 @@ test("volume stays between 0 and 1, and a broken value reads as full", () => {
 	assert.equal(volume(), 1);
 	setVolume(-1);
 	assert.equal(volume(), 0);
-	store.set("lh-volume", "loud");
+	store.set("lanna-volume", "loud");
 	assert.equal(volume(), 1);
 });
