@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ImageIcon, LoaderCircleIcon, XIcon } from "lucide-react";
+import { ImageViewer, learnerImageSrc } from "@/components/image-viewer";
 import { Hint } from "@/components/ui/hint";
 import type { AttachedImage } from "@/src/core";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,22 @@ export function ChatImageButton({
 	);
 }
 
+function ChipThumb({ src }: { src: string }) {
+	const [failed, setFailed] = useState(false);
+	if (failed) {
+		return <ImageIcon className="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />;
+	}
+	return (
+		// eslint-disable-next-line @next/next/no-img-element
+		<img
+			src={src}
+			alt=""
+			onError={() => setFailed(true)}
+			className="size-5 shrink-0 rounded-xs object-cover bg-background/40"
+		/>
+	);
+}
+
 export function DraftImageChips({
 	images,
 	onRemove,
@@ -83,27 +100,42 @@ export function DraftImageChips({
 	onRemove: (img: AttachedImage) => void;
 	className?: string;
 }) {
+	const [open, setOpen] = useState<{ src: string; name: string } | null>(null);
+	const close = useCallback(() => setOpen(null), []);
 	if (images.length === 0) return null;
 	return (
-		<ul data-testid="draft-images" className={cn("flex min-w-0 flex-wrap gap-2", className)}>
-			{images.map((img) => (
-				<li
-					key={img.path}
-					title={img.path}
-					className="flex max-w-full min-w-0 items-center gap-1.5 rounded-md bg-well py-1 pr-1 pl-2.5 font-ui text-[13px] text-ink-2"
-				>
-					<ImageIcon className="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
-					<span className="truncate">{img.name}</span>
-					<button
-						type="button"
-						onClick={() => onRemove(img)}
-						aria-label={`Remove ${img.name}`}
-						className="flex size-5 shrink-0 items-center justify-center rounded text-ink-3 transition-colors hover:bg-well-2 hover:text-foreground"
-					>
-						<XIcon className="size-3.5" />
-					</button>
-				</li>
-			))}
-		</ul>
+		<>
+			<ul data-testid="draft-images" className={cn("flex min-w-0 flex-wrap gap-2", className)}>
+				{images.map((img) => {
+					const src = learnerImageSrc(img);
+					return (
+						<li
+							key={img.path}
+							className="flex max-w-full min-w-0 items-center gap-0.5 rounded-md bg-well p-1 font-ui text-[13px] text-ink-2"
+						>
+							<button
+								type="button"
+								title={`View ${img.name}`}
+								aria-label={`View ${img.name}`}
+								onClick={() => setOpen({ src, name: img.name })}
+								className="flex min-w-0 cursor-zoom-in items-center gap-1.5 rounded px-1.5 py-0.5 text-left transition-colors hover:bg-well-2 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal"
+							>
+								<ChipThumb src={src} />
+								<span className="truncate">{img.name}</span>
+							</button>
+							<button
+								type="button"
+								onClick={() => onRemove(img)}
+								aria-label={`Remove ${img.name}`}
+								className="flex size-5 shrink-0 items-center justify-center rounded text-ink-3 transition-colors hover:bg-well-2 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal"
+							>
+								<XIcon className="size-3.5" />
+							</button>
+						</li>
+					);
+				})}
+			</ul>
+			<ImageViewer src={open?.src ?? null} name={open?.name ?? ""} onClose={close} />
+		</>
 	);
 }

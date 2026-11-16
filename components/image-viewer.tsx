@@ -3,6 +3,12 @@
 import { useEffect, useRef } from "react";
 import { XIcon } from "lucide-react";
 import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
+import type { AttachedImage } from "@/src/core";
+
+export function learnerImageSrc(img: AttachedImage): string {
+	const fileName = img.path.split(/[/\\]/).pop() ?? img.name;
+	return `/api/learner-images?file=${encodeURIComponent(fileName)}`;
+}
 
 export function ImageViewer({ src, name, onClose }: { src: string | null; name: string; onClose: () => void }) {
 	const closeRef = useRef<HTMLButtonElement>(null);

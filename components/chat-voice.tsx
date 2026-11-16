@@ -10,7 +10,7 @@ import {
 	type AttachedPdf,
 	type LearnerLine,
 } from "@/src/core";
-import { ImageViewer } from "@/components/image-viewer";
+import { ImageViewer, learnerImageSrc } from "@/components/image-viewer";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<AnswerTone, string> = {
@@ -56,8 +56,7 @@ function ImageChips({ images, className }: { images: readonly AttachedImage[]; c
 		<>
 			<ul data-testid="attached-images" className={cn("flex flex-wrap gap-2.5", className)}>
 				{images.map((img) => {
-					const fileName = img.path.split(/[/\\]/).pop() ?? img.name;
-					const src = `/api/learner-images?file=${encodeURIComponent(fileName)}`;
+					const src = learnerImageSrc(img);
 					return (
 						<li key={img.path} className="max-w-full">
 							<button
