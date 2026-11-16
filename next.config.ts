@@ -1,11 +1,23 @@
 import { readFileSync } from "node:fs";
 import type { NextConfig } from "next";
 
-const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string; homepage: string };
+const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as {
+	version: string;
+	homepage: string;
+};
 
 const production = process.env.NODE_ENV === "production";
 
-const GOOGLE_AVATAR_HOSTS = ["yt3.ggpht.com", "yt4.ggpht.com", "yt3.googleusercontent.com", "yt4.googleusercontent.com", "lh3.googleusercontent.com", "lh4.googleusercontent.com", "lh5.googleusercontent.com", "lh6.googleusercontent.com"];
+const GOOGLE_AVATAR_HOSTS = [
+	"yt3.ggpht.com",
+	"yt4.ggpht.com",
+	"yt3.googleusercontent.com",
+	"yt4.googleusercontent.com",
+	"lh3.googleusercontent.com",
+	"lh4.googleusercontent.com",
+	"lh5.googleusercontent.com",
+	"lh6.googleusercontent.com",
+];
 
 // Next writes inline scripts for hydration and the theme, and a static header cannot carry the
 // per-request nonce that would replace 'unsafe-inline' (that needs the proxy). The directives
@@ -32,7 +44,10 @@ const SECURITY_HEADERS = [
 	{ key: "X-Frame-Options", value: "DENY" },
 	{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 	{ key: "Cross-Origin-Resource-Policy", value: "same-origin" },
-	{ key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self), payment=(), usb=(), serial=(), bluetooth=()" },
+	{
+		key: "Permissions-Policy",
+		value: "camera=(), geolocation=(), microphone=(self), payment=(), usb=(), serial=(), bluetooth=()",
+	},
 	...(production
 		? [
 				{ key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY },
@@ -42,9 +57,14 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
-	// The Progress page was /plan; old links and bookmarks keep working.
+	// Old links and bookmarks keep working: the Progress page was /plan, and the study was /experiment.
 	async redirects() {
-		return [{ source: "/plan", destination: "/progress", permanent: false }];
+		return [
+			{ source: "/plan", destination: "/progress", permanent: false },
+			{ source: "/experiment", destination: "/experiments/input-first", permanent: false },
+			{ source: "/experiment/check", destination: "/experiments/input-first/check", permanent: false },
+			{ source: "/experiments", destination: "/experiments/input-first", permanent: false },
+		];
 	},
 	async headers() {
 		return [{ source: "/:path*", headers: SECURITY_HEADERS }];
@@ -72,7 +92,8 @@ const nextConfig: NextConfig = {
 	// name. Next refuses a dev resource from any origin not listed here, so the page
 	// never hydrates and pairing does nothing. The name lives in .env.local, which is
 	// not committed, and only the dev server reads it, so a build never carries it.
-	allowedDevOrigins: process.env.NODE_ENV === "development" && process.env.LH_TAILNET_HOST ? [process.env.LH_TAILNET_HOST] : undefined,
+	allowedDevOrigins:
+		process.env.NODE_ENV === "development" && process.env.LH_TAILNET_HOST ? [process.env.LH_TAILNET_HOST] : undefined,
 	// SAFETY (empirically verified 2026-09-17): without this, output file
 	// tracing sweeps the repo's real data/ — chat records, graph ledgers —
 	// INTO the standalone bundle. A shipped desktop app would carry the
@@ -144,9 +165,6 @@ const nextConfig: NextConfig = {
 			// npm installs only the current platform's binary, so this glob
 			// resolves to exactly one Skia binary per build.
 			"node_modules/@napi-rs/canvas-*/**/*",
-			// Wave E stage 2: resvg rasterizes visual-maker SVGs natively; same
-			// per-platform-binary story as the canvas above (one per build).
-			"node_modules/@resvg/resvg-js-*/**/*",
 			"node_modules/@earendil-works/pi-ai/dist/providers/data/**/*",
 			// Public native OAuth factories load these flows through variable imports.
 			// Electron main uses the same standalone SDK; the offline runtime gate
@@ -172,7 +190,6 @@ const nextConfig: NextConfig = {
 		"@earendil-works/pi-agent-core",
 		"pdfjs-dist", // sources v0: bundling breaks its node fake-worker path
 		"@napi-rs/canvas", // native binding — bundling breaks the .node require
-		"@resvg/resvg-js", // native binding — same
 	],
 };
 

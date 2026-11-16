@@ -31,7 +31,9 @@ test.after(() => {
 test("chats: createChat stamps version 1 on disk", () => {
 	const r = chatStore.createChat("stamp test");
 	assert.equal(r.version, 1, "the in-memory twin is stamped");
-	const onDisk = JSON.parse(fs.readFileSync(path.join(TMP_DATA, "profiles", "slovak", "chats", `${r.id}.json`), "utf8"));
+	const onDisk = JSON.parse(
+		fs.readFileSync(path.join(TMP_DATA, "profiles", "slovak", "chats", `${r.id}.json`), "utf8"),
+	);
 	assert.equal(onDisk.version, 1, "the record carries the stamp");
 });
 
@@ -40,7 +42,13 @@ test("chats: an UNSTAMPED legacy record reads fine (absence = v1) and is stamped
 	fs.mkdirSync(path.join(TMP_DATA, "profiles", "slovak", "chats"), { recursive: true });
 	fs.writeFileSync(
 		path.join(TMP_DATA, "profiles", "slovak", "chats", `${id}.json`),
-		JSON.stringify({ id, title: "legacy", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), messages: [] }),
+		JSON.stringify({
+			id,
+			title: "legacy",
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			messages: [],
+		}),
 		"utf-8",
 	);
 	const r = chatStore.getChat(id);
@@ -54,7 +62,14 @@ test("chats: a NEWER-stamped record is refused honestly (the downgrade scenario)
 	const id = "chat_future000_stamp0";
 	fs.writeFileSync(
 		path.join(TMP_DATA, "profiles", "slovak", "chats", `${id}.json`),
-		JSON.stringify({ id, title: "from the future", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), messages: [], version: 99 }),
+		JSON.stringify({
+			id,
+			title: "from the future",
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			messages: [],
+			version: 99,
+		}),
 		"utf-8",
 	);
 	assert.equal(chatStore.getChat(id), null, "getChat refuses: reads as absent, never misparsed");
@@ -68,6 +83,8 @@ test("chats: a NEWER-stamped record is refused honestly (the downgrade scenario)
 
 test("golden fixtures are deliberately the unstamped legacy shape (lazy v1 = current-valid)", () => {
 	const here = import.meta.dirname;
-	const teach = JSON.parse(fs.readFileSync(path.join(here, "fixtures", "golden-data", "chats", "chat_mv27rrra_feff23b6.json"), "utf8"));
+	const teach = JSON.parse(
+		fs.readFileSync(path.join(here, "fixtures", "golden-data", "chats", "chat_mv27rrra_feff23b6.json"), "utf8"),
+	);
 	assert.equal(teach.version, undefined, "fixture records pin the unstamped read path");
 });

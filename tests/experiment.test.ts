@@ -169,8 +169,23 @@ test("weeklyCheckRows opens a check on its day and counts a repeated item once",
 		gitCommit: "",
 		decisionRule: "",
 	};
-	const item = (type: "probe" | "production", n: number, score: number): CheckItemRecord => ({ date: "2026-11-16", week: 1, dayNumber: 7, language: "russian", type, itemId: `${type}-${n}`, prompt: "", expected: "", response: "", score, verdict: "" });
-	const firstTry = [...Array.from({ length: 10 }, (_, n) => item("probe", n, n < 6 ? 1 : 0)), ...Array.from({ length: 5 }, (_, n) => item("production", n, 0.8))];
+	const item = (type: "probe" | "production", n: number, score: number): CheckItemRecord => ({
+		date: "2026-11-16",
+		week: 1,
+		dayNumber: 7,
+		language: "russian",
+		type,
+		itemId: `${type}-${n}`,
+		prompt: "",
+		expected: "",
+		response: "",
+		score,
+		verdict: "",
+	});
+	const firstTry = [
+		...Array.from({ length: 10 }, (_, n) => item("probe", n, n < 6 ? 1 : 0)),
+		...Array.from({ length: 5 }, (_, n) => item("production", n, 0.8)),
+	];
 	const secondTry = [item("probe", 9, 1)];
 
 	const beforeTheDay = weeklyCheckRows(config, [], 6);
@@ -178,7 +193,10 @@ test("weeklyCheckRows opens a check on its day and counts a repeated item once",
 	assert.ok(beforeTheDay.every((r) => r.state === "ahead"));
 
 	const onTheDay = weeklyCheckRows(config, [], 7);
-	assert.deepEqual(onTheDay.filter((r) => r.state === "open").map((r) => `${r.week}:${r.language}`), ["1:russian", "1:slovak"]);
+	assert.deepEqual(
+		onTheDay.filter((r) => r.state === "open").map((r) => `${r.week}:${r.language}`),
+		["1:russian", "1:slovak"],
+	);
 	assert.equal(onTheDay[0]!.date, "2026-11-16");
 
 	const answered = weeklyCheckRows(config, [...firstTry, ...secondTry], 7);
@@ -193,5 +211,9 @@ test("weeklyCheckRows opens a check on its day and counts a repeated item once",
 
 test("the study's server code names no folder outside the data root", () => {
 	const source = readFileSync(new URL("../src/server/experiment.ts", import.meta.url), "utf8");
-	assert.doesNotMatch(source, /[A-Za-z]:[\/]Users|Projects\/langharness/, "a sandbox or a test must never read or write the real data folder");
+	assert.doesNotMatch(
+		source,
+		/[A-Za-z]:[/]Users|Projects\/langharness/,
+		"a sandbox or a test must never read or write the real data folder",
+	);
 });

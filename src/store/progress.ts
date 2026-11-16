@@ -15,7 +15,14 @@ import type { MixupRecord } from "../core/mixups.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import { LEARNER_FIELDS, learnerFieldsOf, withLearnerFields, withoutLearnerFields, type LearnerFields, type LearnerGoal } from "../core/onboarding.ts";
+import {
+	LEARNER_FIELDS,
+	learnerFieldsOf,
+	withLearnerFields,
+	withoutLearnerFields,
+	type LearnerFields,
+	type LearnerGoal,
+} from "../core/onboarding.ts";
 import { readLearnerFields, writeLearnerFields } from "./learner.ts";
 
 export interface DayRecord {
@@ -118,7 +125,10 @@ export interface ProgressRecord {
 	stamps?: Record<string, string>;
 	/** The latest lesson saves by the id the client sent (src/server/lesson.ts):
 	 *  a retry of one of them is answered from here, not recorded again. */
-	lessonAcks?: Array<{ id: string; outcome: { xp: number; correct: number; total: number; perfect: boolean; queued: string[]; newBest?: number } }>;
+	lessonAcks?: Array<{
+		id: string;
+		outcome: { xp: number; correct: number; total: number; perfect: boolean; queued: string[]; newBest?: number };
+	}>;
 	sessionAcks?: Array<{ id: string; outcome: unknown }>;
 }
 
@@ -152,7 +162,14 @@ export const progressStore = {
 		let record: ProgressRecord;
 		try {
 			const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Partial<ProgressRecord>;
-			record = { ...emptyProgress(), ...raw, days: raw.days ?? {}, units: raw.units ?? {}, exams: raw.exams ?? {}, recent: raw.recent ?? [] };
+			record = {
+				...emptyProgress(),
+				...raw,
+				days: raw.days ?? {},
+				units: raw.units ?? {},
+				exams: raw.exams ?? {},
+				recent: raw.recent ?? [],
+			};
 		} catch {
 			return emptyProgress();
 		}

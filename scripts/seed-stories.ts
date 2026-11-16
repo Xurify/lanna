@@ -17,7 +17,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = process.env.LH_DATA_DIR;
 if (!dataDir) throw new Error("set LH_DATA_DIR to a scratch folder first");
 const rel = path.relative(ROOT, path.resolve(dataDir));
-if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))) throw new Error(`refusing ${dataDir}: it is inside the repo, where your real data/ lives`);
+if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel)))
+	throw new Error(`refusing ${dataDir}: it is inside the repo, where your real data/ lives`);
 process.env.LH_PROFILE ??= "slovak";
 
 const { storyStore } = await import("../src/store/stories.ts");
@@ -34,7 +35,9 @@ function tokenize(sk: string, ep: FixtureEpisode): Token[] {
 			const hit = ep.glossary[p.toLocaleLowerCase("sk-SK")];
 			if (!hit) return [{ text: p, word: true }];
 			const [lemma, gloss] = hit;
-			return [{ text: p, word: true, lemma, gloss, ...(fresh.has(lemma.toLocaleLowerCase("sk-SK")) ? { fresh: true } : {}) }];
+			return [
+				{ text: p, word: true, lemma, gloss, ...(fresh.has(lemma.toLocaleLowerCase("sk-SK")) ? { fresh: true } : {}) },
+			];
 		});
 }
 
@@ -94,13 +97,44 @@ if (!readingSourceStore.get(OWN_READING.id)) {
 	OWN_READING.writtenParts.forEach((part, i) => {
 		const number = i + 1;
 		const writtenAt = new Date(Date.now() - (2 - i) * 86_400_000);
-		const story = assembleStory({ ...part, cast: [] }, retellBrief(known, source, number, []), known, lexicon, { model: "fixture:hand-written", steps: [] }, 1, writtenAt, null, {
-			source: { id: source.id, title: source.title, url: source.url, site: source.site, part: number, parts: source.sections.length, difficulty: source.difficulty },
-			original: source.sections[i]!,
-		});
+		const story = assembleStory(
+			{ ...part, cast: [] },
+			retellBrief(known, source, number, []),
+			known,
+			lexicon,
+			{ model: "fixture:hand-written", steps: [] },
+			1,
+			writtenAt,
+			null,
+			{
+				source: {
+					id: source.id,
+					title: source.title,
+					url: source.url,
+					site: source.site,
+					part: number,
+					parts: source.sections.length,
+					difficulty: source.difficulty,
+				},
+				original: source.sections[i]!,
+			},
+		);
 		storyStore.put(story);
 	});
 	const yesterday = new Date(Date.now() - 86_400_000);
-	storyStore.appendRead({ storyId: ownStoryId(source.id, 1), at: yesterday.toISOString(), day: dayKey(yesterday, new Date().getTimezoneOffset()), ms: 240_000, correct: 3, total: 3, answers: [0, 1, 2], tapped: [], queued: [], xp: 45 });
-	console.log(`own reading: "${source.title}", ${OWN_READING.writtenParts.length} of ${source.sections.length} parts written, part 1 read`);
+	storyStore.appendRead({
+		storyId: ownStoryId(source.id, 1),
+		at: yesterday.toISOString(),
+		day: dayKey(yesterday, new Date().getTimezoneOffset()),
+		ms: 240_000,
+		correct: 3,
+		total: 3,
+		answers: [0, 1, 2],
+		tapped: [],
+		queued: [],
+		xp: 45,
+	});
+	console.log(
+		`own reading: "${source.title}", ${OWN_READING.writtenParts.length} of ${source.sections.length} parts written, part 1 read`,
+	);
 }

@@ -9,8 +9,33 @@
  * Pure and browser-safe, given the lexicon entries.
  */
 
-import { buildItem, buildLesson, candidatesFor, classifyExample, isUnitId, rng, shuffle, unitInfo, type LessonItem, type LessonPlan, type UnitId } from "./lesson.ts";
-import { drillable, mixupItem, mixupKey, mixupLexicon, mixupRule, mixupStatus, NO_FRAMES, pairSentenceId, twinsOf, type MixupLexicon, type MixupProbe, type MixupRecord } from "./mixups.ts";
+import {
+	buildItem,
+	buildLesson,
+	candidatesFor,
+	classifyExample,
+	isUnitId,
+	rng,
+	shuffle,
+	unitInfo,
+	type LessonItem,
+	type LessonPlan,
+	type UnitId,
+} from "./lesson.ts";
+import {
+	drillable,
+	mixupItem,
+	mixupKey,
+	mixupLexicon,
+	mixupRule,
+	mixupStatus,
+	NO_FRAMES,
+	pairSentenceId,
+	twinsOf,
+	type MixupLexicon,
+	type MixupProbe,
+	type MixupRecord,
+} from "./mixups.ts";
 import { entryLemma, type LexiconEntry } from "./review.ts";
 
 /** The targets, as the lexicon backs them. */
@@ -39,21 +64,39 @@ function entryOfLemma(lex: MixupLexicon, lemma: string): LexiconEntry | undefine
 /** Keep what the lexicon can back: a word with a verified sentence, a unit
  *  that lessons can build (not a pairs or tutor unit) with enough sentences,
  *  a pair whose twins both exist and can be drilled. */
-export function resolvePractice(raw: { words: string[]; units: string[]; pairs: Array<[string, string]> } | undefined, focus: string[], entries: readonly LexiconEntry[], frames: readonly MixupProbe[] = NO_FRAMES): PersonalPractice | null {
+export function resolvePractice(
+	raw: { words: string[]; units: string[]; pairs: Array<[string, string]> } | undefined,
+	focus: string[],
+	entries: readonly LexiconEntry[],
+	frames: readonly MixupProbe[] = NO_FRAMES,
+): PersonalPractice | null {
 	if (!raw) return null;
 	const lex = mixupLexicon(entries, frames);
 	const words = [...new Set(raw.words.map((w) => entryOfLemma(lex, w)?.slug).filter((s): s is string => !!s))];
-	const units = [...new Set(raw.units.filter(isUnitId))].filter((u) => unitInfo(u).kind !== "pairs" && candidatesFor(entries, u).length >= MIN_UNIT_SENTENCES);
+	const units = [...new Set(raw.units.filter(isUnitId))].filter(
+		(u) => unitInfo(u).kind !== "pairs" && candidatesFor(entries, u).length >= MIN_UNIT_SENTENCES,
+	);
 	const pairs: Array<[string, string]> = [];
 	for (const [x, y] of raw.pairs) {
 		const a = entryOfLemma(lex, x);
 		const b = entryOfLemma(lex, y);
-		if (!a || !b || a === b || pairs.some((p) => mixupKey(...p) === mixupKey(a.slug, b.slug)) || !drillable(lex, a.slug, b.slug)) continue;
+		if (
+			!a ||
+			!b ||
+			a === b ||
+			pairs.some((p) => mixupKey(...p) === mixupKey(a.slug, b.slug)) ||
+			!drillable(lex, a.slug, b.slug)
+		)
+			continue;
 		pairs.push([a.slug, b.slug]);
 	}
 	if (words.length + units.length + pairs.length === 0) return null;
 	const lemma = (slug: string) => entryLemma(lex.bySlug.get(slug)!);
-	const shown = [...pairs.map(([a, b]) => `${lemma(a)} / ${lemma(b)}`), ...words.map(lemma), ...units.map((u) => unitInfo(u).title)];
+	const shown = [
+		...pairs.map(([a, b]) => `${lemma(a)} / ${lemma(b)}`),
+		...words.map(lemma),
+		...units.map((u) => unitInfo(u).title),
+	];
 	return { words, units, pairs, focus: focus.slice(0, 3), shown };
 }
 
@@ -65,12 +108,20 @@ export function resolvePractice(raw: { words: string[]; units: string[]; pairs: 
  * one rep each, so the lesson is interleaved rather than blocked. `recent`
  * sentence ids go to the back while fresher ones remain.
  */
-export function buildPersonalLesson(entries: readonly LexiconEntry[], practice: PersonalPractice | null | undefined, record: MixupRecord | undefined, opts: { seed: number; length?: number; recent?: ReadonlySet<string>; frames?: readonly MixupProbe[] }): LessonPlan {
+export function buildPersonalLesson(
+	entries: readonly LexiconEntry[],
+	practice: PersonalPractice | null | undefined,
+	record: MixupRecord | undefined,
+	opts: { seed: number; length?: number; recent?: ReadonlySet<string>; frames?: readonly MixupProbe[] },
+): LessonPlan {
 	const rand = rng(opts.seed);
 	const length = opts.length ?? 12;
 	if (!practice) return { unit: "words", items: [], focus: "personal" };
 	const lex = mixupLexicon(entries, opts.frames ?? NO_FRAMES);
-	const fresh = <T>(list: T[], id: (x: T) => string) => [...list.filter((x) => !opts.recent?.has(id(x))), ...list.filter((x) => opts.recent?.has(id(x)))];
+	const fresh = <T>(list: T[], id: (x: T) => string) => [
+		...list.filter((x) => !opts.recent?.has(id(x))),
+		...list.filter((x) => opts.recent?.has(id(x))),
+	];
 	const pools: LessonItem[][] = [];
 	for (const [a, b] of practice.pairs) {
 		const key = mixupKey(a, b);
@@ -104,7 +155,14 @@ export function buildPersonalLesson(entries: readonly LexiconEntry[], practice: 
 		);
 	}
 	for (const unit of practice.units) {
-		pools.push(buildLesson(entries, unit, { seed: opts.seed, recent: opts.recent, pattern: ["type", "type", "type", "type"], length: 4 }).items);
+		pools.push(
+			buildLesson(entries, unit, {
+				seed: opts.seed,
+				recent: opts.recent,
+				pattern: ["type", "type", "type", "type"],
+				length: 4,
+			}).items,
+		);
 	}
 	const items: LessonItem[] = [];
 	const used = new Set<string>();

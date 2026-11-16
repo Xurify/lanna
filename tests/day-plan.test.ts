@@ -22,8 +22,29 @@ const COURSE: Course = {
 	version: 1,
 	draft: true,
 	units: [
-		{ id: "acc", kind: "grammar", title: "Objects", tagline: "What you have", rule: "The object takes the accusative: Piju kávu.", glyph: "coffee", grammarTerm: "Accusative case", cat: "Nouns", tags: ["accusative", "singular"] },
-		{ id: "loc", kind: "grammar", title: "Where? v, na", tagline: "The locative", rule: "After v and na for a place, the locative.", glyph: "map-pin", grammarTerm: "Locative case", cat: "Nouns", tags: ["locative", "singular"], after: ["v", "na"] },
+		{
+			id: "acc",
+			kind: "grammar",
+			title: "Objects",
+			tagline: "What you have",
+			rule: "The object takes the accusative: Piju kávu.",
+			glyph: "coffee",
+			grammarTerm: "Accusative case",
+			cat: "Nouns",
+			tags: ["accusative", "singular"],
+		},
+		{
+			id: "loc",
+			kind: "grammar",
+			title: "Where? v, na",
+			tagline: "The locative",
+			rule: "After v and na for a place, the locative.",
+			glyph: "map-pin",
+			grammarTerm: "Locative case",
+			cat: "Nouns",
+			tags: ["locative", "singular"],
+			after: ["v", "na"],
+		},
 	],
 	tutors: [],
 	goals: [{ id: "can-order", title: "Can order", tagline: "In a café", scene: "cafe" }],
@@ -35,7 +56,10 @@ const COURSE: Course = {
 const czech = path.join(dir, "languages", "czech");
 fs.mkdirSync(czech, { recursive: true });
 fs.writeFileSync(path.join(czech, "course.json"), JSON.stringify(COURSE));
-fs.writeFileSync(path.join(czech, "language.json"), JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }));
+fs.writeFileSync(
+	path.join(czech, "language.json"),
+	JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }),
+);
 
 const config = await import("../config.ts");
 const { languageDay, setLanguageMinutes } = await import("../src/server/day-plan.ts");
@@ -44,13 +68,31 @@ const { minutesFromShares, sharesFromMinutes } = await import("../src/core/day-p
 
 describe("splitting the day", () => {
 	test("shares come out whole and add up to 100", () => {
-		assert.deepEqual(sharesFromMinutes([{ id: "a", minutes: 60 }, { id: "b", minutes: 30 }, { id: "c", minutes: 30 }]), { a: 50, b: 25, c: 25 });
-		const thirds = sharesFromMinutes([{ id: "a", minutes: 10 }, { id: "b", minutes: 10 }, { id: "c", minutes: 10 }]);
-		assert.equal(Object.values(thirds).reduce((n, v) => n + v, 0), 100);
+		assert.deepEqual(
+			sharesFromMinutes([
+				{ id: "a", minutes: 60 },
+				{ id: "b", minutes: 30 },
+				{ id: "c", minutes: 30 },
+			]),
+			{ a: 50, b: 25, c: 25 },
+		);
+		const thirds = sharesFromMinutes([
+			{ id: "a", minutes: 10 },
+			{ id: "b", minutes: 10 },
+			{ id: "c", minutes: 10 },
+		]);
+		assert.equal(
+			Object.values(thirds).reduce((n, v) => n + v, 0),
+			100,
+		);
 	});
 
 	test("minutes follow the shares, each language keeps a floor, and shares need not add up to 100", () => {
-		assert.deepEqual(minutesFromShares(120, { slovak: 45, russian: 35, estonian: 20 }), { slovak: 54, russian: 42, estonian: 24 });
+		assert.deepEqual(minutesFromShares(120, { slovak: 45, russian: 35, estonian: 20 }), {
+			slovak: 54,
+			russian: 42,
+			estonian: 24,
+		});
 		assert.deepEqual(minutesFromShares(20, { a: 95, b: 5 }), { a: 19, b: 5 });
 		assert.deepEqual(minutesFromShares(100, { a: 60, b: 60 }), { a: 50, b: 50 });
 	});
@@ -79,7 +121,10 @@ describe("the day across languages", () => {
 		assert.ok(cz.setUp && cz.tasks.some((t) => t.id === "lesson"), "the Czech plan has a lesson");
 		assert.equal(config.activeProfile(), "slovak", "nothing switched");
 		assert.equal((globalThis as Record<string, unknown>).__lhCourse, undefined, "the Slovak course is running again");
-		assert.ok(fs.existsSync(path.join(dir, "profiles", "czech", "progress.json")), "the Czech plan was kept in the Czech folder");
+		assert.ok(
+			fs.existsSync(path.join(dir, "profiles", "czech", "progress.json")),
+			"the Czech plan was kept in the Czech folder",
+		);
 	});
 
 	test("splitting the day writes each language's minutes a day", () => {
@@ -91,6 +136,12 @@ describe("the day across languages", () => {
 				["slovak", 45],
 			],
 		);
-		assert.equal(config.withProfile("czech", () => JSON.parse(fs.readFileSync(path.join(config.PATHS.data, "progress.json"), "utf-8")).goal.minutesPerDay), 75);
+		assert.equal(
+			config.withProfile(
+				"czech",
+				() => JSON.parse(fs.readFileSync(path.join(config.PATHS.data, "progress.json"), "utf-8")).goal.minutesPerDay,
+			),
+			75,
+		);
 	});
 });

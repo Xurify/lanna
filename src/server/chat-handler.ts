@@ -8,7 +8,11 @@ import {
 	type TeachingAgent,
 } from "../agent/teacher-agent.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
-import { connectionBackgroundAllowed, connectionScopeCurrent, isSubscriptionProvider } from "../agent/subscription-connections.ts";
+import {
+	connectionBackgroundAllowed,
+	connectionScopeCurrent,
+	isSubscriptionProvider,
+} from "../agent/subscription-connections.ts";
 import { nativeSubscriptionError } from "../agent/subscription-stream.ts";
 import { chatGPTStreamError } from "../agent/chatgpt-stream.ts";
 import { SubscriptionRequestCycle, type SubscriptionDispatchLifecycle } from "../agent/subscription-request-cycle.ts";
@@ -18,17 +22,24 @@ import { activeProfile, type ModelRole } from "../../config.ts";
 import { slovakLookup } from "../agent/lexicon.ts";
 import { checkerNote, checkSlovak } from "../core/slovak-check.ts";
 import type { LhMessage } from "../core/native-messages.ts";
-import { deliverJobResult, noteSteersDurable, reconcileUserSteers, registerLiveAgent, restoreUncommittedAutomatic, setJobRespawn, setTurnRunner, settleSteers, unregisterLiveAgent } from "./jobs.ts";
+import {
+	deliverJobResult,
+	noteSteersDurable,
+	reconcileUserSteers,
+	registerLiveAgent,
+	restoreUncommittedAutomatic,
+	setJobRespawn,
+	setTurnRunner,
+	settleSteers,
+	unregisterLiveAgent,
+} from "./jobs.ts";
 import { runPiTurn } from "./pi/ui-stream.ts";
 import { collectToolCallIds } from "./pi/call-ids.ts";
 import { providerEventNote } from "../agent/provider-events.ts";
 import { effectiveSettings, stores } from "./stores.ts";
 import { searchAvailable, searchProvider } from "./search.ts";
 import { providerKeyPresent } from "./keys.ts";
-import {
-	resolveConversationSpec,
-	resolveRoleSpec,
-} from "../core/settings-resolution.ts";
+import { resolveConversationSpec, resolveRoleSpec } from "../core/settings-resolution.ts";
 import { modelsNotConfigured, providerKeyMissing as providerKeyMissingEnvelope } from "../core/settings.ts";
 import { beginTurn, endTurn } from "./turn-liveness.ts";
 import { applyParkedDismissal } from "./dismissal-park.ts";
@@ -41,14 +52,9 @@ import { catalogContextLimits, refreshConnectionCatalog } from "./model-catalog.
 import { emit } from "../core/events.ts";
 import { settledTurnResponse } from "./turn-runs.ts";
 import { asAgentMessages } from "../core/native-messages.ts";
-import {
-	ChatInputError,
-	inputAppends,
-	parseChatInput,
-	type TurnInput,
-} from "../core/input-events.ts";
+import { ChatInputError, inputAppends, parseChatInput, type TurnInput } from "../core/input-events.ts";
 import { steerDelivered } from "../core/contracts.ts";
-import type {CallUsage} from "../core/contracts.ts";
+import type { CallUsage } from "../core/contracts.ts";
 import type { ChatRecord } from "../core/contracts/chat.ts";
 import { recordChatAnswer } from "./chat-evidence.ts";
 import { enqueueWords, reviewDigest } from "./review.ts";
@@ -86,7 +92,8 @@ function promptKind(record: ChatRecord): "practice" | "chat" | "teacher" {
  *  certain (core/slovak-check.ts) into the model's copy of it. The learner's
  *  card reads `details.text`, so they never see the note. */
 function withSlovakEvidence(message: LhMessage): LhMessage {
-	if (activeProfile() !== "slovak" || message.role !== "custom" || message.customType !== "practice-thinking") return message;
+	if (activeProfile() !== "slovak" || message.role !== "custom" || message.customType !== "practice-thinking")
+		return message;
 	const text = (message.details as { text?: string } | undefined)?.text;
 	const note = text ? checkerNote(checkSlovak(text, slovakLookup() ?? undefined)) : null;
 	return note ? { ...message, content: `${message.content}\n\n${note}` } : message;
@@ -123,8 +130,7 @@ const jobRunner = createJobRunner({
 	// override → slot → NOTHING — read FRESH per job (a settings PUT
 	// between dispatch and spawn lands); an empty chain flows through as
 	// undefined and the runner refuses the spawn honestly.
-	engineFor: (role) =>
-		resolveEngine(role),
+	engineFor: (role) => resolveEngine(role),
 	// Key-presence gate (provider-key interlude, 2026-09-25): the runner
 	// reads the resolved engine's provider and asks THIS check (the agent
 	// layer may not read the key store); a missing key refuses the spawn
@@ -137,7 +143,6 @@ const jobRunner = createJobRunner({
 	// same signal so keyless servers never see the research tool at all.
 	searchProvider,
 });
-
 
 // Wake-pipeline wiring (contracts.ts "THE ASYNC PROTOCOL" §4): the pipeline
 // delivers its steers through THIS composition root (one event: the steer
@@ -229,7 +234,10 @@ export async function handleChatInput(
 	if (isSubscriptionProvider(conversation.provider)) {
 		await refreshConnectionCatalog(conversation.provider);
 		if (input.type === "steers" && !connectionBackgroundAllowed(conversation.provider)) {
-			return Response.json({ error: "Background use is off for this connection. Automatic follow-up remains deferred in its queue." }, { status: 403 });
+			return Response.json(
+				{ error: "Background use is off for this connection. Automatic follow-up remains deferred in its queue." },
+				{ status: 403 },
+			);
 		}
 	}
 	if (!providerKeyPresent(conversation.provider)) {
@@ -247,7 +255,11 @@ export async function handleChatInput(
 	// placement mirrors the BYOK/key gates — BEFORE appends and
 	// beginTurn, no liveness effects — and the record re-reads after
 	// because compaction appends the marker.
-	const callPurpose = { background: input.type === "steers" || (input.type === "continue" && reconstructRequestCause(record.messages) !== "foreground") };
+	const callPurpose = {
+		background:
+			input.type === "steers" ||
+			(input.type === "continue" && reconstructRequestCause(record.messages) !== "foreground"),
+	};
 	let requestCycle: SubscriptionRequestCycle | undefined;
 	const lifecycle: SubscriptionDispatchLifecycle = {
 		captured: (scope) => requestCycle?.captured(scope),
@@ -255,8 +267,21 @@ export async function handleChatInput(
 		noDispatch: (kind) => requestCycle?.noDispatch(kind),
 	};
 	let conversationEngine: PiEngine;
-	try { conversationEngine = piEngineForSpec(conversation, () => callPurpose.background, lifecycle); }
-	catch { return Response.json({ error: conversation.provider === "chatgpt" ? chatGPTStreamError("model catalog") : isSubscriptionProvider(conversation.provider) ? nativeSubscriptionError(conversation.provider, "model catalog") : "The selected model is unavailable." }, { status: 503 }); }
+	try {
+		conversationEngine = piEngineForSpec(conversation, () => callPurpose.background, lifecycle);
+	} catch {
+		return Response.json(
+			{
+				error:
+					conversation.provider === "chatgpt"
+						? chatGPTStreamError("model catalog")
+						: isSubscriptionProvider(conversation.provider)
+							? nativeSubscriptionError(conversation.provider, "model catalog")
+							: "The selected model is unavailable.",
+			},
+			{ status: 503 },
+		);
+	}
 	const modelIdForCompaction = `${conversationEngine.model.provider}:${conversationEngine.model.id}`;
 	await ensureCompacted(
 		{
@@ -309,8 +334,9 @@ export async function handleChatInput(
 	// the composer gates), so adjacency holds by construction.
 	if (input.type === "answer" && danglingQuestionOf([...record.messages, ...appends]) !== null) {
 		const merged = [...record.messages, ...appends];
-		try { stores.chatStore.saveMessages(chatId, merged); }
-		catch (err) {
+		try {
+			stores.chatStore.saveMessages(chatId, merged);
+		} catch (err) {
 			console.error(`[chat ${chatId}] write-ahead persist failed:`, err);
 			return new Response("Your input could not be saved. Please try again.", { status: 500 });
 		}
@@ -391,19 +417,21 @@ export async function handleChatInput(
 	// enabled). The definitive toggleable set is TOGGLEABLE_TOOLS — the
 	// sub-agent JOB tools (research/pdf; adjudicated with the
 	// user: quiz/ask/fs/plan/probe_done are always-on).
-	if (isSubscriptionProvider(conversation.provider)) requestCycle = new SubscriptionRequestCycle({
-		initialMessages: asAgentMessages(merged),
-		staged: stagedAutomatic ? asAgentMessages(appends) : undefined,
-		foregroundOwed: !callPurpose.background,
-		purpose: callPurpose,
-		scopeCurrent: (scope) => connectionScopeCurrent(conversation.provider, scope),
-		commitStaged: () => {
-			stores.chatStore.saveMessages(chatId, merged);
-			persistBaseCount = merged.length;
-			noteSteersDurable(chatId, merged);
-		},
-		restoreAutomatic: (automaticIds, retainedIds) => restoreUncommittedAutomatic(chatId, constructed, automaticIds, retainedIds),
-	});
+	if (isSubscriptionProvider(conversation.provider))
+		requestCycle = new SubscriptionRequestCycle({
+			initialMessages: asAgentMessages(merged),
+			staged: stagedAutomatic ? asAgentMessages(appends) : undefined,
+			foregroundOwed: !callPurpose.background,
+			purpose: callPurpose,
+			scopeCurrent: (scope) => connectionScopeCurrent(conversation.provider, scope),
+			commitStaged: () => {
+				stores.chatStore.saveMessages(chatId, merged);
+				persistBaseCount = merged.length;
+				noteSteersDurable(chatId, merged);
+			},
+			restoreAutomatic: (automaticIds, retainedIds) =>
+				restoreUncommittedAutomatic(chatId, constructed, automaticIds, retainedIds),
+		});
 	const agentOpts: AgentBuildOptions = {
 		engine,
 		callPurpose,
@@ -432,7 +460,17 @@ export async function handleChatInput(
 					{
 						review: reviewSeam,
 						answers: { record: (answer) => recordChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
-						drawing: { draw: (brief, signal) => drawForReply({ engine, reply: latestReplyText(turnMessages()), brief, signal, onUsage: collectUsage, chatId }) },
+						drawing: {
+							draw: (brief, signal) =>
+								drawForReply({
+									engine,
+									reply: latestReplyText(turnMessages()),
+									brief,
+									signal,
+									onUsage: collectUsage,
+									chatId,
+								}),
+						},
 						jobs: {
 							chatId,
 							jobStore: stores.jobStore,
@@ -443,52 +481,52 @@ export async function handleChatInput(
 					{ ...agentOpts, noteLearnerText: chatCheckerNote, appContent: chatAppContent(chatId) },
 				)
 			: record.kind === "practice"
-			? createPracticeAgent(
-					{
-						chatId,
-						chatStore: stores.chatStore,
-						// THE RARELY-NEEDED SET (owner round 10): research + pdf jobs
-						// (same runner/gating as the teacher's — research honestly
-						// absent when no engine is live).
-						jobs: {
+				? createPracticeAgent(
+						{
 							chatId,
-							jobStore: stores.jobStore,
-							spawn: (job, input) => void jobRunner.runJob(job.id, input),
-							searchAvailable,
+							chatStore: stores.chatStore,
+							// THE RARELY-NEEDED SET (owner round 10): research + pdf jobs
+							// (same runner/gating as the teacher's — research honestly
+							// absent when no engine is live).
+							jobs: {
+								chatId,
+								jobStore: stores.jobStore,
+								spawn: (job, input) => void jobRunner.runJob(job.id, input),
+								searchAvailable,
+							},
+							review: reviewSeam,
 						},
-						review: reviewSeam,
-					},
-					agentOpts,
-				)
-			: teaching
-			? createTeacherAgent(
-					{
-						chatId,
-						chatStore: stores.chatStore,
-						jobStore: stores.jobStore,
-						spawn: (job, input) => void jobRunner.runJob(job.id, input),
-						// The registry drop's signal (2026-09-20): no live engine
-						// = no research tool in the teacher's registry.
-						searchAvailable,
-						review: reviewSeam,
-					},
-					agentOpts,
-				)
-			: createProberAgent(
-					{
-						chatId,
-						chatStore: stores.chatStore,
-						deliver: (steer) => void deliverJobResult(steer),
-						// Fix wave (2026-09-20): the prober carries research + pdf
-						// dispatch (owner ruling — phase-omnipresent), so its ctx
-						// needs the same job wiring as the teacher's.
-						jobStore: stores.jobStore,
-						spawn: (job, input) => void jobRunner.runJob(job.id, input),
-						searchAvailable,
-						review: reviewSeam,
-					},
-					agentOpts,
-				);
+						agentOpts,
+					)
+				: teaching
+					? createTeacherAgent(
+							{
+								chatId,
+								chatStore: stores.chatStore,
+								jobStore: stores.jobStore,
+								spawn: (job, input) => void jobRunner.runJob(job.id, input),
+								// The registry drop's signal (2026-09-20): no live engine
+								// = no research tool in the teacher's registry.
+								searchAvailable,
+								review: reviewSeam,
+							},
+							agentOpts,
+						)
+					: createProberAgent(
+							{
+								chatId,
+								chatStore: stores.chatStore,
+								deliver: (steer) => void deliverJobResult(steer),
+								// Fix wave (2026-09-20): the prober carries research + pdf
+								// dispatch (owner ruling — phase-omnipresent), so its ctx
+								// needs the same job wiring as the teacher's.
+								jobStore: stores.jobStore,
+								spawn: (job, input) => void jobRunner.runJob(job.id, input),
+								searchAvailable,
+								review: reviewSeam,
+							},
+							agentOpts,
+						);
 
 	// A test-injected agent gets no usage collector (tests assert the
 	// transcript, not the money channel); when it's ours, usage flows through
@@ -508,8 +546,12 @@ export async function handleChatInput(
 		// coalescing). Settlement still cannot beat the flow below: it needs
 		// a streamed response, which never happens inside the constructor.
 		turnMessages = () => constructed.state.messages;
-		registerLiveAgent(chatId, constructed, input.type !== "steers" && input.type !== "continue",
-			input.type === "steers" ? new Set(appends.map((message) => message.id)) : undefined);
+		registerLiveAgent(
+			chatId,
+			constructed,
+			input.type !== "steers" && input.type !== "continue",
+			input.type === "steers" ? new Set(appends.map((message) => message.id)) : undefined,
+		);
 		// Debug recorder run marker (owner, 2026-10-04): correlates the
 		// JSONL event stream with the record's turns; no-op unless
 		// LH_PROVIDER_EVENTS=1.
@@ -533,7 +575,8 @@ export async function handleChatInput(
 			// transcript directly (the retry context the model saw).
 			onError: (error) => {
 				if (conversation.provider === "chatgpt") return chatGPTStreamError(String(error));
-				if (isSubscriptionProvider(conversation.provider)) return nativeSubscriptionError(conversation.provider, String(error));
+				if (isSubscriptionProvider(conversation.provider))
+					return nativeSubscriptionError(conversation.provider, String(error));
 				console.error(`[chat ${chatId}] turn error:`, error);
 				return "An error occurred.";
 			},
@@ -611,7 +654,11 @@ export async function handleChatInput(
 						const spec = resolveConversationSpec(stores.chatStore.getChat(chatId)?.settings, fresh.models.strong);
 						if (!spec || !connectionBackgroundAllowed(spec.provider)) return null;
 						let kickEngine: PiEngine;
-						try { kickEngine = piEngineForSpec(spec, true); } catch { return null; }
+						try {
+							kickEngine = piEngineForSpec(spec, true);
+						} catch {
+							return null;
+						}
 						const kickModelId = `${kickEngine.model.provider}:${kickEngine.model.id}`;
 						const freshRecord = stores.chatStore.getChat(chatId);
 						if (!freshRecord) return null;
@@ -645,7 +692,8 @@ export async function handleChatInput(
 		// must cost zero permanently-held slots beyond the one live view. The
 		// turn itself is a server-side process (ruling 2026-09-25) — it never
 		// needed this connection, only a view did.
-		if (stagedAutomatic && requestCycle && !(await requestCycle.admission)) return Response.json({ error: "Automatic follow-up remains deferred in its queue." }, { status: 403 });
+		if (stagedAutomatic && requestCycle && !(await requestCycle.admission))
+			return Response.json({ error: "Automatic follow-up remains deferred in its queue." }, { status: 403 });
 		return Response.json({ ok: true });
 	} catch (err) {
 		// The stream never started, so no onFinish will fire — clear the registry

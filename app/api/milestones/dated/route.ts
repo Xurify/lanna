@@ -5,7 +5,15 @@
  * after its date. Both PUT answers return the report, so the page redraws in one step.
  */
 
-import { addDatedScene, BODY_LIMITS, bodyTooLarge, DatedSceneError, milestonesReport, recordSceneOutcome, scheduleScene } from "@/src/server";
+import {
+	addDatedScene,
+	BODY_LIMITS,
+	bodyTooLarge,
+	DatedSceneError,
+	milestonesReport,
+	recordSceneOutcome,
+	scheduleScene,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +31,8 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { text?: unknown; date?: unknown } | null;
-	if (!body || typeof body.text !== "string" || typeof body.date !== "string") return Response.json({ message: "text and date must be strings" }, { status: 400 });
+	if (!body || typeof body.text !== "string" || typeof body.date !== "string")
+		return Response.json({ message: "text and date must be strings" }, { status: 400 });
 	const tz = tzOf(req);
 	try {
 		const { record, reused } = await addDatedScene(body.text, body.date, { tz });

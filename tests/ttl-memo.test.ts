@@ -31,7 +31,10 @@ describe("TtlMemo", () => {
 
 	test("a failed load is not kept", async () => {
 		const memo = new TtlMemo<number>({ ttlMs: 1000 });
-		await assert.rejects(memo.run("k", async () => Promise.reject(new Error("down"))), /down/);
+		await assert.rejects(
+			memo.run("k", async () => Promise.reject(new Error("down"))),
+			/down/,
+		);
 		assert.equal(await memo.run("k", async () => 7), 7);
 	});
 

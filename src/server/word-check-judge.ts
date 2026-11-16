@@ -46,7 +46,9 @@ Reply with only a JSON object: {"accept": true or false, "note": "at most 12 wor
 }
 
 export function meaningJudgePrompt(m: MeaningToJudge): string {
-	return [`Word: ${m.word}`, `The dictionary's meanings: ${m.glosses.join(" | ")}`, `${TYPED_LINE}${m.typed}`].join("\n");
+	return [`Word: ${m.word}`, `The dictionary's meanings: ${m.glosses.join(" | ")}`, `${TYPED_LINE}${m.typed}`].join(
+		"\n",
+	);
 }
 
 export function parseMeaningJudgement(text: string): MeaningJudgement | null {
@@ -55,7 +57,10 @@ export function parseMeaningJudgement(text: string): MeaningJudgement | null {
 	try {
 		const reply = JSON.parse(json[0]) as { accept?: unknown; note?: unknown };
 		if (typeof reply.accept !== "boolean") return null;
-		return { accepted: reply.accept, note: typeof reply.note === "string" ? reply.note.trim().slice(0, NOTE_LIMIT) : "" };
+		return {
+			accepted: reply.accept,
+			note: typeof reply.note === "string" ? reply.note.trim().slice(0, NOTE_LIMIT) : "",
+		};
 	} catch {
 		return null;
 	}
@@ -78,16 +83,33 @@ function scriptedEngine(): PiEngine | null {
 	if (scripted?.file === file) return scripted.engine;
 	try {
 		const script = JSON.parse(fs.readFileSync(scriptPath, "utf-8")) as { accept?: unknown; note?: unknown };
-		const accepted = new Set(Array.isArray(script.accept) ? script.accept.filter((a): a is string => typeof a === "string").map(plainMeaning) : []);
+		const accepted = new Set(
+			Array.isArray(script.accept)
+				? script.accept.filter((a): a is string => typeof a === "string").map(plainMeaning)
+				: [],
+		);
 		const faux = createFauxCore({ tokenSize: { min: 32, max: 32 } });
 		const engine: PiEngine = {
 			model: faux.getModel(),
 			streamFn: (model, context, options) => {
 				const last = context.messages[context.messages.length - 1];
-				const prompt = last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "";
-				const typed = prompt.split("\n").find((line) => line.startsWith(TYPED_LINE))?.slice(TYPED_LINE.length) ?? "";
+				const prompt =
+					last && typeof last.content === "string"
+						? last.content
+						: Array.isArray(last?.content)
+							? last.content.map((c) => ("text" in c ? c.text : "")).join("")
+							: "";
+				const typed =
+					prompt
+						.split("\n")
+						.find((line) => line.startsWith(TYPED_LINE))
+						?.slice(TYPED_LINE.length) ?? "";
 				const accept = accepted.has(plainMeaning(typed));
-				faux.setResponses([fauxAssistantMessage(JSON.stringify({ accept, note: accept && typeof script.note === "string" ? script.note : "" }))]);
+				faux.setResponses([
+					fauxAssistantMessage(
+						JSON.stringify({ accept, note: accept && typeof script.note === "string" ? script.note : "" }),
+					),
+				]);
 				return faux.streamSimple(model, context, options);
 			},
 		};
@@ -113,19 +135,38 @@ export function wordCheckModel(engine?: PiEngine): string {
 }
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
-export async function judgeMeaning(m: MeaningToJudge, usage: StoryUsage, opts: { engine?: PiEngine; now?: Date } = {}): Promise<MeaningJudgement | null> {
+export async function judgeMeaning(
+	m: MeaningToJudge,
+	usage: StoryUsage,
+	opts: { engine?: PiEngine; now?: Date } = {},
+): Promise<MeaningJudgement | null> {
 	const key = `${m.slug}|${plainMeaning(m.typed)}`;
 	const kept = wordCheckStore.judgements()[key];
 	if (kept) return { accepted: kept.accepted, note: kept.note };
 	const real = marker(opts.engine);
 	if (!real) return null;
 	try {
-		const { text } = await runSubagent([], { role: "researcher", engine: real.engine, systemPrompt: meaningJudgeSystem(), prompt: meaningJudgePrompt(m), maxTurns: 1, onUsage: (u) => usage.steps.push(stepOf(u)) });
+		const { text } = await runSubagent([], {
+			role: "researcher",
+			engine: real.engine,
+			systemPrompt: meaningJudgeSystem(),
+			prompt: meaningJudgePrompt(m),
+			maxTurns: 1,
+			onUsage: (u) => usage.steps.push(stepOf(u)),
+		});
 		const judged = parseMeaningJudgement(text);
-		if (judged) wordCheckStore.putJudgement(key, { ...judged, model: real.model, at: (opts.now ?? new Date()).toISOString() });
+		if (judged)
+			wordCheckStore.putJudgement(key, { ...judged, model: real.model, at: (opts.now ?? new Date()).toISOString() });
 		return judged;
 	} catch {
 		return null;

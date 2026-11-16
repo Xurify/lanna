@@ -143,7 +143,17 @@ export function findAudioClip(key: string): (AudioClipEntry & { absolute: string
 }
 
 /** Write a clip and its index line; returns the entry with its absolute path. */
-export function storeAudioClip(input: { key: string; lang: string; voice: AudioVoice; tier: string; model?: string; text: string; ext: "mp3" | "wav"; data: Buffer; now?: Date }): AudioClipEntry & { absolute: string } {
+export function storeAudioClip(input: {
+	key: string;
+	lang: string;
+	voice: AudioVoice;
+	tier: string;
+	model?: string;
+	text: string;
+	ext: "mp3" | "wav";
+	data: Buffer;
+	now?: Date;
+}): AudioClipEntry & { absolute: string } {
 	const entry: AudioClipEntry = {
 		key: input.key,
 		lang: input.lang,
@@ -180,7 +190,10 @@ export interface MigrationCandidate {
  * matches is kept as <lang>/<voice>/unknown-<key>.mp3 with text null —
  * never thrown away. Runs once: the old folder disappears when empty.
  */
-export function migrateLegacyAudio(candidates: () => Iterable<MigrationCandidate>, fallbackLang = "sk"): { moved: number; matched: number } {
+export function migrateLegacyAudio(
+	candidates: () => Iterable<MigrationCandidate>,
+	fallbackLang = "sk",
+): { moved: number; matched: number } {
 	const legacy = PATHS.audioLegacy;
 	let files: string[];
 	try {
@@ -227,7 +240,10 @@ export function migrateLegacyAudio(candidates: () => Iterable<MigrationCandidate
 			voice: hit?.voice ?? "female",
 			tier: "unknown",
 			text: hit?.text ?? null,
-			file: clipRelativePath({ lang: hit?.lang ?? fallbackLang, voice: hit?.voice ?? "female", key, text: hit?.text ?? null }, ext),
+			file: clipRelativePath(
+				{ lang: hit?.lang ?? fallbackLang, voice: hit?.voice ?? "female", key, text: hit?.text ?? null },
+				ext,
+			),
 			bytes: stat.size,
 			createdAt: stat.mtime.toISOString(),
 		};
@@ -311,7 +327,7 @@ export interface LessonLogEntry {
 	 *  scene (unit = the scene id), one rep per correction; fluency: a
 	 *  "say it faster" round, one rep per sentence (unit "fast"); mixups:
 	 *  a Mix-ups lesson (unit "mixups", src/core/mixups.ts); personal: the
- *  lesson built from the guide's targets (unit "personal", src/core/personal.ts). */
+	 *  lesson built from the guide's targets (unit "personal", src/core/personal.ts). */
 	mode: "lesson" | "blitz" | "mixups" | "personal" | "placement" | "listen" | "speak" | "fluency";
 	ms?: number;
 	xp: number;
@@ -364,7 +380,11 @@ interface WhyEntry {
 const WHY_FILE = () => path.join(PATHS.lessons, "why-index.json");
 
 export function whyKey(lang: string, sentence: string, answer: string): string {
-	return crypto.createHash("sha256").update(`${lang}\u0000${sentence.normalize("NFC").trim()}\u0000${answer.normalize("NFC").trim()}`).digest("hex").slice(0, 24);
+	return crypto
+		.createHash("sha256")
+		.update(`${lang}\u0000${sentence.normalize("NFC").trim()}\u0000${answer.normalize("NFC").trim()}`)
+		.digest("hex")
+		.slice(0, 24);
 }
 
 function readWhyIndex(): Record<string, WhyEntry> {

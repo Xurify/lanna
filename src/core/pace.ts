@@ -25,7 +25,12 @@ export function countSyllables(text: string, lang = "sk"): number {
 			if (SK_VOWELS.includes(c)) {
 				if (c === "i" && i + 1 < w.length && "aeu".includes(w[i + 1]!)) i++;
 				n++;
-			} else if ("rlŕĺ".includes(c) && w.length > 1 && (i === 0 || !SK_VOWELS.includes(w[i - 1]!)) && (i + 1 === w.length || !SK_VOWELS.includes(w[i + 1]!))) {
+			} else if (
+				"rlŕĺ".includes(c) &&
+				w.length > 1 &&
+				(i === 0 || !SK_VOWELS.includes(w[i - 1]!)) &&
+				(i + 1 === w.length || !SK_VOWELS.includes(w[i + 1]!))
+			) {
 				n++;
 			}
 		}

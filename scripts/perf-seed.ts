@@ -17,7 +17,9 @@ import path from "node:path";
 
 const dir = process.env.LH_DATA_DIR;
 if (!dir) {
-	console.error("Set LH_DATA_DIR to an empty folder first: this script writes a profile and must not touch your real data.");
+	console.error(
+		"Set LH_DATA_DIR to an empty folder first: this script writes a profile and must not touch your real data.",
+	);
 	process.exit(1);
 }
 process.env.LH_PROFILE = "slovak";
@@ -44,7 +46,10 @@ for (let i = 0; i < cards; i++) {
 	const now = new Date(start + (YEAR * i) / cards);
 	const status = reviewStatus(now, 0, { mint: true });
 	if (!status.next) break;
-	answerReview({ cardId: status.next.card.id, given: status.next.card.answer, ms: 4000, rating: i % 9 === 0 ? 1 : 3 }, now);
+	answerReview(
+		{ cardId: status.next.card.id, given: status.next.card.answer, ms: 4000, rating: i % 9 === 0 ? 1 : 3 },
+		now,
+	);
 }
 meta.settings = { ...meta.settings, newPerDay: 20 };
 reviewStore.writeMeta({ ...reviewStore.readMeta(), settings: meta.settings });
@@ -59,4 +64,6 @@ if (log.length) {
 	fs.appendFileSync(path.join(PATHS.review, "log.jsonl"), `${lines.join("\n")}\n`, "utf-8");
 }
 const size = (f: string) => `${Math.round(fs.statSync(path.join(PATHS.review, f)).size / 1024)} kB`;
-console.log(`heavy profile: ${Object.keys(reviewStore.readCards()).length} cards (${size("cards.json")}), ${reviewStore.readLog().length} log lines (${size("log.jsonl")})`);
+console.log(
+	`heavy profile: ${Object.keys(reviewStore.readCards()).length} cards (${size("cards.json")}), ${reviewStore.readLog().length} log lines (${size("log.jsonl")})`,
+);

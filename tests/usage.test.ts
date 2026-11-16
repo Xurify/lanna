@@ -8,25 +8,45 @@ import { sumSteps } from "../src/core/prices.ts";
 import type { CallUsage, JobRecord, TurnUsage } from "../src/core/contracts.ts";
 
 const call = (over: Partial<CallUsage> = {}): CallUsage => ({
-	inputTokens: 0, outputTokens: 0, cacheReadTokens: undefined,
-	cacheWriteTokens: undefined, reasoningTokens: undefined, ...over,
+	inputTokens: 0,
+	outputTokens: 0,
+	cacheReadTokens: undefined,
+	cacheWriteTokens: undefined,
+	reasoningTokens: undefined,
+	...over,
 });
 
 test("sumSteps: absent stays absent; unknown long-cache detail stays unknown", () => {
-	const sum = sumSteps([call({ inputTokens: 100, outputTokens: 20 }), call({ inputTokens: 50, outputTokens: 10, cacheReadTokens: 30 })]);
+	const sum = sumSteps([
+		call({ inputTokens: 100, outputTokens: 20 }),
+		call({ inputTokens: 50, outputTokens: 10, cacheReadTokens: 30 }),
+	]);
 	assert.equal(sum.inputTokens, 150);
 	assert.equal(sum.outputTokens, 30);
 	assert.equal(sum.cacheReadTokens, 30);
 	assert.equal(sum.cacheWriteTokens, undefined);
 	assert.equal(sumSteps([call({ inputTokens: undefined, outputTokens: undefined })]).inputTokens, undefined);
-	assert.equal(sumSteps([call({ cacheWriteTokens: 10 }), call({ cacheWriteTokens: 20, cacheWrite1hTokens: 5 })]).cacheWrite1hTokens, undefined);
+	assert.equal(
+		sumSteps([call({ cacheWriteTokens: 10 }), call({ cacheWriteTokens: 20, cacheWrite1hTokens: 5 })])
+			.cacheWrite1hTokens,
+		undefined,
+	);
 });
 
 test("callCost prices normalized fresh input directly, without subtracting caches again", () => {
-	const cost = callCost(call({ inputTokens: 100_000, outputTokens: 20_000, cacheReadTokens: 10_000 }), "openrouter:z-ai/glm-5.3-flash");
+	const cost = callCost(
+		call({ inputTokens: 100_000, outputTokens: 20_000, cacheReadTokens: 10_000 }),
+		"openrouter:z-ai/glm-5.3-flash",
+	);
 	assert.ok(cost !== null);
 	assert.ok(Math.abs(cost - (0.015 + 0.0003 + 0.01)) < 1e-9);
-	assert.equal(callCost(call({ inputTokens: 10_000, outputTokens: 1_000, cacheReadTokens: 70_000 }), "openrouter:openai/gpt-6.1-sol"), 0.037);
+	assert.equal(
+		callCost(
+			call({ inputTokens: 10_000, outputTokens: 1_000, cacheReadTokens: 70_000 }),
+			"openrouter:openai/gpt-6.1-sol",
+		),
+		0.037,
+	);
 });
 
 test("cache writes: precise short/one-hour costs and honest unknown historical splits", () => {
@@ -43,7 +63,13 @@ test("unknown model, absent or invalid required usage is null, never fake zero",
 });
 
 test("turn/session costs sum calls and count unpriced separately", () => {
-	const turn: TurnUsage = { id: "t1", messageId: "m1", at: "x", model: "openrouter:z-ai/glm-5.3-flash", steps: [call({ inputTokens: 10_000, outputTokens: 2_000 }), call({ inputTokens: 12_000, outputTokens: 1_000 })] };
+	const turn: TurnUsage = {
+		id: "t1",
+		messageId: "m1",
+		at: "x",
+		model: "openrouter:z-ai/glm-5.3-flash",
+		steps: [call({ inputTokens: 10_000, outputTokens: 2_000 }), call({ inputTokens: 12_000, outputTokens: 1_000 })],
+	};
 	const totals = sessionCost({ turns: [turn, { ...turn, id: "t2", model: "not/a-model" }] });
 	assert.equal(totals.unpriced, 1);
 	assert.equal(totals.cost, turnCost(turn));
@@ -53,14 +79,30 @@ test("turn/session costs sum calls and count unpriced separately", () => {
 
 test("legacy flat-rate jobs remain priceable; missing usage stays absent", () => {
 	assert.equal(jobCost({}), null);
-	const job: Pick<JobRecord, "usage"> = { usage: { model: "openrouter:z-ai/glm-5.3-flash", inputTokens: 1_000_000, outputTokens: 100_000, cacheReadTokens: 0, cacheWriteTokens: 0, reasoningTokens: 0, steps: 4 } };
+	const job: Pick<JobRecord, "usage"> = {
+		usage: {
+			model: "openrouter:z-ai/glm-5.3-flash",
+			inputTokens: 1_000_000,
+			outputTokens: 100_000,
+			cacheReadTokens: 0,
+			cacheWriteTokens: 0,
+			reasoningTokens: 0,
+			steps: 4,
+		},
+	};
 	assert.ok(jobCost(job)! > 0);
 });
 
 test("appendTurnUsage: idempotent per turn; continuations survive saveMessages; list omits log", () => {
 	const record = chatStore.createChat("usage fixture");
 	try {
-		const entry: TurnUsage = { id: "turn_1", messageId: "msg_a", at: "x", model: "openai:gpt-5", steps: [call({ inputTokens: 100, outputTokens: 10, cacheWrite1hTokens: 0 })] };
+		const entry: TurnUsage = {
+			id: "turn_1",
+			messageId: "msg_a",
+			at: "x",
+			model: "openai:gpt-5",
+			steps: [call({ inputTokens: 100, outputTokens: 10, cacheWrite1hTokens: 0 })],
+		};
 		chatStore.appendTurnUsage(record.id, entry);
 		chatStore.appendTurnUsage(record.id, entry);
 		chatStore.appendTurnUsage(record.id, { ...entry, id: "turn_2" });
@@ -69,6 +111,7 @@ test("appendTurnUsage: idempotent per turn; continuations survive saveMessages; 
 		assert.deepEqual(chatStore.getChat(record.id)?.turns?.[0]?.steps, JSON.parse(JSON.stringify(entry.steps)));
 		assert.equal(chatStore.getChat(record.id)?.turns?.length, 2);
 		assert.equal("turns" in chatStore.listChats().find((c) => c.id === record.id)!, false);
-	} finally { fs.unlinkSync(`${PATHS.chats}/${record.id}.json`); }
+	} finally {
+		fs.unlinkSync(`${PATHS.chats}/${record.id}.json`);
+	}
 });
-

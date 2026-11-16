@@ -22,20 +22,36 @@ fs.writeFileSync(
 		tag: "cs-CZ",
 		version: 1,
 		draft: true,
-		units: [{ id: "acc", kind: "grammar", title: "Objects", tagline: "What you have", rule: "The object takes the accusative: Piju kávu.", glyph: "coffee", grammarTerm: "Accusative case", cat: "Nouns", tags: ["accusative", "singular"] }],
+		units: [
+			{
+				id: "acc",
+				kind: "grammar",
+				title: "Objects",
+				tagline: "What you have",
+				rule: "The object takes the accusative: Piju kávu.",
+				glyph: "coffee",
+				grammarTerm: "Accusative case",
+				cat: "Nouns",
+				tags: ["accusative", "singular"],
+			},
+		],
 		tutors: [],
 		goals: [],
 		chapters: [{ id: "cafe", stage: "a1", title: "At the café", tagline: "Objects", units: ["acc"] }],
 	}),
 );
-fs.writeFileSync(path.join(czech, "language.json"), JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }));
+fs.writeFileSync(
+	path.join(czech, "language.json"),
+	JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }),
+);
 
 const { NextRequest } = await import("next/server");
 const { workUnitAsyncStorage } = await import("next/dist/server/app-render/work-unit-async-storage.external.js");
 const config = await import("../config.ts");
 const { languageOf } = await import("../src/server/request-language.ts");
 const { activeCourse } = await import("../src/core/course.ts");
-const { languageGone, isSameOrigin, SHOWN_LANGUAGE_HEADER, DEVICE_LANGUAGE_COOKIE } = await import("../src/core/language-guard.ts");
+const { languageGone, isSameOrigin, SHOWN_LANGUAGE_HEADER, DEVICE_LANGUAGE_COOKIE } =
+	await import("../src/core/language-guard.ts");
 const { recordActiveTime } = await import("../src/server/lesson.ts");
 const { shownLanguageFetch } = await import("../lib/shown-language.ts");
 const { proxy } = await import("../proxy.ts");
@@ -69,13 +85,20 @@ function inRequest<T>(from: From, fn: () => T): T {
 		type: "request",
 		url: { pathname: "/", search: "" },
 		headers,
-		cookies: { get: (name: string) => (name === DEVICE_LANGUAGE_COOKIE && from.device ? { name, value: from.device } : undefined) },
+		cookies: {
+			get: (name: string) =>
+				name === DEVICE_LANGUAGE_COOKIE && from.device ? { name, value: from.device } : undefined,
+		},
 	};
 	return workUnitAsyncStorage.run(store as never, fn);
 }
 
 async function send(pathname: string, body: unknown, from: From): Promise<Response> {
-	const init = { method: "POST", headers: headersFrom(from, { "content-type": "application/json" }), body: JSON.stringify(body) };
+	const init = {
+		method: "POST",
+		headers: headersFrom(from, { "content-type": "application/json" }),
+		body: JSON.stringify(body),
+	};
 	const gate = await proxy(new NextRequest(origin + pathname, init));
 	if (gate.headers.get("x-middleware-next") !== "1") return gate;
 	return inRequest(from, () => ROUTES[pathname]!(new Request(origin + pathname, init)));
@@ -84,15 +107,25 @@ async function send(pathname: string, body: unknown, from: From): Promise<Respon
 const profileDir = (id: string) => path.join(dir, "profiles", id);
 const minutesIn = (id: string): number => {
 	try {
-		const p = JSON.parse(fs.readFileSync(path.join(profileDir(id), "progress.json"), "utf-8")) as { days: Record<string, { minutes?: number }> };
+		const p = JSON.parse(fs.readFileSync(path.join(profileDir(id), "progress.json"), "utf-8")) as {
+			days: Record<string, { minutes?: number }>;
+		};
 		return Object.values(p.days).reduce((n, d) => n + (d.minutes ?? 0), 0);
 	} catch {
 		return 0;
 	}
 };
-const lessonLogs = (id: string) => (fs.existsSync(path.join(profileDir(id), "lessons")) ? fs.readdirSync(path.join(profileDir(id), "lessons")).filter((f) => f.endsWith(".jsonl")) : []);
+const lessonLogs = (id: string) =>
+	fs.existsSync(path.join(profileDir(id), "lessons"))
+		? fs.readdirSync(path.join(profileDir(id), "lessons")).filter((f) => f.endsWith(".jsonl"))
+		: [];
 
-const SLOVAK_LESSON = { unit: "acc-fem", mode: "lesson", reps: [{ itemId: "i1", slug: "kava", kind: "type", verdict: "exact" }], activeMs: 60_000 };
+const SLOVAK_LESSON = {
+	unit: "acc-fem",
+	mode: "lesson",
+	reps: [{ itemId: "i1", slug: "kava", kind: "type", verdict: "exact" }],
+	activeMs: 60_000,
+};
 
 after(() => fs.rmSync(dir, { recursive: true, force: true }));
 
@@ -103,7 +136,10 @@ beforeEach(() => {
 
 describe("which language a request runs", () => {
 	const known = (id: string) => id === "slovak" || id === "czech";
-	const hints = (page: string | null, device?: string) => ({ headers: { get: () => page }, cookies: { get: () => (device ? { value: device } : undefined) } });
+	const hints = (page: string | null, device?: string) => ({
+		headers: { get: () => page },
+		cookies: { get: () => (device ? { value: device } : undefined) },
+	});
 
 	test("the page's language, else the device's, else none", () => {
 		assert.equal(languageOf(hints("slovak", "czech"), known), "slovak");
@@ -113,15 +149,26 @@ describe("which language a request runs", () => {
 	});
 
 	test("two devices run two languages at once, each with its own folder and course", () => {
-		const phone = inRequest({ device: "slovak" }, () => ({ profile: config.activeProfile(), data: config.PATHS.data, course: activeCourse()?.language }));
-		const pc = inRequest({ device: "czech" }, () => ({ profile: config.activeProfile(), data: config.PATHS.data, course: activeCourse()?.language }));
+		const phone = inRequest({ device: "slovak" }, () => ({
+			profile: config.activeProfile(),
+			data: config.PATHS.data,
+			course: activeCourse()?.language,
+		}));
+		const pc = inRequest({ device: "czech" }, () => ({
+			profile: config.activeProfile(),
+			data: config.PATHS.data,
+			course: activeCourse()?.language,
+		}));
 		assert.deepEqual(phone, { profile: "slovak", data: profileDir("slovak"), course: undefined });
 		assert.deepEqual(pc, { profile: "czech", data: profileDir("czech"), course: "czech" });
 		assert.equal(config.activeProfile(), "slovak", "outside a request, the default");
 	});
 
 	test("withProfile borrows inside a request and gives the request's language back", () => {
-		const seen = inRequest({ device: "czech" }, () => [config.withProfile("slovak", () => config.activeProfile()), config.activeProfile()]);
+		const seen = inRequest({ device: "czech" }, () => [
+			config.withProfile("slovak", () => config.activeProfile()),
+			config.activeProfile(),
+		]);
 		assert.deepEqual(seen, ["slovak", "czech"]);
 	});
 
@@ -166,7 +213,11 @@ describe("a page left open while another device switches", () => {
 	});
 
 	test("a page whose language was removed saves nothing and says why", async () => {
-		const res = await send("/api/progress/time", { activity: "lesson", ms: 60_000 }, { page: "estonian", device: "slovak" });
+		const res = await send(
+			"/api/progress/time",
+			{ activity: "lesson", ms: 60_000 },
+			{ page: "estonian", device: "slovak" },
+		);
 		assert.equal(res.status, 409);
 		assert.equal(((await res.json()) as { error: string }).error, "language_gone");
 		assert.equal(minutesIn("slovak"), 0);
@@ -175,7 +226,8 @@ describe("a page left open while another device switches", () => {
 });
 
 describe("the device's language cookie", () => {
-	const page = async (cookie?: string) => proxy(new NextRequest(origin + "/review", { headers: cookie ? { cookie } : {} }));
+	const page = async (cookie?: string) =>
+		proxy(new NextRequest(origin + "/review", { headers: cookie ? { cookie } : {} }));
 
 	test("a device that never chose gets the default on its first page", async () => {
 		config.switchProfile("czech");
@@ -196,7 +248,10 @@ describe("the device's language cookie", () => {
 describe("which requests the removed-language check refuses", () => {
 	const known = (id: string) => id === "slovak";
 	test("only a write from a page whose language is gone", () => {
-		assert.equal(languageGone({ method: "POST", pathname: "/api/lesson", shown: "czech" }, known)?.error, "language_gone");
+		assert.equal(
+			languageGone({ method: "POST", pathname: "/api/lesson", shown: "czech" }, known)?.error,
+			"language_gone",
+		);
 		assert.equal(languageGone({ method: "GET", pathname: "/api/lesson", shown: "czech" }, known), null);
 		assert.equal(languageGone({ method: "POST", pathname: "/api/lesson", shown: "slovak" }, known), null);
 		assert.equal(languageGone({ method: "POST", pathname: "/api/lesson", shown: null }, known), null);
@@ -231,22 +286,29 @@ describe("the page's fetch", () => {
 		await pageFetch("/api/lesson", { method: "POST", headers: { "content-type": "application/json" } });
 		await pageFetch("/review?_rsc=1");
 		await pageFetch(new Request(`${origin}/api/review`, { method: "POST", headers: { "content-type": "text/plain" } }));
-		assert.deepEqual(calls.map((c) => [c.header, c.other]), [
-			["slovak", "application/json"],
-			["slovak", null],
-			["slovak", "text/plain"],
-		]);
+		assert.deepEqual(
+			calls.map((c) => [c.header, c.other]),
+			[
+				["slovak", "application/json"],
+				["slovak", null],
+				["slovak", "text/plain"],
+			],
+		);
 	});
 
 	test("leaves other sites alone", async () => {
 		await pageFetch("https://example.com/api/x");
-		assert.deepEqual(calls.map((c) => c.header), [null]);
+		assert.deepEqual(
+			calls.map((c) => c.header),
+			[null],
+		);
 	});
 
 	test("reports a refusal for a removed language, and no other 409", async () => {
 		reply = () => new Response(JSON.stringify({ message: "busy" }), { status: 409 });
 		await pageFetch("/api/profile", { method: "POST" });
-		reply = () => new Response(JSON.stringify({ error: "language_gone", shown: "slovak", message: "" }), { status: 409 });
+		reply = () =>
+			new Response(JSON.stringify({ error: "language_gone", shown: "slovak", message: "" }), { status: 409 });
 		const res = await pageFetch("/api/lesson", { method: "POST" });
 		assert.equal(((await res.json()) as { error: string }).error, "language_gone", "the caller still reads the body");
 		await new Promise((r) => setTimeout(r, 0));

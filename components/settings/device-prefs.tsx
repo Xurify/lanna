@@ -114,8 +114,17 @@ export function VolumeRow() {
 			testid="row-volume"
 		>
 			<div className="flex w-56 shrink-0 items-center gap-3">
-				<Slider value={level} onChange={setVolume} onCommit={() => sfx.tap()} label="Volume" className="flex-1" testid="volume" />
-				<span className="w-9 text-right font-ui text-xs font-semibold tabular-nums text-muted-foreground">{Math.round(level * 100)}%</span>
+				<Slider
+					value={level}
+					onChange={setVolume}
+					onCommit={() => sfx.tap()}
+					label="Volume"
+					className="flex-1"
+					testid="volume"
+				/>
+				<span className="w-9 text-right font-ui text-xs font-semibold tabular-nums text-muted-foreground">
+					{Math.round(level * 100)}%
+				</span>
 			</div>
 		</SettingsRow>
 	);

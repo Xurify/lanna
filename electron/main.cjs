@@ -1,5 +1,5 @@
 /**
- * LearnHarness — the Electron shell (wrapper milestone, 2026-09-17).
+ * LangHarness — the Electron shell (wrapper milestone, 2026-09-17).
  *
  * What this process is and is not:
  *   IS:  a thin launcher + security guard around the app's real server —
@@ -30,7 +30,9 @@ const { app, BrowserWindow, clipboard, Menu, ipcMain, session, shell } = require
 /** Whether the last session ended in Night, kept beside the window state so the window is the right color from its first frame. */
 function savedNight() {
 	try {
-		const raw = JSON.parse(require("node:fs").readFileSync(require("node:path").join(app.getPath("userData"), "theme.json"), "utf8"));
+		const raw = JSON.parse(
+			require("node:fs").readFileSync(require("node:path").join(app.getPath("userData"), "theme.json"), "utf8"),
+		);
 		return raw.night === true;
 	} catch {
 		return false;
@@ -38,13 +40,19 @@ function savedNight() {
 }
 function saveNight(night) {
 	try {
-		require("node:fs").writeFileSync(require("node:path").join(app.getPath("userData"), "theme.json"), JSON.stringify({ night }));
+		require("node:fs").writeFileSync(
+			require("node:path").join(app.getPath("userData"), "theme.json"),
+			JSON.stringify({ night }),
+		);
 	} catch {
 		// the next start opens in Day and the page corrects it
 	}
 }
 
-const CHROME = { day: { color: "#ffffff", symbolColor: "#16181b" }, night: { color: "#101214", symbolColor: "#ecedee" } };
+const CHROME = {
+	day: { color: "#ffffff", symbolColor: "#16181b" },
+	night: { color: "#101214", symbolColor: "#ecedee" },
+};
 const { createChatGPT, fileStore } = require("./chatgpt.cjs");
 const { attachChatGPTChild, trustedSender, chatGPTControl } = require("./chatgpt-ipc.cjs");
 const { createSubscriptions, loadSubscriptionSDK } = require("./subscriptions.cjs");
@@ -71,11 +79,11 @@ const SIDEBAR_AUTOCLOSE = 900;
 const PRODUCT_NAME = "LangHarness";
 
 // APP NAME → userData (owner, 2026-10-10): the Application Support dir is
-// exactly "LearnHarness" in dev AND packaged. Packaged Electron would
+// exactly "LangHarness" in dev AND packaged. Packaged Electron would
 // otherwise derive it from package.json "name" (now lowercase
-// "learnharness"), and productName metadata alone doesn't reach app.name.
+// "langharness"), and productName metadata alone doesn't reach app.name.
 // Must run before the LH_DEV_URL suffix below — dev becomes
-// "LearnHarness-dev".
+// "LangHarness-dev".
 app.setName(PRODUCT_NAME);
 
 // Audio playback hardening:
@@ -106,8 +114,8 @@ function serverEntry() {
 
 // ─── Single instance: two instances would fight over the data dir ─────────
 // ─── Browser-service helper (Wave E stage 3, owner 2026-10-10) ────────
-// The render engines for agent jobs: PDFs and SVGs rasterize natively
-// (pdfjs+Skia, resvg — no browser); only a page that executes JS needs one. The
+// The render engines for agent jobs: PDFs rasterize natively
+// (pdfjs + Skia — no browser); only a page that executes JS needs one. The
 // app's own Chromium serves that via this helper — the server spawns
 //   <this binary> --browser-service
 // and connects over CDP (system Chrome stays the fallback). Handshake:
@@ -240,7 +248,7 @@ function log(line) {
 }
 
 function startServer(port) {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve, _reject) => {
 		const child = spawn(
 			process.execPath,
 			// Only the macOS backend needs this: Next's native title setter
@@ -270,7 +278,12 @@ function startServer(port) {
 		serverProcess = child;
 		chatgptChild = attachChatGPTChild(child, chatgpt);
 		subscriptionChild = attachSubscriptionChild(child, subscriptions);
-		const fwd = (buf) => buf.toString().trimEnd().split("\n").forEach((l) => l && log(`server: ${l}`));
+		const fwd = (buf) =>
+			buf
+				.toString()
+				.trimEnd()
+				.split("\n")
+				.forEach((l) => l && log(`server: ${l}`));
 		child.stdout.on("data", fwd);
 		child.stderr.on("data", fwd);
 		child.on("exit", (code, signal) => {
@@ -345,15 +358,15 @@ function createWindow(url) {
 		...(process.platform === "darwin"
 			? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 16, y: 22.5 } }
 			: {
-				titleBarStyle: "hidden",
-				// Native min/max/close on the right, at the OS's compact default
-				// height. Do not force the zoom-invariant native overlay to match
-				// the renderer's 60 CSS px bar: zooming out would cover its border.
-				// The renderer reserves the actual width via env(titlebar-area-*).
-				titleBarOverlay: { ...(savedNight() ? CHROME.night : CHROME.day) },
-				// Keep the custom bar alone; Alt reveals the native menu.
-				autoHideMenuBar: true,
-			}),
+					titleBarStyle: "hidden",
+					// Native min/max/close on the right, at the OS's compact default
+					// height. Do not force the zoom-invariant native overlay to match
+					// the renderer's 60 CSS px bar: zooming out would cover its border.
+					// The renderer reserves the actual width via env(titlebar-area-*).
+					titleBarOverlay: { ...(savedNight() ? CHROME.night : CHROME.day) },
+					// Keep the custom bar alone; Alt reveals the native menu.
+					autoHideMenuBar: true,
+				}),
 		webPreferences: {
 			contextIsolation: true,
 			sandbox: true,
@@ -396,8 +409,7 @@ function createWindow(url) {
 	// Notification.requestPermission() as "denied" with no prompt, so the
 	// desktop app could never reach the granted state.
 	const allowedPermissions = new Set(["media", "clipboard-sanitized-write", "local-fonts", "notifications"]);
-	const fromOwnOrigin = (origin, permission) =>
-		origin === allowedOrigin() && allowedPermissions.has(permission);
+	const fromOwnOrigin = (origin, permission) => origin === allowedOrigin() && allowedPermissions.has(permission);
 	session.defaultSession.setPermissionRequestHandler((_wc, permission, callback, details) => {
 		const requestOrigin = details.requestingUrl ? new URL(details.requestingUrl).origin : null;
 		callback(fromOwnOrigin(requestOrigin, permission));
@@ -575,7 +587,7 @@ function setupAutoUpdater() {
 	autoUpdater.logger = {
 		info: (m) => log(`updater: ${m}`),
 		warn: (m) => log(`updater warn: ${m}`),
-		debug: (m) => {}, // too chatty for the persistent log
+		debug: (_m) => {}, // too chatty for the persistent log
 		error: (m) => log(`updater error: ${m}`),
 	};
 	autoUpdater.on("checking-for-update", () => reportUpdateStatus("checking"));
@@ -600,7 +612,11 @@ function checkForUpdatesFromMenu() {
 			if (win.isMinimized()) win.restore();
 			win.focus();
 			const openSettings = () => {
-				try { win.webContents.send("lh:open-settings", "general"); } catch { /* window closed */ }
+				try {
+					win.webContents.send("lh:open-settings", "general");
+				} catch {
+					/* window closed */
+				}
 			};
 			if (win.webContents.isLoadingMainFrame()) win.webContents.once("did-finish-load", openSettings);
 			else openSettings();
@@ -615,8 +631,8 @@ function zoomStep(win, dir) {
 	const current = win.webContents.getZoomFactor();
 	const next =
 		dir > 0
-			? ZOOM_LADDER.find((f) => f > current + 0.001) ?? ZOOM_LADDER[ZOOM_LADDER.length - 1]
-			: [...ZOOM_LADDER].reverse().find((f) => f < current - 0.001) ?? ZOOM_LADDER[0];
+			? (ZOOM_LADDER.find((f) => f > current + 0.001) ?? ZOOM_LADDER[ZOOM_LADDER.length - 1])
+			: ([...ZOOM_LADDER].reverse().find((f) => f < current - 0.001) ?? ZOOM_LADDER[0]);
 	applyZoom(win, next);
 }
 
@@ -643,7 +659,18 @@ function installMenu() {
 				{ role: "quit" },
 			],
 		},
-		{ label: "Edit", submenu: [{ role: "undo" }, { role: "redo" }, { type: "separator" }, { role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "selectAll" }] },
+		{
+			label: "Edit",
+			submenu: [
+				{ role: "undo" },
+				{ role: "redo" },
+				{ type: "separator" },
+				{ role: "cut" },
+				{ role: "copy" },
+				{ role: "paste" },
+				{ role: "selectAll" },
+			],
+		},
 		{
 			label: "View",
 			submenu: [
@@ -699,7 +726,7 @@ async function main() {
 	// later." with a Playback ID, seen 2026-10-28): the player is served a
 	// build for a browser it does not recognize. Present as the Chrome we
 	// are; nothing else keys off these tokens.
-	app.userAgentFallback = app.userAgentFallback.replace(/ (learnharness|LearnHarness|Electron)\/\S+/g, "");
+	app.userAgentFallback = app.userAgentFallback.replace(/ (learnharness|langharness|LangHarness|Electron)\/\S+/g, "");
 
 	// Dev mode: point at a running `next dev` server (LH_DEV_URL) — no
 	// spawn, no packaging, full HMR. The rest of this shell still applies
@@ -732,7 +759,9 @@ async function main() {
 		});
 		await subscriptions.ready;
 		log(`starting server: ${serverEntry()}`);
-		log(`data dir: ${DATA_DIR()}${fs.existsSync(AUTH_FILE()) ? " · auth.json: present" : " · auth.json: ABSENT (no BYOK keys yet)"}`);
+		log(
+			`data dir: ${DATA_DIR()}${fs.existsSync(AUTH_FILE()) ? " · auth.json: present" : " · auth.json: ABSENT (no BYOK keys yet)"}`,
+		);
 		await startServer(new URL(url).port);
 		await waitUntilUp(url);
 		log(`server up: ${url}`);
@@ -743,13 +772,29 @@ async function main() {
 	// Renderer controls contain no token/URL/code operation. The separate server
 	// child is the only recipient of credential leases over inherited IPC.
 	ipcMain.handle("lh:chatgpt:control", async (event, command) => {
-		if (!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) || !trustedSender(event, new URL(url).origin, BrowserWindow)) return { error: "Untrusted desktop request." };
-		if (!chatgpt || !serverProcess?.connected) return { available: false, pending: false, activeId: null, accounts: [], error: "ChatGPT sign-in requires the desktop app's private server connection. Browser-only and externally launched development servers keep API-key connections." };
+		if (
+			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
+			!trustedSender(event, new URL(url).origin, BrowserWindow)
+		)
+			return { error: "Untrusted desktop request." };
+		if (!chatgpt || !serverProcess?.connected)
+			return {
+				available: false,
+				pending: false,
+				activeId: null,
+				accounts: [],
+				error:
+					"ChatGPT sign-in requires the desktop app's private server connection. Browser-only and externally launched development servers keep API-key connections.",
+			};
 		return chatGPTControl(command, chatgpt);
 	});
 
 	ipcMain.handle("lh:subscriptions:control", async (event, command) => {
-		if (!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) || !trustedSender(event, new URL(url).origin, BrowserWindow)) throw new Error("Untrusted desktop request.");
+		if (
+			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
+			!trustedSender(event, new URL(url).origin, BrowserWindow)
+		)
+			throw new Error("Untrusted desktop request.");
 		if (!subscriptions || !serverProcess?.connected) {
 			if (command?.op === "status") return [];
 			throw new Error("Subscription sign-in requires the desktop app's private server connection.");
@@ -760,8 +805,15 @@ async function main() {
 	// The dev shell has no browser tabs. Only a one-use action on its own
 	// Next server may be resolved here; never accept an arbitrary external URL.
 	ipcMain.handle("lh:subscriptions:web-browser", async (event, action) => {
-		if (!devUrl || !trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) || !trustedSender(event, new URL(url).origin, BrowserWindow)) throw new Error("Untrusted development request.");
-		await openWebSubscriptionBrowser(action, new URL(url).origin, { openExternal: (target) => shell.openExternal(target) });
+		if (
+			!devUrl ||
+			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
+			!trustedSender(event, new URL(url).origin, BrowserWindow)
+		)
+			throw new Error("Untrusted development request.");
+		await openWebSubscriptionBrowser(action, new URL(url).origin, {
+			openExternal: (target) => shell.openExternal(target),
+		});
 	});
 
 	installMenu();
@@ -773,11 +825,19 @@ async function main() {
 	setupAutoUpdater();
 	ipcMain.on("lh:update-install", () => installUpdateNow());
 	ipcMain.handle("lh:update:get", (event) => {
-		if (!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) || !trustedSender(event, new URL(url).origin, BrowserWindow)) throw new Error("Untrusted desktop request.");
+		if (
+			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
+			!trustedSender(event, new URL(url).origin, BrowserWindow)
+		)
+			throw new Error("Untrusted desktop request.");
 		return updateState;
 	});
 	ipcMain.handle("lh:update:check", (event) => {
-		if (!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) || !trustedSender(event, new URL(url).origin, BrowserWindow)) throw new Error("Untrusted desktop request.");
+		if (
+			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
+			!trustedSender(event, new URL(url).origin, BrowserWindow)
+		)
+			throw new Error("Untrusted desktop request.");
 		checkForUpdates({ manual: true });
 	});
 
@@ -785,19 +845,25 @@ async function main() {
 	// (electron/storage-ipc.cjs). Same sender check as the handlers above.
 	registerStorageIPC(ipcMain, {
 		session,
-		trusted: (event) => trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) && trustedSender(event, new URL(url).origin, BrowserWindow),
+		trusted: (event) =>
+			trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) &&
+			trustedSender(event, new URL(url).origin, BrowserWindow),
 	});
 
 	// Settings → Appearance → Reading font: the installed families, asked of the OS
 	// here because the renderer's queryLocalFonts is empty in Electron 44 (electron/fonts-ipc.cjs).
 	registerFontsIPC(ipcMain, {
-		trusted: (event) => trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) && trustedSender(event, new URL(url).origin, BrowserWindow),
+		trusted: (event) =>
+			trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) &&
+			trustedSender(event, new URL(url).origin, BrowserWindow),
 	});
 
 	// Watch → picks: the learner's YouTube history, recommendations and
 	// subscriptions, read through a signed-in session of its own (electron/youtube.cjs).
 	registerYouTubeIPC(ipcMain, {
-		trusted: (event) => trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) && trustedSender(event, new URL(url).origin, BrowserWindow),
+		trusted: (event) =>
+			trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) &&
+			trustedSender(event, new URL(url).origin, BrowserWindow),
 		youtube: createYouTube({ session, BrowserWindow, userAgent: app.userAgentFallback }),
 		BrowserWindow,
 	});
@@ -809,7 +875,10 @@ async function main() {
 	// window grows right. No-op when already wide.
 	// The renderer's first paint can race did-finish-load — it asks for
 	// the current factor itself (mirrors "lh:zoom" pushes).
-	ipcMain.handle("lh:zoom:get", (event) => BrowserWindow.fromWebContents(event.sender)?.webContents.getZoomFactor() ?? 1);
+	ipcMain.handle(
+		"lh:zoom:get",
+		(event) => BrowserWindow.fromWebContents(event.sender)?.webContents.getZoomFactor() ?? 1,
+	);
 	ipcMain.on("lh:theme", (event, night) => {
 		const win = BrowserWindow.fromWebContents(event.sender);
 		if (!win) return;
@@ -826,7 +895,11 @@ async function main() {
 		const target = SIDEBAR_AUTOCLOSE;
 		if (width < target) win.setBounds({ x, y, width: target, height });
 	});
-	reopenWindow = () => { chatgpt?.resume(); subscriptions?.resume(); return createWindow(url); };
+	reopenWindow = () => {
+		chatgpt?.resume();
+		subscriptions?.resume();
+		return createWindow(url);
+	};
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) reopenWindow();
 	});

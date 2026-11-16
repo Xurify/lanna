@@ -48,7 +48,13 @@ const stanica = (first?: RepResult["first"], detail: Partial<NonNullable<RepResu
 
 test("a wrong first try lands on its drill: the tally, the gender column, the log", () => {
 	// "stanica" first (the dictionary form), then right after the cue.
-	recordLesson({ unit: "gen", mode: "lesson", reps: [stanica({ given: "stanica", verdict: "wrong" })], tz: 0, clientId: "first-0001-aaaa" });
+	recordLesson({
+		unit: "gen",
+		mode: "lesson",
+		reps: [stanica({ given: "stanica", verdict: "wrong" })],
+		tz: 0,
+		clientId: "first-0001-aaaa",
+	});
 	const gen = progressStore.read().units["gen"]!;
 	assert.deepEqual(gen.first, { reps: 1, right: 0, accents: 0, slips: { base: 1 } });
 	assert.deepEqual(gen.byGender?.fem, { reps: 1, right: 0, accents: 0, slips: { base: 1 } });
@@ -61,7 +67,13 @@ test("a wrong first try lands on its drill: the tally, the gender column, the lo
 });
 
 test("a right first try counts as right", () => {
-	recordLesson({ unit: "gen", mode: "lesson", reps: [stanica({ given: "stanice", verdict: "exact" })], tz: 0, clientId: "first-0002-bbbb" });
+	recordLesson({
+		unit: "gen",
+		mode: "lesson",
+		reps: [stanica({ given: "stanice", verdict: "exact" })],
+		tz: 0,
+		clientId: "first-0002-bbbb",
+	});
 	const gen = progressStore.read().units["gen"]!;
 	assert.equal(gen.first?.reps, 2);
 	assert.equal(gen.first?.right, 1);
@@ -78,7 +90,11 @@ test("peeks, meaning and build reps, and the end-of-lesson retry never count", (
 			stanica({ given: "stanica", verdict: "wrong", peeked: true }),
 			{ ...base, kind: "meaning" },
 			{ ...base, kind: "build" },
-			{ ...stanica({ given: "stanice", verdict: "exact" }), itemId: "stanica#3~again", detail: { ...base.detail, again: true } },
+			{
+				...stanica({ given: "stanice", verdict: "exact" }),
+				itemId: "stanica#3~again",
+				detail: { ...base.detail, again: true },
+			},
 		],
 		tz: 0,
 		clientId: "first-0003-cccc",
@@ -98,7 +114,15 @@ test("a rep without a first answer (an old client) counts nothing and still logs
 
 test("a mixed lesson counts the rep toward the case it drilled, not the lesson's unit", () => {
 	const genBefore = progressStore.read().units["gen"]!.first!.reps;
-	recordLesson({ unit: "gen", mode: "lesson", reps: [{ ...stanica({ given: "stanice", verdict: "exact" }), detail: { ...stanica().detail, unit: "loc", mixed: true } }], tz: 0, clientId: "first-0005-eeee" });
+	recordLesson({
+		unit: "gen",
+		mode: "lesson",
+		reps: [
+			{ ...stanica({ given: "stanice", verdict: "exact" }), detail: { ...stanica().detail, unit: "loc", mixed: true } },
+		],
+		tz: 0,
+		clientId: "first-0005-eeee",
+	});
 	const p = progressStore.read();
 	assert.equal(p.units["gen"]!.first!.reps, genBefore, "not the lesson's unit");
 	assert.equal(p.units["loc"]?.first?.reps, 1, "the locative tally");

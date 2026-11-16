@@ -11,30 +11,30 @@ Use it twice: once **before** you draw (decide the one idea, pick the pieces), o
 
 ## The look
 
-| Part | Rule |
-|---|---|
-| Line | Thin: 1.4 for things, 2.1 for the one arrow or path the idea is about. Round caps and joins. |
-| Wobble | A seeded bow on every straight stroke and a displacement filter on the whole sheet. Never a ruler-straight line, never a random wobble that changes per render (hydration). |
-| Ink | Three tones only: `ink` (the text color, for the main thing), `graphite` (people), `soft` (scenery), plus `mark` (teal, for the one thing that matters). Day and Night come from the tokens, never from a hex. |
-| Patch | One highlighter patch (`Patch`) behind the single thing the case marks. Not two. |
-| Words | At most one `Note` per picture: the preposition or verb the picture is about. The app's own font, no handwriting font, no third family. |
-| Motion | Each stroke draws itself in the order scenery, people, patch, arrow, label (`delay`). Off under reduced motion (`app/globals.css`, `ink-draw`, `ink-fade`). |
-| No | Gradients, shadows, boxes around everything, emoji, clip art, a legend. |
+| Part   | Rule                                                                                                                                                                                                           |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line   | Thin: 1.4 for things, 2.1 for the one arrow or path the idea is about. Round caps and joins.                                                                                                                   |
+| Wobble | A seeded bow on every straight stroke and a displacement filter on the whole sheet. Never a ruler-straight line, never a random wobble that changes per render (hydration).                                    |
+| Ink    | Three tones only: `ink` (the text color, for the main thing), `graphite` (people), `soft` (scenery), plus `mark` (teal, for the one thing that matters). Day and Night come from the tokens, never from a hex. |
+| Patch  | One highlighter patch (`Patch`) behind the single thing the case marks. Not two.                                                                                                                               |
+| Words  | At most one `Note` per picture: the preposition or verb the picture is about. The app's own font, no handwriting font, no third family.                                                                        |
+| Motion | Each stroke draws itself in the order scenery, people, patch, arrow, label (`delay`). Off under reduced motion (`app/globals.css`, `ink-draw`, `ink-fade`).                                                    |
+| No     | Gradients, shadows, boxes around everything, emoji, clip art, a legend.                                                                                                                                        |
 
 ## The kit
 
 `components/lesson/ink-paths.ts` is pure (path strings, seeded). `components/lesson/ink.tsx` draws them.
 
-| Piece | Use |
-|---|---|
-| `Sheet` | The surface: an `svg` with the ink filter. Every sketch is one `Sheet`, viewBox `0 0 340 132`, ground line at y 104. |
-| `Figure` | A person on the ground. `reach="right"` or `"left"` for the one who acts; no `reach` for the one who is acted on. |
-| `House` | `kind` is `home`, `school` (a flag), `office` (windows) or `clinic` (a cross). Pick the kind that says what the word means: work is not a house. |
-| `Box`, `Loop`, `Line`, `Curve`, `Stroke` | Things: a box, a ring, a line, a curve through points, a custom path. |
-| `Arrow` | Always the accent ink: the movement of the preposition or verb. Shaft first, head after. |
-| `Patch`, `Dot` | The highlight, and the solid dot of "where it sits". |
-| `Note` | The one word. |
-| `PenUnderline`, `PenRule` | The pen underline under a lit ending, and the rule between table rows. |
+| Piece                                    | Use                                                                                                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Sheet`                                  | The surface: an `svg` with the ink filter. Every sketch is one `Sheet`, viewBox `0 0 340 132`, ground line at y 104.                             |
+| `Figure`                                 | A person on the ground. `reach="right"` or `"left"` for the one who acts; no `reach` for the one who is acted on.                                |
+| `House`                                  | `kind` is `home`, `school` (a flag), `office` (windows) or `clinic` (a cross). Pick the kind that says what the word means: work is not a house. |
+| `Box`, `Loop`, `Line`, `Curve`, `Stroke` | Things: a box, a ring, a line, a curve through points, a custom path.                                                                            |
+| `Arrow`                                  | Always the accent ink: the movement of the preposition or verb. Shaft first, head after.                                                         |
+| `Patch`, `Dot`                           | The highlight, and the solid dot of "where it sits".                                                                                             |
+| `Note`                                   | The one word.                                                                                                                                    |
+| `PenUnderline`, `PenRule`                | The pen underline under a lit ending, and the rule between table rows.                                                                           |
 
 A scene is a `case` in `Scene` (`components/lesson/case-sketch.tsx`): `Ground`, scenery, people, `Patch`, `Arrow`, `Note`. Give every stroke its own `seed` (a number nobody else in the scene uses; a figure uses `seed` to `seed + 5`). A new scene kind goes in `SceneKind` and in a stage of `SKETCHES`.
 
@@ -87,15 +87,15 @@ Every story in the Read library has a cover: a small ink scene with watercolour 
 
 **What a cover scene is.**
 
-| Part | Rule |
-|---|---|
-| Frame | viewBox `0 0 200 120`. The subject fills about 70 to 80% of the width with a 14 px margin; nothing runs off the edge. |
-| Ground | Outdoors: one soft ground line at y 104. Indoors: a table edge instead. Never both. No sun, no moon, no empty circles. |
-| Ink | Main shapes `MAIN` (1.7) in `ink`, details `DETAIL` (1.2) in `graphite`, scenery in `soft`. Long lines bow less than short ones (`L` does this). |
-| People | Head with dot eyes, a smile and hair; a coat or dress with body; arms with an elbow (`Person` takes arm paths); shoes. One clear action each: waving, walking toward a door, sitting with knees bent. |
-| Highlight | One teal patch (`Highlight`, `q-ink-patch`) on the one thing the story is about: the cross on a clinic, the briefcase, the coffee, the speech bubble. A bubble or a surface is filled to its outline, not blotted. Never on a random window or a tree crown. |
-| Washes | Loose and off-register under the ink (`Wash`, `WashBox`, `WashPath`), in the four low-chroma hues `ochre`, `rose`, `sage`, `sky` (`--q-wash-*`, with their own lighter Night values). Two or three per scene, kept inside or just past their shape; a wash that spreads like a stain is too big. A vehicle's frame or a thin object stays uncoloured. |
-| Each scene its own silhouette | Two scenes must not share a shape at card size: the park tree is round, the autumn tree is bare branches; the home is a gabled house, the mountain hut an A-frame. |
+| Part                          | Rule                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frame                         | viewBox `0 0 200 120`. The subject fills about 70 to 80% of the width with a 14 px margin; nothing runs off the edge.                                                                                                                                                                                                                                 |
+| Ground                        | Outdoors: one soft ground line at y 104. Indoors: a table edge instead. Never both. No sun, no moon, no empty circles.                                                                                                                                                                                                                                |
+| Ink                           | Main shapes `MAIN` (1.7) in `ink`, details `DETAIL` (1.2) in `graphite`, scenery in `soft`. Long lines bow less than short ones (`L` does this).                                                                                                                                                                                                      |
+| People                        | Head with dot eyes, a smile and hair; a coat or dress with body; arms with an elbow (`Person` takes arm paths); shoes. One clear action each: waving, walking toward a door, sitting with knees bent.                                                                                                                                                 |
+| Highlight                     | One teal patch (`Highlight`, `q-ink-patch`) on the one thing the story is about: the cross on a clinic, the briefcase, the coffee, the speech bubble. A bubble or a surface is filled to its outline, not blotted. Never on a random window or a tree crown.                                                                                          |
+| Washes                        | Loose and off-register under the ink (`Wash`, `WashBox`, `WashPath`), in the four low-chroma hues `ochre`, `rose`, `sage`, `sky` (`--q-wash-*`, with their own lighter Night values). Two or three per scene, kept inside or just past their shape; a wash that spreads like a stain is too big. A vehicle's frame or a thin object stays uncoloured. |
+| Each scene its own silhouette | Two scenes must not share a shape at card size: the park tree is round, the autumn tree is bare branches; the home is a gabled house, the mountain hut an A-frame.                                                                                                                                                                                    |
 
 **Review before it ships.** Render every scene on numbered tiles with `npx tsx scripts/cover-contact-sheet.tsx <dir> <motif,motif,...>`, screenshot `sheet-light.html` and `sheet-dark.html`, and give only the PNGs to a fresh reviewer each round (the brief in "Blind review before it ships" above, asking per tile: what is drawn, the guessed setting, clarity and craft 1 to 10, the one fix; then which tiles are too alike). Fix what it names, render again, use a new reviewer. Mistakes the reviewers caught: a stall awning that read as a blimp, a tree that read as a lollipop, leaf ticks that read as birds, marks on a bush that read as a face, a croissant that read as a fish, a plate seen from above that read as a UFO, a stick person with an arm that meant nothing, typed lettering in a hand-drawn scene.
 

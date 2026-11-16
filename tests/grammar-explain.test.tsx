@@ -8,7 +8,11 @@ import { GrammarExplain } from "../components/lesson/grammar-explain.tsx";
 import type { LessonExplain } from "../src/core/lesson.ts";
 
 /** The explanations as curriculum/slovak/mixups.json holds them (the shipped data). */
-const families = (JSON.parse(fs.readFileSync("curriculum/slovak/mixups.json", "utf-8")) as { families: Array<{ id: string; explain?: LessonExplain }> }).families;
+const families = (
+	JSON.parse(fs.readFileSync("curriculum/slovak/mixups.json", "utf-8")) as {
+		families: Array<{ id: string; explain?: LessonExplain }>;
+	}
+).families;
 const aspect = families.find((f) => f.id === "aspect")!.explain!;
 const thisThat = families.find((f) => f.id === "this-vs-that")!.explain!;
 
@@ -34,7 +38,10 @@ describe("the grammar explanation (static, worked examples; never a drill)", () 
 	});
 
 	it("renders a case grid's 'not yet' cells as text, never filled in; the shipped tento grid has none", () => {
-		const gap = { ...thisThat, tables: [{ title: "gap", cols: ["m. sg."], rows: [{ case: "N", cells: ["not yet"] }] }] };
+		const gap = {
+			...thisThat,
+			tables: [{ title: "gap", cols: ["m. sg."], rows: [{ case: "N", cells: ["not yet"] }] }],
+		};
 		const html = renderToStaticMarkup(<GrammarExplain explain={gap} />);
 		assert.ok(html.includes('data-testid="explain-table"'));
 		assert.ok(html.includes("not yet"));

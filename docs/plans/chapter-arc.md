@@ -6,19 +6,19 @@ Date: 2026-10-30. Evidence: [../research/slovake-eu-benchmark.md](../research/sl
 
 ## What we're building
 
-The **arc** is the fixed run of seven steps that every chapter goes through, in the same order. Each step adds one thing the chapter needs, such as a story, a contrast pair, a sound or an exam. Every chapter gets the arc, and the daily plan works through it, so "today" reads as "day 3 of *At the doctor's*" rather than a list of grammar IDs. The arc uses what the app already does well: local drills, Read, Speak and Review.
+The **arc** is the fixed run of seven steps that every chapter goes through, in the same order. Each step adds one thing the chapter needs, such as a story, a contrast pair, a sound or an exam. Every chapter gets the arc, and the daily plan works through it, so "today" reads as "day 3 of _At the doctor's_" rather than a list of grammar IDs. The arc uses what the app already does well: local drills, Read, Speak and Review.
 
 ## The arc
 
-| # | Step | Strand | Built from | Model calls |
-|---|---|---|---|---|
-| 1 | Príbeh (story) | input | a Read episode for the chapter (phase 2) | one per chapter, cached |
-| 2 | Slová (words) | form | existing word lessons and Review | none |
-| 3 | Tvary (forms) | form | the chapter's existing drill unit | none |
-| 4 | Dvojičky (pairs) | form | new pair drill (phase 3) | none |
-| 5 | Scéna (scene) | output | scripted scene, then live Speak (phase 5) | one per scene, cached |
-| 6 | Zvuk (sound) | fluency | minimal pairs and shadowing (phase 7) | none, TTS cached |
-| 7 | Skúška (exam) | all | mixed items from the chapter (phase 6) | one judge for free writing |
+| #   | Step             | Strand  | Built from                                | Model calls                |
+| --- | ---------------- | ------- | ----------------------------------------- | -------------------------- |
+| 1   | Príbeh (story)   | input   | a Read episode for the chapter (phase 2)  | one per chapter, cached    |
+| 2   | Slová (words)    | form    | existing word lessons and Review          | none                       |
+| 3   | Tvary (forms)    | form    | the chapter's existing drill unit         | none                       |
+| 4   | Dvojičky (pairs) | form    | new pair drill (phase 3)                  | none                       |
+| 5   | Scéna (scene)    | output  | scripted scene, then live Speak (phase 5) | one per scene, cached      |
+| 6   | Zvuk (sound)     | fluency | minimal pairs and shadowing (phase 7)     | none, TTS cached           |
+| 7   | Skúška (exam)    | all     | mixed items from the chapter (phase 6)    | one judge for free writing |
 
 ## Decisions
 

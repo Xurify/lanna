@@ -9,15 +9,7 @@
  * and switching sections never refetches.
  */
 
-import {
-	createContext,
-	Fragment,
-	useCallback,
-	useContext,
-	useEffect,
-	useRef,
-	useState,
-} from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import {
 	CURRENT_SETTINGS_VERSION,
 	type AgentSettings,
@@ -153,9 +145,7 @@ function SettingsDialogBody({
 	initialRow?: string | null;
 }) {
 	const { onAppearanceChange } = useAppearance();
-	const [record, setRecord] = useState<UserSettings | null | undefined>(
-		undefined,
-	);
+	const [record, setRecord] = useState<UserSettings | null | undefined>(undefined);
 	const [error, setError] = useState<string | null>(null);
 	// MenuShell open-count — drives the content column's scroll lock.
 	const [openMenus, setOpenMenus] = useState(0);
@@ -195,9 +185,7 @@ function SettingsDialogBody({
 	// Fetch once per mount. 200 with {settings: null} is first boot, not an error.
 	useEffect(() => {
 		sharedJson<{ settings: UserSettings | null }>("/api/settings")
-			.then((body) =>
-				setRecord(body.settings ?? { version: CURRENT_SETTINGS_VERSION }),
-			)
+			.then((body) => setRecord(body.settings ?? { version: CURRENT_SETTINGS_VERSION }))
 			.catch(() => setRecord(null));
 	}, []);
 
@@ -217,10 +205,7 @@ function SettingsDialogBody({
 
 	/** The one writer: PUT the section, sync the record, show route errors inline. */
 	const write = useCallback(
-		async (
-			section: "general" | "agent" | "models" | "appearance" | "compaction" | "notifications",
-			body: object,
-		) => {
+		async (section: "general" | "agent" | "models" | "appearance" | "compaction" | "notifications", body: object) => {
 			setError(null);
 			const res = await fetch(`/api/settings/${section}`, {
 				method: "PUT",
@@ -235,16 +220,10 @@ function SettingsDialogBody({
 				return;
 			}
 			// Store the server's answer, not the request body: the models section clamps thinking levels on write.
-			const stored = (
-				(await res.json().catch(() => null)) as { settings?: UserSettings } | null
-			)?.settings;
-			setRecord(
-				(prev) =>
-					stored ?? ({ ...(prev ?? {}), [section]: body }) as UserSettings,
-			);
+			const stored = ((await res.json().catch(() => null)) as { settings?: UserSettings } | null)?.settings;
+			setRecord((prev) => stored ?? ({ ...(prev ?? {}), [section]: body } as UserSettings));
 			notifySettingsSaved(section);
-			if (section === "appearance")
-				onAppearanceChange(body as AppearanceSettings);
+			if (section === "appearance") onAppearanceChange(body as AppearanceSettings);
 		},
 		[onAppearanceChange],
 	);
@@ -271,13 +250,16 @@ function SettingsDialogBody({
 							<ChevronLeftIcon className="size-5" />
 						</button>
 					)}
-					<div className={cn("flex size-9 items-center justify-center rounded-lg bg-teal-wash text-teal max-md:ml-2", phoneShowsSection && "max-md:hidden")}>
+					<div
+						className={cn(
+							"flex size-9 items-center justify-center rounded-lg bg-teal-wash text-teal max-md:ml-2",
+							phoneShowsSection && "max-md:hidden",
+						)}
+					>
 						<SlidersIcon className="size-5" />
 					</div>
 					<div className="min-w-0">
-						<h2 className="truncate font-ui text-base font-semibold tracking-[-0.01em] text-foreground">
-							Settings
-						</h2>
+						<h2 className="truncate font-ui text-base font-semibold tracking-[-0.01em] text-foreground">Settings</h2>
 						<p className="text-xs text-muted-foreground max-md:hidden">How LangHarness teaches, sounds and looks</p>
 					</div>
 				</div>
@@ -305,34 +287,34 @@ function SettingsDialogBody({
 						const Icon = SECTION_ICONS[s.id];
 						return (
 							<Fragment key={s.id}>
-							{"divider" in s && <div role="separator" className="mx-3 my-2 h-px shrink-0 bg-border" />}
-							<button
-								type="button"
-								data-testid={`settings-nav-${s.id}`}
-								aria-current={active === s.id}
-								className={cn(
-									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-left font-ui text-sm transition-colors max-md:min-h-12 max-md:gap-3 max-md:text-[15px] max-md:text-foreground max-md:hover:bg-well",
-									active === s.id
-										? "md:bg-card md:font-semibold md:text-teal-2 md:shadow-raise"
-										: "text-ink-2 hover:bg-well-2 hover:text-foreground",
-								)}
-								onClick={() => {
-									setActive(s.id);
-									setPhoneShowsSection(true);
-								}}
-							>
-								{Icon && (
-									<Icon
-										className={cn(
-											"size-4 shrink-0 transition-colors",
-											active === s.id ? "md:text-teal" : "text-ink-3",
-											"max-md:size-5 max-md:text-ink-2",
-										)}
-									/>
-								)}
-								<span className="flex-1">{s.label}</span>
-								<ChevronRightIcon className="size-4 text-ink-4 md:hidden" aria-hidden />
-							</button>
+								{"divider" in s && <div role="separator" className="mx-3 my-2 h-px shrink-0 bg-border" />}
+								<button
+									type="button"
+									data-testid={`settings-nav-${s.id}`}
+									aria-current={active === s.id}
+									className={cn(
+										"flex items-center gap-2.5 rounded-lg px-3 py-2 text-left font-ui text-sm transition-colors max-md:min-h-12 max-md:gap-3 max-md:text-[15px] max-md:text-foreground max-md:hover:bg-well",
+										active === s.id
+											? "md:bg-card md:font-semibold md:text-teal-2 md:shadow-raise"
+											: "text-ink-2 hover:bg-well-2 hover:text-foreground",
+									)}
+									onClick={() => {
+										setActive(s.id);
+										setPhoneShowsSection(true);
+									}}
+								>
+									{Icon && (
+										<Icon
+											className={cn(
+												"size-4 shrink-0 transition-colors",
+												active === s.id ? "md:text-teal" : "text-ink-3",
+												"max-md:size-5 max-md:text-ink-2",
+											)}
+										/>
+									)}
+									<span className="flex-1">{s.label}</span>
+									<ChevronRightIcon className="size-4 text-ink-4 md:hidden" aria-hidden />
+								</button>
 							</Fragment>
 						);
 					})}
@@ -354,27 +336,17 @@ function SettingsDialogBody({
 						</p>
 					)}
 					{record === undefined ? (
-						<p className="px-6 py-5 text-xs text-muted-foreground">
-							Loading settings…
-						</p>
+						<p className="px-6 py-5 text-xs text-muted-foreground">Loading settings…</p>
 					) : record === null ? (
-						<p className="px-6 py-5 text-xs text-muted-foreground">
-							Settings could not be loaded — refresh to retry.
-						</p>
+						<p className="px-6 py-5 text-xs text-muted-foreground">Settings could not be loaded — refresh to retry.</p>
 					) : (
 						<div>
 							{active === "general" && (
-								<SettingsSection
-									title="General"
-									hint="App updates and word lookup."
-									testid="section-general"
-								>
+								<SettingsSection title="General" hint="App updates and word lookup." testid="section-general">
 									<SettingsGroup label="Updates" testid="group-updates">
 										<UpdateSettings
 											autoUpdate={record.general?.autoUpdate ?? true}
-											onAutoUpdateChange={(on) =>
-												void write("general", { ...record.general, autoUpdate: on })
-											}
+											onAutoUpdateChange={(on) => void write("general", { ...record.general, autoUpdate: on })}
 										/>
 									</SettingsGroup>
 									<SettingsGroup label="Dictionary & word lookup" testid="group-word-lookup">
@@ -423,15 +395,9 @@ function SettingsDialogBody({
 										agent={record.agent}
 										models={record.models}
 										compaction={record.compaction}
-										onModelsChange={(next: ModelsSettings) =>
-											void write("models", next)
-										}
-										onSectionChange={(next: AgentSettings) =>
-											void write("agent", next)
-										}
-										onCompactionChange={(next: CompactionSettings) =>
-											void write("compaction", next)
-										}
+										onModelsChange={(next: ModelsSettings) => void write("models", next)}
+										onSectionChange={(next: AgentSettings) => void write("agent", next)}
+										onCompactionChange={(next: CompactionSettings) => void write("compaction", next)}
 									/>
 								</SettingsSection>
 							)}
@@ -443,9 +409,7 @@ function SettingsDialogBody({
 								>
 									<AppearanceSection
 										appearance={record.appearance}
-										onSectionChange={(next: AppearanceSettings) =>
-											void write("appearance", next)
-										}
+										onSectionChange={(next: AppearanceSettings) => void write("appearance", next)}
 									/>
 								</SettingsSection>
 							)}

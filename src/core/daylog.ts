@@ -21,7 +21,17 @@ export interface DayLogLesson {
 	ms?: number;
 	correct: number;
 	total: number;
-	reps: Array<{ unit?: string; lemma?: string; gloss?: string; sentence?: string; answer: string; given?: string; verdict: string; again?: boolean; first?: { given: string; verdict: string } }>;
+	reps: Array<{
+		unit?: string;
+		lemma?: string;
+		gloss?: string;
+		sentence?: string;
+		answer: string;
+		given?: string;
+		verdict: string;
+		again?: boolean;
+		first?: { given: string; verdict: string };
+	}>;
 }
 
 /** The slice of a review answer the log reads (src/core/review.ts ReviewLogEntry). */
@@ -69,7 +79,16 @@ interface DayLogInput {
 	reviews: readonly DayLogReview[];
 	cards: readonly DayLogCard[];
 	/** The day's record from progress.json, when the day has one. */
-	record?: (StrandDay & { stories?: number; talks?: number; tutors?: number; reads?: number; watches?: number; rereads?: number }) | undefined;
+	record?:
+		| (StrandDay & {
+				stories?: number;
+				talks?: number;
+				tutors?: number;
+				reads?: number;
+				watches?: number;
+				rereads?: number;
+		  })
+		| undefined;
 	/** getTimezoneOffset(): minutes west of UTC. */
 	tz: number;
 }
@@ -115,8 +134,12 @@ function counted(n: number | undefined, one: string, many: string): string | nul
 
 export function buildDayLog(day: string, input: DayLogInput): DayLog {
 	const { tz } = input;
-	const lessons = input.lessons.filter((e) => e.day === day && e.mode !== "placement").sort((a, b) => a.at.localeCompare(b.at));
-	const reviews = input.reviews.filter((r) => localDay(r.reviewedAt, tz) === day).sort((a, b) => a.reviewedAt.localeCompare(b.reviewedAt));
+	const lessons = input.lessons
+		.filter((e) => e.day === day && e.mode !== "placement")
+		.sort((a, b) => a.at.localeCompare(b.at));
+	const reviews = input.reviews
+		.filter((r) => localDay(r.reviewedAt, tz) === day)
+		.sort((a, b) => a.reviewedAt.localeCompare(b.reviewedAt));
 	const cards = new Map(input.cards.map((c) => [c.id, c]));
 
 	const entries: DayEntry[] = [];
@@ -137,7 +160,8 @@ export function buildDayLog(day: string, input: DayLogInput): DayLog {
 			// A repeat after the last rep is the same miss again; the first try is the one that counts.
 			const wrongFirst = r.first ? r.first.verdict === "wrong" : r.verdict === "wrong" && !r.again;
 			const given = (r.first?.given ?? r.given ?? "").trim();
-			if (wrongFirst && !r.again && given && given !== r.answer) mistakes.push({ time, title: info?.title ?? titleOf(e), given, answer: r.answer, sentence: r.sentence ?? "" });
+			if (wrongFirst && !r.again && given && given !== r.answer)
+				mistakes.push({ time, title: info?.title ?? titleOf(e), given, answer: r.answer, sentence: r.sentence ?? "" });
 		}
 	}
 
@@ -148,8 +172,18 @@ export function buildDayLog(day: string, input: DayLogInput): DayLog {
 		const first = sitting[0]!;
 		const right = sitting.filter((r) => r.verdict === "exact").length;
 		const ms = sitting.reduce((n, r) => n + (r.ms ?? 0), 0);
-		const parts = [`${sitting.length} ${sitting.length === 1 ? "answer" : "answers"}`, `${right} right`, ms > 0 ? minutesLabel(ms) : ""].filter(Boolean);
-		entries.push({ at: first.reviewedAt, time: localTime(first.reviewedAt, tz), kind: "review", title: "Review", line: parts.join(", ") });
+		const parts = [
+			`${sitting.length} ${sitting.length === 1 ? "answer" : "answers"}`,
+			`${right} right`,
+			ms > 0 ? minutesLabel(ms) : "",
+		].filter(Boolean);
+		entries.push({
+			at: first.reviewedAt,
+			time: localTime(first.reviewedAt, tz),
+			kind: "review",
+			title: "Review",
+			line: parts.join(", "),
+		});
 		sitting = [];
 	};
 	let last = 0;
@@ -160,7 +194,14 @@ export function buildDayLog(day: string, input: DayLogInput): DayLog {
 		last = t;
 		const card = cards.get(r.cardId);
 		const given = r.given.trim();
-		if (r.verdict === "wrong" && card && given && given !== card.answer) mistakes.push({ time: localTime(r.reviewedAt, tz), title: "Review", given, answer: card.answer, sentence: card.sentence });
+		if (r.verdict === "wrong" && card && given && given !== card.answer)
+			mistakes.push({
+				time: localTime(r.reviewedAt, tz),
+				title: "Review",
+				given,
+				answer: card.answer,
+				sentence: card.sentence,
+			});
 	}
 	flush();
 	entries.sort((a, b) => a.at.localeCompare(b.at));
@@ -174,9 +215,24 @@ export function buildDayLog(day: string, input: DayLogInput): DayLog {
 	const parts = strandParts(input.record ?? {});
 	const total = parts.minutes.input + parts.minutes.output + parts.minutes.form + parts.minutes.fluency;
 	const rec = input.record;
-	const also = [counted(rec?.reads, "episode read", "episodes read"), counted(rec?.watches, "video watched", "videos watched"), counted(rec?.stories, "story told", "stories told"), counted(rec?.talks, "talk in writing", "talks in writing"), counted(rec?.tutors, "tutor session", "tutor sessions"), counted(rec?.rereads, "timed re-read", "timed re-reads")].filter((x): x is string => x !== null);
+	const also = [
+		counted(rec?.reads, "episode read", "episodes read"),
+		counted(rec?.watches, "video watched", "videos watched"),
+		counted(rec?.stories, "story told", "stories told"),
+		counted(rec?.talks, "talk in writing", "talks in writing"),
+		counted(rec?.tutors, "tutor session", "tutor sessions"),
+		counted(rec?.rereads, "timed re-read", "timed re-reads"),
+	].filter((x): x is string => x !== null);
 
-	return { day, entries, rules, words, mistakes, strands: { minutes: parts.minutes, total, estimated: parts.estimated }, also };
+	return {
+		day,
+		entries,
+		rules,
+		words,
+		mistakes,
+		strands: { minutes: parts.minutes, total, estimated: parts.estimated },
+		also,
+	};
 }
 
 /** Whether a day's log has anything to show. */

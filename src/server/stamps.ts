@@ -6,7 +6,23 @@
  * stamp keeps its date and is never earned twice.
  */
 
-import { classifyWordState, examSummaries, hoursDone, longestStreak, newStamps, nextStamps, recentStamps, stampCatalog, stampStates, STRANDS, type CurriculumState, type StampEvidence, type StampState, type StrandBalance, type TrailLog } from "../core/index.ts";
+import {
+	classifyWordState,
+	examSummaries,
+	hoursDone,
+	longestStreak,
+	newStamps,
+	nextStamps,
+	recentStamps,
+	stampCatalog,
+	stampStates,
+	STRANDS,
+	type CurriculumState,
+	type StampEvidence,
+	type StampState,
+	type StrandBalance,
+	type TrailLog,
+} from "../core/index.ts";
 import type { ProgressRecord } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
@@ -27,10 +43,22 @@ export interface StampReport {
 }
 
 /** The evidence and the trail log, from what is on record. */
-export function stampEvidence(p: ProgressRecord, curriculum: CurriculumState, balance: StrandBalance, streakDays: number, activeDays: ReadonlySet<string>): { evidence: StampEvidence; log: TrailLog } {
+export function stampEvidence(
+	p: ProgressRecord,
+	curriculum: CurriculumState,
+	balance: StrandBalance,
+	streakDays: number,
+	activeDays: ReadonlySet<string>,
+): { evidence: StampEvidence; log: TrailLog } {
 	const days = Object.values(p.days);
 	const sum = (pick: (d: (typeof days)[number]) => number | undefined) => days.reduce((n, d) => n + (pick(d) ?? 0), 0);
-	let cards: Array<{ state: "new" | "learning" | "review"; reps?: number; lapses?: number; memory?: { stability?: number }; suspended?: boolean }> = [];
+	let cards: Array<{
+		state: "new" | "learning" | "review";
+		reps?: number;
+		lapses?: number;
+		memory?: { stability?: number };
+		suspended?: boolean;
+	}> = [];
 	try {
 		cards = Object.values(reviewStore.readCards()).filter((c) => !c.suspended);
 	} catch {
@@ -68,7 +96,8 @@ export function stampEvidence(p: ProgressRecord, curriculum: CurriculumState, ba
 		reviews: sum((d) => d.reviews),
 		perfectLessons: sum((d) => d.perfect),
 		comebacks,
-		balancedWeek: balance.total >= BALANCED_WEEK_MINUTES && STRANDS.every((s) => balance.share[s.id] >= BALANCED_STRAND_SHARE),
+		balancedWeek:
+			balance.total >= BALANCED_WEEK_MINUTES && STRANDS.every((s) => balance.share[s.id] >= BALANCED_STRAND_SHARE),
 		storiesRead,
 		scenesSpoken: sum((d) => d.speaks),
 		listens: sum((d) => d.listens),
@@ -96,7 +125,12 @@ export function stampEvidence(p: ProgressRecord, curriculum: CurriculumState, ba
 
 /** Judge every stamp and put the newly earned ones on record (in `p`,
  *  which the caller writes). */
-export function syncStamps(p: ProgressRecord, curriculum: CurriculumState, evidence: StampEvidence, today: string): { report: StampReport; minted: StampState[] } {
+export function syncStamps(
+	p: ProgressRecord,
+	curriculum: CurriculumState,
+	evidence: StampEvidence,
+	today: string,
+): { report: StampReport; minted: StampState[] } {
 	const before = p.stamps ?? {};
 	const all = stampStates(stampCatalog(curriculum), evidence, before, today);
 	const minted = newStamps(all, before);

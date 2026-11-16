@@ -16,12 +16,12 @@ Recommended order:
 
 ## Routes
 
-| Route | Works when | Watch: new videos | Data and keys | Setup | Cost |
-|---|---|---|---|---|---|
-| 1. Phone to the PC over Tailscale (built, E21) | the PC is awake and LangHarness runs | works | stay on the PC | about 5 minutes, once ([remote-access.md](../remote-access.md)) | $0; about $5–10 a month of power if the PC stays on around the clock (estimate) |
-| 2. Always-on machine at home, over Tailscale | home power and internet are up | works (home connection) | stay at home, on that machine | an afternoon: install it, move `data/` and the key files | an old laptop $0; a 16 GB N150 mini PC about $250–400 in 2026; under $1.50 a month of power (estimate) |
-| 3. Rented cloud server, reached only over Tailscale | always | probably fails (see below) | on a rented machine; reverses E7 and E21's rejection of third parties | an afternoon, plus backups | Hetzner CX23 about €6 a month with IPv4 |
-| 4. Store app (Capacitor or native) | only with route 1, 2 or 3 underneath | as underneath | as underneath | weeks, plus App Review | Apple $99 a year, Google Play $25 once; App Store guideline 4.2 risk (E20) |
+| Route                                               | Works when                           | Watch: new videos          | Data and keys                                                         | Setup                                                           | Cost                                                                                                   |
+| --------------------------------------------------- | ------------------------------------ | -------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1. Phone to the PC over Tailscale (built, E21)      | the PC is awake and LangHarness runs | works                      | stay on the PC                                                        | about 5 minutes, once ([remote-access.md](../remote-access.md)) | $0; about $5–10 a month of power if the PC stays on around the clock (estimate)                        |
+| 2. Always-on machine at home, over Tailscale        | home power and internet are up       | works (home connection)    | stay at home, on that machine                                         | an afternoon: install it, move `data/` and the key files        | an old laptop $0; a 16 GB N150 mini PC about $250–400 in 2026; under $1.50 a month of power (estimate) |
+| 3. Rented cloud server, reached only over Tailscale | always                               | probably fails (see below) | on a rented machine; reverses E7 and E21's rejection of third parties | an afternoon, plus backups                                      | Hetzner CX23 about €6 a month with IPv4                                                                |
+| 4. Store app (Capacitor or native)                  | only with route 1, 2 or 3 underneath | as underneath              | as underneath                                                         | weeks, plus App Review                                          | Apple $99 a year, Google Play $25 once; App Store guideline 4.2 risk (E20)                             |
 
 Not costed: a multi-user web app that other learners sign up for. That is a separate project. It needs accounts, a data folder per user, and a data folder per user (E75 gives each device its own language, but one server still has one data folder). It needs keys or billing per user, and it cannot serve other people through the owner's ChatGPT, Copilot or Grok subscription.
 

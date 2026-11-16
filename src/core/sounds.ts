@@ -99,7 +99,8 @@ export function checkSound(def: SoundDef, examplesOf: (slug: string) => readonly
 	const reasons: string[] = [];
 	const [first, second] = def.twins;
 	if (def.twins.length !== 2) reasons.push("needs exactly two twins");
-	else if (soundDistance(first.sk, second.sk) !== 1) reasons.push(`${first.sk} and ${second.sk} do not differ in exactly one sound`);
+	else if (soundDistance(first.sk, second.sk) !== 1)
+		reasons.push(`${first.sk} and ${second.sk} do not differ in exactly one sound`);
 	for (const t of def.twins) {
 		if (examplesOf(t.slug) === undefined) reasons.push(`${t.slug} is not in the lexicon`);
 	}

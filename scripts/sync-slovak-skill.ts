@@ -86,7 +86,9 @@ function readTree(dir: string): Files {
 
 function readCommit(repo: string, commit: string): Files {
 	const files: Files = new Map();
-	for (const full of git(repo, "ls-tree", "-r", "--name-only", commit, "--", UPSTREAM_SKILL).split("\n").filter(Boolean)) {
+	for (const full of git(repo, "ls-tree", "-r", "--name-only", commit, "--", UPSTREAM_SKILL)
+		.split("\n")
+		.filter(Boolean)) {
 		files.set(full.slice(UPSTREAM_SKILL.length + 1), lf(git(repo, "show", `${commit}:${full}`)));
 	}
 	return files;
@@ -103,11 +105,15 @@ function main() {
 	const force = args.includes("--force");
 	const repo = path.resolve(args.find((a) => !a.startsWith("--")) ?? process.env.SLOVAK_WIKI_DIR ?? defaultSource());
 	if (!fs.existsSync(path.join(repo, UPSTREAM_SKILL, "SKILL.md"))) {
-		console.error(`No slovak-language skill at ${path.join(repo, UPSTREAM_SKILL)}. Pass the slovak.wiki checkout: npm run skill:sync -- <dir>`);
+		console.error(
+			`No slovak-language skill at ${path.join(repo, UPSTREAM_SKILL)}. Pass the slovak.wiki checkout: npm run skill:sync -- <dir>`,
+		);
 		process.exit(1);
 	}
 	if (git(repo, "status", "--porcelain", "--", UPSTREAM_SKILL).trim()) {
-		console.error(`The skill in ${repo} has uncommitted changes. Commit them in slovak.wiki first, so SOURCE.md can name the commit.`);
+		console.error(
+			`The skill in ${repo} has uncommitted changes. Commit them in slovak.wiki first, so SOURCE.md can name the commit.`,
+		);
 		process.exit(1);
 	}
 	const sourceMd = fs.readFileSync(path.join(LOCAL, OWN), "utf8");
@@ -122,21 +128,29 @@ function main() {
 	const plan = planSkillSync(readTree(LOCAL), readCommit(repo, recordedCommit), incoming);
 
 	if (plan.conflicts.length && !force) {
-		console.error(`Not synced. Changed here but not in slovak.wiki:\n  ${plan.conflicts.join("\n  ")}\nPort the change to slovak.wiki and sync again, or pass --force to drop it.`);
+		console.error(
+			`Not synced. Changed here but not in slovak.wiki:\n  ${plan.conflicts.join("\n  ")}\nPort the change to slovak.wiki and sync again, or pass --force to drop it.`,
+		);
 		process.exit(1);
 	}
 	for (const p of [...plan.add, ...plan.update, ...(force ? plan.conflicts.filter((c) => incoming.has(c)) : [])]) {
 		fs.mkdirSync(path.dirname(path.join(LOCAL, p)), { recursive: true });
 		fs.writeFileSync(path.join(LOCAL, p), incoming.get(p)!);
 	}
-	for (const p of [...plan.remove, ...(force ? plan.conflicts.filter((c) => !incoming.has(c)) : [])]) fs.rmSync(path.join(LOCAL, p));
+	for (const p of [...plan.remove, ...(force ? plan.conflicts.filter((c) => !incoming.has(c)) : [])])
+		fs.rmSync(path.join(LOCAL, p));
 	fs.writeFileSync(path.join(LOCAL, OWN), recordCommit(sourceMd, commit, date)!);
 	fs.rmSync(MIRROR, { recursive: true, force: true });
 	fs.cpSync(LOCAL, MIRROR, { recursive: true });
 
 	const changed = plan.add.length + plan.update.length + plan.remove.length + (force ? plan.conflicts.length : 0);
-	console.log(`Synced from ${repo} at ${commit} (${date}): ${plan.add.length} added, ${plan.update.length} updated, ${plan.remove.length} removed${force && plan.conflicts.length ? `, ${plan.conflicts.length} local edits dropped` : ""}.`);
-	if (changed > 0) console.log("The tutor reads these files at runtime. Before merging, measure it: EVAL_BUDGET_USD=0.05 tsx scripts/eval-slovak-accuracy.ts <out-dir> claude-haiku-5-5:xhigh:skill (see docs/research/slovak-accuracy-eval.md).");
+	console.log(
+		`Synced from ${repo} at ${commit} (${date}): ${plan.add.length} added, ${plan.update.length} updated, ${plan.remove.length} removed${force && plan.conflicts.length ? `, ${plan.conflicts.length} local edits dropped` : ""}.`,
+	);
+	if (changed > 0)
+		console.log(
+			"The tutor reads these files at runtime. Before merging, measure it: EVAL_BUDGET_USD=0.05 tsx scripts/eval-slovak-accuracy.ts <out-dir> claude-haiku-5-5:xhigh:skill (see docs/research/slovak-accuracy-eval.md).",
+		);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

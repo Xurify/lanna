@@ -29,7 +29,20 @@
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { Usage } from "@earendil-works/pi-ai";
-import { activeCompactionOf, buildCompactionPrompt, compactionCutIndex, COMPACTION_RESERVE_TOKENS, estimateContextTokens, estimateTokens, newCompactionMarker, planTreeToText, serializeForSummary, toLlmMessages, type CompactionDetails, type LhMessage } from "../core/index.ts";
+import {
+	activeCompactionOf,
+	buildCompactionPrompt,
+	compactionCutIndex,
+	COMPACTION_RESERVE_TOKENS,
+	estimateContextTokens,
+	estimateTokens,
+	newCompactionMarker,
+	planTreeToText,
+	serializeForSummary,
+	toLlmMessages,
+	type CompactionDetails,
+	type LhMessage,
+} from "../core/index.ts";
 import { emit } from "../core/events.ts";
 import type { ChatStore } from "../core/ports.ts";
 import type { PiEngine } from "../agent/models.ts";
@@ -123,7 +136,10 @@ export async function awaitCompaction(chatId: string): Promise<void> {
 
 /** Resolve the effective trigger. Unknown window → the setting alone
  *  (honest: no fake window — the catalog-index precedent). */
-export function effectiveThresholdTokens(settingTokens: number | undefined, contextWindowTokens: number | undefined): number {
+export function effectiveThresholdTokens(
+	settingTokens: number | undefined,
+	contextWindowTokens: number | undefined,
+): number {
 	const setting = settingTokens ?? 150_000;
 	if (contextWindowTokens === undefined) return setting;
 	return Math.min(setting, Math.max(contextWindowTokens - COMPACTION_RESERVE_TOKENS, 1));
@@ -144,7 +160,10 @@ export function effectiveThresholdTokens(settingTokens: number | undefined, cont
 export function projectedContextTokens(messages: readonly LhMessage[], systemPromptTokens: number): number {
 	const est = estimateContextTokens(messages);
 	if (est.lastUsageIndex !== null) return est.tokens;
-	return estimateTokens(toLlmMessages(messages as readonly AgentMessage[]) as unknown as readonly LhMessage[]) + systemPromptTokens;
+	return (
+		estimateTokens(toLlmMessages(messages as readonly AgentMessage[]) as unknown as readonly LhMessage[]) +
+		systemPromptTokens
+	);
 }
 
 // ─── the compaction run ─────────────────────────────────────────────────────
@@ -188,7 +207,9 @@ async function compact(deps: CompactionDeps, chatId: string): Promise<void> {
 		priorSummary = previous.content;
 	}
 	const spanText = serializeForSummary(messages.slice(spanStart, cut));
-	const fullSpan = priorSummary ? `[SYSTEM NOTE — prior compaction summary, still authoritative where not superseded]\n${priorSummary}\n\n${spanText}` : spanText;
+	const fullSpan = priorSummary
+		? `[SYSTEM NOTE — prior compaction summary, still authoritative where not superseded]\n${priorSummary}\n\n${spanText}`
+		: spanText;
 
 	const prompt = buildCompactionPrompt({
 		spanText: fullSpan,

@@ -47,7 +47,8 @@ export function PairForm({ next }: { next: string }) {
 			<div className="w-full max-w-sm">
 				<h1 className="font-ui text-2xl font-semibold tracking-tight text-foreground">Pair this device</h1>
 				<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-					On the computer, open Settings, then Devices, and choose Make a code. The code works for five minutes, and only once.
+					On the computer, open Settings, then Devices, and choose Make a code. The code works for five minutes, and
+					only once.
 				</p>
 				<form onSubmit={pair} className="relative mt-6 flex flex-col gap-4" data-testid="pair-form">
 					<label className="flex flex-col gap-1.5">
@@ -75,10 +76,20 @@ export function PairForm({ next }: { next: string }) {
 							data-testid="pair-name"
 						/>
 					</label>
-					<Button type="submit" className="h-11 cursor-pointer" disabled={busy || digits.length !== 6} aria-busy={busy} data-testid="pair-submit">
+					<Button
+						type="submit"
+						className="h-11 cursor-pointer"
+						disabled={busy || digits.length !== 6}
+						aria-busy={busy}
+						data-testid="pair-submit"
+					>
 						{busy ? "Pairing…" : "Pair this device"}
 					</Button>
-					<p role="alert" className="absolute inset-x-0 top-full mt-3 text-sm leading-relaxed text-destructive" data-testid="pair-error">
+					<p
+						role="alert"
+						className="absolute inset-x-0 top-full mt-3 text-sm leading-relaxed text-destructive"
+						data-testid="pair-error"
+					>
 						{error ?? ""}
 					</p>
 				</form>

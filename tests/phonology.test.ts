@@ -61,7 +61,10 @@ describe("Functional Load (FL) weighting in pronunciation scoring", () => {
 		];
 		// Weighted: (100 * 1.0 + 20 * 1.5) / (1.0 + 1.5) = 130 / 2.5 = 52.
 		const weightedB = functionalLoadWeightedScore(caseB, "slovak");
-		assert.ok(weightedB <= 55, `Vowel length miss severely drops score to ${weightedB} due to high communicative impact`);
+		assert.ok(
+			weightedB <= 55,
+			`Vowel length miss severely drops score to ${weightedB} due to high communicative impact`,
+		);
 	});
 
 	test("returns 0 for empty phoneme array", () => {
@@ -147,7 +150,10 @@ describe("Bundled phonology datasets validation", () => {
 					assert.notEqual(p.ipaA, p.ipaB, `IPAs '${p.ipaA}' and '${p.ipaB}' must differ in pair ${p.id}`);
 					assert.ok(p.meaningA && p.meaningB, `Pair ${p.id} has meanings`);
 					assert.ok(p.cue && p.cue.length > 5, `Pair ${p.id} has cue`);
-					assert.ok(p.cue.length <= 100, `Pair ${p.id}: the cue is ${p.cue.length} characters; over 100 it runs past the three lines the card keeps for it on a phone`);
+					assert.ok(
+						p.cue.length <= 100,
+						`Pair ${p.id}: the cue is ${p.cue.length} characters; over 100 it runs past the three lines the card keeps for it on a phone`,
+					);
 					assert.ok(p.exampleA && p.exampleB, `Pair ${p.id} has examples`);
 				}
 			});
@@ -155,7 +161,11 @@ describe("Bundled phonology datasets validation", () => {
 			test("each example sentence holds its word in exactly that form", () => {
 				const data = getPhonologyData(lang);
 				assert.ok(data);
-				const holds = (word: string, sentence: string) => sentence.toLowerCase().split(/[^\p{L}]+/u).includes(word.toLowerCase());
+				const holds = (word: string, sentence: string) =>
+					sentence
+						.toLowerCase()
+						.split(/[^\p{L}]+/u)
+						.includes(word.toLowerCase());
 				for (const p of data.pairs) {
 					assert.ok(holds(p.a, p.exampleA), `${p.id}: "${p.exampleA}" does not hold "${p.a}"`);
 					assert.ok(holds(p.b, p.exampleB), `${p.id}: "${p.exampleB}" does not hold "${p.b}"`);
@@ -171,8 +181,16 @@ describe("Bundled phonology datasets validation", () => {
 					const [left, right] = p.contrast.split(",")[0]!.split(" and ");
 					assert.equal(p.a.slice(...spans.a).toLowerCase(), left);
 					assert.equal(p.b.slice(...spans.b).toLowerCase(), right);
-					assert.equal(p.a.slice(0, spans.a[0]), p.b.slice(0, spans.b[0]), `${p.id}: the words differ before the marked letters`);
-					assert.equal(p.a.slice(spans.a[1]), p.b.slice(spans.b[1]), `${p.id}: the words differ after the marked letters`);
+					assert.equal(
+						p.a.slice(0, spans.a[0]),
+						p.b.slice(0, spans.b[0]),
+						`${p.id}: the words differ before the marked letters`,
+					);
+					assert.equal(
+						p.a.slice(spans.a[1]),
+						p.b.slice(spans.b[1]),
+						`${p.id}: the words differ after the marked letters`,
+					);
 				}
 			});
 
@@ -306,7 +324,10 @@ describe("Ear Gym round", () => {
 	});
 
 	test("the same seed gives the same round, another seed a different one", () => {
-		const words = (seed: number) => earGymRound(PHONOLOGY_PAIRS, seed).map((trial) => trial.targetWord).join(" ");
+		const words = (seed: number) =>
+			earGymRound(PHONOLOGY_PAIRS, seed)
+				.map((trial) => trial.targetWord)
+				.join(" ");
 		assert.equal(words(42), words(42));
 		assert.notEqual(words(42), words(43));
 	});
@@ -333,7 +354,10 @@ describe("contrastSpans", () => {
 		assert.deepEqual(contrastSpans({ a: "pas", b: "pás", contrast: "a and á" }), { a: [1, 2], b: [1, 2] });
 		assert.deepEqual(contrastSpans({ a: "mesto", b: "miesto", contrast: "e and ie" }), { a: [1, 2], b: [1, 3] });
 		assert.deepEqual(contrastSpans({ a: "мат", b: "мать", contrast: "т and ть" }), { a: [2, 3], b: [2, 4] });
-		assert.deepEqual(contrastSpans({ a: "rad", b: "raď", contrast: "d and ď, heard as t and ť at the end of a word" }), { a: [2, 3], b: [2, 3] });
+		assert.deepEqual(
+			contrastSpans({ a: "rad", b: "raď", contrast: "d and ď, heard as t and ť at the end of a word" }),
+			{ a: [2, 3], b: [2, 3] },
+		);
 	});
 
 	test("gives null when the contrast does not name letters of the words", () => {

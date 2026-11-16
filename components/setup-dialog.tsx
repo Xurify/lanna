@@ -45,7 +45,11 @@ import { ProviderMenuList } from "@/components/settings/model-menu";
 import { ChevronDown, SlidersIcon, XIcon } from "lucide-react";
 import { Dialog, DialogPortal, DialogOverlay, DialogContent } from "@/components/ui/dialog";
 import { ChatGPTBackgroundAccess, ChatGPTUIProvider } from "@/components/settings/chatgpt-connection";
-import { NativeSubscriptionBackgroundAccess, NativeSubscriptionUIProvider, SubscriptionConnections } from "@/components/settings/subscription-connections";
+import {
+	NativeSubscriptionBackgroundAccess,
+	NativeSubscriptionUIProvider,
+	SubscriptionConnections,
+} from "@/components/settings/subscription-connections";
 import { populateLevel, thinkingLabel } from "@/components/thinking-default";
 import { ThinkingMenuList } from "@/components/settings/model-menu";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
@@ -71,9 +75,7 @@ interface ModelsBody {
 
 /** Pure: which stage the flow opens at — no keyed provider = keys first
  *  (owner's dependency ordering). Exported for tests. */
-export function setupStage(
-	providers: { id: string; keyPresent: boolean }[] | null,
-): "keys" | "pickers" {
+export function setupStage(providers: { id: string; keyPresent: boolean }[] | null): "keys" | "pickers" {
 	if (providers === null) return "keys"; // fetch failed → the honest fallback
 	return providers.some((p) => p.keyPresent) ? "pickers" : "keys";
 }
@@ -164,7 +166,9 @@ export function SetupKeysBody({
 						<span className="min-w-0 flex-1 truncate text-left font-medium">
 							{provider ? provider.label : "Pick a provider…"}
 						</span>
-						<ChevronDown className={cn("size-4 text-muted-foreground transition-transform duration-150", menuOpen && "rotate-180")} />
+						<ChevronDown
+							className={cn("size-4 text-muted-foreground transition-transform duration-150", menuOpen && "rotate-180")}
+						/>
 					</button>
 					{menuOpen && (
 						<MenuShell
@@ -199,7 +203,10 @@ export function SetupKeysBody({
 							onClick={onSave}
 							disabled={saving || !value.trim()}
 							data-testid="setup-key-save"
-							className={cn(buttonVariants({ size: "default" }), "h-10 rounded-xl px-4 text-xs font-medium shrink-0 disabled:cursor-not-allowed")}
+							className={cn(
+								buttonVariants({ size: "default" }),
+								"h-10 rounded-xl px-4 text-xs font-medium shrink-0 disabled:cursor-not-allowed",
+							)}
 						>
 							{saving ? "Saving…" : "Save key"}
 						</button>
@@ -212,9 +219,7 @@ export function SetupKeysBody({
 				)}
 			</div>
 			<div className="mt-2 border-t border-border/60 pt-4">
-				<h3 className="mb-3 font-ui text-xs font-semiboldr text-muted-foreground">
-					Subscriptions
-				</h3>
+				<h3 className="mb-3 font-ui text-xs font-semiboldr text-muted-foreground">Subscriptions</h3>
 				<SubscriptionConnections setup />
 			</div>
 		</div>
@@ -277,10 +282,17 @@ export function SetupDialog({
 		setError(null);
 		fetch("/api/keys")
 			.then((r) => r.json())
-			.then((b: { providers?: ProviderKeyInfo[] }) => { if (!cancelled) setKeyProviders(b.providers ?? []); })
-			.catch(() => { if (!cancelled) setKeyProviders([]); });
+			.then((b: { providers?: ProviderKeyInfo[] }) => {
+				if (!cancelled) setKeyProviders(b.providers ?? []);
+			})
+			.catch(() => {
+				if (!cancelled) setKeyProviders([]);
+			});
 		fetch("/api/models")
-			.then((r) => { if (!r.ok) throw new Error("Catalog unavailable"); return r.json(); })
+			.then((r) => {
+				if (!r.ok) throw new Error("Catalog unavailable");
+				return r.json();
+			})
 			.then((b: ModelsBody) => {
 				if (cancelled) return;
 				setBody(b);
@@ -300,8 +312,12 @@ export function SetupDialog({
 				}
 				setLevels(preLevels);
 			})
-			.catch(() => { if (!cancelled) setFailed(true); });
-		return () => { cancelled = true; };
+			.catch(() => {
+				if (!cancelled) setFailed(true);
+			});
+		return () => {
+			cancelled = true;
+		};
 	}, [open, keysTick]);
 
 	// Esc + outside-click — layered dismissal, closable WITHOUT
@@ -367,7 +383,11 @@ export function SetupDialog({
 		setKeySaving(false);
 		if (!res || !res.ok) {
 			const body = (await res?.json().catch(() => ({}))) as { error?: string } | undefined;
-			setKeyError(res ? (body?.error ?? `Couldn't save the key (error ${res.status}). Try again.`) : "Couldn't save. Check your connection and try again.");
+			setKeyError(
+				res
+					? (body?.error ?? `Couldn't save the key (error ${res.status}). Try again.`)
+					: "Couldn't save. Check your connection and try again.",
+			);
 			return;
 		}
 		setKeyProvider(null);
@@ -394,7 +414,11 @@ export function SetupDialog({
 		}).catch(() => null);
 		if (!res || !res.ok) {
 			setSaving(false);
-			setError(res ? `Couldn't save: ${(await res.json().catch(() => ({}))).error ?? res.status}` : "Couldn't save. Check your connection and try again.");
+			setError(
+				res
+					? `Couldn't save: ${(await res.json().catch(() => ({}))).error ?? res.status}`
+					: "Couldn't save. Check your connection and try again.",
+			);
 			return;
 		}
 		notifySettingsSaved("models");
@@ -407,108 +431,118 @@ export function SetupDialog({
 		<ChatGPTUIProvider>
 			<NativeSubscriptionUIProvider>
 				<Dialog open={open} onClose={onClose}>
-			<DialogPortal>
-				<DialogOverlay data-testid="setup-backdrop">
-					<DialogContent
-						aria-label="Set up your models"
-						data-testid="setup-dialog"
-						className="max-h-[85vh] w-[640px] max-w-[92vw] overflow-hidden p-0"
-					>
-						<header className="flex shrink-0 items-center justify-between border-b border-border/50 px-6 py-4">
-							<div className="flex items-center gap-3">
-								<div className="flex size-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
-									<SlidersIcon className="size-5" />
-								</div>
-								<div>
-									<h2 className="font-ui text-lg font-semibold tracking-tight text-foreground">
-										Set up your models
-									</h2>
-									<p className="text-xs text-muted-foreground">
-										Add an AI key, then pick your models
-									</p>
-								</div>
-							</div>
-							<button
-								type="button"
-								aria-label="Close setup"
-								data-testid="setup-close"
-								onClick={onClose}
-								className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					<DialogPortal>
+						<DialogOverlay data-testid="setup-backdrop">
+							<DialogContent
+								aria-label="Set up your models"
+								data-testid="setup-dialog"
+								className="max-h-[85vh] w-[640px] max-w-[92vw] overflow-hidden p-0"
 							>
-								<XIcon className="size-4" />
-							</button>
-						</header>
+								<header className="flex shrink-0 items-center justify-between border-b border-border/50 px-6 py-4">
+									<div className="flex items-center gap-3">
+										<div className="flex size-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+											<SlidersIcon className="size-5" />
+										</div>
+										<div>
+											<h2 className="font-ui text-lg font-semibold tracking-tight text-foreground">
+												Set up your models
+											</h2>
+											<p className="text-xs text-muted-foreground">Add an AI key, then pick your models</p>
+										</div>
+									</div>
+									<button
+										type="button"
+										aria-label="Close setup"
+										data-testid="setup-close"
+										onClick={onClose}
+										className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									>
+										<XIcon className="size-4" />
+									</button>
+								</header>
 
-						{stage === "keys" ? (
-							<div className="flex flex-col overflow-y-auto">
-								{failed ? (
-									<div className="p-6">
-										<p className="text-sm text-foreground">
-											The list of models could not be loaded. Check your connection, then close this and open it again.
-										</p>
+								{stage === "keys" ? (
+									<div className="flex flex-col overflow-y-auto">
+										{failed ? (
+											<div className="p-6">
+												<p className="text-sm text-foreground">
+													The list of models could not be loaded. Check your connection, then close this and open it
+													again.
+												</p>
+											</div>
+										) : (
+											<SetupKeysBody
+												providers={keyProviders}
+												provider={keyProvider}
+												value={keyValue}
+												saving={keySaving}
+												error={keyError}
+												menuOpen={keyMenuOpen}
+												menuAnchor={keyTriggerRef}
+												onToggleMenu={() => setKeyMenuOpen((v) => !v)}
+												onPick={(p) => {
+													setKeyProvider(p);
+													setKeyMenuOpen(false);
+													setKeyError(null);
+												}}
+												onValue={setKeyValue}
+												onSave={() => void saveKey()}
+											/>
+										)}
 									</div>
 								) : (
-									<SetupKeysBody
-										providers={keyProviders}
-										provider={keyProvider}
-										value={keyValue}
-										saving={keySaving}
-										error={keyError}
-										menuOpen={keyMenuOpen}
-										menuAnchor={keyTriggerRef}
-										onToggleMenu={() => setKeyMenuOpen((v) => !v)}
-										onPick={(p) => {
-											setKeyProvider(p);
-											setKeyMenuOpen(false);
-											setKeyError(null);
-										}}
-										onValue={setKeyValue}
-										onSave={() => void saveKey()}
-									/>
-								)}
-							</div>
-						) : (
-							<div className="flex flex-col gap-4 overflow-y-auto p-6" data-testid="setup-stage-pickers">
-								<p className="text-xs text-muted-foreground">
-									Pick the model for each tier. All three are required before chats can start.
-								</p>
-						{SLOT_ORDER.map((slot) => {
-							const entry = picked[slot];
-							const level = levels[slot];
-							const levelsForEntry = entry?.supportedLevels ?? [];
-							const catalog =
-								slot === "vision" ? body?.models.filter((m) => m.input.includes("image")) : body?.models;
-							return (
-								<div key={slot} data-testid={`setup-slot-${slot}`} className="flex flex-col gap-1.5">
-									<span className="flex items-center gap-1.5">
-										<span className="font-ui text-sm text-foreground">{SLOT_META[slot].label}</span>
-										{!body?.slots?.[slot]?.model && !picked[slot] && (
-											<span
-												data-testid={`setup-needed-${slot}`}
-												className="rounded-sm border border-border px-1 py-0.5 text-xs font-normal tracking-wide text-muted-foreground"
-											>
-												needed
-											</span>
-										)}
-									</span>
-									<span className="text-xs text-muted-foreground">{SLOT_META[slot].roster}</span>
-									{slot !== "strong" && <><ChatGPTBackgroundAccess provider={entry?.provider} /><NativeSubscriptionBackgroundAccess provider={entry?.provider} /></>}
-									<div className="flex items-center gap-2">
-										<div className="relative flex-1">
-											<button
-												type="button"
-												aria-label={`${SLOT_META[slot].label} model`}
-												data-testid={`setup-trigger-${slot}`}
-												aria-expanded={openMenu?.slot === slot && openMenu.kind === "model"}
-												onClick={() => setOpenMenu(openMenu?.slot === slot && openMenu.kind === "model" ? null : { slot, kind: "model" })}
-												className="flex h-7 min-w-40 w-full items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50"
-											>
-												<span className="min-w-0 flex-1 truncate">{entry ? entry.name : "Pick a model…"}</span>
-												<span aria-hidden className="text-muted-foreground">
-													▾
-												</span>
-											</button>
-											{/* Anchor by TESTID, not a ref (the settings-section pattern):
+									<div className="flex flex-col gap-4 overflow-y-auto p-6" data-testid="setup-stage-pickers">
+										<p className="text-xs text-muted-foreground">
+											Pick the model for each tier. All three are required before chats can start.
+										</p>
+										{SLOT_ORDER.map((slot) => {
+											const entry = picked[slot];
+											const level = levels[slot];
+											const levelsForEntry = entry?.supportedLevels ?? [];
+											const catalog =
+												slot === "vision" ? body?.models.filter((m) => m.input.includes("image")) : body?.models;
+											return (
+												<div key={slot} data-testid={`setup-slot-${slot}`} className="flex flex-col gap-1.5">
+													<span className="flex items-center gap-1.5">
+														<span className="font-ui text-sm text-foreground">{SLOT_META[slot].label}</span>
+														{!body?.slots?.[slot]?.model && !picked[slot] && (
+															<span
+																data-testid={`setup-needed-${slot}`}
+																className="rounded-sm border border-border px-1 py-0.5 text-xs font-normal tracking-wide text-muted-foreground"
+															>
+																needed
+															</span>
+														)}
+													</span>
+													<span className="text-xs text-muted-foreground">{SLOT_META[slot].roster}</span>
+													{slot !== "strong" && (
+														<>
+															<ChatGPTBackgroundAccess provider={entry?.provider} />
+															<NativeSubscriptionBackgroundAccess provider={entry?.provider} />
+														</>
+													)}
+													<div className="flex items-center gap-2">
+														<div className="relative flex-1">
+															<button
+																type="button"
+																aria-label={`${SLOT_META[slot].label} model`}
+																data-testid={`setup-trigger-${slot}`}
+																aria-expanded={openMenu?.slot === slot && openMenu.kind === "model"}
+																onClick={() =>
+																	setOpenMenu(
+																		openMenu?.slot === slot && openMenu.kind === "model"
+																			? null
+																			: { slot, kind: "model" },
+																	)
+																}
+																className="flex h-7 min-w-40 w-full items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50"
+															>
+																<span className="min-w-0 flex-1 truncate">{entry ? entry.name : "Pick a model…"}</span>
+																<span aria-hidden className="text-muted-foreground">
+																	▾
+																</span>
+															</button>
+															{/* Anchor by TESTID, not a ref (the settings-section pattern):
 											    React attaches a host element's ref AFTER its descendants'
 											    layout effects run, so a ref freshly attached in this same
 											    commit (menu opening = the ref condition turning true) is
@@ -517,95 +551,105 @@ export function SetupDialog({
 											    place()) shows it. querySelector at place time has no such
 											    ordering hazard. Live-caught by the owner 2026-10-09: every
 											    setup picker opened dead until a window resize. */}
-											{openMenu?.slot === slot && openMenu.kind === "model" && (
-												<MenuShell
-													anchorTestid={`setup-trigger-${slot}`}
-													testid={`setup-menu-${slot}`}
-													preferredSide="down"
-													align="left"
-													menuClass="flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
-												>
-													<ModelMenuList
-														models={catalog}
-														effectiveId={entry?.id}
-														effectiveProvider={entry?.provider}
-														onPick={(m) => {
-															setPicked((prev) => ({ ...prev, [slot]: m }));
-															// Auto-populate (chunk 2, owner: "populate
-															// everywhere"): no explicit level → the
-															// ordering's level for the fresh pick; an
-															// explicit one rides (Save clamps server-side).
-															setLevels((prev) => ({
-																...prev,
-																[slot]: populateLevel(prev[slot], m.supportedLevels),
-															}));
-															setOpenMenu(null);
-														}}
-														footer={catalog && catalog.length === 0 ? "No image-capable models. Add an AI key for a service that has one." : undefined}
-													/>
-												</MenuShell>
-											)}
-										</div>
-										{/* Thinking selector (chunk 2): editable, pre-populated from
+															{openMenu?.slot === slot && openMenu.kind === "model" && (
+																<MenuShell
+																	anchorTestid={`setup-trigger-${slot}`}
+																	testid={`setup-menu-${slot}`}
+																	preferredSide="down"
+																	align="left"
+																	menuClass="flex w-[22rem] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+																>
+																	<ModelMenuList
+																		models={catalog}
+																		effectiveId={entry?.id}
+																		effectiveProvider={entry?.provider}
+																		onPick={(m) => {
+																			setPicked((prev) => ({ ...prev, [slot]: m }));
+																			// Auto-populate (chunk 2, owner: "populate
+																			// everywhere"): no explicit level → the
+																			// ordering's level for the fresh pick; an
+																			// explicit one rides (Save clamps server-side).
+																			setLevels((prev) => ({
+																				...prev,
+																				[slot]: populateLevel(prev[slot], m.supportedLevels),
+																			}));
+																			setOpenMenu(null);
+																		}}
+																		footer={
+																			catalog && catalog.length === 0
+																				? "No image-capable models. Add an AI key for a service that has one."
+																				: undefined
+																		}
+																	/>
+																</MenuShell>
+															)}
+														</div>
+														{/* Thinking selector (chunk 2): editable, pre-populated from
 										    the ordering per picked model — no model, no levels. */}
-										<div className="relative">
+														<div className="relative">
+															<button
+																type="button"
+																aria-label={`${SLOT_META[slot].label} thinking`}
+																data-testid={`setup-thinking-${slot}`}
+																aria-expanded={openMenu?.slot === slot && openMenu.kind === "thinking"}
+																disabled={!entry}
+																onClick={() =>
+																	setOpenMenu(
+																		openMenu?.slot === slot && openMenu.kind === "thinking"
+																			? null
+																			: { slot, kind: "thinking" },
+																	)
+																}
+																className="flex h-7 w-24 items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
+															>
+																<span className="min-w-0 flex-1 truncate text-left">
+																	{entry ? (level ? thinkingLabel(level) : "…") : "—"}
+																</span>
+																<span aria-hidden className="text-muted-foreground">
+																	▾
+																</span>
+															</button>
+															{openMenu?.slot === slot && openMenu.kind === "thinking" && (
+																<MenuShell
+																	anchorTestid={`setup-thinking-${slot}`}
+																	testid={`setup-thinking-menu-${slot}`}
+																	preferredSide="down"
+																	align="left"
+																	menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
+																>
+																	<ThinkingMenuList
+																		levels={levelsForEntry.map(String)}
+																		effectiveLevel={level}
+																		onPick={(lv) => {
+																			setLevels((prev) => ({ ...prev, [slot]: lv as ThinkingLevel }));
+																			setOpenMenu(null);
+																		}}
+																	/>
+																</MenuShell>
+															)}
+														</div>
+													</div>
+												</div>
+											);
+										})}
+										<div className="flex items-center gap-3">
 											<button
 												type="button"
-												aria-label={`${SLOT_META[slot].label} thinking`}
-												data-testid={`setup-thinking-${slot}`}
-												aria-expanded={openMenu?.slot === slot && openMenu.kind === "thinking"}
-												disabled={!entry}
-												onClick={() => setOpenMenu(openMenu?.slot === slot && openMenu.kind === "thinking" ? null : { slot, kind: "thinking" })}
-												className="flex h-7 w-24 items-center gap-1 rounded-sm border border-border bg-background px-1.5 font-ui text-xs text-foreground transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-40"
+												data-testid="setup-save"
+												disabled={!allPicked || saving}
+												onClick={() => void save()}
+												className={cn(buttonVariants({ size: "sm" }), "disabled:cursor-not-allowed")}
 											>
-												<span className="min-w-0 flex-1 truncate text-left">
-													{entry ? (level ? thinkingLabel(level) : "…") : "—"}
-												</span>
-												<span aria-hidden className="text-muted-foreground">
-													▾
-												</span>
+												{saving ? "Saving…" : "Save models"}
 											</button>
-											{openMenu?.slot === slot && openMenu.kind === "thinking" && (
-												<MenuShell
-													anchorTestid={`setup-thinking-${slot}`}
-													testid={`setup-thinking-menu-${slot}`}
-													preferredSide="down"
-													align="left"
-													menuClass="flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-card p-2 text-xs shadow-xl"
-												>
-													<ThinkingMenuList
-														levels={levelsForEntry.map(String)}
-														effectiveLevel={level}
-														onPick={(lv) => {
-															setLevels((prev) => ({ ...prev, [slot]: lv as ThinkingLevel }));
-															setOpenMenu(null);
-														}}
-													/>
-												</MenuShell>
-											)}
+											{error && <p className="text-xs text-red-400">{error}</p>}
 										</div>
 									</div>
-								</div>
-							);
-						})}
-						<div className="flex items-center gap-3">
-							<button
-								type="button"
-								data-testid="setup-save"
-								disabled={!allPicked || saving}
-								onClick={() => void save()}
-								className={cn(buttonVariants({ size: "sm" }), "disabled:cursor-not-allowed")}
-							>
-								{saving ? "Saving…" : "Save models"}
-							</button>
-							{error && <p className="text-xs text-red-400">{error}</p>}
-						</div>
-					</div>
-				)}
-					</DialogContent>
-				</DialogOverlay>
-			</DialogPortal>
-		</Dialog>
+								)}
+							</DialogContent>
+						</DialogOverlay>
+					</DialogPortal>
+				</Dialog>
 			</NativeSubscriptionUIProvider>
 		</ChatGPTUIProvider>
 	);

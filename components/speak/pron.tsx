@@ -13,14 +13,26 @@ import { cn } from "@/lib/utils";
 import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SoundPictures } from "@/components/phonology/sound-pictures";
 import { speak, useActiveLanguage } from "@/components/speech";
-import { PRON_CLEAR, PRON_GOOD, getPhonologyData, getSoundNote, pronLabel, type PronReport, type PronScore } from "@/src/core";
+import {
+	PRON_CLEAR,
+	PRON_GOOD,
+	getPhonologyData,
+	getSoundNote,
+	pronLabel,
+	type PronReport,
+	type PronScore,
+} from "@/src/core";
 
 function pronInk(overall: number): string {
 	return overall >= PRON_GOOD ? "text-teal-2" : overall >= PRON_CLEAR ? "text-teal-2" : "text-miss";
 }
 
 function pronBg(overall: number): string {
-	return overall >= PRON_GOOD ? "bg-teal-wash text-teal-2" : overall >= PRON_CLEAR ? "bg-teal-wash text-foreground" : "bg-miss-soft text-miss";
+	return overall >= PRON_GOOD
+		? "bg-teal-wash text-teal-2"
+		: overall >= PRON_CLEAR
+			? "bg-teal-wash text-foreground"
+			: "bg-miss-soft text-miss";
 }
 
 /** "Clear · 92" with the weak words in the title. */
@@ -35,7 +47,15 @@ export function PronChip({ score, big = false }: { score: PronScore; big?: boole
 		.filter(Boolean)
 		.join(" · ");
 	return (
-		<span className={cn("inline-flex items-center gap-1 rounded-md font-ui font-[600] tabular-nums", big ? "px-2 py-0.5 text-sm" : "px-1.5 py-px text-xs", pronBg(score.overall))} title={title} data-testid="pron-chip">
+		<span
+			className={cn(
+				"inline-flex items-center gap-1 rounded-md font-ui font-[600] tabular-nums",
+				big ? "px-2 py-0.5 text-sm" : "px-1.5 py-px text-xs",
+				pronBg(score.overall),
+			)}
+			title={title}
+			data-testid="pron-chip"
+		>
 			{pronLabel(score.overall)} · {score.overall}
 		</span>
 	);
@@ -61,7 +81,10 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 							: "Words to work on"}
 				</p>
 				{getPhonologyData(lang?.id) && (
-					<Link href="/phonology" className="shrink-0 font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2 pointer-coarse:py-3">
+					<Link
+						href="/phonology"
+						className="shrink-0 font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2 pointer-coarse:py-3"
+					>
 						Train in the ear gym
 					</Link>
 				)}
@@ -85,7 +108,9 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 											key
 										</span>
 									)}
-									{s.in.length > 0 && <span className="font-ui text-xs text-muted-foreground">in {s.in.join(", ")}</span>}
+									{s.in.length > 0 && (
+										<span className="font-ui text-xs text-muted-foreground">in {s.in.join(", ")}</span>
+									)}
 								</>
 							);
 
@@ -97,13 +122,23 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 											onClick={() => setActiveSound(isExpanded ? null : s.p)}
 											aria-expanded={isExpanded}
 											title={title}
-											className={cn("lh-press flex items-center gap-2 rounded-lg border px-2.5 py-1 font-prose text-base", isExpanded ? "border-teal bg-teal-wash" : "border-border bg-card hover:bg-well")}
+											className={cn(
+												"lh-press flex items-center gap-2 rounded-lg border px-2.5 py-1 font-prose text-base",
+												isExpanded ? "border-teal bg-teal-wash" : "border-border bg-card hover:bg-well",
+											)}
 										>
 											{chip}
-											<ChevronDownIcon className={cn("size-3.5 text-ink-3 transition-transform", isExpanded && "rotate-180")} strokeWidth={1.8} aria-hidden="true" />
+											<ChevronDownIcon
+												className={cn("size-3.5 text-ink-3 transition-transform", isExpanded && "rotate-180")}
+												strokeWidth={1.8}
+												aria-hidden="true"
+											/>
 										</button>
 									) : (
-										<span className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base" title={title}>
+										<span
+											className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base"
+											title={title}
+										>
 											{chip}
 										</span>
 									)}
@@ -122,20 +157,31 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 									<span>[{note.ipa}]</span>
 								</p>
 								<div className="flex shrink-0 items-center gap-2">
-									<button type="button" onClick={() => void speak(note.word).catch(() => {})} className={cn(SECONDARY, SMALL)}>
+									<button
+										type="button"
+										onClick={() => void speak(note.word).catch(() => {})}
+										className={cn(SECONDARY, SMALL)}
+									>
 										<Volume2Icon className="size-3.5 text-ink-3" strokeWidth={1.6} />
 										<span>
 											Hear <span lang={lang?.code}>{note.word}</span>
 										</span>
 									</button>
-									<Link href={`/phonology?view=sounds&sound=${encodeURIComponent(note.symbol)}`} className={cn(SECONDARY, SMALL)}>
+									<Link
+										href={`/phonology?view=sounds&sound=${encodeURIComponent(note.symbol)}`}
+										className={cn(SECONDARY, SMALL)}
+									>
 										All sounds
 									</Link>
 								</div>
 							</div>
 							<p className="mt-2 font-prose text-[15px] leading-relaxed text-ink-2">{note.how}</p>
 							<p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Common slip: {note.slip}</p>
-							{note.functionalLoad === "high" && <p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">Mixing this sound up can change what a word means.</p>}
+							{note.functionalLoad === "high" && (
+								<p className="mt-1.5 font-prose text-[14px] leading-relaxed text-ink-3">
+									Mixing this sound up can change what a word means.
+								</p>
+							)}
 							{lang && <SoundPictures note={note} langCode={lang.code} className="mt-3 max-w-md [&_button]:bg-card" />}
 						</div>
 					)}
@@ -145,16 +191,28 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 			{report.words.length > 0 && (
 				<ul className="mt-2 flex flex-wrap gap-2">
 					{report.words.map((w) => (
-						<li key={w.word} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base" lang={lang?.code} title={`${w.score} on average over ${w.n} ${w.n === 1 ? "time" : "times"}`}>
+						<li
+							key={w.word}
+							className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1 font-prose text-base"
+							lang={lang?.code}
+							title={`${w.score} on average over ${w.n} ${w.n === 1 ? "time" : "times"}`}
+						>
 							<span className={pronInk(w.score)}>{w.word}</span>
-							<button type="button" onClick={() => void speak(w.word).catch(() => {})} aria-label={`Play ${w.word}`} className="flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+							<button
+								type="button"
+								onClick={() => void speak(w.word).catch(() => {})}
+								aria-label={`Play ${w.word}`}
+								className="flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+							>
 								<Volume2Icon className="size-3.5" />
 							</button>
 						</li>
 					))}
 				</ul>
 			)}
-			<p className="mt-2 font-prose text-sm text-muted-foreground">From your spoken lines lately. Tap a sound to see how to make it and hear a word with it.</p>
+			<p className="mt-2 font-prose text-sm text-muted-foreground">
+				From your spoken lines lately. Tap a sound to see how to make it and hear a word with it.
+			</p>
 		</div>
 	);
 }

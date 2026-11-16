@@ -45,7 +45,10 @@ describe("a lesson", () => {
 		recordLesson({ unit: "loc", mode: "lesson", reps: [], tz: 0 }, now);
 		assert.equal(progressStore.read().units["loc"]?.lessons ?? 0, 0);
 		assert.equal(progressStore.read().days["2026-10-21"]?.lessons ?? 0, 0);
-		recordLesson({ unit: "loc", mode: "lesson", reps: [{ itemId: "x#0", slug: "x", kind: "choose", verdict: "exact" }], tz: 0 }, now);
+		recordLesson(
+			{ unit: "loc", mode: "lesson", reps: [{ itemId: "x#0", slug: "x", kind: "choose", verdict: "exact" }], tz: 0 },
+			now,
+		);
 		assert.equal(progressStore.read().units["loc"]?.lessons, 1);
 	});
 });

@@ -21,7 +21,18 @@ export function languageDay(tz?: number, now = new Date()): LanguageDay {
 		if (!info) return [];
 		const s = withProfile(id, () => progressSummary(tz, now, { syncExperiment: false }));
 		const setUp = Boolean(s.goal.onboardedAt);
-		return [{ id, english: info.english, endonym: info.endonym, running: id === running, minutes: s.goal.minutesPerDay, practiced: s.todayMinutes, setUp, tasks: setUp ? s.plan.tasks : [] }];
+		return [
+			{
+				id,
+				english: info.english,
+				endonym: info.endonym,
+				running: id === running,
+				minutes: s.goal.minutesPerDay,
+				practiced: s.todayMinutes,
+				setUp,
+				tasks: setUp ? s.plan.tasks : [],
+			},
+		];
 	});
 	languages.sort((a, b) => b.minutes - a.minutes || a.english.localeCompare(b.english));
 	syncExperimentQuietly(now);

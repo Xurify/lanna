@@ -29,7 +29,10 @@ const FILE = () => path.join(PATHS.data, "known.json");
 function read(): KnownWordsFile {
 	try {
 		const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Partial<KnownWordsFile>;
-		return { ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}), words: raw.words && typeof raw.words === "object" ? raw.words : {} };
+		return {
+			...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
+			words: raw.words && typeof raw.words === "object" ? raw.words : {},
+		};
 	} catch {
 		return { words: {} };
 	}

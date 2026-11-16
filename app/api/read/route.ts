@@ -23,7 +23,24 @@
  */
 
 import { isReadingDifficulty, MAX_LINKS_PER_ADD, MAX_SOURCE_PARTS } from "@/src/core";
-import { BODY_LIMITS, bodyTooLarge, generating, importLinks, importReading, nextStory, ReadImportError, readingState, recordOnce, recordRead, removeSource, sessionClientId, sourcePart, storyStore, UNKNOWN_TEXT, writeNewStory } from "@/src/server";
+import {
+	BODY_LIMITS,
+	bodyTooLarge,
+	generating,
+	importLinks,
+	importReading,
+	nextStory,
+	ReadImportError,
+	readingState,
+	recordOnce,
+	recordRead,
+	removeSource,
+	sessionClientId,
+	sourcePart,
+	storyStore,
+	UNKNOWN_TEXT,
+	writeNewStory,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +92,8 @@ export async function POST(req: Request) {
 	}
 	if (body.action === "write") {
 		try {
-			const topic = typeof body.topic === "string" ? body.topic.trim().slice(0, MAX_TOPIC_CHARS) || undefined : undefined;
+			const topic =
+				typeof body.topic === "string" ? body.topic.trim().slice(0, MAX_TOPIC_CHARS) || undefined : undefined;
 			return Response.json(await writeNewStory({ topic }));
 		} catch (err) {
 			return modelFailure(err);
@@ -84,16 +102,33 @@ export async function POST(req: Request) {
 	if (body.action === "finish") {
 		if (typeof body.storyId !== "string") return Response.json({ message: "storyId is required" }, { status: 400 });
 		const storyId = body.storyId;
-		const answers = Array.isArray(body.answers) ? body.answers.map((a) => (typeof a === "number" ? a : -1)).slice(0, 8) : [];
-		const tapped = Array.isArray(body.tapped) ? body.tapped.filter((t): t is string => typeof t === "string").slice(0, 200) : [];
+		const answers = Array.isArray(body.answers)
+			? body.answers.map((a) => (typeof a === "number" ? a : -1)).slice(0, 8)
+			: [];
+		const tapped = Array.isArray(body.tapped)
+			? body.tapped.filter((t): t is string => typeof t === "string").slice(0, 200)
+			: [];
 		try {
-			return Response.json(recordOnce("read", sessionClientId(body.clientId), () => recordRead({ storyId, answers, tapped, ms: typeof body.ms === "number" ? body.ms : undefined, activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined, tz: tzOf(body.tz) })));
+			return Response.json(
+				recordOnce("read", sessionClientId(body.clientId), () =>
+					recordRead({
+						storyId,
+						answers,
+						tapped,
+						ms: typeof body.ms === "number" ? body.ms : undefined,
+						activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined,
+						tz: tzOf(body.tz),
+					}),
+				),
+			);
 		} catch (err) {
 			return Response.json({ message: err instanceof Error ? err.message : String(err) }, { status: 404 });
 		}
 	}
 	if (body.action === "import" && Array.isArray(body.urls)) {
-		const urls = body.urls.filter((u): u is string => typeof u === "string" && u.length <= MAX_URL_CHARS).slice(0, MAX_LINKS_PER_ADD);
+		const urls = body.urls
+			.filter((u): u is string => typeof u === "string" && u.length <= MAX_URL_CHARS)
+			.slice(0, MAX_LINKS_PER_ADD);
 		const difficulty = isReadingDifficulty(body.difficulty) ? body.difficulty : undefined;
 		try {
 			const { added, failed } = await importLinks(urls, difficulty);
@@ -116,7 +151,8 @@ export async function POST(req: Request) {
 	}
 	if (body.action === "part") {
 		const part = Number(body.part);
-		if (!validSourceId(body.sourceId) || !Number.isInteger(part) || part < 1 || part > MAX_SOURCE_PARTS) return Response.json({ message: "sourceId and part are required" }, { status: 400 });
+		if (!validSourceId(body.sourceId) || !Number.isInteger(part) || part < 1 || part > MAX_SOURCE_PARTS)
+			return Response.json({ message: "sourceId and part are required" }, { status: 400 });
 		try {
 			return Response.json(await sourcePart(body.sourceId, part));
 		} catch (err) {
@@ -128,7 +164,10 @@ export async function POST(req: Request) {
 		removeSource(body.sourceId);
 		return Response.json({ ok: true });
 	}
-	return Response.json({ message: "action must be next, write, finish, import, part or remove-source" }, { status: 400 });
+	return Response.json(
+		{ message: "action must be next, write, finish, import, part or remove-source" },
+		{ status: 400 },
+	);
 }
 
 const MAX_URL_CHARS = 2000;

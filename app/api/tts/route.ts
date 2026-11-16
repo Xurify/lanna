@@ -22,7 +22,8 @@ export async function GET(req: Request) {
 	const style = url.searchParams.get("style") === "dialogue" ? "dialogue" : "narration";
 	const skip = (url.searchParams.get("skip") ?? "").split(",").filter((t): t is TtsTier => TIERS.has(t as TtsTier));
 	if (!text) return Response.json({ message: "text is required" }, { status: 400 });
-	if (text.length > TTS_MAX_CHARS) return Response.json({ message: `text is longer than ${TTS_MAX_CHARS} characters` }, { status: 413 });
+	if (text.length > TTS_MAX_CHARS)
+		return Response.json({ message: `text is longer than ${TTS_MAX_CHARS} characters` }, { status: 413 });
 	try {
 		const clip = await synthesize({ text, lang, voice, gender, style, skip });
 		if (!clip) return new Response(null, { status: 204, headers: { "x-tts-fallback": "browser" } });

@@ -29,22 +29,49 @@ export function TaskFrame({ children, strip = true }: { children: React.ReactNod
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
-			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
-			{children}
+				{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
+				{children}
 			</div>
 		</>
 	);
 }
 
-const LEAVE = "-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-ink-3 transition-colors hover:bg-well hover:text-ink-2";
+const LEAVE =
+	"-ml-1.5 pointer-coarse:-ml-3 rounded-lg p-1.5 pointer-coarse:p-3 text-ink-3 transition-colors hover:bg-well hover:text-ink-2";
 
 /** Exit · progress bar · count. The band drags the window. The bar is the
  *  teal of work done; only a clock running low turns it red (`ink` is kept for older callers). */
-export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave }: { progress: number; label: string; count: string; tone?: string; ink?: string; href?: string; onLeave?: () => void }) {
+export function TaskTop({
+	progress,
+	label,
+	count,
+	tone,
+	ink,
+	href = "/",
+	onLeave,
+}: {
+	progress: number;
+	label: string;
+	count: string;
+	tone?: string;
+	ink?: string;
+	href?: string;
+	onLeave?: () => void;
+}) {
 	return (
 		<TaskBar href={href} onLeave={onLeave}>
-			<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2" aria-label={label}>
-				<div className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))} style={fillStyle(Math.max(0.03, progress))} />
+			<div
+				role="progressbar"
+				aria-valuemin={0}
+				aria-valuemax={100}
+				aria-valuenow={Math.round(progress * 100)}
+				className="relative h-1 flex-1 overflow-hidden rounded-full bg-well-2"
+				aria-label={label}
+			>
+				<div
+					className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))}
+					style={fillStyle(Math.max(0.03, progress))}
+				/>
 			</div>
 			<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
 				{count}
@@ -55,7 +82,8 @@ export function TaskTop({ progress, label, count, tone, ink, href = "/", onLeave
 
 export type PipOutcome = "right" | "almost" | "miss" | "shown" | "now" | "ahead";
 
-const STRUCK = "relative bg-well-2 after:absolute after:inset-x-0 after:top-[calc(50%-1px)] after:h-0.5 after:rounded-full after:content-['']";
+const STRUCK =
+	"relative bg-well-2 after:absolute after:inset-x-0 after:top-[calc(50%-1px)] after:h-0.5 after:rounded-full after:content-['']";
 
 export function Pip({ outcome, className }: { outcome: PipOutcome; className?: string }) {
 	return (
@@ -85,11 +113,31 @@ export function Pips({ outcomes, className }: { outcomes: readonly PipOutcome[];
 	);
 }
 
-export function TaskRound({ outcomes, label, count, href = "/", onLeave }: { outcomes: readonly PipOutcome[]; label: string; count: string; href?: string; onLeave?: () => void }) {
+export function TaskRound({
+	outcomes,
+	label,
+	count,
+	href = "/",
+	onLeave,
+}: {
+	outcomes: readonly PipOutcome[];
+	label: string;
+	count: string;
+	href?: string;
+	onLeave?: () => void;
+}) {
 	const answered = outcomes.filter((o) => o !== "now" && o !== "ahead").length;
 	return (
 		<TaskBar href={href} onLeave={onLeave}>
-			<div role="progressbar" aria-valuemin={0} aria-valuemax={outcomes.length} aria-valuenow={answered} aria-label={label} className="min-w-0 flex-1" data-testid="task-round">
+			<div
+				role="progressbar"
+				aria-valuemin={0}
+				aria-valuemax={outcomes.length}
+				aria-valuenow={answered}
+				aria-label={label}
+				className="min-w-0 flex-1"
+				data-testid="task-round"
+			>
 				<Pips outcomes={outcomes} />
 			</div>
 			<span className="font-ui text-[12.5px] font-[450] tabular-nums text-ink-3" data-testid="task-count">
@@ -99,7 +147,15 @@ export function TaskRound({ outcomes, label, count, href = "/", onLeave }: { out
 	);
 }
 
-export function TaskBar({ href = "/", onLeave, children }: { href?: string; onLeave?: () => void; children?: React.ReactNode }) {
+export function TaskBar({
+	href = "/",
+	onLeave,
+	children,
+}: {
+	href?: string;
+	onLeave?: () => void;
+	children?: React.ReactNode;
+}) {
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
@@ -118,7 +174,21 @@ export function TaskBar({ href = "/", onLeave, children }: { href?: string; onLe
 	);
 }
 
-export function PracticeCard({ icon, title, sub, right, children, className }: { icon?: QIconName; title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode; className?: string }) {
+export function PracticeCard({
+	icon,
+	title,
+	sub,
+	right,
+	children,
+	className,
+}: {
+	icon?: QIconName;
+	title: string;
+	sub?: string;
+	right?: React.ReactNode;
+	children: React.ReactNode;
+	className?: string;
+}) {
 	return (
 		<div className={className}>
 			<div className="flex min-h-8 items-center gap-2 text-[13px] font-[550] text-ink-2" data-testid="practice-head">
@@ -134,7 +204,23 @@ export function PracticeCard({ icon, title, sub, right, children, className }: {
 
 /** One answer to pick: a raised tile with its key. Right is the teal, a
  *  wrong pick the muted red, the rest step back once an answer is in. */
-export function OptionTile({ n, state = "idle", disabled, onClick, children, testId, lang }: { n: number; state?: "idle" | "right" | "wrong" | "dim" | "ruled-out"; disabled?: boolean; onClick: () => void; children: React.ReactNode; testId?: string; lang?: string }) {
+export function OptionTile({
+	n,
+	state = "idle",
+	disabled,
+	onClick,
+	children,
+	testId,
+	lang,
+}: {
+	n: number;
+	state?: "idle" | "right" | "wrong" | "dim" | "ruled-out";
+	disabled?: boolean;
+	onClick: () => void;
+	children: React.ReactNode;
+	testId?: string;
+	lang?: string;
+}) {
 	return (
 		<button
 			type="button"
@@ -158,10 +244,25 @@ export function OptionTile({ n, state = "idle", disabled, onClick, children, tes
 }
 
 /** The bar under the question, in the same place every time. */
-export function Dock({ tone = "plain", children, testId, live }: { tone?: "plain" | "right" | "miss" | "wait"; children: React.ReactNode; testId?: string; live?: boolean }) {
+export function Dock({
+	tone = "plain",
+	children,
+	testId,
+	live,
+}: {
+	tone?: "plain" | "right" | "miss" | "wait";
+	children: React.ReactNode;
+	testId?: string;
+	live?: boolean;
+}) {
 	return (
 		<div
-			className={cn("shrink-0 shadow-[0_-1px_0_var(--q-line)] pb-[env(safe-area-inset-bottom)]", tone === "right" && "bg-teal-wash shadow-[0_-1px_0_var(--q-teal-line)]", tone === "miss" && "bg-miss-soft shadow-[0_-1px_0_color-mix(in_srgb,var(--q-miss)_45%,transparent)]", tone === "wait" && "bg-well")}
+			className={cn(
+				"shrink-0 shadow-[0_-1px_0_var(--q-line)] pb-[env(safe-area-inset-bottom)]",
+				tone === "right" && "bg-teal-wash shadow-[0_-1px_0_var(--q-teal-line)]",
+				tone === "miss" && "bg-miss-soft shadow-[0_-1px_0_color-mix(in_srgb,var(--q-miss)_45%,transparent)]",
+				tone === "wait" && "bg-well",
+			)}
 			data-testid={testId}
 			aria-live={live ? "polite" : undefined}
 		>
@@ -170,23 +271,50 @@ export function Dock({ tone = "plain", children, testId, live }: { tone?: "plain
 	);
 }
 
-export function TaskEnd({ children, actions, hint, wide = false, label = "Your result", testId }: { children: React.ReactNode; actions: React.ReactNode; hint?: React.ReactNode; wide?: boolean; label?: string; testId?: string }) {
+export function TaskEnd({
+	children,
+	actions,
+	hint,
+	wide = false,
+	label = "Your result",
+	testId,
+}: {
+	children: React.ReactNode;
+	actions: React.ReactNode;
+	hint?: React.ReactNode;
+	wide?: boolean;
+	label?: string;
+	testId?: string;
+}) {
 	const column = cn("mx-auto w-full max-w-2xl px-6", wide && "lg:max-w-5xl");
 	const body = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		renderAhead(readOrigin());
 		endOpenedAt = performance.now();
-		if (document.activeElement === null || document.activeElement === document.body) body.current?.focus({ preventScroll: true });
+		if (document.activeElement === null || document.activeElement === document.body)
+			body.current?.focus({ preventScroll: true });
 	}, []);
 	return (
 		<>
-			<div ref={body} tabIndex={-1} role="region" aria-label={label} data-task-end="" className="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" data-testid={testId}>
+			<div
+				ref={body}
+				tabIndex={-1}
+				role="region"
+				aria-label={label}
+				data-task-end=""
+				className="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none"
+				data-testid={testId}
+			>
 				<div className={cn(column, "q-rise my-auto pb-12 pt-16")}>{children}</div>
 			</div>
 			<Dock>
 				<div className={cn(column, "flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4")}>
 					{hint}
-					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2" onPointerOver={() => renderAhead(readOrigin())} onFocus={() => renderAhead(readOrigin())}>
+					<div
+						className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2"
+						onPointerOver={() => renderAhead(readOrigin())}
+						onFocus={() => renderAhead(readOrigin())}
+					>
 						{actions}
 					</div>
 				</div>
@@ -195,9 +323,18 @@ export function TaskEnd({ children, actions, hint, wide = false, label = "Your r
 	);
 }
 
-export const PLAY_ROW = "lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
+export const PLAY_ROW =
+	"lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
 
-export function SentenceRows({ children, className, "data-testid": testId }: { children: React.ReactNode; className?: string; "data-testid"?: string }) {
+export function SentenceRows({
+	children,
+	className,
+	"data-testid": testId,
+}: {
+	children: React.ReactNode;
+	className?: string;
+	"data-testid"?: string;
+}) {
 	return (
 		<ul className={cn("divide-y divide-[var(--q-line)]", className)} data-testid={testId}>
 			{children}
@@ -205,7 +342,21 @@ export function SentenceRows({ children, className, "data-testid": testId }: { c
 	);
 }
 
-export function SentenceRow({ sentence, lang, translation, note, onPlay, children }: { sentence: string; lang?: string; translation?: string; note?: React.ReactNode; onPlay: () => void; children?: React.ReactNode }) {
+export function SentenceRow({
+	sentence,
+	lang,
+	translation,
+	note,
+	onPlay,
+	children,
+}: {
+	sentence: string;
+	lang?: string;
+	translation?: string;
+	note?: React.ReactNode;
+	onPlay: () => void;
+	children?: React.ReactNode;
+}) {
 	return (
 		<li className="flex items-start gap-4 py-4">
 			<button type="button" onClick={onPlay} className={PLAY_ROW} aria-label={`Play: ${sentence}`} title="Play">
@@ -221,7 +372,10 @@ export function SentenceRow({ sentence, lang, translation, note, onPlay, childre
 					</p>
 				)}
 				{note && (
-					<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3" data-no-word-lookup="true">
+					<div
+						className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-ui text-[12.5px] text-ink-3"
+						data-no-word-lookup="true"
+					>
 						{note}
 					</div>
 				)}
@@ -230,7 +384,15 @@ export function SentenceRow({ sentence, lang, translation, note, onPlay, childre
 	);
 }
 
-export function NotSaved({ onRetry, busy = false, refused = false }: { onRetry: () => void; busy?: boolean; refused?: boolean }) {
+export function NotSaved({
+	onRetry,
+	busy = false,
+	refused = false,
+}: {
+	onRetry: () => void;
+	busy?: boolean;
+	refused?: boolean;
+}) {
 	if (refused)
 		return (
 			<p className="font-prose text-[13px] text-ink-3" role="status">
@@ -240,7 +402,12 @@ export function NotSaved({ onRetry, busy = false, refused = false }: { onRetry: 
 	return (
 		<p className="font-prose text-[13px] text-ink-3" role="status">
 			Not saved yet. The app keeps trying.{" "}
-			<button type="button" onClick={onRetry} disabled={busy} className="font-ui font-[550] text-ink-2 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-foreground disabled:text-ink-3 disabled:no-underline pointer-coarse:py-3">
+			<button
+				type="button"
+				onClick={onRetry}
+				disabled={busy}
+				className="font-ui font-[550] text-ink-2 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-foreground disabled:text-ink-3 disabled:no-underline pointer-coarse:py-3"
+			>
 				{busy ? "Trying…" : "Try again"}
 			</button>
 		</p>
@@ -269,8 +436,20 @@ export function EnterHint({ children }: { children: React.ReactNode }) {
 /** The verdict mark: a small filled disc with a tick or a cross. */
 export function VerdictDisc({ ok }: { ok: boolean }) {
 	return (
-		<span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", ok ? "bg-teal text-[var(--q-on-teal)]" : "bg-miss text-[var(--q-bg)]")} aria-hidden="true">
-			<svg viewBox="0 0 24 24" className="size-3.5 fill-none stroke-current" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+		<span
+			className={cn(
+				"flex size-6 shrink-0 items-center justify-center rounded-full",
+				ok ? "bg-teal text-[var(--q-on-teal)]" : "bg-miss text-[var(--q-bg)]",
+			)}
+			aria-hidden="true"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				className="size-3.5 fill-none stroke-current"
+				strokeWidth={2.6}
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			>
 				{ok ? <path d="M5.5 12.5l4 4L18.5 7.5" /> : <path d="M7 7l10 10M17 7L7 17" />}
 			</svg>
 		</span>
@@ -279,20 +458,49 @@ export function VerdictDisc({ ok }: { ok: boolean }) {
 
 /** A placeholder in the shape of what is coming, so its slot keeps its size. */
 export function Pulse({ className }: { className?: string }) {
-	return <span aria-hidden="true" className={cn("inline-block animate-pulse rounded-md bg-well-2 motion-reduce:animate-none", className)} />;
+	return (
+		<span
+			aria-hidden="true"
+			className={cn("inline-block animate-pulse rounded-md bg-well-2 motion-reduce:animate-none", className)}
+		/>
+	);
 }
 
 /** Numbers on an end screen, in one card divided into cells (the mockup's
  *  score card). */
 export function Stats({ children, className }: { children: React.ReactNode; className?: string }) {
-	return <div className={cn("flex max-w-sm flex-col divide-y divide-[var(--q-line)] border-t border-[var(--q-line)] text-left", className)}>{children}</div>;
+	return (
+		<div
+			className={cn(
+				"flex max-w-sm flex-col divide-y divide-[var(--q-line)] border-t border-[var(--q-line)] text-left",
+				className,
+			)}
+		>
+			{children}
+		</div>
+	);
 }
 
-export function Stat({ label, value, ink, icon }: { label: string; value: string | null; ink?: string; icon?: React.ReactNode }) {
+export function Stat({
+	label,
+	value,
+	ink,
+	icon,
+}: {
+	label: string;
+	value: string | null;
+	ink?: string;
+	icon?: React.ReactNode;
+}) {
 	return (
 		<div className="flex min-h-11 items-center justify-between gap-4 py-2">
 			<p className="min-w-0 text-[14px] text-ink-3">{label}</p>
-			<p className={cn("flex h-6 shrink-0 items-center gap-1.5 font-ui text-[16px] font-semibold tracking-[-0.01em] tabular-nums", ink ?? "text-foreground")}>
+			<p
+				className={cn(
+					"flex h-6 shrink-0 items-center gap-1.5 font-ui text-[16px] font-semibold tracking-[-0.01em] tabular-nums",
+					ink ?? "text-foreground",
+				)}
+			>
 				{icon}
 				{value ?? <Pulse className="h-4 w-12" />}
 			</p>
@@ -302,9 +510,17 @@ export function Stat({ label, value, ink, icon }: { label: string; value: string
 
 export function PracticeTime({ ms, how }: { ms: number | null; how: string }) {
 	return (
-		<p className="mt-3 flex h-6 items-center gap-1.5 font-ui text-[15px] font-[550] text-ink-2" title={how} data-testid="practice-time">
+		<p
+			className="mt-3 flex h-6 items-center gap-1.5 font-ui text-[15px] font-[550] text-ink-2"
+			title={how}
+			data-testid="practice-time"
+		>
 			<TimerIcon className="size-4 text-teal" strokeWidth={1.6} aria-hidden="true" />
-			{ms === null ? <Pulse className="h-4 w-10" /> : <span className="tabular-nums text-foreground">{practiceClock(ms)}</span>}
+			{ms === null ? (
+				<Pulse className="h-4 w-10" />
+			) : (
+				<span className="tabular-nums text-foreground">{practiceClock(ms)}</span>
+			)}
 			<span>practice time</span>
 			<span className="sr-only">. {how}</span>
 		</p>

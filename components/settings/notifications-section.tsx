@@ -10,12 +10,7 @@ import {
 	type NotificationSoundPreset,
 	type StudyTrendInsights,
 } from "@/src/core";
-import {
-	SettingsSection,
-	SettingsGroup,
-	SettingsRow,
-	Toggle,
-} from "./controls.tsx";
+import { SettingsSection, SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
 import {
 	playReminderSound,
 	saveCustomSound,
@@ -28,7 +23,6 @@ import {
 	dispatchReminderAlert,
 } from "../notifications/notification-dispatcher.ts";
 import {
-	BellIcon,
 	SparklesIcon,
 	Volume2Icon,
 	PlusIcon,

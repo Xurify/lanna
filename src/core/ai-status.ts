@@ -4,4 +4,6 @@
  * status it is given; the check itself is src/server/ai-status.ts.
  */
 
-export type AiStatus = { ready: true; model: string } | { ready: false; reason: "no-model" | "no-key"; provider?: string };
+export type AiStatus =
+	| { ready: true; model: string }
+	| { ready: false; reason: "no-model" | "no-key"; provider?: string };

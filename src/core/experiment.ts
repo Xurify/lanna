@@ -170,7 +170,11 @@ export function dayNumberForDate(startDateStr: string, dateStr: string): number 
 }
 
 /** Builds the full 42-day schedule from onset day. */
-export function buildSchedule(startDateStr: string, onsetDay: number, totalDays = EXPERIMENT_CONSTANTS.TOTAL_DAYS): DaySchedule[] {
+export function buildSchedule(
+	startDateStr: string,
+	onsetDay: number,
+	totalDays = EXPERIMENT_CONSTANTS.TOTAL_DAYS,
+): DaySchedule[] {
 	const schedule: DaySchedule[] = [];
 	for (let day = 1; day <= totalDays; day++) {
 		const date = dateForDayNumber(startDateStr, day);
@@ -192,7 +196,10 @@ export function buildSchedule(startDateStr: string, onsetDay: number, totalDays 
 	return schedule;
 }
 
-export function dailyRowsWithinSchedule(rows: DailyExperimentRecord[], schedule: DaySchedule[]): DailyExperimentRecord[] {
+export function dailyRowsWithinSchedule(
+	rows: DailyExperimentRecord[],
+	schedule: DaySchedule[],
+): DailyExperimentRecord[] {
 	const dates = new Set(schedule.map((s) => s.date));
 	return rows.filter((r) => dates.has(r.date));
 }
@@ -247,7 +254,11 @@ export function usableCovariates(days: DailyExperimentRecord[]): CovariateName[]
 	});
 }
 
-export function fitInterruptedTimeSeries(days: DailyExperimentRecord[], onsetDay: number, covariates: readonly CovariateName[] = []): { b0: number; b1: number; b2: number; b3: number } | null {
+export function fitInterruptedTimeSeries(
+	days: DailyExperimentRecord[],
+	onsetDay: number,
+	covariates: readonly CovariateName[] = [],
+): { b0: number; b1: number; b2: number; b3: number } | null {
 	const valid = days.filter((d) => d.firstPlayShare !== null);
 	const width = 4 + covariates.length;
 	if (valid.length < width) return null;
@@ -312,7 +323,11 @@ export function runRandomizationTest(days: DailyExperimentRecord[], observedOnse
 		covariatesUsed = [];
 		observedFit = fitInterruptedTimeSeries(days, observedOnset);
 	}
-	if (!observedFit || baselineDays < EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE || interventionDays < EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE) {
+	if (
+		!observedFit ||
+		baselineDays < EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE ||
+		interventionDays < EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE
+	) {
 		return {
 			b0: observedFit?.b0 ?? 0,
 			b1: observedFit?.b1 ?? 0,
@@ -368,7 +383,11 @@ export interface WeeklyCheckRow {
 	productionMatch: number | null;
 }
 
-export function weeklyCheckRows(config: ExperimentConfig, checks: CheckItemRecord[], todayDayNumber: number): WeeklyCheckRow[] {
+export function weeklyCheckRows(
+	config: ExperimentConfig,
+	checks: CheckItemRecord[],
+	todayDayNumber: number,
+): WeeklyCheckRow[] {
 	const rows: WeeklyCheckRow[] = [];
 	for (let week = 1; week <= EXPERIMENT_CONSTANTS.TOTAL_WEEKS; week++) {
 		const checkDay = week * 7;
@@ -377,7 +396,9 @@ export function weeklyCheckRows(config: ExperimentConfig, checks: CheckItemRecor
 			for (const c of checks) if (c.week === week && c.language === language) latest.set(`${c.type}:${c.itemId}`, c);
 			const probes = [...latest.values()].filter((c) => c.type === "probe");
 			const production = [...latest.values()].filter((c) => c.type === "production");
-			const done = probes.length >= EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK && production.length >= EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
+			const done =
+				probes.length >= EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK &&
+				production.length >= EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK;
 			const lastDay = checkDay + EXPERIMENT_CONSTANTS.MAKE_UP_DAYS;
 			rows.push({
 				week,
@@ -387,7 +408,8 @@ export function weeklyCheckRows(config: ExperimentConfig, checks: CheckItemRecor
 				state: done ? "done" : todayDayNumber < checkDay ? "ahead" : todayDayNumber <= lastDay ? "open" : "missed",
 				probesUnderstood: probes.filter((p) => p.score === 1).length,
 				probesAnswered: probes.length,
-				productionMatch: production.length > 0 ? production.reduce((sum, p) => sum + p.score, 0) / production.length : null,
+				productionMatch:
+					production.length > 0 ? production.reduce((sum, p) => sum + p.score, 0) / production.length : null,
 			});
 		}
 	}
@@ -422,9 +444,15 @@ function fitWithUsableCovariates(days: DailyExperimentRecord[], onsetDay: number
 	return fitInterruptedTimeSeries(days, onsetDay, usableCovariates(days)) ?? fitInterruptedTimeSeries(days, onsetDay);
 }
 
-const mean = (values: number[]): number | null => (values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null);
+const mean = (values: number[]): number | null =>
+	values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
 
-export function analyzeStudy(config: ExperimentConfig, daily: DailyExperimentRecord[], checks: CheckItemRecord[], todayDayNumber: number): StudyAnalysis {
+export function analyzeStudy(
+	config: ExperimentConfig,
+	daily: DailyExperimentRecord[],
+	checks: CheckItemRecord[],
+	todayDayNumber: number,
+): StudyAnalysis {
 	const { treatment, control } = config.languages;
 	const elapsed = (d: DailyExperimentRecord) => d.dayNumber <= Math.min(todayDayNumber, config.days);
 	const treatmentDays = daily.filter((d) => d.language === treatment && elapsed(d));
@@ -433,19 +461,36 @@ export function analyzeStudy(config: ExperimentConfig, daily: DailyExperimentRec
 
 	const controlFit = fitWithUsableCovariates(controlDays, config.onsetDay);
 	const controlB2 = controlFit ? controlFit.b2 : null;
-	const timeTrend = { controlB2, flagged: controlB2 !== null && regression.b2 > 0 && controlB2 >= EXPERIMENT_CONSTANTS.TIME_TREND_RATIO * regression.b2 };
+	const timeTrend = {
+		controlB2,
+		flagged:
+			controlB2 !== null && regression.b2 > 0 && controlB2 >= EXPERIMENT_CONSTANTS.TIME_TREND_RATIO * regression.b2,
+	};
 
 	const armDays = treatmentDays.filter((d) => d.arm === "input-first");
-	const armMinutes = armDays.map((d) => allowedAndTotal(d.minutesBy ?? {})).reduce((sum, m) => ({ allowed: sum.allowed + m.allowed, total: sum.total + m.total }), { allowed: 0, total: 0 });
+	const armMinutes = armDays
+		.map((d) => allowedAndTotal(d.minutesBy ?? {}))
+		.reduce((sum, m) => ({ allowed: sum.allowed + m.allowed, total: sum.total + m.total }), { allowed: 0, total: 0 });
 	const complianceShare = armMinutes.total > 0 ? Math.round((armMinutes.allowed / armMinutes.total) * 1000) / 10 : null;
-	const compliance = { share: complianceShare, flagged: complianceShare !== null && complianceShare < EXPERIMENT_CONSTANTS.COMPLIANCE_THRESHOLD };
+	const compliance = {
+		share: complianceShare,
+		flagged: complianceShare !== null && complianceShare < EXPERIMENT_CONSTANTS.COMPLIANCE_THRESHOLD,
+	};
 
 	const baselineMinutes = mean(treatmentDays.filter((d) => d.arm !== "input-first").map((d) => d.minutes));
 	const armMinutesPerDay = mean(armDays.map((d) => d.minutes));
-	const balanceRatio = baselineMinutes !== null && baselineMinutes > 0 && armMinutesPerDay !== null ? Math.round((armMinutesPerDay / baselineMinutes) * 1000) / 10 : null;
-	const balance = { ratio: balanceRatio, flagged: balanceRatio !== null && balanceRatio < EXPERIMENT_CONSTANTS.BALANCE_THRESHOLD };
+	const balanceRatio =
+		baselineMinutes !== null && baselineMinutes > 0 && armMinutesPerDay !== null
+			? Math.round((armMinutesPerDay / baselineMinutes) * 1000) / 10
+			: null;
+	const balance = {
+		ratio: balanceRatio,
+		flagged: balanceRatio !== null && balanceRatio < EXPERIMENT_CONSTANTS.BALANCE_THRESHOLD,
+	};
 
-	const doneWeeks = weeklyCheckRows(config, checks, todayDayNumber).filter((r) => r.language === treatment && r.state === "done");
+	const doneWeeks = weeklyCheckRows(config, checks, todayDayNumber).filter(
+		(r) => r.language === treatment && r.state === "done",
+	);
 	const isArmWeek = (week: number) => week * 7 >= config.onsetDay;
 	const baselineWeeks = doneWeeks.filter((r) => !isArmWeek(r.week));
 	const armWeeks = doneWeeks.filter((r) => isArmWeek(r.week));
@@ -459,11 +504,23 @@ export function analyzeStudy(config: ExperimentConfig, daily: DailyExperimentRec
 		armProduction,
 		baselineProbe: mean(baselineWeeks.map(probeShare)),
 		armProbe: mean(armWeeks.map(probeShare)),
-		cost: baselineProduction !== null && armProduction !== null && baselineProduction - armProduction >= EXPERIMENT_CONSTANTS.SPEAKING_COST - 1e-9,
+		cost:
+			baselineProduction !== null &&
+			armProduction !== null &&
+			baselineProduction - armProduction >= EXPERIMENT_CONSTANTS.SPEAKING_COST - 1e-9,
 	};
 
-	const verdictStatus: VerdictStatus = regression.verdictStatus === "insufficient_data" || doneWeeks.length < EXPERIMENT_CONSTANTS.CHECK_WEEKS_NEEDED ? "insufficient_data" : regression.verdictStatus;
-	return { regression, checkWeeksDone: doneWeeks.length, flags: { timeTrend, compliance, balance }, speaking, verdictStatus };
+	const verdictStatus: VerdictStatus =
+		regression.verdictStatus === "insufficient_data" || doneWeeks.length < EXPERIMENT_CONSTANTS.CHECK_WEEKS_NEEDED
+			? "insufficient_data"
+			: regression.verdictStatus;
+	return {
+		regression,
+		checkWeeksDone: doneWeeks.length,
+		flags: { timeTrend, compliance, balance },
+		speaking,
+		verdictStatus,
+	};
 }
 
 export interface DeviationRecord {
@@ -474,7 +531,13 @@ export interface DeviationRecord {
 	note: string;
 }
 
-export function scheduleDeviations(config: ExperimentConfig, schedule: DaySchedule[], daily: DailyExperimentRecord[], checks: CheckItemRecord[], todayDayNumber: number): DeviationRecord[] {
+export function scheduleDeviations(
+	config: ExperimentConfig,
+	schedule: DaySchedule[],
+	daily: DailyExperimentRecord[],
+	checks: CheckItemRecord[],
+	todayDayNumber: number,
+): DeviationRecord[] {
 	const languages = [config.languages.treatment, config.languages.control];
 	const out: DeviationRecord[] = [];
 	for (const day of schedule) {
@@ -482,12 +545,24 @@ export function scheduleDeviations(config: ExperimentConfig, schedule: DaySchedu
 		for (const language of languages) {
 			const reps = daily.find((d) => d.date === day.date && d.language === language)?.dictationReps ?? 0;
 			if (reps >= EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY) continue;
-			out.push({ key: `missed-day:${day.date}:${language}`, kind: "missed-day", date: day.date, language, note: `${reps} of the ${EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY} typed Listen sentences a day needs` });
+			out.push({
+				key: `missed-day:${day.date}:${language}`,
+				kind: "missed-day",
+				date: day.date,
+				language,
+				note: `${reps} of the ${EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY} typed Listen sentences a day needs`,
+			});
 		}
 	}
 	for (const row of weeklyCheckRows(config, checks, todayDayNumber)) {
 		if (row.state !== "missed") continue;
-		out.push({ key: `missed-check:${row.week}:${row.language}`, kind: "missed-check", date: row.lastDate, language: row.language, note: `week ${row.week} check not finished by ${row.lastDate} (${row.probesAnswered} sentences answered)` });
+		out.push({
+			key: `missed-check:${row.week}:${row.language}`,
+			kind: "missed-check",
+			date: row.lastDate,
+			language: row.language,
+			note: `week ${row.week} check not finished by ${row.lastDate} (${row.probesAnswered} sentences answered)`,
+		});
 	}
 	return out;
 }
@@ -516,24 +591,42 @@ export function generateSummaryMarkdown(
 	lines.push(``);
 	lines.push(`## Statistical Status`);
 	lines.push(``);
-	lines.push(`- **Baseline Valid Days**: ${analysis.baselineDays} / ${EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE} required`);
-	lines.push(`- **Intervention Valid Days**: ${analysis.interventionDays} / ${EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE} required`);
+	lines.push(
+		`- **Baseline Valid Days**: ${analysis.baselineDays} / ${EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE} required`,
+	);
+	lines.push(
+		`- **Intervention Valid Days**: ${analysis.interventionDays} / ${EXPERIMENT_CONSTANTS.MIN_DAYS_PER_PHASE} required`,
+	);
 	lines.push(`- **Immediate Level Shift ($b_2$)**: ${(analysis.b2 * 100).toFixed(1)} percentage points`);
 	lines.push(`- **Randomization p-value**: ${analysis.pValue.toFixed(4)} (Threshold: ${(1 / 11).toFixed(4)})`);
-	lines.push(`- **Covariates in the model**: ${analysis.covariatesUsed.length > 0 ? analysis.covariatesUsed.join(", ") : "none (not yet varying across counted days)"}`);
-	lines.push(`- **Weekly checks done (${config.languages.treatment})**: ${study.checkWeeksDone} / ${EXPERIMENT_CONSTANTS.CHECK_WEEKS_NEEDED} required`);
+	lines.push(
+		`- **Covariates in the model**: ${analysis.covariatesUsed.length > 0 ? analysis.covariatesUsed.join(", ") : "none (not yet varying across counted days)"}`,
+	);
+	lines.push(
+		`- **Weekly checks done (${config.languages.treatment})**: ${study.checkWeeksDone} / ${EXPERIMENT_CONSTANTS.CHECK_WEEKS_NEEDED} required`,
+	);
 	lines.push(`- **Current Verdict**: **${study.verdictStatus.toUpperCase()}**`);
 	lines.push(``);
 	lines.push(`## Flags (printed beside the verdict, never change it)`);
 	lines.push(``);
-	lines.push(`- **Time trend**: ${config.languages.control} level change at the same day ${study.flags.timeTrend.controlB2 === null ? "n/a" : `${(study.flags.timeTrend.controlB2 * 100).toFixed(1)} pp`} against ${(analysis.b2 * 100).toFixed(1)} pp: ${flag(study.flags.timeTrend.flagged)}`);
-	lines.push(`- **Compliance**: ${study.flags.compliance.share === null ? "n/a" : `${study.flags.compliance.share}%`} of listening-first minutes on allowed tasks (needs ${EXPERIMENT_CONSTANTS.COMPLIANCE_THRESHOLD}%): ${flag(study.flags.compliance.flagged)}`);
-	lines.push(`- **Balance**: listening-first days at ${study.flags.balance.ratio === null ? "n/a" : `${study.flags.balance.ratio}%`} of the minutes a day before the switch (needs ${EXPERIMENT_CONSTANTS.BALANCE_THRESHOLD}%): ${flag(study.flags.balance.flagged)}`);
+	lines.push(
+		`- **Time trend**: ${config.languages.control} level change at the same day ${study.flags.timeTrend.controlB2 === null ? "n/a" : `${(study.flags.timeTrend.controlB2 * 100).toFixed(1)} pp`} against ${(analysis.b2 * 100).toFixed(1)} pp: ${flag(study.flags.timeTrend.flagged)}`,
+	);
+	lines.push(
+		`- **Compliance**: ${study.flags.compliance.share === null ? "n/a" : `${study.flags.compliance.share}%`} of listening-first minutes on allowed tasks (needs ${EXPERIMENT_CONSTANTS.COMPLIANCE_THRESHOLD}%): ${flag(study.flags.compliance.flagged)}`,
+	);
+	lines.push(
+		`- **Balance**: listening-first days at ${study.flags.balance.ratio === null ? "n/a" : `${study.flags.balance.ratio}%`} of the minutes a day before the switch (needs ${EXPERIMENT_CONSTANTS.BALANCE_THRESHOLD}%): ${flag(study.flags.balance.flagged)}`,
+	);
 	lines.push(``);
 	lines.push(`## Speaking (descriptive, not tested)`);
 	lines.push(``);
-	lines.push(`- **Production**: ${points(study.speaking.baselineProduction)} before the switch (n=${study.speaking.baselineWeeks}) against ${points(study.speaking.armProduction)} after (n=${study.speaking.armWeeks})${study.speaking.cost ? " — **speaking cost (descriptive)**" : ""}`);
-	lines.push(`- **Listening probe**: ${points(study.speaking.baselineProbe)} before against ${points(study.speaking.armProbe)} after`);
+	lines.push(
+		`- **Production**: ${points(study.speaking.baselineProduction)} before the switch (n=${study.speaking.baselineWeeks}) against ${points(study.speaking.armProduction)} after (n=${study.speaking.armWeeks})${study.speaking.cost ? " — **speaking cost (descriptive)**" : ""}`,
+	);
+	lines.push(
+		`- **Listening probe**: ${points(study.speaking.baselineProbe)} before against ${points(study.speaking.armProbe)} after`,
+	);
 	lines.push(``);
 	lines.push(`## Weekly Checks Summary`);
 	lines.push(``);
@@ -547,8 +640,10 @@ export function generateSummaryMarkdown(
 			const probes = items.filter((c) => c.type === "probe");
 			const prods = items.filter((c) => c.type === "production");
 
-			const probeScore = probes.length > 0 ? `${probes.filter((p) => p.score === 1).length}/${probes.length}` : "pending";
-			const prodAvg = prods.length > 0 ? `${Math.round((prods.reduce((a, b) => a + b.score, 0) / prods.length) * 100)}%` : "pending";
+			const probeScore =
+				probes.length > 0 ? `${probes.filter((p) => p.score === 1).length}/${probes.length}` : "pending";
+			const prodAvg =
+				prods.length > 0 ? `${Math.round((prods.reduce((a, b) => a + b.score, 0) / prods.length) * 100)}%` : "pending";
 			const status = probes.length === 10 && prods.length === 5 ? "Completed" : "Scheduled";
 
 			lines.push(`| W${w} | ${checkDate} | ${lang} | ${probeScore} | ${prodAvg} | ${status} |`);
@@ -561,7 +656,9 @@ export function generateSummaryMarkdown(
 	lines.push(`| Day | Date | Lang | Phase | Arm | 1st-Play Share | Reps | Minutes | Compliance |`);
 	lines.push(`|---|---|---|---|---|---|---|---|---|`);
 
-	const sortedDays = [...dailyRecords].sort((a, b) => b.dayNumber - a.dayNumber || a.language.localeCompare(b.language));
+	const sortedDays = [...dailyRecords].sort(
+		(a, b) => b.dayNumber - a.dayNumber || a.language.localeCompare(b.language),
+	);
 	const recent = sortedDays.slice(0, 28);
 
 	if (recent.length === 0) {

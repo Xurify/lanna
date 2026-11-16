@@ -16,7 +16,10 @@ process.env.LH_DATA_DIR = dir;
 delete process.env.LH_PROFILE;
 const added = path.join(dir, "languages", "czech");
 fs.mkdirSync(added, { recursive: true });
-fs.writeFileSync(path.join(added, "language.json"), JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }));
+fs.writeFileSync(
+	path.join(added, "language.json"),
+	JSON.stringify({ id: "czech", tag: "cs-CZ", code: "cs", endonym: "Čeština", english: "Czech" }),
+);
 const czechCourse = { language: "czech", code: "cs", tag: "cs-CZ", units: [], tutors: [], goals: [], chapters: [] };
 fs.writeFileSync(path.join(added, "course.json"), JSON.stringify(czechCourse));
 
@@ -40,7 +43,11 @@ describe("the running language", () => {
 		assert.equal(again.PATHS.data, path.join(dir, "profiles", "czech"), "the paths follow the switch");
 		assert.equal(again.PATHS.review, path.join(dir, "profiles", "czech", "review"));
 		assert.equal(course()?.language, "czech", "the course follows the switch");
-		assert.equal(JSON.parse(fs.readFileSync(path.join(dir, "profile.json"), "utf-8")).active, "czech", "the next start runs it too");
+		assert.equal(
+			JSON.parse(fs.readFileSync(path.join(dir, "profile.json"), "utf-8")).active,
+			"czech",
+			"the next start runs it too",
+		);
 
 		again.switchProfile("slovak");
 		assert.equal(first.activeProfile(), "slovak");
@@ -49,7 +56,11 @@ describe("the running language", () => {
 
 	it("borrows another language for a synchronous read and gives it back", async () => {
 		const config = await load("borrow");
-		const seen = config.withProfile("czech", () => ({ profile: config.activeProfile(), data: config.PATHS.data, course: course()?.language }));
+		const seen = config.withProfile("czech", () => ({
+			profile: config.activeProfile(),
+			data: config.PATHS.data,
+			course: course()?.language,
+		}));
 		assert.deepEqual(seen, { profile: "czech", data: path.join(dir, "profiles", "czech"), course: "czech" });
 		assert.equal(config.activeProfile(), "slovak");
 		assert.equal(course(), undefined);

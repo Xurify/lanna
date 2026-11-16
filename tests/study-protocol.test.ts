@@ -31,7 +31,12 @@ const config: ExperimentConfig = {
 	decisionRule: "",
 };
 
-function day(language: string, d: number, share: number | null, extra: Partial<DailyExperimentRecord> = {}): DailyExperimentRecord {
+function day(
+	language: string,
+	d: number,
+	share: number | null,
+	extra: Partial<DailyExperimentRecord> = {},
+): DailyExperimentRecord {
 	const post = d >= ONSET;
 	return {
 		date: dateForDayNumber(START, d),
@@ -51,33 +56,69 @@ function day(language: string, d: number, share: number | null, extra: Partial<D
 	};
 }
 
-const days = (language: string, share: (d: number) => number, extra: (d: number) => Partial<DailyExperimentRecord> = () => ({})) => Array.from({ length: 42 }, (_, i) => day(language, i + 1, share(i + 1), extra(i + 1)));
+const days = (
+	language: string,
+	share: (d: number) => number,
+	extra: (d: number) => Partial<DailyExperimentRecord> = () => ({}),
+) => Array.from({ length: 42 }, (_, i) => day(language, i + 1, share(i + 1), extra(i + 1)));
 
 function weekChecks(language: string, week: number, probesRight: number, production: number): CheckItemRecord[] {
-	const base = { date: dateForDayNumber(START, week * 7), week, dayNumber: week * 7, language, prompt: "", expected: "", response: "x", verdict: "" };
+	const base = {
+		date: dateForDayNumber(START, week * 7),
+		week,
+		dayNumber: week * 7,
+		language,
+		prompt: "",
+		expected: "",
+		response: "x",
+		verdict: "",
+	};
 	return [
-		...Array.from({ length: 10 }, (_, n) => ({ ...base, type: "probe" as const, itemId: `p${week}-${n}`, score: n < probesRight ? 1 : 0 })),
-		...Array.from({ length: 5 }, (_, n) => ({ ...base, type: "production" as const, itemId: `w${week}-${n}`, score: production, engine: "stt:deepgram" })),
+		...Array.from({ length: 10 }, (_, n) => ({
+			...base,
+			type: "probe" as const,
+			itemId: `p${week}-${n}`,
+			score: n < probesRight ? 1 : 0,
+		})),
+		...Array.from({ length: 5 }, (_, n) => ({
+			...base,
+			type: "production" as const,
+			itemId: `w${week}-${n}`,
+			score: production,
+			engine: "stt:deepgram",
+		})),
 	];
 }
 
-const allWeeks = (language: string, production: (week: number) => number) => Array.from({ length: 6 }, (_, i) => weekChecks(language, i + 1, 6, production(i + 1))).flat();
+const allWeeks = (language: string, production: (week: number) => number) =>
+	Array.from({ length: 6 }, (_, i) => weekChecks(language, i + 1, 6, production(i + 1))).flat();
 
 test("the model holds sentence length level: harder sentences after the switch no longer hide the jump", () => {
 	const words = (d: number) => 6 + (d >= ONSET ? 2 : 0) + (d % 3);
-	const russian = days("russian", (d) => 0.5 + (d >= ONSET ? 0.2 : 0) - 0.05 * (words(d) - 6), (d) => ({ covariates: { meanWordsPerSentence: words(d) } }));
+	const russian = days(
+		"russian",
+		(d) => 0.5 + (d >= ONSET ? 0.2 : 0) - 0.05 * (words(d) - 6),
+		(d) => ({ covariates: { meanWordsPerSentence: words(d) } }),
+	);
 
 	const result = runRandomizationTest(russian, ONSET);
 	assert.deepEqual(result.covariatesUsed, ["meanWordsPerSentence"]);
 	assert.ok(Math.abs(result.b2 - 0.2) < 1e-6, `the jump is +20 points once length is held level, got ${result.b2}`);
 
-	const unadjusted = runRandomizationTest(russian.map((r) => ({ ...r, covariates: { meanWordsPerSentence: 6 } })), ONSET);
+	const unadjusted = runRandomizationTest(
+		russian.map((r) => ({ ...r, covariates: { meanWordsPerSentence: 6 } })),
+		ONSET,
+	);
 	assert.deepEqual(unadjusted.covariatesUsed, [], "a constant covariate is left out");
 	assert.ok(unadjusted.b2 < 0.15, `without the covariate the jump reads smaller (${unadjusted.b2})`);
 });
 
 test("a covariate missing on a counted day is left out instead of guessed", () => {
-	const russian = days("russian", (d) => (d >= ONSET ? 0.7 : 0.5), (d) => ({ covariates: { meanWordsPerSentence: 6, ...(d === 3 ? {} : { meanFrequencyRank: 400 + d }) } }));
+	const russian = days(
+		"russian",
+		(d) => (d >= ONSET ? 0.7 : 0.5),
+		(d) => ({ covariates: { meanWordsPerSentence: 6, ...(d === 3 ? {} : { meanFrequencyRank: 400 + d }) } }),
+	);
 	assert.deepEqual(runRandomizationTest(russian, ONSET).covariatesUsed, []);
 });
 
@@ -89,7 +130,12 @@ test("the verdict needs five weeks of checks even when the jump is clear", () =>
 	assert.equal(early.checkWeeksDone, 4);
 	assert.equal(early.verdictStatus, "insufficient_data");
 
-	const done = analyzeStudy(config, daily, allWeeks("russian", () => 0.8), 43);
+	const done = analyzeStudy(
+		config,
+		daily,
+		allWeeks("russian", () => 0.8),
+		43,
+	);
 	assert.equal(done.checkWeeksDone, 6);
 	assert.equal(done.verdictStatus, "confirmed_benefit");
 });
@@ -107,7 +153,10 @@ test("compliance and balance read the treatment's minutes on listening-first day
 	const russian = days(
 		"russian",
 		(d) => (d >= ONSET ? 0.7 : 0.5),
-		(d): Partial<DailyExperimentRecord> => (d >= ONSET ? { minutes: 8, minutesBy: { listen: 6, speak: 2 } } : { minutes: 20, minutesBy: { listen: 10, lesson: 10 } }),
+		(d): Partial<DailyExperimentRecord> =>
+			d >= ONSET
+				? { minutes: 8, minutesBy: { listen: 6, speak: 2 } }
+				: { minutes: 20, minutesBy: { listen: 10, lesson: 10 } },
 	);
 	const study = analyzeStudy(config, [...russian, ...days("slovak", () => 0.5)], [], 43);
 	assert.equal(study.flags.compliance.share, 75);
@@ -115,37 +164,62 @@ test("compliance and balance read the treatment's minutes on listening-first day
 	assert.equal(study.flags.balance.ratio, 40);
 	assert.ok(study.flags.balance.flagged, "8 minutes a day against 20 before is under 70%");
 
-	const kept = analyzeStudy(config, [...days("russian", (d) => (d >= ONSET ? 0.7 : 0.5)), ...days("slovak", () => 0.5)], [], 43);
+	const kept = analyzeStudy(
+		config,
+		[...days("russian", (d) => (d >= ONSET ? 0.7 : 0.5)), ...days("slovak", () => 0.5)],
+		[],
+		43,
+	);
 	assert.equal(kept.flags.compliance.flagged, false);
 	assert.equal(kept.flags.balance.ratio, 100);
 });
 
 test("speaking is compared before and after the switch, and a drop of ten points is named a cost", () => {
 	const daily = [...days("russian", () => 0.5), ...days("slovak", () => 0.5)];
-	const study = analyzeStudy(config, daily, allWeeks("russian", (w) => (w <= 2 ? 0.8 : 0.7)), 43);
+	const study = analyzeStudy(
+		config,
+		daily,
+		allWeeks("russian", (w) => (w <= 2 ? 0.8 : 0.7)),
+		43,
+	);
 	assert.equal(study.speaking.baselineWeeks, 2);
 	assert.equal(study.speaking.armWeeks, 4);
 	assert.ok(Math.abs(study.speaking.baselineProduction! - 0.8) < 1e-9);
 	assert.ok(Math.abs(study.speaking.armProduction! - 0.7) < 1e-9);
 	assert.ok(study.speaking.cost);
 
-	const steady = analyzeStudy(config, daily, allWeeks("russian", (w) => (w <= 2 ? 0.8 : 0.75)), 43);
+	const steady = analyzeStudy(
+		config,
+		daily,
+		allWeeks("russian", (w) => (w <= 2 ? 0.8 : 0.75)),
+		43,
+	);
 	assert.equal(steady.speaking.cost, false);
 });
 
 test("a weekly check stays open through its two make-up days, then counts as missed", () => {
-	const state = (today: number) => weeklyCheckRows(config, [], today).find((r) => r.week === 1 && r.language === "russian")!;
+	const state = (today: number) =>
+		weeklyCheckRows(config, [], today).find((r) => r.week === 1 && r.language === "russian")!;
 	assert.equal(state(6).state, "ahead");
 	assert.equal(state(7).state, "open");
 	assert.equal(state(7 + EXPERIMENT_CONSTANTS.MAKE_UP_DAYS).state, "open");
 	assert.equal(state(7 + EXPERIMENT_CONSTANTS.MAKE_UP_DAYS).lastDate, dateForDayNumber(START, 9));
 	assert.equal(state(10).state, "missed");
-	assert.equal(weeklyCheckRows(config, weekChecks("russian", 1, 5, 0.5), 10).find((r) => r.week === 1 && r.language === "russian")!.state, "done");
+	assert.equal(
+		weeklyCheckRows(config, weekChecks("russian", 1, 5, 0.5), 10).find((r) => r.week === 1 && r.language === "russian")!
+			.state,
+		"done",
+	);
 });
 
 test("the schedule's deviations: a past day short in a language, and a check whose window closed; today is not judged yet", () => {
 	const schedule = buildSchedule(START, ONSET, 42);
-	const daily = [day("russian", 1, 0.5), day("slovak", 1, null, { dictationReps: 3 }), day("russian", 2, 0.5), day("slovak", 2, 0.5)];
+	const daily = [
+		day("russian", 1, 0.5),
+		day("slovak", 1, null, { dictationReps: 3 }),
+		day("russian", 2, 0.5),
+		day("slovak", 2, 0.5),
+	];
 	const found = scheduleDeviations(config, schedule, daily, weekChecks("slovak", 1, 5, 0.5), 10);
 	const keys = found.map((d) => d.key);
 	assert.ok(keys.includes(`missed-day:${dateForDayNumber(START, 1)}:slovak`));

@@ -10,7 +10,8 @@ import { PAIRS } from "../src/core/pairs.ts";
 import type { LessonTask, UnitId } from "../src/core/lesson.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
-const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] }).words;
+const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] })
+	.words;
 
 /** The first grid task of the plans chapter, with its cells. */
 function firstGrid(): Extract<LessonTask, { kind: "grid" }> {
@@ -49,14 +50,17 @@ describe("the grid task (N1, N7, N8): the forms are hidden until answered, and t
 			if (cell.form) assert.ok(html.includes(`>${cell.form}</span>`), `${cell.form} shows`);
 		}
 		const caption = html.match(/data-testid="task-grid-caption"[^>]*>([^<]*)</)?.[1] ?? "";
-		for (const cell of task.cells) if (cell.note) assert.ok(caption.includes(cell.note), `the note "${cell.note}" is in the caption`);
+		for (const cell of task.cells)
+			if (cell.note) assert.ok(caption.includes(cell.note), `the note "${cell.note}" is in the caption`);
 		assert.equal((html.match(/data-asked="true"/g) ?? []).length, 1, "exactly one cell is marked");
 	});
 
 	it("the asked cell is marked by weight, the teal token and an underline (E33), and by nothing else", () => {
 		const task = firstGrid();
 		const html = renderToStaticMarkup(<TaskGrid task={task} revealed={true} />);
-		const askedForm = html.match(/<span class="([^"]*)"(?: lang="[^"]*")?>([^<]*)<\/span><\/td>/g)?.find((x) => x.includes("text-teal-2"));
+		const askedForm = html
+			.match(/<span class="([^"]*)"(?: lang="[^"]*")?>([^<]*)<\/span><\/td>/g)
+			?.find((x) => x.includes("text-teal-2"));
 		assert.ok(askedForm, "the asked form is teal");
 		assert.match(askedForm!, /font-bold/, "bold");
 		assert.match(askedForm!, /underline decoration-2 underline-offset-\[7px\]/, "a straight underline, offset 7 px");
@@ -70,7 +74,11 @@ describe("the grid task (N1, N7, N8): the forms are hidden until answered, and t
 		assert.deepEqual(shown, hidden, "every td and th has the same classes");
 		const html = renderToStaticMarkup(<TaskGrid task={task} revealed={false} />);
 		assert.match(html, /table-fixed/, "a fixed table: the columns do not follow the content");
-		assert.equal((html.match(/<col /g) ?? []).length, 3, "one label column and two equal aspect columns (the tenses are the rows)");
+		assert.equal(
+			(html.match(/<col /g) ?? []).length,
+			3,
+			"one label column and two equal aspect columns (the tenses are the rows)",
+		);
 		for (const row of task.rows) assert.ok(html.includes(`>${row}</th>`), `the ${row} column header shows`);
 		for (const col of task.cols) assert.ok(html.includes(`>${col}</th>`), `the ${col} row label shows`);
 		assert.match(html, /<td class="h-14 /, "every cell is 56 px high");
@@ -81,7 +89,11 @@ describe("the grid task (N1, N7, N8): the forms are hidden until answered, and t
 		const hidden = renderToStaticMarkup(<TaskGrid task={task} revealed={false} />);
 		const shown = renderToStaticMarkup(<TaskGrid task={task} revealed={true} />);
 		assert.match(shown, /text-\[16px\][^"]*sm:text-\[18px\]/, "16 px, 18 px from the small breakpoint");
-		assert.match(hidden, /<p class="[^"]*min-h-10[^"]*" data-testid="task-grid-caption"/, "the caption has a reserved height");
+		assert.match(
+			hidden,
+			/<p class="[^"]*min-h-10[^"]*" data-testid="task-grid-caption"/,
+			"the caption has a reserved height",
+		);
 		const caption = (html: string) => html.match(/<p class="([^"]*)" data-testid="task-grid-caption"/)?.[1];
 		assert.equal(caption(hidden), caption(shown), "the caption has the same classes in both states");
 	});
@@ -91,6 +103,10 @@ describe("the grid task (N1, N7, N8): the forms are hidden until answered, and t
 		const hidden = renderToStaticMarkup(<TaskGrid task={task} revealed={false} />);
 		const shown = renderToStaticMarkup(<TaskGrid task={task} revealed={true} />);
 		assert.ok(!hidden.includes("perfective future: no such form"));
-		assert.match(shown, /\p{L}+: present form = future meaning · perfective future: no such form/u, "each note starts with the form it describes");
+		assert.match(
+			shown,
+			/\p{L}+: present form = future meaning · perfective future: no such form/u,
+			"each note starts with the form it describes",
+		);
 	});
 });

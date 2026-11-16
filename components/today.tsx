@@ -32,7 +32,16 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { DaySplit } from "@/components/day-split";
 import { switchLanguage } from "@/components/switch-language";
 import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
-import type { AfterPlan, DatedSceneView, DayLanguage, LanguageDay, LineState, PlanTask, StageView, UnitState } from "@/src/core";
+import type {
+	AfterPlan,
+	DatedSceneView,
+	DayLanguage,
+	LanguageDay,
+	LineState,
+	PlanTask,
+	StageView,
+	UnitState,
+} from "@/src/core";
 import { TodayLineRow } from "@/components/today-line-row";
 import { StudyEntryRow } from "@/components/study-entry-row";
 import { WhereYouAre } from "@/components/where-you-are";
@@ -53,13 +62,26 @@ interface Step {
 /** Minutes a language's setup takes (four screens and the level check). */
 const SETUP_MINUTES = 5;
 
-
 /** "Verb forms" from "Grammar: Verb forms": the unit's name without its kind. */
 function bare(title: string): string {
 	return title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
 }
 
-export function Today({ initialConfigured, initialSummary = null, initialDay = null, initialLine = null, initialStage = null, initialDated = null }: { initialConfigured: boolean; initialSummary?: Summary | null; initialDay?: LanguageDay | null; initialLine?: LineState | null; initialStage?: StageView | null; initialDated?: { next: DatedSceneView | null; awaitingOutcome: DatedSceneView[] } | null }) {
+export function Today({
+	initialConfigured,
+	initialSummary = null,
+	initialDay = null,
+	initialLine = null,
+	initialStage = null,
+	initialDated = null,
+}: {
+	initialConfigured: boolean;
+	initialSummary?: Summary | null;
+	initialDay?: LanguageDay | null;
+	initialLine?: LineState | null;
+	initialStage?: StageView | null;
+	initialDated?: { next: DatedSceneView | null; awaitingOutcome: DatedSceneView[] } | null;
+}) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const line = initialLine;
@@ -115,16 +137,22 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 	const groups = multi
 		? day!.languages.map((lang) => {
 				const own = lang.running ? tasks : lang.tasks.filter((t) => !hidden(t));
-				const steps: Step[] = lang.setUp ? own.map((t) => ({ key: `${lang.id}:${t.id}`, lang, task: t, minutes: t.minutes, done: t.done })) : [{ key: `${lang.id}:setup`, lang, task: null, minutes: SETUP_MINUTES, done: false }];
+				const steps: Step[] = lang.setUp
+					? own.map((t) => ({ key: `${lang.id}:${t.id}`, lang, task: t, minutes: t.minutes, done: t.done }))
+					: [{ key: `${lang.id}:setup`, lang, task: null, minutes: SETUP_MINUTES, done: false }];
 				return { lang, steps };
 			})
 		: null;
-	const steps: Step[] = groups ? groups.flatMap((g) => g.steps) : tasks.map((t) => ({ key: t.id, lang: null, task: t, minutes: t.minutes, done: t.done }));
+	const steps: Step[] = groups
+		? groups.flatMap((g) => g.steps)
+		: tasks.map((t) => ({ key: t.id, lang: null, task: t, minutes: t.minutes, done: t.done }));
 	const up = steps.find((x) => !x.done) ?? null;
 	// Enter starts the day's next step (input once the plan is done).
 	// Tasks that open a tutor chat start a model turn, so they wait for a click.
 	const enterable = s ? (up ? !up.task || Boolean(up.task.href) : true) : false;
-	const lessonUpNext = steps.find((x) => !x.done && (!x.lang || x.lang.running) && x.task?.href?.startsWith("/lesson?unit="))?.task?.href ?? null;
+	const lessonUpNext =
+		steps.find((x) => !x.done && (!x.lang || x.lang.running) && x.task?.href?.startsWith("/lesson?unit="))?.task
+			?.href ?? null;
 	useEffect(() => {
 		if (lessonUpNext) void fetch(`/api${lessonUpNext}&warm`).catch(() => {});
 	}, [lessonUpNext]);
@@ -134,7 +162,16 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 			if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 			const t = e.target as HTMLElement | null;
 			// A focused control answers Enter itself.
-			if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "BUTTON" || t.tagName === "A" || t.isContentEditable || t.getAttribute("role") === "button")) return;
+			if (
+				t &&
+				(t.tagName === "INPUT" ||
+					t.tagName === "TEXTAREA" ||
+					t.tagName === "BUTTON" ||
+					t.tagName === "A" ||
+					t.isContentEditable ||
+					t.getAttribute("role") === "button")
+			)
+				return;
 			e.preventDefault();
 			if (up) start(up);
 			else router.push(s.afterPlan?.step.href ?? `/lesson?unit=${s.next}`);
@@ -158,7 +195,14 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 	const tutorUnit = (u: UnitState) => {
 		const unit = curriculumUnit(u.id);
 		if (!unit) return;
-		withTutor(() => startTutorChat(router, { title: `Tutor: ${unit.title}`, prompt: tutorUnitPrompt(unit), activity: "tutor", unit: unit.id }));
+		withTutor(() =>
+			startTutorChat(router, {
+				title: `Tutor: ${unit.title}`,
+				prompt: tutorUnitPrompt(unit),
+				activity: "tutor",
+				unit: unit.id,
+			}),
+		);
 	};
 	/** The plan's speaking task: a tutor unit, or a spoken scene (/speak, a
 	 *  link the row follows itself). */
@@ -197,14 +241,23 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 		return x === up ? (
 			<li key={x.key} data-testid={`plan-${x.key}`} data-next="true">
 				{x.task ? (
-					<UpNext task={x.task} busy={busy} onOpen={() => start(x)} meta={elsewhere ? `Opens in ${elsewhere.english}.` : x.task.id === "review" && s ? reviewMeta(s) : null} />
+					<UpNext
+						task={x.task}
+						busy={busy}
+						onOpen={() => start(x)}
+						meta={elsewhere ? `Opens in ${elsewhere.english}.` : x.task.id === "review" && s ? reviewMeta(s) : null}
+					/>
 				) : (
 					<SetupNext lang={x.lang!} busy={busy} onOpen={() => start(x)} />
 				)}
 			</li>
 		) : (
 			<li key={x.key} data-testid={`plan-${x.key}`}>
-				{x.task ? <PlanRow task={x.task} busy={busy} onOpen={() => start(x)} /> : <SetupRow lang={x.lang!} busy={busy} onOpen={() => start(x)} />}
+				{x.task ? (
+					<PlanRow task={x.task} busy={busy} onOpen={() => start(x)} />
+				) : (
+					<SetupRow lang={x.lang!} busy={busy} onOpen={() => start(x)} />
+				)}
 			</li>
 		);
 	};
@@ -219,21 +272,31 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 		<div className="@container h-dvh" data-testid="today">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
 				{/* Phone and tablet: the score is a top bar, since the rail is not there. */}
-				<header className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden" data-testid="today-topbar">
+				<header
+					className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden"
+					data-testid="today-topbar"
+				>
 					<SidebarToggle />
 					<QPie frac={s && s.dailyGoal > 0 ? s.todayXp / s.dailyGoal : 0} size={28} />
 					<div className="flex min-w-0 flex-1 flex-col leading-[1.2]">
 						<b className="q-num whitespace-nowrap text-[15px] font-semibold tracking-[-0.01em]">
 							{s?.todayXp ?? 0} <span className="text-[13px] font-[450] text-ink-3">/ {s?.dailyGoal ?? 50} XP</span>
 						</b>
-						<small className="block truncate text-xs text-ink-3">{s ? (toGoal > 0 ? `${toGoal} XP to today's goal` : "Today's goal is met") : " "}</small>
+						<small className="block truncate text-xs text-ink-3">
+							{s ? (toGoal > 0 ? `${toGoal} XP to today's goal` : "Today's goal is met") : " "}
+						</small>
 					</div>
-					<div className="ml-auto flex shrink-0 items-center rounded-[9px] bg-well-2 p-0.5" aria-label={`${streak} days in a row, level ${s?.level.level ?? 1}`}>
+					<div
+						className="ml-auto flex shrink-0 items-center rounded-[9px] bg-well-2 p-0.5"
+						aria-label={`${streak} days in a row, level ${s?.level.level ?? 1}`}
+					>
 						<span className="inline-flex h-7 items-center gap-1.5 whitespace-nowrap px-2.5 text-[13px] font-[550] text-ink-2">
 							<i className="size-[9px] rounded-[3px] bg-teal" aria-hidden="true" />
 							{streak} {streak === 1 ? "day" : "days"}
 						</span>
-						<span className="inline-flex h-7 items-center whitespace-nowrap rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)] @max-sm:hidden">Level {s?.level.level ?? 1}</span>
+						<span className="inline-flex h-7 items-center whitespace-nowrap rounded-r-[7px] px-2.5 text-[13px] font-[550] text-ink-2 shadow-[inset_1px_0_0_var(--q-line-2)] @max-sm:hidden">
+							Level {s?.level.level ?? 1}
+						</span>
 					</div>
 				</header>
 
@@ -241,17 +304,13 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 pt-4 @6xl:px-0 @6xl:pt-8">
 						<div className="mx-auto w-full max-w-[720px] pb-8">
 							<header className="q-rise">
-								<p className="q-date first-letter:uppercase">
-									{date}
-								</p>
+								<p className="q-date first-letter:uppercase">{date}</p>
 								<h1 className="q-hello @max-6xl:!mt-1 @max-6xl:!text-[29px] @max-6xl:!leading-[1.12]">
 									{greeting()}.{" "}
 									{streak > 0 && (
 										<>
 											<br className="@6xl:hidden" />
-											<em lang="en">
-												Day {streak} in a row.
-											</em>
+											<em lang="en">Day {streak} in a row.</em>
 										</>
 									)}
 								</h1>
@@ -261,7 +320,11 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 											`All ${total} tasks are done today.`
 										) : (
 											<>
-												{total} tasks<span className="@max-6xl:hidden">{multi ? ` in ${day!.languages.length} languages` : ""} today</span>, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span>
+												{total} tasks
+												<span className="@max-6xl:hidden">
+													{multi ? ` in ${day!.languages.length} languages` : ""} today
+												</span>
+												, {done} done, about {left} <span className="@max-6xl:hidden">minutes</span>
 												<span className="@6xl:hidden">min</span> left.
 											</>
 										)}
@@ -280,10 +343,10 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 							)}
 
 							{line && (
-									<div className="mt-5 q-rise" style={{ animationDelay: ".04s" }} data-testid="today-line">
-										<TodayLineRow line={line} />
-									</div>
-								)}
+								<div className="mt-5 q-rise" style={{ animationDelay: ".04s" }} data-testid="today-line">
+									<TodayLineRow line={line} />
+								</div>
+							)}
 
 							{s?.experiment?.active && (
 								<div className="mt-5 q-rise" style={{ animationDelay: ".045s" }} data-testid="study-entry">
@@ -291,7 +354,12 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 								</div>
 							)}
 
-								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".05s" }} data-testid="daily-plan" aria-label="Today's plan">
+							<section
+								className="mt-6 q-rise @max-6xl:mt-5"
+								style={{ animationDelay: ".05s" }}
+								data-testid="daily-plan"
+								aria-label="Today's plan"
+							>
 								<h2 className="q-sh">
 									<QIcon name="arrow" />
 									Today&apos;s plan
@@ -319,12 +387,23 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 									/>
 								)}
 								{switchNote && (
-									<p className="mb-3 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground" role="alert" data-testid="switch-note">
+									<p
+										className="mb-3 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground"
+										role="alert"
+										data-testid="switch-note"
+									>
 										{switchNote}
 									</p>
 								)}
 								{!s && <PlanSkeleton />}
-								{s && total === 0 && <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} after={s.afterPlan} />}
+								{s && total === 0 && (
+									<AllDone
+										minutes={s.plan.minutes}
+										goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay}
+										next={s.next}
+										after={s.afterPlan}
+									/>
+								)}
 								{s && total > 0 && !groups && (
 									<ol className="flex flex-col gap-2" data-testid="plan-tasks">
 										{steps.map(row)}
@@ -337,7 +416,9 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 											<h3 className="mb-2.5 flex items-center gap-2.5 px-1 text-[15px] font-[550] text-foreground">
 												<CountryFlag lang={g.lang.id} className="h-[18px] w-[27px] rounded-[4px]" />
 												{g.lang.endonym}
-												{g.lang.english !== g.lang.endonym && <span className="font-[450] text-ink-3">{g.lang.english}</span>}
+												{g.lang.english !== g.lang.endonym && (
+													<span className="font-[450] text-ink-3">{g.lang.english}</span>
+												)}
 												<span className="q-num ml-auto text-[12.5px] font-[450] text-ink-3">
 													{g.lang.practiced} of {g.lang.minutes} min
 												</span>
@@ -345,17 +426,45 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 											<ol className="flex flex-col gap-2">{g.steps.map(row)}</ol>
 										</div>
 									))}
-								{s && total > 0 && done >= total && (groups ? <AllDone minutes={day!.practiced} goal={day!.minutes} next={s.next} after={s.afterPlan} className="mt-2" /> : <AllDone minutes={s.plan.minutes} goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay} next={s.next} after={s.afterPlan} className="mt-2" />)}
+								{s &&
+									total > 0 &&
+									done >= total &&
+									(groups ? (
+										<AllDone
+											minutes={day!.practiced}
+											goal={day!.minutes}
+											next={s.next}
+											after={s.afterPlan}
+											className="mt-2"
+										/>
+									) : (
+										<AllDone
+											minutes={s.plan.minutes}
+											goal={s.pace?.goalMinutes ?? s.goal.minutesPerDay}
+											next={s.next}
+											after={s.afterPlan}
+											className="mt-2"
+										/>
+									))}
 							</section>
 
 							<WhereYouAre stage={stage} scene={soonest} />
 
 							{s && (
-								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".08s" }} data-testid="today-so-far" aria-label="Today so far">
+								<section
+									className="mt-6 q-rise @max-6xl:mt-5"
+									style={{ animationDelay: ".08s" }}
+									data-testid="today-so-far"
+									aria-label="Today so far"
+								>
 									<h2 className="q-sh">
 										<QIcon name="check" />
 										Today so far
-										<Link href="/log" data-testid="open-log" className="lh-press order-3 -my-1 inline-flex h-7 items-center gap-1.5 rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground">
+										<Link
+											href="/log"
+											data-testid="open-log"
+											className="lh-press order-3 -my-1 inline-flex h-7 items-center gap-1.5 rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground"
+										>
 											<HistoryIcon className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
 											Open the log
 										</Link>
@@ -367,7 +476,9 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 											))}
 										</ol>
 									) : (
-										<p className="text-[14px] text-ink-3">{dayLog ? "Nothing finished yet today. Each finished task shows here with its time." : "\u00a0"}</p>
+										<p className="text-[14px] text-ink-3">
+											{dayLog ? "Nothing finished yet today. Each finished task shows here with its time." : "\u00a0"}
+										</p>
 									)}
 								</section>
 							)}
@@ -375,7 +486,11 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 							{s && <OutsideListening />}
 
 							{weakGroups.length > 0 && (
-								<section className="mt-6 q-rise @max-6xl:mt-5" style={{ animationDelay: ".1s" }} data-testid="weak-spots">
+								<section
+									className="mt-6 q-rise @max-6xl:mt-5"
+									style={{ animationDelay: ".1s" }}
+									data-testid="weak-spots"
+								>
 									<h2 className="q-sh">
 										<QIcon name="chart" />
 										From your answers
@@ -416,10 +531,16 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 										</p>
 									)}
 									<div className="q-acts @max-xl:[&_.q-btn]:h-10" style={{ marginTop: 16 }}>
-										<Link href={`/lesson?unit=${weakGroups[0]!.unit}`} className="q-btn sec t" data-testid={`weak-spot-${weakGroups[0]!.id}`}>
+										<Link
+											href={`/lesson?unit=${weakGroups[0]!.unit}`}
+											className="q-btn sec t"
+											data-testid={`weak-spot-${weakGroups[0]!.id}`}
+										>
 											<QIcon name="grammar" />
 											<span className="@max-xl:hidden">Lesson on the {bare(weakGroups[0]!.title)}</span>
-											<span className="@xl:hidden">{bare(weakGroups[0]!.title).replace(/^./, (c) => c.toUpperCase())} lesson</span>
+											<span className="@xl:hidden">
+												{bare(weakGroups[0]!.title).replace(/^./, (c) => c.toUpperCase())} lesson
+											</span>
 										</Link>
 										{openMixups.length > 0 && (
 											<Link href="/lesson?mode=mixups" className="q-btn sec" data-testid="mixups-practice">
@@ -475,14 +596,36 @@ export function Today({ initialConfigured, initialSummary = null, initialDay = n
 function PlanRow({ task, busy, onOpen }: { task: PlanTask; busy: boolean; onOpen: () => void }) {
 	const w = words(task);
 	return (
-		<button type="button" onClick={onOpen} disabled={busy} className={cn("flex w-full items-center gap-3 rounded-[10px] px-3.5 py-2.5 text-left", task.done ? "bg-transparent" : "bg-well hover:bg-well-2")}>
+		<button
+			type="button"
+			onClick={onOpen}
+			disabled={busy}
+			className={cn(
+				"flex w-full items-center gap-3 rounded-[10px] px-3.5 py-2.5 text-left",
+				task.done ? "bg-transparent" : "bg-well hover:bg-well-2",
+			)}
+		>
 			<span className={cn("q-cb !mt-0 shrink-0", task.done && "!bg-teal !shadow-none")}>{task.done && <QCheck />}</span>
 			<span className="min-w-0 flex-1">
-				<span className={cn("block truncate text-[15px] tracking-[-0.006em]", task.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground")}>{w.primary}</span>
+				<span
+					className={cn(
+						"block truncate text-[15px] tracking-[-0.006em]",
+						task.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground",
+					)}
+				>
+					{w.primary}
+				</span>
 			</span>
 			<span className="q-pill grey shrink-0">{taskLabel(task)}</span>
 			<span className="q-num w-12 shrink-0 text-right text-[12.5px] text-ink-3">{task.minutes} min</span>
-			<span className={cn("hidden w-12 shrink-0 text-right text-[12px] @xl:block", task.done ? "font-[550] text-teal-2" : "text-ink-4")}>{task.done ? "Done" : "To do"}</span>
+			<span
+				className={cn(
+					"hidden w-12 shrink-0 text-right text-[12px] @xl:block",
+					task.done ? "font-[550] text-teal-2" : "text-ink-4",
+				)}
+			>
+				{task.done ? "Done" : "To do"}
+			</span>
 		</button>
 	);
 }
@@ -490,9 +633,16 @@ function PlanRow({ task, busy, onOpen }: { task: PlanTask; busy: boolean; onOpen
 /** A language in the list that is not set up yet: its setup is its one step. */
 function SetupRow({ lang, busy, onOpen }: { lang: DayLanguage; busy: boolean; onOpen: () => void }) {
 	return (
-		<button type="button" onClick={onOpen} disabled={busy} className="flex w-full items-center gap-3 rounded-[10px] bg-well px-3.5 py-2.5 text-left hover:bg-well-2">
+		<button
+			type="button"
+			onClick={onOpen}
+			disabled={busy}
+			className="flex w-full items-center gap-3 rounded-[10px] bg-well px-3.5 py-2.5 text-left hover:bg-well-2"
+		>
 			<span className="q-cb !mt-0 shrink-0" />
-			<span className="min-w-0 flex-1 truncate text-[15px] tracking-[-0.006em] text-foreground">Set up {lang.english}</span>
+			<span className="min-w-0 flex-1 truncate text-[15px] tracking-[-0.006em] text-foreground">
+				Set up {lang.english}
+			</span>
 			<span className="q-pill grey shrink-0">Setup</span>
 			<span className="q-num w-12 shrink-0 text-right text-[12.5px] text-ink-3">{SETUP_MINUTES} min</span>
 			<span className="hidden w-12 shrink-0 text-right text-[12px] text-ink-4 @xl:block">To do</span>
@@ -515,7 +665,12 @@ function SetupNext({ lang, busy, onOpen }: { lang: DayLanguage; busy: boolean; o
 						Why you are learning it, what you already know, your pace and a short level check. Opens in {lang.english}.
 					</p>
 				</div>
-				<button type="button" className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" onClick={onOpen} disabled={busy}>
+				<button
+					type="button"
+					className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]"
+					onClick={onOpen}
+					disabled={busy}
+				>
 					Start<span className="@xl:hidden"> setup</span>
 					<kbd className="q-kbd pointer-coarse:hidden">
 						<QIcon name="enter" />
@@ -538,7 +693,17 @@ function PlanSkeleton() {
 }
 
 /** The next task as a card: its kind, its minutes, what it is, and Start. */
-function UpNext({ task, busy, onOpen, meta }: { task: PlanTask; busy: boolean; onOpen: () => void; meta: React.ReactNode }) {
+function UpNext({
+	task,
+	busy,
+	onOpen,
+	meta,
+}: {
+	task: PlanTask;
+	busy: boolean;
+	onOpen: () => void;
+	meta: React.ReactNode;
+}) {
 	const w = words(task);
 	return (
 		<article className="q-card" data-testid={`plan-next-${task.id}`}>
@@ -552,12 +717,19 @@ function UpNext({ task, busy, onOpen, meta }: { task: PlanTask; busy: boolean; o
 					<h3 className="@max-xl:text-[19px]">{w.primary}</h3>
 					{w.rest && (
 						<p className="q-rv-tease" style={{ fontSize: 15 }}>
-							{task.from ? `Left over from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ${w.rest.charAt(0).toUpperCase()}${w.rest.slice(1)}` : w.rest}
+							{task.from
+								? `Left over from ${new Date(`${task.from}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" })}. ${w.rest.charAt(0).toUpperCase()}${w.rest.slice(1)}`
+								: w.rest}
 						</p>
 					)}
 					{meta && <p className="q-rv-meta">{meta}</p>}
 				</div>
-				<button type="button" className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" onClick={onOpen} disabled={busy}>
+				<button
+					type="button"
+					className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]"
+					onClick={onOpen}
+					disabled={busy}
+				>
 					Start<span className="@xl:hidden"> {taskLabel(task)}</span>
 					<kbd className="q-kbd pointer-coarse:hidden">
 						<QIcon name="enter" />
@@ -579,7 +751,19 @@ function reviewMeta(s: Summary): React.ReactNode {
 }
 
 /** The plan is done: time left goes to input (src/core/after-plan.ts), with a lesson as the second choice. */
-function AllDone({ minutes, goal, next, after, className }: { minutes: number; goal: number; next: string; after?: AfterPlan; className?: string }) {
+function AllDone({
+	minutes,
+	goal,
+	next,
+	after,
+	className,
+}: {
+	minutes: number;
+	goal: number;
+	next: string;
+	after?: AfterPlan;
+	className?: string;
+}) {
 	const step = after?.step;
 	return (
 		<article className={cn("q-card", className)} data-testid="plan-complete">
@@ -587,7 +771,8 @@ function AllDone({ minutes, goal, next, after, className }: { minutes: number; g
 				<div className="min-w-0">
 					<h3 className="@max-xl:text-[19px]">All done for today.</h3>
 					<p className="q-rv-tease" style={{ fontSize: 15 }}>
-						That is {minutes} of your {goal} min goal.{step && minutes < goal ? " More time goes to listening, so drills stay about a quarter of your week." : ""}
+						That is {minutes} of your {goal} min goal.
+						{step && minutes < goal ? " More time goes to listening, so drills stay about a quarter of your week." : ""}
 					</p>
 					{step && (
 						<p className="q-rv-meta" data-testid="after-plan">
@@ -608,7 +793,11 @@ function AllDone({ minutes, goal, next, after, className }: { minutes: number; g
 					)}
 				</div>
 				{step ? (
-					<Link href={step.href} className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]" data-testid="after-plan-start">
+					<Link
+						href={step.href}
+						className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]"
+						data-testid="after-plan-start"
+					>
 						Start<span className="@xl:hidden"> {step.kind === "watch" ? "Media" : "Listen"}</span>
 						<kbd className="q-kbd pointer-coarse:hidden">
 							<QIcon name="enter" />

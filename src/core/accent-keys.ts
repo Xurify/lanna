@@ -27,7 +27,10 @@ function letterBefore(value: string, start: number, end: number): string {
 /** Cyrillic letters with a mark are letters of their own: е and ё, и and й follow each other in everyday words (её, русский). */
 function changes(before: string, letter: string, tag: string): boolean {
 	if (!before || /\p{Script=Cyrillic}/u.test(letter)) return false;
-	return before.toLocaleLowerCase(tag) !== letter.toLocaleLowerCase(tag) && baseLetter(before, tag) === baseLetter(letter, tag);
+	return (
+		before.toLocaleLowerCase(tag) !== letter.toLocaleLowerCase(tag) &&
+		baseLetter(before, tag) === baseLetter(letter, tag)
+	);
 }
 
 /** A dead key (´ ˇ ¨ on the learner's own layout) or a key inside an IME composition. Browsers report 229 as the keyCode of a key an IME is handling. */
@@ -35,14 +38,27 @@ export function belongsToLayoutAccent(key: { key: string; isComposing: boolean; 
 	return key.key === "Dead" || key.isComposing || key.keyCode === 229;
 }
 
-export function liveFamily(families: readonly LetterFamily[], value: string, start: number, end: number, tag: string): string | null {
+export function liveFamily(
+	families: readonly LetterFamily[],
+	value: string,
+	start: number,
+	end: number,
+	tag: string,
+): string | null {
 	const before = letterBefore(value, start, end);
 	if (!before) return null;
 	const family = families.find((f) => f.base === baseLetter(before, tag));
 	return family && family.letters.some((letter) => changes(before, letter, tag)) ? family.base : null;
 }
 
-export function pressLetter(value: string, start: number, end: number, letter: string, shift: boolean, tag: string): { value: string; caret: number } {
+export function pressLetter(
+	value: string,
+	start: number,
+	end: number,
+	letter: string,
+	shift: boolean,
+	tag: string,
+): { value: string; caret: number } {
 	const before = letterBefore(value, start, end);
 	if (changes(before, letter, tag)) {
 		const upper = shift || (before !== before.toLocaleLowerCase(tag) && before === before.toLocaleUpperCase(tag));

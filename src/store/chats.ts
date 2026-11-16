@@ -55,7 +55,11 @@ function createChat(title: string, kind?: "practice" | "chat"): ChatRecord {
  *  lazy migration means existing files only get stamped on their next write.
  *  A future-version guard lives on the read side (getChat). */
 function writeChat(record: ChatRecord): void {
-	fs.writeFileSync(chatFile(record.id), JSON.stringify({ ...record, version: CURRENT_CHAT_VERSION }, null, "\t"), "utf-8");
+	fs.writeFileSync(
+		chatFile(record.id),
+		JSON.stringify({ ...record, version: CURRENT_CHAT_VERSION }, null, "\t"),
+		"utf-8",
+	);
 }
 
 function getChat(id: string): ChatRecord | null {
@@ -70,7 +74,9 @@ function getChat(id: string): ChatRecord | null {
 	// the next read-modify-write must not rewrite what it doesn't understand.
 	const v = (parsed as { version?: unknown }).version;
 	if (typeof v === "number" && v > CURRENT_CHAT_VERSION) {
-		console.error(`[chat ${id}] record stamped with schema version ${v} > ${CURRENT_CHAT_VERSION} — this app build is older; refusing to read it`);
+		console.error(
+			`[chat ${id}] record stamped with schema version ${v} > ${CURRENT_CHAT_VERSION} — this app build is older; refusing to read it`,
+		);
 		return null;
 	}
 	return parsed as ChatRecord;
@@ -84,7 +90,7 @@ function listChats(): ChatSummary[] {
 			.filter((f) => f.endsWith(".json"))
 			.map((f) => getChat(f.slice(0, -5)))
 			.filter((r): r is ChatRecord => r !== null)
-			.map(({ messages, tree, turns, ...summary }) => {
+			.map(({ messages, tree: _tree, turns: _turns, ...summary }) => {
 				// Per-record isolation (Wave B): a record whose messages fail the
 				// projection (e.g. pre-Wave-B UIMessage-format scratch — the
 				// zero-back-compat wipe makes these "corrupt") must not blank the
@@ -138,9 +144,7 @@ function saveMessages(id: string, messages: LhMessage[]): void {
 function appendTurnUsage(id: string, entry: TurnUsage): void {
 	const record = getChat(id);
 	if (!record) throw new Error(`Chat not found: ${id}`);
-	record.turns = record.turns?.some((t) => t.id === entry.id)
-		? record.turns
-		: [...(record.turns ?? []), entry];
+	record.turns = record.turns?.some((t) => t.id === entry.id) ? record.turns : [...(record.turns ?? []), entry];
 	writeChat(record);
 }
 

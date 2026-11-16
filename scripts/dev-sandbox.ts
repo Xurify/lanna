@@ -50,7 +50,9 @@ export function freePort(avoid: readonly number[] = [REAL_PORT]): Promise<number
 export function assertSafeDataDir(dir: string, root: string = ROOT): void {
 	const rel = path.relative(path.resolve(root), path.resolve(dir));
 	if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))) {
-		throw new Error(`refusing ${dir}: a sandbox data folder must be outside the repo (${root}), where your real data/ lives`);
+		throw new Error(
+			`refusing ${dir}: a sandbox data folder must be outside the repo (${root}), where your real data/ lives`,
+		);
 	}
 }
 
@@ -108,7 +110,9 @@ function killTree(pid: number | undefined): void {
 async function main(): Promise<void> {
 	const args = process.argv.slice(2);
 	if (args.includes("-h") || args.includes("--help")) {
-		console.log("Usage: npm run dev:sandbox [-- --seed]\n  --seed  fill the sandbox with the demo week (scripts/demo-measured-minutes.ts)");
+		console.log(
+			"Usage: npm run dev:sandbox [-- --seed]\n  --seed  fill the sandbox with the demo week (scripts/demo-measured-minutes.ts)",
+		);
 		return;
 	}
 	const unknown = args.filter((a) => a !== "--seed");
@@ -128,15 +132,27 @@ async function main(): Promise<void> {
 	console.log(rule);
 
 	if (args.includes("--seed")) {
-		const seed = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "demo-measured-minutes.ts")], { cwd: ROOT, env: plan.env as NodeJS.ProcessEnv, stdio: "inherit" });
+		const seed = spawnSync(
+			process.execPath,
+			["--import", "tsx", path.join(ROOT, "scripts", "demo-measured-minutes.ts")],
+			{ cwd: ROOT, env: plan.env as NodeJS.ProcessEnv, stdio: "inherit" },
+		);
 		if (seed.status !== 0) process.exit(seed.status ?? 1);
 		// Four hand-made episodes for the Read screens (scripts/fixtures/series-episodes.ts).
-		const stories = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "seed-stories.ts")], { cwd: ROOT, env: plan.env as NodeJS.ProcessEnv, stdio: "inherit" });
+		const stories = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "seed-stories.ts")], {
+			cwd: ROOT,
+			env: plan.env as NodeJS.ProcessEnv,
+			stdio: "inherit",
+		});
 		if (stories.status !== 0) process.exit(stories.status ?? 1);
 	}
 
 	const next = createRequire(import.meta.url).resolve("next/dist/bin/next");
-	const child = spawn(process.execPath, [next, "dev", "-H", "127.0.0.1", "-p", String(plan.port)], { cwd: ROOT, env: plan.env as NodeJS.ProcessEnv, stdio: ["inherit", "pipe", "pipe"] });
+	const child = spawn(process.execPath, [next, "dev", "-H", "127.0.0.1", "-p", String(plan.port)], {
+		cwd: ROOT,
+		env: plan.env as NodeJS.ProcessEnv,
+		stdio: ["inherit", "pipe", "pipe"],
+	});
 	let seen = "";
 	for (const [stream, sink] of [
 		[child.stdout, process.stdout],

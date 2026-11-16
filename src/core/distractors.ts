@@ -92,7 +92,14 @@ interface OptionChoice {
  * then the length-matched pool to fill. `close` tells the caller whether a
  * model near-miss is still worth asking for.
  */
-export function chooseOptions(own: string, near: readonly string[], close: readonly Neighbor[], fallback: readonly string[], rand: () => number, count = 3): OptionChoice {
+export function chooseOptions(
+	own: string,
+	near: readonly string[],
+	close: readonly Neighbor[],
+	fallback: readonly string[],
+	rand: () => number,
+	count = 3,
+): OptionChoice {
 	const key = (s: string) => s.trim().toLowerCase();
 	const seen = new Set([key(own)]);
 	const picked: string[] = [];
@@ -105,9 +112,18 @@ export function chooseOptions(own: string, near: readonly string[], close: reado
 		}
 	};
 	take(near);
-	take(shuffle(close.slice(0, 5).map((n) => n.text), rand));
+	take(
+		shuffle(
+			close.slice(0, 5).map((n) => n.text),
+			rand,
+		),
+	);
 	const closeCount = picked.length;
 	const ownLen = own.trim().length;
-	take(shuffle([...new Set(fallback)], rand).sort((a, b) => Math.abs(a.length - ownLen) - Math.abs(b.length - ownLen)).slice(0, 6));
+	take(
+		shuffle([...new Set(fallback)], rand)
+			.sort((a, b) => Math.abs(a.length - ownLen) - Math.abs(b.length - ownLen))
+			.slice(0, 6),
+	);
 	return { options: shuffle([own.trim(), ...picked], rand), close: closeCount };
 }

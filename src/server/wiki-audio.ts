@@ -28,7 +28,10 @@ function load(profile: string): WikiAudio | null {
 	if (loaded.has(profile)) return loaded.get(profile)!;
 	let wiki: WikiAudio | null = null;
 	try {
-		const raw = JSON.parse(fs.readFileSync(path.join(PATHS.curriculum, profile, "wiki-audio.json"), "utf-8")) as { base: string; clips: Record<string, { kind: string; hash: string }> };
+		const raw = JSON.parse(fs.readFileSync(path.join(PATHS.curriculum, profile, "wiki-audio.json"), "utf-8")) as {
+			base: string;
+			clips: Record<string, { kind: string; hash: string }>;
+		};
 		const clips = new Map(Object.entries(raw.clips));
 		const folded = new Map<string, { kind: string; hash: string } | null>();
 		for (const [text, clip] of clips) {

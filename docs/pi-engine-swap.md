@@ -18,6 +18,7 @@ deeply. After this swap every piece of the turn pipeline is either ours or
 pi's, each fully understood.
 
 Verified package facts (all three scouts + npm registry):
+
 - `@earendil-works/pi-ai` + `pi-agent-core` latest **0.85.1**, MIT, ESM-only,
   Node `>=22.19.0` (local dev runs 26.7 — fine; Electron wave must ship ≥22).
   Plain registry installs, no vendoring. The old prototype
@@ -32,19 +33,20 @@ Verified package facts (all three scouts + npm registry):
 
 ## 1. Engine architecture — stateless per-turn Agent, record is the truth
 
-**The record stays the source of truth.** Every turn constructs a *fresh*
+**The record stays the source of truth.** Every turn constructs a _fresh_
 `Agent` from the persisted UIMessage record via our `convertToLlm` adapter,
 runs it, persists the resulting parts back into the record, discards the
 Agent. pi's `steer()`/`followUp()` queues are **in-memory** (plain arrays on
-the instance) and die with the process — they are for a *held-live* agent
+the instance) and die with the process — they are for a _held-live_ agent
 (pi-coding-agent holds one Agent per session lifetime). lh's architecture is
 the opposite: HTTP request-scoped turns, durable wake pipeline, write-ahead
 persistence, 409 one-turn guard. Those stay exactly as they are.
 
 Concretely, per POST to `/api/chat`:
+
 1. `beginTurn` / 409 guard / write-ahead persist (unchanged, `chat-handler.ts`).
 2. `claimSteers` coalescing (unchanged — server wake messages are appended
-   into the record *before* the turn, which is what already happens).
+   into the record _before_ the turn, which is what already happens).
 3. Build `initialState.messages` = `recordToPiMessages(record)` (§4).
 4. `new Agent({ initialState, streamFn, convertToLlm, getApiKey, tools })`.
 5. Run to completion (loop runs because question tools terminate early,
@@ -54,6 +56,7 @@ Concretely, per POST to `/api/chat`:
    `appendTurnUsage`, `triggerExtraction`, `endTurn` (all unchanged).
 
 What we deliberately do **not** adopt:
+
 - Held-live Agents across requests (loses durability guarantees, changes the
   409/one-writer model).
 - pi's in-loop steering injection (mid-turn steers) — today a wake waits for
@@ -69,41 +72,45 @@ Three shapes were found across pi itself and the prototype; lh needs a third
 variant because its question tools are **client-answered** and turn-scoped:
 
 - pi's own `ask_question` (interactive-subagents ext): execute writes a
-  sidecar file and returns; the *session layer* orchestrates the reply as a
+  sidecar file and returns; the _session layer_ orchestrates the reply as a
   future message. Fits a held-live subagent, not our turn model.
 - The prototype's plan: **blocking execute** awaiting the learner, graded
   verdict as the result. Fits a TUI, not HTTP — would hold a POST open for
   the minutes a learner takes to answer.
 
 **lh's variant (the design):** question tools (`quiz`, `ask_user_question`)
-are `AgentTool`s whose `execute()` returns *immediately* with a synthetic
+are `AgentTool`s whose `execute()` returns _immediately_ with a synthetic
 result:
 
 ```ts
 execute: async () => ({
-  content: [{ type: "text",
-    text: "Question posed to the learner. Turn ends here; the answer arrives as this call's result next turn." }],
-})
+	content: [
+		{
+			type: "text",
+			text: "Question posed to the learner. Turn ends here; the answer arrives as this call's result next turn.",
+		},
+	],
+});
 ```
 
 - **The stop mechanism is the `shouldStopAfterTurn` hook, not
   `terminate`.** (Verified in `agent-loop.js`: terminate lives on the
-  *result*, fires only after the batch executes, and only when *every*
+  _result_, fires only after the batch executes, and only when _every_
   result in the batch sets it — so a quiz+research batch would NOT stop,
   the model would keep teaching past the quiz. `terminate` is also shaped
   for workflow-final tools, not pause-pending-input; we don't repurpose
-  it.) Our wrapper's hook: *did this turn's completed assistant message
+  it.) Our wrapper's hook: _did this turn's completed assistant message
   contain a question-tool call? → return true → the loop stops before any
-  further model call.* Deterministic for every batch shape; server tools
+  further model call._ Deterministic for every batch shape; server tools
   called in the same batch (research etc.) still execute and stream their
   results first, matching today's SDK behavior where a client tool call
   ends the turn.
 - The synthetic result exists only because pi's loop requires a result for
   every executed call to settle into a clean terminal state **within that
-  turn**. It is *never persisted* — our record keeps the tool part with
+  turn**. It is _never persisted_ — our record keeps the tool part with
   **no output** until the client answers, exactly as today. The dead run's
   in-memory context (placeholder included) is discarded; the learner's
-  answer attaches to the *record*, and the next turn's fresh Agent sees
+  answer attaches to the _record_, and the next turn's fresh Agent sees
   the answered call as a normal tool result via the adapter (§4).
 - The learner's answer (dock → `addToolOutput` → next POST carrying the
   mutated transcript) re-enters via `recordToPiMessages`: the answered tool
@@ -125,7 +132,7 @@ execute: async () => ({
   quiz, or an aborted LLM call — pi salvages the partial assistant message
   with stopReason `aborted`): `recordToPiMessages` must synthesize a
   `ToolResultMessage` ("The question was interrupted") for any toolCall
-  lacking a result *before* the LLM call, or providers reject the request.
+  lacking a result _before_ the LLM call, or providers reject the request.
   This is a hard invariant of the adapter, covered by tests.
 
 ## 3. The bridge — pi AgentEvents → UIMessageChunk SSE
@@ -142,6 +149,7 @@ We own a ~200-line `src/server/ui-stream-bridge.ts` replacing
   unit-tested against `uiMessageChunkSchema` shapes.
 
 Event mapping (pi event → chunk(s)):
+
 - `agent_start`/`turn_start` → `start` (see id rule) + `start-step`.
 - `message_update` carrying pi text events: `text_start/delta/end` →
   `text-start`/`text-delta`/`text-end` (stable id per block, e.g.
@@ -165,7 +173,7 @@ Event mapping (pi event → chunk(s)):
   validation/unknown-tool messages like today.
 - **Continuation id rule (the load-bearing one, from client source
   `makeRequest`/`createStreamingUIMessageState`):** if the transcript's last
-  message is an *assistant* message, the client's streaming state starts as
+  message is an _assistant_ message, the client's streaming state starts as
   a clone of it and the stream must continue that message — so `start`
   carries `messageId` = last assistant message's id. Otherwise (fresh turn)
   a fresh server-generated id. Violating this duplicates every part of the
@@ -180,6 +188,7 @@ Event mapping (pi event → chunk(s)):
 ## 4. The record adapter — `recordToPiMessages` / message shapes
 
 `convertToLlm` (ours) converts record UIMessages → pi `Message[]`:
+
 - user text message → `UserMessage {role:"user", content, timestamp}`.
   Data parts (`data-plan-accepted`, `data-plan-block`) are dropped
   (UI-only), exactly as `convertToModelMessages` does today.
@@ -236,6 +245,7 @@ surface is the extractor's staged loop.
 ## 7. Test harness
 
 `MockLanguageModelV4` (23 sites) is replaced by scripted pi-side fakes:
+
 - Engine-level: a fake `streamFn` yielding scripted
   `AssistantMessageEvent` sequences (text, tool calls, terminal) — the
   async-iterator shape is simpler than the SDK's.

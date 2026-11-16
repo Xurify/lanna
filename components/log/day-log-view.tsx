@@ -43,7 +43,9 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 	if (dayLogIsEmpty(log)) {
 		return (
 			<p className="q-line dim" data-testid="log-empty">
-				{isToday ? "Nothing yet today. Each finished task appears here with its time." : "Nothing was recorded on this day."}
+				{isToday
+					? "Nothing yet today. Each finished task appears here with its time."
+					: "Nothing was recorded on this day."}
 			</p>
 		);
 	}
@@ -124,7 +126,8 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 						{log.mistakes.slice(0, 12).map((m, i) => (
 							<li key={i} className="text-[14px] text-ink-2" lang={lang?.code}>
 								<span className="q-num mr-2 text-[13px] text-ink-3">{m.time}</span>
-								<span className="text-miss line-through decoration-1">{m.given}</span> <span className="text-ink-4">→</span> <b className="font-[550] text-foreground">{m.answer}</b>
+								<span className="text-miss line-through decoration-1">{m.given}</span>{" "}
+								<span className="text-ink-4">→</span> <b className="font-[550] text-foreground">{m.answer}</b>
 							</li>
 						))}
 						{log.mistakes.length > 12 && <li className="text-[13px] text-ink-3">{log.mistakes.length - 12} more.</li>}
@@ -138,7 +141,8 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 					Minutes
 					{total > 0 && (
 						<small>
-							{total} min{log.strands.estimated > 0 ? `, ${Math.round(log.strands.estimated)} counted from the plan` : ""}
+							{total} min
+							{log.strands.estimated > 0 ? `, ${Math.round(log.strands.estimated)} counted from the plan` : ""}
 						</small>
 					)}
 				</h3>
@@ -149,11 +153,20 @@ export function DayLogView({ log, isToday }: { log: DayLog; isToday: boolean }) 
 							return (
 								<div key={s.id} className="contents">
 									<span className="lab">{s.title}</span>
-									<span className="q-bar" role="meter" aria-valuemin={0} aria-valuemax={max} aria-valuenow={m} aria-label={`${s.title}: ${Math.round(m)} minutes`}>
+									<span
+										className="q-bar"
+										role="meter"
+										aria-valuemin={0}
+										aria-valuemax={max}
+										aria-valuenow={m}
+										aria-label={`${s.title}: ${Math.round(m)} minutes`}
+									>
 										<i style={{ width: `${(m / max) * 100}%` }} />
 									</span>
 									<span className={cn("mins q-num", m === 0 && "text-ink-4")}>{Math.round(m)} min</span>
-									<span className={cn("pct q-num", m === 0 && "text-ink-4")}>{total > 0 ? Math.round((m / total) * 100) : 0}%</span>
+									<span className={cn("pct q-num", m === 0 && "text-ink-4")}>
+										{total > 0 ? Math.round((m / total) * 100) : 0}%
+									</span>
 								</div>
 							);
 						})}

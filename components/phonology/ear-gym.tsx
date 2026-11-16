@@ -11,11 +11,36 @@ import { QIcon } from "@/components/quiet/icon";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { KBD } from "@/components/ui/learn-buttons";
 import { QUIET } from "@/components/ui/learn-buttons";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, onFocusedControl, Pip, PracticeCard, PRIMARY, SECONDARY, TaskBar, TaskEnd, TaskFrame, VerdictDisc } from "@/components/task-frame";
+import {
+	COLUMN,
+	Dock,
+	endEnterBlocked,
+	EnterHint,
+	onFocusedControl,
+	Pip,
+	PracticeCard,
+	PRIMARY,
+	SECONDARY,
+	TaskBar,
+	TaskEnd,
+	TaskFrame,
+	VerdictDisc,
+} from "@/components/task-frame";
 import { sfx } from "@/components/lesson/sound";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { speak, stopSpeaking } from "@/components/speech";
-import { contrastSpans, earGymRound, getPhonologyData, getPhonologyPairs, getSoundNotes, hasRhythmPage, praiseFor, soundNotesForPairs, type EarGymExercise, type PhonologyFamily } from "@/src/core";
+import {
+	contrastSpans,
+	earGymRound,
+	getPhonologyData,
+	getPhonologyPairs,
+	getSoundNotes,
+	hasRhythmPage,
+	praiseFor,
+	soundNotesForPairs,
+	type EarGymExercise,
+	type PhonologyFamily,
+} from "@/src/core";
 import { RhythmicVisualizer } from "./rhythmic-visualizer";
 import { SoundGuide } from "./sound-guide";
 
@@ -70,7 +95,11 @@ export function EarGym({
 	const hasRhythm = hasRhythmPage(languageId);
 	const hasSounds = (getSoundNotes(languageId)?.sounds.length ?? 0) > 0;
 	const dataset = getPhonologyData(languageId);
-	const views: View[] = ["pairs", ...(hasSounds ? (["sounds"] as const) : []), ...(hasRhythm ? (["rhythm"] as const) : [])];
+	const views: View[] = [
+		"pairs",
+		...(hasSounds ? (["sounds"] as const) : []),
+		...(hasRhythm ? (["rhythm"] as const) : []),
+	];
 
 	const [view, setView] = useState<View>(initialView && views.includes(initialView) ? initialView : "pairs");
 	const [guideSound, setGuideSound] = useState(initialSound);
@@ -82,9 +111,15 @@ export function EarGym({
 	const playSeq = useRef(0);
 
 	const contrasts = dataset?.families ?? [];
-	const menu: ReadonlyArray<{ value: FamilyChoice; label: string }> = [{ value: "all", label: "All sounds" }, ...contrasts.map((f) => ({ value: f.id, label: f.label }))];
+	const menu: ReadonlyArray<{ value: FamilyChoice; label: string }> = [
+		{ value: "all", label: "All sounds" },
+		...contrasts.map((f) => ({ value: f.id, label: f.label })),
+	];
 
-	const trials = useMemo(() => earGymRound(getPhonologyPairs(languageId, family === "all" ? {} : { family }), seed + round), [languageId, family, seed, round]);
+	const trials = useMemo(
+		() => earGymRound(getPhonologyPairs(languageId, family === "all" ? {} : { family }), seed + round),
+		[languageId, family, seed, round],
+	);
 
 	const total = trials.length;
 	const trial = trials[index] ?? null;
@@ -300,10 +335,19 @@ export function EarGym({
 					data-testid="ear-gym-strip"
 				>
 					{trials.map((t, i) => (
-						<Pip key={i} className="flex-1" outcome={i < answers.length ? (answers[i] === t.targetWord ? "right" : "miss") : i === index ? "now" : "ahead"} />
+						<Pip
+							key={i}
+							className="flex-1"
+							outcome={
+								i < answers.length ? (answers[i] === t.targetWord ? "right" : "miss") : i === index ? "now" : "ahead"
+							}
+						/>
 					))}
 				</div>
-				<span className={cn("font-ui text-[12.5px] font-[450] tabular-nums text-ink-3", switcher && "hidden sm:inline")} data-testid="task-count">
+				<span
+					className={cn("font-ui text-[12.5px] font-[450] tabular-nums text-ink-3", switcher && "hidden sm:inline")}
+					data-testid="task-count"
+				>
 					{index + 1}/{total}
 				</span>
 			</TaskBar>
@@ -313,7 +357,17 @@ export function EarGym({
 					<PracticeCard
 						icon="ear"
 						title="Ear gym"
-						right={<ChoiceMenu quiet align="end" value={family} options={menu} onChange={(next) => startRound(next as FamilyChoice)} ariaLabel="Sounds" className="-me-2" />}
+						right={
+							<ChoiceMenu
+								quiet
+								align="end"
+								value={family}
+								options={menu}
+								onChange={(next) => startRound(next as FamilyChoice)}
+								ariaLabel="Sounds"
+								className="-me-2"
+							/>
+						}
 					>
 						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:gap-x-4">
 							<button
@@ -355,18 +409,31 @@ export function EarGym({
 									side={side}
 									answered={answered}
 									sounding={!!playing && !playing.hidden && playing.word === side.word}
-									state={!answered ? "idle" : side.word === trial.targetWord ? "right" : side.word === picked ? "wrong" : "idle"}
+									state={
+										!answered
+											? "idle"
+											: side.word === trial.targetWord
+												? "right"
+												: side.word === picked
+													? "wrong"
+													: "idle"
+									}
 									langCode={languageCode}
 									onClick={() => (answered ? play(side.word, false, trial.genderPrompt) : answer(side.word))}
 								/>
 							))}
 						</div>
 
-						<div className="mt-4 flex min-h-[6.25rem] items-center min-[380px]:min-h-[4.75rem] sm:min-h-[3.25rem]" data-testid="ear-gym-cue">
+						<div
+							className="mt-4 flex min-h-[6.25rem] items-center min-[380px]:min-h-[4.75rem] sm:min-h-[3.25rem]"
+							data-testid="ear-gym-cue"
+						>
 							{answered ? (
 								<p className="lh-rise font-prose text-[15px] leading-relaxed text-ink-2">{trial.cue}</p>
 							) : (
-								<p className="font-ui text-[13px] leading-relaxed text-ink-3">The underlined letters differ. After you pick, tap a word to hear it.</p>
+								<p className="font-ui text-[13px] leading-relaxed text-ink-3">
+									The underlined letters differ. After you pick, tap a word to hear it.
+								</p>
 							)}
 						</div>
 					</PracticeCard>
@@ -378,7 +445,13 @@ export function EarGym({
 				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 					{answered ? (
 						<>
-							<p className={cn("flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]", right ? "text-teal-2" : "text-miss")} data-testid="ear-gym-verdict">
+							<p
+								className={cn(
+									"flex items-center gap-2.5 font-ui text-[15px] font-[600] tracking-[-0.01em]",
+									right ? "text-teal-2" : "text-miss",
+								)}
+								data-testid="ear-gym-verdict"
+							>
 								<VerdictDisc ok={right} />
 								{right ? (
 									"Heard right"
@@ -421,20 +494,41 @@ function ViewSwitch({ views, view, onChange }: { views: readonly View[]; view: V
 	const crowded = views.length > 2;
 	return (
 		<>
-			<div className={cn("q-segc shrink-0 pointer-coarse:[&>button]:h-10", crowded && "hidden sm:inline-flex")} role="group" aria-label="View" data-testid="phonology-views">
+			<div
+				className={cn("q-segc shrink-0 pointer-coarse:[&>button]:h-10", crowded && "hidden sm:inline-flex")}
+				role="group"
+				aria-label="View"
+				data-testid="phonology-views"
+			>
 				{views.map((v) => (
-					<button key={v} type="button" aria-pressed={view === v} className={cn(view === v && "on")} onClick={() => onChange(v)}>
+					<button
+						key={v}
+						type="button"
+						aria-pressed={view === v}
+						className={cn(view === v && "on")}
+						onClick={() => onChange(v)}
+					>
 						{VIEW_LABELS[v]}
 					</button>
 				))}
 			</div>
-			{crowded && <ChoiceMenu quiet value={view} options={views.map((v) => ({ value: v, label: VIEW_LABELS[v] }))} onChange={(next) => onChange(next as View)} ariaLabel="View" className="-ms-2 shrink-0 sm:hidden" />}
+			{crowded && (
+				<ChoiceMenu
+					quiet
+					value={view}
+					options={views.map((v) => ({ value: v, label: VIEW_LABELS[v] }))}
+					onChange={(next) => onChange(next as View)}
+					ariaLabel="View"
+					className="-ms-2 shrink-0 sm:hidden"
+				/>
+			)}
 		</>
 	);
 }
 
 function SoundIcon({ on, className }: { on: boolean; className?: string }) {
-	const layer = "col-start-1 row-start-1 size-full transition-[opacity,scale,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none";
+	const layer =
+		"col-start-1 row-start-1 size-full transition-[opacity,scale,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none";
 	const shown = "scale-100 opacity-100 blur-none";
 	const gone = "scale-[0.25] opacity-0 blur-[4px]";
 	return (
@@ -450,13 +544,36 @@ function Marked({ word, span, state }: { word: string; span: Span | null; state:
 	return (
 		<>
 			{word.slice(0, span[0])}
-			<span className={cn("underline decoration-[0.07em] underline-offset-[0.17em]", state === "right" ? "decoration-teal" : state === "wrong" ? "decoration-miss" : "decoration-[var(--q-ink-4)]")}>{word.slice(span[0], span[1])}</span>
+			<span
+				className={cn(
+					"underline decoration-[0.07em] underline-offset-[0.17em]",
+					state === "right" ? "decoration-teal" : state === "wrong" ? "decoration-miss" : "decoration-[var(--q-ink-4)]",
+				)}
+			>
+				{word.slice(span[0], span[1])}
+			</span>
 			{word.slice(span[1])}
 		</>
 	);
 }
 
-function WordTile({ n, side, state, answered, sounding, langCode, onClick }: { n: number; side: Side; state: TileState; answered: boolean; sounding: boolean; langCode: string; onClick: () => void }) {
+function WordTile({
+	n,
+	side,
+	state,
+	answered,
+	sounding,
+	langCode,
+	onClick,
+}: {
+	n: number;
+	side: Side;
+	state: TileState;
+	answered: boolean;
+	sounding: boolean;
+	langCode: string;
+	onClick: () => void;
+}) {
 	return (
 		<button
 			type="button"
@@ -473,16 +590,33 @@ function WordTile({ n, side, state, answered, sounding, langCode, onClick }: { n
 		>
 			<span className="q-kbd shrink-0 justify-center">{n}</span>
 			<span className="block min-w-0 flex-1 sm:flex-none">
-				<span className={cn("block font-prose text-[28px] font-semibold leading-none tracking-[-0.03em] sm:text-[40px]", state === "right" ? "text-teal-2" : state === "wrong" ? "text-miss" : "text-foreground")} lang={langCode}>
+				<span
+					className={cn(
+						"block font-prose text-[28px] font-semibold leading-none tracking-[-0.03em] sm:text-[40px]",
+						state === "right" ? "text-teal-2" : state === "wrong" ? "text-miss" : "text-foreground",
+					)}
+					lang={langCode}
+				>
 					<Marked word={side.word} span={side.span} state={state} />
 				</span>
 				<span className="mt-2.5 block font-ui text-[13.5px] leading-snug text-ink-3">
 					{side.meaning}
-					<span className={cn("ms-2 hidden whitespace-nowrap sm:inline", !answered && "sm:invisible")}>[{side.ipa}]</span>
+					<span className={cn("ms-2 hidden whitespace-nowrap sm:inline", !answered && "sm:invisible")}>
+						[{side.ipa}]
+					</span>
 				</span>
 			</span>
-			<span className={cn("flex shrink-0 items-center gap-2.5 sm:absolute sm:end-5 sm:top-5", !answered && "invisible")}>
-				<span className={cn("hidden font-ui text-[12.5px] font-[550] sm:inline", state === "right" ? "text-teal-2" : state === "wrong" ? "text-miss" : "invisible")}>{state === "right" ? "Played" : "Your pick"}</span>
+			<span
+				className={cn("flex shrink-0 items-center gap-2.5 sm:absolute sm:end-5 sm:top-5", !answered && "invisible")}
+			>
+				<span
+					className={cn(
+						"hidden font-ui text-[12.5px] font-[550] sm:inline",
+						state === "right" ? "text-teal-2" : state === "wrong" ? "text-miss" : "invisible",
+					)}
+				>
+					{state === "right" ? "Played" : "Your pick"}
+				</span>
 				<SoundIcon on={sounding} className="size-[18px] text-ink-3" />
 			</span>
 		</button>
@@ -491,7 +625,12 @@ function WordTile({ n, side, state, answered, sounding, langCode, onClick }: { n
 
 function HearWord({ side, gender, langCode }: { side: Side; gender: "female" | "male"; langCode: string }) {
 	return (
-		<button type="button" onClick={() => void speak(side.word, undefined, { gender }).catch(() => {})} aria-label={`Play ${side.word}`} className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}>
+		<button
+			type="button"
+			onClick={() => void speak(side.word, undefined, { gender }).catch(() => {})}
+			aria-label={`Play ${side.word}`}
+			className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}
+		>
 			<Volume2Icon className="size-4 text-ink-3" strokeWidth={1.6} />
 			<span className="font-prose text-[16px] font-semibold" lang={langCode}>
 				<Marked word={side.word} span={side.span} state="idle" />
@@ -580,7 +719,9 @@ function RoundEnd({
 									aria-label={`Train ${c.label}: ${c.right} of ${c.results.length} heard right`}
 									className="group -mx-2 flex min-h-12 w-[calc(100%+1rem)] items-center gap-4 rounded-lg px-2 py-2.5 text-start transition-colors duration-150 hover:bg-well motion-reduce:transition-none"
 								>
-									<span className="min-w-0 flex-1 font-ui text-[14.5px] font-medium tracking-[-0.006em] text-foreground">{c.label}</span>
+									<span className="min-w-0 flex-1 font-ui text-[14.5px] font-medium tracking-[-0.006em] text-foreground">
+										{c.label}
+									</span>
 									<span className="flex shrink-0 items-center gap-[3px]">
 										{c.results.map((ok, i) => (
 											<Pip key={i} className="w-4" outcome={ok ? "right" : "miss"} />
@@ -610,8 +751,12 @@ function RoundEnd({
 					data-testid="ear-gym-guide"
 				>
 					<span className="min-w-0 flex-1">
-						<span className="block font-ui text-[14.5px] font-medium tracking-[-0.006em] text-foreground">How these sounds are made</span>
-						<span className="block font-ui text-[13px] text-ink-3">Where the tongue and the lips go, with a drawing</span>
+						<span className="block font-ui text-[14.5px] font-medium tracking-[-0.006em] text-foreground">
+							How these sounds are made
+						</span>
+						<span className="block font-ui text-[13px] text-ink-3">
+							Where the tongue and the lips go, with a drawing
+						</span>
 					</span>
 					<QIcon name="chev" className="shrink-0 text-ink-4 group-hover:text-ink-2" />
 				</button>
@@ -619,7 +764,11 @@ function RoundEnd({
 			{right.length > 0 && (
 				<details className="group mt-6" data-testid="ear-gym-right">
 					<summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 [&::-webkit-details-marker]:hidden">
-						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
+						<ChevronDownIcon
+							className="size-3.5 transition-transform group-open:rotate-180"
+							strokeWidth={1.8}
+							aria-hidden="true"
+						/>
 						Heard right · {right.length} {right.length === 1 ? "pair" : "pairs"}
 					</summary>
 					<HeardRows rows={right} langCode={langCode} />

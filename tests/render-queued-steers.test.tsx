@@ -47,6 +47,10 @@ describe("visibleQueuedSteers (the fold: a line dies when its card lands)", () =
 			{ id: "msg_1" } as never,
 			{ id: "steer_a", role: "user", content: "a" } as never,
 		]);
-		assert.deepEqual(after.map((s) => s.id), ["steer_b"], "the drained steer's line dropped");
+		assert.deepEqual(
+			after.map((s) => s.id),
+			["steer_b"],
+			"the drained steer's line dropped",
+		);
 	});
 });

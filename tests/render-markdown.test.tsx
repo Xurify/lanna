@@ -53,10 +53,7 @@ describe("render — mermaid", () => {
 		// happen: the mermaid language must not take the code-block path, and
 		// the chart source must not leak as visible code.
 		const html = render("```mermaid\ngraph TD\nA --> B\n```");
-		assert.ok(
-			!html.includes('data-streamdown="code-block"'),
-			"mermaid fences must not render as code blocks",
-		);
+		assert.ok(!html.includes('data-streamdown="code-block"'), "mermaid fences must not render as code blocks");
 		assert.ok(!html.includes("graph TD"), "chart source is not leaked as text");
 	});
 
@@ -82,7 +79,6 @@ describe("render — mermaid", () => {
 		assert.match(html, />Retry</);
 	});
 });
-
 
 describe("render — bold is the real <strong> (the dead Bold-color fix)", () => {
 	// Streamdown's default `strong` renders <span class="font-semibold"

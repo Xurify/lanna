@@ -24,4 +24,3 @@ export async function renderMermaid(chart: string): Promise<string> {
 	});
 	return svg;
 }
-

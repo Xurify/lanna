@@ -66,7 +66,12 @@ export function PlanSvg({
  */
 export function PlanBlock({ data, onOpen }: { data: PlanBlockData; onOpen: () => void }) {
 	const statusMap = useMemo(() => new Map(data.nodes.map((n) => [n.id, n.status] as const)), [data]);
-	const statusOf = useMemo(() => (id: string): PlanNodeStatus => statusMap.get(id) ?? "upcoming", [statusMap]);
+	const statusOf = useMemo(
+		() =>
+			(id: string): PlanNodeStatus =>
+				statusMap.get(id) ?? "upcoming",
+		[statusMap],
+	);
 	const diagram = useMemo(
 		() => renderPlan(data.nodes, data.edges, statusOf, { monochrome: true, pad: CHAT_PAD }),
 		[data, statusOf],
@@ -159,10 +164,7 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 	}, []);
 
 	// The diagram already includes the glow's padding, so its drawn size is the fit box.
-	const box = useMemo(
-		() => (diagram ? { w: diagram.width, h: diagram.height } : { w: 0, h: 0 }),
-		[diagram],
-	);
+	const box = useMemo(() => (diagram ? { w: diagram.width, h: diagram.height } : { w: 0, h: 0 }), [diagram]);
 	const fitZoom = useMemo(() => fitZoomFor(box, size), [box, size]);
 
 	const [view, setView] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
@@ -218,9 +220,7 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 		const d = dragRef.current;
 		if (!d) return;
 		d.moved = true;
-		setView((v) =>
-			v.zoom <= fitZoom + 1e-9 ? v : { ...v, x: d.x + (e.clientX - d.px), y: d.y + (e.clientY - d.py) },
-		);
+		setView((v) => (v.zoom <= fitZoom + 1e-9 ? v : { ...v, x: d.x + (e.clientX - d.px), y: d.y + (e.clientY - d.py) }));
 	};
 	const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
 		const d = dragRef.current;
@@ -288,10 +288,7 @@ export function PlanPopup({ messages, onClose }: { messages: readonly PopupMessa
 								// Hidden until the first fit has APPLIED — the fit runs in an
 								// effect (after paint), so the diagram never flashes at zoom 1.
 								opacity: settled ? 1 : 0,
-								transition:
-									panning || !settled
-										? "none"
-										: "transform 180ms ease-out, opacity 160ms ease-out",
+								transition: panning || !settled ? "none" : "transform 180ms ease-out, opacity 160ms ease-out",
 							}}
 						>
 							<PlanSvg diagram={diagram} sizing="natural" />

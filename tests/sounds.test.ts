@@ -29,7 +29,8 @@ import type { LexiconEntry } from "../src/core/review.ts";
 
 const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] };
 const bySlug = new Map(lexicon.words.map((e) => [e.slug, e]));
-const examplesOf = (slug: string): string[] | undefined => bySlug.get(slug)?.examples.flatMap((x) => (x.sk ? [x.sk] : []));
+const examplesOf = (slug: string): string[] | undefined =>
+	bySlug.get(slug)?.examples.flatMap((x) => (x.sk ? [x.sk] : []));
 
 test("the sounds file: two sounds, each in a real chapter, with a rule, a bridge and two twins", () => {
 	const sounds = getSoundsForLanguage("slovak");
@@ -65,12 +66,32 @@ test("the drop rule catches a bad sound: an unverified line, a line with no twin
 	const good = getSound("slovak", "dlzka-a-cestovanie") as SoundDef;
 	const bad = (over: Partial<SoundDef>) => ({ ...good, ...over });
 	const reasonsFor = (over: Partial<SoundDef>) => checkSound(bad(over), examplesOf);
-	assert.ok(reasonsFor({ lines: ["Stratil som svoj pas kedysi.", "Váš pas, prosím."] }).some((r) => r.includes("not a verified example")));
-	assert.ok(reasonsFor({ lines: ["Dobrý deň, pani.", "Váš pas, prosím."] }).some((r) => r.includes("exactly one of the twins")));
-	assert.ok(reasonsFor({ lines: ["Máš pas aj pás?", "Váš pas, prosím."] }).some((r) => r.includes("exactly one of the twins")));
-	assert.ok(reasonsFor({ lines: ["Máš sýrsky pas?", "Váš pas, prosím, a potom ešte chvíľu čakáme na pokladni."] }).some((r) => r.includes("longer than")));
-	assert.ok(reasonsFor({ twins: [{ slug: "neexistuje", sk: "pas", en: "x" }, good.twins[1]] }).some((r) => r.includes("not in the lexicon")));
-	assert.ok(reasonsFor({ twins: [good.twins[0], { slug: "pas", sk: "pome", en: "x" }] }).some((r) => r.includes("exactly one sound")));
+	assert.ok(
+		reasonsFor({ lines: ["Stratil som svoj pas kedysi.", "Váš pas, prosím."] }).some((r) =>
+			r.includes("not a verified example"),
+		),
+	);
+	assert.ok(
+		reasonsFor({ lines: ["Dobrý deň, pani.", "Váš pas, prosím."] }).some((r) => r.includes("exactly one of the twins")),
+	);
+	assert.ok(
+		reasonsFor({ lines: ["Máš pas aj pás?", "Váš pas, prosím."] }).some((r) => r.includes("exactly one of the twins")),
+	);
+	assert.ok(
+		reasonsFor({ lines: ["Máš sýrsky pas?", "Váš pas, prosím, a potom ešte chvíľu čakáme na pokladni."] }).some((r) =>
+			r.includes("longer than"),
+		),
+	);
+	assert.ok(
+		reasonsFor({ twins: [{ slug: "neexistuje", sk: "pas", en: "x" }, good.twins[1]] }).some((r) =>
+			r.includes("not in the lexicon"),
+		),
+	);
+	assert.ok(
+		reasonsFor({ twins: [good.twins[0], { slug: "pas", sk: "pome", en: "x" }] }).some((r) =>
+			r.includes("exactly one sound"),
+		),
+	);
 });
 
 test("the shadow lines are short, verified, and split across both twins", () => {
@@ -92,7 +113,11 @@ test("the listening check: four items, two of each twin, in an order the random 
 	let i = 0;
 	const other = listenOrder(s, () => seq[i++ % seq.length] ?? 0);
 	assert.equal(other.filter((w) => w === s.twins[0].sk).length, 2);
-	assert.deepEqual(listenOrder(s, () => 0.5), order, "the same source gives the same order");
+	assert.deepEqual(
+		listenOrder(s, () => 0.5),
+		order,
+		"the same source gives the same order",
+	);
 });
 
 test("the verdict reads the Speak clarity bar, and the bar is unchanged", () => {

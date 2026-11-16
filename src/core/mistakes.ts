@@ -203,15 +203,37 @@ export function trendOf(recent: { reps: number; right: number }, earlier: { reps
 }
 
 /** Whether there is enough evidence to write the guide, and how far off. */
-export function guideReadiness(a: Pick<MistakeAnalysis, "reps" | "wrong" | "chat">): { ready: boolean; reps: number; wrong: number; needReps: number; needWrong: number } {
+export function guideReadiness(a: Pick<MistakeAnalysis, "reps" | "wrong" | "chat">): {
+	ready: boolean;
+	reps: number;
+	wrong: number;
+	needReps: number;
+	needWrong: number;
+} {
 	const reps = a.reps + (a.chat?.answers ?? 0);
 	const wrong = a.wrong + (a.chat?.misses ?? 0);
-	return { ready: reps >= GUIDE_MIN_REPS && wrong >= GUIDE_MIN_WRONG, reps, wrong, needReps: GUIDE_MIN_REPS, needWrong: GUIDE_MIN_WRONG };
+	return {
+		ready: reps >= GUIDE_MIN_REPS && wrong >= GUIDE_MIN_WRONG,
+		reps,
+		wrong,
+		needReps: GUIDE_MIN_REPS,
+		needWrong: GUIDE_MIN_WRONG,
+	};
 }
 
-export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupRecord | undefined, now: Date): MistakeAnalysis {
+export function analyzeMistakes(
+	lessons: readonly LoggedLesson[],
+	mixups: MixupRecord | undefined,
+	now: Date,
+): MistakeAnalysis {
 	const cut = now.getTime() - TREND_DAYS * DAY_MS;
-	type Tally = { reps: number; right: number; recent: { reps: number; right: number }; earlier: { reps: number; right: number }; slips: Partial<Record<FormSlip, number>> };
+	type Tally = {
+		reps: number;
+		right: number;
+		recent: { reps: number; right: number };
+		earlier: { reps: number; right: number };
+		slips: Partial<Record<FormSlip, number>>;
+	};
 	const units = new Map<string, Tally>();
 	const words = new Map<string, MissedWord & { right: number }>();
 	const weeks = new Map<string, { reps: number; right: number }>();
@@ -234,7 +256,13 @@ export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 			const day = lesson.at.slice(0, 10);
 			if (!from || day < from) from = day;
 			if (!to || day > to) to = day;
-			const u = units.get(r.unit) ?? { reps: 0, right: 0, recent: { reps: 0, right: 0 }, earlier: { reps: 0, right: 0 }, slips: {} };
+			const u = units.get(r.unit) ?? {
+				reps: 0,
+				right: 0,
+				recent: { reps: 0, right: 0 },
+				earlier: { reps: 0, right: 0 },
+				slips: {},
+			};
 			const window = t >= cut ? u.recent : u.earlier;
 			u.reps++;
 			window.reps++;
@@ -243,7 +271,15 @@ export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 				window.right++;
 			} else {
 				const slip = r.slip ?? "other";
-				if (r.sentence) samples.push({ at: lesson.at, unit: unitInfo(r.unit).title, sentence: r.sentence, answer: r.answer, given: first.given.trim(), ...(r.slip ? { slip: r.slip } : {}) });
+				if (r.sentence)
+					samples.push({
+						at: lesson.at,
+						unit: unitInfo(r.unit).title,
+						sentence: r.sentence,
+						answer: r.answer,
+						given: first.given.trim(),
+						...(r.slip ? { slip: r.slip } : {}),
+					});
 				u.slips[slip] = (u.slips[slip] ?? 0) + 1;
 				slips[slip] = (slips[slip] ?? 0) + 1;
 			}
@@ -254,7 +290,16 @@ export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 			if (right) w.right++;
 			weeks.set(wk, w);
 			const key = r.slug;
-			const word = words.get(key) ?? { lemma: r.lemma, slug: r.slug, answer: r.answer, misses: 0, reps: 0, lastGiven: "", lastAt: "", right: 0 };
+			const word = words.get(key) ?? {
+				lemma: r.lemma,
+				slug: r.slug,
+				answer: r.answer,
+				misses: 0,
+				reps: 0,
+				lastGiven: "",
+				lastAt: "",
+				right: 0,
+			};
 			word.reps++;
 			if (right) word.right++;
 			else if (!word.lastAt || lesson.at >= word.lastAt) {
@@ -295,7 +340,19 @@ export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
 		.sort(([a], [b]) => a.localeCompare(b))
 		.slice(-WEEKS_SHOWN)
 		.map(([week, w]) => ({ week, reps: w.reps, accuracy: w.right / w.reps }));
-	return { at: now.toISOString(), reps, wrong, from, to, units: unitList, slips, words: missed, weeks: weekList, mixups: mixupList(mixups).filter((m) => m.status !== "cleared"), samples: samples.sort((a, b) => b.at.localeCompare(a.at)).slice(0, SAMPLES_KEPT) };
+	return {
+		at: now.toISOString(),
+		reps,
+		wrong,
+		from,
+		to,
+		units: unitList,
+		slips,
+		words: missed,
+		weeks: weekList,
+		mixups: mixupList(mixups).filter((m) => m.status !== "cleared"),
+		samples: samples.sort((a, b) => b.at.localeCompare(a.at)).slice(0, SAMPLES_KEPT),
+	};
 }
 
 /** The facts the guide is written from, and what decides whether a saved
@@ -303,20 +360,42 @@ export function analyzeMistakes(lessons: readonly LoggedLesson[], mixups: MixupR
  *  is never paid for twice for the same evidence. */
 export function guideFacts(a: MistakeAnalysis): string {
 	const pct = (x: number) => `${Math.round(x * 100)}%`;
-	const lines: string[] = [`First tries counted: ${a.reps}, wrong: ${a.wrong}${a.from ? ` (${a.from} to ${a.to})` : ""}.`];
+	const lines: string[] = [
+		`First tries counted: ${a.reps}, wrong: ${a.wrong}${a.from ? ` (${a.from} to ${a.to})` : ""}.`,
+	];
 	const slipLine = FORM_SLIPS.filter((s) => a.slips[s]).map((s) => `${s} ${a.slips[s]}`);
 	if (slipLine.length) lines.push(`Kinds of wrong answer: ${slipLine.join(", ")}.`);
 	for (const u of a.units.slice(0, 6)) {
-		const range = u.low !== undefined && u.high !== undefined ? ` (likely ${pct(u.low)}–${pct(u.high)}${u.weak ? ", weak" : ", too few answers to call weak"})` : "";
-		lines.push(`Unit ${u.title} [${u.unit}]: ${pct(u.accuracy)} of ${u.reps} first tries${u.accuracy < WEAK_BAR ? range : ""}; trend ${u.trend}${u.recent !== null && u.earlier !== null ? ` (${pct(u.earlier)} before, ${pct(u.recent)} lately)` : ""}.`);
+		const range =
+			u.low !== undefined && u.high !== undefined
+				? ` (likely ${pct(u.low)}–${pct(u.high)}${u.weak ? ", weak" : ", too few answers to call weak"})`
+				: "";
+		lines.push(
+			`Unit ${u.title} [${u.unit}]: ${pct(u.accuracy)} of ${u.reps} first tries${u.accuracy < WEAK_BAR ? range : ""}; trend ${u.trend}${u.recent !== null && u.earlier !== null ? ` (${pct(u.earlier)} before, ${pct(u.recent)} lately)` : ""}.`,
+		);
 	}
-	for (const x of a.samples ?? []) lines.push(`Wrong: "${x.sentence}" wanted "${x.answer}", wrote "${x.given || "nothing"}" (${x.unit}${x.slip ? `, ${x.slip}` : ""}).`);
-	for (const w of a.words) lines.push(`Missed ${w.misses}×: ${w.lemma} (wanted "${w.answer}", last wrote "${w.lastGiven}").`);
-	for (const m of a.mixups.slice(0, 8)) lines.push(m.status === "active" ? `Mixes up ${m.words.join(" / ")} (${m.misses} misses).` : `Not tested yet but the same pattern: ${m.words.join(" / ")}.`);
+	for (const x of a.samples ?? [])
+		lines.push(
+			`Wrong: "${x.sentence}" wanted "${x.answer}", wrote "${x.given || "nothing"}" (${x.unit}${x.slip ? `, ${x.slip}` : ""}).`,
+		);
+	for (const w of a.words)
+		lines.push(`Missed ${w.misses}×: ${w.lemma} (wanted "${w.answer}", last wrote "${w.lastGiven}").`);
+	for (const m of a.mixups.slice(0, 8))
+		lines.push(
+			m.status === "active"
+				? `Mixes up ${m.words.join(" / ")} (${m.misses} misses).`
+				: `Not tested yet but the same pattern: ${m.words.join(" / ")}.`,
+		);
 	if (a.chat?.answers) {
-		lines.push(`In chats with the tutor: ${a.chat.answers} graded answers, ${a.chat.firstTryRight} right with no hint, ${a.chat.misses} wrong or given up.`);
-		for (const u of a.chat.units.slice(0, 4)) lines.push(`In chats, unit ${u.title} [${u.unit}]: ${u.misses} wrong of ${u.answers}.`);
-		for (const t of a.chat.topics.slice(0, 5)) lines.push(`In chats, missed ${t.misses}× on "${t.focus}" (last wrote "${t.lastGiven || "nothing"}", wanted "${t.lastExpected}"${t.unit ? `, unit [${t.unit}]` : ""}).`);
+		lines.push(
+			`In chats with the tutor: ${a.chat.answers} graded answers, ${a.chat.firstTryRight} right with no hint, ${a.chat.misses} wrong or given up.`,
+		);
+		for (const u of a.chat.units.slice(0, 4))
+			lines.push(`In chats, unit ${u.title} [${u.unit}]: ${u.misses} wrong of ${u.answers}.`);
+		for (const t of a.chat.topics.slice(0, 5))
+			lines.push(
+				`In chats, missed ${t.misses}× on "${t.focus}" (last wrote "${t.lastGiven || "nothing"}", wanted "${t.lastExpected}"${t.unit ? `, unit [${t.unit}]` : ""}).`,
+			);
 	}
 	return lines.join("\n");
 }
@@ -344,7 +423,8 @@ export interface GuideData {
 	practice?: { words: string[]; units: string[]; pairs: Array<[string, string]> };
 }
 
-const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
+const clip = (v: unknown, max: number): string =>
+	typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "";
 
 /** The guide's JSON from the model's text, or null when it is not one: a
  *  reply wrapped in prose or fences is cut to its outermost braces; every
@@ -360,10 +440,16 @@ export function parseGuide(text: string): GuideData | null {
 	} catch {
 		return null;
 	}
-	const list = (v: unknown): Array<Record<string, unknown>> => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : []);
+	const list = (v: unknown): Array<Record<string, unknown>> =>
+		Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : [];
 	const patterns = list(raw.patterns)
 		.slice(0, 4)
-		.map((p) => ({ title: clip(p.title, 90), evidence: clip(p.evidence, 260), why: clip(p.why, 300), fix: clip(p.fix, 300) }))
+		.map((p) => ({
+			title: clip(p.title, 90),
+			evidence: clip(p.evidence, 260),
+			why: clip(p.why, 300),
+			fix: clip(p.fix, 300),
+		}))
 		.filter((p) => p.title && p.why);
 	if (!patterns.length) return null;
 	const next = list(raw.next)
@@ -374,17 +460,29 @@ export function parseGuide(text: string): GuideData | null {
 		.slice(0, 4)
 		.map((p) => {
 			const unit = typeof p.unit === "string" && isUnitId(p.unit) ? p.unit : undefined;
-			const kind: GuideData["plan"][number]["kind"] = p.kind === "mixups" || p.kind === "review" ? p.kind : p.kind === "unit" && unit ? "unit" : "other";
+			const kind: GuideData["plan"][number]["kind"] =
+				p.kind === "mixups" || p.kind === "review" ? p.kind : p.kind === "unit" && unit ? "unit" : "other";
 			return { step: clip(p.step, 200), kind, ...(kind === "unit" ? { unit } : {}) };
 		})
 		.filter((p) => p.step);
 	const practiceRaw = raw.practice && typeof raw.practice === "object" ? (raw.practice as Record<string, unknown>) : {};
-	const strings = (v: unknown, cap: number) => (Array.isArray(v) ? v.map((x) => clip(x, 40)).filter(Boolean).slice(0, cap) : []);
+	const strings = (v: unknown, cap: number) =>
+		Array.isArray(v)
+			? v
+					.map((x) => clip(x, 40))
+					.filter(Boolean)
+					.slice(0, cap)
+			: [];
 	const pairs = (Array.isArray(practiceRaw.pairs) ? practiceRaw.pairs : [])
 		.filter((p): p is unknown[] => Array.isArray(p) && p.length === 2)
 		.map((p) => [clip(p[0], 40), clip(p[1], 40)] as [string, string])
 		.filter(([a, b]) => a && b && a !== b)
 		.slice(0, 3);
 	const practice = { words: strings(practiceRaw.words, 6), units: strings(practiceRaw.units, 3), pairs };
-	return { patterns, next, plan, ...(practice.words.length + practice.units.length + practice.pairs.length > 0 ? { practice } : {}) };
+	return {
+		patterns,
+		next,
+		plan,
+		...(practice.words.length + practice.units.length + practice.pairs.length > 0 ? { practice } : {}),
+	};
 }

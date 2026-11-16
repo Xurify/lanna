@@ -38,10 +38,14 @@ export const REFERENCE_ANCHORS: Readonly<Record<string, readonly string[]>> = {
 };
 
 /** The allowed URL for a slug (and an optional verified anchor), or null when either is not on the list. */
-export function referencePageUrl(slug: string, lang: keyof typeof LANGUAGES = "slovak", anchor?: string): string | null {
+export function referencePageUrl(
+	slug: string,
+	lang: keyof typeof LANGUAGES = "slovak",
+	anchor?: string,
+): string | null {
 	if (!REFERENCE_PAGES.includes(slug)) return null;
 	if (anchor !== undefined && !(REFERENCE_ANCHORS[slug] ?? []).includes(anchor)) return null;
-	const base = LANGUAGES[lang].referenceSite?.baseUrl;
+	const base = LANGUAGES[lang]?.referenceSite?.baseUrl;
 	if (!base) return null;
 	return anchor === undefined ? `${base}${slug}` : `${base}${slug}#${anchor}`;
 }
@@ -51,5 +55,8 @@ export function isAllowedReferenceUrl(url: string, lang: keyof typeof LANGUAGES 
 	const hash = url.indexOf("#");
 	const page = hash === -1 ? url : url.slice(0, hash);
 	const anchor = hash === -1 ? undefined : url.slice(hash + 1);
-	return REFERENCE_PAGES.some((slug) => referencePageUrl(slug, lang) === page && (anchor === undefined || referencePageUrl(slug, lang, anchor) === url));
+	return REFERENCE_PAGES.some(
+		(slug) =>
+			referencePageUrl(slug, lang) === page && (anchor === undefined || referencePageUrl(slug, lang, anchor) === url),
+	);
 }

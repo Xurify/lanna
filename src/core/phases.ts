@@ -85,11 +85,7 @@ function advance(
 		}
 		// plan → teach via the first nodeId-tagged quizzing CALL — quiz OR
 		// explain, whichever mechanic the settings armed (both carry nodeId).
-		if (
-			phase === "plan" &&
-			(part.type === "tool-quiz" || part.type === "tool-explain") &&
-			taggedNodeId(part.input)
-		) {
+		if (phase === "plan" && (part.type === "tool-quiz" || part.type === "tool-explain") && taggedNodeId(part.input)) {
 			phase = "teach";
 		}
 	}
@@ -109,9 +105,7 @@ function advance(
  * part whose generation contains the call — the divider renders there,
  * between the plan presentation and the teaching block.
  */
-export function teachStepIndex(
-	parts: ReadonlyArray<{ type: string; state?: string; input?: unknown }>,
-): number {
+export function teachStepIndex(parts: ReadonlyArray<{ type: string; state?: string; input?: unknown }>): number {
 	let stepStarts = 0; // how many step-start parts seen so far
 	let latest = -1; // index of the latest step-start
 	for (let i = 0; i < parts.length; i++) {
@@ -121,10 +115,7 @@ export function teachStepIndex(
 			latest = i;
 			continue;
 		}
-		if (
-			(part.type === "tool-quiz" || part.type === "tool-explain") &&
-			taggedNodeId(part.input)
-		) {
+		if ((part.type === "tool-quiz" || part.type === "tool-explain") && taggedNodeId(part.input)) {
 			// The call's governing step: 0–1 step-starts seen = the message's
 			// FIRST step → -1 (the divider belongs before the whole message);
 			// a later step → that step-start's index (the divider renders at
@@ -168,15 +159,12 @@ export function phaseAt3Lh(messages: readonly LhMessage[], upToIndex?: number): 
 		const role = (m as { role?: string }).role;
 		if (role === "toolResult") {
 			const result = m as { toolName?: string; isError?: boolean };
-			if (
-				phase === "probe" &&
-				result.toolName === "probe_done" &&
-				!result.isError
-			) {
+			if (phase === "probe" && result.toolName === "probe_done" && !result.isError) {
 				phase = "plan";
 			}
 		} else if (role === "assistant") {
-			const content = (m as { content?: ReadonlyArray<{ type?: string; name?: string; arguments?: unknown }> }).content ?? [];
+			const content =
+				(m as { content?: ReadonlyArray<{ type?: string; name?: string; arguments?: unknown }> }).content ?? [];
 			if (phase === "plan") {
 				for (const block of content) {
 					if (

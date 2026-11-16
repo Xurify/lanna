@@ -19,10 +19,27 @@ process.env.LH_PROFILE = "slovak";
 
 const core = await import("../src/core/milestones.ts");
 type LearnerFacts = import("../src/core/milestones.ts").LearnerFacts;
-const { coverageAt, lemmasFor, GENRES, genreLemmas, hoursForSpeed, speedForHours, speedFromSamples, speedTrend, estimateMilestone, MILESTONES, parseCustomMapping, customMilestone, customId, speedNeeded, creditedSpeed } = core;
+const {
+	coverageAt,
+	lemmasFor,
+	GENRES,
+	genreLemmas,
+	hoursForSpeed,
+	speedForHours,
+	speedFromSamples,
+	speedTrend,
+	estimateMilestone,
+	MILESTONES,
+	parseCustomMapping,
+	customMilestone,
+	customId,
+	speedNeeded,
+	creditedSpeed,
+} = core;
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { frequencyOrder } = await import("../src/server/reading.ts");
-const { addCustomMilestone, learnerFacts, milestonesReport, removeCustomMilestone, wordSets } = await import("../src/server/milestones.ts");
+const { addCustomMilestone, learnerFacts, milestonesReport, removeCustomMilestone, wordSets } =
+	await import("../src/server/milestones.ts");
 const { milestoneStore } = await import("../src/store/milestones.ts");
 const { progressStore } = await import("../src/store/progress.ts");
 const { reviewStore } = await import("../src/store/review.ts");
@@ -87,11 +104,19 @@ test("speed from Listen reps: the audio's time counts, replays and peeks slow it
 });
 
 test("the speed trend needs eight sessions across a week, then gives a slope", () => {
-	const few = Array.from({ length: 7 }, (_, i) => ({ hours: i, wpm: 60 + i * 2, at: `2026-10-${String(10 + i).padStart(2, "0")}T10:00:00Z` }));
+	const few = Array.from({ length: 7 }, (_, i) => ({
+		hours: i,
+		wpm: 60 + i * 2,
+		at: `2026-10-${String(10 + i).padStart(2, "0")}T10:00:00Z`,
+	}));
 	assert.equal(speedTrend(few), null);
 	const sameDay = Array.from({ length: 9 }, (_, i) => ({ hours: i, wpm: 60 + i * 2, at: "2026-10-10T10:00:00Z" }));
 	assert.equal(speedTrend(sameDay), null);
-	const enough = Array.from({ length: 9 }, (_, i) => ({ hours: i * 2, wpm: 60 + i * 4, at: `2026-10-${String(10 + i).padStart(2, "0")}T10:00:00Z` }));
+	const enough = Array.from({ length: 9 }, (_, i) => ({
+		hours: i * 2,
+		wpm: 60 + i * 4,
+		at: `2026-10-${String(10 + i).padStart(2, "0")}T10:00:00Z`,
+	}));
 	const t = speedTrend(enough)!;
 	assert.ok(Math.abs(t.slope - 2) < 1e-9, "2 words a minute per hour");
 	assert.equal(t.points, 9);
@@ -115,7 +140,12 @@ function facts(over: Partial<LearnerFacts> = {}): LearnerFacts {
 		paceDays: 12,
 		hoursDone: 300,
 		hoursLogged: 40,
-		listen: { sessions: 12, reading: { wpm: 80, samples: 90, words: 700, realtime: 0.3, audioWpm: 150 }, trend: null, knownSentences: { total: 60, right: 52 } },
+		listen: {
+			sessions: 12,
+			reading: { wpm: 80, samples: 90, words: 700, realtime: 0.3, audioWpm: 150 },
+			trend: null,
+			knownSentences: { total: 60, right: 52 },
+		},
 		watch: null,
 	};
 	const merged = { ...base, ...over };
@@ -125,7 +155,11 @@ function facts(over: Partial<LearnerFacts> = {}): LearnerFacts {
 test("Xurify's case: the words are nearly there for a vlog and speed is the gap; the date is the later of the two", () => {
 	const f = facts();
 	assert.deepEqual(f.speed, { wpm: 80, basis: "listen" });
-	const vlog = estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, f, { now: NOW });
+	const vlog = estimateMilestone(
+		MILESTONES.find((m) => m.id === "vlog")!,
+		f,
+		{ now: NOW },
+	);
 	assert.equal(vlog.words.need, 3750);
 	assert.equal(vlog.words.toGo, 150);
 	assert.ok(vlog.words.coverageNow > 0.94 && vlog.words.coverageNow < 0.95);
@@ -149,13 +183,21 @@ test("Xurify's case: the words are nearly there for a vlog and speed is the gap;
 
 test("reading news is self-paced: words alone decide; a café exchange is within reach at B1", () => {
 	const f = facts();
-	const news = estimateMilestone(MILESTONES.find((m) => m.id === "news")!, f, { now: NOW });
+	const news = estimateMilestone(
+		MILESTONES.find((m) => m.id === "news")!,
+		f,
+		{ now: NOW },
+	);
 	assert.equal(news.speed.need, 0);
 	assert.equal(news.speed.hoursToGo, 0);
 	assert.equal(news.binding, "words");
 	assert.equal(news.words.need, 5000);
 	assert.equal(news.eta.daysPlanned, news.words.eta.daysPlanned);
-	const cafe = estimateMilestone(MILESTONES.find((m) => m.id === "cafe")!, f, { now: NOW });
+	const cafe = estimateMilestone(
+		MILESTONES.find((m) => m.id === "cafe")!,
+		f,
+		{ now: NOW },
+	);
 	assert.equal(cafe.status, "reached");
 	assert.equal(cafe.binding, "none");
 	assert.equal(cafe.eta.daysPlanned, 0);
@@ -163,40 +205,93 @@ test("reading news is self-paced: words alone decide; a café exchange is within
 });
 
 test("without a Listen measurement the speed is assumed from the hours ladder and said so", () => {
-	const f = facts({ listen: { sessions: 0, reading: null, trend: null, knownSentences: { total: 0, right: 0 } }, hoursDone: 200 });
-	assert.deepEqual(f.speed, { wpm: 95, basis: "level" }, "a placed B1 is credited B1's rung, not the few hours the map has");
-	assert.deepEqual(facts({ listen: f.listen, hoursDone: 500, level: "A2" }).speed, { wpm: 111, basis: "level" }, "more hours than the rung count");
-	const vlog = estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, f, { now: NOW });
+	const f = facts({
+		listen: { sessions: 0, reading: null, trend: null, knownSentences: { total: 0, right: 0 } },
+		hoursDone: 200,
+	});
+	assert.deepEqual(
+		f.speed,
+		{ wpm: 95, basis: "level" },
+		"a placed B1 is credited B1's rung, not the few hours the map has",
+	);
+	assert.deepEqual(
+		facts({ listen: f.listen, hoursDone: 500, level: "A2" }).speed,
+		{ wpm: 111, basis: "level" },
+		"more hours than the rung count",
+	);
+	const vlog = estimateMilestone(
+		MILESTONES.find((m) => m.id === "vlog")!,
+		f,
+		{ now: NOW },
+	);
 	assert.equal(vlog.speed.basis, "level");
 	assert.match(vlog.missing[1]!, /a listener at your level/);
 	// A trend is never used over an assumed speed.
-	const withTrend = facts({ listen: { sessions: 0, reading: null, trend: { slope: 5, points: 9 }, knownSentences: { total: 0, right: 0 } }, hoursDone: 200 });
-	assert.equal(estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, withTrend, { now: NOW }).speed.hoursBasis, "ladder");
+	const withTrend = facts({
+		listen: { sessions: 0, reading: null, trend: { slope: 5, points: 9 }, knownSentences: { total: 0, right: 0 } },
+		hoursDone: 200,
+	});
+	assert.equal(
+		estimateMilestone(
+			MILESTONES.find((m) => m.id === "vlog")!,
+			withTrend,
+			{ now: NOW },
+		).speed.hoursBasis,
+		"ladder",
+	);
 });
 
 test("the learner's own trend replaces the ladder, clamped to half and twice of it", () => {
 	const base = facts();
-	const ladder = estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, base, { now: NOW }).speed.hoursToGo;
+	const ladder = estimateMilestone(
+		MILESTONES.find((m) => m.id === "vlog")!,
+		base,
+		{ now: NOW },
+	).speed.hoursToGo;
 	// 1 word a minute per hour → 55 hours, far under half the ladder → clamped to half.
 	const slow = facts({ listen: { ...base.listen, trend: { slope: 1, points: 9 } } });
-	const s = estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, slow, { now: NOW }).speed;
+	const s = estimateMilestone(
+		MILESTONES.find((m) => m.id === "vlog")!,
+		slow,
+		{ now: NOW },
+	).speed;
 	assert.equal(s.hoursBasis, "trend");
 	assert.equal(s.hoursToGo, Math.round(ladder * 0.5));
 	// 0.2 a minute per hour → 275 hours, inside the band → used as is.
 	const mid = facts({ listen: { ...base.listen, trend: { slope: 0.2, points: 9 } } });
-	assert.equal(estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, mid, { now: NOW }).speed.hoursToGo, 275);
+	assert.equal(
+		estimateMilestone(
+			MILESTONES.find((m) => m.id === "vlog")!,
+			mid,
+			{ now: NOW },
+		).speed.hoursToGo,
+		275,
+	);
 	// A flat or falling trend keeps the ladder.
 	const flat = facts({ listen: { ...base.listen, trend: { slope: -0.1, points: 9 } } });
-	assert.equal(estimateMilestone(MILESTONES.find((m) => m.id === "vlog")!, flat, { now: NOW }).speed.hoursBasis, "ladder");
+	assert.equal(
+		estimateMilestone(
+			MILESTONES.find((m) => m.id === "vlog")!,
+			flat,
+			{ now: NOW },
+		).speed.hoursBasis,
+		"ladder",
+	);
 });
 
 test("a custom mapping is checked field by field and odd answers fall back", () => {
-	const good = parseCustomMapping('Sure: {"title":"Follow my mother-in-law on the phone","line":"Phone calls about family news.","genre":"conversation","coverage":0.95,"wpm":150,"support":"interactive","icon":"phone","cefr":"B1: can follow speech directed at me"}', "x");
+	const good = parseCustomMapping(
+		'Sure: {"title":"Follow my mother-in-law on the phone","line":"Phone calls about family news.","genre":"conversation","coverage":0.95,"wpm":150,"support":"interactive","icon":"phone","cefr":"B1: can follow speech directed at me"}',
+		"x",
+	);
 	assert.equal(good.genre, "conversation");
 	assert.equal(good.coverage, 0.95);
 	assert.equal(good.support, "interactive");
 	assert.equal(good.icon, "phone");
-	const odd = parseCustomMapping('{"genre":"opera","coverage":1.5,"wpm":-4,"support":"telepathy","icon":"dragon"}', "Understand opera");
+	const odd = parseCustomMapping(
+		'{"genre":"opera","coverage":1.5,"wpm":-4,"support":"telepathy","icon":"dragon"}',
+		"Understand opera",
+	);
 	assert.equal(odd.genre, "conversation");
 	assert.equal(odd.coverage, 0.98);
 	assert.equal(odd.wpm, 0);
@@ -221,7 +316,15 @@ test("facts from a profile: met and assumed words, the frequency order, pace and
 	assert.ok(order.indexOf("mat") < 20);
 
 	const p = progressStore.read();
-	p.goal = { level: "B2", minutesPerDay: 60, daysPerWeek: 5, placedLevel: "A2", placedAt: NOW.toISOString(), startChapter: "health", onboardedAt: NOW.toISOString() };
+	p.goal = {
+		level: "B2",
+		minutesPerDay: 60,
+		daysPerWeek: 5,
+		placedLevel: "A2",
+		placedAt: NOW.toISOString(),
+		startChapter: "health",
+		onboardedAt: NOW.toISOString(),
+	};
 	for (let i = 0; i < 14; i++) {
 		const d = new Date(NOW.getTime() - i * 86_400_000).toISOString().slice(0, 10);
 		p.days[d] = { xp: 10, lessons: 1, reps: 10, reviews: 0, minutes: 30 };
@@ -229,7 +332,22 @@ test("facts from a profile: met and assumed words, the frequency order, pace and
 	progressStore.write(p);
 	const cards = reviewStore.readCards();
 	const mint = (slug: string, i: number, stability: number) => {
-		cards[`${slug}#0`] = { id: `${slug}#0`, slug, lemma: slug, gloss: "", sentence: "", translation: "", answer: "", at: 0, state: "review", memory: { stability, difficulty: 5 }, due: NOW.toISOString(), reps: 3, lapses: 0, createdAt: new Date(NOW.getTime() - i * 86_400_000).toISOString() };
+		cards[`${slug}#0`] = {
+			id: `${slug}#0`,
+			slug,
+			lemma: slug,
+			gloss: "",
+			sentence: "",
+			translation: "",
+			answer: "",
+			at: 0,
+			state: "review",
+			memory: { stability, difficulty: 5 },
+			due: NOW.toISOString(),
+			reps: 3,
+			lapses: 0,
+			createdAt: new Date(NOW.getTime() - i * 86_400_000).toISOString(),
+		};
 	};
 	mint("byt", 1, 30);
 	mint("mesto", 2, 10);
@@ -245,7 +363,13 @@ test("facts from a profile: met and assumed words, the frequency order, pace and
 	assert.equal(core.levelVocabulary("B1", 1), core.LEVEL_VOCAB.B1);
 	assert.equal(sets.met.size, 3);
 	assert.equal(sets.solid, 2);
-	assert.equal(sets.known.size, sets.credited + (sets.met.has("praca") && order.indexOf("praca") >= sets.credited ? 1 : 0) + (order.indexOf("mesto") >= sets.credited ? 1 : 0) + (order.indexOf("byt") >= sets.credited ? 1 : 0));
+	assert.equal(
+		sets.known.size,
+		sets.credited +
+			(sets.met.has("praca") && order.indexOf("praca") >= sets.credited ? 1 : 0) +
+			(order.indexOf("mesto") >= sets.credited ? 1 : 0) +
+			(order.indexOf("byt") >= sets.credited ? 1 : 0),
+	);
 	// A word check replaces the band.
 	p.goal.vocabulary = { size: 2150, at: NOW.toISOString(), reliable: true };
 	progressStore.write(p);
@@ -302,7 +426,8 @@ test("Listen sessions feed the speed reading; the report ranks milestones and li
 	assert.equal(vlog.speed.have, 75);
 	assert.equal(vlog.speed.basis, "listen");
 	assert.ok(report.nextWords.length > 0 && report.nextWords.length <= 24);
-	for (const w of report.nextWords) assert.ok(!["byt", "mesto", "praca"].includes(w.slug), "met words are not next words");
+	for (const w of report.nextWords)
+		assert.ok(!["byt", "mesto", "praca"].includes(w.slug), "met words are not next words");
 	assert.ok(report.nextWords[0]!.rank > core.LEVEL_VOCAB.A1, "the next words sit past the credited band");
 	assert.ok(report.goals["can-order"], "the map's goals are on the report");
 });
@@ -319,9 +444,19 @@ test("a custom milestone is mapped once on the cheap slot and kept; the same wor
 	};
 	// The faux engine route is exercised through the mapping seam instead:
 	// write the record the service would, then check the store and report.
-	const mapping = parseCustomMapping('{"title":"Follow the in-laws on the phone","line":"Family calls.","genre":"conversation","coverage":0.95,"wpm":150,"support":"interactive","icon":"phone"}', "x");
+	const mapping = parseCustomMapping(
+		'{"title":"Follow the in-laws on the phone","line":"Family calls.","genre":"conversation","coverage":0.95,"wpm":150,"support":"interactive","icon":"phone"}',
+		"x",
+	);
 	const text = "understand my in-laws on the phone";
-	milestoneStore.upsert({ def: customMilestone(text, mapping), text, mapping, model: "test", usage: { model: "test", steps: [] }, createdAt: NOW.toISOString() });
+	milestoneStore.upsert({
+		def: customMilestone(text, mapping),
+		text,
+		mapping,
+		model: "test",
+		usage: { model: "test", steps: [] },
+		createdAt: NOW.toISOString(),
+	});
 	const again = await addCustomMilestone(text, { engine: engine as never, now: NOW });
 	assert.equal(again.reused, true);
 	assert.equal(calls, 0, "no model call for the same words");
@@ -347,16 +482,86 @@ test("a custom milestone is mapped once on the cheap slot and kept; the same wor
 });
 
 test("appendLessonLog keeps the timing fields a Listen rep carries", () => {
-	appendLessonLog({ id: "t1", at: NOW.toISOString(), day: "2026-10-28", unit: "listen", mode: "listen", xp: 0, correct: 1, total: 1, perfect: true, queued: [], reps: [{ itemId: "a#0", kind: "meaning", unit: "listen", slug: "a", lemma: "a", gloss: "", sentence: "A b c d.", translation: "x", answer: "x", given: "x", verdict: "exact", assisted: false, ms: 1200, heardMs: 1000, replays: 1, peeked: false, words: 4 }] });
+	appendLessonLog({
+		id: "t1",
+		at: NOW.toISOString(),
+		day: "2026-10-28",
+		unit: "listen",
+		mode: "listen",
+		xp: 0,
+		correct: 1,
+		total: 1,
+		perfect: true,
+		queued: [],
+		reps: [
+			{
+				itemId: "a#0",
+				kind: "meaning",
+				unit: "listen",
+				slug: "a",
+				lemma: "a",
+				gloss: "",
+				sentence: "A b c d.",
+				translation: "x",
+				answer: "x",
+				given: "x",
+				verdict: "exact",
+				assisted: false,
+				ms: 1200,
+				heardMs: 1000,
+				replays: 1,
+				peeked: false,
+				words: 4,
+			},
+		],
+	});
 	const f = learnerFacts(loadLexicon(), NOW, 0);
 	assert.ok(f.listen.sessions >= 2);
 });
 
 test("a typed Listen sentence is timed by its clip, not by the typing", () => {
 	const before = learnerFacts(loadLexicon(), NOW, 0).listen.reading;
-	const typed = { itemId: "b#0", kind: "dictation", unit: "listen", slug: "b", lemma: "b", gloss: "", sentence: "E f g h.", translation: "y", answer: "E f g h.", given: "e f g h", verdict: "exact" as const, assisted: false, ms: 20_000, heardMs: 2000, replays: 0, peeked: false, words: 4 };
-	appendLessonLog({ id: "t2", at: NOW.toISOString(), day: "2026-10-28", unit: "listen", mode: "listen", xp: 0, correct: 1, total: 1, perfect: true, queued: [], reps: [typed, { ...typed, itemId: "c#0", heardMs: undefined }, { ...typed, itemId: "d#0", verdict: "wrong" as const }] });
+	const typed = {
+		itemId: "b#0",
+		kind: "dictation",
+		unit: "listen",
+		slug: "b",
+		lemma: "b",
+		gloss: "",
+		sentence: "E f g h.",
+		translation: "y",
+		answer: "E f g h.",
+		given: "e f g h",
+		verdict: "exact" as const,
+		assisted: false,
+		ms: 20_000,
+		heardMs: 2000,
+		replays: 0,
+		peeked: false,
+		words: 4,
+	};
+	appendLessonLog({
+		id: "t2",
+		at: NOW.toISOString(),
+		day: "2026-10-28",
+		unit: "listen",
+		mode: "listen",
+		xp: 0,
+		correct: 1,
+		total: 1,
+		perfect: true,
+		queued: [],
+		reps: [
+			typed,
+			{ ...typed, itemId: "c#0", heardMs: undefined },
+			{ ...typed, itemId: "d#0", verdict: "wrong" as const },
+		],
+	});
 	const after = learnerFacts(loadLexicon(), NOW, 0).listen.reading!;
-	assert.equal(after.samples, (before?.samples ?? 0) + 1, "one usable sample: the one without a clip length and the wrong one do not count");
+	assert.equal(
+		after.samples,
+		(before?.samples ?? 0) + 1,
+		"one usable sample: the one without a clip length and the wrong one do not count",
+	);
 	assert.equal(after.words, (before?.words ?? 0) + 4);
 });

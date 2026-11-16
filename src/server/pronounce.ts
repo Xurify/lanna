@@ -14,7 +14,15 @@
  */
 
 import { activeLanguage } from "./active-language.ts";
-import { matchScore, parseAzure, pronReport, type AzureResult, type PronEngine, type PronReport, type PronScore } from "../core/pronounce.ts";
+import {
+	matchScore,
+	parseAzure,
+	pronReport,
+	type AzureResult,
+	type PronEngine,
+	type PronReport,
+	type PronScore,
+} from "../core/pronounce.ts";
 
 export type { PronReport };
 import { fluencyStore, speakStore } from "../store/speak.ts";
@@ -22,7 +30,23 @@ import { keyValue, redactSecrets } from "./keys.ts";
 import { sttEngine, transcribe } from "./speak.ts";
 
 /** Azure's locale for the active language. */
-const LOCALE: Record<string, string | undefined> = { sk: "sk-SK", ru: "ru-RU", cs: "cs-CZ", pl: "pl-PL", de: "de-DE", es: "es-ES", fr: "fr-FR", it: "it-IT", pt: "pt-PT", hu: "hu-HU", et: "et-EE", fi: "fi-FI", nl: "nl-NL", sv: "sv-SE", uk: "uk-UA" };
+const LOCALE: Record<string, string | undefined> = {
+	sk: "sk-SK",
+	ru: "ru-RU",
+	cs: "cs-CZ",
+	pl: "pl-PL",
+	de: "de-DE",
+	es: "es-ES",
+	fr: "fr-FR",
+	it: "it-IT",
+	pt: "pt-PT",
+	hu: "hu-HU",
+	et: "et-EE",
+	fi: "fi-FI",
+	nl: "nl-NL",
+	sv: "sv-SE",
+	uk: "uk-UA",
+};
 
 function azureKeys(): { key: string; region: string } | null {
 	const key = keyValue("AZURE_SPEECH_KEY");
@@ -45,12 +69,23 @@ function scriptedScore(reference: string, heard?: string): PronScore {
 		.map((word) => {
 			const h = hash(word);
 			const score = 55 + (h % 46);
-			const phonemes = [...word].slice(0, 5).map((ch, i) => ({ p: ch, score: Math.max(10, Math.min(100, score + ((h >> (i * 3)) % 31) - 15)) }));
+			const phonemes = [...word]
+				.slice(0, 5)
+				.map((ch, i) => ({ p: ch, score: Math.max(10, Math.min(100, score + ((h >> (i * 3)) % 31) - 15)) }));
 			return score < 60 ? { word, score, error: "mispronunciation" as const, phonemes } : { word, score, phonemes };
 		});
 	const accuracy = words.length ? Math.round(words.reduce((n, w) => n + w.score, 0) / words.length) : 80;
 	const fluency = 70 + (hash(reference) % 30);
-	return { engine: "azure", accuracy, fluency, completeness: 100, prosody: 60 + (hash(reference + "p") % 40), overall: Math.round(accuracy * 0.7 + fluency * 0.3), words, heard: heard ?? reference };
+	return {
+		engine: "azure",
+		accuracy,
+		fluency,
+		completeness: 100,
+		prosody: 60 + (hash(reference + "p") % 40),
+		overall: Math.round(accuracy * 0.7 + fluency * 0.3),
+		words,
+		heard: heard ?? reference,
+	};
 }
 
 /** Which engine would score a line; null when there is no way to hear it. */
@@ -74,7 +109,10 @@ interface AssessInput {
  *  Throws when the engine refused or none is set. */
 export async function assess(input: AssessInput): Promise<PronScore | null> {
 	const engine = pronounceEngine();
-	if (!engine) throw new Error("No way to score pronunciation: add an Azure Speech key (sound by sound) or a speech-to-text key in Settings → API keys.");
+	if (!engine)
+		throw new Error(
+			"No way to score pronunciation: add an Azure Speech key (sound by sound) or a speech-to-text key in Settings → API keys.",
+		);
 	if (input.audio.byteLength === 0) return null;
 	if (scripted()) return scriptedScore(input.reference || input.heard || "", input.heard);
 	const lang = input.lang ?? activeLanguage().code;
@@ -92,7 +130,14 @@ export async function assess(input: AssessInput): Promise<PronScore | null> {
 
 async function assessAzure(audio: Uint8Array, reference: string, locale: string): Promise<PronScore | null> {
 	const { key, region } = azureKeys()!;
-	const params = { ReferenceText: reference, GradingSystem: "HundredMark", Granularity: "Phoneme", Dimension: "Comprehensive", EnableProsodyAssessment: true, EnableMiscue: true };
+	const params = {
+		ReferenceText: reference,
+		GradingSystem: "HundredMark",
+		Granularity: "Phoneme",
+		Dimension: "Comprehensive",
+		EnableProsodyAssessment: true,
+		EnableMiscue: true,
+	};
 	const url = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${encodeURIComponent(locale)}&format=detailed`;
 	const res = await fetch(url, {
 		method: "POST",
@@ -116,7 +161,8 @@ function recentScores(opts: { rounds?: number; scenes?: number } = {}): PronScor
 		.list()
 		.filter((e) => e.mode === "fast")
 		.slice(-(opts.rounds ?? 12));
-	for (const r of rounds) if (r.mode === "fast") for (const rep of r.reps) for (const p of rep.passes) if (p.pron) out.push(p.pron);
+	for (const r of rounds)
+		if (r.mode === "fast") for (const rep of r.reps) for (const p of rep.passes) if (p.pron) out.push(p.pron);
 	const scenes = speakStore.list().slice(-(opts.scenes ?? 8));
 	for (const entry of scenes) {
 		const s = speakStore.get(entry.id);

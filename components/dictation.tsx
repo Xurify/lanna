@@ -686,14 +686,14 @@ export function DictationBar({ dictation, compact = false }: { dictation: Dictat
 					}}
 					aria-label={error ? `Dictation failed: ${error}` : "Start dictation"}
 					data-testid="dictation-toggle"
-				// Same blurring as the floating chrome (owner, fix wave round 3),
-			// but lower opacity — the mic stays quieter than the model pills.
-			className={
-				compact
-					? "flex size-8 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-well hover:text-foreground"
-					: "flex h-7 w-auto items-center justify-center gap-1.5 rounded-md border border-border/50 bg-card px-3 text-xs text-muted-foreground shadow-raise transition-colors hover:border-border hover:text-foreground"
-			}
-			>
+					// Same blurring as the floating chrome (owner, fix wave round 3),
+					// but lower opacity — the mic stays quieter than the model pills.
+					className={
+						compact
+							? "flex size-8 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-well hover:text-foreground"
+							: "flex h-7 w-auto items-center justify-center gap-1.5 rounded-md border border-border/50 bg-card px-3 text-xs text-muted-foreground shadow-raise transition-colors hover:border-border hover:text-foreground"
+					}
+				>
 					<MicIcon className={compact ? "size-4" : "size-3.5"} />
 					{(!compact || error) && <span className="max-w-full truncate">{error ?? "Dictate"}</span>}
 				</button>
@@ -714,14 +714,10 @@ export function DictationBar({ dictation, compact = false }: { dictation: Dictat
 					onClick={toggle}
 					disabled={phase === "stopping"}
 					aria-label="Stop dictation"
-				data-testid="dictation-toggle"
-				className="flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-destructive/10 px-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
-			>
-				{phase === "stopping" ? (
-					<Loader2Icon className="size-3.5 animate-spin" />
-				) : (
-					<MicIcon className="size-3.5" />
-				)}
+					data-testid="dictation-toggle"
+					className="flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-destructive/10 px-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+				>
+					{phase === "stopping" ? <Loader2Icon className="size-3.5 animate-spin" /> : <MicIcon className="size-3.5" />}
 					Stop
 				</button>
 			</Hint>

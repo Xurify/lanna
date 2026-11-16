@@ -15,7 +15,8 @@ interface Body {
 	tz?: unknown;
 }
 
-const boundedMs = (value: unknown, max: number) => (typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.min(value, max) : undefined);
+const boundedMs = (value: unknown, max: number) =>
+	typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.min(value, max) : undefined;
 
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
@@ -27,7 +28,9 @@ export async function POST(req: Request) {
 		if (body.action === "answer") {
 			if (typeof body.slug !== "string") return Response.json({ message: "slug is required" }, { status: 400 });
 			const typed = typeof body.typed === "string" ? body.typed : null;
-			return Response.json(await answerWordCheck({ id: body.id, slug: body.slug, typed, ms: boundedMs(body.ms, MAX_ANSWER_MS) }));
+			return Response.json(
+				await answerWordCheck({ id: body.id, slug: body.slug, typed, ms: boundedMs(body.ms, MAX_ANSWER_MS) }),
+			);
 		}
 		if (body.action === "finish") {
 			const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;

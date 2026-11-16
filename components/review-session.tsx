@@ -8,7 +8,17 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookmarkIcon, ChevronDownIcon, EyeOffIcon, LightbulbIcon, LoaderCircleIcon, MinusIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
+import {
+	BookmarkIcon,
+	ChevronDownIcon,
+	EyeOffIcon,
+	LightbulbIcon,
+	LoaderCircleIcon,
+	MinusIcon,
+	PlusIcon,
+	SlidersHorizontalIcon,
+	XIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QIcon, QPie } from "@/components/quiet/icon";
 import { SidebarToggle } from "@/components/sidebar";
@@ -20,7 +30,21 @@ import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/componen
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { MissWhy } from "@/components/miss-why";
-import { compareAnswer, diacriticSlips, ratingCeiling, ratingFor, RATING_LABELS, shortGloss, splitOnWords, targetWordOf, wordsOf, type AnswerVerdict, type MissReason, type Rating, type ReviewCard } from "@/src/core";
+import {
+	compareAnswer,
+	diacriticSlips,
+	ratingCeiling,
+	ratingFor,
+	RATING_LABELS,
+	shortGloss,
+	splitOnWords,
+	targetWordOf,
+	wordsOf,
+	type AnswerVerdict,
+	type MissReason,
+	type Rating,
+	type ReviewCard,
+} from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { settle, shake } from "@/components/motion";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -54,14 +78,26 @@ interface AnsweredLine {
 }
 
 /** How the lexicon's `src` reads on the card. */
-const HELP_BUTTON = "q-btn sec !h-auto min-h-14 flex-col !items-start !gap-0 py-1.5 text-left !whitespace-normal disabled:!opacity-60 @2xl:min-h-12 @2xl:!h-12 @2xl:flex-row @2xl:!items-center @2xl:!gap-2 @2xl:!whitespace-nowrap";
+const HELP_BUTTON =
+	"q-btn sec !h-auto min-h-14 flex-col !items-start !gap-0 py-1.5 text-left !whitespace-normal disabled:!opacity-60 @2xl:min-h-12 @2xl:!h-12 @2xl:flex-row @2xl:!items-center @2xl:!gap-2 @2xl:!whitespace-nowrap";
 
 const SENTENCE_SOURCES: Record<string, string> = { curated: "slovak.wiki", tatoeba: "Tatoeba" };
 
 interface Status {
 	profile: string;
 	available: boolean;
-	counts: { due: number; learning: number; newToday: number; newLeft: number; total: number; reviewedToday: number; cardsToday: number; dueUntouched: number; pendingNew: number; dueLater: number };
+	counts: {
+		due: number;
+		learning: number;
+		newToday: number;
+		newLeft: number;
+		total: number;
+		reviewedToday: number;
+		cardsToday: number;
+		dueUntouched: number;
+		pendingNew: number;
+		dueLater: number;
+	};
 	settings: { newPerDay: number; retention: number; blankWords: number };
 	next: Prompt | null;
 	answered?: AnsweredLine[];
@@ -92,7 +128,6 @@ function writePref(key: string, value: string) {
 		// not remembered
 	}
 }
-
 
 /**
  * Splits each piece of the sentence around the gaps. Punctuation that touches
@@ -134,7 +169,12 @@ function stillToDo(counts: Status["counts"]): string {
 	const left = counts.dueUntouched + newLeft;
 	const later = counts.dueLater;
 	const toRepeat = counts.due + counts.learning;
-	if (left === 0) return toRepeat > 0 ? `Every card seen once today. ${toRepeat} to repeat.` : later > 0 ? `Done for now. ${later} more ${later === 1 ? "card comes" : "cards come"} due later today.` : "All done for today.";
+	if (left === 0)
+		return toRepeat > 0
+			? `Every card seen once today. ${toRepeat} to repeat.`
+			: later > 0
+				? `Done for now. ${later} more ${later === 1 ? "card comes" : "cards come"} due later today.`
+				: "All done for today.";
 	return `Still to do: ${counts.dueUntouched} due, ${newLeft} new${toRepeat > counts.dueUntouched ? `, ${toRepeat - counts.dueUntouched} to repeat` : ""}${later > 0 ? `, ${later} more due later today` : ""}.`;
 }
 
@@ -158,7 +198,13 @@ function VerdictMark({ verdict }: { verdict: AnswerVerdict }) {
 				verdict === "wrong" && "text-miss shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
 			)}
 		>
-			<svg viewBox="0 0 24 24" className="size-2.5 fill-none stroke-current" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+			<svg
+				viewBox="0 0 24 24"
+				className="size-2.5 fill-none stroke-current"
+				strokeWidth={3}
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			>
 				{verdict === "wrong" ? <path d="M7 7l10 10M17 7L7 17" /> : <path d="M5.5 12.5l4 4L18.5 7.5" />}
 			</svg>
 		</span>
@@ -176,24 +222,61 @@ function comesBack(days: number): string {
 	return `${(days / 365).toFixed(1).replace(/\.0$/, "")} yr`;
 }
 
-function DeckSettings({ mode, onMode, blankWords, onBlankWords, className }: { mode: Mode; onMode: (m: Mode) => void; blankWords: number; onBlankWords: (n: number) => void; className?: string }) {
+function DeckSettings({
+	mode,
+	onMode,
+	blankWords,
+	onBlankWords,
+	className,
+}: {
+	mode: Mode;
+	onMode: (m: Mode) => void;
+	blankWords: number;
+	onBlankWords: (n: number) => void;
+	className?: string;
+}) {
 	return (
-		<div className={cn("grid grid-cols-[auto_auto] items-center justify-start gap-x-4 gap-y-3 text-[13px] text-ink-3", className)}>
+		<div
+			className={cn(
+				"grid grid-cols-[auto_auto] items-center justify-start gap-x-4 gap-y-3 text-[13px] text-ink-3",
+				className,
+			)}
+		>
 			<div className="contents">
 				<span id="review-mode-label">Answer by</span>
 				<span className="q-segc" role="radiogroup" aria-labelledby="review-mode-label">
 					{(["type", "choice"] as const).map((m) => (
-						<button key={m} type="button" role="radio" aria-checked={mode === m} className={cn("!h-8 !px-3 !text-[13px] pointer-coarse:!h-10", mode === m && "on")} onClick={() => onMode(m)} data-testid={`review-mode-${m}`}>
+						<button
+							key={m}
+							type="button"
+							role="radio"
+							aria-checked={mode === m}
+							className={cn("!h-8 !px-3 !text-[13px] pointer-coarse:!h-10", mode === m && "on")}
+							onClick={() => onMode(m)}
+							data-testid={`review-mode-${m}`}
+						>
 							{m === "type" ? "Typing" : "Choosing"}
 						</button>
 					))}
 				</span>
 			</div>
-			<div className="contents" data-testid="review-blank" title="How many words a card can hide. A new word always hides one. Applies from the next card.">
+			<div
+				className="contents"
+				data-testid="review-blank"
+				title="How many words a card can hide. A new word always hides one. Applies from the next card."
+			>
 				<span id="review-blank-label">Blank</span>
 				<span className="q-segc" role="radiogroup" aria-labelledby="review-blank-label">
 					{[1, 2, 3].map((n) => (
-						<button key={n} type="button" role="radio" aria-checked={blankWords === n} className={cn("!h-8 !px-3 !text-[13px] whitespace-nowrap pointer-coarse:!h-10", blankWords === n && "on")} onClick={() => onBlankWords(n)} data-testid={`review-blank-${n}`}>
+						<button
+							key={n}
+							type="button"
+							role="radio"
+							aria-checked={blankWords === n}
+							className={cn("!h-8 !px-3 !text-[13px] whitespace-nowrap pointer-coarse:!h-10", blankWords === n && "on")}
+							onClick={() => onBlankWords(n)}
+							data-testid={`review-blank-${n}`}
+						>
 							{n === 1 ? "1 word" : `1–${n}`}
 						</button>
 					))}
@@ -203,9 +286,24 @@ function DeckSettings({ mode, onMode, blankWords, onBlankWords, className }: { m
 	);
 }
 
-function AnsweredRow({ line, code, fresh, hide }: { line: AnsweredLine; code?: string; fresh: boolean; hide: ReadonlySet<string> }) {
+function AnsweredRow({
+	line,
+	code,
+	fresh,
+	hide,
+}: {
+	line: AnsweredLine;
+	code?: string;
+	fresh: boolean;
+	hide: ReadonlySet<string>;
+}) {
 	return (
-		<li className={cn("relative grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-x-3 py-3 @xl:grid-cols-[minmax(0,1fr)_auto]", fresh && "lh-fade")}>
+		<li
+			className={cn(
+				"relative grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-x-3 py-3 @xl:grid-cols-[minmax(0,1fr)_auto]",
+				fresh && "lh-fade",
+			)}
+		>
 			<span className="mt-[3px] @xl:absolute @xl:-left-7 @xl:top-3">
 				<VerdictMark verdict={line.verdict} />
 			</span>
@@ -242,7 +340,19 @@ function AnsweredRow({ line, code, fresh, hide }: { line: AnsweredLine; code?: s
 	);
 }
 
-function AnsweredHistory({ lines, sessionSince, answeredToday, code, hide }: { lines: AnsweredLine[]; sessionSince: string | undefined; answeredToday: number; code: string; hide: ReadonlySet<string> }) {
+function AnsweredHistory({
+	lines,
+	sessionSince,
+	answeredToday,
+	code,
+	hide,
+}: {
+	lines: AnsweredLine[];
+	sessionSince: string | undefined;
+	answeredToday: number;
+	code: string;
+	hide: ReadonlySet<string>;
+}) {
 	const [earlierOpen, setEarlierOpen] = useState(false);
 	const inSession = (line: AnsweredLine) => sessionSince !== undefined && line.reviewedAt > sessionSince;
 	const session = lines.filter(inSession);
@@ -250,7 +360,15 @@ function AnsweredHistory({ lines, sessionSince, answeredToday, code, hide }: { l
 	const earlierAnswers = answeredToday - session.length;
 	const missed = session.filter((line) => line.verdict === "wrong").length;
 	const sessionCut = earlier.length === 0 && answeredToday > lines.length;
-	const row = (line: AnsweredLine) => <AnsweredRow key={`${line.cardId}@${line.reviewedAt}`} line={line} code={code} hide={hide} fresh={inSession(line)} />;
+	const row = (line: AnsweredLine) => (
+		<AnsweredRow
+			key={`${line.cardId}@${line.reviewedAt}`}
+			line={line}
+			code={code}
+			hide={hide}
+			fresh={inSession(line)}
+		/>
+	);
 	return (
 		<section className="mt-8" aria-label="Answered today" data-testid="review-answered">
 			{session.length > 0 && (
@@ -275,7 +393,10 @@ function AnsweredHistory({ lines, sessionSince, answeredToday, code, hide }: { l
 						className="-ml-1 mt-1 flex h-10 items-center gap-1.5 rounded-md px-1 text-[13px] font-[500] text-ink-2 hover:text-foreground"
 						data-testid="review-answered-earlier-toggle"
 					>
-						<ChevronDownIcon className={cn("size-3.5 transition-transform", earlierOpen && "rotate-180")} aria-hidden="true" />
+						<ChevronDownIcon
+							className={cn("size-3.5 transition-transform", earlierOpen && "rotate-180")}
+							aria-hidden="true"
+						/>
 						Earlier today · {earlierAnswers}
 					</button>
 					<div id="review-answered-earlier" hidden={!earlierOpen}>
@@ -312,9 +433,11 @@ export function ReviewSession() {
 	const closeSettings = useCallback(() => setSettingsOpen(false), []);
 	usePopoverDismiss(bandRef, settingsOpen, closeSettings);
 	const [hidden, setHidden] = useState<{ id: string; lemma: string } | null>(null);
-// Cards whose sentence went to the saved phrases from this page.
+	// Cards whose sentence went to the saved phrases from this page.
 	const [savedIds, setSavedIds] = useState<ReadonlySet<string>>(() => new Set());
-	const [newestLineAtOpen, setNewestLineAtOpen] = useState<string | undefined>(() => (knownStatus ? (knownStatus.answered?.[0]?.reviewedAt ?? "") : undefined));
+	const [newestLineAtOpen, setNewestLineAtOpen] = useState<string | undefined>(() =>
+		knownStatus ? (knownStatus.answered?.[0]?.reviewedAt ?? "") : undefined,
+	);
 	const shownAt = useRef(Date.now());
 	// One card at a time: its active time (the gaps between actions, each
 	// capped) is what the day's minutes count; `ms` stays the card's wall-clock.
@@ -380,7 +503,13 @@ export function ReviewSession() {
 	const typed = gaps.map((_, i) => (fields[i] ?? "").trim());
 	const given = givenParts.join(" ");
 	const focusGap = (i: number) => inputRefs.current[i]?.focus();
-	const focusOpenGap = () => focusGap(Math.max(0, typed.findIndex((t) => !t)));
+	const focusOpenGap = () =>
+		focusGap(
+			Math.max(
+				0,
+				typed.findIndex((t) => !t),
+			),
+		);
 	const tag = lang?.tag ?? "sk-SK";
 	// A card already retrieved once is always typed: recall beats recognition (docs/research/desirable-difficulties.md).
 	// The sentence is spoken when the answer is checked: have its audio ready by then.
@@ -437,7 +566,17 @@ export function ReviewSession() {
 			const res = await fetch("/api/review", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ cardId: prompt.card.id, given, ms: Date.now() - shownAt.current, activeMs: activeTime.finish(), rating: Math.min(rating, cap), hints: hint, picked: picks, words: prompt.words, tz: new Date().getTimezoneOffset() }),
+				body: JSON.stringify({
+					cardId: prompt.card.id,
+					given,
+					ms: Date.now() - shownAt.current,
+					activeMs: activeTime.finish(),
+					rating: Math.min(rating, cap),
+					hints: hint,
+					picked: picks,
+					words: prompt.words,
+					tz: new Date().getTimezoneOffset(),
+				}),
 			});
 			// The answer's response carries the deck as it stands now: one round trip, not two.
 			const after = res.ok ? ((await res.json().catch(() => null)) as { status?: Status } | null)?.status : undefined;
@@ -456,7 +595,12 @@ export function ReviewSession() {
 		const res = await fetch("/api/phrases", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ text: prompt.card.sentence, translation: prompt.card.translation, source: "review", context: prompt.card.lemma }),
+			body: JSON.stringify({
+				text: prompt.card.sentence,
+				translation: prompt.card.translation,
+				source: "review",
+				context: prompt.card.lemma,
+			}),
 		}).catch(() => null);
 		if (res?.ok) setSavedIds((s) => new Set(s).add(id));
 	};
@@ -498,7 +642,11 @@ export function ReviewSession() {
 			if (e.key === "Enter") {
 				e.preventDefault();
 				void rate(suggested);
-			} else if (["1", "2", "3", "4"].includes(e.key) && !(e.target instanceof HTMLInputElement) && Number(e.key) <= cap) {
+			} else if (
+				["1", "2", "3", "4"].includes(e.key) &&
+				!(e.target instanceof HTMLInputElement) &&
+				Number(e.key) <= cap
+			) {
 				setSuggested(Number(e.key) as Rating);
 			}
 		};
@@ -506,9 +654,21 @@ export function ReviewSession() {
 		return () => window.removeEventListener("keydown", onKey);
 	});
 
-	const gapVerdicts = useMemo(() => (verdict ? gaps.map((gap, i) => compareAnswer(gap, givenParts[i] ?? "", tag)) : []), [verdict, gaps, givenParts, tag]);
-	const gapSlips = useMemo(() => gapVerdicts.map((v, i) => (v === "accents" ? new Set(diacriticSlips(gaps[i]!, givenParts[i] ?? "", tag)) : new Set<number>())), [gapVerdicts, gaps, givenParts, tag]);
-	const hideInHistory = useMemo(() => (prompt && !verdict ? new Set(wordsOf(prompt.answer)) : NO_WORDS), [prompt, verdict]);
+	const gapVerdicts = useMemo(
+		() => (verdict ? gaps.map((gap, i) => compareAnswer(gap, givenParts[i] ?? "", tag)) : []),
+		[verdict, gaps, givenParts, tag],
+	);
+	const gapSlips = useMemo(
+		() =>
+			gapVerdicts.map((v, i) =>
+				v === "accents" ? new Set(diacriticSlips(gaps[i]!, givenParts[i] ?? "", tag)) : new Set<number>(),
+			),
+		[gapVerdicts, gaps, givenParts, tag],
+	);
+	const hideInHistory = useMemo(
+		() => (prompt && !verdict ? new Set(wordsOf(prompt.answer)) : NO_WORDS),
+		[prompt, verdict],
+	);
 	const typeInGap = (i: number, value: string) => {
 		const [head, ...rest] = value.split(/\s+/);
 		const spill = i < gaps.length - 1 && rest.length > 0;
@@ -578,9 +738,16 @@ export function ReviewSession() {
 					<QPie frac={day.s && day.s.dailyGoal > 0 ? day.s.todayXp / day.s.dailyGoal : 0} size={28} />
 					<div className="flex min-w-0 flex-col leading-[1.2]">
 						<b className="q-num text-[15px] font-semibold tracking-[-0.01em]">
-							{day.s?.todayXp ?? 0} <span className="text-[13px] font-[450] text-ink-3">/ {day.s?.dailyGoal ?? 50} XP</span>
+							{day.s?.todayXp ?? 0}{" "}
+							<span className="text-[13px] font-[450] text-ink-3">/ {day.s?.dailyGoal ?? 50} XP</span>
 						</b>
-						<small className="text-xs text-ink-3">{day.s ? (day.s.todayXp < day.s.dailyGoal ? `${day.s.dailyGoal - day.s.todayXp} to today's goal` : "Today's goal is met") : " "}</small>
+						<small className="text-xs text-ink-3">
+							{day.s
+								? day.s.todayXp < day.s.dailyGoal
+									? `${day.s.dailyGoal - day.s.todayXp} to today's goal`
+									: "Today's goal is met"
+								: " "}
+						</small>
 					</div>
 					<Link href="/" className="q-btn ghost ml-auto">
 						Today
@@ -607,10 +774,14 @@ export function ReviewSession() {
 							>
 								<div className="lh-fill rounded-full bg-teal" style={fillStyle(total > 0 ? done / total : 0)} />
 							</div>
-							<span className="min-w-[52px] whitespace-nowrap text-right @sm:min-w-[88px] text-[12.5px] text-ink-3" data-testid="review-counts">
+							<span
+								className="min-w-[52px] whitespace-nowrap text-right @sm:min-w-[88px] text-[12.5px] text-ink-3"
+								data-testid="review-counts"
+							>
 								{counts && lang ? (
 									<>
-										<b className="q-num font-semibold text-ink-2">{done}</b> of <b className="q-num font-semibold text-ink-2">{total}</b>
+										<b className="q-num font-semibold text-ink-2">{done}</b> of{" "}
+										<b className="q-num font-semibold text-ink-2">{total}</b>
 										<span className="hidden @sm:inline"> today</span>
 									</>
 								) : null}
@@ -621,17 +792,34 @@ export function ReviewSession() {
 								aria-expanded={settingsOpen}
 								aria-controls="review-settings"
 								title="Review settings: answer by typing or choosing, and how many words a blank hides"
-								className={cn("grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-10", settingsOpen && "bg-well text-ink-2")}
+								className={cn(
+									"grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-10",
+									settingsOpen && "bg-well text-ink-2",
+								)}
 								data-testid="review-settings-toggle"
 							>
 								<SlidersHorizontalIcon className="size-4" aria-hidden="true" />
 								<span className="sr-only">Review settings</span>
 							</button>
-							<SoundControl className="-mr-1.5 flex shrink-0 items-center justify-center transition-colors pointer-coarse:size-10" iconClass="size-4" testid="review-sound" />
+							<SoundControl
+								className="-mr-1.5 flex shrink-0 items-center justify-center transition-colors pointer-coarse:size-10"
+								iconClass="size-4"
+								testid="review-sound"
+							/>
 						</div>
 						{settingsOpen && (
-							<div id="review-settings" role="group" aria-label="Review settings" className="lh-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8">
-								<DeckSettings mode={mode} onMode={chooseMode} blankWords={blankWordsNow} onBlankWords={chooseBlankWords} />
+							<div
+								id="review-settings"
+								role="group"
+								aria-label="Review settings"
+								className="lh-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8"
+							>
+								<DeckSettings
+									mode={mode}
+									onMode={chooseMode}
+									blankWords={blankWordsNow}
+									onBlankWords={chooseBlankWords}
+								/>
 							</div>
 						)}
 					</div>
@@ -639,7 +827,10 @@ export function ReviewSession() {
 					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
 						<div className={cn(COLUMN, "pb-12")}>
 							{loadError && (
-								<div role="alert" className="mt-8 flex flex-wrap items-center gap-3 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground">
+								<div
+									role="alert"
+									className="mt-8 flex flex-wrap items-center gap-3 rounded-lg bg-miss-soft px-4 py-3 text-[14px] text-foreground"
+								>
 									<p>Couldn&apos;t load your review deck. {loadError}</p>
 									<button type="button" onClick={() => void load()} className="q-btn sec ml-auto">
 										Try again
@@ -649,7 +840,12 @@ export function ReviewSession() {
 
 							{/* A card that arrives late must not push the page: its space is held from the first frame, drawn only after the skeleton delay. */}
 							{!loadError && (!status || (prompt && !lang)) && (
-								<div className={cn("min-h-[300px] pt-8 @xl:pt-12", !slow && "invisible")} aria-busy="true" aria-label="Loading your review deck" data-testid="review-loading">
+								<div
+									className={cn("min-h-[300px] pt-8 @xl:pt-12", !slow && "invisible")}
+									aria-busy="true"
+									aria-label="Loading your review deck"
+									data-testid="review-loading"
+								>
 									<div className="h-3 w-24 animate-pulse rounded bg-well-2" />
 									<div className="mt-5 h-10 w-full animate-pulse rounded-lg bg-well-2 @xl:h-12" />
 									<div className="mt-4 h-10 w-2/3 animate-pulse rounded-lg bg-well-2 @xl:h-12" />
@@ -659,28 +855,44 @@ export function ReviewSession() {
 
 							{status && !status.available && (
 								<p className="pt-8 text-[17px] leading-relaxed text-ink-2 @xl:pt-12" data-testid="review-unavailable">
-									This language has no words yet, so there is nothing to review. Add its words from the language menu at the top of the sidebar (Add a language…).
+									This language has no words yet, so there is nothing to review. Add its words from the language menu at
+									the top of the sidebar (Add a language…).
 								</p>
 							)}
 
 							{caughtUp && (
 								<section className="lh-fade pt-8 @xl:pt-12" data-testid="review-done">
-																		<h1 className="text-[34px] leading-[44px] font-semibold tracking-[-0.032em] text-foreground @xl:text-[44px] @xl:leading-[60px]">{done > 0 ? "All caught up." : "Nothing is due right now."}</h1>
+									<h1 className="text-[34px] leading-[44px] font-semibold tracking-[-0.032em] text-foreground @xl:text-[44px] @xl:leading-[60px]">
+										{done > 0 ? "All caught up." : "Nothing is due right now."}
+									</h1>
 									<p className="q-line dim mt-3 max-w-lg" data-testid="review-left">
-										{counts && stillToDo(counts) !== "All done for today." ? `${stillToDo(counts)} ` : ""}Words come back on the day they are due, and new ones arrive tomorrow.
+										{counts && stillToDo(counts) !== "All done for today." ? `${stillToDo(counts)} ` : ""}Words come
+										back on the day they are due, and new ones arrive tomorrow.
 									</p>
 									<div className="mt-6 flex items-center gap-3" data-testid="review-new-per-day">
 										<span className="text-[13px] text-ink-3" id="review-new-per-day-label">
 											New words per day
 										</span>
 										<div className="q-segc" role="group" aria-labelledby="review-new-per-day-label">
-											<button type="button" onClick={() => stepNewPerDay(-5)} disabled={(newPerDay ?? status.settings.newPerDay) <= 0} aria-label="Five fewer new words per day" className="disabled:opacity-40">
+											<button
+												type="button"
+												onClick={() => stepNewPerDay(-5)}
+												disabled={(newPerDay ?? status.settings.newPerDay) <= 0}
+												aria-label="Five fewer new words per day"
+												className="disabled:opacity-40"
+											>
 												<MinusIcon className="size-3.5" />
 											</button>
 											<span className="q-num grid w-10 place-items-center text-[13px] font-semibold" aria-live="polite">
 												{newPerDay ?? status.settings.newPerDay}
 											</span>
-											<button type="button" onClick={() => stepNewPerDay(5)} disabled={(newPerDay ?? status.settings.newPerDay) >= 100} aria-label="Five more new words per day" className="disabled:opacity-40">
+											<button
+												type="button"
+												onClick={() => stepNewPerDay(5)}
+												disabled={(newPerDay ?? status.settings.newPerDay) >= 100}
+												aria-label="Five more new words per day"
+												className="disabled:opacity-40"
+											>
 												<PlusIcon className="size-3.5" />
 											</button>
 										</div>
@@ -690,10 +902,21 @@ export function ReviewSession() {
 							)}
 
 							{prompt && lang && (
-								<article ref={bodyRef} className="pt-5 @xl:pt-12" data-testid="review-card" aria-label={`Review, ${isNew ? "new word" : "card"}`}>
+								<article
+									ref={bodyRef}
+									className="pt-5 @xl:pt-12"
+									data-testid="review-card"
+									aria-label={`Review, ${isNew ? "new word" : "card"}`}
+								>
 									<div className="flex h-8 items-center gap-3 text-[13px] text-ink-3">
 										<span className="whitespace-nowrap font-[450]" data-testid="review-kind">
-											{isNew ? (newTotal > 0 ? `New word ${position} of ${newTotal}` : "New word") : prompt.card.state === "learning" ? "Relearning" : "Review"}
+											{isNew
+												? newTotal > 0
+													? `New word ${position} of ${newTotal}`
+													: "New word"
+												: prompt.card.state === "learning"
+													? "Relearning"
+													: "Review"}
 										</span>
 										{prompt.sentenceSource && (
 											<span className="-ml-1.5 hidden min-w-0 truncate @lg:inline" data-testid="review-source">
@@ -701,14 +924,29 @@ export function ReviewSession() {
 											</span>
 										)}
 										{hidden ? (
-											<span className="ml-auto flex items-center gap-1 whitespace-nowrap" role="status" data-testid="review-hidden">
+											<span
+												className="ml-auto flex items-center gap-1 whitespace-nowrap"
+												role="status"
+												data-testid="review-hidden"
+											>
 												Hidden: <span lang={lang?.code}>{hidden.lemma}</span>
-												<button type="button" onClick={() => void unhide()} className="q-btn ghost -mr-2.5 !h-8 !px-2 !text-[13px] !text-teal-2" data-testid="review-unhide">
+												<button
+													type="button"
+													onClick={() => void unhide()}
+													className="q-btn ghost -mr-2.5 !h-8 !px-2 !text-[13px] !text-teal-2"
+													data-testid="review-unhide"
+												>
 													Undo
 												</button>
 											</span>
 										) : (
-											<button type="button" onClick={() => void suspend()} className="q-btn ghost -mr-2.5 ml-auto !h-8 !text-[13px] !font-[450]" title="Never show this word again" data-testid="review-suspend">
+											<button
+												type="button"
+												onClick={() => void suspend()}
+												className="q-btn ghost -mr-2.5 ml-auto !h-8 !text-[13px] !font-[450]"
+												title="Never show this word again"
+												data-testid="review-suspend"
+											>
 												<EyeOffIcon className="size-3.5" aria-hidden="true" />
 												Hide this word
 											</button>
@@ -748,10 +986,27 @@ export function ReviewSession() {
 																	{!verdict && !picks && (fields[i]?.length ?? 0) > gap.length ? fields[i] : gap}
 																</span>
 																{verdict ? (
-																	<span className="lh-pop col-start-1 row-start-1 whitespace-pre text-center" data-testid="review-answer">
-																		<span className={cn(v === "exact" && "underline decoration-teal decoration-2 underline-offset-[8px]", v === "wrong" && "underline decoration-miss decoration-2 underline-offset-[8px]")}>
+																	<span
+																		className="lh-pop col-start-1 row-start-1 whitespace-pre text-center"
+																		data-testid="review-answer"
+																	>
+																		<span
+																			className={cn(
+																				v === "exact" &&
+																					"underline decoration-teal decoration-2 underline-offset-[8px]",
+																				v === "wrong" &&
+																					"underline decoration-miss decoration-2 underline-offset-[8px]",
+																			)}
+																		>
 																			{[...gap].map((ch, k) => (
-																				<span key={k} className={gapSlips[i]?.has(k) ? "underline decoration-2 underline-offset-4" : undefined}>
+																				<span
+																					key={k}
+																					className={
+																						gapSlips[i]?.has(k)
+																							? "underline decoration-2 underline-offset-4"
+																							: undefined
+																					}
+																				>
 																					{ch}
 																				</span>
 																			))}
@@ -776,7 +1031,10 @@ export function ReviewSession() {
 																				e.stopPropagation();
 																				if (typed.some(Boolean)) check(typed);
 																				else focusOpenGap();
-																			} else if (i > 0 && ((e.key === "Backspace" && !el.value) || (e.key === "ArrowLeft" && atStart))) {
+																			} else if (
+																				i > 0 &&
+																				((e.key === "Backspace" && !el.value) || (e.key === "ArrowLeft" && atStart))
+																			) {
 																				e.preventDefault();
 																				focusGap(i - 1);
 																			} else if (i < gaps.length - 1 && e.key === "ArrowRight" && atEnd) {
@@ -784,7 +1042,9 @@ export function ReviewSession() {
 																				focusGap(i + 1);
 																			}
 																		}}
-																		aria-label={gaps.length > 1 ? `Missing word ${i + 1} of ${gaps.length}` : "Missing word"}
+																		aria-label={
+																			gaps.length > 1 ? `Missing word ${i + 1} of ${gaps.length}` : "Missing word"
+																		}
 																		autoComplete="off"
 																		autoCorrect="off"
 																		spellCheck={false}
@@ -807,17 +1067,34 @@ export function ReviewSession() {
 											{prompt.card.translation}
 										</p>
 										<span className={cn("flex shrink-0 gap-2", !verdict && "invisible")} aria-hidden={!verdict}>
-											<PlayButton text={prompt.card.sentence} className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2" label="Play the sentence" />
+											<PlayButton
+												text={prompt.card.sentence}
+												className="size-8 shrink-0 rounded-full bg-well text-ink-2 hover:bg-well-2"
+												label="Play the sentence"
+											/>
 											<button
 												type="button"
 												onClick={() => void saveSentence()}
 												aria-pressed={savedIds.has(prompt.card.id)}
-												aria-label={savedIds.has(prompt.card.id) ? "Sentence saved to your phrases" : "Save the sentence to your phrases"}
-												title={savedIds.has(prompt.card.id) ? "Saved to your phrases" : "Save the sentence to your phrases"}
+												aria-label={
+													savedIds.has(prompt.card.id)
+														? "Sentence saved to your phrases"
+														: "Save the sentence to your phrases"
+												}
+												title={
+													savedIds.has(prompt.card.id) ? "Saved to your phrases" : "Save the sentence to your phrases"
+												}
 												data-testid="review-save-phrase"
-												className={cn("grid size-8 shrink-0 place-items-center rounded-full bg-well text-ink-2 hover:bg-well-2", savedIds.has(prompt.card.id) && "text-teal-2")}
+												className={cn(
+													"grid size-8 shrink-0 place-items-center rounded-full bg-well text-ink-2 hover:bg-well-2",
+													savedIds.has(prompt.card.id) && "text-teal-2",
+												)}
 											>
-												<BookmarkIcon className="size-4" fill={savedIds.has(prompt.card.id) ? "currentColor" : "none"} aria-hidden="true" />
+												<BookmarkIcon
+													className="size-4"
+													fill={savedIds.has(prompt.card.id) ? "currentColor" : "none"}
+													aria-hidden="true"
+												/>
 											</button>
 										</span>
 									</div>
@@ -839,28 +1116,47 @@ export function ReviewSession() {
 												)}
 											</p>
 
-											{!verdict && mode === "choice" && !picks && <p className="q-sub !mt-0 mb-3">You have met this word before, so this time you type it.</p>}
+											{!verdict && mode === "choice" && !picks && (
+												<p className="q-sub !mt-0 mb-3">You have met this word before, so this time you type it.</p>
+											)}
 
 											{picks && (
 												<div className="grid gap-2 @xl:grid-cols-2" data-testid="review-options">
 													{prompt.options.map((o, i) => (
-														<OptionTile key={o} n={i + 1} onClick={() => check([o])} disabled={!!verdict} lang={lang?.code}>
+														<OptionTile
+															key={o}
+															n={i + 1}
+															onClick={() => check([o])}
+															disabled={!!verdict}
+															lang={lang?.code}
+														>
 															{o}
 														</OptionTile>
 													))}
 												</div>
 											)}
 
-											{!picks && (
-												<DiacriticBar variant="keys" />
-											)}
+											{!picks && <DiacriticBar variant="keys" />}
 										</div>
 
 										{verdict && (
 											<div className="lh-fade col-start-1 row-start-1" data-testid="review-feedback">
-												<p className={cn("q-result !text-[15px]", verdict === "wrong" && "miss")} data-testid="review-verdict">
-													{verdict === "wrong" ? <XIcon className="size-4" strokeWidth={2} aria-hidden="true" /> : <QIcon name="check" />}
-													{exact ? (helped ? "Right" : "Right on the first try") : verdict === "accents" ? "Almost, check the accents" : "Not quite"}
+												<p
+													className={cn("q-result !text-[15px]", verdict === "wrong" && "miss")}
+													data-testid="review-verdict"
+												>
+													{verdict === "wrong" ? (
+														<XIcon className="size-4" strokeWidth={2} aria-hidden="true" />
+													) : (
+														<QIcon name="check" />
+													)}
+													{exact
+														? helped
+															? "Right"
+															: "Right on the first try"
+														: verdict === "accents"
+															? "Almost, check the accents"
+															: "Not quite"}
 													{exact && <span>· {helped ? "help used" : "no help used"}</span>}
 													{!exact && given.trim() && !(verdict === "wrong" && reason) && (
 														<span className="min-w-0 truncate">
@@ -868,11 +1164,23 @@ export function ReviewSession() {
 														</span>
 													)}
 												</p>
-												{verdict === "wrong" && reason && <MissWhy reason={reason} given={reason.given ?? targetWordOf(prompt, given)} answer={reason.answer ?? prompt.card.answer} code={lang?.code} className="mt-3" />}
+												{verdict === "wrong" && reason && (
+													<MissWhy
+														reason={reason}
+														given={reason.given ?? targetWordOf(prompt, given)}
+														answer={reason.answer ?? prompt.card.answer}
+														code={lang?.code}
+														className="mt-3"
+													/>
+												)}
 												{verdict !== "wrong" && (
 													<p className="mt-3 flex flex-wrap gap-x-6 gap-y-1" data-testid="review-facts">
 														<Note label="word">
-															<Link href={`/words?search=${encodeURIComponent(prompt.card.lemma)}`} lang={lang?.code} className="underline decoration-line-2 underline-offset-2 hover:text-ink">
+															<Link
+																href={`/words?search=${encodeURIComponent(prompt.card.lemma)}`}
+																lang={lang?.code}
+																className="underline decoration-line-2 underline-offset-2 hover:text-ink"
+															>
 																{prompt.card.lemma}
 															</Link>
 															<span className="ml-1.5 font-[450] text-ink-2">{shortGloss(prompt.card.gloss)}</span>
@@ -880,22 +1188,28 @@ export function ReviewSession() {
 														{prompt.form && <Note label="form">{prompt.form}</Note>}
 													</p>
 												)}
-</div>
+											</div>
 										)}
 									</div>
 								</article>
 							)}
 
-
 							{lang && status?.available && answered.length > 0 && (prompt || caughtUp) && (
-								<AnsweredHistory lines={answered} sessionSince={newestLineAtOpen} answeredToday={counts?.reviewedToday ?? answered.length} code={lang.code} hide={hideInHistory} />
+								<AnsweredHistory
+									lines={answered}
+									sessionSince={newestLineAtOpen}
+									answeredToday={counts?.reviewedToday ?? answered.length}
+									code={lang.code}
+									hide={hideInHistory}
+								/>
 							)}
 
 							{status && lang && status.leeches.length > 0 && (
 								<section className="mt-12" data-testid="review-leeches">
 									<h2 className="q-sh">Words that keep slipping</h2>
 									<p className="q-sub" style={{ marginTop: 0 }}>
-										Missed again and again. A lesson on them, or a sentence of your own, often helps more than another review.
+										Missed again and again. A lesson on them, or a sentence of your own, often helps more than another
+										review.
 									</p>
 									<ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
 										{status.leeches.map((l) => (
@@ -938,7 +1252,10 @@ export function ReviewSession() {
 												data-testid="review-hint"
 											>
 												<span className="flex items-center gap-2">
-													<LightbulbIcon className="hidden size-3.5 shrink-0 text-ink-3 @2xl:block" aria-hidden="true" />
+													<LightbulbIcon
+														className="hidden size-3.5 shrink-0 text-ink-3 @2xl:block"
+														aria-hidden="true"
+													/>
 													{hint === 0 ? "Show meaning" : hint === 1 ? "Show base form" : "Both hints shown"}
 												</span>
 												<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
@@ -946,14 +1263,25 @@ export function ReviewSession() {
 													{hint === 0 ? "at most Good" : "at most Hard"}
 												</span>
 											</button>
-											<button type="button" onClick={() => check(gaps.map(() => ""))} className={HELP_BUTTON} data-testid="review-dont-know">
+											<button
+												type="button"
+												onClick={() => check(gaps.map(() => ""))}
+												className={HELP_BUTTON}
+												data-testid="review-dont-know"
+											>
 												I don&apos;t know
 												<span className="text-[12px] font-[450] text-ink-3 @2xl:text-[13px]">
 													<span className="hidden @2xl:inline">· </span>counts as Again
 												</span>
 											</button>
 											{!picks && (
-												<button type="button" onClick={() => check(typed)} disabled={!typed.some(Boolean)}	className="q-btn primary col-span-2 !h-12 @2xl:ml-auto @2xl:min-w-44" data-testid="review-check">
+												<button
+													type="button"
+													onClick={() => check(typed)}
+													disabled={!typed.some(Boolean)}
+													className="q-btn primary col-span-2 !h-12 @2xl:ml-auto @2xl:min-w-44"
+													data-testid="review-check"
+												>
 													Check
 													<span className="q-kbd pointer-coarse:hidden">
 														<QIcon name="enter" />
@@ -964,7 +1292,10 @@ export function ReviewSession() {
 									) : (
 										<div key="rate" className="grid gap-2 @2xl:flex @2xl:h-14 @2xl:items-center">
 											{cap === 1 ? (
-												<p className="flex h-14 items-center text-[15px] text-ink-2 @2xl:w-[440px]" data-testid="review-ratings">
+												<p
+													className="flex h-14 items-center text-[15px] text-ink-2 @2xl:w-[440px]"
+													data-testid="review-ratings"
+												>
 													<b className="font-semibold text-foreground">Again</b>
 													<span aria-hidden="true" className="mx-2 text-ink-3">
 														·
@@ -972,31 +1303,53 @@ export function ReviewSession() {
 													<span className="text-ink-3">comes back in {comesBack(prompt.intervals[1])}</span>
 												</p>
 											) : (
-											<div className="grid h-14 grid-cols-4 rounded-[10px] bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)] @2xl:w-[440px]" role="radiogroup" aria-label="Rate it yourself: when the word comes back" data-testid="review-ratings">
-												{([1, 2, 3, 4] as Rating[]).map((r) => (
-													<button
-														key={r}
-														type="button"
-														role="radio"
-														aria-checked={r === shownSuggested}
-														disabled={saving || r > cap}
-														onClick={() => setSuggested(r)}
-														title={r > cap ? `${RATING_LABELS[r]} is off: ${verdict === "wrong" ? "a miss counts as Again" : "you had help on this card"}` : undefined}
-														className={cn(
-															"relative flex min-w-0 flex-col items-center justify-center text-[14px] font-semibold text-foreground transition-colors first:rounded-l-[10px] last:rounded-r-[10px]",
-															r > 1 && "shadow-[inset_1px_0_0_var(--q-line)]",
-															r !== shownSuggested && "hover:bg-well-2 disabled:text-ink-4 disabled:hover:bg-transparent",
-															r === shownSuggested && "rounded-[10px] bg-card text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
-														)}
-													>
-														<kbd className="absolute left-1.5 top-1.5 hidden font-ui text-[12px] font-[550] text-ink-4 pointer-fine:block">{r}</kbd>
-														{RATING_LABELS[r]}
-														<span className="q-num text-[12px] font-[450] text-ink-3">{comesBack(prompt.intervals[r])}</span>
-													</button>
-												))}
-											</div>
+												<div
+													className="grid h-14 grid-cols-4 rounded-[10px] bg-well shadow-[inset_0_0_0_1px_var(--q-line-2)] @2xl:w-[440px]"
+													role="radiogroup"
+													aria-label="Rate it yourself: when the word comes back"
+													data-testid="review-ratings"
+												>
+													{([1, 2, 3, 4] as Rating[]).map((r) => (
+														<button
+															key={r}
+															type="button"
+															role="radio"
+															aria-checked={r === shownSuggested}
+															disabled={saving || r > cap}
+															onClick={() => setSuggested(r)}
+															title={
+																r > cap
+																	? `${RATING_LABELS[r]} is off: ${verdict === "wrong" ? "a miss counts as Again" : "you had help on this card"}`
+																	: undefined
+															}
+															className={cn(
+																"relative flex min-w-0 flex-col items-center justify-center text-[14px] font-semibold text-foreground transition-colors first:rounded-l-[10px] last:rounded-r-[10px]",
+																r > 1 && "shadow-[inset_1px_0_0_var(--q-line)]",
+																r !== shownSuggested &&
+																	"hover:bg-well-2 disabled:text-ink-4 disabled:hover:bg-transparent",
+																r === shownSuggested &&
+																	"rounded-[10px] bg-card text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
+															)}
+														>
+															<kbd className="absolute left-1.5 top-1.5 hidden font-ui text-[12px] font-[550] text-ink-4 pointer-fine:block">
+																{r}
+															</kbd>
+															{RATING_LABELS[r]}
+															<span className="q-num text-[12px] font-[450] text-ink-3">
+																{comesBack(prompt.intervals[r])}
+															</span>
+														</button>
+													))}
+												</div>
 											)}
-											<button type="button" autoFocus disabled={saving} onClick={() => void rate(shownSuggested)} data-testid="review-continue" className="q-btn primary !h-12 @2xl:ml-auto @2xl:min-w-44">
+											<button
+												type="button"
+												autoFocus
+												disabled={saving}
+												onClick={() => void rate(shownSuggested)}
+												data-testid="review-continue"
+												className="q-btn primary !h-12 @2xl:ml-auto @2xl:min-w-44"
+											>
 												{saving && <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />}
 												Continue · {RATING_LABELS[shownSuggested]}
 												<span className="q-kbd pointer-coarse:hidden">
@@ -1006,7 +1359,7 @@ export function ReviewSession() {
 										</div>
 									)}
 								</div>
-</div>
+							</div>
 						</div>
 					)}
 

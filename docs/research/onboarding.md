@@ -1,6 +1,6 @@
 # Setup and placement: finding goals and level without a long chat
 
-*LangHarness, 2026-10-28. Thread "Rethink how learner goals are set". Code: `src/core/onboarding.ts`, `components/onboarding/`, `src/agent/learner-profile.ts`, `components/hours-sheet.tsx`.*
+_LangHarness, 2026-10-28. Thread "Rethink how learner goals are set". Code: `src/core/onboarding.ts`, `components/onboarding/`, `src/agent/learner-profile.ts`, `components/hours-sheet.tsx`._
 
 ## The problem
 

@@ -83,7 +83,7 @@ test("the ladder: enters where the learner said, jumps on a hold, halves on a ga
 	assert.ok(re.n <= 8, `a re-check asks only above its start: ${re.n}`);
 	// Noisy learners: right placement most of the time, ~11 items.
 	let seed = 11;
-	const rand = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+	const rand = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
 	let right = 0;
 	let items = 0;
 	const N = 200;
@@ -102,24 +102,36 @@ test("the ladder: enters where the learner said, jumps on a hold, halves on a ga
 });
 
 test("the Socratic stage's JSON: verdicts and asks only on the units offered; prose becomes a closing line; verdicts replace the drill's reps", () => {
-	const { parseProbeReply, probeReps, withProbe, probeUnits, placementOutcome, placementTiers, REPS_PER_UNIT } = onboarding;
+	const { parseProbeReply, probeReps, withProbe, probeUnits, placementOutcome, placementTiers, REPS_PER_UNIT } =
+		onboarding;
 	const units = ["motion", "cond"] as const;
-	const r = parseProbeReply('```json\n{"say":"Right form.","verdict":{"unit":"motion","result":"held","note":"idem do školy"},"ask":{"unit":"cond","prompt":"Give the form","sk":"Keby som ___ (mať) čas.","kind":"produce"},"done":null}\n```', [...units]);
+	const r = parseProbeReply(
+		'```json\n{"say":"Right form.","verdict":{"unit":"motion","result":"held","note":"idem do školy"},"ask":{"unit":"cond","prompt":"Give the form","sk":"Keby som ___ (mať) čas.","kind":"produce"},"done":null}\n```',
+		[...units],
+	);
 	assert.equal(r.say, "Right form.");
 	assert.deepEqual(r.verdict, { unit: "motion", result: "held", note: "idem do školy" });
 	assert.equal(r.ask?.unit, "cond");
 	assert.equal(r.done, undefined);
-	const odd = parseProbeReply('{"say":"x","verdict":{"unit":"plural","result":"gap","note":""},"ask":{"unit":"plural","sk":"…"},"done":"That is the edge."}', [...units]);
+	const odd = parseProbeReply(
+		'{"say":"x","verdict":{"unit":"plural","result":"gap","note":""},"ask":{"unit":"plural","sk":"…"},"done":"That is the edge."}',
+		[...units],
+	);
 	assert.equal(odd.verdict, undefined, "a unit outside the offer is dropped");
 	assert.equal(odd.ask, undefined);
 	assert.equal(odd.done, "That is the edge.");
 	const prose = parseProbeReply("I could not decide.", [...units]);
 	assert.equal(prose.done, "", "prose with no ask ends the stage");
 	assert.equal(prose.say, "I could not decide.");
-	const reps = probeReps([{ unit: "motion", result: "slip", note: "" }, { unit: "cond", result: "gap", note: "" }]);
+	const reps = probeReps([
+		{ unit: "motion", result: "slip", note: "" },
+		{ unit: "cond", result: "gap", note: "" },
+	]);
 	assert.equal(reps.length, 2 * REPS_PER_UNIT);
 	assert.equal(reps.filter((x) => x.verdict === "exact").length, 1);
-	const drill = placementTiers()[2]!.units.flatMap((u) => [0, 1].map(() => ({ tier: "a2", unit: u, verdict: (u === "motion" ? "wrong" : "exact") as "exact" | "wrong" })));
+	const drill = placementTiers()[2]!.units.flatMap((u) =>
+		[0, 1].map(() => ({ tier: "a2", unit: u, verdict: (u === "motion" ? "wrong" : "exact") as "exact" | "wrong" })),
+	);
 	const before = placementOutcome(drill, { from: 2 });
 	assert.equal(before.weak.join(), "motion");
 	const after = placementOutcome(withProbe(drill, [{ unit: "motion", result: "held", note: "" }]), { from: 2 });
@@ -131,27 +143,47 @@ test("the Socratic stage's JSON: verdicts and asks only on the units offered; pr
 
 test("the word check: bands scored with the false-alarm correction, pseudowords are not in the dictionary", () => {
 	const { scoreVocab, makePseudowords, VOCAB_BANDS, WORDS_PER_BAND } = vocab;
-	const items: Array<{ id: string; word: string; band: string | null }> = VOCAB_BANDS.flatMap((b) => Array.from({ length: WORDS_PER_BAND }, (_, i) => ({ id: `${b.id}-${i}`, word: `w${b.id}${i}`, band: b.id })));
+	const items: Array<{ id: string; word: string; band: string | null }> = VOCAB_BANDS.flatMap((b) =>
+		Array.from({ length: WORDS_PER_BAND }, (_, i) => ({ id: `${b.id}-${i}`, word: `w${b.id}${i}`, band: b.id })),
+	);
 	for (let i = 0; i < 8; i++) items.push({ id: `pseudo-${i}`, word: `p${i}`, band: null as string | null });
 	// Knows the first two bands fully, half of the third, nothing above; no false alarms.
-	const yes = new Set(items.filter((i) => i.band === "b500" || i.band === "b1000" || (i.band === "b2000" && Number(i.id.slice(-1)) < 4)).map((i) => i.id));
-	const e = scoreVocab(items, items.map((i) => ({ id: i.id, yes: yes.has(i.id) })));
+	const yes = new Set(
+		items
+			.filter((i) => i.band === "b500" || i.band === "b1000" || (i.band === "b2000" && Number(i.id.slice(-1)) < 4))
+			.map((i) => i.id),
+	);
+	const e = scoreVocab(
+		items,
+		items.map((i) => ({ id: i.id, yes: yes.has(i.id) })),
+	);
 	assert.equal(e.size, 1500);
 	assert.equal(e.falseAlarms, 0);
 	assert.equal(e.reliable, true);
 	// Ticking everything, pseudowords included, is worth nothing.
-	const all = scoreVocab(items, items.map((i) => ({ id: i.id, yes: true })));
+	const all = scoreVocab(
+		items,
+		items.map((i) => ({ id: i.id, yes: true })),
+	);
 	assert.equal(all.size, 0);
 	assert.equal(all.reliable, false);
 	// Two of eight pseudowords ticked discounts the real ticks.
-	const some = scoreVocab(items, items.map((i) => ({ id: i.id, yes: yes.has(i.id) || i.id === "pseudo-0" || i.id === "pseudo-1" })));
+	const some = scoreVocab(
+		items,
+		items.map((i) => ({ id: i.id, yes: yes.has(i.id) || i.id === "pseudo-0" || i.id === "pseudo-1" })),
+	);
 	assert.ok(some.size < 1500 && some.size > 1000, `${some.size}`);
 	assert.equal(some.reliable, true);
 	const lexicon = loadLexicon()!;
 	let seed = 5;
-	const rand = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+	const rand = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
 	const real = (w: string) => lexicon.byForm.has(w) || lexicon.byFolded.has(w) || lexicon.bySlug.has(w);
-	const ps = makePseudowords(lexicon.entries.slice(0, 2000).map((x) => entryLemma(x)), 8, rand, real);
+	const ps = makePseudowords(
+		lexicon.entries.slice(0, 2000).map((x) => entryLemma(x)),
+		8,
+		rand,
+		real,
+	);
 	assert.equal(ps.length, 8);
 	for (const w of ps) {
 		assert.ok(!real(w), `${w} is a real word`);
@@ -168,7 +200,11 @@ test("the whole check through the server: items one at a time, a typed alternati
 	assert.equal(start.from, 0);
 	assert.equal(start.item.kind, "type");
 	assert.equal(start.progress.asked, 0);
-	assert.equal(ladder.placementLadder().indexOf(start.item.unit), ladder.START_BY_PRIOR.reading, "a reader enters at A2");
+	assert.equal(
+		ladder.placementLadder().indexOf(start.item.unit),
+		ladder.START_BY_PRIOR.reading,
+		"a reader enters at A2",
+	);
 	assert.ok(fs.existsSync(path.join(PATHS.placement, `${start.id}.json`)));
 
 	// Answer the ladder: everything right up to rung 10, by string; the
@@ -182,11 +218,17 @@ test("the whole check through the server: items one at a time, a typed alternati
 		let out;
 		if (!right && !judgedOnce) {
 			judgedOnce = true;
-			out = await server.answerPlacement({ id: start.id, itemId: item.id, given: "iný", verdict: "wrong" }, { engine: fauxEngine([reply({ accept: true, note: "a synonym that fits the slot" })]), now });
+			out = await server.answerPlacement(
+				{ id: start.id, itemId: item.id, given: "iný", verdict: "wrong" },
+				{ engine: fauxEngine([reply({ accept: true, note: "a synonym that fits the slot" })]), now },
+			);
 			assert.equal(out.verdict, "exact", "the model's acceptance counts as right");
 			assert.equal(out.judged?.accepted, true);
 		} else {
-			out = await server.answerPlacement({ id: start.id, itemId: item.id, given: right ? item.answer : "zle", verdict: right ? "exact" : "wrong" }, { engine: fauxEngine([reply({ accept: false, note: "wrong case" })]), now });
+			out = await server.answerPlacement(
+				{ id: start.id, itemId: item.id, given: right ? item.answer : "zle", verdict: right ? "exact" : "wrong" },
+				{ engine: fauxEngine([reply({ accept: false, note: "wrong case" })]), now },
+			);
 			if (!right) assert.equal(out.judged?.accepted, false);
 		}
 		answered++;
@@ -199,15 +241,38 @@ test("the whole check through the server: items one at a time, a typed alternati
 	}
 	const session = placementStore.get(start.id)!;
 	assert.equal(session.items.filter((r) => r.verdict).length, answered);
-	assert.ok(session.items.some((r) => r.judged?.accepted), "the judgement is on disk");
+	assert.ok(
+		session.items.some((r) => r.judged?.accepted),
+		"the judgement is on disk",
+	);
 	assert.ok(session.usage.steps.length >= 1, "the judge's call is costed");
 
 	// The Socratic stage: a first reply that asks about a unit not offered is asked again once; then the tutor asks about the first miss, judges it a slip, asks once more, then stops.
 	const engine = fauxEngine([
-		reply({ say: "", verdict: null, ask: { unit: "numbers", prompt: "Count", sk: "___ (3) psy", kind: "produce" }, done: null }),
-		reply({ say: "", verdict: null, ask: { unit: "cond", prompt: "Give the form", sk: "Keby som ___ (mať) čas.", kind: "produce" }, done: null }),
-		reply({ say: "Right form.", verdict: { unit: "cond", result: "slip", note: "mal after a nudge" }, ask: { unit: "cond", prompt: "What decided it?", sk: "Keby som mal čas.", kind: "why" }, done: null }),
-		reply({ say: "That is it.", verdict: { unit: "cond", result: "held", note: "knows keby + past form" }, ask: null, done: "The conditional is held; the edge is motion verbs." }),
+		reply({
+			say: "",
+			verdict: null,
+			ask: { unit: "numbers", prompt: "Count", sk: "___ (3) psy", kind: "produce" },
+			done: null,
+		}),
+		reply({
+			say: "",
+			verdict: null,
+			ask: { unit: "cond", prompt: "Give the form", sk: "Keby som ___ (mať) čas.", kind: "produce" },
+			done: null,
+		}),
+		reply({
+			say: "Right form.",
+			verdict: { unit: "cond", result: "slip", note: "mal after a nudge" },
+			ask: { unit: "cond", prompt: "What decided it?", sk: "Keby som mal čas.", kind: "why" },
+			done: null,
+		}),
+		reply({
+			say: "That is it.",
+			verdict: { unit: "cond", result: "held", note: "knows keby + past form" },
+			ask: null,
+			done: "The conditional is held; the edge is motion verbs.",
+		}),
 	]);
 	let t = await server.probePlacement({ id: start.id }, { engine, now });
 	assert.equal(t.done, false);
@@ -228,7 +293,10 @@ test("the whole check through the server: items one at a time, a typed alternati
 	assert.equal(items.length, 48);
 	assert.equal(items.filter((i) => i.band === null).length, 8);
 	assert.deepEqual(server.wordsFor(start.id), items, "the same items on a second read");
-	const est = server.recordWords(start.id, items.map((i) => ({ id: i.id, yes: i.band === "b500" || i.band === "b1000" })));
+	const est = server.recordWords(
+		start.id,
+		items.map((i) => ({ id: i.id, yes: i.band === "b500" || i.band === "b1000" })),
+	);
 	assert.equal(est.size, 1000);
 
 	// Finish: the held verdict on cond lifts it out of the weak list; the outcome lands in progress.json; the lesson log has every rep.
@@ -248,7 +316,10 @@ test("the whole check through the server: items one at a time, a typed alternati
 	const weakUnits = Object.keys(rec.weak ?? {});
 	assert.ok(weakUnits.length >= 1, "the misses are on record");
 	assert.ok(weakUnits.every((u) => rec.weak![u]!.source === "check"));
-	assert.ok(weakUnits.some((u) => rec.weak![u]!.note === "wrong case"), `the judge's note is the evidence: ${JSON.stringify(rec.weak)}`);
+	assert.ok(
+		weakUnits.some((u) => rec.weak![u]!.note === "wrong case"),
+		`the judge's note is the evidence: ${JSON.stringify(rec.weak)}`,
+	);
 	assert.equal(rec.weak!["cond"], undefined, "held by the tutor: not a weak spot");
 	setGoal({ minutesPerDay: 90 }, 0, now); // a generous budget keeps every task; the plan is cut to the budget but never grows past its fixed task list
 	const summary = progressSummary(0, now);
@@ -258,33 +329,65 @@ test("the whole check through the server: items one at a time, a typed alternati
 	const mapUnits = summary.curriculum.chapters.flatMap((c) => c.units);
 	const openWeak = weakUnits.filter((u) => mapUnits.find((m) => m.id === u)?.status !== "locked");
 	const strengthen = summary.plan.tasks.find((t) => t.id === "strengthen");
-	if (openWeak.length) assert.ok(strengthen && openWeak.includes(strengthen.unit!), `Strengthen opens a weak spot: ${JSON.stringify(strengthen)}; weak ${JSON.stringify(weakUnits)}; next ${summary.next}; map ${JSON.stringify(mapUnits.filter((m) => weakUnits.includes(m.id)).map((m) => [m.id, m.kind, m.status]))}; tasks ${JSON.stringify(summary.plan.tasks.map((t) => [t.id, t.unit]))}`);
+	if (openWeak.length)
+		assert.ok(
+			strengthen && openWeak.includes(strengthen.unit!),
+			`Strengthen opens a weak spot: ${JSON.stringify(strengthen)}; weak ${JSON.stringify(weakUnits)}; next ${summary.next}; map ${JSON.stringify(mapUnits.filter((m) => weakUnits.includes(m.id)).map((m) => [m.id, m.kind, m.status]))}; tasks ${JSON.stringify(summary.plan.tasks.map((t) => [t.id, t.unit]))}`,
+		);
 	assert.match(learnerProfileSegment() ?? "", /Weak spots on record:/);
 	// Lessons mend it: enough reps right since the flag and the spot is dropped.
 	const target = weakUnits[0]! as UnitId;
-	const rep = (i: number, verdict: "exact" | "wrong") => ({ itemId: `x#${i}`, slug: "x", kind: "type" as const, verdict });
-	recordLesson({ unit: target, mode: "lesson", reps: Array.from({ length: 10 }, (_, i) => rep(i, i < 9 ? "exact" : "wrong")), tz: 0 }, now);
+	const rep = (i: number, verdict: "exact" | "wrong") => ({
+		itemId: `x#${i}`,
+		slug: "x",
+		kind: "type" as const,
+		verdict,
+	});
+	recordLesson(
+		{
+			unit: target,
+			mode: "lesson",
+			reps: Array.from({ length: 10 }, (_, i) => rep(i, i < 9 ? "exact" : "wrong")),
+			tz: 0,
+		},
+		now,
+	);
 	assert.equal(progressStore.read().weak![target], undefined, "9/10 since the flag mends it");
 	// And lessons flag one on their own: a unit under the bar after enough reps.
-	recordLesson({ unit: "gen", mode: "lesson", reps: Array.from({ length: 8 }, (_, i) => rep(i, i < 4 ? "exact" : "wrong")), tz: 0 }, now);
+	recordLesson(
+		{
+			unit: "gen",
+			mode: "lesson",
+			reps: Array.from({ length: 8 }, (_, i) => rep(i, i < 4 ? "exact" : "wrong")),
+			tz: 0,
+		},
+		now,
+	);
 	assert.equal(progressStore.read().weak!["gen"]?.source, "lesson");
 	assert.equal(progressStore.read().weak!["gen"]?.note, "50% right in lesson 1");
 	assert.equal(rec.xp, 0, "no XP for a measurement");
 	const log = readLessonLog().filter((e) => e.mode === "placement");
 	assert.equal(log.length, 1);
 	assert.equal(log[0]!.reps.length, answered);
-	assert.ok(log[0]!.reps.some((x) => x.hint?.startsWith("accepted:")), "the accepted alternative is marked in the log");
+	assert.ok(
+		log[0]!.reps.some((x) => x.hint?.startsWith("accepted:")),
+		"the accepted alternative is marked in the log",
+	);
 	assert.equal(placementStore.list().length, 1);
 	assert.equal(placementStore.list()[0]!.vocabulary, 1000);
 
 	// Without a model: the judge is skipped, the stage is skipped, string grading stands.
 	const plain = server.startPlacement({ now });
 	assert.equal(plain.judges, false);
-	const a = await server.answerPlacement({ id: plain.id, itemId: plain.item.id, given: "x", verdict: "wrong" }, { now });
+	const a = await server.answerPlacement(
+		{ id: plain.id, itemId: plain.item.id, given: "x", verdict: "wrong" },
+		{ now },
+	);
 	assert.equal(a.verdict, "wrong");
 	assert.equal(a.judged, undefined);
 	let st = a;
-	while (st.item) st = await server.answerPlacement({ id: plain.id, itemId: st.item.id, given: "x", verdict: "wrong" }, { now });
+	while (st.item)
+		st = await server.answerPlacement({ id: plain.id, itemId: st.item.id, given: "x", verdict: "wrong" }, { now });
 	const p = await server.probePlacement({ id: plain.id }, { now });
 	assert.equal(p.done, true);
 	assert.equal(p.skipped, true);
@@ -313,7 +416,16 @@ test("the luck check: the rung the level rests on is offered to the tutor again,
 	let rung = start.progress.unit!;
 	for (let n = 0; ; n++) {
 		const right = placementLadder().indexOf(rung) < 11;
-		const out = await server.answerPlacement({ id: start.id, itemId: item.id, given: right ? item.answer : "zle", verdict: right ? "exact" : "wrong", ms: 4000 }, { now });
+		const out = await server.answerPlacement(
+			{
+				id: start.id,
+				itemId: item.id,
+				given: right ? item.answer : "zle",
+				verdict: right ? "exact" : "wrong",
+				ms: 4000,
+			},
+			{ now },
+		);
 		if (!out.item) break;
 		item = out.item;
 		rung = out.progress.unit!;
@@ -326,14 +438,30 @@ test("the luck check: the rung the level rests on is offered to the tutor again,
 
 	const prompts: string[] = [];
 	const faux = fauxEngine([
-		reply({ say: "", verdict: null, ask: { unit: floor, prompt: "Give the form", sk: "Keby som ___ (mať) auto, išiel by som.", kind: "produce" }, done: null }),
-		reply({ say: "Not that form.", verdict: { unit: floor, result: "gap", note: "no form under keby" }, ask: null, done: "The conditional is not there yet." }),
+		reply({
+			say: "",
+			verdict: null,
+			ask: { unit: floor, prompt: "Give the form", sk: "Keby som ___ (mať) auto, išiel by som.", kind: "produce" },
+			done: null,
+		}),
+		reply({
+			say: "Not that form.",
+			verdict: { unit: floor, result: "gap", note: "no form under keby" },
+			ask: null,
+			done: "The conditional is not there yet.",
+		}),
 	]);
 	const engine = {
 		model: faux.model,
 		streamFn: ((model, context, options) => {
 			const last = context.messages[context.messages.length - 1];
-			prompts.push(last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "");
+			prompts.push(
+				last && typeof last.content === "string"
+					? last.content
+					: Array.isArray(last?.content)
+						? last.content.map((c) => ("text" in c ? c.text : "")).join("")
+						: "",
+			);
 			return faux.streamFn(model, context, options);
 		}) as typeof faux.streamFn,
 	};
@@ -362,23 +490,44 @@ test("the miss judge reads the earlier answers of the check, so its note can nam
 			model: faux.model,
 			streamFn: ((model, context, options) => {
 				const last = context.messages[context.messages.length - 1];
-				prompts.push(last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "");
+				prompts.push(
+					last && typeof last.content === "string"
+						? last.content
+						: Array.isArray(last?.content)
+							? last.content.map((c) => ("text" in c ? c.text : "")).join("")
+							: "",
+				);
 				return faux.streamFn(model, context, options);
 			}) as typeof faux.streamFn,
 		};
 	};
 	const first = start.item;
-	const a = await server.answerPlacement({ id: start.id, itemId: first.id, given: "prvé", verdict: "wrong" }, { engine: judging("A past form for a present meaning."), now });
+	const a = await server.answerPlacement(
+		{ id: start.id, itemId: first.id, given: "prvé", verdict: "wrong" },
+		{ engine: judging("A past form for a present meaning."), now },
+	);
 	assert.doesNotMatch(prompts[0]!, /Earlier answers/, "nothing earlier on the first answer");
 	const second = a.item!;
-	const b = await server.answerPlacement({ id: start.id, itemId: second.id, given: "druhé", verdict: "wrong" }, { engine: judging("Again a past form for a present meaning, as with prvé.", "Prvé "), now });
-	assert.match(prompts[1]!, /Earlier answers in this check, oldest first:\n- \[.+\] ".*" \(.*\) → wrote "prvé", form ".+": MISS \(A past form for a present meaning\.\)/);
+	const b = await server.answerPlacement(
+		{ id: start.id, itemId: second.id, given: "druhé", verdict: "wrong" },
+		{ engine: judging("Again a past form for a present meaning, as with prvé.", "Prvé "), now },
+	);
+	assert.match(
+		prompts[1]!,
+		/Earlier answers in this check, oldest first:\n- \[.+\] ".*" \(.*\) → wrote "prvé", form ".+": MISS \(A past form for a present meaning\.\)/,
+	);
 	assert.doesNotMatch(prompts[1]!, /wrote "druhé"/, "the answer being judged is not its own history");
 	assert.match(prompts[1]!, /^The learner typed: druhé$/m);
 	assert.equal(b.judged?.note, "Again a past form for a present meaning, as with prvé.");
 	assert.equal(b.judged?.repeat, "Prvé", "a repeat that names a real earlier miss is kept");
 	const earlier = placementStore.get(start.id)!.items;
-	const imagined = await server.judgeAnswer(second, "tretie", { model: "faux", steps: [] }, { engine: judging("Again, as with nič.", "nič") }, earlier);
+	const imagined = await server.judgeAnswer(
+		second,
+		"tretie",
+		{ model: "faux", steps: [] },
+		{ engine: judging("Again, as with nič.", "nič") },
+		earlier,
+	);
 	assert.equal(imagined?.repeat, undefined, "a repeat of a miss the learner never typed is dropped");
 
 	// The tutor sees the judge's notes and the repeat; the weak spot keeps the repeat's note, not the first one.

@@ -20,7 +20,7 @@ export function subscribeToBannerAlerts(handler: BannerAlertHandler): () => void
 	return () => bannerHandlers.delete(handler);
 }
 
-export function isDesktopNotificationSupported(): boolean {
+function isDesktopNotificationSupported(): boolean {
 	return typeof window !== "undefined" && "Notification" in window;
 }
 
@@ -47,13 +47,7 @@ export interface DispatchAlertOptions {
 }
 
 export async function dispatchReminderAlert(options: DispatchAlertOptions): Promise<void> {
-	const {
-		nudge,
-		soundPreset = "chime",
-		systemNotification = true,
-		inAppBanner = true,
-		onActionClick,
-	} = options;
+	const { nudge, soundPreset = "chime", systemNotification = true, inAppBanner = true, onActionClick } = options;
 
 	// 1. Play audio chime / custom sound
 	try {
@@ -89,9 +83,13 @@ export async function dispatchReminderAlert(options: DispatchAlertOptions): Prom
 				if (onActionClick) {
 					onActionClick();
 				} else if (nudge.taskKind || nudge.href) {
-					const target = nudge.href ?? (nudge.taskKind === "listen" ? "/listen" : `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`);
+					const target =
+						nudge.href ??
+						(nudge.taskKind === "listen" ? "/listen" : `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`);
 					if (nudge.languageId) {
-						switchLanguage(nudge.languageId, nudge.languageName ?? nudge.languageId, target).catch(() => window.location.assign(target));
+						switchLanguage(nudge.languageId, nudge.languageName ?? nudge.languageId, target).catch(() =>
+							window.location.assign(target),
+						);
 					} else {
 						window.location.assign(target);
 					}
@@ -104,5 +102,6 @@ export async function dispatchReminderAlert(options: DispatchAlertOptions): Prom
 }
 
 if (typeof window !== "undefined") {
-	(window as unknown as { __lhDispatchReminderAlert?: typeof dispatchReminderAlert }).__lhDispatchReminderAlert = dispatchReminderAlert;
+	(window as unknown as { __lhDispatchReminderAlert?: typeof dispatchReminderAlert }).__lhDispatchReminderAlert =
+		dispatchReminderAlert;
 }

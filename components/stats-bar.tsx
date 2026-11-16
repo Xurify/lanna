@@ -84,7 +84,7 @@ export function StatsBar({
 	// Missing/pending catalog means usage-only, never a hardcoded maximum.
 	const { catalog } = useModelCatalog();
 	const limits = useMemo(() => (catalog ? catalogLimits(catalog) : undefined), [catalog]);
-	const limit = selectedModel ? limits?.get(selectedModel) ?? null : null;
+	const limit = selectedModel ? (limits?.get(selectedModel) ?? null) : null;
 	const contextLabel = formatContextMeasurement(contextTokens, limit);
 	const { cost = 0, unpriced = turns.length, subscription = 0 } = pricing ?? {};
 	// Honest cost: show dollars only when at least one turn priced;
@@ -114,82 +114,81 @@ export function StatsBar({
 			{/* The left side: the session-data summary — only once a session
 			    exists (turns). Pre-chat renders nothing (see the header). */}
 			{(chatId || turns.length > 0) && (
-			<div ref={barRef} className="relative">
-				{/* No tooltip — the numbers describe themselves and the popover
+				<div ref={barRef} className="relative">
+					{/* No tooltip — the numbers describe themselves and the popover
 			    speaks on click (owner, subtlety round 2026-09-25). */}
-			<button
-				type="button"
-				onClick={() => setOpen((o) => !o)}
-				aria-expanded={open}
-				data-testid="stats-summary"
-				className="flex items-center gap-1.5 tabular-nums transition-colors hover:text-foreground"
-			>
-				<span data-testid="stats-context">
-					{contextLabel}
-				</span>
-				<span aria-hidden>·</span>
-				<span data-testid="stats-cost">{costLabel}</span>
-			</button>
-				{open && (
-					<div
-						data-testid="stats-detail"
-						className="absolute bottom-full left-1/2 z-40 mb-1.5 w-72 -translate-x-1/2 rounded-xl border bg-card p-3 text-xs shadow-xl"
+					<button
+						type="button"
+						onClick={() => setOpen((o) => !o)}
+						aria-expanded={open}
+						data-testid="stats-summary"
+						className="flex items-center gap-1.5 tabular-nums transition-colors hover:text-foreground"
 					>
-						<div className="mb-2 text-xs font-medium text-muted-foreground">
-							Session stats
-						</div>
-						<div className="flex flex-col gap-1 text-muted-foreground">
-							<div className="flex justify-between gap-2">
-								<span>Context (last call)</span>
-								<span className="tabular-nums text-card-foreground">
-									{contextLabel}
-								</span>
-							</div>
-							<div className="flex justify-between gap-2">
-								<span>{subscription ? "Usage" : "Total cost"}</span>
-								<span className="tabular-nums text-card-foreground">{costLabel}</span>
-							</div>
-							{providers.includes("ChatGPT") && <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noreferrer" className="underline underline-offset-2">Manage ChatGPT usage</a>}
-							{unpriced > 0 && (
+						<span data-testid="stats-context">{contextLabel}</span>
+						<span aria-hidden>·</span>
+						<span data-testid="stats-cost">{costLabel}</span>
+					</button>
+					{open && (
+						<div
+							data-testid="stats-detail"
+							className="absolute bottom-full left-1/2 z-40 mb-1.5 w-72 -translate-x-1/2 rounded-xl border bg-card p-3 text-xs shadow-xl"
+						>
+							<div className="mb-2 text-xs font-medium text-muted-foreground">Session stats</div>
+							<div className="flex flex-col gap-1 text-muted-foreground">
 								<div className="flex justify-between gap-2">
-									<span>Unpriced turns</span>
-									<span className="tabular-nums text-card-foreground">{unpriced}</span>
+									<span>Context (last call)</span>
+									<span className="tabular-nums text-card-foreground">{contextLabel}</span>
 								</div>
+								<div className="flex justify-between gap-2">
+									<span>{subscription ? "Usage" : "Total cost"}</span>
+									<span className="tabular-nums text-card-foreground">{costLabel}</span>
+								</div>
+								{providers.includes("ChatGPT") && (
+									<a
+										href="https://chatgpt.com/settings/usage"
+										target="_blank"
+										rel="noreferrer"
+										className="underline underline-offset-2"
+									>
+										Manage ChatGPT usage
+									</a>
+								)}
+								{unpriced > 0 && (
+									<div className="flex justify-between gap-2">
+										<span>Unpriced turns</span>
+										<span className="tabular-nums text-card-foreground">{unpriced}</span>
+									</div>
+								)}
+							</div>
+							{turns.length > 0 && (
+								<>
+									<div className="mb-1 mt-2.5 border-t pt-2 text-xs font-medium text-muted-foreground">Turns</div>
+									<ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
+										{turns.map((turn, i) => {
+											const c = pricing?.turnCosts[turn.id] ?? null;
+											return (
+												<li key={`${turn.messageId}-${i}`} className="flex items-center justify-between gap-2">
+													<span className="truncate text-muted-foreground">
+														#{i + 1} · {stampModelLabel(catalog?.models, turn.model)}
+													</span>
+													<span className="flex shrink-0 items-center gap-2 tabular-nums text-card-foreground">
+														<span className="text-muted-foreground">{turn.steps.length} steps</span>
+														<span>{subscriptionLabel(turn.model) ?? (c === null ? "—" : formatUsd(c))}</span>
+													</span>
+												</li>
+											);
+										})}
+									</ul>
+								</>
 							)}
 						</div>
-						{turns.length > 0 && (
-							<>
-								<div className="mb-1 mt-2.5 border-t pt-2 text-xs font-medium text-muted-foreground">
-									Turns
-								</div>
-								<ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
-									{turns.map((turn, i) => {
-										const c = pricing?.turnCosts[turn.id] ?? null;
-										return (
-											<li key={`${turn.messageId}-${i}`} className="flex items-center justify-between gap-2">
-												<span className="truncate text-muted-foreground">
-													#{i + 1} · {stampModelLabel(catalog?.models, turn.model)}
-												</span>
-												<span className="flex shrink-0 items-center gap-2 tabular-nums text-card-foreground">
-													<span className="text-muted-foreground">{turn.steps.length} steps</span>
-													<span>{subscriptionLabel(turn.model) ?? (c === null ? "—" : formatUsd(c))}</span>
-												</span>
-											</li>
-										);
-									})}
-								</ul>
-							</>
-						)}
-					</div>
-				)}
-			</div>
+					)}
+				</div>
 			)}
 			{/* The middle slot: dictation (owner, 2026-09-17). flex-1 lets the
 			    meter expand into the row's free width; justify-center keeps the
 			    lone idle mic button visually centered. */}
-			{dictationSlot && (
-				<div className="flex min-w-0 flex-1 items-center justify-start">{dictationSlot}</div>
-			)}
+			{dictationSlot && <div className="flex min-w-0 flex-1 items-center justify-start">{dictationSlot}</div>}
 			{/* The model + thinking control — one controller for the conversation
 			    agents (prober/teacher); the record's `turns` above still folds
 			    the ACTUAL models billed, regardless of what the picker says. */}

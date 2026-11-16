@@ -6,13 +6,51 @@ import { analyzeChats, type ChatAnswer, type MistakesReport } from "@/src/core";
 
 const now = new Date("2026-11-11T12:00:00Z");
 const answers: ChatAnswer[] = [
-	{ at: "2026-11-10T10:00:00Z", chatId: "c1", verdict: "wrong", given: "tá kniha", expected: "táto kniha", focus: "feminine this", hinted: false, unit: "acc-fem" },
-	{ at: "2026-11-11T10:00:00Z", chatId: "c2", verdict: "dont_know", given: "", expected: "táto kniha", focus: "feminine this", hinted: false, unit: "acc-fem" },
-	{ at: "2026-11-11T10:05:00Z", chatId: "c2", verdict: "right", given: "chlieb", expected: "chlieb", focus: "word for bread", hinted: false },
+	{
+		at: "2026-11-10T10:00:00Z",
+		chatId: "c1",
+		verdict: "wrong",
+		given: "tá kniha",
+		expected: "táto kniha",
+		focus: "feminine this",
+		hinted: false,
+		unit: "acc-fem",
+	},
+	{
+		at: "2026-11-11T10:00:00Z",
+		chatId: "c2",
+		verdict: "dont_know",
+		given: "",
+		expected: "táto kniha",
+		focus: "feminine this",
+		hinted: false,
+		unit: "acc-fem",
+	},
+	{
+		at: "2026-11-11T10:05:00Z",
+		chatId: "c2",
+		verdict: "right",
+		given: "chlieb",
+		expected: "chlieb",
+		focus: "word for bread",
+		hinted: false,
+	},
 ];
 
 function report(chatAnswers: ChatAnswer[]): MistakesReport {
-	const analysis = { at: now.toISOString(), reps: 0, wrong: 0, from: null, to: null, units: [], slips: {}, words: [], weeks: [], mixups: [], chat: analyzeChats(chatAnswers, now) };
+	const analysis = {
+		at: now.toISOString(),
+		reps: 0,
+		wrong: 0,
+		from: null,
+		to: null,
+		units: [],
+		slips: {},
+		words: [],
+		weeks: [],
+		mixups: [],
+		chat: analyzeChats(chatAnswers, now),
+	};
 	return { analysis, guide: null, guideCurrent: false, ai: { ready: false, reason: "no-model" } };
 }
 

@@ -25,11 +25,26 @@
  * Pure and browser-safe: the family file is bundled, no fs.
  */
 
-import { ASPECT_FAMILY_ID, MIXUP_FAMILIES, mixupKey, parallelForm, type MixupFamily, type MixupProbe } from "./mixups.ts";
-import { buildPairsLesson, rng, shuffle, type LessonExplain, type LessonItem, type LessonPlan, type LessonTask, type UnitId } from "./lesson.ts";
+import {
+	ASPECT_FAMILY_ID,
+	MIXUP_FAMILIES,
+	mixupKey,
+	parallelForm,
+	type MixupFamily,
+	type MixupProbe,
+} from "./mixups.ts";
+import {
+	buildPairsLesson,
+	rng,
+	shuffle,
+	type LessonExplain,
+	type LessonItem,
+	type LessonPlan,
+	type LessonTask,
+	type UnitId,
+} from "./lesson.ts";
 import { chapterPairs, pairMembers, type PairDef } from "./pairs.ts";
 import { entryLemma, exampleText, type LexiconEntry } from "./review.ts";
-
 
 const CELL_ROWS = ["imperfective", "perfective"];
 const CELL_COLS = ["past", "present", "future"];
@@ -38,9 +53,73 @@ const PERFECTIVE_FUTURE_NOTE = "perfective future: no such form";
 
 /** Function words and clitics a cue window is never made of alone (lowercase). */
 export const STOPWORDS: ReadonlySet<string> = new Set([
-	"a", "i", "o", "u", "v", "vo", "s", "so", "z", "zo", "na", "do", "od", "po", "za", "pre", "pri", "pod", "nad", "bez", "k", "ku", "o",
-	"ani", "aj", "ale", "že", "aby", "ak", "ako", "lebo", "keď", "tak", "len", "tiež", "ešte", "už", "veľmi", "tu", "tam", "ten", "tá", "to", "toto", "ach", "čo",
-	"sa", "si", "som", "sme", "ste", "je", "sú", "bol", "bola", "boli", "mi", "ti", "mu", "ho", "ju", "ich", "im", "ma", "nás", "vás", "ťa",
+	"a",
+	"i",
+	"o",
+	"u",
+	"v",
+	"vo",
+	"s",
+	"so",
+	"z",
+	"zo",
+	"na",
+	"do",
+	"od",
+	"po",
+	"za",
+	"pre",
+	"pri",
+	"pod",
+	"nad",
+	"bez",
+	"k",
+	"ku",
+	"o",
+	"ani",
+	"aj",
+	"ale",
+	"že",
+	"aby",
+	"ak",
+	"ako",
+	"lebo",
+	"keď",
+	"tak",
+	"len",
+	"tiež",
+	"ešte",
+	"už",
+	"veľmi",
+	"tu",
+	"tam",
+	"ten",
+	"tá",
+	"to",
+	"toto",
+	"ach",
+	"čo",
+	"sa",
+	"si",
+	"som",
+	"sme",
+	"ste",
+	"je",
+	"sú",
+	"bol",
+	"bola",
+	"boli",
+	"mi",
+	"ti",
+	"mu",
+	"ho",
+	"ju",
+	"ich",
+	"im",
+	"ma",
+	"nás",
+	"vás",
+	"ťa",
 ]);
 
 const aspectFamily = (): MixupFamily | undefined => MIXUP_FAMILIES.find((f) => f.id === ASPECT_FAMILY_ID);
@@ -49,7 +128,8 @@ const aspectFamily = (): MixupFamily | undefined => MIXUP_FAMILIES.find((f) => f
 const isPastMasc = (form: string) => /l$/iu.test(form.trim());
 
 /** A paradigm the verifier has checked: flagged in the lexicon, or accepted by the family. */
-const verified = (e: LexiconEntry, accepted: ReadonlySet<string>) => (e as { formsVerified?: boolean }).formsVerified === true || accepted.has(e.slug);
+const verified = (e: LexiconEntry, accepted: ReadonlySet<string>) =>
+	(e as { formsVerified?: boolean }).formsVerified === true || accepted.has(e.slug);
 
 /** The family's pair as [imperfective, perfective] entries, or null when either is missing. */
 function aspectTwins(entries: readonly LexiconEntry[], pair: [string, string]): [LexiconEntry, LexiconEntry] | null {
@@ -60,7 +140,11 @@ function aspectTwins(entries: readonly LexiconEntry[], pair: [string, string]): 
 
 /** The six cells of the grid for one aspect pair, row by row, or null when a
  *  paradigm is missing or not verified. */
-export function gridCells(imp: LexiconEntry, perf: LexiconEntry, accepted: ReadonlySet<string> = new Set()): Array<{ row: number; col: number; form: string | null; note?: string }> | null {
+export function gridCells(
+	imp: LexiconEntry,
+	perf: LexiconEntry,
+	accepted: ReadonlySet<string> = new Set(),
+): Array<{ row: number; col: number; form: string | null; note?: string }> | null {
 	if (!verified(imp, accepted) || !verified(perf, accepted)) return null;
 	const presentImp = imp.forms?.[0];
 	const pastImp = imp.forms?.find(isPastMasc);
@@ -95,7 +179,14 @@ const pairOf = (family: MixupFamily, imp: string, perf: string, ids: ReadonlyMap
 
 /** The grid tasks of one aspect pair: one per formed cell. The question names
  *  the cell's form and the options are three cell labels, the answer among them. */
-function gridTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: UnitId, rand: () => number, pair: [string, string], ids: ReadonlyMap<string, string>): LessonItem[] {
+function gridTasks(
+	entries: readonly LexiconEntry[],
+	family: MixupFamily,
+	unit: UnitId,
+	rand: () => number,
+	pair: [string, string],
+	ids: ReadonlyMap<string, string>,
+): LessonItem[] {
 	const accepted = new Set(family.formsAccepted ?? []);
 	const twins = aspectTwins(entries, pair);
 	if (!twins) return [];
@@ -104,9 +195,19 @@ function gridTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: 
 	if (!cells) return [];
 	const askable = cells.filter((c) => c.form !== null);
 	return askable.map((target) => {
-		const others = shuffle(askable.filter((c) => c !== target), rand).slice(0, 2);
+		const others = shuffle(
+			askable.filter((c) => c !== target),
+			rand,
+		).slice(0, 2);
 		const answer = cellLabel(target.row, target.col);
-		const task: LessonTask = { kind: "grid", form: target.form!, rows: CELL_ROWS, cols: CELL_COLS, cells, target: { row: target.row, col: target.col } };
+		const task: LessonTask = {
+			kind: "grid",
+			form: target.form!,
+			rows: CELL_ROWS,
+			cols: CELL_COLS,
+			cells,
+			target: { row: target.row, col: target.col },
+		};
 		const holder = target.row === 0 ? imp : perf;
 		return {
 			id: `${holder.slug}#task-grid-${target.row}${target.col}`,
@@ -136,19 +237,102 @@ function wordsOf(text: string): Array<{ start: number; end: number }> {
 
 /* The cue words a window may not hold (N9; the verifier's list, lowercase). A
  * window that holds one is dropped, unless it is the row's span. */
-const HABIT_WORDS: ReadonlySet<string> = new Set(["každý", "každá", "každé", "každú", "každoročne", "denne", "vždy", "často", "zvyčajne", "obvykle", "bežne", "občas"]);
+const HABIT_WORDS: ReadonlySet<string> = new Set([
+	"každý",
+	"každá",
+	"každé",
+	"každú",
+	"každoročne",
+	"denne",
+	"vždy",
+	"často",
+	"zvyčajne",
+	"obvykle",
+	"bežne",
+	"občas",
+]);
 /** "každom" counts only with a time noun next. */
 const EACH_IN_TIME = "každom";
-const TIME_NOUNS: ReadonlySet<string> = new Set(["deň", "dni", "dní", "týždeň", "týždňa", "týždni", "týždne", "týždňov", "mesiac", "mesiaca", "mesiaci", "mesiace", "mesiacov", "rok", "roku", "roky", "rokov", "večer", "ráno", "noc", "hodinu", "hodine", "hodiny", "hodín", "minútu", "minúty", "minút", "sekúnd", "chvíľu", "polhodinu"]);
+const TIME_NOUNS: ReadonlySet<string> = new Set([
+	"deň",
+	"dni",
+	"dní",
+	"týždeň",
+	"týždňa",
+	"týždni",
+	"týždne",
+	"týždňov",
+	"mesiac",
+	"mesiaca",
+	"mesiaci",
+	"mesiace",
+	"mesiacov",
+	"rok",
+	"roku",
+	"roky",
+	"rokov",
+	"večer",
+	"ráno",
+	"noc",
+	"hodinu",
+	"hodine",
+	"hodiny",
+	"hodín",
+	"minútu",
+	"minúty",
+	"minút",
+	"sekúnd",
+	"chvíľu",
+	"polhodinu",
+]);
 const DURATION_WORDS: ReadonlySet<string> = new Set(["dlho"]);
 /** "celý", "celú", "celé" count with a time noun next (celý deň, celé ráno, celú noc). */
 const WHOLE_WORDS: ReadonlySet<string> = new Set(["celý", "celú", "celé"]);
-const NUMBER_WORDS: ReadonlySet<string> = new Set(["jeden", "jedna", "jedno", "jednu", "dva", "dve", "tri", "štyri", "päť", "šesť", "sedem", "osem", "deväť", "desať", "jedenásť", "dvanásť", "pätnásť", "dvadsať", "tridsať", "štyridsať", "päťdesiat", "šesťdesiat", "sedemdesiat", "osemdesiat", "deväťdesiat", "sto"]);
+const NUMBER_WORDS: ReadonlySet<string> = new Set([
+	"jeden",
+	"jedna",
+	"jedno",
+	"jednu",
+	"dva",
+	"dve",
+	"tri",
+	"štyri",
+	"päť",
+	"šesť",
+	"sedem",
+	"osem",
+	"deväť",
+	"desať",
+	"jedenásť",
+	"dvanásť",
+	"pätnásť",
+	"dvadsať",
+	"tridsať",
+	"štyridsať",
+	"päťdesiat",
+	"šesťdesiat",
+	"sedemdesiat",
+	"osemdesiat",
+	"deväťdesiat",
+	"sto",
+]);
 /** A number before one of these is a duration. */
 const HOUR_MINUTE_WORDS: ReadonlySet<string> = new Set(["hodiny", "hodín", "minút", "minúty", "hodinu", "dni", "dní"]);
 const PHASE_WORDS: ReadonlySet<string> = new Set(["budem", "budeš", "bude", "budeme", "budete", "budú"]);
 /** Every form of začať, prestať and skončiť, by its stem. */
-const PHASE_STEMS = ["začn", "začal", "začať", "začín", "prestan", "prestaň", "prestal", "prestať", "prestá", "skonč", "konč"];
+const PHASE_STEMS = [
+	"začn",
+	"začal",
+	"začať",
+	"začín",
+	"prestan",
+	"prestaň",
+	"prestal",
+	"prestať",
+	"prestá",
+	"skonč",
+	"konč",
+];
 /** The perfective cue words that are whole words. */
 const PERFECTIVE_WORDS: ReadonlySet<string> = new Set(["nakoniec", "konečne"]);
 /** podaril-, podarí and stihol, stihne, stihnú, stihnúť by stem. "podari" alone misses the accented podarí, so both are listed. */
@@ -220,7 +404,12 @@ type WindowDrop = {
  *  first and last words are read from the sentence; none when absent). `keep`
  *  is the row's keep list: a window that is exactly one of its words skips the
  *  cue-word drop only (the other drops still apply). */
-export function cueWindowReport(sentence: string, span: string, form?: string, keep: readonly string[] = []): { kept: string[]; dropped: WindowDrop[] } {
+export function cueWindowReport(
+	sentence: string,
+	span: string,
+	form?: string,
+	keep: readonly string[] = [],
+): { kept: string[]; dropped: WindowDrop[] } {
 	const none = { kept: [] as string[], dropped: [] as WindowDrop[] };
 	const at = sentence.indexOf(span);
 	if (at < 0 || span.length === 0) return none;
@@ -253,7 +442,8 @@ export function cueWindowReport(sentence: string, span: string, form?: string, k
 		else if (formFirst >= 0 && (b === formFirst - 1 || a === formLast + 1)) drop("touches the form");
 		else if (text.includes(",")) drop("crosses a comma");
 		else if (cue !== undefined && !keep.includes(text)) drop(GROUP_REASON[cue]);
-		else if (wordsOf(text).every((w) => STOPWORDS.has(text.slice(w.start, w.end).toLocaleLowerCase("sk-SK")))) drop("only function words");
+		else if (wordsOf(text).every((w) => STOPWORDS.has(text.slice(w.start, w.end).toLocaleLowerCase("sk-SK"))))
+			drop("only function words");
 		else if (kept.includes(text)) drop("repeats another window");
 		else kept.push(text);
 	}
@@ -294,14 +484,24 @@ export function cueQuestion(entries: readonly LexiconEntry[], family: MixupFamil
 	if (!entry || !pair || !row.form) return null;
 	const twin = entries.find((e) => e.slug === (pair[0] === row.slug ? pair[1] : pair[0]));
 	if (!twin) return null;
-	const theirs = row.form === entryLemma(entry) ? entryLemma(twin) : parallelForm(entry, twin, row.form, new Set(family.formsAccepted ?? []));
+	const theirs =
+		row.form === entryLemma(entry)
+			? entryLemma(twin)
+			: parallelForm(entry, twin, row.form, new Set(family.formsAccepted ?? []));
 	if (theirs === null) return null;
 	return `Which word made it ${row.form} and not ${theirs}?`;
 }
 
 /** One cue rep per approved row of the chapter's aspect twins that has a span
  *  with at least three windows to offer. */
-function cueTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: UnitId, rand: () => number, slugs: ReadonlySet<string>, ids: ReadonlyMap<string, string>): LessonItem[] {
+function cueTasks(
+	entries: readonly LexiconEntry[],
+	family: MixupFamily,
+	unit: UnitId,
+	rand: () => number,
+	slugs: ReadonlySet<string>,
+	ids: ReadonlyMap<string, string>,
+): LessonItem[] {
 	const out: LessonItem[] = [];
 	(family.probes ?? []).forEach((row: MixupProbe, index) => {
 		if (!row.approved || !row.span || !slugs.has(row.slug)) return;
@@ -337,7 +537,13 @@ function cueTasks(entries: readonly LexiconEntry[], family: MixupFamily, unit: U
 /** The form-reading tasks of a chapter's aspect pairs: every grid and cue task
  *  in a shuffled order, the tasks not seen in the last lessons first (`recent`
  *  holds the rep ids). Empty when the chapter has no aspect pair. */
-export function aspectTasks(entries: readonly LexiconEntry[], pairs: readonly PairDef[], unit: UnitId, seed: number, recent?: ReadonlySet<string>): LessonItem[] {
+export function aspectTasks(
+	entries: readonly LexiconEntry[],
+	pairs: readonly PairDef[],
+	unit: UnitId,
+	seed: number,
+	recent?: ReadonlySet<string>,
+): LessonItem[] {
 	const family = aspectFamily();
 	if (!family) return [];
 	const rand = rng(seed);
@@ -360,7 +566,9 @@ export function aspectTasks(entries: readonly LexiconEntry[], pairs: readonly Pa
 }
 
 /** The cue and explanation an aspect pair's Dvojičky reps carry; none for other pairs. */
-export function aspectPairInfo(entries: readonly LexiconEntry[]): (pair: PairDef) => { cue?: string; explain?: LessonExplain } | undefined {
+export function aspectPairInfo(
+	entries: readonly LexiconEntry[],
+): (pair: PairDef) => { cue?: string; explain?: LessonExplain } | undefined {
 	const family = aspectFamily();
 	return (pair) => {
 		const members = pairMembers(entries, pair);
@@ -372,8 +580,17 @@ export function aspectPairInfo(entries: readonly LexiconEntry[]): (pair: PairDef
 
 /** A Dvojičky lesson for a chapter, with its aspect pairs' tasks and explanations.
  *  A chapter with no aspect pair is the plain Dvojičky lesson. */
-export function pairsLessonFor(entries: readonly LexiconEntry[], unit: UnitId, opts: { seed: number; recent?: ReadonlySet<string> }): LessonPlan {
+export function pairsLessonFor(
+	entries: readonly LexiconEntry[],
+	unit: UnitId,
+	opts: { seed: number; recent?: ReadonlySet<string> },
+): LessonPlan {
 	const chapter = unit.startsWith("pairs-") ? unit.slice("pairs-".length) : unit;
 	const tasks = aspectTasks(entries, chapterPairs(chapter), unit, opts.seed, opts.recent);
-	return buildPairsLesson(entries, unit, { seed: opts.seed, recent: opts.recent, tasks, pairInfo: aspectPairInfo(entries) });
+	return buildPairsLesson(entries, unit, {
+		seed: opts.seed,
+		recent: opts.recent,
+		tasks,
+		pairInfo: aspectPairInfo(entries),
+	});
 }

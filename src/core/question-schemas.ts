@@ -25,9 +25,7 @@ const quizOptionProps = {
  *  collection, there is no correctness to leak. */
 const askOptionProps = {
 	...quizOptionProps,
-	description: Type.Optional(
-		Type.String({ description: "Optional extra detail shown below the option" }),
-	),
+	description: Type.Optional(Type.String({ description: "Optional extra detail shown below the option" })),
 };
 
 // The SHARED quiz authoring fields — everything except `nodeId`. The probe

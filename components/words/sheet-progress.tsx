@@ -7,7 +7,11 @@ export function SheetProgressBar({ progress, className }: { progress: SheetProgr
 	const { lines, caught } = progress;
 	const missed = progress.heard - caught;
 	const ahead = lines - progress.heard;
-	const parts = [`${caught} of ${lines} caught by ear`, missed > 0 && `${missed} missed last time`, ahead > 0 && `${ahead} not heard yet`].filter(Boolean);
+	const parts = [
+		`${caught} of ${lines} caught by ear`,
+		missed > 0 && `${missed} missed last time`,
+		ahead > 0 && `${ahead} not heard yet`,
+	].filter(Boolean);
 	return (
 		<div className={className} data-testid="sheet-progress">
 			<div role="img" aria-label={parts.join(", ")} className="flex h-2 gap-[3px]">

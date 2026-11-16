@@ -14,7 +14,17 @@
  */
 
 import { isPronScore, type PronScore } from "@/src/core";
-import { BODY_LIMITS, bodyTooLarge, speakDrop, speakEnd, speakStart, speakState, speakStore, speakTurn, STT_MAX_BYTES } from "@/src/server";
+import {
+	BODY_LIMITS,
+	bodyTooLarge,
+	speakDrop,
+	speakEnd,
+	speakStart,
+	speakState,
+	speakStore,
+	speakTurn,
+	STT_MAX_BYTES,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +55,12 @@ function pronOf(v: unknown): PronScore | undefined {
 }
 
 const str = (v: unknown, max = 600) => (typeof v === "string" ? v.slice(0, max) : "");
-const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v !== "" && Number.isFinite(Number(v)) ? Number(v) : undefined);
+const num = (v: unknown) =>
+	typeof v === "number" && Number.isFinite(v)
+		? v
+		: typeof v === "string" && v !== "" && Number.isFinite(Number(v))
+			? Number(v)
+			: undefined;
 
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.recording);
@@ -56,7 +71,15 @@ export async function POST(req: Request) {
 	try {
 		if (type.startsWith("multipart/form-data")) {
 			const form = await req.formData();
-			body = { action: form.get("action"), id: form.get("id"), text: form.get("text"), via: form.get("via"), ms: form.get("ms"), tz: form.get("tz"), pron: form.get("pron") };
+			body = {
+				action: form.get("action"),
+				id: form.get("id"),
+				text: form.get("text"),
+				via: form.get("via"),
+				ms: form.get("ms"),
+				tz: form.get("tz"),
+				pron: form.get("pron"),
+			};
 			const file = form.get("audio");
 			if (file instanceof Blob && file.size > 0 && file.size <= STT_MAX_BYTES) {
 				audio = { data: new Uint8Array(await file.arrayBuffer()) };
@@ -72,10 +95,26 @@ export async function POST(req: Request) {
 				return Response.json(await speakStart(str(body.scene, 40)));
 			case "turn": {
 				const via = body.via === "voice" ? "voice" : "typed";
-				return Response.json(await speakTurn({ id: str(body.id, 80), text: str(body.text), via, ms: num(body.ms), audio, pron: pronOf(body.pron) }));
+				return Response.json(
+					await speakTurn({
+						id: str(body.id, 80),
+						text: str(body.text),
+						via,
+						ms: num(body.ms),
+						audio,
+						pron: pronOf(body.pron),
+					}),
+				);
 			}
 			case "end":
-				return Response.json(await speakEnd({ id: str(body.id, 80), ms: num(body.ms), activeMs: num(body.activeMs), tz: tz !== undefined && Math.abs(tz) <= 840 ? tz : undefined }));
+				return Response.json(
+					await speakEnd({
+						id: str(body.id, 80),
+						ms: num(body.ms),
+						activeMs: num(body.activeMs),
+						tz: tz !== undefined && Math.abs(tz) <= 840 ? tz : undefined,
+					}),
+				);
 			case "drop":
 				speakDrop(str(body.id, 80));
 				return Response.json({ ok: true });
@@ -84,7 +123,11 @@ export async function POST(req: Request) {
 		}
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
-		const status = /unknown|over|nothing|something/i.test(message) ? 400 : /No model|configured/i.test(message) ? 503 : 500;
+		const status = /unknown|over|nothing|something/i.test(message)
+			? 400
+			: /No model|configured/i.test(message)
+				? 503
+				: 500;
 		return Response.json({ message }, { status });
 	}
 }

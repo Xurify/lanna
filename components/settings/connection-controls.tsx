@@ -6,7 +6,24 @@ import { Button } from "@/components/ui/button";
 
 import { ProviderIcon } from "./provider-icons.tsx";
 
-export function ConnectionRow({ label, action, disabled, onAction, children, testid, actionTestid, card }: { label: string; action: string; disabled: boolean; onAction: () => void; children?: React.ReactNode; testid?: string; actionTestid?: string; card?: boolean }) {
+export function ConnectionRow({
+	label,
+	action,
+	disabled,
+	onAction,
+	children,
+	testid,
+	actionTestid,
+}: {
+	label: string;
+	action: string;
+	disabled: boolean;
+	onAction: () => void;
+	children?: React.ReactNode;
+	testid?: string;
+	actionTestid?: string;
+	card?: boolean;
+}) {
 	return (
 		<div
 			className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 transition-colors hover:border-border/80 hover:bg-accent"
@@ -34,32 +51,82 @@ export function ConnectionRow({ label, action, disabled, onAction, children, tes
 	);
 }
 
-export function ConnectionFooter({ leading, children, testid }: { leading?: React.ReactNode; children: React.ReactNode; testid?: string }) {
-	return <div className="mt-4 flex flex-wrap items-center justify-between gap-3" data-testid={testid}>
-		{leading}
-		<div className="ml-auto flex flex-wrap items-center justify-end gap-2">{children}</div>
-	</div>;
+export function ConnectionFooter({
+	leading,
+	children,
+	testid,
+}: {
+	leading?: React.ReactNode;
+	children: React.ReactNode;
+	testid?: string;
+}) {
+	return (
+		<div className="mt-4 flex flex-wrap items-center justify-between gap-3" data-testid={testid}>
+			{leading}
+			<div className="ml-auto flex flex-wrap items-center justify-end gap-2">{children}</div>
+		</div>
+	);
 }
 
-export function ConnectionDialog({ children, onClose, busy, label, testid, backdropTestid }: { children: React.ReactNode; onClose: () => void; busy: boolean; label: string; testid: string; backdropTestid: string }) {
-	const ref = useRef<HTMLDivElement>(null), closeRef = useRef(onClose);
+export function ConnectionDialog({
+	children,
+	onClose,
+	busy,
+	label,
+	testid,
+	backdropTestid,
+}: {
+	children: React.ReactNode;
+	onClose: () => void;
+	busy: boolean;
+	label: string;
+	testid: string;
+	backdropTestid: string;
+}) {
+	const ref = useRef<HTMLDivElement>(null),
+		closeRef = useRef(onClose);
 	closeRef.current = onClose;
-	const backdropDismiss = useBackdropDismiss(() => { if (!busy) onClose(); });
+	const backdropDismiss = useBackdropDismiss(() => {
+		if (!busy) onClose();
+	});
 	useEffect(() => {
 		const previous = document.activeElement as HTMLElement | null;
-		const focusable = () => [...(ref.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled])') ?? [])];
+		const focusable = () => [
+			...(ref.current?.querySelectorAll<HTMLElement>(
+				"button:not([disabled]), a[href], input:not([disabled]), select:not([disabled])",
+			) ?? []),
+		];
 		focusable()[0]?.focus();
 		const key = (event: KeyboardEvent) => {
-			if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); closeRef.current(); }
-			else if (event.key === "Tab") {
-				const items = focusable(), first = items[0], last = items.at(-1);
-				if (!first) { event.preventDefault(); return; }
-				if (event.shiftKey && (document.activeElement === first || !ref.current?.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
-				else if (!event.shiftKey && (document.activeElement === last || !ref.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+			if (event.key === "Escape") {
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				closeRef.current();
+			} else if (event.key === "Tab") {
+				const items = focusable(),
+					first = items[0],
+					last = items.at(-1);
+				if (!first) {
+					event.preventDefault();
+					return;
+				}
+				if (event.shiftKey && (document.activeElement === first || !ref.current?.contains(document.activeElement))) {
+					event.preventDefault();
+					last?.focus();
+				} else if (
+					!event.shiftKey &&
+					(document.activeElement === last || !ref.current?.contains(document.activeElement))
+				) {
+					event.preventDefault();
+					first.focus();
+				}
 			}
 		};
 		document.addEventListener("keydown", key, true);
-		return () => { document.removeEventListener("keydown", key, true); if (previous?.isConnected) previous.focus(); };
+		return () => {
+			document.removeEventListener("keydown", key, true);
+			if (previous?.isConnected) previous.focus();
+		};
 	}, []);
 	return createPortal(
 		<div

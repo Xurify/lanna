@@ -1,8 +1,8 @@
 # Shadowing and the sound step (Zvuk)
 
-*LangHarness research note, 8 November 2026.*
+_LangHarness research note, 8 November 2026._
 
-The question: how should the sound step (Zvuk, `docs/plans/chapter-arc.md` phase 7) train a learner's ear and mouth for one contrast, given what Olle Kjellin's tutorial *Quality Practise Pronunciation with Audacity* (v1.8.1, 2018) and Stephen Krashen's *Principles and Practice in Second Language Acquisition* (1982) say?
+The question: how should the sound step (Zvuk, `docs/plans/chapter-arc.md` phase 7) train a learner's ear and mouth for one contrast, given what Olle Kjellin's tutorial _Quality Practise Pronunciation with Audacity_ (v1.8.1, 2018) and Stephen Krashen's _Principles and Practice in Second Language Acquisition_ (1982) say?
 
 **Short answer.** Kjellin gives concrete settings and a clear method, but no controlled data: the tutorial says so itself (section 5). Krashen says little about pronunciation as such, but his affective-filter and comprehension points argue for short, low-pressure listening before speaking. The app adopts Kjellin's timing and his short-line rule, keeps a listening check before any repetition, and scores each line with the clarity bar Speak already uses. It does not adopt his advice to hold back all writing, or his "repeat-one" loop, for reasons below.
 
@@ -50,6 +50,6 @@ Kjellin's method rests on his teaching and on the mirror-neuron literature he ci
 
 ## Sources
 
-- Kjellin, O. (2018). *Quality Practise Pronunciation with Audacity: The Best Method!* (version 1.8.1). Sections 2, 3, 4, 5, 7, 8, 16.
-- Krashen, S. (1982). *Principles and Practice in Second Language Acquisition*. Chapters I to V. Revised introduction (2009).
+- Kjellin, O. (2018). _Quality Practise Pronunciation with Audacity: The Best Method!_ (version 1.8.1). Sections 2, 3, 4, 5, 7, 8, 16.
+- Krashen, S. (1982). _Principles and Practice in Second Language Acquisition_. Chapters I to V. Revised introduction (2009).
 - Russell, J. & Spada, N. (2006) and Li, S. (2010) on corrective feedback: cited from memory in the text above and not checked here; verify before relying on them.

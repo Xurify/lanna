@@ -64,9 +64,19 @@ import { knownWordStore } from "../store/known-words.ts";
 import { videoStore } from "../store/videos.ts";
 import { activeLanguage } from "./active-language.ts";
 import { knownWords, storyEngine, type KnownWords } from "./reading.ts";
-import { extractJsonAfter, fetchTrack, fetchVideoMeta, glossSegments, pickTrack, prepareStage, prepareVideo, watchState } from "./watch.ts";
+import {
+	extractJsonAfter,
+	fetchTrack,
+	fetchVideoMeta,
+	glossSegments,
+	pickTrack,
+	prepareStage,
+	prepareVideo,
+	watchState,
+} from "./watch.ts";
 
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+const UA =
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 const WEB_VERSION = "2.20251101.00.00";
 /** YouTube's search filter for videos with subtitles or CC. */
 const SUBTITLES_FILTER = "EgIoAQ==";
@@ -101,17 +111,28 @@ const CREATOR_VIDEOS = 4;
 /** Videos checked when the learner lists a creator's newest or searches the channel. */
 const CREATOR_LIST = 20;
 
-const captionLangs = (): string[] => [activeLanguage().code, ...(activeLanguage().captionFallbacks ?? []).map((f) => f.code)];
+const captionLangs = (): string[] => [
+	activeLanguage().code,
+	...(activeLanguage().captionFallbacks ?? []).map((f) => f.code),
+];
 const region = (): string | undefined => activeLanguage().tag.split("-")[1]?.toUpperCase();
 
 type Json = Record<string, unknown>;
 
-async function innertube(endpoint: string, body: Json, signal?: AbortSignal, hl: string = activeLanguage().code): Promise<Json | null> {
+async function innertube(
+	endpoint: string,
+	body: Json,
+	signal?: AbortSignal,
+	hl: string = activeLanguage().code,
+): Promise<Json | null> {
 	const gl = region();
 	const res = await fetch(`https://www.youtube.com/youtubei/v1/${endpoint}?prettyPrint=false`, {
 		method: "POST",
 		headers: { "content-type": "application/json", "user-agent": UA },
-		body: JSON.stringify({ context: { client: { clientName: "WEB", clientVersion: WEB_VERSION, hl, ...(gl ? { gl } : {}) } }, ...body }),
+		body: JSON.stringify({
+			context: { client: { clientName: "WEB", clientVersion: WEB_VERSION, hl, ...(gl ? { gl } : {}) } },
+			...body,
+		}),
 		signal,
 	});
 	if (!res.ok) return null;
@@ -119,7 +140,12 @@ async function innertube(endpoint: string, body: Json, signal?: AbortSignal, hl:
 }
 
 /** Up to `n` jobs at a time. */
-async function pool<T>(items: readonly T[], n: number, job: (item: T) => Promise<void>, signal?: AbortSignal): Promise<void> {
+async function pool<T>(
+	items: readonly T[],
+	n: number,
+	job: (item: T) => Promise<void>,
+	signal?: AbortSignal,
+): Promise<void> {
 	let at = 0;
 	const worker = async () => {
 		while (at < items.length) {
@@ -138,9 +164,15 @@ async function pool<T>(items: readonly T[], n: number, job: (item: T) => Promise
 // ─── Channels ───────────────────────────────────────────────────────────────
 
 /** A channel's newest uploads: its feed, or its videos tab when the feed fails. */
-async function channelVideos(channelId: string, signal?: AbortSignal): Promise<{ channel: FoundChannel | null; videos: FoundVideo[] }> {
+async function channelVideos(
+	channelId: string,
+	signal?: AbortSignal,
+): Promise<{ channel: FoundChannel | null; videos: FoundVideo[] }> {
 	try {
-		const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`, { headers: { "user-agent": UA }, signal });
+		const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`, {
+			headers: { "user-agent": UA },
+			signal,
+		});
 		if (res.ok) {
 			const feed = parseChannelFeed(await res.text());
 			if (feed.channel || feed.videos.length) return feed;
@@ -152,10 +184,18 @@ async function channelVideos(channelId: string, signal?: AbortSignal): Promise<{
 	if (!data) return { channel: null, videos: [] };
 	const meta = (data.metadata as Json | undefined)?.channelMetadataRenderer as Json | undefined;
 	const name = typeof meta?.title === "string" ? meta.title : undefined;
-	const vanity = typeof meta?.vanityChannelUrl === "string" ? /\/(@[^/?#]+)/.exec(meta.vanityChannelUrl)?.[1] : undefined;
+	const vanity =
+		typeof meta?.vanityChannelUrl === "string" ? /\/(@[^/?#]+)/.exec(meta.vanityChannelUrl)?.[1] : undefined;
 	const avatar = channelImage(meta?.avatar);
 	return {
-		channel: name ? { id: channelId, name, ...(vanity ? { handle: decodeURIComponent(vanity) } : {}), ...(avatar ? { avatar } : {}) } : null,
+		channel: name
+			? {
+					id: channelId,
+					name,
+					...(vanity ? { handle: decodeURIComponent(vanity) } : {}),
+					...(avatar ? { avatar } : {}),
+				}
+			: null,
 		videos: extractVideos(data).map((v) => ({ ...v, channelId, ...(name && !v.channel ? { channel: name } : {}) })),
 	};
 }
@@ -164,14 +204,26 @@ async function channelVideos(channelId: string, signal?: AbortSignal): Promise<{
  *  ranks them. The page is read twice: in the language for the titles as
  *  written (an English page translates them), and in English for the
  *  relative dates, which only English can be read in. */
-async function channelSearch(channelId: string, query: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
+async function channelSearch(
+	channelId: string,
+	query: string,
+	opts: { signal?: AbortSignal; now?: Date } = {},
+): Promise<FoundVideo[]> {
 	return withDates(channelId, { browseId: channelId, params: CHANNEL_SEARCH, query }, opts);
 }
 
 /** A browse page's videos with titles from the page in the language and dates from the page in English. */
-async function withDates(channelId: string, body: Json, opts: { signal?: AbortSignal; now?: Date }, exact: ReadonlyMap<string, string> = new Map()): Promise<FoundVideo[]> {
+async function withDates(
+	channelId: string,
+	body: Json,
+	opts: { signal?: AbortSignal; now?: Date },
+	exact: ReadonlyMap<string, string> = new Map(),
+): Promise<FoundVideo[]> {
 	const now = opts.now ?? new Date();
-	const [page, english] = await Promise.all([innertube("browse", body, opts.signal).catch(() => null), innertube("browse", body, opts.signal, "en").catch(() => null)]);
+	const [page, english] = await Promise.all([
+		innertube("browse", body, opts.signal).catch(() => null),
+		innertube("browse", body, opts.signal, "en").catch(() => null),
+	]);
 	const when = english ? publishedTimes(english) : new Map<string, string>();
 	return extractVideos(page ?? english ?? {}).map((v) => {
 		const at = exact.get(v.id) ?? (when.has(v.id) ? agoToIso(when.get(v.id)!, now) : undefined);
@@ -182,7 +234,10 @@ async function withDates(channelId: string, body: Json, opts: { signal?: AbortSi
 /** A channel's uploads, newest first, from its videos tab (withDates), with
  *  the feed's exact dates where the feed has the video. The feed alone lists
  *  only a few, and no older ones. */
-async function channelUploads(channelId: string, opts: { signal?: AbortSignal; now?: Date } = {}): Promise<FoundVideo[]> {
+async function channelUploads(
+	channelId: string,
+	opts: { signal?: AbortSignal; now?: Date } = {},
+): Promise<FoundVideo[]> {
 	const feed = await channelVideos(channelId, opts.signal).catch(() => ({ channel: null, videos: [] as FoundVideo[] }));
 	const exact = new Map(feed.videos.filter((v) => v.at).map((v) => [v.id, v.at!]));
 	const listed = await withDates(channelId, { browseId: channelId, params: VIDEOS_TAB }, opts, exact);
@@ -198,45 +253,65 @@ async function channelUploads(channelId: string, opts: { signal?: AbortSignal; n
  *  list is what is kept; whether each video is in the library, dismissed or
  *  checked is read fresh each time. "Check again" clears it. */
 const CREATOR_LIST_TTL_MS = 10 * 60_000;
-const listings = (): TtlMemo<FoundVideo[]> => ((globalThis as { __lhListings?: TtlMemo<FoundVideo[]> }).__lhListings ??= new TtlMemo({ ttlMs: CREATOR_LIST_TTL_MS, max: 60 }));
+const listings = (): TtlMemo<FoundVideo[]> =>
+	((globalThis as { __lhListings?: TtlMemo<FoundVideo[]> }).__lhListings ??= new TtlMemo({
+		ttlMs: CREATOR_LIST_TTL_MS,
+		max: 60,
+	}));
 /** A shared load is not the caller's to cancel: it finishes and is kept, so a click that was left is not wasted. */
 const LISTING_TIMEOUT_MS = 45_000;
 
-export async function creatorVideos(id: string, opts: { query?: string; signal?: AbortSignal; now?: Date } = {}): Promise<CreatorVideo[]> {
+export async function creatorVideos(
+	id: string,
+	opts: { query?: string; signal?: AbortSignal; now?: Date } = {},
+): Promise<CreatorVideo[]> {
 	const creator = discoverStore.creators().creators.find((c) => c.id === id);
 	if (!creator) throw new Error("That creator is not saved.");
 	const now = opts.now ?? new Date();
 	const query = opts.query?.trim().slice(0, 100);
 	const listed = await listings().run(`${activeProfile()}|${id}|${query ?? ""}`, async () => {
 		const signal = AbortSignal.timeout(LISTING_TIMEOUT_MS);
-		return (query ? await channelSearch(id, query, { signal, now }) : await channelUploads(id, { signal, now })).slice(0, CREATOR_LIST);
+		return (query ? await channelSearch(id, query, { signal, now }) : await channelUploads(id, { signal, now })).slice(
+			0,
+			CREATOR_LIST,
+		);
 	});
 	const found = listed.map((v) => ({ ...v, channelId: v.channelId ?? id, channel: v.channel ?? creator.name }));
 	const kept = discoverStore.scans();
 	const fresh: Record<string, ScannedVideo> = {};
 	const lexicon = loadLexicon();
 	const k = knownWords(lexicon);
-	await pool(found.filter((v) => !kept[v.id] || awaitingCaptions(kept[v.id]!, now)), 4, async (v) => {
-		fresh[v.id] = await scanVideo(v, ["creator"], { lexicon, k, now, signal: opts.signal });
-	}, opts.signal);
+	await pool(
+		found.filter((v) => !kept[v.id] || awaitingCaptions(kept[v.id]!, now)),
+		4,
+		async (v) => {
+			fresh[v.id] = await scanVideo(v, ["creator"], { lexicon, k, now, signal: opts.signal });
+		},
+		opts.signal,
+	);
 	const scans = { ...discoverStore.scans(), ...fresh };
 	for (const v of found) {
 		const s = scans[v.id];
 		if (!s) continue;
 		// A failed check kept the title it was found with, which an English page had translated.
 		const title = s.skip === "unavailable" ? v.title : s.title;
-		if ((v.at && !s.publishedAt) || title !== s.title) scans[v.id] = { ...s, title, ...(v.at && !s.publishedAt ? { publishedAt: v.at } : {}) };
+		if ((v.at && !s.publishedAt) || title !== s.title)
+			scans[v.id] = { ...s, title, ...(v.at && !s.publishedAt ? { publishedAt: v.at } : {}) };
 	}
 	discoverStore.putScans(scans);
 	const library = new Set(videoStore.list().map((v) => v.id));
 	const pics = discoverStore.avatars();
-	return creatorVideoRows(found.map((v) => scans[v.id]).filter((v): v is ScannedVideo => !!v), { library, dismissed: discoverStore.dismissed(), now }).map((v) => (pics[id] ? { ...v, avatar: pics[id] } : v));
+	return creatorVideoRows(
+		found.map((v) => scans[v.id]).filter((v): v is ScannedVideo => !!v),
+		{ library, dismissed: discoverStore.dismissed(), now },
+	).map((v) => (pics[id] ? { ...v, avatar: pics[id] } : v));
 }
 
 /** The channel a pasted link, @handle or video belongs to. */
 async function resolveChannel(input: string, signal?: AbortSignal): Promise<FoundChannel> {
 	const parsed = parseChannelInput(input);
-	if (!parsed) throw new Error("That is not a YouTube channel. Paste a channel link, an @handle or one of their videos.");
+	if (!parsed)
+		throw new Error("That is not a YouTube channel. Paste a channel link, an @handle or one of their videos.");
 	let id: string | undefined;
 	let name: string | undefined;
 	let handle: string | undefined;
@@ -252,10 +327,19 @@ async function resolveChannel(input: string, signal?: AbortSignal): Promise<Foun
 		const browseId = ((resolved?.endpoint as Json | undefined)?.browseEndpoint as Json | undefined)?.browseId;
 		if (typeof browseId === "string" && browseId.startsWith("UC")) id = browseId;
 		else {
-			const res = await fetch(parsed.url, { headers: { "user-agent": UA, "accept-language": "en-US,en;q=0.9", cookie: "CONSENT=YES+cb; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg" }, signal });
+			const res = await fetch(parsed.url, {
+				headers: {
+					"user-agent": UA,
+					"accept-language": "en-US,en;q=0.9",
+					cookie: "CONSENT=YES+cb; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg",
+				},
+				signal,
+			});
 			if (res.ok) {
 				const html = await res.text();
-				id = /"externalId":"(UC[A-Za-z0-9_-]{22})"/.exec(html)?.[1] ?? /<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[A-Za-z0-9_-]{22})"/.exec(html)?.[1];
+				id =
+					/"externalId":"(UC[A-Za-z0-9_-]{22})"/.exec(html)?.[1] ??
+					/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[A-Za-z0-9_-]{22})"/.exec(html)?.[1];
 			}
 		}
 		if (!id) throw new Error(`YouTube has no channel at ${parsed.handle ?? parsed.url}.`);
@@ -265,7 +349,12 @@ async function resolveChannel(input: string, signal?: AbortSignal): Promise<Foun
 	if (!name) throw new Error("YouTube did not answer for that channel. Try again in a minute.");
 	// The feed has no picture; the channel page does.
 	const avatar = feed.channel?.avatar ?? (await channelAvatar(id, signal));
-	return { id, name, ...((handle ?? feed.channel?.handle) ? { handle: handle ?? feed.channel?.handle } : {}), ...(avatar ? { avatar } : {}) };
+	return {
+		id,
+		name,
+		...((handle ?? feed.channel?.handle) ? { handle: handle ?? feed.channel?.handle } : {}),
+		...(avatar ? { avatar } : {}),
+	};
 }
 
 /** A channel's picture, from its page; undefined when YouTube gives none. */
@@ -282,7 +371,11 @@ async function channelAvatar(channelId: string, signal?: AbortSignal): Promise<s
 /** Channels worth saving: not saved, not turned down. */
 function suggestions(): CreatorSuggestion[] {
 	const skip = new Set([...discoverStore.creators().creators.map((c) => c.id), ...discoverStore.dismissedChannels()]);
-	return suggestCreators(Object.values(discoverStore.scans()), skip, discoverStore.youtube().subscriptions?.channels).slice(0, SUGGESTIONS_SHOWN);
+	return suggestCreators(
+		Object.values(discoverStore.scans()),
+		skip,
+		discoverStore.youtube().subscriptions?.channels,
+	).slice(0, SUGGESTIONS_SHOWN);
 }
 
 function rememberAvatars(found: Record<string, string>): void {
@@ -308,14 +401,21 @@ async function fillAvatarsNow(signal?: AbortSignal): Promise<void> {
 	const have = discoverStore.avatars();
 	const saved = discoverStore.creators().creators;
 	const suggested = suggestions();
-	const todo = [...saved.map((c) => c.id), ...suggested.map((c) => c.id)].filter((id, i, all) => !have[id] && !missed.has(id) && all.indexOf(id) === i);
+	const todo = [...saved.map((c) => c.id), ...suggested.map((c) => c.id)].filter(
+		(id, i, all) => !have[id] && !missed.has(id) && all.indexOf(id) === i,
+	);
 	if (!todo.length) return;
 	const found: Record<string, string> = {};
-	await pool(todo, 4, async (id) => {
-		const avatar = await channelAvatar(id, signal);
-		if (avatar) found[id] = avatar;
-		else missed.add(id);
-	}, signal);
+	await pool(
+		todo,
+		4,
+		async (id) => {
+			const avatar = await channelAvatar(id, signal);
+			if (avatar) found[id] = avatar;
+			else missed.add(id);
+		},
+		signal,
+	);
 	if (Object.keys(found).length) rememberAvatars(found);
 }
 
@@ -324,19 +424,32 @@ export function listCreators(): Creator[] {
 }
 
 /** Save a creator; a creator already saved is returned as it is. */
-export async function addCreator(input: string, from: CreatorFrom = "link", opts: { now?: Date; signal?: AbortSignal; known?: FoundChannel } = {}): Promise<Creator> {
+export async function addCreator(
+	input: string,
+	from: CreatorFrom = "link",
+	opts: { now?: Date; signal?: AbortSignal; known?: FoundChannel } = {},
+): Promise<Creator> {
 	const found = opts.known ?? (await resolveChannel(input, opts.signal));
 	const f = discoverStore.creators();
 	const kept = f.creators.find((c) => c.id === found.id);
 	if (kept) return kept;
-	const creator: Creator = { id: found.id, name: found.name, ...(found.handle ? { handle: found.handle } : {}), addedAt: (opts.now ?? new Date()).toISOString(), from };
+	const creator: Creator = {
+		id: found.id,
+		name: found.name,
+		...(found.handle ? { handle: found.handle } : {}),
+		addedAt: (opts.now ?? new Date()).toISOString(),
+		from,
+	};
 	discoverStore.putCreators({ ...f, creators: [...f.creators, creator] });
 	if (found.avatar) rememberAvatars({ [found.id]: found.avatar });
 	return creator;
 }
 
 /** Save several channels from pasted text; the ones that fail are named. */
-export async function addCreators(inputs: readonly string[], opts: { signal?: AbortSignal } = {}): Promise<{ saved: Creator[]; failed: Array<{ input: string; message: string }> }> {
+export async function addCreators(
+	inputs: readonly string[],
+	opts: { signal?: AbortSignal } = {},
+): Promise<{ saved: Creator[]; failed: Array<{ input: string; message: string }> }> {
 	const saved: Creator[] = [];
 	const failed: Array<{ input: string; message: string }> = [];
 	await pool(
@@ -363,7 +476,13 @@ export function saveSuggestions(ids?: readonly string[]): Creator[] {
 		if (want && !want.has(s.id)) continue;
 		const f = discoverStore.creators();
 		if (f.creators.some((c) => c.id === s.id)) continue;
-		const creator: Creator = { id: s.id, name: s.name, ...(s.handle ? { handle: s.handle } : {}), addedAt: new Date().toISOString(), from: s.from.find((x): x is Exclude<PickSource, "creator"> => x !== "creator") ?? "history" };
+		const creator: Creator = {
+			id: s.id,
+			name: s.name,
+			...(s.handle ? { handle: s.handle } : {}),
+			addedAt: new Date().toISOString(),
+			from: s.from.find((x): x is Exclude<PickSource, "creator"> => x !== "creator") ?? "history",
+		};
 		discoverStore.putCreators({ ...f, creators: [...f.creators, creator] });
 		if (s.avatar) rememberAvatars({ [s.id]: s.avatar });
 		out.push(creator);
@@ -403,7 +522,11 @@ function languageShare(text: string, lexicon: Lexicon | null): { share: number; 
 }
 
 /** The known-word share of a video's caption lines, measured locally. */
-function measureLines(lines: readonly string[], lexicon: Lexicon | null, k: KnownWords): { coverage: number; expected: number; wordCount: number; unknownCount: number } {
+function measureLines(
+	lines: readonly string[],
+	lexicon: Lexicon | null,
+	k: KnownWords,
+): { coverage: number; expected: number; wordCount: number; unknownCount: number } {
 	const segments = glossSegments(
 		lines.map((sk, i) => ({ start: i, end: i + 1, sk })),
 		[],
@@ -416,22 +539,41 @@ function measureLines(lines: readonly string[], lexicon: Lexicon | null, k: Know
 		coverage: Math.round(videoCoverage(segments) * 1000) / 1000,
 		expected: Math.round(videoExpected(segments) * 1000) / 1000,
 		wordCount: words.length,
-		unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(tag))).size,
+		unknownCount: new Set(words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase(tag)))
+			.size,
 	};
 }
 
 /** Check one video for the offer: its tracks, whether it is spoken in the
  *  language, and the known-word share of its captions. No model call. */
-async function scanVideo(found: FoundVideo, sources: readonly PickSource[], ctx: { lexicon: Lexicon | null; k: KnownWords; now?: Date; query?: string; signal?: AbortSignal }): Promise<ScannedVideo> {
+async function scanVideo(
+	found: FoundVideo,
+	sources: readonly PickSource[],
+	ctx: { lexicon: Lexicon | null; k: KnownWords; now?: Date; query?: string; signal?: AbortSignal },
+): Promise<ScannedVideo> {
 	const now = (ctx.now ?? new Date()).toISOString();
-	const base = { id: found.id, title: found.title, ...(found.channel ? { channel: found.channel } : {}), ...(found.channelId ? { channelId: found.channelId } : {}), scannedAt: now, sources: [...sources], ...(ctx.query ? { query: ctx.query } : {}) };
+	const base = {
+		id: found.id,
+		title: found.title,
+		...(found.channel ? { channel: found.channel } : {}),
+		...(found.channelId ? { channelId: found.channelId } : {}),
+		scannedAt: now,
+		sources: [...sources],
+		...(ctx.query ? { query: ctx.query } : {}),
+	};
 	const meta = await fetchVideoMeta(found.id, ctx.signal);
 	if (!meta) return { ...base, durationSec: found.durationSec ?? 0, tracks: [], spoken: "unsure", skip: "unavailable" };
 	const langs = captionLangs();
 	const tracks = trackTags(meta.tracks);
 	const title = meta.title || found.title;
 	const share = languageShare(`${title} ${meta.description ?? ""}`, ctx.lexicon);
-	const spoken = judgeSpoken({ tracks, lang: langs[0]!, fallbacks: langs.slice(1), titleShare: share.share, titleWords: share.words });
+	const spoken = judgeSpoken({
+		tracks,
+		lang: langs[0]!,
+		fallbacks: langs.slice(1),
+		titleShare: share.share,
+		titleWords: share.words,
+	});
 	const v: ScannedVideo = {
 		...base,
 		title,
@@ -453,7 +595,9 @@ async function scanVideo(found: FoundVideo, sources: readonly PickSource[], ctx:
 	const scanned: ScannedVideo = { ...v, trackLang, captionKind: track.kind === "asr" ? "auto-captions" : "captions" };
 	const got = await fetchTrack(track, ctx.signal);
 	if (!got) return { ...scanned, skip: "no-captions" };
-	const lines = segmentCues(got.cues).slice(0, MAX_SEGMENTS).map((l) => l.sk);
+	const lines = segmentCues(got.cues)
+		.slice(0, MAX_SEGMENTS)
+		.map((l) => l.sk);
 	if (!lines.length) return { ...scanned, skip: "no-captions" };
 	discoverStore.putText(found.id, trackLang, lines);
 	const words = lines.join(" ").split(/\s+/).filter(Boolean).length;
@@ -479,36 +623,62 @@ function hashOf(parts: readonly string[]): string {
 }
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
 /** The interests the searches are written from: the history and
  *  recommendations (titles and channels), the subscriptions, the creators. */
 function interestLines(yt: YouTubeSignals, creators: readonly Creator[]): string[] {
-	const titles = [...(yt.history?.videos ?? []).slice(0, 60), ...(yt.recommended?.videos ?? []).slice(0, 30)].map((v) => `${v.title}${v.channel ? ` — ${v.channel}` : ""}`);
-	const channels = [...(yt.subscriptions?.channels ?? []).slice(0, 40).map((c) => c.name), ...creators.map((c) => c.name)];
+	const titles = [...(yt.history?.videos ?? []).slice(0, 60), ...(yt.recommended?.videos ?? []).slice(0, 30)].map(
+		(v) => `${v.title}${v.channel ? ` — ${v.channel}` : ""}`,
+	);
+	const channels = [
+		...(yt.subscriptions?.channels ?? []).slice(0, 40).map((c) => c.name),
+		...creators.map((c) => c.name),
+	];
 	return [...titles, ...(channels.length ? [`Channels: ${[...new Set(channels)].join(", ")}`] : [])];
 }
 
 /** The searches, written once per set of interests on the cheap slot and
  *  kept; reused for two weeks or until the interests change. */
-async function interestSearches(opts: { engine?: PiEngine; model?: string; now?: Date; force?: boolean } = {}): Promise<string[]> {
+async function interestSearches(
+	opts: { engine?: PiEngine; model?: string; now?: Date; force?: boolean } = {},
+): Promise<string[]> {
 	const yt = discoverStore.youtube();
 	const lines = interestLines(yt, listCreators());
 	if (lines.length < 3) return [];
 	const key = hashOf([activeLanguage().code, ...lines]);
 	const now = opts.now ?? new Date();
 	const kept = discoverStore.searches();
-	if (kept && !opts.force && kept.key === key && now.getTime() - Date.parse(kept.at) < SEARCHES_AFTER_MS) return kept.queries;
+	if (kept && !opts.force && kept.key === key && now.getTime() - Date.parse(kept.at) < SEARCHES_AFTER_MS)
+		return kept.queries;
 	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "test" } : storyEngine();
 	if (!resolved) return kept?.queries ?? [];
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const prompt = `Write ${SEARCH_COUNT} searches.\n\nWhat they watch and follow:\n${lines.map((l) => `- ${l}`).join("\n")}`;
-	const { text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: searchSystem(), prompt, maxTurns: 1, onUsage: (u) => usage.steps.push(stepOf(u)) });
+	const { text } = await runSubagent([], {
+		role: "researcher",
+		engine: resolved.engine,
+		systemPrompt: searchSystem(),
+		prompt,
+		maxTurns: 1,
+		onUsage: (u) => usage.steps.push(stepOf(u)),
+	});
 	let queries: string[] = [];
 	try {
 		const raw = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { queries?: unknown };
-		if (Array.isArray(raw.queries)) queries = raw.queries.filter((q): q is string => typeof q === "string").map((q) => q.replace(/["#]/g, "").trim()).filter((q) => q.length >= 2 && q.length <= 60);
+		if (Array.isArray(raw.queries))
+			queries = raw.queries
+				.filter((q): q is string => typeof q === "string")
+				.map((q) => q.replace(/["#]/g, "").trim())
+				.filter((q) => q.length >= 2 && q.length <= 60);
 	} catch {
 		queries = [];
 	}
@@ -541,7 +711,14 @@ function cleanVideos(list: readonly unknown[]): FoundVideo[] {
 		seen.add(v.id);
 		const channel = clip(v.channel, 200);
 		const at = clip(v.at, 40);
-		out.push({ id: v.id, title: clip(v.title, 300) ?? v.id, ...(channel ? { channel } : {}), ...(typeof v.channelId === "string" && CHANNEL_ID.test(v.channelId) ? { channelId: v.channelId } : {}), ...(typeof v.durationSec === "number" && v.durationSec > 0 ? { durationSec: Math.round(v.durationSec) } : {}), ...(at ? { at } : {}) });
+		out.push({
+			id: v.id,
+			title: clip(v.title, 300) ?? v.id,
+			...(channel ? { channel } : {}),
+			...(typeof v.channelId === "string" && CHANNEL_ID.test(v.channelId) ? { channelId: v.channelId } : {}),
+			...(typeof v.durationSec === "number" && v.durationSec > 0 ? { durationSec: Math.round(v.durationSec) } : {}),
+			...(at ? { at } : {}),
+		});
 	}
 	return out;
 }
@@ -550,7 +727,8 @@ function cleanChannels(list: readonly unknown[]): FoundChannel[] {
 	const out = new Map<string, FoundChannel>();
 	for (const raw of list.slice(0, 2000)) {
 		const c = raw as Partial<FoundChannel> | null;
-		if (!c || typeof c.id !== "string" || !CHANNEL_ID.test(c.id) || typeof c.name !== "string" || out.has(c.id)) continue;
+		if (!c || typeof c.id !== "string" || !CHANNEL_ID.test(c.id) || typeof c.name !== "string" || out.has(c.id))
+			continue;
 		const handle = clip(c.handle, 100);
 		out.set(c.id, { id: c.id, name: c.name.slice(0, 200), ...(handle?.startsWith("@") ? { handle } : {}) });
 	}
@@ -559,18 +737,38 @@ function cleanChannels(list: readonly unknown[]): FoundChannel[] {
 
 /** The lists out of a YouTube page the desktop app read while signed in,
  *  and the signed-in account's picture from its top bar when the page has one. */
-function listsFromPage(list: YouTubeList, html: string): { videos: FoundVideo[]; channels: FoundChannel[]; account?: YouTubeAccount } {
-	const data = extractJsonAfter(html, /ytInitialData\s*=\s*/) ?? extractJsonAfter(html, /window\["ytInitialData"\]\s*=\s*/);
+function listsFromPage(
+	list: YouTubeList,
+	html: string,
+): { videos: FoundVideo[]; channels: FoundChannel[]; account?: YouTubeAccount } {
+	const data =
+		extractJsonAfter(html, /ytInitialData\s*=\s*/) ?? extractJsonAfter(html, /window\["ytInitialData"\]\s*=\s*/);
 	if (!data) throw new Error("YouTube sent a page without the list. Sign in again and retry.");
 	const context = ((data as Json).responseContext as Json | undefined)?.mainAppWebResponseContext as Json | undefined;
 	if (context?.loggedOut === true) throw new Error("YouTube no longer counts this window as signed in. Connect again.");
 	const account = accountFromPage(data);
-	return { ...(list === "subscriptions" ? { videos: [], channels: extractChannels(data) } : { videos: extractVideos(data), channels: [] }), ...(account ? { account } : {}) };
+	return {
+		...(list === "subscriptions"
+			? { videos: [], channels: extractChannels(data) }
+			: { videos: extractVideos(data), channels: [] }),
+		...(account ? { account } : {}),
+	};
 }
 
 /** Keep what was read from YouTube. Returns how many items the list has. */
-export function importYouTube(list: YouTubeList, payload: { html?: string; videos?: unknown[]; channels?: unknown[] }, via: "account" | "takeout", now = new Date()): number {
-	const read = payload.html ? listsFromPage(list, payload.html) : { videos: cleanVideos(payload.videos ?? []), channels: cleanChannels(payload.channels ?? []), account: undefined };
+export function importYouTube(
+	list: YouTubeList,
+	payload: { html?: string; videos?: unknown[]; channels?: unknown[] },
+	via: "account" | "takeout",
+	now = new Date(),
+): number {
+	const read = payload.html
+		? listsFromPage(list, payload.html)
+		: {
+				videos: cleanVideos(payload.videos ?? []),
+				channels: cleanChannels(payload.channels ?? []),
+				account: undefined,
+			};
 	const yt = discoverStore.youtube();
 	const at = now.toISOString();
 	if (list === "subscriptions") yt.subscriptions = { at, via, channels: read.channels };
@@ -639,13 +837,22 @@ function refreshStatus(): RefreshStatus {
 /** Read the creators' feeds and the YouTube lists, search, check the new
  *  videos, measure the old ones again, keep one video ready. One refresh at
  *  a time; a second caller shares the first. */
-export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: string; keepReady?: boolean } = {}): Promise<void> {
+export function refreshDiscover(
+	opts: { now?: Date; engine?: PiEngine; model?: string; keepReady?: boolean } = {},
+): Promise<void> {
 	const s = refreshState();
 	if (s.job) return s.job;
 	const abort = new AbortController();
 	const profile = activeProfile();
 	listings().forget();
-	Object.assign(s, { running: true, step: "Reading your creators' newest videos", done: 0, total: 0, error: undefined, abort });
+	Object.assign(s, {
+		running: true,
+		step: "Reading your creators' newest videos",
+		done: 0,
+		total: 0,
+		error: undefined,
+		abort,
+	});
 	const job = (async () => {
 		const signal = abort.signal;
 		const now = opts.now ?? new Date();
@@ -659,7 +866,11 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 			const kept = scans[v.id];
 			if (kept && (awaitingCaptions(kept, now) || (kept.skip === "too-long" && kept.durationSec <= MAX_VIDEO_SEC))) {
 				// Its captions may have arrived since, or the longest video taken may have grown: check it again, keeping what found it.
-				const q = queue.get(v.id) ?? { found: { ...v, at: kept.publishedAt }, sources: new Set<PickSource>(kept.sources), ...(kept.query ? { query: kept.query } : {}) };
+				const q = queue.get(v.id) ?? {
+					found: { ...v, at: kept.publishedAt },
+					sources: new Set<PickSource>(kept.sources),
+					...(kept.query ? { query: kept.query } : {}),
+				};
 				q.sources.add(source);
 				queue.set(v.id, q);
 			} else if (kept) {
@@ -673,18 +884,30 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 			queue.set(v.id, q);
 		};
 
-		await pool(f.creators, 4, async (c) => {
-			const { videos } = await channelVideos(c.id, signal);
-			for (const v of videos.slice(0, PER_CREATOR)) add({ ...v, channelId: v.channelId ?? c.id, channel: v.channel ?? c.name }, "creator");
-		}, signal);
+		await pool(
+			f.creators,
+			4,
+			async (c) => {
+				const { videos } = await channelVideos(c.id, signal);
+				for (const v of videos.slice(0, PER_CREATOR))
+					add({ ...v, channelId: v.channelId ?? c.id, channel: v.channel ?? c.name }, "creator");
+			},
+			signal,
+		);
 		const saved = new Set(f.creators.map((c) => c.id));
 		const subs = (yt.subscriptions?.channels ?? []).filter((c) => !saved.has(c.id)).slice(0, MAX_SUBSCRIPTIONS);
 		if (subs.length) {
 			s.step = "Reading the channels you subscribe to";
-			await pool(subs, 6, async (c) => {
-				const { videos } = await channelVideos(c.id, signal);
-				for (const v of videos.slice(0, PER_SUBSCRIPTION)) add({ ...v, channelId: c.id, channel: v.channel ?? c.name }, "subscriptions");
-			}, signal);
+			await pool(
+				subs,
+				6,
+				async (c) => {
+					const { videos } = await channelVideos(c.id, signal);
+					for (const v of videos.slice(0, PER_SUBSCRIPTION))
+						add({ ...v, channelId: c.id, channel: v.channel ?? c.name }, "subscriptions");
+				},
+				signal,
+			);
 		}
 		for (const v of (yt.history?.videos ?? []).slice(0, MAX_HISTORY)) add(v, "history");
 		for (const v of (yt.recommended?.videos ?? []).slice(0, MAX_RECOMMENDED)) add(v, "recommended");
@@ -692,9 +915,14 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 		try {
 			const queries = await interestSearches({ now, engine: opts.engine, model: opts.model });
 			if (queries.length) s.step = "Searching YouTube for your interests";
-			await pool(queries, 3, async (q) => {
-				for (const v of (await searchVideos(q, signal)).slice(0, PER_SEARCH)) add(v, "search", q);
-			}, signal);
+			await pool(
+				queries,
+				3,
+				async (q) => {
+					for (const v of (await searchVideos(q, signal)).slice(0, PER_SEARCH)) add(v, "search", q);
+				},
+				signal,
+			);
 		} catch (err) {
 			if (err instanceof Error && err.name === "AbortError") throw err;
 		}
@@ -702,16 +930,22 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 		const todo = [...queue.values()].slice(0, MAX_SCANS);
 		s.step = "Checking the videos";
 		s.total = todo.length;
-		await pool(todo, 4, async (q) => {
-			try {
-				const prev = scans[q.found.id];
-				const next = await scanVideo(q.found, [...q.sources], { lexicon, k, now, query: q.query, signal });
-				// Still no captions: the wait is counted from the first check.
-				scans[q.found.id] = prev?.skip === "no-captions" && next.skip === "no-captions" ? { ...next, scannedAt: prev.scannedAt } : next;
-			} finally {
-				s.done++;
-			}
-		}, signal);
+		await pool(
+			todo,
+			4,
+			async (q) => {
+				try {
+					const prev = scans[q.found.id];
+					const next = await scanVideo(q.found, [...q.sources], { lexicon, k, now, query: q.query, signal });
+					// Still no captions: the wait is counted from the first check.
+					scans[q.found.id] =
+						prev?.skip === "no-captions" && next.skip === "no-captions" ? { ...next, scannedAt: prev.scannedAt } : next;
+				} finally {
+					s.done++;
+				}
+			},
+			signal,
+		);
 
 		s.step = "Measuring what you know of each";
 		const tooOld = now.getTime() - REMEASURE_AFTER_MS;
@@ -719,7 +953,13 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 		const marked = knownWordStore.updatedAt();
 		for (const v of Object.values(scans)) {
 			if (v.coverage === undefined || !v.trackLang) continue;
-			if (v.level === k.level && v.measuredAt && Date.parse(v.measuredAt) > tooOld && !(marked && v.measuredAt < marked)) continue;
+			if (
+				v.level === k.level &&
+				v.measuredAt &&
+				Date.parse(v.measuredAt) > tooOld &&
+				!(marked && v.measuredAt < marked)
+			)
+				continue;
 			const lines = discoverStore.text(v.id, v.trackLang);
 			if (!lines) continue;
 			Object.assign(v, measureLines(lines, lexicon, k), { level: k.level, measuredAt: now.toISOString() });
@@ -733,10 +973,21 @@ export function refreshDiscover(opts: { now?: Date; engine?: PiEngine; model?: s
 	s.job = job;
 	return job
 		.catch((err) => {
-			s.error = err instanceof Error && err.name === "AbortError" ? "Stopped." : err instanceof Error ? err.message : String(err);
+			s.error =
+				err instanceof Error && err.name === "AbortError"
+					? "Stopped."
+					: err instanceof Error
+						? err.message
+						: String(err);
 		})
 		.finally(() => {
-			Object.assign(s, { running: false, step: undefined, job: undefined, abort: undefined, finishedAt: new Date().toISOString() });
+			Object.assign(s, {
+				running: false,
+				step: undefined,
+				job: undefined,
+				abort: undefined,
+				finishedAt: new Date().toISOString(),
+			});
 		});
 }
 
@@ -770,7 +1021,10 @@ export function keepOneReady(): string | null {
 	if (!discoverStore.creators().keepReady || !storyEngine()) return null;
 	const watched = new Set(videoStore.watches().map((w) => w.videoId));
 	if (videoStore.list().some((v) => !watched.has(v.id)) || watchState().preparing.length > 0) return null;
-	const top = picks().find((p) => p.coverage !== undefined && p.coverage >= KEEP_READY_FLOOR && p.spoken === "yes" && (p.wordsPerMin ?? 0) >= 50);
+	const top = picks().find(
+		(p) =>
+			p.coverage !== undefined && p.coverage >= KEEP_READY_FLOOR && p.spoken === "yes" && (p.wordsPerMin ?? 0) >= 50,
+	);
 	if (!top || prepareStage(top.id)) return null;
 	void prepareVideo(videoUrl(top.id)).catch(() => {
 		const scans = discoverStore.scans();
@@ -791,12 +1045,16 @@ export function discoverState(now = new Date()): DiscoverStateView {
 	const pics = discoverStore.avatars();
 	const dismissed = discoverStore.dismissed();
 	const picture = (id: string) => (pics[id] ? { avatar: pics[id] } : {});
-	const withPicture = (p: PickedVideo): PickedVideo => (p.channelId && pics[p.channelId] ? { ...p, avatar: pics[p.channelId]! } : p);
+	const withPicture = (p: PickedVideo): PickedVideo =>
+		p.channelId && pics[p.channelId] ? { ...p, avatar: pics[p.channelId]! } : p;
 	return {
 		creators: f.creators.map((c) => ({
 			...c,
 			picks: all.filter((p) => p.channelId === c.id).length,
-			videos: all.filter((p) => p.channelId === c.id).slice(0, CREATOR_VIDEOS).map(withPicture),
+			videos: all
+				.filter((p) => p.channelId === c.id)
+				.slice(0, CREATOR_VIDEOS)
+				.map(withPicture),
 			tooLong: scans.filter((v) => v.channelId === c.id && v.skip === "too-long" && !dismissed.has(v.id)).length,
 			awaitingCaptions: scans.filter((v) => v.channelId === c.id && awaitingCaptions(v, now)).length,
 			...picture(c.id),
@@ -808,8 +1066,18 @@ export function discoverState(now = new Date()): DiscoverStateView {
 		refresh: refreshStatus(),
 		youtube: {
 			...(yt.history ? { history: { at: yt.history.at, via: yt.history.via, count: yt.history.videos.length } } : {}),
-			...(yt.recommended ? { recommended: { at: yt.recommended.at, via: yt.recommended.via, count: yt.recommended.videos.length } } : {}),
-			...(yt.subscriptions ? { subscriptions: { at: yt.subscriptions.at, via: yt.subscriptions.via, count: yt.subscriptions.channels.length } } : {}),
+			...(yt.recommended
+				? { recommended: { at: yt.recommended.at, via: yt.recommended.via, count: yt.recommended.videos.length } }
+				: {}),
+			...(yt.subscriptions
+				? {
+						subscriptions: {
+							at: yt.subscriptions.at,
+							via: yt.subscriptions.via,
+							count: yt.subscriptions.channels.length,
+						},
+					}
+				: {}),
 		},
 		...(yt.account && (yt.account.name || yt.account.photo) ? { youtubeAccount: yt.account } : {}),
 		searches: discoverStore.searches()?.queries ?? [],

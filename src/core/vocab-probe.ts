@@ -79,7 +79,14 @@ export function scoreVocab(items: readonly VocabItem[], answers: readonly VocabA
 		return { ...b, n: mine.length, hits, share };
 	});
 	const raw = bands.reduce((n, b) => n + (b.to - b.from) * b.share, 0);
-	return { size: Math.round(raw / 50) * 50, bands, pseudo: pseudo.length, falseAlarms, falseAlarmRate: f, reliable: f < 0.5 };
+	return {
+		size: Math.round(raw / 50) * 50,
+		bands,
+		pseudo: pseudo.length,
+		falseAlarms,
+		falseAlarmRate: f,
+		reliable: f < 0.5,
+	};
 }
 
 const VOWELS = "aáäeéiíoóuúyý";
@@ -88,7 +95,12 @@ const VOWELS = "aáäeéiíoóuúyý";
  *  spliced onto the back of another, kept only when the result is not in
  *  the dictionary (`isReal`) and reads like a word. Deterministic for a
  *  given `rand`. */
-export function makePseudowords(words: readonly string[], count: number, rand: () => number, isReal: (w: string) => boolean): string[] {
+export function makePseudowords(
+	words: readonly string[],
+	count: number,
+	rand: () => number,
+	isReal: (w: string) => boolean,
+): string[] {
 	const pool = words.filter((w) => /^[a-záäčďéíĺľňóôŕšťúýž]{4,9}$/u.test(w));
 	const out: string[] = [];
 	const seen = new Set<string>();

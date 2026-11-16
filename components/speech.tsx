@@ -6,14 +6,14 @@
  * A 204 means no server voice worked, so the browser speaks with speechSynthesis.
  */
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sharedJson } from "@/lib/shared-fetch";
 import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
 import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
 
-// ─── The active language (fetched once per page load) ──────────────────────
+// ─── The active language (fetched once per page load) ──────────────────────────
 
 let profilePromise: Promise<LanguageInfo> | null = null;
 let knownLanguage: LanguageInfo | null = null;
@@ -21,7 +21,7 @@ const languageListeners = new Set<() => void>();
 
 function activeLanguage(): Promise<LanguageInfo> {
 	profilePromise ??= sharedJson<{ active?: string; language?: LanguageInfo }>("/api/profile")
-		.then((p) => p.language ?? (isLanguageId(p.active) ? LANGUAGES[p.active] : LANGUAGES.slovak))
+		.then((p) => p.language ?? (isLanguageId(p.active) ? LANGUAGES[p.active] : undefined) ?? LANGUAGES.slovak)
 		.catch(() => LANGUAGES.slovak)
 		.then((l) => {
 			knownLanguage = l;
@@ -99,7 +99,10 @@ export function SpeedToggle({ className }: { className?: string }) {
 			onClick={() => setSpeed(next)}
 			aria-label={`Playback speed ${speed}×, click for ${next}×`}
 			title="Playback speed"
-			className={cn("rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", className)}
+			className={cn(
+				"rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+				className,
+			)}
 		>
 			{speed}×
 		</button>
@@ -140,7 +143,10 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 		u.volume = volume();
 		const voice = window.speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang.code));
 		if (voice) u.voice = voice;
-		else console.warn(`[Speech] this ${navigator.userAgent.includes("Electron") ? "desktop app" : "browser"} has no system voice for ${lang.tag}; nothing may play`);
+		else
+			console.warn(
+				`[Speech] this ${navigator.userAgent.includes("Electron") ? "desktop app" : "browser"} has no system voice for ${lang.tag}; nothing may play`,
+			);
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;
 			resolve();
@@ -186,7 +192,10 @@ function clipGain(key: string, blob: Blob): Promise<number> {
 	let gain = gains.get(key);
 	if (!gain) {
 		// The measure only adjusts loudness: if decoding stalls, the clip plays at full volume rather than not at all.
-		gain = Promise.race([measureGain(blob), new Promise<number>((resolve) => setTimeout(() => resolve(1), GAIN_WAIT_MS))]);
+		gain = Promise.race([
+			measureGain(blob),
+			new Promise<number>((resolve) => setTimeout(() => resolve(1), GAIN_WAIT_MS)),
+		]);
 		gains.set(key, gain);
 	}
 	return gain;
@@ -232,7 +241,9 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	if (mine !== generation || !soundOn()) return;
 	if (!res || res.status === 204 || !res.ok) {
 		// The app's own voices failed; the system's voice is the fallback. The desktop app often has none for the language, so say why it may be silent.
-		console.warn(`[Speech] no server voice (${res ? `HTTP ${res.status}` : "no answer"}${res?.headers.get("x-tts-fallback") ? ", every voice service failed" : ""}); trying the system voice for ${language.tag}`);
+		console.warn(
+			`[Speech] no server voice (${res ? `HTTP ${res.status}` : "no answer"}${res?.headers.get("x-tts-fallback") ? ", every voice service failed" : ""}); trying the system voice for ${language.tag}`,
+		);
 		return speakWithBrowser(text, language, rate);
 	}
 	const blob = await res.blob();
@@ -329,7 +340,11 @@ export function PlayButton({ text, className, label }: { text: string; className
 export function SpokenPhrase({ text }: { text: string }) {
 	const lang = useActiveLanguage();
 	return (
-		<span className="lh-spoken inline-flex items-baseline gap-0.5 rounded-md bg-primary/5 pl-1.5 pr-0.5 font-medium text-foreground" data-testid="spoken-phrase" lang={lang?.code}>
+		<span
+			className="lh-spoken inline-flex items-baseline gap-0.5 rounded-md bg-primary/5 pl-1.5 pr-0.5 font-medium text-foreground"
+			data-testid="spoken-phrase"
+			lang={lang?.code}
+		>
 			<span>{text}</span>
 			<PlayButton text={text} className="size-5 self-center" />
 		</span>

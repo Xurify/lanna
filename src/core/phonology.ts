@@ -14,7 +14,6 @@
 import slovakPairsJson from "../../curriculum/slovak/phonology-pairs.json";
 import russianPairsJson from "../../curriculum/russian/phonology-pairs.json";
 import estonianPairsJson from "../../curriculum/estonian/phonology-pairs.json";
-import type { LanguageId } from "./language.ts";
 import { rng, shuffle } from "./lesson.ts";
 import { getSoundNote } from "./sound-notes.ts";
 
@@ -129,10 +128,7 @@ export function functionalLoadWeightedScore(
  * - CG (Category-Goodness): One maps as good native exemplar, one as deviant (Intermediate).
  * - UC (Uncategorized-Categorized): One sound is unknown / in phonetic white-space.
  */
-export function getPamContrastPriority(
-	family: PhonologyFamily,
-	knownLanguages: readonly string[] = [],
-): PamPriority {
+export function getPamContrastPriority(family: PhonologyFamily, knownLanguages: readonly string[] = []): PamPriority {
 	const langs = new Set(knownLanguages.map((l) => l.toLowerCase()));
 
 	// Vowel quantity (short vs long vowels)
@@ -150,7 +146,8 @@ export function getPamContrastPriority(
 		return {
 			category: "SC",
 			priority: "high",
-			rationale: "Your background lacks phonemic vowel duration. Learners often substitute vowel quality for length. High priority drill.",
+			rationale:
+				"Your background lacks phonemic vowel duration. Learners often substitute vowel quality for length. High priority drill.",
 		};
 	}
 
@@ -176,13 +173,15 @@ export function getPamContrastPriority(
 			return {
 				category: "CG",
 				priority: "medium",
-				rationale: "Palatal contrasts exist in your background. Focus on Slovak's dorsal tongue contact without Russian-style iotation.",
+				rationale:
+					"Palatal contrasts exist in your background. Focus on Slovak's dorsal tongue contact without Russian-style iotation.",
 			};
 		}
 		return {
 			category: "SC",
 			priority: "high",
-			rationale: "Tongue-blade palatal stops assimilate into native dental/alveolar stops. Critical contrast for verb endings and noun cases.",
+			rationale:
+				"Tongue-blade palatal stops assimilate into native dental/alveolar stops. Critical contrast for verb endings and noun cases.",
 		};
 	}
 
@@ -199,7 +198,8 @@ export function getPamContrastPriority(
 		return {
 			category: "UC",
 			priority: "high",
-			rationale: "Consonants acting as vowels without helping vowels are unfamiliar. Practice sustaining trills and laterals directly.",
+			rationale:
+				"Consonants acting as vowels without helping vowels are unfamiliar. Practice sustaining trills and laterals directly.",
 		};
 	}
 
@@ -271,7 +271,10 @@ const KNOWN_ASSIMILATIONS: Record<string, AssimilationRule> = {
  * that exhibit regular Slovak regressive voicing assimilation (*spodobovanie*).
  */
 export function getVoicingAssimilationNotes(word: string): AssimilationRule | null {
-	const clean = word.trim().toLowerCase().replace(/[.,!?;:]/g, "");
+	const clean = word
+		.trim()
+		.toLowerCase()
+		.replace(/[.,!?;:]/g, "");
 	return KNOWN_ASSIMILATIONS[clean] ?? null;
 }
 
@@ -287,7 +290,10 @@ export function getPhonologyData(languageId: string | undefined): PhonologyDatas
 	return (languageId && BUNDLED_DATASETS[languageId]) || null;
 }
 
-export function getPhonologyPairs(languageId: string, opts: { family?: PhonologyFamily; minFunctionalLoad?: FunctionalLoadLevel } = {}): PhonologyPair[] {
+export function getPhonologyPairs(
+	languageId: string,
+	opts: { family?: PhonologyFamily; minFunctionalLoad?: FunctionalLoadLevel } = {},
+): PhonologyPair[] {
 	const dataset = getPhonologyData(languageId);
 	if (!dataset) return [];
 	return dataset.pairs.filter((p) => {
@@ -303,8 +309,8 @@ export function getPhonologyPairs(languageId: string, opts: { family?: Phonology
  * In accordance with HVPT principles, alternates target member and speaker gender.
  */
 export function createEarGymExercise(pair: PhonologyPair, seed: number = 0): EarGymExercise {
-	const isB = (seed % 2) === 1;
-	const isMale = (Math.floor(seed / 2) % 2) === 1;
+	const isB = seed % 2 === 1;
+	const isMale = Math.floor(seed / 2) % 2 === 1;
 
 	const targetWord = isB ? pair.b : pair.a;
 	const targetMeaning = isB ? pair.meaningB : pair.meaningA;
@@ -316,15 +322,16 @@ export function createEarGymExercise(pair: PhonologyPair, seed: number = 0): Ear
 	const distractorIpa = isB ? pair.ipaA : pair.ipaB;
 
 	// Randomize option order based on seed
-	const options = (seed % 3 === 0)
-		? [
-			{ word: targetWord, meaning: targetMeaning, isCorrect: true },
-			{ word: distractorWord, meaning: distractorMeaning, isCorrect: false },
-		]
-		: [
-			{ word: distractorWord, meaning: distractorMeaning, isCorrect: false },
-			{ word: targetWord, meaning: targetMeaning, isCorrect: true },
-		];
+	const options =
+		seed % 3 === 0
+			? [
+					{ word: targetWord, meaning: targetMeaning, isCorrect: true },
+					{ word: distractorWord, meaning: distractorMeaning, isCorrect: false },
+				]
+			: [
+					{ word: distractorWord, meaning: distractorMeaning, isCorrect: false },
+					{ word: targetWord, meaning: targetMeaning, isCorrect: true },
+				];
 
 	return {
 		pairId: pair.id,
@@ -363,7 +370,11 @@ export function pickRoundPairs(pool: readonly PhonologyPair[], size: number, ran
 	return result;
 }
 
-export function earGymRound(pool: readonly PhonologyPair[], seed: number, size: number = EAR_GYM_ROUND): EarGymExercise[] {
+export function earGymRound(
+	pool: readonly PhonologyPair[],
+	seed: number,
+	size: number = EAR_GYM_ROUND,
+): EarGymExercise[] {
 	if (pool.length === 0) return [];
 	const rand = rng(seed);
 	return pickRoundPairs(pool, size, rand).map((pair) => createEarGymExercise(pair, Math.floor(rand() * 4)));

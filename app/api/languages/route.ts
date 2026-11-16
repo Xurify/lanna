@@ -9,7 +9,15 @@
  * hidden. The learner's progress in it stays. Adding a hidden built-in puts
  * it back.
  */
-import { addEstimates, BODY_LIMITS, bodyTooLarge, languageCatalog, removeLanguage, restoreLanguage, startLanguageAdd } from "@/src/server";
+import {
+	addEstimates,
+	BODY_LIMITS,
+	bodyTooLarge,
+	languageCatalog,
+	removeLanguage,
+	restoreLanguage,
+	startLanguageAdd,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 

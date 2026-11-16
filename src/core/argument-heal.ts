@@ -55,10 +55,7 @@ function tryParse(raw: string): unknown {
 	}
 }
 
-export function healEncodedArguments(
-	args: unknown,
-	schema: { properties?: Record<string, PropSchema> },
-): unknown {
+export function healEncodedArguments(args: unknown, schema: { properties?: Record<string, PropSchema> }): unknown {
 	if (typeof args !== "object" || args === null || Array.isArray(args)) return args;
 	const properties = schema.properties;
 	if (!properties) return args;
@@ -79,11 +76,7 @@ export function healEncodedArguments(
 		if (fixed === undefined && prop.type === "boolean" && typeof parsed === "boolean") {
 			fixed = parsed;
 		}
-		if (
-			fixed === undefined &&
-			(prop.type === "number" || prop.type === "integer") &&
-			typeof parsed === "number"
-		) {
+		if (fixed === undefined && (prop.type === "number" || prop.type === "integer") && typeof parsed === "number") {
 			fixed = parsed;
 		}
 		if (fixed === undefined && prop.type === "array" && Array.isArray(parsed)) fixed = parsed;

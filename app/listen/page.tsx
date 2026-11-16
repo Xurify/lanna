@@ -9,7 +9,11 @@ export const dynamic = "force-dynamic";
 /** Listen: ten sentences the learner can follow, heard first and typed.
  *  The plan is built here, with the page, so the
  *  first sentence is in the first HTML and never swaps after load. */
-export default async function ListenPage({ searchParams }: { searchParams: Promise<{ sheet?: string; section?: string }> }) {
+export default async function ListenPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ sheet?: string; section?: string }>;
+}) {
 	const { sheet: sheetId, section } = await searchParams;
 	if (sheetId) {
 		const sheet = cheatsheetStore.get(sheetId);
@@ -32,4 +36,3 @@ export default async function ListenPage({ searchParams }: { searchParams: Promi
 	const experiment = getTodayExperimentStatus(new Date(), activeProfile());
 	return <ListenPlayer initialPlan={plan} initialExperiment={experiment} />;
 }
-

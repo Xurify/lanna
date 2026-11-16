@@ -45,7 +45,8 @@ const none: Pick<StageView, "binding" | "words" | "speed"> = { binding: null, wo
 export function stageSentence(milestones: readonly MilestoneEstimate[]): StageView {
 	if (milestones.length === 0) return { title: null, line: "Nothing to measure yet.", detail: null, ...none };
 	const target = nearestOpen(milestones);
-	if (!target) return { title: null, line: "Every milestone the app tracks is reached by this estimate.", detail: null, ...none };
+	if (!target)
+		return { title: null, line: "Every milestone the app tracks is reached by this estimate.", detail: null, ...none };
 	const title = `"${target.def.title}"`;
 	const estimated = target.speed.basis === "level";
 	const meters = {
@@ -57,7 +58,9 @@ export function stageSentence(milestones: readonly MilestoneEstimate[]): StageVi
 		return {
 			title: target.def.title,
 			line: `Speed limits ${title}: about ${target.speed.have} words a minute are understood, and this needs about ${target.speed.need}.`,
-			detail: estimated ? "The speed is the level's estimate until a few Listen or Watch sessions measure it." : "Speed grows with hours of Listen and Watch, not with learning words alone.",
+			detail: estimated
+				? "The speed is the level's estimate until a few Listen or Watch sessions measure it."
+				: "Speed grows with hours of Listen and Watch, not with learning words alone.",
 			binding: "speed",
 			...meters,
 		};
@@ -71,5 +74,11 @@ export function stageSentence(milestones: readonly MilestoneEstimate[]): StageVi
 			...meters,
 		};
 	}
-	return { title: target.def.title, line: `Words and speed both have a way to go for ${title}.`, detail: null, binding: null, ...meters };
+	return {
+		title: target.def.title,
+		line: `Words and speed both have a way to go for ${title}.`,
+		detail: null,
+		binding: null,
+		...meters,
+	};
 }

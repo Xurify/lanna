@@ -16,13 +16,28 @@
 
 import { cn } from "@/lib/utils";
 import { STRAND_STYLE } from "@/components/strand-style";
-import { STAGES, type CurriculumState, type Strand } from "@/src/core";
+import type { Strand } from "@/src/core";
 
-export function TrailMark({ strand, size = "md", className }: { strand: Strand; size?: "sm" | "md" | "lg"; className?: string }) {
+export function TrailMark({
+	strand,
+	size = "md",
+	className,
+}: {
+	strand: Strand;
+	size?: "sm" | "md" | "lg";
+	className?: string;
+}) {
 	const w = size === "lg" ? 24 : size === "sm" ? 14 : 18;
 	const h = size === "lg" ? 16 : size === "sm" ? 10 : 12;
 	return (
-		<svg width={w} height={h} viewBox="0 0 18 12" className={cn("shrink-0", className)} aria-hidden="true" data-testid={`trail-mark-${strand}`}>
+		<svg
+			width={w}
+			height={h}
+			viewBox="0 0 18 12"
+			className={cn("shrink-0", className)}
+			aria-hidden="true"
+			data-testid={`trail-mark-${strand}`}
+		>
 			<rect x="0" y="0" width="18" height="12" rx="1.5" fill="var(--foreground)" />
 			<rect x="0" y="4" width="18" height="4" fill={STRAND_STYLE[strand].stripe} />
 		</svg>
@@ -62,16 +77,4 @@ export function ridgeY(x: number): number {
 		if (t <= x1) return y0 + ((t - x0) / (x1 - x0)) * (y1 - y0);
 	}
 	return RIDGE[RIDGE.length - 1]![1];
-}
-
-const W = 600;
-const H = 56;
-const px = (p: [number, number]) => `${(p[0] * W).toFixed(1)} ${(p[1] * (H - 10) + 4).toFixed(1)}`;
-
-interface RidgeStop {
-	/** The level this stretch of the way climbs. */
-	label: string;
-	/** Where the stretch begins and ends, 0..1 along the way to the target level. */
-	from: number;
-	to: number;
 }

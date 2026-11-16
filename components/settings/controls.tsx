@@ -153,12 +153,7 @@ export function SettingsSegmented<T extends string | number>({
 	testid: string;
 }) {
 	return (
-		<div
-			role="radiogroup"
-			aria-label={ariaLabel}
-			data-testid={testid}
-			className="q-segc shrink-0"
-		>
+		<div role="radiogroup" aria-label={ariaLabel} data-testid={testid} className="q-segc shrink-0">
 			{options.map((o) => {
 				const active = o.value === value;
 				return (
@@ -233,7 +228,8 @@ export function Toggle({
 				<span
 					className={cn(
 						"absolute left-px top-px size-4 rounded-full shadow-sm transition-transform",
-						"bg-white", checked ? "translate-x-4" : "translate-x-0",
+						"bg-white",
+						checked ? "translate-x-4" : "translate-x-0",
 					)}
 				/>
 			)}

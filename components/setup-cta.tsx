@@ -53,12 +53,17 @@ export function ZeroKeysPill({ onOpen, inline = false }: { onOpen: () => void; i
 			type="button"
 			data-testid="setup-cta-keys"
 			onClick={onOpen}
-			className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
+			className={cn(
+				buttonVariants({ variant: "accent-soft", size: "sm" }),
+				"cursor-pointer rounded-full font-ui font-semibold",
+			)}
 		>
 			Add an AI key
 		</button>
 	);
-	return inline ? button : (
+	return inline ? (
+		button
+	) : (
 		<div className="relative h-0">
 			<div className="pointer-events-auto absolute inset-x-0 bottom-2 flex justify-center">{button}</div>
 		</div>

@@ -48,11 +48,21 @@ describe("LH_DATA_DIR seam", () => {
 		// spread): under either config.ts fences data into a temp folder (the
 		// test fence, 2026-10-28, widened 2026-10-29); this child simulates
 		// the packaged app.
-		const env: Record<string, string | undefined> = { ...process.env, LH_DATA_DIR: "", LH_PROFILE: "", NODE_ENV: "production" };
+		const env: Record<string, string | undefined> = {
+			...process.env,
+			LH_DATA_DIR: "",
+			LH_PROFILE: "",
+			NODE_ENV: "production",
+		};
 		delete env.NODE_TEST_CONTEXT;
 		const out = execFileSync(
 			process.execPath,
-			["--import", pathToFileURL(TSX_LOADER).href, "--eval", `const m = await import(${JSON.stringify(pathToFileURL(path.join(REPO_ROOT, "config.ts")).href)}); console.log(JSON.stringify({ data: m.PATHS.data, chats: m.PATHS.chats }));`],
+			[
+				"--import",
+				pathToFileURL(TSX_LOADER).href,
+				"--eval",
+				`const m = await import(${JSON.stringify(pathToFileURL(path.join(REPO_ROOT, "config.ts")).href)}); console.log(JSON.stringify({ data: m.PATHS.data, chats: m.PATHS.chats }));`,
+			],
 			{ cwd: REPO_ROOT, encoding: "utf-8", env: env as NodeJS.ProcessEnv },
 		);
 		const parsed = JSON.parse(out) as { data: string; chats: string | null };

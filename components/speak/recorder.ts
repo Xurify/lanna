@@ -44,7 +44,12 @@ const FLOOR = 0.016;
 const levelOf = (rms: number) => Math.min(1, Math.max(0, (20 * Math.log10(rms + 1e-6) + 50) / 40));
 
 export function micSupported(): boolean {
-	return typeof window !== "undefined" && typeof AudioContext !== "undefined" && "audioWorklet" in AudioContext.prototype && !!navigator.mediaDevices?.getUserMedia;
+	return (
+		typeof window !== "undefined" &&
+		typeof AudioContext !== "undefined" &&
+		"audioWorklet" in AudioContext.prototype &&
+		!!navigator.mediaDevices?.getUserMedia
+	);
 }
 
 export class Recorder {
@@ -76,7 +81,9 @@ export class Recorder {
 		this.done = new Promise<Recording>((res) => {
 			this.resolve = res;
 		});
-		this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+		this.stream = await navigator.mediaDevices.getUserMedia({
+			audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
+		});
 		try {
 			// A context at the capture rate: the worklet's frames arrive as
 			// 16 kHz linear16, so nothing is resampled on the way in or out.
@@ -88,7 +95,8 @@ export class Recorder {
 			this.source = source;
 			const node = new AudioWorkletNode(ctx, "pcm-capture");
 			this.node = node;
-			node.port.onmessage = (e: MessageEvent) => this.onMessage(e.data as { type?: string; rms?: number; buffer?: ArrayBuffer });
+			node.port.onmessage = (e: MessageEvent) =>
+				this.onMessage(e.data as { type?: string; rms?: number; buffer?: ArrayBuffer });
 			source.connect(node);
 			// Pull the graph. The worklet writes no output, so this is silence.
 			node.connect(ctx.destination);
@@ -113,7 +121,11 @@ export class Recorder {
 		const rate = this.ctx?.sampleRate || RATE;
 		const frames = this.frames;
 		const samples = frames.reduce((n, f) => n + f.length, 0);
-		const recording: Recording = { wav: encodeWav(frames, rate), ms: Math.round((samples / rate) * 1000), spokeAt: this.spokeAt };
+		const recording: Recording = {
+			wav: encodeWav(frames, rate),
+			ms: Math.round((samples / rate) * 1000),
+			spokeAt: this.spokeAt,
+		};
 		this.teardown();
 		this.done = null;
 		this.resolve?.({ ...recording });

@@ -22,7 +22,16 @@ const { regenCost, regenPlan, regenerate } = await import("../src/server/audio-r
 registerLanguage({ ...LANGUAGE_CATALOG.find((l) => l.id === "estonian")!, specialLetters: ["õ", "ä", "ö", "ü"] });
 const NARRATOR = "YJsJ2Mt3VRr0gCiTY6DA";
 const put = (lang: string, voice: string, text: string, tier: string, model?: string) =>
-	corpus.storeAudioClip({ key: corpus.audioKey(lang, voice, text), lang, voice, tier, ...(model ? { model } : {}), text, ext: "mp3", data: Buffer.from(`old ${text}`) });
+	corpus.storeAudioClip({
+		key: corpus.audioKey(lang, voice, text),
+		lang,
+		voice,
+		tier,
+		...(model ? { model } : {}),
+		text,
+		ext: "mp3",
+		data: Buffer.from(`old ${text}`),
+	});
 
 describe("audio regeneration", () => {
 	it("plans the older and the Edge-made clips ElevenLabs can make, and counts their characters", () => {
@@ -36,7 +45,11 @@ describe("audio regeneration", () => {
 		assert.deepEqual(texts, ["Dobrý deň.", "Mart on Tartus.", "chlieb"]);
 		assert.equal(plan.chars, [..."Dobrý deň."].length + [..."Mart on Tartus."].length + [..."chlieb"].length);
 		assert.equal(plan.kept["already the newest model"], 1);
-		assert.equal(plan.kept["no ElevenLabs voice for this language's words (Edge)"], 1, "an Estonian word has no ElevenLabs voice");
+		assert.equal(
+			plan.kept["no ElevenLabs voice for this language's words (Edge)"],
+			1,
+			"an Estonian word has no ElevenLabs voice",
+		);
 		assert.equal(regenCost(1000).credits, 1000);
 	});
 
@@ -48,7 +61,9 @@ describe("audio regeneration", () => {
 		globalThis.fetch = (async (_url: string | URL | Request, init?: RequestInit) => {
 			const body = JSON.parse(String(init?.body)) as { text: string; model_id: string };
 			sent.push(body.text);
-			return body.text === "chlieb" ? new Response("boom", { status: 500 }) : new Response(new Uint8Array([9, 9]), { status: 200 });
+			return body.text === "chlieb"
+				? new Response("boom", { status: 500 })
+				: new Response(new Uint8Array([9, 9]), { status: 200 });
 		}) as typeof fetch;
 		try {
 			const plan = regenPlan();
@@ -68,7 +83,11 @@ describe("audio regeneration", () => {
 			assert.equal(fs.readFileSync(moved, "utf-8"), "old Mart on Tartus.");
 			const word = corpus.findAudioClip(corpus.audioKey("sk", "female", "chlieb"))!;
 			assert.equal(fs.readFileSync(word.absolute, "utf-8"), "old chlieb");
-			assert.deepEqual(regenPlan().items.map((i) => i.entry.text), ["chlieb"], "a second run picks up only what failed");
+			assert.deepEqual(
+				regenPlan().items.map((i) => i.entry.text),
+				["chlieb"],
+				"a second run picks up only what failed",
+			);
 		} finally {
 			globalThis.fetch = realFetch;
 			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;

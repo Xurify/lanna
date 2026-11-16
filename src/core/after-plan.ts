@@ -35,12 +35,24 @@ export interface AfterPlan {
 export function afterPlan(input: { video?: AfterPlanVideo; listensToday: number; listenMinutes: number }): AfterPlan {
 	if (input.video) {
 		return {
-			step: { kind: "watch", title: `Watch: ${input.video.title}`, line: "A video you added, line by line: listen first, then reveal", minutes: input.video.minutes, href: `/watch?id=${input.video.id}` },
+			step: {
+				kind: "watch",
+				title: `Watch: ${input.video.title}`,
+				line: "A video you added, line by line: listen first, then reveal",
+				minutes: input.video.minutes,
+				href: `/watch?id=${input.video.id}`,
+			},
 			find: null,
 		};
 	}
 	return {
-		step: { kind: "listen", title: input.listensToday > 0 ? "Listen: ten more sentences" : "Listen: ten sentences", line: "New sentences you can follow, heard first and typed", minutes: input.listenMinutes, href: "/listen" },
+		step: {
+			kind: "listen",
+			title: input.listensToday > 0 ? "Listen: ten more sentences" : "Listen: ten sentences",
+			line: "New sentences you can follow, heard first and typed",
+			minutes: input.listenMinutes,
+			href: "/listen",
+		},
 		find: "/watch",
 	};
 }

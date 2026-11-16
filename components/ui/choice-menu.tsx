@@ -70,7 +70,14 @@ export function ChoiceMenu({
 				<ChevronDownIcon className="size-4 shrink-0 text-ink-3" strokeWidth={1.6} />
 			</button>
 			{open && (
-				<ul role="listbox" aria-label={ariaLabel} className={cn("absolute top-full z-30 mt-1.5 min-w-full overflow-hidden rounded-lg bg-card p-1 shadow-raise-hi", align === "end" ? "end-0" : "start-0")}>
+				<ul
+					role="listbox"
+					aria-label={ariaLabel}
+					className={cn(
+						"absolute top-full z-30 mt-1.5 min-w-full overflow-hidden rounded-lg bg-card p-1 shadow-raise-hi",
+						align === "end" ? "end-0" : "start-0",
+					)}
+				>
 					{options.map((o) => (
 						<li key={o.value} role="option" aria-selected={o.value === value}>
 							<button

@@ -10,7 +10,6 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { LineRecord } from "../core/line.ts";
 
-
 const FILE = () => path.join(PATHS.line, "log.jsonl");
 
 export const lineStore = {

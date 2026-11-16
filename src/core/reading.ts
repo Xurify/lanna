@@ -85,7 +85,20 @@ export interface StoryCharacter {
  *  rest are stand-alone pieces so a learner meets the text types the CEFR
  *  describes for the level (messages and dialogues at A1, diary and
  *  tales at A2, news and interviews at B1, opinion and history at B2). */
-export type StoryGenre = "robo" | "dialogue" | "message" | "diary" | "folk" | "travel" | "fable" | "news" | "interview" | "work" | "opinion" | "history" | "own";
+export type StoryGenre =
+	| "robo"
+	| "dialogue"
+	| "message"
+	| "diary"
+	| "folk"
+	| "travel"
+	| "fable"
+	| "news"
+	| "interview"
+	| "work"
+	| "opinion"
+	| "history"
+	| "own";
 
 interface GenreInfo {
 	id: StoryGenre;
@@ -95,18 +108,85 @@ interface GenreInfo {
 }
 
 const STORY_GENRES: readonly GenreInfo[] = [
-	{ id: "robo", label: "{series}", from: "A1", brief: "an episode of the running series (see the earlier recaps); mostly dialogue with a little narration" },
-	{ id: "dialogue", label: "A conversation", from: "A1", brief: "a stand-alone conversation between two people in an everyday place (a shop, a bus, a kitchen, a reception desk); almost every line is speech, with one narrator line to set the scene" },
-	{ id: "message", label: "Messages", from: "A1", brief: "an exchange of short text messages or a short email and its reply between two named people; each sentence is one message or one line of a message" },
-	{ id: "diary", label: "A diary page", from: "A2", brief: "a diary entry written in the first person by a named person about one day; narration only" },
-	{ id: "folk", label: "A folk tale", from: "A2", brief: "a {language} folk tale or legend retold simply; narration with a few lines of speech" },
-	{ id: "travel", label: "A place in {country}", from: "A2", brief: "a short piece about a real town, region or custom in {country}, as a friendly guide would tell it; narration only" },
-	{ id: "fable", label: "A fable", from: "A2", brief: "a short fable with animals and a one-line moral at the end; narration with lines of speech" },
-	{ id: "news", label: "A news item", from: "B1", brief: "a short local news item in plain newspaper {language} about an everyday event (a new tram line, a festival, a lost dog found); one quoted person" },
-	{ id: "interview", label: "An interview", from: "B1", brief: "a short interview: a named interviewer's questions and a named person's answers about their work or hobby" },
-	{ id: "work", label: "At work", from: "B1", brief: "a scene at work (a meeting, a phone call with a client, an email thread) with two or three named colleagues; mostly speech" },
-	{ id: "opinion", label: "An opinion piece", from: "B2", brief: "a short opinion column that argues one point about life in {country} and admits one counter-argument; narration only" },
-	{ id: "history", label: "From history", from: "B2", brief: "a short piece about a person, place or event from the history of {country}, told as a story; narration with at most two lines of speech" },
+	{
+		id: "robo",
+		label: "{series}",
+		from: "A1",
+		brief: "an episode of the running series (see the earlier recaps); mostly dialogue with a little narration",
+	},
+	{
+		id: "dialogue",
+		label: "A conversation",
+		from: "A1",
+		brief:
+			"a stand-alone conversation between two people in an everyday place (a shop, a bus, a kitchen, a reception desk); almost every line is speech, with one narrator line to set the scene",
+	},
+	{
+		id: "message",
+		label: "Messages",
+		from: "A1",
+		brief:
+			"an exchange of short text messages or a short email and its reply between two named people; each sentence is one message or one line of a message",
+	},
+	{
+		id: "diary",
+		label: "A diary page",
+		from: "A2",
+		brief: "a diary entry written in the first person by a named person about one day; narration only",
+	},
+	{
+		id: "folk",
+		label: "A folk tale",
+		from: "A2",
+		brief: "a {language} folk tale or legend retold simply; narration with a few lines of speech",
+	},
+	{
+		id: "travel",
+		label: "A place in {country}",
+		from: "A2",
+		brief:
+			"a short piece about a real town, region or custom in {country}, as a friendly guide would tell it; narration only",
+	},
+	{
+		id: "fable",
+		label: "A fable",
+		from: "A2",
+		brief: "a short fable with animals and a one-line moral at the end; narration with lines of speech",
+	},
+	{
+		id: "news",
+		label: "A news item",
+		from: "B1",
+		brief:
+			"a short local news item in plain newspaper {language} about an everyday event (a new tram line, a festival, a lost dog found); one quoted person",
+	},
+	{
+		id: "interview",
+		label: "An interview",
+		from: "B1",
+		brief: "a short interview: a named interviewer's questions and a named person's answers about their work or hobby",
+	},
+	{
+		id: "work",
+		label: "At work",
+		from: "B1",
+		brief:
+			"a scene at work (a meeting, a phone call with a client, an email thread) with two or three named colleagues; mostly speech",
+	},
+	{
+		id: "opinion",
+		label: "An opinion piece",
+		from: "B2",
+		brief:
+			"a short opinion column that argues one point about life in {country} and admits one counter-argument; narration only",
+	},
+	{
+		id: "history",
+		label: "From history",
+		from: "B2",
+		brief:
+			"a short piece about a person, place or event from the history of {country}, told as a story; narration with at most two lines of speech",
+	},
 	{ id: "own", label: "Your reading", from: "A1", brief: "" },
 ];
 
@@ -149,16 +229,37 @@ const STORY_QUESTION_KINDS: readonly StoryQuestionKind[] = ["recall", "inference
 /** How each kind is shown over the question, and what the model is told
  *  to write. */
 export const QUESTION_KIND_INFO: Readonly<Record<StoryQuestionKind, { label: string; brief: string }>> = {
-	recall: { label: "What happened?", brief: "a literal question about what happened (who, what, where, when) answered directly by the text" },
-	inference: { label: "Between the lines", brief: "a question the text answers only indirectly (why someone did something, what will probably happen next, what a character wants)" },
-	vocab: { label: "A word from the text", brief: "what one word or phrase from the text means IN THIS SENTENCE, with options that are other plausible meanings; quote the word in the question" },
-	paraphrase: { label: "In other words", brief: "which option says the same as one sentence of the text in different words; the distractors change one detail" },
-	attitude: { label: "How they feel", brief: "how a character feels or what their attitude or intention is, shown by what they say or do, never stated outright" },
+	recall: {
+		label: "What happened?",
+		brief: "a literal question about what happened (who, what, where, when) answered directly by the text",
+	},
+	inference: {
+		label: "Between the lines",
+		brief:
+			"a question the text answers only indirectly (why someone did something, what will probably happen next, what a character wants)",
+	},
+	vocab: {
+		label: "A word from the text",
+		brief:
+			"what one word or phrase from the text means IN THIS SENTENCE, with options that are other plausible meanings; quote the word in the question",
+	},
+	paraphrase: {
+		label: "In other words",
+		brief:
+			"which option says the same as one sentence of the text in different words; the distractors change one detail",
+	},
+	attitude: {
+		label: "How they feel",
+		brief:
+			"how a character feels or what their attitude or intention is, shown by what they say or do, never stated outright",
+	},
 };
 
 /** The questions an episode gets at each level: how many, how many
  *  options each, and of which kinds in order. */
-export const QUESTION_PLAN: Readonly<Record<Cefr, { count: number; options: number; kinds: readonly StoryQuestionKind[] }>> = {
+export const QUESTION_PLAN: Readonly<
+	Record<Cefr, { count: number; options: number; kinds: readonly StoryQuestionKind[] }>
+> = {
 	A1: { count: 3, options: 3, kinds: ["recall", "recall", "recall"] },
 	A2: { count: 3, options: 3, kinds: ["recall", "recall", "inference"] },
 	B1: { count: 4, options: 4, kinds: ["recall", "inference", "vocab", "paraphrase"] },
@@ -334,7 +435,11 @@ export const SHELF_DAILY_CAP = 8;
  *  learner's level first until it holds SHELF_OWN unread stories, then one
  *  at the level below and one above; genres rotate so no level holds two
  *  unread stories of one kind, and series episodes stay in the mix. */
-export function shelfNeeds(level: Cefr, unread: readonly { level: Cefr; genre?: StoryGenre }[], recentGenres: readonly StoryGenre[] = []): Array<{ level: Cefr; genre: StoryGenre }> {
+export function shelfNeeds(
+	level: Cefr,
+	unread: readonly { level: Cefr; genre?: StoryGenre }[],
+	recentGenres: readonly StoryGenre[] = [],
+): Array<{ level: Cefr; genre: StoryGenre }> {
 	const li = levelIndex(level);
 	const wants: Array<{ level: Cefr; want: number }> = [{ level, want: SHELF_OWN }];
 	if (li > 0) wants.push({ level: LEVEL_ORDER[li - 1]!, want: SHELF_NEAR });
@@ -344,10 +449,15 @@ export function shelfNeeds(level: Cefr, unread: readonly { level: Cefr; genre?: 
 		const have = unread.filter((u) => u.level === w.level).map((u) => u.genre ?? "robo");
 		const taken = new Set<StoryGenre>([...have, ...out.filter((o) => o.level === w.level).map((o) => o.genre)]);
 		for (let n = have.length; n < w.want; n++) {
-			const pool = genresAt(w.level).map((g) => g.id).filter((g) => !taken.has(g));
+			const pool = genresAt(w.level)
+				.map((g) => g.id)
+				.filter((g) => !taken.has(g));
 			// Martin first when the level has no episode waiting, then the
 			// genre read least recently.
-			const pick = pool.includes("robo") && !taken.has("robo") ? "robo" : [...pool].sort((a, b) => lastSeen(a, recentGenres) - lastSeen(b, recentGenres))[0];
+			const pick =
+				pool.includes("robo") && !taken.has("robo")
+					? "robo"
+					: [...pool].sort((a, b) => lastSeen(a, recentGenres) - lastSeen(b, recentGenres))[0];
 			if (!pick) break;
 			taken.add(pick);
 			out.push({ level: w.level, genre: pick });
@@ -401,7 +511,9 @@ function fitScore(story: StoryRecord, input: PickInput): PickReason {
 	const dist = Math.abs(levelIndex(story.level) - levelIndex(input.level));
 	const levelScore = dist === 0 ? 1 : dist === 1 ? 0.7 : 0.3;
 	const recentG = input.recentGenres.slice(-2);
-	const variety = (recentG.includes(genre) ? 0 : 0.15) + (story.topic && input.recentTopics.slice(-3).includes(story.topic) ? 0 : 0.1);
+	const variety =
+		(recentG.includes(genre) ? 0 : 0.15) +
+		(story.topic && input.recentTopics.slice(-3).includes(story.topic) ? 0 : 0.1);
 	const series = genre === "robo" ? 0.1 : 0;
 	const score = Math.round((fit * 0.55 + levelScore * 0.25 + variety + series) * 100) / 100;
 	const line = `${Math.round(coverage * 100)} of 100 words known · ${story.level} · ${genreInfo(genre).label}${recentG.includes(genre) ? " (read lately)" : ""}`;
@@ -437,7 +549,10 @@ function countWords(s: string): number {
 
 function cutParagraph(para: string, target: number): string[] {
 	if (countWords(para) <= target) return [para];
-	const sentences = para.split(/(?<=[.!?…])\s+/).map((s) => s.trim()).filter(Boolean);
+	const sentences = para
+		.split(/(?<=[.!?…])\s+/)
+		.map((s) => s.trim())
+		.filter(Boolean);
 	if (sentences.length <= 1) return [para];
 	const pieces: string[] = [];
 	let current: string[] = [];
@@ -496,8 +611,7 @@ export function splitIntoSections(text: string, level: Cefr, difficulty: Reading
 		let minIdx = 0;
 		for (let i = 0; i < sections.length - 1; i++) {
 			const sum =
-				sections[i]!.reduce((n, p) => n + countWords(p), 0) +
-				sections[i + 1]!.reduce((n, p) => n + countWords(p), 0);
+				sections[i]!.reduce((n, p) => n + countWords(p), 0) + sections[i + 1]!.reduce((n, p) => n + countWords(p), 0);
 			if (sum < minSum) {
 				minSum = sum;
 				minIdx = i;
@@ -514,11 +628,19 @@ export function ownStoryId(sourceId: string, part: number): string {
 	return `${sourceId}-p${String(part).padStart(2, "0")}`;
 }
 
-export function sourceIsShortened(wordCount: number, parts: number, level: Cefr, difficulty: ReadingDifficulty = "level"): boolean {
+export function sourceIsShortened(
+	wordCount: number,
+	parts: number,
+	level: Cefr,
+	difficulty: ReadingDifficulty = "level",
+): boolean {
 	return difficulty !== "full" && wordCount / parts > sourceWordsPerPart(level, difficulty) * 1.25;
 }
 
-export function pickStory(stories: readonly StoryRecord[], input: PickInput): { story: StoryRecord; reason: PickReason } | null {
+export function pickStory(
+	stories: readonly StoryRecord[],
+	input: PickInput,
+): { story: StoryRecord; reason: PickReason } | null {
 	const ownStories = stories.filter((s) => s.source);
 	if (ownStories.length > 0) {
 		const bySource = new Map<string, StoryRecord>();
@@ -537,9 +659,14 @@ export function pickStory(stories: readonly StoryRecord[], input: PickInput): { 
 		if (candidates[0]) return { story: candidates[0], reason: fitScore(candidates[0], input) };
 	}
 	const regularStories = stories.filter((s) => !s.source);
-	const mine = input.chapter ? regularStories.filter((s) => s.chapter === input.chapter).sort((a, b) => a.createdAt.localeCompare(b.createdAt)) : [];
+	const mine = input.chapter
+		? regularStories.filter((s) => s.chapter === input.chapter).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+		: [];
 	if (mine[0]) return { story: mine[0], reason: fitScore(mine[0], input) };
-	const roboNext = Math.min(...regularStories.filter((s) => (s.genre ?? "robo") === "robo").map((s) => s.episode), Infinity);
+	const roboNext = Math.min(
+		...regularStories.filter((s) => (s.genre ?? "robo") === "robo").map((s) => s.episode),
+		Infinity,
+	);
 	let best: { story: StoryRecord; reason: PickReason } | null = null;
 	for (const story of regularStories) {
 		if ((story.genre ?? "robo") === "robo" && story.episode > roboNext) continue;
@@ -575,7 +702,7 @@ export const NEW_WORDS_MAX: Record<Cefr, number> = { A1: 3, A2: 4, B1: 5, B2: 6,
 export const KNOWN_RANK: Record<Cefr, number> = { A1: 500, A2: 1000, B1: 2000, B2: 3000, C1: 5000 };
 
 /** Below this share of known running words the draft is written again. */
-export const COVERAGE_FLOOR = 0.92;// ─── XP ─────────────────────────────────────────────────────────────────────
+export const COVERAGE_FLOOR = 0.92; // ─── XP ─────────────────────────────────────────────────────────────────────
 
 /** A finished reading earns XP for the text read and the questions right;
  *  a reread earns the questions only (the words are not new work). */
@@ -613,42 +740,258 @@ export function wordTokens(sentences: readonly { tokens: readonly StoryToken[] }
  *  They are read as known at every level: a learner meets "sa" and "jeho"
  *  in the first week, and a text is not harder for using them. */
 export const GRAMMAR_WORDS: Readonly<Record<string, readonly [string, string]>> = {
-	ono: ["ono", "it"], ony: ["ony", "they (things, women)"],
-	mňa: ["ja", "me"], mi: ["ja", "to me"], mne: ["ja", "(to) me"], mnou: ["ja", "(with) me"],
-	ťa: ["ty", "you (object)"], teba: ["ty", "you (object)"], ti: ["ty", "to you"], tebe: ["ty", "(to) you"], tebou: ["ty", "(with) you"],
-	ho: ["on", "him; it"], jeho: ["on", "his; him"], mu: ["on", "to him"], jemu: ["on", "to him"], ňom: ["on", "him (after a preposition)"], ním: ["on", "(with) him"],
-	ňou: ["ona", "her (after a preposition)"], nej: ["ona", "her; to her"], ju: ["ona", "her"], jej: ["ona", "her; to her"], ňu: ["ona", "her (after a preposition)"],
-	nás: ["my", "us"], nám: ["my", "to us"], nami: ["my", "(with) us"], vás: ["vy", "you (plural, object)"], vám: ["vy", "to you (plural)"], vami: ["vy", "(with) you (plural)"],
-	ich: ["oni", "them; their"], im: ["oni", "to them"], nich: ["oni", "them (after a preposition)"], nimi: ["oni", "(with) them"],
-	sa: ["sa", "oneself (reflexive particle)"], si: ["si", "to oneself / you are"], seba: ["seba", "oneself"], sebe: ["seba", "(to) oneself"], sebou: ["seba", "(with) oneself"],
-	moja: ["môj", "my"], moje: ["môj", "my"], môjho: ["môj", "my"], mojho: ["môj", "my"], mojej: ["môj", "my"], môjmu: ["môj", "to my"], mojom: ["môj", "(in/on) my"], mojím: ["môj", "(with) my"], moji: ["môj", "my (plural)"], mojich: ["môj", "my (plural)"],
-	tvoja: ["tvoj", "your"], tvoje: ["tvoj", "your"], tvojho: ["tvoj", "your"], tvojej: ["tvoj", "your"], naša: ["náš", "our"], naše: ["náš", "our"], nášho: ["náš", "our"], našej: ["náš", "our"], našich: ["náš", "our"], vaša: ["váš", "your (plural)"], vaše: ["váš", "your (plural)"], vášho: ["váš", "your (plural)"], vašej: ["váš", "your (plural)"],
-	svoja: ["svoj", "one's own"], svoje: ["svoj", "one's own"], svojho: ["svoj", "one's own"], svojej: ["svoj", "one's own"], svojom: ["svoj", "(in/on) one's own"], svojím: ["svoj", "(with) one's own"],
-	tá: ["ten", "that; this (feminine)"], tí: ["ten", "those"], tie: ["ten", "those"], toho: ["ten", "that (object)"], tomu: ["ten", "to that"], tom: ["ten", "that (after a preposition)"], tým: ["ten", "(with) that"], tej: ["ten", "that (feminine)"], tú: ["ten", "that (feminine, object)"], tých: ["ten", "those (object)"], tými: ["ten", "(with) those"],
-	toto: ["tento", "this"], táto: ["tento", "this (feminine)"], títo: ["tento", "these"], tieto: ["tento", "these"], tohto: ["tento", "this (object)"], tejto: ["tento", "this (feminine)"], týmto: ["tento", "(with) this; (to) these"], tomto: ["tento", "(in/on) this"],
-	tomuto: ["tento", "to this"], túto: ["tento", "this (feminine, object)"], touto: ["tento", "(with) this (feminine)"], týchto: ["tento", "these (object)"], týmito: ["tento", "(with) these"],
-	tamten: ["tamten", "that over there"], tamtá: ["tamten", "that over there (feminine)"], tamto: ["tamten", "that over there (neuter)"], tamtí: ["tamten", "those over there"], tamtie: ["tamten", "those over there"],
-	tamtoho: ["tamten", "that over there (object)"], tamtej: ["tamten", "that over there (feminine)"], tamtomu: ["tamten", "to that over there"], tamtom: ["tamten", "that over there (after a preposition)"], tamtým: ["tamten", "(with) that over there; (to) those over there"],
-	tamtú: ["tamten", "that over there (feminine, object)"], tamtou: ["tamten", "(with) that over there (feminine)"], tamtých: ["tamten", "those over there (object)"], tamtými: ["tamten", "(with) those over there"],
-	ktorá: ["ktorý", "which; who (feminine)"], ktoré: ["ktorý", "which; that"], ktorí: ["ktorý", "who; which (plural)"], ktorú: ["ktorý", "which (object)"], ktorého: ["ktorý", "whose; which"], ktorému: ["ktorý", "to which; to whom"], ktorej: ["ktorý", "whose; in/to which"], ktorom: ["ktorý", "(in/on) which"], ktorým: ["ktorý", "(with) which"], ktorých: ["ktorý", "of which; whose"],
-	sem: ["sem", "(to) here"], koho: ["kto", "whom"], komu: ["kto", "to whom"], kým: ["kto", "(with) whom / while"], čom: ["čo", "what (after a preposition)"], čím: ["čo", "(with) what"], čoho: ["čo", "of what"], čomu: ["čo", "to what"],
-	i: ["aj", "and; also"], aj: ["aj", "also; too"], ak: ["ak", "if"], aby: ["aby", "so that; in order to"], no: ["no", "well; but"], však: ["však", "however; after all"], iba: ["iba", "only"],
-	vždy: ["vždy", "always"], nikdy: ["nikdy", "never"], niekedy: ["niekedy", "sometimes"], nikde: ["nikde", "nowhere"], niekde: ["niekde", "somewhere"], všetko: ["všetko", "everything"], všetci: ["všetci", "everyone"], všetkých: ["všetci", "all; everyone"], všetkým: ["všetci", "to everyone; everything"],
-	tak: ["tak", "so; like that"], taký: ["taký", "such"], taká: ["taký", "such"], také: ["taký", "such"], takto: ["takto", "like this"],
-	vo: ["v", "in"], k: ["k", "to; towards"], ku: ["k", "to; towards"], u: ["u", "at (someone's place)"], pred: ["pred", "in front of; before"], nad: ["nad", "above"], pod: ["pod", "under"], medzi: ["medzi", "between; among"], bez: ["bez", "without"], cez: ["cez", "through; across"], pri: ["pri", "at; by; near"], proti: ["proti", "against"], podľa: ["podľa", "according to"], okolo: ["okolo", "around; past"],
-	až: ["až", "until; as much as"], ani: ["ani", "not even; nor"], než: ["než", "than"], nech: ["nech", "let (may)"], by: ["by", "would (conditional)"],
-	keby: ["keby", "if (conditional)"], napríklad: ["napríklad", "for example"],
-	hm: ["hm", "hm (filler)"], hmm: ["hm", "hm (filler)"], eh: ["eh", "eh (filler)"], ehm: ["eh", "um (filler)"], aha: ["aha", "aha"], wow: ["wow", "wow"],
-	nejaký: ["nejaký", "some; a certain"], nejaká: ["nejaký", "some; a certain"], nejaké: ["nejaký", "some; a certain"], nejakého: ["nejaký", "some; a certain"], nejakej: ["nejaký", "some; a certain"], nejakému: ["nejaký", "some; a certain"], nejakom: ["nejaký", "some; a certain"], nejakým: ["nejaký", "some; a certain"], nejakú: ["nejaký", "some; a certain"], nejakou: ["nejaký", "some; a certain"], nejakí: ["nejaký", "some; a certain"], nejakých: ["nejaký", "some; a certain"], nejakými: ["nejaký", "some; a certain"], nejako: ["nejako", "somehow"], nejak: ["nejako", "somehow"],
-	iný: ["iný", "other; different"], iná: ["iný", "other; different"], iné: ["iný", "other; different"], iného: ["iný", "other; different"], inej: ["iný", "other; different"], inému: ["iný", "other; different"], inom: ["iný", "other; different"], iným: ["iný", "other; different"], inú: ["iný", "other; different"], inou: ["iný", "other; different"], iní: ["iný", "other; different"], iných: ["iný", "other; different"], inými: ["iný", "other; different"],
-	takého: ["taký", "such"], takej: ["taký", "such"], takému: ["taký", "such"], takom: ["taký", "such"], takým: ["taký", "such"], takú: ["taký", "such"], takou: ["taký", "such"], takí: ["taký", "such"], takých: ["taký", "such"], takými: ["taký", "such"],
-	jeden: ["jeden", "one"], jedna: ["jeden", "one"], jedno: ["jeden", "one"], jedného: ["jeden", "one"], jednej: ["jeden", "one"], jednému: ["jeden", "one"], jednom: ["jeden", "one"], jedným: ["jeden", "one"], jednu: ["jeden", "one"], jednou: ["jeden", "one"],
-	dva: ["dva", "two"], dve: ["dva", "two"], dvaja: ["dva", "two (men)"], dvoch: ["dva", "two"], dvom: ["dva", "to two"], dvomi: ["dva", "(with) two"],
-	tri: ["tri", "three"], troch: ["tri", "three"], trom: ["tri", "to three"], tromi: ["tri", "(with) three"],
-	štyri: ["štyri", "four"], štyroch: ["štyri", "four"], štyrom: ["štyri", "to four"], štyrmi: ["štyri", "(with) four"],
-	päť: ["päť", "five"], šesť: ["šesť", "six"], sedem: ["sedem", "seven"], osem: ["osem", "eight"], deväť: ["deväť", "nine"], desať: ["desať", "ten"],
-	centrum: ["centrum", "center; downtown"], centra: ["centrum", "center; downtown (genitive)"], centre: ["centrum", "in the center (locative)"], centrom: ["centrum", "through/with the center"], centru: ["centrum", "towards the center"],
-	hora: ["hora", "mountain; forest"], hory: ["hora", "mountains; of the mountain"], hore: ["hora", "up; on the mountain"], horu: ["hora", "mountain (accusative)"], horou: ["hora", "through the mountain"], hôr: ["hora", "of the mountains"], horám: ["hora", "to the mountains"], horách: ["hora", "in the mountains (locative plural)"], horami: ["hora", "through/with the mountains"],
+	ono: ["ono", "it"],
+	ony: ["ony", "they (things, women)"],
+	mňa: ["ja", "me"],
+	mi: ["ja", "to me"],
+	mne: ["ja", "(to) me"],
+	mnou: ["ja", "(with) me"],
+	ťa: ["ty", "you (object)"],
+	teba: ["ty", "you (object)"],
+	ti: ["ty", "to you"],
+	tebe: ["ty", "(to) you"],
+	tebou: ["ty", "(with) you"],
+	ho: ["on", "him; it"],
+	jeho: ["on", "his; him"],
+	mu: ["on", "to him"],
+	jemu: ["on", "to him"],
+	ňom: ["on", "him (after a preposition)"],
+	ním: ["on", "(with) him"],
+	ňou: ["ona", "her (after a preposition)"],
+	nej: ["ona", "her; to her"],
+	ju: ["ona", "her"],
+	jej: ["ona", "her; to her"],
+	ňu: ["ona", "her (after a preposition)"],
+	nás: ["my", "us"],
+	nám: ["my", "to us"],
+	nami: ["my", "(with) us"],
+	vás: ["vy", "you (plural, object)"],
+	vám: ["vy", "to you (plural)"],
+	vami: ["vy", "(with) you (plural)"],
+	ich: ["oni", "them; their"],
+	im: ["oni", "to them"],
+	nich: ["oni", "them (after a preposition)"],
+	nimi: ["oni", "(with) them"],
+	sa: ["sa", "oneself (reflexive particle)"],
+	si: ["si", "to oneself / you are"],
+	seba: ["seba", "oneself"],
+	sebe: ["seba", "(to) oneself"],
+	sebou: ["seba", "(with) oneself"],
+	moja: ["môj", "my"],
+	moje: ["môj", "my"],
+	môjho: ["môj", "my"],
+	mojho: ["môj", "my"],
+	mojej: ["môj", "my"],
+	môjmu: ["môj", "to my"],
+	mojom: ["môj", "(in/on) my"],
+	mojím: ["môj", "(with) my"],
+	moji: ["môj", "my (plural)"],
+	mojich: ["môj", "my (plural)"],
+	tvoja: ["tvoj", "your"],
+	tvoje: ["tvoj", "your"],
+	tvojho: ["tvoj", "your"],
+	tvojej: ["tvoj", "your"],
+	naša: ["náš", "our"],
+	naše: ["náš", "our"],
+	nášho: ["náš", "our"],
+	našej: ["náš", "our"],
+	našich: ["náš", "our"],
+	vaša: ["váš", "your (plural)"],
+	vaše: ["váš", "your (plural)"],
+	vášho: ["váš", "your (plural)"],
+	vašej: ["váš", "your (plural)"],
+	svoja: ["svoj", "one's own"],
+	svoje: ["svoj", "one's own"],
+	svojho: ["svoj", "one's own"],
+	svojej: ["svoj", "one's own"],
+	svojom: ["svoj", "(in/on) one's own"],
+	svojím: ["svoj", "(with) one's own"],
+	tá: ["ten", "that; this (feminine)"],
+	tí: ["ten", "those"],
+	tie: ["ten", "those"],
+	toho: ["ten", "that (object)"],
+	tomu: ["ten", "to that"],
+	tom: ["ten", "that (after a preposition)"],
+	tým: ["ten", "(with) that"],
+	tej: ["ten", "that (feminine)"],
+	tú: ["ten", "that (feminine, object)"],
+	tých: ["ten", "those (object)"],
+	tými: ["ten", "(with) those"],
+	toto: ["tento", "this"],
+	táto: ["tento", "this (feminine)"],
+	títo: ["tento", "these"],
+	tieto: ["tento", "these"],
+	tohto: ["tento", "this (object)"],
+	tejto: ["tento", "this (feminine)"],
+	týmto: ["tento", "(with) this; (to) these"],
+	tomto: ["tento", "(in/on) this"],
+	tomuto: ["tento", "to this"],
+	túto: ["tento", "this (feminine, object)"],
+	touto: ["tento", "(with) this (feminine)"],
+	týchto: ["tento", "these (object)"],
+	týmito: ["tento", "(with) these"],
+	tamten: ["tamten", "that over there"],
+	tamtá: ["tamten", "that over there (feminine)"],
+	tamto: ["tamten", "that over there (neuter)"],
+	tamtí: ["tamten", "those over there"],
+	tamtie: ["tamten", "those over there"],
+	tamtoho: ["tamten", "that over there (object)"],
+	tamtej: ["tamten", "that over there (feminine)"],
+	tamtomu: ["tamten", "to that over there"],
+	tamtom: ["tamten", "that over there (after a preposition)"],
+	tamtým: ["tamten", "(with) that over there; (to) those over there"],
+	tamtú: ["tamten", "that over there (feminine, object)"],
+	tamtou: ["tamten", "(with) that over there (feminine)"],
+	tamtých: ["tamten", "those over there (object)"],
+	tamtými: ["tamten", "(with) those over there"],
+	ktorá: ["ktorý", "which; who (feminine)"],
+	ktoré: ["ktorý", "which; that"],
+	ktorí: ["ktorý", "who; which (plural)"],
+	ktorú: ["ktorý", "which (object)"],
+	ktorého: ["ktorý", "whose; which"],
+	ktorému: ["ktorý", "to which; to whom"],
+	ktorej: ["ktorý", "whose; in/to which"],
+	ktorom: ["ktorý", "(in/on) which"],
+	ktorým: ["ktorý", "(with) which"],
+	ktorých: ["ktorý", "of which; whose"],
+	sem: ["sem", "(to) here"],
+	koho: ["kto", "whom"],
+	komu: ["kto", "to whom"],
+	kým: ["kto", "(with) whom / while"],
+	čom: ["čo", "what (after a preposition)"],
+	čím: ["čo", "(with) what"],
+	čoho: ["čo", "of what"],
+	čomu: ["čo", "to what"],
+	i: ["aj", "and; also"],
+	aj: ["aj", "also; too"],
+	ak: ["ak", "if"],
+	aby: ["aby", "so that; in order to"],
+	no: ["no", "well; but"],
+	však: ["však", "however; after all"],
+	iba: ["iba", "only"],
+	vždy: ["vždy", "always"],
+	nikdy: ["nikdy", "never"],
+	niekedy: ["niekedy", "sometimes"],
+	nikde: ["nikde", "nowhere"],
+	niekde: ["niekde", "somewhere"],
+	všetko: ["všetko", "everything"],
+	všetci: ["všetci", "everyone"],
+	všetkých: ["všetci", "all; everyone"],
+	všetkým: ["všetci", "to everyone; everything"],
+	tak: ["tak", "so; like that"],
+	taký: ["taký", "such"],
+	taká: ["taký", "such"],
+	také: ["taký", "such"],
+	takto: ["takto", "like this"],
+	vo: ["v", "in"],
+	k: ["k", "to; towards"],
+	ku: ["k", "to; towards"],
+	u: ["u", "at (someone's place)"],
+	pred: ["pred", "in front of; before"],
+	nad: ["nad", "above"],
+	pod: ["pod", "under"],
+	medzi: ["medzi", "between; among"],
+	bez: ["bez", "without"],
+	cez: ["cez", "through; across"],
+	pri: ["pri", "at; by; near"],
+	proti: ["proti", "against"],
+	podľa: ["podľa", "according to"],
+	okolo: ["okolo", "around; past"],
+	až: ["až", "until; as much as"],
+	ani: ["ani", "not even; nor"],
+	než: ["než", "than"],
+	nech: ["nech", "let (may)"],
+	by: ["by", "would (conditional)"],
+	keby: ["keby", "if (conditional)"],
+	napríklad: ["napríklad", "for example"],
+	hm: ["hm", "hm (filler)"],
+	hmm: ["hm", "hm (filler)"],
+	eh: ["eh", "eh (filler)"],
+	ehm: ["eh", "um (filler)"],
+	aha: ["aha", "aha"],
+	wow: ["wow", "wow"],
+	nejaký: ["nejaký", "some; a certain"],
+	nejaká: ["nejaký", "some; a certain"],
+	nejaké: ["nejaký", "some; a certain"],
+	nejakého: ["nejaký", "some; a certain"],
+	nejakej: ["nejaký", "some; a certain"],
+	nejakému: ["nejaký", "some; a certain"],
+	nejakom: ["nejaký", "some; a certain"],
+	nejakým: ["nejaký", "some; a certain"],
+	nejakú: ["nejaký", "some; a certain"],
+	nejakou: ["nejaký", "some; a certain"],
+	nejakí: ["nejaký", "some; a certain"],
+	nejakých: ["nejaký", "some; a certain"],
+	nejakými: ["nejaký", "some; a certain"],
+	nejako: ["nejako", "somehow"],
+	nejak: ["nejako", "somehow"],
+	iný: ["iný", "other; different"],
+	iná: ["iný", "other; different"],
+	iné: ["iný", "other; different"],
+	iného: ["iný", "other; different"],
+	inej: ["iný", "other; different"],
+	inému: ["iný", "other; different"],
+	inom: ["iný", "other; different"],
+	iným: ["iný", "other; different"],
+	inú: ["iný", "other; different"],
+	inou: ["iný", "other; different"],
+	iní: ["iný", "other; different"],
+	iných: ["iný", "other; different"],
+	inými: ["iný", "other; different"],
+	takého: ["taký", "such"],
+	takej: ["taký", "such"],
+	takému: ["taký", "such"],
+	takom: ["taký", "such"],
+	takým: ["taký", "such"],
+	takú: ["taký", "such"],
+	takou: ["taký", "such"],
+	takí: ["taký", "such"],
+	takých: ["taký", "such"],
+	takými: ["taký", "such"],
+	jeden: ["jeden", "one"],
+	jedna: ["jeden", "one"],
+	jedno: ["jeden", "one"],
+	jedného: ["jeden", "one"],
+	jednej: ["jeden", "one"],
+	jednému: ["jeden", "one"],
+	jednom: ["jeden", "one"],
+	jedným: ["jeden", "one"],
+	jednu: ["jeden", "one"],
+	jednou: ["jeden", "one"],
+	dva: ["dva", "two"],
+	dve: ["dva", "two"],
+	dvaja: ["dva", "two (men)"],
+	dvoch: ["dva", "two"],
+	dvom: ["dva", "to two"],
+	dvomi: ["dva", "(with) two"],
+	tri: ["tri", "three"],
+	troch: ["tri", "three"],
+	trom: ["tri", "to three"],
+	tromi: ["tri", "(with) three"],
+	štyri: ["štyri", "four"],
+	štyroch: ["štyri", "four"],
+	štyrom: ["štyri", "to four"],
+	štyrmi: ["štyri", "(with) four"],
+	päť: ["päť", "five"],
+	šesť: ["šesť", "six"],
+	sedem: ["sedem", "seven"],
+	osem: ["osem", "eight"],
+	deväť: ["deväť", "nine"],
+	desať: ["desať", "ten"],
+	centrum: ["centrum", "center; downtown"],
+	centra: ["centrum", "center; downtown (genitive)"],
+	centre: ["centrum", "in the center (locative)"],
+	centrom: ["centrum", "through/with the center"],
+	centru: ["centrum", "towards the center"],
+	hora: ["hora", "mountain; forest"],
+	hory: ["hora", "mountains; of the mountain"],
+	hore: ["hora", "up; on the mountain"],
+	horu: ["hora", "mountain (accusative)"],
+	horou: ["hora", "through the mountain"],
+	hôr: ["hora", "of the mountains"],
+	horám: ["hora", "to the mountains"],
+	horách: ["hora", "in the mountains (locative plural)"],
+	horami: ["hora", "through/with the mountains"],
 };
 
 /** The grammar word a form is, if the table has it. */
@@ -660,11 +1003,20 @@ export function grammarWord(form: string): { lemma: string; gloss: string } | un
 /** Share of word tokens the learner can read: known words, plus the
  *  words the episode introduces on purpose (glossed, repeated, queued —
  *  the i+1). What is left are stray unknowns, the ones the floor limits. */
-export function knownCoverage(sentences: readonly { tokens: readonly StoryToken[] }[], introduced: readonly StoryWord[] = []): number {
+export function knownCoverage(
+	sentences: readonly { tokens: readonly StoryToken[] }[],
+	introduced: readonly StoryWord[] = [],
+): number {
 	const words = wordTokens(sentences);
 	if (words.length === 0) return 1;
-	const taught = new Set(introduced.flatMap((w) => [w.slug, w.lemma.toLocaleLowerCase()]).filter((x): x is string => !!x));
-	return words.filter((t) => !t.fresh || (t.slug && taught.has(t.slug)) || (t.lemma && taught.has(t.lemma.toLocaleLowerCase()))).length / words.length;
+	const taught = new Set(
+		introduced.flatMap((w) => [w.slug, w.lemma.toLocaleLowerCase()]).filter((x): x is string => !!x),
+	);
+	return (
+		words.filter(
+			(t) => !t.fresh || (t.slug && taught.has(t.slug)) || (t.lemma && taught.has(t.lemma.toLocaleLowerCase())),
+		).length / words.length
+	);
 }
 
 // ─── The model's answer ─────────────────────────────────────────────────────
@@ -693,9 +1045,16 @@ export function questionsFrom(raw: unknown): StoryQuestion[] {
 			if (!q || typeof q !== "object") return null;
 			const qq = q as { q?: unknown; options?: unknown; answer?: unknown; kind?: unknown };
 			const options = Array.isArray(qq.options) ? qq.options.map(str).filter(Boolean) : [];
-			const answer = typeof qq.answer === "number" ? qq.answer : typeof qq.answer === "string" ? options.indexOf(qq.answer.trim()) : -1;
+			const answer =
+				typeof qq.answer === "number"
+					? qq.answer
+					: typeof qq.answer === "string"
+						? options.indexOf(qq.answer.trim())
+						: -1;
 			if (!str(qq.q) || options.length < 2 || answer < 0 || answer >= Math.min(options.length, 4)) return null;
-			const kind = (STORY_QUESTION_KINDS as readonly string[]).includes(str(qq.kind)) ? (str(qq.kind) as StoryQuestionKind) : undefined;
+			const kind = (STORY_QUESTION_KINDS as readonly string[]).includes(str(qq.kind))
+				? (str(qq.kind) as StoryQuestionKind)
+				: undefined;
 			return { q: str(qq.q), options: options.slice(0, 4), answer, ...(kind ? { kind } : {}) };
 		})
 		.filter((q): q is StoryQuestion => q !== null);
@@ -741,7 +1100,10 @@ export function parseStoryDraft(text: string): StoryDraft {
 					if (!s || typeof s !== "object") return null;
 					const ss = s as { sk?: unknown; en?: unknown; who?: unknown; p?: unknown };
 					const who = str(ss.who);
-					const known = who && who.toLocaleLowerCase() !== "narrator" && names.has(who.toLocaleLowerCase()) ? cast.find((c) => c.name.toLocaleLowerCase() === who.toLocaleLowerCase())!.name : undefined;
+					const known =
+						who && who.toLocaleLowerCase() !== "narrator" && names.has(who.toLocaleLowerCase())
+							? cast.find((c) => c.name.toLocaleLowerCase() === who.toLocaleLowerCase())!.name
+							: undefined;
 					const p = ss.p === true ? true : undefined;
 					return { sk: str(ss.sk), en: str(ss.en), ...(known ? { who: known } : {}), ...(p ? { p: true } : {}) };
 				})
@@ -750,7 +1112,11 @@ export function parseStoryDraft(text: string): StoryDraft {
 	if (sentences.length < 3) throw new Error(`the draft has ${sentences.length} sentences`);
 	const newWords = Array.isArray(o.newWords)
 		? o.newWords
-				.map((w) => (w && typeof w === "object" ? { sk: str((w as { sk?: unknown }).sk), en: str((w as { en?: unknown }).en) } : null))
+				.map((w) =>
+					w && typeof w === "object"
+						? { sk: str((w as { sk?: unknown }).sk), en: str((w as { en?: unknown }).en) }
+						: null,
+				)
 				.filter((w): w is { sk: string; en: string } => !!w && w.sk.length > 0)
 		: [];
 	const questions = questionsFrom(o.questions);
@@ -768,7 +1134,10 @@ export function parseStoryDraft(text: string): StoryDraft {
 
 // ─── Grading the check ──────────────────────────────────────────────────────
 
-export function gradeAnswers(questions: readonly StoryQuestion[], answers: readonly number[]): { correct: number; total: number } {
+export function gradeAnswers(
+	questions: readonly StoryQuestion[],
+	answers: readonly number[],
+): { correct: number; total: number } {
 	let correct = 0;
 	questions.forEach((q, i) => {
 		if (answers[i] === q.answer) correct++;

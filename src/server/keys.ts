@@ -17,7 +17,18 @@
  * Only auth.json counts, and the fill-gap still reflects it so new keys apply mid-session.
  */
 
-import { AUTH_KEYS, AUTH_PROVIDER_KEYS, AUTH_PROVIDER_ENV_VARS, type AuthKeyStatus, genericProviderKeyGuard, isKnownAuthKey, isPlainAuthSetting, isProviderEnvVar, maskKey, validateKeyShape } from "../core/auth-keys.ts";
+import {
+	AUTH_KEYS,
+	AUTH_PROVIDER_KEYS,
+	AUTH_PROVIDER_ENV_VARS,
+	type AuthKeyStatus,
+	genericProviderKeyGuard,
+	isKnownAuthKey,
+	isPlainAuthSetting,
+	isProviderEnvVar,
+	maskKey,
+	validateKeyShape,
+} from "../core/auth-keys.ts";
 import { authKeySavedAt, authStore } from "../store/auth.ts";
 import { isSubscriptionProvider, subscriptionConnected } from "../agent/subscription-connections.ts";
 
@@ -130,7 +141,13 @@ export function resolveKeyStatuses(
 
 /** The GET view: every curated key (present or not) + unknown file vars. */
 export function keyStatuses(): AuthKeyStatus[] {
-	return resolveKeyStatuses(authStore.authVars(), process.env, boot().realEnv, AUTH_PROVIDER_ENV_VARS, authKeySavedAt.all());
+	return resolveKeyStatuses(
+		authStore.authVars(),
+		process.env,
+		boot().realEnv,
+		AUTH_PROVIDER_ENV_VARS,
+		authKeySavedAt.all(),
+	);
 }
 
 /** Live value for one var, env first. The canonical read for consumers outside the server barrel. */
@@ -144,11 +161,16 @@ const MIN_SECRET_LENGTH = 8;
 
 /** Text with every key this server holds taken out, for a provider's error body that is passed on to the page. */
 export function redactSecrets(text: string): string {
-	const ids = new Set<string>([...AUTH_KEYS.map((key) => key.id), ...AUTH_PROVIDER_ENV_VARS, ...Object.keys(authStore.authVars())]);
+	const ids = new Set<string>([
+		...AUTH_KEYS.map((key) => key.id),
+		...AUTH_PROVIDER_ENV_VARS,
+		...Object.keys(authStore.authVars()),
+	]);
 	let out = text;
 	for (const id of ids) {
 		const value = keyValue(id)?.trim();
-		if (value && value.length >= MIN_SECRET_LENGTH && !isPlainAuthSetting(id)) out = out.split(value).join("[key hidden]");
+		if (value && value.length >= MIN_SECRET_LENGTH && !isPlainAuthSetting(id))
+			out = out.split(value).join("[key hidden]");
 	}
 	return out;
 }

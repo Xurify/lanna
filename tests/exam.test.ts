@@ -20,7 +20,8 @@ process.env.LH_PROFILE = "slovak";
 
 const { allChapters } = await import("../src/core/curriculum.ts");
 const { unitInfo } = await import("../src/core/lesson.ts");
-const { EXAM_LENGTH, EXAM_PASS_MARK, bestAttempt, chapterHasExam, examItems, examLine, examSummaries, scoreExam } = await import("../src/core/exam.ts");
+const { EXAM_LENGTH, EXAM_PASS_MARK, bestAttempt, chapterHasExam, examItems, examLine, examSummaries, scoreExam } =
+	await import("../src/core/exam.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { progressStore } = await import("../src/store/progress.ts");
 const { examFor, recordExam } = await import("../src/server/exam.ts");
@@ -96,7 +97,11 @@ describe("the score", () => {
 		const wrong = right.map((r, i) => (i < 2 ? (r === 0 ? 1 : 0) : r));
 		const two = scoreExam(draw.items, wrong);
 		assert.equal(two.correct, EXAM_LENGTH - 2);
-		assert.deepEqual(two.misses, [draw.items[0]!.id, draw.items[1]!.id], "the misses are the missed items' ids, in exam order");
+		assert.deepEqual(
+			two.misses,
+			[draw.items[0]!.id, draw.items[1]!.id],
+			"the misses are the missed items' ids, in exam order",
+		);
 	});
 
 	it("an out-of-range or missing pick is a miss, never a crash", () => {
@@ -109,8 +114,22 @@ describe("the score", () => {
 	it(`the pass rule is ${Math.round(EXAM_PASS_MARK * 100)}%: 7 of 8 passes, 6 of 8 does not`, () => {
 		const draw = examItems("cafe", 42, entries)!;
 		const right = draw.items.map((i) => i.options!.findIndex((o) => o === i.answer));
-		assert.equal(scoreExam(draw.items, right.map((r, i) => (i === 0 ? -1 : r))).passed, true, "7 of 8 passes");
-		assert.equal(scoreExam(draw.items, right.map((r, i) => (i < 2 ? -1 : r))).passed, false, "6 of 8 does not");
+		assert.equal(
+			scoreExam(
+				draw.items,
+				right.map((r, i) => (i === 0 ? -1 : r)),
+			).passed,
+			true,
+			"7 of 8 passes",
+		);
+		assert.equal(
+			scoreExam(
+				draw.items,
+				right.map((r, i) => (i < 2 ? -1 : r)),
+			).passed,
+			false,
+			"6 of 8 does not",
+		);
 	});
 });
 
@@ -133,7 +152,11 @@ describe("the record", () => {
 		assert.deepEqual(kept?.[0], attempt);
 
 		// A failed attempt records its misses too.
-		const failed = recordExam({ chapterId: "cafe", seed, answers: right.map((r, i) => (i < 2 ? (r === 0 ? 1 : 0) : r)) });
+		const failed = recordExam({
+			chapterId: "cafe",
+			seed,
+			answers: right.map((r, i) => (i < 2 ? (r === 0 ? 1 : 0) : r)),
+		});
 		assert.equal(failed.attempt.passed, false);
 		assert.equal(failed.attempt.misses.length, 2);
 		assert.equal(progressStore.read().exams["cafe"]?.length, 2);
@@ -141,14 +164,27 @@ describe("the record", () => {
 
 	it("a chapter's best attempt: the highest score, the more recent breaking a tie", () => {
 		const t = (at: string, score: number) => ({ at, score, total: 8, passed: score >= 7 });
-		assert.deepEqual(bestAttempt([t("2026-10-30T10:00:00Z", 5), t("2026-10-30T11:00:00Z", 7), t("2026-10-30T09:00:00Z", 6)]), t("2026-10-30T11:00:00Z", 7));
-		assert.deepEqual(bestAttempt([t("2026-10-30T10:00:00Z", 7), t("2026-10-30T11:00:00Z", 7)].reverse()), { at: "2026-10-30T11:00:00Z", score: 7, total: 8, passed: true });
+		assert.deepEqual(
+			bestAttempt([t("2026-10-30T10:00:00Z", 5), t("2026-10-30T11:00:00Z", 7), t("2026-10-30T09:00:00Z", 6)]),
+			t("2026-10-30T11:00:00Z", 7),
+		);
+		assert.deepEqual(bestAttempt([t("2026-10-30T10:00:00Z", 7), t("2026-10-30T11:00:00Z", 7)].reverse()), {
+			at: "2026-10-30T11:00:00Z",
+			score: 7,
+			total: 8,
+			passed: true,
+		});
 		assert.equal(bestAttempt([]), null);
 	});
 });
 
 describe("the path's exam row", () => {
-	const t = (at: string, score: number) => ({ at, score, total: EXAM_LENGTH, passed: score / EXAM_LENGTH >= EXAM_PASS_MARK });
+	const t = (at: string, score: number) => ({
+		at,
+		score,
+		total: EXAM_LENGTH,
+		passed: score / EXAM_LENGTH >= EXAM_PASS_MARK,
+	});
 
 	it("a chapter has an exam when its arc gives it words or a form drill: every chapter but media", () => {
 		for (const ch of allChapters()) assert.equal(chapterHasExam(ch.id), ch.id !== "media", `${ch.id}`);
@@ -157,8 +193,15 @@ describe("the path's exam row", () => {
 
 	it("examSummaries: an entry per exam chapter, its attempts, and the best; no entry for media", () => {
 		const summaries = examSummaries({ cafe: [t("2026-10-30T10:00:00Z", 5), t("2026-10-30T11:00:00Z", 7)] });
-		assert.deepEqual(summaries["cafe"], { attempts: 2, best: { at: "2026-10-30T11:00:00Z", score: 7, total: EXAM_LENGTH, passed: true } });
-		assert.deepEqual(summaries["town"], { attempts: 0, best: null }, "a chapter with no attempt is listed, not taken yet");
+		assert.deepEqual(summaries["cafe"], {
+			attempts: 2,
+			best: { at: "2026-10-30T11:00:00Z", score: 7, total: EXAM_LENGTH, passed: true },
+		});
+		assert.deepEqual(
+			summaries["town"],
+			{ attempts: 0, best: null },
+			"a chapter with no attempt is listed, not taken yet",
+		);
 		assert.equal(summaries["media"], undefined);
 		assert.equal(Object.keys(summaries).length, allChapters().filter((c) => c.id !== "media").length);
 	});

@@ -42,7 +42,11 @@ export interface SentenceCheckEntry {
  *  tapped, in the order they come in the video, then the video's pre-teach
  *  words. A video whose captions are not in the learner's language gives
  *  none: its words are not the words being learned. */
-export function sentenceTargets(video: VideoRecord, tapped: readonly string[] = [], max = SENTENCE_TARGETS): SentenceTarget[] {
+export function sentenceTargets(
+	video: VideoRecord,
+	tapped: readonly string[] = [],
+	max = SENTENCE_TARGETS,
+): SentenceTarget[] {
 	if (video.source.trackLang !== video.lang) return [];
 	const out: SentenceTarget[] = [];
 	const seen = new Set<string>();
@@ -54,10 +58,12 @@ export function sentenceTargets(video: VideoRecord, tapped: readonly string[] = 
 	};
 	for (const seg of video.segments) {
 		for (const tok of seg.tokens) {
-			if (tok.word && tok.slug && tapped.includes(tok.slug)) add({ lemma: tok.lemma ?? tok.text, slug: tok.slug, gloss: tok.gloss ?? "", line: seg.sk, at: seg.i });
+			if (tok.word && tok.slug && tapped.includes(tok.slug))
+				add({ lemma: tok.lemma ?? tok.text, slug: tok.slug, gloss: tok.gloss ?? "", line: seg.sk, at: seg.i });
 		}
 	}
-	for (const w of video.preTeach) add({ lemma: w.lemma, ...(w.slug ? { slug: w.slug } : {}), gloss: w.gloss, line: w.example, at: w.at });
+	for (const w of video.preTeach)
+		add({ lemma: w.lemma, ...(w.slug ? { slug: w.slug } : {}), gloss: w.gloss, line: w.example, at: w.at });
 	return out;
 }
 

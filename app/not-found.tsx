@@ -8,7 +8,9 @@ export default function NotFound() {
 			<div className="w-full max-w-md">
 				<div className="q-card p-6">
 					<h1 className="text-[20px] font-semibold tracking-[-0.018em] text-foreground">Nothing here</h1>
-					<p className="q-line dim mt-1.5 !text-[15px]">There is no page at this address. It may have moved, or the link is old.</p>
+					<p className="q-line dim mt-1.5 !text-[15px]">
+						There is no page at this address. It may have moved, or the link is old.
+					</p>
 					<div className="q-acts">
 						<Link href="/" className="q-btn primary">
 							<QIcon name="arrow" className="size-4" />

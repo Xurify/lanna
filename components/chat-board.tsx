@@ -16,7 +16,10 @@ function replyTexts(messages: readonly LhViewMessage[]): string[] {
 			m.parts
 				.flatMap((p) => {
 					if (p.type === "text") return [p.text];
-					const svg = p.type === "tool-draw" && p.state === "output-available" ? (p.output as { svg?: string } | null)?.svg : undefined;
+					const svg =
+						p.type === "tool-draw" && p.state === "output-available"
+							? (p.output as { svg?: string } | null)?.svg
+							: undefined;
 					return svg ? ["```svg\n" + svg + "\n```"] : [];
 				})
 				.join("\n\n"),
@@ -38,14 +41,24 @@ export function useDrill(messages: readonly LhViewMessage[], title: string) {
 	return { score, drill, opening, label };
 }
 
-export function ChatBoard({ messages, drill: drillState }: { messages: readonly LhViewMessage[]; drill: ReturnType<typeof useDrill> }) {
+export function ChatBoard({
+	messages,
+	drill: drillState,
+}: {
+	messages: readonly LhViewMessage[];
+	drill: ReturnType<typeof useDrill>;
+}) {
 	const { score, drill, opening, label } = drillState;
 	const replies = useMemo(() => replyTexts(messages), [messages]);
 	const drawing = useMemo(() => latestDrawing(replies), [replies]);
 	const phrases = useMemo(() => boardPhrases(replies), [replies]);
 
 	return (
-		<aside aria-label="The board" data-testid="chat-board" className="hidden w-80 shrink-0 overflow-y-auto border-l border-border/60 px-6 pt-8 pb-40 xl:block">
+		<aside
+			aria-label="The board"
+			data-testid="chat-board"
+			className="hidden w-80 shrink-0 overflow-y-auto border-l border-border/60 px-6 pt-8 pb-40 xl:block"
+		>
 			<h2 className="font-ui text-xs font-semibold text-muted-foreground">How it is going</h2>
 			{score.asked > 0 ? (
 				<div className="mt-2" data-testid="chat-score">
@@ -58,7 +71,12 @@ export function ChatBoard({ messages, drill: drillState }: { messages: readonly 
 			) : (
 				<p className="mt-2 text-sm text-ink-3">Your answers to the tutor’s questions are counted here.</p>
 			)}
-			<button type="button" onClick={drill} disabled={opening} className={cn(QUIET, SMALL, "mt-2 -ml-3 text-foreground")}>
+			<button
+				type="button"
+				onClick={drill}
+				disabled={opening}
+				className={cn(QUIET, SMALL, "mt-2 -ml-3 text-foreground")}
+			>
 				{label}
 			</button>
 

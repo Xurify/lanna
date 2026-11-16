@@ -76,7 +76,14 @@ import { strandBalance, type StrandBalance } from "../core/strands.ts";
 import type { TrajectoryDay, TrajectoryInput } from "../core/trajectory.ts";
 import { carriedTasks, doneInLedger, RECENT_DAYS, type DayPlanSnapshot } from "../core/carry-over.ts";
 import { appendLessonLog, type LessonLogRep } from "../store/corpus.ts";
-import { clearWeak, flagWeak, lessonFlagsWeak, tallyWeak, weakSpotList, type WeakSpotSummary } from "../core/weak-spots.ts";
+import {
+	clearWeak,
+	flagWeak,
+	lessonFlagsWeak,
+	tallyWeak,
+	weakSpotList,
+	type WeakSpotSummary,
+} from "../core/weak-spots.ts";
 import { defaultGoal, progressStore, type DayRecord, type GoalRecord, type ProgressRecord } from "../store/progress.ts";
 import { stampEvidence, syncStamps, type StampReport } from "./stamps.ts";
 import type { StampState, TrailLog } from "../core/stamps.ts";
@@ -127,19 +134,35 @@ export function lessonFor(unit: UnitId, seed = Date.now(), opts?: { gender?: Atl
 	const info = allUnits().find((u) => u.id === unit)!;
 	// Dvojičky build their own reps: a choice between the two twins, from
 	// pairs.json, not the cloze classifier.
-	if (info.kind === "pairs") return withKnown(pairsLessonFor(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
+	if (info.kind === "pairs")
+		return withKnown(pairsLessonFor(entries(), unit, { seed, recent: new Set(progressStore.read().recent) }));
 	const progress = progressStore.read();
 	const rec = progress.units[unit];
 	const stage = unitStage(rec?.lessons ?? 0, rec && rec.reps > 0 ? rec.correct / rec.reps : null);
-	const grammar = allUnits().filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern).map((u) => u.id);
+	const grammar = allUnits()
+		.filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern)
+		.map((u) => u.id);
 	const reached = (u: UnitId) => (progress.units[u]?.lessons ?? 0) > 0 || grammar.indexOf(u) < grammar.indexOf(unit);
 	const contrast = (CONTRAST[unit] ?? []).filter(reached);
 	const others = grammar.filter((u) => u !== unit && !contrast.includes(u) && (progress.units[u]?.lessons ?? 0) > 0);
 	// Vocabulary, word-order and mixed units are not interleaved with others:
 	// the first two are a different kind of rep, the third is the mix itself.
-	const mix = info.kind === "words" || info.union || info.pattern || opts?.gender ? [] : [...contrast, ...others].slice(0, 3);
+	const mix =
+		info.kind === "words" || info.union || info.pattern || opts?.gender ? [] : [...contrast, ...others].slice(0, 3);
 	const weakGender = opts?.gender ? undefined : (weakestGender(rec?.byGender) ?? undefined);
-	return withOpenMixups(withKnown({ ...buildLesson(entries(), unit, { seed, recent: new Set(progress.recent), stage, mix, gender: opts?.gender, weakGender }), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] }));
+	return withOpenMixups(
+		withKnown({
+			...buildLesson(entries(), unit, {
+				seed,
+				recent: new Set(progress.recent),
+				stage,
+				mix,
+				gender: opts?.gender,
+				weakGender,
+			}),
+			bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [],
+		}),
+	);
 }
 
 /** Attach what the review deck knows about each item's word: its own card,
@@ -167,10 +190,22 @@ export function personalFor(seed = Date.now()): LessonPlan {
 /** Blitz runs over the units you have started (at least the first three). */
 export function blitzFor(seed = Date.now()): LessonPlan {
 	const progress = progressStore.read();
-	const started = allUnits().filter((u) => u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0).map((u) => u.id);
-	const firstGrammar = allUnits().filter((u) => !u.kind || u.kind === "grammar").filter((u) => !u.union && !u.pattern).slice(0, 3).map((u) => u.id);
+	const started = allUnits()
+		.filter(
+			(u) =>
+				u.kind !== "words" && u.kind !== "pairs" && !u.union && !u.pattern && (progress.units[u.id]?.lessons ?? 0) > 0,
+		)
+		.map((u) => u.id);
+	const firstGrammar = allUnits()
+		.filter((u) => !u.kind || u.kind === "grammar")
+		.filter((u) => !u.union && !u.pattern)
+		.slice(0, 3)
+		.map((u) => u.id);
 	const units = started.length >= 2 ? started : firstGrammar;
-	return { ...buildBlitz(entries(), units, seed), bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [] };
+	return {
+		...buildBlitz(entries(), units, seed),
+		bridges: parallelsOn(progress.goal) ? bridgeLanguages(progress.goal) : [],
+	};
 }
 
 export interface RepResult {
@@ -303,7 +338,13 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 		p.weak = t.weak;
 		// This lesson under the bar flags the unit (a lesson just mended is not re-flagged by its own reps).
 		if (!t.mended && !p.weak[input.unit] && lessonFlagsWeak(total, correct)) {
-			p.weak = flagWeak(p.weak, input.unit, "lesson", `${Math.round((correct / total) * 100)}% right in lesson ${unit.lessons}`, now);
+			p.weak = flagWeak(
+				p.weak,
+				input.unit,
+				"lesson",
+				`${Math.round((correct / total) * 100)}% right in lesson ${unit.lessons}`,
+				now,
+			);
 		}
 	}
 	day.reps += total;
@@ -352,11 +393,17 @@ function repTry(r: RepResult): { entry?: LexiconEntry; count: FirstTryCount | nu
 	const entry = loadLexicon()?.bySlug.get(r.slug);
 	const d = r.detail;
 	if (!entry || !d?.unit || d.answer === undefined || d.task) return { entry, count: null };
-	return { entry, count: firstTryOf({ kind: r.kind, unit: d.unit, again: d.again, first: r.first, answer: d.answer, entry }, tag()) };
+	return {
+		entry,
+		count: firstTryOf({ kind: r.kind, unit: d.unit, again: d.again, first: r.first, answer: d.answer, entry }, tag()),
+	};
 }
 
 /** One rep for the lesson log. A lesson rep passes its lexicon entry and first try; placement reps pass neither. */
-function logRep(r: RepResult, { entry, count }: { entry?: LexiconEntry; count?: FirstTryCount | null } = {}): LessonLogRep {
+function logRep(
+	r: RepResult,
+	{ entry, count }: { entry?: LexiconEntry; count?: FirstTryCount | null } = {},
+): LessonLogRep {
 	const d = r.detail ?? {};
 	return {
 		itemId: r.itemId,
@@ -383,7 +430,13 @@ function logRep(r: RepResult, { entry, count }: { entry?: LexiconEntry; count?: 
 }
 
 /** A review answer counts toward XP and the day (called by /api/review). */
-export function recordReviewXp(verdict: RepVerdict, tz?: number, now = new Date(), ms?: number, activeMs?: number): number {
+export function recordReviewXp(
+	verdict: RepVerdict,
+	tz?: number,
+	now = new Date(),
+	ms?: number,
+	activeMs?: number,
+): number {
 	const p = progressStore.read();
 	const day = dayOf(p, today(tz, now));
 	const xp = verdict === "exact" ? 8 : verdict === "accents" ? 4 : 1;
@@ -501,13 +554,19 @@ export interface ProgressSummary {
 /** The video the daily plan should show: the one watched today (so the
  *  task reads as done), else the newest added and not watched yet;
  *  undefined when neither exists. */
-function pendingWatch(day: string): { id: string; title: string; minutes: number; coverage?: number; estimated?: boolean; captionLang?: string } | undefined {
+function pendingWatch(
+	day: string,
+):
+	| { id: string; title: string; minutes: number; coverage?: number; estimated?: boolean; captionLang?: string }
+	| undefined {
 	try {
 		const watches = videoStore.watches();
 		const library = videoStore.list();
 		const todays = watches.filter((w) => w.day === day).at(-1);
 		const watched = new Set(watches.map((w) => w.videoId));
-		const v = (todays && library.find((e) => e.id === todays.videoId)) ?? [...library].reverse().find((e) => !watched.has(e.id));
+		const v =
+			(todays && library.find((e) => e.id === todays.videoId)) ??
+			[...library].reverse().find((e) => !watched.has(e.id));
 		// Nothing waits: the picks are read again when stale, and the best one prepared
 		// when the learner keeps one ready. Imported late: discover imports this module.
 		if (!v && process.env.NODE_ENV !== "test") {
@@ -518,7 +577,16 @@ function pendingWatch(day: string): { id: string; title: string; minutes: number
 				})
 				.catch(() => {});
 		}
-		return v ? { id: v.id, title: v.title, minutes: watchMinutes(v.durationSec), ...(coverageKind(v) === "none" ? { captionLang: captionLanguageName(v.trackLang!) } : { coverage: v.coverage, ...(coverageKind(v) === "estimated" ? { estimated: true } : {}) }) } : undefined;
+		return v
+			? {
+					id: v.id,
+					title: v.title,
+					minutes: watchMinutes(v.durationSec),
+					...(coverageKind(v) === "none"
+						? { captionLang: captionLanguageName(v.trackLang!) }
+						: { coverage: v.coverage, ...(coverageKind(v) === "estimated" ? { estimated: true } : {}) }),
+				}
+			: undefined;
 	} catch {
 		return undefined;
 	}
@@ -550,10 +618,18 @@ export function syncExperimentQuietly(now: Date): void {
 	}
 }
 
-export function progressSummary(tz?: number, now = new Date(), opts: { syncExperiment?: boolean } = {}): ProgressSummary {
+export function progressSummary(
+	tz?: number,
+	now = new Date(),
+	opts: { syncExperiment?: boolean } = {},
+): ProgressSummary {
 	const p = progressStore.read();
 	const key = today(tz, now);
-	const active = new Set(Object.entries(p.days).filter(([, d]) => d.xp > 0 || (d.talks ?? 0) + (d.stories ?? 0) + (d.tutors ?? 0) > 0).map(([k]) => k));
+	const active = new Set(
+		Object.entries(p.days)
+			.filter(([, d]) => d.xp > 0 || (d.talks ?? 0) + (d.stories ?? 0) + (d.tutors ?? 0) > 0)
+			.map(([k]) => k),
+	);
 	const week: Array<{ day: string; xp: number }> = [];
 	for (let i = 6; i >= 0; i--) {
 		const d = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
@@ -596,7 +672,8 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
 	for (let i = 1; i <= RECENT_DAYS; i++) {
 		const day = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
 		const record = p.days[day];
-		if (record?.planned) earlier.push({ day, tasks: record.planned.map((t) => ({ ...t, done: t.done || doneInLedger(t.id, record) })) });
+		if (record?.planned)
+			earlier.push({ day, tasks: record.planned.map((t) => ({ ...t, done: t.done || doneInLedger(t.id, record) })) });
 	}
 	const carried = carriedTasks(earlier, key, new Set());
 	const scheduledArm = getScheduledArmForDate(activeProfile(), key);
@@ -604,7 +681,22 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
-		day: { units: d?.units ?? {}, reviews: d?.reviews ?? 0, blitz: d?.blitz ?? 0, mixups: d?.mixups ?? 0, personal: d?.personal ?? 0, talks: d?.talks ?? 0, stories: d?.stories ?? 0, tutors: d?.tutors ?? 0, reads: d?.reads ?? 0, listens: d?.listens ?? 0, watches: d?.watches ?? 0, speaks: d?.speaks ?? 0, rereads: d?.rereads ?? 0, fasts: d?.fasts ?? 0 },
+		day: {
+			units: d?.units ?? {},
+			reviews: d?.reviews ?? 0,
+			blitz: d?.blitz ?? 0,
+			mixups: d?.mixups ?? 0,
+			personal: d?.personal ?? 0,
+			talks: d?.talks ?? 0,
+			stories: d?.stories ?? 0,
+			tutors: d?.tutors ?? 0,
+			reads: d?.reads ?? 0,
+			listens: d?.listens ?? 0,
+			watches: d?.watches ?? 0,
+			speaks: d?.speaks ?? 0,
+			rereads: d?.rereads ?? 0,
+			fasts: d?.fasts ?? 0,
+		},
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		arm,
@@ -631,10 +723,13 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
 	}
 	const backlog = plan.tasks.filter((t) => t.from).length;
 	const recentMinutes: number[] = [];
-	for (let i = 13; i >= 0; i--) recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);
+	for (let i = 13; i >= 0; i--)
+		recentMinutes.push(p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0);
 	// The week by strand (src/core/strands.ts): the last seven days' ledgers.
 	const balance = strandBalance(week.map((w) => p.days[w.day]).filter((x): x is DayRecord => !!x));
-	const stageIds = new Set(STAGES.filter((s) => CEFR_ORDER.indexOf(s.level) <= CEFR_ORDER.indexOf(goal.level)).map((s) => s.id));
+	const stageIds = new Set(
+		STAGES.filter((s) => CEFR_ORDER.indexOf(s.level) <= CEFR_ORDER.indexOf(goal.level)).map((s) => s.id),
+	);
 	const toTarget = curriculum.chapters.filter((c) => stageIds.has(c.stage));
 	const wordsNow = Object.values(reviewStore.readCards()).filter((c) => !c.suspended).length;
 	// The day's snapshots (src/core/trajectory.ts). Every recorder that moves
@@ -663,7 +758,8 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
 		});
 	}
 	let loggedRecent = 0;
-	for (let i = 0; i < RECENT_DAYS; i++) loggedRecent += p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
+	for (let i = 0; i < RECENT_DAYS; i++)
+		loggedRecent += p.days[dayKey(new Date(now.getTime() - i * 86_400_000), tz)]?.minutes ?? 0;
 	const streak = streakOf(active, key, Math.max(0, DAYS_IN_WEEK - (goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK)));
 	// The stamp book: judge every stamp on today's evidence and write down
 	// the ones earned since the last look (a review session or a story earns
@@ -671,7 +767,8 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
 	const { evidence, log } = stampEvidence(p, curriculum, balance, streak.days, active);
 	const timed = Object.values(p.days).filter((d) => (d.minutes ?? 0) > 0);
 	const timedMinutes = timed.reduce((n, d) => n + (d.minutes ?? 0), 0);
-	const xpPerHour = timedMinutes >= 60 ? Math.round((timed.reduce((n, d) => n + (d.xp ?? 0), 0) / timedMinutes) * 60) : null;
+	const xpPerHour =
+		timedMinutes >= 60 ? Math.round((timed.reduce((n, d) => n + (d.xp ?? 0), 0) / timedMinutes) * 60) : null;
 	const stamps = syncStamps(p, curriculum, evidence, key);
 	if (stamps.minted.length) progressStore.write(p);
 	if (opts.syncExperiment !== false) syncExperimentQuietly(now);
@@ -691,7 +788,13 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
 		plan,
 		afterPlan: afterPlan({ video: unwatchedVideo(), listensToday: d?.listens ?? 0, listenMinutes: LISTEN_MINUTES }),
 		goal,
-		projection: projection(curriculum, { target: goal.level, minutesPerDay: goal.minutesPerDay, daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK, recentMinutes, now }),
+		projection: projection(curriculum, {
+			target: goal.level,
+			minutesPerDay: goal.minutesPerDay,
+			daysPerWeek: goal.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
+			recentMinutes,
+			now,
+		}),
 		balance,
 		trajectory: {
 			days: trajectoryDays,
@@ -706,7 +809,13 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
 		weakSpots: weakSpotList(p.weak),
 		mixups: mixupList(p.mixups),
 		exams: examSummaries(p.exams),
-		pace: { goalMinutes: goal.minutesPerDay, plannedMinutes: plan.minutes, logged: Math.round(loggedRecent), windowDays: RECENT_DAYS, dailyAverage: Math.round(loggedRecent / RECENT_DAYS) },
+		pace: {
+			goalMinutes: goal.minutesPerDay,
+			plannedMinutes: plan.minutes,
+			logged: Math.round(loggedRecent),
+			windowDays: RECENT_DAYS,
+			dailyAverage: Math.round(loggedRecent / RECENT_DAYS),
+		},
 		backlog,
 		todayMinutes: Math.round(p.days[key]?.minutes ?? 0),
 		wordsKnown: log.wordsKnown,
@@ -724,14 +833,25 @@ export function progressSummary(tz?: number, now = new Date(), opts: { syncExper
  * stamped the first time the wizard saves (or is skipped), so the Today
  * page stops redirecting to it.
  */
-export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?: number, now = new Date()): ProgressSummary {
+export function setGoal(
+	goal: Partial<GoalRecord> & { onboarded?: boolean },
+	tz?: number,
+	now = new Date(),
+): ProgressSummary {
 	const p = progressStore.read();
 	const cur = p.goal ?? defaultGoal();
 	const level = goal.level && CEFR_ORDER.includes(goal.level) ? (goal.level as Cefr) : cur.level;
-	const minutesPerDay = typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay) ? Math.max(5, Math.min(MAX_MINUTES, Math.round(goal.minutesPerDay))) : cur.minutesPerDay;
-	const daysPerWeek = typeof goal.daysPerWeek === "number" && Number.isFinite(goal.daysPerWeek) ? Math.max(1, Math.min(7, Math.round(goal.daysPerWeek))) : (cur.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK);
+	const minutesPerDay =
+		typeof goal.minutesPerDay === "number" && Number.isFinite(goal.minutesPerDay)
+			? Math.max(5, Math.min(MAX_MINUTES, Math.round(goal.minutesPerDay)))
+			: cur.minutesPerDay;
+	const daysPerWeek =
+		typeof goal.daysPerWeek === "number" && Number.isFinite(goal.daysPerWeek)
+			? Math.max(1, Math.min(7, Math.round(goal.daysPerWeek)))
+			: (cur.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK);
 	const next: GoalRecord = { ...cur, level, minutesPerDay, daysPerWeek };
-	if (Array.isArray(goal.purposes)) next.purposes = [...new Set(goal.purposes.filter(isPurpose))].slice(0, MAX_PURPOSES);
+	if (Array.isArray(goal.purposes))
+		next.purposes = [...new Set(goal.purposes.filter(isPurpose))].slice(0, MAX_PURPOSES);
 	if (typeof goal.purposeNote === "string") {
 		const note = goal.purposeNote.trim().slice(0, MAX_PURPOSE_NOTE);
 		if (note) next.purposeNote = note;
@@ -758,24 +878,41 @@ export function setGoal(goal: Partial<GoalRecord> & { onboarded?: boolean }, tz?
 		else delete next.languageLevels;
 	} else if (next.languageLevels && next.languages) {
 		// Languages that left the list take their level with them.
-		for (const k of Object.keys(next.languageLevels) as Lang[]) if (!next.languages.includes(k)) delete next.languageLevels[k];
+		for (const k of Object.keys(next.languageLevels) as Lang[])
+			if (!next.languages.includes(k)) delete next.languageLevels[k];
 	}
 	// The running language is left out of its own pickers, so a list saved
 	// here never names it. The list is shared with the other languages,
 	// which may name it (Slovak in a Russian setup): keep it and its level.
 	const own = activeLanguage().code;
-	if (Array.isArray(goal.languages) && isLang(own) && cur.languages?.includes(own) && next.languages && !next.languages.includes(own)) {
+	if (
+		Array.isArray(goal.languages) &&
+		isLang(own) &&
+		cur.languages?.includes(own) &&
+		next.languages &&
+		!next.languages.includes(own)
+	) {
 		next.languages = [...next.languages, own];
 		const level = cur.languageLevels?.[own];
 		if (level) next.languageLevels = { ...next.languageLevels, [own]: level };
 	}
 	if (Array.isArray(goal.otherLanguages)) {
-		next.otherLanguages = [...new Set(goal.otherLanguages.filter((v): v is string => typeof v === "string").map((v) => v.trim().slice(0, MAX_OTHER_LANGUAGE_LENGTH)).filter(Boolean))].slice(0, MAX_OTHER_LANGUAGES);
+		next.otherLanguages = [
+			...new Set(
+				goal.otherLanguages
+					.filter((v): v is string => typeof v === "string")
+					.map((v) => v.trim().slice(0, MAX_OTHER_LANGUAGE_LENGTH))
+					.filter(Boolean),
+			),
+		].slice(0, MAX_OTHER_LANGUAGES);
 	}
 	if (goal.explainIn !== undefined) {
 		const known = next.languages ?? [];
 		const raw = Array.isArray(goal.explainIn) ? goal.explainIn : [goal.explainIn];
-		const list = [...new Set(raw.filter((l): l is Lang => isLang(l) && (l === "en" || known.includes(l))))].slice(0, MAX_EXPLAIN);
+		const list = [...new Set(raw.filter((l): l is Lang => isLang(l) && (l === "en" || known.includes(l))))].slice(
+			0,
+			MAX_EXPLAIN,
+		);
 		if (list.length === 0 || (list.length === 1 && list[0] === "en")) delete next.explainIn;
 		else next.explainIn = list;
 	}
@@ -822,12 +959,20 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 	const p = progressStore.read();
 	const { outcome } = input;
 	const asked = new Set(outcome.tiers.filter((t) => !t.held).flatMap((t) => placementTier(t.id)?.units ?? []));
-	for (const [id, rec] of Object.entries(p.units)) if (rec.placed && rec.lessons === 0 && asked.has(id as UnitId)) delete p.units[id];
+	for (const [id, rec] of Object.entries(p.units))
+		if (rec.placed && rec.lessons === 0 && asked.has(id as UnitId)) delete p.units[id];
 	let weak = p.weak ?? {};
 	for (const [id, e] of Object.entries(outcome.units)) {
 		// The check's word on a unit it asked about: a miss flags it, a clean
 		// run clears it, whatever flagged it before.
-		if (e.reps > 0 && e.correct < e.reps) weak = flagWeak(weak, id, "check", input.weakNotes?.[id as UnitId] ?? `${e.correct} of ${e.reps} right in the check`, now);
+		if (e.reps > 0 && e.correct < e.reps)
+			weak = flagWeak(
+				weak,
+				id,
+				"check",
+				input.weakNotes?.[id as UnitId] ?? `${e.correct} of ${e.reps} right in the check`,
+				now,
+			);
 		else if (e.reps > 0) weak = clearWeak(weak, id);
 		const rec = p.units[id];
 		if (rec && rec.lessons > 0) continue;
@@ -865,4 +1010,3 @@ export function recordPlacement(input: PlacementResultInput, now = new Date()): 
 	}
 	return { ...outcome, summary: progressSummary(input.tz, now) };
 }
-

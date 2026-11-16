@@ -1,20 +1,41 @@
-import type { Api, AssistantMessage, Model, SimpleStreamOptions, StreamFunction, TranscriptContext } from "@earendil-works/pi-ai";
+import type {
+	Api,
+	AssistantMessage,
+	Model,
+	SimpleStreamOptions,
+	StreamFunction,
+	TranscriptContext,
+} from "@earendil-works/pi-ai";
 import { streamSimple } from "@earendil-works/pi-ai/api/openai-responses";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import { transformMessages } from "@earendil-works/pi-ai/api/transform-messages";
-import { chatGPTAbortController, chatGPTScope, chatGPTScopeCurrent, chatGPTLease, chatGPTDenial } from "./chatgpt-bridge.ts";
+import {
+	chatGPTAbortController,
+	chatGPTScope,
+	chatGPTScopeCurrent,
+	chatGPTLease,
+	chatGPTDenial,
+} from "./chatgpt-bridge.ts";
 import type { AdmissionScope, ChatGPTDispatchLifecycle } from "./chatgpt-request-cycle.ts";
 
 const USAGE = "https://chatgpt.com/settings/usage";
 export function chatGPTStreamError(message: string): string {
-	if (/subscription_sharing_usage_limit_exceeded|quota|429/.test(message)) return `ChatGPT plan usage limit reached. Manage usage at ${USAGE}. No API-key fallback was used.`;
-	if (/scope|authorization_context|permission/.test(message)) return "ChatGPT plan permission is missing. Reconnect in Settings → API keys and authorize plan use. No API-key fallback was used.";
-	if (/expired|invalid_grant|401|invalid_user/.test(message)) return "Your ChatGPT session expired. Reconnect in Settings → API keys. No API-key fallback was used.";
-	if (/background|Background/.test(message)) return "ChatGPT background use is off in this app. Enable Allow background use for all ChatGPT accounts in Settings → API keys to run this work. No API-key fallback was used.";
-	if (/eligible|403/.test(message)) return "This ChatGPT account or workspace does not permit this request. Check ChatGPT settings; reconnecting may not change eligibility.";
-	if (/cancel|abort|closed|disconnect/i.test(message)) return "ChatGPT request cancelled or connection closed. No API-key fallback was used.";
-	if (/catalog|model/.test(message)) return "The selected model is unavailable for this ChatGPT account. Refresh the connection in Settings → API keys and choose an available model yourself. No API-key fallback was used.";
-	if (/incomplete|terminal|interrupted|stop reason/.test(message)) return "ChatGPT returned an incomplete response. Retry when ready; no API-key fallback was used.";
+	if (/subscription_sharing_usage_limit_exceeded|quota|429/.test(message))
+		return `ChatGPT plan usage limit reached. Manage usage at ${USAGE}. No API-key fallback was used.`;
+	if (/scope|authorization_context|permission/.test(message))
+		return "ChatGPT plan permission is missing. Reconnect in Settings → API keys and authorize plan use. No API-key fallback was used.";
+	if (/expired|invalid_grant|401|invalid_user/.test(message))
+		return "Your ChatGPT session expired. Reconnect in Settings → API keys. No API-key fallback was used.";
+	if (/background|Background/.test(message))
+		return "ChatGPT background use is off in this app. Enable Allow background use for all ChatGPT accounts in Settings → API keys to run this work. No API-key fallback was used.";
+	if (/eligible|403/.test(message))
+		return "This ChatGPT account or workspace does not permit this request. Check ChatGPT settings; reconnecting may not change eligibility.";
+	if (/cancel|abort|closed|disconnect/i.test(message))
+		return "ChatGPT request cancelled or connection closed. No API-key fallback was used.";
+	if (/catalog|model/.test(message))
+		return "The selected model is unavailable for this ChatGPT account. Refresh the connection in Settings → API keys and choose an available model yourself. No API-key fallback was used.";
+	if (/incomplete|terminal|interrupted|stop reason/.test(message))
+		return "ChatGPT returned an incomplete response. Retry when ready; no API-key fallback was used.";
 	return "ChatGPT request failed. Check your connection and ChatGPT usage, then retry. No API-key fallback was used.";
 }
 
@@ -22,14 +43,25 @@ export function chatGPTStreamError(message: string): string {
 export function chatGPTPayload(raw: unknown, selectedModelId: string): Record<string, unknown> {
 	const payload = raw as Record<string, unknown>;
 	const out: Record<string, unknown> = { model: selectedModelId, store: false, stream: true };
-	for (const key of ["instructions", "reasoning", "include", "text", "tool_choice", "parallel_tool_calls", "prompt_cache_key"]) {
+	for (const key of [
+		"instructions",
+		"reasoning",
+		"include",
+		"text",
+		"tool_choice",
+		"parallel_tool_calls",
+		"prompt_cache_key",
+	]) {
 		if (payload[key] !== undefined) out[key] = payload[key];
 	}
 	if (!Array.isArray(payload.input)) throw new Error("ChatGPT requires stateless input history");
-	out.input = payload.input.map((item) => item?.role === "system" ? { ...item, role: "developer" } : item);
+	out.input = payload.input.map((item) => (item?.role === "system" ? { ...item, role: "developer" } : item));
 	if (Array.isArray(payload.tools) && payload.tools.length) {
-		if (payload.tools.some((tool) => tool.type !== "function" && tool.type !== "custom")) throw new Error("Unsupported ChatGPT tool capability");
-		out.tools = [{ type: "namespace", name: "learnharness", description: "LearnHarness local learning tools", tools: payload.tools }];
+		if (payload.tools.some((tool) => tool.type !== "function" && tool.type !== "custom"))
+			throw new Error("Unsupported ChatGPT tool capability");
+		out.tools = [
+			{ type: "namespace", name: "langharness", description: "LangHarness local learning tools", tools: payload.tools },
+		];
 	}
 	return out;
 }
@@ -39,12 +71,48 @@ export function chatGPTHistory(context: TranscriptContext, logicalModel: Model<A
 	// Apply Pi's normal foreign-model signature treatment BEFORE the alias
 	// becomes openai, or real API-key turns could look like subscription turns.
 	const messages = transformMessages(context.messages, logicalModel);
-	return { ...context, messages: messages.map((m) => m.role === "assistant" && m.provider === "chatgpt" ? { ...m, provider: "openai" } : m) };
+	return {
+		...context,
+		messages: messages.map((m) => {
+			if (m.role !== "assistant") return m;
+			const hasLegacyNamespace = m.content.some(
+				(item) => item.type === "toolCall" && item.namespace === "learnharness",
+			);
+			const content = hasLegacyNamespace
+				? m.content.map((item) =>
+						item.type === "toolCall" && item.namespace === "learnharness"
+							? { ...item, namespace: "langharness" }
+							: item,
+					)
+				: m.content;
+			if (m.provider !== "chatgpt" && !hasLegacyNamespace) return m;
+			return { ...m, ...(m.provider === "chatgpt" ? { provider: "openai" } : {}), content };
+		}),
+	};
 }
 function empty(model: Model<Api>): AssistantMessage {
-	return { role: "assistant", api: model.api, provider: "chatgpt", model: model.id, content: [], stopReason: "error", timestamp: Date.now(), usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } };
+	return {
+		role: "assistant",
+		api: model.api,
+		provider: "chatgpt",
+		model: model.id,
+		content: [],
+		stopReason: "error",
+		timestamp: Date.now(),
+		usage: {
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		},
+	};
 }
-export function chatGPTStream(background: () => boolean, lifecycle?: ChatGPTDispatchLifecycle): StreamFunction<Api, SimpleStreamOptions> {
+export function chatGPTStream(
+	background: () => boolean,
+	lifecycle?: ChatGPTDispatchLifecycle,
+): StreamFunction<Api, SimpleStreamOptions> {
 	return (logicalModel, context, options) => {
 		const output = new AssistantMessageEventStream();
 		const purpose = background();
@@ -57,16 +125,28 @@ export function chatGPTStream(background: () => boolean, lifecycle?: ChatGPTDisp
 			let scope: AdmissionScope | undefined;
 			let committed = false;
 			let terminal = false;
-			const check = () => { if (signal.aborted || !scope || !chatGPTScopeCurrent(scope)) throw new Error("cancelled or catalog authority changed"); };
+			const check = () => {
+				if (signal.aborted || !scope || !chatGPTScopeCurrent(scope))
+					throw new Error("cancelled or catalog authority changed");
+			};
 			try {
 				if (logicalModel.provider !== "chatgpt") throw new Error("ChatGPT account catalog has no selected model");
-				if (Object.keys(options?.headers ?? {}).some((key) => key.toLowerCase() === "authorization")) throw new Error("Authorization override is forbidden");
+				if (Object.keys(options?.headers ?? {}).some((key) => key.toLowerCase() === "authorization"))
+					throw new Error("Authorization override is forbidden");
 				scope = chatGPTScope(logicalModel.id);
 				lifecycle?.captured(scope);
 				const credentials = await chatGPTLease(scope, purpose);
 				check();
 				// NEVER dispatch through Models under openai: that would expose ambient API-key fallback.
-				const transport: Model<"openai-responses"> = { ...logicalModel, api: "openai-responses", provider: "openai", baseUrl: "https://api.openai.com/v1", headers: undefined, samplingParams: undefined, compat: { ...logicalModel.compat, supportsDeveloperRole: true } };
+				const transport: Model<"openai-responses"> = {
+					...logicalModel,
+					api: "openai-responses",
+					provider: "openai",
+					baseUrl: "https://api.openai.com/v1",
+					headers: undefined,
+					samplingParams: undefined,
+					compat: { ...logicalModel.compat, supportsDeveloperRole: true },
+				};
 				const delegate = options?.fetch ?? globalThis.fetch;
 				const source = streamSimple(transport, chatGPTHistory(context, logicalModel), {
 					...options,
@@ -88,9 +168,17 @@ export function chatGPTStream(background: () => boolean, lifecycle?: ChatGPTDisp
 						return payload;
 					},
 					onProviderStreamEvent: async (raw, model) => {
-						const event = raw as { type?: string; code?: string; error?: { code?: string }; response?: { error?: { code?: string }; status?: string } };
-						if (event.type === "response.completed" && event.response?.status === "completed" && !event.response?.error) completed = true;
-						if (["response.incomplete", "response.failed", "error"].includes(event.type ?? "") || event.response?.error) failure = event.code || event.error?.code || event.response?.error?.code || "incomplete terminal response";
+						const event = raw as {
+							type?: string;
+							code?: string;
+							error?: { code?: string };
+							response?: { error?: { code?: string }; status?: string };
+						};
+						if (event.type === "response.completed" && event.response?.status === "completed" && !event.response?.error)
+							completed = true;
+						if (["response.incomplete", "response.failed", "error"].includes(event.type ?? "") || event.response?.error)
+							failure =
+								event.code || event.error?.code || event.response?.error?.code || "incomplete terminal response";
 						await options?.onProviderStreamEvent?.(raw, model);
 					},
 				});
@@ -108,10 +196,18 @@ export function chatGPTStream(background: () => boolean, lifecycle?: ChatGPTDisp
 				}
 			} catch (err) {
 				if (terminal) return;
-				if (!committed) lifecycle?.noDispatch(await chatGPTDenial(scope, controller, options?.signal?.aborted === true, purpose));
-				partial = { ...partial, stopReason: signal.aborted ? "aborted" : "error", errorMessage: chatGPTStreamError(err instanceof Error ? err.message : "") };
+				if (!committed)
+					lifecycle?.noDispatch(await chatGPTDenial(scope, controller, options?.signal?.aborted === true, purpose));
+				partial = {
+					...partial,
+					stopReason: signal.aborted ? "aborted" : "error",
+					errorMessage: chatGPTStreamError(err instanceof Error ? err.message : ""),
+				};
 				output.push({ type: "error", reason: partial.stopReason as "error" | "aborted", error: partial });
-			} finally { release(); output.end(); }
+			} finally {
+				release();
+				output.end();
+			}
 		})();
 		return output;
 	};

@@ -3,7 +3,14 @@
  * is on, this is one of the few requests an unpaired phone may make. A right
  * code signs the device in for 180 days; the cookie is HttpOnly.
  */
-import { cleanDeviceName, deviceCookie, deviceNameFromAgent, normalizeCode, redeemPairingCode, secureRequest } from "@/src/server";
+import {
+	cleanDeviceName,
+	deviceCookie,
+	deviceNameFromAgent,
+	normalizeCode,
+	redeemPairingCode,
+	secureRequest,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +31,9 @@ export async function POST(request: Request) {
 		if (result.reason === "wrong") {
 			const left = result.attemptsLeft;
 			const message =
-				left > 0 ? `That code is not right. ${left} ${left === 1 ? "try" : "tries"} left.` : "That code is used up. Make a new code on the computer.";
+				left > 0
+					? `That code is not right. ${left} ${left === 1 ? "try" : "tries"} left.`
+					: "That code is used up. Make a new code on the computer.";
 			return Response.json({ error: message, attemptsLeft: left }, { status: 401, headers: NO_STORE });
 		}
 		return Response.json(

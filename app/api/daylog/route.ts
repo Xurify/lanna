@@ -17,6 +17,7 @@ export async function GET(req: Request) {
 	const today = new Date(Date.now() - tz * 60_000).toISOString().slice(0, 10);
 	const day = given && /^\d{4}-\d{2}-\d{2}$/.test(given) ? given : today;
 	const list = Number(q.get("list"));
-	if (Number.isInteger(list) && list > 0) return Response.json({ today, days: dayLogDays(today, tz, Math.min(list, 120)) });
+	if (Number.isInteger(list) && list > 0)
+		return Response.json({ today, days: dayLogDays(today, tz, Math.min(list, 120)) });
 	return Response.json(dayLog(day, tz));
 }

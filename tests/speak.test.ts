@@ -20,7 +20,8 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
-const { parseSummary, parseTutorReply, SPEAK_SCENES, SPEAK_TURNS, speakCounts, speakXp, wordMatch, foldedWords } = await import("../src/core/speak.ts");
+const { parseSummary, parseTutorReply, SPEAK_SCENES, SPEAK_TURNS, speakCounts, speakXp, wordMatch, foldedWords } =
+	await import("../src/core/speak.ts");
 const { STRAND_MINUTES, strandBalance } = await import("../src/core/strands.ts");
 const { purposeScenes, PURPOSES } = await import("../src/core/onboarding.ts");
 const speak = await import("../src/server/speak.ts");
@@ -39,20 +40,31 @@ function fauxEngine(steps: FauxResponseStep[]) {
 const reply = (o: unknown) => fauxAssistantMessage(JSON.stringify(o));
 
 test("every scene the purposes point at exists", () => {
-	for (const p of PURPOSES) for (const id of purposeScenes([p.id])) assert.ok(SPEAK_SCENES.some((s) => s.id === id), `${p.id} → ${id}`);
+	for (const p of PURPOSES)
+		for (const id of purposeScenes([p.id]))
+			assert.ok(
+				SPEAK_SCENES.some((s) => s.id === id),
+				`${p.id} → ${id}`,
+			);
 	for (const s of SPEAK_SCENES) assert.ok(s.task.length > 10 && s.brief.length > 10);
 });
 
 test("parseTutorReply: JSON in, a turn out; a prompt needs both the slip and the hint; prose is taken as the line", () => {
-	const r = parseTutorReply('```json\n{"sk":"Dobrý deň! Čo si dáte?","en":"Hello! What will you have?","prompt":null,"repaired":false,"end":false}\n```');
+	const r = parseTutorReply(
+		'```json\n{"sk":"Dobrý deň! Čo si dáte?","en":"Hello! What will you have?","prompt":null,"repaired":false,"end":false}\n```',
+	);
 	assert.equal(r.sk, "Dobrý deň! Čo si dáte?");
 	assert.equal(r.en, "Hello! What will you have?");
 	assert.equal(r.prompt, undefined);
-	const p = parseTutorReply('{"sk":"(do škol…? skús ešte raz) Áno?","en":"...","prompt":{"yours":"idem do škola","hint":"(do škol…? skús ešte raz)","kind":"case"},"end":false}');
+	const p = parseTutorReply(
+		'{"sk":"(do škol…? skús ešte raz) Áno?","en":"...","prompt":{"yours":"idem do škola","hint":"(do škol…? skús ešte raz)","kind":"case"},"end":false}',
+	);
 	assert.deepEqual(p.prompt, { yours: "idem do škola", hint: "(do škol…? skús ešte raz)", kind: "case" });
 	const half = parseTutorReply('{"sk":"Áno.","en":"Yes.","prompt":{"yours":"","hint":"(skús)","kind":"verb"}}');
 	assert.equal(half.prompt, undefined, "a prompt without the learner's words is dropped");
-	const odd = parseTutorReply('{"sk":"Áno.","en":"Yes.","prompt":{"yours":"x","hint":"y","kind":"nonsense"},"repaired":true,"end":true}');
+	const odd = parseTutorReply(
+		'{"sk":"Áno.","en":"Yes.","prompt":{"yours":"x","hint":"y","kind":"nonsense"},"repaired":true,"end":true}',
+	);
 	assert.equal(odd.prompt?.kind, "other");
 	assert.equal(odd.repaired, true);
 	assert.equal(odd.end, true);
@@ -119,21 +131,87 @@ test("the strand balance counts a spoken scene as output and the speed rounds as
 test("correctionSlip: a case-form slip finds its drill and atlas cell; anything else is nothing", async () => {
 	const { loadLexicon } = await import("../src/agent/lexicon.ts");
 	const lexicon = loadLexicon();
-	const hit = speak.correctionSlip({ yours: "Ako ďaleko je to od stanica?", right: "Ako ďaleko je to od stanice?", rule: "od takes the genitive", kind: "case", slug: "stanica" }, lexicon);
+	const hit = speak.correctionSlip(
+		{
+			yours: "Ako ďaleko je to od stanica?",
+			right: "Ako ďaleko je to od stanice?",
+			rule: "od takes the genitive",
+			kind: "case",
+			slug: "stanica",
+		},
+		lexicon,
+	);
 	assert.deepEqual(hit, { drill: "gen", slip: "base", cell: { row: "G", col: "fem" }, gender: "feminine" });
-	assert.equal(speak.correctionSlip({ yours: "Ja robit doma.", right: "Ja robím doma.", rule: "the present ending", kind: "verb", slug: "robit" }, lexicon), null, "a verb form is not a case slip");
-	assert.equal(speak.correctionSlip({ yours: "x", right: "y", rule: "r", kind: "other" }, lexicon), null, "no slug, no lookup");
-	assert.equal(speak.correctionSlip({ yours: "Ako ďaleko je to od stanice?", right: "Ako ďaleko je to od stanice?", rule: "r", kind: "case", slug: "stanica" }, lexicon), null, "said right: no slip");
+	assert.equal(
+		speak.correctionSlip(
+			{ yours: "Ja robit doma.", right: "Ja robím doma.", rule: "the present ending", kind: "verb", slug: "robit" },
+			lexicon,
+		),
+		null,
+		"a verb form is not a case slip",
+	);
+	assert.equal(
+		speak.correctionSlip({ yours: "x", right: "y", rule: "r", kind: "other" }, lexicon),
+		null,
+		"no slug, no lookup",
+	);
+	assert.equal(
+		speak.correctionSlip(
+			{
+				yours: "Ako ďaleko je to od stanice?",
+				right: "Ako ďaleko je to od stanice?",
+				rule: "r",
+				kind: "case",
+				slug: "stanica",
+			},
+			lexicon,
+		),
+		null,
+		"said right: no slip",
+	);
 });
 
 test("a scene on a scripted engine: start, two turns with a prompt and a repair, the end summary; everything on disk", async () => {
-	progressStore.write({ ...progressStore.read(), goal: { level: "B2", minutesPerDay: 30, purposes: ["daily"], onboardedAt: "2026-10-28T00:00:00.000Z" } });
+	progressStore.write({
+		...progressStore.read(),
+		goal: { level: "B2", minutesPerDay: 30, purposes: ["daily"], onboardedAt: "2026-10-28T00:00:00.000Z" },
+	});
 	const engine = fauxEngine([
-		reply({ sk: "Dobrý deň! Čo si dáte?", en: "Hello! What will you have?", prompt: null, repaired: false, end: false }),
-		reply({ sk: "(jednu káv…? skús ešte raz)", en: "(one coff…? try again)", prompt: { yours: "prosím si jedna káva", hint: "(jednu káv…? skús ešte raz)", kind: "case" }, repaired: false, end: false }),
-		reply({ sk: "Výborne, jednu kávu. Ešte niečo?", en: "Great, one coffee. Anything else?", prompt: null, repaired: true, end: false }),
+		reply({
+			sk: "Dobrý deň! Čo si dáte?",
+			en: "Hello! What will you have?",
+			prompt: null,
+			repaired: false,
+			end: false,
+		}),
+		reply({
+			sk: "(jednu káv…? skús ešte raz)",
+			en: "(one coff…? try again)",
+			prompt: { yours: "prosím si jedna káva", hint: "(jednu káv…? skús ešte raz)", kind: "case" },
+			repaired: false,
+			end: false,
+		}),
+		reply({
+			sk: "Výborne, jednu kávu. Ešte niečo?",
+			en: "Great, one coffee. Anything else?",
+			prompt: null,
+			repaired: true,
+			end: false,
+		}),
 		reply({ sk: "Ďakujem, dovidenia!", en: "Thank you, goodbye!", prompt: null, repaired: false, end: true }),
-		reply({ corrections: [{ yours: "prosím si jedna káva", right: "prosím si jednu kávu", rule: "the thing you ask for takes the accusative", kind: "case", lemma: "káva" }], keep: ["Nech sa páči.", "Ešte niečo?"], note: "Polite and clear." }),
+		reply({
+			corrections: [
+				{
+					yours: "prosím si jedna káva",
+					right: "prosím si jednu kávu",
+					rule: "the thing you ask for takes the accusative",
+					kind: "case",
+					lemma: "káva",
+				},
+			],
+			keep: ["Nech sa páči.", "Ešte niečo?"],
+			note: "Polite and clear.",
+		}),
 	]);
 	const now = new Date("2026-10-28T10:00:00Z");
 	const s = await speak.speakStart("cafe", { engine, model: "faux:speak", now });
@@ -143,7 +221,10 @@ test("a scene on a scripted engine: start, two turns with a prompt and a repair,
 	assert.equal(s.turns[0]!.text, "Dobrý deň! Čo si dáte?");
 	assert.ok(fs.existsSync(path.join(PATHS.speak, `${s.id}.json`)), "the scene is on disk from the first line");
 
-	const t1 = await speak.speakTurn({ id: s.id, text: "prosím si jedna káva", via: "voice", ms: 1800, audio: { data: new Uint8Array([1, 2, 3, 4]) } }, { engine, now });
+	const t1 = await speak.speakTurn(
+		{ id: s.id, text: "prosím si jedna káva", via: "voice", ms: 1800, audio: { data: new Uint8Array([1, 2, 3, 4]) } },
+		{ engine, now },
+	);
 	assert.equal(t1.reply.prompt?.kind, "case");
 	assert.equal(t1.end, false);
 	const learner = t1.session.turns.find((t) => t.role === "learner")!;
@@ -171,7 +252,16 @@ test("a scene on a scripted engine: start, two turns with a prompt and a repair,
 	assert.ok((day.minutes ?? 0) > 2);
 	const idx = speakStore.list();
 	assert.equal(idx.length, 1);
-	assert.deepEqual({ turns: idx[0]!.turns, prompts: idx[0]!.prompts, repaired: idx[0]!.repaired, corrections: idx[0]!.corrections, model: idx[0]!.model }, { turns: 3, prompts: 1, repaired: 1, corrections: 1, model: "faux:speak" });
+	assert.deepEqual(
+		{
+			turns: idx[0]!.turns,
+			prompts: idx[0]!.prompts,
+			repaired: idx[0]!.repaired,
+			corrections: idx[0]!.corrections,
+			model: idx[0]!.model,
+		},
+		{ turns: 3, prompts: 1, repaired: 1, corrections: 1, model: "faux:speak" },
+	);
 	const log = readLessonLog().filter((e) => e.mode === "speak");
 	assert.equal(log.length, 1);
 	assert.equal(log[0]!.unit, "cafe");
@@ -206,9 +296,15 @@ test("a scene is forced closed after the turn cap, and an unfinished one is offe
 	const now = new Date("2026-10-29T10:00:00Z");
 	const s = await speak.speakStart("way", { engine, now });
 	let end = false;
-	for (let i = 0; i < SPEAK_TURNS; i++) end = (await speak.speakTurn({ id: s.id, text: `moja línia ${i}`, via: "typed" }, { engine, now })).end;
+	for (let i = 0; i < SPEAK_TURNS; i++)
+		end = (await speak.speakTurn({ id: s.id, text: `moja línia ${i}`, via: "typed" }, { engine, now })).end;
 	assert.equal(end, true, "the cap closes the scene even when the model does not");
-	assert.deepEqual(speak.speakState().unfinished, { id: s.id, scene: "way", sceneTitle: "Na ulici", turns: SPEAK_TURNS });
+	assert.deepEqual(speak.speakState().unfinished, {
+		id: s.id,
+		scene: "way",
+		sceneTitle: "Na ulici",
+		turns: SPEAK_TURNS,
+	});
 	speak.speakDrop(s.id);
 	assert.equal(speak.speakState().unfinished, null);
 });
@@ -246,11 +342,21 @@ test("transcribe refuses honestly without a key", async () => {
 
 test("a scene's brief gives who you meet, without the tutor's \"you are\"", async () => {
 	const { briefParts, sceneCounterpart } = await import("../src/core/speak.ts");
-	assert.equal(sceneCounterpart("a waiter in a small café in Bratislava's old town; I want to order coffee"), "A waiter in a small café in Bratislava's old town");
-	assert.equal(sceneCounterpart("my new colleague at the office; we meet at the coffee machine"), "Your new colleague at the office");
+	assert.equal(
+		sceneCounterpart("a waiter in a small café in Bratislava's old town; I want to order coffee"),
+		"A waiter in a small café in Bratislava's old town",
+	);
+	assert.equal(
+		sceneCounterpart("my new colleague at the office; we meet at the coffee machine"),
+		"Your new colleague at the office",
+	);
 	// A generated story bible wrote the brief as an instruction to the tutor.
-	const kadri = "You are Kadri, the friendly owner of a small café on Raekoja plats in Tartu. It is morning and the learner comes to the counter.";
+	const kadri =
+		"You are Kadri, the friendly owner of a small café on Raekoja plats in Tartu. It is morning and the learner comes to the counter.";
 	assert.equal(sceneCounterpart(kadri), "Kadri, the friendly owner of a small café on Raekoja plats in Tartu");
-	assert.deepEqual(briefParts(kadri), { role: "Kadri, the friendly owner of a small café on Raekoja plats in Tartu", situation: "It is morning and the learner comes to the counter" });
+	assert.deepEqual(briefParts(kadri), {
+		role: "Kadri, the friendly owner of a small café on Raekoja plats in Tartu",
+		situation: "It is morning and the learner comes to the counter",
+	});
 	for (const s of SPEAK_SCENES) assert.ok(!/^you are/i.test(sceneCounterpart(s.brief)), s.id);
 });

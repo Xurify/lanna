@@ -2,7 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
 import { processWide } from "../core/process-wide.ts";
-import { referenceAspectPairs, referenceUnits, type AspectPair, type ReferenceUnit } from "../core/reference-contrast.ts";
+import {
+	referenceAspectPairs,
+	referenceUnits,
+	type AspectPair,
+	type ReferenceUnit,
+} from "../core/reference-contrast.ts";
 
 interface ReferenceSource {
 	folder: string;

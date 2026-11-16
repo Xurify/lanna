@@ -21,7 +21,8 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { id?: unknown; answers?: unknown } | null;
-	if (!body || typeof body.id !== "string" || !Array.isArray(body.answers)) return Response.json({ message: "id and answers are required" }, { status: 400 });
+	if (!body || typeof body.id !== "string" || !Array.isArray(body.answers))
+		return Response.json({ message: "id and answers are required" }, { status: 400 });
 	const answers = body.answers.flatMap((a: unknown) => {
 		const x = a as { id?: unknown; yes?: unknown } | null;
 		return x && typeof x.id === "string" ? [{ id: x.id, yes: x.yes === true }] : [];

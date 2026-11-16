@@ -133,7 +133,8 @@ function writePdf(name: string, pages: string[]): string {
 	objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
 	pages.forEach((text, i) => {
 		const stream = text ? `BT /F1 12 Tf 72 720 Td (${text}) Tj ET` : "";
-		objects[pageIds[i]!] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${pageIds[i]! + 1} 0 R >>`;
+		objects[pageIds[i]!] =
+			`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${pageIds[i]! + 1} 0 R >>`;
 		objects[pageIds[i]! + 1] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
 	});
 	let body = "%PDF-1.4\n";
@@ -164,7 +165,10 @@ describe("read tool — PDFs", () => {
 	});
 
 	it("sends a long PDF to the pdf job instead of dumping it", async () => {
-		const file = writePdf("book.pdf", Array.from({ length: 11 }, () => LINE));
+		const file = writePdf(
+			"book.pdf",
+			Array.from({ length: 11 }, () => LINE),
+		);
 		const { text } = await run({ path: file });
 		assert.match(text, /11 pages, too long to read in place\. Dispatch the pdf job/);
 		assert.doesNotMatch(text, /--- Page/);

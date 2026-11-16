@@ -59,12 +59,38 @@ function Timeline({ t }: { t: NonNullable<LessonExplain["timeline"]> }) {
 				<text x="0" y="14" fontSize="13" fill="currentColor" className="text-ink-3">
 					čítať
 				</text>
-				<line x1="0" y1="32" x2="306" y2="32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-ink-3" />
-				<path d="M 298 25 L 308 32 L 298 39" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" className="text-ink-3" />
+				<line
+					x1="0"
+					y1="32"
+					x2="306"
+					y2="32"
+					stroke="currentColor"
+					strokeWidth="3"
+					strokeLinecap="round"
+					className="text-ink-3"
+				/>
+				<path
+					d="M 298 25 L 308 32 L 298 39"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2.5"
+					strokeLinejoin="round"
+					strokeLinecap="round"
+					className="text-ink-3"
+				/>
 				<text x="0" y="60" fontSize="13" fill="currentColor" className="text-teal-2">
 					prečítať
 				</text>
-				<line x1="0" y1="78" x2="200" y2="78" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-teal-2" />
+				<line
+					x1="0"
+					y1="78"
+					x2="200"
+					y2="78"
+					stroke="currentColor"
+					strokeWidth="3"
+					strokeLinecap="round"
+					className="text-teal-2"
+				/>
 				<circle cx="200" cy="78" r="5" fill="currentColor" className="text-teal-2" />
 				<text x="212" y="82" fontSize="13" fill="currentColor" className="text-teal-2">
 					finished
@@ -96,7 +122,11 @@ function CaseGrid({ grid }: { grid: Grid }) {
 								<span className="sr-only">Case</span>
 							</th>
 							{grid.cols.map((col) => (
-								<th key={col} scope="col" className="px-2 py-1 text-left font-ui text-[12.5px] font-semibold text-ink-3">
+								<th
+									key={col}
+									scope="col"
+									className="px-2 py-1 text-left font-ui text-[12.5px] font-semibold text-ink-3"
+								>
 									{col}
 								</th>
 							))}
@@ -111,7 +141,14 @@ function CaseGrid({ grid }: { grid: Grid }) {
 								{row.cells.map((cell, i) => {
 									const missing = cell === "not yet";
 									return (
-										<td key={i} className={cn("px-2 py-1 align-top", missing ? "font-ui text-[13px] italic text-ink-3" : "text-foreground")} lang={missing ? undefined : lang?.code}>
+										<td
+											key={i}
+											className={cn(
+												"px-2 py-1 align-top",
+												missing ? "font-ui text-[13px] italic text-ink-3" : "text-foreground",
+											)}
+											lang={missing ? undefined : lang?.code}
+										>
 											{cell}
 										</td>
 									);
@@ -128,11 +165,18 @@ function CaseGrid({ grid }: { grid: Grid }) {
 export function GrammarExplain({ explain }: { explain: LessonExplain }) {
 	const link = isAllowedReferenceUrl(explain.wiki) ? explain.wiki : null;
 	return (
-		<div className="flex flex-col gap-4 font-prose text-[15px] leading-relaxed" data-testid="grammar-explain" data-checked={explain.checked ?? "unchecked"}>
+		<div
+			className="flex flex-col gap-4 font-prose text-[15px] leading-relaxed"
+			data-testid="grammar-explain"
+			data-checked={explain.checked ?? "unchecked"}
+		>
 			<Contrast c={explain.contrast} />
 			{explain.timeline && <Timeline t={explain.timeline} />}
 			{explain.points && explain.points.length > 0 && (
-				<ol className="flex list-decimal flex-col gap-1 pl-5 text-foreground marker:text-ink-3" data-testid="explain-points">
+				<ol
+					className="flex list-decimal flex-col gap-1 pl-5 text-foreground marker:text-ink-3"
+					data-testid="explain-points"
+				>
 					{explain.points.map((p) => (
 						<li key={p}>{p}</li>
 					))}
@@ -142,14 +186,21 @@ export function GrammarExplain({ explain }: { explain: LessonExplain }) {
 				<CaseGrid key={grid.title} grid={grid} />
 			))}
 			{explain.tables && explain.tables.length > 0 && (
-				<p className="font-ui text-[12.5px] text-ink-3">N nominative, G genitive, D dative, A accusative, L locative, I instrumental.</p>
+				<p className="font-ui text-[12.5px] text-ink-3">
+					N nominative, G genitive, D dative, A accusative, L locative, I instrumental.
+				</p>
 			)}
 			<p className="text-foreground">
 				<span className={cn(LABEL, "mr-2")}>Trap</span>
 				{explain.trap}
 			</p>
 			{link && (
-				<a href={link} target="_blank" rel="noopener noreferrer" className="font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2">
+				<a
+					href={link}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2"
+				>
 					The grammar page on slovak.wiki
 				</a>
 			)}

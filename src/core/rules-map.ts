@@ -43,7 +43,10 @@ export function areaLabel(source: string): string {
 export function splitBridge(statement: string): { statement: string; bridge?: string } {
 	const m = BRIDGE.exec(statement);
 	if (!m) return { statement: statement.trim() };
-	return { statement: statement.slice(0, m.index).trim(), bridge: statement.slice(m.index + m[0].length).trim() || undefined };
+	return {
+		statement: statement.slice(0, m.index).trim(),
+		bridge: statement.slice(m.index + m[0].length).trim() || undefined,
+	};
 }
 
 export function buildRulesMap(g: GraphLike): RuleArea[] {
@@ -80,7 +83,9 @@ export function buildRulesMap(g: GraphLike): RuleArea[] {
 		const i = AREA_ORDER.indexOf(a.label.toLowerCase());
 		return i < 0 ? AREA_ORDER.length : i;
 	};
-	return [...areas.values()].filter((a) => a.rules.length > 0).sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label));
+	return [...areas.values()]
+		.filter((a) => a.rules.length > 0)
+		.sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label));
 }
 
 interface RuleHit {
@@ -91,7 +96,11 @@ interface RuleHit {
 /** Name first (start, then contains), then the rule text at a word start. A one-letter search matches names only. */
 export function searchRules(areas: readonly RuleArea[], query: string): { area: RuleArea; hits: RuleHit[] }[] {
 	const q = query.trim();
-	if (!q) return areas.map((area) => ({ area, hits: area.rules.map((rule) => ({ rule, match: { rank: 1, kind: "start" } as WordSearchMatch })) }));
+	if (!q)
+		return areas.map((area) => ({
+			area,
+			hits: area.rules.map((rule) => ({ rule, match: { rank: 1, kind: "start" } as WordSearchMatch })),
+		}));
 	return areas
 		.map((area) => ({
 			area,

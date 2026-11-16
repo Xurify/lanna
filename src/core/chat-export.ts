@@ -45,7 +45,10 @@ function extractMessageText(message: ExportMessage): string {
 	}
 	if ("content" in message) {
 		const texts = userFacingTextOf((message as { content: unknown }).content);
-		return texts.map((t) => t.trim()).filter(Boolean).join("\n\n");
+		return texts
+			.map((t) => t.trim())
+			.filter(Boolean)
+			.join("\n\n");
 	}
 	return "";
 }
@@ -97,11 +100,15 @@ function svgFence(svg: unknown): string {
 function answeredQuestion(toolName: string | undefined, details: unknown): QuestionAnswerData | null {
 	if (!(QUESTION_TOOLS as readonly string[]).includes(toolName ?? "")) return null;
 	const answer = details as Partial<QuestionAnswerData> | null | undefined;
-	return typeof answer?.questionText === "string" && Array.isArray(answer.answers) ? (answer as QuestionAnswerData) : null;
+	return typeof answer?.questionText === "string" && Array.isArray(answer.answers)
+		? (answer as QuestionAnswerData)
+		: null;
 }
 
 function questionMarkdown(question: QuestionAnswerData): string {
-	const options = (question.options ?? []).map((option) => `- ${option.label}${question.correctIndices?.includes(option.index) ? " (correct)" : ""}`);
+	const options = (question.options ?? []).map(
+		(option) => `- ${option.label}${question.correctIndices?.includes(option.index) ? " (correct)" : ""}`,
+	);
 	return [question.questionText.trim(), ...(options.length > 0 ? ["", ...options] : [])].join("\n");
 }
 

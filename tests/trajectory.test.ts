@@ -7,28 +7,72 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { daysToReach, horizonDays, measuredPace, MIN_WORD_SNAPSHOTS, trajectory, type TrajectoryDay, type TrajectoryInput } from "../src/core/trajectory.ts";
+import {
+	daysToReach,
+	horizonDays,
+	measuredPace,
+	MIN_WORD_SNAPSHOTS,
+	trajectory,
+	type TrajectoryDay,
+	type TrajectoryInput,
+} from "../src/core/trajectory.ts";
 
 function days(n: number, f: (i: number) => Partial<TrajectoryDay> = () => ({})): TrajectoryDay[] {
-	return Array.from({ length: n }, (_, i) => ({ day: `d${i}`, minutes: 0, lessons: 0, hours: null, units: null, words: null, ...f(i) }));
+	return Array.from({ length: n }, (_, i) => ({
+		day: `d${i}`,
+		minutes: 0,
+		lessons: 0,
+		hours: null,
+		units: null,
+		words: null,
+		...f(i),
+	}));
 }
 
 function input(d: TrajectoryDay[], over: Partial<TrajectoryInput> = {}): TrajectoryInput {
-	return { days: d, hoursDone: 10, hoursTarget: 100, unitsDone: 5, unitsTotal: 50, wordsNow: null, goalMinutes: 20, goalDays: 6, ...over };
+	return {
+		days: d,
+		hoursDone: 10,
+		hoursTarget: 100,
+		unitsDone: 5,
+		unitsTotal: 50,
+		wordsNow: null,
+		goalMinutes: 20,
+		goalDays: 6,
+		...over,
+	};
 }
 
 const FULL = { minutesPerDay: 60, daysPerWeek: 7 };
 
 describe("measuredPace", () => {
 	it("reads the last 14 days once a week of them has study", () => {
-		const p = measuredPace(days(30, (i) => ({ minutes: i % 2 === 0 ? 30 : 0 })), 20, 6);
+		const p = measuredPace(
+			days(30, (i) => ({ minutes: i % 2 === 0 ? 30 : 0 })),
+			20,
+			6,
+		);
 		assert.equal(p.measured, true);
 		assert.equal(p.minutesPerDay, 30);
 		assert.equal(p.daysPerWeek, 3.5);
 	});
 	it("falls back to the goal with too little study or history", () => {
-		assert.deepEqual(measuredPace(days(30, (i) => ({ minutes: i > 25 ? 30 : 0 })), 20, 6), { minutesPerDay: 20, daysPerWeek: 6, measured: false });
-		assert.equal(measuredPace(days(5, () => ({ minutes: 30 })), 20, 6).measured, false);
+		assert.deepEqual(
+			measuredPace(
+				days(30, (i) => ({ minutes: i > 25 ? 30 : 0 })),
+				20,
+				6,
+			),
+			{ minutesPerDay: 20, daysPerWeek: 6, measured: false },
+		);
+		assert.equal(
+			measuredPace(
+				days(5, () => ({ minutes: 30 })),
+				20,
+				6,
+			).measured,
+			false,
+		);
 	});
 });
 
@@ -63,7 +107,9 @@ describe("hours without snapshots (the days before they were kept)", () => {
 		assert.equal(trajectory(input(d), "hours", { minutesPerDay: 0, daysPerWeek: 7 }).daysToTarget, null);
 	});
 	it("has a flat past with no minutes on record", () => {
-		assert.deepEqual(trajectory(input(days(14)), "hours", { minutesPerDay: 20, daysPerWeek: 6 }).past, [{ day: 0, value: 10 }]);
+		assert.deepEqual(trajectory(input(days(14)), "hours", { minutesPerDay: 20, daysPerWeek: 6 }).past, [
+			{ day: 0, value: 10 },
+		]);
 	});
 });
 
@@ -103,7 +149,10 @@ describe("hours with snapshots", () => {
 
 describe("units", () => {
 	it("is not ready before any lesson or snapshot", () => {
-		assert.equal(trajectory(input(days(14, () => ({ minutes: 20 }))), "units", { minutesPerDay: 20, daysPerWeek: 6 }).ready, false);
+		assert.equal(
+			trajectory(input(days(14, () => ({ minutes: 20 }))), "units", { minutesPerDay: 20, daysPerWeek: 6 }).ready,
+			false,
+		);
 	});
 	it("falls back to lessons per hour until the rate can be measured", () => {
 		const d = days(14, () => ({ minutes: 60, lessons: 2 }));

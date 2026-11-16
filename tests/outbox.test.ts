@@ -21,11 +21,25 @@ globalThis.fetch = (async (_url: unknown, init?: RequestInit) => {
 	const reply = replies.shift() ?? { status: 200 };
 	if (reply === "network") throw new TypeError("fetch failed");
 	if (reply.status !== 200) return new Response("no", { status: reply.status });
-	return new Response(JSON.stringify({ queued: ["vták"], summary: { streak: { days: 1, activeToday: true }, todayXp: 10, dailyGoal: 50, next: "loc", bestBlitz: 0, units: [] } }), { status: 200 });
+	return new Response(
+		JSON.stringify({
+			queued: ["vták"],
+			summary: {
+				streak: { days: 1, activeToday: true },
+				todayXp: 10,
+				dailyGoal: 50,
+				next: "loc",
+				bestBlitz: 0,
+				units: [],
+			},
+		}),
+		{ status: 200 },
+	);
 }) as typeof fetch;
 
 const outbox = await import("../components/lesson/outbox.ts");
-const waiting = () => JSON.parse(store.get("lh-outbox") ?? "[]") as Array<{ id: string; lang: string; refused?: number }>;
+const waiting = () =>
+	JSON.parse(store.get("lh-outbox") ?? "[]") as Array<{ id: string; lang: string; refused?: number }>;
 
 beforeEach(() => {
 	store.clear();
@@ -41,7 +55,10 @@ after(() => {
 describe("lesson outbox", () => {
 	it("keeps a finished lesson the moment it is enqueued", () => {
 		const entry = outbox.enqueueLesson("sk", { unit: "loc" });
-		assert.deepEqual(waiting().map((p) => p.id), [entry.id]);
+		assert.deepEqual(
+			waiting().map((p) => p.id),
+			[entry.id],
+		);
 		assert.equal(sent.length, 0, "nothing is sent by enqueueing");
 	});
 
@@ -100,9 +117,17 @@ describe("lesson outbox", () => {
 		const good = outbox.enqueueLesson("sk", { unit: "good" });
 		const verdict = new Promise((resolve) => outbox.onSettled(bad.id, resolve));
 		await outbox.flushOutbox("sk");
-		assert.deepEqual(sent.map((s) => s.unit), ["bad", "good"], "the refused lesson is tried once per run");
+		assert.deepEqual(
+			sent.map((s) => s.unit),
+			["bad", "good"],
+			"the refused lesson is tried once per run",
+		);
 		assert.equal(await verdict, null);
-		assert.deepEqual(waiting().map((p) => p.id), [bad.id], "the refused lesson is kept, the recorded one is removed");
+		assert.deepEqual(
+			waiting().map((p) => p.id),
+			[bad.id],
+			"the refused lesson is kept, the recorded one is removed",
+		);
 		assert.equal(waiting()[0]!.refused, 400);
 		assert.ok(good.id);
 	});
@@ -125,7 +150,10 @@ describe("lesson outbox", () => {
 		assert.equal(waiting().length, 1);
 		await outbox.flushOutbox("sk");
 		assert.equal(sent.length, 2);
-		assert.deepEqual(waiting().map((p) => p.id), []);
+		assert.deepEqual(
+			waiting().map((p) => p.id),
+			[],
+		);
 		assert.ok(bad.id);
 	});
 
@@ -133,8 +161,14 @@ describe("lesson outbox", () => {
 		outbox.enqueueLesson("ru", { unit: "ru-unit" });
 		outbox.enqueueLesson("sk", { unit: "sk-unit" });
 		await outbox.flushOutbox("sk");
-		assert.deepEqual(sent.map((s) => s.unit), ["sk-unit"]);
-		assert.deepEqual(waiting().map((p) => p.lang), ["ru"]);
+		assert.deepEqual(
+			sent.map((s) => s.unit),
+			["sk-unit"],
+		);
+		assert.deepEqual(
+			waiting().map((p) => p.lang),
+			["ru"],
+		);
 	});
 
 	it("two flushes at once send each lesson once", async () => {

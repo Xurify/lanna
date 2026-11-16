@@ -15,9 +15,16 @@ const ex = (sk: string, en = sk) => ({ sk, en, src: "curated" });
 describe("lexicon merge", () => {
 	it("keeps every shipped example at its position and appends the new ones", () => {
 		const shipped = { words: [{ slug: "kava", sk: "káva", examples: [ex("Káva je horúca."), ex("Chcem kávu.")] }] };
-		const fresh = { words: [{ slug: "kava", sk: "káva", examples: [ex("Chcem kávu."), ex("Káva je horúca."), ex("Pijem kávu ráno.")] }] };
+		const fresh = {
+			words: [
+				{ slug: "kava", sk: "káva", examples: [ex("Chcem kávu."), ex("Káva je horúca."), ex("Pijem kávu ráno.")] },
+			],
+		};
 		const { lexicon, stats } = mergeLexicon(shipped, fresh);
-		assert.deepEqual(lexicon.words[0].examples.map((e: { sk: string }) => e.sk), ["Káva je horúca.", "Chcem kávu.", "Pijem kávu ráno."]);
+		assert.deepEqual(
+			lexicon.words[0].examples.map((e: { sk: string }) => e.sk),
+			["Káva je horúca.", "Chcem kávu.", "Pijem kávu ráno."],
+		);
 		assert.equal(stats.examplesAdded, 1);
 		assert.equal(stats.examplesKept, 2);
 	});
@@ -26,7 +33,10 @@ describe("lexicon merge", () => {
 		const shipped = { words: [{ slug: "pes", sk: "pes", examples: [ex("Pes šteká."), ex("Pes spí.")] }] };
 		const fresh = { words: [{ slug: "pes", sk: "pes", examples: [ex("Pes spí.")] }] };
 		const { lexicon, stats } = mergeLexicon(shipped, fresh);
-		assert.deepEqual(lexicon.words[0].examples.map((e: { sk: string }) => e.sk), ["Pes šteká.", "Pes spí."]);
+		assert.deepEqual(
+			lexicon.words[0].examples.map((e: { sk: string }) => e.sk),
+			["Pes šteká.", "Pes spí."],
+		);
 		assert.equal(stats.examplesDroppedByWiki, 1);
 	});
 
@@ -43,7 +53,11 @@ describe("lexicon merge", () => {
 	it("gives no blank to a rejected example", () => {
 		const sentence = "Ponúkli mi prácu.";
 		const shipped = { words: [{ slug: "ponuknut", sk: "ponúknuť", examples: [{ ...ex(sentence), rejected: true }] }] };
-		const fresh = { words: [{ slug: "ponuknut", sk: "ponúknuť", examples: [{ ...ex(sentence), cloze: { answer: "Ponúkli", at: 0 } }] }] };
+		const fresh = {
+			words: [
+				{ slug: "ponuknut", sk: "ponúknuť", examples: [{ ...ex(sentence), cloze: { answer: "Ponúkli", at: 0 } }] },
+			],
+		};
 		const { lexicon, stats } = mergeLexicon(shipped, fresh);
 		assert.equal(lexicon.words[0].examples[0].cloze, undefined);
 		assert.equal(stats.clozesAdopted, 0);
@@ -51,10 +65,20 @@ describe("lexicon merge", () => {
 
 	it("adds new words at the end and takes the fresh export's header", () => {
 		const shipped = { source: "old", words: [{ slug: "a", sk: "a", examples: [] }] };
-		const fresh = { source: "new", exportedAt: "2026-10-30", words: [{ slug: "a", sk: "a", examples: [] }, { slug: "dzus", sk: "dzus", examples: [ex("Dzus je dobrý.")] }] };
+		const fresh = {
+			source: "new",
+			exportedAt: "2026-10-30",
+			words: [
+				{ slug: "a", sk: "a", examples: [] },
+				{ slug: "dzus", sk: "dzus", examples: [ex("Dzus je dobrý.")] },
+			],
+		};
 		const { lexicon, stats } = mergeLexicon(shipped, fresh);
 		assert.equal(lexicon.source, "new");
-		assert.deepEqual(lexicon.words.map((w: { slug: string }) => w.slug), ["a", "dzus"]);
+		assert.deepEqual(
+			lexicon.words.map((w: { slug: string }) => w.slug),
+			["a", "dzus"],
+		);
 		assert.equal(stats.wordsAdded, 1);
 	});
 });

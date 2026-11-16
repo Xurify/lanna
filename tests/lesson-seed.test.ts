@@ -21,7 +21,10 @@ describe("the lesson a unit opens with", () => {
 		assert.equal(lessonSeed("words", undefined, NOON), seed);
 		const first = lessonFor("words", seed).items.map((i) => i.id);
 		assert.ok(first.length > 0);
-		assert.deepEqual(lessonFor("words", lessonSeed("words", undefined, NOON)).items.map((i) => i.id), first);
+		assert.deepEqual(
+			lessonFor("words", lessonSeed("words", undefined, NOON)).items.map((i) => i.id),
+			first,
+		);
 	});
 
 	test("changes with the unit, the gender, the day and a finished lesson", () => {
@@ -30,7 +33,12 @@ describe("the lesson a unit opens with", () => {
 		assert.notEqual(lessonSeed("words", "fem", NOON), seed);
 		assert.notEqual(lessonSeed("words", undefined, new Date("2026-11-10T12:00:00")), seed);
 		const progress = progressStore.read();
-		progress.units.words = { ...progress.units.words, lessons: (progress.units.words?.lessons ?? 0) + 1, reps: (progress.units.words?.reps ?? 0) + 12, correct: (progress.units.words?.correct ?? 0) + 10 } as (typeof progress.units)[string];
+		progress.units.words = {
+			...progress.units.words,
+			lessons: (progress.units.words?.lessons ?? 0) + 1,
+			reps: (progress.units.words?.reps ?? 0) + 12,
+			correct: (progress.units.words?.correct ?? 0) + 10,
+		} as (typeof progress.units)[string];
 		progressStore.write(progress);
 		assert.notEqual(lessonSeed("words", undefined, NOON), seed);
 	});

@@ -26,6 +26,7 @@ Run these before you set anything up. They decide where the server goes.
    ```
 
    A table of subtitle languages means YouTube accepts the address today. "Sign in to confirm you're not a bot" means it does not, and Watch could not prepare new videos from that machine (videos already prepared still play). Run it two or three times over a day, because an address's reputation changes. Home addresses (the NAS) are usually accepted.
+
 2. **Memory on the VPS.** Run `free -h` and read the `available` column. The app uses about 260 MiB idle (measured, with no browser open). While the tutor builds a demo, Chromium adds several hundred MiB more (not measured). The compose file caps the container at 2 GB. Building the image needs about 3 GB, so build elsewhere if `available` is under that (section 2, step 8 shows how).
 3. **The NAS model.** In DSM open Control Panel → Info Center and note the model and the memory. Then open Package Center and look for **Container Manager**. If it is not offered, the NAS cannot run the server. Most Plus models can; j and value models often cannot. An ARM model needs the image built for arm64 (section 2, step 8).
 
@@ -41,6 +42,7 @@ Run these before you set anything up. They decide where the server goes.
    ```
 
    Membership of the `docker` group is the same as root on this machine. If flags.games runs here, keep that in mind; rootless Docker avoids it but is a separate setup.
+
 3. **The code.**
 
    ```bash
@@ -57,6 +59,7 @@ Run these before you set anything up. They decide where the server goes.
    ```
 
    For a public address (7b) add `LH_PUBLIC_HOST` and `LH_PROXY_SECRET` as shown there. Other settings, all optional: `LH_PORT` (default 3010), `LH_MEM_LIMIT` (default 2g), `LH_UPDATE_YTDLP=1` (update yt-dlp each time the container starts, instead of using the version pinned in the image), `LH_DOCKER_BUILD_ARGS` (extra `docker build` arguments, such as `--build-arg NODE_IMAGE=mirror.gcr.io/library/node:26-bookworm-slim` when Docker Hub refuses with "429 Too Many Requests").
+
 5. **First start.** The update script builds the image, runs the boot check, and starts the container:
 
    ```bash
@@ -64,6 +67,7 @@ Run these before you set anything up. They decide where the server goes.
    ```
 
    The first build takes several minutes. Afterwards, `sudo -u langharness /srv/langharness/repo/scripts/update-server.sh status` shows what runs.
+
 6. **The port.** The container's port is published on the VPS's loopback only (`127.0.0.1:3010`). Never change that to `3010:3010`: Docker writes its own firewall rules, so ufw would not stop the world from reaching it.
 7. **Reaching it.** Two ways.
 
@@ -135,6 +139,7 @@ Run these before you set anything up. They decide where the server goes.
       ```
 
       `proxy_buffering off` and the long read timeout are for the tutor's streaming answers. `client_max_body_size` is above the 8 MB cap on a spoken line.
+
    3. Start the container with the new settings, then set the password. It asks twice and shows nothing as you type. The first password also turns web access on:
 
       ```bash
@@ -144,7 +149,9 @@ Run these before you set anything up. They decide where the server goes.
       ```
 
       The same container has `node cli/remote-code.mjs`, which prints a pairing code for a Tailscale device (7a) and replaces the SSH tunnel.
+
    4. Open `https://learn.example.com`, sign in, and on the phone choose Share, then Add to Home Screen.
+
 8. **Updates and backups on a timer.** As root, create these four files.
 
    `/etc/systemd/system/langharness-update.service`:
@@ -247,12 +254,14 @@ The order matters. The point is that two copies never run at the same time, and 
    ```
 
    Keys that exist only in `.env.local` do not move. Enter them in Settings → API keys on the server afterwards. Do not paste keys into a chat (E5).
+
 3. Give the files to the container's user, then delete the import folder:
 
    ```bash
    sudo chown -R 10001:10001 /srv/langharness/data /srv/langharness/keys
    rm -r ~/lh-import
    ```
+
 4. Start the server (section 1, step 5) and open it. Check Today, your streak and one lesson.
 5. Only then, on the PC, rename the `data` folder to `data-moved-<date>`, so nothing on the PC can write to it again.
 

@@ -25,10 +25,21 @@ const { progressStore } = await import("../src/store/progress.ts");
 after(() => fs.rmSync(TMP, { recursive: true, force: true }));
 
 const NOW = new Date("2026-11-07T12:00:00Z");
-const entry = (day: string, minutes: number, attention: "focused" | "background"): OutsideEntry => ({ id: `${day}-${minutes}-${attention}`, day, at: `${day}T20:00:00Z`, minutes, attention });
+const entry = (day: string, minutes: number, attention: "focused" | "background"): OutsideEntry => ({
+	id: `${day}-${minutes}-${attention}`,
+	day,
+	at: `${day}T20:00:00Z`,
+	minutes,
+	attention,
+});
 
 test("an entry needs whole minutes in range and one of the two kinds of attention", () => {
-	assert.deepEqual(parseEntry({ minutes: 29.6, attention: "focused", what: "  Podcast   o  Bratislave " }), { ok: true, minutes: 30, attention: "focused", what: "Podcast o Bratislave" });
+	assert.deepEqual(parseEntry({ minutes: 29.6, attention: "focused", what: "  Podcast   o  Bratislave " }), {
+		ok: true,
+		minutes: 30,
+		attention: "focused",
+		what: "Podcast o Bratislave",
+	});
 	assert.equal(parseEntry({ minutes: 0, attention: "focused" }).ok, false);
 	assert.equal(parseEntry({ minutes: 601, attention: "focused" }).ok, false);
 	assert.equal(parseEntry({ minutes: 30, attention: "half" }).ok, false);
@@ -40,7 +51,10 @@ test("an entry needs whole minutes in range and one of the two kinds of attentio
 test("the summary averages over every day of the window, credits focused time at its weight and background at none", () => {
 	const days = paceWindow(NOW, 0);
 	assert.equal(days.length, 14);
-	const s = outsideSummary([entry(days[13]!, 140, "focused"), entry(days[12]!, 280, "background"), entry("2026-01-01", 600, "focused")], days);
+	const s = outsideSummary(
+		[entry(days[13]!, 140, "focused"), entry(days[12]!, 280, "background"), entry("2026-01-01", 600, "focused")],
+		days,
+	);
 	assert.equal(s.focusedPerDay, 10);
 	assert.equal(s.backgroundPerDay, 20);
 	assert.equal(s.creditedPerDay, 10 * OUTSIDE_WEIGHT.focused + 20 * OUTSIDE_WEIGHT.background);
@@ -51,7 +65,10 @@ test("the summary averages over every day of the window, credits focused time at
 test("a day counts no more than sixteen hours, focused first", () => {
 	const days = paceWindow(NOW, 0);
 	const today = days[13]!;
-	const s = outsideSummary([entry(today, 600, "focused"), entry(today, 300, "focused"), entry(today, 600, "background")], days);
+	const s = outsideSummary(
+		[entry(today, 600, "focused"), entry(today, 300, "focused"), entry(today, 600, "background")],
+		days,
+	);
 	assert.equal(Math.round(s.focusedPerDay * 14), 900);
 	assert.equal(Math.round(s.backgroundPerDay * 14), MAX_DAY_MINUTES - 900);
 });
@@ -74,7 +91,12 @@ function facts(over: Partial<LearnerFacts> = {}): LearnerFacts {
 		paceDays: 12,
 		hoursDone: 300,
 		hoursLogged: 40,
-		listen: { sessions: 12, reading: { wpm: 80, samples: 90, words: 700, realtime: 0.3, audioWpm: 150 }, trend: null, knownSentences: { total: 60, right: 52 } },
+		listen: {
+			sessions: 12,
+			reading: { wpm: 80, samples: 90, words: 700, realtime: 0.3, audioWpm: 150 },
+			trend: null,
+			knownSentences: { total: 60, right: 52 },
+		},
 		watch: null,
 	};
 	const merged = { ...base, ...over };
@@ -82,7 +104,14 @@ function facts(over: Partial<LearnerFacts> = {}): LearnerFacts {
 }
 
 const vlog = MILESTONES.find((m) => m.id === "vlog")!;
-const outside = (creditedPerDay: number) => ({ focusedPerDay: creditedPerDay * 2, backgroundPerDay: 90, creditedPerDay, focusedHours: 10, backgroundHours: 20, entries: 4 });
+const outside = (creditedPerDay: number) => ({
+	focusedPerDay: creditedPerDay * 2,
+	backgroundPerDay: 90,
+	creditedPerDay,
+	focusedHours: 10,
+	backgroundHours: 20,
+	entries: 4,
+});
 
 test("focused outside time adds a speed date of its own and leaves the measured dates alone", () => {
 	const plain = estimateMilestone(vlog, facts(), { now: NOW });
@@ -104,7 +133,19 @@ test("focused outside time adds a speed date of its own and leaves the measured 
 
 test("background time alone adds nothing, and the learner's own trend already holds what outside listening did", () => {
 	assert.equal(estimateMilestone(vlog, facts({ outside: outside(0) }), { now: NOW }).speed.outside, null);
-	const trended = estimateMilestone(vlog, facts({ outside: outside(30), listen: { sessions: 12, reading: { wpm: 80, samples: 90, words: 700, realtime: 0.3, audioWpm: 150 }, trend: { slope: 0.2, points: 9 }, knownSentences: { total: 60, right: 52 } } }), { now: NOW });
+	const trended = estimateMilestone(
+		vlog,
+		facts({
+			outside: outside(30),
+			listen: {
+				sessions: 12,
+				reading: { wpm: 80, samples: 90, words: 700, realtime: 0.3, audioWpm: 150 },
+				trend: { slope: 0.2, points: 9 },
+				knownSentences: { total: 60, right: 52 },
+			},
+		}),
+		{ now: NOW },
+	);
 	assert.equal(trended.speed.hoursBasis, "trend");
 	assert.deepEqual(trended.speed.outside, { basis: "in-trend" });
 });

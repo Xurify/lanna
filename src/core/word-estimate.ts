@@ -135,7 +135,8 @@ export function plainMeaning(text: string): string {
 		.replace(/^(?:to|a|an|the)\s+/, "");
 }
 
-const meaningsIn = (text: string, separators: RegExp) => text.replace(NOTE_IN_BRACKETS, " ").split(separators).map(plainMeaning).filter(Boolean);
+const meaningsIn = (text: string, separators: RegExp) =>
+	text.replace(NOTE_IN_BRACKETS, " ").split(separators).map(plainMeaning).filter(Boolean);
 
 export function meaningsInGloss(gloss: string): string[] {
 	return [...new Set(meaningsIn(gloss, /[;,/]/))];
@@ -234,17 +235,24 @@ function curvature(points: readonly WeightedPoint[], shift: number, slope: numbe
 	return { gradShift, gradSlope, hShift, hCross, hSlope };
 }
 
-function climb(points: readonly WeightedPoint[], slopeIsFree: boolean, startSlope: number): { shift: number; slope: number } {
+function climb(
+	points: readonly WeightedPoint[],
+	slopeIsFree: boolean,
+	startSlope: number,
+): { shift: number; slope: number } {
 	let shift = 0;
 	let slope = startSlope;
 	for (let i = 0; i < NEWTON_STEPS; i++) {
 		const c = curvature(points, shift, slope);
 		const determinant = c.hShift * c.hSlope - c.hCross * c.hCross;
-		const stepShift = slopeIsFree ? (c.hSlope * c.gradShift - c.hCross * c.gradSlope) / determinant : c.gradShift / c.hShift;
+		const stepShift = slopeIsFree
+			? (c.hSlope * c.gradShift - c.hCross * c.gradSlope) / determinant
+			: c.gradShift / c.hShift;
 		const stepSlope = slopeIsFree ? (c.hShift * c.gradSlope - c.hCross * c.gradShift) / determinant : 0;
 		const before = logPosterior(points, shift, slope);
 		let scale = 1;
-		while (scale > 1e-4 && logPosterior(points, shift + scale * stepShift, slope + scale * stepSlope) < before) scale /= 2;
+		while (scale > 1e-4 && logPosterior(points, shift + scale * stepShift, slope + scale * stepSlope) < before)
+			scale /= 2;
 		shift += scale * stepShift;
 		slope += scale * stepSlope;
 		if (Math.abs(scale * stepShift) < 1e-7 && Math.abs(scale * stepSlope) < 1e-7) break;
@@ -252,9 +260,17 @@ function climb(points: readonly WeightedPoint[], slopeIsFree: boolean, startSlop
 	return { shift, slope };
 }
 
-export function fitKnowledgeCurve(answers: readonly CheckAnswer[], priorSize: number, dictionarySize: number): KnowledgeCurve {
+export function fitKnowledgeCurve(
+	answers: readonly CheckAnswer[],
+	priorSize: number,
+	dictionarySize: number,
+): KnowledgeCurve {
 	const centerLogRank = priorCenterLogRank(priorSize, dictionarySize);
-	const points = answers.map((a) => ({ x: Math.log(Math.max(1, a.rank)) - centerLogRank, known: a.known, weight: answerWeight(a.ageDays) }));
+	const points = answers.map((a) => ({
+		x: Math.log(Math.max(1, a.rank)) - centerLogRank,
+		known: a.known,
+		weight: answerWeight(a.ageDays),
+	}));
 	let { shift, slope } = climb(points, true, PRIOR_SLOPE);
 	const slopeIsFree = slope >= MIN_SLOPE;
 	if (!slopeIsFree) ({ shift, slope } = climb(points, false, MIN_SLOPE));
@@ -288,14 +304,23 @@ function readWord(curve: KnowledgeCurve, rank: number, evidence: WordEvidence | 
 	};
 	if (evidence?.check) {
 		const weight = answerWeight(evidence.check.ageDays);
-		offer({ source: "checked", chance: weight * (evidence.check.known ? 1 : 0) + (1 - weight) * fromCurve, curveShare: 1 - weight });
+		offer({
+			source: "checked",
+			chance: weight * (evidence.check.known ? 1 : 0) + (1 - weight) * fromCurve,
+			curveShare: 1 - weight,
+		});
 	}
-	if (evidence?.reviewRecall !== undefined) offer({ source: "review", chance: Math.min(1, Math.max(0, evidence.reviewRecall)), curveShare: 0 });
+	if (evidence?.reviewRecall !== undefined)
+		offer({ source: "review", chance: Math.min(1, Math.max(0, evidence.reviewRecall)), curveShare: 0 });
 	if (evidence?.marked) offer({ source: "marked", chance: 1, curveShare: 0 });
 	return best;
 }
 
-export function estimateWords(words: readonly RankedWord[], evidence: ReadonlyMap<string, WordEvidence>, curve: KnowledgeCurve): WordEstimate {
+export function estimateWords(
+	words: readonly RankedWord[],
+	evidence: ReadonlyMap<string, WordEvidence>,
+	curve: KnowledgeCurve,
+): WordEstimate {
 	const parts: Record<WordEvidenceSource, number> = { review: 0, marked: 0, checked: 0, inferred: 0 };
 	const counts: Record<WordEvidenceSource, number> = { review: 0, marked: 0, checked: 0, inferred: 0 };
 	let outcomeVariance = 0;
@@ -318,7 +343,10 @@ export function estimateWords(words: readonly RankedWord[], evidence: ReadonlyMa
 		}
 	}
 	const [[varShift, cross], [, varSlope]] = curve.covariance;
-	const curveVariance = shiftSensitivity * shiftSensitivity * varShift + 2 * shiftSensitivity * slopeSensitivity * cross + slopeSensitivity * slopeSensitivity * varSlope;
+	const curveVariance =
+		shiftSensitivity * shiftSensitivity * varShift +
+		2 * shiftSensitivity * slopeSensitivity * cross +
+		slopeSensitivity * slopeSensitivity * varSlope;
 	const spread = Z_FOR_80_PERCENT_RANGE * Math.sqrt(Math.max(0, outcomeVariance + curveVariance));
 	const total = parts.review + parts.marked + parts.checked + parts.inferred;
 	for (const source of Object.keys(parts) as WordEvidenceSource[]) parts[source] = Math.round(parts[source]);
@@ -348,15 +376,24 @@ function nearestByLogRank(candidates: readonly RankedWord[], targetLogRank: numb
 	const above = candidates[lo]!;
 	const below = candidates[lo - 1];
 	if (!below) return above;
-	return Math.abs(Math.log(above.rank) - targetLogRank) < Math.abs(Math.log(below.rank) - targetLogRank) ? above : below;
+	return Math.abs(Math.log(above.rank) - targetLogRank) < Math.abs(Math.log(below.rank) - targetLogRank)
+		? above
+		: below;
 }
 
-export function nextCheckWord(candidatesByRank: readonly RankedWord[], curve: KnowledgeCurve, turn: number, rand: () => number): RankedWord | undefined {
+export function nextCheckWord(
+	candidatesByRank: readonly RankedWord[],
+	curve: KnowledgeCurve,
+	turn: number,
+	rand: () => number,
+): RankedWord | undefined {
 	const last = candidatesByRank[candidatesByRank.length - 1];
 	if (!last) return undefined;
 	const top = Math.log(last.rank);
 	const floor = Math.min(top, Math.log(SPREAD_FROM_RANK));
 	const focused = turn % 2 === 0;
-	const raw = focused ? Math.log(midpointRank(curve)) + ((rand() * 2 - 1) * FOCUS_LOGIT_HALF_WIDTH) / curve.slope : floor + rand() * (top - floor);
+	const raw = focused
+		? Math.log(midpointRank(curve)) + ((rand() * 2 - 1) * FOCUS_LOGIT_HALF_WIDTH) / curve.slope
+		: floor + rand() * (top - floor);
 	return nearestByLogRank(candidatesByRank, Math.min(top, Math.max(floor, raw)));
 }

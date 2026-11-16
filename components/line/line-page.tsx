@@ -158,7 +158,9 @@ export function LinePage({ initial }: { initial: LineState }) {
 							</Link>
 						}
 					>
-						<p>The line is a dictionary sentence of five to twelve words with one or two you have not met. None fits yet.</p>
+						<p>
+							The line is a dictionary sentence of five to twelve words with one or two you have not met. None fits yet.
+						</p>
 						<p>One will fit as you learn more words.</p>
 					</EmptyState>
 				</div>
@@ -166,9 +168,23 @@ export function LinePage({ initial }: { initial: LineState }) {
 		);
 	}
 
-	const shown: LineRecord | null = justHeard ? (justHeard === "morning" ? view.morning : view.evening) : phase === "waiting" ? view.morning : phase === "done" ? view.evening : null;
+	const shown: LineRecord | null = justHeard
+		? justHeard === "morning"
+			? view.morning
+			: view.evening
+		: phase === "waiting"
+			? view.morning
+			: phase === "done"
+				? view.evening
+				: null;
 	const compare: LineRecord | null = shown && shown.phase === "evening" ? view.morning : null;
-	const sub = asking ? (askPhase === "morning" ? "First hearing" : "Second hearing") : shown?.phase === "evening" ? "Heard twice" : "First hearing";
+	const sub = asking
+		? askPhase === "morning"
+			? "First hearing"
+			: "Second hearing"
+		: shown?.phase === "evening"
+			? "Heard twice"
+			: "First hearing";
 	const eveningLater = shown?.phase === "morning" && !view.eveningOpen;
 	const eveningNow = shown?.phase === "morning" && view.eveningOpen && !view.evening;
 
@@ -178,13 +194,22 @@ export function LinePage({ initial }: { initial: LineState }) {
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
 				<div key={asking ? `ask-${askPhase}` : `shown-${shown?.phase ?? "none"}`} className={cn(COLUMN, "lh-rise")}>
-					<LineCard icon="ear" title="Today's line" sub={sub} right={item ? `${item.words} words · ${item.newWords.length} new` : undefined}>
+					<LineCard
+						icon="ear"
+						title="Today's line"
+						sub={sub}
+						right={item ? `${item.words} words · ${item.newWords.length} new` : undefined}
+					>
 						{asking && item ? (
 							<>
 								<p className="mb-4 font-ui text-[13px] text-ink-3">
-									{askPhase === "morning" ? "No text yet. It shows once you have answered." : `First hearing: ${view.morning!.caught} of ${view.morning!.words} words. The same sentence, once more.`}
+									{askPhase === "morning"
+										? "No text yet. It shows once you have answered."
+										: `First hearing: ${view.morning!.caught} of ${view.morning!.words} words. The same sentence, once more.`}
 								</p>
-								<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">Type what you hear</h2>
+								<h2 className="mb-5 font-prose text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+									Type what you hear
+								</h2>
 								<div className="flex flex-wrap items-center gap-3">
 									<button
 										type="button"
@@ -195,7 +220,12 @@ export function LinePage({ initial }: { initial: LineState }) {
 									>
 										<Volume2Icon className="size-6" strokeWidth={1.6} />
 									</button>
-									<button type="button" onClick={() => play(true)} aria-label="Play slowly" className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-teal-wash px-3.5 text-[13px] font-[550] text-teal-2 transition-colors hover:bg-well-2">
+									<button
+										type="button"
+										onClick={() => play(true)}
+										aria-label="Play slowly"
+										className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-teal-wash px-3.5 text-[13px] font-[550] text-teal-2 transition-colors hover:bg-well-2"
+									>
 										<SnailIcon className="size-5" strokeWidth={1.6} />
 										Slowly
 									</button>
@@ -249,10 +279,22 @@ export function LinePage({ initial }: { initial: LineState }) {
 				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 					{asking ? (
 						<>
-							<button type="button" className={QUIET} disabled={busy} onClick={() => void submit("")} data-testid="line-miss">
+							<button
+								type="button"
+								className={QUIET}
+								disabled={busy}
+								onClick={() => void submit("")}
+								data-testid="line-miss"
+							>
 								I didn&apos;t catch it
 							</button>
-							<button type="button" className={PRIMARY} disabled={busy || !typed.trim()} onClick={() => void submit(typed.trim())} data-testid="line-check">
+							<button
+								type="button"
+								className={PRIMARY}
+								disabled={busy || !typed.trim()}
+								onClick={() => void submit(typed.trim())}
+								data-testid="line-check"
+							>
 								Check
 								<span className="q-kbd pointer-coarse:hidden">
 									<QIcon name="enter" />
@@ -261,11 +303,28 @@ export function LinePage({ initial }: { initial: LineState }) {
 						</>
 					) : (
 						<>
-							<p className="min-w-0 font-ui text-[15px] font-[600] tracking-[-0.01em] text-foreground" data-testid="line-verdict">
-								{shown ? `${shown.phase === "morning" ? "First hearing" : "Second hearing"} · ${shown.caught} of ${shown.words} words` : ""}
-								{eveningLater && <span className="block text-[13px] font-[450] text-ink-3">It comes back later today, once you have practiced.</span>}
-								{eveningNow && <span className="block text-[13px] font-[450] text-ink-3">You have practiced today, so it can come back now, or later today.</span>}
-								{shown?.phase === "evening" && <span className="block text-[13px] font-[450] text-ink-3">Both hearings are in. The next line comes tomorrow.</span>}
+							<p
+								className="min-w-0 font-ui text-[15px] font-[600] tracking-[-0.01em] text-foreground"
+								data-testid="line-verdict"
+							>
+								{shown
+									? `${shown.phase === "morning" ? "First hearing" : "Second hearing"} · ${shown.caught} of ${shown.words} words`
+									: ""}
+								{eveningLater && (
+									<span className="block text-[13px] font-[450] text-ink-3">
+										It comes back later today, once you have practiced.
+									</span>
+								)}
+								{eveningNow && (
+									<span className="block text-[13px] font-[450] text-ink-3">
+										You have practiced today, so it can come back now, or later today.
+									</span>
+								)}
+								{shown?.phase === "evening" && (
+									<span className="block text-[13px] font-[450] text-ink-3">
+										Both hearings are in. The next line comes tomorrow.
+									</span>
+								)}
 							</p>
 							<div className="flex shrink-0 items-center gap-2">
 								{eveningNow && (
@@ -299,24 +358,40 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 	const delta = before ? score.caught - before.caught : null;
 	return (
 		<>
-			<p className="mb-3 font-ui text-[13px] text-ink-3">{record.phase === "morning" ? "First hearing, with no text" : "Second hearing, after practice"}</p>
+			<p className="mb-3 font-ui text-[13px] text-ink-3">
+				{record.phase === "morning" ? "First hearing, with no text" : "Second hearing, after practice"}
+			</p>
 			<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-				<p className="font-ui text-[44px] font-semibold leading-none tracking-[-0.03em] text-foreground" data-testid="line-figure">
+				<p
+					className="font-ui text-[44px] font-semibold leading-none tracking-[-0.03em] text-foreground"
+					data-testid="line-figure"
+				>
 					{score.caught}
 					<span className="ml-2 text-[20px] font-[450] tracking-normal text-ink-3">of {score.words} words</span>
 				</p>
 				{before && delta !== null && (
 					<span className={cn("q-pill", delta <= 0 && "grey")} data-testid="line-delta">
-						{delta === 0 ? "Same as" : `${delta > 0 ? "+" : ""}${delta} on`} the first hearing ({before.caught} of {before.words})
+						{delta === 0 ? "Same as" : `${delta > 0 ? "+" : ""}${delta} on`} the first hearing ({before.caught} of{" "}
+						{before.words})
 					</span>
 				)}
 			</div>
-			<p className="mt-5 font-prose text-[28px] font-[550] leading-[1.4] tracking-[-0.025em]" lang={lang?.code} data-testid="line-marks">
+			<p
+				className="mt-5 font-prose text-[28px] font-[550] leading-[1.4] tracking-[-0.025em]"
+				lang={lang?.code}
+				data-testid="line-marks"
+			>
 				{score.marks.map((m, i) => (
 					<span key={i}>
 						{i > 0 && " "}
 						<span
-							className={m.caught ? "text-foreground" : m.almost ? "text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]" : "text-ink-4"}
+							className={
+								m.caught
+									? "text-foreground"
+									: m.almost
+										? "text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]"
+										: "text-ink-4"
+							}
 							title={m.caught ? "Caught" : m.almost ? "The right word, an accent missing" : "Not caught"}
 						>
 							{shown[i] ?? m.word}
@@ -324,8 +399,14 @@ function Result({ record, compare }: { record: LineRecord; compare: LineRecord |
 					</span>
 				))}
 			</p>
-			<p className="mt-2 font-ui text-[12.5px] text-ink-3">Caught words in full, missed words faded, a missing accent underlined.</p>
-			{before && <p className="mt-1 font-ui text-[12.5px] text-ink-3" data-testid="line-confound">You had seen the sentence by now, so a higher count shows what you remember, not how much better you hear.</p>}
+			<p className="mt-2 font-ui text-[12.5px] text-ink-3">
+				Caught words in full, missed words faded, a missing accent underlined.
+			</p>
+			{before && (
+				<p className="mt-1 font-ui text-[12.5px] text-ink-3" data-testid="line-confound">
+					You had seen the sentence by now, so a higher count shows what you remember, not how much better you hear.
+				</p>
+			)}
 			{score.caught < score.words && (
 				<p className="mt-3 font-prose text-base text-ink-3" data-testid="line-typed">
 					{record.typed ? (
@@ -362,7 +443,19 @@ function Frame({ children }: { children: React.ReactNode }) {
 	);
 }
 
-function LineCard({ icon, title, sub, right, children }: { icon: QIconName; title: string; sub?: string; right?: string; children: React.ReactNode }) {
+function LineCard({
+	icon,
+	title,
+	sub,
+	right,
+	children,
+}: {
+	icon: QIconName;
+	title: string;
+	sub?: string;
+	right?: string;
+	children: React.ReactNode;
+}) {
 	const note = right ? <span className="max-sm:hidden">{right}</span> : undefined;
 	return (
 		<PracticeCard icon={icon} title={title} sub={sub} right={note}>

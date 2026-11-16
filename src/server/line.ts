@@ -13,7 +13,19 @@ import { loadLexicon } from "../agent/lexicon.ts";
 import { activeProfile } from "../../config.ts";
 import { addMinutes } from "../core/active-time.ts";
 import { dayKey } from "../core/review.ts";
-import { LINE_REPEAT_DAYS, lineSeed, pickLine, repeatWindowStart, scoreLine, type LineDay, type LineItem, type LineRecord, type LineScore, type LineState, type LineWord } from "../core/line.ts";
+import {
+	LINE_REPEAT_DAYS,
+	lineSeed,
+	pickLine,
+	repeatWindowStart,
+	scoreLine,
+	type LineDay,
+	type LineItem,
+	type LineRecord,
+	type LineScore,
+	type LineState,
+	type LineWord,
+} from "../core/line.ts";
 import { progressStore } from "../store/progress.ts";
 import { lineStore } from "../store/line.ts";
 import { knownWords, resolveWord, STORY_NAMES } from "./reading.ts";
@@ -42,13 +54,23 @@ function pickToday(day: string, records: readonly LineRecord[]): LineItem | null
 	if (pickCache.has(key)) return pickCache.get(key)!;
 	const lexicon = loadLexicon();
 	if (!lexicon) return null;
-	const item = pickLine(lexicon.entries, lookupFor(lexicon), { seed: lineSeed(profile, day), recent: recentIds(records, day) });
+	const item = pickLine(lexicon.entries, lookupFor(lexicon), {
+		seed: lineSeed(profile, day),
+		recent: recentIds(records, day),
+	});
 	pickCache.set(key, item);
 	return item;
 }
 
 function fromRecord(r: LineRecord): LineItem {
-	return { id: r.itemId, slug: r.itemId.split("#")[0]!, sentence: r.sentence, translation: r.translation, words: r.words, newWords: r.newWords };
+	return {
+		id: r.itemId,
+		slug: r.itemId.split("#")[0]!,
+		sentence: r.sentence,
+		translation: r.translation,
+		words: r.words,
+		newWords: r.newWords,
+	};
 }
 
 function dayBefore(day: string, n: number): string {
@@ -86,7 +108,15 @@ export function lineState(now = new Date(), tz = now.getTimezoneOffset()): LineS
 	const item = morning ? fromRecord(morning) : pickToday(day, records);
 	return {
 		day,
-		item: item ? { id: item.id, sentence: item.sentence, translation: item.translation, words: item.words, newWords: item.newWords } : null,
+		item: item
+			? {
+					id: item.id,
+					sentence: item.sentence,
+					translation: item.translation,
+					words: item.words,
+					newWords: item.newWords,
+				}
+			: null,
 		morning,
 		evening,
 		eveningOpen: practicedToday(day),
@@ -117,7 +147,8 @@ export function recordLine(input: LineAnswer, now = new Date(), tz = now.getTime
 	} else {
 		if (!morning) return { ok: false, status: 409, message: "Hear the line in the morning first." };
 		if (evening) return { ok: false, status: 409, message: "Today's line was already heard again today." };
-		if (!practicedToday(day)) return { ok: false, status: 409, message: "The line comes back once you have practiced today." };
+		if (!practicedToday(day))
+			return { ok: false, status: 409, message: "The line comes back once you have practiced today." };
 		item = fromRecord(morning);
 	}
 	if (!item) return { ok: false, status: 409, message: "There is no line today." };

@@ -94,14 +94,7 @@ export function VisualOutputCard({
 		   ROW below: "Figure" left, the controls right, both edges following
 		   the IMAGE's own width (the wrapper carries the natural-sizing law,
 		   so the row hugs a centered narrow figure, not the column). */
-		<div
-			className={
-				natural !== null
-					? "my-4 mx-auto w-fit max-w-full"
-					: "my-4 w-full"
-			}
-			data-testid="visual-card"
-		>
+		<div className={natural !== null ? "my-4 mx-auto w-fit max-w-full" : "my-4 w-full"} data-testid="visual-card">
 			{/* Natural sizing (owner, 2026-10-07): a declared-width svg sits at
 			   ITS size; max-w-full still shrinks oversized ones to fit. No
 			   declared size (viewBox-only, %-width) keeps the full-width law.

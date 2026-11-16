@@ -30,8 +30,18 @@ import { ChatDraft, type ChatStarterTopic } from "@/components/chat-draft";
 const DOCK = "mx-auto w-full max-w-[46rem] px-4";
 
 /** One-tap starting points for an empty draft (they fill the composer). */
-const TEACH_IDEAS = ["Ordering food in a café", "Talking about my weekend", "The past tense", "Cases after prepositions"];
-const PRACTICE_IDEAS = ["Verb endings in the present", "Accusative after mám, vidím", "Where? v, na + locative", "Past tense -l, -la, -lo"];
+const TEACH_IDEAS = [
+	"Ordering food in a café",
+	"Talking about my weekend",
+	"The past tense",
+	"Cases after prepositions",
+];
+const PRACTICE_IDEAS = [
+	"Verb endings in the present",
+	"Accusative after mám, vidím",
+	"Where? v, na + locative",
+	"Past tense -l, -la, -lo",
+];
 
 /**
  * The draft's whole behavior as one pure seam: create the session (title =
@@ -55,9 +65,7 @@ export async function startDraftSession(
 	const res = await fetchLike("/api/chats", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(
-			mode ? { title: t, kind: mode } : { title: t },
-		),
+		body: JSON.stringify(mode ? { title: t, kind: mode } : { title: t }),
 	});
 	const { id } = (await res.json()) as { id: string };
 	// No settings PUT on create (per-session models, owner 2026-09-28):
@@ -65,7 +73,7 @@ export async function startDraftSession(
 	return `/chat/${id}?prompt=${encodeURIComponent(t)}`;
 }
 
-export async function createChatSession(text: string, fetchLike: typeof fetch): Promise<{ id: string; title: string } | null> {
+async function createChatSession(text: string, fetchLike: typeof fetch): Promise<{ id: string; title: string } | null> {
 	const t = text.trim();
 	if (!t) return null;
 	const res = await fetchLike("/api/chats", {
@@ -108,9 +116,11 @@ export function DraftShell({
 	// strip lives in the stats bar's middle slot.
 	// Tab navigates INTO the composer (owner, keyboard round 2026-10-06):
 	// the only text field on this surface — the cycle's whole chain.
-	const cycleComposer = useCallback((): readonly HTMLElement[] =>
-		Array.from(document.querySelectorAll<HTMLElement>('[data-testid="composer"] textarea')),
-		[]);
+	const cycleComposer = useCallback(
+		(): readonly HTMLElement[] =>
+			Array.from(document.querySelectorAll<HTMLElement>('[data-testid="composer"] textarea')),
+		[],
+	);
 	useFieldCycle(cycleComposer);
 	const dictation = useDictation({
 		append: (t) => onChange(joinDictation(text, t)),
@@ -158,39 +168,42 @@ export function DraftShell({
 			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1">
-						<div className="flex min-h-0 w-full flex-1 flex-col" data-testid="draft-surface">
-						<div className="flex min-h-0 flex-1 items-end justify-center overflow-y-auto px-4 pb-10 pt-6"><div className="flex max-w-xl flex-col items-center gap-4 text-center">
-									<div className="max-w-md space-y-1.5">
-										<h3 className="font-ui text-3xl font-semibold tracking-tight text-foreground">
-											{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
-										</h3>
-										<p className="text-base text-muted-foreground">
-											{mode === "practice"
-												? "Short drills on one thing. Describe it, pick skills, or paste a sentence of your own."
-												: "Your tutor asks a few quick questions to see what you know, then teaches from there."}
-										</p>
-									</div>
-									<div className="pointer-events-auto mt-3 flex max-w-lg flex-wrap justify-center gap-2" data-testid="draft-suggestions">
-										{(mode === "practice" ? PRACTICE_IDEAS : TEACH_IDEAS).map((idea) => (
-											<button
-												key={idea}
-												type="button"
-												onClick={() => {
-													onChange(idea);
-													composerInputRef.current?.focus();
-												}}
-												className="rounded-full bg-card px-4 py-2 font-ui text-sm font-medium text-foreground shadow-raise transition-colors hover:bg-well"
-											>
-												{idea}
-											</button>
-										))}
-									</div>
-								</div></div>
+					<div className="flex min-h-0 w-full flex-1 flex-col" data-testid="draft-surface">
+						<div className="flex min-h-0 flex-1 items-end justify-center overflow-y-auto px-4 pb-10 pt-6">
+							<div className="flex max-w-xl flex-col items-center gap-4 text-center">
+								<div className="max-w-md space-y-1.5">
+									<h3 className="font-ui text-3xl font-semibold tracking-tight text-foreground">
+										{mode === "practice" ? "What should we drill?" : "What do you want to learn?"}
+									</h3>
+									<p className="text-base text-muted-foreground">
+										{mode === "practice"
+											? "Short drills on one thing. Describe it, pick skills, or paste a sentence of your own."
+											: "Your tutor asks a few quick questions to see what you know, then teaches from there."}
+									</p>
+								</div>
+								<div
+									className="pointer-events-auto mt-3 flex max-w-lg flex-wrap justify-center gap-2"
+									data-testid="draft-suggestions"
+								>
+									{(mode === "practice" ? PRACTICE_IDEAS : TEACH_IDEAS).map((idea) => (
+										<button
+											key={idea}
+											type="button"
+											onClick={() => {
+												onChange(idea);
+												composerInputRef.current?.focus();
+											}}
+											className="rounded-full bg-card px-4 py-2 font-ui text-sm font-medium text-foreground shadow-raise transition-colors hover:bg-well"
+										>
+											{idea}
+										</button>
+									))}
+								</div>
+							</div>
+						</div>
 						<div className="w-full pb-3">
-							<div className={cn(DOCK, (mode === "practice" || setupCta) ? "pt-9" : "pt-1")}>
-								<ComposerActions
-									setup={setupCta}
-								/>
+							<div className={cn(DOCK, mode === "practice" || setupCta ? "pt-9" : "pt-1")}>
+								<ComposerActions setup={setupCta} />
 								<div className="pointer-events-auto overflow-hidden rounded-xl bg-card shadow-raise-hi">
 									<Composer
 										busy={busy}
@@ -209,10 +222,7 @@ export function DraftShell({
 										placeholder={mode === "practice" ? "What do you want to practice?" : "What do you want to learn?"}
 									/>
 								</div>
-								<StatsBar
-									dictationSlot={<DictationBar dictation={dictation} />}
-									turns={[]}
-								/>
+								<StatsBar dictationSlot={<DictationBar dictation={dictation} />} turns={[]} />
 							</div>
 						</div>
 					</div>
@@ -332,28 +342,50 @@ export function NewSession({
 
 	if (strandedOnChat) return null;
 	if (started) {
-		return <Chat key={started.id} chatId={started.id} title={started.title} kind="chat" initialMessages={[]} initialPrompt={started.prompt} initialConfigured />;
+		return (
+			<Chat
+				key={started.id}
+				chatId={started.id}
+				title={started.title}
+				kind="chat"
+				initialMessages={[]}
+				initialPrompt={started.prompt}
+				initialConfigured
+			/>
+		);
 	}
 
 	return (
 		<>
 			{(() => {
 				const setupCta = zeroKeys ? (
-						<ZeroKeysPill inline onOpen={() => setSetupOpen(true)} />
-					) : (
-						!configured && (
-							<button
-								type="button"
-								data-testid="setup-cta"
-								onClick={() => setSetupOpen(true)}
-								className={cn(buttonVariants({ variant: "accent-soft", size: "sm" }), "cursor-pointer rounded-full font-ui font-semibold")}
-							>
-								Add an AI key
-							</button>
-						)
-					);
+					<ZeroKeysPill inline onOpen={() => setSetupOpen(true)} />
+				) : (
+					!configured && (
+						<button
+							type="button"
+							data-testid="setup-cta"
+							onClick={() => setSetupOpen(true)}
+							className={cn(
+								buttonVariants({ variant: "accent-soft", size: "sm" }),
+								"cursor-pointer rounded-full font-ui font-semibold",
+							)}
+						>
+							Add an AI key
+						</button>
+					)
+				);
 				return mode === "chat" ? (
-					<ChatDraft busy={busy} text={text} onChange={applyText} onSend={send} language={language} setupCta={setupCta} weakTopics={weakTopics} recent={recent.map((r) => ({ id: r.id, title: r.title, when: timeAgo(r.updatedAt) }))} />
+					<ChatDraft
+						busy={busy}
+						text={text}
+						onChange={applyText}
+						onSend={send}
+						language={language}
+						setupCta={setupCta}
+						weakTopics={weakTopics}
+						recent={recent.map((r) => ({ id: r.id, title: r.title, when: timeAgo(r.updatedAt) }))}
+					/>
 				) : (
 					<DraftShell busy={busy} text={text} onChange={applyText} onSend={send} mode={mode} setupCta={setupCta} />
 				);
@@ -369,7 +401,7 @@ export function NewSession({
 					// Save only saves (owner ruling 2026-10-09): the draft
 					// waits in the composer; the learner sends it.
 				}}
-				/>
+			/>
 		</>
 	);
 }

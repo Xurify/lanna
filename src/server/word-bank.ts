@@ -285,7 +285,8 @@ function buildResultFromEntry(
 	const folded = foldDiacritics(lower);
 	const canonicalLemma = canonicalEntry.lemma ?? canonicalEntry.sk ?? "";
 	const lemmaLower = canonicalLemma.toLocaleLowerCase(lang.tag);
-	const isNegated = Boolean(affirmativeBase) || (lower.startsWith("ne") && !lemmaLower.startsWith("ne") && lower.length >= 4);
+	const isNegated =
+		Boolean(affirmativeBase) || (lower.startsWith("ne") && !lemmaLower.startsWith("ne") && lower.length >= 4);
 
 	const rawEntryGloss = normalizeEnglishGloss(entry.en);
 	const baseGloss = normalizeEnglishGloss(canonicalEntry.en);
@@ -303,21 +304,11 @@ function buildResultFromEntry(
 	} else if (affirmativeBase) {
 		// e.g. Neviem -> "I don't know (to not know)"
 		const affLemma = affirmativeBase.lemma ?? affirmativeBase.sk ?? "";
-		gloss = surfaceOverride
-			? `${surfaceOverride} (${rawEntryGloss})`
-			: `${rawEntryGloss} (${affLemma} = ${baseGloss})`;
+		gloss = surfaceOverride ? `${surfaceOverride} (${rawEntryGloss})` : `${rawEntryGloss} (${affLemma} = ${baseGloss})`;
 	} else if (isNegated) {
-		const negInfinitive = baseGloss.startsWith("to ")
-			? `to not ${baseGloss.slice(3)}`
-			: `not ${baseGloss}`;
-		gloss = surfaceOverride
-			? `${surfaceOverride} (${negInfinitive})`
-			: negInfinitive;
-	} else if (
-		surfaceOverride &&
-		lower !== lemmaLower &&
-		surfaceOverride.toLowerCase() !== rawEntryGloss.toLowerCase()
-	) {
+		const negInfinitive = baseGloss.startsWith("to ") ? `to not ${baseGloss.slice(3)}` : `not ${baseGloss}`;
+		gloss = surfaceOverride ? `${surfaceOverride} (${negInfinitive})` : negInfinitive;
+	} else if (surfaceOverride && lower !== lemmaLower && surfaceOverride.toLowerCase() !== rawEntryGloss.toLowerCase()) {
 		// Inflected form with a cached surface translation (e.g. plače -> "he cries · to cry")
 		gloss = `${surfaceOverride} · ${rawEntryGloss}`;
 	} else {
@@ -362,7 +353,10 @@ function buildResultFromEntry(
  */
 export function lookupSelection(text: string): SelectionLookupResult {
 	const lang = activeLang();
-	const cleaned = text.trim().replace(/^[.,!?;:"'„“”«»()[\]—–-]+|[.,!?;:"'„“”«»()[\]—–-]+$/g, "").trim();
+	const cleaned = text
+		.trim()
+		.replace(/^[.,!?;:"'„“”«»()[\]—–-]+|[.,!?;:"'„“”«»()[\]—–-]+$/g, "")
+		.trim();
 	if (!cleaned) return { query: text, found: false, langCode: lang.code, langTag: lang.tag, langEnglish: lang.english };
 
 	const lexicon = loadLexicon();
@@ -380,15 +374,18 @@ export function lookupSelection(text: string): SelectionLookupResult {
 	}
 
 	// 2. Grammar & high-frequency inflected words table (GRAMMAR_WORDS)
-	const grammarMatch = grammarWord(lower) ?? (() => {
-		for (const [grammarKey, grammarData] of Object.entries(GRAMMAR_WORDS)) {
-			if (foldDiacritics(grammarKey) === folded) return { lemma: grammarData[0], gloss: grammarData[1] };
-		}
-		return undefined;
-	})();
+	const grammarMatch =
+		grammarWord(lower) ??
+		(() => {
+			for (const [grammarKey, grammarData] of Object.entries(GRAMMAR_WORDS)) {
+				if (foldDiacritics(grammarKey) === folded) return { lemma: grammarData[0], gloss: grammarData[1] };
+			}
+			return undefined;
+		})();
 	if (grammarMatch) {
 		const lexEntry = lexicon?.byForm.get(grammarMatch.lemma.toLocaleLowerCase(lang.tag))?.[0];
-		const slug = lexEntry?.slug ?? foldDiacritics(grammarMatch.lemma.toLocaleLowerCase(lang.tag)).replace(/[^a-z0-9]+/g, "-");
+		const slug =
+			lexEntry?.slug ?? foldDiacritics(grammarMatch.lemma.toLocaleLowerCase(lang.tag)).replace(/[^a-z0-9]+/g, "-");
 		const card = Object.values(cards).find((cardEntry) => cardEntry.slug === slug);
 		const isDifferent = lower !== grammarMatch.lemma.toLocaleLowerCase(lang.tag);
 		const refLink = referenceSiteLinkFor(lexEntry?.slug, grammarMatch.lemma, lang, grammarMatch.lemma);
@@ -606,7 +603,9 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 			const firstDictionaryBlock = Array.isArray(dictionaryBlocks[0]) ? dictionaryBlocks[0] : undefined;
 			const partOfSpeech = typeof firstDictionaryBlock?.[0] === "string" ? firstDictionaryBlock[0] : undefined;
 			const alternatives = Array.isArray(firstDictionaryBlock?.[1])
-				? (firstDictionaryBlock[1] as unknown[]).filter((alternative): alternative is string => typeof alternative === "string").slice(0, 4)
+				? (firstDictionaryBlock[1] as unknown[])
+						.filter((alternative): alternative is string => typeof alternative === "string")
+						.slice(0, 4)
 				: undefined;
 
 			if (translated) {
@@ -710,11 +709,7 @@ export async function lookupSelectionAsync(
 	const lemmaLower = (syncResult.lemma ?? cleaned).toLocaleLowerCase(lang.tag);
 	const isMultiWord = /\s/.test(cleaned);
 	const isInflected = syncResult.found && lower !== lemmaLower && !syncResult.surfaceGloss;
-	const shouldFetchGoogle =
-		!syncResult.found ||
-		isMultiWord ||
-		isInflected ||
-		Boolean(options.includeGoogleTranslate);
+	const shouldFetchGoogle = !syncResult.found || isMultiWord || isInflected || Boolean(options.includeGoogleTranslate);
 
 	if (!shouldFetchGoogle) {
 		return syncResult;
@@ -944,7 +939,12 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 
 		let match: WordSearchMatch | null = null;
 		if (searchText) {
-			match = matchWord(searchText, { lemma: entryLemma(entry), gloss: entry.en, forms: entry.forms, examples: (entry.examples ?? []).filter((e) => !e.rejected).map((e) => ({ sk: exampleText(e), en: e.en })) });
+			match = matchWord(searchText, {
+				lemma: entryLemma(entry),
+				gloss: entry.en,
+				forms: entry.forms,
+				examples: (entry.examples ?? []).filter((e) => !e.rejected).map((e) => ({ sk: exampleText(e), en: e.en })),
+			});
 			if (!match) continue;
 		}
 
@@ -978,7 +978,11 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 	// 2. Otherwise sort by frequency rank (lower rank = commoner)
 	items.sort((a, b) => {
 		// A search is ranked by how well it matched, then by frequency; with no search, your own words first.
-		if (a.match && b.match) return compareMatches({ match: { ...a.match, rank: RANK[a.match.kind] }, rank: a.rank }, { match: { ...b.match, rank: RANK[b.match.kind] }, rank: b.rank });
+		if (a.match && b.match)
+			return compareMatches(
+				{ match: { ...a.match, rank: RANK[a.match.kind] }, rank: a.rank },
+				{ match: { ...b.match, rank: RANK[b.match.kind] }, rank: b.rank },
+			);
 		if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
 		if (a.inDeck !== b.inDeck) return a.inDeck ? -1 : 1;
 		const rankA = a.rank ?? 99999;

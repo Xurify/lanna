@@ -3,7 +3,14 @@ import { cn } from "@/lib/utils";
 
 /** An icon from the Quiet tool set: 16px, 1.6 stroke, round caps, as in the mockup's `.ico`. */
 export function QIcon({ name, className }: { name: QIconName; className?: string }) {
-	return <svg className={cn("q-ico", className)} viewBox="0 0 24 24" aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICON_PATHS[name] }} />;
+	return (
+		<svg
+			className={cn("q-ico", className)}
+			viewBox="0 0 24 24"
+			aria-hidden="true"
+			dangerouslySetInnerHTML={{ __html: ICON_PATHS[name] }}
+		/>
+	);
 }
 
 /** Things-style progress pie from the mockup's build.mjs: a thin ring with a filled wedge. */
@@ -17,9 +24,19 @@ export function QPie({ frac, size = 36, className }: { frac: number; size?: numb
 	const y = (c + ir * Math.sin(a)).toFixed(2);
 	const large = f > 0.5 ? 1 : 0;
 	return (
-		<svg className={cn("q-pie", className)} width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+		<svg
+			className={cn("q-pie", className)}
+			width={size}
+			height={size}
+			viewBox={`0 0 ${size} ${size}`}
+			aria-hidden="true"
+		>
 			<circle cx={c} cy={c} r={r} fill="none" stroke="var(--q-teal)" strokeWidth="1.5" />
-			{f >= 1 ? <circle cx={c} cy={c} r={ir} fill="var(--q-teal)" /> : f > 0 ? <path d={`M${c} ${c}L${c} ${c - ir}A${ir} ${ir} 0 ${large} 1 ${x} ${y}Z`} fill="var(--q-teal)" /> : null}
+			{f >= 1 ? (
+				<circle cx={c} cy={c} r={ir} fill="var(--q-teal)" />
+			) : f > 0 ? (
+				<path d={`M${c} ${c}L${c} ${c - ir}A${ir} ${ir} 0 ${large} 1 ${x} ${y}Z`} fill="var(--q-teal)" />
+			) : null}
 		</svg>
 	);
 }

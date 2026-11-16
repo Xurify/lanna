@@ -31,7 +31,9 @@ export function sheetListenState(sheet: Cheatsheet): SheetProgress {
 export function sheetListenFor(sheet: Cheatsheet, opts: { section?: string; seed?: number } = {}): SheetListenPlan {
 	const practice = sheetPracticeStore.read(sheet.id);
 	const lines = linesOf(sheet, opts.section);
-	const items = pickSheetLines(lines, practice, { seed: opts.seed ?? Date.now() }).map((line) => sheetListenItem(line, sheet.title));
+	const items = pickSheetLines(lines, practice, { seed: opts.seed ?? Date.now() }).map((line) =>
+		sheetListenItem(line, sheet.title),
+	);
 	return { items, known: 0, coverage: 1, progress: sheetProgress(lines, practice) };
 }
 
@@ -91,10 +93,25 @@ export function recordSheetListen(sheet: Cheatsheet, input: SheetListenInput, no
 	const day = dayKey(now, input.tz);
 	if (graded.length > 0) {
 		sheetPracticeStore.write(sheet.id, practice);
-		sheetPracticeStore.appendLog({ at, day, sheet: sheet.id, title: sheet.title, ...(input.section ? { section: input.section } : {}), ...(input.ms !== undefined ? { ms: input.ms } : {}), reps: graded });
+		sheetPracticeStore.appendLog({
+			at,
+			day,
+			sheet: sheet.id,
+			title: sheet.title,
+			...(input.section ? { section: input.section } : {}),
+			...(input.ms !== undefined ? { ms: input.ms } : {}),
+			reps: graded,
+		});
 		const p = progressStore.read();
 		addMinutes((p.days[day] ??= { xp: 0, lessons: 0, reps: 0, reviews: 0 }), "listen", sessionMs(input));
 		progressStore.write(p);
 	}
-	return { xp: 0, correct: understood(graded), almost: almostCount(graded), total: graded.length, queued: [], progress: sheetProgress(lines, practice) };
+	return {
+		xp: 0,
+		correct: understood(graded),
+		almost: almostCount(graded),
+		total: graded.length,
+		queued: [],
+		progress: sheetProgress(lines, practice),
+	};
 }

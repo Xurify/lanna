@@ -24,7 +24,6 @@ import type { AppearanceSettings } from "@/src/core";
 import { appearanceVars, resolveAppearance, staleVarNames } from "@/lib/appearance-vars";
 import { sharedJson } from "@/lib/shared-fetch";
 
-
 interface AppearanceContextValue {
 	/** Resolved appearance; factory until the record arrives. */
 	appearance: ReturnType<typeof resolveAppearance>;
@@ -88,11 +87,11 @@ export function AppearanceProvider({
 				// slice is unknown-shaped here, so it goes through the same
 				// resolve (absent/invalid fields = factory anyway).
 				const appearance = body.settings?.appearance;
-				setDelta(
-					appearance && typeof appearance === "object" ? (appearance as AppearanceSettings) : undefined,
-				);
+				setDelta(appearance && typeof appearance === "object" ? (appearance as AppearanceSettings) : undefined);
 			})
-			.catch(() => {/* settings stay factory — not worth a crash */});
+			.catch(() => {
+				/* settings stay factory — not worth a crash */
+			});
 		return () => {
 			alive = false;
 		};

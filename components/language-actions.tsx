@@ -28,7 +28,13 @@ export interface ProfileInfo {
 	profiles: ProfileEntry[];
 }
 
-export function useLanguageActions({ profile, onChanged }: { profile: ProfileInfo | null; onChanged: (next?: ProfileInfo) => void }) {
+export function useLanguageActions({
+	profile,
+	onChanged,
+}: {
+	profile: ProfileInfo | null;
+	onChanged: (next?: ProfileInfo) => void;
+}) {
 	const [removing, setRemoving] = useState<ProfileEntry | null>(null);
 	// The language the Add dialog opens on, or true for none.
 	const [adding, setAdding] = useState<string | boolean>(false);
@@ -89,13 +95,25 @@ export function useLanguageActions({ profile, onChanged }: { profile: ProfileInf
 	};
 }
 
-function RemoveDialog({ entry, onCancel, onRemoved }: { entry: ProfileEntry; onCancel: () => void; onRemoved: () => void }) {
+function RemoveDialog({
+	entry,
+	onCancel,
+	onRemoved,
+}: {
+	entry: ProfileEntry;
+	onCancel: () => void;
+	onRemoved: () => void;
+}) {
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const remove = async () => {
 		setBusy(true);
 		setError(null);
-		const res = await fetch("/api/languages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "remove", id: entry.id }) }).catch(() => null);
+		const res = await fetch("/api/languages", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ action: "remove", id: entry.id }),
+		}).catch(() => null);
 		if (!res?.ok) {
 			const body = (await res?.json().catch(() => null)) as { message?: string } | null;
 			setError(body?.message ?? `Couldn't remove ${entry.english}. Try again.`);
@@ -173,7 +191,10 @@ function ConfirmDialog({
 
 	if (typeof document === "undefined") return null;
 	return createPortal(
-		<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100" {...dismiss}>
+		<div
+			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
+			{...dismiss}
+		>
 			<div
 				role="alertdialog"
 				aria-modal="true"
@@ -200,7 +221,11 @@ function ConfirmDialog({
 					</p>
 				)}
 				<div className="flex items-center justify-end gap-2 pt-2">
-					<button type="button" onClick={onCancel} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+					<button
+						type="button"
+						onClick={onCancel}
+						className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					>
 						Cancel
 					</button>
 					<button

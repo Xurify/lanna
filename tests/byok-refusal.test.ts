@@ -88,7 +88,11 @@ describe("isProviderKeyRefusal — the job-record matcher (provider-key interlud
 		assert.equal(isProviderKeyRefusal(""), false);
 		assert.equal(isProviderKeyRefusal(undefined), false);
 		assert.equal(isProviderKeyRefusal("FAILED: headless crashed"), false);
-		assert.equal(isProviderKeyRefusal(modelsNotConfigured(["strong"]).error), false, "the models refusal is a different failure");
+		assert.equal(
+			isProviderKeyRefusal(modelsNotConfigured(["strong"]).error),
+			false,
+			"the models refusal is a different failure",
+		);
 	});
 });
 
@@ -124,13 +128,21 @@ describe("prefillFromSlots — the SetupDialog prefill (BYOK wave)", () => {
 	});
 
 	it("a pin whose model left the federated catalog does not prefill (lapsed key)", () => {
-		const pre = prefillFromSlots(catalog, { strong: { model: { provider: "gone", id: "vanished" } }, cheap: null, vision: null });
+		const pre = prefillFromSlots(catalog, {
+			strong: { model: { provider: "gone", id: "vanished" } },
+			cheap: null,
+			vision: null,
+		});
 		assert.deepEqual(pre, {});
 	});
 
 	it("provider collisions never cross-pollute (same id, different provider)", () => {
 		const both = [entry("shared-id", "openai"), entry("shared-id", "openrouter")];
-		const pre = prefillFromSlots(both, { strong: { model: { provider: "openrouter", id: "shared-id" } }, cheap: null, vision: null });
+		const pre = prefillFromSlots(both, {
+			strong: { model: { provider: "openrouter", id: "shared-id" } },
+			cheap: null,
+			vision: null,
+		});
 		assert.equal(pre.strong?.provider, "openrouter");
 	});
 
@@ -142,7 +154,17 @@ describe("prefillFromSlots — the SetupDialog prefill (BYOK wave)", () => {
 
 describe("prefillLevelFromPin — the setup dialog's level prefill (chunk 2)", () => {
 	const entry = (levels: string[]) =>
-		({ id: "m", name: "M", provider: "p", reasoning: true, input: ["text"], supportedLevels: levels, cost: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 }, contextWindow: 1000, maxTokens: 1000 }) as never;
+		({
+			id: "m",
+			name: "M",
+			provider: "p",
+			reasoning: true,
+			input: ["text"],
+			supportedLevels: levels,
+			cost: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 },
+			contextWindow: 1000,
+			maxTokens: 1000,
+		}) as never;
 
 	it("a stored level the pinned model still supports prefills as-is", () => {
 		assert.equal(prefillLevelFromPin(entry(["low", "high"]), { thinkingLevel: "high" }), "high");

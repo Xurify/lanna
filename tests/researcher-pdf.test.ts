@@ -86,8 +86,7 @@ describe("researcher pdf tools — download + triage", () => {
 	it("web_fetch_pdf downloads, triages, and returns a usable summary", async () => {
 		const dir = await newDir();
 		const tools = createPdfReadTools(dir);
-		const restoreSeams = stubSafeFetch((async () =>
-			pdfResponse()) as typeof fetch);
+		const restoreSeams = stubSafeFetch((async () => pdfResponse()) as typeof fetch);
 		try {
 			const out = await tools.web_fetch_pdf!.execute!("t1", { url: "https://arxiv.org/pdf/2406.14058" });
 			const text = asText(out);
@@ -105,8 +104,7 @@ describe("researcher pdf tools — download + triage", () => {
 	it("the follow-up tools read the download page-level (extract + search)", async () => {
 		const dir = await newDir();
 		const tools = createPdfReadTools(dir);
-		const restoreSeams = stubSafeFetch((async () =>
-			pdfResponse()) as typeof fetch);
+		const restoreSeams = stubSafeFetch((async () => pdfResponse()) as typeof fetch);
 		try {
 			const out = await tools.web_fetch_pdf!.execute!("t2", { url: "https://example.com/paper.pdf" });
 			const { path: pdfPath } = (out as { details: { path: string } }).details;
@@ -126,8 +124,10 @@ describe("researcher pdf tools — download + triage", () => {
 	it("rejects non-PDF responses and non-http(s) schemes with error strings", async () => {
 		const dir = await newDir();
 		const tools = createPdfReadTools(dir);
-		const restoreSeams = stubSafeFetch((async () =>
-			new Response("<html>just a page</html>", { headers: { "content-type": "text/html" } })) as typeof fetch);
+		const restoreSeams = stubSafeFetch(
+			(async () =>
+				new Response("<html>just a page</html>", { headers: { "content-type": "text/html" } })) as typeof fetch,
+		);
 		try {
 			const notPdf = asText(await tools.web_fetch_pdf!.execute!("t5", { url: "https://example.com/doc" }));
 			assert.match(notPdf, /web_fetch_pdf failed/);
@@ -154,8 +154,7 @@ describe("researcher pdf tools — the temp-dir wall", () => {
 	it("pdf_info reports per-page triage signals for a real download", async () => {
 		const dir = await newDir();
 		const tools = createPdfReadTools(dir);
-		const restoreSeams = stubSafeFetch((async () =>
-			pdfResponse()) as typeof fetch);
+		const restoreSeams = stubSafeFetch((async () => pdfResponse()) as typeof fetch);
 		try {
 			const out = await tools.web_fetch_pdf!.execute!("t9", { url: "https://example.com/x.pdf" });
 			const { path: pdfPath } = (out as { details: { path: string } }).details;
@@ -172,8 +171,7 @@ describe("researcher pdf tools — the temp-dir wall", () => {
 describe("web_fetch — PDF pointer + source header", () => {
 	it("a PDF URL points at web_fetch_pdf instead of dead-ending", async () => {
 		const web = createWebTools(() => null);
-		const restoreSeams = stubSafeFetch((async () =>
-			pdfResponse()) as typeof fetch);
+		const restoreSeams = stubSafeFetch((async () => pdfResponse()) as typeof fetch);
 		try {
 			const out = asText(await web.web_fetch!.execute!("t11", { url: "https://example.com/paper.pdf" }));
 			assert.match(out, /PDF document/);
@@ -185,10 +183,12 @@ describe("web_fetch — PDF pointer + source header", () => {
 
 	it("output carries the source line with HTTP status", async () => {
 		const web = createWebTools(() => null);
-		const restoreSeams = stubSafeFetch((async () =>
-			new Response("A plain text page with enough content to matter.", {
-				headers: { "content-type": "text/plain" },
-			})) as typeof fetch);
+		const restoreSeams = stubSafeFetch(
+			(async () =>
+				new Response("A plain text page with enough content to matter.", {
+					headers: { "content-type": "text/plain" },
+				})) as typeof fetch,
+		);
 		try {
 			const out = asText(await web.web_fetch!.execute!("t12", { url: "https://example.com/page" }));
 			assert.match(out, /^Source: https:\/\/example\.com\/page \(HTTP 200\)/);

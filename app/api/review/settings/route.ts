@@ -7,7 +7,11 @@ export const dynamic = "force-dynamic";
 export async function PUT(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { newPerDay?: unknown; retention?: unknown; blankWords?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as {
+		newPerDay?: unknown;
+		retention?: unknown;
+		blankWords?: unknown;
+	} | null;
 	return Response.json({
 		settings: updateReviewSettings({
 			...(typeof body?.newPerDay === "number" ? { newPerDay: body.newPerDay } : {}),

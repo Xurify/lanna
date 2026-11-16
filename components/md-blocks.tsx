@@ -29,12 +29,7 @@
 import { cloneElement, isValidElement, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { CheckIcon, CopyIcon, MaximizeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-	CodeBlock,
-	extractTableDataFromElement,
-	tableDataToMarkdown,
-	useIsCodeFenceIncomplete,
-} from "streamdown";
+import { CodeBlock, extractTableDataFromElement, tableDataToMarkdown, useIsCodeFenceIncomplete } from "streamdown";
 import type { ExtraProps } from "streamdown";
 import { MERMAID_FONT_SIZE, renderMermaid } from "@/components/mermaid-render";
 import { SpokenPhrase, spokenText } from "@/components/speech";
@@ -84,15 +79,7 @@ async function copyText(text: string): Promise<boolean> {
  *  group-hover/md:opacity-100). Copies getText() on click; the icon flips
  *  to a check for a beat — enough feedback on its own (a "Copied" pill was
  *  tried and removed by owner ask, 2026-09-19). */
-function CopyCorner({
-	getText,
-	label,
-	className,
-}: {
-	getText: () => string;
-	label: string;
-	className?: string;
-}) {
+function CopyCorner({ getText, label, className }: { getText: () => string; label: string; className?: string }) {
 	const [copied, setCopied] = useState(false);
 	const timerRef = useRef<number | undefined>(undefined);
 	useEffect(() => () => window.clearTimeout(timerRef.current), []);
@@ -203,24 +190,24 @@ function MermaidInline({ chart }: { chart: string }) {
 				<CopyCorner getText={() => chart} label="Copy diagram source" />
 				{overlay && (
 					<Hint
-					// Full-screen overlay copy (tooltip wave) — "session view" was
-					// internal direction-speak for the same thing.
-					label="Open full-screen"
-					side="bottom"
-				>
-<button
-						type="button"
-						aria-label="Expand diagram"
-						data-testid="md-mermaid-expand"
-												className="flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover/md:opacity-100"
-						onClick={(e) => {
-							blurAfterPointerClick(e);
-							overlay.openMermaid(chart);
-						}}
+						// Full-screen overlay copy (tooltip wave) — "session view" was
+						// internal direction-speak for the same thing.
+						label="Open full-screen"
+						side="bottom"
 					>
-						<MaximizeIcon className="size-3.5" />
-					</button>
-				</Hint>
+						<button
+							type="button"
+							aria-label="Expand diagram"
+							data-testid="md-mermaid-expand"
+							className="flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover/md:opacity-100"
+							onClick={(e) => {
+								blurAfterPointerClick(e);
+								overlay.openMermaid(chart);
+							}}
+						>
+							<MaximizeIcon className="size-3.5" />
+						</button>
+					</Hint>
 				)}
 			</div>
 		</div>
@@ -244,7 +231,11 @@ function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 		const spoken = spokenText(codeSource(children));
 		if (spoken) return <SpokenPhrase text={spoken} />;
 		return (
-			<code className={cn("rounded bg-muted px-1.5 py-0.5 font-mono text-sm", className)} data-streamdown="inline-code" {...rest}>
+			<code
+				className={cn("rounded bg-muted px-1.5 py-0.5 font-mono text-sm", className)}
+				data-streamdown="inline-code"
+				{...rest}
+			>
 				{children}
 			</code>
 		);
@@ -291,7 +282,8 @@ interface ParsedAlert {
 	children: ReactNode;
 }
 
-const significant = (c: ReactNode) => c !== null && c !== undefined && c !== "" && !(typeof c === "string" && c.trim() === "");
+const significant = (c: ReactNode) =>
+	c !== null && c !== undefined && c !== "" && !(typeof c === "string" && c.trim() === "");
 
 /** The element's markdown tag — Streamdown wraps every block in its own
  *  styled component (MarkdownParagraph, …), so the React type is rarely
@@ -329,7 +321,8 @@ export function parseAlertMarker(children: ReactNode): ParsedAlert | null {
 		let rest = innerList.map((c) => (c === lead ? (stripped === "" ? null : stripped) : c));
 		if (stripped === "") {
 			// the hard-break <br> that ended the marker line is now leading junk
-			while (rest.length && (rest[0] === null || (isValidElement(rest[0]) && markdownTag(rest[0]) === "br"))) rest = rest.slice(1);
+			while (rest.length && (rest[0] === null || (isValidElement(rest[0]) && markdownTag(rest[0]) === "br")))
+				rest = rest.slice(1);
 		}
 		rebuiltPara = cloneElement(para, {}, ...rest);
 	}
@@ -343,7 +336,7 @@ export function parseAlertMarker(children: ReactNode): ParsedAlert | null {
  *  hugs its text (width: fit-content, capped at the column) instead of
  *  stretching full-width into empty space. */
 function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraProps) {
-	const { children, node, ...rest } = props;
+	const { children, node: _node, ...rest } = props;
 	const alert = parseAlertMarker(children);
 	if (!alert) {
 		// Plain quote — Streamdown's own styling, restored by hand: overriding
@@ -379,7 +372,7 @@ function MarkdownBlockquote(props: ComponentProps<"blockquote"> & ExtraProps) {
  *  horizontal-scroller for wide ones, with the corner copy. The copy
  *  serializes the REAL DOM table (the library's own extractor → Markdown). */
 function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
-	const { children, node, ...rest } = props;
+	const { children, node: _node, ...rest } = props;
 	const ref = useRef<HTMLTableElement>(null);
 	return (
 		<div className="group/md relative my-4" data-testid="md-table">
@@ -397,9 +390,9 @@ function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
 				<table
 					ref={ref}
 					// No text-sm here — the table text runs at the session prose size
-				// (owner note, 2026-09-19: streamdown's cells pin their own text-sm
-				// 12.5px; globals.css overrides cells to inherit, so tables match the
-				// 16px chat text for a consistent look).
+					// (owner note, 2026-09-19: streamdown's cells pin their own text-sm
+					// 12.5px; globals.css overrides cells to inherit, so tables match the
+					// 16px chat text for a consistent look).
 					className="w-full border-collapse"
 					data-streamdown="table"
 					{...rest}
@@ -422,7 +415,7 @@ function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
  *  emphasis AND lets the designed token rule apply unmodified — color
  *  --lh-ink-strong, weight 700 (beating the old 600 utility). */
 function MarkdownStrong(props: ComponentProps<"strong"> & ExtraProps) {
-	const { children, className, node, ...rest } = props;
+	const { children, className, node: _node, ...rest } = props;
 	return (
 		<strong data-streamdown="strong" className={className} {...rest}>
 			{children}

@@ -1,6 +1,6 @@
 # Development guide
 
-The developer README (split out of the storefront README, 2026-10-10). Everything below is for people working ON LearnHarness, not using it.
+The developer README (split out of the storefront README, 2026-10-10). Everything below is for people working ON LangHarness, not using it.
 
 A standalone learning app (web + Electron desktop): a **teacher agent** (Next.js; the Vercel AI SDK's `UIMessage` protocol end-to-end, LLM engine [pi-ai](docs/pi-engine-swap.md) via OpenRouter), probe→teach lessons with graded quiz/ask interactions, a formal **session plan tree** the teacher authors once (`plan_init`) and whose progress is derived from tagged quiz calls, and a persistent cross-session **knowledge graph** of what the learner knows — the graph is the app's home page.
 
@@ -21,15 +21,14 @@ npm run build        # production build (standalone output)
 npm start            # serve the production build
 
 npm test             # the full suite (node:test via tsx; deterministic, no LLM, no network)
-npm run lint         # eslint — includes the import law (architecture §2)
+npm run lint         # oxlint + eslint — includes the import law (architecture §2)
+npm run fmt          # format code, JSON, and Markdown with oxfmt
+npm run fmt:check    # check formatting with oxfmt
 npm run typecheck    # tsc --noEmit
 node scripts/smoke-web-subscriptions.mjs # after build: offline Next start/dev + reload gate
 
 npm run desktop:dev    # next dev + Electron shell pointed at it
 npm run desktop:dist   # local signed/notarized macOS arm64 build (LH_NOTARY keychain)
-
-# one-shot data scripts (run from the master tree only — data never crosses trees)
-npx tsx --env-file=.env.local scripts/replay-layout.ts        # re-derive layout from the ledgers
 ```
 
 The Next server reloads on save. `electron/main.cjs` and the modules it loads do not: they load once, when Electron starts. After changing them, quit the desktop window and run `npm run desktop:dev` again. A window still running older code has no handler for newer IPC calls, so the Settings control that calls one fails (for example, Settings → Data → Clear cache).
@@ -42,14 +41,14 @@ For Windows/Linux packages and the three-OS CI/release flow, see [`desktop-relea
 
 Secrets and machine-specific paths only. Model choice and thinking budgets are the user's, not the environment's — BYOK model slots live in **settings** (`models` section: strong/cheap/vision, provider + model id + optional thinking level; per-role and per-chat overrides ride on top). The extraction batch threshold is a settings knob too (`graph.extractionChunkTokens`, default 4096, floor 500).
 
-| Variable | Purpose |
-|---|---|
-| `OPENROUTER_API_KEY` | required — all LLM calls go through OpenRouter |
-| `GOOGLE_SEARCH_API_KEY` + `GOOGLE_CSE_ID` | researcher's `web_search` (Google Custom Search) |
-| `DEEPGRAM_API_KEY` | optional — dictation (STT token minting; audio streams browser→Deepgram, never through the server) |
-| `CHROME_PATH` | optional system Chrome fallback for demo verification; the app's own browser helper is primary (nothing is downloaded) |
+| Variable                                  | Purpose                                                                                                                |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY`                      | required — all LLM calls go through OpenRouter                                                                         |
+| `GOOGLE_SEARCH_API_KEY` + `GOOGLE_CSE_ID` | researcher's `web_search` (Google Custom Search)                                                                       |
+| `DEEPGRAM_API_KEY`                        | optional — dictation (STT token minting; audio streams browser→Deepgram, never through the server)                     |
+| `CHROME_PATH`                             | optional system Chrome fallback for demo verification; the app's own browser helper is primary (nothing is downloaded) |
 
-The packaged desktop app takes keys from `userData/auth.json` (BYOK, mode 0600, read/written directly by the server via `LH_AUTH_FILE`). PDFs render natively with pdfjs/Skia; SVGs use resvg.
+The packaged desktop app takes keys from `userData/auth.json` (BYOK, mode 0600, read/written directly by the server via `LH_AUTH_FILE`). PDFs render natively with pdfjs/Skia.
 
 ### Subscription connections in web/dev
 
@@ -80,7 +79,7 @@ flowchart TB
     end
 
     subgraph WORKBENCH["WORKBENCH — background labor (owns data/jobs)"]
-        SUBS["researcher · demo-builder · visual-maker<br/>(pi agents driven to completion)"]
+        SUBS["researcher · demo-builder<br/>(pi agents driven to completion)"]
         WAKE["wake pipeline — per-chat serialized steer delivery,<br/>server-side wake turns, crash recovery"]
     end
 
@@ -129,7 +128,7 @@ src/
     tools/probe.ts              probe_done (probe→teach handoff seam)
     tools/jobs.ts               research / pdf tool surfaces
     tools/web.ts                web_search (Google CSE) + web_fetch (researcher only)
-    subagents/                  researcher · demo-builder · visual-maker
+    subagents/                  researcher · demo-builder
                                 · pdf-reader,
                                 extraction pipeline (extractor/auditor + merger handoff),
                                 runner (async protocol), native renderers + browser-service helper,
@@ -156,7 +155,7 @@ src/
                                 ledgers · jobs (+ render-settings, default-settings)
 electron/                       desktop launcher + security guard (spawns the standalone
                                 server; 1 IPC channel; LH_DATA_DIR + BYOK env)
-scripts/                        build-server.mjs (packaging guards), replay-layout
+scripts/                        build-server.mjs (packaging guards)
 data/                           chats/ · graph/ (nodes/chains/sessions/coverage
                                 ledgers + positions/sources/render-settings maps) ·
                                 jobs/ · settings.json — runtime state, git-ignored
@@ -206,7 +205,7 @@ All deterministic, no LLM, no network (engines are injected — pi-ai's faux pro
 
 1. **Pure core units** — merger (via the real fs adapters, backup-and-restored), derivation, coverage, question grading, plan tree, phases, clusters, layout, tool-parts, prices.
 2. **Server flows** — `handleChatRequest` driven end-to-end with scripted engines: persistence, liveness, steer claiming, the wake pipeline (409 retry, quiz deferral, idempotency), crash recovery, the data-dir seam (including a fresh child process).
-3. **Sub-agent loops** — researcher/demo-builder/visual-maker with fake headless APIs; the extraction pipeline end-to-end (audit drops, failure-checkpoints-nothing, single-flight, abort).
+3. **Sub-agent loops** — researcher/demo-builder with fake headless APIs; the extraction pipeline end-to-end (audit drops, failure-checkpoints-nothing, single-flight, abort).
 4. **Render tests** — transcript, cards, docks, composer, sidebar, coverage via React server-side rendering.
 5. **Golden fixtures** (`tests/fixtures/golden-data/`) — a REAL data dir (real records produced by the app, never hand-edited), copied to a temp dir and read through the production paths via the `LH_DATA_DIR` seam. Pins that real data parses, flattens to a legal LLM wire, derives the graph end-to-end, covers every custom-marker kind, and that reads never write. **The fixture law:** an intentional on-disk format change updates the fixtures in the same commit — see the fixture README.
 

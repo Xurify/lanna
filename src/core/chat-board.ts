@@ -1,10 +1,12 @@
 export type BoardPhrase = { phrase: string; meaning: string };
 
-const GLOSSED = /`say:\s*([^`]+?)\s*`\s*(?:=\s*|\(\s*)(?:["“]([^"”\n]+)["”]|([^"”)\n]+?)\s*(?:\)|[.,;:]|$|\s(?=[A-Z])))/gm;
+const GLOSSED =
+	/`say:\s*([^`]+?)\s*`\s*(?:=\s*|\(\s*)(?:["“]([^"”\n]+)["”]|([^"”)\n]+?)\s*(?:\)|[.,;:]|$|\s(?=[A-Z])))/gm;
 
 const PAGE_CITATION = /\s*\(pp?\.\s*[\d,\s–-]+\)/g;
 
-const GRAMMAR_LABEL = /^(masculine|feminine|neuter|singular|plural|nominative|genitive|dative|accusative|locative|instrumental|vocative|perfective|imperfective)(\s+(animate|inanimate|singular|plural))?$/i;
+const GRAMMAR_LABEL =
+	/^(masculine|feminine|neuter|singular|plural|nominative|genitive|dative|accusative|locative|instrumental|vocative|perfective|imperfective)(\s+(animate|inanimate|singular|plural))?$/i;
 
 export function boardPhrases(replies: readonly string[]): BoardPhrase[] {
 	const seen = new Set<string>();

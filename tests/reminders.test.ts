@@ -425,7 +425,11 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	assert.ok(studyNudge, "Should contain an experiment source nudge");
 	assert.equal(studyNudge?.taskKind, "listen");
 	assert.equal(studyNudge?.title, "Study: 3 in Russian to go in Listen", "only the language still short is named");
-	assert.equal(studyNudge?.languageId, "russian", "the study nudge opens Listen in the language still short, not the running one");
+	assert.equal(
+		studyNudge?.languageId,
+		"russian",
+		"the study nudge opens Listen in the language still short, not the running one",
+	);
 	assert.equal(studyNudge?.href, "/listen");
 	assert.match(studyNudge?.message ?? "", /Day 1 of 42/);
 
@@ -449,8 +453,16 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	const checkNudge = checkNudges.find((n) => n.taskKind === "experiment");
 	assert.ok(checkNudge, "Should contain weekly check alert");
 	assert.match(checkNudge?.title ?? "", /week 1 check is open/);
-	assert.equal(checkNudges.filter((n) => n.source === "experiment").length, 1, "a day that counts in both languages gets no Listen nudge");
-	assert.equal(checkNudge?.href, "/experiments/input-first/check?week=1&lang=slovak", "the check nudge opens the open check, not week 1 of the treatment by default");
+	assert.equal(
+		checkNudges.filter((n) => n.source === "experiment").length,
+		1,
+		"a day that counts in both languages gets no Listen nudge",
+	);
+	assert.equal(
+		checkNudge?.href,
+		"/experiments/input-first/check?week=1&lang=slovak",
+		"the check nudge opens the open check, not week 1 of the treatment by default",
+	);
 
 	// 3. shouldTriggerNudge fires study alert when experimentPending is true even if todayMinutes >= dailyGoal
 	const testTime = new Date("2026-11-10T20:30:00");
@@ -481,4 +493,3 @@ test("buildDailyNudges and shouldTriggerNudge alert on uncompleted study tasks e
 	});
 	assert.equal(allDoneNudges.length, 0, "No nudges when both goal minutes and study requirements are done");
 });
-

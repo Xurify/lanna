@@ -10,7 +10,11 @@ export const dynamic = "force-dynamic";
 
 /** The whole A1→B2 map (LangHarness): every chapter open, with the
  *  learner's progress on it. The Today page shows the same path folded. */
-export default async function CurriculumRoute({ searchParams }: { searchParams: Promise<{ view?: string | string[] }> }) {
+export default async function CurriculumRoute({
+	searchParams,
+}: {
+	searchParams: Promise<{ view?: string | string[] }>;
+}) {
 	const view = resolveClimbView((await searchParams).view, (await cookies()).get(CLIMB_VIEW_COOKIE)?.value);
 	const record = readSettingsRecord();
 	let summary = null;

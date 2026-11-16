@@ -44,8 +44,14 @@ async function setup(): Promise<string> {
 	await fs.mkdir(path.join(root, "code"), { recursive: true });
 	await fs.mkdir(path.join(root, "node_modules"), { recursive: true });
 	await fs.mkdir(path.join(root, "Library"), { recursive: true });
-	await fs.writeFile(path.join(root, "notes", "calculus.md"), "Calculus notes\nThe derivative measures force.\nChapter 1\n");
-	await fs.writeFile(path.join(root, "notes", "linear.txt"), "Eigenvectors keep their direction\nonly scaling remains\n");
+	await fs.writeFile(
+		path.join(root, "notes", "calculus.md"),
+		"Calculus notes\nThe derivative measures force.\nChapter 1\n",
+	);
+	await fs.writeFile(
+		path.join(root, "notes", "linear.txt"),
+		"Eigenvectors keep their direction\nonly scaling remains\n",
+	);
 	await fs.writeFile(path.join(root, "notes", "sub", "hidden.md"), "deep file about MU\n");
 	await fs.writeFile(path.join(root, "code", "main.ts"), "const x = 1;\nconst eigenvector = 'here';\n");
 	await fs.writeFile(path.join(root, "node_modules", "skipme.txt"), "eigenvector in node_modules\n");

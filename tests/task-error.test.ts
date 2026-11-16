@@ -10,7 +10,8 @@ const { briefError } = await import("../src/server/tasks.ts");
 
 describe("briefError", () => {
 	test("keeps the last line and drops the command and traceback above it", () => {
-		const message = 'Command failed: C:\\Python313\\python.exe spotify_helper.py download https://open.spotify.com/track/x\nTraceback (most recent call last):\n  File "spotify_helper.py", line 158\nerror: spotdl wrote no MP3 (exit 0): Done 100%';
+		const message =
+			'Command failed: C:\\Python313\\python.exe spotify_helper.py download https://open.spotify.com/track/x\nTraceback (most recent call last):\n  File "spotify_helper.py", line 158\nerror: spotdl wrote no MP3 (exit 0): Done 100%';
 		assert.equal(briefError(message), "error: spotdl wrote no MP3 (exit 0): Done 100%");
 	});
 

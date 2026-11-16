@@ -14,7 +14,17 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { aspectPairInfo, aspectTasks, cueQuestion, cueWindowReport, cueWindows, gridCells, pairsLessonFor, spanCueGroups, STOPWORDS } from "../src/core/aspect-tasks.ts";
+import {
+	aspectPairInfo,
+	aspectTasks,
+	cueQuestion,
+	cueWindowReport,
+	cueWindows,
+	gridCells,
+	pairsLessonFor,
+	spanCueGroups,
+	STOPWORDS,
+} from "../src/core/aspect-tasks.ts";
 import { PAIRS_TASK_SLOTS, patternExamples, type LessonItem, type UnitId } from "../src/core/lesson.ts";
 import { chapterPairs, twinSentences, PAIRS } from "../src/core/pairs.ts";
 import {
@@ -33,7 +43,8 @@ import {
 import { entryLemma, exampleText, type LexiconEntry } from "../src/core/review.ts";
 import { lessonMixupEvent } from "../src/server/mixups.ts";
 
-const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] }).words;
+const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] })
+	.words;
 const E = (slug: string) => entries.find((e) => e.slug === slug) as LexiconEntry;
 const aspect = MIXUP_FAMILIES.find((f) => f.id === "aspect") as MixupFamily;
 const accepted = new Set(aspect.formsAccepted ?? []);
@@ -76,7 +87,11 @@ test("the grid's forms are the paradigm's own: present and past from the lists, 
 test("the grid labels the perfective present as the future meaning, and the perfective future as no form", () => {
 	const cells = gridCells(E("pisat"), E("napisat"), accepted)!;
 	const present = cells.find((c) => c.row === 1 && c.col === 1)!;
-	assert.equal(present.note, `${present.form}: present form = future meaning`, "the note starts with the form it describes");
+	assert.equal(
+		present.note,
+		`${present.form}: present form = future meaning`,
+		"the note starts with the form it describes",
+	);
 	assert.equal(cells.find((c) => c.row === 1 && c.col === 2)!.note, "perfective future: no such form");
 });
 
@@ -103,30 +118,61 @@ test("a cue window is a same-length run of words of the sentence, never the span
 
 test("a cue window the row's form touches or contains is dropped, with its reason (N3)", () => {
 	const drops = (sentence: string, span: string, form?: string) => cueWindowReport(sentence, span, form).dropped;
-	const reason = (sentence: string, span: string, form: string | undefined, text: string) => drops(sentence, span, form).find((d) => d.text === text)?.reason;
-	assert.equal(reason("Román o vojne čítala celú noc.", "celú noc", "čítala", "vojne čítala"), "contains the form", "'vojne čítala' holds the twin form");
+	const reason = (sentence: string, span: string, form: string | undefined, text: string) =>
+		drops(sentence, span, form).find((d) => d.text === text)?.reason;
+	assert.equal(
+		reason("Román o vojne čítala celú noc.", "celú noc", "čítala", "vojne čítala"),
+		"contains the form",
+		"'vojne čítala' holds the twin form",
+	);
 	assert.equal(reason("Román o vojne čítala celú noc.", "celú noc", "čítala", "o vojne"), "touches the form");
-	assert.equal(reason("Náhodne otvoril knihu a začal čítať.", "začal", "čítať", "čítať"), "contains the form", "'čítať' is the twin form for začal");
+	assert.equal(
+		reason("Náhodne otvoril knihu a začal čítať.", "začal", "čítať", "čítať"),
+		"contains the form",
+		"'čítať' is the twin form for začal",
+	);
 	assert.equal(reason("Náhodne otvoril knihu a začal čítať.", "začal", "čítať", "a"), "only function words");
 	assert.equal(reason("Tom bude písať list.", "bude", "písať", "list"), "touches the form");
 	assert.equal(reason("Po porade s lekárom prestal brať lieky.", "prestal", "brať", "Po"), "only function words");
 	assert.equal(reason("Po porade s lekárom prestal brať lieky.", "prestal", "brať", "lieky"), "touches the form");
-	assert.ok(drops("Ona bežne pracuje a bežne číta knihy.", "bežne", "pracuje").some((d) => d.text === "bežne" && d.reason === "repeats the cue"), "the same word elsewhere in the sentence is not a window");
+	assert.ok(
+		drops("Ona bežne pracuje a bežne číta knihy.", "bežne", "pracuje").some(
+			(d) => d.text === "bežne" && d.reason === "repeats the cue",
+		),
+		"the same word elsewhere in the sentence is not a window",
+	);
 	assert.equal(reason("Pracuje tvrdo, tvrdo pracuje.", "Pracuje", undefined, "tvrdo"), "repeats another window");
-	assert.deepEqual(cueWindowReport("Román o vojne čítala celú noc.", "celú noc", "čítala").kept, ["Román o"], "the kept window is the one the rules allow");
+	assert.deepEqual(
+		cueWindowReport("Román o vojne čítala celú noc.", "celú noc", "čítala").kept,
+		["Román o"],
+		"the kept window is the one the rules allow",
+	);
 });
 
 test("the cue-word groups: a window holding one is dropped with its group's reason, and the span itself is never dropped (N9)", () => {
-	const reason = (sentence: string, span: string, form: string | undefined, text: string) => cueWindowReport(sentence, span, form).dropped.find((d) => d.text === text)?.reason;
+	const reason = (sentence: string, span: string, form: string | undefined, text: string) =>
+		cueWindowReport(sentence, span, form).dropped.find((d) => d.text === text)?.reason;
 	// Habit and frequency: každý, vždy, často, … and každom only with a time noun next
 	assert.equal(reason("Pes štekal často, ale mačka spala v kúte.", "spala", undefined, "často"), "a habit cue");
 	assert.equal(reason("Každý deň chodím do parku.", "chodím", undefined, "Každý"), "a habit cue");
-	assert.equal(reason("Chodí do školy každom roku.", "Chodí", undefined, "každom"), "a habit cue", "každom with a time noun");
-	assert.equal(reason("Chodí v každom obchode.", "Chodí", undefined, "každom"), undefined, "každom with no time noun is kept");
+	assert.equal(
+		reason("Chodí do školy každom roku.", "Chodí", undefined, "každom"),
+		"a habit cue",
+		"každom with a time noun",
+	);
+	assert.equal(
+		reason("Chodí v každom obchode.", "Chodí", undefined, "každom"),
+		undefined,
+		"každom with no time noun is kept",
+	);
 	// Duration: dlho; celý, celú, celé with noc; a number with hodiny, hodín or minút
 	assert.equal(reason("Čakal dlho na vlak.", "Čakal", undefined, "dlho"), "a duration cue");
 	assert.equal(reason("Čítal celú noc knihu.", "Čítal", undefined, "celú"), "a duration cue");
-	assert.equal(reason("Čítal celú noc knihu.", "Čítal", undefined, "noc"), "a duration cue", "the noc of the phrase too");
+	assert.equal(
+		reason("Čítal celú noc knihu.", "Čítal", undefined, "noc"),
+		"a duration cue",
+		"the noc of the phrase too",
+	);
 	assert.equal(reason("Čakal dve hodiny na vlak.", "Čakal", undefined, "dve"), "a duration cue", "the number");
 	assert.equal(reason("Čakal dve hodiny na vlak.", "Čakal", undefined, "hodiny"), "a duration cue", "the unit");
 	// Phase verbs: budem, budeš, bude, budeme, budete, budú; every form of začať, prestať, skončiť
@@ -136,19 +182,33 @@ test("the cue-word groups: a window holding one is dropped with its group's reas
 	assert.equal(reason("Skončil včera prácu.", "prácu", undefined, "Skončil"), "a phase verb", "skončiť by stem");
 	// Perfective cues: nakoniec, konečne; za with a time noun; podarilo, podarí; stihol, stihla, stihli, stihnem
 	assert.equal(reason("Nakoniec ju našiel doma.", "doma", undefined, "Nakoniec"), "a perfective cue");
-	assert.equal(reason("Vrátil sa za hodinu domov.", "domov", undefined, "za"), "a perfective cue", "za with a time noun");
+	assert.equal(
+		reason("Vrátil sa za hodinu domov.", "domov", undefined, "za"),
+		"a perfective cue",
+		"za with a time noun",
+	);
 	assert.equal(reason("Podarilo sa mu to.", "to", undefined, "Podarilo"), "a perfective cue");
 	assert.equal(reason("Stihol včas prísť domov.", "domov", undefined, "Stihol"), "a perfective cue");
 	// Present moment: práve
 	assert.equal(reason("Práve čítam knihu.", "knihu", undefined, "Práve"), "the present-moment cue");
 	// The span is the answer, so it is never a dropped window and never a cue of its own
-	assert.deepEqual(cueWindowReport("Každý deň čítam knihu.", "Každý deň", undefined).kept, ["čítam knihu"], "the span is not a window");
+	assert.deepEqual(
+		cueWindowReport("Každý deň čítam knihu.", "Každý deň", undefined).kept,
+		["čítam knihu"],
+		"the span is not a window",
+	);
 });
 
 test("a window that crosses a comma is dropped; ach and čo are filler, so they are only function words (N9)", () => {
 	assert.equal(reason2("Dom stojí, a záhrada kvitne.", "záhrada kvitne", undefined, "stojí, a"), "crosses a comma");
-	assert.equal(reason2("Ach, zabudla som kúpiť kapustu. Čo budeme robiť?", "budeme", "robiť", "Ach"), "only function words");
-	assert.equal(reason2("Ach, zabudla som kúpiť kapustu. Čo budeme robiť?", "budeme", "robiť", "Čo"), "only function words");
+	assert.equal(
+		reason2("Ach, zabudla som kúpiť kapustu. Čo budeme robiť?", "budeme", "robiť", "Ach"),
+		"only function words",
+	);
+	assert.equal(
+		reason2("Ach, zabudla som kúpiť kapustu. Čo budeme robiť?", "budeme", "robiť", "Čo"),
+		"only function words",
+	);
 	assert.ok(STOPWORDS.has("ach") && STOPWORDS.has("čo"), "ach and čo are stopwords");
 });
 
@@ -174,12 +234,24 @@ test("the second pass of cue words: time nouns after za, the units of a number, 
 	assert.equal(reason2("Čakal dve minúty na vlak.", "vlak", undefined, "minúty"), "a duration cue");
 	assert.equal(reason2("Čakal päť dní na vlak.", "vlak", undefined, "päť"), "a duration cue");
 	assert.equal(reason2("Čakal päť dní na vlak.", "vlak", undefined, "dní"), "a duration cue");
-	assert.equal(reason2("Čakal 1 hodinu na vlak.", "vlak", undefined, "hodinu"), "a duration cue", "the unit after a digit");
+	assert.equal(
+		reason2("Čakal 1 hodinu na vlak.", "vlak", undefined, "hodinu"),
+		"a duration cue",
+		"the unit after a digit",
+	);
 	// celý, celú, celé count with any time noun next, not only noc
 	assert.equal(reason2("Pracoval celý deň v kancelárii.", "kancelárii", undefined, "celý"), "a duration cue");
-	assert.equal(reason2("Pracoval celý deň v kancelárii.", "kancelárii", undefined, "deň"), "a duration cue", "the time noun too");
+	assert.equal(
+		reason2("Pracoval celý deň v kancelárii.", "kancelárii", undefined, "deň"),
+		"a duration cue",
+		"the time noun too",
+	);
 	assert.equal(reason2("Čakal celé ráno na vlak.", "vlak", undefined, "celé"), "a duration cue");
-	assert.equal(reason2("Mal celý život pred sebou.", "sebou", undefined, "celý"), undefined, "celý with a noun that is no time noun is kept");
+	assert.equal(
+		reason2("Mal celý život pred sebou.", "sebou", undefined, "celý"),
+		undefined,
+		"celý with a noun that is no time noun is kept",
+	);
 	// prestaň (the ň) and končiť, končí, končil (the stem konč) are phase verbs
 	assert.equal(reason2("Prestaň kričať, prosím.", "prosím", undefined, "Prestaň"), "a phase verb");
 	assert.equal(reason2("Film končí o desiatej.", "desiatej", undefined, "končí"), "a phase verb");
@@ -217,16 +289,28 @@ test("the cue prompt names the row's verb and its twin: a finite row the paralle
 	assert.equal(questionOf(idOf(row42)), "Which word made it robiť and not urobiť?");
 	assert.equal(questionOf(idOf(row21)), "Which word made it kúpil and not kupoval?");
 	// Every usable cue row has a prompt
-	for (const r of aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3)) {
+	for (const r of aspect.probes!.filter(
+		(r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3,
+	)) {
 		assert.ok(cueQuestion(entries, aspect, r), `${r.sk} has a prompt`);
 	}
 });
 
 test("the keep list: Dlho is kept as a window of row 21 only through its keep list, and the other drops still apply (N11)", () => {
 	const s = "Dlho som odolával, ale nakoniec som si kúpil nový telefón.";
-	assert.equal(cueWindowReport(s, "nakoniec", "kúpil").dropped.find((d) => d.text === "Dlho")?.reason, "a duration cue");
-	assert.deepEqual(cueWindows(s, "nakoniec", "kúpil", ["Dlho"]), ["Dlho", "odolával", "telefón"], "with the keep list, three windows");
-	assert.ok(!cueWindows(s, "nakoniec", "kúpil", ["Dlho", "som"]).includes("som"), "a keep list skips the cue-word drop only: function words still drop");
+	assert.equal(
+		cueWindowReport(s, "nakoniec", "kúpil").dropped.find((d) => d.text === "Dlho")?.reason,
+		"a duration cue",
+	);
+	assert.deepEqual(
+		cueWindows(s, "nakoniec", "kúpil", ["Dlho"]),
+		["Dlho", "odolával", "telefón"],
+		"with the keep list, three windows",
+	);
+	assert.ok(
+		!cueWindows(s, "nakoniec", "kúpil", ["Dlho", "som"]).includes("som"),
+		"a keep list skips the cue-word drop only: function words still drop",
+	);
 	const kept = aspect.probes!.filter((r) => r.cueKeep && r.cueKeep.length > 0);
 	assert.equal(kept.length, 1, "one row has a keep list");
 	assert.equal(kept[0]!.span, "nakoniec");
@@ -235,15 +319,22 @@ test("the keep list: Dlho is kept as a window of row 21 only through its keep li
 });
 
 test("one perfective cue rep: of the six cue spans, only nakoniec is a perfective cue (N11)", () => {
-	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3);
+	const cueRows = aspect.probes!.filter(
+		(r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3,
+	);
 	assert.equal(cueRows.length, 6);
 	const perfective = cueRows.filter((r) => spanCueGroups(r.sk, r.span!).includes("perfective"));
-	assert.deepEqual(perfective.map((r) => r.span), ["nakoniec"]);
+	assert.deepEqual(
+		perfective.map((r) => r.span),
+		["nakoniec"],
+	);
 });
 
 test("the cue reps: one per approved row whose span has three windows, each a substring of its sentence", () => {
 	const tasks = aspectTasks(entries, PAIRS, "pairs-plans", 5).filter((i) => i.task?.kind === "cue");
-	const usable = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3);
+	const usable = aspect.probes!.filter(
+		(r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3,
+	);
 	assert.equal(tasks.length, usable.length, "every usable approved row gives one cue rep");
 	for (const item of tasks) {
 		assert.equal(item.kind, "choose");
@@ -252,7 +343,8 @@ test("the cue reps: one per approved row whose span has three windows, each a su
 		assert.equal(item.options!.filter((o) => o === item.answer).length, 1, "the span is offered once");
 		assert.equal(new Set(item.options).size, item.options!.length, "no repeated option");
 		for (const o of item.options!) assert.ok(item.sentence.includes(o), `${o} is a substring of the sentence`);
-		for (const o of item.options!.filter((o) => o !== item.answer)) assert.equal(o.split(" ").length, item.answer.split(" ").length, "same length");
+		for (const o of item.options!.filter((o) => o !== item.answer))
+			assert.equal(o.split(" ").length, item.answer.split(" ").length, "same length");
 	}
 });
 
@@ -263,20 +355,37 @@ test("the verifier's span corrections hold: po francúzsky and pohŕdavo are the
 		return hits[0]!;
 	};
 	const francuzsky = row("Hovorím po francúzsky každý deň");
-	assert.equal(francuzsky.approved !== undefined && francuzsky.span, undefined, "row 53 stays an approved probe row with no cue span (its každý deň is a second answer)");
-	const why = cueWindowReport(francuzsky.sk, "po francúzsky", francuzsky.form).dropped.find((d) => d.text === "každý deň");
+	assert.equal(
+		francuzsky.approved !== undefined && francuzsky.span,
+		undefined,
+		"row 53 stays an approved probe row with no cue span (its každý deň is a second answer)",
+	);
+	const why = cueWindowReport(francuzsky.sk, "po francúzsky", francuzsky.form).dropped.find(
+		(d) => d.text === "každý deň",
+	);
 	assert.equal(why?.reason, "a habit cue", "as a window, každý deň would be a second answer: the rule drops it");
 	assert.equal(row("O susedoch vždy hovorila pohŕdavo").span, "pohŕdavo", "the cue is pohŕdavo");
 	assert.equal(row("Starý otec vždy hovoril múdro a pokojne").span, undefined, "no single span: no cue rep");
 	assert.equal(row("Lokálny obchod predáva čerstvé pečivo každé ráno").span, undefined, "the ongoing offer is no span");
 	assert.equal(row("Zodpovední rodičia čítajú deťom každý večer").span, undefined, "no object shows no span");
-	const cueRows = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3);
-	assert.equal(cueRows.length, 6, "six rows make cue reps: row 53 is withdrawn, and row 21 keeps Dlho (its keep list), so it has three windows");
+	const cueRows = aspect.probes!.filter(
+		(r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length >= 3,
+	);
+	assert.equal(
+		cueRows.length,
+		6,
+		"six rows make cue reps: row 53 is withdrawn, and row 21 keeps Dlho (its keep list), so it has three windows",
+	);
 });
 
 test("the rows with fewer than three windows give no cue rep, and are named (N3)", () => {
-	const short = aspect.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length < 3).map((r) => r.span);
-	assert.deepEqual([...short].sort(), ["Budete", "bude", "budeš", "celú noc", "pohŕdavo", "prestal", "v každej trafike", "za necelý mesiac"].sort());
+	const short = aspect
+		.probes!.filter((r) => r.approved && r.span && cueWindows(r.sk, r.span, r.form, r.cueKeep).length < 3)
+		.map((r) => r.span);
+	assert.deepEqual(
+		[...short].sort(),
+		["Budete", "bude", "budeš", "celú noc", "pohŕdavo", "prestal", "v každej trafike", "za necelý mesiac"].sort(),
+	);
 });
 
 test("cue reps and grid reps are tasks: they carry the family's cue and explanation, and never a first try", () => {
@@ -286,7 +395,19 @@ test("cue reps and grid reps are tasks: they carry the family's cue and explanat
 	for (const i of tasks) {
 		assert.equal(i.pair?.cue, aspect.cue);
 		assert.ok(i.pair?.explain, "the explanation is attached");
-		assert.equal(lessonMixupEvent({ slug: i.slug, kind: i.kind, first: { given: "x", verdict: "wrong" }, detail: { answer: i.answer, unit: i.unit, task: i.task!.kind } }, at(1)), null, "a task is no mix-up event");
+		assert.equal(
+			lessonMixupEvent(
+				{
+					slug: i.slug,
+					kind: i.kind,
+					first: { given: "x", verdict: "wrong" },
+					detail: { answer: i.answer, unit: i.unit, task: i.task!.kind },
+				},
+				at(1),
+			),
+			null,
+			"a task is no mix-up event",
+		);
 	}
 });
 
@@ -315,12 +436,21 @@ test("aspect chapters put their tasks at the task slots; other chapters have non
 		assert.equal(plan.items.length, 12, `${chapter}: twelve reps`);
 		const at = plan.items.flatMap((i, n) => (i.task ? [n] : []));
 		assert.ok(at.length >= 1, `${chapter}: has a task`);
-		assert.ok(at.every((n) => PAIRS_TASK_SLOTS.includes(n)), `${chapter}: tasks sit at the task slots (${at})`);
+		assert.ok(
+			at.every((n) => PAIRS_TASK_SLOTS.includes(n)),
+			`${chapter}: tasks sit at the task slots (${at})`,
+		);
 	}
 	for (const chapter of ["town", "family", "people", "opinions"]) {
 		const plan = pairsLessonFor(entries, `pairs-${chapter}` as UnitId, { seed: 3 });
-		assert.ok(plan.items.every((i) => !i.task), `${chapter}: no task`);
-		assert.ok(plan.items.every((i) => !i.pair?.explain), `${chapter}: no explanation`);
+		assert.ok(
+			plan.items.every((i) => !i.task),
+			`${chapter}: no task`,
+		);
+		assert.ok(
+			plan.items.every((i) => !i.pair?.explain),
+			`${chapter}: no explanation`,
+		);
 	}
 });
 
@@ -373,7 +503,19 @@ const fixtureFamily = (probes: MixupProbe[], extra: Partial<MixupFamily> = {}): 
 
 /** A record entry for the kupovať / kupiť pair, as a miss (or a probe) would write it. */
 function kupRecord(misses: number, hits = 0, won?: string[]): MixupRecord {
-	return { [mixupKey("kupovat", "kupit")]: { a: "kupovat", b: "kupit", words: ["kupovať", "kúpiť"], family: "aspect", since: at(0), lastAt: at(0), misses, hits, ...(won ? { won } : {}) } };
+	return {
+		[mixupKey("kupovat", "kupit")]: {
+			a: "kupovat",
+			b: "kupit",
+			words: ["kupovať", "kúpiť"],
+			family: "aspect",
+			since: at(0),
+			lastAt: at(0),
+			misses,
+			hits,
+			...(won ? { won } : {}),
+		},
+	};
 }
 
 const build = (probes: MixupProbe[], record: MixupRecord, seed = 1, extra: Partial<MixupFamily> = {}) => {
@@ -391,7 +533,10 @@ test("fixture: approved rows on both sides give choices from both twins, each di
 		const expected = parallelForm(E(item.slug), other, item.answer, accepted);
 		assert.ok(expected !== null, `${item.answer}: a parallel exists`);
 		assert.ok(item.options!.includes(item.answer), "the answer is offered");
-		assert.ok(item.options!.some((o) => fold(o) === fold(expected!)), `${item.answer}: the other twin's form in the slot (${expected}) is offered`);
+		assert.ok(
+			item.options!.some((o) => fold(o) === fold(expected!)),
+			`${item.answer}: the other twin's form in the slot (${expected}) is offered`,
+		);
 	}
 });
 
@@ -408,7 +553,10 @@ test("fixture: an open mix-up is typed, a probe is chosen", () => {
 	assert.ok(probe.items.every((i) => i.kind === "choose"));
 	const open = build(fixtureRows(), kupRecord(1));
 	assert.ok(open.items.length > 0);
-	assert.ok(open.items.every((i) => i.kind === "type"), "an open mix-up is typed");
+	assert.ok(
+		open.items.every((i) => i.kind === "type"),
+		"an open mix-up is typed",
+	);
 });
 
 test("fixture: an unapproved row is refused, and a pair with one side approved is refused (the balance gate)", () => {
@@ -429,46 +577,109 @@ test("fixture: a row with no parallel form is refused unless it is the dictionar
 	// kupovat is unverified: its own rows have no choice, and kupiť's finite rows
 	// have no parallel, so only the infinitive (a lemma choice) is left, one side only.
 	assert.equal(plan.items.filter((i) => i.slug === "kupovat").length, 0);
-	assert.ok(plan.items.every((i) => i.answer === "kúpiť"), "only the dictionary form is left");
+	assert.ok(
+		plan.items.every((i) => i.answer === "kúpiť"),
+		"only the dictionary form is left",
+	);
 	assert.equal(plan.items.length, 0, "and one side alone is no deck");
 });
 
 test("fixture: one aspect never mends, and both aspects mend (the fixture's own rows)", () => {
 	const key = mixupKey("kupovat", "kupit");
-	const right = (slug: string, n: number) => ({ slug, answer: slug, given: slug, verdict: "exact" as const, sentence: "", at: at(n) });
-	const lex = mixupLexicon(entries, NO_FRAMES, MIXUP_FAMILIES.map((f) => (f.id === "aspect" ? fixtureFamily(fixtureRows()) : f)));
+	const right = (slug: string, n: number) => ({
+		slug,
+		answer: slug,
+		given: slug,
+		verdict: "exact" as const,
+		sentence: "",
+		at: at(n),
+	});
+	const lex = mixupLexicon(
+		entries,
+		NO_FRAMES,
+		MIXUP_FAMILIES.map((f) => (f.id === "aspect" ? fixtureFamily(fixtureRows()) : f)),
+	);
 	let record: MixupRecord = { [key]: { ...kupRecord(1)[key]! } };
-	record = tallyMixups(record, [right("kupovat", 1), right("kupovat", 2), right("kupovat", 3), right("kupovat", 4)], lex).record;
+	record = tallyMixups(
+		record,
+		[right("kupovat", 1), right("kupovat", 2), right("kupovat", 3), right("kupovat", 4)],
+		lex,
+	).record;
 	assert.equal(mixupStatus(record[key]!), "active", "three or more right on one aspect do not mend");
-	record = tallyMixups(record, [{ ...right("kupit", 5), at: new Date(Date.UTC(2026, 10, 5, 10)).toISOString() }], lex).record;
+	record = tallyMixups(
+		record,
+		[{ ...right("kupit", 5), at: new Date(Date.UTC(2026, 10, 5, 10)).toISOString() }],
+		lex,
+	).record;
 	assert.equal(mixupStatus(record[key]!), "mended", "the other aspect, on a second day, mends it");
 });
 
 test("fixture: a wrong first try between the twins opens the pair, with both aspects' rows drillable", () => {
 	const families = MIXUP_FAMILIES.map((f) => (f.id === "aspect" ? fixtureFamily(fixtureRows()) : f));
 	const lex = mixupLexicon(entries, NO_FRAMES, families);
-	const event = { slug: "kupit", answer: "kúpiť", given: "kupovať", verdict: "wrong" as const, sentence: "Chcem kúpiť knihu.", at: at(1) };
+	const event = {
+		slug: "kupit",
+		answer: "kúpiť",
+		given: "kupovať",
+		verdict: "wrong" as const,
+		sentence: "Chcem kúpiť knihu.",
+		at: at(1),
+	};
 	const { record, found } = tallyMixups({}, [event], lex);
 	assert.deepEqual(found, [mixupKey("kupit", "kupovat")]);
 	assert.equal(record[mixupKey("kupit", "kupovat")]!.misses, 1);
 });
 
 test("visible: a miss on a Dvojičky pick opens the pair even where the family cannot drill it (S1)", () => {
-	const event = { slug: "napisat", answer: "napísať", given: "písať", verdict: "wrong" as const, sentence: "Chcem napísať knihu.", at: at(1) };
-	assert.deepEqual(tallyMixups({}, [event], mixupLexicon(entries)).record, {}, "a plain miss on an undrillable pair records nothing");
+	const event = {
+		slug: "napisat",
+		answer: "napísať",
+		given: "písať",
+		verdict: "wrong" as const,
+		sentence: "Chcem napísať knihu.",
+		at: at(1),
+	};
+	assert.deepEqual(
+		tallyMixups({}, [event], mixupLexicon(entries)).record,
+		{},
+		"a plain miss on an undrillable pair records nothing",
+	);
 	const seen = tallyMixups({}, [{ ...event, visible: true }], mixupLexicon(entries)).record;
 	assert.equal(seen[mixupKey("napisat", "pisat")]?.misses, 1, "a visible miss is recorded");
 });
 
 test("a Dvojičky pick's miss from the lesson reads as visible; a task's miss does not count", () => {
 	const detail = { answer: "napísať", sentence: "Chcem napísať knihu.", unit: "pairs-plans" };
-	const picked = lessonMixupEvent({ slug: "napisat", kind: "choose", first: { given: "písať", verdict: "wrong" }, detail }, at(2));
+	const picked = lessonMixupEvent(
+		{ slug: "napisat", kind: "choose", first: { given: "písať", verdict: "wrong" }, detail },
+		at(2),
+	);
 	assert.equal(picked?.visible, true);
-	assert.equal(lessonMixupEvent({ slug: "napisat", kind: "choose", first: { given: "písať", verdict: "wrong" }, detail: { ...detail, task: "cue" } }, at(2)), null);
+	assert.equal(
+		lessonMixupEvent(
+			{
+				slug: "napisat",
+				kind: "choose",
+				first: { given: "písať", verdict: "wrong" },
+				detail: { ...detail, task: "cue" },
+			},
+			at(2),
+		),
+		null,
+	);
 });
 
 test("shadow ids: a probe row past the entry's own examples has a `#p` id that is never a lexicon example index (S4)", () => {
-	const synthetic: MixupProbe = { slug: "kupovat", sk: "Dnes som kupoval knihu.", form: "kupoval", at: 9, type: "fixture", phrase: "fixture", src: "verified-pool", approved: "fixture (test)" };
+	const synthetic: MixupProbe = {
+		slug: "kupovat",
+		sk: "Dnes som kupoval knihu.",
+		form: "kupoval",
+		at: 9,
+		type: "fixture",
+		phrase: "fixture",
+		src: "verified-pool",
+		approved: "fixture (test)",
+	};
 	const probes = fixtureRows().concat(synthetic);
 	const own = E("kupovat").examples.length;
 	const plan = build(probes, kupRecord(0));
@@ -492,8 +703,15 @@ test("the Same pattern examples never show a form-reading task, and a task rep s
 	assert.ok(task, "the plans lesson has a task");
 	assert.deepEqual(patternExamples(plan.items, task), [], "a task rep shows no examples");
 	const [a, b] = plan.items.filter((i) => !i.task);
-	assert.deepEqual(patternExamples([task!, a!, b!], b).map((i) => i.id), [a!.id], "the task before them is not an example");
-	assert.ok(patternExamples(plan.items, a).every((o) => !o.task), "no task among a pair rep's examples");
+	assert.deepEqual(
+		patternExamples([task!, a!, b!], b).map((i) => i.id),
+		[a!.id],
+		"the task before them is not an example",
+	);
+	assert.ok(
+		patternExamples(plan.items, a).every((o) => !o.task),
+		"no task among a pair rep's examples",
+	);
 });
 
 test("the task slots are three, at 3, 7 and 11 of a twelve-rep lesson", () => {
@@ -508,6 +726,14 @@ test("the fixture lesson never repeats a sentence", () => {
 
 test("jednu, the accusative of jeden, is a number before a duration unit: Čítal som jednu hodinu is a duration cue (verifier, N9)", () => {
 	assert.equal(reason2("Čítal som jednu hodinu v kaviarni.", "kaviarni", undefined, "jednu"), "a duration cue");
-	assert.equal(reason2("Čítal som jednu hodinu v kaviarni.", "kaviarni", undefined, "hodinu"), "a duration cue", "the unit after jednu");
-	assert.equal(reason2("Čítal som jednu knihu v kaviarni.", "kaviarni", undefined, "jednu"), undefined, "jednu before a noun that is no unit is kept");
+	assert.equal(
+		reason2("Čítal som jednu hodinu v kaviarni.", "kaviarni", undefined, "hodinu"),
+		"a duration cue",
+		"the unit after jednu",
+	);
+	assert.equal(
+		reason2("Čítal som jednu knihu v kaviarni.", "kaviarni", undefined, "jednu"),
+		undefined,
+		"jednu before a noun that is no unit is kept",
+	);
 });

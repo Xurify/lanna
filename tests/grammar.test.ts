@@ -7,14 +7,34 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ATLAS_CASES, ATLAS_GENDERS, atlasCellOf, atlasUnit, caseDrill, genderColumn, genderLabel, grammarAtlas, isAtlasGender, slipLine, weakestAtlasCell, weakestGender } from "../src/core/grammar.ts";
+import {
+	ATLAS_CASES,
+	ATLAS_GENDERS,
+	atlasCellOf,
+	atlasUnit,
+	caseDrill,
+	genderColumn,
+	genderLabel,
+	grammarAtlas,
+	isAtlasGender,
+	slipLine,
+	weakestAtlasCell,
+	weakestGender,
+} from "../src/core/grammar.ts";
 import { allUnits, unitInfo } from "../src/core/lesson.ts";
 
-const cell = (atlas: ReturnType<typeof grammarAtlas>, row: string, col: string) => atlas.find((c) => c.row === row && c.col === col)!;
+const cell = (atlas: ReturnType<typeof grammarAtlas>, row: string, col: string) =>
+	atlas.find((c) => c.row === row && c.col === col)!;
 
 test("the atlas is six cases by three genders, in order", () => {
-	assert.deepEqual(ATLAS_CASES.map((c) => c.case), ["N", "G", "D", "A", "L", "I"]);
-	assert.deepEqual(ATLAS_GENDERS.map((g) => g.id), ["masc", "fem", "neut"]);
+	assert.deepEqual(
+		ATLAS_CASES.map((c) => c.case),
+		["N", "G", "D", "A", "L", "I"],
+	);
+	assert.deepEqual(
+		ATLAS_GENDERS.map((g) => g.id),
+		["masc", "fem", "neut"],
+	);
 	assert.equal(grammarAtlas({}).length, 18);
 });
 
@@ -22,7 +42,12 @@ test("the mapping, pinned cell by cell: A-fem → acc-fem, A-masc → acc-people
 	assert.equal(atlasUnit("A", "fem"), "acc-fem");
 	assert.equal(atlasUnit("A", "masc"), "acc-people");
 	assert.equal(atlasUnit("A", "neut"), null);
-	for (const [row, unit] of [["G", "gen"], ["D", "dat"], ["L", "loc"], ["I", "ins"]] as const) {
+	for (const [row, unit] of [
+		["G", "gen"],
+		["D", "dat"],
+		["L", "loc"],
+		["I", "ins"],
+	] as const) {
 		for (const g of ATLAS_GENDERS) assert.equal(atlasUnit(row, g.id), unit, `${row} ${g.id}`);
 	}
 	for (const g of ATLAS_GENDERS) assert.equal(atlasUnit("N", g.id), null, `N ${g.id} has no drill`);
@@ -49,7 +74,12 @@ test("a cell with no drill carries no record, and names no unit", () => {
 test("each cell's accuracy is its first tries right / tries, from its own gender column", () => {
 	const units = {
 		"acc-fem": { byGender: { fem: { reps: 10, right: 8, accents: 1, slips: { "same-word": 2 } } } },
-		gen: { byGender: { masc: { reps: 4, right: 1, accents: 0, slips: { base: 3 } }, neut: { reps: 2, right: 2, accents: 0, slips: {} } } },
+		gen: {
+			byGender: {
+				masc: { reps: 4, right: 1, accents: 0, slips: { base: 3 } },
+				neut: { reps: 2, right: 2, accents: 0, slips: {} },
+			},
+		},
 	};
 	const atlas = grammarAtlas(units);
 	assert.equal(cell(atlas, "A", "fem").accuracy, 0.8);
@@ -75,7 +105,9 @@ test("zero first tries, a missing record, a gender with no column or a drill wit
 });
 
 test("Speak slips show on their cell, apart from its accuracy", () => {
-	const atlas = grammarAtlas({ gen: { byGender: { fem: { reps: 0, right: 0, accents: 0, slips: {}, spoken: { base: 2 } } } } });
+	const atlas = grammarAtlas({
+		gen: { byGender: { fem: { reps: 0, right: 0, accents: 0, slips: {}, spoken: { base: 2 } } } },
+	});
 	const c = cell(atlas, "G", "fem");
 	assert.equal(c.accuracy, null);
 	assert.deepEqual(c.spoken, { base: 2 });

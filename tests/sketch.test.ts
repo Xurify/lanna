@@ -23,7 +23,10 @@ describe("parseSketch", () => {
 			`<svg viewBox="0 0 100 50"><script>alert(1)</script><a href="javascript:alert(1)"><text x="1" y="1">link</text></a><image href="https://x.test/a.png"/><foreignObject><div>hi</div></foreignObject><rect x="0" y="0" width="10" height="10" onclick="alert(1)" fill="url(https://x.test/p)" style="stroke:url(#a);fill:var(--ink)"/><style>*{}</style><use href="#a"/></svg>`,
 		);
 		assert.ok(sketch);
-		assert.ok(!/script|alert|href|image|foreignObject|onclick|url\(|<style|<use|<a\b|link|hi</.test(sketch.body), sketch.body);
+		assert.ok(
+			!/script|alert|href|image|foreignObject|onclick|url\(|<style|<use|<a\b|link|hi</.test(sketch.body),
+			sketch.body,
+		);
 		assert.match(sketch.body, /<rect x="0" y="0" width="10" height="10" style="fill:var\(--sk-ink\)"\/>/);
 	});
 
@@ -37,13 +40,17 @@ describe("parseSketch", () => {
 	});
 
 	it("escapes text and keeps tspans only inside text", () => {
-		const sketch = parseSketch(`<svg viewBox="0 0 10 10"><text x="1" y="2">a &lt; b &amp; <tspan dx="2">č</tspan></text><tspan>loose</tspan></svg>`);
+		const sketch = parseSketch(
+			`<svg viewBox="0 0 10 10"><text x="1" y="2">a &lt; b &amp; <tspan dx="2">č</tspan></text><tspan>loose</tspan></svg>`,
+		);
 		assert.ok(sketch);
 		assert.equal(sketch.body, `<g><text x="1" y="2">a &lt; b &amp; <tspan dx="2">č</tspan></text></g>`);
 	});
 
 	it("takes the title as the label and leaves it out of the body", () => {
-		const sketch = parseSketch(`<svg viewBox="0 0 10 10"><title>this and that</title><line x1="0" y1="0" x2="5" y2="5"/></svg>`);
+		const sketch = parseSketch(
+			`<svg viewBox="0 0 10 10"><title>this and that</title><line x1="0" y1="0" x2="5" y2="5"/></svg>`,
+		);
 		assert.equal(sketch?.label, "this and that");
 		assert.equal(sketch?.body, `<g><line x1="0" y1="0" x2="5" y2="5"/></g>`);
 	});
@@ -85,16 +92,25 @@ describe("parseSketch steps and drawing", () => {
 	});
 
 	it("draws strokes in order when asked, leaving dashed lines and the root alone", () => {
-		const sketch = parseSketch(`<svg viewBox="0 0 100 50"><path d="M0 0 L5 5" style="stroke:var(--ink)"/><line x1="0" y1="0" x2="9" y2="9" stroke-dasharray="3 6"/><text x="1" y="1">a</text></svg>`, { animate: true });
+		const sketch = parseSketch(
+			`<svg viewBox="0 0 100 50"><path d="M0 0 L5 5" style="stroke:var(--ink)"/><line x1="0" y1="0" x2="9" y2="9" stroke-dasharray="3 6"/><text x="1" y="1">a</text></svg>`,
+			{ animate: true },
+		);
 		assert.ok(sketch);
-		assert.match(sketch.body, /<path d="M0 0 L5 5" style="--ink-delay:0\.05s;stroke:var\(--sk-ink\)" pathLength="1" class="ink-draw"\/>/);
+		assert.match(
+			sketch.body,
+			/<path d="M0 0 L5 5" style="--ink-delay:0\.05s;stroke:var\(--sk-ink\)" pathLength="1" class="ink-draw"\/>/,
+		);
 		assert.match(sketch.body, /<line x1="0" y1="0" x2="9" y2="9" stroke-dasharray="3 6"\/>/);
 		assert.match(sketch.body, /<text x="1" y="1" style="--ink-delay:0\.15s" class="ink-fade">a<\/text>/);
 		assert.equal(parseSketch(`<svg viewBox="0 0 1 1"><path d="M0 0"/></svg>`)?.body, `<g><path d="M0 0"/></g>`);
 	});
 
 	it("closes what the drawing left open when the root closes", () => {
-		assert.equal(parseSketch(`<svg viewBox="0 0 1 1"><g><path d="M0 0"/></svg>`)?.body, `<g><g><path d="M0 0"/></g></g>`);
+		assert.equal(
+			parseSketch(`<svg viewBox="0 0 1 1"><g><path d="M0 0"/></svg>`)?.body,
+			`<g><g><path d="M0 0"/></g></g>`,
+		);
 	});
 });
 

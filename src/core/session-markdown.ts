@@ -98,13 +98,15 @@ function toolResultBody(result: ToolResultMessage, ctx?: MarkdownContext): { hea
 					: result.toolName === "recall"
 						? "Recall"
 						: "Recall check"; // explain — the teach free-recall name
-		const question = typeof out?.questionText === "string" && out.questionText ? out.questionText : "(no question text)";
+		const question =
+			typeof out?.questionText === "string" && out.questionText ? out.questionText : "(no question text)";
 		const body = [`**Q:** ${question}`];
 		if (out?.dismissed === true) body.push("The learner skipped this check.");
 		else if (out?.dontKnow === true) body.push("The learner did not know.");
 		else if (out?.correct === true) body.push("The learner answered correctly.");
 		else if (out?.correct === false) body.push("The learner answered incorrectly.");
-		else if (typeof out?.text === "string" && out.text.trim()) body.push(`The learner answered in his own words: ${out.text.trim()}`);
+		else if (typeof out?.text === "string" && out.text.trim())
+			body.push(`The learner answered in his own words: ${out.text.trim()}`);
 		if (typeof out?.note === "string" && out.note) body.push(`*(his thinking: ${out.note})*`);
 		return { heading, body };
 	}
@@ -127,13 +129,15 @@ function toolResultBody(result: ToolResultMessage, ctx?: MarkdownContext): { hea
 		// The reveal (owner round, 2026-10-05): the solution committed at
 		// pose time — the newest cleanly-posed problem before this conclude.
 		const input = problemInputForConclude(ctx.messages, result.toolCallId);
-		const solution = typeof input?.modelSolution === "string" && input.modelSolution.trim() ? input.modelSolution.trim() : undefined;
+		const solution =
+			typeof input?.modelSolution === "string" && input.modelSolution.trim() ? input.modelSolution.trim() : undefined;
 		if (solution !== undefined) body.push(`> **Model solution**\n>\n> ${solution.replace(/\n/g, "\n> ")}`);
 		return { heading: "Concluded", body };
 	}
 
 	if (result.toolName === "ask_user_question") {
-		const question = typeof out?.questionText === "string" && out.questionText ? out.questionText : "(no question text)";
+		const question =
+			typeof out?.questionText === "string" && out.questionText ? out.questionText : "(no question text)";
 		const body = [`**Q:** ${question}`];
 		const chosen = [
 			...(Array.isArray(out?.answers) ? out!.answers! : []),
@@ -155,12 +159,7 @@ function toolResultBody(result: ToolResultMessage, ctx?: MarkdownContext): { hea
  * nothing (a failed tool call, a bare marker, an empty text part set).
  * `mid` is the provenance anchor shown when `anchors` is on.
  */
-function messageMarkdown(
-	message: LhMessage,
-	mid: string,
-	anchors = true,
-	ctx?: MarkdownContext,
-): string | null {
+function messageMarkdown(message: LhMessage, mid: string, anchors = true, ctx?: MarkdownContext): string | null {
 	const role = (message as { role?: string }).role;
 	const anchor = anchors ? ` · ${mid}` : "";
 	const parts: string[] = [];
@@ -170,7 +169,10 @@ function messageMarkdown(
 			parts.push(`### Learner${anchor}\n\n${text.trim()}`);
 		}
 	} else if (role === "assistant") {
-		for (const text of userFacingTextOf((message as { content: unknown }).content, ctx?.failedOutputCalls ?? failedOutputCallIds([message]))) {
+		for (const text of userFacingTextOf(
+			(message as { content: unknown }).content,
+			ctx?.failedOutputCalls ?? failedOutputCallIds([message]),
+		)) {
 			parts.push(`### Teacher${anchor}\n\n${text.trim()}`);
 		}
 	} else if (role === "toolResult") {

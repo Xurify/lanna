@@ -42,7 +42,9 @@ if (exists(path.join(ROOT, "public"))) {
 // 2) Safety: the repo's real data/ must NEVER ride along in the bundle.
 const leakedData = path.join(STANDALONE, "data");
 if (exists(leakedData)) {
-	console.error("[build-server] REFUSING: standalone contains a data/ directory — repo session data would ship in the app.");
+	console.error(
+		"[build-server] REFUSING: standalone contains a data/ directory — repo session data would ship in the app.",
+	);
 	console.error("             Check outputFileTracingExcludes in next.config.ts.");
 	process.exit(1);
 }
@@ -52,7 +54,9 @@ if (exists(leakedData)) {
 // (the DEV BYOK key store, 0600) byte-identical into the DMG (caught in
 // the 2026-10-08 payload audit; excluded in next.config.ts — this guard
 // makes a regression loud instead of silent).
-const subscriptionSecrets = fs.readdirSync(STANDALONE).filter((name) => /^(chatgpt|github-copilot|xai)-credentials\.json/.test(name));
+const subscriptionSecrets = fs
+	.readdirSync(STANDALONE)
+	.filter((name) => /^(chatgpt|github-copilot|xai)-credentials\.json/.test(name));
 for (const secret of ["auth.json", ...subscriptionSecrets, ".env", ".env.local"]) {
 	if (exists(path.join(STANDALONE, secret))) {
 		console.error(`[build-server] REFUSING: standalone contains ${secret} — dev secrets would ship in the app.`);
@@ -68,7 +72,7 @@ for (const secret of ["auth.json", ...subscriptionSecrets, ".env", ".env.local"]
 // Remove ONLY these standalone-root paths AFTER tracing — excluding a
 // generic dist/** earlier broke pi-ai / pi-agent-core's runtime dist/.
 // Never touch ROOT/dist or ROOT/node_modules/electron (the running app
-// and the build runtime); native canvas/resvg packages stay untouched.
+// and the build runtime); native canvas packages stay untouched.
 for (const extra of ["dist", path.join("node_modules", "electron")]) {
 	const target = path.join(STANDALONE, extra);
 	if (exists(target)) {

@@ -15,7 +15,13 @@ export async function uploadLearnerImage(file: File): Promise<AttachedImage> {
 	return { path: data.path, name: data.name ?? file.name };
 }
 
-export function ChatImageButton({ onAttached, compact = false }: { onAttached: (img: AttachedImage) => void; compact?: boolean }) {
+export function ChatImageButton({
+	onAttached,
+	compact = false,
+}: {
+	onAttached: (img: AttachedImage) => void;
+	compact?: boolean;
+}) {
 	const input = useRef<HTMLInputElement>(null);
 	const [state, setState] = useState<"idle" | "saving">("idle");
 	const [error, setError] = useState<string | null>(null);
@@ -68,12 +74,24 @@ export function ChatImageButton({ onAttached, compact = false }: { onAttached: (
 	);
 }
 
-export function DraftImageChips({ images, onRemove, className }: { images: readonly AttachedImage[]; onRemove: (img: AttachedImage) => void; className?: string }) {
+export function DraftImageChips({
+	images,
+	onRemove,
+	className,
+}: {
+	images: readonly AttachedImage[];
+	onRemove: (img: AttachedImage) => void;
+	className?: string;
+}) {
 	if (images.length === 0) return null;
 	return (
 		<ul data-testid="draft-images" className={cn("flex min-w-0 flex-wrap gap-2", className)}>
 			{images.map((img) => (
-				<li key={img.path} title={img.path} className="flex max-w-full min-w-0 items-center gap-1.5 rounded-md bg-well py-1 pr-1 pl-2.5 font-ui text-[13px] text-ink-2">
+				<li
+					key={img.path}
+					title={img.path}
+					className="flex max-w-full min-w-0 items-center gap-1.5 rounded-md bg-well py-1 pr-1 pl-2.5 font-ui text-[13px] text-ink-2"
+				>
 					<ImageIcon className="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
 					<span className="truncate">{img.name}</span>
 					<button

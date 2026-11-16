@@ -25,13 +25,52 @@ import { ChevronDownIcon, EyeIcon, HeadphonesIcon, RepeatIcon, SnailIcon, Volume
 import { readOrigin } from "@/components/origin";
 import { QIcon } from "@/components/quiet/icon";
 import { QUIET } from "@/components/ui/learn-buttons";
-import { COLUMN, Dock, endEnterBlocked, EnterHint, NotSaved, PAGE_TIME_HOW, Pips, PracticeCard, PracticeTime, PRIMARY, Pulse, SECONDARY, SentenceRow, SentenceRows, Stat, Stats, TaskEnd, TaskFrame as Frame, TaskRound, VerdictDisc, type PipOutcome } from "@/components/task-frame";
+import {
+	COLUMN,
+	Dock,
+	endEnterBlocked,
+	EnterHint,
+	NotSaved,
+	PAGE_TIME_HOW,
+	Pips,
+	PracticeCard,
+	PracticeTime,
+	PRIMARY,
+	Pulse,
+	SECONDARY,
+	SentenceRow,
+	SentenceRows,
+	Stat,
+	Stats,
+	TaskEnd,
+	TaskFrame as Frame,
+	TaskRound,
+	VerdictDisc,
+	type PipOutcome,
+} from "@/components/task-frame";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { almostCount, isWatchItem, judgeTyped, LISTEN_XP, listenXp, PEEK_AFTER_REPLAYS, heardPieces, praiseFor, scoreLine, understood, type LineMark, type ListenItem, type ListenPlan, type ListenVerdict, type SheetProgress, type TodayExperimentStatus } from "@/src/core";
+import {
+	almostCount,
+	isWatchItem,
+	judgeTyped,
+	LISTEN_XP,
+	listenXp,
+	PEEK_AFTER_REPLAYS,
+	heardPieces,
+	praiseFor,
+	scoreLine,
+	understood,
+	type LineMark,
+	type ListenItem,
+	type ListenPlan,
+	type ListenVerdict,
+	type SheetProgress,
+	type TodayExperimentStatus,
+} from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { SheetProgressBar } from "@/components/words/sheet-progress";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
@@ -95,9 +134,14 @@ function marksOf(rep: Pick<Rep, "item" | "given" | "verdict">): LineMark[] | und
 }
 
 function sourceOf(item: ListenItem): string {
-	if (item.source) return item.source.kind === "sheet" ? item.source.title : `From a video you watched · ${item.source.title}`;
+	if (item.source)
+		return item.source.kind === "sheet" ? item.source.title : `From a video you watched · ${item.source.title}`;
 	if (isWatchItem(item.id)) return "From a video you watched";
-	return item.stretch.length === 0 ? "Every word is yours" : item.stretch.length === 1 ? "One new word" : `${item.stretch.length} new words`;
+	return item.stretch.length === 0
+		? "Every word is yours"
+		: item.stretch.length === 1
+			? "One new word"
+			: `${item.stretch.length} new words`;
 }
 
 export function ListenPlayer({
@@ -156,7 +200,12 @@ export function ListenPlayer({
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const next = (await res.json()) as ListenPlan;
 			if (seq !== loadSeq.current) return;
-			if (next.items.length === 0) throw new Error(sheet ? "This cheatsheet has no phrase to play. A phrase with … in it is skipped." : "No sentences to listen to yet. Finish a lesson or two first.");
+			if (next.items.length === 0)
+				throw new Error(
+					sheet
+						? "This cheatsheet has no phrase to play. A phrase with … in it is skipped."
+						: "No sentences to listen to yet. Finish a lesson or two first.",
+				);
 			setPlan(next);
 			startedAt.current = Date.now();
 			activeTime.restart();
@@ -189,7 +238,8 @@ export function ListenPlayer({
 		setReplays(0);
 		void speak(item.sentence)
 			.then(() => {
-				if (soundOn() && timing.current.shownAt === t0 && timing.current.heardMs === undefined) timing.current.heardMs = Date.now() - t0;
+				if (soundOn() && timing.current.shownAt === t0 && timing.current.heardMs === undefined)
+					timing.current.heardMs = Date.now() - t0;
 			})
 			.catch(() => {});
 		return () => {
@@ -213,7 +263,13 @@ export function ListenPlayer({
 			// A right answer with the text shown first is not counted.
 			const correct = understood(all);
 			const almost = almostCount(all);
-			const tally: Outcome = { xp: sheet ? 0 : listenXp(correct, all.length, almost), correct, almost, total: all.length, queued: [] };
+			const tally: Outcome = {
+				xp: sheet ? 0 : listenXp(correct, all.length, almost),
+				correct,
+				almost,
+				total: all.length,
+				queued: [],
+			};
 			setOutcome(tally);
 			const activeMs = activeTime.finish();
 			setPracticeMs(activeMs);
@@ -221,31 +277,38 @@ export function ListenPlayer({
 				const timed = { ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() };
 				lastSave.current = sheet
 					? keepSession(lang?.code ?? "sk", sheetListenUrl(sheet), {
-							reps: all.map((r) => ({ itemId: r.item.id, given: r.given, peeked: r.peeked, replays: r.replays, ms: r.ms, heardMs: r.heardMs })),
+							reps: all.map((r) => ({
+								itemId: r.item.id,
+								given: r.given,
+								peeked: r.peeked,
+								replays: r.replays,
+								ms: r.ms,
+								heardMs: r.heardMs,
+							})),
 							section: sheet.section,
 							...timed,
 						})
 					: keepSession(lang?.code ?? "sk", "/api/listen", {
-						reps: all.map((r) => ({
-							itemId: r.item.id,
-							slug: r.item.slug,
-							lemma: r.item.lemma,
-							gloss: r.item.gloss,
-							sentence: r.item.sentence,
-							translation: r.item.translation,
-							given: r.given,
-							answer: "type",
-							verdict: r.verdict,
-							stretch: r.item.stretch.map((w) => w.slug).filter((s): s is string => !!s),
-							ms: r.ms,
-							heardMs: r.heardMs,
-							replays: r.replays,
-							peeked: r.peeked,
-							words: r.item.words,
-							stretchText: r.item.stretch.map((w) => w.text),
-						})),
-						...timed,
-				});
+							reps: all.map((r) => ({
+								itemId: r.item.id,
+								slug: r.item.slug,
+								lemma: r.item.lemma,
+								gloss: r.item.gloss,
+								sentence: r.item.sentence,
+								translation: r.item.translation,
+								given: r.given,
+								answer: "type",
+								verdict: r.verdict,
+								stretch: r.item.stretch.map((w) => w.slug).filter((s): s is string => !!s),
+								ms: r.ms,
+								heardMs: r.heardMs,
+								replays: r.replays,
+								peeked: r.peeked,
+								words: r.item.words,
+								stretchText: r.item.stretch.map((w) => w.text),
+							})),
+							...timed,
+						});
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 			} catch (err) {
 				setSaveFailed(true);
@@ -390,7 +453,13 @@ export function ListenPlayer({
 								</button>
 							)
 						}
-						secondary={/yet/i.test(error) ? undefined : <Link href="/" className="q-btn ghost">Back to Today</Link>}
+						secondary={
+							/yet/i.test(error) ? undefined : (
+								<Link href="/" className="q-btn ghost">
+									Back to Today
+								</Link>
+							)
+						}
 					>
 						{/yet/i.test(error) ? (
 							<>
@@ -409,7 +478,10 @@ export function ListenPlayer({
 	if (!plan || !item) {
 		return (
 			<Frame>
-				<div className="m-auto flex items-center gap-3 font-ui text-sm text-muted-foreground" data-testid="listen-loading">
+				<div
+					className="m-auto flex items-center gap-3 font-ui text-sm text-muted-foreground"
+					data-testid="listen-loading"
+				>
 					<HeadphonesIcon className="size-5 animate-pulse" />
 					{sheet ? "Picking phrases from your cheatsheet…" : "Choosing sentences you can follow…"}
 				</div>
@@ -420,16 +492,34 @@ export function ListenPlayer({
 	if (outcome) {
 		return (
 			<Frame>
-				<EndScreen outcome={outcome} practiceMs={practiceMs} reps={reps} sheet={sheet} saving={saving} failed={saveFailed} refused={saveRefused} onAgain={() => void load()} onRetrySave={() => void retrySave()} />
+				<EndScreen
+					outcome={outcome}
+					practiceMs={practiceMs}
+					reps={reps}
+					sheet={sheet}
+					saving={saving}
+					failed={saveFailed}
+					refused={saveRefused}
+					onAgain={() => void load()}
+					onRetrySave={() => void retrySave()}
+				/>
 			</Frame>
 		);
 	}
 
 	const praise = praiseFor(lang?.code, index);
-	const tone = !current ? "plain" : current.verdict === "wrong" ? "miss" : current.verdict === "exact" ? "right" : "wait";
+	const tone = !current
+		? "plain"
+		: current.verdict === "wrong"
+			? "miss"
+			: current.verdict === "exact"
+				? "right"
+				: "wait";
 	const unit = sheet ? "phrase" : "sentence";
 	const canPeek = replays >= PEEK_AFTER_REPLAYS;
-	const outcomes = plan.items.map((_, i): PipOutcome => (i < reps.length ? pipOf(reps[i]!) : i > index ? "ahead" : current ? pipOf(current) : "now"));
+	const outcomes = plan.items.map((_, i): PipOutcome =>
+		i < reps.length ? pipOf(reps[i]!) : i > index ? "ahead" : current ? pipOf(current) : "now",
+	);
 	const stretch = item.stretch.map((w) => w.text);
 
 	const sessionStudyReps = reps.length + (current ? 1 : 0);
@@ -439,7 +529,12 @@ export function ListenPlayer({
 
 	return (
 		<Frame strip={false}>
-			<TaskRound outcomes={outcomes} label={`${unit} ${index + 1} of ${total}`} count={`${index + 1}/${total}`} href={sheet ? sheetHref(sheet) : "/"} />
+			<TaskRound
+				outcomes={outcomes}
+				label={`${unit} ${index + 1} of ${total}`}
+				count={`${index + 1}/${total}`}
+				href={sheet ? sheetHref(sheet) : "/"}
+			/>
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-1 sm:pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
@@ -449,7 +544,11 @@ export function ListenPlayer({
 						sub={sourceOf(item)}
 						right={
 							studyActive ? (
-								<span className={cn("tabular-nums", liveStudyReps >= 5 && "text-teal-2")} title={`Study day ${initialExperiment?.dayNumber}: ${liveStudyReps} of 5 sentences toward a day that counts`} data-testid="listen-study-banner">
+								<span
+									className={cn("tabular-nums", liveStudyReps >= 5 && "text-teal-2")}
+									title={`Study day ${initialExperiment?.dayNumber}: ${liveStudyReps} of 5 sentences toward a day that counts`}
+									data-testid="listen-study-banner"
+								>
 									Study day {initialExperiment?.dayNumber} · {Math.min(liveStudyReps, 5)} of 5
 								</span>
 							) : undefined
@@ -467,7 +566,15 @@ export function ListenPlayer({
 								<Volume2Icon className="size-6" strokeWidth={1.6} />
 							</button>
 							<h2 className="min-w-0 font-prose text-[19px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[22px]">
-								{!current ? "Type what you hear" : current.verdict === "exact" ? <span lang={praise.lang}>{praise.text}</span> : current.verdict === "accents" ? "So close" : "It says…"}
+								{!current ? (
+									"Type what you hear"
+								) : current.verdict === "exact" ? (
+									<span lang={praise.lang}>{praise.text}</span>
+								) : current.verdict === "accents" ? (
+									"So close"
+								) : (
+									"It says…"
+								)}
 							</h2>
 							<button
 								type="button"
@@ -485,8 +592,17 @@ export function ListenPlayer({
 
 						{(current || peeked) && (
 							<div className="lh-rise mt-6" data-testid="listen-sentence" data-word-lookup-enabled="true">
-								<p className="font-prose text-[24px] font-[550] leading-[1.35] tracking-[-0.025em] text-foreground sm:text-[30px]" lang={lang?.code} data-testid="listen-marks">
-									<Heard sentence={item.sentence} stretch={stretch} marks={current ? marksOf(current) : undefined} tag={lang?.tag} />
+								<p
+									className="font-prose text-[24px] font-[550] leading-[1.35] tracking-[-0.025em] text-foreground sm:text-[30px]"
+									lang={lang?.code}
+									data-testid="listen-marks"
+								>
+									<Heard
+										sentence={item.sentence}
+										stretch={stretch}
+										marks={current ? marksOf(current) : undefined}
+										tag={lang?.tag}
+									/>
 								</p>
 								{item.stretch.length > 0 && (
 									<ul className="mt-3 flex flex-wrap gap-2" aria-label="New words">
@@ -499,12 +615,20 @@ export function ListenPlayer({
 									</ul>
 								)}
 								{current && item.translation && (
-									<p data-no-word-lookup="true" className="mt-3 font-prose text-base text-ink-2" data-testid="listen-translation">
+									<p
+										data-no-word-lookup="true"
+										className="mt-3 font-prose text-base text-ink-2"
+										data-testid="listen-translation"
+									>
 										{item.translation}
 									</p>
 								)}
 								{current && item.source?.kind === "sheet" && item.source.note && (
-									<p data-no-word-lookup="true" className="mt-1 font-ui text-[13px] text-ink-3" data-testid="listen-note">
+									<p
+										data-no-word-lookup="true"
+										className="mt-1 font-ui text-[13px] text-ink-3"
+										data-testid="listen-note"
+									>
 										{item.source.note}
 									</p>
 								)}
@@ -545,7 +669,10 @@ export function ListenPlayer({
 												onMouseDown={keepFieldFocus}
 												onClick={() => setPeeked(true)}
 												disabled={!canPeek}
-												className={cn("lh-press inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 font-medium shadow-[inset_0_0_0_1px_var(--q-line-2)] pointer-coarse:h-11", canPeek ? "text-ink-2 hover:bg-well" : "text-ink-4")}
+												className={cn(
+													"lh-press inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 font-medium shadow-[inset_0_0_0_1px_var(--q-line-2)] pointer-coarse:h-11",
+													canPeek ? "text-ink-2 hover:bg-well" : "text-ink-4",
+												)}
 												data-testid="listen-peek"
 											>
 												<EyeIcon className="size-4" strokeWidth={1.6} />
@@ -565,7 +692,17 @@ export function ListenPlayer({
 				<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-3 py-4")}>
 					{current ? (
 						<>
-							<p className={cn("flex min-w-0 items-center gap-2.5 font-ui text-[15px] font-[600] leading-snug tracking-[-0.01em]", current.verdict === "exact" ? "text-teal-2" : current.verdict === "accents" ? "text-ink-2" : "text-miss")} data-testid="listen-verdict">
+							<p
+								className={cn(
+									"flex min-w-0 items-center gap-2.5 font-ui text-[15px] font-[600] leading-snug tracking-[-0.01em]",
+									current.verdict === "exact"
+										? "text-teal-2"
+										: current.verdict === "accents"
+											? "text-ink-2"
+											: "text-miss",
+								)}
+								data-testid="listen-verdict"
+							>
 								<VerdictDisc ok={current.verdict !== "wrong"} />
 								{current.verdict === "exact"
 									? `Typed correctly${sheet ? "" : ` · +${LISTEN_XP} XP`}`
@@ -575,7 +712,13 @@ export function ListenPlayer({
 											? "Not quite"
 											: "Not caught this time"}
 							</p>
-							<button type="button" onClick={advance} className={cn(PRIMARY, TOUCH_TALL, "shrink-0")} data-testid="listen-continue" autoFocus>
+							<button
+								type="button"
+								onClick={advance}
+								className={cn(PRIMARY, TOUCH_TALL, "shrink-0")}
+								data-testid="listen-continue"
+								autoFocus
+							>
 								{index + 1 >= total ? "Finish" : "Continue"}
 								<span className={ENTER_KEY}>
 									<QIcon name="enter" />
@@ -587,7 +730,13 @@ export function ListenPlayer({
 							<button type="button" onClick={giveUp} className={cn(QUIET, TOUCH_TALL)} data-testid="listen-give-up">
 								I didn&apos;t catch it
 							</button>
-							<button type="button" onClick={submit} disabled={!draft.trim()} className={cn(PRIMARY, TOUCH_TALL)} data-testid="listen-check">
+							<button
+								type="button"
+								onClick={submit}
+								disabled={!draft.trim()}
+								className={cn(PRIMARY, TOUCH_TALL)}
+								data-testid="listen-check"
+							>
 								Check
 								<span className={ENTER_KEY}>
 									<QIcon name="enter" />
@@ -603,18 +752,37 @@ export function ListenPlayer({
 
 const WORD_LINE = "underline decoration-2 underline-offset-[6px]";
 
-function Heard({ sentence, stretch, marks, tag }: { sentence: string; stretch: string[]; marks?: LineMark[]; tag?: string }) {
+function Heard({
+	sentence,
+	stretch,
+	marks,
+	tag,
+}: {
+	sentence: string;
+	stretch: string[];
+	marks?: LineMark[];
+	tag?: string;
+}) {
 	const pieces = heardPieces(sentence, { newWords: stretch, marks, tag });
 	return (
 		<span className={cn(pieces.some((piece) => piece.given) && "leading-[calc(1.35em_+_max(11px,0.48em)_+_6px)]")}>
 			{pieces.map((piece, i) => {
 				const word = (
 					<span
-						title={piece.mark === "missed" ? (piece.given ? `You typed “${piece.given}”` : "Not typed") : piece.mark === "almost" ? "The right word, an accent missing" : undefined}
+						title={
+							piece.mark === "missed"
+								? piece.given
+									? `You typed “${piece.given}”`
+									: "Not typed"
+								: piece.mark === "almost"
+									? "The right word, an accent missing"
+									: undefined
+						}
 						className={cn(
 							piece.newWord && "font-semibold text-teal-2",
 							piece.mark === "missed" && "rounded-[0.18em] bg-miss-soft px-[0.1em]",
-							(piece.mark === "almost" || (piece.newWord && piece.mark !== "missed")) && cn(WORD_LINE, "decoration-teal"),
+							(piece.mark === "almost" || (piece.newWord && piece.mark !== "missed")) &&
+								cn(WORD_LINE, "decoration-teal"),
 						)}
 					>
 						{piece.text}
@@ -624,7 +792,13 @@ function Heard({ sentence, stretch, marks, tag }: { sentence: string; stretch: s
 				return (
 					<ruby key={i} className="[ruby-position:under]">
 						{word}
-						<rt data-no-word-lookup="true" className={cn("pt-0.5 font-prose text-[max(11px,0.48em)] font-[450] leading-none tracking-normal", piece.mark === "missed" ? "text-miss" : "text-ink-3")}>
+						<rt
+							data-no-word-lookup="true"
+							className={cn(
+								"pt-0.5 font-prose text-[max(11px,0.48em)] font-[450] leading-none tracking-normal",
+								piece.mark === "missed" ? "text-miss" : "text-ink-3",
+							)}
+						>
 							{piece.given}
 						</rt>
 					</ruby>
@@ -645,15 +819,34 @@ interface EndScreenProps {
 	onRetrySave: () => void;
 }
 
-function SheetEndScreen({ outcome, practiceMs, reps, sheet, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps & { sheet: ListenSheet }) {
+function SheetEndScreen({
+	outcome,
+	practiceMs,
+	reps,
+	sheet,
+	saving,
+	failed,
+	refused,
+	onAgain,
+	onRetrySave,
+}: EndScreenProps & { sheet: ListenSheet }) {
 	const missed = reps.filter((r) => r.verdict !== "exact");
 	const typedCorrectly = reps.filter((r) => r.verdict === "exact");
 	const shown = reps.filter((r) => r.peeked).length;
-	const asides = [outcome.almost > 0 && `${outcome.almost} with only an accent missing`, shown > 0 && `${shown} with the text shown, not counted`].filter(Boolean);
+	const asides = [
+		outcome.almost > 0 && `${outcome.almost} with only an accent missing`,
+		shown > 0 && `${shown} with the text shown, not counted`,
+	].filter(Boolean);
 	return (
 		<TaskEnd
 			testId="listen-end"
-			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for the cheatsheet</EnterHint>}
+			hint={
+				failed ? (
+					<NotSaved onRetry={onRetrySave} busy={saving} refused={refused} />
+				) : (
+					<EnterHint>for the cheatsheet</EnterHint>
+				)
+			}
 			actions={
 				<>
 					<button type="button" onClick={onAgain} className={cn(SECONDARY, TOUCH_TALL)} data-testid="listen-again">
@@ -689,7 +882,8 @@ function SheetEndScreen({ outcome, practiceMs, reps, sheet, saving, failed, refu
 					<SheetProgressBar progress={outcome.progress} />
 				)}
 				<p className="q-sub !mt-4 max-w-prose" data-testid="listen-sheet-terms">
-					These are your own phrases, as you wrote them. Nothing checked them against the dictionary. The time counts as listening; it earns no XP and adds nothing to Review.
+					These are your own phrases, as you wrote them. Nothing checked them against the dictionary. The time counts as
+					listening; it earns no XP and adds nothing to Review.
 				</p>
 			</div>
 			{missed.length > 0 && (
@@ -701,7 +895,11 @@ function SheetEndScreen({ outcome, practiceMs, reps, sheet, saving, failed, refu
 			{typedCorrectly.length > 0 && (
 				<details className="group mt-6" data-testid="listen-understood">
 					<summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 [&::-webkit-details-marker]:hidden">
-						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
+						<ChevronDownIcon
+							className="size-3.5 transition-transform group-open:rotate-180"
+							strokeWidth={1.8}
+							aria-hidden="true"
+						/>
 						Typed correctly · {typedCorrectly.length} {typedCorrectly.length === 1 ? "phrase" : "phrases"}
 					</summary>
 					<ListenRows reps={typedCorrectly} />
@@ -716,9 +914,20 @@ function EndScreen({ sheet, ...props }: EndScreenProps & { sheet?: ListenSheet }
 	return sheet ? <SheetEndScreen sheet={sheet} {...props} /> : <DictionaryEndScreen {...props} />;
 }
 
-function DictionaryEndScreen({ outcome, practiceMs, reps, saving, failed, refused, onAgain, onRetrySave }: EndScreenProps) {
+function DictionaryEndScreen({
+	outcome,
+	practiceMs,
+	reps,
+	saving,
+	failed,
+	refused,
+	onAgain,
+	onRetrySave,
+}: EndScreenProps) {
 	const lang = useActiveLanguage();
-	const words = reps.flatMap((r) => r.item.stretch).filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
+	const words = reps
+		.flatMap((r) => r.item.stretch)
+		.filter((w, i, all) => all.findIndex((x) => x.lemma === w.lemma) === i);
 	// Missing an accent counts too: those sentences are worth hearing again.
 	const missed = reps.filter((r) => r.verdict !== "exact");
 	// The ones that went right are kept out of sight until asked for, but never lost: the sentence you got right is one you may want to see too.
@@ -726,7 +935,9 @@ function DictionaryEndScreen({ outcome, practiceMs, reps, saving, failed, refuse
 	return (
 		<TaskEnd
 			testId="listen-end"
-			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for Today</EnterHint>}
+			hint={
+				failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for Today</EnterHint>
+			}
 			actions={
 				<>
 					<button type="button" onClick={onAgain} className={cn(SECONDARY, TOUCH_TALL)} data-testid="listen-again">
@@ -750,11 +961,33 @@ function DictionaryEndScreen({ outcome, practiceMs, reps, saving, failed, refuse
 			<Pips outcomes={reps.map(pipOf)} className="mt-4 max-w-xs" />
 			{outcome.almost > 0 && <p className="q-sub !mt-3">{outcome.almost} typed with only a missing accent (half XP)</p>}
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+				<Stat
+					label="XP"
+					value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`}
+					ink={failed ? "text-ink-3" : "text-teal-2"}
+				/>
 				<Stat label="New words met" value={String(words.length)} />
-				<Stat label="Added to Review" value={saving ? null : failed ? (refused ? "Not counted" : "Not counted yet") : outcome.queued.length ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} ink={failed ? "text-ink-3" : undefined} />
+				<Stat
+					label="Added to Review"
+					value={
+						saving
+							? null
+							: failed
+								? refused
+									? "Not counted"
+									: "Not counted yet"
+								: outcome.queued.length
+									? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}`
+									: "None"
+					}
+					ink={failed ? "text-ink-3" : undefined}
+				/>
 			</Stats>
-			<Link href="/mistakes#mistakes-listening" className="mt-3 inline-block font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2" data-testid="listen-trends">
+			<Link
+				href="/mistakes#mistakes-listening"
+				className="mt-3 inline-block font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2"
+				data-testid="listen-trends"
+			>
 				How your listening is going
 			</Link>
 			{words.length > 0 && (
@@ -763,14 +996,18 @@ function DictionaryEndScreen({ outcome, practiceMs, reps, saving, failed, refuse
 					<ul className="mt-2 flex flex-wrap gap-2">
 						{words.map((w) => (
 							<li key={w.lemma} className="rounded-md bg-well px-2.5 py-1 font-prose text-[14px]">
-									<span className="font-[600] text-teal-2" lang={lang?.code}>
+								<span className="font-[600] text-teal-2" lang={lang?.code}>
 									{w.lemma}
 								</span>
 								{w.gloss && <span className="text-ink-3"> · {w.gloss}</span>}
 							</li>
 						))}
 					</ul>
-					{!failed && <p className="mt-2 font-prose text-sm text-ink-3">They are in Review now, so you meet them again before you forget them.</p>}
+					{!failed && (
+						<p className="mt-2 font-prose text-sm text-ink-3">
+							They are in Review now, so you meet them again before you forget them.
+						</p>
+					)}
 				</div>
 			)}
 			{missed.length > 0 && (
@@ -782,7 +1019,11 @@ function DictionaryEndScreen({ outcome, practiceMs, reps, saving, failed, refuse
 			{understood.length > 0 && (
 				<details className="group mt-6" data-testid="listen-understood">
 					<summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 font-ui text-[13px] font-[550] text-ink-3 hover:text-ink-2 [&::-webkit-details-marker]:hidden">
-						<ChevronDownIcon className="size-3.5 transition-transform group-open:rotate-180" strokeWidth={1.8} aria-hidden="true" />
+						<ChevronDownIcon
+							className="size-3.5 transition-transform group-open:rotate-180"
+							strokeWidth={1.8}
+							aria-hidden="true"
+						/>
 						Typed correctly · {understood.length} {understood.length === 1 ? "sentence" : "sentences"}
 					</summary>
 					<ListenRows reps={understood} />
@@ -805,7 +1046,11 @@ function ListenRows({ reps }: { reps: Rep[] }) {
 					translation={r.item.translation}
 					onPlay={() => void speak(r.item.sentence)}
 					note={
-						r.peeked ? <span>The text was shown</span> : r.verdict === "exact" || r.given ? undefined : <span>Not caught</span>
+						r.peeked ? (
+							<span>The text was shown</span>
+						) : r.verdict === "exact" || r.given ? undefined : (
+							<span>Not caught</span>
+						)
 					}
 				>
 					<Heard sentence={r.item.sentence} stretch={[]} marks={marksOf(r)} tag={lang?.tag} />

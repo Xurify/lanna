@@ -14,12 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import {
-	DEFAULT_REVIEW_SETTINGS,
-	type ReviewCard,
-	type ReviewLogEntry,
-	type ReviewSettings,
-} from "../core/review.ts";
+import { DEFAULT_REVIEW_SETTINGS, type ReviewCard, type ReviewLogEntry, type ReviewSettings } from "../core/review.ts";
 
 const CARDS_FILE = () => path.join(PATHS.review, "cards.json");
 const LOG_FILE = () => path.join(PATHS.review, "log.jsonl");
@@ -70,7 +65,13 @@ export const reviewStore = {
 		const before = statOf(file);
 		fs.appendFileSync(file, `${JSON.stringify(entry)}\n`, "utf-8");
 		// Keep the parsed log current instead of re-reading a file that only grows.
-		if (logCache && logCache.file === file && before && logCache.size === before.size && logCache.mtimeMs === before.mtimeMs) {
+		if (
+			logCache &&
+			logCache.file === file &&
+			before &&
+			logCache.size === before.size &&
+			logCache.mtimeMs === before.mtimeMs
+		) {
 			const after = statOf(file);
 			if (after) logCache = { file, size: after.size, mtimeMs: after.mtimeMs, entries: [...logCache.entries, entry] };
 			else logCache = null;
@@ -82,7 +83,8 @@ export const reviewStore = {
 		const file = LOG_FILE();
 		const st = statOf(file);
 		if (!st) return [];
-		if (logCache && logCache.file === file && logCache.size === st.size && logCache.mtimeMs === st.mtimeMs) return logCache.entries;
+		if (logCache && logCache.file === file && logCache.size === st.size && logCache.mtimeMs === st.mtimeMs)
+			return logCache.entries;
 		let entries: ReviewLogEntry[] = [];
 		try {
 			entries = fs

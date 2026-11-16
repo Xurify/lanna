@@ -13,7 +13,22 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-cheatsheets-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
-const { CheatsheetParseError, formatRepoSheet, parseRepoSheet, cheatsheetId, cheatsheetRowCount, cheatsheetWords, countOverlap, formatSheetText, isCheatsheetId, mergeSections, parseSheetText, phraseKey, sameSection, searchSections } = await import("../src/core/cheatsheets.ts");
+const {
+	CheatsheetParseError,
+	formatRepoSheet,
+	parseRepoSheet,
+	cheatsheetId,
+	cheatsheetRowCount,
+	cheatsheetWords,
+	countOverlap,
+	formatSheetText,
+	isCheatsheetId,
+	mergeSections,
+	parseSheetText,
+	phraseKey,
+	sameSection,
+	searchSections,
+} = await import("../src/core/cheatsheets.ts");
 const { cheatsheetStore } = await import("../src/store/cheatsheets.ts");
 const { cheatsheetReviewState, cheatsheetToReview } = await import("../src/server/cheatsheets.ts");
 const { PATHS, ROOT, repoCheatsheetsDir } = await import("../config.ts");
@@ -28,13 +43,21 @@ const B = fixture("cheatsheet-b.txt");
 
 describe("parseSheetText", () => {
 	it("reads a line with | as a phrase and a line without one as a section name", () => {
-		const sections = parseSheetText("Café\nКофе, пожалуйста. | KO-fye, pa-ZHAL-sta | A coffee, please.\nNot here | | Nothing\n\nStation\nГде вокзал? | GDYE vak-ZAL? | Where is the station?");
+		const sections = parseSheetText(
+			"Café\nКофе, пожалуйста. | KO-fye, pa-ZHAL-sta | A coffee, please.\nNot here | | Nothing\n\nStation\nГде вокзал? | GDYE vak-ZAL? | Where is the station?",
+		);
 		assert.deepEqual(
 			sections.map((s) => s.title),
 			["Café", "Station"],
 		);
-		assert.deepEqual(sections[0]!.rows[0], { text: "Кофе, пожалуйста.", pron: "KO-fye, pa-ZHAL-sta", meaning: "A coffee, please." });
-		assert.deepEqual(sections[1]!.rows, [{ text: "Где вокзал?", pron: "GDYE vak-ZAL?", meaning: "Where is the station?" }]);
+		assert.deepEqual(sections[0]!.rows[0], {
+			text: "Кофе, пожалуйста.",
+			pron: "KO-fye, pa-ZHAL-sta",
+			meaning: "A coffee, please.",
+		});
+		assert.deepEqual(sections[1]!.rows, [
+			{ text: "Где вокзал?", pron: "GDYE vak-ZAL?", meaning: "Where is the station?" },
+		]);
 	});
 
 	it("keeps empty fields out and joins extra fields as a note", () => {
@@ -46,7 +69,9 @@ describe("parseSheetText", () => {
 	});
 
 	it("skips the header and separator of a pasted table and strips bold marks", () => {
-		const sections = parseSheetText("| Russian | Sounds like | Meaning |\n|---|---|---|\n**Помогите!** | pa-ma-GEE-tye | Help");
+		const sections = parseSheetText(
+			"| Russian | Sounds like | Meaning |\n|---|---|---|\n**Помогите!** | pa-ma-GEE-tye | Help",
+		);
 		assert.deepEqual(sections[0]!.title, "Phrases");
 		assert.deepEqual(sections[0]!.rows, [{ text: "Помогите!", pron: "pa-ma-GEE-tye", meaning: "Help" }]);
 	});
@@ -77,9 +102,14 @@ describe("parseSheetText", () => {
 		assert.equal(parseSheetText(B)[0]!.title, "1. Café and food", "the pasted table header above it is skipped");
 		for (const text of [A, B]) {
 			// A pasted table header and its |---| line carry a "|" but are not phrases.
-			const lines = text.split("\n").filter((l) => l.includes("|") && !/^[\s|:-]+$/.test(l) && !/^\|\s*Russian\b/.test(l));
+			const lines = text
+				.split("\n")
+				.filter((l) => l.includes("|") && !/^[\s|:-]+$/.test(l) && !/^\|\s*Russian\b/.test(l));
 			const sections = parseSheetText(text);
-			assert.equal(sections.reduce((n, s) => n + s.rows.length, 0), lines.length);
+			assert.equal(
+				sections.reduce((n, s) => n + s.rows.length, 0),
+				lines.length,
+			);
 		}
 	});
 });
@@ -115,7 +145,11 @@ describe("phrases across sheets", () => {
 	it("counts the shared and the new phrases of a second text", () => {
 		const o = countOverlap(parseSheetText(A), parseSheetText(B));
 		assert.deepEqual(o, { shared: 8, fresh: 5 });
-		assert.equal(o.shared + o.fresh, new Set(parseSheetText(B).flatMap((s) => s.rows.map((r) => phraseKey(r.text)))).size, "every distinct phrase is counted once");
+		assert.equal(
+			o.shared + o.fresh,
+			new Set(parseSheetText(B).flatMap((s) => s.rows.map((r) => phraseKey(r.text)))).size,
+			"every distinct phrase is counted once",
+		);
 	});
 
 	it("matches numbered sections by their number, else by title", () => {
@@ -125,8 +159,12 @@ describe("phrases across sheets", () => {
 	});
 
 	it("adds only new phrases: into the section they name, else as a new section", () => {
-		const existing = parseSheetText("1. At the café\nКофе, пожалуйста. | KO-fye | A coffee, please.\n\nTips\nСтоп | | stop");
-		const incoming = parseSheetText("1. Café and food\nКофе, пожалуйста! | x | Coffee!\nМеню, пожалуйста. | mee-NYU | The menu, please.\n\nHelp\nПомогите | | help");
+		const existing = parseSheetText(
+			"1. At the café\nКофе, пожалуйста. | KO-fye | A coffee, please.\n\nTips\nСтоп | | stop",
+		);
+		const incoming = parseSheetText(
+			"1. Café and food\nКофе, пожалуйста! | x | Coffee!\nМеню, пожалуйста. | mee-NYU | The menu, please.\n\nHelp\nПомогите | | help",
+		);
 		const { sections, added } = mergeSections(existing, incoming);
 		assert.equal(added, 2);
 		const cafe = sections.find((s) => s.id === "1-at-the-cafe")!;
@@ -145,7 +183,11 @@ describe("cheatsheetStore", () => {
 		assert.equal(sheet.title, "Sample sheet");
 		assert.equal(cheatsheetRowCount(sheet), cheatsheetRowCount({ sections: parseSheetText(A) }));
 		assert.ok(fs.existsSync(path.join(PATHS.cheatsheets, `${sheet.id}.json`)));
-		assert.deepEqual(fs.readdirSync(PATHS.cheatsheets).filter((f) => f.endsWith(".md")), ["README.md"], "one JSON file per sheet, no source copy");
+		assert.deepEqual(
+			fs.readdirSync(PATHS.cheatsheets).filter((f) => f.endsWith(".md")),
+			["README.md"],
+			"one JSON file per sheet, no source copy",
+		);
 		assert.ok(fs.existsSync(path.join(PATHS.cheatsheets, "README.md")));
 		assert.equal(cheatsheetStore.get(sheet.id)?.title, "Sample sheet");
 		assert.equal(cheatsheetStore.get("../progress"), null);
@@ -163,7 +205,11 @@ describe("cheatsheetStore", () => {
 
 	it("update replaces the title and phrases, keeps the id and the import date, and moves the old version to trash", () => {
 		const sheet = cheatsheetStore.create("Old name", "| Ahoj | hi |", new Date("2026-11-06T09:00:00Z"));
-		const edited = cheatsheetStore.update(sheet.id, { title: "New name", text: "Words\nAhoj | | hi\nČau | | bye" }, new Date("2026-11-06T12:00:00Z"));
+		const edited = cheatsheetStore.update(
+			sheet.id,
+			{ title: "New name", text: "Words\nAhoj | | hi\nČau | | bye" },
+			new Date("2026-11-06T12:00:00Z"),
+		);
 		assert.equal(edited?.id, sheet.id);
 		assert.equal(edited?.title, "New name");
 		assert.equal(edited?.importedAt, sheet.importedAt);
@@ -171,7 +217,10 @@ describe("cheatsheetStore", () => {
 		assert.equal(cheatsheetRowCount(cheatsheetStore.get(sheet.id)!), 2);
 		const trash = fs.readdirSync(path.join(PATHS.cheatsheets, "trash")).filter((f) => f.startsWith(`${sheet.id}.`));
 		assert.equal(trash.length, 1);
-		assert.equal(JSON.parse(fs.readFileSync(path.join(PATHS.cheatsheets, "trash", trash[0]!), "utf-8")).title, "Old name");
+		assert.equal(
+			JSON.parse(fs.readFileSync(path.join(PATHS.cheatsheets, "trash", trash[0]!), "utf-8")).title,
+			"Old name",
+		);
 
 		assert.throws(() => cheatsheetStore.update(sheet.id, { text: "No phrase here" }), CheatsheetParseError);
 		assert.equal(cheatsheetStore.get(sheet.id)?.title, "New name", "a refused edit changes nothing");
@@ -190,7 +239,11 @@ describe("cheatsheetStore", () => {
 		assert.ok(versions.length >= 1);
 		const writes = fs.statSync(path.join(PATHS.cheatsheets, `${sheet.id}.json`)).mtimeMs;
 		assert.equal(cheatsheetStore.add(sheet.id, B)?.added, 0);
-		assert.equal(fs.statSync(path.join(PATHS.cheatsheets, `${sheet.id}.json`)).mtimeMs, writes, "a no-op add writes nothing");
+		assert.equal(
+			fs.statSync(path.join(PATHS.cheatsheets, `${sheet.id}.json`)).mtimeMs,
+			writes,
+			"a no-op add writes nothing",
+		);
 		cheatsheetStore.remove(sheet.id);
 	});
 
@@ -204,7 +257,11 @@ describe("cheatsheetStore", () => {
 
 describe("cheatsheet words into Review", () => {
 	it("finds the sheet's dictionary words and adds the ones not in the deck", () => {
-		const sheet = cheatsheetStore.create("Station", "Station\nKde je stanica? | | Where is the station?\nDobrý deň, jeden lístok, prosím. | | Hello, one ticket, please.", new Date("2026-11-06T15:00:00Z"));
+		const sheet = cheatsheetStore.create(
+			"Station",
+			"Station\nKde je stanica? | | Where is the station?\nDobrý deň, jeden lístok, prosím. | | Hello, one ticket, please.",
+			new Date("2026-11-06T15:00:00Z"),
+		);
 		const before = cheatsheetReviewState(sheet);
 		assert.ok(before.inDictionary > 0, "the Slovak lexicon knows some of these words");
 		const result = cheatsheetToReview(sheet);
@@ -220,7 +277,9 @@ describe("corpus export", () => {
 		const { exportCorpus } = await import("../src/server/corpus-export.ts");
 		const sheet = cheatsheetStore.create("Exported sheet", "Ahoj | hi", new Date("2026-11-06T16:00:00Z"));
 		const { dir, summary } = exportCorpus({ stamp: "cheatsheets-test" });
-		const exported = JSON.parse(fs.readFileSync(path.join(dir, "cheatsheets.json"), "utf-8")) as Array<{ title: string }>;
+		const exported = JSON.parse(fs.readFileSync(path.join(dir, "cheatsheets.json"), "utf-8")) as Array<{
+			title: string;
+		}>;
 		assert.equal(summary.counts.cheatsheets, cheatsheetStore.list().length);
 		assert.ok(exported.some((s) => s.title === "Exported sheet"));
 		cheatsheetStore.remove(sheet.id);
@@ -235,12 +294,19 @@ describe("ids", () => {
 		assert.ok(id.startsWith("sample-"));
 		assert.ok(cheatsheetId("Ночь", now, () => false).startsWith("sheet-"));
 		const taken = new Set([id]);
-		assert.notEqual(cheatsheetId("Sample: Ночь!", now, (c) => taken.has(c)), id);
+		assert.notEqual(
+			cheatsheetId("Sample: Ночь!", now, (c) => taken.has(c)),
+			id,
+		);
 		for (const bad of ["../progress", "a/b", "", "UPPER", ".hidden"]) assert.equal(isCheatsheetId(bad), false, bad);
 	});
 
 	it("lists each word of a sheet once, lowercased", () => {
-		const sheet = { sections: parseSheetText("Words\nЯ не уверен. / Я не уверена. | | I'm not sure\nЧто-то есть? | | Is there something?") };
+		const sheet = {
+			sections: parseSheetText(
+				"Words\nЯ не уверен. / Я не уверена. | | I'm not sure\nЧто-то есть? | | Is there something?",
+			),
+		};
 		assert.deepEqual(cheatsheetWords(sheet, "ru-RU"), ["я", "не", "уверен", "уверена", "что-то", "есть"]);
 	});
 });
@@ -254,7 +320,11 @@ describe("sheets kept in the repo", () => {
 		const { title, sections } = parseRepoSheet("# Café words\n\nCafé\nКофе | KO-fye | coffee", "fallback");
 		assert.equal(title, "Café words");
 		assert.deepEqual(sections[0]!.rows, [{ text: "Кофе", pron: "KO-fye", meaning: "coffee" }]);
-		assert.equal(parseRepoSheet("Café\nКофе | | coffee", "cafe-words").title, "cafe-words", "no title line: the file name");
+		assert.equal(
+			parseRepoSheet("Café\nКофе | | coffee", "cafe-words").title,
+			"cafe-words",
+			"no title line: the file name",
+		);
 		assert.equal(formatRepoSheet("Café words", sections), "# Café words\n\nCafé\nКофе | KO-fye | coffee\n");
 	});
 
@@ -267,9 +337,15 @@ describe("sheets kept in the repo", () => {
 		assert.ok(listed?.repoFile?.endsWith("cafe-words.txt"));
 		assert.equal(cheatsheetStore.get("repo-cafe-words")?.sections[0]?.rows.length, 1);
 
-		const edited = cheatsheetStore.update("repo-cafe-words", { title: "Café", text: "Café\nКофе | KO-fye | coffee\nЧай | CHAI | tea" });
+		const edited = cheatsheetStore.update("repo-cafe-words", {
+			title: "Café",
+			text: "Café\nКофе | KO-fye | coffee\nЧай | CHAI | tea",
+		});
 		assert.equal(edited?.title, "Café");
-		assert.equal(fs.readFileSync(path.join(dir, "cafe-words.txt"), "utf-8"), "# Café\n\nCafé\nКофе | KO-fye | coffee\nЧай | CHAI | tea\n");
+		assert.equal(
+			fs.readFileSync(path.join(dir, "cafe-words.txt"), "utf-8"),
+			"# Café\n\nCafé\nКофе | KO-fye | coffee\nЧай | CHAI | tea\n",
+		);
 		assert.equal(cheatsheetStore.add("repo-cafe-words", "Café\nЧай | | tea\nВода | | water")?.added, 1);
 		assert.match(fs.readFileSync(path.join(dir, "cafe-words.txt"), "utf-8"), /Вода/);
 
@@ -279,7 +355,11 @@ describe("sheets kept in the repo", () => {
 	});
 
 	it("Move to repo writes the sheet under its title and puts the local copy in trash", () => {
-		const local = cheatsheetStore.create("Travel: basics", "Help\nПомогите! | | Help!", new Date("2026-11-06T17:00:00Z"));
+		const local = cheatsheetStore.create(
+			"Travel: basics",
+			"Help\nПомогите! | | Help!",
+			new Date("2026-11-06T17:00:00Z"),
+		);
 		const moved = cheatsheetStore.toRepo(local.id);
 		assert.equal(moved?.id, "repo-travel-basics");
 		assert.equal(cheatsheetStore.get(local.id), null);
@@ -299,7 +379,12 @@ describe("sheets kept in the repo", () => {
 			.readdirSync(root)
 			.map((lang) => path.join(root, lang, "cheatsheets"))
 			.filter((d) => fs.existsSync(d))
-			.flatMap((d) => fs.readdirSync(d).filter((f) => f.endsWith(".txt")).map((f) => path.join(d, f)));
+			.flatMap((d) =>
+				fs
+					.readdirSync(d)
+					.filter((f) => f.endsWith(".txt"))
+					.map((f) => path.join(d, f)),
+			);
 		assert.ok(files.length >= 1);
 		for (const file of files) {
 			const { title, sections } = parseRepoSheet(fs.readFileSync(file, "utf-8"), path.basename(file, ".txt"));
@@ -310,8 +395,19 @@ describe("sheets kept in the repo", () => {
 
 describe("searchSections", () => {
 	const sections = [
-		{ id: "a", title: "Greetings", rows: [{ text: "Dobrý deň", meaning: "good day" }, { text: "Čau", meaning: "hi", note: "friends only" }] },
-		{ id: "b", title: "Time", rows: [{ text: "Koľko je hodín?", pron: "KOL-ko ye HO-deen", meaning: "what time is it" }] },
+		{
+			id: "a",
+			title: "Greetings",
+			rows: [
+				{ text: "Dobrý deň", meaning: "good day" },
+				{ text: "Čau", meaning: "hi", note: "friends only" },
+			],
+		},
+		{
+			id: "b",
+			title: "Time",
+			rows: [{ text: "Koľko je hodín?", pron: "KOL-ko ye HO-deen", meaning: "what time is it" }],
+		},
 	];
 
 	it("returns everything for an empty search", () => {
@@ -319,10 +415,22 @@ describe("searchSections", () => {
 	});
 
 	it("finds a phrase without its accents, and by meaning, pronunciation or note", () => {
-		assert.deepEqual(searchSections(sections, "cau", "sk-SK").map((s) => s.rows.map((r) => r.text)), [["Čau"]]);
-		assert.deepEqual(searchSections(sections, "what time", "sk-SK").map((s) => s.id), ["b"]);
-		assert.deepEqual(searchSections(sections, "ho-deen", "sk-SK").map((s) => s.id), ["b"]);
-		assert.deepEqual(searchSections(sections, "friends", "sk-SK").map((s) => s.id), ["a"]);
+		assert.deepEqual(
+			searchSections(sections, "cau", "sk-SK").map((s) => s.rows.map((r) => r.text)),
+			[["Čau"]],
+		);
+		assert.deepEqual(
+			searchSections(sections, "what time", "sk-SK").map((s) => s.id),
+			["b"],
+		);
+		assert.deepEqual(
+			searchSections(sections, "ho-deen", "sk-SK").map((s) => s.id),
+			["b"],
+		);
+		assert.deepEqual(
+			searchSections(sections, "friends", "sk-SK").map((s) => s.id),
+			["a"],
+		);
 	});
 
 	it("keeps every row of a section whose title matches, and drops sections with no match", () => {

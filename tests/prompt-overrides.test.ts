@@ -55,7 +55,9 @@ function snapshotDir(dir: string): string[] {
 	if (!fs.existsSync(dir)) return [];
 	const out: string[] = [];
 	const walk = (rel: string) => {
-		for (const entry of fs.readdirSync(path.join(dir, rel), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+		for (const entry of fs
+			.readdirSync(path.join(dir, rel), { withFileTypes: true })
+			.sort((a, b) => a.name.localeCompare(b.name))) {
 			const child = rel ? `${rel}/${entry.name}` : entry.name;
 			if (entry.isDirectory()) walk(child);
 			else out.push(`${child}|${fs.statSync(path.join(dir, child)).size}`);
@@ -192,29 +194,66 @@ describe("the source-derived segment list", () => {
 				"shared/40-formatting.md",
 			],
 		);
-		assert.equal(teacher.some((s) => s.path === "teacher/05-method.md"), true);
-		assert.equal(teacher.some((s) => s.path === "teacher/10-planning.md"), true);
-		assert.equal(teacher.some((s) => s.path === "teacher/60-probing-in-brief.md"), false);
+		assert.equal(
+			teacher.some((s) => s.path === "teacher/05-method.md"),
+			true,
+		);
+		assert.equal(
+			teacher.some((s) => s.path === "teacher/10-planning.md"),
+			true,
+		);
+		assert.equal(
+			teacher.some((s) => s.path === "teacher/60-probing-in-brief.md"),
+			false,
+		);
 		assert.equal(
 			teacher.every(
-				(s) => s.path === "system-prompt.md" || s.path.startsWith("teacher/") || s.path.startsWith("shared/") || s.path === "language/10-slovak.md",
+				(s) =>
+					s.path === "system-prompt.md" ||
+					s.path.startsWith("teacher/") ||
+					s.path.startsWith("shared/") ||
+					s.path === "language/10-slovak.md",
 			),
 			true,
 		);
 		// the shared fragments compose for BOTH agents, same path key.
-		assert.equal(teacher.some((s) => s.path === "shared/30-learner-files.md" && s.shared), true);
-		assert.equal(prober.some((s) => s.path === "shared/30-learner-files.md" && s.shared), true);
+		assert.equal(
+			teacher.some((s) => s.path === "shared/30-learner-files.md" && s.shared),
+			true,
+		);
+		assert.equal(
+			prober.some((s) => s.path === "shared/30-learner-files.md" && s.shared),
+			true,
+		);
 		// Voice + accuracy moved BACK to shared/ fragments (owner round 13,
 		// 2026-10-05): one law across every agent — including practice, whose
 		// near-copy had drifted stale ("You have no research tool here").
-		assert.equal(prober.some((s) => s.path === "shared/10-voice.md" && s.shared), true);
-		assert.equal(teacher.some((s) => s.path === "shared/10-voice.md" && s.shared), true);
-		assert.equal(prober.some((s) => s.path === "shared/15-accuracy.md" && s.shared), true);
+		assert.equal(
+			prober.some((s) => s.path === "shared/10-voice.md" && s.shared),
+			true,
+		);
+		assert.equal(
+			teacher.some((s) => s.path === "shared/10-voice.md" && s.shared),
+			true,
+		);
+		assert.equal(
+			prober.some((s) => s.path === "shared/15-accuracy.md" && s.shared),
+			true,
+		);
 		// Tool MECHANICS are shared; question METHODOLOGY is phase-owned.
-		assert.equal(prober.some((s) => s.path.startsWith("teacher/")), false);
-		assert.equal(teacher.some((s) => s.path.startsWith("prober/")), false);
+		assert.equal(
+			prober.some((s) => s.path.startsWith("teacher/")),
+			false,
+		);
+		assert.equal(
+			teacher.some((s) => s.path.startsWith("prober/")),
+			false,
+		);
 		// README and other non-numeric files never load.
-		assert.equal(allSegmentPaths().some((p) => p.includes("README")), false);
+		assert.equal(
+			allSegmentPaths().some((p) => p.includes("README")),
+			false,
+		);
 	});
 
 	it("effective segments: switch+file → override; either missing → source text", () => {
@@ -399,7 +438,11 @@ describe("an orphaned ON heals to OFF on write — never a 400 (the invariant: a
 		// store never guarded — the record is the only place it exists).
 		const on = await putSection("agent", { prompts: { "teacher/99-vanished.md": true, [SEGMENT]: true } });
 		assert.equal(on.status, 200, "vanished-fragment ON heals too, not a 400");
-		assert.equal(readSettingsRecord()?.agent?.prompts?.["teacher/99-vanished.md"], undefined, "the vanished key healed to OFF");
+		assert.equal(
+			readSettingsRecord()?.agent?.prompts?.["teacher/99-vanished.md"],
+			undefined,
+			"the vanished key healed to OFF",
+		);
 		promptOverrides.deleteOverride(SEGMENT);
 	});
 
@@ -422,11 +465,7 @@ describe("test isolation (the suite must never touch real user data)", () => {
 			PROMPTS_OVERRIDE_DIR.startsWith(TMP_DATA),
 			`PROMPTS_OVERRIDE_DIR (${PROMPTS_OVERRIDE_DIR}) must live under the temp seam (${TMP_DATA})`,
 		);
-		assert.notEqual(
-			PROMPTS_OVERRIDE_DIR,
-			REPO_PROMPTS,
-			"the seam must NOT resolve to the repo's real data/prompts",
-		);
+		assert.notEqual(PROMPTS_OVERRIDE_DIR, REPO_PROMPTS, "the seam must NOT resolve to the repo's real data/prompts");
 		// The suite proves it writes here:
 		promptOverrides.writeOverride("system-prompt.md", "isolation probe");
 		assert.equal(

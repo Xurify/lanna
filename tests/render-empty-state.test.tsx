@@ -11,7 +11,12 @@ const wrap = (el: React.ReactElement) => renderToStaticMarkup(createElement(Sett
 describe("empty and blocked states", () => {
 	it("an empty state names the screen, says why, and has one primary action and at most a text link", () => {
 		const html = wrap(
-			<EmptyState testid="x" title="No episodes yet" action={<button className="q-btn primary">Add an AI key</button>} secondary={<a className="q-btn ghost">Back to Today</a>}>
+			<EmptyState
+				testid="x"
+				title="No episodes yet"
+				action={<button className="q-btn primary">Add an AI key</button>}
+				secondary={<a className="q-btn ghost">Back to Today</a>}
+			>
 				<p>Episodes are short stories at your level.</p>
 			</EmptyState>,
 		);
@@ -27,7 +32,13 @@ describe("empty and blocked states", () => {
 	});
 
 	it("no screen text names an internal term", () => {
-		const html = wrap(<AiCallout status={{ ready: false, reason: "no-model" } as never} title="Better with AI" adds={["A tutor reads your answers"]} />);
+		const html = wrap(
+			<AiCallout
+				status={{ ready: false, reason: "no-model" } as never}
+				title="Better with AI"
+				adds={["A tutor reads your answers"]}
+			/>,
+		);
 		assert.ok(html.includes("AI is not set up yet."));
 		assert.ok(html.includes("Set up AI"));
 		for (const word of ["slot", "cheap", "strong", "token"]) assert.ok(!html.toLowerCase().includes(word), word);

@@ -151,14 +151,12 @@ export function contextProvider(apiKey: string, fetchFn: FetchLike = fetch): Sea
 					const highlightText = Array.isArray(r.highlights)
 						? r.highlights.join(" ")
 						: Array.isArray(r.highlights?.highlights)
-						? r.highlights.highlights.join(" ")
-						: "";
+							? r.highlights.highlights.join(" ")
+							: "";
 					return {
 						title: r.title ?? r.url ?? "",
 						url: r.url ?? "",
-						snippet: (r.description?.trim() || highlightText || "")
-							.replace(/\s+/g, " ")
-							.slice(0, 500),
+						snippet: (r.description?.trim() || highlightText || "").replace(/\s+/g, " ").slice(0, 500),
 					};
 				});
 		},
@@ -190,7 +188,7 @@ export function resolveSearchEngineFor(
 	/** Per-engine live keys (absent engine = absent property is fine). */
 	keys: Partial<Record<SearchEngineId, string | undefined>>,
 ): SearchStatus & { key: string | null } {
-	const pinnedKey = pinned ? keys[pinned] ?? null : null;
+	const pinnedKey = pinned ? (keys[pinned] ?? null) : null;
 	if (pinned) {
 		const entry = ENGINE_ORDER.find((e) => e.id === pinned);
 		if (!pinnedKey) {
@@ -219,14 +217,11 @@ export function resolveSearchEngineFor(
  *  settings record's pin + the auth store fresh each call, so a key saved
  *  mid-session activates on the next check (no restart). */
 export function searchStatus(): SearchStatus {
-	const { available, engine, reason } = resolveSearchEngineFor(
-		effectiveSettings().agent.search?.engine,
-		{
-			context: engineKey("context") ?? undefined,
-			tavily: engineKey("tavily") ?? undefined,
-			brave: engineKey("brave") ?? undefined,
-		},
-	);
+	const { available, engine, reason } = resolveSearchEngineFor(effectiveSettings().agent.search?.engine, {
+		context: engineKey("context") ?? undefined,
+		tavily: engineKey("tavily") ?? undefined,
+		brave: engineKey("brave") ?? undefined,
+	});
 	return { available, engine, reason };
 }
 

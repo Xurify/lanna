@@ -78,7 +78,13 @@ test("env on: observer writes pinned-shape JSONL lines", (t) => {
 	assert.equal(lines.length, 2);
 	assert.deepEqual(
 		{ ...lines[0], t: 0 },
-		{ t: 0, ctx: "teacher", provider: "openrouter", model: "z-ai/glm-5.3-flash", event: { type: "raw", delta: "hello" } },
+		{
+			t: 0,
+			ctx: "teacher",
+			provider: "openrouter",
+			model: "z-ai/glm-5.3-flash",
+			event: { type: "raw", delta: "hello" },
+		},
 		"event line: {t, ctx, provider, model, event}",
 	);
 	assert.match(String(lines[1]!.note), /run end/);
@@ -113,5 +119,9 @@ test("the byte cap writes one marker and stops recording", (t) => {
 	const lines = readLines(dir, "chat_cap");
 	assert.equal(lines.length, 2, "one event + one cap marker");
 	assert.match(String(lines.at(-1)!.note), /cap 250 bytes reached/);
-	assert.equal(lines.some((l) => (l.event as { type?: string })?.type === "b"), false, "post-cap event dropped");
+	assert.equal(
+		lines.some((l) => (l.event as { type?: string })?.type === "b"),
+		false,
+		"post-cap event dropped",
+	);
 });

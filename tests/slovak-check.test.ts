@@ -33,7 +33,15 @@ describe("the Slovak checker", () => {
 	});
 
 	it("is silent on the forms that are right", () => {
-		for (const ok of ["Stretli sme sa so susedmi.", "Idem zo školy.", "Som v škole.", "Idem s mamou.", "Idem k lekárovi.", "Bojím sa psov.", "Páči sa mi to."]) {
+		for (const ok of [
+			"Stretli sme sa so susedmi.",
+			"Idem zo školy.",
+			"Som v škole.",
+			"Idem s mamou.",
+			"Idem k lekárovi.",
+			"Bojím sa psov.",
+			"Páči sa mi to.",
+		]) {
 			assert.deepEqual(rules(ok), [], ok);
 		}
 	});
@@ -52,7 +60,12 @@ describe("the Slovak checker", () => {
 	});
 
 	it("leaves bude alone: its infinitive can be the subject, or follow modal dať sa", () => {
-		for (const ok of ["Najlepšie bude zavolať mu.", "Lepšie bude prísť skôr.", "Najjednoduchšie bude zobrať taxík.", "Bude sa to dať opraviť?"]) {
+		for (const ok of [
+			"Najlepšie bude zavolať mu.",
+			"Lepšie bude prísť skôr.",
+			"Najjednoduchšie bude zobrať taxík.",
+			"Bude sa to dať opraviť?",
+		]) {
 			assert.deepEqual(rules(ok), [], ok);
 		}
 	});
@@ -77,8 +90,15 @@ describe("the Slovak checker", () => {
 		const real = slovakLookup("slovak")!;
 		assert.ok(real, "the bundled lexicon loads");
 		assert.equal(checkSlovak("Čakali sme na vlak pol hodiny.", real).verified, true);
-		assert.equal(checkSlovak("Čakali sme na vlak pol hodiny", real).verified, true, "the final full stop does not matter");
-		assert.deepEqual(checkSlovak("Mám dva sestry.", real).issues.map((i) => i.fix), ["dve sestry"]);
+		assert.equal(
+			checkSlovak("Čakali sme na vlak pol hodiny", real).verified,
+			true,
+			"the final full stop does not matter",
+		);
+		assert.deepEqual(
+			checkSlovak("Mám dva sestry.", real).issues.map((i) => i.fix),
+			["dve sestry"],
+		);
 		assert.deepEqual(checkSlovak("Mám dva psy.", real).issues, []);
 	});
 

@@ -72,11 +72,21 @@ export interface LadderState {
 /** A fresh ladder: a re-check from tier `from` holds every rung below it. */
 export function ladderStart(opts: { prior?: Prior; from?: number } = {}): LadderState {
 	const from = Math.max(0, Math.min(placementTiers().length - 1, opts.from ?? 0));
-	const below = placementTiers().slice(0, from).reduce((n, t) => n + t.units.length, 0);
+	const below = placementTiers()
+		.slice(0, from)
+		.reduce((n, t) => n + t.units.length, 0);
 	const lo = below - 1;
 	const seed = START_BY_PRIOR[opts.prior ?? "none"];
 	const cursor = Math.max(lo + 1, seed);
-	return { lo, hi: placementLadder().length, cursor: Math.min(cursor, placementLadder().length - 1), asked: 0, tally: {}, phase: "bracket", from };
+	return {
+		lo,
+		hi: placementLadder().length,
+		cursor: Math.min(cursor, placementLadder().length - 1),
+		asked: 0,
+		tally: {},
+		phase: "bracket",
+		from,
+	};
 }
 
 /** The unit the next item comes from, or null when the check is over. */
@@ -118,7 +128,9 @@ export function applyAnswer(state: LadderState, unit: UnitId, hit: boolean): Lad
 /** The next rung below the floor to confirm: unasked, above the re-check's
  *  start, at most two rungs down. Null when there is none. */
 function confirmRung(state: LadderState): number | null {
-	const floor = placementTiers().slice(0, state.from).reduce((n, t) => n + t.units.length, 0);
+	const floor = placementTiers()
+		.slice(0, state.from)
+		.reduce((n, t) => n + t.units.length, 0);
 	for (let i = state.lo - 1; i >= Math.max(floor, state.lo - 2); i--) {
 		const u = placementLadder()[i]!;
 		if (!state.tally[u]) return i;
@@ -155,9 +167,21 @@ export function ladderOutcome(state: LadderState): PlacementOutcome {
 		const passed = i < state.from || held / t.units.length >= PASS_SHARE;
 		if (passed && !blocked) lastPassed = i;
 		if (!passed) blocked = true;
-		tiers.push({ id: t.id, level: t.level, title: t.title, reps, correct, passed, ...(i < state.from ? { held: true } : {}) });
+		tiers.push({
+			id: t.id,
+			level: t.level,
+			title: t.title,
+			reps,
+			correct,
+			passed,
+			...(i < state.from ? { held: true } : {}),
+		});
 	}
-	const startChapter = lastPassed >= 0 ? (allChapters()[allChapters().findIndex((c) => c.id === placementTiers()[lastPassed]!.chapters.at(-1)) + 1]?.id ?? allChapters().at(-1)!.id) : allChapters()[0]!.id;
+	const startChapter =
+		lastPassed >= 0
+			? (allChapters()[allChapters().findIndex((c) => c.id === placementTiers()[lastPassed]!.chapters.at(-1)) + 1]
+					?.id ?? allChapters().at(-1)!.id)
+			: allChapters()[0]!.id;
 	const level: Cefr = STAGES.find((st) => st.id === allChapters().find((c) => c.id === startChapter)!.stage)!.level;
 	const testedOut = Object.entries(units)
 		.filter(([, e]) => e.reps >= 2 && e.correct === e.reps)
@@ -165,12 +189,24 @@ export function ladderOutcome(state: LadderState): PlacementOutcome {
 	const weak = Object.entries(units)
 		.filter(([, e]) => e.correct < e.reps)
 		.map(([id]) => id as UnitId);
-	return { level, tiers, from: state.from, ceiling: lastPassed === placementTiers().length - 1, startChapter, units, testedOut, weak };
+	return {
+		level,
+		tiers,
+		from: state.from,
+		ceiling: lastPassed === placementTiers().length - 1,
+		startChapter,
+		units,
+		testedOut,
+		weak,
+	};
 }
 
 /** The floor and the ceiling in words, for the result screen and the tutor. */
 export function ladderEdge(state: LadderState): { floor: UnitId | null; ceiling: UnitId | null } {
-	return { floor: state.lo >= 0 ? (placementLadder()[state.lo] ?? null) : null, ceiling: state.hi < placementLadder().length ? (placementLadder()[state.hi] ?? null) : null };
+	return {
+		floor: state.lo >= 0 ? (placementLadder()[state.lo] ?? null) : null,
+		ceiling: state.hi < placementLadder().length ? (placementLadder()[state.hi] ?? null) : null,
+	};
 }
 
 export function luckRung(state: LadderState): UnitId | null {

@@ -21,18 +21,34 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SoundDrawing } from "../components/phonology/mouth.tsx";
-import { TONGUE_SHAPES, getSoundNotes, type LipShape, type SoundPicture, type TongueShape } from "../src/core/sound-notes.ts";
+import {
+	TONGUE_SHAPES,
+	getSoundNotes,
+	type LipShape,
+	type SoundPicture,
+	type TongueShape,
+} from "../src/core/sound-notes.ts";
 
 const outDir = process.argv[2];
 const mode = process.argv[3] ?? "shapes";
-if (!outDir) throw new Error("usage: npx tsx scripts/sound-contact-sheet.tsx <out-dir> [shapes | blind | <language id>]");
+if (!outDir)
+	throw new Error("usage: npx tsx scripts/sound-contact-sheet.tsx <out-dir> [shapes | blind | <language id>]");
 mkdirSync(outDir, { recursive: true });
 
-const LIPS_FOR_SHAPE: Partial<Record<TongueShape, LipShape>> = { "back-mid": "round", "back-high": "round", "front-high": "spread", "middle-high": "spread" };
+const LIPS_FOR_SHAPE: Partial<Record<TongueShape, LipShape>> = {
+	"back-mid": "round",
+	"back-high": "round",
+	"front-high": "spread",
+	"middle-high": "spread",
+};
 
-const draw = (picture: SoundPicture, seed: number, quiet = false) => renderToStaticMarkup(<SoundDrawing picture={picture} seed={seed} quiet={quiet} />);
+const draw = (picture: SoundPicture, seed: number, quiet = false) =>
+	renderToStaticMarkup(<SoundDrawing picture={picture} seed={seed} quiet={quiet} />);
 
-const mouth = (tongue: TongueShape, lips: LipShape = "neutral", mark?: "lips" | "throat"): SoundPicture => ({ kind: "mouth", mouth: { tongue, lips, ...(mark ? { mark } : {}) } });
+const mouth = (tongue: TongueShape, lips: LipShape = "neutral", mark?: "lips" | "throat"): SoundPicture => ({
+	kind: "mouth",
+	mouth: { tongue, lips, ...(mark ? { mark } : {}) },
+});
 const BLIND: SoundPicture[][] = [
 	[mouth("tip-ridge"), mouth("body-roof")],
 	[mouth("back-roof"), mouth("back-near-roof")],
@@ -47,8 +63,15 @@ const BLIND: SoundPicture[][] = [
 	[mouth("tip-teeth-middle-up"), mouth("tip-teeth-back-up")],
 	[mouth("back-low"), mouth("front-low")],
 	[mouth("tip-ridge"), mouth("tip-ridge-middle-up")],
-	[{ kind: "length", units: 1 }, { kind: "length", units: 2 }],
-	[{ kind: "length", units: 1 }, { kind: "length", units: 2 }, { kind: "length", units: 3 }],
+	[
+		{ kind: "length", units: 1 },
+		{ kind: "length", units: 2 },
+	],
+	[
+		{ kind: "length", units: 1 },
+		{ kind: "length", units: 2 },
+		{ kind: "length", units: 3 },
+	],
 ];
 
 function cells(): string[] {
@@ -60,7 +83,10 @@ function cells(): string[] {
 	}
 	if (mode === "shapes") {
 		const pictures: Array<{ name: string; picture: SoundPicture }> = [
-			...TONGUE_SHAPES.map((tongue) => ({ name: `${tongue} · ${LIPS_FOR_SHAPE[tongue] ?? "neutral"}`, picture: { kind: "mouth" as const, mouth: { tongue, lips: LIPS_FOR_SHAPE[tongue] ?? ("neutral" as const) } } })),
+			...TONGUE_SHAPES.map((tongue) => ({
+				name: `${tongue} · ${LIPS_FOR_SHAPE[tongue] ?? "neutral"}`,
+				picture: { kind: "mouth" as const, mouth: { tongue, lips: LIPS_FOR_SHAPE[tongue] ?? ("neutral" as const) } },
+			})),
 			{ name: "front-high · round", picture: { kind: "mouth", mouth: { tongue: "front-high", lips: "round" } } },
 			{ name: "back-mid · spread", picture: { kind: "mouth", mouth: { tongue: "back-mid", lips: "spread" } } },
 			{ name: "rest · lip-to-teeth", picture: { kind: "mouth", mouth: { tongue: "rest", lips: "lip-to-teeth" } } },
@@ -69,16 +95,18 @@ function cells(): string[] {
 			{ name: "length 2", picture: { kind: "length", units: 2 } },
 			{ name: "length 3", picture: { kind: "length", units: 3 } },
 		];
-		return pictures.map((p, i) => `<figure><div>${draw(p.picture, 40 + i * 20)}</div><figcaption>${p.name}</figcaption></figure>`);
+		return pictures.map(
+			(p, i) => `<figure><div>${draw(p.picture, 40 + i * 20)}</div><figcaption>${p.name}</figcaption></figure>`,
+		);
 	}
 	const data = getSoundNotes(mode);
 	if (!data) throw new Error(`no sound notes for ${mode}`);
 	return data.sounds
 		.flatMap((s) => (s.picture && s.next ? [{ ...s, picture: s.picture, next: s.next }] : []))
 		.map(
-		(s, i) =>
-			`<figure class="two"><div>${draw(s.next.picture, 300 + i * 40, true)}<span>${s.next.symbol} · ${s.next.word}</span></div><div>${draw(s.picture, 320 + i * 40)}<span class="on">${s.symbol} · ${s.word}</span></div><figcaption>${s.how}</figcaption></figure>`,
-	);
+			(s, i) =>
+				`<figure class="two"><div>${draw(s.next.picture, 300 + i * 40, true)}<span>${s.next.symbol} · ${s.next.word}</span></div><div>${draw(s.picture, 320 + i * 40)}<span class="on">${s.symbol} · ${s.word}</span></div><figcaption>${s.how}</figcaption></figure>`,
+		);
 }
 
 function sheet(night: boolean): string {

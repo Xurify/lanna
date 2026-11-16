@@ -127,9 +127,7 @@ async function fetchAndExtract(url: string): Promise<string> {
 
 const webSearchInput = Type.Object({
 	query: Type.String({ description: "The search query (a normal search string, phrases included)" }),
-	count: Type.Optional(
-		Type.Integer({ minimum: 1, maximum: 10, description: "Number of results (default 5, max 10)" }),
-	),
+	count: Type.Optional(Type.Integer({ minimum: 1, maximum: 10, description: "Number of results (default 5, max 10)" })),
 });
 
 const webFetchInput = Type.Object({
@@ -141,23 +139,28 @@ export function createWebTools(search: () => SearchProvider | null): Record<stri
 		web_search: {
 			name: "web_search",
 			label: "web_search",
-			description: "Search the web. One search per call — use one call per search angle. " +
+			description:
+				"Search the web. One search per call — use one call per search angle. " +
 				"Returns an array of results with title, url, and snippet.",
 			parameters: webSearchInput,
-			execute: serverExecute("web_search", webSearchInput, async ({ query, count }): Promise<WebSearchResult[] | string> => {
-				const provider = search();
-				if (!provider) {
-					return (
-						"web_search is not available: no search engine is configured. " +
-						"Set a Context, Tavily or Brave search API key in settings. Report in your brief that web search is unavailable."
-					);
-				}
-				try {
-					return await provider.search(query, count ?? 5);
-				} catch (err) {
-					return `web_search failed: ${err instanceof Error ? err.message : String(err)}`;
-				}
-			}),
+			execute: serverExecute(
+				"web_search",
+				webSearchInput,
+				async ({ query, count }): Promise<WebSearchResult[] | string> => {
+					const provider = search();
+					if (!provider) {
+						return (
+							"web_search is not available: no search engine is configured. " +
+							"Set a Context, Tavily or Brave search API key in settings. Report in your brief that web search is unavailable."
+						);
+					}
+					try {
+						return await provider.search(query, count ?? 5);
+					} catch (err) {
+						return `web_search failed: ${err instanceof Error ? err.message : String(err)}`;
+					}
+				},
+			),
 		},
 
 		web_fetch: {

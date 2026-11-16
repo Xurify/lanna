@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation";
 import { Today } from "@/components/today";
-import { datedScenesForToday, languageDay, lineState, prepareCorpus, progressSummary, readSettingsRecord, stageNow } from "@/src/server";
+import {
+	datedScenesForToday,
+	languageDay,
+	lineState,
+	prepareCorpus,
+	progressSummary,
+	readSettingsRecord,
+	stageNow,
+} from "@/src/server";
 import { slotsConfigured } from "@/src/core";
 
 export const metadata = { title: { absolute: "Today · LangHarness" } };
@@ -59,5 +67,14 @@ export default function HomePage() {
 	} catch {
 		stage = null;
 	}
-	return <Today initialConfigured={slotsConfigured(record?.models)} initialSummary={summary} initialDay={day} initialLine={line} initialStage={stage} initialDated={dated} />;
+	return (
+		<Today
+			initialConfigured={slotsConfigured(record?.models)}
+			initialSummary={summary}
+			initialDay={day}
+			initialLine={line}
+			initialStage={stage}
+			initialDated={dated}
+		/>
+	);
 }

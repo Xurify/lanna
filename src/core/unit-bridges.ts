@@ -140,5 +140,7 @@ export function unitBridges(unit: UnitId, langs: readonly BridgeLang[]): UnitBri
 
 /** The units that carry a line in a language (for the tests). */
 export function unitsBridgedIn(lang: BridgeLang): UnitId[] {
-	return allUnits().filter((u) => (lang === "et" ? !!u.bridge : !!MORE[u.id]?.[lang])).map((u) => u.id);
+	return allUnits()
+		.filter((u) => (lang === "et" ? !!u.bridge : !!MORE[u.id]?.[lang]))
+		.map((u) => u.id);
 }

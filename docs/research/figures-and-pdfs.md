@@ -24,7 +24,7 @@
 - Learners bring their own material: a textbook page, a teacher's handout, a phrase sheet ([situation-practice.md](situation-practice.md)). Answering from it with page numbers is evidence the learner can check (P5, P8).
 - **A short PDF is read at once.** `read` returns the text of a PDF of up to ten pages, marked by page, when every page has real text. The tutor answers in the same turn. A long or scanned PDF still goes to the background reader, which can search and read pages by eye. Before this, `read` returned a PDF's raw bytes as text.
 - **Language material, not math papers.** The reader copies forms exactly as printed, with their diacritics and page, keeps the document's own structure instead of counting rules it does not name, says what the document leaves out, and returns practice lines.
-- **Practice, not a summary.** The document's example sentences are where the learner meets the forms (P4). The tutor then asks for a form with a word the document does not use, so the learner applies the rule instead of copying a line (P3). In two runs after the change, the tutor flagged the prepositions the handout lists without an example and asked for *pri okne* and *na ulici*.
+- **Practice, not a summary.** The document's example sentences are where the learner meets the forms (P4). The tutor then asks for a form with a word the document does not use, so the learner applies the rule instead of copying a line (P3). In two runs after the change, the tutor flagged the prepositions the handout lists without an example and asked for _pri okne_ and _na ulici_.
 - **A PDF button in Ask.** The learner picks a file. It is kept under the profile's `sources/` folder and shown as a chip in the draft and in the message. The earlier rule of no document upload ([situation-practice.md](situation-practice.md)) is reversed. A typed file path is not something most learners will do, so without an upload the tool was out of reach.
 - The Read PDFs switch now applies in the chat and in practice, not only in lessons.
 
@@ -36,5 +36,5 @@
 
 ## Sources
 
-- Herron, C., Hanley, J. E. B., & Cole, S. P. (1995). A comparison study of two advance organizers for introducing beginning foreign language students to video. *The Modern Language Journal*, 79(3), 387–395.
-- Lin et al. (2019). The effects of phonetic training and visual feedback on novel contrast production. *Proceedings of the 19th International Congress of Phonetic Sciences*.
+- Herron, C., Hanley, J. E. B., & Cole, S. P. (1995). A comparison study of two advance organizers for introducing beginning foreign language students to video. _The Modern Language Journal_, 79(3), 387–395.
+- Lin et al. (2019). The effects of phonetic training and visual feedback on novel contrast production. _Proceedings of the 19th International Congress of Phonetic Sciences_.

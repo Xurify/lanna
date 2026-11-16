@@ -49,9 +49,7 @@ export function ProbeDoneCard({ part }: { part: { input?: unknown; output?: unkn
 			{output && !output.ok ? (
 				<p className="text-sm text-muted-foreground">The tutor tried again: {output.error}</p>
 			) : state === "output-error" ? (
-				<p className="text-sm text-muted-foreground">
-					These notes could not be read, so the tutor wrote them again.
-				</p>
+				<p className="text-sm text-muted-foreground">These notes could not be read, so the tutor wrote them again.</p>
 			) : strands ? (
 				<div className="space-y-2">
 					{strands.map((s, i) => (
@@ -60,9 +58,7 @@ export function ProbeDoneCard({ part }: { part: { input?: unknown; output?: unkn
 							<div className="mt-0.5 text-sm text-muted-foreground">{s.assessment}</div>
 						</div>
 					))}
-					{assessment?.summary && (
-						<p className="px-1 text-sm text-muted-foreground">{assessment.summary}</p>
-					)}
+					{assessment?.summary && <p className="px-1 text-sm text-muted-foreground">{assessment.summary}</p>}
 				</div>
 			) : (
 				<p className="text-sm text-muted-foreground">Writing up what you know…</p>

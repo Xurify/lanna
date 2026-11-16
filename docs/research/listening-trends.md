@@ -15,20 +15,20 @@ Each Listen rep logs the sentence, what was typed or picked, the verdict, time t
 
 A typed sentence is aligned with the one played, word by word (a similar word is one substitution, not a drop and an add), and each difference gets one cause (`src/core/listen-analysis.ts`):
 
-| Kind | Causes |
-|---|---|
-| Vocabulary | the stretch word, whatever the difference looks like |
-| Hearing | vowel length (á é í ó ú ý ŕ ĺ), ô heard as a plain o (it is a diphthong, not a long o), soft ľ ň ď ť, š ž č against s z c, voiced against unvoiced (d/t, b/p, z/s, g/k, v/f, h/ch), a short word dropped (v z s sa si je…), a word not caught, a word added, a different word heard |
-| Grammar | the right word with the wrong ending |
-| Spelling | i for y (the two sound the same in Slovak), e or a for ä (ä is said like e) |
-| Typing | a one-letter slip that sounds the same |
+| Kind       | Causes                                                                                                                                                                                                                                                                              |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vocabulary | the stretch word, whatever the difference looks like                                                                                                                                                                                                                                |
+| Hearing    | vowel length (á é í ó ú ý ŕ ĺ), ô heard as a plain o (it is a diphthong, not a long o), soft ľ ň ď ť, š ž č against s z c, voiced against unvoiced (d/t, b/p, z/s, g/k, v/f, h/ch), a short word dropped (v z s sa si je…), a word not caught, a word added, a different word heard |
+| Grammar    | the right word with the wrong ending                                                                                                                                                                                                                                                |
+| Spelling   | i for y (the two sound the same in Slovak), e or a for ä (ä is said like e)                                                                                                                                                                                                         |
+| Typing     | a one-letter slip that sounds the same                                                                                                                                                                                                                                              |
 
 Because the sentence's only unmet word is known, a difference on any other word is not a vocabulary gap, which is what makes the split honest. A picked meaning shows only whether the sentence was understood, so it counts toward accuracy and effort but has no cause. That is why Listen became typing-only the same day: the causes need typed sentences, and the owner had already found picking too easy.
 
 Two rules keep the reading from blaming the ear for something else:
 
 - **Marks the learner does not type.** A sentence typed with no marks at all is compared without them. Otherwise a learner who types without háčky and dĺžne would see vowel length and soft consonants at the top of the list, which is a keyboard habit and says nothing about hearing. A sentence with only its marks off counts as understood.
-- **Voicing assimilation.** A voiced consonant is said unvoiced at the end of a word and takes the voice of the consonant after it (*had* sounds like [hat], *v škole* like [fškole], *kde* like [gde]). Writing it as heard is a spelling gap, not a hearing one, so a voicing difference at the end of a word or before a consonant is filed as spelling ("Written as it sounds"). One between vowels (*kosa* against *koza*) stays hearing.
+- **Voicing assimilation.** A voiced consonant is said unvoiced at the end of a word and takes the voice of the consonant after it (_had_ sounds like [hat], _v škole_ like [fškole], _kde_ like [gde]). Writing it as heard is a spelling gap, not a hearing one, so a voicing difference at the end of a word or before a consonant is filed as spelling ("Written as it sounds"). One between vowels (_kosa_ against _koza_) stays hearing.
 
 ## The trends
 

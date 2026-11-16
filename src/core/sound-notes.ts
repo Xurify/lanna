@@ -87,7 +87,11 @@ const key = (text: string) => text.trim().toLowerCase().normalize("NFC");
 export function getSoundNote(target: string, languageId: string | undefined): SoundNote | null {
 	const wanted = key(target);
 	if (!wanted) return null;
-	return getSoundNotes(languageId)?.sounds.find((s) => key(s.symbol) === wanted || s.aliases?.some((a) => key(a) === wanted)) ?? null;
+	return (
+		getSoundNotes(languageId)?.sounds.find(
+			(s) => key(s.symbol) === wanted || s.aliases?.some((a) => key(a) === wanted),
+		) ?? null
+	);
 }
 
 export function soundNotesForPairs(family: string, languageId: string | undefined): SoundNote[] {

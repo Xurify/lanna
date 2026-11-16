@@ -20,7 +20,11 @@ type State = DiscoverStateView;
 
 export async function post(body: Record<string, unknown>): Promise<{ ok: boolean; body: Record<string, unknown> }> {
 	try {
-		const res = await fetch("/api/watch/discover", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+		const res = await fetch("/api/watch/discover", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(body),
+		});
 		return { ok: res.ok, body: (await res.json().catch(() => ({}))) as Record<string, unknown> };
 	} catch (err) {
 		return { ok: false, body: { message: err instanceof Error ? err.message : String(err) } };
@@ -86,7 +90,10 @@ export function YouTubeSection({ d }: { d: Discover }) {
 	useEffect(() => {
 		const yt = window.lh?.youtube;
 		if (!yt) return;
-		void yt.status().then((s) => setDesktop({ connected: s.connected }), () => setDesktop(null));
+		void yt.status().then(
+			(s) => setDesktop({ connected: s.connected }),
+			() => setDesktop(null),
+		);
 	}, []);
 
 	const readAccount = useCallback(async () => {
@@ -105,10 +112,15 @@ export function YouTubeSection({ d }: { d: Discover }) {
 				}
 				const r = await post({ action: "import", list, via: "account", html: page.html });
 				if (!r.ok) {
-					setMessage({ text: typeof r.body.message === "string" ? r.body.message : "YouTube's page could not be read.", bad: true });
+					setMessage({
+						text: typeof r.body.message === "string" ? r.body.message : "YouTube's page could not be read.",
+						bad: true,
+					});
 					return;
 				}
-				counts.push(`${r.body.count as number} ${list === "subscriptions" ? "channels" : list === "history" ? "from your history" : "recommended"}`);
+				counts.push(
+					`${r.body.count as number} ${list === "subscriptions" ? "channels" : list === "history" ? "from your history" : "recommended"}`,
+				);
 			}
 			// Who is signed in, for the card. Not every desktop build can ask; a refusal costs nothing.
 			if (yt.account) {
@@ -188,7 +200,10 @@ export function YouTubeSection({ d }: { d: Discover }) {
 
 	if (!state) return null;
 	const read = LISTS.filter((l) => state.youtube[l]);
-	const lastRead = read.map((l) => state.youtube[l]!.at).sort().at(-1);
+	const lastRead = read
+		.map((l) => state.youtube[l]!.at)
+		.sort()
+		.at(-1);
 	const account = desktop?.connected && !signedOut ? state.youtubeAccount : undefined;
 	return (
 		<section data-testid="watch-youtube">
@@ -199,9 +214,14 @@ export function YouTubeSection({ d }: { d: Discover }) {
 							<div className="mb-2 flex items-center gap-3" data-testid="watch-youtube-account">
 								<Avatar name={account?.name ?? "?"} src={account?.photo} />
 								<span className="min-w-0">
-									<span className="block truncate font-ui text-[15px] font-[600] text-foreground">{account?.name ? `Signed in as ${account.name}` : "Signed in"}</span>
+									<span className="block truncate font-ui text-[15px] font-[600] text-foreground">
+										{account?.name ? `Signed in as ${account.name}` : "Signed in"}
+									</span>
 									{account?.handle && (
-										<span className="block truncate font-prose text-[13px] text-ink-3" data-testid="watch-youtube-handle">
+										<span
+											className="block truncate font-prose text-[13px] text-ink-3"
+											data-testid="watch-youtube-handle"
+										>
 											{account.handle}
 										</span>
 									)}
@@ -213,64 +233,142 @@ export function YouTubeSection({ d }: { d: Discover }) {
 								? `The app reads your history, your recommendations and the channels you subscribe to, and finds the ones in ${name}.`
 								: `Connect your YouTube and the app reads your history, your recommendations and the channels you subscribe to, then finds the videos and creators in ${name} among them.`}
 						</p>
-						<p className="mt-1 font-prose text-[13px] leading-relaxed text-ink-3">You sign in to Google in a window of the app&rsquo;s own. The app never sees your password, posts nothing, and keeps only your name and picture and the lists of videos and channels.</p>
+						<p className="mt-1 font-prose text-[13px] leading-relaxed text-ink-3">
+							You sign in to Google in a window of the app&rsquo;s own. The app never sees your password, posts nothing,
+							and keeps only your name and picture and the lists of videos and channels.
+						</p>
 						<div className="mt-3 flex flex-wrap items-center gap-2">
 							{desktop.connected ? (
-								<button type="button" disabled={!!busy} onClick={() => void readAccount()} className="q-btn sec t" data-testid="watch-youtube-read">
+								<button
+									type="button"
+									disabled={!!busy}
+									onClick={() => void readAccount()}
+									className="q-btn sec t"
+									data-testid="watch-youtube-read"
+								>
 									<RefreshCwIcon className="size-4" strokeWidth={1.8} />
 									Read again
 								</button>
 							) : (
-								<button type="button" disabled={!!busy} onClick={() => void connect()} className="q-btn sec t" data-testid="watch-youtube-connect">
+								<button
+									type="button"
+									disabled={!!busy}
+									onClick={() => void connect()}
+									className="q-btn sec t"
+									data-testid="watch-youtube-connect"
+								>
 									Connect YouTube
 								</button>
 							)}
 							{(desktop.connected || accountRead) && (
-								<button type="button" disabled={!!busy} onClick={() => void disconnect()} className="q-btn ghost" data-testid="watch-youtube-disconnect">
+								<button
+									type="button"
+									disabled={!!busy}
+									onClick={() => void disconnect()}
+									className="q-btn ghost"
+									data-testid="watch-youtube-disconnect"
+								>
 									Sign out of YouTube
 								</button>
 							)}
 						</div>
 					</>
 				) : (
-					<p className="font-prose text-[15px] leading-relaxed text-foreground">Add your YouTube history and subscriptions from a Google Takeout export, and the app finds the videos and creators in {name} among them. In the desktop app you can sign in instead.</p>
+					<p className="font-prose text-[15px] leading-relaxed text-foreground">
+						Add your YouTube history and subscriptions from a Google Takeout export, and the app finds the videos and
+						creators in {name} among them. In the desktop app you can sign in instead.
+					</p>
 				)}
 
-				<div className={cn("flex flex-col items-start gap-x-3 gap-y-2 sm:flex-row sm:items-center", desktop ? "mt-4 border-t border-line pt-4" : "mt-3")}>
-					<input ref={fileRef} type="file" multiple accept=".json,.html,.htm,.csv" className="sr-only" tabIndex={-1} onChange={(e) => void takeout(e.target.files)} data-testid="watch-takeout-file" />
-					<button type="button" disabled={!!busy} onClick={() => fileRef.current?.click()} className="q-btn sec" data-testid="watch-takeout">
+				<div
+					className={cn(
+						"flex flex-col items-start gap-x-3 gap-y-2 sm:flex-row sm:items-center",
+						desktop ? "mt-4 border-t border-line pt-4" : "mt-3",
+					)}
+				>
+					<input
+						ref={fileRef}
+						type="file"
+						multiple
+						accept=".json,.html,.htm,.csv"
+						className="sr-only"
+						tabIndex={-1}
+						onChange={(e) => void takeout(e.target.files)}
+						data-testid="watch-takeout-file"
+					/>
+					<button
+						type="button"
+						disabled={!!busy}
+						onClick={() => fileRef.current?.click()}
+						className="q-btn sec"
+						data-testid="watch-takeout"
+					>
 						<UploadIcon className="size-4" strokeWidth={1.8} />
 						Add Takeout files
 					</button>
 					<span className="min-w-0 flex-1 font-prose text-[13px] leading-snug text-ink-3">
 						At{" "}
-						<a href="https://takeout.google.com/" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink-2">
+						<a
+							href="https://takeout.google.com/"
+							target="_blank"
+							rel="noreferrer"
+							className="underline underline-offset-2 hover:text-ink-2"
+						>
 							takeout.google.com
 						</a>
-						, pick only &ldquo;YouTube and YouTube Music&rdquo; with history and subscriptions. Then add <code className="font-mono text-[12px]">watch-history</code> and <code className="font-mono text-[12px]">subscriptions.csv</code> from the download.
+						, pick only &ldquo;YouTube and YouTube Music&rdquo; with history and subscriptions. Then add{" "}
+						<code className="font-mono text-[12px]">watch-history</code> and{" "}
+						<code className="font-mono text-[12px]">subscriptions.csv</code> from the download.
 					</span>
 				</div>
 
 				{(busy || message) && (
-					<p className={cn("mt-3 flex items-center gap-2 font-prose text-[13px]", message?.bad ? "text-miss" : "text-ink-2")} role="status" data-testid="watch-youtube-status">
-						{busy ? <LoaderCircleIcon className="size-3.5 shrink-0 animate-spin" /> : !message?.bad ? <CheckIcon className="size-3.5 shrink-0 text-teal-2" /> : null}
+					<p
+						className={cn(
+							"mt-3 flex items-center gap-2 font-prose text-[13px]",
+							message?.bad ? "text-miss" : "text-ink-2",
+						)}
+						role="status"
+						data-testid="watch-youtube-status"
+					>
+						{busy ? (
+							<LoaderCircleIcon className="size-3.5 shrink-0 animate-spin" />
+						) : !message?.bad ? (
+							<CheckIcon className="size-3.5 shrink-0 text-teal-2" />
+						) : null}
 						{busy ?? message?.text}
 					</p>
 				)}
 
 				{read.length > 0 && (
-					<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line pt-3 font-prose text-[13px] text-ink-3" data-testid="watch-youtube-read-lists">
+					<div
+						className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line pt-3 font-prose text-[13px] text-ink-3"
+						data-testid="watch-youtube-read-lists"
+					>
 						<span className="min-w-0 flex-1">
 							Read {lastRead ? timeAgo(lastRead) : ""}:{" "}
 							{read
 								.map((l) => {
 									const r = state.youtube[l]!;
-									return l === "subscriptions" ? `${r.count} subscriptions` : l === "history" ? `${r.count} from your history` : `${r.count} recommended`;
+									return l === "subscriptions"
+										? `${r.count} subscriptions`
+										: l === "history"
+											? `${r.count} from your history`
+											: `${r.count} recommended`;
 								})
 								.join(", ")}
 							{state.searches.length > 0 && <> · searched for {state.searches.map((q) => `"${q}"`).join(", ")}</>}
 						</span>
-						<button type="button" onClick={() => void post({ action: "forget-youtube" }).then((r) => (apply(r.body), load(), setMessage({ text: "Forgotten. Your creators and videos stay." })))} className="q-btn ghost h-8" data-testid="watch-youtube-forget">
+						<button
+							type="button"
+							onClick={() =>
+								void post({ action: "forget-youtube" }).then(
+									(r) => (apply(r.body), load(), setMessage({ text: "Forgotten. Your creators and videos stay." })),
+								)
+							}
+							className="q-btn ghost h-8"
+							data-testid="watch-youtube-forget"
+						>
 							Forget what was read
 						</button>
 					</div>

@@ -9,6 +9,8 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { slugs?: unknown } | null;
-	const slugs = Array.isArray(body?.slugs) ? body.slugs.filter((s): s is string => typeof s === "string").slice(0, 50) : [];
+	const slugs = Array.isArray(body?.slugs)
+		? body.slugs.filter((s): s is string => typeof s === "string").slice(0, 50)
+		: [];
 	return Response.json({ added: enqueueWords(slugs) });
 }

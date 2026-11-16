@@ -36,11 +36,15 @@ const GIT_ENV = {
 	GIT_COMMITTER_NAME: "t",
 	GIT_COMMITTER_EMAIL: "t@example.invalid",
 };
-const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, env: { ...process.env, ...GIT_ENV }, encoding: "utf8" }).trim();
+const git = (cwd: string, ...args: string[]) =>
+	execFileSync("git", args, { cwd, env: { ...process.env, ...GIT_ENV }, encoding: "utf8" }).trim();
 
 type Run = { status: number; out: string };
 const run = (script: string, args: string[], env: Record<string, string>): Run => {
-	const result = spawnSync("bash", [script, ...args], { env: { ...process.env, ...GIT_ENV, ...env }, encoding: "utf8" });
+	const result = spawnSync("bash", [script, ...args], {
+		env: { ...process.env, ...GIT_ENV, ...env },
+		encoding: "utf8",
+	});
 	return { status: result.status ?? -1, out: `${result.stdout}${result.stderr}` };
 };
 
@@ -52,7 +56,10 @@ describe("verify-data.mjs", () => {
 		write(path.join(dir, "log.jsonl"), '{"a":1}\nnot json\n\n{"b":2}\nalso not\n');
 		write(path.join(dir, "notes.txt"), "{ not checked");
 		const out = execFileSync("node", [VERIFY, dir], { encoding: "utf8" }).trim().split("\n");
-		assert.deepEqual(out.sort(), ["# 3 JSON files read, 2 with problems", "bad.json\tjson\t1", "log.jsonl\tjsonl\t2"].sort());
+		assert.deepEqual(
+			out.sort(),
+			["# 3 JSON files read, 2 with problems", "bad.json\tjson\t1", "log.jsonl\tjsonl\t2"].sort(),
+		);
 	});
 });
 
@@ -66,7 +73,11 @@ describe("backup-data.sh", { skip: !toolsReady }, () => {
 		write(path.join(home, "sheets/slovak/mine.txt"), "# Mine\nahoj | | hello\n");
 		return { home, env: { LH_HOME: home, LH_REPO: fresh("backup-repo"), LH_BACKUP_RETRY_SECONDS: "0" } };
 	};
-	const snapshots = (home: string) => fs.readdirSync(path.join(home, "backups")).filter((name) => /^\d{8}T\d{6}Z$/.test(name)).sort();
+	const snapshots = (home: string) =>
+		fs
+			.readdirSync(path.join(home, "backups"))
+			.filter((name) => /^\d{8}T\d{6}Z$/.test(name))
+			.sort();
 	const nextSecond = () => new Promise((resolve) => setTimeout(resolve, 1100));
 
 	it("writes a snapshot of data, keys and sheets with a report, and points latest at it", () => {
@@ -147,7 +158,10 @@ describe("backup-data.sh", { skip: !toolsReady }, () => {
 
 	it("exits 4 when the push fails but still keeps the local snapshot", () => {
 		const { home, env } = setup();
-		const result = run(BACKUP, ["backup", "--push-to", "nobody@127.0.0.1:/nonexistent-lh-test"], { ...env, RSYNC_RSH: "false" });
+		const result = run(BACKUP, ["backup", "--push-to", "nobody@127.0.0.1:/nonexistent-lh-test"], {
+			...env,
+			RSYNC_RSH: "false",
+		});
 		assert.equal(result.status, 4, result.out);
 		assert.equal(snapshots(home).length, 1);
 	});
@@ -228,7 +242,8 @@ exit 0
 			git(seed, "push", "-q", "origin", "main");
 			return git(seed, "rev-parse", "HEAD");
 		};
-		const calls = () => (fs.existsSync(path.join(stub, "calls.log")) ? read(path.join(stub, "calls.log")).split("\n").filter(Boolean) : []);
+		const calls = () =>
+			fs.existsSync(path.join(stub, "calls.log")) ? read(path.join(stub, "calls.log")).split("\n").filter(Boolean) : [];
 		const running = () => (fs.existsSync(path.join(stub, "running")) ? read(path.join(stub, "running")).trim() : "");
 		const images = () => read(path.join(stub, "images")).split("\n").filter(Boolean);
 		return { origin, seed, checkout, home, stub, env, commit, calls, running, images };
@@ -243,7 +258,17 @@ exit 0
 		assert.equal(result.status, 0, result.out);
 		const tag = `langharness:${short(sha)}`;
 		assert.equal(builds(s.calls()).length, 1);
-		assert.ok(s.calls().some((line) => line.startsWith("run ") && line.includes(tag) && line.includes("--network none") && line.includes("boot-check.mjs")));
+		assert.ok(
+			s
+				.calls()
+				.some(
+					(line) =>
+						line.startsWith("run ") &&
+						line.includes(tag) &&
+						line.includes("--network none") &&
+						line.includes("boot-check.mjs"),
+				),
+		);
 		assert.equal(s.running(), tag);
 		assert.equal(read(path.join(s.home, "state/deployed")).trim(), sha);
 		assert.match(read(path.join(s.checkout, ".env")), new RegExp(`^LH_IMAGE=${tag}$`, "m"));
@@ -372,7 +397,10 @@ exit 0
 			const result = run(UPDATE, [], s.env);
 			assert.equal(result.status, 0, result.out);
 			const branch = `sheets/${today()}`;
-			assert.equal(git(s.origin, "show", `${branch}:curriculum/slovak/cheatsheets/animal-hospital.txt`), "# Animal hospital\nv1 edited");
+			assert.equal(
+				git(s.origin, "show", `${branch}:curriculum/slovak/cheatsheets/animal-hospital.txt`),
+				"# Animal hospital\nv1 edited",
+			);
 			assert.equal(git(s.origin, "show", `${branch}:curriculum/slovak/cheatsheets/mine.txt`), "# Mine\nahoj | | hello");
 			assert.equal(git(s.origin, "rev-parse", "main"), mainBefore);
 			assert.equal(git(s.origin, "rev-list", "--count", `main..${branch}`), "1");

@@ -59,9 +59,7 @@ export function PdfBriefCard({ output }: { output: unknown }) {
 				<MessageResponse>{result.brief}</MessageResponse>
 			</div>
 			{!failed && readList.length > 0 && (
-				<div className="mt-3 border-t pt-2 text-xs text-muted-foreground">
-					Pages read: {readList.join(", ")}
-				</div>
+				<div className="mt-3 border-t pt-2 text-xs text-muted-foreground">Pages read: {readList.join(", ")}</div>
 			)}
 			{!failed && consultedList.length > readList.length && (
 				<div className="mt-3 border-t pt-2 text-xs text-muted-foreground">

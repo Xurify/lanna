@@ -23,20 +23,10 @@ export function Dialog({
 }) {
 	if (!open) return null;
 
-	return (
-		<DialogContext.Provider value={{ onClose }}>
-			{children}
-		</DialogContext.Provider>
-	);
+	return <DialogContext.Provider value={{ onClose }}>{children}</DialogContext.Provider>;
 }
 
-export function DialogPortal({
-	children,
-	container,
-}: {
-	children: React.ReactNode;
-	container?: Element | null;
-}) {
+export function DialogPortal({ children, container }: { children: React.ReactNode; container?: Element | null }) {
 	if (typeof document === "undefined") {
 		return <>{children}</>;
 	}
@@ -57,7 +47,7 @@ export function DialogOverlay({
 		<div
 			className={cn(
 				"fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100",
-				className
+				className,
 			)}
 			{...(handleClose ? backdropDismiss : {})}
 			{...props}
@@ -87,7 +77,7 @@ export function DialogContent({
 			onClick={(e) => e.stopPropagation()}
 			className={cn(
 				"relative flex w-full max-w-lg flex-col overflow-hidden rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150",
-				className
+				className,
 			)}
 			{...props}
 		>

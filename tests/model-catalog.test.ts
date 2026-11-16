@@ -71,7 +71,10 @@ describe("the model catalog projection", () => {
 		// model slots wave: the providers surface + the resolved slot pins
 		const openrouter = providers.find((p) => p.id === "openrouter");
 		assert.ok(openrouter && openrouter.keyPresent, "openrouter federated (key pinned above)");
-		assert.ok(providers.some((p) => !p.keyPresent), "keyless providers listed for discovery");
+		assert.ok(
+			providers.some((p) => !p.keyPresent),
+			"keyless providers listed for discovery",
+		);
 		assert.deepEqual(Object.keys(slots), ["strong", "cheap", "vision"]);
 		// a keyless provider's models never reach the picker
 		const keyless = providers.filter((p) => !p.keyPresent).map((p) => p.id);
@@ -138,10 +141,17 @@ describe("the background roles' resolved pins (rolePins)", () => {
 		const record = {
 			version: 1,
 			models: { cheap: { model: { provider: "openrouter", id: "qwen/qwen3.8-flash" } } },
-			agent: { models: { researcher: { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "high" as const } } },
+			agent: {
+				models: {
+					researcher: { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "high" as const },
+				},
+			},
 		};
 		const pins = rolePinsFor(resolveSettings(record).agent.models);
-		assert.deepEqual(pins.researcher, { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "high" });
+		assert.deepEqual(pins.researcher, {
+			model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" },
+			thinkingLevel: "high",
+		});
 	});
 
 	it("catalogRolePins matches the same resolution the engine wiring uses", () => {
@@ -188,14 +198,8 @@ describe("the models-section validation gate", () => {
 			validateModelsSettings({ strong: { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" } } }).ok,
 			true,
 		);
-		assert.equal(
-			validateModelsSettings({ cheap: { model: { provider: "nope", id: "x" } } }).ok,
-			false,
-		);
-		assert.equal(
-			validateModelsSettings({ vision: { model: { provider: "openrouter", id: "nope/nope" } } }).ok,
-			false,
-		);
+		assert.equal(validateModelsSettings({ cheap: { model: { provider: "nope", id: "x" } } }).ok, false);
+		assert.equal(validateModelsSettings({ vision: { model: { provider: "openrouter", id: "nope/nope" } } }).ok, false);
 	});
 
 	it("thinking levels never reject a slot write (owner, interlude 2026-09-22)", () => {
@@ -203,11 +207,15 @@ describe("the models-section validation gate", () => {
 		// WORKS — validation accepts ANY level; the WRITE clamps to the
 		// new model's nearest supported and stores the clamped result.
 		assert.deepEqual(
-			validateModelsSettings({ strong: { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "minimal" } }),
+			validateModelsSettings({
+				strong: { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "minimal" },
+			}),
 			{ ok: true },
 		);
 		assert.deepEqual(
-			validateModelsSettings({ strong: { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "xhigh" } }),
+			validateModelsSettings({
+				strong: { model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" }, thinkingLevel: "xhigh" },
+			}),
 			{ ok: true },
 		);
 	});
@@ -224,10 +232,7 @@ describe("the models-section validation gate", () => {
 			thinkingLevel: "low",
 		});
 		// glm cannot disable thinking: off clamps UP to low
-		assert.equal(
-			clampModelsLevels({ strong: { ...glm, thinkingLevel: "off" as const } }).strong?.thinkingLevel,
-			"low",
-		);
+		assert.equal(clampModelsLevels({ strong: { ...glm, thinkingLevel: "off" as const } }).strong?.thinkingLevel, "low");
 		// a supported level passes through untouched
 		assert.deepEqual(clampModelsLevels({ strong: { ...glm, thinkingLevel: "high" as const } }).strong, {
 			model: { provider: "openrouter", id: "z-ai/glm-5.3-flash" },
@@ -259,8 +264,14 @@ describe("the settings validation gate", () => {
 		const strong: EffectiveSlot = { provider: "openrouter", id: "z-ai/glm-5.3-flash" };
 		// the body's own model wins
 		assert.deepEqual(
-			clampChatLevel({ model: { provider: "openrouter", id: "qwen/qwen3.8-max-0902" }, thinkingLevel: "xhigh" as const }, strong),
-			{ model: { provider: "openrouter", id: "qwen/qwen3.8-max-0902" }, thinkingLevel: clampThinkingLevel(qwenModel(), "xhigh") },
+			clampChatLevel(
+				{ model: { provider: "openrouter", id: "qwen/qwen3.8-max-0902" }, thinkingLevel: "xhigh" as const },
+				strong,
+			),
+			{
+				model: { provider: "openrouter", id: "qwen/qwen3.8-max-0902" },
+				thinkingLevel: clampThinkingLevel(qwenModel(), "xhigh"),
+			},
 		);
 		// no body model → the record's strong slot is the fallback
 		assert.equal(clampChatLevel({ thinkingLevel: "xhigh" as const }, strong).thinkingLevel, "max");
@@ -297,7 +308,10 @@ describe("pi thinking truth (pinned against pi-ai upgrades)", () => {
 		assert.equal(over.level, "high");
 		const clamped = piEngineForSpec({ provider: "openrouter", id: "z-ai/glm-5.3-flash", thinkingLevel: "minimal" });
 		assert.equal(clamped.level, "low");
-		assert.throws(() => piEngineForSpec({ provider: "openrouter", id: "nope/nope", thinkingLevel: "low" }), /catalog has no model/);
+		assert.throws(
+			() => piEngineForSpec({ provider: "openrouter", id: "nope/nope", thinkingLevel: "low" }),
+			/catalog has no model/,
+		);
 	});
 
 	it("UNSET levels resolve from the baked DEFAULT_THINKING_ORDER (owner, 2026-09-22)", () => {
@@ -306,7 +320,10 @@ describe("pi thinking truth (pinned against pi-ai upgrades)", () => {
 		const glm = piEngineForSpec({ provider: "openrouter", id: "z-ai/glm-5.3-flash" });
 		assert.equal(glm.level, "low");
 		// explicit levels never consult the order — pi clamps nearest
-		assert.equal(piEngineForSpec({ provider: "openrouter", id: "z-ai/glm-5.3-flash", thinkingLevel: "max" }).level, "max");
+		assert.equal(
+			piEngineForSpec({ provider: "openrouter", id: "z-ai/glm-5.3-flash", thinkingLevel: "max" }).level,
+			"max",
+		);
 		// a non-reasoning model reports exactly ["off"] → the order lands there
 		const flat = piModels()
 			.getProviders()

@@ -29,5 +29,9 @@ export function personalPlanEntry(now = new Date()): { focus: string } | null {
 
 export function personalLessonFor(seed = Date.now()): LessonPlan {
 	const p = progressStore.read();
-	return buildPersonalLesson(loadLexicon()?.entries ?? [], personalPractice(), p.mixups, { seed, recent: new Set(p.recent), frames: aspectFrames() });
+	return buildPersonalLesson(loadLexicon()?.entries ?? [], personalPractice(), p.mixups, {
+		seed,
+		recent: new Set(p.recent),
+		frames: aspectFrames(),
+	});
 }

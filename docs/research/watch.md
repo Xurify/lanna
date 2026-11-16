@@ -1,6 +1,6 @@
 # The Watch task: a YouTube video as guided comprehensible input
 
-*LangHarness, 2026-10-28. Thread "Turn YouTube videos into guided comprehension", PRs #3 and #4. Code: `src/core/watch.ts`, `src/server/watch.ts`, `src/store/videos.ts`, `components/watch/watch-player.tsx`, `app/watch`.*
+_LangHarness, 2026-10-28. Thread "Turn YouTube videos into guided comprehension", PRs #3 and #4. Code: `src/core/watch.ts`, `src/server/watch.ts`, `src/store/videos.ts`, `components/watch/watch-player.tsx`, `app/watch`._
 
 ## Why
 

@@ -16,7 +16,13 @@
 import { activeProfile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { TtlMemo } from "../core/ttl-memo.ts";
-import { bestFragments, FRAGMENT_SOURCE_MAX_SEC, lineFacts, rangeStats, type FragmentAnalysis } from "../core/fragments.ts";
+import {
+	bestFragments,
+	FRAGMENT_SOURCE_MAX_SEC,
+	lineFacts,
+	rangeStats,
+	type FragmentAnalysis,
+} from "../core/fragments.ts";
 import { isVideoId, parseCaptions, segmentCues } from "../core/watch.ts";
 import { discoverStore, type CaptionLines } from "../store/discover.ts";
 import { videoStore } from "../store/videos.ts";
@@ -33,15 +39,31 @@ function libraryCaptions(id: string): FetchedCaptions | null {
 	if (!rec || !raw) return null;
 	const cues = parseCaptions(raw.text);
 	if (!cues.length) return null;
-	return { meta: { id, title: rec.title, ...(rec.channel ? { channel: rec.channel } : {}), durationSec: rec.fragment?.ofSec ?? rec.durationSec }, cues, source: rec.source };
+	return {
+		meta: {
+			id,
+			title: rec.title,
+			...(rec.channel ? { channel: rec.channel } : {}),
+			durationSec: rec.fragment?.ofSec ?? rec.durationSec,
+		},
+		cues,
+		source: rec.source,
+	};
 }
 
 /** The caption lines of a video, from the kept copy, the library's, or YouTube. */
-async function captionLines(id: string, opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date }): Promise<CaptionLines> {
+async function captionLines(
+	id: string,
+	opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date },
+): Promise<CaptionLines> {
 	const kept = discoverStore.lines(id);
 	if (kept) return kept;
-	const fetched = libraryCaptions(id) ?? (await (opts.captions ? opts.captions(id) : fetchCaptions(id, { signal: opts.signal })));
-	if (fetched.meta.durationSec > FRAGMENT_SOURCE_MAX_SEC) throw new Error(`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Fragments are found in videos under ${FRAGMENT_SOURCE_MAX_SEC / 60} minutes.`);
+	const fetched =
+		libraryCaptions(id) ?? (await (opts.captions ? opts.captions(id) : fetchCaptions(id, { signal: opts.signal })));
+	if (fetched.meta.durationSec > FRAGMENT_SOURCE_MAX_SEC)
+		throw new Error(
+			`This video is ${Math.round(fetched.meta.durationSec / 60)} minutes long. Fragments are found in videos under ${FRAGMENT_SOURCE_MAX_SEC / 60} minutes.`,
+		);
 	const lines = segmentCues(fetched.cues)
 		.slice(0, MAX_LINES)
 		.map((l) => ({ start: Math.round(l.start * 100) / 100, end: Math.round(l.end * 100) / 100, sk: l.sk }));
@@ -64,9 +86,16 @@ async function captionLines(id: string, opts: { captions?: (id: string) => Promi
  *  the last few analyses; short, because the strip reads the learner's words
  *  as they stand and a lesson changes them. */
 const ANALYSIS_TTL_MS = 2 * 60_000;
-const analyses = (): TtlMemo<FragmentAnalysis> => ((globalThis as { __lhFragments?: TtlMemo<FragmentAnalysis> }).__lhFragments ??= new TtlMemo({ ttlMs: ANALYSIS_TTL_MS, max: 8 }));
+const analyses = (): TtlMemo<FragmentAnalysis> =>
+	((globalThis as { __lhFragments?: TtlMemo<FragmentAnalysis> }).__lhFragments ??= new TtlMemo({
+		ttlMs: ANALYSIS_TTL_MS,
+		max: 8,
+	}));
 
-export function analyzeFragments(id: string, opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date } = {}): Promise<FragmentAnalysis> {
+export function analyzeFragments(
+	id: string,
+	opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date } = {},
+): Promise<FragmentAnalysis> {
 	// A caller that brings its own caption source (a test) is not shared with.
 	if (opts.captions || opts.now) return analyzeNow(id, opts);
 	return analyses()
@@ -77,10 +106,19 @@ export function analyzeFragments(id: string, opts: { captions?: (id: string) => 
 /** Whether the library holds the video, read fresh: preparing it must show at once. */
 function preparedOf(id: string): Pick<FragmentAnalysis, "prepared"> {
 	const kept = videoStore.get(id);
-	return kept ? { prepared: kept.fragment ? { startSec: kept.fragment.startSec, endSec: kept.fragment.endSec } : { whole: true as const } } : {};
+	return kept
+		? {
+				prepared: kept.fragment
+					? { startSec: kept.fragment.startSec, endSec: kept.fragment.endSec }
+					: { whole: true as const },
+			}
+		: {};
 }
 
-async function analyzeNow(id: string, opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date }): Promise<FragmentAnalysis> {
+async function analyzeNow(
+	id: string,
+	opts: { captions?: (id: string) => Promise<FetchedCaptions>; signal?: AbortSignal; now?: Date },
+): Promise<FragmentAnalysis> {
 	if (!isVideoId(id)) throw new Error("That is not a YouTube video.");
 	const src = await captionLines(id, opts);
 	const lexicon = loadLexicon();
@@ -101,7 +139,11 @@ async function analyzeNow(id: string, opts: { captions?: (id: string) => Promise
 		durationSec: src.durationSec,
 		trackLang: src.trackLang,
 		measurable,
-		...(measurable ? {} : { message: `The captions are in ${src.trackLang}, so their words are not matched against your ${language.english}. Pick a stretch by ear.` }),
+		...(measurable
+			? {}
+			: {
+					message: `The captions are in ${src.trackLang}, so their words are not matched against your ${language.english}. Pick a stretch by ear.`,
+				}),
 		lines,
 		lex,
 		picks: measurable ? bestFragments(lines, lex) : [],

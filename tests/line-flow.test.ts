@@ -39,9 +39,17 @@ test("the morning hearing keeps its sentence; the evening comes only after pract
 	progress.days[DAY] = { xp: 12, lessons: 0, reps: 3, reviews: 0 };
 	progressStore.write(progress);
 
-	const evening = recordLine({ phase: "evening", itemId: before.item!.id, typed: before.item!.sentence, activeMs: 4000 }, now, 0);
+	const evening = recordLine(
+		{ phase: "evening", itemId: before.item!.id, typed: before.item!.sentence, activeMs: 4000 },
+		now,
+		0,
+	);
 	assert.ok(evening.ok, "the evening replay is recorded once practice is on record");
-	assert.equal(evening.ok && evening.score.caught, evening.ok && evening.score.words, "a full answer catches every word");
+	assert.equal(
+		evening.ok && evening.score.caught,
+		evening.ok && evening.score.words,
+		"a full answer catches every word",
+	);
 
 	const again = recordLine({ phase: "evening", itemId: before.item!.id, typed: "" }, now, 0);
 	assert.equal(again.ok, false, "a second evening replay is refused");
@@ -57,11 +65,22 @@ test("the morning hearing keeps its sentence; the evening comes only after pract
 test("a sentence that is not the day's line is refused, and a hearing counts its active time as listening", () => {
 	const state = lineState(new Date("2026-11-06T08:00:00Z"), 0);
 	assert.ok(state.item);
-	const wrong = recordLine({ phase: "morning", itemId: "not-the-line#0", typed: "x" }, new Date("2026-11-06T08:00:00Z"), 0);
+	const wrong = recordLine(
+		{ phase: "morning", itemId: "not-the-line#0", typed: "x" },
+		new Date("2026-11-06T08:00:00Z"),
+		0,
+	);
 	assert.equal(wrong.ok, false);
-	const right = recordLine({ phase: "morning", itemId: state.item!.id, typed: "", activeMs: 6000 }, new Date("2026-11-06T08:00:00Z"), 0);
+	const right = recordLine(
+		{ phase: "morning", itemId: state.item!.id, typed: "", activeMs: 6000 },
+		new Date("2026-11-06T08:00:00Z"),
+		0,
+	);
 	assert.ok(right.ok);
-	assert.ok((progressStore.read().days["2026-11-06"]?.minutesBy?.listen ?? 0) > 0, "the time on the page is kept as listening");
+	assert.ok(
+		(progressStore.read().days["2026-11-06"]?.minutesBy?.listen ?? 0) > 0,
+		"the time on the page is kept as listening",
+	);
 });
 
 test("the log is append-only and every hearing is in it with the sentence that was played", () => {

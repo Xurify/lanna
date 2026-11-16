@@ -92,13 +92,7 @@ export function DeleteSessionDialog({
 			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-100"
 			{...backdropDismiss}
 		>
-			<DeleteSessionBody
-				chat={chat}
-				busy={busy}
-				failure={failure}
-				onClose={onClose}
-				onRun={() => void run()}
-			/>
+			<DeleteSessionBody chat={chat} busy={busy} failure={failure} onClose={onClose} onRun={() => void run()} />
 		</div>,
 		document.body,
 	);
@@ -140,7 +134,8 @@ function DeleteSessionBody({
 				</code>
 			</div>
 			<p className="mt-2 text-sm text-muted-foreground">
-				The chat leaves your list and any background work in it stops. The chat is kept in the trash, so opening its link again lets you put it back.
+				The chat leaves your list and any background work in it stops. The chat is kept in the trash, so opening its
+				link again lets you put it back.
 			</p>
 			{failure && (
 				<div
@@ -167,7 +162,14 @@ function DeleteSessionBody({
 				<Button type="button" variant="ghost" size="sm" data-testid="delete-cancel" onClick={onClose} disabled={busy}>
 					Cancel
 				</Button>
-				<Button type="button" variant="destructive" size="sm" data-testid="delete-confirm" onClick={onRun} disabled={busy}>
+				<Button
+					type="button"
+					variant="destructive"
+					size="sm"
+					data-testid="delete-confirm"
+					onClick={onRun}
+					disabled={busy}
+				>
 					{busy ? "Deleting…" : "Delete"}
 				</Button>
 			</div>

@@ -2,22 +2,123 @@
 	"about": "The hard set: forms models get wrong (clitic order, s/so, masculine-person plurals, numerals with people, animals in the plural). Answers checked against .claude/skills/slovak-language/references (grammar-core, nouns, adjectives-pronouns-numerals, orthography-and-punctuation).",
 	"items": [
 		{ "id": "h-ok-pacisami", "kind": "sentence", "text": "Páči sa mi to.", "ok": true, "ref": "syntax-and-style.md" },
-		{ "id": "h-ok-dal-som-mu-ho", "kind": "sentence", "text": "Dal som mu ho včera.", "ok": true, "ref": "syntax-and-style.md" },
-		{ "id": "h-ok-vynarali", "kind": "sentence", "text": "Pri čítaní sa mi vynárali nové otázky.", "ok": true, "ref": "syntax-and-style.md" },
-		{ "id": "h-ok-dvoch-chlapcov", "kind": "sentence", "text": "Videl som tam dvoch chlapcov.", "ok": true, "ref": "adjectives-pronouns-numerals.md" },
-		{ "id": "h-ok-so-susedmi", "kind": "sentence", "text": "Stretli sme sa so susedmi.", "ok": true, "ref": "orthography-and-punctuation.md" },
+		{
+			"id": "h-ok-dal-som-mu-ho",
+			"kind": "sentence",
+			"text": "Dal som mu ho včera.",
+			"ok": true,
+			"ref": "syntax-and-style.md"
+		},
+		{
+			"id": "h-ok-vynarali",
+			"kind": "sentence",
+			"text": "Pri čítaní sa mi vynárali nové otázky.",
+			"ok": true,
+			"ref": "syntax-and-style.md"
+		},
+		{
+			"id": "h-ok-dvoch-chlapcov",
+			"kind": "sentence",
+			"text": "Videl som tam dvoch chlapcov.",
+			"ok": true,
+			"ref": "adjectives-pronouns-numerals.md"
+		},
+		{
+			"id": "h-ok-so-susedmi",
+			"kind": "sentence",
+			"text": "Stretli sme sa so susedmi.",
+			"ok": true,
+			"ref": "orthography-and-punctuation.md"
+		},
 		{ "id": "h-ok-bojim-sa-psov", "kind": "sentence", "text": "Bojím sa psov.", "ok": true, "ref": "nouns.md" },
-		{ "id": "h-err-paci-mi-sa", "kind": "sentence", "text": "Páči mi sa ten film.", "ok": false, "fix": "páči sa mi|ten film sa mi páči", "ref": "syntax-and-style.md" },
-		{ "id": "h-err-chlapci-unavene", "kind": "sentence", "text": "Chlapci boli unavené.", "ok": false, "fix": "unavení", "ref": "nouns.md" },
-		{ "id": "h-err-s-sestrou", "kind": "sentence", "text": "Išiel som s sestrou do mesta.", "ok": false, "fix": "so sestrou", "ref": "orthography-and-punctuation.md" },
-		{ "id": "h-err-dva-chlapci", "kind": "sentence", "text": "Videl som dva chlapci.", "ok": false, "fix": "dvoch chlapcov", "ref": "adjectives-pronouns-numerals.md" },
-		{ "id": "h-err-k-doktor", "kind": "sentence", "text": "Musím ísť k doktor.", "ok": false, "fix": "k (doktorovi|lekárovi)", "ref": "valency-and-prepositions.md" },
-		{ "id": "h-tr-dvoch-chlapcov", "kind": "translate", "en": "I saw two boys. (I am a man.)", "check": "dvoch chlapcov", "ref": "adjectives-pronouns-numerals.md" },
-		{ "id": "h-tr-psov", "kind": "translate", "en": "I am afraid of dogs.", "check": "bojím sa psov", "ref": "nouns.md" },
-		{ "id": "h-tr-chlapci-unaveni", "kind": "translate", "en": "The boys were tired.", "check": "chlapci boli unavení", "ref": "nouns.md" },
-		{ "id": "h-tr-so-susedmi", "kind": "translate", "en": "with the neighbors", "check": "so susedmi", "ref": "orthography-and-punctuation.md" },
-		{ "id": "h-tr-tri-psy", "kind": "translate", "en": "three dogs", "check": "tri psy", "ref": "adjectives-pronouns-numerals.md" },
-		{ "id": "h-tr-zo-skoly", "kind": "translate", "en": "I am coming home from school.", "check": "zo školy", "ref": "orthography-and-punctuation.md" },
-		{ "id": "h-explain-clitics", "kind": "explain", "question": "In 'Páči sa mi to', why does 'sa' come before 'mi'? Answer an A1 learner in at most three sentences.", "ref": "syntax-and-style.md", "rubric": "Clitics have a fixed order: the auxiliary (som, si…), then sa/si, then the dative (mi), then other short pronouns (to, ho; in Páči sa mi to, to is the subject). Wrong if it says the dative comes first or that the order is free." }
+		{
+			"id": "h-err-paci-mi-sa",
+			"kind": "sentence",
+			"text": "Páči mi sa ten film.",
+			"ok": false,
+			"fix": "páči sa mi|ten film sa mi páči",
+			"ref": "syntax-and-style.md"
+		},
+		{
+			"id": "h-err-chlapci-unavene",
+			"kind": "sentence",
+			"text": "Chlapci boli unavené.",
+			"ok": false,
+			"fix": "unavení",
+			"ref": "nouns.md"
+		},
+		{
+			"id": "h-err-s-sestrou",
+			"kind": "sentence",
+			"text": "Išiel som s sestrou do mesta.",
+			"ok": false,
+			"fix": "so sestrou",
+			"ref": "orthography-and-punctuation.md"
+		},
+		{
+			"id": "h-err-dva-chlapci",
+			"kind": "sentence",
+			"text": "Videl som dva chlapci.",
+			"ok": false,
+			"fix": "dvoch chlapcov",
+			"ref": "adjectives-pronouns-numerals.md"
+		},
+		{
+			"id": "h-err-k-doktor",
+			"kind": "sentence",
+			"text": "Musím ísť k doktor.",
+			"ok": false,
+			"fix": "k (doktorovi|lekárovi)",
+			"ref": "valency-and-prepositions.md"
+		},
+		{
+			"id": "h-tr-dvoch-chlapcov",
+			"kind": "translate",
+			"en": "I saw two boys. (I am a man.)",
+			"check": "dvoch chlapcov",
+			"ref": "adjectives-pronouns-numerals.md"
+		},
+		{
+			"id": "h-tr-psov",
+			"kind": "translate",
+			"en": "I am afraid of dogs.",
+			"check": "bojím sa psov",
+			"ref": "nouns.md"
+		},
+		{
+			"id": "h-tr-chlapci-unaveni",
+			"kind": "translate",
+			"en": "The boys were tired.",
+			"check": "chlapci boli unavení",
+			"ref": "nouns.md"
+		},
+		{
+			"id": "h-tr-so-susedmi",
+			"kind": "translate",
+			"en": "with the neighbors",
+			"check": "so susedmi",
+			"ref": "orthography-and-punctuation.md"
+		},
+		{
+			"id": "h-tr-tri-psy",
+			"kind": "translate",
+			"en": "three dogs",
+			"check": "tri psy",
+			"ref": "adjectives-pronouns-numerals.md"
+		},
+		{
+			"id": "h-tr-zo-skoly",
+			"kind": "translate",
+			"en": "I am coming home from school.",
+			"check": "zo školy",
+			"ref": "orthography-and-punctuation.md"
+		},
+		{
+			"id": "h-explain-clitics",
+			"kind": "explain",
+			"question": "In 'Páči sa mi to', why does 'sa' come before 'mi'? Answer an A1 learner in at most three sentences.",
+			"ref": "syntax-and-style.md",
+			"rubric": "Clitics have a fixed order: the auxiliary (som, si…), then sa/si, then the dative (mi), then other short pronouns (to, ho; in Páči sa mi to, to is the subject). Wrong if it says the dative comes first or that the order is free."
+		}
 	]
 }

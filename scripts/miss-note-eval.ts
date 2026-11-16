@@ -18,7 +18,9 @@ const [outDir, ...rest] = process.argv.slice(2);
 const dry = rest.includes("--dry");
 const wanted = rest.filter((a) => a !== "--dry");
 if (!outDir || wanted.length === 0 || !process.env.LH_DATA_DIR) {
-	console.error("usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> tsx scripts/miss-note-eval.ts <out-dir> [--dry] <a/b> ...");
+	console.error(
+		"usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> tsx scripts/miss-note-eval.ts <out-dir> [--dry] <a/b> ...",
+	);
 	process.exit(1);
 }
 
@@ -34,7 +36,12 @@ initAuthEnv();
 const lexicon = loadLexicon();
 if (!lexicon) throw new Error("no lexicon");
 const { english, tag, id: language } = activeLanguage();
-const senseHead = (s: string) => s.replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+const senseHead = (s: string) =>
+	s
+		.replace(/\([^)]*\)/g, "")
+		.replace(/\s+/g, " ")
+		.trim()
+		.toLowerCase();
 const senses = (en: string) => new Set(en.split(";").map(senseHead).filter(Boolean));
 const commonness = (e: { rank?: number; examples: unknown[] }) => e.rank ?? 100_000 - e.examples.length;
 
@@ -42,7 +49,8 @@ function entriesOf(pair: string) {
 	const [la, lb] = pair.split("/").map((s) => s.trim());
 	const as = lexicon!.entries.filter((e) => entryLemma(e) === la).sort((x, y) => commonness(x) - commonness(y));
 	const bs = lexicon!.entries.filter((e) => entryLemma(e) === lb).sort((x, y) => commonness(x) - commonness(y));
-	for (const a of as) for (const b of bs) if ([...senses(a.en)].some((s) => senses(b.en).has(s))) return [a, b] as const;
+	for (const a of as)
+		for (const b of bs) if ([...senses(a.en)].some((s) => senses(b.en).has(s))) return [a, b] as const;
 	return as[0] && bs[0] ? ([as[0], bs[0]] as const) : null;
 }
 
@@ -68,10 +76,16 @@ for (const pair of wanted) {
 	}
 	const note = await ensureMissNote(a, b);
 	calls += note ? (note.judge ? 2 : 1) : 1;
-	const rule = pairContrastRule(language, { slug: a.slug, lemma: entryLemma(a) }, { slug: b.slug, lemma: entryLemma(b) });
+	const rule = pairContrastRule(
+		language,
+		{ slug: a.slug, lemma: entryLemma(a) },
+		{ slug: b.slug, lemma: entryLemma(b) },
+	);
 	const row = { pair, sentences: evidence.words.map((w) => w.sentences.length), rule, ...note };
 	rows.push(row);
-	console.log(`${pair} [${note?.status ?? "error"}${note?.reason ? `: ${note.reason}` : ""}] ${note?.note ?? ""} ($${(note?.cost ?? 0).toFixed(4)}, ${note?.ms ?? 0} ms)`);
+	console.log(
+		`${pair} [${note?.status ?? "error"}${note?.reason ? `: ${note.reason}` : ""}] ${note?.note ?? ""} ($${(note?.cost ?? 0).toFixed(4)}, ${note?.ms ?? 0} ms)`,
+	);
 	fs.writeFileSync(path.join(outDir, "results.json"), JSON.stringify(rows, null, "\t"));
 }
 if (!dry) console.log(`${calls} calls`);

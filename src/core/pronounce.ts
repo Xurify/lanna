@@ -74,7 +74,19 @@ export function pronLabel(overall: number): string {
 export function isPronScore(v: unknown): v is PronScore {
 	if (!v || typeof v !== "object") return false;
 	const o = v as Record<string, unknown>;
-	return (o.engine === "azure" || o.engine === "match") && typeof o.accuracy === "number" && typeof o.overall === "number" && Array.isArray(o.words) && o.words.every((w) => w && typeof w === "object" && typeof (w as PronWord).word === "string" && typeof (w as PronWord).score === "number");
+	return (
+		(o.engine === "azure" || o.engine === "match") &&
+		typeof o.accuracy === "number" &&
+		typeof o.overall === "number" &&
+		Array.isArray(o.words) &&
+		o.words.every(
+			(w) =>
+				w &&
+				typeof w === "object" &&
+				typeof (w as PronWord).word === "string" &&
+				typeof (w as PronWord).score === "number",
+		)
+	);
 }
 
 /** A fast pass counts when it was inside the window AND, when there is a
@@ -115,7 +127,13 @@ export interface AzureResult {
 	NBest?: Array<{
 		Display?: string;
 		Lexical?: string;
-		PronunciationAssessment?: { AccuracyScore?: number; FluencyScore?: number; CompletenessScore?: number; ProsodyScore?: number; PronScore?: number };
+		PronunciationAssessment?: {
+			AccuracyScore?: number;
+			FluencyScore?: number;
+			CompletenessScore?: number;
+			ProsodyScore?: number;
+			PronScore?: number;
+		};
 		Words?: Array<{
 			Word?: string;
 			PronunciationAssessment?: { AccuracyScore?: number; ErrorType?: string };
@@ -124,9 +142,14 @@ export interface AzureResult {
 	}>;
 }
 
-const ERROR: Record<string, PronError | undefined> = { Omission: "omission", Insertion: "insertion", Mispronunciation: "mispronunciation" };
+const ERROR: Record<string, PronError | undefined> = {
+	Omission: "omission",
+	Insertion: "insertion",
+	Mispronunciation: "mispronunciation",
+};
 
-const clamp = (n: unknown): number => (typeof n === "number" && Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0);
+const clamp = (n: unknown): number =>
+	typeof n === "number" && Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0;
 
 /** Read Azure's result. Null when nothing was recognized. */
 export function parseAzure(result: AzureResult): PronScore | null {
@@ -136,11 +159,24 @@ export function parseAzure(result: AzureResult): PronScore | null {
 	const pa = best.PronunciationAssessment ?? {};
 	const words: PronWord[] = (best.Words ?? []).map((w) => {
 		const error = ERROR[w.PronunciationAssessment?.ErrorType ?? ""];
-		const phonemes = (w.Phonemes ?? []).filter((p) => p.Phoneme).map((p) => ({ p: p.Phoneme!, score: clamp(p.PronunciationAssessment?.AccuracyScore) }));
-		return { word: (w.Word ?? "").toLocaleLowerCase("sk-SK"), score: error === "omission" ? 0 : clamp(w.PronunciationAssessment?.AccuracyScore), ...(error ? { error } : {}), ...(phonemes.length ? { phonemes } : {}) };
+		const phonemes = (w.Phonemes ?? [])
+			.filter((p) => p.Phoneme)
+			.map((p) => ({ p: p.Phoneme!, score: clamp(p.PronunciationAssessment?.AccuracyScore) }));
+		return {
+			word: (w.Word ?? "").toLocaleLowerCase("sk-SK"),
+			score: error === "omission" ? 0 : clamp(w.PronunciationAssessment?.AccuracyScore),
+			...(error ? { error } : {}),
+			...(phonemes.length ? { phonemes } : {}),
+		};
 	});
 	const accuracy = clamp(pa.AccuracyScore);
-	const out: PronScore = { engine: "azure", accuracy, overall: clamp(pa.PronScore ?? pa.AccuracyScore), words, heard: (best.Display ?? result.DisplayText ?? "").trim() };
+	const out: PronScore = {
+		engine: "azure",
+		accuracy,
+		overall: clamp(pa.PronScore ?? pa.AccuracyScore),
+		words,
+		heard: (best.Display ?? result.DisplayText ?? "").trim(),
+	};
 	if (typeof pa.FluencyScore === "number") out.fluency = clamp(pa.FluencyScore);
 	if (typeof pa.CompletenessScore === "number") out.completeness = clamp(pa.CompletenessScore);
 	if (typeof pa.ProsodyScore === "number") out.prosody = clamp(pa.ProsodyScore);
@@ -173,7 +209,10 @@ const WEAK_WORD = 60;
 
 /** What to work on, across many scored lines: the sounds and the words
  *  that stay low. A sound counts once it was heard at least twice. */
-export function pronReport(scores: readonly PronScore[], opts: { sounds?: number; words?: number; languageId?: string } = {}): PronReport {
+export function pronReport(
+	scores: readonly PronScore[],
+	opts: { sounds?: number; words?: number; languageId?: string } = {},
+): PronReport {
 	const sounds = new Map<string, { sum: number; n: number; in: Set<string> }>();
 	const words = new Map<string, { sum: number; n: number }>();
 	let sum = 0;

@@ -6,7 +6,15 @@ import { cn } from "@/lib/utils";
 import { KBD, PRIMARY, QUIET } from "@/components/ui/learn-buttons";
 import { COLUMN, Dock, PracticeCard } from "@/components/task-frame";
 import { speak, useActiveLanguage } from "@/components/speech";
-import { CaseSketch, sketchLead, sketchStages, sketchSummary, ROW_GLOSS, type SketchStage, type SketchSummary } from "@/components/lesson/case-sketch";
+import {
+	CaseSketch,
+	sketchLead,
+	sketchStages,
+	sketchSummary,
+	ROW_GLOSS,
+	type SketchStage,
+	type SketchSummary,
+} from "@/components/lesson/case-sketch";
 import { PenRule, PenUnderline } from "@/components/lesson/ink";
 import { referencePageUrl, unitInfo, type LessonPlan } from "@/src/core";
 
@@ -67,7 +75,10 @@ export function LessonIntro({ plan, onStart }: { plan: LessonPlan; onStart: () =
 							<p className="max-w-md text-center font-ui text-[13px] text-ink-3" data-testid="intro-lead">
 								{sketchLead(plan.unit)}
 							</p>
-							<p className="mt-4 text-center font-ui text-[15px] font-semibold text-foreground" data-testid="intro-label">
+							<p
+								className="mt-4 text-center font-ui text-[15px] font-semibold text-foreground"
+								data-testid="intro-label"
+							>
 								{stage!.label}
 							</p>
 							<CaseSketch unit={plan.unit} stage={step} className="mx-auto my-1 max-h-40" />
@@ -76,7 +87,10 @@ export function LessonIntro({ plan, onStart }: { plan: LessonPlan; onStart: () =
 								{stage!.meaning}
 							</p>
 							<FormChange stage={stage!} />
-							<p className="mt-4 min-h-12 max-w-md text-balance text-center font-prose text-[15px] leading-snug text-ink-2" data-testid="intro-why">
+							<p
+								className="mt-4 min-h-12 max-w-md text-balance text-center font-prose text-[15px] leading-snug text-ink-2"
+								data-testid="intro-why"
+							>
 								{keepEndings(stage!.why)}
 							</p>
 						</figure>
@@ -86,7 +100,13 @@ export function LessonIntro({ plan, onStart }: { plan: LessonPlan; onStart: () =
 					</div>
 				</>,
 			)}
-			<IntroDock step={step} finished={finished} onBack={() => setStep(step - 1)} onNext={() => setStep(step + 1)} onStart={onStart} />
+			<IntroDock
+				step={step}
+				finished={finished}
+				onBack={() => setStep(step - 1)}
+				onNext={() => setStep(step + 1)}
+				onStart={onStart}
+			/>
 		</>
 	);
 }
@@ -104,12 +124,31 @@ function introCard(plan: LessonPlan, progress: string, body: React.ReactNode) {
 	);
 }
 
-function IntroDock({ step, finished, onBack, onNext, onStart }: { step: number; finished: boolean; onBack: () => void; onNext: () => void; onStart: () => void }) {
+function IntroDock({
+	step,
+	finished,
+	onBack,
+	onNext,
+	onStart,
+}: {
+	step: number;
+	finished: boolean;
+	onBack: () => void;
+	onNext: () => void;
+	onStart: () => void;
+}) {
 	return (
 		<Dock>
 			<div className={cn(COLUMN, "grid min-h-20 grid-cols-[1fr_auto_1fr] items-center gap-4 py-4")}>
 				<div className="flex justify-start">
-					<button type="button" onClick={onBack} className={cn(QUIET, "-ml-2", step === 0 && "invisible")} tabIndex={step === 0 ? -1 : 0} aria-hidden={step === 0} data-testid="intro-back">
+					<button
+						type="button"
+						onClick={onBack}
+						className={cn(QUIET, "-ml-2", step === 0 && "invisible")}
+						tabIndex={step === 0 ? -1 : 0}
+						aria-hidden={step === 0}
+						data-testid="intro-back"
+					>
 						<ArrowLeftIcon className="size-4" strokeWidth={1.8} aria-hidden />
 						Back
 					</button>
@@ -173,9 +212,27 @@ function FormChange({ stage }: { stage: SketchStage }) {
 	);
 }
 
-function MarkedEnding({ before, base, ending, after, className }: { before: string; base: string; ending: string; after: string; className?: string }) {
+function MarkedEnding({
+	before,
+	base,
+	ending,
+	after,
+	className,
+}: {
+	before: string;
+	base: string;
+	ending: string;
+	after: string;
+	className?: string;
+}) {
 	return (
-		<p className={cn("font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[34px] sm:leading-[50px]", className)} lang="sk">
+		<p
+			className={cn(
+				"font-prose text-[28px] font-semibold leading-[1.5] tracking-[-0.032em] text-foreground sm:text-[34px] sm:leading-[50px]",
+				className,
+			)}
+			lang="sk"
+		>
 			{before}
 			{base}
 			<span className="relative inline-block align-baseline font-semibold leading-none text-teal-2">
@@ -197,7 +254,10 @@ function StageDots({ step, count, onPick }: { step: number; count: number; onPic
 					aria-label={`Step ${i + 1}`}
 					aria-current={i === step}
 					onClick={() => onPick(i)}
-					className={cn("h-1.5 rounded-full transition-all", i === step ? "w-5 bg-teal" : i < step ? "w-1.5 bg-teal/50" : "w-1.5 bg-well-2 hover:bg-teal/40")}
+					className={cn(
+						"h-1.5 rounded-full transition-all",
+						i === step ? "w-5 bg-teal" : i < step ? "w-1.5 bg-teal/50" : "w-1.5 bg-well-2 hover:bg-teal/40",
+					)}
 				/>
 			))}
 		</div>
@@ -207,7 +267,10 @@ function StageDots({ step, count, onPick }: { step: number; count: number; onPic
 function SummaryStage({ summary }: { summary: SketchSummary }) {
 	const link = referencePageUrl(`/grammar/cases/${summary.slug}`);
 	return (
-		<div className="lh-rise flex flex-col items-start gap-3 font-prose text-[15px] leading-relaxed text-foreground" data-testid="intro-summary">
+		<div
+			className="lh-rise flex flex-col items-start gap-3 font-prose text-[15px] leading-relaxed text-foreground"
+			data-testid="intro-summary"
+		>
 			<p className="font-ui text-[13px] font-semibold text-ink-3">The rule in short</p>
 			<p>{summary.calls}</p>
 			<div className="w-full" data-testid="intro-table">
@@ -247,7 +310,13 @@ function SummaryStage({ summary }: { summary: SketchSummary }) {
 				</p>
 			)}
 			{link && (
-				<a href={link} target="_blank" rel="noopener noreferrer" className="font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2" data-testid="intro-wiki">
+				<a
+					href={link}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="font-ui text-[13px] font-[550] text-ink-3 underline decoration-[var(--q-line-2)] underline-offset-[3px] hover:text-ink-2"
+					data-testid="intro-wiki"
+				>
 					The {summary.slug} case on slovak.wiki
 				</a>
 			)}

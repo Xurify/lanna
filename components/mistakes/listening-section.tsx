@@ -4,7 +4,19 @@ import Link from "next/link";
 import { LoaderCircleIcon, SparklesIcon } from "lucide-react";
 import { AiCallout } from "@/components/ai-callout";
 import { cn } from "@/lib/utils";
-import { CAUSE_MIN_SENTENCES, LISTEN_CAUSES, LISTEN_KIND_LABEL, LISTEN_MIN_MISSED, LISTEN_MIN_SESSIONS, LISTEN_MIN_TYPED, type CauseTrend, type ListenAnalysis, type ListenGuideData, type MistakesReport, type Trend } from "@/src/core";
+import {
+	CAUSE_MIN_SENTENCES,
+	LISTEN_CAUSES,
+	LISTEN_KIND_LABEL,
+	LISTEN_MIN_MISSED,
+	LISTEN_MIN_SESSIONS,
+	LISTEN_MIN_TYPED,
+	type CauseTrend,
+	type ListenAnalysis,
+	type ListenGuideData,
+	type MistakesReport,
+	type Trend,
+} from "@/src/core";
 import { useActiveLanguage } from "@/components/speech";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -37,7 +49,8 @@ function CauseRow({ c }: { c: CauseTrend }) {
 				<span className="q-num ml-auto text-[13px] text-ink-2">
 					{c.recent !== null && c.earlier !== null ? (
 						<>
-							{c.recent} in 100 sentences lately, {c.earlier} before · <span className={cn("font-semibold", t.ink)}>{t.label}</span>
+							{c.recent} in 100 sentences lately, {c.earlier} before ·{" "}
+							<span className={cn("font-semibold", t.ink)}>{t.label}</span>
 						</>
 					) : (
 						<>
@@ -146,12 +159,25 @@ function DeepBody({ data }: { data: ListenGuideData }) {
 }
 
 /** The deep read: one model call over the figures above, written once per set of figures. The page shows the saved one without a call. */
-function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; busy: boolean; error: string | null; onWrite: (force: boolean) => void }) {
+function DeepRead({
+	report,
+	busy,
+	error,
+	onWrite,
+}: {
+	report: MistakesReport;
+	busy: boolean;
+	error: string | null;
+	onWrite: (force: boolean) => void;
+}) {
 	const { listenGuide: guide, listenGuideCurrent: current, ai } = report;
 	return (
 		<section className="q-card mt-6 p-5" aria-labelledby="listen-guide-title" data-testid="listen-guide">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-				<h3 id="listen-guide-title" className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-foreground">
+				<h3
+					id="listen-guide-title"
+					className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-foreground"
+				>
 					<SparklesIcon className="size-4 text-teal" strokeWidth={1.6} aria-hidden="true" />
 					Deep read
 				</h3>
@@ -163,9 +189,18 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 				)}
 			</div>
 			{guide ? (
-				<div className="mt-3">{guide.data ? <DeepBody data={guide.data} /> : <p className="whitespace-pre-wrap text-sm text-foreground">{guide.text}</p>}</div>
+				<div className="mt-3">
+					{guide.data ? (
+						<DeepBody data={guide.data} />
+					) : (
+						<p className="whitespace-pre-wrap text-sm text-foreground">{guide.text}</p>
+					)}
+				</div>
 			) : ai.ready ? (
-				<p className="mt-2 text-sm text-ink-3">An AI teacher reads the figures above and the sentences you missed, finds what they share and says what to practice. It uses your main AI model and runs once per set of figures.</p>
+				<p className="mt-2 text-sm text-ink-3">
+					An AI teacher reads the figures above and the sentences you missed, finds what they share and says what to
+					practice. It uses your main AI model and runs once per set of figures.
+				</p>
 			) : (
 				<AiCallout status={ai} title="Turn on AI for a deeper read" adds={DEEP_ADDS} className="mt-3" />
 			)}
@@ -176,22 +211,43 @@ function DeepRead({ report, busy, error, onWrite }: { report: MistakesReport; bu
 			)}
 			{ai.ready && (
 				<div className="mt-4 flex flex-wrap items-center gap-3">
-					<button type="button" disabled={busy || (!!guide && !!current)} onClick={() => onWrite(false)} className="q-btn sec pointer-coarse:min-h-11" data-testid="listen-guide-write">
+					<button
+						type="button"
+						disabled={busy || (!!guide && !!current)}
+						onClick={() => onWrite(false)}
+						className="q-btn sec pointer-coarse:min-h-11"
+						data-testid="listen-guide-write"
+					>
 						{busy ? <LoaderCircleIcon className="q-ico animate-spin" /> : <SparklesIcon className="q-ico" />}
 						{guide ? (current ? "Deep read is up to date" : "Read it again") : "Analyze my listening"}
 					</button>
 					<p className="text-xs text-ink-3" data-testid="listen-guide-privacy">
-						Sends the figures on this page and the sentences you missed, with what you typed, to your model provider. Nothing else leaves this computer.
+						Sends the figures on this page and the sentences you missed, with what you typed, to your model provider.
+						Nothing else leaves this computer.
 					</p>
 				</div>
 			)}
-			{!ai.ready && guide && <AiCallout status={ai} title="AI is off, so this read cannot be refreshed" adds={[]} className="mt-4" />}
+			{!ai.ready && guide && (
+				<AiCallout status={ai} title="AI is off, so this read cannot be refreshed" adds={[]} className="mt-4" />
+			)}
 		</section>
 	);
 }
 
 /** What the Listen task says about hearing: how it is going, why sentences were missed, and whether that is changing. The figures are local, no model; the deep read is the optional model call. */
-export function ListeningSection({ l, report, busy, error, onWrite }: { l: ListenAnalysis; report: MistakesReport; busy: boolean; error: string | null; onWrite: (force: boolean) => void }) {
+export function ListeningSection({
+	l,
+	report,
+	busy,
+	error,
+	onWrite,
+}: {
+	l: ListenAnalysis;
+	report: MistakesReport;
+	busy: boolean;
+	error: string | null;
+	onWrite: (force: boolean) => void;
+}) {
 	const lang = useActiveLanguage();
 	if (l.sentences === 0) return null;
 	const from = l.from === l.to ? l.from : `${l.from} to ${l.to}`;
@@ -201,12 +257,19 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 				Listening
 			</h2>
 			<p className="-mt-1 mb-3 text-[13px] text-ink-3">
-				From the Listen task, {l.sentences} {l.sentences === 1 ? "sentence" : "sentences"} in {l.sessions} {l.sessions === 1 ? "session" : "sessions"} ({from}). Each typed sentence is compared with what was said, word by word. Meanings picked before Listen became typing-only count as right when the right one was picked, but give no cause.
+				From the Listen task, {l.sentences} {l.sentences === 1 ? "sentence" : "sentences"} in {l.sessions}{" "}
+				{l.sessions === 1 ? "session" : "sessions"} ({from}). Each typed sentence is compared with what was said, word
+				by word. Meanings picked before Listen became typing-only count as right when the right one was picked, but give
+				no cause.
 			</p>
 			<div className="q-card p-4">
 				<p className="text-[15px] text-foreground">
 					<b className="q-num font-semibold">{pct(l.right)}</b> typed correctly
-					{l.range && l.sentences < 100 ?<span className="text-ink-3">, likely between {pct(l.range.low)} and {pct(l.range.high)}</span> : null}
+					{l.range && l.sentences < 100 ? (
+						<span className="text-ink-3">
+							, likely between {pct(l.range.low)} and {pct(l.range.high)}
+						</span>
+					) : null}
 					<span className="text-ink-3"> · {l.typed} typed</span>
 				</p>
 				{l.weeks.length >= 2 && (
@@ -215,7 +278,12 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 							<li key={w.week} className="flex min-w-0 flex-1 flex-col items-center gap-1">
 								<span className="q-num text-xs font-semibold text-ink-2">{w.few ? "few" : pct(w.right / w.reps)}</span>
 								<span className="flex h-16 w-full items-end rounded-md bg-well-2">
-									{!w.few && <span className="w-full rounded-md bg-teal" style={{ height: `${Math.max(4, Math.round((w.right / w.reps) * 100))}%` }} />}
+									{!w.few && (
+										<span
+											className="w-full rounded-md bg-teal"
+											style={{ height: `${Math.max(4, Math.round((w.right / w.reps) * 100))}%` }}
+										/>
+									)}
 								</span>
 								<span className="text-xs text-ink-3" title={`${w.reps} sentences`}>
 									{w.week.slice(5)}
@@ -228,7 +296,10 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 
 			{!l.ready ? (
 				<p className="mt-3 text-[13px] text-ink-3" data-testid="listening-notready">
-					Why sentences are missed shows once there is enough to tell a pattern from chance: {LISTEN_MIN_TYPED} typed sentences (<span className="q-num">{l.readable}</span> so far), {LISTEN_MIN_MISSED} of them with a miss (<span className="q-num">{l.read}</span>), over {LISTEN_MIN_SESSIONS} sessions (<span className="q-num">{l.readSessions}</span>). Every{" "}
+					Why sentences are missed shows once there is enough to tell a pattern from chance: {LISTEN_MIN_TYPED} typed
+					sentences (<span className="q-num">{l.readable}</span> so far), {LISTEN_MIN_MISSED} of them with a miss (
+					<span className="q-num">{l.read}</span>), over {LISTEN_MIN_SESSIONS} sessions (
+					<span className="q-num">{l.readSessions}</span>). Every{" "}
 					<Link href="/listen" className="underline underline-offset-2 hover:text-foreground">
 						Listen
 					</Link>{" "}
@@ -236,7 +307,9 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 				</p>
 			) : (
 				<>
-					<Heading line="Every difference between what was said and what you typed, grouped by what it most likely was.">What goes wrong</Heading>
+					<Heading line="Every difference between what was said and what you typed, grouped by what it most likely was.">
+						What goes wrong
+					</Heading>
 					{l.kinds.length > 0 && (
 						<p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-2" data-testid="listening-kinds">
 							{l.kinds.map((k) => (
@@ -253,25 +326,34 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 					</ul>
 					{l.rare > 0 && (
 						<p className="mt-1.5 text-[12.5px] text-ink-3">
-							{l.rare} more {l.rare === 1 ? "difference" : "differences"} with a cause seen in fewer than {CAUSE_MIN_SENTENCES} sentences, not listed.
+							{l.rare} more {l.rare === 1 ? "difference" : "differences"} with a cause seen in fewer than{" "}
+							{CAUSE_MIN_SENTENCES} sentences, not listed.
 						</p>
 					)}
 
 					<Heading line="Effort says how hard a sentence was to catch, whatever the words.">Signals</Heading>
-					<ul className="q-card mt-2 divide-y divide-[var(--q-line)] text-[14px] text-ink-2" data-testid="listening-signals">
+					<ul
+						className="q-card mt-2 divide-y divide-[var(--q-line)] text-[14px] text-ink-2"
+						data-testid="listening-signals"
+					>
 						{l.replays.recent !== null && (
 							<li className="px-4 py-2.5">
-								Plays after the first: <b className="q-num font-semibold">{l.replays.recent.toFixed(1)}</b> a sentence lately{l.replays.earlier !== null ? `, ${l.replays.earlier.toFixed(1)} before` : ""}
+								Plays after the first: <b className="q-num font-semibold">{l.replays.recent.toFixed(1)}</b> a sentence
+								lately{l.replays.earlier !== null ? `, ${l.replays.earlier.toFixed(1)} before` : ""}
 							</li>
 						)}
 						{l.peeked.recent !== null && (
 							<li className="px-4 py-2.5">
-								Text shown before answering: <b className="q-num font-semibold">{pct(l.peeked.recent)}</b> of sentences lately{l.peeked.earlier !== null ? `, ${pct(l.peeked.earlier)} before` : ""}
+								Text shown before answering: <b className="q-num font-semibold">{pct(l.peeked.recent)}</b> of sentences
+								lately{l.peeked.earlier !== null ? `, ${pct(l.peeked.earlier)} before` : ""}
 							</li>
 						)}
 						{l.pace ? (
 							<li className="px-4 py-2.5">
-								Slow clips (under {l.pace.slowBelow} syllables a second): <b className="q-num font-semibold">{pct(l.pace.slow.right / l.pace.slow.reps)}</b> typed correctly. Fast clips (over {l.pace.fastAbove}): <b className="q-num font-semibold">{pct(l.pace.fast.right / l.pace.fast.reps)}</b>.
+								Slow clips (under {l.pace.slowBelow} syllables a second):{" "}
+								<b className="q-num font-semibold">{pct(l.pace.slow.right / l.pace.slow.reps)}</b> typed correctly. Fast
+								clips (over {l.pace.fastAbove}):{" "}
+								<b className="q-num font-semibold">{pct(l.pace.fast.right / l.pace.fast.reps)}</b>.
 								{l.pace.fastHarder ? " Speed, more than any single word, is where it goes." : ""}
 							</li>
 						) : null}
@@ -279,7 +361,9 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 
 					{(l.insights ?? []).length > 0 && (
 						<>
-							<Heading line="Found by a stricter test than the trends, so it needs many sentences before it shows anything.">Things you may not have noticed</Heading>
+							<Heading line="Found by a stricter test than the trends, so it needs many sentences before it shows anything.">
+								Things you may not have noticed
+							</Heading>
 							<ul className="q-card mt-2 divide-y divide-[var(--q-line)]" data-testid="listening-insights">
 								{l.insights.map((i) => (
 									<li key={i.id} className="px-4 py-3" data-testid={`listening-insight-${i.id}`}>
@@ -292,7 +376,8 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 														<span lang={lang?.code}>{w.word}</span>
 														{w.typedAs.length > 0 && (
 															<>
-																{" "}→ <span lang={lang?.code}>{w.typedAs.join(", ")}</span>
+																{" "}
+																→ <span lang={lang?.code}>{w.typedAs.join(", ")}</span>
 															</>
 														)}
 													</li>
@@ -323,7 +408,17 @@ export function ListeningSection({ l, report, busy, error, onWrite }: { l: Liste
 											{m.errors.map((e, i) => (
 												<li key={i} className="q-pill grey" title={LISTEN_CAUSES[e.cause].line}>
 													<span lang={lang?.code}>{e.target || "+"}</span>
-													{e.given && e.target ? <> → <span lang={lang?.code}>{e.given}</span></> : e.target ? " missed" : <> “{e.given}” added</>} · {LISTEN_CAUSES[e.cause].label.toLowerCase()}
+													{e.given && e.target ? (
+														<>
+															{" "}
+															→ <span lang={lang?.code}>{e.given}</span>
+														</>
+													) : e.target ? (
+														" missed"
+													) : (
+														<> “{e.given}” added</>
+													)}{" "}
+													· {LISTEN_CAUSES[e.cause].label.toLowerCase()}
 												</li>
 											))}
 										</ul>

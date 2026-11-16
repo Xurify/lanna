@@ -31,7 +31,8 @@ export interface JobToolContext {
 
 export const researchInputSchema = Type.Object({
 	question: Type.String({
-		description: "The single research question to answer. Make it specific — the researcher sees nothing else of the lesson.",
+		description:
+			"The single research question to answer. Make it specific — the researcher sees nothing else of the lesson.",
 	}),
 	context: Type.Optional(
 		Type.String({
@@ -109,7 +110,9 @@ export function jobTools(ctx: JobToolContext): Record<string, AgentTool<any>> {
 			label: "pdf",
 			description: PDF_DESCRIPTION,
 			parameters: pdfInputSchema,
-			execute: serverExecute("pdf", pdfInputSchema, (input, { toolCallId }) => dispatch(ctx, "pdf", toolCallId, PDF_ACK, input)),
+			execute: serverExecute("pdf", pdfInputSchema, (input, { toolCallId }) =>
+				dispatch(ctx, "pdf", toolCallId, PDF_ACK, input),
+			),
 		},
 	};
 }

@@ -27,23 +27,38 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 			<QIcon name="chart" className={cn("shrink-0", status.validDay && !checkOpen ? "text-ink-3" : "text-teal")} />
 			<span className="min-w-0 flex-1">
 				<span className="block text-[15px] font-[550] tracking-[-0.006em] text-foreground">
-					Study <span className="font-[450] text-ink-3">· day {status.dayNumber} of {status.totalDays}</span>
+					Study{" "}
+					<span className="font-[450] text-ink-3">
+						· day {status.dayNumber} of {status.totalDays}
+					</span>
 				</span>
 				{checkOpen ? (
 					<span className="block truncate text-[13px] text-ink-3">
-						The week {check.week} check in {studyLanguage(check.language).name} is open{status.checkLastDate ? ` through ${shortDate(status.checkLastDate)}` : ""}
+						The week {check.week} check in {studyLanguage(check.language).name} is open
+						{status.checkLastDate ? ` through ${shortDate(status.checkLastDate)}` : ""}
 					</span>
 				) : (
-					<span className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-[13px] text-ink-3" data-testid="study-entry-languages">
+					<span
+						className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-[13px] text-ink-3"
+						data-testid="study-entry-languages"
+					>
 						{status.languages.map((l) => (
 							<span key={l.id} className="inline-flex items-center gap-1.5">
 								{studyLanguage(l.id).name}
 								<span className="flex gap-[2px]" aria-hidden="true">
 									{Array.from({ length: need }, (_, i) => (
-										<i key={i} className={cn("h-1.5 w-2.5 rounded-[2px]", i < l.dictationReps ? "bg-teal" : "bg-[var(--q-line-2)]")} />
+										<i
+											key={i}
+											className={cn(
+												"h-1.5 w-2.5 rounded-[2px]",
+												i < l.dictationReps ? "bg-teal" : "bg-[var(--q-line-2)]",
+											)}
+										/>
 									))}
 								</span>
-								<span className="tabular-nums">{l.validDay ? "counts" : `${Math.min(l.dictationReps, need)} of ${need}`}</span>
+								<span className="tabular-nums">
+									{l.validDay ? "counts" : `${Math.min(l.dictationReps, need)} of ${need}`}
+								</span>
 							</span>
 						))}
 					</span>
@@ -56,14 +71,24 @@ export function StudyEntryRow({ status }: { status: TodayExperimentStatus | null
 
 	if (checkOpen) {
 		return (
-			<Link href={`${CHECK_ROUTE}?week=${check.week}&lang=${check.language}`} className={ROW} data-testid="study-entry-row" aria-label={label}>
+			<Link
+				href={`${CHECK_ROUTE}?week=${check.week}&lang=${check.language}`}
+				className={ROW}
+				data-testid="study-entry-row"
+				aria-label={label}
+			>
 				{inner}
 			</Link>
 		);
 	}
 	if (firstShort) {
 		return (
-			<ListenInLanguage language={studyLanguage(firstShort.id)} running={status.runningLanguage} className={ROW} testId="study-entry-row">
+			<ListenInLanguage
+				language={studyLanguage(firstShort.id)}
+				running={status.runningLanguage}
+				className={ROW}
+				testId="study-entry-row"
+			>
 				{inner}
 			</ListenInLanguage>
 		);

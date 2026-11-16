@@ -9,7 +9,16 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { parseRepoSheet, parseSheetText } = await import("../src/core/cheatsheets.ts");
-const { isSheetItem, pickSheetLines, sheetLineHeard, sheetLineOfItem, sheetLines, sheetListenItem, sheetProgress, SHEET_LISTEN_COUNT } = await import("../src/core/sheet-listen.ts");
+const {
+	isSheetItem,
+	pickSheetLines,
+	sheetLineHeard,
+	sheetLineOfItem,
+	sheetLines,
+	sheetListenItem,
+	sheetProgress,
+	SHEET_LISTEN_COUNT,
+} = await import("../src/core/sheet-listen.ts");
 const { cheatsheetStore } = await import("../src/store/cheatsheets.ts");
 const { sheetPracticeStore } = await import("../src/store/sheet-practice.ts");
 const { progressStore } = await import("../src/store/progress.ts");
@@ -75,32 +84,65 @@ describe("sheetLines", () => {
 });
 
 describe("pickSheetLines", () => {
-	const many = sheetLines({ sections: parseSheetText(Array.from({ length: 30 }, (_, i) => `слово${i} | | word ${i}`).join("\n")) });
+	const many = sheetLines({
+		sections: parseSheetText(Array.from({ length: 30 }, (_, i) => `слово${i} | | word ${i}`).join("\n")),
+	});
 	const at = (minute: number) => new Date(Date.UTC(2026, 10, 9, 10, minute)).toISOString();
 
 	it("starts with the first ten phrases of the sheet", () => {
 		const picked = pickSheetLines(many, {}, { seed: 1 });
 		assert.equal(picked.length, SHEET_LISTEN_COUNT);
-		assert.deepEqual(picked.map((l) => l.key).sort(), many.slice(0, 10).map((l) => l.key).sort());
+		assert.deepEqual(
+			picked.map((l) => l.key).sort(),
+			many
+				.slice(0, 10)
+				.map((l) => l.key)
+				.sort(),
+		);
 	});
 
 	it("brings back at most five missed phrases, the oldest miss first, then phrases not heard yet", () => {
-		const practice = Object.fromEntries(many.slice(0, 8).map((l, i) => [l.key, sheetLineHeard(undefined, false, at(i))]));
+		const practice = Object.fromEntries(
+			many.slice(0, 8).map((l, i) => [l.key, sheetLineHeard(undefined, false, at(i))]),
+		);
 		const picked = pickSheetLines(many, practice, { seed: 2 }).map((l) => l.key);
 		const missedAgain = picked.filter((k) => practice[k]);
-		assert.deepEqual(missedAgain.sort(), many.slice(0, 5).map((l) => l.key).sort());
-		assert.deepEqual(picked.filter((k) => !practice[k]).sort(), many.slice(8, 13).map((l) => l.key).sort());
+		assert.deepEqual(
+			missedAgain.sort(),
+			many
+				.slice(0, 5)
+				.map((l) => l.key)
+				.sort(),
+		);
+		assert.deepEqual(
+			picked.filter((k) => !practice[k]).sort(),
+			many
+				.slice(8, 13)
+				.map((l) => l.key)
+				.sort(),
+		);
 	});
 
 	it("once every phrase was heard, repeats the ones caught the fewest times in a row", () => {
-		const practice = Object.fromEntries(many.map((l, i) => [l.key, { heard: 3, caughtInARow: i < 10 ? 1 : 3, at: at(i) }]));
+		const practice = Object.fromEntries(
+			many.map((l, i) => [l.key, { heard: 3, caughtInARow: i < 10 ? 1 : 3, at: at(i) }]),
+		);
 		const picked = pickSheetLines(many, practice, { seed: 3 }).map((l) => l.key);
-		assert.deepEqual(picked.sort(), many.slice(0, 10).map((l) => l.key).sort());
+		assert.deepEqual(
+			picked.sort(),
+			many
+				.slice(0, 10)
+				.map((l) => l.key)
+				.sort(),
+		);
 	});
 
 	it("counts a phrase as caught while its last answer was caught", () => {
 		const [a, b, c] = many;
-		const practice = { [a!.key]: sheetLineHeard(undefined, true, at(0)), [b!.key]: sheetLineHeard(sheetLineHeard(undefined, true, at(0)), false, at(1)) };
+		const practice = {
+			[a!.key]: sheetLineHeard(undefined, true, at(0)),
+			[b!.key]: sheetLineHeard(sheetLineHeard(undefined, true, at(0)), false, at(1)),
+		};
 		assert.deepEqual(sheetProgress([a!, b!, c!], practice), { lines: 3, heard: 2, caught: 1 });
 	});
 });
@@ -122,7 +164,11 @@ describe("a sheet line as a Listen item", () => {
 describe("a session on a sheet", () => {
 	const sheet = cheatsheetStore.create("Night shift", SHEET_TEXT, new Date("2026-11-09T10:00:00Z"));
 	const now = new Date("2026-11-09T12:00:00Z");
-	const idOf = (text: string) => sheetListenItem(sheetLines(sheet).find((l) => l.text === text)!, sheet.title).id;
+	const idOf = (text: string) =>
+		sheetListenItem(
+			sheetLines(sheet).find((l) => l.text === text)!,
+			sheet.title,
+		).id;
 
 	it("offers the sheet's lines, or one section's", () => {
 		const whole = sheetListenFor(sheet, { seed: 1 });
@@ -152,7 +198,14 @@ describe("a session on a sheet", () => {
 			},
 			now,
 		);
-		assert.deepEqual(outcome, { xp: 0, correct: 1, almost: 1, total: 5, queued: [], progress: { lines: 6, heard: 5, caught: 2 } });
+		assert.deepEqual(outcome, {
+			xp: 0,
+			correct: 1,
+			almost: 1,
+			total: 5,
+			queued: [],
+			progress: { lines: 6, heard: 5, caught: 2 },
+		});
 
 		const practice = sheetPracticeStore.read(sheet.id);
 		assert.equal(practice["пускаем"]!.caughtInARow, 1);
@@ -193,7 +246,11 @@ describe("a session on a sheet", () => {
 	});
 
 	it("writes nothing for a session with no line of the sheet in it", () => {
-		const outcome = recordSheetListen(sheet, { reps: [{ itemId: "word#0", given: "x" }], activeMs: 60_000 }, new Date("2026-11-10T12:00:00Z"));
+		const outcome = recordSheetListen(
+			sheet,
+			{ reps: [{ itemId: "word#0", given: "x" }], activeMs: 60_000 },
+			new Date("2026-11-10T12:00:00Z"),
+		);
 		assert.equal(outcome.total, 0);
 		assert.equal(sheetPracticeStore.readLog().length, 1);
 		assert.equal(progressStore.read().days["2026-11-10"], undefined);

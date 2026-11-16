@@ -87,7 +87,11 @@ export function ThinkingBlock({
 	// ⌘T: an explicit global set overrides every row (once set, rows re-sync).
 	const syncedRef = useRef(false);
 	useEffect(
-		() => subscribeUserThinking((o) => { syncedRef.current = true; setOpen(o); }),
+		() =>
+			subscribeUserThinking((o) => {
+				syncedRef.current = true;
+				setOpen(o);
+			}),
 		[],
 	);
 	return (
@@ -126,9 +130,7 @@ export function ThinkingBlock({
 				{label}
 				<ChevronDownIcon className={cn("size-4 shrink-0 transition-transform", open ? "rotate-180" : "rotate-0")} />
 			</button>
-			{open && (
-				<span className="lh-prose mt-1.5 block whitespace-pre-wrap text-[15px] italic text-ink-3">{text}</span>
-			)}
+			{open && <span className="lh-prose mt-1.5 block whitespace-pre-wrap text-[15px] italic text-ink-3">{text}</span>}
 		</div>
 	);
 }

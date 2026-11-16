@@ -25,7 +25,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import { rejudgeSpoken, type Creator, type FoundChannel, type FoundVideo, type ScannedVideo, type YouTubeAccount } from "../core/discover.ts";
+import {
+	rejudgeSpoken,
+	type Creator,
+	type FoundChannel,
+	type FoundVideo,
+	type ScannedVideo,
+	type YouTubeAccount,
+} from "../core/discover.ts";
 import type { StoryUsage } from "../core/reading.ts";
 
 const dir = () => path.join(PATHS.videos, "discover");
@@ -90,7 +97,11 @@ const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 export const discoverStore = {
 	creators(): CreatorsFile {
 		const f = readJson<Partial<CreatorsFile>>("creators.json", {});
-		return { creators: Array.isArray(f.creators) ? f.creators : [], keepReady: f.keepReady !== false, ...(f.refreshedAt ? { refreshedAt: f.refreshedAt } : {}) };
+		return {
+			creators: Array.isArray(f.creators) ? f.creators : [],
+			keepReady: f.keepReady !== false,
+			...(f.refreshedAt ? { refreshedAt: f.refreshedAt } : {}),
+		};
 	},
 	putCreators(f: CreatorsFile): void {
 		writeJson("creators.json", f);
@@ -151,7 +162,11 @@ export const discoverStore = {
 	/** Channel pictures by channel id. */
 	avatars(): Record<string, string> {
 		const a = readJson<Record<string, unknown>>("avatars.json", {});
-		return Object.fromEntries(Object.entries(a && typeof a === "object" ? a : {}).filter((e): e is [string, string] => typeof e[1] === "string"));
+		return Object.fromEntries(
+			Object.entries(a && typeof a === "object" ? a : {}).filter(
+				(e): e is [string, string] => typeof e[1] === "string",
+			),
+		);
 	},
 	putAvatars(a: Record<string, string>): void {
 		writeJson("avatars.json", a);

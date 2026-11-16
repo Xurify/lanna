@@ -89,14 +89,18 @@ describe("serverExecute: cooperative settle, mapping parity, question bypass", (
 			label: "partial",
 			description: "test",
 			parameters: schema,
-			execute: serverExecute("partial", schema, (_input: unknown, ctx: ToolExecuteContext) =>
-				new Promise((resolve) => {
-					// The fs-tools contract: poll upfront (a listener on an
-					// already-aborted signal never fires), else listen.
-					const signal = ctx.signal!;
-					if (signal.aborted) return resolve("partial results");
-					signal.addEventListener("abort", () => resolve("partial results"), { once: true });
-				})),
+			execute: serverExecute(
+				"partial",
+				schema,
+				(_input: unknown, ctx: ToolExecuteContext) =>
+					new Promise((resolve) => {
+						// The fs-tools contract: poll upfront (a listener on an
+						// already-aborted signal never fires), else listen.
+						const signal = ctx.signal!;
+						if (signal.aborted) return resolve("partial results");
+						signal.addEventListener("abort", () => resolve("partial results"), { once: true });
+					}),
+			),
 		};
 		const ac = new AbortController();
 		const pending = pi.execute("c5", {}, ac.signal);
@@ -119,7 +123,7 @@ describe("serverExecute: cooperative settle, mapping parity, question bypass", (
 			question: "q",
 			options: [
 				{ label: "A", value: "same" },
-			{ label: "B", value: "same" },
+				{ label: "B", value: "same" },
 			],
 		})) as { isError?: boolean; content: Array<{ text?: string }>; details?: { tool: string; problems: string[] } };
 		assert.equal(result.isError, true, "pi 1.0 convention: returned, not thrown");

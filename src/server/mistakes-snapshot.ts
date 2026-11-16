@@ -21,13 +21,18 @@ export type { MistakesReport };
 /** The snapshot is read again after a lesson once it is this old. */
 const SNAPSHOT_MAX_AGE_MS = 6 * 3_600_000;
 
-export function mistakesReportOf(analysis: MistakeAnalysis, guide: GuideRecord | null, listenGuide: ListenGuideRecord | null = null): MistakesReport {
+export function mistakesReportOf(
+	analysis: MistakeAnalysis,
+	guide: GuideRecord | null,
+	listenGuide: ListenGuideRecord | null = null,
+): MistakesReport {
 	return {
 		analysis,
 		guide,
 		guideCurrent: !!guide && guide.digest === digest(guideFacts(analysis)),
 		listenGuide,
-		listenGuideCurrent: !!listenGuide && !!analysis.listening && listenGuide.digest === digest(listenGuideFacts(analysis.listening)),
+		listenGuideCurrent:
+			!!listenGuide && !!analysis.listening && listenGuide.digest === digest(listenGuideFacts(analysis.listening)),
 		ai: aiStatus("strong"),
 	};
 }
@@ -42,7 +47,11 @@ export function mistakesReport(now = new Date()): MistakesReport {
 /** Read the log again and save the snapshot with its time, keeping the guide. */
 export function analyzeNow(now = new Date()): MistakesReport {
 	const log = readLessonLog();
-	const analysis = { ...analyzeMistakes(log, progressStore.read().mixups, now), listening: analyzeListening(log, now), chat: analyzeChats(readChatAnswers(), now) };
+	const analysis = {
+		...analyzeMistakes(log, progressStore.read().mixups, now),
+		listening: analyzeListening(log, now),
+		chat: analyzeChats(readChatAnswers(), now),
+	};
 	const { guide, listenGuide } = analysisStore.read();
 	analysisStore.write({ analysis, guide, listenGuide });
 	return mistakesReportOf(analysis, guide, listenGuide ?? null);

@@ -13,8 +13,17 @@ export async function POST(req: Request) {
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { action?: unknown; id?: unknown } | null;
 	if (body?.action === "clear") return Response.json({ ok: true, removed: clearFinishedTasks() });
-	if ((body?.action !== "dismiss" && body?.action !== "remove") || typeof body.id !== "string" || !/^[A-Za-z0-9:_-]+$/.test(body.id)) {
-		return Response.json({ message: 'body must be {action: "dismiss" | "remove", id} or {action: "clear"}' }, { status: 400 });
+	if (
+		(body?.action !== "dismiss" && body?.action !== "remove") ||
+		typeof body.id !== "string" ||
+		!/^[A-Za-z0-9:_-]+$/.test(body.id)
+	) {
+		return Response.json(
+			{ message: 'body must be {action: "dismiss" | "remove", id} or {action: "clear"}' },
+			{ status: 400 },
+		);
 	}
-	return (body.action === "dismiss" ? dismissTask(body.id) : removeTask(body.id)) ? Response.json({ ok: true }) : Response.json({ message: "no finished task with that id" }, { status: 404 });
+	return (body.action === "dismiss" ? dismissTask(body.id) : removeTask(body.id))
+		? Response.json({ ok: true })
+		: Response.json({ message: "no finished task with that id" }, { status: 404 });
 }

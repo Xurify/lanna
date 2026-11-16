@@ -16,12 +16,8 @@ import { assertNotSecret, capOutput, formatSize, MAX_OUTPUT_BYTES, resolveSource
 const DEFAULT_LIMIT = 500;
 
 const lsInput = Type.Object({
-	path: Type.Optional(
-		Type.String({ description: "Directory to list (default: the learner's home directory)" }),
-	),
-	limit: Type.Optional(
-		Type.Integer({ description: "Maximum number of entries to return (default: 500)" }),
-	),
+	path: Type.Optional(Type.String({ description: "Directory to list (default: the learner's home directory)" })),
+	limit: Type.Optional(Type.Integer({ description: "Maximum number of entries to return (default: 500)" })),
 });
 
 export const lsTool: AgentTool<typeof lsInput> = {

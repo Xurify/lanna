@@ -3,7 +3,19 @@
 import { EmptyState } from "@/components/quiet/empty-state";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpenIcon, BookmarkCheckIcon, FileTextIcon, BookmarkIcon, PlusIcon, RepeatIcon, SearchIcon, StarIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
+import {
+	BookOpenIcon,
+	BookmarkCheckIcon,
+	FileTextIcon,
+	BookmarkIcon,
+	PlusIcon,
+	RepeatIcon,
+	SearchIcon,
+	StarIcon,
+	Trash2Icon,
+	Volume2Icon,
+	XIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
@@ -17,7 +29,19 @@ const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
 export type WordsTab = "words" | "phrases" | "cheatsheets";
 
-export function WordBankPage({ initialTab = "words", initialSheet, initialSearch, initialWords = null, initialEstimate = null }: { initialTab?: WordsTab; initialSheet?: string; initialSearch?: string; initialWords?: { items: WordBankItem[]; total: number; summary: WordBankSummary } | null; initialEstimate?: WordEstimateReport | null }) {
+export function WordBankPage({
+	initialTab = "words",
+	initialSheet,
+	initialSearch,
+	initialWords = null,
+	initialEstimate = null,
+}: {
+	initialTab?: WordsTab;
+	initialSheet?: string;
+	initialSearch?: string;
+	initialWords?: { items: WordBankItem[]; total: number; summary: WordBankSummary } | null;
+	initialEstimate?: WordEstimateReport | null;
+}) {
 	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
@@ -290,11 +314,12 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 								)}
 							</button>
 						</div>
-
 					</>
 				)}
 
-				{activeTab === "cheatsheets" && <CheatsheetsTab initialSheet={initialSheet} onCount={setSheetCount} onOpenChange={setSheetOpen} />}
+				{activeTab === "cheatsheets" && (
+					<CheatsheetsTab initialSheet={initialSheet} onCount={setSheetCount} onOpenChange={setSheetOpen} />
+				)}
 
 				{/* ──────────────── TAB 1: WORD BANK ──────────────── */}
 				{activeTab === "words" && (
@@ -361,7 +386,9 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 									)}
 								>
 									{tab.label}
-									{tab.count !== undefined && <span className="ml-1.5 font-normal tabular-nums opacity-80">{tab.count}</span>}
+									{tab.count !== undefined && (
+										<span className="ml-1.5 font-normal tabular-nums opacity-80">{tab.count}</span>
+									)}
 								</button>
 							))}
 						</div>
@@ -392,7 +419,9 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 														{item.match?.span ? (
 															<>
 																{item.lemma.slice(0, item.match.span[0])}
-																<mark className="bg-transparent font-bold text-teal-2 underline decoration-teal decoration-2 underline-offset-4">{item.lemma.slice(item.match.span[0], item.match.span[1])}</mark>
+																<mark className="bg-transparent font-bold text-teal-2 underline decoration-teal decoration-2 underline-offset-4">
+																	{item.lemma.slice(item.match.span[0], item.match.span[1])}
+																</mark>
 																{item.lemma.slice(item.match.span[1])}
 															</>
 														) : (
@@ -426,7 +455,11 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 												</p>
 												{item.match?.via && (
 													<p className="mt-0.5 pl-10 font-ui text-xs text-ink-3" data-testid="word-match-kind">
-														{item.match.kind === "meaning" ? `Matches meaning: ${item.match.via}` : item.match.kind === "form" ? `Matches the form: ${item.match.via}` : `Matches an example: ${item.match.via}`}
+														{item.match.kind === "meaning"
+															? `Matches meaning: ${item.match.via}`
+															: item.match.kind === "form"
+																? `Matches the form: ${item.match.via}`
+																: `Matches an example: ${item.match.via}`}
 													</p>
 												)}
 
@@ -442,13 +475,9 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 															>
 																<Volume2Icon className="size-3.5" />
 															</button>
-															<p className="font-prose text-sm text-foreground">
-																{item.example.sk}
-															</p>
+															<p className="font-prose text-sm text-foreground">{item.example.sk}</p>
 														</div>
-														<p className="mt-1 pl-5.5 font-prose text-xs text-muted-foreground">
-															{item.example.en}
-														</p>
+														<p className="mt-1 pl-5.5 font-prose text-xs text-muted-foreground">{item.example.en}</p>
 													</div>
 												)}
 											</div>
@@ -469,11 +498,7 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 																			: "text-muted-foreground",
 															)}
 														>
-															{item.retention >= 80
-																? "Can recall"
-																: item.retention > 0
-																	? "In progress"
-																	: "New"}
+															{item.retention >= 80 ? "Can recall" : item.retention > 0 ? "In progress" : "New"}
 														</span>
 														<span className="text-foreground">{item.retention}%</span>
 													</div>
@@ -509,10 +534,10 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 																: "text-muted-foreground hover:bg-accent hover:text-foreground",
 														)}
 													>
-														<StarIcon
-															className={cn("size-4", item.favorite && "fill-gold")}
-														/>
-														<span className="text-xs font-semibold">{item.favorite ? "Favorite" : "Add to favorites"}</span>
+														<StarIcon className={cn("size-4", item.favorite && "fill-gold")} />
+														<span className="text-xs font-semibold">
+															{item.favorite ? "Favorite" : "Add to favorites"}
+														</span>
 													</button>
 
 													{/* In review deck button */}
@@ -560,7 +585,11 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 										</button>
 									}
 								>
-									<p>{searchQuery.trim() ? "Search by how a word starts, or by its English meaning. Accents are optional. A longer search also looks in example sentences, and a few words in a row find the sentence that has them." : "Try another filter. All your words are still here."}</p>
+									<p>
+										{searchQuery.trim()
+											? "Search by how a word starts, or by its English meaning. Accents are optional. A longer search also looks in example sentences, and a few words in a row find the sentence that has them."
+											: "Try another filter. All your words are still here."}
+									</p>
 								</EmptyState>
 							)}
 
@@ -654,7 +683,11 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 												<Volume2Icon className="size-4" />
 											</button>
 											<div>
-												<p className="font-prose text-lg font-semibold leading-snug text-foreground" lang={lang?.code} data-word-lookup-enabled="true">
+												<p
+													className="font-prose text-lg font-semibold leading-snug text-foreground"
+													lang={lang?.code}
+													data-word-lookup-enabled="true"
+												>
 													{phrase.text}
 												</p>
 												<p className="mt-1 font-prose text-sm text-muted-foreground" lang="en">
@@ -682,7 +715,10 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 
 							{filteredPhrases.length === 0 && !loadingPhrases && (
 								<EmptyState testid="phrases-empty" title="No saved phrases yet">
-									<p>Press Save on a phrase in a story, a scene, a lesson or a review card to keep it here, or add your own. No AI key needed.</p>
+									<p>
+										Press Save on a phrase in a story, a scene, a lesson or a review card to keep it here, or add your
+										own. No AI key needed.
+									</p>
 								</EmptyState>
 							)}
 						</div>
@@ -694,9 +730,7 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 					<div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4">
 						<div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl">
 							<div className="mb-4 flex items-center justify-between">
-								<h2 className="font-title text-xl font-semibold text-foreground">
-									Add a phrase
-								</h2>
+								<h2 className="font-title text-xl font-semibold text-foreground">Add a phrase</h2>
 								<button
 									type="button"
 									onClick={() => setShowAddModal(false)}
@@ -709,9 +743,7 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 
 							<form onSubmit={handleAddPhrase} className="space-y-4">
 								<div>
-									<label className="block font-ui text-xs font-semibold text-muted-foreground">
-										Phrase *
-									</label>
+									<label className="block font-ui text-xs font-semibold text-muted-foreground">Phrase *</label>
 									<input
 										type="text"
 										required
@@ -737,9 +769,7 @@ export function WordBankPage({ initialTab = "words", initialSheet, initialSearch
 								</div>
 
 								<div>
-									<label className="block font-ui text-xs font-semibold text-muted-foreground">
-										Context or note
-									</label>
+									<label className="block font-ui text-xs font-semibold text-muted-foreground">Context or note</label>
 									<input
 										type="text"
 										placeholder="for example Weather"

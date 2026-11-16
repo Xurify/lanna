@@ -18,9 +18,11 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-pron-"));
 process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 // A speech key in this machine's environment would make the engine the test expects to be none.
-for (const id of ["ELEVENLABS_API_KEY", "GROQ_API_KEY", "DEEPGRAM_API_KEY", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION"]) delete process.env[id];
+for (const id of ["ELEVENLABS_API_KEY", "GROQ_API_KEY", "DEEPGRAM_API_KEY", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION"])
+	delete process.env[id];
 
-const { isPronScore, matchScore, parseAzure, passMade, PRON_CLEAR, pronLabel, pronReport } = await import("../src/core/pronounce.ts");
+const { isPronScore, matchScore, parseAzure, passMade, PRON_CLEAR, pronLabel, pronReport } =
+	await import("../src/core/pronounce.ts");
 type PronScore = import("../src/core/pronounce.ts").PronScore;
 const { speakXp, speakCounts, SPEAK_CLEAR_XP } = await import("../src/core/speak.ts");
 const { pronunciationReport, pronounceEngine } = await import("../src/server/pronounce.ts");
@@ -35,7 +37,10 @@ test("matchScore: intelligibility from a transcript — each expected word heard
 	assert.ok(s.words.every((w) => w.score === 100));
 	const half = matchScore("Mám novú prácu.", "mám prácu");
 	assert.equal(half.accuracy, 67);
-	assert.deepEqual(half.words.find((w) => w.word === "novú"), { word: "novú", score: 0, error: "omission" });
+	assert.deepEqual(
+		half.words.find((w) => w.word === "novú"),
+		{ word: "novú", score: 0, error: "omission" },
+	);
 	assert.equal(half.heard, "mám prácu");
 	assert.ok(isPronScore(half));
 	assert.ok(!isPronScore({ engine: "azure", words: "no" }));
@@ -48,10 +53,30 @@ test("parseAzure reads the detailed result: the four scores, words with error ty
 		NBest: [
 			{
 				Display: "Mám novú prácu.",
-				PronunciationAssessment: { AccuracyScore: 78, FluencyScore: 90, CompletenessScore: 100, ProsodyScore: 70.4, PronScore: 80.2 },
+				PronunciationAssessment: {
+					AccuracyScore: 78,
+					FluencyScore: 90,
+					CompletenessScore: 100,
+					ProsodyScore: 70.4,
+					PronScore: 80.2,
+				},
 				Words: [
-					{ Word: "Mám", PronunciationAssessment: { AccuracyScore: 95, ErrorType: "None" }, Phonemes: [{ Phoneme: "m", PronunciationAssessment: { AccuracyScore: 99 } }, { Phoneme: "aa", PronunciationAssessment: { AccuracyScore: 92 } }] },
-					{ Word: "novú", PronunciationAssessment: { AccuracyScore: 40, ErrorType: "Mispronunciation" }, Phonemes: [{ Phoneme: "n", PronunciationAssessment: { AccuracyScore: 80 } }, { Phoneme: "uu", PronunciationAssessment: { AccuracyScore: 20 } }] },
+					{
+						Word: "Mám",
+						PronunciationAssessment: { AccuracyScore: 95, ErrorType: "None" },
+						Phonemes: [
+							{ Phoneme: "m", PronunciationAssessment: { AccuracyScore: 99 } },
+							{ Phoneme: "aa", PronunciationAssessment: { AccuracyScore: 92 } },
+						],
+					},
+					{
+						Word: "novú",
+						PronunciationAssessment: { AccuracyScore: 40, ErrorType: "Mispronunciation" },
+						Phonemes: [
+							{ Phoneme: "n", PronunciationAssessment: { AccuracyScore: 80 } },
+							{ Phoneme: "uu", PronunciationAssessment: { AccuracyScore: 20 } },
+						],
+					},
 					{ Word: "prácu", PronunciationAssessment: { AccuracyScore: 0, ErrorType: "Omission" } },
 				],
 			},
@@ -101,12 +126,79 @@ test("the report: sounds heard at least twice that stay low, words that keep com
 		engine: "azure",
 		accuracy: overall,
 		overall,
-		words: words.map(([word, score, ph]) => ({ word, score, ...(score < 60 ? { error: "mispronunciation" as const } : {}), phonemes: ph.map(([p, s]) => ({ p, score: s })) })),
+		words: words.map(([word, score, ph]) => ({
+			word,
+			score,
+			...(score < 60 ? { error: "mispronunciation" as const } : {}),
+			phonemes: ph.map(([p, s]) => ({ p, score: s })),
+		})),
 	});
 	const report = pronReport([
-		line([["žena", 40, [["zh", 30], ["e", 90], ["n", 95], ["a", 92]]], ["chlieb", 50, [["x", 35], ["l", 90], ["ie", 88], ["b", 90]]]], 60),
-		line([["život", 45, [["zh", 25], ["i", 90], ["v", 90], ["o", 90], ["t", 90]]], ["dom", 95, [["d", 95], ["o", 95], ["m", 95]]]], 85),
-		line([["ryba", 92, [["r", 60], ["i", 90], ["b", 95], ["a", 95]]]], 95),
+		line(
+			[
+				[
+					"žena",
+					40,
+					[
+						["zh", 30],
+						["e", 90],
+						["n", 95],
+						["a", 92],
+					],
+				],
+				[
+					"chlieb",
+					50,
+					[
+						["x", 35],
+						["l", 90],
+						["ie", 88],
+						["b", 90],
+					],
+				],
+			],
+			60,
+		),
+		line(
+			[
+				[
+					"život",
+					45,
+					[
+						["zh", 25],
+						["i", 90],
+						["v", 90],
+						["o", 90],
+						["t", 90],
+					],
+				],
+				[
+					"dom",
+					95,
+					[
+						["d", 95],
+						["o", 95],
+						["m", 95],
+					],
+				],
+			],
+			85,
+		),
+		line(
+			[
+				[
+					"ryba",
+					92,
+					[
+						["r", 60],
+						["i", 90],
+						["b", 95],
+						["a", 95],
+					],
+				],
+			],
+			95,
+		),
 	]);
 	assert.equal(report.lines, 3);
 	assert.equal(report.average, 80);
@@ -123,8 +215,39 @@ test("the report: sounds heard at least twice that stay low, words that keep com
 
 test("the report on disk: scored passes in the fluency log and scored turns in the scenes", () => {
 	assert.equal(pronounceEngine(), null, "no keys in the test environment");
-	const weak: PronScore = { engine: "azure", accuracy: 40, overall: 40, words: [{ word: "ľahko", score: 30, error: "mispronunciation", phonemes: [{ p: "lj", score: 20 }, { p: "a", score: 90 }] }] };
-	fluencyStore.append({ mode: "fast", at: "2026-10-28T10:00:00.000Z", day: "2026-10-28", reps: [{ itemId: "x#0", slug: "x", sentence: "Ľahko.", translation: "Easily.", passes: [{ ms: 900, window: 2000, made: false, inWindow: true, pron: weak }] }], passesMade: 0, sentencesMade: 0, xp: 8 });
+	const weak: PronScore = {
+		engine: "azure",
+		accuracy: 40,
+		overall: 40,
+		words: [
+			{
+				word: "ľahko",
+				score: 30,
+				error: "mispronunciation",
+				phonemes: [
+					{ p: "lj", score: 20 },
+					{ p: "a", score: 90 },
+				],
+			},
+		],
+	};
+	fluencyStore.append({
+		mode: "fast",
+		at: "2026-10-28T10:00:00.000Z",
+		day: "2026-10-28",
+		reps: [
+			{
+				itemId: "x#0",
+				slug: "x",
+				sentence: "Ľahko.",
+				translation: "Easily.",
+				passes: [{ ms: 900, window: 2000, made: false, inWindow: true, pron: weak }],
+			},
+		],
+		passesMade: 0,
+		sentencesMade: 0,
+		xp: 8,
+	});
 	const session = {
 		id: "sp-2026-10-28-cafe-abc",
 		lang: "sk",
@@ -136,7 +259,13 @@ test("the report on disk: scored passes in the fluency log and scored turns in t
 		endedAt: "2026-10-28T10:05:00.000Z",
 		turns: [
 			{ role: "tutor" as const, text: "Dobrý deň.", at: "2026-10-28T10:00:00.000Z" },
-			{ role: "learner" as const, text: "Ľahko, ďakujem.", at: "2026-10-28T10:00:10.000Z", via: "voice" as const, pron: { ...weak, words: [...weak.words, { word: "ďakujem", score: 95, phonemes: [{ p: "lj", score: 25 }] }] } },
+			{
+				role: "learner" as const,
+				text: "Ľahko, ďakujem.",
+				at: "2026-10-28T10:00:10.000Z",
+				via: "voice" as const,
+				pron: { ...weak, words: [...weak.words, { word: "ďakujem", score: 95, phonemes: [{ p: "lj", score: 25 }] }] },
+			},
 		],
 		usage: { model: "faux", steps: [] },
 		xp: 15,

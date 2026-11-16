@@ -11,10 +11,20 @@ interface WordLinkInput {
 	lookupLabel?: string;
 }
 
-export function wordLinks({ text, langCode, langEnglish, referenceSite, slug, lemma, lookupUrl, lookupLabel }: WordLinkInput) {
+export function wordLinks({
+	text,
+	langCode,
+	langEnglish,
+	referenceSite,
+	slug,
+	lemma,
+	lookupUrl,
+	lookupLabel,
+}: WordLinkInput) {
 	const encodedWord = encodeURIComponent(text);
 	const referenceUrl =
-		lookupUrl ?? (referenceSite ? referenceLink(referenceSite, { slug, lemma: lemma ?? text, query: text }) : undefined);
+		lookupUrl ??
+		(referenceSite ? referenceLink(referenceSite, { slug, lemma: lemma ?? text, query: text }) : undefined);
 	return {
 		referenceUrl,
 		referenceLabel: lookupLabel ?? referenceSite?.label,

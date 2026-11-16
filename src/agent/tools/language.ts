@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { activeProfile, PATHS } from "../../../config.ts";
+import { activeProfile } from "../../../config.ts";
 import { checkerNote, checkSlovak } from "../../core/slovak-check.ts";
 import { serverExecute } from "../tool-execute.ts";
 import { referenceDir } from "../language-reference.ts";
@@ -46,19 +46,27 @@ const lookupWordTool: AgentTool<typeof lookupInput> = {
 	executionMode: "sequential",
 	execute: serverExecute("lookup_word", lookupInput, async ({ word }) => {
 		const result = lookupWord(word);
-		if (result.match === "none") return `No dictionary entry matches "${word}". Do not present a form for it as certain.`;
+		if (result.match === "none")
+			return `No dictionary entry matches "${word}". Do not present a form for it as certain.`;
 		const how =
 			result.match === "exact"
 				? "exact match"
 				: result.match === "folded"
 					? "matched only after ignoring diacritics — check the spelling"
 					: "matched an English gloss";
-		return [`${result.entries.length} entr${result.entries.length === 1 ? "y" : "ies"} for "${word}" (${how}). Slug in brackets.`, ...result.entries.map((e) => `[${e.slug}] ${formatEntry(e)}`)].join("\n\n");
+		return [
+			`${result.entries.length} entr${result.entries.length === 1 ? "y" : "ies"} for "${word}" (${how}). Slug in brackets.`,
+			...result.entries.map((e) => `[${e.slug}] ${formatEntry(e)}`),
+		].join("\n\n");
 	}),
 };
 
 const checkInput = Type.Object({
-	text: Type.String({ minLength: 1, maxLength: 2000, description: "Slovak text: the learner's sentence, or a correction you are about to give." }),
+	text: Type.String({
+		minLength: 1,
+		maxLength: 2000,
+		description: "Slovak text: the learner's sentence, or a correction you are about to give.",
+	}),
 });
 
 const checkSlovakTool: AgentTool<typeof checkInput> = {
@@ -70,7 +78,10 @@ const checkSlovakTool: AgentTool<typeof checkInput> = {
 	executionMode: "sequential",
 	execute: serverExecute("check_slovak", checkInput, async ({ text }) => {
 		const check = checkSlovak(text, slovakLookup() ?? undefined);
-		return checkerNote(check) ?? "[Checker: none of the certain rules is broken. That does not prove the text right; use lookup_word for forms.]";
+		return (
+			checkerNote(check) ??
+			"[Checker: none of the certain rules is broken. That does not prove the text right; use lookup_word for forms.]"
+		);
 	}),
 };
 
@@ -95,7 +106,11 @@ const REFERENCES: Record<string, string> = {
 const referenceInput = Type.Object({
 	topic: Type.Union(
 		Object.keys(REFERENCES).map((k) => Type.Literal(k)),
-		{ description: `One of: ${Object.entries(REFERENCES).map(([k, v]) => `${k} (${v})`).join("; ")}.` },
+		{
+			description: `One of: ${Object.entries(REFERENCES)
+				.map(([k, v]) => `${k} (${v})`)
+				.join("; ")}.`,
+		},
 	),
 });
 

@@ -10,15 +10,7 @@
  */
 
 import type { LhMessage } from "./native-messages.ts";
-import type {
-	ChatRecord,
-	ChatSettings,
-	ChatSummary,
-	JobKind,
-	JobRecord,
-	PlanTree,
-	TurnUsage,
-} from "./contracts.ts";
+import type { ChatRecord, ChatSettings, ChatSummary, JobKind, JobRecord, PlanTree, TurnUsage } from "./contracts.ts";
 import type { UserSettings } from "./settings.ts";
 
 // ─── ChatStore — the session record's home (data/chats) ─────────────────────
@@ -152,4 +144,3 @@ export interface AuthStore {
 	/** Remove one VAR if present (absent = no-op, still a silent success). */
 	deleteAuthVar(name: string): void;
 }
-

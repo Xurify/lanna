@@ -39,11 +39,18 @@ describe("marking words as known", () => {
 		const k = knownWords(lexicon);
 		assert.ok(k.met.has(ze) && k.known.has(ze) && k.expected.has(ze));
 		assert.ok(k.sample.includes("že"), "the story brief may use it");
-		assert.equal(knownWordStore.set(ze, "že", true, new Date("2026-11-07T12:01:00Z")), true, "marking again changes nothing");
+		assert.equal(
+			knownWordStore.set(ze, "že", true, new Date("2026-11-07T12:01:00Z")),
+			true,
+			"marking again changes nothing",
+		);
 		assert.equal(knownWordStore.updatedAt(), "2026-11-07T12:00:00.000Z");
 		assert.equal(knownWordStore.set(ze, "že", false, new Date("2026-11-07T12:02:00Z")), false);
 		assert.equal(knownWords(lexicon).met.has(ze), false);
-		const saved = JSON.parse(fs.readFileSync(path.join(TMP_DATA, "profiles", "slovak", "known.json"), "utf-8")) as { updatedAt: string; words: Record<string, unknown> };
+		const saved = JSON.parse(fs.readFileSync(path.join(TMP_DATA, "profiles", "slovak", "known.json"), "utf-8")) as {
+			updatedAt: string;
+			words: Record<string, unknown>;
+		};
 		assert.deepEqual(saved.words, {});
 		assert.equal(saved.updatedAt, "2026-11-07T12:02:00.000Z");
 	});
@@ -70,12 +77,31 @@ describe("marking words as known", () => {
 		});
 		const { createFauxCore, fauxAssistantMessage } = await import("@earendil-works/pi-ai");
 		const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
-		faux.setResponses([fauxAssistantMessage(JSON.stringify({ t: ["Hello, I have very good coffee.", "It is good and it is cheap.", "A good shop has good coffee every day."] }))]);
+		faux.setResponses([
+			fauxAssistantMessage(
+				JSON.stringify({
+					t: [
+						"Hello, I have very good coffee.",
+						"It is good and it is cheap.",
+						"A good shop has good coffee every day.",
+					],
+				}),
+			),
+		]);
 		const engine = { model: faux.getModel(), streamFn: faux.streamSimple };
-		const before = await watch.prepareVideo("https://youtu.be/knownknown1", { engine, model: "faux:watch", captions, questions: false, now: new Date("2026-11-07T12:20:00Z") });
+		const before = await watch.prepareVideo("https://youtu.be/knownknown1", {
+			engine,
+			model: "faux:watch",
+			captions,
+			questions: false,
+			now: new Date("2026-11-07T12:20:00Z"),
+		});
 		assert.equal(before.measuredAt, "2026-11-07T12:20:00.000Z");
 		const dobry = slugOf("dobrý");
-		assert.ok(before.preTeach.some((w) => w.slug === dobry), "dobrý is not studied, so it is pre-taught");
+		assert.ok(
+			before.preTeach.some((w) => w.slug === dobry),
+			"dobrý is not studied, so it is pre-taught",
+		);
 
 		knownWordStore.set(dobry, "dobrý", true, new Date("2026-11-07T12:30:00Z"));
 		const after1 = watch.remeasureVideo(videoStore.get("knownknown1")!, new Date("2026-11-07T12:31:00Z"));
@@ -84,7 +110,11 @@ describe("marking words as known", () => {
 		assert.equal(after1.measuredAt, "2026-11-07T12:31:00.000Z");
 		assert.equal(after1.measure, MEASURE_VERSION);
 		assert.equal(videoStore.get("knownknown1")!.coverage, after1.coverage, "kept");
-		assert.equal(watch.remeasureVideo(after1, new Date("2026-11-07T12:32:00Z")), after1, "measured after the mark: nothing to do");
+		assert.equal(
+			watch.remeasureVideo(after1, new Date("2026-11-07T12:32:00Z")),
+			after1,
+			"measured after the mark: nothing to do",
+		);
 		assert.equal(watch.currentVideo("knownknown1")!.coverage, after1.coverage);
 	});
 
@@ -99,10 +129,22 @@ describe("marking words as known", () => {
 		rec.segments = rec.segments.map((s) => ({ ...s, rendered: s.sk, sk: s.sk.replace("deň", "den") }));
 		videoStore.put(rec);
 		const again = watch.remeasureVideo(rec, new Date("2026-11-07T12:40:00Z"));
-		assert.equal(again.coverage, videoStore.get("knownknown1")!.coverage, "measured on the rendering, which is the Slovak");
+		assert.equal(
+			again.coverage,
+			videoStore.get("knownknown1")!.coverage,
+			"measured on the rendering, which is the Slovak",
+		);
 		assert.equal(again.coverageEstimated, true);
 		assert.equal(again.measuredAt, "2026-11-07T12:40:00.000Z");
-		const noRendering: VideoRecord = { ...rec, id: "knownknown3", segments: rec.segments.map(({ rendered: _r, ...s }) => s) };
-		assert.equal(watch.remeasureVideo(noRendering, new Date()), noRendering, "without a rendering the estimate is kept");
+		const noRendering: VideoRecord = {
+			...rec,
+			id: "knownknown3",
+			segments: rec.segments.map(({ rendered: _r, ...s }) => s),
+		};
+		assert.equal(
+			watch.remeasureVideo(noRendering, new Date()),
+			noRendering,
+			"without a rendering the estimate is kept",
+		);
 	});
 });

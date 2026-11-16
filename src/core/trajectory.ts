@@ -104,7 +104,11 @@ export function measuredPace(days: readonly TrajectoryDay[], goalMinutes: number
 	const active = recent.filter((d) => d.minutes > 0);
 	if (recent.length >= PACE_WINDOW_DAYS && active.length >= MIN_PACE_DAYS) {
 		const sum = active.reduce((n, d) => n + d.minutes, 0);
-		return { minutesPerDay: Math.max(1, Math.round(sum / active.length)), daysPerWeek: round1((active.length / recent.length) * 7), measured: true };
+		return {
+			minutesPerDay: Math.max(1, Math.round(sum / active.length)),
+			daysPerWeek: round1((active.length / recent.length) * 7),
+			measured: true,
+		};
 	}
 	return { minutesPerDay: goalMinutes, daysPerWeek: goalDays, measured: false };
 }
@@ -136,7 +140,14 @@ export function horizonDays(daysToTarget: number | null): number {
 /** The past: real snapshots (carried over days between them), reconstructed
  *  from the activity before the first one, or from the value now when there
  *  are none. Words are never reconstructed. */
-function buildPast(days: readonly TrajectoryDay[], snaps: ReadonlyArray<number | null>, activity: (d: TrajectoryDay) => number, now: number, reconstruct: boolean, carry: boolean): TrajectoryPoint[] {
+function buildPast(
+	days: readonly TrajectoryDay[],
+	snaps: ReadonlyArray<number | null>,
+	activity: (d: TrajectoryDay) => number,
+	now: number,
+	reconstruct: boolean,
+	carry: boolean,
+): TrajectoryPoint[] {
 	const n = days.length;
 	const at = (i: number) => i - (n - 1);
 	const first = snaps.findIndex((v) => v !== null);
@@ -148,7 +159,8 @@ function buildPast(days: readonly TrajectoryDay[], snaps: ReadonlyArray<number |
 	}
 	const points: TrajectoryPoint[] = [];
 	const anchor = snaps[first]!;
-	if (reconstruct && (c[first] ?? 0) > 0) for (let i = 0; i < first; i++) points.push({ day: at(i), value: (anchor * c[i]!) / c[first]! });
+	if (reconstruct && (c[first] ?? 0) > 0)
+		for (let i = 0; i < first; i++) points.push({ day: at(i), value: (anchor * c[i]!) / c[first]! });
 	const carried = carryForward(snaps);
 	for (let i = first; i < n; i++) {
 		const v = carry ? carried[i] : snaps[i];
@@ -159,7 +171,11 @@ function buildPast(days: readonly TrajectoryDay[], snaps: ReadonlyArray<number |
 
 /** Gain per practice hour from `from` on: the rises between the snapshots,
  *  over the minutes practiced in the same days, placement days left out. */
-function creditedRate(days: readonly TrajectoryDay[], snaps: ReadonlyArray<number | null>, from: number): number | null {
+function creditedRate(
+	days: readonly TrajectoryDay[],
+	snaps: ReadonlyArray<number | null>,
+	from: number,
+): number | null {
 	const carried = carryForward(snaps);
 	const a = carried.findIndex((v, i) => i >= from && v !== null);
 	const b = days.length - 1;
@@ -178,7 +194,12 @@ function measuredRate(days: readonly TrajectoryDay[], snaps: ReadonlyArray<numbe
 	return creditedRate(days, snaps, Math.max(0, days.length - RATE_WINDOW_DAYS)) ?? creditedRate(days, snaps, 0);
 }
 
-export function trajectory(input: TrajectoryInput, metric: TrajectoryMetric, pace: Pick<TrajectoryPace, "minutesPerDay" | "daysPerWeek">, horizon?: number): Trajectory {
+export function trajectory(
+	input: TrajectoryInput,
+	metric: TrajectoryMetric,
+	pace: Pick<TrajectoryPace, "minutesPerDay" | "daysPerWeek">,
+	horizon?: number,
+): Trajectory {
 	const days = input.days;
 	const hoursPerDay = (pace.minutesPerDay / 60) * (pace.daysPerWeek / 7);
 	const recent = days.slice(-PACE_WINDOW_DAYS);
@@ -214,7 +235,12 @@ export function trajectory(input: TrajectoryInput, metric: TrajectoryMetric, pac
 			basis = "measured";
 		} else if (totalLessons > 0) {
 			const recentLessons = recent.reduce((s, d) => s + d.lessons, 0);
-			const lessonsPerHour = recentHours > 0 && recentLessons > 0 ? recentLessons / recentHours : totalHours > 0 ? totalLessons / totalHours : 0;
+			const lessonsPerHour =
+				recentHours > 0 && recentLessons > 0
+					? recentLessons / recentHours
+					: totalHours > 0
+						? totalLessons / totalHours
+						: 0;
 			perHour = (now / totalLessons) * lessonsPerHour;
 		} else {
 			ready = false;
@@ -245,5 +271,16 @@ export function trajectory(input: TrajectoryInput, metric: TrajectoryMetric, pac
 		for (let t = 0; t < span; t += step) future.push({ day: t, value: Math.min(cap, now + ratePerDay * t) });
 		future.push({ day: span, value: Math.min(cap, now + ratePerDay * span) });
 	}
-	return { metric, ready, now, past, future, ratePerDay, perPracticeHour: ready ? perHour : 0, basis, target, daysToTarget: daysTo };
+	return {
+		metric,
+		ready,
+		now,
+		past,
+		future,
+		ratePerDay,
+		perPracticeHour: ready ? perHour : 0,
+		basis,
+		target,
+		daysToTarget: daysTo,
+	};
 }

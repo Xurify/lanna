@@ -29,18 +29,42 @@ describe("ai status", () => {
 	});
 
 	it("a provider's own error becomes a plain message that says which key", () => {
-		assert.match(friendlyAiError(new Error("Provider is not configured: anthropic")), /The anthropic key is missing\. Add it in Settings → API keys/);
+		assert.match(
+			friendlyAiError(new Error("Provider is not configured: anthropic")),
+			/The anthropic key is missing\. Add it in Settings → API keys/,
+		);
 		assert.match(friendlyAiError(new Error("HTTP 401 Unauthorized")), /refused the key/);
 		assert.equal(friendlyAiError(new Error("socket hang up")), "socket hang up");
 	});
 
 	it("a guide asked for with no model says what is missing, not a provider error", async () => {
 		analyzeNow(new Date("2026-11-01T08:00:00Z"));
-		const rep = (ok: boolean) => ({ itemId: "dom#0", slug: "dom", kind: "type" as const, verdict: ok ? ("exact" as const) : ("wrong" as const), first: { given: ok ? "dome" : "dom", verdict: ok ? ("exact" as const) : ("wrong" as const) }, detail: { unit: "loc", lemma: "dom", gloss: "house", sentence: "Bývam v dome.", translation: "x", answer: "dome", given: ok ? "dome" : "dom" } });
+		const rep = (ok: boolean) => ({
+			itemId: "dom#0",
+			slug: "dom",
+			kind: "type" as const,
+			verdict: ok ? ("exact" as const) : ("wrong" as const),
+			first: { given: ok ? "dome" : "dom", verdict: ok ? ("exact" as const) : ("wrong" as const) },
+			detail: {
+				unit: "loc",
+				lemma: "dom",
+				gloss: "house",
+				sentence: "Bývam v dome.",
+				translation: "x",
+				answer: "dome",
+				given: ok ? "dome" : "dom",
+			},
+		});
 		const { recordLesson } = await import("../src/server/lesson.ts");
 		// Enough evidence for a guide (30 first tries, 5 wrong), so the model check is what stops it.
-		recordLesson({ unit: "loc", mode: "lesson", reps: Array.from({ length: 30 }, (_, i) => rep(i >= 5)), tz: 0 }, new Date("2026-11-01T09:00:00Z"));
+		recordLesson(
+			{ unit: "loc", mode: "lesson", reps: Array.from({ length: 30 }, (_, i) => rep(i >= 5)), tz: 0 },
+			new Date("2026-11-01T09:00:00Z"),
+		);
 		analyzeNow(new Date("2026-11-01T09:30:00Z"));
-		await assert.rejects(() => writeGuide({ now: new Date("2026-11-01T10:00:00Z") }), /No model is set\. Pick one in Settings → AI models/);
+		await assert.rejects(
+			() => writeGuide({ now: new Date("2026-11-01T10:00:00Z") }),
+			/No model is set\. Pick one in Settings → AI models/,
+		);
 	});
 });

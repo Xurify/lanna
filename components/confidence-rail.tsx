@@ -38,9 +38,7 @@ export function confidenceRailStyle(value: number): CSSProperties {
 		backgroundColor: "var(--q-well-2)",
 		backgroundImage: [
 			`linear-gradient(90deg, ${color} 0%, ${color} ${value}%, transparent ${value}%, transparent 100%)`,
-			...[30, 50, 70, 90].map(
-				() => "linear-gradient(90deg, var(--q-line-2), var(--q-line-2))",
-			),
+			...[30, 50, 70, 90].map(() => "linear-gradient(90deg, var(--q-line-2), var(--q-line-2))"),
 		].join(", "),
 		backgroundSize: ["100% 100%", "1px 100%", "1px 100%", "1px 100%", "1px 100%"].join(", "),
 		backgroundPosition: ["0 0", ...[30, 50, 70, 90].map((p) => `${p}% 0`)].join(", "),

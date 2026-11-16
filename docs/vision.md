@@ -30,8 +30,8 @@ The global graph is an **objective world-model of the domains the learner has en
 
 Two kinds, no scalars, no encoded strength — prerequisiteness is a spectrum, and we deliberately refuse to formalize the spectrum:
 
-- **`follows`** — `A → B`: B is *derivable* from A (A is a premise of B). If C follows from both A and B, both `A → C` and `B → C` exist; joint requirements are just sibling edges.
-- **`supports`** — `A → B`: A *grounds or justifies* B without entailing it.
+- **`follows`** — `A → B`: B is _derivable_ from A (A is a premise of B). If C follows from both A and B, both `A → C` and `B → C` exist; joint requirements are just sibling edges.
+- **`supports`** — `A → B`: A _grounds or justifies_ B without entailing it.
 
 Strength/depth of dependencies is **derived at read time** from topology (chains, corroboration), never stored — this is the input the future understanding model consumes.
 
@@ -41,7 +41,7 @@ Every node records every **(chat, message) point** where it came up; every edge 
 
 ### Construction: free-form extraction, fully decoupled from sessions (DECIDED 2026-09-02 — supersedes live emission)
 
-*Coverage settled 2026-09-15 — see `vision-extraction-coverage.md`: the message is the unit of coverage (a covered-fingerprint ledger per chat), runs are token-budgeted batches of the oldest uncovered messages, and the trigger is uncovered tokens ≥ a chunk budget (replacing everyNQuizAnswers — quiz-less sessions extract too).*
+_Coverage settled 2026-09-15 — see `vision-extraction-coverage.md`: the message is the unit of coverage (a covered-fingerprint ledger per chat), runs are token-budgeted batches of the oldest uncovered messages, and the trigger is uncovered tokens ≥ a chunk budget (replacing everyNQuizAnswers — quiz-less sessions extract too)._
 
 **Second amendment, reversing the 2026-08-22 live-emission decision.** The session's plan tree is the teacher's scaffolding for the session experience (§2); the global graph does not depend on it — structurally or otherwise. What the teacher formalizes is session-relative; the graph must not inherit those choices. (The original design doc's post-hoc stance was right after all.)
 
@@ -87,15 +87,15 @@ Known vs. understood, event ledger as source of truth, derived state recomputed 
 When the graph fills up, the canvas needs a readable at-a-glance structure: **clusters** — objective regions of the world model (domains like "Lacanian psychoanalysis" or "photosynthesis"), discovered by **community detection** on the `follows`/`supports` edges. A community = nodes linked to each other far more than to the rest (modularity). Everything about them is **entirely inferred from the graph data** — the extraction/audit pipeline never knows clusters exist.
 
 - **Algorithm: Louvain (modularity maximization), seeded for determinism.** In-stack via graphology's ecosystem, near-linear, scales far beyond our sizes. Determinism gives reproducibility (same graph → same clusters); the seed/graphology choice also keeps the upgrade path open: Louvain's dendrogram contains **hierarchy** — "math ⊃ differential calculus ⊃ chain rule" is one level down — deliberately NOT built now (multi-scale clusters stay parked). Dismissed: Leiden (better resolution guarantees, no JS port), Infomap (heuristic-strong, heavier, weaker JS support), Girvan–Newman (O(n³)), label propagation (unstable), spectral (needs k handed in).
-- **Structure, not layout.** Clusters are a pure function of the *edges*, never of the visual layout. The force-directed layout already places structurally-close nodes together, so cluster hulls will look contiguous — but cluster identity must not inherit the layout's seed dependence and drift.
+- **Structure, not layout.** Clusters are a pure function of the _edges_, never of the visual layout. The force-directed layout already places structurally-close nodes together, so cluster hulls will look contiguous — but cluster identity must not inherit the layout's seed dependence and drift.
 - **Derived, cached, auto-updated.** Clusters recompute when the ledger changes, cached against a graph version stamp — same doctrine as states and strengths: derived never stored, nothing hand-maintained.
 - **Size-gated meaning.** Only communities ≥ ~3 nodes render as clusters (threshold tunable on real data) — a visible blob always means "a real domain"; lone nodes and tiny communities stay plain.
 - **Naming: one cheap LLM call per new/changed cluster** — a single call (no agent loop) with the members' names + statements, producing a short domain label. Never part of extraction; a separate, cached seam.
 - **Labeling persistence — the core-survival rule.** Each labeling record (append-only, like everything we persist) stores the label AND the member set it was produced with (the **core**). A recomputed community **keeps** its label while ≥ half its members are from that core; when under half are, it **relabels** with all current nodes (a new record is appended — old records stay as history: an audit trail of how the domains were named over time). Single successor: on splits/merges the strongest-overlap community inherits, the others get fresh labelings; a core with no ≥50% successor simply has no living heir. Cluster color keys to the labeling record — color survives exactly as long as the label does.
-- **Rendering: glow blobs behind everything.** A dashed boundary encloses the cluster's hull; the fill is blurred, low-opacity, and sits *behind* the whole graph (edges and nodes float above it, so the blur naturally fogs the inter-cluster space). Per-cluster stable hue. **Cluster labels are inverse-gated** against the existing camera-ratio span: zoomed out = **domain view** (cluster labels on, node labels off), zoomed in = **proposition view** (node labels on, cluster labels faded) — one symmetric transition between the two views of one canvas.
+- **Rendering: glow blobs behind everything.** A dashed boundary encloses the cluster's hull; the fill is blurred, low-opacity, and sits _behind_ the whole graph (edges and nodes float above it, so the blur naturally fogs the inter-cluster space). Per-cluster stable hue. **Cluster labels are inverse-gated** against the existing camera-ratio span: zoomed out = **domain view** (cluster labels on, node labels off), zoomed in = **proposition view** (node labels on, cluster labels faded) — one symmetric transition between the two views of one canvas.
 - **Boundary geometry: computed at draw time, never stored** — a pure function of the member positions. This is the constraint that keeps future physics/moving nodes (likely not implemented soon) from invalidating anything: convex hull + padding + rounded corners is cheap per-frame; organic metaball hulls are the same family. Secondary until then.
-- **Inter-cluster edges stay visible.** Bridges between domains are meaningful (Nietzsche's will-to-power *follows* Schopenhauer's will) — one of the most informative reads of the clustered view, not clutter.
-- **Honest risk: sparsity.** Community detection wants density contrast, and the current real graph is thin — the 2k-node synthetic benchmark (open question 1) is the *primary* validation of clustering quality, not just of layout/render speed.
+- **Inter-cluster edges stay visible.** Bridges between domains are meaningful (Nietzsche's will-to-power _follows_ Schopenhauer's will) — one of the most informative reads of the clustered view, not clutter.
+- **Honest risk: sparsity.** Community detection wants density contrast, and the current real graph is thin — the 2k-node synthetic benchmark (open question 1) is the _primary_ validation of clustering quality, not just of layout/render speed.
 
 ### Rendering (DECIDED — research report 2026-08-22)
 
@@ -107,15 +107,15 @@ When the graph fills up, the canvas needs a readable at-a-glance structure: **cl
 - **Pan/zoom** built in; hover/click events (`enterNode`, `clickNode`) free. Typed edges: `EdgeArrowProgram` and/or two edge colors for `follows` vs `supports`.
 - **React integration:** thin ~40-line `useEffect` wrapper (sigma is imperative; `@react-sigma/core` exists but is optional).
 - **Obsidian internals (confirmed by research):** PixiJS **WebGL** renderer (canvas fallback), custom d3-force-style simulation (its four force sliders map 1:1 onto d3-force primitives), zoom-gated label fade, alpha-decay settling. Our chosen stack reproduces that feel with a documented, maintained library.
-- Rejected: vis-network / cytoscape.js (Canvas 2D, 3× bundle, editing features we don't need), react-force-graph-2d (best freeze API but heaviest dep tree; its strength is *animated* simulation, which we explicitly don't want), cosmos.gl (GPU forces — overkill below ~10k nodes).
+- Rejected: vis-network / cytoscape.js (Canvas 2D, 3× bundle, editing features we don't need), react-force-graph-2d (best freeze API but heaviest dep tree; its strength is _animated_ simulation, which we explicitly don't want), cosmos.gl (GPU forces — overkill below ~10k nodes).
 - Pre-implementation validation (cheap): 2k-node synthetic benchmark to confirm layout time + render smoothness before committing.
 - Physics is for **placement only** — no dragging, no sliders, no editing interactions. Pan + zoom only.
 
 ### The graph as session context (DECIDED 2026-08-22)
 
-*Selection problem V1 settled 2026-09-14 — see `vision-context-injection.md`: semantic-closeness top-K under a per-session token budget, delivered as a steer. The structural-neighborhood and diagnostic-hotspot strategies below stay parked.*
+_Selection problem V1 settled 2026-09-14 — see `vision-context-injection.md`: semantic-closeness top-K under a per-session token budget, delivered as a steer. The structural-neighborhood and diagnostic-hotspot strategies below stay parked._
 
-Every session starts with the learner's knowledge graph as base context for the teacher. This is what makes probing *precise* — probe questions can target subtleties and nuances at the boundary of what the learner actually holds, instead of re-discovering it from scratch each session. Personalization compounds across sessions.
+Every session starts with the learner's knowledge graph as base context for the teacher. This is what makes probing _precise_ — probe questions can target subtleties and nuances at the boundary of what the learner actually holds, instead of re-discovering it from scratch each session. Personalization compounds across sessions.
 
 **The selection problem (open):** the whole graph may eventually be too much context, and pedagogical relevance ≠ semantic closeness. What matters for a new topic: (a) its **structural neighborhood** — the `follows`-edge subtree the topic stands on, regardless of surface similarity; (b) **diagnostic hotspots** — nodes the ledger marks as shaky / misunderstood / misconceived, anywhere in the graph (a live misconception — events showing the learner holds a node wrong — is always relevant context); (c) the frontier strip near the topic. Candidate strategies, to tune on real data: whole graph while it's small; k-hop structural neighborhood around the topic's nodes; ledger-informed slices (weak/misconceived/floating first); a cheap routing pass that picks subtrees given the session topic.
 
@@ -152,31 +152,32 @@ The most general and capable demo runtime is the one we already ship: **the web 
 - **The contract matters more than the tech:** (a) a tiny auto-injected bridge script — ResizeObserver → postMessage → parent sizes the iframe; (b) `window.onerror` capture posted to the parent → error chip on the demo → learner (or auto-flow) sends the error back to the teacher, which fixes and re-issues the demo. The fix loop is where Artifacts-quality emerges. (c) Re-calling the tool = a new version of the artifact.
 - **Persistence is free:** the HTML lives in the message's tool part, so demos re-render on session reload.
 - **Python: deferred.** Pyodide (WASM CPython; numpy works; matplotlib renders static figures) is the only no-server path — heavy (10–20 MB lazy download) and poor at interactivity (static-image-oriented re-rendering). Revisit when a session genuinely wants numpy-grade computation. **Server-side Python: rejected** (sandbox infrastructure, portability).
-- The system prompt should push demos the way it pushes diagrams: *if the concept is dynamic — a parameter to sweep, a process to animate, a distribution to sample — build the instrument, don't describe it.*
+- The system prompt should push demos the way it pushes diagrams: _if the concept is dynamic — a parameter to sweep, a process to animate, a distribution to sample — build the instrument, don't describe it._
 
 ### Notes, thinking out loud, and dictation (DECIDED direction; build later)
 
 The note field is not an auxiliary input — it's the channel where the learner **reasons out loud**. The lesson should evolve from it: the teacher is prompted to elicit yapping ("talk me through your reasoning"), to reference the learner's own words later, and notes feed the graph as diagnostic events (per the design doc: notes are calibration gold). Notes get more prominent treatment in the UI.
 
 **Dictation is a requirement, not a luxury** — yapping means talking, not typing. What it requires on the web:
+
 1. **Capture:** `getUserMedia` + AudioWorklet → 16 kHz linear16 PCM (browser-native; replaces the pi extension's sox/`rec`).
 2. **Transport + transcription:** the pi `dictate` extension's proven recipe ports directly — Deepgram streaming (`nova-3`, `smart_format`, `punctuate`, `endpointing=300`), per-utterance finals. Architecture: a server route mints a **short-lived Deepgram token**, the browser connects to Deepgram's WSS directly (API key never touches the client). On-device whisper (transformers.js/WebGPU) is the private/offline alternative — deferred unless Deepgram disappoints.
 3. **UX:** mic button in the composer blob; live level meter (AnalyserNode — the pi extension's responsive visuals rebuilt for web); transcript lands in the textarea/field, editable before send; Escape cancels; **a finished dictation is never lost** (carried over from the pi extension's hard-won UX lessons).
 
 ### It is not a chat — the presentation principle (direction, 2026-08-22 — LOW PRIORITY)
 
-A session is functionally a conversation — the learner talks, reasons, and steers constantly; that two-way flow is *how it works best*. But it must never be **presented** as a chat. Forget the chat interface entirely. The resolution of this paradox:
+A session is functionally a conversation — the learner talks, reasons, and steers constantly; that two-way flow is _how it works best_. But it must never be **presented** as a chat. Forget the chat interface entirely. The resolution of this paradox:
 
-**Asymmetry of artifact.** In a chat, both parties produce the same object (messages) in the same lane — that's what makes it *look* like a chat. In a lesson, the two parties produce fundamentally different kinds of things:
+**Asymmetry of artifact.** In a chat, both parties produce the same object (messages) in the same lane — that's what makes it _look_ like a chat. In a lesson, the two parties produce fundamentally different kinds of things:
 
-- **The teacher writes the document.** Prose, sections, diagrams, demos, checks — the teacher's output is structural; it becomes the lesson artifact itself. The teacher doesn't "send messages"; it *writes the lesson*. (The whiteboard.)
-- **The learner writes in the margins.** Responses, questions, reasoning, yaps — contributory, anchored to points in the document. (The floor / the voice.) *(Amended below: intact interjection cards in the spine; margins become a view, not storage.)*
+- **The teacher writes the document.** Prose, sections, diagrams, demos, checks — the teacher's output is structural; it becomes the lesson artifact itself. The teacher doesn't "send messages"; it _writes the lesson_. (The whiteboard.)
+- **The learner writes in the margins.** Responses, questions, reasoning, yaps — contributory, anchored to points in the document. (The floor / the voice.) _(Amended below: intact interjection cards in the spine; margins become a view, not storage.)_
 
 Two different instruments, not two identical keyboards. Consequences:
 
 - **Bubbles die.** Teacher text renders as document typography (headings, prose, full-width blocks). Learner text renders as annotation blocks (bordered note cards, anchored quotes) — never right-aligned bubbles.
 - **The unit is the block, not the message.** Sections, paragraphs, diagrams, demos, checks, Q&A boxes, margin notes.
-- **Chronology yields to structure.** *(Amended below: one chronological spine; structure enters via typed blocks and the link overlay, not relocation.)*
+- **Chronology yields to structure.** _(Amended below: one chronological spine; structure enters via typed blocks and the link overlay, not relocation.)_
 - **Q&A becomes document furniture.** A learner question renders as a quoted card with the teacher's answer as prose beneath — a textbook "reader question" box, not a turn pair.
 - **The composer becomes a response field.** Same floating blob, reframed: its output lands as an annotation anchored to the current position, not as the next bubble in a stream.
 - What stays: turn-taking underneath — the LLM still sees a conversation. This is a **presentation-layer** change, not an interaction-model change.
@@ -185,20 +186,20 @@ References: textbook marginalia, Hypothesis/Genius annotations, Observable noteb
 
 ### Refinement: the spine and the interjection (2026-08-22, after feedback)
 
-The margin model above has two real flaws, spotted in review: (a) **placement** — when a learner sends one big yap with questions about many different things, routing fragments to the right anchors needs an unreliable split-and-route step; (b) **receipt & chronology** — scattering the learner's block across margins means they hit send and *nothing visibly happens*, and the when/what of their own contribution is lost. Also: session value is mostly **in the moment** — past sessions are rarely revised — so optimizing for the re-readable artifact was misprioritized (and HTML export is deprioritized).
+The margin model above has two real flaws, spotted in review: (a) **placement** — when a learner sends one big yap with questions about many different things, routing fragments to the right anchors needs an unreliable split-and-route step; (b) **receipt & chronology** — scattering the learner's block across margins means they hit send and _nothing visibly happens_, and the when/what of their own contribution is lost. Also: session value is mostly **in the moment** — past sessions are rarely revised — so optimizing for the re-readable artifact was misprioritized (and HTML export is deprioritized).
 
 The evolved model keeps the chat-killing (asymmetry) and drops the relocation:
 
 - **One chronological spine.** Everything renders in time order at the frontier. The learner's block stays **intact, visible, and timestamped** — always.
 - **The learner block is an "interjection" card, not a bubble.** A distinct block species: full-width, tinted, left rule, `You · 3:41 PM` kicker (mic badge when dictated). Never right-aligned, never a bubble. Chat-ness dies by **type asymmetry and document typography**, not by relocating the learner's words.
 - **The teacher's reply is woven document content.** A multi-question yap gets a **Q&A interlude**: the teacher quotes each fragment and answers in prose beneath it (LLMs are natively great at quote-then-answer — contextuality without moving the learner's text). The send moment pays off structurally: tree may visibly update (detour nodes), then the interlude writes itself.
-- **Anchoring survives as a link overlay, never a relocation.** When a question clearly refers to an earlier passage, a deep link is attached (and a backlink on the passage: "questioned here ↩"). The margin/panel can later *show* "questions attached to this node" as a computed **view** — a lens, not storage. No scattering; chronology intact; the revision aid is preserved as a byproduct.
+- **Anchoring survives as a link overlay, never a relocation.** When a question clearly refers to an earlier passage, a deep link is attached (and a backlink on the passage: "questioned here ↩"). The margin/panel can later _show_ "questions attached to this node" as a computed **view** — a lens, not storage. No scattering; chronology intact; the revision aid is preserved as a byproduct.
 
 ### Structural identity — how a session differs from a chat (ideation, 2026-08-22)
 
 A chat has two bubble types, amnesia per message, and no state. What the medium lets us do instead — strongest candidates first:
 
-1. **The transcript becomes the lesson document.** Not a flat message list — a document **sectioned by tree node**, written live: each section headed by its node, collapsible, the current section highlighted. The artifact produced is a generated textbook chapter, not a chat log. Navigating the tree navigates the document. *(The biggest single break from chat-shaped UX.)*
+1. **The transcript becomes the lesson document.** Not a flat message list — a document **sectioned by tree node**, written live: each section headed by its node, collapsible, the current section highlighted. The artifact produced is a generated textbook chapter, not a chat log. Navigating the tree navigates the document. _(The biggest single break from chat-shaped UX.)_
 2. **Gated progression.** Checks are gates, not chat: demonstrating understanding is what advances the tree — nodes visibly complete, next ones unlock, and at forks **the learner chooses the branch** ("two ways from here — pick"). ChatGPT never gates anything.
 3. **Typed blocks with distinct visual grammar.** Teach / check / demo / diagram / learner-reasoning / Q&A — six block types with six looks, vs. chat's two bubbles.
 4. **Session state always visible.** A thin persistent strip: current node, phase, what's been established so far this session, the current node's prerequisites. The anti-amnesia surface.
@@ -243,12 +244,12 @@ The teacher's context window and attention are precious — it has the lesson to
 ## 4. Roadmap (dependency-ordered)
 
 1. **Plan-tree tools + session state** — structured tools, tree persisted in the chat store, `set_current` tracking. (Everything else depends on this.) **✅ Wave 1 (W1): 8 DAG-validated tools, prompt fragment, live-verified (plan_init + set_current in a real session).**
-2. **Bare-bones global graph + home view** — live emission from tree tools into a graph store, naive-union merge, home page renders it with the chosen lightweight renderer. *This is the "see something appear even from a partial session" milestone.* **✅ Wave 2 (W4): JSONL ledgers, idempotent emission, sigma.js + forceAtlas2 home view, foldStaleChats catch-up. Live-verified.**
+2. **Bare-bones global graph + home view** — live emission from tree tools into a graph store, naive-union merge, home page renders it with the chosen lightweight renderer. _This is the "see something appear even from a partial session" milestone._ **✅ Wave 2 (W4): JSONL ledgers, idempotent emission, sigma.js + forceAtlas2 home view, foldStaleChats catch-up. Live-verified.**
 3. **Phase separation** — probe/teach marker, transcript divider, collapsed teach-phase checks. **✅ Wave 2 (W5): phaseAt from first plan_init, "Teaching · N nodes" divider, invitation bar + reveal. Live-verified.**
 4. **Right-panel tree view** — persistent, current-position highlight. **✅ Wave 3 (W7): topo order, done/current/next/upcoming, progress header, collapse-to-rail persisted. Live-verified.**
 5. **Background consolidation → free-form extraction pipeline** — merge adjudication, calibration, prose-only edges. **◐ Wave 3 (W8, lite) shipped exact/alias-match merge + graph-as-context injection. Superseded direction (2026-09-02): the pipeline becomes free-form post-hoc extraction (extractor session-only → auditor with global-graph identity judgment → deterministic merger), tree-blind, message-granular provenance, no taught events, per-proposition understanding notes. Minimal implementation of the §1 philosophy next.**
 6. **Demo capability** — the `demo` artifact contract (sandboxed iframe, error-fix loop) + the **demo-builder sub-agent** that tests code before delivery (§2.5). High value; slots in any time after step 1. **✅ Wave 2 (W6): demo + visual tools, verifying builders (headless Chrome), sandboxed demo card, SVG card. Live-verified (visual needs a vision-capable LH_VISUAL_MODEL).**
-6b. **Researcher tool** — fact verification for the teacher (§2.5); cheap port of proven pi pieces. **✅ Wave 1 (W2): async job protocol, live activity card, sourced brief, teacher continuation. Live-verified.**
+   6b. **Researcher tool** — fact verification for the teacher (§2.5); cheap port of proven pi pieces. **✅ Wave 1 (W2): async job protocol, live activity card, sourced brief, teacher continuation. Live-verified.**
 7. **Presentation fixes** — LaTeX delimiters, line breaks, mermaid integration. **✅ Wave 1 (W3): \(…\)/\[…\] contract ($ literal forever), remark-breaks, dark mermaid + styled streamdown chrome. Live-verified.**
 8. **Structural-identity candidates** (from §2 ideation, pending selection): sectioned lesson-document transcript, gated progression, typed blocks, session-state strip.
 9. **Later:** dictation (Deepgram token-mint + AudioWorklet capture), frontier expansion + what-next queries (new territory / repairs / conversions), spaced repetition on the event ledger, practice exercises, Electron.
@@ -270,17 +271,17 @@ The teacher's context window and attention are precious — it has the lesson to
 
 ## Amendments to the vault design doc (2025-08-20) — summary
 
-| Original | Now |
-|---|---|
-| Teacher never modified; graph built post-hoc | Post-hoc again (2026-09-02): free-form extraction, fully decoupled from the session's formalism — the 2026-08-22 live-emission reversal is itself reversed |
-| Misconception nodes as first-class structure | No node `kind`: every node is a true proposition; misconceptions enter as true corrections, wrongness lives in the event ledger |
-| `requires` edges | `follows` / `supports` — derivability vs. grounding; strength derived at read time, never stored |
-| `taught` events (marking things done) | Dropped; the extractor records per-proposition understanding notes (named-word scale) as session-scoped observations instead |
-| Understanding scale standardized (2026-09-08) | The note becomes a closed five-word scale (`solid`/`shaky`/`accepted`/`resisted`/`not yet engaged`), enforced by the extraction schema — no numbers, no prose; agent justifications are dropped |
-| Chat-granular node/edge provenance | Message-granular (chat, message) provenance on nodes and edges — the exact derivation points |
-| `name` + `statement` on nodes | `statement` (minimal proposition, the rendering label) + `description` (required elaboration) + `aliases` (verbatim phrasings) |
-| `statement` + `description` (2026-09-02) | `name` (very short label, the rendering handle) + `statement` (full precision, identity anchor, detail card); `description` dropped — full-sentence canvas labels cluttered the graph (2026-09-08, seeing real extracted data) |
-| Updates per completed session | Continuous; partial sessions deposit value |
-| Mermaid DAG as the plan artifact | Structured tools as source of truth; mermaid only for ad-hoc diagrams |
-| UI deferred, "not important" | UI exists (Next.js, v3.4); the graph view is the app's home page |
-| pi as core dependency | pi removed; harness is standalone Next.js + Vercel AI SDK |
+| Original                                      | Now                                                                                                                                                                                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Teacher never modified; graph built post-hoc  | Post-hoc again (2026-09-02): free-form extraction, fully decoupled from the session's formalism — the 2026-08-22 live-emission reversal is itself reversed                                                                     |
+| Misconception nodes as first-class structure  | No node `kind`: every node is a true proposition; misconceptions enter as true corrections, wrongness lives in the event ledger                                                                                                |
+| `requires` edges                              | `follows` / `supports` — derivability vs. grounding; strength derived at read time, never stored                                                                                                                               |
+| `taught` events (marking things done)         | Dropped; the extractor records per-proposition understanding notes (named-word scale) as session-scoped observations instead                                                                                                   |
+| Understanding scale standardized (2026-09-08) | The note becomes a closed five-word scale (`solid`/`shaky`/`accepted`/`resisted`/`not yet engaged`), enforced by the extraction schema — no numbers, no prose; agent justifications are dropped                                |
+| Chat-granular node/edge provenance            | Message-granular (chat, message) provenance on nodes and edges — the exact derivation points                                                                                                                                   |
+| `name` + `statement` on nodes                 | `statement` (minimal proposition, the rendering label) + `description` (required elaboration) + `aliases` (verbatim phrasings)                                                                                                 |
+| `statement` + `description` (2026-09-02)      | `name` (very short label, the rendering handle) + `statement` (full precision, identity anchor, detail card); `description` dropped — full-sentence canvas labels cluttered the graph (2026-09-08, seeing real extracted data) |
+| Updates per completed session                 | Continuous; partial sessions deposit value                                                                                                                                                                                     |
+| Mermaid DAG as the plan artifact              | Structured tools as source of truth; mermaid only for ad-hoc diagrams                                                                                                                                                          |
+| UI deferred, "not important"                  | UI exists (Next.js, v3.4); the graph view is the app's home page                                                                                                                                                               |
+| pi as core dependency                         | pi removed; harness is standalone Next.js + Vercel AI SDK                                                                                                                                                                      |

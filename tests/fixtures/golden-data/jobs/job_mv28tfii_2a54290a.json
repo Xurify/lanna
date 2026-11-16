@@ -9,7 +9,7 @@
 	"updatedAt": "2026-10-10T10:20:09.331Z",
 	"error": "Invalid PDF structure.",
 	"result": {
-		"path": "/Users/amos/Downloads/test_session/test.txt",
+		"path": "/Users/learner/Downloads/test_session/test.txt",
 		"question": "This is a wiring test, not a real extraction job. There is no PDF involved: the path given points to a plain-text file containing only the word \"test\". Please confirm receipt of the job, say hi, and state plainly that no PDF content was available to read.",
 		"brief": "PDF failed: Invalid PDF structure.",
 		"pagesRead": [],

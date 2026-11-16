@@ -63,9 +63,19 @@ export function missNoteSettled(note: Pick<MissNote, "status" | "attempts">): bo
 	return note.status !== "rejected" || (note.attempts ?? 1) >= MISS_NOTE_ATTEMPTS;
 }
 
-const PART_OF_SPEECH: Readonly<Record<string, string>> = { Nouns: "noun", Verbs: "verb", Adjectives: "adjective", Adverbs: "adverb" };
+const PART_OF_SPEECH: Readonly<Record<string, string>> = {
+	Nouns: "noun",
+	Verbs: "verb",
+	Adjectives: "adjective",
+	Adverbs: "adverb",
+};
 
-function noteWord(entry: LexiconEntry, member: "a" | "b", from: ReturnType<typeof twinSentences>, tag: string): NoteWord {
+function noteWord(
+	entry: LexiconEntry,
+	member: "a" | "b",
+	from: ReturnType<typeof twinSentences>,
+	tag: string,
+): NoteWord {
 	const prefix = member === "a" ? "A" : "B";
 	const sentences = from
 		.filter((s) => s.member === member)
@@ -76,7 +86,14 @@ function noteWord(entry: LexiconEntry, member: "a" | "b", from: ReturnType<typeo
 		.slice(0, NOTE_SENTENCES)
 		.map((x, i) => ({ id: `${prefix}${i + 1}`, ...x }));
 	const pos = PART_OF_SPEECH[entry.cat];
-	return { slug: entry.slug, lemma: entryLemma(entry), gloss: entry.en, ...(pos ? { partOfSpeech: pos } : {}), sentences, forms: formsOfEntry(entry, tag) };
+	return {
+		slug: entry.slug,
+		lemma: entryLemma(entry),
+		gloss: entry.en,
+		...(pos ? { partOfSpeech: pos } : {}),
+		sentences,
+		forms: formsOfEntry(entry, tag),
+	};
 }
 
 export function missNoteEvidence(x: LexiconEntry, y: LexiconEntry, tag = "sk-SK"): MissNoteEvidence {
@@ -93,7 +110,9 @@ function evidenceBlock(e: MissNoteEvidence): string {
 	return e.words
 		.map((w, i) => {
 			const head = `Word ${i === 0 ? "A" : "B"}: "${w.lemma}"${w.partOfSpeech ? `, ${w.partOfSpeech}` : ""}. Dictionary: "${w.gloss}".`;
-			const lines = w.sentences.length ? w.sentences.map((s) => `  ${s.id}: ${s.text} = ${s.en}`) : ["  (no sentences)"];
+			const lines = w.sentences.length
+				? w.sentences.map((s) => `  ${s.id}: ${s.text} = ${s.en}`)
+				: ["  (no sentences)"];
 			return [head, ...lines].join("\n");
 		})
 		.join("\n");
@@ -108,11 +127,11 @@ export function missNoteBrief(e: MissNoteEvidence, language: string): string {
 		`A learner mixed up the ${language} words "${a.lemma}" and "${b.lemma}". Say what tells them apart, in one or two short sentences of plain English.`,
 		"",
 		"Use ONLY the evidence below: the dictionary glosses and the sentences with their translations. Do not use anything you know about the language that is not shown here.",
-		"- Say only what these glosses and sentences show. If they show no clear difference in meaning or use, set \"differ\" to false and leave \"note\" empty. That is better than a guess.",
+		'- Say only what these glosses and sentences show. If they show no clear difference in meaning or use, set "differ" to false and leave "note" empty. That is better than a guess.',
 		"- Do not name a grammar category (a case, aspect, perfective, register, formal, colloquial and the like) unless the evidence names it.",
 		`- Put every ${language} word or phrase in *asterisks*, and use only words that appear in the evidence. Name both words.`,
 		`- At most ${NOTE_ASKED_WORDS} words.`,
-		"- In \"cites\", list the ids of the sentences that show the difference, at least one for each word.",
+		'- In "cites", list the ids of the sentences that show the difference, at least one for each word.',
 		"",
 		evidenceBlock(e),
 		"",
@@ -200,9 +219,14 @@ export function verifyMissNote(draft: MissNoteDraft, e: MissNoteEvidence, tag = 
 		if (unknown) return { ok: false, reason: `"${unknown}" is not in the evidence` };
 	}
 	const outside = note.replace(/\*[^*]+\*/g, " ");
-	const englishText = e.words.map((w) => `${w.gloss} ${w.partOfSpeech ?? ""} ${w.sentences.map((s) => s.en).join(" ")}`).join(" ").toLowerCase();
+	const englishText = e.words
+		.map((w) => `${w.gloss} ${w.partOfSpeech ?? ""} ${w.sentences.map((s) => s.en).join(" ")}`)
+		.join(" ")
+		.toLowerCase();
 	const evidenceWords = new Set(words(englishText));
-	const slovakLooking = (t: string) => NON_ASCII_LETTER.test(t) || (t.length > SHARED_SHORT_WORD && known.has(exact(t)) && !evidenceWords.has(t.toLowerCase()));
+	const slovakLooking = (t: string) =>
+		NON_ASCII_LETTER.test(t) ||
+		(t.length > SHARED_SHORT_WORD && known.has(exact(t)) && !evidenceWords.has(t.toLowerCase()));
 	const loose = words(outside).find(slovakLooking);
 	if (loose) return { ok: false, reason: `"${loose}" is outside the asterisks` };
 	const phrase = (text: string) => ` ${words(text).map(key).join(" ")} `;
@@ -217,7 +241,8 @@ export function verifyMissNote(draft: MissNoteDraft, e: MissNoteEvidence, tag = 
 	const bad = draft.cites.find((c) => !ids.has(c));
 	if (bad) return { ok: false, reason: `cites ${bad}, which does not exist` };
 	for (const [i, w] of e.words.entries()) {
-		if (w.sentences.length && !draft.cites.some((c) => ids.get(c) === i)) return { ok: false, reason: `cites no sentence of ${w.lemma}` };
+		if (w.sentences.length && !draft.cites.some((c) => ids.get(c) === i))
+			return { ok: false, reason: `cites no sentence of ${w.lemma}` };
 	}
 	return { ok: true };
 }
@@ -245,8 +270,22 @@ export function parseJudgement(text: string): MissNoteJudgement | null {
 	return { supported: o.supported, ...(problem ? { problem } : {}) };
 }
 
-export function missNoteRecord(e: MissNoteEvidence, draft: MissNoteDraft | null, raw: string, meta: { model: string; now: Date; cost?: number; ms?: number }, tag = "sk-SK"): MissNote {
-	const base = { key: e.key, words: [e.words[0].lemma, e.words[1].lemma] as [string, string], raw, model: meta.model, created: meta.now.toISOString(), ...(meta.cost !== undefined ? { cost: meta.cost } : {}), ...(meta.ms !== undefined ? { ms: meta.ms } : {}) };
+export function missNoteRecord(
+	e: MissNoteEvidence,
+	draft: MissNoteDraft | null,
+	raw: string,
+	meta: { model: string; now: Date; cost?: number; ms?: number },
+	tag = "sk-SK",
+): MissNote {
+	const base = {
+		key: e.key,
+		words: [e.words[0].lemma, e.words[1].lemma] as [string, string],
+		raw,
+		model: meta.model,
+		created: meta.now.toISOString(),
+		...(meta.cost !== undefined ? { cost: meta.cost } : {}),
+		...(meta.ms !== undefined ? { ms: meta.ms } : {}),
+	};
 	if (!draft) return { ...base, status: "rejected", reason: "not the JSON asked for" };
 	if (!draft.differ) return { ...base, status: "none" };
 	const check = verifyMissNote(draft, e, tag);

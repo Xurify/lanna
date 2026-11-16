@@ -18,5 +18,7 @@ export async function POST(req: Request) {
 	const sentence = str(body?.sentence);
 	const answer = str(body?.answer, 120);
 	if (!sentence || !answer) return Response.json({ message: "sentence and answer are required" }, { status: 400 });
-	return Response.json(openWhy({ title: str(body?.title, 120), sentence, answer, lemma: str(body?.lemma, 80), given: str(body?.given) }));
+	return Response.json(
+		openWhy({ title: str(body?.title, 120), sentence, answer, lemma: str(body?.lemma, 80), given: str(body?.given) }),
+	);
 }

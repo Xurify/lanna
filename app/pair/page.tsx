@@ -14,6 +14,7 @@ export default async function PairPage({ searchParams }: { searchParams: Promise
 
 /** Where to go once paired: a path inside the app. Never another origin, and never back to this page. */
 function safeNext(path: string | undefined): string {
-	if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\") || path.startsWith("/pair")) return "/";
+	if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\") || path.startsWith("/pair"))
+		return "/";
 	return path;
 }

@@ -7,7 +7,18 @@ import { usePathname, useRouter } from "next/navigation";
 import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
-import { CheckIcon, MessagesSquareIcon, PlusIcon, ListChecksIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, SearchIcon, SettingsIcon, Trash2Icon, XIcon } from "lucide-react";
+import {
+	CheckIcon,
+	MessagesSquareIcon,
+	PlusIcon,
+	ListChecksIcon,
+	PanelLeftCloseIcon,
+	PanelLeftOpenIcon,
+	SearchIcon,
+	SettingsIcon,
+	Trash2Icon,
+	XIcon,
+} from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
 import { LhMark } from "@/components/lh-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -15,7 +26,11 @@ import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
 import { SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_WIDTH_COOKIE, clampSidebarWidth } from "@/lib/sidebar-size";
-import { preloadSettingsDialog, SettingsDialogProvider, useSettingsDialog } from "@/components/settings/settings-context";
+import {
+	preloadSettingsDialog,
+	SettingsDialogProvider,
+	useSettingsDialog,
+} from "@/components/settings/settings-context";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +48,6 @@ import { stopSpeaking } from "@/components/speech";
  * session. Open state persists across pages (provider lives in the root
  * layout) and across reloads (localStorage).
  */
-
 
 /*
  * Narrow-window behavior (owner, 2026-09-17): below SIDEBAR_AUTOCLOSE the
@@ -55,7 +69,10 @@ import type { ChatGPTControlBridge, NativeSubscriptionControlBridge } from "@/sr
 import type { UpdateState } from "@/components/settings/update-settings.tsx";
 
 // Only needed once the learner selects text, so it stays out of the first load.
-const SelectionWordBankBar = dynamic(() => import("@/components/words/selection-word-bank").then((m) => m.SelectionWordBankBar), { ssr: false });
+const SelectionWordBankBar = dynamic(
+	() => import("@/components/words/selection-word-bank").then((m) => m.SelectionWordBankBar),
+	{ ssr: false },
+);
 const SIDEBAR_AUTOCLOSE = 900;
 
 /* Phone widths, and touch tablets below lg, in the plain browser: the sidebar becomes
@@ -68,7 +85,8 @@ const PHONE_QUERY = "(width < 48rem), (pointer: coarse) and (width < 64rem)";
 // Module scope, guarded for SSR (the server has no navigator).
 // The preload bridge is the shell's identity: the user agent no longer
 // names Electron (electron/main.cjs strips it so embedded YouTube plays).
-const IS_ELECTRON = typeof window !== "undefined" && (!!window.lh?.platform || navigator.userAgent.includes("Electron"));
+const IS_ELECTRON =
+	typeof window !== "undefined" && (!!window.lh?.platform || navigator.userAgent.includes("Electron"));
 
 declare global {
 	interface Window {
@@ -140,7 +158,6 @@ const SidebarContext = createContext<{
 	setWidth: () => {},
 });
 
-
 export function useSidebar() {
 	return useContext(SidebarContext);
 }
@@ -154,7 +171,15 @@ function isTaskRoute(pathname: string | null): boolean {
 	return TASK_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 }
 
-export function SidebarProvider({ children, defaultCollapsed = false, defaultWidth = SIDEBAR_MAX }: { children: React.ReactNode; defaultCollapsed?: boolean; defaultWidth?: number }) {
+export function SidebarProvider({
+	children,
+	defaultCollapsed = false,
+	defaultWidth = SIDEBAR_MAX,
+}: {
+	children: React.ReactNode;
+	defaultCollapsed?: boolean;
+	defaultWidth?: number;
+}) {
 	const [width, setWidthState] = useState(clampSidebarWidth(defaultWidth));
 	const setWidth = useCallback((px: number) => setWidthState(clampSidebarWidth(px)), []);
 	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
@@ -218,15 +243,17 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 		// physical-fixed — the CSS gutter lengths divide by this factor so
 		// their RENDERED size never moves. getZoom covers the first-paint
 		// race; every later change arrives as an lh:zoom push.
-		const setZoomVar = (factor: number) =>
-			document.documentElement.style.setProperty("--lh-zoom", String(factor));
+		const setZoomVar = (factor: number) => document.documentElement.style.setProperty("--lh-zoom", String(factor));
 		const off = window.lh?.onZoom?.(setZoomVar);
 		void window.lh?.getZoom?.().then(setZoomVar);
 
 		// Arm the width transition only after the first frames have painted,
 		// so nothing applied at mount animates.
 		// (setTimeout fallback: test DOMs have no requestAnimationFrame.)
-		const frame = typeof requestAnimationFrame === "function" ? requestAnimationFrame : (cb: () => void) => setTimeout(cb, 16) as unknown as number;
+		const frame =
+			typeof requestAnimationFrame === "function"
+				? requestAnimationFrame
+				: (cb: () => void) => setTimeout(cb, 16) as unknown as number;
 		const cancel = typeof cancelAnimationFrame === "function" ? cancelAnimationFrame : (id: number) => clearTimeout(id);
 		let inner = 0;
 		const outer = frame(() => {
@@ -294,9 +321,19 @@ export function SidebarProvider({ children, defaultCollapsed = false, defaultWid
 	}, [toggle]);
 
 	return (
-		<SidebarContext.Provider value={{ open, drawer, phone, toggle, closeDrawer, collapsed: folded, toggleCollapsed, width, setWidth }}>
+		<SidebarContext.Provider
+			value={{ open, drawer, phone, toggle, closeDrawer, collapsed: folded, toggleCollapsed, width, setWidth }}
+		>
 			{/* transitions gated on mount: no slide-in flash on page load */}
-			<div style={{ "--sidebar-cols": folded ? "3.25rem" : `${width}px` } as React.CSSProperties} className={cn("flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]", mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]")}>{children}</div>
+			<div
+				style={{ "--sidebar-cols": folded ? "3.25rem" : `${width}px` } as React.CSSProperties}
+				className={cn(
+					"flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]",
+					mounted && "[&_.sidebar-motion]:transition-[width,margin,opacity]",
+				)}
+			>
+				{children}
+			</div>
 		</SidebarContext.Provider>
 	);
 }
@@ -324,28 +361,32 @@ export function SidebarToggle() {
 				"w-0 -mr-3",
 				// Phone widths follow the drawer, decided in CSS so the first
 				// paint is already right.
-				drawer ? "max-md:w-0 max-md:-mr-3 touch-narrow:w-0 touch-narrow:-mr-3" : "max-md:w-9 max-md:mr-0 touch-narrow:w-9 touch-narrow:mr-0",
+				drawer
+					? "max-md:w-0 max-md:-mr-3 touch-narrow:w-0 touch-narrow:-mr-3"
+					: "max-md:w-9 max-md:mr-0 touch-narrow:w-9 touch-narrow:mr-0",
 			)}
 		>
 			<Hint label="Open sidebar" action="toggle-sidebar">
-			<Button
-				variant="ghost"
-				size="icon"
-				aria-label="Open sidebar"
-				aria-hidden={!shown}
-				tabIndex={shown ? 0 : -1}
-				onClick={toggle}
-				className={cn(
-					"sidebar-motion duration-200 pointer-coarse:size-11",
-					open ? "pointer-events-none opacity-0" : "opacity-100",
-					drawer ? "max-md:pointer-events-none max-md:opacity-0 touch-narrow:pointer-events-none touch-narrow:opacity-0" : "max-md:pointer-events-auto max-md:opacity-100 touch-narrow:pointer-events-auto touch-narrow:opacity-100",
-				)}
-			>
-				{/* Owner, round 6: size-4, SAME as the close glyph — the toggle
+				<Button
+					variant="ghost"
+					size="icon"
+					aria-label="Open sidebar"
+					aria-hidden={!shown}
+					tabIndex={shown ? 0 : -1}
+					onClick={toggle}
+					className={cn(
+						"sidebar-motion duration-200 pointer-coarse:size-11",
+						open ? "pointer-events-none opacity-0" : "opacity-100",
+						drawer
+							? "max-md:pointer-events-none max-md:opacity-0 touch-narrow:pointer-events-none touch-narrow:opacity-0"
+							: "max-md:pointer-events-auto max-md:opacity-100 touch-narrow:pointer-events-auto touch-narrow:opacity-100",
+					)}
+				>
+					{/* Owner, round 6: size-4, SAME as the close glyph — the toggle
 				    must not grow when the sidebar is closed (it did: size-5 here).
 				    The small look is the standard, both directions. */}
-				<PanelLeftOpenIcon className="size-4" />
-			</Button>
+					<PanelLeftOpenIcon className="size-4" />
+				</Button>
 			</Hint>
 		</span>
 	);
@@ -449,7 +490,10 @@ function SessionRow({
 				<span
 					aria-hidden="true"
 					data-testid="session-row-check"
-					className={cn("grid size-4 shrink-0 place-items-center rounded border", selected ? "border-foreground bg-foreground text-background" : "border-muted-foreground/60")}
+					className={cn(
+						"grid size-4 shrink-0 place-items-center rounded border",
+						selected ? "border-foreground bg-foreground text-background" : "border-muted-foreground/60",
+					)}
 				>
 					{selected && <CheckIcon className="size-3" strokeWidth={3} />}
 				</span>
@@ -478,7 +522,15 @@ function SessionRow({
  *  title line becomes a text input — select-all on entry (the click means
  *  "replace", the header rename's rule), Enter/blur commits, Esc discards.
  *  The meta line stays so the row never changes height mid-edit. */
-function RenameRow({ chat, onCommit, onCancel }: { chat: ChatListItem; onCommit: (next: string) => void; onCancel: () => void }) {
+function RenameRow({
+	chat,
+	onCommit,
+	onCancel,
+}: {
+	chat: ChatListItem;
+	onCommit: (next: string) => void;
+	onCancel: () => void;
+}) {
 	const [draft, setDraft] = useState(chat.title);
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	useEffect(() => {
@@ -738,7 +790,7 @@ function SessionsSidebar() {
 	useEffect(() => {
 		if (!selectMode || bulkOpen) return;
 		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key !== "Escape" || (e.target instanceof HTMLInputElement)) return;
+			if (e.key !== "Escape" || e.target instanceof HTMLInputElement) return;
 			e.stopPropagation();
 			exitSelect();
 		};
@@ -865,7 +917,9 @@ function SessionsSidebar() {
 	return (
 		<>
 			{drawer && <div className="fixed inset-0 z-40 bg-black/50" onClick={closeDrawer} aria-hidden="true" />}
-			<aside data-sidebar="" style={{ "--sw": `${width}px` } as React.CSSProperties}
+			<aside
+				data-sidebar=""
+				style={{ "--sw": `${width}px` } as React.CSSProperties}
 				className={cn(
 					"sidebar-motion shrink-0 overflow-hidden duration-200 md:relative",
 					open ? "w-72 md:w-[var(--sw)]" : "w-0 md:w-13",
@@ -874,20 +928,38 @@ function SessionsSidebar() {
 					// squeezing it. CSS makes the call before hydration, so a phone
 					// never paints the open column first.
 					"max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 touch-narrow:fixed touch-narrow:inset-y-0 touch-narrow:left-0 touch-narrow:z-50",
-					drawer ? "max-md:w-72 max-md:shadow-2xl touch-narrow:w-72 touch-narrow:shadow-2xl" : "max-md:w-0 touch-narrow:w-0",
+					drawer
+						? "max-md:w-72 max-md:shadow-2xl touch-narrow:w-72 touch-narrow:shadow-2xl"
+						: "max-md:w-0 touch-narrow:w-0",
 				)}
 			>
 				{/* Folded: a narrow column that holds only the button to open it. It is a real column (the page moves over), not a floating button, so nothing on the page sits under it. */}
 				{collapsed && (
-					<div className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side lh-side pt-3 md:flex" data-testid="sidebar-folded">
+					<div
+						className="lh-drag hidden h-full w-full flex-col items-center border-r bg-side lh-side pt-3 md:flex"
+						data-testid="sidebar-folded"
+					>
 						<Hint label="Open sidebar" action="toggle-sidebar" side="right">
-							<Button variant="ghost" size="icon" aria-label="Open sidebar" onClick={toggle} data-testid="sidebar-open" className="lh-no-drag text-ink-3 hover:text-foreground">
+							<Button
+								variant="ghost"
+								size="icon"
+								aria-label="Open sidebar"
+								onClick={toggle}
+								data-testid="sidebar-open"
+								className="lh-no-drag text-ink-3 hover:text-foreground"
+							>
 								<PanelLeftOpenIcon className="size-4" />
 							</Button>
 						</Hint>
 					</div>
 				)}
-				<div inert={!visible} className={cn("@container flex h-full w-72 flex-col border-r bg-side lh-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]", collapsed && "md:hidden")}>
+				<div
+					inert={!visible}
+					className={cn(
+						"@container flex h-full w-72 flex-col border-r bg-side lh-side md:w-[var(--sw)] max-md:pt-[env(safe-area-inset-top)] max-md:pb-[env(safe-area-inset-bottom)] touch-narrow:pt-[env(safe-area-inset-top)] touch-narrow:pb-[env(safe-area-inset-bottom)]",
+						collapsed && "md:hidden",
+					)}
+				>
 					{/* Merged chrome (2026-09-17): in Electron this band is the
 					    window's drag surface and starts after the traffic lights
 					    (.lh-lights-gutter); in the browser those classes are inert. */}
@@ -901,16 +973,33 @@ function SessionsSidebar() {
 								<LhMark className="size-6" />
 							</Link>
 						</Hint>
-						<Link href="/" tabIndex={-1} className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight">
+						<Link
+							href="/"
+							tabIndex={-1}
+							className="lh-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight"
+						>
 							Lang<span className="text-sun">Harness</span>
 						</Link>
 						<Hint label="Collapse sidebar" action="toggle-sidebar">
-							<Button variant="ghost" size="icon" aria-label="Collapse sidebar" onClick={toggleCollapsed} data-testid="sidebar-collapse" className="lh-no-drag max-md:hidden touch-narrow:hidden">
+							<Button
+								variant="ghost"
+								size="icon"
+								aria-label="Collapse sidebar"
+								onClick={toggleCollapsed}
+								data-testid="sidebar-collapse"
+								className="lh-no-drag max-md:hidden touch-narrow:hidden"
+							>
 								<PanelLeftCloseIcon className="size-4" />
 							</Button>
 						</Hint>
 						<Hint label="Close menu" action="toggle-sidebar">
-							<Button variant="ghost" size="icon" aria-label="Close menu" onClick={toggle} className="lh-no-drag md:hidden touch-narrow:inline-flex">
+							<Button
+								variant="ghost"
+								size="icon"
+								aria-label="Close menu"
+								onClick={toggle}
+								className="lh-no-drag md:hidden touch-narrow:inline-flex"
+							>
 								<PanelLeftCloseIcon className="size-4" />
 							</Button>
 						</Hint>
@@ -918,13 +1007,16 @@ function SessionsSidebar() {
 
 					{/* On a short window the navigation scrolls on its own; the tutor below keeps a reserved height, so the chats are never squeezed or pushed out of sight. */}
 					<div className="min-h-0 overflow-y-auto pt-1 [scrollbar-gutter:stable]" data-testid="sidebar-nav-scroll">
-					<LanguageSwitcher />
+						<LanguageSwitcher />
 					</div>
 
 					{/* The tutor: two ways to start a chat, then the chats themselves.
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
-					<section aria-label="Chats" className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3">
+					<section
+						aria-label="Chats"
+						className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3"
+					>
 						<div ref={searchBoxRef} className="flex flex-col gap-1.5">
 							<div className="flex h-8 items-center">
 								{searching ? (
@@ -992,9 +1084,7 @@ function SessionsSidebar() {
 									</span>
 								) : (
 									<>
-										<h2 className="px-2.5 text-xs font-bold text-muted-foreground">
-											Chats
-										</h2>
+										<h2 className="px-2.5 text-xs font-bold text-muted-foreground">Chats</h2>
 										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
 											<Button
 												type="button"
@@ -1004,10 +1094,15 @@ function SessionsSidebar() {
 												aria-pressed={selectMode}
 												data-testid="session-select-toggle"
 												onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
-												className={cn("ml-auto rounded-lg text-muted-foreground", selectMode && "bg-accent text-foreground")}
+												className={cn(
+													"ml-auto rounded-lg text-muted-foreground",
+													selectMode && "bg-accent text-foreground",
+												)}
 											>
 												<ListChecksIcon className="size-3.5" />
-												<span className="hidden text-[12px] font-[550] @[15rem]:inline">{selectMode ? "Done" : "Select"}</span>
+												<span className="hidden text-[12px] font-[550] @[15rem]:inline">
+													{selectMode ? "Done" : "Select"}
+												</span>
 											</Button>
 										</Hint>
 										<Hint label="Search chats" action="sessions-search" side="bottom">
@@ -1040,7 +1135,12 @@ function SessionsSidebar() {
 								</Hint>
 							</div>
 							{searching && (
-								<div className="flex items-center gap-1" role="group" aria-label="Show" data-testid="session-kind-filter">
+								<div
+									className="flex items-center gap-1"
+									role="group"
+									aria-label="Show"
+									data-testid="session-kind-filter"
+								>
 									{(["all", "chat", "teach", "practice"] as const).map((f) => (
 										<button
 											key={f}
@@ -1076,7 +1176,14 @@ function SessionsSidebar() {
 									>
 										{allShownSelected ? "Clear" : "Select all"}
 									</Button>
-									<Button type="button" variant="ghost" size="xs" data-testid="session-select-done" onClick={exitSelect} className="ml-auto text-muted-foreground">
+									<Button
+										type="button"
+										variant="ghost"
+										size="xs"
+										data-testid="session-select-done"
+										onClick={exitSelect}
+										className="ml-auto text-muted-foreground"
+									>
 										Done
 									</Button>
 								</div>
@@ -1098,7 +1205,9 @@ function SessionsSidebar() {
 									{query.trim()
 										? `No chats match “${query.trim()}”.`
 										: kindFilter !== "all"
-											? kindFilter === "chat" ? "No chats yet." : `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
+											? kindFilter === "chat"
+												? "No chats yet."
+												: `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
 											: "Your chats with the tutor show up here."}
 								</p>
 							) : (
@@ -1136,7 +1245,9 @@ function SessionsSidebar() {
 									className="w-full rounded-lg font-semibold"
 								>
 									<Trash2Icon />
-									{selectedChats.length === 0 ? "Select chats to delete" : `Delete ${selectedChats.length} ${selectedChats.length === 1 ? "chat" : "chats"}`}
+									{selectedChats.length === 0
+										? "Select chats to delete"
+										: `Delete ${selectedChats.length} ${selectedChats.length === 1 ? "chat" : "chats"}`}
 								</Button>
 							</div>
 						)}
@@ -1231,11 +1342,7 @@ function SessionsSidebar() {
 
 				{/* The two-option delete dialog (wave 6) — portaled to body
 				    by the component itself, lives here for state locality. */}
-				<DeleteSessionDialog
-					chat={deleting}
-					onClose={() => setDeleting(null)}
-					onDeleted={onDeleted}
-				/>
+				<DeleteSessionDialog chat={deleting} onClose={() => setDeleting(null)} onDeleted={onDeleted} />
 				<DeleteSessionsDialog
 					open={bulkOpen}
 					chats={selectedChats}
@@ -1317,11 +1424,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 	return (
 		<SettingsDialogProvider>
 			<JumpProvider>
-			<SessionsSidebar />
-			{/* The frame is one viewport tall; the content scrolls inside it so
+				<SessionsSidebar />
+				{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. */}
-			<main className="min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
-				{/* The SCROLL-PROOF window-drag strip (owner bug report,
+				<main className="min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+					{/* The SCROLL-PROOF window-drag strip (owner bug report,
 				    2026-10-28: "scrolled down, I can't grab the window"). The
 				    per-page strips are absolute inside the scrolling content,
 				    so they ride off-screen with it and a scrolled page has no
@@ -1332,14 +1439,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				    sidebar, and -mb-13 pulls the page up over it so nothing
 				    moves. The per-page strips stay for the surfaces they were
 				    tuned for; this is the floor every page stands on. */}
-				<div className="lh-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
-				{children}
-			</main>
-			<SelectionWordBankBar />
-			{/* The single document-level keydown listener (keyboard wave A) —
+					<div className="lh-drag sticky top-0 -mb-13 h-13" aria-hidden="true" />
+					{children}
+				</main>
+				<SelectionWordBankBar />
+				{/* The single document-level keydown listener (keyboard wave A) —
 			    after the content in the tree, but it's window-level so order only
 			    matters for the events it dispatches, never for DOM priority. */}
-			<KeyboardShortcuts />
+				<KeyboardShortcuts />
 			</JumpProvider>
 		</SettingsDialogProvider>
 	);

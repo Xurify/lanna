@@ -160,7 +160,11 @@ export function parseCatchDraft(text: string): CatchDraft | null {
 
 /** The brief for one item, written from the pair the learner mixes up. */
 export function catchBrief(t: CatchTarget, language: string): string {
-	const forms = (w: CatchWord) => w.forms.slice(0, BRIEF_FORMS).map((f) => `"${f}"`).join(", ");
+	const forms = (w: CatchWord) =>
+		w.forms
+			.slice(0, BRIEF_FORMS)
+			.map((f) => `"${f}"`)
+			.join(", ");
 	return [
 		`Write ${CATCH_SENTENCES} short sentences in ${language}, one after another, as practice text for a learner who mixes up "${t.wrong.lemma}" and "${t.right.lemma}". The rule: ${t.rule}`,
 		`Sentence 0 is plain context with neither word. Sentence 1 uses a form of "${t.wrong.lemma}" where "${t.right.lemma}" belongs, so it is wrong in exactly this way. Use one of these forms, exactly as written: ${forms(t.wrong)}.`,
@@ -182,12 +186,20 @@ interface CatchBuildInput {
 /** An item from the model's draft, if the code can see the mistake in it. */
 export function buildCatchItem(input: CatchBuildInput): { item: CatchItem } | { reason: string } {
 	const { draft, target } = input;
-	const sentences: StorySentence[] = draft.sentences.map((s) => ({ sk: s.sk, en: s.en, who: target.speaker, tokens: tokenize(s.sk) }));
+	const sentences: StorySentence[] = draft.sentences.map((s) => ({
+		sk: s.sk,
+		en: s.en,
+		who: target.speaker,
+		tokens: tokenize(s.sk),
+	}));
 	const check = verifyCatch(draft.slip, target, sentences, input.lexicon, input.pairs);
 	if (!("slip" in check)) return { reason: check.reason };
 	const wanted = check.slip.wrong.toLowerCase();
-	const hits = sentences[check.slip.sentence]!.tokens.flatMap((t, i) => (t.word && t.text.toLowerCase() === wanted ? [i] : []));
-	if (hits.length !== 1) return { reason: `"${check.slip.wrong}" appears ${hits.length} times in the wrong sentence, not once` };
+	const hits = sentences[check.slip.sentence]!.tokens.flatMap((t, i) =>
+		t.word && t.text.toLowerCase() === wanted ? [i] : [],
+	);
+	if (hits.length !== 1)
+		return { reason: `"${check.slip.wrong}" appears ${hits.length} times in the wrong sentence, not once` };
 	return {
 		item: {
 			id: input.id,
@@ -215,7 +227,11 @@ export function buildCatchItem(input: CatchBuildInput): { item: CatchItem } | { 
  * having taken it for right, so it is a miss on the wrong word, one the
  * learner saw in the sentence (visible).
  */
-export function catchMixupEvent(item: CatchItem, answer: { tapOk: boolean; typed: string; verdict: AnswerVerdict }, at: string): MixupEvent {
+export function catchMixupEvent(
+	item: CatchItem,
+	answer: { tapOk: boolean; typed: string; verdict: AnswerVerdict },
+	at: string,
+): MixupEvent {
 	const sentence = item.sentences[item.slip.sentence]?.sk ?? "";
 	const base = { slug: item.slip.rightSlug, answer: item.slip.right, sentence, at };
 	if (!answer.tapOk) return { ...base, given: item.slip.wrong, verdict: "wrong", visible: true };

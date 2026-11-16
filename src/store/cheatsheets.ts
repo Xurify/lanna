@@ -74,7 +74,13 @@ function readRepoSheet(id: string): Cheatsheet | null {
 	const file = repoFile(id.slice(REPO_PREFIX.length));
 	try {
 		const { title, sections } = parseRepoSheet(fs.readFileSync(file, "utf-8"), id.slice(REPO_PREFIX.length));
-		return { id, title, importedAt: fs.statSync(file).mtime.toISOString(), sections, repoFile: path.relative(ROOT, file).split(path.sep).join("/") };
+		return {
+			id,
+			title,
+			importedAt: fs.statSync(file).mtime.toISOString(),
+			sections,
+			repoFile: path.relative(ROOT, file).split(path.sep).join("/"),
+		};
 	} catch {
 		// Missing, or text with no phrase: not listed.
 		return null;
@@ -129,7 +135,12 @@ export const cheatsheetStore = {
 		const out: CheatsheetSummary[] = [];
 		for (const summary of this.list()) {
 			const sheet = this.get(summary.id);
-			if (sheet && (searchSections([{ id: "", title: sheet.title, rows: [] }], query, tag).length > 0 || searchSections(sheet.sections, query, tag).length > 0)) out.push(summary);
+			if (
+				sheet &&
+				(searchSections([{ id: "", title: sheet.title, rows: [] }], query, tag).length > 0 ||
+					searchSections(sheet.sections, query, tag).length > 0)
+			)
+				out.push(summary);
 		}
 		return out;
 	},
@@ -159,7 +170,12 @@ export const cheatsheetStore = {
 		if (!old) return null;
 		const sections = parseSheetText(input.text);
 		keepVersion(id, now);
-		const sheet: Cheatsheet = { ...old, title: titleOr(input.title, old.title), updatedAt: now.toISOString(), sections };
+		const sheet: Cheatsheet = {
+			...old,
+			title: titleOr(input.title, old.title),
+			updatedAt: now.toISOString(),
+			sections,
+		};
 		writeAtomic(fileFor(id), JSON.stringify(sheet, null, "\t"));
 		return sheet;
 	},

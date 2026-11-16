@@ -47,23 +47,49 @@ describe("reading Wiktionary entries", () => {
 	});
 
 	test("letter names, names and affixes are not words; a nested sense gives its own gloss", () => {
-		assert.equal(build.readKaikkiEntry({ word: "я", pos: "noun", senses: [{ glosses: ["The name of the Cyrillic script letter Я."] }] }).word, null);
+		assert.equal(
+			build.readKaikkiEntry({
+				word: "я",
+				pos: "noun",
+				senses: [{ glosses: ["The name of the Cyrillic script letter Я."] }],
+			}).word,
+			null,
+		);
 		assert.equal(build.readKaikkiEntry({ word: "Praha", pos: "name", senses: [{ glosses: ["Prague"] }] }).word, null);
-		const v = build.readKaikkiEntry({ word: "в", pos: "prep", senses: [{ glosses: ["[with prepositional]", "in, at"] }] }).word;
+		const v = build.readKaikkiEntry({
+			word: "в",
+			pos: "prep",
+			senses: [{ glosses: ["[with prepositional]", "in, at"] }],
+		}).word;
 		assert.deepEqual(v?.glosses, ["in, at"]);
 	});
 
 	test("a form-of entry names its lemma, but a diminutive does not", () => {
-		assert.deepEqual(build.readKaikkiEntry({ word: "kun", pos: "noun", senses: [{ glosses: ["genitive plural of kuna"], tags: ["form-of"], form_of: [{ word: "kuna" }] }] }).formOf, [
-			{ form: "kun", lemma: "kuna", pos: "noun", tags: [] },
-		]);
-		assert.deepEqual(build.readKaikkiEntry({ word: "kočička", pos: "noun", senses: [{ glosses: ["diminutive of kočka"], tags: ["diminutive", "form-of"], form_of: [{ word: "kočka" }] }] }).formOf, []);
+		assert.deepEqual(
+			build.readKaikkiEntry({
+				word: "kun",
+				pos: "noun",
+				senses: [{ glosses: ["genitive plural of kuna"], tags: ["form-of"], form_of: [{ word: "kuna" }] }],
+			}).formOf,
+			[{ form: "kun", lemma: "kuna", pos: "noun", tags: [] }],
+		);
+		assert.deepEqual(
+			build.readKaikkiEntry({
+				word: "kočička",
+				pos: "noun",
+				senses: [{ glosses: ["diminutive of kočka"], tags: ["diminutive", "form-of"], form_of: [{ word: "kočka" }] }],
+			}).formOf,
+			[],
+		);
 	});
 
 	test("the line filter looks only at word fields", () => {
 		const wanted = new Set(["kočka"]);
 		assert.equal(build.lineMayMatter(kaikki({ word: "Kočka", pos: "noun" }), wanted, TAG), true);
-		assert.equal(build.lineMayMatter(kaikki({ word: "pes", pos: "noun", glosses: ["not a kočka"] }), wanted, TAG), false);
+		assert.equal(
+			build.lineMayMatter(kaikki({ word: "pes", pos: "noun", glosses: ["not a kočka"] }), wanted, TAG),
+			false,
+		);
 	});
 
 	test("stress marks go only from Cyrillic", () => {
@@ -72,16 +98,37 @@ describe("reading Wiktionary entries", () => {
 	});
 });
 
-const word = (lemma: string, pos: string, forms: string[] = [], glosses = [lemma]): import("../src/core/language-build.ts").BuildWord => ({ key: `${lemma}\u0000${pos}`, lemma, pos, glosses, forms });
+const word = (
+	lemma: string,
+	pos: string,
+	forms: string[] = [],
+	glosses = [lemma],
+): import("../src/core/language-build.ts").BuildWord => ({ key: `${lemma}\u0000${pos}`, lemma, pos, glosses, forms });
 
 describe("ranking and sentences", () => {
 	test("non-inflecting entries of one spelling become one row; a noun spelled the same stays apart and ranks by its own forms", () => {
-		const merged = build.mergeHomographs([word("jak", "adv", [], ["how"]), word("jak", "conj", [], ["as"]), word("jak", "noun", ["jaka", "jaků"], ["yak"])], TAG);
+		const merged = build.mergeHomographs(
+			[
+				word("jak", "adv", [], ["how"]),
+				word("jak", "conj", [], ["as"]),
+				word("jak", "noun", ["jaka", "jaků"], ["yak"]),
+			],
+			TAG,
+		);
 		assert.equal(merged.length, 2);
 		assert.deepEqual(merged.find((w) => w.pos === "adv")?.glosses, ["how", "as"]);
-		const freq = new Map([["jak", 1], ["jaků", 900]]);
+		const freq = new Map([
+			["jak", 1],
+			["jaků", 900],
+		]);
 		const ranked = build.rankWords(merged, freq, TAG, 10);
-		assert.deepEqual(ranked.map((w) => [w.lemma, w.pos, w.rank]), [["jak", "adv", 1], ["jak", "noun", 900]]);
+		assert.deepEqual(
+			ranked.map((w) => [w.lemma, w.pos, w.rank]),
+			[
+				["jak", "adv", 1],
+				["jak", "noun", 900],
+			],
+		);
 	});
 
 	test("a sentence goes to the word that alone owns the token, or whose dictionary form it is; the blank sits on the token", () => {
@@ -94,7 +141,13 @@ describe("ranking and sentences", () => {
 		c.add({ id: 1, text: "Vidím kočku.", en: "I see the cat." });
 		c.add({ id: 2, text: "Děkuji.", en: "Thank you." });
 		const cat = c.examples.get("kočka\u0000noun")!;
-		assert.deepEqual(cat[0], { text: "Vidím kočku.", en: "I see the cat.", src: "tatoeba", tatoebaId: 1, cloze: { answer: "kočku", at: 6 } });
+		assert.deepEqual(cat[0], {
+			text: "Vidím kočku.",
+			en: "I see the cat.",
+			src: "tatoeba",
+			tatoebaId: 1,
+			cloze: { answer: "kočku", at: 6 },
+		});
 		assert.equal(c.examples.get("děkuji\u0000intj")?.length, 1);
 		assert.equal(c.examples.get("děkovat\u0000verb"), undefined);
 	});
@@ -102,7 +155,16 @@ describe("ranking and sentences", () => {
 	test("after the first sentences, a word gets one more for each form it lacks, then a second, up to the cap", () => {
 		const words = [{ ...word("kočka", "noun", ["kočku", "kočce", "kočkou"]), rank: 1 }];
 		const c = new build.ExampleCollector(words, TAG, 2, { perForm: 2, maxPerWord: 5 });
-		const lines = ["Kočka spí.", "Kočka jí.", "Kočka pije.", "Vidím kočku.", "Mám kočku.", "Hladím kočku.", "Dám to kočce.", "Jdu s kočkou."];
+		const lines = [
+			"Kočka spí.",
+			"Kočka jí.",
+			"Kočka pije.",
+			"Vidím kočku.",
+			"Mám kočku.",
+			"Hladím kočku.",
+			"Dám to kočce.",
+			"Jdu s kočkou.",
+		];
 		lines.forEach((text, i) => c.add({ id: i + 1, text, en: text }));
 		const blanks = c.examples.get("kočka\u0000noun")!.map((e) => e.cloze!.answer);
 		assert.deepEqual(blanks, ["Kočka", "Kočka", "kočku", "kočce", "kočkou"]);
@@ -110,12 +172,20 @@ describe("ranking and sentences", () => {
 
 	test("a capitalized spelling inside a sentence is a name, not the common word that shares it", () => {
 		const words = [{ ...word("tom", "noun", ["toma", "tomem"], ["volume"]), rank: 1 }];
-		const sentences = [{ text: "Mluvím s Tomem." }, { text: "Ptal se Toma." }, { text: "Toma tu není." }, { text: "Druhý tom je lepší." }];
+		const sentences = [
+			{ text: "Mluvím s Tomem." },
+			{ text: "Ptal se Toma." },
+			{ text: "Toma tu není." },
+			{ text: "Druhý tom je lepší." },
+		];
 		const names = build.namesIn(sentences, TAG);
 		assert.deepEqual([...names].sort(), ["toma", "tomem"]);
 		const c = new build.ExampleCollector(words, TAG, 5, { names });
 		sentences.forEach((s, i) => c.add({ id: i + 1, text: s.text, en: s.text }));
-		assert.deepEqual(c.examples.get("tom\u0000noun")!.map((e) => e.text), ["Druhý tom je lepší."]);
+		assert.deepEqual(
+			c.examples.get("tom\u0000noun")!.map((e) => e.text),
+			["Druhý tom je lepší."],
+		);
 	});
 
 	test("a form that a word outside the list also owns is not blanked, nor a word joined by a hyphen", () => {
@@ -129,20 +199,39 @@ describe("ranking and sentences", () => {
 	});
 
 	test("a noun spelled like an adjective in every form is that adjective, which then ranks", () => {
-		const merged = build.mergeHomographs([word("červený", "adj", ["červená", "červeného"], ["red"]), word("červený", "noun", ["červeného"], ["a Red"])], TAG);
-		assert.deepEqual(merged.map((w) => w.pos), ["adj"]);
-		assert.deepEqual(build.rankWords(merged, new Map([["červená", 7]]), TAG, 10).map((w) => w.rank), [7]);
+		const merged = build.mergeHomographs(
+			[word("červený", "adj", ["červená", "červeného"], ["red"]), word("červený", "noun", ["červeného"], ["a Red"])],
+			TAG,
+		);
+		assert.deepEqual(
+			merged.map((w) => w.pos),
+			["adj"],
+		);
+		assert.deepEqual(
+			build.rankWords(merged, new Map([["červená", 7]]), TAG, 10).map((w) => w.rank),
+			[7],
+		);
 	});
 
 	test("a word written with ё ranks by the е spelling a frequency list may use", () => {
 		const ranked = build.rankWords([word("зелёный", "adj", ["зелёная"])], new Map([["зеленый", 40]]), "ru-RU", 10);
-		assert.deepEqual(ranked.map((w) => w.rank), [40]);
+		assert.deepEqual(
+			ranked.map((w) => w.rank),
+			[40],
+		);
 	});
 
 	test("the course's theme words stay in the list past the limit", () => {
 		const words = [word("a", "noun", ["ax"]), word("b", "noun", ["bx"]), word("c", "noun", ["cx"])];
-		const freq = new Map([["a", 1], ["b", 2], ["c", 3]]);
-		assert.deepEqual(build.rankWords(words, freq, TAG, 1, new Set(["c"])).map((w) => w.lemma), ["a", "c"]);
+		const freq = new Map([
+			["a", 1],
+			["b", 2],
+			["c", 3],
+		]);
+		assert.deepEqual(
+			build.rankWords(words, freq, TAG, 1, new Set(["c"])).map((w) => w.lemma),
+			["a", "c"],
+		);
 	});
 
 	test("usable sentences are short and have no digits", () => {
@@ -157,15 +246,37 @@ describe("ranking and sentences", () => {
 	});
 
 	test("a frequency list ranks from 1 and skips numbers", () => {
-		assert.deepEqual([...build.parseFrequency("to 100\n42 90\nJe 80\nto 70\n", TAG).entries()], [["to", 1], ["je", 2]]);
+		assert.deepEqual(
+			[...build.parseFrequency("to 100\n42 90\nJe 80\nto 70\n", TAG).entries()],
+			[
+				["to", 1],
+				["je", 2],
+			],
+		);
 	});
 });
 
 describe("reference links", () => {
 	test("a site with a page per word links the lemma; slovak.wiki keeps its dictionary and search pages", () => {
-		assert.equal(referenceLink({ label: "Wiktionary", baseUrl: "https://en.wiktionary.org", wordUrl: "https://en.wiktionary.org/wiki/{word}#Czech" }, { slug: "kocka", lemma: "kočka", query: "kočku" }), "https://en.wiktionary.org/wiki/ko%C4%8Dka#Czech");
-		assert.equal(referenceLink({ label: "slovak.wiki", baseUrl: "https://www.slovak.wiki" }, { slug: "macka", query: "mačku" }), "https://www.slovak.wiki/dictionary/macka");
-		assert.equal(referenceLink({ label: "slovak.wiki", baseUrl: "https://www.slovak.wiki" }, { query: "dobrý deň" }), "https://www.slovak.wiki/search?q=dobr%C3%BD%20de%C5%88");
+		assert.equal(
+			referenceLink(
+				{
+					label: "Wiktionary",
+					baseUrl: "https://en.wiktionary.org",
+					wordUrl: "https://en.wiktionary.org/wiki/{word}#Czech",
+				},
+				{ slug: "kocka", lemma: "kočka", query: "kočku" },
+			),
+			"https://en.wiktionary.org/wiki/ko%C4%8Dka#Czech",
+		);
+		assert.equal(
+			referenceLink({ label: "slovak.wiki", baseUrl: "https://www.slovak.wiki" }, { slug: "macka", query: "mačku" }),
+			"https://www.slovak.wiki/dictionary/macka",
+		);
+		assert.equal(
+			referenceLink({ label: "slovak.wiki", baseUrl: "https://www.slovak.wiki" }, { query: "dobrý deň" }),
+			"https://www.slovak.wiki/search?q=dobr%C3%BD%20de%C5%88",
+		);
 	});
 });
 
@@ -176,12 +287,26 @@ const FILES: Record<string, Buffer | string> = {
 	// Five Czech sentences, their English links and translations, compressed
 	// with bzip2 as Tatoeba serves them.
 	"ces-eng_links.tsv.bz2": bz2("QlpoOTFBWSZTWdU7UTIAAAfIAAAwfgAgACGnqNGhDAjHvRNt5S6SldgAeLuSKcKEhqnaiZA="),
-	"ces_sentences.tsv.bz2": bz2("QlpoOTFBWSZTWRTuqcYAAA3f9AAwQAE+AAQKBQAuOsoAAAIACCACDAAgAFQ0iaDI0BkMaNBlNIaeoGgGaQEyFsVVUiMpJuiceUxdEiJD82eRBpkURoXdIHA31Om4zHHgJ+DCQBCtin5JcXckU4UJAU7qnGA="),
-	"eng_sentences.tsv.bz2": bz2("QlpoOTFBWSZTWXI+DxoAABdfgAAwQAF+IAAgBgAu7d8gIABoMkg0ek0HpDIAGgpiZAAeoD1DA33KqwUHRulcGOfYSyub32onkCJMQgEQ5gZAMGLlFLrBA9QW7KT0BQmC9M+xYc3UQjRkBOjsPoSiKxIgdqJ+LuSKcKEg5HweNA=="),
+	"ces_sentences.tsv.bz2": bz2(
+		"QlpoOTFBWSZTWRTuqcYAAA3f9AAwQAE+AAQKBQAuOsoAAAIACCACDAAgAFQ0iaDI0BkMaNBlNIaeoGgGaQEyFsVVUiMpJuiceUxdEiJD82eRBpkURoXdIHA31Om4zHHgJ+DCQBCtin5JcXckU4UJAU7qnGA=",
+	),
+	"eng_sentences.tsv.bz2": bz2(
+		"QlpoOTFBWSZTWXI+DxoAABdfgAAwQAF+IAAgBgAu7d8gIABoMkg0ek0HpDIAGgpiZAAeoD1DA33KqwUHRulcGOfYSyub32onkCJMQgEQ5gZAMGLlFLrBA9QW7KT0BQmC9M+xYc3UQjRkBOjsPoSiKxIgdqJ+LuSKcKEg5HweNA==",
+	),
 	"cs_50k.txt": "to 100\nje 90\nkočka 80\npes 70\nkočku 60\npsa 50\nděkuji 40\nmám 30\n",
 	"kaikki.org-dictionary-Czech.jsonl": [
-		kaikki({ word: "kočka", pos: "noun", senses: [{ glosses: ["cat"], tags: ["feminine"] }], forms: [{ form: "kočku", tags: ["accusative", "singular"], source: "declension" }] }),
-		kaikki({ word: "pes", pos: "noun", senses: [{ glosses: ["dog"], tags: ["masculine", "animate"] }], forms: [{ form: "psa", tags: ["accusative", "singular"], source: "declension" }] }),
+		kaikki({
+			word: "kočka",
+			pos: "noun",
+			senses: [{ glosses: ["cat"], tags: ["feminine"] }],
+			forms: [{ form: "kočku", tags: ["accusative", "singular"], source: "declension" }],
+		}),
+		kaikki({
+			word: "pes",
+			pos: "noun",
+			senses: [{ glosses: ["dog"], tags: ["masculine", "animate"] }],
+			forms: [{ form: "psa", tags: ["accusative", "singular"], source: "declension" }],
+		}),
 		kaikki({ word: "děkuji", pos: "intj", senses: [{ glosses: ["thank you"] }] }),
 		kaikki({ word: "hrad", pos: "noun", senses: [{ glosses: ["castle"] }] }),
 	].join("\n"),
@@ -195,13 +320,25 @@ const fakeFetch = (async (input: string | URL | Request) => {
 	const name = decodeURIComponent(url.slice(url.lastIndexOf("/") + 1));
 	if (failKaikki && name.startsWith("kaikki")) return new Response("busy", { status: 503 });
 	const body = FILES[name];
-	return body === undefined ? new Response("missing", { status: 404 }) : new Response(typeof body === "string" ? body : new Uint8Array(body));
+	return body === undefined
+		? new Response("missing", { status: 404 })
+		: new Response(typeof body === "string" ? body : new Uint8Array(body));
 }) as typeof fetch;
 
 // The fixture has three words, so the course is three tiny chapters over
 // the one cell its sentences have (accusative singular).
 const COURSE = JSON.stringify({
-	units: ["acc", "acc-objects", "acc-nouns"].map((id) => ({ id, kind: "grammar", title: id, tagline: "objects", rule: "The object takes the accusative: Vidím kočku.", glyph: "coffee", grammarTerm: "Accusative", cat: "Nouns", tags: ["accusative", "singular"] })),
+	units: ["acc", "acc-objects", "acc-nouns"].map((id) => ({
+		id,
+		kind: "grammar",
+		title: id,
+		tagline: "objects",
+		rule: "The object takes the accusative: Vidím kočku.",
+		glyph: "coffee",
+		grammarTerm: "Accusative",
+		cat: "Nouns",
+		tags: ["accusative", "singular"],
+	})),
 	tutors: [{ id: "sounds", title: "Sounds", tagline: "č, ř", glyph: "ear", brief: "Teach the sounds." }],
 	goals: ["can-a", "can-b", "can-c"].map((id) => ({ id, title: id, tagline: "x", scene: "cafe" })),
 	chapters: [
@@ -266,23 +403,44 @@ describe("adding a language in the background", () => {
 		assert.equal(taskId, "language:czech");
 		assert.deepEqual(listTasks()[0]?.language, { id: "czech", english: "Czech" });
 		await done;
-		assert.ok(calls.every((u) => !u.includes("tatoeba")), "Tatoeba is not downloaded again");
+		assert.ok(
+			calls.every((u) => !u.includes("tatoeba")),
+			"Tatoeba is not downloaded again",
+		);
 		const [t] = listTasks();
 		assert.equal(t?.status, "done");
 		assert.equal(t?.title, "Czech is ready");
 		// hrad is not in the frequency list; "Děkuji." is one word, too short to drill.
-		assert.equal(t?.note, "3 chapters, 3 grammar lessons, 0 word themes, 1 tutor sessions; 3 words, 2 with example sentences.");
+		assert.equal(
+			t?.note,
+			"3 chapters, 3 grammar lessons, 0 word themes, 1 tutor sessions; 3 words, 2 with example sentences.",
+		);
 		assert.equal(asked.length, 3, "the course (cut once, then asked with twice the room), then the story bible");
 		assert.equal(caps[1], 2 * caps[0]!);
 
 		const folder = path.join(dir, "languages", "czech");
-		const lexicon = JSON.parse(fs.readFileSync(path.join(folder, "lexicon.json"), "utf-8")) as { words: Array<{ lemma: string; examples: Array<{ text: string; tatoebaId: number; cloze: { answer: string; at: number } }> }> };
-		assert.deepEqual(lexicon.words.map((w) => w.lemma), ["kočka", "pes", "děkuji"]);
+		const lexicon = JSON.parse(fs.readFileSync(path.join(folder, "lexicon.json"), "utf-8")) as {
+			words: Array<{
+				lemma: string;
+				examples: Array<{ text: string; tatoebaId: number; cloze: { answer: string; at: number } }>;
+			}>;
+		};
+		assert.deepEqual(
+			lexicon.words.map((w) => w.lemma),
+			["kočka", "pes", "děkuji"],
+		);
 		const cat = lexicon.words[0]!;
-		assert.deepEqual(cat.examples.map((e) => e.text), ["Kočka spí.", "Vidím kočku.", "Mám psa a kočku."]);
-		for (const e of cat.examples) assert.equal(e.text.slice(e.cloze.at, e.cloze.at + e.cloze.answer.length), e.cloze.answer);
+		assert.deepEqual(
+			cat.examples.map((e) => e.text),
+			["Kočka spí.", "Vidím kočku.", "Mám psa a kočku."],
+		);
+		for (const e of cat.examples)
+			assert.equal(e.text.slice(e.cloze.at, e.cloze.at + e.cloze.answer.length), e.cloze.answer);
 		const course = JSON.parse(fs.readFileSync(path.join(folder, "course.json"), "utf-8"));
-		assert.deepEqual(course.chapters.map((c: { id: string }) => c.id), ["one", "two", "three"]);
+		assert.deepEqual(
+			course.chapters.map((c: { id: string }) => c.id),
+			["one", "two", "three"],
+		);
 		assert.equal(course.code, "cs");
 		const world = JSON.parse(fs.readFileSync(path.join(folder, "world.json"), "utf-8"));
 		assert.equal(world.city, "Brno");
@@ -292,13 +450,23 @@ describe("adding a language in the background", () => {
 		assert.deepEqual(config.addedLanguageIds(), ["czech"]);
 		assert.equal(config.isLanguageProfile("czech"), true);
 		assert.equal(config.curriculumFile("czech", "lexicon.json"), path.join(folder, "lexicon.json"));
-		assert.equal(config.curriculumFile("slovak", "lexicon.json"), path.join(config.PATHS.root, "curriculum", "slovak", "lexicon.json"));
+		assert.equal(
+			config.curriculumFile("slovak", "lexicon.json"),
+			path.join(config.PATHS.root, "curriculum", "slovak", "lexicon.json"),
+		);
 		const info = profileLanguage("czech");
 		assert.equal(info?.tag, "cs-CZ");
 		assert.deepEqual(info?.specialLetters, []);
 		assert.equal(languageById("czech")?.english, "Czech", "registered for the browser-safe core");
 		const listed = profileStatus().profiles.find((p) => p.id === "czech");
-		assert.deepEqual(listed, { id: "czech", tag: "cs-CZ", endonym: "Čeština", english: "Czech", lexicon: true, removable: true });
+		assert.deepEqual(listed, {
+			id: "czech",
+			tag: "cs-CZ",
+			endonym: "Čeština",
+			english: "Czech",
+			lexicon: true,
+			removable: true,
+		});
 		assert.equal(languageCatalog().find((r) => r.id === "czech")?.ready, true);
 		const { usageReport } = await import("../src/server/usage-report.ts");
 		assert.equal(usageReport().languages?.count, 1, "the course and story calls show in Spending");
@@ -323,7 +491,11 @@ describe("adding a language in the background", () => {
 		assert.equal(fs.existsSync(path.join(dir, "languages", "czech")), false);
 		assert.ok(fs.existsSync(path.join(progress, "progress.json")), "progress stays");
 		assert.equal(config.isLanguageProfile("czech"), false);
-		assert.equal(JSON.parse(fs.readFileSync(path.join(dir, "profile.json"), "utf-8")).active, config.activeProfile(), "the switch waiting for a restart is undone");
+		assert.equal(
+			JSON.parse(fs.readFileSync(path.join(dir, "profile.json"), "utf-8")).active,
+			config.activeProfile(),
+			"the switch waiting for a restart is undone",
+		);
 		assert.throws(() => removeLanguage("czech"), /nothing to remove/);
 		assert.throws(() => removeLanguage(config.activeProfile()), /running now/);
 	});
@@ -331,12 +503,27 @@ describe("adding a language in the background", () => {
 	test("only built-in languages can be hidden, and a hidden one comes back", () => {
 		const { restoreLanguage } = startModule;
 		const profileFile = path.join(dir, "profile.json");
-		fs.writeFileSync(profileFile, JSON.stringify({ active: config.activeProfile(), hidden: ["russian", config.activeProfile()] }));
-		assert.deepEqual(config.readProfileChoice().hidden, [config.activeProfile()], "an id that is not built in is not hidden");
-		assert.equal(languageCatalog().find((r) => r.id === "russian")?.restoreOnly, undefined, "a catalog language is added, never restored");
+		fs.writeFileSync(
+			profileFile,
+			JSON.stringify({ active: config.activeProfile(), hidden: ["russian", config.activeProfile()] }),
+		);
+		assert.deepEqual(
+			config.readProfileChoice().hidden,
+			[config.activeProfile()],
+			"an id that is not built in is not hidden",
+		);
+		assert.equal(
+			languageCatalog().find((r) => r.id === "russian")?.restoreOnly,
+			undefined,
+			"a catalog language is added, never restored",
+		);
 
 		config.saveProfileChoice({ active: config.activeProfile() });
-		assert.deepEqual(config.readProfileChoice().hidden, [config.activeProfile()], "saving a switch keeps the hidden list");
+		assert.deepEqual(
+			config.readProfileChoice().hidden,
+			[config.activeProfile()],
+			"saving a switch keeps the hidden list",
+		);
 
 		assert.equal(restoreLanguage(config.activeProfile()), true);
 		assert.equal(restoreLanguage(config.activeProfile()), false);

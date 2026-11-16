@@ -30,7 +30,12 @@ function baseIn(extra: Record<string, string>): { base: string; pid: number } {
 	Object.assign(env, extra);
 	const out = execFileSync(
 		process.execPath,
-		["--import", pathToFileURL(TSX_LOADER).href, "--eval", `const m = await import(${JSON.stringify(pathToFileURL(path.join(REPO_ROOT, "config.ts")).href)}); console.log(JSON.stringify({ base: m.PATHS.base, pid: process.pid }));`],
+		[
+			"--import",
+			pathToFileURL(TSX_LOADER).href,
+			"--eval",
+			`const m = await import(${JSON.stringify(pathToFileURL(path.join(REPO_ROOT, "config.ts")).href)}); console.log(JSON.stringify({ base: m.PATHS.base, pid: process.pid }));`,
+		],
 		{ cwd: REPO_ROOT, encoding: "utf-8", env: env as NodeJS.ProcessEnv },
 	);
 	const parsed = JSON.parse(out) as { base: string; pid: number };

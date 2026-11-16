@@ -5,14 +5,24 @@ import { Readable } from "node:stream";
 import * as zlib from "node:zlib";
 import { afterEach, describe, it } from "node:test";
 
-import { assertPublicUrl, isPublicAddress, safeFetch, safeFetchSeams, SafeFetchError, type Transport, type TransportRequest } from "../src/agent/safe-fetch.ts";
+import {
+	assertPublicUrl,
+	isPublicAddress,
+	safeFetch,
+	safeFetchSeams,
+	SafeFetchError,
+	type Transport,
+	type TransportRequest,
+} from "../src/agent/safe-fetch.ts";
 
 const original = { ...safeFetchSeams };
 afterEach(() => Object.assign(safeFetchSeams, original));
 
 const PUBLIC = "93.184.216.34";
 
-function replyWith(handler: (request: TransportRequest) => { status?: number; headers?: Record<string, string>; body?: Buffer | string }): { transport: Transport; seen: TransportRequest[] } {
+function replyWith(
+	handler: (request: TransportRequest) => { status?: number; headers?: Record<string, string>; body?: Buffer | string },
+): { transport: Transport; seen: TransportRequest[] } {
 	const seen: TransportRequest[] = [];
 	const transport: Transport = async (request) => {
 		seen.push(request);
@@ -29,16 +39,54 @@ function replyWith(handler: (request: TransportRequest) => { status?: number; he
 
 describe("isPublicAddress", () => {
 	const blocked = [
-		"0.0.0.0", "10.1.2.3", "100.64.0.1", "100.127.255.255", "127.0.0.1", "127.255.255.254", "169.254.169.254", "172.16.0.1", "172.31.255.255",
-		"192.0.0.1", "192.168.1.1", "198.18.0.1", "224.0.0.1", "240.0.0.1", "255.255.255.255",
-		"::", "::1", "fe80::1", "fc00::1", "fd12:3456::1", "ff02::1", "2002:7f00:1::", "2001:db8::1", "64:ff9b::7f00:1", "64:ff9b::a9fe:a9fe",
-		"::ffff:127.0.0.1", "::ffff:7f00:1", "::ffff:10.0.0.1", "::ffff:169.254.169.254", "0:0:0:0:0:ffff:c0a8:1",
-		"not-an-ip", "",
+		"0.0.0.0",
+		"10.1.2.3",
+		"100.64.0.1",
+		"100.127.255.255",
+		"127.0.0.1",
+		"127.255.255.254",
+		"169.254.169.254",
+		"172.16.0.1",
+		"172.31.255.255",
+		"192.0.0.1",
+		"192.168.1.1",
+		"198.18.0.1",
+		"224.0.0.1",
+		"240.0.0.1",
+		"255.255.255.255",
+		"::",
+		"::1",
+		"fe80::1",
+		"fc00::1",
+		"fd12:3456::1",
+		"ff02::1",
+		"2002:7f00:1::",
+		"2001:db8::1",
+		"64:ff9b::7f00:1",
+		"64:ff9b::a9fe:a9fe",
+		"::ffff:127.0.0.1",
+		"::ffff:7f00:1",
+		"::ffff:10.0.0.1",
+		"::ffff:169.254.169.254",
+		"0:0:0:0:0:ffff:c0a8:1",
+		"not-an-ip",
+		"",
 	];
 	for (const address of blocked) {
 		it(`refuses ${address || "an empty string"}`, () => assert.equal(isPublicAddress(address), false));
 	}
-	for (const address of ["93.184.216.34", "8.8.8.8", "1.1.1.1", "172.15.255.255", "172.32.0.1", "100.63.255.255", "2606:4700:4700::1111", "2001:4860:4860::8888", "::ffff:8.8.8.8", "64:ff9b::808:808"]) {
+	for (const address of [
+		"93.184.216.34",
+		"8.8.8.8",
+		"1.1.1.1",
+		"172.15.255.255",
+		"172.32.0.1",
+		"100.63.255.255",
+		"2606:4700:4700::1111",
+		"2001:4860:4860::8888",
+		"::ffff:8.8.8.8",
+		"64:ff9b::808:808",
+	]) {
 		it(`allows ${address}`, () => assert.equal(isPublicAddress(address), true));
 	}
 });
@@ -72,7 +120,10 @@ describe("assertPublicUrl", () => {
 	for (const [url, message] of refused) {
 		it(`refuses ${url}`, async () => {
 			safeFetchSeams.resolve = async () => assert.fail("a literal or internal name is never resolved");
-			await assert.rejects(assertPublicUrl(url), (error) => error instanceof SafeFetchError && message.test(error.message));
+			await assert.rejects(
+				assertPublicUrl(url),
+				(error) => error instanceof SafeFetchError && message.test(error.message),
+			);
 		});
 	}
 
@@ -122,7 +173,9 @@ describe("safeFetch", () => {
 	it("checks every redirect hop, not only the first URL", async () => {
 		safeFetchSeams.resolve = async (host) => (host === "evil.example.com" ? ["10.0.0.9"] : [PUBLIC]);
 		const { transport, seen } = replyWith((request) =>
-			request.url.hostname === "example.com" ? { status: 302, headers: { location: "https://evil.example.com/inner" } } : { body: "internal" },
+			request.url.hostname === "example.com"
+				? { status: 302, headers: { location: "https://evil.example.com/inner" } }
+				: { body: "internal" },
 		);
 		safeFetchSeams.transport = transport;
 		await assert.rejects(safeFetch("https://example.com/"), /public internet/);
@@ -141,7 +194,9 @@ describe("safeFetch", () => {
 
 	it("follows a relative redirect and reports the final URL", async () => {
 		safeFetchSeams.resolve = async () => [PUBLIC];
-		const { transport } = replyWith((request) => (request.url.pathname === "/a" ? { status: 301, headers: { location: "/b" } } : { body: "done" }));
+		const { transport } = replyWith((request) =>
+			request.url.pathname === "/a" ? { status: 301, headers: { location: "/b" } } : { body: "done" },
+		);
 		safeFetchSeams.transport = transport;
 		const response = await safeFetch("https://example.com/a");
 		assert.equal(response.url, "https://example.com/b");
@@ -158,7 +213,9 @@ describe("safeFetch", () => {
 
 	it("turns a redirected POST into a GET without the body", async () => {
 		safeFetchSeams.resolve = async () => [PUBLIC];
-		const { transport, seen } = replyWith((request) => (request.url.pathname === "/post" ? { status: 303, headers: { location: "/get" } } : { body: "ok" }));
+		const { transport, seen } = replyWith((request) =>
+			request.url.pathname === "/post" ? { status: 303, headers: { location: "/get" } } : { body: "ok" },
+		);
 		safeFetchSeams.transport = transport;
 		await safeFetch("https://example.com/post", { method: "POST", body: "x" });
 		assert.equal(seen[1]?.method, "GET");
@@ -169,7 +226,10 @@ describe("safeFetch", () => {
 		safeFetchSeams.resolve = async () => [PUBLIC];
 		const { transport } = replyWith(() => ({ body: Buffer.alloc(2000, 97) }));
 		safeFetchSeams.transport = transport;
-		await assert.rejects(async () => (await safeFetch("https://example.com/", { maxBytes: 1000 })).text(), /response too large/);
+		await assert.rejects(
+			async () => (await safeFetch("https://example.com/", { maxBytes: 1000 })).text(),
+			/response too large/,
+		);
 		const declared = replyWith(() => ({ headers: { "content-length": "5000" }, body: "x" }));
 		safeFetchSeams.transport = declared.transport;
 		await assert.rejects(safeFetch("https://example.com/", { maxBytes: 1000 }), /response too large/);
@@ -181,7 +241,10 @@ describe("safeFetch", () => {
 		assert.ok(bomb.length < 10_000);
 		const { transport } = replyWith(() => ({ headers: { "content-encoding": "gzip" }, body: bomb }));
 		safeFetchSeams.transport = transport;
-		await assert.rejects(async () => (await safeFetch("https://example.com/", { maxBytes: 100_000 })).text(), /response too large/);
+		await assert.rejects(
+			async () => (await safeFetch("https://example.com/", { maxBytes: 100_000 })).text(),
+			/response too large/,
+		);
 	});
 
 	it("decodes gzip and brotli", async () => {
@@ -189,7 +252,10 @@ describe("safeFetch", () => {
 		const gzip = replyWith(() => ({ headers: { "content-encoding": "gzip" }, body: zlib.gzipSync("plain gzip") }));
 		safeFetchSeams.transport = gzip.transport;
 		assert.equal(await (await safeFetch("https://example.com/")).text(), "plain gzip");
-		const brotli = replyWith(() => ({ headers: { "content-encoding": "br" }, body: zlib.brotliCompressSync("plain br") }));
+		const brotli = replyWith(() => ({
+			headers: { "content-encoding": "br" },
+			body: zlib.brotliCompressSync("plain br"),
+		}));
 		safeFetchSeams.transport = brotli.transport;
 		assert.equal(await (await safeFetch("https://example.com/")).text(), "plain br");
 	});
@@ -204,7 +270,8 @@ describe("safeFetch", () => {
 	it("gives up when the whole request takes too long", async () => {
 		safeFetchSeams.resolve = async () => [PUBLIC];
 		const keepAlive = setTimeout(() => {}, 5000);
-		safeFetchSeams.transport = (request) => new Promise((_resolve, reject) => request.signal.addEventListener("abort", () => reject(request.signal.reason)));
+		safeFetchSeams.transport = (request) =>
+			new Promise((_resolve, reject) => request.signal.addEventListener("abort", () => reject(request.signal.reason)));
 		try {
 			await assert.rejects(safeFetch("https://example.com/", { timeoutMs: 30 }));
 		} finally {
@@ -231,7 +298,11 @@ describe("safeFetch over a real socket", () => {
 	const serve = async (handler: http.RequestListener) => {
 		const server = http.createServer(handler);
 		await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-		return { server, port: (server.address() as AddressInfo).port, close: () => new Promise<void>((resolve) => server.close(() => resolve())) };
+		return {
+			server,
+			port: (server.address() as AddressInfo).port,
+			close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+		};
 	};
 
 	it("is refused by default: a server on this computer is not reachable", async () => {
@@ -286,9 +357,20 @@ describe("the tools and readers that fetch for someone else", () => {
 		const reached: string[] = [];
 		safeFetchSeams.transport = async (request) => {
 			reached.push(request.url.href);
-			return { status: 200, statusText: "", headers: new Headers({ "content-type": "text/plain" }), body: Readable.from(["a page of text long enough to be returned"]) };
+			return {
+				status: 200,
+				statusText: "",
+				headers: new Headers({ "content-type": "text/plain" }),
+				body: Readable.from(["a page of text long enough to be returned"]),
+			};
 		};
-		for (const url of ["http://127.0.0.1/api/keys", "http://localhost/api/chats", "http://169.254.169.254/latest/meta-data/iam", "http://[::1]/", "http://10.0.0.1/"]) {
+		for (const url of [
+			"http://127.0.0.1/api/keys",
+			"http://localhost/api/chats",
+			"http://169.254.169.254/latest/meta-data/iam",
+			"http://[::1]/",
+			"http://10.0.0.1/",
+		]) {
 			const out = await web_fetch!.execute!("t", { url });
 			assert.match(String(out.details), /web_fetch failed/, url);
 		}
@@ -318,7 +400,15 @@ describe("the tools and readers that fetch for someone else", () => {
 	it("only YouTube's own caption addresses are fetched for a track", async () => {
 		const { isYouTubeCaptionUrl } = await import("../src/core/watch.ts");
 		assert.equal(isYouTubeCaptionUrl("https://www.youtube.com/api/timedtext?v=abc&lang=sk"), true);
-		for (const url of ["http://www.youtube.com/api/timedtext?v=a", "https://youtube.com.evil.example/api/timedtext", "https://evil.example/api/timedtext", "https://www.youtube.com/other", "https://user:pw@www.youtube.com/api/timedtext", "http://127.0.0.1/api/timedtext", "not a url"]) {
+		for (const url of [
+			"http://www.youtube.com/api/timedtext?v=a",
+			"https://youtube.com.evil.example/api/timedtext",
+			"https://evil.example/api/timedtext",
+			"https://www.youtube.com/other",
+			"https://user:pw@www.youtube.com/api/timedtext",
+			"http://127.0.0.1/api/timedtext",
+			"not a url",
+		]) {
 			assert.equal(isYouTubeCaptionUrl(url), false, url);
 		}
 	});

@@ -4,10 +4,13 @@
  * server, then open the owner-validated provider page outside the renderer.
  * The caller must authenticate its trusted app main frame first. */
 async function openWebSubscriptionBrowser(action, origin, { fetch: request = globalThis.fetch, openExternal }) {
-	if (typeof action !== "string" || !/^\/api\/subscriptions\/browser\?id=[0-9a-f-]{36}$/.test(action)) throw new Error("Invalid sign-in action.");
+	if (typeof action !== "string" || !/^\/api\/subscriptions\/browser\?id=[0-9a-f-]{36}$/.test(action))
+		throw new Error("Invalid sign-in action.");
 	const response = await request(new URL(action, origin), {
-		method: "POST", redirect: "manual", credentials: "omit",
-		headers: { origin, "x-learnharness-subscriptions": "1" },
+		method: "POST",
+		redirect: "manual",
+		credentials: "omit",
+		headers: { origin, "x-langharness-subscriptions": "1" },
 		signal: AbortSignal.timeout(15000),
 	});
 	const target = response.headers.get("location");

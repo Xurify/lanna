@@ -18,7 +18,22 @@
 
 import { STAGES, type CurriculumState } from "./curriculum.ts";
 
-export type StampKind = "first" | "chapter" | "summit" | "streak" | "words" | "reviews" | "perfect" | "comeback" | "balance" | "stories" | "scenes" | "listens" | "blitz" | "hours" | "exams";
+export type StampKind =
+	| "first"
+	| "chapter"
+	| "summit"
+	| "streak"
+	| "words"
+	| "reviews"
+	| "perfect"
+	| "comeback"
+	| "balance"
+	| "stories"
+	| "scenes"
+	| "listens"
+	| "blitz"
+	| "hours"
+	| "exams";
 
 interface StampDef {
 	id: string;
@@ -91,8 +106,20 @@ const DEEDS: StampDef[] = [
 	{ id: "perfect-50", kind: "perfect", name: "Päťdesiat bez chyby", line: "Fifty lessons without a miss", goal: 50 },
 	{ id: "comeback-10", kind: "comeback", name: "Návrat", line: "10 words once missed, now known", goal: 10 },
 	{ id: "comeback-50", kind: "comeback", name: "Veľký návrat", line: "50 words once missed, now known", goal: 50 },
-	{ id: "comeback-200", kind: "comeback", name: "Dvesto návratov", line: "200 words once missed, now known", goal: 200 },
-	{ id: "balance-week", kind: "balance", name: "Štyri značky", line: "A week with all four kinds of practice", goal: 1 },
+	{
+		id: "comeback-200",
+		kind: "comeback",
+		name: "Dvesto návratov",
+		line: "200 words once missed, now known",
+		goal: 200,
+	},
+	{
+		id: "balance-week",
+		kind: "balance",
+		name: "Štyri značky",
+		line: "A week with all four kinds of practice",
+		goal: 1,
+	},
 	{ id: "stories-1", kind: "stories", name: "Prvý príbeh", line: "Your first story read", goal: 1 },
 	{ id: "stories-10", kind: "stories", name: "Čitateľ", line: "Ten stories read", goal: 10 },
 	{ id: "stories-50", kind: "stories", name: "Knihomoľ", line: "Fifty stories read", goal: 50 },
@@ -123,9 +150,25 @@ export function stampCatalog(curriculum: Pick<CurriculumState, "chapters"> | nul
 	const stages = STAGES.filter((st) => chapters.some((ch) => ch.stage === st.id));
 	const chapterStamps: StampDef[] = chapters.map((ch) => {
 		const stage = STAGES.find((st) => st.id === ch.stage);
-		return { id: `chapter:${ch.id}`, kind: "chapter", name: ch.title, line: `Chapter done · ${stage?.level ?? ""}`.trim(), goal: 1, level: stage?.level, stage: ch.stage };
+		return {
+			id: `chapter:${ch.id}`,
+			kind: "chapter",
+			name: ch.title,
+			line: `Chapter done · ${stage?.level ?? ""}`.trim(),
+			goal: 1,
+			level: stage?.level,
+			stage: ch.stage,
+		};
 	});
-	const summitStamps: StampDef[] = stages.map((st) => ({ id: `summit:${st.id}`, kind: "summit", name: `${st.level} · ${st.title}`, line: `Every chapter of ${st.level} done`, goal: 1, level: st.level, stage: st.id }));
+	const summitStamps: StampDef[] = stages.map((st) => ({
+		id: `summit:${st.id}`,
+		kind: "summit",
+		name: `${st.level} · ${st.title}`,
+		line: `Every chapter of ${st.level} done`,
+		goal: 1,
+		level: st.level,
+		stage: st.id,
+	}));
 	return [...summitStamps, ...chapterStamps, ...DEEDS];
 }
 
@@ -172,12 +215,22 @@ export function stampCount(def: StampDef, e: StampEvidence): number {
  * stays earned even if the evidence later falls under its goal: a streak
  * broken does not un-earn the week it marked.
  */
-export function stampStates(defs: readonly StampDef[], evidence: StampEvidence, earned: Readonly<Record<string, string>>, today: string): StampState[] {
+export function stampStates(
+	defs: readonly StampDef[],
+	evidence: StampEvidence,
+	earned: Readonly<Record<string, string>>,
+	today: string,
+): StampState[] {
 	return defs.map((def) => {
 		const have = stampCount(def, evidence);
 		const met = have >= def.goal;
 		const day = earned[def.id] ?? (met ? today : null);
-		return { ...def, earned: day, have, progress: day ? 1 : Math.max(0, Math.min(1, def.goal > 0 ? have / def.goal : 0)) };
+		return {
+			...def,
+			earned: day,
+			have,
+			progress: day ? 1 : Math.max(0, Math.min(1, def.goal > 0 ? have / def.goal : 0)),
+		};
 	});
 }
 

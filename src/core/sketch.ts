@@ -196,7 +196,11 @@ function attributes(tag: string): Map<string, string> {
 }
 
 function keptAttributes(element: string, found: Map<string, string>): string {
-	const allowed = new Set([...(GEOMETRY[element] ?? []), ...(element === "title" ? [] : PRESENTATION), ...(element === "title" ? [] : ["style"])]);
+	const allowed = new Set([
+		...(GEOMETRY[element] ?? []),
+		...(element === "title" ? [] : PRESENTATION),
+		...(element === "title" ? [] : ["style"]),
+	]);
 	const out: string[] = [];
 	for (const [name, raw] of found) {
 		const lower = name.toLowerCase();
@@ -209,7 +213,10 @@ function keptAttributes(element: string, found: Map<string, string>): string {
 
 function parseViewBox(raw: string | undefined): { viewBox: string; width: number; height: number } | null {
 	if (!raw) return null;
-	const parts = raw.trim().split(/[\s,]+/).map(Number);
+	const parts = raw
+		.trim()
+		.split(/[\s,]+/)
+		.map(Number);
 	if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return null;
 	const [x, y, width, height] = parts as [number, number, number, number];
 	if (width <= 0 || height <= 0 || width > 2000 || height > 4000) return null;
@@ -219,13 +226,20 @@ function parseViewBox(raw: string | undefined): { viewBox: string; width: number
 function stepAttributes(found: Map<string, string>, steps: Map<number, string>): string {
 	const step = Number(found.get("data-step"));
 	if (!Number.isInteger(step) || step < 1 || step > SKETCH_MAX_STEPS) return "";
-	const caption = decodeEntities(found.get("data-caption") ?? "").replace(/\s+/g, " ").trim().slice(0, 140);
+	const caption = decodeEntities(found.get("data-caption") ?? "")
+		.replace(/\s+/g, " ")
+		.trim()
+		.slice(0, 140);
 	if (!steps.has(step) || (caption && !steps.get(step))) steps.set(step, caption);
 	return ` data-step="${step}"`;
 }
 
 function withDrawing(name: string, kept: string, order: number): string {
-	const drawn = TEXTS.has(name) ? ` class="ink-fade"` : SHAPES.has(name) && !/stroke-dasharray/.test(kept) ? ` pathLength="1" class="ink-draw"` : null;
+	const drawn = TEXTS.has(name)
+		? ` class="ink-fade"`
+		: SHAPES.has(name) && !/stroke-dasharray/.test(kept)
+			? ` pathLength="1" class="ink-draw"`
+			: null;
 	if (drawn === null) return kept;
 	const delay = `--ink-delay:${Math.min(order * DRAW_STAGGER_SECONDS, DRAW_LAST_START_SECONDS).toFixed(2)}s`;
 	const timed = kept.includes(' style="') ? kept.replace(' style="', ` style="${delay};`) : `${kept} style="${delay}"`;
@@ -234,7 +248,9 @@ function withDrawing(name: string, kept: string, order: number): string {
 
 export function parseSketch(source: string, options: { animate?: boolean } = {}): Sketch | null {
 	if (source.length > SKETCH_MAX_SOURCE) return null;
-	const tokens = source.match(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<!DOCTYPE[^>]*>|<\/?[a-zA-Z][^<>]*?\/?>|[^<]+/g);
+	const tokens = source.match(
+		/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<!DOCTYPE[^>]*>|<\/?[a-zA-Z][^<>]*?\/?>|[^<]+/g,
+	);
 	if (!tokens) return null;
 
 	let root: { viewBox: string; width: number; height: number } | null = null;
@@ -249,7 +265,8 @@ export function parseSketch(source: string, options: { animate?: boolean } = {})
 
 	for (const token of tokens) {
 		if (closed) break;
-		if (token.startsWith("<!--") || token.startsWith("<![CDATA[") || token.startsWith("<?") || token.startsWith("<!")) continue;
+		if (token.startsWith("<!--") || token.startsWith("<![CDATA[") || token.startsWith("<?") || token.startsWith("<!"))
+			continue;
 		if (!token.startsWith("<")) {
 			if (skipDepth > 0) continue;
 			const current = open[open.length - 1];
@@ -296,7 +313,11 @@ export function parseSketch(source: string, options: { animate?: boolean } = {})
 			continue;
 		}
 
-		if (skipDepth > 0 || !ELEMENTS.has(name) || (name === "tspan" && open[open.length - 1] !== "text" && open[open.length - 1] !== "tspan")) {
+		if (
+			skipDepth > 0 ||
+			!ELEMENTS.has(name) ||
+			(name === "tspan" && open[open.length - 1] !== "text" && open[open.length - 1] !== "tspan")
+		) {
 			if (!selfClosing) skipDepth++;
 			continue;
 		}

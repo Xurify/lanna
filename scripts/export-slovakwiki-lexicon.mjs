@@ -16,7 +16,10 @@ import { pathToFileURL } from "node:url";
 const wiki = path.resolve(process.argv[2] ?? "../slovak.wiki");
 const out = path.resolve(process.argv[3] ?? "curriculum/slovak/lexicon.json");
 const { createJiti } = await import(pathToFileURL(path.join(wiki, "node_modules/jiti/lib/jiti.mjs")).href);
-const jiti = createJiti(import.meta.url, { alias: { $lib: path.join(wiki, "src/lib"), "@": path.join(wiki, "src") }, interopDefault: true });
+const jiti = createJiti(import.meta.url, {
+	alias: { $lib: path.join(wiki, "src/lib"), "@": path.join(wiki, "src") },
+	interopDefault: true,
+});
 const lib = (p) => jiti.import(path.join(wiki, "src/lib/catalog", p));
 const { words } = await lib("dictionary/words.ts");
 const { searchFormsForLemma, formsVerified } = await lib("search/forms.ts");

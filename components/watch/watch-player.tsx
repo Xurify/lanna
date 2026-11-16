@@ -29,10 +29,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, BookOpenIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, ExternalLinkIcon, LanguagesIcon, ListIcon, LoaderCircleIcon, MonitorPlayIcon, PauseIcon, PlayIcon, RepeatIcon, SnailIcon, ScissorsIcon, SparklesIcon, Trash2Icon, Volume2Icon, XIcon } from "lucide-react";
-import { SidebarToggle } from "@/components/sidebar";
-import { useActivity, type FeedTask } from "@/components/activity-dock";
-import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
+import {
+	BookOpenIcon,
+	CheckIcon,
+	ChevronLeftIcon,
+	ChevronRightIcon,
+	EyeIcon,
+	ExternalLinkIcon,
+	LanguagesIcon,
+	ListIcon,
+	LoaderCircleIcon,
+	PauseIcon,
+	PlayIcon,
+	RepeatIcon,
+	SnailIcon,
+	Volume2Icon,
+	XIcon,
+} from "lucide-react";
+import { useActivity } from "@/components/activity-dock";
+import { EmptyState, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { BUTTON, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { endEnterBlocked, EnterHint, NotSaved, PracticeTime, Stat, Stats, TaskEnd } from "@/components/task-frame";
@@ -44,7 +59,28 @@ import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
-import { coverageBand, coverageKind, formatClock, GAP_CAP_MS, isSpotifyId, LINE_DECISION_CAP_MS, listeningSpeed, LISTEN_FLOOR, parseVideoUrl, PREPARE_STAGE_LINE, watchClockOn, watchXp, type SegmentStat, type VideoRecord, type WatchMode, type WatchState, captionLanguageName, SENTENCE_MAX_CHARS, sentenceTargets, type SentenceTarget } from "@/src/core";
+import {
+	coverageBand,
+	coverageKind,
+	formatClock,
+	GAP_CAP_MS,
+	isSpotifyId,
+	LINE_DECISION_CAP_MS,
+	listeningSpeed,
+	LISTEN_FLOOR,
+	parseVideoUrl,
+	PREPARE_STAGE_LINE,
+	watchClockOn,
+	watchXp,
+	type SegmentStat,
+	type VideoRecord,
+	type WatchMode,
+	type WatchState,
+	captionLanguageName,
+	SENTENCE_MAX_CHARS,
+	sentenceTargets,
+	type SentenceTarget,
+} from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { ChannelLink } from "@/components/watch/channel-link";
 import { useAddToRead } from "@/components/watch/read-import";
@@ -84,7 +120,17 @@ interface PrepareError {
 const COLUMN = "mx-auto w-full max-w-3xl px-6";
 const SLOW_RATE = 0.75;
 
-export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover }: { initial: WatchState | null; initialVideo?: VideoRecord | null; initialUrl?: string | null; initialDiscover?: DiscoverStateView | null }) {
+export function WatchPlayer({
+	initial,
+	initialVideo,
+	initialUrl,
+	initialDiscover,
+}: {
+	initial: WatchState | null;
+	initialVideo?: VideoRecord | null;
+	initialUrl?: string | null;
+	initialDiscover?: DiscoverStateView | null;
+}) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const discover = useDiscover(initialDiscover ?? null);
@@ -139,12 +185,25 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			for (const e of events) window.removeEventListener(e, act);
 		};
 	}, [working]);
-	const activeTime = useActiveTime("watch", "passive", { active: watchClockOn({ watching: stage === "watch", questions: stage === "questions", ready: videoReady, playing: videoPlaying, deciding, decideCapped, idle }) });
+	const activeTime = useActiveTime("watch", "passive", {
+		active: watchClockOn({
+			watching: stage === "watch",
+			questions: stage === "questions",
+			ready: videoReady,
+			playing: videoPlaying,
+			deciding,
+			decideCapped,
+			idle,
+		}),
+	});
 
 	const { feed } = useActivity();
 	const running = feed.tasks.filter((t) => t.kind === "video" && t.status === "running");
 	// The library follows the background tasks: a video that finished is on the shelf without a reload.
-	const taskSig = feed.tasks.filter((t) => t.kind === "video").map((t) => `${t.id}:${t.status}`).join("|");
+	const taskSig = feed.tasks
+		.filter((t) => t.kind === "video")
+		.map((t) => `${t.id}:${t.status}`)
+		.join("|");
 	const seenSig = useRef(taskSig);
 
 	const load = useCallback(async () => {
@@ -165,7 +224,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			rangeRef.current = range;
 			const id = parseVideoUrl(url);
 			if (!id) {
-				setError({ message: "That is not a YouTube or Spotify link. Paste a youtube.com/watch, youtu.be, shorts or open.spotify.com/track link." });
+				setError({
+					message:
+						"That is not a YouTube or Spotify link. Paste a youtube.com/watch, youtu.be, shorts or open.spotify.com/track link.",
+				});
 				setStarting(null);
 				setStage("error");
 				return;
@@ -174,7 +236,18 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			setError(null);
 			setStarting(url);
 			try {
-				const res = await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", url, transcribe, force, background: true, ...(range ? { range } : {}) }) });
+				const res = await fetch("/api/watch", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({
+						action: "add",
+						url,
+						transcribe,
+						force,
+						background: true,
+						...(range ? { range } : {}),
+					}),
+				});
 				const body = (await res.json()) as VideoRecord | PrepareError | { background: true };
 				if (!res.ok) throw body;
 				forgetWatchCaches();
@@ -194,7 +267,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				setOutcome(null);
 				setStage("preview");
 			} catch (err) {
-				const e = err && typeof err === "object" && "message" in err ? (err as PrepareError) : { message: err instanceof Error ? err.message : String(err) };
+				const e =
+					err && typeof err === "object" && "message" in err
+						? (err as PrepareError)
+						: { message: err instanceof Error ? err.message : String(err) };
 				setError(e);
 				setStage("error");
 			} finally {
@@ -235,7 +311,11 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const remove = useCallback(
 		async (id: string) => {
 			try {
-				await fetch("/api/watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", videoId: id }) });
+				await fetch("/api/watch", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ action: "delete", videoId: id }),
+				});
 			} catch {
 				// the list below says what is still there
 			}
@@ -252,7 +332,8 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	const regenTask = regen ? feed.tasks.find((t) => t.id === `video:${regen.id}`) : undefined;
 	const openRef = useRef<(id: string) => void>(() => {});
 	useEffect(() => {
-		if (!regen || regen.error || !regenTask || regenTask.status === "running" || (regenTask.finishedAt ?? 0) < regen.at) return;
+		if (!regen || regen.error || !regenTask || regenTask.status === "running" || (regenTask.finishedAt ?? 0) < regen.at)
+			return;
 		if (regenTask.status === "done") {
 			setRegen(null);
 			if (stageRef.current === "preview") openRef.current(regen.id);
@@ -277,12 +358,15 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	};
 	openRef.current = open;
 
-	const start = useCallback((m: WatchMode) => {
-		setMode(m);
-		startedAt.current = Date.now();
-		activeTime.restart();
-		setStage("watch");
-	}, [activeTime]);
+	const start = useCallback(
+		(m: WatchMode) => {
+			setMode(m);
+			startedAt.current = Date.now();
+			activeTime.restart();
+			setStage("watch");
+		},
+		[activeTime],
+	);
 
 	const finish = useCallback(
 		async (all: number[], segStats: SegmentStat[]) => {
@@ -295,7 +379,17 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 			const activeMs = activeTime.finish();
 			setPracticeMs(activeMs);
 			try {
-				lastSave.current = keepSession(lang?.code ?? "sk", "/api/watch", { action: "finish", videoId: video.id, mode, stats: segStats, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() });
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/watch", {
+					action: "finish",
+					videoId: video.id,
+					mode,
+					stats: segStats,
+					answers: all,
+					tapped,
+					ms: Date.now() - startedAt.current,
+					activeMs,
+					tz: new Date().getTimezoneOffset(),
+				});
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
 			} catch (err) {
@@ -304,7 +398,17 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				const correct = video.questions.filter((q, i) => all[i] === q.answer).length;
 				const gotFirst = segStats.filter((s) => s.got === "first").length;
 				const gotAfter = segStats.filter((s) => s.got === "after").length;
-				setOutcome({ xp: watchXp(video.segments.length, gotFirst, gotAfter, correct, false), correct, total: video.questions.length, gotFirst, gotAfter, missed: segStats.filter((s) => s.got === "no").length, queued: [], rewatch: false, summary: { todayXp: 0, dailyGoal: 50, streak: { days: 0 } } });
+				setOutcome({
+					xp: watchXp(video.segments.length, gotFirst, gotAfter, correct, false),
+					correct,
+					total: video.questions.length,
+					gotFirst,
+					gotAfter,
+					missed: segStats.filter((s) => s.got === "no").length,
+					queued: [],
+					rewatch: false,
+					summary: { todayXp: 0, dailyGoal: 50, streak: { days: 0 } },
+				});
 			} finally {
 				setSaving(false);
 			}
@@ -341,7 +445,12 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	// Escape goes one step back, like the X: from a video to the shelf, from the shelf to the page the player was opened from; a word popover closes first.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Escape" || document.querySelector("[data-word-popover]") || document.querySelector("[role=dialog]")) return;
+			if (
+				e.key !== "Escape" ||
+				document.querySelector("[data-word-popover]") ||
+				document.querySelector("[role=dialog]")
+			)
+				return;
 			if (stageRef.current === "shelf") router.push(readOrigin());
 			else setStage("shelf");
 		};
@@ -357,14 +466,27 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				<div className="mx-auto w-full max-w-3xl px-6 pt-[8vh]">
 					<EmptyState
 						testid="watch-error"
-						title={error?.elsewhere ? `This video is in ${error.elsewhere.english}` : "This video could not be prepared"}
+						title={
+							error?.elsewhere ? `This video is in ${error.elsewhere.english}` : "This video could not be prepared"
+						}
 						action={
 							error?.elsewhere && pending ? (
-								<button type="button" onClick={() => void moveTo(error.elsewhere!, pending)} disabled={moving} className="q-btn primary" data-testid="watch-move">
+								<button
+									type="button"
+									onClick={() => void moveTo(error.elsewhere!, pending)}
+									disabled={moving}
+									className="q-btn primary"
+									data-testid="watch-move"
+								>
 									{moving ? "Switching…" : `Switch to ${error.elsewhere.english} and add it`}
 								</button>
 							) : error?.noCaptions && error.canTranscribe && pending ? (
-								<button type="button" onClick={() => void prepare(pending, true)} className="q-btn primary" data-testid="watch-transcribe">
+								<button
+									type="button"
+									onClick={() => void prepare(pending, true)}
+									className="q-btn primary"
+									data-testid="watch-transcribe"
+								>
 									Transcribe the audio
 								</button>
 							) : state?.canPrepare === false ? (
@@ -393,20 +515,37 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 
 	if (stage === "shelf" || !video) {
 		return (
-			<Shelf state={state} running={running} starting={starting} discover={discover} onOpen={open} onPrepare={(url, range) => void prepare(url, false, false, range)} onDelete={(id) => void remove(id)} />
+			<Shelf
+				state={state}
+				running={running}
+				starting={starting}
+				discover={discover}
+				onOpen={open}
+				onPrepare={(url, range) => void prepare(url, false, false, range)}
+				onDelete={(id) => void remove(id)}
+			/>
 		);
 	}
 
 	if (stage === "preview") {
 		return (
 			<Frame strip={false}>
-				<TopBar video={video} step={`${video.segments.length} lines · ${formatClock(video.durationSec)}`} progress={0} onShelf={() => setStage("shelf")} />
+				<TopBar
+					video={video}
+					step={`${video.segments.length} lines · ${formatClock(video.durationSec)}`}
+					progress={0}
+					onShelf={() => setStage("shelf")}
+				/>
 				<Preview
 					video={video}
 					canFind={state?.canPrepare !== false}
 					onStart={start}
 					onVideo={setVideo}
-					regenerating={!!regen && regen.id === video.id && !regen.error ? { step: regenTask?.status === "running" ? regenTask.step : PREPARE_STAGE_LINE.captions } : null}
+					regenerating={
+						!!regen && regen.id === video.id && !regen.error
+							? { step: regenTask?.status === "running" ? regenTask.step : PREPARE_STAGE_LINE.captions }
+							: null
+					}
 					regenError={regen?.id === video.id ? regen.error : undefined}
 					onRegenerate={() => {
 						setRegen({ id: video.id, at: Date.now() });
@@ -420,7 +559,12 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	if (stage === "questions") {
 		return (
 			<Frame strip={false}>
-				<TopBar video={video} step={`Question ${Math.min(answers.length + 1, video.questions.length)} of ${video.questions.length}`} progress={video.questions.length ? answers.length / video.questions.length : 1} onShelf={() => setStage("shelf")} />
+				<TopBar
+					video={video}
+					step={`Question ${Math.min(answers.length + 1, video.questions.length)} of ${video.questions.length}`}
+					progress={video.questions.length ? answers.length / video.questions.length : 1}
+					onShelf={() => setStage("shelf")}
+				/>
 				<Check
 					questions={video.questions}
 					answers={answers}
@@ -437,7 +581,20 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End video={video} stats={stats} outcome={outcome} practiceMs={practiceMs} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} mode={mode} tapped={tapped} onAgain={() => setStage("preview")} onShelf={() => setStage("shelf")} />
+				<End
+					video={video}
+					stats={stats}
+					outcome={outcome}
+					practiceMs={practiceMs}
+					saving={saving}
+					failed={saveFailed}
+					refused={saveRefused}
+					onRetrySave={() => void retrySave()}
+					mode={mode}
+					tapped={tapped}
+					onAgain={() => setStage("preview")}
+					onShelf={() => setStage("shelf")}
+				/>
 			</Frame>
 		);
 	}
@@ -451,7 +608,10 @@ export function WatchPlayer({ initial, initialVideo, initialUrl, initialDiscover
 				onTap={onTap}
 				onMode={setMode}
 				onShelf={() => setStage("shelf")}
-				onPlaying={setVideoPlaying} onReady={setVideoReady} onDeciding={setDeciding} onDone={(segStats) => {
+				onPlaying={setVideoPlaying}
+				onReady={setVideoReady}
+				onDeciding={setDeciding}
+				onDone={(segStats) => {
 					setStats(segStats);
 					if (video.questions.length) setStage("questions");
 					else void finish([], segStats);
@@ -467,26 +627,51 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
-			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
-			{children}
+				{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
+				{children}
 			</div>
 		</>
 	);
 }
 
-function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord; step: string; progress: number; onShelf: () => void; right?: React.ReactNode }) {
+function TopBar({
+	video,
+	step,
+	progress,
+	onShelf,
+	right,
+}: {
+	video: VideoRecord;
+	step: string;
+	progress: number;
+	onShelf: () => void;
+	right?: React.ReactNode;
+}) {
 	const lang = useActiveLanguage();
 	return (
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
-				<button type="button" onClick={onShelf} aria-label="Back to your videos" title="Back to your videos" className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-leave">
+				<button
+					type="button"
+					onClick={onShelf}
+					aria-label="Back to your videos"
+					title="Back to your videos"
+					className="-ml-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					data-testid="watch-leave"
+				>
 					<XIcon className="size-5" />
 				</button>
 				<div className="min-w-0 flex-1">
 					<p className="truncate font-ui text-sm font-[600] text-foreground" lang={lang?.code}>
 						{video.title} <span className="text-muted-foreground">· {step}</span>
 					</p>
-					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
+					<div
+						role="progressbar"
+						aria-valuemin={0}
+						aria-valuemax={100}
+						aria-valuenow={Math.round(progress * 100)}
+						className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent"
+					>
 						<div className="lh-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
 					</div>
 				</div>
@@ -498,7 +683,23 @@ function TopBar({ video, step, progress, onShelf, right }: { video: VideoRecord;
 
 // ─── The pre-watch pass ─────────────────────────────────────────────────────
 
-function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating, regenError }: { video: VideoRecord; canFind: boolean; onStart: (mode: WatchMode) => void; onRegenerate: () => void; /** The video measured again (a word marked as known). */ onVideo: (v: VideoRecord) => void; regenerating: { step: string } | null; regenError?: string }) {
+function Preview({
+	video,
+	canFind,
+	onStart,
+	onRegenerate,
+	onVideo,
+	regenerating,
+	regenError,
+}: {
+	video: VideoRecord;
+	canFind: boolean;
+	onStart: (mode: WatchMode) => void;
+	onRegenerate: () => void;
+	/** The video measured again (a word marked as known). */ onVideo: (v: VideoRecord) => void;
+	regenerating: { step: string } | null;
+	regenError?: string;
+}) {
 	const lang = useActiveLanguage();
 	const spotify = isSpotifyId(video.id);
 	const readIn = useAddToRead();
@@ -510,7 +711,11 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 		if (!w.slug) return;
 		setMarking(w.slug);
 		try {
-			const res = await fetch("/api/words/known", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug: w.slug, known: true }) });
+			const res = await fetch("/api/words/known", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ slug: w.slug, known: true }),
+			});
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const again = await fetch(`/api/watch?id=${encodeURIComponent(video.id)}`);
 			if (again.ok) onVideo((await again.json()) as VideoRecord);
@@ -523,12 +728,21 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 	};
 	const band = coverageBand(video.coverage);
 	const pct = Math.round(video.coverage * 100);
-	const kind = coverageKind({ lang: video.lang, trackLang: video.source.trackLang, estimated: video.coverageEstimated });
+	const kind = coverageKind({
+		lang: video.lang,
+		trackLang: video.source.trackLang,
+		estimated: video.coverageEstimated,
+	});
 	const tone = band.band === "comfortable" ? "text-teal-2" : band.band === "stretch" ? "text-teal-2" : "text-miss";
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			// Enter in a field (a study section's gap) belongs to that field.
-			if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement) && !(e.target instanceof HTMLAnchorElement) && !(e.target instanceof HTMLInputElement)) {
+			if (
+				e.key === "Enter" &&
+				!(e.target instanceof HTMLButtonElement) &&
+				!(e.target instanceof HTMLAnchorElement) &&
+				!(e.target instanceof HTMLInputElement)
+			) {
 				e.preventDefault();
 				onStart("step");
 			}
@@ -547,13 +761,31 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 						</>
 					)}
 					{formatClock(video.durationSec)}
-					{video.fragment ? ` (${formatClock(video.fragment.startSec)} to ${formatClock(video.fragment.endSec)} of a ${formatClock(video.fragment.ofSec)} video)` : ""} · {video.source.kind === "captions" ? "captions by people" : video.source.kind === "auto-captions" ? "YouTube's automatic captions" : "transcribed from the audio"}
+					{video.fragment
+						? ` (${formatClock(video.fragment.startSec)} to ${formatClock(video.fragment.endSec)} of a ${formatClock(video.fragment.ofSec)} video)`
+						: ""}{" "}
+					·{" "}
+					{video.source.kind === "captions"
+						? "captions by people"
+						: video.source.kind === "auto-captions"
+							? "YouTube's automatic captions"
+							: "transcribed from the audio"}
 					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
-					{video.untranslated ? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation` : ""}
+					{video.untranslated
+						? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation`
+						: ""}
 				</p>
 				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang={video.lang}>
 					{video.title}
-					<a href={videoUrl(video.id)} target="_blank" rel="noreferrer" aria-label={spotify ? "Open this track on Spotify" : "Open this video on YouTube"} title={spotify ? "Open on Spotify" : "Open on YouTube"} className="ml-2 inline-flex size-8 translate-y-0.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-preview-youtube">
+					<a
+						href={videoUrl(video.id)}
+						target="_blank"
+						rel="noreferrer"
+						aria-label={spotify ? "Open this track on Spotify" : "Open this video on YouTube"}
+						title={spotify ? "Open on Spotify" : "Open on YouTube"}
+						className="ml-2 inline-flex size-8 translate-y-0.5 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						data-testid="watch-preview-youtube"
+					>
 						<ExternalLinkIcon className="size-4" strokeWidth={1.6} />
 					</a>
 				</h1>
@@ -562,7 +794,9 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 					{kind === "none" ? (
 						<div className="flex items-center gap-4 rounded-lg border bg-card px-5 py-4" data-testid="watch-coverage">
 							<div>
-								<p className="font-ui text-2xl font-[600] text-foreground">{captionLanguageName(video.source.trackLang)} captions</p>
+								<p className="font-ui text-2xl font-[600] text-foreground">
+									{captionLanguageName(video.source.trackLang)} captions
+								</p>
 								<p className="font-ui text-sm font-[600] text-muted-foreground">Not matched to your words</p>
 							</div>
 						</div>
@@ -579,9 +813,20 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 						</div>
 					)}
 					<div className="rounded-lg border bg-card px-5 py-4">
-						<p className="font-prose text-base leading-snug text-foreground">{kind === "none" ? `The captions are ${captionLanguageName(video.source.trackLang)}, so their words are not matched against your ${captionLanguageName(video.lang)}. Regenerate to get an estimate from a ${captionLanguageName(video.lang)} rendering of them.` : kind === "estimated" ? `${band.line} An estimate: measured on a ${captionLanguageName(video.lang)} rendering of the ${captionLanguageName(video.source.trackLang)} captions.` : band.line}</p>
+						<p className="font-prose text-base leading-snug text-foreground">
+							{kind === "none"
+								? `The captions are ${captionLanguageName(video.source.trackLang)}, so their words are not matched against your ${captionLanguageName(video.lang)}. Regenerate to get an estimate from a ${captionLanguageName(video.lang)} rendering of them.`
+								: kind === "estimated"
+									? `${band.line} An estimate: measured on a ${captionLanguageName(video.lang)} rendering of the ${captionLanguageName(video.source.trackLang)} captions.`
+									: band.line}
+						</p>
 						<p className="mt-2 font-prose text-sm text-muted-foreground">
-							{video.wordCount} words · {video.unknownCount} you have not studied{video.expected !== undefined && kind !== "none" ? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}` : ""} · {video.segments.length} lines · {video.questions.length} {video.questions.length === 1 ? "question" : "questions"} at {video.level}
+							{video.wordCount} words · {video.unknownCount} you have not studied
+							{video.expected !== undefined && kind !== "none"
+								? ` · ${Math.round(video.expected * 100)}% expected at ${video.level}`
+								: ""}{" "}
+							· {video.segments.length} lines · {video.questions.length}{" "}
+							{video.questions.length === 1 ? "question" : "questions"} at {video.level}
 						</p>
 					</div>
 				</div>
@@ -590,14 +835,29 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 
 				{video.preTeach.length > 0 && (
 					<div className="mt-6" data-testid="watch-preteach">
-						<p className="font-ui text-sm font-[600] text-muted-foreground">Meet these first — they come up in the video and you have not studied them</p>
+						<p className="font-ui text-sm font-[600] text-muted-foreground">
+							Meet these first — they come up in the video and you have not studied them
+						</p>
 						<p className="mt-0.5 font-prose text-[13px] text-ink-3" role="status">
-							{marked.length ? `${marked.join(", ")} ${marked.length === 1 ? "counts" : "count"} as known now; the share and the list above follow. Undo in a word's card.` : "Know one already? Tick it and it counts as known from now on, here and everywhere the app measures what you know."}
+							{marked.length
+								? `${marked.join(", ")} ${marked.length === 1 ? "counts" : "count"} as known now; the share and the list above follow. Undo in a word's card.`
+								: "Know one already? Tick it and it counts as known from now on, here and everywhere the app measures what you know."}
 						</p>
 						<ul className="mt-2 grid gap-2 sm:grid-cols-2">
 							{video.preTeach.map((w) => (
-								<li key={w.slug ?? w.lemma} className={cn("flex items-start gap-3 rounded-lg border bg-card px-4 py-3", marking === w.slug && "opacity-60")}>
-									<button type="button" onClick={() => void speak(w.lemma).catch(() => {})} aria-label={`Play ${w.lemma}`} className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+								<li
+									key={w.slug ?? w.lemma}
+									className={cn(
+										"flex items-start gap-3 rounded-lg border bg-card px-4 py-3",
+										marking === w.slug && "opacity-60",
+									)}
+								>
+									<button
+										type="button"
+										onClick={() => void speak(w.lemma).catch(() => {})}
+										aria-label={`Play ${w.lemma}`}
+										className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									>
 										<Volume2Icon className="size-4" />
 									</button>
 									<span className="min-w-0 flex-1">
@@ -611,13 +871,29 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 											<Tag>{w.count === 1 ? "once" : `${w.count}× in the video`}</Tag>
 											{w.cat && <Tag>{w.cat.toLowerCase()}</Tag>}
 										</span>
-										<span className="mt-1 block truncate font-prose text-xs text-muted-foreground" lang={lang?.code} title={w.example}>
+										<span
+											className="mt-1 block truncate font-prose text-xs text-muted-foreground"
+											lang={lang?.code}
+											title={w.example}
+										>
 											{w.example}
 										</span>
 									</span>
 									{w.slug && (
-										<button type="button" disabled={marking !== null} onClick={() => void markKnown(w)} aria-label={`I know ${w.lemma}`} title="I know this" className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-teal-2 disabled:opacity-50 pointer-coarse:size-11" data-testid="watch-preteach-known">
-											{marking === w.slug ? <LoaderCircleIcon className="size-4 animate-spin" /> : <CheckIcon className="size-4" strokeWidth={2} />}
+										<button
+											type="button"
+											disabled={marking !== null}
+											onClick={() => void markKnown(w)}
+											aria-label={`I know ${w.lemma}`}
+											title="I know this"
+											className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-teal-2 disabled:opacity-50 pointer-coarse:size-11"
+											data-testid="watch-preteach-known"
+										>
+											{marking === w.slug ? (
+												<LoaderCircleIcon className="size-4 animate-spin" />
+											) : (
+												<CheckIcon className="size-4" strokeWidth={2} />
+											)}
 										</button>
 									)}
 								</li>
@@ -627,31 +903,58 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 				)}
 
 				<div className="mt-8 grid gap-3 sm:grid-cols-2">
-					<button type="button" onClick={() => onStart("step")} className="group rounded-lg border border-teal bg-teal-wash p-5 text-left transition-colors hover:brightness-105" data-testid="watch-start-step">
+					<button
+						type="button"
+						onClick={() => onStart("step")}
+						className="group rounded-lg border border-teal bg-teal-wash p-5 text-left transition-colors hover:brightness-105"
+						data-testid="watch-start-step"
+					>
 						<span className="flex items-center gap-2 font-ui text-lg font-[600] text-foreground">
 							<PlayIcon className="size-5 fill-current text-teal-2" />
 							Line by line
-							<kbd className="ml-auto rounded-md border bg-card px-1.5 font-ui text-xs font-[600] text-muted-foreground">Enter</kbd>
+							<kbd className="ml-auto rounded-md border bg-card px-1.5 font-ui text-xs font-[600] text-muted-foreground">
+								Enter
+							</kbd>
 						</span>
-						<span className="mt-1 block font-prose text-sm text-foreground/80">Each line plays with the text hidden and pauses. Replay, slow it, reveal — then say whether you got it. It trains putting meaning together at speed.</span>
+						<span className="mt-1 block font-prose text-sm text-foreground/80">
+							Each line plays with the text hidden and pauses. Replay, slow it, reveal — then say whether you got it. It
+							trains putting meaning together at speed.
+						</span>
 					</button>
-					<button type="button" onClick={() => onStart("flow")} className="rounded-lg border bg-card p-5 text-left transition-colors hover:shadow-raise-hi" data-testid="watch-start-flow">
+					<button
+						type="button"
+						onClick={() => onStart("flow")}
+						className="rounded-lg border bg-card p-5 text-left transition-colors hover:shadow-raise-hi"
+						data-testid="watch-start-flow"
+					>
 						<span className="flex items-center gap-2 font-ui text-lg font-[600] text-foreground">
 							<ListIcon className="size-5 text-muted-foreground" />
 							Straight through
 						</span>
-						<span className="mt-1 block font-prose text-sm text-muted-foreground">Both subtitles show under the video and the whole transcript below it. Tap a line to jump to it, or a word for its meaning.</span>
+						<span className="mt-1 block font-prose text-sm text-muted-foreground">
+							Both subtitles show under the video and the whole transcript below it. Tap a line to jump to it, or a word
+							for its meaning.
+						</span>
 					</button>
 				</div>
 
 				{video.source.trackLang === video.lang && <StudySections video={video} canFind={canFind} />}
 
 				<div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
-					<button type="button" onClick={() => readIn.add(video.id)} disabled={readBusy} aria-busy={readBusy} className="q-btn sec t" data-testid="watch-add-to-read">
+					<button
+						type="button"
+						onClick={() => readIn.add(video.id)}
+						disabled={readBusy}
+						aria-busy={readBusy}
+						className="q-btn sec t"
+						data-testid="watch-add-to-read"
+					>
 						<BookOpenIcon className="size-4" strokeWidth={1.6} />
 						{readBusy ? "Adding…" : "Add to Read"}
 					</button>
-					<span className="font-prose text-sm text-muted-foreground">Adds these lines to Read as an episode, every word tappable.</span>
+					<span className="font-prose text-sm text-muted-foreground">
+						Adds these lines to Read as an episode, every word tappable.
+					</span>
 				</div>
 				{readIn.error && (
 					<p className="mt-2 font-prose text-sm text-miss" role="alert" data-testid="watch-add-to-read-error">
@@ -659,8 +962,19 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 					</p>
 				)}
 				<div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
-					<button type="button" onClick={onRegenerate} disabled={!!regenerating || !canFind} aria-busy={!!regenerating} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60 disabled:hover:bg-transparent" data-testid="watch-regenerate">
-						{regenerating ? <LoaderCircleIcon className="size-4 animate-spin" /> : <RepeatIcon className="size-4" strokeWidth={1.6} />}
+					<button
+						type="button"
+						onClick={onRegenerate}
+						disabled={!!regenerating || !canFind}
+						aria-busy={!!regenerating}
+						className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-ui text-sm font-[600] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60 disabled:hover:bg-transparent"
+						data-testid="watch-regenerate"
+					>
+						{regenerating ? (
+							<LoaderCircleIcon className="size-4 animate-spin" />
+						) : (
+							<RepeatIcon className="size-4" strokeWidth={1.6} />
+						)}
 						{regenerating ? "Regenerating…" : "Regenerate"}
 					</button>
 					{regenerating ? (
@@ -668,7 +982,10 @@ function Preview({ video, canFind, onStart, onRegenerate, onVideo, regenerating,
 							{regenerating.step}. This page updates when it is done.
 						</span>
 					) : (
-						<span className="font-prose text-sm text-muted-foreground">Fetches the captions again and translates them again. One AI request, two for captions in another language. Your past watchings stay.</span>
+						<span className="font-prose text-sm text-muted-foreground">
+							Fetches the captions again and translates them again. One AI request, two for captions in another
+							language. Your past watchings stay.
+						</span>
 					)}
 				</div>
 				{regenError && (
@@ -686,15 +1003,38 @@ function Ring({ value, floor, tone }: { value: number; floor: number; tone: stri
 	const r = 26;
 	const c = 2 * Math.PI * r;
 	const angle = (p: number) => -90 + p * 360;
-	const mark = (p: number, radius: number) => ({ x: 32 + radius * Math.cos((angle(p) * Math.PI) / 180), y: 32 + radius * Math.sin((angle(p) * Math.PI) / 180) });
+	const mark = (p: number, radius: number) => ({
+		x: 32 + radius * Math.cos((angle(p) * Math.PI) / 180),
+		y: 32 + radius * Math.sin((angle(p) * Math.PI) / 180),
+	});
 	// The floor tick spans the track exactly, so it reads as a mark on the ring, not a stray stroke beside it.
 	const a = mark(floor, r - 3);
 	const b = mark(floor, r + 3);
 	return (
 		<svg viewBox="0 0 64 64" className="size-20 shrink-0" aria-hidden="true">
 			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-well-2" />
-			<circle cx="32" cy="32" r={r} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className={tone} strokeDasharray={`${c * Math.max(0.01, value)} ${c}`} transform="rotate(-90 32 32)" />
-			<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-ink-2" />
+			<circle
+				cx="32"
+				cy="32"
+				r={r}
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="6"
+				strokeLinecap="round"
+				className={tone}
+				strokeDasharray={`${c * Math.max(0.01, value)} ${c}`}
+				transform="rotate(-90 32 32)"
+			/>
+			<line
+				x1={a.x}
+				y1={a.y}
+				x2={b.x}
+				y2={b.y}
+				stroke="currentColor"
+				strokeWidth="2"
+				strokeLinecap="round"
+				className="text-ink-2"
+			/>
 			<text x="32" y="36" textAnchor="middle" className="fill-current font-ui text-[15px] font-[600] text-foreground">
 				{Math.round(value * 100)}%
 			</text>
@@ -810,7 +1150,29 @@ interface LineState {
 
 const fresh = (): LineState => ({ replays: 0, slow: false, revealedText: false, revealedMeaning: false });
 
-function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying, onReady, onDeciding }: { video: VideoRecord; mode: WatchMode; tapped: string[]; onTap: (key: string) => void; onMode: (m: WatchMode) => void; onShelf: () => void; onDone: (stats: SegmentStat[]) => void; onPlaying: (on: boolean) => void; onReady: (on: boolean) => void; onDeciding: (on: boolean) => void }) {
+function Screen({
+	video,
+	mode,
+	tapped,
+	onTap,
+	onMode,
+	onShelf,
+	onDone,
+	onPlaying,
+	onReady,
+	onDeciding,
+}: {
+	video: VideoRecord;
+	mode: WatchMode;
+	tapped: string[];
+	onTap: (key: string) => void;
+	onMode: (m: WatchMode) => void;
+	onShelf: () => void;
+	onDone: (stats: SegmentStat[]) => void;
+	onPlaying: (on: boolean) => void;
+	onReady: (on: boolean) => void;
+	onDeciding: (on: boolean) => void;
+}) {
 	const lang = useActiveLanguage();
 	const holder = useRef<HTMLDivElement>(null);
 	const player = useRef<YTPlayer | null>(null);
@@ -869,7 +1231,15 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					},
 					onError: (e) => {
 						if (!alive) return;
-						setPlayerError(e.data === PLAYER_ERROR_AUDIO ? "The audio could not be played. The lines still work here." : e.data === 101 || e.data === 150 ? "The owner of this video does not allow it to be embedded. Open it on YouTube and read the lines here." : e.data === 100 ? "This video was removed or is private." : `YouTube could not play this video (error ${e.data}). The lines still work here.`);
+						setPlayerError(
+							e.data === PLAYER_ERROR_AUDIO
+								? "The audio could not be played. The lines still work here."
+								: e.data === 101 || e.data === 150
+									? "The owner of this video does not allow it to be embedded. Open it on YouTube and read the lines here."
+									: e.data === 100
+										? "This video was removed or is private."
+										: `YouTube could not play this video (error ${e.data}). The lines still work here.`,
+						);
 					},
 				};
 				if (!YT) {
@@ -883,7 +1253,19 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					width: "100%",
 					height: "100%",
 					host: "https://www.youtube-nocookie.com",
-					playerVars: { controls: 1, rel: 0, modestbranding: 1, playsinline: 1, cc_load_policy: 0, iv_load_policy: 3, disablekb: 1, fs: 0, origin: window.location.origin, start: Math.floor(segs[0]!.start), ...(video.fragment ? { end: Math.ceil(segs[segs.length - 1]!.end + 1) } : {}) },
+					playerVars: {
+						controls: 1,
+						rel: 0,
+						modestbranding: 1,
+						playsinline: 1,
+						cc_load_policy: 0,
+						iv_load_policy: 3,
+						disablekb: 1,
+						fs: 0,
+						origin: window.location.origin,
+						start: Math.floor(segs[0]!.start),
+						...(video.fragment ? { end: Math.ceil(segs[segs.length - 1]!.end + 1) } : {}),
+					},
 					events,
 				});
 			})
@@ -1007,7 +1389,15 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 		for (const [i, l] of lines.current) {
 			if (!l.got) continue;
 			const s = segs[i]!;
-			out.push({ i, words: s.tokens.filter((t) => t.word).length, sec: Math.round((s.end - s.start) * 100) / 100, replays: l.replays, slow: l.slow, revealed: l.revealedText || l.revealedMeaning, got: l.got });
+			out.push({
+				i,
+				words: s.tokens.filter((t) => t.word).length,
+				sec: Math.round((s.end - s.start) * 100) / 100,
+				replays: l.replays,
+				slow: l.slow,
+				revealed: l.revealedText || l.revealedMeaning,
+				got: l.got,
+			});
 		}
 		return out.sort((a, b) => a.i - b.i);
 	}, [segs]);
@@ -1070,7 +1460,24 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [popover, mode, heard, atEnd, idx, segs.length, togglePlay, replay, toggleSlow, showText, showMeaning, gotIt, notYet, goTo, onDone, statsOf]);
+	}, [
+		popover,
+		mode,
+		heard,
+		atEnd,
+		idx,
+		segs.length,
+		togglePlay,
+		replay,
+		toggleSlow,
+		showText,
+		showMeaning,
+		gotIt,
+		notYet,
+		goTo,
+		onDone,
+		statsOf,
+	]);
 
 	// A click on the player puts keyboard focus inside YouTube's iframe,
 	// where our window-level shortcuts (T, R, S, M...) never fire. Take it back.
@@ -1139,11 +1546,33 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 				progress={(idx + (atEnd ? 1 : 0)) / segs.length}
 				onShelf={onShelf}
 				right={
-					<div className="flex items-center rounded-lg bg-accent p-0.5 font-ui text-xs font-[600]" role="group" aria-label="Mode">
-						<button type="button" onClick={() => switchMode("step")} aria-pressed={step} className={cn("rounded-md px-2 py-1 transition-colors", step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground")} data-testid="watch-mode-step">
+					<div
+						className="flex items-center rounded-lg bg-accent p-0.5 font-ui text-xs font-[600]"
+						role="group"
+						aria-label="Mode"
+					>
+						<button
+							type="button"
+							onClick={() => switchMode("step")}
+							aria-pressed={step}
+							className={cn(
+								"rounded-md px-2 py-1 transition-colors",
+								step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
+							)}
+							data-testid="watch-mode-step"
+						>
 							Line by line
 						</button>
-						<button type="button" onClick={() => switchMode("flow")} aria-pressed={!step} className={cn("rounded-md px-2 py-1 transition-colors", !step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground")} data-testid="watch-mode-flow">
+						<button
+							type="button"
+							onClick={() => switchMode("flow")}
+							aria-pressed={!step}
+							className={cn(
+								"rounded-md px-2 py-1 transition-colors",
+								!step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
+							)}
+							data-testid="watch-mode-flow"
+						>
 							Straight through
 						</button>
 					</div>
@@ -1153,7 +1582,11 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 			<div className="flex flex-1 flex-col overflow-y-auto">
 				<div className={cn(COLUMN, "pt-1")}>
 					{/* The player keeps its box from the first paint. */}
-					<div className="relative mx-auto aspect-video w-full overflow-hidden rounded-lg bg-black" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player">
+					<div
+						className="relative mx-auto aspect-video w-full overflow-hidden rounded-lg bg-black"
+						style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }}
+						data-testid="watch-player"
+					>
 						<div ref={holder} className="absolute inset-0 [&>iframe]:size-full" />
 						{/* In step mode the lines are ours to show, one at a time:
 						    this band covers YouTube's own subtitles for the whole
@@ -1161,8 +1594,14 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 						    cc_load_policy, and after a reveal the player would
 						    already show the next line). Clicks pass through. */}
 						{ready && !playerError && step && !isSpotifyId(video.id) && (
-							<div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[26%] items-end justify-center bg-black pb-2" aria-hidden data-testid="watch-caption-cover">
-								<span className="font-ui text-[11px] font-[600] text-sun-ink/40">{textShown ? "the line is below" : "subtitles covered · T to reveal"}</span>
+							<div
+								className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[26%] items-end justify-center bg-black pb-2"
+								aria-hidden
+								data-testid="watch-caption-cover"
+							>
+								<span className="font-ui text-[11px] font-[600] text-sun-ink/40">
+									{textShown ? "the line is below" : "subtitles covered · T to reveal"}
+								</span>
 							</div>
 						)}
 						{!ready && !playerError && (
@@ -1173,7 +1612,11 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					</div>
 					{/* The player's own message stays readable; ours sits under it. */}
 					{playerError && (
-						<div className="mx-auto mt-3 flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3" style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }} data-testid="watch-player-error">
+						<div
+							className="mx-auto mt-3 flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-miss/40 bg-miss-soft px-4 py-3"
+							style={{ maxWidth: "calc(min(44vh, 460px) * 16 / 9)" }}
+							data-testid="watch-player-error"
+						>
 							<p className="font-prose text-sm text-foreground">{playerError}</p>
 							<a href={video.url} target="_blank" rel="noreferrer" className={cn(SECONDARY, "h-9 px-3 text-sm")}>
 								{isSpotifyId(video.id) ? "Open on Spotify" : "Open on YouTube"}
@@ -1182,15 +1625,33 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 					)}
 
 					{/* Both subtitles */}
-					<div className="mt-4 min-h-[7.5rem]" data-word-column data-word-lookup-enabled="true" data-testid="watch-subtitles">
+					<div
+						className="mt-4 min-h-[7.5rem]"
+						data-word-column
+						data-word-lookup-enabled="true"
+						data-testid="watch-subtitles"
+					>
 						{step && prev && (
-							<p className="mb-1 truncate font-prose text-sm text-muted-foreground" lang={lang?.code} aria-hidden="true">
+							<p
+								className="mb-1 truncate font-prose text-sm text-muted-foreground"
+								lang={lang?.code}
+								aria-hidden="true"
+							>
 								{prev.sk}
 							</p>
 						)}
-						<div className={cn("rounded-lg border px-5 py-4 transition-colors", miss ? "border-miss bg-miss-soft" : atEnd && step ? "border-teal-line bg-card" : "bg-card")}>
+						<div
+							className={cn(
+								"rounded-lg border px-5 py-4 transition-colors",
+								miss ? "border-miss bg-miss-soft" : atEnd && step ? "border-teal-line bg-card" : "bg-card",
+							)}
+						>
 							{textShown ? (
-								<p className="font-prose text-[1.5rem] leading-[1.5] text-foreground" lang={lang?.code} data-testid="watch-sk">
+								<p
+									className="font-prose text-[1.5rem] leading-[1.5] text-foreground"
+									lang={lang?.code}
+									data-testid="watch-sk"
+								>
 									{seg.tokens.map((t, j) =>
 										t.word ? (
 											<Word
@@ -1211,16 +1672,34 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 									)}
 								</p>
 							) : (
-								<p className="flex items-center gap-3 font-prose text-[1.5rem] leading-[1.5] text-muted-foreground" data-testid="watch-hidden">
+								<p
+									className="flex items-center gap-3 font-prose text-[1.5rem] leading-[1.5] text-muted-foreground"
+									data-testid="watch-hidden"
+								>
 									<span className="flex gap-1" aria-hidden="true">
 										{Array.from({ length: Math.min(words, 14) }).map((_, k) => (
-											<span key={k} className={cn("h-3 rounded-full bg-foreground/15", k % 3 === 0 ? "w-8" : k % 3 === 1 ? "w-5" : "w-6")} />
+											<span
+												key={k}
+												className={cn(
+													"h-3 rounded-full bg-foreground/15",
+													k % 3 === 0 ? "w-8" : k % 3 === 1 ? "w-5" : "w-6",
+												)}
+											/>
 										))}
 									</span>
-									<span className="font-ui text-sm font-[600]">{playing ? "Listen…" : atEnd ? "Did you get it?" : heard ? "Paused" : "Starting…"}</span>
+									<span className="font-ui text-sm font-[600]">
+										{playing ? "Listen…" : atEnd ? "Did you get it?" : heard ? "Paused" : "Starting…"}
+									</span>
 								</p>
 							)}
-							<p className={cn("mt-1 font-prose text-base", meaningShown ? "text-muted-foreground" : "select-none text-transparent")} data-testid="watch-en" aria-hidden={!meaningShown}>
+							<p
+								className={cn(
+									"mt-1 font-prose text-base",
+									meaningShown ? "text-muted-foreground" : "select-none text-transparent",
+								)}
+								data-testid="watch-en"
+								aria-hidden={!meaningShown}
+							>
 								{meaningShown ? seg.en : "·"}
 							</p>
 						</div>
@@ -1234,14 +1713,25 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 									<button
 										type="button"
 										onClick={() => goTo(s.i)}
-										className={cn("flex w-full items-baseline gap-3 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-accent", s.i === idx && "bg-teal-wash")}
+										className={cn(
+											"flex w-full items-baseline gap-3 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-accent",
+											s.i === idx && "bg-teal-wash",
+										)}
 										ref={(el) => {
 											if (s.i === idx && el) el.scrollIntoView({ block: "nearest" });
 										}}
 									>
-										<span className="w-12 shrink-0 font-ui text-xs font-[600] tabular-nums text-muted-foreground">{formatClock(s.start)}</span>
+										<span className="w-12 shrink-0 font-ui text-xs font-[600] tabular-nums text-muted-foreground">
+											{formatClock(s.start)}
+										</span>
 										<span className="min-w-0 flex-1">
-											<span className={cn("block font-prose text-base", s.i === idx ? "text-foreground" : "text-foreground/80")} lang={lang?.code}>
+											<span
+												className={cn(
+													"block font-prose text-base",
+													s.i === idx ? "text-foreground" : "text-foreground/80",
+												)}
+												lang={lang?.code}
+											>
 												{s.sk}
 											</span>
 											{showEn && <span className="block font-prose text-sm text-muted-foreground">{s.en}</span>}
@@ -1257,24 +1747,78 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 			{/* The controls */}
 			<div className={cn("border-t border-border", miss && "bg-miss-soft")}>
 				<div className={cn("mx-auto w-full max-w-5xl px-6", "flex min-h-24 flex-wrap items-center gap-2 py-4")}>
-					<Ctl onClick={togglePlay} label={playing ? "Pause" : "Play"} keyName="Space" icon={playing ? <PauseIcon className="size-4" /> : <PlayIcon className="size-4 fill-current" />} testId="watch-play" />
-					<Ctl onClick={replay} label="Replay" keyName="R" icon={<RepeatIcon className="size-4" />} testId="watch-replay" />
-					<Ctl onClick={toggleSlow} label={rate === 1 ? "Slower" : "Normal speed"} keyName="S" active={rate !== 1} icon={<SnailIcon className="size-4" />} testId="watch-slow" />
+					<Ctl
+						onClick={togglePlay}
+						label={playing ? "Pause" : "Play"}
+						keyName="Space"
+						icon={playing ? <PauseIcon className="size-4" /> : <PlayIcon className="size-4 fill-current" />}
+						testId="watch-play"
+					/>
+					<Ctl
+						onClick={replay}
+						label="Replay"
+						keyName="R"
+						icon={<RepeatIcon className="size-4" />}
+						testId="watch-replay"
+					/>
+					<Ctl
+						onClick={toggleSlow}
+						label={rate === 1 ? "Slower" : "Normal speed"}
+						keyName="S"
+						active={rate !== 1}
+						icon={<SnailIcon className="size-4" />}
+						testId="watch-slow"
+					/>
 					{step ? (
 						<>
-							<Ctl onClick={showText} label={captionLanguageName(video.source?.trackLang ?? video.lang)} keyName="T" active={line.revealedText} disabled={line.revealedText} icon={<EyeIcon className="size-4" />} testId="watch-text" />
-							<Ctl onClick={showMeaning} label="Meaning" keyName="M" active={line.revealedMeaning} disabled={line.revealedMeaning || !line.revealedText} icon={<LanguagesIcon className="size-4" />} testId="watch-meaning" />
+							<Ctl
+								onClick={showText}
+								label={captionLanguageName(video.source?.trackLang ?? video.lang)}
+								keyName="T"
+								active={line.revealedText}
+								disabled={line.revealedText}
+								icon={<EyeIcon className="size-4" />}
+								testId="watch-text"
+							/>
+							<Ctl
+								onClick={showMeaning}
+								label="Meaning"
+								keyName="M"
+								active={line.revealedMeaning}
+								disabled={line.revealedMeaning || !line.revealedText}
+								icon={<LanguagesIcon className="size-4" />}
+								testId="watch-meaning"
+							/>
 						</>
 					) : (
-						<Ctl onClick={() => setShowEn((v) => !v)} label={showEn ? "Hide meaning" : "Meaning"} keyName="M" active={showEn} icon={<LanguagesIcon className="size-4" />} testId="watch-meaning" />
+						<Ctl
+							onClick={() => setShowEn((v) => !v)}
+							label={showEn ? "Hide meaning" : "Meaning"}
+							keyName="M"
+							active={showEn}
+							icon={<LanguagesIcon className="size-4" />}
+							testId="watch-meaning"
+						/>
 					)}
 					<div className="ml-auto flex items-center gap-2">
-						<button type="button" onClick={() => goTo(idx - 1)} disabled={idx === 0} aria-label="Previous line" className="flex size-12 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30" data-testid="watch-prev">
+						<button
+							type="button"
+							onClick={() => goTo(idx - 1)}
+							disabled={idx === 0}
+							aria-label="Previous line"
+							className="flex size-12 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
+							data-testid="watch-prev"
+						>
 							<ChevronLeftIcon className="size-5" />
 						</button>
 						{step ? (
 							miss ? (
-								<button type="button" onClick={advance} className={cn(BUTTON, "bg-miss text-background hover:brightness-110")} data-testid="watch-continue">
+								<button
+									type="button"
+									onClick={advance}
+									className={cn(BUTTON, "bg-miss text-background hover:brightness-110")}
+									data-testid="watch-continue"
+								>
 									{idx + 1 >= segs.length ? "Finish" : "Continue"}
 								</button>
 							) : (
@@ -1282,7 +1826,14 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 									<button type="button" onClick={notYet} className={SECONDARY} data-testid="watch-notyet" title="N">
 										Not yet
 									</button>
-									<button type="button" onClick={gotIt} disabled={!heard && !atEnd} className={PRIMARY} data-testid="watch-gotit" title="Enter · your own call, nothing checks it">
+									<button
+										type="button"
+										onClick={gotIt}
+										disabled={!heard && !atEnd}
+										className={PRIMARY}
+										data-testid="watch-gotit"
+										title="Enter · your own call, nothing checks it"
+									>
 										<CheckIcon className="size-5" strokeWidth={3} />
 										{idx + 1 >= segs.length ? "Got it (my call) · finish" : "Got it (my call)"}
 									</button>
@@ -1290,10 +1841,18 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 							)
 						) : (
 							<button type="button" onClick={() => onDone(statsOf())} className={PRIMARY} data-testid="watch-finish">
-								{video.questions.length ? `Answer ${video.questions.length} ${video.questions.length === 1 ? "question" : "questions"}` : "Done"}
+								{video.questions.length
+									? `Answer ${video.questions.length} ${video.questions.length === 1 ? "question" : "questions"}`
+									: "Done"}
 							</button>
 						)}
-						<button type="button" onClick={() => (step && idx + 1 >= segs.length ? onDone(statsOf()) : goTo(idx + 1))} aria-label="Next line" className="flex size-12 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-next">
+						<button
+							type="button"
+							onClick={() => (step && idx + 1 >= segs.length ? onDone(statsOf()) : goTo(idx + 1))}
+							aria-label="Next line"
+							className="flex size-12 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							data-testid="watch-next"
+						>
 							<ChevronRightIcon className="size-5" />
 						</button>
 					</div>
@@ -1303,7 +1862,23 @@ function Screen({ video, mode, tapped, onTap, onMode, onShelf, onDone, onPlaying
 	);
 }
 
-function Ctl({ onClick, label, keyName, icon, active, disabled, testId }: { onClick: () => void; label: string; keyName: string; icon: React.ReactNode; active?: boolean; disabled?: boolean; testId: string }) {
+function Ctl({
+	onClick,
+	label,
+	keyName,
+	icon,
+	active,
+	disabled,
+	testId,
+}: {
+	onClick: () => void;
+	label: string;
+	keyName: string;
+	icon: React.ReactNode;
+	active?: boolean;
+	disabled?: boolean;
+	testId: string;
+}) {
 	return (
 		<button
 			type="button"
@@ -1311,12 +1886,17 @@ function Ctl({ onClick, label, keyName, icon, active, disabled, testId }: { onCl
 			disabled={disabled}
 			aria-pressed={active}
 			title={`${label} (${keyName})`}
-			className={cn("inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 font-ui text-sm font-[600] transition-colors hover:bg-foreground/5 disabled:cursor-default disabled:opacity-50", active ? "border-foreground/60 text-foreground" : "border-foreground/15 text-foreground/80")}
+			className={cn(
+				"inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 font-ui text-sm font-[600] transition-colors hover:bg-foreground/5 disabled:cursor-default disabled:opacity-50",
+				active ? "border-foreground/60 text-foreground" : "border-foreground/15 text-foreground/80",
+			)}
 			data-testid={testId}
 		>
 			{icon}
 			<span className="hidden sm:inline">{label}</span>
-			<kbd className="hidden rounded border bg-card px-1 font-ui text-xs font-[600] text-muted-foreground lg:inline">{keyName}</kbd>
+			<kbd className="hidden rounded border bg-card px-1 font-ui text-xs font-[600] text-muted-foreground lg:inline">
+				{keyName}
+			</kbd>
 		</button>
 	);
 }
@@ -1338,7 +1918,9 @@ function SentenceStep({ videoId, targets }: { videoId: string; targets: Sentence
 	return (
 		<section className="mt-10 text-left" data-testid="watch-sentences">
 			<h2 className="q-sh">Use the words</h2>
-			<p className="mt-1 font-prose text-sm text-ink-3">Write one sentence with each word, in any form. The meaning shows after your first try.</p>
+			<p className="mt-1 font-prose text-sm text-ink-3">
+				Write one sentence with each word, in any form. The meaning shows after your first try.
+			</p>
 			<ol className="mt-4 flex flex-col gap-3">
 				{targets.map((t) => (
 					<SentenceRow key={t.lemma} videoId={videoId} target={t} />
@@ -1365,7 +1947,13 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 			const res = await fetch("/api/watch", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ action: "sentence", videoId, lemma: target.lemma, sentence, tz: new Date().getTimezoneOffset() }),
+				body: JSON.stringify({
+					action: "sentence",
+					videoId,
+					lemma: target.lemma,
+					sentence,
+					tz: new Date().getTimezoneOffset(),
+				}),
 			});
 			const body = (await res.json()) as Partial<SentenceReply> & { message?: string };
 			if (!res.ok || typeof body.ok !== "boolean") throw new Error(body.message ?? `HTTP ${res.status}`);
@@ -1404,7 +1992,12 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 					data-testid="watch-sentence-input"
 				/>
 				{!accepted && (
-					<button type="submit" disabled={busy || !text.trim()} className={cn(PRIMARY, "h-11 px-5")} data-testid="watch-sentence-check">
+					<button
+						type="submit"
+						disabled={busy || !text.trim()}
+						className={cn(PRIMARY, "h-11 px-5")}
+						data-testid="watch-sentence-check"
+					>
 						{busy ? "Checking…" : "Check"}
 					</button>
 				)}
@@ -1425,7 +2018,33 @@ function SentenceRow({ videoId, target }: { videoId: string; target: SentenceTar
 	);
 }
 
-function End({ failed, refused, onRetrySave, video, stats, outcome, practiceMs, saving, mode, tapped, onAgain, onShelf }: { video: VideoRecord; stats: SegmentStat[]; outcome: Outcome | null; practiceMs: number | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; mode: WatchMode; tapped: string[]; onAgain: () => void; onShelf: () => void }) {
+function End({
+	failed,
+	refused,
+	onRetrySave,
+	video,
+	stats,
+	outcome,
+	practiceMs,
+	saving,
+	mode,
+	tapped,
+	onAgain,
+	onShelf,
+}: {
+	video: VideoRecord;
+	stats: SegmentStat[];
+	outcome: Outcome | null;
+	practiceMs: number | null;
+	saving: boolean;
+	failed: boolean;
+	refused: boolean;
+	onRetrySave: () => void;
+	mode: WatchMode;
+	tapped: string[];
+	onAgain: () => void;
+	onShelf: () => void;
+}) {
 	const lang = useActiveLanguage();
 	const speed = listeningSpeed(stats);
 	const targets = useMemo(() => sentenceTargets(video, tapped), [video, tapped]);
@@ -1445,7 +2064,13 @@ function End({ failed, refused, onRetrySave, video, stats, outcome, practiceMs, 
 	return (
 		<TaskEnd
 			testId="watch-end"
-			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>for another video</EnterHint>}
+			hint={
+				failed ? (
+					<NotSaved onRetry={onRetrySave} busy={saving} refused={refused} />
+				) : (
+					<EnterHint>for another video</EnterHint>
+				)
+			}
 			actions={
 				<>
 					<Link href="/" className={SECONDARY}>
@@ -1468,23 +2093,44 @@ function End({ failed, refused, onRetrySave, video, stats, outcome, practiceMs, 
 			<p className="q-line dim mt-2" lang={lang?.code}>
 				{video.title}
 			</p>
-			<PracticeTime ms={practiceMs} how="Counted while the video played, and while you answered with no pause over 90 seconds." />
+			<PracticeTime
+				ms={practiceMs}
+				how="Counted while the video played, and while you answered with no pause over 90 seconds."
+			/>
 			<Stats className="mt-7 max-w-none">
-				<Stat label="XP" value={saving || !outcome ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
-				<Stat label={mode === "step" ? "Got the first time" : "Lines"} value={mode === "step" ? (judged ? `${gotFirst} of ${judged}` : "None judged") : String(video.segments.length)} />
-				<Stat label="Questions right" value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null} />
+				<Stat
+					label="XP"
+					value={saving || !outcome ? null : failed ? (refused ? "Not counted" : "Not counted yet") : `+${outcome.xp}`}
+					ink={failed ? "text-ink-3" : "text-teal-2"}
+				/>
+				<Stat
+					label={mode === "step" ? "Got the first time" : "Lines"}
+					value={
+						mode === "step" ? (judged ? `${gotFirst} of ${judged}` : "None judged") : String(video.segments.length)
+					}
+				/>
+				<Stat
+					label="Questions right"
+					value={outcome ? (total ? `${outcome.correct} of ${total}` : "None asked") : null}
+				/>
 			</Stats>
 			{mode === "step" && judged > 0 && (
 				<p className="mt-3 font-prose text-[13px] text-ink-3" data-testid="watch-speed">
-					{speed.wpmFirst !== null ? `On the lines you got the first time, the speech ran at ${speed.wpmFirst} words a minute` : "You got no line on the first listen this time"}
-					{speed.wpmAll ? `; the whole video runs at ${speed.wpmAll}` : ""}. You got {Math.round(speed.shareFirst * 100)}% the first time
+					{speed.wpmFirst !== null
+						? `On the lines you got the first time, the speech ran at ${speed.wpmFirst} words a minute`
+						: "You got no line on the first listen this time"}
+					{speed.wpmAll ? `; the whole video runs at ${speed.wpmAll}` : ""}. You got{" "}
+					{Math.round(speed.shareFirst * 100)}% the first time
 					{outcome && outcome.missed > 0 ? `, ${outcome.missed} not yet` : ""}.
 				</p>
 			)}
 			{outcome && (
 				<p className="mt-2 font-prose text-[13px] text-ink-3">
-					{outcome.queued.length > 0 ? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to Review. ` : ""}
-					The app counts {Math.round(video.coverage * 100)}% of this video's words as known. That is its estimate, not a measure of what you understood.
+					{outcome.queued.length > 0
+						? `${outcome.queued.length} word${outcome.queued.length === 1 ? "" : "s"} added to Review. `
+						: ""}
+					The app counts {Math.round(video.coverage * 100)}% of this video's words as known. That is its estimate, not a
+					measure of what you understood.
 				</p>
 			)}
 			{targets.length > 0 && <SentenceStep videoId={video.id} targets={targets} />}

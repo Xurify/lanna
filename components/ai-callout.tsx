@@ -14,7 +14,17 @@ import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { AUTH_PROVIDER_KEYS, type AiStatus } from "@/src/core";
 
-export function AiCallout({ status, title, adds, className }: { status: AiStatus; title: string; adds: string[]; className?: string }) {
+export function AiCallout({
+	status,
+	title,
+	adds,
+	className,
+}: {
+	status: AiStatus;
+	title: string;
+	adds: string[];
+	className?: string;
+}) {
 	if (status.ready) return null;
 	const provider = AUTH_PROVIDER_KEYS.find((p) => p.id === status.provider)?.label ?? status.provider;
 	const missing = status.reason === "no-model" ? "AI is not set up yet." : `The ${provider} key is missing.`;

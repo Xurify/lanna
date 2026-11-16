@@ -10,7 +10,13 @@ export const dynamic = "force-dynamic";
 export async function POST() {
 	const made = await createPairingCode();
 	if (made === "off") {
-		return Response.json({ error: "Turn on remote access first." }, { status: 409, headers: { "Cache-Control": "no-store" } });
+		return Response.json(
+			{ error: "Turn on remote access first." },
+			{ status: 409, headers: { "Cache-Control": "no-store" } },
+		);
 	}
-	return Response.json({ code: formatCode(made.code), expiresAt: made.expiresAt }, { headers: { "Cache-Control": "no-store" } });
+	return Response.json(
+		{ code: formatCode(made.code), expiresAt: made.expiresAt },
+		{ headers: { "Cache-Control": "no-store" } },
+	);
 }

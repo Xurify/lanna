@@ -9,11 +9,13 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { EXPERIMENT_CONSTANTS, dateForDayNumber } = await import("../src/core/experiment.ts");
-const { ensureExperimentInitialized, experimentDir, readDeviations, syncDailyExperimentData } = await import("../src/server/experiment.ts");
+const { ensureExperimentInitialized, experimentDir, readDeviations, syncDailyExperimentData } =
+	await import("../src/server/experiment.ts");
 
 after(() => fs.rmSync(TMP_DATA, { recursive: true, force: true }));
 
-const noonOf = (dayNumber: number) => new Date(`${dateForDayNumber(EXPERIMENT_CONSTANTS.START_DATE, dayNumber)}T12:00:00`);
+const noonOf = (dayNumber: number) =>
+	new Date(`${dateForDayNumber(EXPERIMENT_CONSTANTS.START_DATE, dayNumber)}T12:00:00`);
 
 test("the study's files are written under the scratch data folder", () => {
 	ensureExperimentInitialized();
@@ -36,7 +38,10 @@ test("the measure's files are recorded on the first look and a later change is l
 	assert.ok(first.files["src/core/listen.ts"]?.match(/^[0-9a-f]{64}$/), "the grader is fingerprinted");
 	assert.equal(readDeviations().filter((d) => d.kind === "measure-changed").length, 0, "the first look only records");
 
-	fs.writeFileSync(file, JSON.stringify({ ...first, files: { ...first.files, "src/core/listen.ts": "an older grader" } }));
+	fs.writeFileSync(
+		file,
+		JSON.stringify({ ...first, files: { ...first.files, "src/core/listen.ts": "an older grader" } }),
+	);
 	syncDailyExperimentData(noonOf(4));
 	const changed = readDeviations().filter((d) => d.kind === "measure-changed");
 	assert.equal(changed.length, 1);
@@ -53,7 +58,15 @@ test("a page view that finds nothing new leaves the study's files untouched", ()
 	fs.utimesSync(files[0]!, new Date(0), new Date(0));
 	fs.utimesSync(files[1]!, new Date(0), new Date(0));
 	syncDailyExperimentData(noonOf(4));
-	assert.deepEqual(files.map((file) => fs.statSync(file).mtimeMs), [0, 0], "nothing was rewritten");
+	assert.deepEqual(
+		files.map((file) => fs.statSync(file).mtimeMs),
+		[0, 0],
+		"nothing was rewritten",
+	);
 	assert.ok(before.every((ms) => ms > 0));
-	assert.deepEqual(fs.readdirSync(experimentDir()).filter((name) => name.endsWith(".tmp")), [], "no half-written file is left");
+	assert.deepEqual(
+		fs.readdirSync(experimentDir()).filter((name) => name.endsWith(".tmp")),
+		[],
+		"no half-written file is left",
+	);
 });

@@ -1,0 +1,21 @@
+{
+	"useTabs": true,
+	"tabWidth": 2,
+	"printWidth": 120,
+	"singleQuote": false,
+	"semi": true,
+	"endOfLine": "lf",
+	"ignorePatterns": [
+		".next/**",
+		"node_modules/**",
+		"data/**",
+		"dist/**",
+		"build/**",
+		"next-env.d.ts",
+		"package-lock.json",
+		"bun.lock",
+		"curriculum/**",
+		"tests/fixtures/**",
+		"*.jsonl"
+	]
+}

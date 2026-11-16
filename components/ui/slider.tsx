@@ -57,7 +57,14 @@ export function Slider({
 	const clamp = (v: number) => Math.min(max, Math.max(min, Math.round((v - min) / step) * step + min));
 	const share = max > min ? (Math.min(max, Math.max(min, value)) - min) / (max - min) : 0;
 	const text = valueText ?? (unit ? `${Math.round(value * 100)}%` : String(value));
-	const tickValues = ticks === true ? (Math.round((max - min) / step) <= 12 ? Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step) : []) : ticks ? [...ticks].filter((t) => t >= min && t <= max) : [];
+	const tickValues =
+		ticks === true
+			? Math.round((max - min) / step) <= 12
+				? Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step)
+				: []
+			: ticks
+				? [...ticks].filter((t) => t >= min && t <= max)
+				: [];
 
 	const at = (e: { clientX: number; clientY: number }): number => {
 		const rect = track.current?.getBoundingClientRect();
@@ -108,22 +115,49 @@ export function Slider({
 			onPointerCancel={() => setDragging(false)}
 			onKeyDown={(e) => {
 				const big = e.key === "PageUp" || e.key === "PageDown" ? 10 : 1;
-				const delta = e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "PageUp" ? step * big : e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "PageDown" ? -step * big : 0;
+				const delta =
+					e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "PageUp"
+						? step * big
+						: e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "PageDown"
+							? -step * big
+							: 0;
 				const next = e.key === "Home" ? min : e.key === "End" ? max : delta ? clamp(value + delta) : null;
 				if (next === null) return;
 				e.preventDefault();
 				set(next, true);
 			}}
 		>
-			<div ref={track} className={cn("relative rounded-full bg-line-2", vertical ? "my-2 h-[calc(100%-1rem)] w-[3px]" : "mx-2 h-[3px] w-[calc(100%-1rem)]")}>
-				<div className={cn("absolute rounded-full bg-teal", vertical ? "inset-x-0 bottom-0" : "inset-y-0 left-0")} style={vertical ? { height: `${share * 100}%` } : { width: `${share * 100}%` }} />
+			<div
+				ref={track}
+				className={cn(
+					"relative rounded-full bg-line-2",
+					vertical ? "my-2 h-[calc(100%-1rem)] w-[3px]" : "mx-2 h-[3px] w-[calc(100%-1rem)]",
+				)}
+			>
+				<div
+					className={cn("absolute rounded-full bg-teal", vertical ? "inset-x-0 bottom-0" : "inset-y-0 left-0")}
+					style={vertical ? { height: `${share * 100}%` } : { width: `${share * 100}%` }}
+				/>
 				{tickValues.map((t) => {
 					const p = ((t - min) / (max - min)) * 100;
-					return <span key={t} aria-hidden="true" className={cn("absolute bg-ink-4", vertical ? "left-1/2 h-px w-2 -translate-x-1/2" : "top-1/2 h-2 w-px -translate-y-1/2")} style={vertical ? { bottom: `${p}%` } : { left: `${p}%` }} />;
+					return (
+						<span
+							key={t}
+							aria-hidden="true"
+							className={cn(
+								"absolute bg-ink-4",
+								vertical ? "left-1/2 h-px w-2 -translate-x-1/2" : "top-1/2 h-2 w-px -translate-y-1/2",
+							)}
+							style={vertical ? { bottom: `${p}%` } : { left: `${p}%` }}
+						/>
+					);
 				})}
 				<div
 					data-thumb=""
-					className={cn("absolute size-4 rounded-full bg-card shadow-[0_0_0_1.5px_var(--q-teal)]", vertical ? "left-1/2 -translate-x-1/2 translate-y-1/2" : "top-1/2 -translate-x-1/2 -translate-y-1/2")}
+					className={cn(
+						"absolute size-4 rounded-full bg-card shadow-[0_0_0_1.5px_var(--q-teal)]",
+						vertical ? "left-1/2 -translate-x-1/2 translate-y-1/2" : "top-1/2 -translate-x-1/2 -translate-y-1/2",
+					)}
 					style={vertical ? { bottom: `${share * 100}%` } : { left: `${share * 100}%` }}
 					aria-hidden="true"
 				/>

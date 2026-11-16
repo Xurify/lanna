@@ -46,7 +46,11 @@ export function datedScenesForToday(now = new Date(), tz?: number): DatedScenesT
 
 /** A scene in the learner's words, on a day. The words are mapped once (the
  *  cheap model), then the day is kept with them. */
-export async function addDatedScene(textRaw: string, date: string, opts: CustomOptions & { tz?: number } = {}): Promise<{ record: CustomMilestoneRecord; reused: boolean }> {
+export async function addDatedScene(
+	textRaw: string,
+	date: string,
+	opts: CustomOptions & { tz?: number } = {},
+): Promise<{ record: CustomMilestoneRecord; reused: boolean }> {
 	const { tz, ...custom } = opts;
 	const now = custom.now ?? new Date();
 	const problem = datedDateProblem(date, todayOf(now, tz));
@@ -65,12 +69,17 @@ export function scheduleScene(id: string, date: string, opts: { now?: Date; tz?:
 }
 
 /** The line written after a scene's date. Only once the date has passed. */
-export function recordSceneOutcome(id: string, textRaw: string, opts: { now?: Date; tz?: number } = {}): CustomMilestoneRecord {
+export function recordSceneOutcome(
+	id: string,
+	textRaw: string,
+	opts: { now?: Date; tz?: number } = {},
+): CustomMilestoneRecord {
 	const now = opts.now ?? new Date();
 	const rec = milestoneStore.active().find((c) => c.def.id === id);
 	if (!rec) throw new DatedSceneError("That scene is not on your list.", 404);
 	if (!rec.date) throw new DatedSceneError("Give the scene a date first.", 409);
-	if (isoDaysBetween(todayOf(now, opts.tz), rec.date) >= 0) throw new DatedSceneError("Write how it went once the date has passed.", 409);
+	if (isoDaysBetween(todayOf(now, opts.tz), rec.date) >= 0)
+		throw new DatedSceneError("Write how it went once the date has passed.", 409);
 	const text = textRaw.trim().replace(/\s+/g, " ").slice(0, MAX_CUSTOM_LENGTH);
 	if (!text) throw new DatedSceneError("Write one line about how it went.", 400);
 	const saved = milestoneStore.recordOutcome(id, { at: now.toISOString(), text });

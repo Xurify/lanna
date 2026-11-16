@@ -44,10 +44,26 @@ export interface SelfTalkPrompt {
 
 export const SELF_TALK_CATEGORIES: Array<{ id: SelfTalkCategory; label: string; description: string }> = [
 	{ id: "surroundings", label: "Surroundings", description: "Name objects, colors, and positions around you (A1)" },
-	{ id: "routine", label: "Daily routine", description: "Narrate what you are doing right now or your daily rituals (A1-A2)" },
-	{ id: "picture", label: "Scenes and pictures", description: "Describe what people are doing and wearing in a scene (A2-B1)" },
-	{ id: "story", label: "Yesterday and tomorrow", description: "Tell what happened earlier or what you plan to do (A2-B1)" },
-	{ id: "opinion", label: "Thoughts and opinions", description: "Explain why you like something or share a perspective (B1-B2)" },
+	{
+		id: "routine",
+		label: "Daily routine",
+		description: "Narrate what you are doing right now or your daily rituals (A1-A2)",
+	},
+	{
+		id: "picture",
+		label: "Scenes and pictures",
+		description: "Describe what people are doing and wearing in a scene (A2-B1)",
+	},
+	{
+		id: "story",
+		label: "Yesterday and tomorrow",
+		description: "Tell what happened earlier or what you plan to do (A2-B1)",
+	},
+	{
+		id: "opinion",
+		label: "Thoughts and opinions",
+		description: "Explain why you like something or share a perspective (B1-B2)",
+	},
 ];
 
 export const SELF_TALK_PROMPTS: SelfTalkPrompt[] = [
@@ -252,17 +268,18 @@ export function getSelfTalkPromptById(id: string): SelfTalkPrompt | undefined {
 export function getRandomSelfTalkPrompt(level?: Cefr, seed?: number): SelfTalkPrompt {
 	const pool = level ? getSelfTalkPrompts({ level }) : SELF_TALK_PROMPTS;
 	const candidates = pool.length > 0 ? pool : SELF_TALK_PROMPTS;
-	const index = typeof seed === "number" ? Math.abs(seed) % candidates.length : Math.floor(Math.random() * candidates.length);
+	const index =
+		typeof seed === "number" ? Math.abs(seed) % candidates.length : Math.floor(Math.random() * candidates.length);
 	return (candidates[index] ?? SELF_TALK_PROMPTS[0]) as SelfTalkPrompt;
 }
-
-
 
 /** Calculate XP earned based on active speaking seconds vs prompt target. */
 export function calculateSelfTalkXp(activeSec: number, targetSec: number): { xp: number; metTarget: boolean } {
 	if (activeSec < 10) return { xp: 0, metTarget: false };
 	const metTarget = activeSec >= targetSec;
-	const xp = metTarget ? SELF_TALK_BASE_XP + SELF_TALK_BONUS_XP : Math.max(5, Math.round(SELF_TALK_BASE_XP * (activeSec / targetSec)));
+	const xp = metTarget
+		? SELF_TALK_BASE_XP + SELF_TALK_BONUS_XP
+		: Math.max(5, Math.round(SELF_TALK_BASE_XP * (activeSec / targetSec)));
 	return { xp, metTarget };
 }
 
@@ -283,4 +300,3 @@ export function findUsedSuggestedWords(transcript: string, suggested: UsefulChun
 		return false;
 	});
 }
-

@@ -54,7 +54,6 @@ function requireNode(map: Map<string, PlanNode>, id: string, what: string): void
 	}
 }
 
-
 /**
  * Would adding edge from→to create a cycle? Walk forward from `to` along
  * existing edges; if we can reach `from`, the new edge closes a loop.

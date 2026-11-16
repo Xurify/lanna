@@ -55,7 +55,10 @@ export interface FragmentLine {
 export type FragmentLex = Record<string, { lemma: string; gloss: string; rank?: number }>;
 
 /** A line's facts from its glossed tokens. */
-export function lineFacts(segments: readonly { start: number; end: number; sk: string; tokens: readonly StoryToken[] }[], rankOf: (slug: string) => number | undefined = () => undefined): { lines: FragmentLine[]; lex: FragmentLex } {
+export function lineFacts(
+	segments: readonly { start: number; end: number; sk: string; tokens: readonly StoryToken[] }[],
+	rankOf: (slug: string) => number | undefined = () => undefined,
+): { lines: FragmentLine[]; lex: FragmentLex } {
 	const lex: FragmentLex = {};
 	const lines = segments.map((s): FragmentLine => {
 		const words = s.tokens.filter((t) => t.word);
@@ -70,7 +73,15 @@ export function lineFacts(segments: readonly { start: number; end: number; sk: s
 				lex[t.slug] = { lemma: t.lemma, gloss: t.gloss, ...(rank !== undefined ? { rank } : {}) };
 			}
 		}
-		return { start: s.start, end: s.end, words: words.length, fresh: fresh.length, ...(beyond !== fresh.length ? { beyond } : {}), ...(u.length ? { u } : {}), ...(/[.!?…]["')»]*\s*$/.test(s.sk.trim()) ? { stop: true } : {}) };
+		return {
+			start: s.start,
+			end: s.end,
+			words: words.length,
+			fresh: fresh.length,
+			...(beyond !== fresh.length ? { beyond } : {}),
+			...(u.length ? { u } : {}),
+			...(/[.!?…]["')»]*\s*$/.test(s.sk.trim()) ? { stop: true } : {}),
+		};
 	});
 	return { lines, lex };
 }
@@ -141,12 +152,27 @@ export function recurrenceFactor(count: number): number {
 	return 1 + 0.35 * (Math.min(count, 4) - 1);
 }
 
-function statsOf(lines: readonly FragmentLine[], lex: FragmentLex, from: number, to: number, counts: ReadonlyMap<string, number>, words: number, fresh: number, beyond: number): FragmentStats {
+function statsOf(
+	lines: readonly FragmentLine[],
+	lex: FragmentLex,
+	from: number,
+	to: number,
+	counts: ReadonlyMap<string, number>,
+	words: number,
+	fresh: number,
+	beyond: number,
+): FragmentStats {
 	const start = lines[from]!.start;
 	const end = lines[to]!.end;
 	const sec = Math.max(1, end - start);
 	const ranked = [...counts]
-		.map(([slug, count]) => ({ slug, lemma: lex[slug]?.lemma ?? slug, gloss: lex[slug]?.gloss ?? "", count, w: wordWeight(lex[slug]?.rank) * recurrenceFactor(count) }))
+		.map(([slug, count]) => ({
+			slug,
+			lemma: lex[slug]?.lemma ?? slug,
+			gloss: lex[slug]?.gloss ?? "",
+			count,
+			w: wordWeight(lex[slug]?.rank) * recurrenceFactor(count),
+		}))
 		.sort((a, b) => b.w - a.w || b.count - a.count || a.slug.localeCompare(b.slug));
 	let value = 0;
 	ranked.slice(0, MAX_VALUE_WORDS).forEach((w, i) => {
@@ -170,7 +196,12 @@ function statsOf(lines: readonly FragmentLine[], lex: FragmentLex, from: number,
 }
 
 /** The facts of lines `from`..`to` (inclusive). */
-export function rangeStats(lines: readonly FragmentLine[], lex: FragmentLex, from: number, to: number): FragmentStats | null {
+export function rangeStats(
+	lines: readonly FragmentLine[],
+	lex: FragmentLex,
+	from: number,
+	to: number,
+): FragmentStats | null {
 	if (!lines.length || from < 0 || to < from || to >= lines.length) return null;
 	const counts = new Map<string, number>();
 	let words = 0;
@@ -227,7 +258,10 @@ export function lengthFactor(sec: number): number {
  *  practice at a comfortable share), so a fragment of all-known words ranks
  *  last, not out. */
 function fragmentScore(s: FragmentStats): number {
-	return Math.round(comprehension(s.coverage) * density(s.wpm) * lengthFactor(s.sec) * Math.sqrt(0.4 + s.value) * 1000) / 1000;
+	return (
+		Math.round(comprehension(s.coverage) * density(s.wpm) * lengthFactor(s.sec) * Math.sqrt(0.4 + s.value) * 1000) /
+		1000
+	);
 }
 
 export interface Fragment extends FragmentStats {
@@ -244,13 +278,19 @@ interface FragmentOptions {
 }
 
 /** The best non-overlapping fragments of a video, best first. */
-export function bestFragments(lines: readonly FragmentLine[], lex: FragmentLex, opts: FragmentOptions = {}): Fragment[] {
+export function bestFragments(
+	lines: readonly FragmentLine[],
+	lex: FragmentLex,
+	opts: FragmentOptions = {},
+): Fragment[] {
 	const minSec = opts.minSec ?? FRAGMENT_MIN_SEC;
 	const maxSec = opts.maxSec ?? FRAGMENT_MAX_SEC;
 	const n = lines.length;
 	if (!n) return [];
-	const pauseBefore = (i: number) => i === 0 || lines[i]!.start - lines[i - 1]!.end >= PAUSE_SEC || lines[i - 1]!.stop === true;
-	const pauseAfter = (i: number) => i === n - 1 || lines[i + 1]!.start - lines[i]!.end >= PAUSE_SEC || lines[i]!.stop === true;
+	const pauseBefore = (i: number) =>
+		i === 0 || lines[i]!.start - lines[i - 1]!.end >= PAUSE_SEC || lines[i - 1]!.stop === true;
+	const pauseAfter = (i: number) =>
+		i === n - 1 || lines[i + 1]!.start - lines[i]!.end >= PAUSE_SEC || lines[i]!.stop === true;
 	// Captions that never pause (automatic ones run on) give too few places to cut: then any line will do.
 	const starts = lines.map((_, i) => pauseBefore(i));
 	const ends = lines.map((_, i) => pauseAfter(i));
@@ -294,7 +334,7 @@ export function heatStrip(lines: readonly FragmentLine[], totalSec: number, buck
 	const fresh = new Array<number>(buckets).fill(0);
 	if (totalSec <= 0) return words.map(() => null);
 	for (const l of lines) {
-		const b = Math.min(buckets - 1, Math.max(0, Math.floor((((l.start + l.end) / 2) / totalSec) * buckets)));
+		const b = Math.min(buckets - 1, Math.max(0, Math.floor(((l.start + l.end) / 2 / totalSec) * buckets)));
 		words[b]! += l.words;
 		fresh[b]! += l.fresh;
 	}
@@ -303,7 +343,11 @@ export function heatStrip(lines: readonly FragmentLine[], totalSec: number, buck
 
 /** The lines a time range covers: the first line that starts at or after
  *  `startSec` through the last that ends at or before `endSec`. Null when none. */
-export function linesIn(lines: readonly FragmentLine[], startSec: number, endSec: number): { from: number; to: number } | null {
+export function linesIn(
+	lines: readonly FragmentLine[],
+	startSec: number,
+	endSec: number,
+): { from: number; to: number } | null {
 	let from = -1;
 	let to = -1;
 	lines.forEach((l, i) => {
@@ -317,7 +361,11 @@ export function linesIn(lines: readonly FragmentLine[], startSec: number, endSec
 
 /** The lines a time range touches: from the line still being said at
  *  `startSec` to the one being said at `endSec`. Null when none. */
-export function linesTouching(lines: readonly FragmentLine[], startSec: number, endSec: number): { from: number; to: number } | null {
+export function linesTouching(
+	lines: readonly FragmentLine[],
+	startSec: number,
+	endSec: number,
+): { from: number; to: number } | null {
 	let from = -1;
 	let to = -1;
 	lines.forEach((l, i) => {

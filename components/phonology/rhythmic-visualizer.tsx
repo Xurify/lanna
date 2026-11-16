@@ -54,7 +54,7 @@ const WORDS_TO_TRY = ["krásny", "chválim", "ženám", "trávam", "vŕbam", "bi
 const AFTER_SHORT = "short stem, long ending";
 const AFTER_LONG = "long stem, short ending";
 
-const STRESS_SENTENCE ={ text: "Chválime krásne Slovensko", translation: "We praise beautiful Slovakia" };
+const STRESS_SENTENCE = { text: "Chválime krásne Slovensko", translation: "We praise beautiful Slovakia" };
 
 function play(text: string) {
 	void speak(text).catch(() => {});
@@ -82,7 +82,8 @@ export function RhythmicVisualizer() {
 				. A few endings are exceptions, and the checker below names them.
 			</p>
 			<p className="q-sub">
-				Long: <b lang={lang?.code}>á é í ó ú ý</b>, the diphthongs <b lang={lang?.code}>ia ie iu ô</b>, and long <b lang={lang?.code}>ŕ ĺ</b>.
+				Long: <b lang={lang?.code}>á é í ó ú ý</b>, the diphthongs <b lang={lang?.code}>ia ie iu ô</b>, and long{" "}
+				<b lang={lang?.code}>ŕ ĺ</b>.
 			</p>
 
 			<section className="mt-10">
@@ -102,7 +103,12 @@ export function RhythmicVisualizer() {
 						className="q-field h-12 min-w-0 flex-1 px-4 font-prose text-[19px] font-medium tracking-[-0.01em] placeholder:font-normal placeholder:text-ink-3"
 						data-testid="rhythm-input"
 					/>
-					<button type="button" onClick={() => play(analysis.word)} disabled={analysis.syllables.length === 0} className={cn(SECONDARY, "h-12 shrink-0")}>
+					<button
+						type="button"
+						onClick={() => play(analysis.word)}
+						disabled={analysis.syllables.length === 0}
+						className={cn(SECONDARY, "h-12 shrink-0")}
+					>
 						<Volume2Icon className="size-4 text-ink-3" strokeWidth={1.6} />
 						Hear it
 					</button>
@@ -115,7 +121,10 @@ export function RhythmicVisualizer() {
 								onClick={() => setWord(w)}
 								aria-pressed={typed === w}
 								lang={lang?.code}
-								className={cn("lh-press rounded-md px-2.5 py-1 font-prose text-[15px] font-medium pointer-coarse:py-2.5", typed === w ? "bg-teal-wash text-teal-2" : "bg-well text-ink-2 hover:bg-well-2")}
+								className={cn(
+									"lh-press rounded-md px-2.5 py-1 font-prose text-[15px] font-medium pointer-coarse:py-2.5",
+									typed === w ? "bg-teal-wash text-teal-2" : "bg-well text-ink-2 hover:bg-well-2",
+								)}
 							>
 								{w}
 							</button>
@@ -127,7 +136,10 @@ export function RhythmicVisualizer() {
 
 			<section className="mt-10">
 				<h2 className="q-sh">Same ending, two lengths</h2>
-				<div className="hidden grid-cols-2 gap-x-8 font-ui text-[12.5px] font-[550] text-ink-2 sm:grid" aria-hidden="true">
+				<div
+					className="hidden grid-cols-2 gap-x-8 font-ui text-[12.5px] font-[550] text-ink-2 sm:grid"
+					aria-hidden="true"
+				>
 					<p className="first-letter:uppercase">{AFTER_SHORT}</p>
 					<p className="first-letter:uppercase">{AFTER_LONG}</p>
 				</div>
@@ -146,9 +158,17 @@ export function RhythmicVisualizer() {
 
 			<section className="mt-10">
 				<h2 className="q-sh">Stress is on the first syllable</h2>
-				<p className="q-line dim">The first syllable of every word carries the stress, and each vowel keeps its full sound. The mark ˈ shows where the stress falls.</p>
+				<p className="q-line dim">
+					The first syllable of every word carries the stress, and each vowel keeps its full sound. The mark ˈ shows
+					where the stress falls.
+				</p>
 				<SentenceRows className="mt-1">
-					<SentenceRow sentence={STRESS_SENTENCE.text} lang={lang?.code} translation={STRESS_SENTENCE.translation} onPlay={() => play(STRESS_SENTENCE.text)}>
+					<SentenceRow
+						sentence={STRESS_SENTENCE.text}
+						lang={lang?.code}
+						translation={STRESS_SENTENCE.translation}
+						onPlay={() => play(STRESS_SENTENCE.text)}
+					>
 						{formatStressCadence(STRESS_SENTENCE.text)}
 					</SentenceRow>
 				</SentenceRows>
@@ -161,7 +181,9 @@ export function RhythmicVisualizer() {
 
 function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 	const lang = useActiveLanguage();
-	const clashing = new Set(analysis.hasViolation ? analysis.violations.flatMap((v) => [v.first.index, v.second.index]) : []);
+	const clashing = new Set(
+		analysis.hasViolation ? analysis.violations.flatMap((v) => [v.first.index, v.second.index]) : [],
+	);
 	const longs = analysis.syllables.filter((s) => s.quantity === "long").length;
 	const note =
 		analysis.hasViolation || analysis.isException
@@ -172,7 +194,11 @@ function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 					? "Only one syllable is long, so nothing has to turn short."
 					: "The long syllables are not next to each other.";
 	return (
-		<div className="min-h-[15.75rem] rounded-xl bg-well px-5 py-6 sm:min-h-[14.25rem] sm:px-7" data-testid="syllable-bar" aria-live="polite">
+		<div
+			className="min-h-[15.75rem] rounded-xl bg-well px-5 py-6 sm:min-h-[14.25rem] sm:px-7"
+			data-testid="syllable-bar"
+			aria-live="polite"
+		>
 			{analysis.syllables.length === 0 ? (
 				<p className="font-ui text-[13px] text-ink-3">Type a word to see its syllables, long and short.</p>
 			) : (
@@ -188,17 +214,27 @@ function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 										className={cn(
 											"relative font-prose text-[36px] font-semibold leading-none tracking-[-0.03em] sm:text-[44px]",
 											clash ? "text-miss" : "text-foreground",
-											i > 0 && "before:absolute before:end-full before:w-5 before:text-center before:font-normal before:text-ink-4 before:content-['·']",
+											i > 0 &&
+												"before:absolute before:end-full before:w-5 before:text-center before:font-normal before:text-ink-4 before:content-['·']",
 										)}
 										lang={lang?.code}
 									>
 										{s.text}
 									</span>
 									<span aria-hidden="true" className="relative mt-3 flex h-1.5 w-full justify-center">
-										{clashesWithPrevious && <span className="absolute end-full top-1/2 w-5 -translate-y-1/2 text-center font-ui text-[13px] font-bold leading-none text-miss">×</span>}
+										{clashesWithPrevious && (
+											<span className="absolute end-full top-1/2 w-5 -translate-y-1/2 text-center font-ui text-[13px] font-bold leading-none text-miss">
+												×
+											</span>
+										)}
 										<span className={cn("h-1.5 rounded-full", long ? "w-8 bg-teal" : "w-1.5 bg-ink-4")} />
 									</span>
-									<span className={cn("mt-1.5 whitespace-nowrap font-ui text-[12px]", long ? "font-[550] text-teal-2" : "text-ink-3")}>
+									<span
+										className={cn(
+											"mt-1.5 whitespace-nowrap font-ui text-[12px]",
+											long ? "font-[550] text-teal-2" : "text-ink-3",
+										)}
+									>
 										{long ? "long" : "short"} <span lang={lang?.code}>{s.nucleus}</span>
 									</span>
 								</li>
@@ -206,17 +242,25 @@ function Beats({ analysis }: { analysis: RhythmicAnalysis }) {
 						})}
 					</ol>
 					<p
-						className={cn("mt-5 flex items-center gap-2.5 font-ui text-[14px] font-[600] tracking-[-0.01em]", analysis.hasViolation ? "text-miss" : analysis.isException ? "text-ink-2" : "text-teal-2")}
+						className={cn(
+							"mt-5 flex items-center gap-2.5 font-ui text-[14px] font-[600] tracking-[-0.01em]",
+							analysis.hasViolation ? "text-miss" : analysis.isException ? "text-ink-2" : "text-teal-2",
+						)}
 						data-testid="rhythm-verdict"
 					>
 						<VerdictDisc ok={!analysis.hasViolation} />
-						{analysis.hasViolation ? "Two long syllables side by side" : analysis.isException ? "Two long syllables, allowed in this word" : "No two long syllables side by side"}
+						{analysis.hasViolation
+							? "Two long syllables side by side"
+							: analysis.isException
+								? "Two long syllables, allowed in this word"
+								: "No two long syllables side by side"}
 					</p>
 					<p className="q-t2 !mt-2">
 						{note}
 						{analysis.suggestion && (
 							<>
-								{" "}By the rule it is{" "}
+								{" "}
+								By the rule it is{" "}
 								<span lang={lang?.code} className="font-semibold text-foreground">
 									{analysis.suggestion}
 								</span>
@@ -234,13 +278,24 @@ function FormLine({ form, note }: { form: Form; note: string }) {
 	const lang = useActiveLanguage();
 	return (
 		<div className="flex items-center gap-3">
-			<button type="button" onClick={() => play(form.word)} className={PLAY_ROW} aria-label={`Play ${form.word}`} title="Play">
+			<button
+				type="button"
+				onClick={() => play(form.word)}
+				className={PLAY_ROW}
+				aria-label={`Play ${form.word}`}
+				title="Play"
+			>
 				<Volume2Icon className="size-4" strokeWidth={1.6} />
 			</button>
 			<div className="min-w-0">
-				<p className="font-prose text-[22px] font-[550] leading-tight tracking-[-0.02em] text-foreground" lang={lang?.code}>
+				<p
+					className="font-prose text-[22px] font-[550] leading-tight tracking-[-0.02em] text-foreground"
+					lang={lang?.code}
+				>
 					{form.stem}
-					<span className="font-semibold text-teal-2 underline decoration-teal-line decoration-2 underline-offset-[5px]">{form.word.slice(form.stem.length)}</span>
+					<span className="font-semibold text-teal-2 underline decoration-teal-line decoration-2 underline-offset-[5px]">
+						{form.word.slice(form.stem.length)}
+					</span>
 				</p>
 				<p className="mt-1 font-ui text-[12.5px] text-ink-3">
 					{form.translation}

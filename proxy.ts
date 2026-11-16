@@ -1,8 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { defaultProfile, isLanguageProfile } from "./config.ts";
-import { DEVICE_LANGUAGE_COOKIE, deviceLanguageCookie, languageGone, SHOWN_LANGUAGE_HEADER } from "./src/core/language-guard.ts";
+import {
+	DEVICE_LANGUAGE_COOKIE,
+	deviceLanguageCookie,
+	languageGone,
+	SHOWN_LANGUAGE_HEADER,
+} from "./src/core/language-guard.ts";
 import { desktopAPIAuthorized, desktopWindowRequest } from "./src/server/desktop-access.ts";
-import { DEVICE_COOKIE, decideAccess, publicModeFrom, readCookie, secureRequest, tailnetHost } from "./src/server/remote-access.ts";
+import {
+	DEVICE_COOKIE,
+	decideAccess,
+	publicModeFrom,
+	readCookie,
+	secureRequest,
+	tailnetHost,
+} from "./src/server/remote-access.ts";
 import { readAccess, resolveDevice } from "./src/server/remote-access-store.ts";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -27,10 +39,17 @@ export async function proxy(request: NextRequest) {
 		publicMode,
 	});
 	if (decision.action === "allow") {
-		const gone = languageGone({ method: request.method, pathname, shown: headers.get(SHOWN_LANGUAGE_HEADER) }, isLanguageProfile);
+		const gone = languageGone(
+			{ method: request.method, pathname, shown: headers.get(SHOWN_LANGUAGE_HEADER) },
+			isLanguageProfile,
+		);
 		if (gone) return NextResponse.json(gone, { status: 409, headers: NO_STORE });
 		const next = NextResponse.next();
-		if (!pathname.startsWith("/api/") && request.method === "GET" && !isLanguageProfile(readCookie(headers, DEVICE_LANGUAGE_COOKIE))) {
+		if (
+			!pathname.startsWith("/api/") &&
+			request.method === "GET" &&
+			!isLanguageProfile(readCookie(headers, DEVICE_LANGUAGE_COOKIE))
+		) {
 			next.headers.append("set-cookie", deviceLanguageCookie(defaultProfile(), secureRequest(request.url, headers)));
 		}
 		return next;
@@ -38,16 +57,28 @@ export async function proxy(request: NextRequest) {
 	const api = pathname.startsWith("/api/");
 	if (decision.action === "login") {
 		if (api || request.method !== "GET") {
-			return NextResponse.json({ error: "login_required", message: "Sign in first." }, { status: 401, headers: NO_STORE });
+			return NextResponse.json(
+				{ error: "login_required", message: "Sign in first." },
+				{ status: 401, headers: NO_STORE },
+			);
 		}
-		const redirect = NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(`${pathname}${search}`)}`, `https://${publicMode?.host ?? headers.get("host")}`), 307);
+		const redirect = NextResponse.redirect(
+			new URL(
+				`/login?next=${encodeURIComponent(`${pathname}${search}`)}`,
+				`https://${publicMode?.host ?? headers.get("host")}`,
+			),
+			307,
+		);
 		redirect.headers.set("cache-control", "no-store");
 		return redirect;
 	}
 	if (decision.action === "pair") {
 		if (api || request.method !== "GET") {
 			return NextResponse.json(
-				{ error: "pairing_required", message: "Pair this device first. Open /pair in LangHarness and enter the code from the computer." },
+				{
+					error: "pairing_required",
+					message: "Pair this device first. Open /pair in LangHarness and enter the code from the computer.",
+				},
 				{ status: 401, headers: NO_STORE },
 			);
 		}

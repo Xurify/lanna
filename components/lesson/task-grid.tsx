@@ -17,7 +17,8 @@ const LABEL = "h-14 px-2 align-middle text-left font-ui text-[13px] font-[550] c
 const CELL = "h-14 rounded-[10px] bg-well px-2 align-middle";
 const FORM = "font-prose text-[16px] font-semibold text-foreground sm:text-[18px]";
 /** The asked cell: weight and the teal token, with the straight underline E33 asks for. */
-const ASKED = "font-prose text-[16px] font-bold text-teal-2 underline decoration-2 underline-offset-[7px] sm:text-[18px]";
+const ASKED =
+	"font-prose text-[16px] font-bold text-teal-2 underline decoration-2 underline-offset-[7px] sm:text-[18px]";
 const CAPTION = "mt-2 min-h-10 font-ui text-[12px] leading-snug text-ink-3";
 
 /** The aspect grid of a form-reading task (src/core/aspect-tasks.ts). Until the
@@ -31,7 +32,11 @@ export function TaskGrid({ task, revealed }: { task: GridTask; revealed: boolean
 	const notes = revealed ? [...new Set(task.cells.flatMap((c) => (c.note ? [c.note] : [])))] : [];
 	return (
 		<div className="mt-5">
-			<table className="w-full table-fixed border-separate border-spacing-1.5 text-left" data-testid="task-grid" data-revealed={revealed ? "true" : "false"}>
+			<table
+				className="w-full table-fixed border-separate border-spacing-1.5 text-left"
+				data-testid="task-grid"
+				data-revealed={revealed ? "true" : "false"}
+			>
 				<colgroup>
 					<col className="w-[24%]" />
 					{task.rows.map((row) => (

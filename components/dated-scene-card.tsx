@@ -12,7 +12,15 @@ import { cn } from "@/lib/utils";
 import { dateInWords, daysLeftWords, type DatedStatus } from "@/src/core";
 
 interface DatedSceneCardProps {
-	scene: { title: string; words?: string | null; date: string; daysLeft: number; status: DatedStatus; line: string; outcomeDue: boolean };
+	scene: {
+		title: string;
+		words?: string | null;
+		date: string;
+		daysLeft: number;
+		status: DatedStatus;
+		line: string;
+		outcomeDue: boolean;
+	};
 }
 
 const STATUS_LABEL: Record<DatedStatus, string> = {
@@ -30,11 +38,16 @@ export function DatedSceneCard({ scene }: DatedSceneCardProps) {
 		<div className="flex items-start gap-4" data-testid="dated-scene-card">
 			<div className="w-14 shrink-0 pt-0.5 text-center" role="img" aria-label={daysLeftWords(scene.daysLeft)}>
 				<p className="text-[30px] font-semibold leading-none tracking-[-0.025em] text-foreground">{n}</p>
-				<p className="mt-1 text-[11.5px] leading-tight text-ink-3">{past ? (n === 1 ? "day ago" : "days ago") : n === 0 ? "today" : n === 1 ? "day left" : "days left"}</p>
+				<p className="mt-1 text-[11.5px] leading-tight text-ink-3">
+					{past ? (n === 1 ? "day ago" : "days ago") : n === 0 ? "today" : n === 1 ? "day left" : "days left"}
+				</p>
 			</div>
 			<div className="min-w-0 flex-1">
 				{/* The learner's own words, whole: the generated title is cut short. */}
-				<h3 className="line-clamp-2 text-[15px] font-[550] leading-snug tracking-[-0.006em] text-foreground first-letter:uppercase" title={scene.title}>
+				<h3
+					className="line-clamp-2 text-[15px] font-[550] leading-snug tracking-[-0.006em] text-foreground first-letter:uppercase"
+					title={scene.title}
+				>
 					{scene.words?.trim() || scene.title}
 				</h3>
 				<p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-3">

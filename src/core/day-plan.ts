@@ -56,5 +56,10 @@ export function sharesFromMinutes(languages: ReadonlyArray<{ id: string; minutes
 export function minutesFromShares(total: number, shares: Record<string, number>): Record<string, number> {
 	const ids = Object.keys(shares);
 	const sum = ids.reduce((n, id) => n + (shares[id] ?? 0), 0);
-	return Object.fromEntries(ids.map((id) => [id, Math.max(MIN_LANGUAGE_MINUTES, Math.round(sum > 0 ? (total * (shares[id] ?? 0)) / sum : total / ids.length))]));
+	return Object.fromEntries(
+		ids.map((id) => [
+			id,
+			Math.max(MIN_LANGUAGE_MINUTES, Math.round(sum > 0 ? (total * (shares[id] ?? 0)) / sum : total / ids.length)),
+		]),
+	);
 }

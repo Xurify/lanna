@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { formatBytes, STORAGE_AREAS, type StorageArea, type StorageReport } from "@/src/core";
 import { SettingsGroup, SettingsRow } from "./controls.tsx";
 
-const CACHE_HINT = "Audio and pages the app keeps so they load faster. Clearing them is safe: they download again when needed.";
-const BROWSER_CACHE_HINT = "Your browser keeps its own copy of audio and pages. Clear it in the browser’s settings, under cached images and files.";
+const CACHE_HINT =
+	"Audio and pages the app keeps so they load faster. Clearing them is safe: they download again when needed.";
+const BROWSER_CACHE_HINT =
+	"Your browser keeps its own copy of audio and pages. Clear it in the browser’s settings, under cached images and files.";
 const CLEARED = "Cache cleared. Audio and pages download again when you need them.";
 const CLEAR_FAILED = "Couldn’t clear the cache. Restart LangHarness and try again.";
 // An older desktop process has no storage handlers; a restart fixes it.
@@ -20,7 +22,8 @@ const LOAD_FAILED = "Couldn’t measure storage. Refresh to try again.";
 
 function savedHint(id: StorageArea["id"], language: string | null): string {
 	if (id === "clips") return "Every spoken sentence, kept so it never needs generating again.";
-	if (id === "progress") return `Chats, reviews, lessons and stories${language ? ` for ${language}` : ""}. Reset moves them to Backups.`;
+	if (id === "progress")
+		return `Chats, reviews, lessons and stories${language ? ` for ${language}` : ""}. Reset moves them to Backups.`;
 	return "Data moved aside by Reset. Nothing is deleted.";
 }
 
@@ -82,10 +85,17 @@ export function StorageSection() {
 		<>
 			<SettingsGroup label="Cache" testid="storage-cache">
 				{/* Wraps the control under the hint on a phone, where SettingsRow would overlap them. */}
-				<div data-testid="storage-row-cache" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1">
+				<div
+					data-testid="storage-row-cache"
+					className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1"
+				>
 					<span className="min-w-0 flex-1">
-						<span className="block font-prose text-(length:--lh-prose-size)">{desktop ? "App cache" : "Browser cache"}</span>
-						<span className="block text-xs text-muted-foreground">{!desktop ? BROWSER_CACHE_HINT : cacheFailed ? UNREADABLE_HINT : CACHE_HINT}</span>
+						<span className="block font-prose text-(length:--lh-prose-size)">
+							{desktop ? "App cache" : "Browser cache"}
+						</span>
+						<span className="block text-xs text-muted-foreground">
+							{!desktop ? BROWSER_CACHE_HINT : cacheFailed ? UNREADABLE_HINT : CACHE_HINT}
+						</span>
 					</span>
 					{desktop && (
 						<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -118,7 +128,11 @@ export function StorageSection() {
 				)}
 			</SettingsGroup>
 			<SettingsGroup label="Saved" testid="storage-saved">
-				{!report && !loadFailed && <span role="status" className="sr-only">Measuring…</span>}
+				{!report && !loadFailed && (
+					<span role="status" className="sr-only">
+						Measuring…
+					</span>
+				)}
 				{STORAGE_AREAS.map(({ id, label }) => {
 					const area = report?.areas.find((a) => a.id === id);
 					return (
@@ -134,7 +148,10 @@ export function StorageSection() {
 								</>
 							}
 						>
-							<span className="shrink-0 font-ui text-xs tabular-nums text-foreground" data-testid={`storage-size-${id}`}>
+							<span
+								className="shrink-0 font-ui text-xs tabular-nums text-foreground"
+								data-testid={`storage-size-${id}`}
+							>
 								{loadFailed ? "Unavailable" : area ? (area.files === 0 ? "Empty" : formatBytes(area.bytes)) : "…"}
 							</span>
 						</SettingsRow>

@@ -33,12 +33,21 @@ test("the arc is seven steps, in the same order for every chapter", () => {
 		["story", "words", "forms", "pairs", "scene", "sound", "exam"],
 	);
 	for (const s of ARC_STEPS) assert.ok(s.slovak && s.english, `${s.id} needs a name in both languages`);
-	for (const ch of allChapters()) assert.deepEqual(chapterArc(ch.id)!.map((a) => a.step.id), ARC_STEPS.map((s) => s.id), ch.id);
+	for (const ch of allChapters())
+		assert.deepEqual(
+			chapterArc(ch.id)!.map((a) => a.step.id),
+			ARC_STEPS.map((s) => s.id),
+			ch.id,
+		);
 	assert.equal(chapterArc("no-such-chapter"), undefined);
 });
 
 test("every chapter has a words step and a forms step, bar the exceptions above", () => {
-	for (const id of [...Object.keys(NO_WORDS), ...Object.keys(NO_FORMS)]) assert.ok(allChapters().some((c) => c.id === id), `${id} is not a chapter`);
+	for (const id of [...Object.keys(NO_WORDS), ...Object.keys(NO_FORMS)])
+		assert.ok(
+			allChapters().some((c) => c.id === id),
+			`${id} is not a chapter`,
+		);
 	for (const ch of allChapters()) {
 		const words = stepUnits(ch.id, "words");
 		const forms = stepUnits(ch.id, "forms");
@@ -79,7 +88,11 @@ test("tutor units sit outside the seven steps, and no unit provides two", () => 
 
 test("every scene a goal uses is a Speak scene, and a chapter's scene step is its goal", () => {
 	for (const u of curriculumUnits()) {
-		if (u.kind === "goal" && u.scene) assert.ok(SPEAK_SCENES.some((s) => s.id === u.scene), `${u.id} uses ${u.scene}`);
+		if (u.kind === "goal" && u.scene)
+			assert.ok(
+				SPEAK_SCENES.some((s) => s.id === u.scene),
+				`${u.id} uses ${u.scene}`,
+			);
 	}
 	for (const ch of allChapters()) {
 		const goal = curriculumUnit(ch.units.at(-1)!)!;

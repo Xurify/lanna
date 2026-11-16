@@ -10,7 +10,7 @@
  * <data>/languages/<id>/language.json.
  */
 
-export type LanguageId = "slovak";
+export type LanguageId = string;
 
 import { isVariantMatch, knownVariants } from "./variants.ts";
 export { isVariantMatch, knownVariants };
@@ -27,13 +27,17 @@ export interface LanguageReferenceSite {
 
 /** The reference page for a word: its own page when the site has one per
  *  word, else slovak.wiki's dictionary or search page. */
-export function referenceLink(site: LanguageReferenceSite, word: { slug?: string; lemma?: string; query?: string }): string {
+export function referenceLink(
+	site: LanguageReferenceSite,
+	word: { slug?: string; lemma?: string; query?: string },
+): string {
 	const query = (word.query ?? "").trim();
 	if (site.wordUrl) {
 		const lemma = (word.lemma ?? query).trim();
 		return lemma ? site.wordUrl.replace("{word}", encodeURIComponent(lemma)) : site.baseUrl;
 	}
-	if (word.slug && !word.slug.includes(" ") && word.slug !== "word") return `${site.baseUrl}/dictionary/${encodeURIComponent(word.slug)}`;
+	if (word.slug && !word.slug.includes(" ") && word.slug !== "word")
+		return `${site.baseUrl}/dictionary/${encodeURIComponent(word.slug)}`;
 	return query ? `${site.baseUrl}/search?q=${encodeURIComponent(query)}` : `${site.baseUrl}/dictionary`;
 }
 
@@ -100,7 +104,7 @@ export function countryOf(info: Pick<LanguageInfo, "tag" | "country">): string {
 		return "the country";
 	}
 }
-export const LANGUAGES: Record<LanguageId, LanguageInfo> = {
+export const LANGUAGES: Record<LanguageId, LanguageInfo> & { readonly slovak: LanguageInfo } = {
 	slovak: {
 		id: "slovak",
 		tag: "sk-SK",
@@ -155,36 +159,77 @@ export interface CatalogLanguage extends LanguageInfo {
 	frequency?: string;
 }
 
-type CatalogRow = [id: string, tag: string, endonym: string, english: string, voices: [string, string], tatoeba: string, wiktionary: string, frequency?: string];
+type CatalogRow = [
+	id: string,
+	tag: string,
+	endonym: string,
+	english: string,
+	voices: [string, string],
+	tatoeba: string,
+	wiktionary: string,
+	frequency?: string,
+];
 
 /** FSI categories, from state.gov, "Foreign Language Training". */
-const FSI: Record<string, 1 | 3> = { bulgarian: 3, czech: 3, estonian: 3, norwegian: 1, polish: 3, romanian: 1, russian: 3 };
+const FSI: Record<string, 1 | 3> = {
+	bulgarian: 3,
+	czech: 3,
+	estonian: 3,
+	norwegian: 1,
+	polish: 3,
+	romanian: 1,
+	russian: 3,
+};
 
 const CATALOG_ROWS: CatalogRow[] = [
-	["bulgarian", "bg-BG", "Български", "Bulgarian", ["bg-BG-KalinaNeural", "bg-BG-BorislavNeural"], "bul", "Bulgarian", "bg"],
+	[
+		"bulgarian",
+		"bg-BG",
+		"Български",
+		"Bulgarian",
+		["bg-BG-KalinaNeural", "bg-BG-BorislavNeural"],
+		"bul",
+		"Bulgarian",
+		"bg",
+	],
 	["czech", "cs-CZ", "Čeština", "Czech", ["cs-CZ-VlastaNeural", "cs-CZ-AntoninNeural"], "ces", "Czech", "cs"],
 	["estonian", "et-EE", "Eesti", "Estonian", ["et-EE-AnuNeural", "et-EE-KertNeural"], "est", "Estonian", "et"],
-	["norwegian", "nb-NO", "Norsk bokmål", "Norwegian", ["nb-NO-PernilleNeural", "nb-NO-FinnNeural"], "nob", "Norwegian Bokmål", "no"],
+	[
+		"norwegian",
+		"nb-NO",
+		"Norsk bokmål",
+		"Norwegian",
+		["nb-NO-PernilleNeural", "nb-NO-FinnNeural"],
+		"nob",
+		"Norwegian Bokmål",
+		"no",
+	],
 	["polish", "pl-PL", "Polski", "Polish", ["pl-PL-ZofiaNeural", "pl-PL-MarekNeural"], "pol", "Polish", "pl"],
 	["romanian", "ro-RO", "Română", "Romanian", ["ro-RO-AlinaNeural", "ro-RO-EmilNeural"], "ron", "Romanian", "ro"],
 	["russian", "ru-RU", "Русский", "Russian", ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"], "rus", "Russian", "ru"],
 ];
 
 /** Every language the app can add by itself. */
-export const LANGUAGE_CATALOG: CatalogLanguage[] = CATALOG_ROWS.map(([id, tag, endonym, english, voices, tatoeba, wiktionary, frequency]) => ({
-	id,
-	tag,
-	code: tag.split("-")[0]!,
-	endonym,
-	english,
-	specialLetters: [],
-	edgeVoices: [...voices],
-	referenceSite: { label: "Wiktionary", baseUrl: "https://en.wiktionary.org", wordUrl: `https://en.wiktionary.org/wiki/{word}#${wiktionary.replace(/ /g, "_")}` },
-	tatoeba,
-	wiktionary,
-	...(frequency ? { frequency } : {}),
-	...(FSI[id] ? { fsiCategory: FSI[id] } : {}),
-}));
+export const LANGUAGE_CATALOG: CatalogLanguage[] = CATALOG_ROWS.map(
+	([id, tag, endonym, english, voices, tatoeba, wiktionary, frequency]) => ({
+		id,
+		tag,
+		code: tag.split("-")[0]!,
+		endonym,
+		english,
+		specialLetters: [],
+		edgeVoices: [...voices],
+		referenceSite: {
+			label: "Wiktionary",
+			baseUrl: "https://en.wiktionary.org",
+			wordUrl: `https://en.wiktionary.org/wiki/{word}#${wiktionary.replace(/ /g, "_")}`,
+		},
+		tatoeba,
+		wiktionary,
+		...(frequency ? { frequency } : {}),
+		...(FSI[id] ? { fsiCategory: FSI[id] } : {}),
+	}),
+);
 
 export function catalogLanguage(id: string): CatalogLanguage | undefined {
 	return LANGUAGE_CATALOG.find((l) => l.id === id);
@@ -253,7 +298,10 @@ export function languageByCode(code: string): LanguageInfo | undefined {
 /** Strip combining marks after NFD — "mäkčeň" → "makcen". Russian ё → е
  *  and й → и fall out of the same rule (both decompose). */
 export function foldDiacritics(text: string): string {
-	return text.normalize("NFD").replace(/\p{M}+/gu, "").normalize("NFC");
+	return text
+		.normalize("NFD")
+		.replace(/\p{M}+/gu, "")
+		.normalize("NFC");
 }
 
 /** Lowercase, trim, collapse whitespace, drop sentence punctuation at the

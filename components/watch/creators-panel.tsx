@@ -18,7 +18,18 @@ import { creatorListings } from "@/components/watch/caches";
 import { post, type Discover } from "@/components/watch/discover";
 import { PickCard } from "@/components/watch/picks-panel";
 import { CardGrid } from "@/components/watch/video-card";
-import { channelUrl, MAX_VIDEO_SEC, parseChannelInput, sortCreatorVideos, splitChannelInputs, videoUrl, type CreatorVideo, type DiscoverStateView, type FragmentRange, type PickedVideo } from "@/src/core";
+import {
+	channelUrl,
+	MAX_VIDEO_SEC,
+	parseChannelInput,
+	sortCreatorVideos,
+	splitChannelInputs,
+	videoUrl,
+	type CreatorVideo,
+	type DiscoverStateView,
+	type FragmentRange,
+	type PickedVideo,
+} from "@/src/core";
 
 type CreatorRow = DiscoverStateView["creators"][number];
 
@@ -39,7 +50,17 @@ const STATUS_LINE: Record<Exclude<CreatorVideo["status"], "offered">, (name: str
 	unavailable: () => "Not available",
 };
 
-export function CreatorsPanel({ d, canPrepare, onPrepare, onCut }: { d: Discover; canPrepare: boolean; onPrepare: (url: string, range?: FragmentRange) => void; onCut: (p: PickedVideo) => void }) {
+export function CreatorsPanel({
+	d,
+	canPrepare,
+	onPrepare,
+	onCut,
+}: {
+	d: Discover;
+	canPrepare: boolean;
+	onPrepare: (url: string, range?: FragmentRange) => void;
+	onCut: (p: PickedVideo) => void;
+}) {
 	const { state, apply } = d;
 	const [chosen, setChosen] = useState<string | null>(lastCreator);
 	const lang = useActiveLanguage();
@@ -51,7 +72,10 @@ export function CreatorsPanel({ d, canPrepare, onPrepare, onCut }: { d: Discover
 			<AddCreators d={d} onSaved={(id) => id && ((lastCreator = id), setChosen(id))} />
 			{state.creators.length > 0 && (
 				<div className="mt-7 grid gap-5 @3xl:grid-cols-[14.5rem_minmax(0,1fr)] @3xl:gap-8">
-					<ul className="-mx-5 flex gap-1 overflow-x-auto px-5 pb-1 @3xl:mx-0 @3xl:flex-col @3xl:overflow-visible @3xl:px-0 @3xl:pb-0" aria-label="Your creators">
+					<ul
+						className="-mx-5 flex gap-1 overflow-x-auto px-5 pb-1 @3xl:mx-0 @3xl:flex-col @3xl:overflow-visible @3xl:px-0 @3xl:pb-0"
+						aria-label="Your creators"
+					>
 						{state.creators.map((c) => {
 							const on = c.id === current?.id;
 							return (
@@ -63,20 +87,45 @@ export function CreatorsPanel({ d, canPrepare, onPrepare, onCut }: { d: Discover
 											setChosen(c.id);
 										}}
 										aria-current={on ? "true" : undefined}
-										className={cn("flex w-full min-w-0 items-center gap-2.5 rounded-xl py-2 pl-2 pr-3 text-left transition-colors @max-3xl:w-auto", on ? "bg-well-2" : "hover:bg-well")}
+										className={cn(
+											"flex w-full min-w-0 items-center gap-2.5 rounded-xl py-2 pl-2 pr-3 text-left transition-colors @max-3xl:w-auto",
+											on ? "bg-well-2" : "hover:bg-well",
+										)}
 										data-testid="watch-creator"
 									>
 										<Avatar name={c.name} src={c.avatar} />
 										<span className="min-w-0">
-											<span className={cn("block max-w-40 truncate font-ui text-[14px] @3xl:max-w-none", on ? "font-[600] text-foreground" : "font-[500] text-ink-2")}>{c.name}</span>
-											<span className="block truncate font-prose text-[12.5px] text-ink-3">{c.picks === 0 ? "no picks now" : c.picks === 1 ? "1 pick" : `${c.picks} picks`}</span>
+											<span
+												className={cn(
+													"block max-w-40 truncate font-ui text-[14px] @3xl:max-w-none",
+													on ? "font-[600] text-foreground" : "font-[500] text-ink-2",
+												)}
+											>
+												{c.name}
+											</span>
+											<span className="block truncate font-prose text-[12.5px] text-ink-3">
+												{c.picks === 0 ? "no picks now" : c.picks === 1 ? "1 pick" : `${c.picks} picks`}
+											</span>
 										</span>
 									</button>
 								</li>
 							);
 						})}
 					</ul>
-					{current && <CreatorDetail key={current.id} c={current} d={d} name={name} lang={lang?.code} canPrepare={canPrepare} onPrepare={onPrepare} onCut={onCut} apply={apply} onRemoved={() => ((lastCreator = null), setChosen(null))} />}
+					{current && (
+						<CreatorDetail
+							key={current.id}
+							c={current}
+							d={d}
+							name={name}
+							lang={lang?.code}
+							canPrepare={canPrepare}
+							onPrepare={onPrepare}
+							onCut={onCut}
+							apply={apply}
+							onRemoved={() => ((lastCreator = null), setChosen(null))}
+						/>
+					)}
 				</div>
 			)}
 			<Suggestions d={d} name={name} />
@@ -106,7 +155,9 @@ function AddCreators({ d, onSaved }: { d: Discover; onSaved: (firstId?: string) 
 		const created = (r.body.creator as { id?: string } | undefined)?.id;
 		if (failed.length) {
 			setInput(failed.map((f) => f.input).join("\n"));
-			setError(`Saved ${String(r.body.saved ?? 0)}. Not saved: ${failed.map((f) => `${f.input} (${f.message.replace(/\.$/, "")})`).join("; ")}`);
+			setError(
+				`Saved ${String(r.body.saved ?? 0)}. Not saved: ${failed.map((f) => `${f.input} (${f.message.replace(/\.$/, "")})`).join("; ")}`,
+			);
 			return;
 		}
 		setInput("");
@@ -138,7 +189,12 @@ function AddCreators({ d, onSaved }: { d: Discover; onSaved: (firstId?: string) 
 					className="q-field h-11 min-w-0 flex-1 rounded-lg px-4 font-ui text-[15px]"
 					data-testid="watch-creator-input"
 				/>
-				<button type="submit" disabled={!valid || busy} className="q-btn sec h-11 px-5" data-testid="watch-creator-save">
+				<button
+					type="submit"
+					disabled={!valid || busy}
+					className="q-btn sec h-11 px-5"
+					data-testid="watch-creator-save"
+				>
 					{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
 					{tokens.length > 1 ? `Save ${tokens.length} creators` : "Save creator"}
 				</button>
@@ -176,7 +232,13 @@ function Suggestions({ d, name }: { d: Discover; name: string }) {
 			<div className="mb-3 flex items-center gap-2">
 				<h2 className="min-w-0 flex-1 font-ui text-sm font-[600] text-ink-2">Channels in {name} from your YouTube</h2>
 				{state.suggestions.length > 1 && (
-					<button type="button" disabled={savingAll} onClick={() => void saveAll()} className="q-btn ghost h-8" data-testid="watch-suggestions-save-all">
+					<button
+						type="button"
+						disabled={savingAll}
+						onClick={() => void saveAll()}
+						className="q-btn ghost h-8"
+						data-testid="watch-suggestions-save-all"
+					>
 						{savingAll ? <LoaderCircleIcon className="size-3.5 animate-spin" /> : <PlusIcon className="size-3.5" />}
 						Save all {state.suggestions.length}
 					</button>
@@ -185,28 +247,59 @@ function Suggestions({ d, name }: { d: Discover; name: string }) {
 			<ul className="grid gap-2 @4xl:grid-cols-2" data-testid="watch-suggestions">
 				{shown.map((s) => (
 					<li key={s.id} className="q-card flex items-center gap-3 py-2.5 pl-3 pr-2" data-testid="watch-suggestion">
-						<a href={channelUrl({ id: s.id })} target="_blank" rel="noreferrer" title={`${s.name} (opens on YouTube)`} className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg" data-testid="watch-suggestion-link">
+						<a
+							href={channelUrl({ id: s.id })}
+							target="_blank"
+							rel="noreferrer"
+							title={`${s.name} (opens on YouTube)`}
+							className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg"
+							data-testid="watch-suggestion-link"
+						>
 							<Avatar name={s.name} src={s.avatar} />
 							<span className="min-w-0 flex-1">
-								<span className="block truncate font-ui text-[14px] font-[600] text-foreground group-hover:underline">{s.name}</span>
+								<span className="block truncate font-ui text-[14px] font-[600] text-foreground group-hover:underline">
+									{s.name}
+								</span>
 								<span className="block truncate font-prose text-[12.5px] text-ink-3">
 									{s.subscribed ? "You subscribe · " : ""}
 									{s.videos === 1 ? "1 video" : `${s.videos} videos`} in {name}
 								</span>
 							</span>
 						</a>
-						<button type="button" disabled={saving === s.id} onClick={() => void save(s.id)} className="q-btn sec h-8 shrink-0 px-3" data-testid="watch-suggestion-save">
-							{saving === s.id ? <LoaderCircleIcon className="size-3.5 animate-spin" /> : <PlusIcon className="size-3.5" />}
+						<button
+							type="button"
+							disabled={saving === s.id}
+							onClick={() => void save(s.id)}
+							className="q-btn sec h-8 shrink-0 px-3"
+							data-testid="watch-suggestion-save"
+						>
+							{saving === s.id ? (
+								<LoaderCircleIcon className="size-3.5 animate-spin" />
+							) : (
+								<PlusIcon className="size-3.5" />
+							)}
 							Save
 						</button>
-						<button type="button" onClick={() => void post({ action: "dismiss-channel", id: s.id }).then((r) => apply(r.body))} aria-label={`Not for me: ${s.name}`} title="Not for me" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-suggestion-dismiss">
+						<button
+							type="button"
+							onClick={() => void post({ action: "dismiss-channel", id: s.id }).then((r) => apply(r.body))}
+							aria-label={`Not for me: ${s.name}`}
+							title="Not for me"
+							className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							data-testid="watch-suggestion-dismiss"
+						>
 							<XIcon className="size-4" strokeWidth={1.6} />
 						</button>
 					</li>
 				))}
 			</ul>
 			{state.suggestions.length > SUGGESTIONS_SHOWN && (
-				<button type="button" onClick={() => setAll((v) => !v)} className="q-btn ghost mt-2" data-testid="watch-suggestions-more">
+				<button
+					type="button"
+					onClick={() => setAll((v) => !v)}
+					className="q-btn ghost mt-2"
+					data-testid="watch-suggestions-more"
+				>
 					{all ? "Show fewer" : `Show ${state.suggestions.length - SUGGESTIONS_SHOWN} more`}
 				</button>
 			)}
@@ -214,7 +307,27 @@ function Suggestions({ d, name }: { d: Discover; name: string }) {
 	);
 }
 
-function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, onRemoved }: { c: CreatorRow; d: Discover; name: string; lang?: string; canPrepare: boolean; onPrepare: (url: string, range?: FragmentRange) => void; onCut: (p: PickedVideo) => void; apply: (body: Record<string, unknown>) => void; onRemoved: () => void }) {
+function CreatorDetail({
+	c,
+	d,
+	name,
+	lang,
+	canPrepare,
+	onPrepare,
+	onCut,
+	apply,
+	onRemoved,
+}: {
+	c: CreatorRow;
+	d: Discover;
+	name: string;
+	lang?: string;
+	canPrepare: boolean;
+	onPrepare: (url: string, range?: FragmentRange) => void;
+	onCut: (p: PickedVideo) => void;
+	apply: (body: Record<string, unknown>) => void;
+	onRemoved: () => void;
+}) {
 	const [sort, setSort] = useState<"best" | "newest">("best");
 	const [query, setQuery] = useState("");
 	/** The search the rows answer: null for the picks, "" for the newest uploads. */
@@ -243,7 +356,8 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 			try {
 				const found = await creatorListings.run(`${lang ?? ""}|${refreshedAt}|${c.id}|${q}`, async () => {
 					const r = await post({ action: "creator-videos", id: c.id, ...(q ? { query: q } : {}) });
-					if (!r.ok || !Array.isArray(r.body.videos)) throw new Error(typeof r.body.message === "string" ? r.body.message : "YouTube did not answer. Try again.");
+					if (!r.ok || !Array.isArray(r.body.videos))
+						throw new Error(typeof r.body.message === "string" ? r.body.message : "YouTube did not answer. Try again.");
 					return r.body.videos as CreatorVideo[];
 				});
 				if (mine === ask.current) setRows(found);
@@ -283,7 +397,8 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 		});
 
 	const listed = asked === null ? null : sortCreatorVideos(rows ?? [], sort);
-	const offered: PickedVideo[] = listed === null ? c.videos : listed.filter((v): v is CreatorVideo & PickedVideo => v.status === "offered");
+	const offered: PickedVideo[] =
+		listed === null ? c.videos : listed.filter((v): v is CreatorVideo & PickedVideo => v.status === "offered");
 	const others = listed === null ? [] : listed.filter((v) => v.status !== "offered");
 	return (
 		<div className="@container min-w-0" data-testid="watch-creator-panel">
@@ -291,7 +406,14 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 				<Avatar name={c.name} src={c.avatar} size="lg" />
 				<div className="min-w-0 flex-1">
 					<h2 className="truncate font-ui text-xl font-[600] leading-tight text-foreground">
-						<a href={channelUrl(c)} target="_blank" rel="noreferrer" title={`${c.name} (opens on YouTube)`} className="hover:underline" data-testid="watch-creator-link">
+						<a
+							href={channelUrl(c)}
+							target="_blank"
+							rel="noreferrer"
+							title={`${c.name} (opens on YouTube)`}
+							className="hover:underline"
+							data-testid="watch-creator-link"
+						>
 							{c.name}
 						</a>
 					</h2>
@@ -316,16 +438,34 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 						>
 							Remove
 						</button>
-						<button type="button" onClick={() => setConfirming(false)} className="rounded-md px-2 py-2 text-muted-foreground hover:bg-accent hover:text-foreground">
+						<button
+							type="button"
+							onClick={() => setConfirming(false)}
+							className="rounded-md px-2 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+						>
 							Keep
 						</button>
 					</span>
 				) : (
 					<>
-						<a href={c.handle ? `https://www.youtube.com/${c.handle}` : `https://www.youtube.com/channel/${c.id}`} target="_blank" rel="noreferrer" aria-label={`Open ${c.name} on YouTube`} title="Open on YouTube" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+						<a
+							href={c.handle ? `https://www.youtube.com/${c.handle}` : `https://www.youtube.com/channel/${c.id}`}
+							target="_blank"
+							rel="noreferrer"
+							aria-label={`Open ${c.name} on YouTube`}
+							title="Open on YouTube"
+							className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						>
 							<ExternalLinkIcon className="size-4" strokeWidth={1.6} />
 						</a>
-						<button type="button" onClick={() => setConfirming(true)} aria-label={`Remove ${c.name}`} title="Remove this creator" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid="watch-creator-remove">
+						<button
+							type="button"
+							onClick={() => setConfirming(true)}
+							aria-label={`Remove ${c.name}`}
+							title="Remove this creator"
+							className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+							data-testid="watch-creator-remove"
+						>
 							<Trash2Icon className="size-4" strokeWidth={1.6} />
 						</button>
 					</>
@@ -341,7 +481,10 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 					className="relative min-w-48 flex-1"
 					role="search"
 				>
-					<SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3" strokeWidth={1.6} />
+					<SearchIcon
+						className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+						strokeWidth={1.6}
+					/>
 					<input
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
@@ -359,14 +502,27 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 						data-testid="watch-creator-search"
 					/>
 					{query && (
-						<button type="button" onClick={clear} aria-label="Clear the search" className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground">
+						<button
+							type="button"
+							onClick={clear}
+							aria-label="Clear the search"
+							className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+						>
 							<XIcon className="size-3.5" strokeWidth={1.6} />
 						</button>
 					)}
 				</form>
 				<div className="q-segc" role="radiogroup" aria-label="Order">
 					{(["best", "newest"] as const).map((by) => (
-						<button key={by} type="button" role="radio" aria-checked={sort === by} className={cn(sort === by && "on")} onClick={() => choose(by)} data-testid={`watch-creator-sort-${by}`}>
+						<button
+							key={by}
+							type="button"
+							role="radio"
+							aria-checked={sort === by}
+							className={cn(sort === by && "on")}
+							onClick={() => choose(by)}
+							data-testid={`watch-creator-sort-${by}`}
+						>
 							{by === "best" ? "Best for you" : "Newest"}
 						</button>
 					))}
@@ -377,7 +533,9 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 				{busy ? (
 					<p className="flex items-center gap-2 font-prose text-[13px] text-ink-3" role="status">
 						<LoaderCircleIcon className="size-4 animate-spin" />
-						{asked ? `Searching ${c.name}'s videos and checking each one` : `Reading ${c.name}'s newest videos and checking each one`}
+						{asked
+							? `Searching ${c.name}'s videos and checking each one`
+							: `Reading ${c.name}'s newest videos and checking each one`}
 					</p>
 				) : error ? (
 					<p className="font-prose text-[13px] text-miss" role="alert">
@@ -386,7 +544,17 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 				) : offered.length > 0 ? (
 					<CardGrid testid="watch-creator-videos-list">
 						{offered.map((v) => (
-							<PickCard key={v.id} p={v} name={name} lang={lang} canPrepare={canPrepare} onPrepare={() => onPrepare(videoUrl(v.id))} onCut={() => onCut(v)} onDismiss={() => dismiss(v.id)} note={listed !== null && v.publishedAt ? `Published ${timeAgo(v.publishedAt)}` : undefined} />
+							<PickCard
+								key={v.id}
+								p={v}
+								name={name}
+								lang={lang}
+								canPrepare={canPrepare}
+								onPrepare={() => onPrepare(videoUrl(v.id))}
+								onCut={() => onCut(v)}
+								onDismiss={() => dismiss(v.id)}
+								note={listed !== null && v.publishedAt ? `Published ${timeAgo(v.publishedAt)}` : undefined}
+							/>
 						))}
 					</CardGrid>
 				) : (
@@ -394,8 +562,10 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 						{listed === null ? (
 							<>
 								Nothing to watch from {c.name} right now.
-								{c.tooLong > 0 && ` ${c.tooLong === 1 ? "One video is" : `${c.tooLong} videos are`} over ${MAX_VIDEO_SEC / 60} minutes.`}
-								{c.awaitingCaptions > 0 && ` ${c.awaitingCaptions === 1 ? "One has" : `${c.awaitingCaptions} have`} no captions yet; they are checked again each time.`}
+								{c.tooLong > 0 &&
+									` ${c.tooLong === 1 ? "One video is" : `${c.tooLong} videos are`} over ${MAX_VIDEO_SEC / 60} minutes.`}
+								{c.awaitingCaptions > 0 &&
+									` ${c.awaitingCaptions === 1 ? "One has" : `${c.awaitingCaptions} have`} no captions yet; they are checked again each time.`}
 							</>
 						) : asked ? (
 							`No video of ${c.name} matches "${asked}".`
@@ -407,7 +577,12 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 
 				{!busy && !error && others.length > 0 && (
 					<div className="mt-6">
-						<button type="button" onClick={() => setSkipped((v) => !v)} aria-expanded={skipped} className="q-btn ghost h-8">
+						<button
+							type="button"
+							onClick={() => setSkipped((v) => !v)}
+							aria-expanded={skipped}
+							className="q-btn ghost h-8"
+						>
 							{skipped ? "Hide" : "Show"} {others.length} that cannot be offered
 						</button>
 						{skipped && (
@@ -415,7 +590,14 @@ function CreatorDetail({ c, d, name, lang, canPrepare, onPrepare, onCut, apply, 
 								{others.map((v) => (
 									<li key={v.id} className="flex items-center gap-3 py-2.5" data-testid="watch-creator-video-skipped">
 										<span className="min-w-0 flex-1">
-											<a href={videoUrl(v.id)} target="_blank" rel="noreferrer" className="block truncate font-ui text-[14px] font-[500] text-ink-2 hover:underline" lang={lang} title={`${v.title} (opens on YouTube)`}>
+											<a
+												href={videoUrl(v.id)}
+												target="_blank"
+												rel="noreferrer"
+												className="block truncate font-ui text-[14px] font-[500] text-ink-2 hover:underline"
+												lang={lang}
+												title={`${v.title} (opens on YouTube)`}
+											>
 												{v.title}
 											</a>
 											<span className="block truncate font-prose text-[12.5px] text-ink-3">

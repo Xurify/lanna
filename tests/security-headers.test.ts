@@ -7,7 +7,9 @@ async function headersFor(nodeEnv: "production" | "development"): Promise<Map<st
 	const previous = process.env.NODE_ENV;
 	(process.env as Record<string, string>).NODE_ENV = nodeEnv;
 	try {
-		const { default: config } = (await import(`../next.config.ts?env=${nodeEnv}`)) as { default: { headers: () => Promise<{ source: string; headers: Header[] }[]> } };
+		const { default: config } = (await import(`../next.config.ts?env=${nodeEnv}`)) as {
+			default: { headers: () => Promise<{ source: string; headers: Header[] }[]> };
+		};
 		const rules = await config.headers();
 		assert.equal(rules.length, 1);
 		assert.equal(rules[0]!.source, "/:path*");
@@ -17,7 +19,13 @@ async function headersFor(nodeEnv: "production" | "development"): Promise<Map<st
 	}
 }
 
-const directives = (policy: string) => new Map(policy.split(";").map((part) => part.trim().split(/\s+/)).map(([name, ...values]) => [name!, values]));
+const directives = (policy: string) =>
+	new Map(
+		policy
+			.split(";")
+			.map((part) => part.trim().split(/\s+/))
+			.map(([name, ...values]) => [name!, values]),
+	);
 
 describe("response headers", () => {
 	it("every build refuses sniffing, framing and cross-origin reads, and keeps the microphone for this page only", async () => {
@@ -29,7 +37,8 @@ describe("response headers", () => {
 			assert.equal(headers.get("Referrer-Policy"), "strict-origin-when-cross-origin", env);
 			const permissions = headers.get("Permissions-Policy")!;
 			assert.match(permissions, /microphone=\(self\)/);
-			for (const feature of ["camera", "geolocation", "payment", "usb"]) assert.match(permissions, new RegExp(`${feature}=\\(\\)`));
+			for (const feature of ["camera", "geolocation", "payment", "usb"])
+				assert.match(permissions, new RegExp(`${feature}=\\(\\)`));
 		}
 	});
 
@@ -55,6 +64,13 @@ describe("response headers", () => {
 			assert.ok(!values.includes("'unsafe-eval'"), `${name} must not allow eval`);
 			assert.ok(!values.includes("http:"), `${name} must not allow plain http`);
 		}
-		for (const origin of policy.get("img-src")!) assert.ok(origin.startsWith("'self'") || origin === "data:" || origin === "blob:" || /^https:\/\/[a-z0-9.]+$/.test(origin), origin);
+		for (const origin of policy.get("img-src")!)
+			assert.ok(
+				origin.startsWith("'self'") ||
+					origin === "data:" ||
+					origin === "blob:" ||
+					/^https:\/\/[a-z0-9.]+$/.test(origin),
+				origin,
+			);
 	});
 });

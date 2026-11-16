@@ -30,7 +30,10 @@ export function applyTheme(choice: ThemeChoice, persist = true): void {
 	const root = document.documentElement;
 	if (persist) {
 		try {
-			document.cookie = choice === "system" ? `${THEME_COOKIE}=; path=/; max-age=0; samesite=lax` : `${THEME_COOKIE}=${choice}; path=/; max-age=31536000; samesite=lax`;
+			document.cookie =
+				choice === "system"
+					? `${THEME_COOKIE}=; path=/; max-age=0; samesite=lax`
+					: `${THEME_COOKIE}=${choice}; path=/; max-age=31536000; samesite=lax`;
 			localStorage.removeItem("lh:theme");
 		} catch {
 			// cookies blocked: the choice still applies for this page view

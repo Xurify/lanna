@@ -34,10 +34,7 @@ import { wordLinks } from "@/components/words/word-links";
  * 4. General app chrome, dashboard widgets, headers, navigation, buttons, and
  *    English translations have no enabled container and are never eligible.
  */
-export function isEligibleLearningTarget(
-	node: Node | null | undefined,
-	activeLangCode?: string,
-): boolean {
+export function isEligibleLearningTarget(node: Node | null | undefined, activeLangCode?: string): boolean {
 	if (!node) return false;
 	const el = node.nodeType === 1 ? (node as Element) : node.parentElement;
 	if (!el) return false;
@@ -218,10 +215,7 @@ export function SelectionWordBankBar() {
 		const computeRectCoords = (rect: DOMRect) => {
 			const halfWidth = 175;
 			const winWidth = window.visualViewport?.width ?? window.innerWidth;
-			const clampedX = Math.max(
-				halfWidth + 12,
-				Math.min(winWidth - halfWidth - 12, rect.left + rect.width / 2),
-			);
+			const clampedX = Math.max(halfWidth + 12, Math.min(winWidth - halfWidth - 12, rect.left + rect.width / 2));
 			const placeAbove = rect.top > 170;
 			return { clampedX, placeAbove };
 		};
@@ -313,10 +307,7 @@ export function SelectionWordBankBar() {
 			rafId = requestAnimationFrame(() => {
 				rafId = null;
 				const sel = window.getSelection();
-				const range =
-					sel && !sel.isCollapsed && sel.rangeCount > 0
-						? sel.getRangeAt(0)
-						: activeRangeRef.current;
+				const range = sel && !sel.isCollapsed && sel.rangeCount > 0 ? sel.getRangeAt(0) : activeRangeRef.current;
 				if (!range) return;
 				if (range.startContainer && !range.startContainer.isConnected) {
 					setSelection(null);
@@ -411,9 +402,7 @@ export function SelectionWordBankBar() {
 		};
 
 		const resizeObserver =
-			typeof ResizeObserver !== "undefined"
-				? new ResizeObserver(() => syncPositionToSelection())
-				: null;
+			typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => syncPositionToSelection()) : null;
 		resizeObserver?.observe(document.documentElement);
 		if (document.body) resizeObserver?.observe(document.body);
 
@@ -496,8 +485,8 @@ export function SelectionWordBankBar() {
 
 	const primaryGloss =
 		translationMode === "google"
-			? lookup?.googleTranslation ?? lookup?.surfaceGloss ?? lookup?.gloss
-			: lookup?.gloss ?? lookup?.googleTranslation;
+			? (lookup?.googleTranslation ?? lookup?.surfaceGloss ?? lookup?.gloss)
+			: (lookup?.gloss ?? lookup?.googleTranslation);
 
 	const secondaryGloss =
 		translationMode === "google" && lookup?.dictionaryGloss && lookup.dictionaryGloss !== primaryGloss
@@ -569,8 +558,16 @@ export function SelectionWordBankBar() {
 			? { left: `${selection.x}px`, top: `${fitTop}px`, transform: "translateX(-50%)" }
 			: // First paint, before the card is measured: the old estimate, replaced before it shows.
 				selection.placeAbove
-				? { left: `${selection.x}px`, bottom: `${Math.max(POPOVER_EDGE, viewportHeight - selection.top + POPOVER_GAP)}px`, transform: "translateX(-50%)" }
-				: { left: `${selection.x}px`, top: `${Math.max(POPOVER_EDGE, selection.bottom + POPOVER_GAP)}px`, transform: "translateX(-50%)" };
+				? {
+						left: `${selection.x}px`,
+						bottom: `${Math.max(POPOVER_EDGE, viewportHeight - selection.top + POPOVER_GAP)}px`,
+						transform: "translateX(-50%)",
+					}
+				: {
+						left: `${selection.x}px`,
+						top: `${Math.max(POPOVER_EDGE, selection.bottom + POPOVER_GAP)}px`,
+						transform: "translateX(-50%)",
+					};
 
 	return (
 		<div
@@ -580,7 +577,10 @@ export function SelectionWordBankBar() {
 			style={positionStyle}
 			className="lh-no-drag fixed z-50 w-max min-w-[18.5rem] max-w-[23.5rem] pointer-events-auto"
 		>
-			<div className="lh-menu-in origin-top flex flex-col gap-2 overflow-y-auto rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl" style={{ maxHeight: `calc(100dvh - ${POPOVER_EDGE * 2}px)` }}>
+			<div
+				className="lh-menu-in origin-top flex flex-col gap-2 overflow-y-auto rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl"
+				style={{ maxHeight: `calc(100dvh - ${POPOVER_EDGE * 2}px)` }}
+			>
 				{/* Always-visible header: headword, POS/morphology, and translation */}
 				<div className="flex flex-col gap-1 border-b border-border/60 pb-2">
 					<div className="flex items-start justify-between gap-2">
@@ -626,9 +626,7 @@ export function SelectionWordBankBar() {
 								aria-label={docked ? "Float above selection" : "Pin to corner"}
 								className={cn(
 									"flex size-6 items-center justify-center rounded-lg transition-colors",
-									docked
-										? "bg-sky/15 text-sky"
-										: "text-muted-foreground hover:bg-accent hover:text-foreground",
+									docked ? "bg-sky/15 text-sky" : "text-muted-foreground hover:bg-accent hover:text-foreground",
 								)}
 							>
 								{docked ? <PinOffIcon className="size-3.5" /> : <PinIcon className="size-3.5" />}
@@ -651,7 +649,9 @@ export function SelectionWordBankBar() {
 
 					{showSurfaceNote && (
 						<p className="font-ui text-[11px] text-muted-foreground">
-							<span className="font-semibold text-foreground/80" lang={langCode}>{selection.text}</span>
+							<span className="font-semibold text-foreground/80" lang={langCode}>
+								{selection.text}
+							</span>
 							{" — "}
 							<span className="italic">{showSurfaceNote}</span>
 						</p>
@@ -663,14 +663,8 @@ export function SelectionWordBankBar() {
 							<span className="inline-block h-4 w-36 animate-pulse rounded bg-accent" />
 						) : primaryGloss ? (
 							<div className="flex flex-col gap-0.5">
-								<p className="font-prose text-sm font-medium leading-snug text-foreground">
-									{primaryGloss}
-								</p>
-								{secondaryGloss && (
-									<p className="font-ui text-[11px] text-muted-foreground">
-										{secondaryGloss}
-									</p>
-								)}
+								<p className="font-prose text-sm font-medium leading-snug text-foreground">{primaryGloss}</p>
+								{secondaryGloss && <p className="font-ui text-[11px] text-muted-foreground">{secondaryGloss}</p>}
 							</div>
 						) : (
 							<p className="font-ui text-xs text-muted-foreground">
@@ -763,9 +757,7 @@ export function SelectionWordBankBar() {
 							data-testid="selection-add-word"
 							className={cn(
 								"flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 font-ui text-xs font-semibold transition-colors whitespace-nowrap",
-								wordSaved
-									? "bg-go/15 text-go"
-									: "bg-go text-primary-foreground hover:brightness-105",
+								wordSaved ? "bg-go/15 text-go" : "bg-go text-primary-foreground hover:brightness-105",
 							)}
 						>
 							{wordSaved ? (

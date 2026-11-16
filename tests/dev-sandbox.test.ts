@@ -32,7 +32,14 @@ describe("planSandbox: data, keys and port of its own", () => {
 		const plan = planSandbox({
 			port: 4123,
 			tmp,
-			env: { LH_DATA_DIR: "C:/real/profile/data", LH_AUTH_FILE: "C:/real/auth.json", LH_DESKTOP_SERVER: "1", LH_DESKTOP_API_SECRET: "x".repeat(64), NODE_ENV: "test", OPENAI_API_KEY: "sk-real" },
+			env: {
+				LH_DATA_DIR: "C:/real/profile/data",
+				LH_AUTH_FILE: "C:/real/auth.json",
+				LH_DESKTOP_SERVER: "1",
+				LH_DESKTOP_API_SECRET: "x".repeat(64),
+				NODE_ENV: "test",
+				OPENAI_API_KEY: "sk-real",
+			},
 		});
 		made.push(plan.dir);
 		assert.ok(plan.dir.startsWith(tmp), "under the temp folder");
@@ -71,7 +78,13 @@ describe("planSandbox: data, keys and port of its own", () => {
 
 describe("assertSafeDataDir", () => {
 	it("refuses the repo, its data/ and anything inside it", () => {
-		for (const bad of [ROOT, path.join(ROOT, "data"), path.join(ROOT, "data", "profiles", "slovak"), path.join(ROOT, ".fresh-data")]) assert.throws(() => assertSafeDataDir(bad, ROOT), /outside the repo/, bad);
+		for (const bad of [
+			ROOT,
+			path.join(ROOT, "data"),
+			path.join(ROOT, "data", "profiles", "slovak"),
+			path.join(ROOT, ".fresh-data"),
+		])
+			assert.throws(() => assertSafeDataDir(bad, ROOT), /outside the repo/, bad);
 	});
 	it("accepts a folder elsewhere", () => {
 		assert.doesNotThrow(() => assertSafeDataDir(path.join(os.tmpdir(), "lh-sandbox-x"), ROOT));
@@ -93,7 +106,10 @@ describe("freePort", () => {
 
 describe("explainFailure: Next locks the .next folder, so a second dev server cannot share a checkout", () => {
 	it("explains the lock and gives the worktree recipe", () => {
-		const text = explainFailure("  Another next dev server is already running.\n", path.join(os.tmpdir(), "langharness"));
+		const text = explainFailure(
+			"  Another next dev server is already running.\n",
+			path.join(os.tmpdir(), "langharness"),
+		);
 		assert.ok(text);
 		assert.match(text!, /already running from this checkout/);
 		assert.match(text!, /git worktree add \.\.[\\/]langharness-sandbox/);
@@ -119,7 +135,9 @@ describe("the demo seed only fills an empty folder", () => {
 		const dir = scratch("lh-sbx-seed-");
 		const res = run(dir);
 		assert.equal(res.status, 0, res.stderr);
-		const days = Object.values((JSON.parse(fs.readFileSync(progressFile(dir), "utf8")) as { days: Record<string, { minutesBy?: object }> }).days);
+		const days = Object.values(
+			(JSON.parse(fs.readFileSync(progressFile(dir), "utf8")) as { days: Record<string, { minutesBy?: object }> }).days,
+		);
 		assert.equal(days.length, 6);
 		assert.equal(days.filter((d) => d.minutesBy).length, 3, "three days measured, three before measuring");
 	});
@@ -137,7 +155,13 @@ describe("the demo seed only fills an empty folder", () => {
 	it("refuses a folder with a learner's own progress in it", () => {
 		const dir = scratch("lh-sbx-seed-");
 		fs.mkdirSync(path.dirname(progressFile(dir)), { recursive: true });
-		const mine = JSON.stringify({ xp: 1234, dailyGoal: 50, days: { "2026-10-27": { xp: 1234, lessons: 9, reps: 90, reviews: 40, minutes: 51 } }, units: {}, recent: [] });
+		const mine = JSON.stringify({
+			xp: 1234,
+			dailyGoal: 50,
+			days: { "2026-10-27": { xp: 1234, lessons: 9, reps: 90, reviews: 40, minutes: 51 } },
+			units: {},
+			recent: [],
+		});
 		fs.writeFileSync(progressFile(dir), mine);
 		const res = run(dir);
 		assert.equal(res.status, 1);

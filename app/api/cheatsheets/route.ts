@@ -17,10 +17,14 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.cheatsheet);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { title?: unknown; text?: unknown } | null;
-	if (typeof body?.text !== "string" || !body.text.trim()) return Response.json({ message: "Add at least one phrase." }, { status: 400 });
-	if (body.text.length > CHEATSHEET_MAX_CHARS) return Response.json({ message: "The text is too long for one cheatsheet." }, { status: 413 });
+	if (typeof body?.text !== "string" || !body.text.trim())
+		return Response.json({ message: "Add at least one phrase." }, { status: 400 });
+	if (body.text.length > CHEATSHEET_MAX_CHARS)
+		return Response.json({ message: "The text is too long for one cheatsheet." }, { status: 413 });
 	try {
-		return Response.json({ sheet: cheatsheetStore.create(typeof body.title === "string" ? body.title : "", body.text) });
+		return Response.json({
+			sheet: cheatsheetStore.create(typeof body.title === "string" ? body.title : "", body.text),
+		});
 	} catch (err) {
 		if (err instanceof CheatsheetParseError) return Response.json({ message: err.message }, { status: 422 });
 		throw err;

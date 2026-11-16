@@ -26,5 +26,13 @@ export default async function WatchPage({ searchParams }: { searchParams: Promis
 	} catch {
 		discover = null;
 	}
-	return <WatchPlayer key={id ?? url ?? "shelf"} initial={state} initialVideo={video} initialUrl={url ?? null} initialDiscover={discover} />;
+	return (
+		<WatchPlayer
+			key={id ?? url ?? "shelf"}
+			initial={state}
+			initialVideo={video}
+			initialUrl={url ?? null}
+			initialDiscover={discover}
+		/>
+	);
 }

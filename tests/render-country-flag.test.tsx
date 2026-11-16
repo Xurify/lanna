@@ -64,7 +64,10 @@ describe("CountryFlag & langToCountryCode", () => {
 		assert.ok(slovakMarkup.includes("w-6 h-4")); // bigger size (24x16)
 		assert.ok(slovakMarkup.includes("ring-inset"), "a hairline ring keeps a white band visible on a card");
 		assert.doesNotMatch(slovakMarkup, /shadow-(2xs|xs|sm|md|lg)/, "no drop shadow under a flag");
-		assert.ok(slovakMarkup.includes('preserveAspectRatio="xMidYMid slice"'), "the flag fills its box instead of letterboxing");
+		assert.ok(
+			slovakMarkup.includes('preserveAspectRatio="xMidYMid slice"'),
+			"the flag fills its box instead of letterboxing",
+		);
 
 		const russianMarkup = renderToStaticMarkup(<CountryFlag lang="russian" />);
 		assert.ok(russianMarkup.includes('data-country-code="RU"'));

@@ -81,7 +81,11 @@ const ARTICLE_PAGE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const htmlPage = (html: string) => async (url: string) => ({ html, contentType: "text/html; charset=utf-8", finalUrl: url });
+const htmlPage = (html: string) => async (url: string) => ({
+	html,
+	contentType: "text/html; charset=utf-8",
+	finalUrl: url,
+});
 
 async function importError(run: () => Promise<unknown>): Promise<string> {
 	try {
@@ -99,7 +103,10 @@ describe("cleanPastedText", () => {
 	});
 
 	it("joins hard-wrapped lines into paragraphs when blank lines separate them", () => {
-		assert.equal(readImport.cleanPastedText("Prvý riadok\r\npokračuje tu.\r\n\r\n\r\nDruhý   odsek."), "Prvý riadok pokračuje tu.\n\nDruhý odsek.");
+		assert.equal(
+			readImport.cleanPastedText("Prvý riadok\r\npokračuje tu.\r\n\r\n\r\nDruhý   odsek."),
+			"Prvý riadok pokračuje tu.\n\nDruhý odsek.",
+		);
 	});
 
 	it("reads each line as a paragraph when the text has no blank line", () => {
@@ -107,7 +114,10 @@ describe("cleanPastedText", () => {
 	});
 
 	it("drops lines that are only a link", () => {
-		assert.equal(readImport.cleanPastedText("Text.\n\nhttps://example.com/unsubscribe\n\nĎalší text."), "Text.\n\nĎalší text.");
+		assert.equal(
+			readImport.cleanPastedText("Text.\n\nhttps://example.com/unsubscribe\n\nĎalší text."),
+			"Text.\n\nĎalší text.",
+		);
 	});
 });
 
@@ -117,7 +127,11 @@ describe("extractArticle", () => {
 		assert.ok(article);
 		assert.match(article.title, /cyklotrasa/);
 		const paragraphs = article.text.split("\n\n");
-		assert.ok(paragraphs.includes("Bratislava otvorila novú cyklotrasu cez celé mesto. Trasa spája centrum s okrajom mesta a vedie popri rieke."));
+		assert.ok(
+			paragraphs.includes(
+				"Bratislava otvorila novú cyklotrasu cez celé mesto. Trasa spája centrum s okrajom mesta a vedie popri rieke.",
+			),
+		);
 		assert.equal(paragraphs.filter((p) => p === "Dĺžka trasy je dvanásť kilometrov.").length, 1);
 		assert.ok(paragraphs.includes("Otvorená je každý deň."));
 		assert.doesNotMatch(article.text, /Domov|Copyright/);
@@ -184,9 +198,23 @@ describe("a part's place and size", () => {
 
 describe("adding a text", () => {
 	it("refuses too little text, a link it cannot open, a page with no article, and nothing at all, in the learner's words", async () => {
-		assert.equal(await importError(() => readImport.addSource({ text: "Príliš krátky text." })), `There is too little text here: at least ${core.MIN_SOURCE_WORDS} words are needed.`);
-		assert.equal(await importError(() => readImport.addSource({ url: "ftp://example.com/file" })), "That is not a link the app can open.");
-		assert.equal(await importError(() => readImport.addSource({ url: "https://example.com/empty" }, { fetchPage: htmlPage("<html><body></body></html>") })), "That page could not be read. Paste its text instead.");
+		assert.equal(
+			await importError(() => readImport.addSource({ text: "Príliš krátky text." })),
+			`There is too little text here: at least ${core.MIN_SOURCE_WORDS} words are needed.`,
+		);
+		assert.equal(
+			await importError(() => readImport.addSource({ url: "ftp://example.com/file" })),
+			"That is not a link the app can open.",
+		);
+		assert.equal(
+			await importError(() =>
+				readImport.addSource(
+					{ url: "https://example.com/empty" },
+					{ fetchPage: htmlPage("<html><body></body></html>") },
+				),
+			),
+			"That page could not be read. Paste its text instead.",
+		);
 		assert.equal(
 			await importError(() =>
 				readImport.addSource(
@@ -225,7 +253,10 @@ describe("adding a text", () => {
 			opened.push(url);
 			return htmlPage(ARTICLE_PAGE.replace("Bratislava", opened.length === 1 ? "Trnava" : "Nitra"))(url);
 		};
-		const source = await readImport.addSource({ url: "https://us2.campaign-archive.com/?e=538bc35af8&u=abc&id=f18194e006&utm_source=newsletter&mc_eid=123" }, { fetchPage });
+		const source = await readImport.addSource(
+			{ url: "https://us2.campaign-archive.com/?e=538bc35af8&u=abc&id=f18194e006&utm_source=newsletter&mc_eid=123" },
+			{ fetchPage },
+		);
 		assert.deepEqual(opened, ["https://us2.campaign-archive.com/?u=abc&id=f18194e006"]);
 		assert.equal(source.url, "https://us2.campaign-archive.com/?u=abc&id=f18194e006");
 		const other = await readImport.addSource({ url: "https://example.com/post?e=keep&page=2" }, { fetchPage });
@@ -262,12 +293,23 @@ describe("reading a text of your own", () => {
 
 	it("writes part one from its section, and writes nothing the second time", async () => {
 		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify(RETOLD_DRAFT))]);
-		const { source, story } = await readImport.importReading({ text, title: "Môj článok", url: "https://example.com/moj-clanok" }, { engine, model: "faux:retell" });
+		const { source, story } = await readImport.importReading(
+			{ text, title: "Môj článok", url: "https://example.com/moj-clanok" },
+			{ engine, model: "faux:retell" },
+		);
 
 		assert.equal(story.id, core.ownStoryId(source.id, 1));
 		assert.equal(story.genre, "own");
 		assert.equal(story.chapter, "own");
-		assert.deepEqual(story.source, { id: source.id, title: "Môj článok", url: "https://example.com/moj-clanok", site: "example.com", part: 1, parts: source.sections.length, difficulty: "level" });
+		assert.deepEqual(story.source, {
+			id: source.id,
+			title: "Môj článok",
+			url: "https://example.com/moj-clanok",
+			site: "example.com",
+			part: 1,
+			parts: source.sections.length,
+			difficulty: "level",
+		});
 		assert.equal(story.original, source.sections[0]);
 		assert.deepEqual(
 			story.sentences.map((s) => s.startsParagraph ?? false),
@@ -275,7 +317,10 @@ describe("reading a text of your own", () => {
 		);
 
 		const noModelLeft = fauxEngine([]);
-		const again = await readImport.importReading({ text, title: "Môj článok", url: "https://example.com/moj-clanok" }, { engine: noModelLeft, model: "faux:retell" });
+		const again = await readImport.importReading(
+			{ text, title: "Môj článok", url: "https://example.com/moj-clanok" },
+			{ engine: noModelLeft, model: "faux:retell" },
+		);
 		assert.equal(again.story.id, story.id);
 		assert.equal(again.story.createdAt, story.createdAt);
 	});
@@ -283,12 +328,24 @@ describe("reading a text of your own", () => {
 	it("lists the text with its progress, and offers its next unread part first", async () => {
 		const source = readingSourceStore.list().find((s) => s.title === "Môj článok")!;
 		const before = reading.sourceEntries().find((s) => s.id === source.id)!;
-		assert.deepEqual({ written: before.written, read: before.read, nextPart: before.nextPart, nextStoryId: before.nextStoryId, finished: before.finished }, { written: 1, read: 0, nextPart: 1, nextStoryId: core.ownStoryId(source.id, 1), finished: false });
+		assert.deepEqual(
+			{
+				written: before.written,
+				read: before.read,
+				nextPart: before.nextPart,
+				nextStoryId: before.nextStoryId,
+				finished: before.finished,
+			},
+			{ written: 1, read: 0, nextPart: 1, nextStoryId: core.ownStoryId(source.id, 1), finished: false },
+		);
 		assert.equal(reading.readingState(0, undefined, { topUpShelf: false }).current?.id, core.ownStoryId(source.id, 1));
 
 		reading.recordRead({ storyId: core.ownStoryId(source.id, 1), answers: [0, 1, 0], tapped: [] });
 		const after = reading.sourceEntries().find((s) => s.id === source.id)!;
-		assert.deepEqual({ read: after.read, nextPart: after.nextPart, nextStoryId: after.nextStoryId }, { read: 1, nextPart: 2, nextStoryId: undefined });
+		assert.deepEqual(
+			{ read: after.read, nextPart: after.nextPart, nextStoryId: after.nextStoryId },
+			{ read: 1, nextPart: 2, nextStoryId: undefined },
+		);
 	});
 
 	it("writes the next part with the earlier part's recap in its brief", async () => {
@@ -317,9 +374,15 @@ describe("reading a text of your own", () => {
 	});
 
 	it("keeps a text that is not simplified as the model gave it: no second draft, no words queued", async () => {
-		const hard = { ...RETOLD_DRAFT, sentences: RETOLD_DRAFT.sentences.map((s) => ({ ...s, sk: `${s.sk.slice(0, -1)} xyzzyq plughw.` })) };
+		const hard = {
+			...RETOLD_DRAFT,
+			sentences: RETOLD_DRAFT.sentences.map((s) => ({ ...s, sk: `${s.sk.slice(0, -1)} xyzzyq plughw.` })),
+		};
 		const engine = fauxEngine([fauxAssistantMessage(JSON.stringify(hard))]);
-		const { story } = await readImport.importReading({ text: makeParagraphs(3, 60), title: "Bez zjednodušenia", difficulty: "full" }, { engine, model: "faux:retell" });
+		const { story } = await readImport.importReading(
+			{ text: makeParagraphs(3, 60), title: "Bez zjednodušenia", difficulty: "full" },
+			{ engine, model: "faux:retell" },
+		);
 		assert.equal(story.drafts, 1);
 		assert.deepEqual(story.newWords, []);
 		assert.equal(story.source?.difficulty, "full");
@@ -337,7 +400,10 @@ describe("reading a text of your own", () => {
 		assert.notEqual(reading.readingState(0, undefined, { topUpShelf: false }).current?.id, partTwo);
 		assert.ok(storyStore.get(partTwo), "the part stays on disk");
 
-		const back = await readImport.importReading({ text, title: "Môj článok", url: "https://example.com/moj-clanok" }, { engine: fauxEngine([]), model: "faux:retell" });
+		const back = await readImport.importReading(
+			{ text, title: "Môj článok", url: "https://example.com/moj-clanok" },
+			{ engine: fauxEngine([]), model: "faux:retell" },
+		);
 		assert.equal(back.story.id, partTwo);
 		assert.ok(reading.sourceEntries().some((s) => s.id === source.id));
 	});
@@ -346,8 +412,16 @@ describe("reading a text of your own", () => {
 		const ownUnread = reading.library().filter((s) => s.source && s.reads === 0).length;
 		assert.ok(ownUnread > 0);
 		const level = reading.knownWords().level;
-		const withOwn = core.shelfNeeds(level, reading.library().filter((s) => s.reads === 0), []);
-		const withoutOwn = core.shelfNeeds(level, reading.library().filter((s) => s.reads === 0 && !s.source), []);
+		const withOwn = core.shelfNeeds(
+			level,
+			reading.library().filter((s) => s.reads === 0),
+			[],
+		);
+		const withoutOwn = core.shelfNeeds(
+			level,
+			reading.library().filter((s) => s.reads === 0 && !s.source),
+			[],
+		);
 		assert.ok(withoutOwn.length >= withOwn.length);
 		assert.ok(withoutOwn.every((need) => need.genre !== "own"));
 	});
@@ -357,14 +431,22 @@ describe("adding several links at once", () => {
 	const pageFor = (url: string) => ARTICLE_PAGE.replace("Bratislava", `Mesto ${new URL(url).pathname.slice(1)}`);
 
 	it("keeps every link it can read, names the ones it cannot, and writes each first part afterwards", async () => {
-		const fetchPage = async (url: string) => (url.includes("broken") ? htmlPage("<html><body></body></html>")(url) : htmlPage(pageFor(url))(url));
+		const fetchPage = async (url: string) =>
+			url.includes("broken") ? htmlPage("<html><body></body></html>")(url) : htmlPage(pageFor(url))(url);
 		const draftAndRedraftForEach = Array.from({ length: 4 }, () => fauxAssistantMessage(JSON.stringify(RETOLD_DRAFT)));
 		const engine = fauxEngine(draftAndRedraftForEach);
-		const links =["https://example.org/kosice", "https://example.org/broken", "https://example.org/zilina", "https://example.org/kosice"];
+		const links = [
+			"https://example.org/kosice",
+			"https://example.org/broken",
+			"https://example.org/zilina",
+			"https://example.org/kosice",
+		];
 		const result = await readImport.importLinks(links, "level", { engine, model: "faux:retell", fetchPage });
 
 		assert.equal(result.added.length, 2);
-		assert.deepEqual(result.failed, [{ url: "https://example.org/broken", message: "That page could not be read. Paste its text instead." }]);
+		assert.deepEqual(result.failed, [
+			{ url: "https://example.org/broken", message: "That page could not be read. Paste its text instead." },
+		]);
 		const beforeWriting = reading.sourceEntries().filter((s) => result.added.includes(s.id));
 		assert.deepEqual(
 			beforeWriting.map((s) => ({ written: s.written, preparing: s.preparing })),
@@ -376,41 +458,66 @@ describe("adding several links at once", () => {
 
 		await result.firstParts;
 		for (const id of result.added) assert.equal(storyStore.get(core.ownStoryId(id, 1))?.source?.part, 1);
-		assert.ok(reading.sourceEntries().filter((s) => result.added.includes(s.id)).every((s) => s.written === 1 && !s.preparing));
+		assert.ok(
+			reading
+				.sourceEntries()
+				.filter((s) => result.added.includes(s.id))
+				.every((s) => s.written === 1 && !s.preparing),
+		);
 	});
 
 	it("does not try a first part again in the same run once the model failed on it", async () => {
 		const fetchPage = async (url: string) => htmlPage(pageFor(url))(url);
-		const failing = await readImport.importLinks(["https://example.org/nitra"], "level", { engine: fauxEngine([]), model: "faux:retell", fetchPage });
+		const failing = await readImport.importLinks(["https://example.org/nitra"], "level", {
+			engine: fauxEngine([]),
+			model: "faux:retell",
+			fetchPage,
+		});
 		await failing.firstParts;
 		const [id] = failing.added;
 		assert.equal(storyStore.get(core.ownStoryId(id!, 1)), null);
 
 		const working = fauxEngine([fauxAssistantMessage(JSON.stringify(RETOLD_DRAFT))]);
 		await reading.writeFirstParts([id!], { engine: working, model: "faux:retell" });
-		assert.equal(storyStore.get(core.ownStoryId(id!, 1)), null, "left for the learner to open, which writes it on demand");
+		assert.equal(
+			storyStore.get(core.ownStoryId(id!, 1)),
+			null,
+			"left for the learner to open, which writes it on demand",
+		);
 		const opened = await reading.sourcePart(id!, 1, { engine: working, model: "faux:retell" });
 		assert.equal(opened.source?.part, 1);
 	});
 });
 
 describe("the rules a program can check", () => {
-	const withSentence = (sk: string) => ({ ...RETOLD_DRAFT, sentences: [...RETOLD_DRAFT.sentences, { sk, en: "I am going to town with my sister." }] });
+	const withSentence = (sk: string) => ({
+		...RETOLD_DRAFT,
+		sentences: [...RETOLD_DRAFT.sentences, { sk, en: "I am going to town with my sister." }],
+	});
 	const text = (n: number) => makeParagraphs(3, 40 + n);
 
 	it("has a draft that breaks one written again with the mistake named, and keeps the clean one", async () => {
 		const broken = fauxAssistantMessage(JSON.stringify(withSentence("Idem do mesta s sestrou.")));
 		const clean = fauxAssistantMessage(JSON.stringify(withSentence("Idem do mesta so sestrou.")));
-		const { story } = await readImport.importReading({ text: text(1), title: "Pravidlá jedna" }, { engine: fauxEngine([broken, clean]), model: "faux:retell" });
+		const { story } = await readImport.importReading(
+			{ text: text(1), title: "Pravidlá jedna" },
+			{ engine: fauxEngine([broken, clean]), model: "faux:retell" },
+		);
 		assert.equal(story.drafts, 2);
 		assert.equal(story.sentences.at(-1)?.sk, "Idem do mesta so sestrou.");
 		assert.equal(story.ruleIssues, undefined);
-		assert.deepEqual(reading.ruleIssues({ sentences: [{ sk: "Idem do mesta s sestrou.", en: "", tokens: [] }] }).length, 1);
+		assert.deepEqual(
+			reading.ruleIssues({ sentences: [{ sk: "Idem do mesta s sestrou.", en: "", tokens: [] }] }).length,
+			1,
+		);
 	});
 
 	it("says on the record how many are left when the second draft breaks them too", async () => {
 		const broken = () => fauxAssistantMessage(JSON.stringify(withSentence("Idem do mesta s sestrou.")));
-		const { story } = await readImport.importReading({ text: text(2), title: "Pravidlá dva" }, { engine: fauxEngine([broken(), broken()]), model: "faux:retell" });
+		const { story } = await readImport.importReading(
+			{ text: text(2), title: "Pravidlá dva" },
+			{ engine: fauxEngine([broken(), broken()]), model: "faux:retell" },
+		);
 		assert.equal(story.ruleIssues, 1);
 	});
 });

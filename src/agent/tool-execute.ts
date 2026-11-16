@@ -104,8 +104,7 @@ function runWithAbortGuard<T>(
 				(v) => settle(() => resolve(v)),
 				(e) => settle(() => reject(e)),
 			);
-	})
-		.finally(cleanup);
+	}).finally(cleanup);
 }
 
 /** The 1.0-native authoring-failure result (pi convention, agent-core
@@ -147,9 +146,7 @@ export interface ImageFileResult {
 }
 
 function isImageResult(v: unknown): v is ImageFileResult {
-	return (
-		typeof v === "object" && v !== null && "text" in v && typeof (v as ImageFileResult).text === "string"
-	);
+	return typeof v === "object" && v !== null && "text" in v && typeof (v as ImageFileResult).text === "string";
 }
 
 /**
@@ -207,7 +204,11 @@ export function serverExecute<P extends TSchema>(
 	// P infers from the call site, not the loose surface.
 	return async (toolCallId, input: unknown, signal) =>
 		toToolResult(
-			await runWithAbortGuard(toolName, (toolSignal) => run(input as Static<P>, { toolCallId, signal: toolSignal }), signal),
+			await runWithAbortGuard(
+				toolName,
+				(toolSignal) => run(input as Static<P>, { toolCallId, signal: toolSignal }),
+				signal,
+			),
 		);
 }
 

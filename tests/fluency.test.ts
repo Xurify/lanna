@@ -19,7 +19,20 @@ process.env.LH_DATA_DIR = TMP_DATA;
 process.env.LH_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
-const { FAST_COUNT, FAST_MAX_WPS, FAST_PASSES, REREAD_MAX_WPM, fastPace, fastWindows, fastXp, pickKnown, rereadTarget, rereadXp, wordsPerMinute, WPM_TARGET } = await import("../src/core/fluency.ts");
+const {
+	FAST_COUNT,
+	FAST_MAX_WPS,
+	FAST_PASSES,
+	REREAD_MAX_WPM,
+	fastPace,
+	fastWindows,
+	fastXp,
+	pickKnown,
+	rereadTarget,
+	rereadXp,
+	wordsPerMinute,
+	WPM_TARGET,
+} = await import("../src/core/fluency.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { knownWords, resolveWord, STORY_NAMES } = await import("../src/server/reading.ts");
 const fluency = await import("../src/server/fluency.ts");
@@ -36,7 +49,8 @@ assert.ok(lexicon, "the Slovak lexicon loads");
 
 function lookup(bound = 800) {
 	const known = new Set<string>();
-	for (const e of lexicon.entries) if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
+	for (const e of lexicon.entries)
+		if ((e.rank !== undefined && e.rank <= bound) || e.origin === "curated" || e.cat === "Places") known.add(e.slug);
 	return { resolve: (form: string) => resolveWord(lexicon, form, known), known };
 }
 
@@ -53,7 +67,10 @@ test("pickKnown: six sentences with no stretch word at all, one per word, three 
 	const any = pickKnown(lexicon.entries, l, { seed: 3, count: 12 });
 	const practiced = new Set([any[4]!.id]);
 	const again = pickKnown(lexicon.entries, l, { seed: 9, practiced });
-	assert.ok(again.some((i) => i.id === any[4]!.id && i.practiced), "the practiced sentence is in the round");
+	assert.ok(
+		again.some((i) => i.id === any[4]!.id && i.practiced),
+		"the practiced sentence is in the round",
+	);
 	// Recent sentences are skipped while fresher ones remain.
 	const recent = new Set(items.map((i) => i.id));
 	const fresh = pickKnown(lexicon.entries, l, { seed: 7, recent });
@@ -98,12 +115,34 @@ test("pace over a round: words a second, first pass against last, only where bot
 	assert.equal(fastPace([]), null);
 	// Four words in 4 s, then in 2 s: one, then two words a second.
 	assert.deepEqual(fastPace([rep("jeden dva tri štyri", [4000, 3000, 2000])]), { sentences: 1, first: 1, last: 2 });
-	assert.equal(fastPace([rep("jeden dva tri štyri", [4000, 3000, 2000], [true, true, false])]), null, "a sentence whose last pass did not count is left out");
-	const timed = { itemId: "x", slug: "x", sentence: "jeden dva tri štyri", translation: "", passes: [{ ms: 5000, speechMs: 4000, window: 9999, made: true }, { ms: 4000, window: 9999, made: true }, { ms: 3000, speechMs: 2000, window: 9999, made: true }] };
-	assert.deepEqual(fastPace([timed]), { sentences: 1, first: 1, last: 2 }, "the time spent speaking wins over the window clock");
+	assert.equal(
+		fastPace([rep("jeden dva tri štyri", [4000, 3000, 2000], [true, true, false])]),
+		null,
+		"a sentence whose last pass did not count is left out",
+	);
+	const timed = {
+		itemId: "x",
+		slug: "x",
+		sentence: "jeden dva tri štyri",
+		translation: "",
+		passes: [
+			{ ms: 5000, speechMs: 4000, window: 9999, made: true },
+			{ ms: 4000, window: 9999, made: true },
+			{ ms: 3000, speechMs: 2000, window: 9999, made: true },
+		],
+	};
+	assert.deepEqual(
+		fastPace([timed]),
+		{ sentences: 1, first: 1, last: 2 },
+		"the time spent speaking wins over the window clock",
+	);
 	// Four words in 0.4 s is ten words a second: a button pressed early, not speech.
 	assert.ok(10 > FAST_MAX_WPS);
-	assert.equal(fastPace([rep("jeden dva tri štyri", [400, 400, 400])]), null, "passes faster than speech are left out of the pace");
+	assert.equal(
+		fastPace([rep("jeden dva tri štyri", [400, 400, 400])]),
+		null,
+		"passes faster than speech are left out of the pace",
+	);
 });
 
 test("a timed re-read of a stored episode: the plan, the record, the history, the next question", () => {
@@ -118,8 +157,32 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 		theme: "daily",
 		createdAt: "2026-10-26T10:00:00.000Z",
 		sentences: [
-			{ sk: "Martin je v Bratislave.", en: "Martin is in Bratislava.", tokens: [{ text: "Martin", word: true }, { text: " ", word: false }, { text: "je", word: true }, { text: " ", word: false }, { text: "v", word: true }, { text: " ", word: false }, { text: "Bratislave", word: true }, { text: ".", word: false }] },
-			{ sk: "Má novú prácu.", en: "He has a new job.", tokens: [{ text: "Má", word: true }, { text: " ", word: false }, { text: "novú", word: true }, { text: " ", word: false }, { text: "prácu", word: true }, { text: ".", word: false }] },
+			{
+				sk: "Martin je v Bratislave.",
+				en: "Martin is in Bratislava.",
+				tokens: [
+					{ text: "Martin", word: true },
+					{ text: " ", word: false },
+					{ text: "je", word: true },
+					{ text: " ", word: false },
+					{ text: "v", word: true },
+					{ text: " ", word: false },
+					{ text: "Bratislave", word: true },
+					{ text: ".", word: false },
+				],
+			},
+			{
+				sk: "Má novú prácu.",
+				en: "He has a new job.",
+				tokens: [
+					{ text: "Má", word: true },
+					{ text: " ", word: false },
+					{ text: "novú", word: true },
+					{ text: " ", word: false },
+					{ text: "prácu", word: true },
+					{ text: ".", word: false },
+				],
+			},
 		],
 		questions: [
 			{ q: "Kde je Martin?", options: ["V Bratislave", "V Košiciach", "Doma"], answer: 0, kind: "recall" as const },
@@ -133,8 +196,23 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 		drafts: 1,
 	};
 	storyStore.put(story);
-	assert.equal(fluency.rereadFor({ now: new Date("2026-10-28T10:00:00Z"), tz: 0 }), null, "an episode never read is not re-read");
-	storyStore.appendRead({ storyId: story.id, at: "2026-10-27T10:00:00.000Z", day: "2026-10-27", ms: 8_400, correct: 3, total: 3, answers: [0, 1], tapped: [], queued: [], xp: 10 });
+	assert.equal(
+		fluency.rereadFor({ now: new Date("2026-10-28T10:00:00Z"), tz: 0 }),
+		null,
+		"an episode never read is not re-read",
+	);
+	storyStore.appendRead({
+		storyId: story.id,
+		at: "2026-10-27T10:00:00.000Z",
+		day: "2026-10-27",
+		ms: 8_400,
+		correct: 3,
+		total: 3,
+		answers: [0, 1],
+		tapped: [],
+		queued: [],
+		xp: 10,
+	});
 	const plan = fluency.rereadFor({ now: new Date("2026-10-28T10:00:00Z"), tz: 0 })!;
 	assert.equal(plan.story.id, story.id);
 	assert.equal(plan.words, 7);
@@ -143,7 +221,10 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 	assert.equal(plan.questionIndex, 0);
 	assert.deepEqual(plan.history, []);
 
-	const out = fluency.recordReread({ storyId: story.id, ms: 4_000, questionIndex: 0, answer: 0, tz: 0 }, new Date("2026-10-28T10:01:00Z"));
+	const out = fluency.recordReread(
+		{ storyId: story.id, ms: 4_000, questionIndex: 0, answer: 0, tz: 0 },
+		new Date("2026-10-28T10:01:00Z"),
+	);
 	assert.equal(out.wpm, 105);
 	assert.equal(out.faster, true);
 	assert.equal(out.right, true);
@@ -160,7 +241,10 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 	assert.equal(next.previousWpm, 105);
 	assert.equal(next.questionIndex, 1);
 	assert.equal(next.history.length, 1);
-	const slower = fluency.recordReread({ storyId: story.id, ms: 6_000, questionIndex: 1, answer: 0, tz: 0 }, new Date("2026-10-29T10:01:00Z"));
+	const slower = fluency.recordReread(
+		{ storyId: story.id, ms: 6_000, questionIndex: 1, answer: 0, tz: 0 },
+		new Date("2026-10-29T10:01:00Z"),
+	);
 	assert.equal(slower.faster, false);
 	assert.equal(slower.right, false);
 	assert.equal(slower.xp, 12);
@@ -168,7 +252,16 @@ test("a timed re-read of a stored episode: the plan, the record, the history, th
 	// The daily plan offers the re-read once an episode was read on an earlier day.
 	const p = progressStore.read();
 	const state = curriculumState(p.units, "B2");
-	const planned = dailyPlan({ state, evidence: p.units, day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 }, review: { due: 0, newLeft: 0, available: false }, minutesPerDay: 60, next: nextLessonUnit(state), dayOfYear: 301, reread: true });
+	const planned = dailyPlan({
+		state,
+		evidence: p.units,
+		day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 },
+		review: { due: 0, newLeft: 0, available: false },
+		minutesPerDay: 60,
+		next: nextLessonUnit(state),
+		dayOfYear: 301,
+		reread: true,
+	});
 	assert.equal(planned.tasks.find((t) => t.id === "fluency")?.href, "/speed?mode=reread");
 });
 
@@ -190,7 +283,22 @@ test("a say-it-faster round: the plan from the lexicon, the practiced sentences 
 		total: 1,
 		perfect: true,
 		queued: [],
-		reps: [{ itemId: seedItems[0]!.id, kind: "type", unit: "present", slug: seedItems[0]!.slug, lemma: seedItems[0]!.lemma, gloss: "", sentence: seedItems[0]!.sentence, translation: seedItems[0]!.translation, answer: "x", given: "x", verdict: "exact", assisted: false }],
+		reps: [
+			{
+				itemId: seedItems[0]!.id,
+				kind: "type",
+				unit: "present",
+				slug: seedItems[0]!.slug,
+				lemma: seedItems[0]!.lemma,
+				gloss: "",
+				sentence: seedItems[0]!.sentence,
+				translation: seedItems[0]!.translation,
+				answer: "x",
+				given: "x",
+				verdict: "exact",
+				assisted: false,
+			},
+		],
 	});
 	const plan = fluency.fastFor(5);
 	assert.equal(plan.items.length, FAST_COUNT);
@@ -203,7 +311,12 @@ test("a say-it-faster round: the plan from the lexicon, the practiced sentences 
 		slug: i.slug,
 		sentence: i.sentence,
 		translation: i.translation,
-		passes: fastWindows(i.words).map((w, k) => ({ ms: n === 0 && k === 2 ? w + 500 : w - 100, window: w, made: !(n === 0 && k === 2), ...(k === 0 ? { heard: i.sentence, match: 1 } : {}) })),
+		passes: fastWindows(i.words).map((w, k) => ({
+			ms: n === 0 && k === 2 ? w + 500 : w - 100,
+			window: w,
+			made: !(n === 0 && k === 2),
+			...(k === 0 ? { heard: i.sentence, match: 1 } : {}),
+		})),
 	}));
 	const out = fluency.recordFast({ reps, ms: 120_000, tz: 0 }, new Date("2026-10-28T11:00:00Z"));
 	assert.equal(out.total, FAST_COUNT);
@@ -222,5 +335,8 @@ test("a say-it-faster round: the plan from the lexicon, the practiced sentences 
 	// The next round skips what was just said.
 	const next = fluency.fastFor(6);
 	const said = new Set(plan.items.map((i) => i.id));
-	assert.ok(next.items.filter((i) => said.has(i.id) && !i.practiced).length === 0, "sentences just said do not come straight back");
+	assert.ok(
+		next.items.filter((i) => said.has(i.id) && !i.practiced).length === 0,
+		"sentences just said do not come straight back",
+	);
 });

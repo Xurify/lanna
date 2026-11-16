@@ -18,8 +18,10 @@ export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as { activity?: unknown; ms?: unknown; tz?: unknown } | null;
-	if (!body || !isTimedActivity(body.activity)) return Response.json({ message: "activity must be a timed activity" }, { status: 400 });
-	if (typeof body.ms !== "number" || !Number.isFinite(body.ms) || body.ms < 0) return Response.json({ message: "ms must be a non-negative number" }, { status: 400 });
+	if (!body || !isTimedActivity(body.activity))
+		return Response.json({ message: "activity must be a timed activity" }, { status: 400 });
+	if (typeof body.ms !== "number" || !Number.isFinite(body.ms) || body.ms < 0)
+		return Response.json({ message: "ms must be a non-negative number" }, { status: 400 });
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;
 	return Response.json({ minutes: recordActiveTime(body.activity, Math.min(body.ms, MAX_MS), tz) });
 }

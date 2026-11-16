@@ -28,5 +28,14 @@ export default async function FluencyPage({ searchParams }: { searchParams: Prom
 		rereadPlan = null;
 		fastPlan = null;
 	}
-	return <FluencyPlayer key={mode ?? "fast"} mode={reread ? "reread" : "fast"} initialReread={rereadPlan} initialFast={fastPlan} stt={stt} pron={pron} />;
+	return (
+		<FluencyPlayer
+			key={mode ?? "fast"}
+			mode={reread ? "reread" : "fast"}
+			initialReread={rereadPlan}
+			initialFast={fastPlan}
+			stt={stt}
+			pron={pron}
+		/>
+	);
 }

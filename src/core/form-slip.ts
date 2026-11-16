@@ -71,5 +71,7 @@ export function formSlip(input: FormSlipInput, tag = "sk-SK"): FormSlip | undefi
 	if (!normalizeAnswer(input.given, tag)) return "blank";
 	if (compareAnswer(input.answer, input.given, tag) !== "wrong") return undefined;
 	if (!isFormOf(input.given, input.lemma, input.forms, tag)) return "other";
-	return foldDiacritics(normalizeAnswer(input.given, tag)) === foldDiacritics(normalizeAnswer(input.lemma, tag)) ? "base" : "same-word";
+	return foldDiacritics(normalizeAnswer(input.given, tag)) === foldDiacritics(normalizeAnswer(input.lemma, tag))
+		? "base"
+		: "same-word";
 }

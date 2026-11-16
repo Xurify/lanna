@@ -24,7 +24,9 @@ export interface GapOutcome {
 	lines: number;
 }
 
-type Stage = { kind: "ask"; misses: number } | { kind: "shown"; verdict: GapResult["verdict"]; assisted: boolean; gaveUp: boolean };
+type Stage =
+	| { kind: "ask"; misses: number }
+	| { kind: "shown"; verdict: GapResult["verdict"]; assisted: boolean; gaveUp: boolean };
 
 export function GapDrill({
 	title,
@@ -106,7 +108,13 @@ export function GapDrill({
 	const stop = () => {
 		if (results.length) return void save(results);
 		const ms = time.finish();
-		if (ms >= 1000) void fetch("/api/progress/time", { method: "POST", keepalive: true, headers: { "content-type": "application/json" }, body: JSON.stringify({ activity: "watch", ms, tz: new Date().getTimezoneOffset() }) }).catch(() => {});
+		if (ms >= 1000)
+			void fetch("/api/progress/time", {
+				method: "POST",
+				keepalive: true,
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ activity: "watch", ms, tz: new Date().getTimezoneOffset() }),
+			}).catch(() => {});
 		onBack();
 	};
 	const save = async (answered: GapResult[]) => {
@@ -133,8 +141,10 @@ export function GapDrill({
 				) : outcome ? (
 					<p className="mt-2 font-prose text-base text-foreground" data-testid={`${testid}-outcome`}>
 						{outcome.right} of {outcome.total} on the first try · +{outcome.xp} XP
-						{outcome.queued.length > 0 && ` · ${outcome.queued.length === 1 ? "1 word" : `${outcome.queued.length} words`} to Review`}
-						{outcome.lines > 0 && ` · ${outcome.lines === 1 ? "1 line comes" : `${outcome.lines} lines come`} back in Listen`}
+						{outcome.queued.length > 0 &&
+							` · ${outcome.queued.length === 1 ? "1 word" : `${outcome.queued.length} words`} to Review`}
+						{outcome.lines > 0 &&
+							` · ${outcome.lines === 1 ? "1 line comes" : `${outcome.lines} lines come`} back in Listen`}
 					</p>
 				) : (
 					error && <p className="mt-2 font-prose text-sm text-miss">{error}</p>
@@ -157,7 +167,14 @@ export function GapDrill({
 				<p className="min-w-0 flex-1 truncate font-ui text-sm font-[600] text-muted-foreground">
 					{title} · {at + 1} of {reps.length}
 				</p>
-				<button type="button" onClick={() => void speak(rep.line, lang ?? undefined).catch(() => {})} aria-label="Play the line" title="Play the line" className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" data-testid={`${testid}-play`}>
+				<button
+					type="button"
+					onClick={() => void speak(rep.line, lang ?? undefined).catch(() => {})}
+					aria-label="Play the line"
+					title="Play the line"
+					className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					data-testid={`${testid}-play`}
+				>
 					<Volume2Icon className="size-4" />
 				</button>
 				<button type="button" onClick={stop} className={cn(QUIET, SMALL)} data-testid={`${testid}-stop`}>
@@ -175,7 +192,13 @@ export function GapDrill({
 				<span className="text-ink-3">{qOpen}</span>
 				<span>{rep.before}</span>
 				{shown ? (
-					<span className={cn("font-[600] underline decoration-2 underline-offset-[6px]", stage.verdict !== "wrong" && !stage.assisted ? "text-teal-2" : "text-miss")} data-testid={`${testid}-answer`}>
+					<span
+						className={cn(
+							"font-[600] underline decoration-2 underline-offset-[6px]",
+							stage.verdict !== "wrong" && !stage.assisted ? "text-teal-2" : "text-miss",
+						)}
+						data-testid={`${testid}-answer`}
+					>
 						{rep.answer}
 					</span>
 				) : (
@@ -197,30 +220,58 @@ export function GapDrill({
 			</form>
 			{cue && (
 				<p className="mt-3 font-prose text-sm text-ink-2" data-testid={`${testid}-cue`}>
-					Starts with <span className="font-[600]" lang={langCode}>{gapCue(rep.answer)}</span>
+					Starts with{" "}
+					<span className="font-[600]" lang={langCode}>
+						{gapCue(rep.answer)}
+					</span>
 					{rep.en && <> · {excerpt(rep.en)}</>}
 				</p>
 			)}
 			{shown && (
 				<p className="mt-3 font-prose text-sm text-ink-2" data-testid={`${testid}-feedback`}>
-					{stage.verdict === "exact" && !stage.assisted ? "Right." : stage.verdict === "accents" && !stage.assisted ? "Right, but check the accents." : stage.gaveUp ? "The answer is above." : stage.verdict === "wrong" ? "Not this time." : "Right after the cue."}
+					{stage.verdict === "exact" && !stage.assisted
+						? "Right."
+						: stage.verdict === "accents" && !stage.assisted
+							? "Right, but check the accents."
+							: stage.gaveUp
+								? "The answer is above."
+								: stage.verdict === "wrong"
+									? "Not this time."
+									: "Right after the cue."}
 					{rep.gloss && ` ${rep.lemma && rep.lemma !== rep.answer ? `${rep.lemma}: ` : ""}${rep.gloss}.`}
 					{rep.en && <span className="block text-ink-3">{excerpt(rep.en)}</span>}
 				</p>
 			)}
 			<div className="mt-5 flex flex-wrap items-center gap-2">
 				{shown ? (
-					<button ref={next} type="button" onClick={() => void advance()} className={cn(PRIMARY, "h-11 px-5")} data-testid={`${testid}-next`}>
+					<button
+						ref={next}
+						type="button"
+						onClick={() => void advance()}
+						className={cn(PRIMARY, "h-11 px-5")}
+						data-testid={`${testid}-next`}
+					>
 						{at + 1 < reps.length ? "Next" : "Finish"}
 						<kbd className={cn(KBD, "hidden pointer-fine:inline-flex")}>Enter</kbd>
 					</button>
 				) : (
 					<>
-						<button type="button" disabled={!typed.trim()} onClick={check} className={cn(PRIMARY, "h-11 px-5")} data-testid={`${testid}-check`}>
+						<button
+							type="button"
+							disabled={!typed.trim()}
+							onClick={check}
+							className={cn(PRIMARY, "h-11 px-5")}
+							data-testid={`${testid}-check`}
+						>
 							Check
 							<kbd className={cn(KBD, "hidden pointer-fine:inline-flex")}>Enter</kbd>
 						</button>
-						<button type="button" onClick={() => settle("wrong", true, true)} className={cn(QUIET, "h-11")} data-testid={`${testid}-dunno`}>
+						<button
+							type="button"
+							onClick={() => settle("wrong", true, true)}
+							className={cn(QUIET, "h-11")}
+							data-testid={`${testid}-dunno`}
+						>
 							I don&apos;t know
 						</button>
 					</>

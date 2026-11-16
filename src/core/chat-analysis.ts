@@ -58,8 +58,10 @@ export interface ChatAnalysis {
 	samples: ChatMiss[];
 }
 
-export const isChatMiss = (a: Pick<ChatAnswer, "verdict">): boolean => a.verdict === "wrong" || a.verdict === "dont_know";
-const isFirstTryRight = (a: Pick<ChatAnswer, "verdict" | "hinted">): boolean => (a.verdict === "right" || a.verdict === "slip") && !a.hinted;
+export const isChatMiss = (a: Pick<ChatAnswer, "verdict">): boolean =>
+	a.verdict === "wrong" || a.verdict === "dont_know";
+const isFirstTryRight = (a: Pick<ChatAnswer, "verdict" | "hinted">): boolean =>
+	(a.verdict === "right" || a.verdict === "slip") && !a.hinted;
 
 export function chatMissesOnUnit(answers: readonly ChatAnswer[], unit: string, now: Date): number {
 	const cut = now.getTime() - WEAK_CHAT_DAYS * DAY_MS;
@@ -96,7 +98,13 @@ export function analyzeChats(answers: readonly ChatAnswer[], now: Date): ChatAna
 		if (!from || day < from) from = day;
 		if (!to || day > to) to = day;
 		if (unit) {
-			const u = units.get(unit) ?? { answers: 0, right: 0, misses: 0, recent: { reps: 0, right: 0 }, earlier: { reps: 0, right: 0 } };
+			const u = units.get(unit) ?? {
+				answers: 0,
+				right: 0,
+				misses: 0,
+				recent: { reps: 0, right: 0 },
+				earlier: { reps: 0, right: 0 },
+			};
 			const window = at >= cut ? u.recent : u.earlier;
 			u.answers++;
 			window.reps++;
@@ -108,7 +116,17 @@ export function analyzeChats(answers: readonly ChatAnswer[], now: Date): ChatAna
 			units.set(unit, u);
 		}
 		const key = focus.toLowerCase();
-		const t = topics.get(key) ?? { focus, answers: 0, misses: 0, chats: 0, lastGiven: "", lastExpected: "", lastAt: "", lastMissAt: "", chatIds: new Set<string>() };
+		const t = topics.get(key) ?? {
+			focus,
+			answers: 0,
+			misses: 0,
+			chats: 0,
+			lastGiven: "",
+			lastExpected: "",
+			lastAt: "",
+			lastMissAt: "",
+			chatIds: new Set<string>(),
+		};
 		t.answers++;
 		t.chatIds.add(a.chatId);
 		if (!t.lastAt || a.at >= t.lastAt) {
@@ -123,7 +141,15 @@ export function analyzeChats(answers: readonly ChatAnswer[], now: Date): ChatAna
 				t.lastGiven = a.given.trim();
 				t.lastExpected = a.expected;
 			}
-			samples.push({ at: a.at, chatId: a.chatId, focus, ...(unit ? { unit } : {}), given: a.given.trim(), expected: a.expected, verdict: a.verdict as ChatMiss["verdict"] });
+			samples.push({
+				at: a.at,
+				chatId: a.chatId,
+				focus,
+				...(unit ? { unit } : {}),
+				given: a.given.trim(),
+				expected: a.expected,
+				verdict: a.verdict as ChatMiss["verdict"],
+			});
 		}
 		topics.set(key, t);
 	}

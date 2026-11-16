@@ -315,10 +315,17 @@ export function applyRhythmicLaw(stem: string, suffix: string): RhythmicLawResul
 
 /** Known lexical patterns that are genuine exceptions to the Rhythmic Law in standard Slovak. */
 const EXCEPTION_PATTERNS: Array<{ regex: RegExp; reason: string }> = [
-	{ regex: /(?:páv|líšč|orl|vtáč|kamzíč|žab)(?:í|ie|ia)/i, reason: "Adjectives made from animal names keep the long ending, like páví" },
+	{
+		regex: /(?:páv|líšč|orl|vtáč|kamzíč|žab)(?:í|ie|ia)/i,
+		reason: "Adjectives made from animal names keep the long ending, like páví",
+	},
 	{ regex: /(?:líst|prút|skál|tŕn)ie/i, reason: "Neuter nouns that end in -ie keep the long ending, like lístie" },
 	{ regex: /básní$/i, reason: "The genitive plural ending -í stays long, like básní" },
-	{ regex: /ia(?:c|ci|ca|ce)?$/i, reason: "Verbs keep -ia in the third person plural and in the forms built on it, like chvália, chváliac and chváliaci" },
+	{
+		regex: /ia(?:c|ci|ca|ce)?$/i,
+		reason:
+			"Verbs keep -ia in the third person plural and in the forms built on it, like chvália, chváliac and chváliaci",
+	},
 ];
 
 /**
@@ -360,8 +367,12 @@ export function analyzeRhythmicLaw(word: string): RhythmicAnalysis {
 		const shortNuc = shortenEnding(pair.second.nucleus);
 		const at = pair.second.text.toLowerCase().indexOf(pair.second.nucleus);
 		const written = at < 0 ? "" : pair.second.text.slice(at, at + pair.second.nucleus.length);
-		const shortWritten = written === written.toUpperCase() && written !== written.toLowerCase() ? shortNuc.toUpperCase() : shortNuc;
-		const fixedSecondText = at < 0 ? pair.second.text : pair.second.text.slice(0, at) + shortWritten + pair.second.text.slice(at + written.length);
+		const shortWritten =
+			written === written.toUpperCase() && written !== written.toLowerCase() ? shortNuc.toUpperCase() : shortNuc;
+		const fixedSecondText =
+			at < 0
+				? pair.second.text
+				: pair.second.text.slice(0, at) + shortWritten + pair.second.text.slice(at + written.length);
 		suggestion = syllables.map((s, idx) => (idx === pair.second.index ? fixedSecondText : s.text)).join("");
 		explanation = `${pair.first.text} and ${pair.second.text} are both long, so the second one turns short.`;
 	} else if (isException) {
@@ -391,7 +402,26 @@ export function formatStressCadence(text: string): string {
 	const normalized = text.normalize("NFC");
 	const tokens = normalized.split(/(\s+|[.,!?;:"'—–]+)/);
 	const vowellessPreps = new Set(["v", "z", "s", "k"]);
-	const vocalicPreps = new Set(["na", "do", "za", "po", "pri", "od", "ku", "zo", "vo", "so", "o", "u", "cez", "pre", "pod", "nad", "pred", "bez"]);
+	const vocalicPreps = new Set([
+		"na",
+		"do",
+		"za",
+		"po",
+		"pri",
+		"od",
+		"ku",
+		"zo",
+		"vo",
+		"so",
+		"o",
+		"u",
+		"cez",
+		"pre",
+		"pod",
+		"nad",
+		"pred",
+		"bez",
+	]);
 
 	const result: string[] = [];
 	let prevVocalicPrep = false;

@@ -29,12 +29,41 @@ import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import { allChapters, curriculumState } from "../core/curriculum.ts";
 import { buildLesson, unitInfo, type LessonItem, type RepVerdict, type UnitId } from "../core/lesson.ts";
-import { placementTiers, PROBE_TURNS, parseProbeReply, probeUnits, tierForChapter, tierOfUnit, type PlacementOutcome, type ProbeReply, type ProbeVerdict, calmEntries } from "../core/onboarding.ts";
-import { applyAnswer, ladderEdge, ladderOutcome, ladderStart, luckRung, placementLadder, MAX_ITEMS, nextUnit, rungStatus } from "../core/placement-ladder.ts";
+import {
+	placementTiers,
+	PROBE_TURNS,
+	parseProbeReply,
+	probeUnits,
+	tierForChapter,
+	tierOfUnit,
+	type PlacementOutcome,
+	type ProbeReply,
+	type ProbeVerdict,
+	calmEntries,
+} from "../core/onboarding.ts";
+import {
+	applyAnswer,
+	ladderEdge,
+	ladderOutcome,
+	ladderStart,
+	luckRung,
+	placementLadder,
+	MAX_ITEMS,
+	nextUnit,
+	rungStatus,
+} from "../core/placement-ladder.ts";
 import { grammarWord } from "../core/reading.ts";
 import type { StoryUsage } from "../core/reading.ts";
 import { entryLemma, type LexiconEntry } from "../core/review.ts";
-import { makePseudowords, PSEUDO_WORDS, scoreVocab, VOCAB_BANDS, WORDS_PER_BAND, type VocabAnswer, type VocabItem } from "../core/vocab-probe.ts";
+import {
+	makePseudowords,
+	PSEUDO_WORDS,
+	scoreVocab,
+	VOCAB_BANDS,
+	WORDS_PER_BAND,
+	type VocabAnswer,
+	type VocabItem,
+} from "../core/vocab-probe.ts";
 import { rng, shuffle } from "../core/lesson.ts";
 import { placementStore, type Judgement, type PlacementItemRecord, type PlacementSession } from "../store/placement.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
@@ -85,14 +114,22 @@ function scriptedEngines(): { judge: PiEngine; probe: PiEngine } | null {
 				model: faux.getModel(),
 				streamFn: (model, context, options) => {
 					const last = context.messages[context.messages.length - 1];
-					const text = last && typeof last.content === "string" ? last.content : Array.isArray(last?.content) ? last.content.map((c) => ("text" in c ? c.text : "")).join("") : "";
+					const text =
+						last && typeof last.content === "string"
+							? last.content
+							: Array.isArray(last?.content)
+								? last.content.map((c) => ("text" in c ? c.text : "")).join("")
+								: "";
 					faux.setResponses([fauxAssistantMessage(JSON.stringify(next(text)))]);
 					return faux.streamSimple(model, context, options);
 				},
 			};
 		};
 		let i = 0;
-		const probe = Array.isArray(script.probe) && script.probe.length ? script.probe : [{ say: "", ask: null, done: "Scripted: nothing to probe." }];
+		const probe =
+			Array.isArray(script.probe) && script.probe.length
+				? script.probe
+				: [{ say: "", ask: null, done: "Scripted: nothing to probe." }];
 		// judge: {"accept": true|false|["word", …], "note"}: a list accepts only those typed words.
 		const judge = (script.judge ?? {}) as { accept?: unknown; note?: unknown };
 		scripted = {
@@ -115,11 +152,25 @@ function scriptedEngines(): { judge: PiEngine; probe: PiEngine } | null {
 }
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
 async function ask(engine: PiEngine, systemPrompt: string, prompt: string, usage: StoryUsage): Promise<string> {
-	const { text } = await runSubagent([], { role: "researcher", engine, systemPrompt, prompt, maxTurns: 1, onUsage: (u) => usage.steps.push(stepOf(u)) });
+	const { text } = await runSubagent([], {
+		role: "researcher",
+		engine,
+		systemPrompt,
+		prompt,
+		maxTurns: 1,
+		onUsage: (u) => usage.steps.push(stepOf(u)),
+	});
 	return text;
 }
 
@@ -150,7 +201,15 @@ function progressOf(s: PlacementSession): PlacementProgress {
 	const unit = nextUnit(s.ladder);
 	const tier = unit ? tierOfUnit(unit) : undefined;
 	const edge = ladderEdge(s.ladder);
-	return { asked: s.ladder.asked, max: MAX_ITEMS, unit, tier: tier ? { id: tier.id, level: tier.level, title: tier.title } : null, floor: edge.floor, ceiling: edge.ceiling, phase: s.ladder.phase };
+	return {
+		asked: s.ladder.asked,
+		max: MAX_ITEMS,
+		unit,
+		tier: tier ? { id: tier.id, level: tier.level, title: tier.title } : null,
+		floor: edge.floor,
+		ceiling: edge.ceiling,
+		phase: s.ladder.phase,
+	};
 }
 
 let calm: { source: Lexicon | null; entries: LexiconEntry[] } | null = null;
@@ -166,7 +225,12 @@ function entries(): LexiconEntry[] {
 function itemFor(s: PlacementSession, unit: UnitId): LessonItem {
 	const p = progressStore.read();
 	const recent = new Set<string>([...p.recent, ...s.items.map((r) => r.item.id)]);
-	const plan = buildLesson(entries(), unit, { seed: s.seed + s.items.length * 131, length: 1, pattern: ["type"], recent });
+	const plan = buildLesson(entries(), unit, {
+		seed: s.seed + s.items.length * 131,
+		length: 1,
+		pattern: ["type"],
+		recent,
+	});
 	const item = plan.items[0];
 	if (!item) throw new Error(`no placement item for ${unit}`);
 	return item;
@@ -228,7 +292,10 @@ function parseJudge(text: string): Judgement {
 	if (!m) return { accepted: false, note: "" };
 	try {
 		const o = JSON.parse(m[0]) as { accept?: unknown; note?: unknown; repeat?: unknown };
-		const out: Judgement = { accepted: o.accept === true, note: typeof o.note === "string" ? o.note.trim().slice(0, 200) : "" };
+		const out: Judgement = {
+			accepted: o.accept === true,
+			note: typeof o.note === "string" ? o.note.trim().slice(0, 200) : "",
+		};
 		if (!out.accepted && typeof o.repeat === "string" && o.repeat.trim()) out.repeat = o.repeat.trim().slice(0, 80);
 		return out;
 	} catch {
@@ -241,23 +308,44 @@ const fold = (s: string) => s.normalize("NFC").trim().toLocaleLowerCase();
 const EARLIER_ANSWERS = 12;
 
 function earlierLine(r: PlacementItemRecord): string {
-	const result = r.verdict === "wrong" ? `MISS${r.judged?.note ? ` (${r.judged.note})` : ""}` : r.judged?.accepted ? "right (an accepted alternative)" : "right";
+	const result =
+		r.verdict === "wrong"
+			? `MISS${r.judged?.note ? ` (${r.judged.note})` : ""}`
+			: r.judged?.accepted
+				? "right (an accepted alternative)"
+				: "right";
 	return `- [${unitInfo(r.rung ?? r.item.unit).title}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}", form "${r.item.answer}": ${result}`;
 }
 
 /** Ask the cheap slot whether a typed miss is a valid alternative. Null
  *  when no model is set or the call fails (then the string verdict stands). */
-export async function judgeAnswer(item: LessonItem, given: string, usage: StoryUsage, opts: PlacementOptions = {}, earlier: readonly PlacementItemRecord[] = []): Promise<Judgement | null> {
+export async function judgeAnswer(
+	item: LessonItem,
+	given: string,
+	usage: StoryUsage,
+	opts: PlacementOptions = {},
+	earlier: readonly PlacementItemRecord[] = [],
+): Promise<Judgement | null> {
 	const script = scriptedEngines();
 	const real = opts.engine ? { engine: opts.engine } : script ? { engine: script.judge } : storyEngine();
 	if (!real) return null;
 	const answered = earlier.filter((r) => r.verdict !== undefined).slice(-EARLIER_ANSWERS);
-	const history = answered.length ? ["Earlier answers in this check, oldest first:", ...answered.map(earlierLine), ""] : [];
-	const prompt = [...history, `Sentence: ${item.before}___${item.after}`, `Meaning: ${item.translation}`, `Dictionary word in the blank: ${item.answer} (${item.lemma}, "${item.gloss}")`, `Hint the learner saw: ${item.hint ?? item.lemma}`, `The learner typed: ${given}`].join("\n");
+	const history = answered.length
+		? ["Earlier answers in this check, oldest first:", ...answered.map(earlierLine), ""]
+		: [];
+	const prompt = [
+		...history,
+		`Sentence: ${item.before}___${item.after}`,
+		`Meaning: ${item.translation}`,
+		`Dictionary word in the blank: ${item.answer} (${item.lemma}, "${item.gloss}")`,
+		`Hint the learner saw: ${item.hint ?? item.lemma}`,
+		`The learner typed: ${given}`,
+	].join("\n");
 	try {
 		const judged = parseJudge(await ask(real.engine, judgeSystem(), prompt, usage));
 		// A repeat is kept only when it names a miss the learner really typed, so a pattern the model imagines never reaches a weak spot.
-		if (judged.repeat && !answered.some((r) => r.verdict === "wrong" && fold(r.given ?? "") === fold(judged.repeat!))) delete judged.repeat;
+		if (judged.repeat && !answered.some((r) => r.verdict === "wrong" && fold(r.given ?? "") === fold(judged.repeat!)))
+			delete judged.repeat;
 		return judged;
 	} catch {
 		return null;
@@ -274,7 +362,13 @@ export async function answerPlacement(input: AnswerInput, opts: PlacementOptions
 	rec.given = input.given;
 	if (input.ms !== undefined) rec.ms = input.ms;
 	if (verdict === "wrong" && input.given.trim()) {
-		const judged = await judgeAnswer(rec.item, input.given, s.usage, opts, s.items.filter((r) => r !== rec));
+		const judged = await judgeAnswer(
+			rec.item,
+			input.given,
+			s.usage,
+			opts,
+			s.items.filter((r) => r !== rec),
+		);
 		if (judged) {
 			rec.judged = judged;
 			if (judged.accepted) verdict = "exact";
@@ -328,12 +422,23 @@ function unitName(id: UnitId): string {
 function probeBrief(s: PlacementSession, outcome: PlacementOutcome, units: UnitId[]): string {
 	const lines: string[] = [];
 	const edge = ladderEdge(s.ladder);
-	lines.push(`Drill evidence (${s.items.length} typed items, adaptive): floor ${edge.floor ? unitInfo(edge.floor).title : "none"}, ceiling ${edge.ceiling ? unitInfo(edge.ceiling).title : "none (every rung held)"}.`);
+	lines.push(
+		`Drill evidence (${s.items.length} typed items, adaptive): floor ${edge.floor ? unitInfo(edge.floor).title : "none"}, ceiling ${edge.ceiling ? unitInfo(edge.ceiling).title : "none (every rung held)"}.`,
+	);
 	for (const r of s.items) {
 		if (!r.verdict) continue;
-		const tag = r.verdict === "wrong" ? `MISS${r.judged?.note ? ` (judge: ${r.judged.note})` : ""}${r.judged?.repeat ? ` · REPEATS the miss "${r.judged.repeat}"` : ""}` : r.verdict === "accents" ? "hit (diacritics off)" : r.judged?.accepted ? "hit (model accepted an alternative)" : "hit";
+		const tag =
+			r.verdict === "wrong"
+				? `MISS${r.judged?.note ? ` (judge: ${r.judged.note})` : ""}${r.judged?.repeat ? ` · REPEATS the miss "${r.judged.repeat}"` : ""}`
+				: r.verdict === "accents"
+					? "hit (diacritics off)"
+					: r.judged?.accepted
+						? "hit (model accepted an alternative)"
+						: "hit";
 		const secs = r.ms !== undefined ? ` in ${Math.round(r.ms / 1000)} s` : "";
-		lines.push(`- [${unitName(r.rung ?? r.item.unit)}${r.rung && r.rung !== r.item.unit ? ` · ${unitName(r.item.unit)}` : ""}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}"${secs}, form "${r.item.answer}": ${tag}`);
+		lines.push(
+			`- [${unitName(r.rung ?? r.item.unit)}${r.rung && r.rung !== r.item.unit ? ` · ${unitName(r.item.unit)}` : ""}] "${r.item.before}___${r.item.after}" (${r.item.translation}) → wrote "${r.given ?? ""}"${secs}, form "${r.item.answer}": ${tag}`,
+		);
 	}
 	lines.push("");
 	lines.push("Units you may probe, most valuable first (id for the JSON · its grammar name and title · its trigger):");
@@ -341,11 +446,15 @@ function probeBrief(s: PlacementSession, outcome: PlacementOutcome, units: UnitI
 		const info = unitInfo(u);
 		const t = s.ladder.tally[u];
 		const luck = u === s.probe.luck ? " · CHECK FOR LUCK: the level rests on this unit, held on drill hits alone" : "";
-		lines.push(`- ${u} · ${unitName(u)}: ${info.tagline}${t ? ` · drill ${t.hits}/${t.hits + t.misses}` : " · not asked by the drill"}${luck}`);
+		lines.push(
+			`- ${u} · ${unitName(u)}: ${info.tagline}${t ? ` · drill ${t.hits}/${t.hits + t.misses}` : " · not asked by the drill"}${luck}`,
+		);
 	}
 	const tier = outcome.tiers.find((t) => !t.passed);
 	lines.push("");
-	lines.push(`The drill stops the learner at the ${tier ? `${tier.level} tier "${tier.title}"` : "top of the check"}; the chapter it would start them in is "${allChapters().find((c) => c.id === outcome.startChapter)?.title ?? outcome.startChapter}".`);
+	lines.push(
+		`The drill stops the learner at the ${tier ? `${tier.level} tier "${tier.title}"` : "top of the check"}; the chapter it would start them in is "${allChapters().find((c) => c.id === outcome.startChapter)?.title ?? outcome.startChapter}".`,
+	);
 	const profile = learnerProfileSegment();
 	if (profile) lines.push("", profile);
 	return lines.join("\n");
@@ -355,7 +464,10 @@ function probeTranscript(s: PlacementSession): string {
 	const out: string[] = [];
 	for (const [i, t] of s.probe.turns.entries()) {
 		if (t.reply.say) out.push(`Tutor: ${t.reply.say}`);
-		if (t.reply.ask) out.push(`Tutor asks (${unitName(t.reply.ask.unit)}, ${t.reply.ask.kind}): ${t.reply.ask.prompt} — ${t.reply.ask.sk}`);
+		if (t.reply.ask)
+			out.push(
+				`Tutor asks (${unitName(t.reply.ask.unit)}, ${t.reply.ask.kind}): ${t.reply.ask.prompt} — ${t.reply.ask.sk}`,
+			);
 		if (t.answer !== undefined) out.push(`Learner: ${t.answer || "(nothing)"}`);
 		else if (i === s.probe.turns.length - 1) out.push("Learner: (answering now)");
 	}
@@ -378,18 +490,31 @@ interface ProbeTurnResult {
  * the tutor reads the brief and asks. Each later call carries the
  * learner's answer to the open question. Returns the tutor's reply.
  */
-export async function probePlacement(input: { id: string; answer?: string }, opts: PlacementOptions = {}): Promise<ProbeTurnResult> {
+export async function probePlacement(
+	input: { id: string; answer?: string },
+	opts: PlacementOptions = {},
+): Promise<ProbeTurnResult> {
 	const s = placementStore.get(input.id);
 	if (!s) throw new Error("No such placement check.");
 	const now = opts.now ?? new Date();
 	const script = scriptedEngines();
-	const real = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:test" } : script ? { engine: script.probe, model: "faux:script" } : probeEngine();
+	const real = opts.engine
+		? { engine: opts.engine, model: opts.model ?? "faux:test" }
+		: script
+			? { engine: script.probe, model: "faux:script" }
+			: probeEngine();
 	const outcome = ladderOutcome(s.ladder);
 	if (s.probe.units.length === 0) {
 		s.probe.luck = luckRung(s.ladder);
 		s.probe.units = probeUnits(outcome, s.probe.luck);
 	}
-	const finished = (): ProbeTurnResult => ({ reply: s.probe.turns.at(-1)?.reply ?? { say: "", done: s.probe.summary ?? "" }, turn: s.probe.turns.length, max: PROBE_TURNS, verdicts: s.probe.verdicts, done: true });
+	const finished = (): ProbeTurnResult => ({
+		reply: s.probe.turns.at(-1)?.reply ?? { say: "", done: s.probe.summary ?? "" },
+		turn: s.probe.turns.length,
+		max: PROBE_TURNS,
+		verdicts: s.probe.verdicts,
+		done: true,
+	});
 	if (!real || s.probe.units.length === 0) {
 		s.probe.skipped = true;
 		s.probe.summary = s.probe.units.length === 0 ? "Nothing at the edge to probe: the drill was clear." : "";
@@ -399,16 +524,35 @@ export async function probePlacement(input: { id: string; answer?: string }, opt
 	if (s.usage.model === "none") s.usage.model = real.model;
 	const open = s.probe.turns.at(-1);
 	if (open && open.reply.ask && open.answer === undefined) {
-		if (input.answer === undefined) return { reply: open.reply, turn: s.probe.turns.length, max: PROBE_TURNS, verdicts: s.probe.verdicts, done: false };
+		if (input.answer === undefined)
+			return {
+				reply: open.reply,
+				turn: s.probe.turns.length,
+				max: PROBE_TURNS,
+				verdicts: s.probe.verdicts,
+				done: false,
+			};
 		open.answer = input.answer.trim().slice(0, 600);
 	}
 	if (s.probe.summary !== undefined) return finished();
 	const asked = s.probe.turns.filter((t) => t.reply.ask).length;
-	const prompt = [probeBrief(s, outcome, s.probe.units), "", s.probe.turns.length ? `The stage so far:\n${probeTranscript(s)}` : "Open the stage: judge nothing yet, ask your first question.", asked >= PROBE_TURNS ? `\nThat was your last question: judge the answer and set "done".` : asked === PROBE_TURNS - 1 ? "\nOne question left after this answer at most." : ""].join("\n");
+	const prompt = [
+		probeBrief(s, outcome, s.probe.units),
+		"",
+		s.probe.turns.length
+			? `The stage so far:\n${probeTranscript(s)}`
+			: "Open the stage: judge nothing yet, ask your first question.",
+		asked >= PROBE_TURNS
+			? `\nThat was your last question: judge the answer and set "done".`
+			: asked === PROBE_TURNS - 1
+				? "\nOne question left after this answer at most."
+				: "",
+	].join("\n");
 	let reply: ProbeReply;
 	try {
 		const text = await ask(real.engine, probeSystem(), prompt, s.usage);
-		if (process.env.LH_PLACEMENT_DEBUG) console.error("[placement/probe]", JSON.stringify(text).slice(0, 400), s.probe.units);
+		if (process.env.LH_PLACEMENT_DEBUG)
+			console.error("[placement/probe]", JSON.stringify(text).slice(0, 400), s.probe.units);
 		reply = parseProbeReply(text, s.probe.units);
 		if (!reply.ask && !reply.done && asked < PROBE_TURNS) {
 			// Neither a question about an offered unit nor a reading: once more, with the units named.
@@ -416,17 +560,27 @@ export async function probePlacement(input: { id: string; answer?: string }, opt
 			const again = await ask(real.engine, probeSystem(), nudge, s.usage);
 			if (process.env.LH_PLACEMENT_DEBUG) console.error("[placement/probe retry]", JSON.stringify(again).slice(0, 400));
 			reply = parseProbeReply(again, s.probe.units);
-			if (!reply.ask && !reply.done) reply = { say: reply.say, done: "The tutor had no further question. The drill's evidence stands." };
+			if (!reply.ask && !reply.done)
+				reply = { say: reply.say, done: "The tutor had no further question. The drill's evidence stands." };
 		}
 	} catch (err) {
-		reply = { say: "", done: `The tutor could not answer (${err instanceof Error ? err.message : String(err)}). The drill's evidence stands.` };
+		reply = {
+			say: "",
+			done: `The tutor could not answer (${err instanceof Error ? err.message : String(err)}). The drill's evidence stands.`,
+		};
 	}
 	if (asked >= PROBE_TURNS) reply = { ...reply, ask: undefined, done: reply.done ?? reply.say };
 	if (reply.verdict) s.probe.verdicts.push(reply.verdict);
 	s.probe.turns.push({ reply, at: now.toISOString() });
 	if (reply.done !== undefined && !reply.ask) s.probe.summary = reply.done;
 	placementStore.put(s);
-	return { reply, turn: s.probe.turns.length, max: PROBE_TURNS, verdicts: s.probe.verdicts, done: s.probe.summary !== undefined };
+	return {
+		reply,
+		turn: s.probe.turns.length,
+		max: PROBE_TURNS,
+		verdicts: s.probe.verdicts,
+		done: s.probe.summary !== undefined,
+	};
 }
 
 /** Leave the stage (the learner skipped it, or lost the thread). */
@@ -450,15 +604,26 @@ export function wordsFor(id: string, lexicon: Lexicon | null = loadLexicon()): V
 	if (!lexicon) throw new Error("No dictionary loaded.");
 	const rand = rng(s.seed + 977);
 	const order = frequencyOrder(lexicon);
-	const usable = (e: LexiconEntry | undefined): e is LexiconEntry => !!e && e.cat !== "Places" && !grammarWord(entryLemma(e)) && !entryLemma(e).includes(" ") && entryLemma(e).length >= 3 && entryLemma(e).charAt(0) === entryLemma(e).charAt(0).toLocaleLowerCase("sk-SK");
+	const usable = (e: LexiconEntry | undefined): e is LexiconEntry =>
+		!!e &&
+		e.cat !== "Places" &&
+		!grammarWord(entryLemma(e)) &&
+		!entryLemma(e).includes(" ") &&
+		entryLemma(e).length >= 3 &&
+		entryLemma(e).charAt(0) === entryLemma(e).charAt(0).toLocaleLowerCase("sk-SK");
 	const items: VocabItem[] = [];
 	for (const b of VOCAB_BANDS) {
 		const slugs = order.slice(b.from, b.to).filter((slug) => usable(lexicon.bySlug.get(slug)));
-		for (const slug of shuffle(slugs, rand).slice(0, WORDS_PER_BAND)) items.push({ id: slug, word: entryLemma(lexicon.bySlug.get(slug)!), band: b.id });
+		for (const slug of shuffle(slugs, rand).slice(0, WORDS_PER_BAND))
+			items.push({ id: slug, word: entryLemma(lexicon.bySlug.get(slug)!), band: b.id });
 	}
 	const real = (w: string) => lexicon.byForm.has(w) || lexicon.byFolded.has(w) || lexicon.bySlug.has(w);
-	const source = order.slice(0, 3000).map((slug) => lexicon.bySlug.get(slug)?.sk ?? "").filter(Boolean);
-	for (const [i, w] of makePseudowords(source, PSEUDO_WORDS, rand, real).entries()) items.push({ id: `pseudo-${i}`, word: w, band: null });
+	const source = order
+		.slice(0, 3000)
+		.map((slug) => lexicon.bySlug.get(slug)?.sk ?? "")
+		.filter(Boolean);
+	for (const [i, w] of makePseudowords(source, PSEUDO_WORDS, rand, real).entries())
+		items.push({ id: `pseudo-${i}`, word: w, band: null });
 	s.words = { items: shuffle(items, rand) };
 	placementStore.put(s);
 	return s.words.items;
@@ -485,7 +650,10 @@ interface FinishResult extends PlacementResult {
 }
 
 /** Fold the three stages into the outcome, record it, index the session. */
-export function finishPlacement(input: { id: string; ms?: number; activeMs?: number; tz?: number }, opts: PlacementOptions = {}): FinishResult {
+export function finishPlacement(
+	input: { id: string; ms?: number; activeMs?: number; tz?: number },
+	opts: PlacementOptions = {},
+): FinishResult {
 	const s = placementStore.get(input.id);
 	if (!s) throw new Error("No such placement check.");
 	const now = opts.now ?? new Date();
@@ -495,10 +663,19 @@ export function finishPlacement(input: { id: string; ms?: number; activeMs?: num
 	for (const v of s.probe.verdicts) last.set(v.unit, v);
 	if (last.size) {
 		const tally = { ...ladder.tally };
-		for (const [u, v] of last) tally[u] = v.result === "held" ? { hits: 2, misses: 0 } : v.result === "slip" ? { hits: 2, misses: 1 } : { hits: 0, misses: 2 };
+		for (const [u, v] of last)
+			tally[u] =
+				v.result === "held"
+					? { hits: 2, misses: 0 }
+					: v.result === "slip"
+						? { hits: 2, misses: 1 }
+						: { hits: 0, misses: 2 };
 		// The bracket moves with the verdicts: the floor is the highest rung
 		// held with no gap below it, the ceiling the lowest gap.
-		let lo = placementTiers().slice(0, ladder.from).reduce((n, t) => n + t.units.length, 0) - 1;
+		let lo =
+			placementTiers()
+				.slice(0, ladder.from)
+				.reduce((n, t) => n + t.units.length, 0) - 1;
 		let hi = placementLadder().length;
 		for (const [i, u] of placementLadder().entries()) {
 			const st = rungStatus(tally[u]);
@@ -522,7 +699,17 @@ export function finishPlacement(input: { id: string; ms?: number; activeMs?: num
 			slug: r.item.slug,
 			kind: r.item.kind,
 			verdict: r.verdict!,
-			detail: { unit: r.item.unit, lemma: r.item.lemma, gloss: r.item.gloss, sentence: r.item.sentence, translation: r.item.translation, answer: r.item.answer, given: r.given, trigger: r.item.trigger, ...(r.judged?.accepted ? { hint: `accepted: ${r.judged.note}` } : {}) },
+			detail: {
+				unit: r.item.unit,
+				lemma: r.item.lemma,
+				gloss: r.item.gloss,
+				sentence: r.item.sentence,
+				translation: r.item.translation,
+				answer: r.item.answer,
+				given: r.given,
+				trigger: r.item.trigger,
+				...(r.judged?.accepted ? { hint: `accepted: ${r.judged.note}` } : {}),
+			},
 		}));
 	// Why each missed unit was missed: the tutor's verdict first, else the
 	// judge's note on a miss that repeats an earlier one, else on the first
@@ -535,10 +722,26 @@ export function finishPlacement(input: { id: string; ms?: number; activeMs?: num
 		if (r.judged?.repeat && r.judged.note) {
 			weakNotes[unit] = r.judged.note;
 			repeated.add(unit);
-		} else if (!weakNotes[unit]) weakNotes[unit] = r.judged?.note ? r.judged.note : `wrote "${r.given}" for ${r.item.answer}`;
+		} else if (!weakNotes[unit])
+			weakNotes[unit] = r.judged?.note ? r.judged.note : `wrote "${r.given}" for ${r.item.answer}`;
 	}
-	for (const [u, v] of last) if (v.result !== "held") weakNotes[u] = v.note ? `${v.result}: ${v.note}` : `the tutor saw a ${v.result}`;
-	const result = recordPlacement({ outcome, reps, ms: input.ms, activeMs: input.activeMs, tz: input.tz, note: s.probe.summary || undefined, weakNotes, vocabulary: s.words?.estimate ? { size: s.words.estimate.size, at: now.toISOString(), reliable: s.words.estimate.reliable } : undefined }, now);
+	for (const [u, v] of last)
+		if (v.result !== "held") weakNotes[u] = v.note ? `${v.result}: ${v.note}` : `the tutor saw a ${v.result}`;
+	const result = recordPlacement(
+		{
+			outcome,
+			reps,
+			ms: input.ms,
+			activeMs: input.activeMs,
+			tz: input.tz,
+			note: s.probe.summary || undefined,
+			weakNotes,
+			vocabulary: s.words?.estimate
+				? { size: s.words.estimate.size, at: now.toISOString(), reliable: s.words.estimate.reliable }
+				: undefined,
+		},
+		now,
+	);
 	placementStore.put(s);
 	placementStore.index(s);
 	return {

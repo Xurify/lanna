@@ -15,13 +15,22 @@ test("Slovak letters fall into fourteen families, in the order they come", () =>
 	const families = letterFamilies(SLOVAK, "sk-SK");
 	assert.equal(families.length, 14);
 	assert.deepEqual(families[0], { base: "a", letters: ["á", "ä"] });
-	assert.deepEqual(families.find((f) => f.base === "l"), { base: "l", letters: ["ĺ", "ľ"] });
-	assert.deepEqual(families.find((f) => f.base === "o"), { base: "o", letters: ["ó", "ô"] });
+	assert.deepEqual(
+		families.find((f) => f.base === "l"),
+		{ base: "l", letters: ["ĺ", "ľ"] },
+	);
+	assert.deepEqual(
+		families.find((f) => f.base === "o"),
+		{ base: "o", letters: ["ó", "ô"] },
+	);
 });
 
 test("Cyrillic letters with a mark group under their plain letter; the rest stand alone", () => {
 	const families = letterFamilies(RUSSIAN, "ru-RU");
-	assert.deepEqual(families.map((f) => f.base), ["е", "и", "ъ", "ы", "ь", "э"]);
+	assert.deepEqual(
+		families.map((f) => f.base),
+		["е", "и", "ъ", "ы", "ь", "э"],
+	);
 });
 
 test("a key changes the plain letter before the caret, and keeps its case", () => {
@@ -73,6 +82,14 @@ test("a dead key or a key inside a composition belongs to the learner's layout",
 	assert.equal(belongsToLayoutAccent({ key: "Dead", isComposing: false, keyCode: 192 }), true, "Estonian ˇ left of 1");
 	assert.equal(belongsToLayoutAccent({ key: "c", isComposing: true, keyCode: 67 }), true, "the letter after it");
 	assert.equal(belongsToLayoutAccent({ key: "Process", isComposing: false, keyCode: 229 }), true);
-	assert.equal(belongsToLayoutAccent({ key: "`", isComposing: false, keyCode: 192 }), false, "US ` still opens the Keyboard");
-	assert.equal(belongsToLayoutAccent({ key: ";", isComposing: false, keyCode: 192 }), false, "Slovak ; still opens the Keyboard");
+	assert.equal(
+		belongsToLayoutAccent({ key: "`", isComposing: false, keyCode: 192 }),
+		false,
+		"US ` still opens the Keyboard",
+	);
+	assert.equal(
+		belongsToLayoutAccent({ key: ";", isComposing: false, keyCode: 192 }),
+		false,
+		"Slovak ; still opens the Keyboard",
+	);
 });

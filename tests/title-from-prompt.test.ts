@@ -24,7 +24,20 @@ describe("titleFromPrompt (smart truncation)", () => {
 
 	it("over the cap: the cut snaps to the last word boundary under it", () => {
 		// > 72 chars total so truncation actually fires.
-		const words = ["teach", "me", "the", "relational", "model", "and", "its", "information", "principle", "underlying", "everything", "please"];
+		const words = [
+			"teach",
+			"me",
+			"the",
+			"relational",
+			"model",
+			"and",
+			"its",
+			"information",
+			"principle",
+			"underlying",
+			"everything",
+			"please",
+		];
 		const joined = words.join(" "); // 10 words, > 72 chars
 		const out = titleFromPrompt(joined);
 		assert.ok(out.endsWith("…"), "marks the truncation");
@@ -57,7 +70,11 @@ describe("titleFromPrompt (smart truncation)", () => {
 });
 
 describe("a first message that carries a PDF", () => {
-	const line = attachedPdfLine({ name: "Lekcia 3 – lokál.pdf", pages: 2, path: "C:/data/profiles/slovak/sources/Lekcia-3-lokal-0a1b2c.pdf" });
+	const line = attachedPdfLine({
+		name: "Lekcia 3 – lokál.pdf",
+		pages: 2,
+		path: "C:/data/profiles/slovak/sources/Lekcia-3-lokal-0a1b2c.pdf",
+	});
 
 	it("is titled by the learner's question, not the file path", () => {
 		assert.equal(titleFromPrompt(`${line}\nWhen do I use the locative?`), "When do I use the locative?");
@@ -69,7 +86,9 @@ describe("a first message that carries a PDF", () => {
 
 	it("splits back into the PDF and the learner's words", () => {
 		assert.deepEqual(splitAttachedPdfs(`${line}\nWhen do I use the locative?`), {
-			pdfs: [{ name: "Lekcia 3 – lokál.pdf", pages: 2, path: "C:/data/profiles/slovak/sources/Lekcia-3-lokal-0a1b2c.pdf" }],
+			pdfs: [
+				{ name: "Lekcia 3 – lokál.pdf", pages: 2, path: "C:/data/profiles/slovak/sources/Lekcia-3-lokal-0a1b2c.pdf" },
+			],
 			images: [],
 			rest: "When do I use the locative?",
 		});
@@ -88,7 +107,13 @@ describe("the composer's draft with a PDF", () => {
 
 	it("drops the PDF line when the chip is removed", () => {
 		const { pdfs, rest } = splitDraft(joinDraft([pdf], "Question?"));
-		assert.equal(joinDraft(pdfs.filter((p) => p !== pdfs[0]), rest), "Question?");
+		assert.equal(
+			joinDraft(
+				pdfs.filter((p) => p !== pdfs[0]),
+				rest,
+			),
+			"Question?",
+		);
 	});
 });
 
@@ -100,13 +125,23 @@ describe("a message that carries an image", () => {
 	});
 
 	it("is titled by the learner's question when text is present", () => {
-		assert.equal(titleFromPrompt(`My image "${img.name}": ${img.path}\nWhat does this sign mean?`), "What does this sign mean?");
+		assert.equal(
+			titleFromPrompt(`My image "${img.name}": ${img.path}\nWhat does this sign mean?`),
+			"What does this sign mean?",
+		);
 	});
 
 	it("splits and joins draft with image attachments", () => {
 		const draft = joinDraft([], "Explain this photo", [img]);
 		assert.deepEqual(splitDraft(draft), { pdfs: [], images: [img], rest: "Explain this photo" });
 		const { images, rest } = splitDraft(draft);
-		assert.equal(joinDraft([], rest, images.filter((i) => i !== images[0])), "Explain this photo");
+		assert.equal(
+			joinDraft(
+				[],
+				rest,
+				images.filter((i) => i !== images[0]),
+			),
+			"Explain this photo",
+		);
 	});
 });

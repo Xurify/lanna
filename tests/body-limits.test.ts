@@ -12,7 +12,11 @@ const { BODY_LIMITS, bodyTooLarge } = await import("../src/server/body-limit.ts"
 after(() => fs.rmSync(TMP, { recursive: true, force: true }));
 
 const withLength = (length: string | null, method = "POST") =>
-	new Request("http://localhost/api/x", { method, headers: length === null ? {} : { "content-length": length }, body: method === "GET" ? undefined : "{}" });
+	new Request("http://localhost/api/x", {
+		method,
+		headers: length === null ? {} : { "content-length": length },
+		body: method === "GET" ? undefined : "{}",
+	});
 
 describe("bodyTooLarge", () => {
 	it("passes a body at or under the limit, and a request that announces none", () => {
@@ -24,8 +28,9 @@ describe("bodyTooLarge", () => {
 
 	it("answers 413 with a plain message over the limit", async () => {
 		const response = bodyTooLarge(withLength("101"), 100);
-		assert.equal(response?.status, 413);
-		assert.equal(((await response?.json()) as { error: string }).error, "request too large");
+		assert.ok(response);
+		assert.equal(response.status, 413);
+		assert.equal(((await response.json()) as { error: string }).error, "request too large");
 	});
 
 	it("refuses a length that is not a number or is negative", () => {
@@ -41,8 +46,15 @@ describe("bodyTooLarge", () => {
 });
 
 const oversizedCall = async (route: string, method: "POST" | "PUT", bytes: number, params?: Record<string, string>) => {
-	const handlers = (await import(`../app/api/${route}/route.ts`)) as Record<string, (request: Request, context?: unknown) => Promise<Response>>;
-	const request = new Request(`http://localhost/api/${route}`, { method, headers: { "content-type": "application/json", "content-length": String(bytes) }, body: "{}" });
+	const handlers = (await import(`../app/api/${route}/route.ts`)) as Record<
+		string,
+		(request: Request, context?: unknown) => Promise<Response>
+	>;
+	const request = new Request(`http://localhost/api/${route}`, {
+		method,
+		headers: { "content-type": "application/json", "content-length": String(bytes) },
+		body: "{}",
+	});
 	return handlers[method]!(request, params ? { params: Promise.resolve(params) } : undefined);
 };
 
@@ -65,7 +77,12 @@ describe("routes refuse an oversized body with 413", () => {
 	];
 	for (const [route, method, bytes, params] of cases) {
 		it(`${method} /api/${route}`, async () => {
-			const response = await oversizedCall(route.startsWith("keys/") ? "keys/[id]" : route.startsWith("settings/") ? "settings/[section]" : route, method, bytes, params);
+			const response = await oversizedCall(
+				route.startsWith("keys/") ? "keys/[id]" : route.startsWith("settings/") ? "settings/[section]" : route,
+				method,
+				bytes,
+				params,
+			);
 			assert.equal(response.status, 413);
 		});
 	}
@@ -74,7 +91,15 @@ describe("routes refuse an oversized body with 413", () => {
 describe("every route that takes a body checks its size first", () => {
 	const root = path.join(import.meta.dirname, "..", "app", "api");
 	const routes = (dir: string): string[] =>
-		fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? routes(path.join(dir, entry.name)) : entry.name === "route.ts" ? [path.join(dir, entry.name)] : []));
+		fs
+			.readdirSync(dir, { withFileTypes: true })
+			.flatMap((entry) =>
+				entry.isDirectory()
+					? routes(path.join(dir, entry.name))
+					: entry.name === "route.ts"
+						? [path.join(dir, entry.name)]
+						: [],
+			);
 	const handled = /^export async function (POST|PUT|PATCH|DELETE)\((req|request)\b/m;
 	const own = ["access", "subscriptions"];
 

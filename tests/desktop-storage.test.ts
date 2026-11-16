@@ -27,7 +27,10 @@ function mainProcess(trusted = true) {
 			},
 		},
 	};
-	registerStorageIPC({ handle: (channel: string, handler: Handler) => handlers.set(channel, handler) }, { session, trusted: () => trusted });
+	registerStorageIPC(
+		{ handle: (channel: string, handler: Handler) => handlers.set(channel, handler) },
+		{ session, trusted: () => trusted },
+	);
 	return { handlers, cleared };
 }
 
@@ -54,7 +57,11 @@ describe("preload storage bridge", () => {
 		runInNewContext(readFileSync(new URL("../electron/preload.cjs", import.meta.url), "utf8"), {
 			process: { platform: "win32" },
 			require: () => ({
-				contextBridge: { exposeInMainWorld: (_: string, value: typeof bridge) => { bridge = value; } },
+				contextBridge: {
+					exposeInMainWorld: (_: string, value: typeof bridge) => {
+						bridge = value;
+					},
+				},
 				ipcRenderer: {
 					on() {},
 					invoke: async (channel: string) => {

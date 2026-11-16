@@ -70,11 +70,20 @@ export function CatchPlayer() {
 	return (
 		<div className="mx-auto w-full max-w-2xl px-4 py-8">
 			<h1 className="font-ui text-2xl font-[600] text-foreground">Catch the mistake</h1>
-			<p className="mt-2 font-ui text-sm text-muted-foreground">One word in this text is wrong. Tap it, then type the word that belongs there.</p>
+			<p className="mt-2 font-ui text-sm text-muted-foreground">
+				One word in this text is wrong. Tap it, then type the word that belongs there.
+			</p>
 
-			<section className="mt-6 flex min-h-[16rem] flex-col rounded-xl bg-card p-5 shadow-[0_0_0_1px_var(--q-line-2)]" aria-live="polite">
+			<section
+				className="mt-6 flex min-h-[16rem] flex-col rounded-xl bg-card p-5 shadow-[0_0_0_1px_var(--q-line-2)]"
+				aria-live="polite"
+			>
 				{!started && (
-					<button type="button" onClick={() => void load()} className={`${BUTTON} bg-primary text-primary-foreground self-start`}>
+					<button
+						type="button"
+						onClick={() => void load()}
+						className={`${BUTTON} bg-primary text-primary-foreground self-start`}
+					>
 						Show a text
 					</button>
 				)}
@@ -83,7 +92,12 @@ export function CatchPlayer() {
 				{next && !next.view && (
 					<div className="flex flex-col gap-3">
 						<p className="font-ui text-sm text-foreground">{error ?? next.reason}</p>
-						<button type="button" onClick={() => void load()} disabled={busy} className={`${BUTTON} bg-card text-foreground shadow-[0_0_0_1px_var(--q-line-2)] self-start`}>
+						<button
+							type="button"
+							onClick={() => void load()}
+							disabled={busy}
+							className={`${BUTTON} bg-card text-foreground shadow-[0_0_0_1px_var(--q-line-2)] self-start`}
+						>
 							Try again
 						</button>
 					</div>
@@ -115,7 +129,11 @@ export function CatchPlayer() {
 									disabled={busy}
 									className="q-field min-h-11 min-w-0 flex-1 rounded-lg px-4 py-2.5 font-ui text-base"
 								/>
-								<button type="submit" disabled={busy || !typed.trim()} className={`${BUTTON} bg-primary text-primary-foreground`}>
+								<button
+									type="submit"
+									disabled={busy || !typed.trim()}
+									className={`${BUTTON} bg-primary text-primary-foreground`}
+								>
 									Check
 								</button>
 							</form>
@@ -147,7 +165,12 @@ export function CatchPlayer() {
 								</li>
 							))}
 						</ol>
-						<button type="button" onClick={() => void load()} disabled={busy} className={`${BUTTON} bg-primary text-primary-foreground self-start`}>
+						<button
+							type="button"
+							onClick={() => void load()}
+							disabled={busy}
+							className={`${BUTTON} bg-primary text-primary-foreground self-start`}
+						>
 							Next text
 						</button>
 					</div>
@@ -158,7 +181,19 @@ export function CatchPlayer() {
 	);
 }
 
-function Sentence({ tokens, sentence, tap, onTap, disabled }: { tokens: CatchToken[]; sentence: number; tap: Tap | null; onTap: (t: Tap) => void; disabled: boolean }) {
+function Sentence({
+	tokens,
+	sentence,
+	tap,
+	onTap,
+	disabled,
+}: {
+	tokens: CatchToken[];
+	sentence: number;
+	tap: Tap | null;
+	onTap: (t: Tap) => void;
+	disabled: boolean;
+}) {
 	return (
 		<p className="font-prose text-lg leading-relaxed text-foreground">
 			{tokens.map((t, i) =>

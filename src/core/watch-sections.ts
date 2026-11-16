@@ -80,7 +80,10 @@ export function sectionsPrompt(video: { title: string; segments: readonly Line[]
 		const marked = s.tokens.map((t) => (t.word && t.fresh ? `[${t.text}]` : t.text)).join("");
 		return `${s.i}. ${marked.trim()} — ${s.en.trim()}`;
 	});
-	const cut = video.segments.length > SECTION_PROMPT_LINES ? `\n(The video has ${video.segments.length} lines; these are the first ${SECTION_PROMPT_LINES}.)` : "";
+	const cut =
+		video.segments.length > SECTION_PROMPT_LINES
+			? `\n(The video has ${video.segments.length} lines; these are the first ${SECTION_PROMPT_LINES}.)`
+			: "";
 	return `The video: ${JSON.stringify(video.title)}. The learner's level: ${level}.${cut}\n\n${lines.join("\n")}`;
 }
 
@@ -130,7 +133,14 @@ export function parseSections(text: string, video: { segments: readonly Line[] }
 			if (token < 0) continue;
 			const t = seg.tokens[token]!;
 			used.add(line);
-			focus.push({ at: line, token, word: t.text, ...(t.lemma ? { lemma: t.lemma } : {}), ...(t.slug ? { slug: t.slug } : {}), ...(t.gloss ? { gloss: t.gloss } : {}) });
+			focus.push({
+				at: line,
+				token,
+				word: t.text,
+				...(t.lemma ? { lemma: t.lemma } : {}),
+				...(t.slug ? { slug: t.slug } : {}),
+				...(t.gloss ? { gloss: t.gloss } : {}),
+			});
 		}
 		if (!focus.length) continue;
 		focus.sort((a, b) => a.at - b.at);
@@ -172,9 +182,15 @@ export function sectionReps(video: { id: string; segments: readonly Line[] }, se
 			{
 				id: sectionRepId(video.id, f.at, f.token),
 				at: f.at,
-				before: seg.tokens.slice(0, f.token).map((x) => x.text).join(""),
+				before: seg.tokens
+					.slice(0, f.token)
+					.map((x) => x.text)
+					.join(""),
 				answer: t.text,
-				after: seg.tokens.slice(f.token + 1).map((x) => x.text).join(""),
+				after: seg.tokens
+					.slice(f.token + 1)
+					.map((x) => x.text)
+					.join(""),
 				line: seg.sk,
 				en: seg.en,
 				start: seg.start,

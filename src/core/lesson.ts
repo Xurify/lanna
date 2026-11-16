@@ -21,7 +21,15 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
-import { activeCourse, courseUnitsFor, filledTags, perCourse, sameCellForms, type Course, type CourseUnit } from "./course.ts";
+import {
+	activeCourse,
+	courseUnitsFor,
+	filledTags,
+	perCourse,
+	sameCellForms,
+	type Course,
+	type CourseUnit,
+} from "./course.ts";
 
 // ─── Units ──────────────────────────────────────────────────────────────────
 
@@ -54,7 +62,14 @@ export const GRAMMAR_UNIT_IDS = [
 ] as const;
 
 /** Vocabulary by frequency band (rank within the part of speech). */
-export const BAND_UNIT_IDS = ["words-300", "words-600", "words-1000", "words-1500", "words-2000", "words-3000"] as const;
+export const BAND_UNIT_IDS = [
+	"words-300",
+	"words-600",
+	"words-1000",
+	"words-1500",
+	"words-2000",
+	"words-3000",
+] as const;
 
 /** The contrast-pairs units (Dvojičky), one per chapter that teaches a
  *  pair (curriculum/slovak/pairs.json). Pinned as a literal so UnitId stays
@@ -72,7 +87,11 @@ export const PAIR_UNIT_IDS = [
 	"pairs-opinions",
 ] as const;
 
-export type UnitId = (typeof GRAMMAR_UNIT_IDS)[number] | (typeof BAND_UNIT_IDS)[number] | (typeof PAIR_UNIT_IDS)[number] | WordClusterId;
+export type UnitId =
+	| (typeof GRAMMAR_UNIT_IDS)[number]
+	| (typeof BAND_UNIT_IDS)[number]
+	| (typeof PAIR_UNIT_IDS)[number]
+	| WordClusterId;
 
 export type UnitKind = "grammar" | "words" | "pairs";
 
@@ -109,14 +128,29 @@ interface UnitInfo {
 	pattern?: "build";
 	/** A generated course's grammar unit: which blanked forms it drills, by
 	 *  their grammar tags and the word before the blank (src/core/course.ts). */
-	match?: Pick<CourseUnit, "cat" | "tags" | "variants" | "after" | "notAfter" | "skipForms" | "lemmas" | "notWith" | "distinct">;
+	match?: Pick<
+		CourseUnit,
+		"cat" | "tags" | "variants" | "after" | "notAfter" | "skipForms" | "lemmas" | "notWith" | "distinct"
+	>;
 }
 
 const WORD_RULE = "Learn the word with its sentence: the sentence is what you will hear.";
 
 const CLUSTER_UNITS: UnitInfo[] = WORD_CLUSTER_IDS.map((id) => {
 	const c = WORD_CLUSTERS[id];
-	return { id, kind: "words", title: `Words: ${c.title}`, tagline: c.tagline, glyph: c.glyph, rule: WORD_RULE, node: `n_seed_${id.replace(/-/g, "_")}`, lemmas: c.lemmas, repeat: true, slovakTerm: "Tematická slovná zásoba", grammarTerm: "Vocabulary cluster" };
+	return {
+		id,
+		kind: "words",
+		title: `Words: ${c.title}`,
+		tagline: c.tagline,
+		glyph: c.glyph,
+		rule: WORD_RULE,
+		node: `n_seed_${id.replace(/-/g, "_")}`,
+		lemmas: c.lemmas,
+		repeat: true,
+		slovakTerm: "Tematická slovná zásoba",
+		grammarTerm: "Vocabulary cluster",
+	};
 });
 
 const BAND_DEFS: Array<[UnitId, readonly [number, number], string, string]> = [
@@ -127,7 +161,17 @@ const BAND_DEFS: Array<[UnitId, readonly [number, number], string, string]> = [
 	["words-2000", [1500, 2000], "Words: up to 2,000", "Opinions, work, feelings in detail"],
 	["words-3000", [2000, 3000], "Words: up to 3,000", "Toward reading anything"],
 ];
-const BAND_UNITS: UnitInfo[] = BAND_DEFS.map(([id, band, title, tagline]) => ({ id, band, title, tagline, kind: "words", glyph: "book-open", rule: WORD_RULE, slovakTerm: "Frekvenčná slovná zásoba", grammarTerm: "Frequency band" }));
+const BAND_UNITS: UnitInfo[] = BAND_DEFS.map(([id, band, title, tagline]) => ({
+	id,
+	band,
+	title,
+	tagline,
+	kind: "words",
+	glyph: "book-open",
+	rule: WORD_RULE,
+	slovakTerm: "Frekvenčná slovná zásoba",
+	grammarTerm: "Frequency band",
+}));
 
 /** One unit per chapter that teaches a pair: the reps choose between the
  *  twins (buildPairsLesson), the rule and bridge are per pair, carried by
@@ -136,7 +180,9 @@ const PAIR_UNITS: UnitInfo[] = PAIR_UNIT_IDS.map((id) => ({
 	id,
 	kind: "pairs" as const,
 	title: "Dvojičky",
-	tagline: chapterPairs(id.slice("pairs-".length)).map((p) => `${p.a} / ${p.b}`).join(" · "),
+	tagline: chapterPairs(id.slice("pairs-".length))
+		.map((p) => `${p.a} / ${p.b}`)
+		.join(" · "),
 	glyph: "git-compare",
 	rule: "Read the sentence and pick the twin it really uses — which of the two words fits.",
 	repeat: true,
@@ -154,29 +200,270 @@ export const lessonsHaveBridges = (): boolean => !activeCourse();
 
 /** Slovak's path, in teaching order. */
 const SLOVAK_UNITS: UnitInfo[] = [
-	{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE, slovakTerm: "Základná slovná zásoba", grammarTerm: "Core vocabulary" },
-	{ id: "present", title: "I, you, we", tagline: "Verbs in the present: -ám, -ím", glyph: "users", rule: "Present endings: ja -m, ty -š, on/ona -, my -me, vy -te, oni -ú/-ia/-jú.", node: "n_seed_v_present", bridge: "Like Estonian: my robíme ≈ me teeme, vy robíte ≈ te teete. Ja robím ≈ ma teen.", slovakTerm: "Prítomný čas", grammarTerm: "Present tense" },
-	{ id: "acc-fem", title: "Objects: -a → -u", tagline: "What you have, see, drink", glyph: "coffee", rule: "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.", node: "n_seed_acc_fem", bridge: "The object case, like Estonian osastav: Pijem kávu ≈ Joon kohvi.", slovakTerm: "Akuzatív (ženský rod)", grammarTerm: "Feminine accusative" },
-	{ id: "loc", title: "Where? v, na, o", tagline: "Kde? The locative", glyph: "map-pin", rule: "After v / na / o / po / pri for place or topic, the noun takes the locative: v meste, na stole, o škole.", node: "n_seed_loc", bridge: "Like the Estonian place cases: v meste ≈ linnas (seesütlev), na stole ≈ laual (alalütlev).", slovakTerm: "Lokál", grammarTerm: "Locative case" },
-	{ id: "acc-people", title: "People and animals as objects", tagline: "Vidím brata", glyph: "user-round", rule: "A masculine person or animal as the object takes -a: Mám brata. Vidím psa. Poznáš učiteľa?", node: "n_seed_acc_anim", bridge: "A masculine person or animal as the object, like osastav: Vidím brata ≈ Näen venda.", slovakTerm: "Akuzatív (životný)", grammarTerm: "Animate masculine accusative" },
-	{ id: "gen", title: "From, to, without", tagline: "do, z, od, bez + genitive", glyph: "door-open", rule: "do / z / od / bez / u / okolo take the genitive: do školy, z práce, bez cukru.", node: "n_seed_gen", bridge: "do školy ≈ kooli (sisseütlev), zo školy ≈ koolist (seestütlev), bez cukru ≈ suhkruta (ilmaütlev).", slovakTerm: "Genitív", grammarTerm: "Genitive case" },
-	{ id: "ins", title: "With: s, pred, za", tagline: "The instrumental", glyph: "handshake", rule: "s / pred / za / nad / pod / medzi (for place) take the instrumental: s kamarátom, pred domom, so sestrou.", node: "n_seed_ins", bridge: "Like Estonian kaasaütlev -ga: s kamarátom ≈ sõbraga, autobusom ≈ bussiga.", slovakTerm: "Inštrumentál", grammarTerm: "Instrumental case" },
-	{ id: "adj", title: "Describing words", tagline: "Adjectives agree: -ý, -á, -é", glyph: "palette", rule: "The adjective copies the noun's gender and number: nový dom, nová kniha, nové mesto, noví ľudia.", node: "n_seed_adj_agree", bridge: "Adjectives agree, as in Estonian: nová kniha → nové knihy ≈ uus raamat → uued raamatud.", slovakTerm: "Adjektíva", grammarTerm: "Adjective agreement" },
-	{ id: "past", title: "What happened", tagline: "Past tense: -l, -la, -lo, -li", glyph: "history", rule: "Past tense = -l / -la / -lo / -li by the subject's gender and number, plus som/si for I/you: Robil som. Robila si.", node: "n_seed_v_past", bridge: "Built like the Estonian perfect: an -l form plus 'be' (robil som ~ olen teinud), with som/si only for I and you.", slovakTerm: "Minulý čas", grammarTerm: "Past tense" },
-	{ id: "dat", title: "To and for: k", tagline: "k, proti, vďaka + dative", glyph: "gift", rule: "k / ku / proti / vďaka / kvôli take the dative: k bratovi, ku škole, vďaka mame.", node: "n_seed_dat", bridge: "Like Estonian alaleütlev -le: k bratovi ≈ vennale, dal som mame ≈ andsin emale.", slovakTerm: "Datív", grammarTerm: "Dative case" },
-	{ id: "modal-inf", title: "Want, can, must + verb", tagline: "chcem ísť, musím pracovať", glyph: "key", rule: "After chcieť, môcť, musieť, vedieť, smieť (and budem) the second verb stays in the infinitive -ť: Chcem ísť. Musím pracovať.", node: "n_seed_modals", bridge: "As in Estonian tahan minna, pean töötama: the second verb does not conjugate. Slovak has one infinitive where Estonian picks -da or -ma.", slovakTerm: "Modálne slovesá", grammarTerm: "Modal verbs" },
-	{ id: "kam-kde", title: "Kam? or Kde?", tagline: "v / na + accusative or locative", glyph: "signpost", rule: "v / na for a destination (kam?) take the accusative: idem na stanicu, do mesta; for a place (kde?) the locative: som na stanici, v meste.", node: "n_seed_kam_kde", bridge: "Exactly the Estonian pair jaama (sisseütlev, kuhu?) and jaamas (seesütlev, kus?).", slovakTerm: "Smer a poloha", grammarTerm: "Direction vs location (Acc / Loc)" },
-	{ id: "present-ujem", title: "-ovať verbs: -ujem", tagline: "pracovať → pracujem", glyph: "briefcase", rule: "Verbs in -ovať swap -ova- for -uj-: pracujem, pracuješ, pracuje, pracujeme, pracujete, pracujú.", node: "n_seed_v_ujem", bridge: "A fixed stem change, like õppima → õpin: learn the stem once; the endings are the usual -m, -š, -, -me, -te, -ú.", slovakTerm: "Slovesá na -ovať", grammarTerm: "-ovať verb conjugation" },
-	{ id: "present-em", title: "-em / -iem verbs", tagline: "písať → píšem, niesť → nesiem", glyph: "pen", rule: "The -em class: píšem, píšeš, píše, píšeme, píšete, píšu; nesiem, nesieš, nesie … nesú. The stem often changes (písať → píš-).", node: "n_seed_v_em", bridge: "Like Estonian verbs whose stem shifts between forms (tulema → tulen): memorize the ja form and the rest follows.", slovakTerm: "Slovesá na -eť/-sť", grammarTerm: "-em / -iem verb conjugation" },
-	{ id: "plural", title: "More than one", tagline: "domy, ženy, mestá, bratia", glyph: "copy", rule: "Nominative plural: masculine things -y (domy), feminine -y / -e (ženy, ulice), neuter -á (mestá), male people -i / -ia / -ovia (študenti, bratia, synovia).", node: "n_seed_plural_nom", bridge: "Estonian has one plural marker -d (majad, naised); Slovak picks the ending by gender, and male people get their own.", slovakTerm: "Plurál", grammarTerm: "Nominative plural" },
-	{ id: "numbers", title: "Counting things", tagline: "dve kávy, päť káv", glyph: "hash", rule: "After 2, 3, 4 the noun is nominative plural (dve kávy, tri domy); after 5 and up, and after veľa / málo / koľko, it is genitive plural (päť káv, veľa domov, koľko ľudí).", node: "n_seed_numerals", bridge: "Estonian puts every counted noun in the singular partitive (viis kohvi); Slovak counts 2–4 as a plural and 5+ as 'of' (genitive), like 'a lot of'.", slovakTerm: "Číslovky a počítanie", grammarTerm: "Numerals & genitive counting" },
-	{ id: "cond", title: "Would: by + -l", tagline: "Chcel by som…", glyph: "wand", rule: "The conditional is the past -l form plus by (with som / si for I / you): Chcel by som kávu. Išli by sme. Keby som mal čas…", node: "n_seed_conditional", bridge: "Estonian puts -ks on the verb (tahaksin, läheksime); Slovak keeps the -l form and adds the little word by in second position.", slovakTerm: "Podmieňovací spôsob", grammarTerm: "Conditional mood" },
-	{ id: "core-verbs", title: "Irregular core verbs", tagline: "mať, ísť, chcieť, môcť, vedieť, jesť", glyph: "star", rule: "The commonest verbs follow no pattern: mám / máš / má, idem / ideš / ide, chcem / chceš / chce, môžem / môžeš / môže, viem / vieš / vie, jem / ješ / je.", node: "n_seed_v_irregular", bridge: "Like olema, minema, tulema in Estonian, which are irregular too: learn these by heart.", repeat: true, slovakTerm: "Nepravidelné slovesá", grammarTerm: "Irregular core verbs" },
-	{ id: "motion", title: "Going: ísť vs chodiť", tagline: "idem (now) vs chodím (regularly)", glyph: "footprints", rule: "ísť = one trip, now or planned (idem do školy); chodiť = repeatedly, as a habit (chodím do školy). Prefixes add direction: prísť (arrive), odísť (leave).", node: "n_seed_motion", bridge: "Estonian uses one verb (lähen kooli / käin koolis); Slovak splits the single trip from the habit.", repeat: true, slovakTerm: "Slovesá pohybu", grammarTerm: "Verbs of motion" },
-	{ id: "clitics", title: "Little words in second place", tagline: "sa, som, mi, ho… always second", glyph: "move-horizontal", rule: "Short unstressed words (sa, si, som, si, mi, ti, mu, ho, ju, by) sit in second position in the clause: Včera som sa učil. Dal mi ho.", node: "n_seed_clitics", bridge: "Estonian has no such slot: in Slovak these words come right after the first stressed phrase, whatever else moves.", pattern: "build", slovakTerm: "Príklonky", grammarTerm: "Clitics (2nd position)" },
-	{ id: "adj-cases", title: "Adjectives in other cases", tagline: "v novej škole, s dobrým kamarátom", glyph: "paintbrush", rule: "The adjective takes its noun's case. Feminine: -ej (genitive, dative, locative), -ú (accusative), -ou (instrumental). Masculine and neuter: -ého / -ému / -om / -ým. Plural: -ých / -ým / -ými.", node: "n_seed_adj_cases", bridge: "As in Estonian, where the adjective follows the noun into every case (uues koolis, hea sõbraga); only the endings differ by gender.", slovakTerm: "Skloňovanie adjektív", grammarTerm: "Adjective case declension" },
-	{ id: "cases-mix", title: "All six cases", tagline: "Mixed: read the trigger, pick the case", glyph: "shuffle", rule: "Read the word before the blank: the preposition or the verb decides the case.", node: "n_seed_case_system", union: ["acc-fem", "loc", "acc-people", "gen", "ins", "dat", "kam-kde", "plural", "numbers"], slovakTerm: "Pády súhrnne", grammarTerm: "Case system review" },
-	{ id: "verbs-mix", title: "All verb forms", tagline: "Mixed: present, past, would", glyph: "dices", rule: "Read the time words and the subject: they decide tense, person and whether by is needed.", node: "n_seed_v_present", union: ["present", "present-em", "present-ujem", "past", "cond", "core-verbs", "motion", "modal-inf"], slovakTerm: "Slovesné tvary", grammarTerm: "Verb forms review" },
+	{
+		id: "words",
+		kind: "words",
+		title: "First words",
+		tagline: "Everyday words in real sentences",
+		glyph: "book",
+		rule: WORD_RULE,
+		slovakTerm: "Základná slovná zásoba",
+		grammarTerm: "Core vocabulary",
+	},
+	{
+		id: "present",
+		title: "I, you, we",
+		tagline: "Verbs in the present: -ám, -ím",
+		glyph: "users",
+		rule: "Present endings: ja -m, ty -š, on/ona -, my -me, vy -te, oni -ú/-ia/-jú.",
+		node: "n_seed_v_present",
+		bridge: "Like Estonian: my robíme ≈ me teeme, vy robíte ≈ te teete. Ja robím ≈ ma teen.",
+		slovakTerm: "Prítomný čas",
+		grammarTerm: "Present tense",
+	},
+	{
+		id: "acc-fem",
+		title: "Objects: -a → -u",
+		tagline: "What you have, see, drink",
+		glyph: "coffee",
+		rule: "A feminine noun in -a takes -u as the direct object: Pijem kávu. Mám sestru.",
+		node: "n_seed_acc_fem",
+		bridge: "The object case, like Estonian osastav: Pijem kávu ≈ Joon kohvi.",
+		slovakTerm: "Akuzatív (ženský rod)",
+		grammarTerm: "Feminine accusative",
+	},
+	{
+		id: "loc",
+		title: "Where? v, na, o",
+		tagline: "Kde? The locative",
+		glyph: "map-pin",
+		rule: "After v / na / o / po / pri for place or topic, the noun takes the locative: v meste, na stole, o škole.",
+		node: "n_seed_loc",
+		bridge: "Like the Estonian place cases: v meste ≈ linnas (seesütlev), na stole ≈ laual (alalütlev).",
+		slovakTerm: "Lokál",
+		grammarTerm: "Locative case",
+	},
+	{
+		id: "acc-people",
+		title: "People and animals as objects",
+		tagline: "Vidím brata",
+		glyph: "user-round",
+		rule: "A masculine person or animal as the object takes -a: Mám brata. Vidím psa. Poznáš učiteľa?",
+		node: "n_seed_acc_anim",
+		bridge: "A masculine person or animal as the object, like osastav: Vidím brata ≈ Näen venda.",
+		slovakTerm: "Akuzatív (životný)",
+		grammarTerm: "Animate masculine accusative",
+	},
+	{
+		id: "gen",
+		title: "From, to, without",
+		tagline: "do, z, od, bez + genitive",
+		glyph: "door-open",
+		rule: "do / z / od / bez / u / okolo take the genitive: do školy, z práce, bez cukru.",
+		node: "n_seed_gen",
+		bridge: "do školy ≈ kooli (sisseütlev), zo školy ≈ koolist (seestütlev), bez cukru ≈ suhkruta (ilmaütlev).",
+		slovakTerm: "Genitív",
+		grammarTerm: "Genitive case",
+	},
+	{
+		id: "ins",
+		title: "With: s, pred, za",
+		tagline: "The instrumental",
+		glyph: "handshake",
+		rule: "s / pred / za / nad / pod / medzi (for place) take the instrumental: s kamarátom, pred domom, so sestrou.",
+		node: "n_seed_ins",
+		bridge: "Like Estonian kaasaütlev -ga: s kamarátom ≈ sõbraga, autobusom ≈ bussiga.",
+		slovakTerm: "Inštrumentál",
+		grammarTerm: "Instrumental case",
+	},
+	{
+		id: "adj",
+		title: "Describing words",
+		tagline: "Adjectives agree: -ý, -á, -é",
+		glyph: "palette",
+		rule: "The adjective copies the noun's gender and number: nový dom, nová kniha, nové mesto, noví ľudia.",
+		node: "n_seed_adj_agree",
+		bridge: "Adjectives agree, as in Estonian: nová kniha → nové knihy ≈ uus raamat → uued raamatud.",
+		slovakTerm: "Adjektíva",
+		grammarTerm: "Adjective agreement",
+	},
+	{
+		id: "past",
+		title: "What happened",
+		tagline: "Past tense: -l, -la, -lo, -li",
+		glyph: "history",
+		rule: "Past tense = -l / -la / -lo / -li by the subject's gender and number, plus som/si for I/you: Robil som. Robila si.",
+		node: "n_seed_v_past",
+		bridge:
+			"Built like the Estonian perfect: an -l form plus 'be' (robil som ~ olen teinud), with som/si only for I and you.",
+		slovakTerm: "Minulý čas",
+		grammarTerm: "Past tense",
+	},
+	{
+		id: "dat",
+		title: "To and for: k",
+		tagline: "k, proti, vďaka + dative",
+		glyph: "gift",
+		rule: "k / ku / proti / vďaka / kvôli take the dative: k bratovi, ku škole, vďaka mame.",
+		node: "n_seed_dat",
+		bridge: "Like Estonian alaleütlev -le: k bratovi ≈ vennale, dal som mame ≈ andsin emale.",
+		slovakTerm: "Datív",
+		grammarTerm: "Dative case",
+	},
+	{
+		id: "modal-inf",
+		title: "Want, can, must + verb",
+		tagline: "chcem ísť, musím pracovať",
+		glyph: "key",
+		rule: "After chcieť, môcť, musieť, vedieť, smieť (and budem) the second verb stays in the infinitive -ť: Chcem ísť. Musím pracovať.",
+		node: "n_seed_modals",
+		bridge:
+			"As in Estonian tahan minna, pean töötama: the second verb does not conjugate. Slovak has one infinitive where Estonian picks -da or -ma.",
+		slovakTerm: "Modálne slovesá",
+		grammarTerm: "Modal verbs",
+	},
+	{
+		id: "kam-kde",
+		title: "Kam? or Kde?",
+		tagline: "v / na + accusative or locative",
+		glyph: "signpost",
+		rule: "v / na for a destination (kam?) take the accusative: idem na stanicu, do mesta; for a place (kde?) the locative: som na stanici, v meste.",
+		node: "n_seed_kam_kde",
+		bridge: "Exactly the Estonian pair jaama (sisseütlev, kuhu?) and jaamas (seesütlev, kus?).",
+		slovakTerm: "Smer a poloha",
+		grammarTerm: "Direction vs location (Acc / Loc)",
+	},
+	{
+		id: "present-ujem",
+		title: "-ovať verbs: -ujem",
+		tagline: "pracovať → pracujem",
+		glyph: "briefcase",
+		rule: "Verbs in -ovať swap -ova- for -uj-: pracujem, pracuješ, pracuje, pracujeme, pracujete, pracujú.",
+		node: "n_seed_v_ujem",
+		bridge:
+			"A fixed stem change, like õppima → õpin: learn the stem once; the endings are the usual -m, -š, -, -me, -te, -ú.",
+		slovakTerm: "Slovesá na -ovať",
+		grammarTerm: "-ovať verb conjugation",
+	},
+	{
+		id: "present-em",
+		title: "-em / -iem verbs",
+		tagline: "písať → píšem, niesť → nesiem",
+		glyph: "pen",
+		rule: "The -em class: píšem, píšeš, píše, píšeme, píšete, píšu; nesiem, nesieš, nesie … nesú. The stem often changes (písať → píš-).",
+		node: "n_seed_v_em",
+		bridge:
+			"Like Estonian verbs whose stem shifts between forms (tulema → tulen): memorize the ja form and the rest follows.",
+		slovakTerm: "Slovesá na -eť/-sť",
+		grammarTerm: "-em / -iem verb conjugation",
+	},
+	{
+		id: "plural",
+		title: "More than one",
+		tagline: "domy, ženy, mestá, bratia",
+		glyph: "copy",
+		rule: "Nominative plural: masculine things -y (domy), feminine -y / -e (ženy, ulice), neuter -á (mestá), male people -i / -ia / -ovia (študenti, bratia, synovia).",
+		node: "n_seed_plural_nom",
+		bridge:
+			"Estonian has one plural marker -d (majad, naised); Slovak picks the ending by gender, and male people get their own.",
+		slovakTerm: "Plurál",
+		grammarTerm: "Nominative plural",
+	},
+	{
+		id: "numbers",
+		title: "Counting things",
+		tagline: "dve kávy, päť káv",
+		glyph: "hash",
+		rule: "After 2, 3, 4 the noun is nominative plural (dve kávy, tri domy); after 5 and up, and after veľa / málo / koľko, it is genitive plural (päť káv, veľa domov, koľko ľudí).",
+		node: "n_seed_numerals",
+		bridge:
+			"Estonian puts every counted noun in the singular partitive (viis kohvi); Slovak counts 2–4 as a plural and 5+ as 'of' (genitive), like 'a lot of'.",
+		slovakTerm: "Číslovky a počítanie",
+		grammarTerm: "Numerals & genitive counting",
+	},
+	{
+		id: "cond",
+		title: "Would: by + -l",
+		tagline: "Chcel by som…",
+		glyph: "wand",
+		rule: "The conditional is the past -l form plus by (with som / si for I / you): Chcel by som kávu. Išli by sme. Keby som mal čas…",
+		node: "n_seed_conditional",
+		bridge:
+			"Estonian puts -ks on the verb (tahaksin, läheksime); Slovak keeps the -l form and adds the little word by in second position.",
+		slovakTerm: "Podmieňovací spôsob",
+		grammarTerm: "Conditional mood",
+	},
+	{
+		id: "core-verbs",
+		title: "Irregular core verbs",
+		tagline: "mať, ísť, chcieť, môcť, vedieť, jesť",
+		glyph: "star",
+		rule: "The commonest verbs follow no pattern: mám / máš / má, idem / ideš / ide, chcem / chceš / chce, môžem / môžeš / môže, viem / vieš / vie, jem / ješ / je.",
+		node: "n_seed_v_irregular",
+		bridge: "Like olema, minema, tulema in Estonian, which are irregular too: learn these by heart.",
+		repeat: true,
+		slovakTerm: "Nepravidelné slovesá",
+		grammarTerm: "Irregular core verbs",
+	},
+	{
+		id: "motion",
+		title: "Going: ísť vs chodiť",
+		tagline: "idem (now) vs chodím (regularly)",
+		glyph: "footprints",
+		rule: "ísť = one trip, now or planned (idem do školy); chodiť = repeatedly, as a habit (chodím do školy). Prefixes add direction: prísť (arrive), odísť (leave).",
+		node: "n_seed_motion",
+		bridge: "Estonian uses one verb (lähen kooli / käin koolis); Slovak splits the single trip from the habit.",
+		repeat: true,
+		slovakTerm: "Slovesá pohybu",
+		grammarTerm: "Verbs of motion",
+	},
+	{
+		id: "clitics",
+		title: "Little words in second place",
+		tagline: "sa, som, mi, ho… always second",
+		glyph: "move-horizontal",
+		rule: "Short unstressed words (sa, si, som, si, mi, ti, mu, ho, ju, by) sit in second position in the clause: Včera som sa učil. Dal mi ho.",
+		node: "n_seed_clitics",
+		bridge:
+			"Estonian has no such slot: in Slovak these words come right after the first stressed phrase, whatever else moves.",
+		pattern: "build",
+		slovakTerm: "Príklonky",
+		grammarTerm: "Clitics (2nd position)",
+	},
+	{
+		id: "adj-cases",
+		title: "Adjectives in other cases",
+		tagline: "v novej škole, s dobrým kamarátom",
+		glyph: "paintbrush",
+		rule: "The adjective takes its noun's case. Feminine: -ej (genitive, dative, locative), -ú (accusative), -ou (instrumental). Masculine and neuter: -ého / -ému / -om / -ým. Plural: -ých / -ým / -ými.",
+		node: "n_seed_adj_cases",
+		bridge:
+			"As in Estonian, where the adjective follows the noun into every case (uues koolis, hea sõbraga); only the endings differ by gender.",
+		slovakTerm: "Skloňovanie adjektív",
+		grammarTerm: "Adjective case declension",
+	},
+	{
+		id: "cases-mix",
+		title: "All six cases",
+		tagline: "Mixed: read the trigger, pick the case",
+		glyph: "shuffle",
+		rule: "Read the word before the blank: the preposition or the verb decides the case.",
+		node: "n_seed_case_system",
+		union: ["acc-fem", "loc", "acc-people", "gen", "ins", "dat", "kam-kde", "plural", "numbers"],
+		slovakTerm: "Pády súhrnne",
+		grammarTerm: "Case system review",
+	},
+	{
+		id: "verbs-mix",
+		title: "All verb forms",
+		tagline: "Mixed: present, past, would",
+		glyph: "dices",
+		rule: "Read the time words and the subject: they decide tense, person and whether by is needed.",
+		node: "n_seed_v_present",
+		union: ["present", "present-em", "present-ujem", "past", "cond", "core-verbs", "motion", "modal-inf"],
+		slovakTerm: "Slovesné tvary",
+		grammarTerm: "Verb forms review",
+	},
 	...CLUSTER_UNITS,
 	...BAND_UNITS,
 	...PAIR_UNITS,
@@ -194,9 +481,35 @@ function courseLessonUnits(course: Course): UnitInfo[] {
 		node: `n_seed_${u.id.replace(/[^a-z0-9]+/gi, "_")}`,
 		...(u.grammarTerm ? { grammarTerm: u.grammarTerm } : {}),
 		...(u.nativeTerm ? { slovakTerm: u.nativeTerm } : {}),
-		...(u.kind === "words" ? { kind: "words" as const, lemmas: u.lemmas ?? [], repeat: true } : { match: { cat: u.cat, tags: u.tags ?? [], ...(u.variants ? { variants: u.variants } : {}), after: u.after, ...(u.notAfter ? { notAfter: u.notAfter } : {}), ...(u.skipForms ? { skipForms: u.skipForms } : {}), ...(u.lemmas ? { lemmas: u.lemmas } : {}), ...(u.notWith ? { notWith: u.notWith } : {}), ...(u.distinct ? { distinct: true } : {}) } }),
+		...(u.kind === "words"
+			? { kind: "words" as const, lemmas: u.lemmas ?? [], repeat: true }
+			: {
+					match: {
+						cat: u.cat,
+						tags: u.tags ?? [],
+						...(u.variants ? { variants: u.variants } : {}),
+						after: u.after,
+						...(u.notAfter ? { notAfter: u.notAfter } : {}),
+						...(u.skipForms ? { skipForms: u.skipForms } : {}),
+						...(u.lemmas ? { lemmas: u.lemmas } : {}),
+						...(u.notWith ? { notWith: u.notWith } : {}),
+						...(u.distinct ? { distinct: true } : {}),
+					},
+				}),
 	}));
-	return [{ id: "words", kind: "words", title: "First words", tagline: "Everyday words in real sentences", glyph: "book", rule: WORD_RULE, grammarTerm: "Core vocabulary" }, ...own, ...BAND_UNITS.map(({ slovakTerm: _native, ...b }) => b)];
+	return [
+		{
+			id: "words",
+			kind: "words",
+			title: "First words",
+			tagline: "Everyday words in real sentences",
+			glyph: "book",
+			rule: WORD_RULE,
+			grammarTerm: "Core vocabulary",
+		},
+		...own,
+		...BAND_UNITS.map(({ slovakTerm: _native, ...b }) => b),
+	];
 }
 
 /** The path, in teaching order: the running language's course. */
@@ -210,7 +523,21 @@ export function unitInfo(id: UnitId): UnitInfo {
 	return allUnits().find((u) => u.id === id)!;
 }
 
-const GEN_PREPS = new Set(["do", "z", "zo", "od", "bez", "u", "okolo", "vedľa", "blízko", "počas", "podľa", "namiesto", "vrátane"]);
+const GEN_PREPS = new Set([
+	"do",
+	"z",
+	"zo",
+	"od",
+	"bez",
+	"u",
+	"okolo",
+	"vedľa",
+	"blízko",
+	"počas",
+	"podľa",
+	"namiesto",
+	"vrátane",
+]);
 const LOC_PREPS = new Set(["v", "vo", "na", "o", "po", "pri"]);
 const INS_PREPS = new Set(["s", "so", "pred", "za", "nad", "pod", "medzi"]);
 const DAT_PREPS = new Set(["k", "ku", "proti", "vďaka", "kvôli", "napriek", "oproti"]);
@@ -225,12 +552,89 @@ function wordBefore(sentence: string, at: number): string {
 	return w.toLowerCase().replace(/^[„“"'(]+|[,.;:!?„“"')]+$/g, "");
 }
 
-const PLURAL_MARKERS = new Set(["sú", "dve", "tri", "štyri", "tieto", "moje", "tvoje", "naše", "vaše", "všetky", "mnohé", "niektoré", "boli", "obe", "oba", "aké", "také", "nové", "staré", "dobré", "malé", "veľké"]);
-const COUNT_WORDS = /^(dva|dve|tri|štyri|dvaja|traja|štyria|päť|šesť|sedem|osem|deväť|desať|jedenásť|dvanásť|pätnásť|dvadsať|tridsať|päťdesiat|sto|tisíc|veľa|málo|koľko|niekoľko|pár|mnoho|dosť|trochu|viac|menej|\d+)$/;
-const MODAL_FORMS = /^(ne)?(môžem|môžeš|môže|môžeme|môžete|môžu|chcem|chceš|chce|chceme|chcete|chcú|musím|musíš|musí|musíme|musíte|musia|viem|vieš|vie|vieme|viete|vedia|smiem|smieš|smie|smieme|smiete|smú|budem|budeš|bude|budeme|budete|budú)$/;
-const CORE_VERBS = new Set(["byť", "mať", "ísť", "chcieť", "môcť", "vedieť", "jesť", "piť", "musieť", "spať", "stáť", "vidieť", "dať", "povedať", "smieť"]);
-const MOTION_VERBS = new Set(["ísť", "chodiť", "prísť", "odísť", "prichádzať", "odchádzať", "prejsť", "vojsť", "vyjsť", "cestovať", "bežať", "letieť", "niesť", "nosiť", "viezť", "voziť"]);
-const CLITICS = new Set(["sa", "si", "som", "ma", "mi", "ťa", "ti", "ho", "mu", "ju", "jej", "nás", "vás", "ich", "im", "by", "sme", "ste"]);
+const PLURAL_MARKERS = new Set([
+	"sú",
+	"dve",
+	"tri",
+	"štyri",
+	"tieto",
+	"moje",
+	"tvoje",
+	"naše",
+	"vaše",
+	"všetky",
+	"mnohé",
+	"niektoré",
+	"boli",
+	"obe",
+	"oba",
+	"aké",
+	"také",
+	"nové",
+	"staré",
+	"dobré",
+	"malé",
+	"veľké",
+]);
+const COUNT_WORDS =
+	/^(dva|dve|tri|štyri|dvaja|traja|štyria|päť|šesť|sedem|osem|deväť|desať|jedenásť|dvanásť|pätnásť|dvadsať|tridsať|päťdesiat|sto|tisíc|veľa|málo|koľko|niekoľko|pár|mnoho|dosť|trochu|viac|menej|\d+)$/;
+const MODAL_FORMS =
+	/^(ne)?(môžem|môžeš|môže|môžeme|môžete|môžu|chcem|chceš|chce|chceme|chcete|chcú|musím|musíš|musí|musíme|musíte|musia|viem|vieš|vie|vieme|viete|vedia|smiem|smieš|smie|smieme|smiete|smú|budem|budeš|bude|budeme|budete|budú)$/;
+const CORE_VERBS = new Set([
+	"byť",
+	"mať",
+	"ísť",
+	"chcieť",
+	"môcť",
+	"vedieť",
+	"jesť",
+	"piť",
+	"musieť",
+	"spať",
+	"stáť",
+	"vidieť",
+	"dať",
+	"povedať",
+	"smieť",
+]);
+const MOTION_VERBS = new Set([
+	"ísť",
+	"chodiť",
+	"prísť",
+	"odísť",
+	"prichádzať",
+	"odchádzať",
+	"prejsť",
+	"vojsť",
+	"vyjsť",
+	"cestovať",
+	"bežať",
+	"letieť",
+	"niesť",
+	"nosiť",
+	"viezť",
+	"voziť",
+]);
+const CLITICS = new Set([
+	"sa",
+	"si",
+	"som",
+	"ma",
+	"mi",
+	"ťa",
+	"ti",
+	"ho",
+	"mu",
+	"ju",
+	"jej",
+	"nás",
+	"vás",
+	"ich",
+	"im",
+	"by",
+	"sme",
+	"ste",
+]);
 const CLEAN = /^[„“"'(]+|[,.;:!?„“"')]+$/g;
 
 /** Nominative plural, read from the ending and the gender; only the
@@ -240,8 +644,15 @@ function isNomPlural(lemma: string, gender: string, answer: string, prev: string
 	if (gender === "masculine-inanimate") return answer === `${lemma}y`;
 	if (gender === "neuter") return lemma.endsWith("o") && answer === `${lemma.slice(0, -1)}á`;
 	if (gender === "masculine-animate")
-		return answer === `${lemma}i` || answer === `${lemma}ia` || answer === `${lemma}ovia` || (lemma.endsWith("k") && answer === `${lemma.slice(0, -1)}ci`) || (lemma.endsWith("h") && answer === `${lemma.slice(0, -1)}si`);
-	if (gender === "feminine") return lemma.endsWith("a") && answer === `${lemma.slice(0, -1)}y` && PLURAL_MARKERS.has(prev);
+		return (
+			answer === `${lemma}i` ||
+			answer === `${lemma}ia` ||
+			answer === `${lemma}ovia` ||
+			(lemma.endsWith("k") && answer === `${lemma.slice(0, -1)}ci`) ||
+			(lemma.endsWith("h") && answer === `${lemma.slice(0, -1)}si`)
+		);
+	if (gender === "feminine")
+		return lemma.endsWith("a") && answer === `${lemma.slice(0, -1)}y` && PLURAL_MARKERS.has(prev);
 	return false;
 }
 
@@ -279,16 +690,23 @@ export function classifyAll(entry: LexiconEntry, example: Pick<LexiconExample, "
 		return out;
 	}
 	if (entry.cat === "Verbs") {
-		const toks = exampleText(example).split(/\s+/).map((t) => t.toLowerCase().replace(CLEAN, ""));
+		const toks = exampleText(example)
+			.split(/\s+/)
+			.map((t) => t.toLowerCase().replace(CLEAN, ""));
 		if (answer === lemma) {
 			if (MODAL_FORMS.test(prev)) out.push("modal-inf");
 		} else {
 			const past = /(l|la|lo|li)$/.test(answer);
-			if (past) out.push(toks.some((t) => t === "by" || t === "keby" || t === "aby" || t === "kiežby") ? "cond" : "past");
+			if (past)
+				out.push(toks.some((t) => t === "by" || t === "keby" || t === "aby" || t === "kiežby") ? "cond" : "past");
 			else {
 				if (CORE_VERBS.has(lemma)) out.push("core-verbs");
 				else if (lemma.endsWith("ovať") && /uj(em|eš|e|eme|ete|ú)$/.test(answer)) out.push("present-ujem");
-				else if (/(iem|ieš|ie|ieme|iete|em|eš|e|eme|ete|ú)$/.test(answer) && !/(ám|áš|á|áme|áte|ajú|ím|íš|í|íme|íte|ia)$/.test(answer)) out.push("present-em");
+				else if (
+					/(iem|ieš|ie|ieme|iete|em|eš|e|eme|ete|ú)$/.test(answer) &&
+					!/(ám|áš|á|áme|áte|ajú|ím|íš|í|íme|íte|ia)$/.test(answer)
+				)
+					out.push("present-em");
 				else out.push("present");
 				if (MOTION_VERBS.has(lemma)) out.push("motion");
 			}
@@ -296,12 +714,16 @@ export function classifyAll(entry: LexiconEntry, example: Pick<LexiconExample, "
 		if (n >= 3 && n <= 7 && toks.length > 1 && CLITICS.has(toks[1]!)) out.push("clitics");
 		return out;
 	}
-	if (entry.cat === "Adjectives" && answer !== lemma) out.push(/(ej|ou|ého|ému|om|ých|ým|ými|ú|iu)$/.test(answer) ? "adj-cases" : "adj");
+	if (entry.cat === "Adjectives" && answer !== lemma)
+		out.push(/(ej|ou|ého|ému|om|ých|ým|ými|ú|iu)$/.test(answer) ? "adj-cases" : "adj");
 	return out;
 }
 
 /** The main unit one cloze example drills, or null. Pure, so tests pin it. */
-export function classifyExample(entry: LexiconEntry, example: Pick<LexiconExample, "text" | "sk" | "cloze">): UnitId | null {
+export function classifyExample(
+	entry: LexiconEntry,
+	example: Pick<LexiconExample, "text" | "sk" | "cloze">,
+): UnitId | null {
 	return classifyAll(entry, example)[0] ?? null;
 }
 
@@ -316,7 +738,11 @@ function isFirstWord(entry: LexiconEntry, example: Pick<LexiconExample, "text" |
 const WORD_POS = new Set(["Nouns", "Verbs", "Adjectives", "Adverbs"]);
 
 /** A frequency band: the word in its dictionary form, in a short sentence. */
-function inBand(entry: LexiconEntry, band: readonly [number, number], example: Pick<LexiconExample, "text" | "sk" | "cloze">): boolean {
+function inBand(
+	entry: LexiconEntry,
+	band: readonly [number, number],
+	example: Pick<LexiconExample, "text" | "sk" | "cloze">,
+): boolean {
 	if (!example.cloze || example.cloze.answer.length < 3 || !WORD_POS.has(entry.cat)) return false;
 	if (entry.rank === undefined || entry.rank < band[0] || entry.rank >= band[1]) return false;
 	if (exampleText(example).split(/\s+/).length > 9) return false;
@@ -325,7 +751,11 @@ function inBand(entry: LexiconEntry, band: readonly [number, number], example: P
 
 /** A cluster word in any short sentence; the dictionary form comes first
  *  (see candidatesFor), inflected forms only fill out a small cluster. */
-function inCluster(lemmas: ReadonlySet<string>, entry: LexiconEntry, example: Pick<LexiconExample, "text" | "sk" | "cloze">): boolean {
+function inCluster(
+	lemmas: ReadonlySet<string>,
+	entry: LexiconEntry,
+	example: Pick<LexiconExample, "text" | "sk" | "cloze">,
+): boolean {
 	if (!example.cloze || !lemmas.has(entryLemma(entry).toLowerCase())) return false;
 	return exampleText(example).split(/\s+/).length <= 9;
 }
@@ -458,7 +888,17 @@ export type Person = "I" | "you" | "he / she / it" | "we" | "you (plural)" | "th
 
 function presentPerson(answer: string): Person {
 	const a = answer.toLowerCase();
-	return a.endsWith("me") ? "we" : a.endsWith("te") ? "you (plural)" : a.endsWith("m") ? "I" : a.endsWith("š") ? "you" : /(ú|ia|jú|u)$/.test(a) ? "they" : "he / she / it";
+	return a.endsWith("me")
+		? "we"
+		: a.endsWith("te")
+			? "you (plural)"
+			: a.endsWith("m")
+				? "I"
+				: a.endsWith("š")
+					? "you"
+					: /(ú|ia|jú|u)$/.test(a)
+						? "they"
+						: "he / she / it";
 }
 
 const SUBJECT_PRONOUNS = new Set(["ja", "ty", "on", "ona", "ono", "my", "vy", "oni", "ony"]);
@@ -474,7 +914,11 @@ export function unstatedPerson(sentence: string, form: string | undefined): Pers
 /** The answer's form in plain words, from the ending and the unit: who is
  *  doing a verb, which case a noun is in. Undefined when nothing safe can
  *  be said (an adverb, a phrase, a form the unit does not name). */
-export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | "cat" | "forms" | "gender" | "formTags">, answer: string, unit: UnitId): string | undefined {
+export function describeForm(
+	entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | "cat" | "forms" | "gender" | "formTags">,
+	answer: string,
+	unit: UnitId,
+): string | undefined {
 	const isVerb = entry.pos === "verb" || entry.cat === "Verbs";
 	const a = answer.toLowerCase();
 	if (a === entryLemma(entry).toLowerCase()) return undefined;
@@ -489,7 +933,15 @@ export function describeForm(entry: Pick<LexiconEntry, "lemma" | "sk" | "pos" | 
 	// dictionary's form lists are incomplete for prefixed verbs).
 	const verbUnit = /^(present|past|cond|core-verbs|motion|verbs-mix)/.test(unit);
 	if (isVerb && ((entry.forms ?? []).some((f) => f.toLowerCase() === a) || verbUnit)) {
-		const past = a.endsWith("li") ? "they" : a.endsWith("la") ? "she" : a.endsWith("lo") ? "it" : a.endsWith("l") ? "he" : null;
+		const past = a.endsWith("li")
+			? "they"
+			: a.endsWith("la")
+				? "she"
+				: a.endsWith("lo")
+					? "it"
+					: a.endsWith("l")
+						? "he"
+						: null;
 		if (past) return `${past} (past) form of ${entry.sk}`;
 		return `${presentPerson(a)} form of ${entry.sk}`;
 	}
@@ -518,7 +970,9 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	const out: Candidate[] = [];
 	const lemmas = info.lemmas ? new Set(info.lemmas.map((l) => l.toLowerCase())) : null;
 	const union = info.union ? new Set<UnitId>(info.union) : null;
-	const matcher: CourseUnit[] | null = info.match ? [{ id: unit, kind: "grammar", title: "", tagline: "", rule: "", glyph: "", ...info.match }] : null;
+	const matcher: CourseUnit[] | null = info.match
+		? [{ id: unit, kind: "grammar", title: "", tagline: "", rule: "", glyph: "", ...info.match }]
+		: null;
 	const tag = activeCourse()?.tag ?? "sk-SK";
 	for (const entry of entries) {
 		entry.examples.forEach((ex, index) => {
@@ -542,7 +996,8 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	// A cluster unit puts the dictionary form first: that is the word to learn.
 	const band = (e: LexiconEntry) => (e.origin === "curated" ? -1 : Math.floor((e.rank ?? 1e9) / 300));
 	const words = (c: Candidate) => exampleText(c.entry.examples[c.index]!).split(/\s+/).length;
-	const inflected = (c: Candidate) => (lemmas && c.entry.examples[c.index]!.cloze!.answer.toLowerCase() !== entryLemma(c.entry).toLowerCase() ? 1 : 0);
+	const inflected = (c: Candidate) =>
+		lemmas && c.entry.examples[c.index]!.cloze!.answer.toLowerCase() !== entryLemma(c.entry).toLowerCase() ? 1 : 0;
 	return out.sort(
 		(a, b) =>
 			inflected(a) - inflected(b) ||
@@ -585,10 +1040,20 @@ export function matchCase(form: string, like: string): string {
  *  because only the ending differs — so a word with two other forms gets a
  *  three-way choice rather than a padded one. Falls back to `pool` (answers
  *  of other items in the unit) only when the word has no other form. */
-export function formOptions(entry: LexiconEntry, answer: string, pool: readonly string[], rand: () => number): string[] {
+export function formOptions(
+	entry: LexiconEntry,
+	answer: string,
+	pool: readonly string[],
+	rand: () => number,
+): string[] {
 	const seen = new Set([fold(answer)]);
 	const picks: string[] = [];
-	const own = [entryLemma(entry), ...(entry.forms ?? []), ...(entry.declension?.singular ?? []), ...(entry.declension?.plural ?? [])];
+	const own = [
+		entryLemma(entry),
+		...(entry.forms ?? []),
+		...(entry.declension?.singular ?? []),
+		...(entry.declension?.plural ?? []),
+	];
 	const add = (f: string) => {
 		if (!f || f.includes(" ")) return;
 		const k = fold(f);
@@ -623,7 +1088,11 @@ export function sameSentence(expected: string[], given: string[]): boolean {
 /** Grade a listening rep. The learner hears the whole sentence, so typing
  *  the whole sentence is as right as typing only the missing word
  *  (dictation): case and punctuation never count, accents are "accents". */
-export function gradeListen(item: Pick<LessonItem, "answer" | "sentence">, given: string, tag = "sk-SK"): "exact" | "accents" | "wrong" {
+export function gradeListen(
+	item: Pick<LessonItem, "answer" | "sentence">,
+	given: string,
+	tag = "sk-SK",
+): "exact" | "accents" | "wrong" {
 	const words = (s: string) =>
 		s
 			.normalize("NFC")
@@ -645,7 +1114,10 @@ export function unheardWord(sentence: string, given: string, tag = "sk-SK"): str
 	const trimEdges = (w: string) => w.replace(/^[„“"'(¿¡]+|[,.;:!?„“"')…]+$/gu, "");
 	const key = (w: string) => foldDiacritics(trimEdges(w.normalize("NFC").toLocaleLowerCase(tag)));
 	const heard = new Set(sentence.split(/\s+/).map(key));
-	const typed = given.trim().split(/\s+/).find((w) => key(w) !== "" && !heard.has(key(w)));
+	const typed = given
+		.trim()
+		.split(/\s+/)
+		.find((w) => key(w) !== "" && !heard.has(key(w)));
 	return typed === undefined ? undefined : trimEdges(typed);
 }
 
@@ -654,27 +1126,92 @@ export function unheardWord(sentence: string, given: string, tag = "sk-SK"): str
  *  form marked), then recognition, then production, with a word bank and a
  *  listening rep to vary the work. The patterns here are 12 reps long, the
  *  app's own choice: a lesson that fits one short sitting. */
-const LESSON_PATTERN: ItemKind[] = ["meaning", "meaning", "choose", "type", "build", "type", "listen", "type", "choose", "build", "listen", "type"];
+const LESSON_PATTERN: ItemKind[] = [
+	"meaning",
+	"meaning",
+	"choose",
+	"type",
+	"build",
+	"type",
+	"listen",
+	"type",
+	"choose",
+	"build",
+	"listen",
+	"type",
+];
 
 /** The first lesson of a grammar unit, forms first: the case work comes
  *  before the two vocabulary reps, same multiset as LESSON_PATTERN. A
  *  lesson that follows the case sketch should test the case. Vocabulary
  *  units stay on LESSON_PATTERN, where the meaning reps carry their work. */
-export const GRAMMAR_FIRST_PATTERN: ItemKind[] = ["choose", "type", "meaning", "build", "type", "listen", "type", "choose", "build", "listen", "meaning", "type"];
+export const GRAMMAR_FIRST_PATTERN: ItemKind[] = [
+	"choose",
+	"type",
+	"meaning",
+	"build",
+	"type",
+	"listen",
+	"type",
+	"choose",
+	"build",
+	"listen",
+	"meaning",
+	"type",
+];
 
 /** Once a unit is known: production almost throughout. Picking a form from
  *  four trains recognizing it; typing it trains producing it, and producing
  *  endings is the gap (reading is ahead of production). */
-const PRACTICED_PATTERN: ItemKind[] = ["type", "type", "choose", "type", "listen", "type", "build", "type", "type", "listen", "type", "type"];
+const PRACTICED_PATTERN: ItemKind[] = [
+	"type",
+	"type",
+	"choose",
+	"type",
+	"listen",
+	"type",
+	"build",
+	"type",
+	"type",
+	"listen",
+	"type",
+	"type",
+];
 
 /** Once a unit is complete (unitDone): production only. No choose rep
  *  (recognition is done teaching), more of the lesson from the units it
  *  is confused with (see MIX_SLOTS), and the player hides the translation
  *  until the answer — desirable difficulties (docs/research/
  *  desirable-difficulties.md), difficulty that rises with mastery. */
-const STRONG_PATTERN: ItemKind[] = ["type", "type", "build", "type", "listen", "type", "type", "build", "type", "listen", "type", "type"];
+const STRONG_PATTERN: ItemKind[] = [
+	"type",
+	"type",
+	"build",
+	"type",
+	"listen",
+	"type",
+	"type",
+	"build",
+	"type",
+	"listen",
+	"type",
+	"type",
+];
 /** Word-order units: rebuild the sentence, with a listening rep to vary it. */
-const BUILD_PATTERN: ItemKind[] = ["build", "build", "listen", "build", "build", "build", "listen", "build", "build", "build", "listen", "build"];
+const BUILD_PATTERN: ItemKind[] = [
+	"build",
+	"build",
+	"listen",
+	"build",
+	"build",
+	"build",
+	"listen",
+	"build",
+	"build",
+	"build",
+	"listen",
+	"build",
+];
 
 /** Slots (by position) that take an item from another unit: 2 in a new unit,
  *  4 in a practiced one, 6 in a complete one. The counts are the app's own
@@ -782,11 +1319,17 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	if (form) item.form = form;
 	const person = vocabulary ? undefined : unstatedPerson(exampleText(ex), form);
 	if (person) item.person = person;
-	const alts = [...knownVariants(answer), ...(info.match ? sameCellForms(c.entry, answer, activeCourse()?.tag ?? "sk-SK") : [])];
+	const alts = [
+		...knownVariants(answer),
+		...(info.match ? sameCellForms(c.entry, answer, activeCourse()?.tag ?? "sk-SK") : []),
+	];
 	if (alts.length > 0) item.alternatives = alts;
 	const trigger = vocabulary ? undefined : triggerOf(exampleText(ex), at, c.unit);
 	if (trigger) item.trigger = trigger;
-	const options = () => (info.kind === "words" ? wordOptions(answer, entryLemma(c.entry), pool, rand) : formOptions(c.entry, answer, pool, rand));
+	const options = () =>
+		info.kind === "words"
+			? wordOptions(answer, entryLemma(c.entry), pool, rand)
+			: formOptions(c.entry, answer, pool, rand);
 	if (kind === "choose") item.options = options();
 	if (kind === "build") {
 		const tokens = sentenceTokens(exampleText(ex));
@@ -828,13 +1371,32 @@ export interface LessonPlan {
 export function buildLesson(
 	entries: readonly LexiconEntry[],
 	unit: UnitId,
-	opts: { seed: number; recent?: ReadonlySet<string>; length?: number; stage?: UnitStage; mix?: readonly UnitId[]; pattern?: readonly ItemKind[]; gender?: AtlasGender; weakGender?: AtlasGender },
+	opts: {
+		seed: number;
+		recent?: ReadonlySet<string>;
+		length?: number;
+		stage?: UnitStage;
+		mix?: readonly UnitId[];
+		pattern?: readonly ItemKind[];
+		gender?: AtlasGender;
+		weakGender?: AtlasGender;
+	},
 ): LessonPlan {
 	const rand = rng(opts.seed);
 	const info = unitInfo(unit);
 	const stage = opts.stage ?? "new";
 	const length = opts.length ?? LESSON_PATTERN.length;
-	const base = opts.pattern ?? (info.pattern === "build" ? BUILD_PATTERN : stage === "strong" ? STRONG_PATTERN : stage === "practiced" ? PRACTICED_PATTERN : info.kind === "words" ? LESSON_PATTERN : GRAMMAR_FIRST_PATTERN);
+	const base =
+		opts.pattern ??
+		(info.pattern === "build"
+			? BUILD_PATTERN
+			: stage === "strong"
+				? STRONG_PATTERN
+				: stage === "practiced"
+					? PRACTICED_PATTERN
+					: info.kind === "words"
+						? LESSON_PATTERN
+						: GRAMMAR_FIRST_PATTERN);
 	const pattern = base.slice(0, length);
 	const sourceFor = (u: UnitId, filterGender?: AtlasGender, weakGender?: AtlasGender) => {
 		const raw = candidatesFor(entries, u);
@@ -863,10 +1425,16 @@ export function buildLesson(
 		return { top, list: shuffle(baseList, rand) };
 	};
 	const main = sourceFor(unit, opts.gender, opts.weakGender);
-	const mixes = (opts.mix ?? []).filter((u) => u !== unit).map((u) => sourceFor(u)).filter((m) => m.list.length > 0);
+	const mixes = (opts.mix ?? [])
+		.filter((u) => u !== unit)
+		.map((u) => sourceFor(u))
+		.filter((m) => m.list.length > 0);
 	// Distractors: other answers of the unit (forms), or for a vocabulary
 	// unit the other words themselves, in their dictionary form.
-	const poolOf = (top: Candidate[], u: UnitId) => (unitInfo(u).kind === "words" ? [...new Set(top.map((c) => entryLemma(c.entry)))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer));
+	const poolOf = (top: Candidate[], u: UnitId) =>
+		unitInfo(u).kind === "words"
+			? [...new Set(top.map((c) => entryLemma(c.entry)))]
+			: top.map((c) => c.entry.examples[c.index]!.cloze!.answer);
 	const pool = poolOf(main.top, unit);
 	const used = new Set<string>();
 	const keyOf = (c: Candidate) => (info.repeat ? `${c.entry.slug}#${c.index}` : c.entry.slug);
@@ -882,14 +1450,22 @@ export function buildLesson(
 			if (kind === "choose" && info.kind === "words") return fold(ex.cloze!.answer) === fold(entryLemma(c.entry));
 			return true;
 		};
-		const take = (list: Candidate[]) => list.find((c) => !used.has(keyOf(c)) && fits(c)) ?? list.find((c) => !used.has(keyOf(c)));
+		const take = (list: Candidate[]) =>
+			list.find((c) => !used.has(keyOf(c)) && fits(c)) ?? list.find((c) => !used.has(keyOf(c)));
 		const mix = MIX_SLOTS[stage].includes(slot) && mixes.length > 0 ? mixes[Math.floor(rand() * mixes.length)]! : null;
 		const fromMix = mix ? take(mix.list) : undefined;
 		const pick = fromMix ?? take(main.list);
 		if (!pick) return;
 		used.add(keyOf(pick));
 		const item = buildItem(pick, kind, fromMix ? poolOf(mix!.top, pick.unit) : pool, rand);
-		if (kind === "meaning") item.options = meaningChoices(item.translation, (fromMix ? mix!.top : main.top).filter((c) => c.entry.slug !== pick.entry.slug).map((c) => c.entry.examples[c.index]!.en), rand);
+		if (kind === "meaning")
+			item.options = meaningChoices(
+				item.translation,
+				(fromMix ? mix!.top : main.top)
+					.filter((c) => c.entry.slug !== pick.entry.slug)
+					.map((c) => c.entry.examples[c.index]!.en),
+				rand,
+			);
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
@@ -921,13 +1497,15 @@ export function buildPairsLesson(
 	const rand = rng(opts.seed);
 	const length = opts.length ?? LESSON_PATTERN.length;
 	const chapter = unit.startsWith("pairs-") ? unit.slice("pairs-".length) : unit;
-	const deck = pairsWithSentences(entries, chapterPairs(chapter)).flatMap(({ pair, sentences }) => sentences.map((s) => ({ pair, s })));
+	const deck = pairsWithSentences(entries, chapterPairs(chapter)).flatMap(({ pair, sentences }) =>
+		sentences.map((s) => ({ pair, s })),
+	);
 	const shuffled = shuffle(deck, rand);
 	const fresh = shuffled.filter((x) => !opts.recent?.has(`${x.s.entry.slug}#${x.s.index}`));
 	const order = [...fresh, ...shuffled.filter((x) => opts.recent?.has(`${x.s.entry.slug}#${x.s.index}`))];
 	const tasks = [...(opts.tasks ?? [])];
 	const items: LessonItem[] = [];
-	for (let k = 0; items.length < length && order.length > 0; ) {
+	for (let k = 0; items.length < length && order.length > 0;) {
 		if (tasks.length > 0 && PAIRS_TASK_SLOTS.includes(items.length)) {
 			items.push(tasks.shift()!);
 			continue;
@@ -939,7 +1517,13 @@ export function buildPairsLesson(
 	return { unit, items };
 }
 
-function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId, entries: readonly LexiconEntry[], rand: () => number, info?: { cue?: string; explain?: LessonExplain }): LessonItem {
+function pairItem(
+	{ pair, s }: { pair: PairDef; s: PairSentence },
+	unit: UnitId,
+	entries: readonly LexiconEntry[],
+	rand: () => number,
+	info?: { cue?: string; explain?: LessonExplain },
+): LessonItem {
 	const ex = s.entry.examples[s.index]!;
 	// The twins' own meanings, first sense, imperfective/perfective marker
 	// kept — for a pair it is often the only difference the chip can show.
@@ -963,24 +1547,48 @@ function pairItem({ pair, s }: { pair: PairDef; s: PairSentence }, unit: UnitId,
 		after: exampleText(ex).slice(s.at + s.form.length),
 		hint: `${pair.a} = ${gloss(pair.a)} · ${pair.b} = ${gloss(pair.b)}`,
 		options: shuffle([pair.a, pair.b], rand),
-		pair: { id: pair.id, rule: pair.rule, bridge: pair.bridge, ...(info?.cue ? { cue: info.cue } : {}), ...(info?.explain ? { explain: info.explain } : {}) },
+		pair: {
+			id: pair.id,
+			rule: pair.rule,
+			bridge: pair.bridge,
+			...(info?.cue ? { cue: info.cue } : {}),
+			...(info?.explain ? { explain: info.explain } : {}),
+		},
 	};
 }
 
 /** The "Same pattern" examples a Why? panel shows for a rep: other sentences of
  *  its unit, never a form-reading task (a grid or a cue rep, whose sentence is
  *  empty or a bare span), and none at all for a task rep itself (N2). */
-export function patternExamples(items: readonly LessonItem[], current: LessonItem | undefined, limit = 2): LessonItem[] {
+export function patternExamples(
+	items: readonly LessonItem[],
+	current: LessonItem | undefined,
+	limit = 2,
+): LessonItem[] {
 	if (!current || current.task) return [];
-	return items.filter((o) => !o.task && o.unit === current.unit && o.sentence !== current.sentence && !o.again).slice(0, limit);
+	return items
+		.filter((o) => !o.task && o.unit === current.unit && o.sentence !== current.sentence && !o.again)
+		.slice(0, limit);
 }
 
 /** Blitz: choose-only reps across the given units, as many as a minute holds. */
-export function buildBlitz(entries: readonly LexiconEntry[], units: readonly UnitId[], seed: number, count = 40): LessonPlan & { units: UnitId[] } {
+export function buildBlitz(
+	entries: readonly LexiconEntry[],
+	units: readonly UnitId[],
+	seed: number,
+	count = 40,
+): LessonPlan & { units: UnitId[] } {
 	const rand = rng(seed);
 	const per = units.map((u) => {
 		const top = candidatesFor(entries, u).slice(0, 120);
-		return { u, top, pool: unitInfo(u).kind === "words" ? [...new Set(top.map((c) => entryLemma(c.entry)))] : top.map((c) => c.entry.examples[c.index]!.cloze!.answer) };
+		return {
+			u,
+			top,
+			pool:
+				unitInfo(u).kind === "words"
+					? [...new Set(top.map((c) => entryLemma(c.entry)))]
+					: top.map((c) => c.entry.examples[c.index]!.cloze!.answer),
+		};
 	});
 	const items: LessonItem[] = [];
 	const used = new Set<string>();
@@ -993,7 +1601,11 @@ export function buildBlitz(entries: readonly LexiconEntry[], units: readonly Uni
 		used.add(id);
 		items.push(buildItem(c, "choose", group.pool, rand));
 	}
-	return { unit: units[0] ?? (allUnits().find((u) => !u.kind || u.kind === "grammar")?.id as UnitId), units: [...units], items };
+	return {
+		unit: units[0] ?? (allUnits().find((u) => !u.kind || u.kind === "grammar")?.id as UnitId),
+		units: [...units],
+		items,
+	};
 }
 
 // ─── Scoring, streaks, levels ──────────────────────────────────────────────
@@ -1027,7 +1639,10 @@ export interface LessonScore {
 /** A finished lesson's score from its reps alone. The server records the
  *  same numbers (src/server/lesson.ts), so the end screen can show them the
  *  moment the last answer is given instead of waiting for the save. */
-export function lessonScore(reps: readonly { kind: ItemKind; verdict: RepVerdict; assisted?: boolean }[], mode: "lesson" | "blitz"): LessonScore {
+export function lessonScore(
+	reps: readonly { kind: ItemKind; verdict: RepVerdict; assisted?: boolean }[],
+	mode: "lesson" | "blitz",
+): LessonScore {
 	let combo = 0;
 	let xp = 0;
 	let correct = 0;
@@ -1085,7 +1700,11 @@ export const DAYS_IN_WEEK = 7;
  * days the plan does not ask for (7 − daysPerWeek). A streak should reward
  * the habit, not punish a planned off day.
  */
-export function streakOf(activeDays: ReadonlySet<string>, today: string, restAllowance = 1): { days: number; restUsed: boolean; activeToday: boolean } {
+export function streakOf(
+	activeDays: ReadonlySet<string>,
+	today: string,
+	restAllowance = 1,
+): { days: number; restUsed: boolean; activeToday: boolean } {
 	const activeToday = activeDays.has(today);
 	const yesterday = addDays(today, -1);
 	let cursor = activeToday ? today : yesterday;

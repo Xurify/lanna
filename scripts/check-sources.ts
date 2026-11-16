@@ -41,10 +41,14 @@ const fold = (s: string) =>
 		.replace(/\p{M}/gu, "")
 		.replace(/[^a-z]+/g, "");
 
-async function fetchWork(doi: string): Promise<{ title: string; first: string; names: string[]; year: number | null } | "missing" | "error"> {
+async function fetchWork(
+	doi: string,
+): Promise<{ title: string; first: string; names: string[]; year: number | null } | "missing" | "error"> {
 	for (let attempt = 0; attempt < 5; attempt++) {
 		try {
-			const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, { headers: { "User-Agent": "langharness-source-check/1.0" } });
+			const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, {
+				headers: { "User-Agent": "langharness-source-check/1.0" },
+			});
 			if (res.status === 404) return "missing";
 			if (res.ok) {
 				const m = ((await res.json()) as { message: Record<string, unknown> }).message;
@@ -85,7 +89,9 @@ for (const s of SOURCES) {
 	const yearGap = w.year ? Math.abs(w.year - s.year) : 0;
 	const status = firstOk && titleOk ? (yearGap > 2 ? "warn" : "ok  ") : "FAIL";
 	if (status === "FAIL") bad++;
-	console.log(`${status} ${s.id.padEnd(16)} ${w.first.padEnd(16)} ${String(w.year ?? "?").padEnd(5)} title match ${Math.round(titleScore * 100)}%${yearGap > 2 ? ` (year differs: ${s.year} vs ${w.year})` : ""}`);
+	console.log(
+		`${status} ${s.id.padEnd(16)} ${w.first.padEnd(16)} ${String(w.year ?? "?").padEnd(5)} title match ${Math.round(titleScore * 100)}%${yearGap > 2 ? ` (year differs: ${s.year} vs ${w.year})` : ""}`,
+	);
 }
 console.log(`${checked} DOIs checked, ${bad} problem${bad === 1 ? "" : "s"}.`);
 process.exit(bad ? 1 : 0);

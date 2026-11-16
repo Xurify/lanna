@@ -49,7 +49,14 @@ export function ensureMissNote(a: LexiconEntry, b: LexiconEntry, opts: MissNoteO
 
 async function ask(engine: PiEngine, systemPrompt: string, prompt: string): Promise<{ text: string; cost: number }> {
 	let cost = 0;
-	const { text } = await runSubagent([], { role: "researcher", engine, systemPrompt, prompt, maxTurns: 1, onUsage: (u) => (cost += u.cost?.total ?? 0) });
+	const { text } = await runSubagent([], {
+		role: "researcher",
+		engine,
+		systemPrompt,
+		prompt,
+		maxTurns: 1,
+		onUsage: (u) => (cost += u.cost?.total ?? 0),
+	});
 	return { text, cost };
 }
 
@@ -67,12 +74,32 @@ async function writeMissNote(a: LexiconEntry, b: LexiconEntry, opts: MissNoteOpt
 		console.warn("[miss-note] the model call failed:", err instanceof Error ? err.message : err);
 		return null;
 	}
-	let note = missNoteRecord(evidence, parseMissNote(written.text), written.text, { model: resolved.model, now: opts.now ?? new Date(), cost: written.cost }, tag);
+	let note = missNoteRecord(
+		evidence,
+		parseMissNote(written.text),
+		written.text,
+		{ model: resolved.model, now: opts.now ?? new Date(), cost: written.cost },
+		tag,
+	);
 	if (note.status === "kept" && opts.judge !== false) {
 		try {
-			const judged = await ask(resolved.engine, MISS_NOTE_JUDGE_SYSTEM(english), judgeMissNoteBrief(evidence, note.note!, english));
-			const judge = parseJudgement(judged.text) ?? { supported: false, problem: "the judge did not answer in the shape asked for" };
-			note = { ...note, judge, cost: (note.cost ?? 0) + judged.cost, ...(judge.supported ? {} : { status: "rejected" as const, reason: `judge: ${judge.problem ?? "not supported"}` }) };
+			const judged = await ask(
+				resolved.engine,
+				MISS_NOTE_JUDGE_SYSTEM(english),
+				judgeMissNoteBrief(evidence, note.note!, english),
+			);
+			const judge = parseJudgement(judged.text) ?? {
+				supported: false,
+				problem: "the judge did not answer in the shape asked for",
+			};
+			note = {
+				...note,
+				judge,
+				cost: (note.cost ?? 0) + judged.cost,
+				...(judge.supported
+					? {}
+					: { status: "rejected" as const, reason: `judge: ${judge.problem ?? "not supported"}` }),
+			};
 		} catch (err) {
 			console.warn("[miss-note] the judge call failed:", err instanceof Error ? err.message : err);
 			return null;

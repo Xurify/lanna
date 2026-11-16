@@ -3,7 +3,14 @@
  * POST /api/words — adds a word to the active FSRS word bank / review deck (and optionally favorites it)
  */
 
-import { addWordToBank, BODY_LIMITS, bodyTooLarge, getWordBank, lookupSelectionAsync, type WordBankQuery } from "@/src/server";
+import {
+	addWordToBank,
+	BODY_LIMITS,
+	bodyTooLarge,
+	getWordBank,
+	lookupSelectionAsync,
+	type WordBankQuery,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -58,11 +65,12 @@ export async function POST(req: Request) {
 		favorite?: unknown;
 	} | null;
 
-	const target = typeof body?.slug === "string" && body.slug.trim()
-		? body.slug.trim()
-		: typeof body?.word === "string" && body.word.trim()
-			? body.word.trim()
-			: "";
+	const target =
+		typeof body?.slug === "string" && body.slug.trim()
+			? body.slug.trim()
+			: typeof body?.word === "string" && body.word.trim()
+				? body.word.trim()
+				: "";
 
 	if (!target) {
 		return Response.json({ message: "slug or word is required" }, { status: 400 });

@@ -39,13 +39,15 @@ const DEFAULT_PORT = 3010;
 const REMOTE_OFF_MESSAGE = "Remote access is off. Turn it on in Settings → Devices, on this computer.";
 const ONLY_THIS_COMPUTER_API = "The LangHarness API only answers this computer.";
 const ONLY_THIS_COMPUTER_PAGE = "LangHarness only answers this computer.";
-const DESKTOP_ONLY_API = "Desktop API access requires the trusted LearnHarness window.";
+const DESKTOP_ONLY_API = "Desktop API access requires the trusted LangHarness window.";
 const ADDRESS_NOT_ALLOWED = "This address is not allowed. Use this computer’s Tailscale name.";
-const PUBLIC_NOT_CONFIGURED = "The public address is not set up: LH_PUBLIC_HOST must be a host name, and LH_PROXY_SECRET at least 32 characters.";
+const PUBLIC_NOT_CONFIGURED =
+	"The public address is not set up: LH_PUBLIC_HOST must be a host name, and LH_PROXY_SECRET at least 32 characters.";
 const ONLY_THROUGH_PROXY = "This address answers only through its reverse proxy.";
 const PUBLIC_ADDRESS_MISMATCH = "This address is not allowed. Use the public address.";
 const HTTPS_REQUIRED = "This address needs HTTPS.";
-const WEB_ACCESS_OFF = "Web access is off. Turn it on in Settings → Devices, or run npm run web:password on the server.";
+const WEB_ACCESS_OFF =
+	"Web access is off. Turn it on in Settings → Devices, or run npm run web:password on the server.";
 const CROSS_ORIGIN = "This request did not come from LangHarness’s own page.";
 
 /**
@@ -86,7 +88,11 @@ export type AccessInput = {
 	publicMode?: PublicMode | null;
 };
 
-type AccessDecision = { action: "allow" } | { action: "refuse"; message: string } | { action: "pair" } | { action: "login" };
+type AccessDecision =
+	| { action: "allow" }
+	| { action: "refuse"; message: string }
+	| { action: "pair" }
+	| { action: "login" };
 
 /** Whether a request came through a reverse proxy (Tailscale Serve, a tunnel, anything). */
 function proxied(headers: Headers): boolean {
@@ -138,13 +144,20 @@ export function validPublicHost(host: string): boolean {
 }
 
 /** Next 16 does not hand the TCP peer to proxy.ts, and every x-forwarded-* header is either filled in by Next or sent by the client, so only a secret the reverse proxy adds can prove a request came through it. */
-export function publicModeFrom(headers: Headers, env: Record<string, string | undefined> = process.env): PublicMode | null {
+export function publicModeFrom(
+	headers: Headers,
+	env: Record<string, string | undefined> = process.env,
+): PublicMode | null {
 	const host = env.LH_PUBLIC_HOST?.trim().toLowerCase();
 	if (!host) return null;
 	const secret = env.LH_PROXY_SECRET ?? "";
 	const secretConfigured = secret.length >= PROXY_SECRET_MIN_LENGTH;
 	const supplied = headers.get(PROXY_SECRET_HEADER);
-	return { host, secretConfigured, secretOk: secretConfigured && supplied !== null && sameHash(hashSecret(supplied), hashSecret(secret)) };
+	return {
+		host,
+		secretConfigured,
+		secretOk: secretConfigured && supplied !== null && sameHash(hashSecret(supplied), hashSecret(secret)),
+	};
 }
 
 export function originAllowed(origin: string | null, host: string): boolean {
@@ -157,18 +170,22 @@ function changesState(method: string): boolean {
 
 /** nginx sends the upstream's own name (127.0.0.1:3010) as Host unless told otherwise, which would look like this computer, so no request at the public address is treated as local. */
 function decidePublic(input: AccessInput, mode: PublicMode): AccessDecision {
-	if (!validPublicHost(mode.host) || !mode.secretConfigured) return { action: "refuse", message: PUBLIC_NOT_CONFIGURED };
+	if (!validPublicHost(mode.host) || !mode.secretConfigured)
+		return { action: "refuse", message: PUBLIC_NOT_CONFIGURED };
 	if (!mode.secretOk) return { action: "refuse", message: ONLY_THROUGH_PROXY };
-	if (!addressedBy(input).every((name) => name?.toLowerCase() === mode.host)) return { action: "refuse", message: PUBLIC_ADDRESS_MISMATCH };
+	if (!addressedBy(input).every((name) => name?.toLowerCase() === mode.host))
+		return { action: "refuse", message: PUBLIC_ADDRESS_MISMATCH };
 	if (input.headers.get("x-forwarded-proto") !== "https") return { action: "refuse", message: HTTPS_REQUIRED };
 	if (!input.enabled) return { action: "refuse", message: WEB_ACCESS_OFF };
-	if (changesState(input.method) && !originAllowed(input.headers.get("origin"), mode.host)) return { action: "refuse", message: CROSS_ORIGIN };
+	if (changesState(input.method) && !originAllowed(input.headers.get("origin"), mode.host))
+		return { action: "refuse", message: CROSS_ORIGIN };
 	if (publicWebPath(input.pathname, input.method)) return { action: "allow" };
 	return input.paired ? { action: "allow" } : { action: "login" };
 }
 
 export function safeNext(path: string | null | undefined): string {
-	if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\") || /[\u0000-\u001f]/.test(path)) return "/";
+	if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\") || /[\u0000-\u001f]/.test(path))
+		return "/";
 	if (path === "/login" || path.startsWith("/login?") || path.startsWith("/pair")) return "/";
 	return path;
 }
@@ -206,7 +223,8 @@ export function decideAccess(input: AccessInput): AccessDecision {
 		if (viaProxy) return { action: "refuse", message: REMOTE_OFF_MESSAGE };
 		return { action: "refuse", message: api ? ONLY_THIS_COMPUTER_API : ONLY_THIS_COMPUTER_PAGE };
 	}
-	if (!names.every((name) => loopbackHost(name) || tailnetHost(name))) return { action: "refuse", message: ADDRESS_NOT_ALLOWED };
+	if (!names.every((name) => loopbackHost(name) || tailnetHost(name)))
+		return { action: "refuse", message: ADDRESS_NOT_ALLOWED };
 	if (input.desktopWindow) return { action: "allow" };
 	if (publicPath(input.pathname, input.method)) return { action: "allow" };
 	if (input.paired) return { action: "allow" };
@@ -286,7 +304,10 @@ export function deviceNameFromAgent(agent: string | null): string {
 /** A name the owner typed: no control characters, 40 characters at most. */
 export function cleanDeviceName(input: unknown, fallback: string): string {
 	if (typeof input !== "string") return fallback;
-	const name = input.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 40);
+	const name = input
+		.replace(/[\u0000-\u001f\u007f]/g, "")
+		.trim()
+		.slice(0, 40);
 	return name || fallback;
 }
 

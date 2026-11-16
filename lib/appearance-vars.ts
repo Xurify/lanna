@@ -27,10 +27,20 @@ export function resolveAppearance(delta: AppearanceSettings | undefined) {
  *  → border #434343 (+47)) — the "per-mode derivation in code" the schema
  *  promises, as the thinnest curve that keeps the palette's relationships. */
 function raise(hex: string, add: number): string {
-	const n = hex.length === 4
-		? hex.slice(1).split("").map((c) => parseInt(c + c, 16))
-		: [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
-	return `#${n.map((c) => Math.min(255, c + add).toString(16).padStart(2, "0")).join("")}`;
+	const n =
+		hex.length === 4
+			? hex
+					.slice(1)
+					.split("")
+					.map((c) => parseInt(c + c, 16))
+			: [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+	return `#${n
+		.map((c) =>
+			Math.min(255, c + add)
+				.toString(16)
+				.padStart(2, "0"),
+		)
+		.join("")}`;
 }
 
 /** The derived palette a chosen background implies (dark curve): background
@@ -83,9 +93,6 @@ export function appearanceVars(a: ReturnType<typeof resolveAppearance>): Record<
  *  (Owner repro, fix wave: resets and toggle-backs never reverted because
  *  application only ever SET properties — the removal half was missing.)
  *  Exported for tests. */
-export function staleVarNames(
-	prevNames: readonly string[],
-	nextVars: Record<string, string>,
-): string[] {
+export function staleVarNames(prevNames: readonly string[], nextVars: Record<string, string>): string[] {
 	return prevNames.filter((n) => !(n in nextVars));
 }

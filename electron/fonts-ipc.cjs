@@ -21,11 +21,21 @@ const { execFile } = require("node:child_process");
 const COMMANDS = {
 	win32: {
 		file: "powershell.exe",
-		args: ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Drawing; (New-Object System.Drawing.Text.InstalledFontCollection).Families | ForEach-Object { $_.Name }"],
+		args: [
+			"-NoProfile",
+			"-NonInteractive",
+			"-Command",
+			"[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Drawing; (New-Object System.Drawing.Text.InstalledFontCollection).Families | ForEach-Object { $_.Name }",
+		],
 	},
 	darwin: {
 		file: "osascript",
-		args: ["-l", "JavaScript", "-e", 'ObjC.import("AppKit"); ObjC.unwrap($.NSFontManager.sharedFontManager.availableFontFamilies).join("\\n")'],
+		args: [
+			"-l",
+			"JavaScript",
+			"-e",
+			'ObjC.import("AppKit"); ObjC.unwrap($.NSFontManager.sharedFontManager.availableFontFamilies).join("\\n")',
+		],
 	},
 	linux: { file: "fc-list", args: [":", "family"] },
 };
@@ -49,7 +59,9 @@ function listInstalledFonts({ platform = process.platform, run = execFile } = {}
 	if (cached) return cached;
 	const command = COMMANDS[platform] ?? COMMANDS.linux;
 	const read = new Promise((resolve) => {
-		run(command.file, command.args, { timeout: 15_000, maxBuffer: 8 * 1024 * 1024, windowsHide: true }, (err, stdout) => resolve(err ? [] : parseFontList(stdout)));
+		run(command.file, command.args, { timeout: 15_000, maxBuffer: 8 * 1024 * 1024, windowsHide: true }, (err, stdout) =>
+			resolve(err ? [] : parseFontList(stdout)),
+		);
 	});
 	cached = read;
 	// A failed or empty read is tried again next time instead of staying empty until a restart.

@@ -1,7 +1,18 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { invalidInputResult, questionResult } from "./tool-execute.ts";
-import { askOptionProblems, explainInputProblems, parseOptionsIfString, quizInputProblems } from "../core/question-core.ts";
-import { askInputSchema, explainInputBase, explainInputObject, probeQuizInputSchema, quizInputObject } from "../core/question-schemas.ts";
+import {
+	askOptionProblems,
+	explainInputProblems,
+	parseOptionsIfString,
+	quizInputProblems,
+} from "../core/question-core.ts";
+import {
+	askInputSchema,
+	explainInputBase,
+	explainInputObject,
+	probeQuizInputSchema,
+	quizInputObject,
+} from "../core/question-schemas.ts";
 import { filterEnabledTools, type EnabledTools } from "../core/pending.ts";
 import type { JobRecord } from "../core/contracts.ts";
 import type { JobStore } from "../core/ports.ts";
@@ -14,7 +25,6 @@ import { findTool } from "./tools/find.ts";
 import { grepTool } from "./tools/grep.ts";
 import { healToolRecord } from "./tools/heal.ts";
 import { languageTools, type ReviewSeam } from "./tools/language.ts";
-
 
 /**
  * The agent-split tool composition (docs/probe-teach-split.md §1): the
@@ -149,7 +159,9 @@ function quizDescription(delta: { name: "quiz" | "probe"; nodeId: boolean; types
 	// Phase-correct shape: the teach example LEADS with the required pair
 	// (type, nodeId — the 2026-10-09 drop-order ruling); the probe example
 	// carries no phase metadata at all, exactly like the probe schema.
-	const example = delta.nodeId ? { type: "check" as const, nodeId: "prep-do-genitive", ...quizExampleBody } : quizExampleBody;
+	const example = delta.nodeId
+		? { type: "check" as const, nodeId: "prep-do-genitive", ...quizExampleBody }
+		: quizExampleBody;
 	return (
 		base +
 		"\nExample arguments — copy the escaping exactly: inside JSON strings a newline is \\n.\n```json\n" +
@@ -176,7 +188,9 @@ function explainDescription(name: "explain" | "recall", nodeId: boolean): string
 		(nodeId
 			? "Set `nodeId` (required) to the plan node this question is about — validated at call time against the session's plan map. "
 			: "") +
-		"ONE question per turn: call a single " + name + ", then end your turn — the learner's answer determines the next."
+		"ONE question per turn: call a single " +
+		name +
+		", then end your turn — the learner's answer determines the next."
 	);
 }
 
@@ -204,9 +218,7 @@ const probeQuizTool: AgentTool<typeof probeQuizInputSchema> = {
 
 /** The teacher's free-recall variant (nodeId-validated, same seam as the
  *  teach quiz — phases/plan recognize BOTH tool names). */
-function teachExplainToolFor(
-	ctx: Pick<PlanToolContext, "chatId" | "chatStore">,
-): AgentTool<typeof explainInputObject> {
+function teachExplainToolFor(ctx: Pick<PlanToolContext, "chatId" | "chatStore">): AgentTool<typeof explainInputObject> {
 	return {
 		name: "explain",
 		label: "explain",
@@ -266,10 +278,7 @@ export interface ProberToolContext extends ProbeDoneContext {
  *  settings seam (core/pending.ts): any tool explicitly false is dropped
  *  from the registry. probe_done stays always-on regardless — it is how
  *  the phase ENDS; a prober that can never conclude is a lockout. */
-export function createProberTools(
-	ctx: ProberToolContext,
-	enabled?: EnabledTools,
-): Record<string, AgentTool<any>> {
+export function createProberTools(ctx: ProberToolContext, enabled?: EnabledTools): Record<string, AgentTool<any>> {
 	// probe_done is re-added AFTER the filter, always-on by construction — it
 	// is how the phase ENDS; a prober that can never conclude is a lockout.
 	const done = probeDoneTool(ctx);
@@ -291,8 +300,9 @@ export function createProberTools(
 	// AgentTool record BEFORE the filter (a conditional spread of two
 	// differently-typed literals makes the whole object's type a union —
 	// unusable as Record<string, AgentTool<any>> downstream).
-	const quizzing: Record<string, AgentTool<any>> =
-		mechanics === "free" ? { recall: probeExplainTool } : { probe: probeQuizTool };
+	const quizzing: Record<string, AgentTool<any>> = mechanics === "free"
+		? { recall: probeExplainTool }
+		: { probe: probeQuizTool };
 	// healToolRecord (owner, 2026-10-09 — the whitehead generalization):
 	// the standard argument heal over the WHOLE registry — every tool,
 	// not just the one the latest wobble incident landed on.
@@ -319,10 +329,10 @@ export function createProberTools(
 				...languageTools(ctx.review),
 				...done,
 			},
-				withoutMechanics(enabled),
-			),
-			...done,
-		});
+			withoutMechanics(enabled),
+		),
+		...done,
+	});
 }
 
 // ─── the teacher's question tools (quiz carries the position field) ──────────
@@ -411,37 +421,40 @@ function withoutMechanics(enabled?: EnabledTools): EnabledTools | undefined {
 	return rest;
 }
 
-export function createTeacherTools(
-	ctx: TeacherToolContext,
-	enabled?: EnabledTools,
-): Record<string, AgentTool<any>> {
+export function createTeacherTools(ctx: TeacherToolContext, enabled?: EnabledTools): Record<string, AgentTool<any>> {
 	// Quizzing mechanics (owner 2026-09-27): free-recall swaps the teach
 	// quiz for the teach explain — one quizzing tool at a time, whichever
 	// the settings arm. ask stays always-on.
 	const mechanics = quizMechanics(enabled);
 	// Same widening as the prober's (see above) — the conditional spread of
 	// two differently-typed literals collapses into an unusable union type.
-	const quizzing: Record<string, AgentTool<any>> =
-		mechanics === "free" ? { explain: teachExplainToolFor(ctx) } : { quiz: teachQuizToolFor(ctx) };
+	const quizzing: Record<string, AgentTool<any>> = mechanics === "free"
+		? { explain: teachExplainToolFor(ctx) }
+		: { quiz: teachQuizToolFor(ctx) };
 	// healToolRecord — same standard as the prober's registry (above).
 	return healToolRecord(
 		filterEnabledTools(
 			{
-			...quizzing,
-			ask_user_question: askUserQuestionTool,
-			// The learner-filesystem set is always-on (user-decided 2026-09,
-			// sources v1): the teacher locates and reads learner-referenced
-			// files on its own terms — nothing auto-injects. Read-only by
-			// construction (fs-shared.ts).
-			read: readTool,
-			ls: lsTool,
-			find: findTool,
-			grep: grepTool,
-			...planTools(ctx),
-			...jobTools({ chatId: ctx.chatId, jobStore: ctx.jobStore, spawn: ctx.spawn, searchAvailable: ctx.searchAvailable }),
-			...languageTools(ctx.review),
-		},
-		withoutMechanics(enabled),
+				...quizzing,
+				ask_user_question: askUserQuestionTool,
+				// The learner-filesystem set is always-on (user-decided 2026-09,
+				// sources v1): the teacher locates and reads learner-referenced
+				// files on its own terms — nothing auto-injects. Read-only by
+				// construction (fs-shared.ts).
+				read: readTool,
+				ls: lsTool,
+				find: findTool,
+				grep: grepTool,
+				...planTools(ctx),
+				...jobTools({
+					chatId: ctx.chatId,
+					jobStore: ctx.jobStore,
+					spawn: ctx.spawn,
+					searchAvailable: ctx.searchAvailable,
+				}),
+				...languageTools(ctx.review),
+			},
+			withoutMechanics(enabled),
 		),
 	);
 }

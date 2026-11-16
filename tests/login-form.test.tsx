@@ -45,7 +45,10 @@ describe("the sign-in form", () => {
 		const drawn = renderToStaticMarkup(createElement(LhAppIcon));
 		assert.ok(fileTile, "build/icon-flat.svg has the tile");
 		assert.ok(drawn.includes(`d="${fileTile}"`));
-		for (const bar of [/<rect x="262" y="212" width="116" height="600" rx="22" fill="#FFFFFF"/, /<rect x="418" y="696" width="344" height="116" rx="22" fill="#9FE3DE"/]) {
+		for (const bar of [
+			/<rect x="262" y="212" width="116" height="600" rx="22" fill="#FFFFFF"/,
+			/<rect x="418" y="696" width="344" height="116" rx="22" fill="#9FE3DE"/,
+		]) {
 			assert.match(file, bar);
 			assert.match(drawn, bar);
 		}
@@ -54,8 +57,14 @@ describe("the sign-in form", () => {
 	it("keeps the field at 16 px or more, so iOS does not zoom when it focuses", () => {
 		const classes = (html.match(/<input[^>]*class="([^"]*)"/)?.[1] ?? "").split(/\s+/);
 		assert.ok(classes.includes("text-[16px]"), "the app's text-base is 14 px");
-		assert.ok(classes.includes("md:text-[16px]"), "a shared input class drops to 14 px from 768 px, which is every iPad in portrait");
-		assert.equal(classes.some((c) => c === "md:text-sm" || c === "text-sm" || c === "text-xs" || c === "text-base"), false);
+		assert.ok(
+			classes.includes("md:text-[16px]"),
+			"a shared input class drops to 14 px from 768 px, which is every iPad in portrait",
+		);
+		assert.equal(
+			classes.some((c) => c === "md:text-sm" || c === "text-sm" || c === "text-xs" || c === "text-base"),
+			false,
+		);
 	});
 
 	it("reserves two lines for a message, so an error never moves the form", () => {

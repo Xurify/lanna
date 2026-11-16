@@ -66,7 +66,12 @@ function retryLater(lang: string): void {
 export async function sendSession<T>(session: PendingSession): Promise<T> {
 	let res: Response;
 	try {
-		res = await fetch(session.url, { method: "POST", headers: { "content-type": "application/json" }, body: session.body, signal: AbortSignal.timeout(15_000) });
+		res = await fetch(session.url, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: session.body,
+			signal: AbortSignal.timeout(15_000),
+		});
 	} catch (err) {
 		retryLater(session.lang);
 		throw err;

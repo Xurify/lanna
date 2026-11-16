@@ -44,8 +44,20 @@ export function openWhy(req: WhyRequest, now = new Date()): WhyOutcome {
 	const models = readSettings()?.models;
 	const slot = (models?.cheap?.model ? models.cheap : models?.strong) ?? null;
 	if (slot?.model) {
-		chatStore.saveSettings(chat.id, { model: { provider: slot.model.provider, id: slot.model.id }, thinkingLevel: CHAT_THINKING_LEVEL });
+		chatStore.saveSettings(chat.id, {
+			model: { provider: slot.model.provider, id: slot.model.id },
+			thinkingLevel: CHAT_THINKING_LEVEL,
+		});
 	}
-	rememberWhy({ key, lang, sentence: req.sentence, answer: req.answer, lemma: req.lemma, given: req.given, chatId: chat.id, createdAt: now.toISOString() });
+	rememberWhy({
+		key,
+		lang,
+		sentence: req.sentence,
+		answer: req.answer,
+		lemma: req.lemma,
+		given: req.given,
+		chatId: chat.id,
+		createdAt: now.toISOString(),
+	});
 	return { id: chat.id, reused: false };
 }

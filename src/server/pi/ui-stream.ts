@@ -121,7 +121,16 @@ export interface PiTurnHandle {
 }
 
 export function runPiTurn(spec: PiTurnSpec): PiTurnHandle {
-	const { agent, onError, onFinish, onSettleError, onSettleFailure, usedToolCallIds, updateFlushMs = 100, requestCycle } = spec;
+	const {
+		agent,
+		onError,
+		onFinish,
+		onSettleError,
+		onSettleFailure,
+		usedToolCallIds,
+		updateFlushMs = 100,
+		requestCycle,
+	} = spec;
 	const uniquifier = usedToolCallIds ? new ToolCallIdUniquifier(usedToolCallIds) : undefined;
 
 	let settled = false;
@@ -229,8 +238,11 @@ export function runPiTurn(spec: PiTurnSpec): PiTurnHandle {
 			onFinish((uniquifier?.remapSettled(settled_) as AgentMessage[]) ?? settled_, sawAbort);
 		} catch (err) {
 			console.error("[turn] settlement failed:", err);
-			try { onSettleFailure?.(err, reportedErrorText); }
-			catch (cleanupError) { console.error("[turn] settlement cleanup failed:", cleanupError); }
+			try {
+				onSettleFailure?.(err, reportedErrorText);
+			} catch (cleanupError) {
+				console.error("[turn] settlement cleanup failed:", cleanupError);
+			}
 			if (reportedErrorText === undefined) {
 				reportedErrorText = onSettleError?.(err) ?? "An error occurred.";
 				send({ type: "error", errorText: reportedErrorText });
@@ -246,9 +258,7 @@ export function runPiTurn(spec: PiTurnSpec): PiTurnHandle {
 		// WIRE DIET: slim the one event pi double-stuffs — our views read
 		// `message`, never `assistantMessageEvent` (same full partial twice).
 		const wire: TurnWireEvent =
-			uniqued.type === "message_update"
-				? { type: "message_update", message: uniqued.message }
-				: uniqued;
+			uniqued.type === "message_update" ? { type: "message_update", message: uniqued.message } : uniqued;
 		send(wire);
 		if (event.type === "message_end") {
 			const m = event.message as { role?: string; stopReason?: string } | undefined;

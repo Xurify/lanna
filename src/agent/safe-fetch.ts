@@ -89,7 +89,8 @@ export interface TransportResponse {
 }
 export type Transport = (request: TransportRequest) => Promise<TransportResponse>;
 
-const resolveWithSystem: Resolver = async (host) => (await dns.lookup(host, { all: true, verbatim: true })).map((entry) => entry.address);
+const resolveWithSystem: Resolver = async (host) =>
+	(await dns.lookup(host, { all: true, verbatim: true })).map((entry) => entry.address);
 
 function toHeaders(raw: http.IncomingHttpHeaders): Headers {
 	const headers = new Headers();
@@ -112,12 +113,22 @@ const connectPinned: Transport = (request) =>
 				headers: request.headers,
 				signal: request.signal,
 				// Node calls lookup with `all: true` when it tries several addresses in turn (autoSelectFamily).
-				lookup: ((_host: string, options: { all?: boolean }, callback: (error: Error | null, address: unknown, family?: number) => void) => {
+				lookup: ((
+					_host: string,
+					options: { all?: boolean },
+					callback: (error: Error | null, address: unknown, family?: number) => void,
+				) => {
 					if (options.all) callback(null, list);
 					else callback(null, list[0]!.address, list[0]!.family);
 				}) as never,
 			},
-			(incoming) => resolve({ status: incoming.statusCode ?? 0, statusText: incoming.statusMessage ?? "", headers: toHeaders(incoming.headers), body: incoming }),
+			(incoming) =>
+				resolve({
+					status: incoming.statusCode ?? 0,
+					statusText: incoming.statusMessage ?? "",
+					headers: toHeaders(incoming.headers),
+					body: incoming,
+				}),
 		);
 		outgoing.on("error", reject);
 		if (request.body !== undefined) outgoing.write(request.body);
@@ -125,7 +136,12 @@ const connectPinned: Transport = (request) =>
 	});
 
 /** What the guard calls out to. Tests replace these; nothing else does. */
-export const safeFetchSeams: { resolve: Resolver; transport: Transport; isAllowedAddress: (address: string) => boolean; allowedPorts: Set<string> } = {
+export const safeFetchSeams: {
+	resolve: Resolver;
+	transport: Transport;
+	isAllowedAddress: (address: string) => boolean;
+	allowedPorts: Set<string>;
+} = {
 	resolve: resolveWithSystem,
 	transport: connectPinned,
 	isAllowedAddress: isPublicAddress,
@@ -158,13 +174,21 @@ export async function assertPublicUrl(input: string | URL): Promise<{ url: URL; 
 	} catch {
 		throw new SafeFetchError(`invalid URL "${String(input)}"`);
 	}
-	if (url.protocol !== "http:" && url.protocol !== "https:") throw new SafeFetchError("only http(s) URLs are supported");
+	if (url.protocol !== "http:" && url.protocol !== "https:")
+		throw new SafeFetchError("only http(s) URLs are supported");
 	if (url.username || url.password) throw new SafeFetchError("URLs with a user name or password are not fetched");
-	if (!safeFetchSeams.allowedPorts.has(url.port)) throw new SafeFetchError("only the standard web ports (80 and 443) are fetched");
-	const host = url.hostname.replace(/^\[|\]$/g, "").replace(/\.$/, "").toLowerCase();
+	if (!safeFetchSeams.allowedPorts.has(url.port))
+		throw new SafeFetchError("only the standard web ports (80 and 443) are fetched");
+	const host = url.hostname
+		.replace(/^\[|\]$/g, "")
+		.replace(/\.$/, "")
+		.toLowerCase();
 	if (!host) throw new SafeFetchError("the URL has no host");
 	const literal = net.isIP(host) !== 0;
-	if (!literal && (!host.includes(".") || host === "localhost" || INTERNAL_SUFFIXES.some((suffix) => host.endsWith(suffix)))) {
+	if (
+		!literal &&
+		(!host.includes(".") || host === "localhost" || INTERNAL_SUFFIXES.some((suffix) => host.endsWith(suffix)))
+	) {
 		throw new SafeFetchError("internal host names are not fetched");
 	}
 	const addresses = literal ? [host] : await safeFetchSeams.resolve(host);
@@ -211,7 +235,10 @@ function decoderFor(encoding: string): Transform | null {
  */
 export async function safeFetch(input: string | URL, options: SafeFetchOptions = {}): Promise<Response> {
 	const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
-	const signal = AbortSignal.any([AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS), ...(options.signal ? [options.signal] : [])]);
+	const signal = AbortSignal.any([
+		AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+		...(options.signal ? [options.signal] : []),
+	]);
 	let method = (options.method ?? "GET").toUpperCase();
 	let body = options.body;
 	let target: string | URL = input;

@@ -17,7 +17,10 @@ test("knownForms: the verified forms and the declension, without the lemma or ph
 	const forms = knownForms({
 		sk: "stanica",
 		forms: ["stanice", "stanica", "na stanici", "stanice"],
-		declension: { singular: ["stanica", "stanice", "stanici", "stanicu", "stanici", "stanicou"], plural: ["stanice", "staníc", "staniciam"] },
+		declension: {
+			singular: ["stanica", "stanice", "stanici", "stanicu", "stanici", "stanicou"],
+			plural: ["stanice", "staníc", "staniciam"],
+		},
 	});
 	assert.ok(forms.includes("stanice") && forms.includes("staníc"), "the declension's forms count");
 	assert.ok(!forms.includes("stanica"), "the lemma is not its own form");
@@ -47,13 +50,25 @@ test("formSlip: the dictionary form, another ending, another word, nothing", () 
 	assert.equal(formSlip({ ...at, given: "vlak" }), "other", "a different word");
 	assert.equal(formSlip({ ...at, given: "" }), "blank", `"I don't know"`);
 	assert.equal(formSlip({ ...at, given: "   " }), "blank");
-	assert.equal(formSlip({ answer: "mäsa", lemma: "mäso", given: "mäso" }), "base", "the dictionary form, diacritics and all");
+	assert.equal(
+		formSlip({ answer: "mäsa", lemma: "mäso", given: "mäso" }),
+		"base",
+		"the dictionary form, diacritics and all",
+	);
 });
 
 test("formSlip: a right answer — or one short only of an accent — is no slip", () => {
 	assert.equal(formSlip({ answer: "stanice", lemma: "stanica", given: "stanice" }), undefined);
-	assert.equal(formSlip({ answer: "ženou", lemma: "žena", given: "zenou" }), undefined, "accents-only is its own verdict");
-	assert.equal(formSlip({ answer: "mäsa", lemma: "mäso", given: "maso" }), "base", "the dictionary form's letters, minus the accent, still read as the dictionary form");
+	assert.equal(
+		formSlip({ answer: "ženou", lemma: "žena", given: "zenou" }),
+		undefined,
+		"accents-only is its own verdict",
+	);
+	assert.equal(
+		formSlip({ answer: "mäsa", lemma: "mäso", given: "maso" }),
+		"base",
+		"the dictionary form's letters, minus the accent, still read as the dictionary form",
+	);
 });
 
 test("every slip has a learner-facing label", () => {

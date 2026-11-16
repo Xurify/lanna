@@ -21,11 +21,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenIcon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, PlusIcon, SearchIcon, SparklesIcon, XIcon } from "lucide-react";
+import {
+	LanguagesIcon,
+	LoaderCircleIcon,
+	PauseIcon,
+	PlayIcon,
+	PlusIcon,
+	SearchIcon,
+	SparklesIcon,
+	XIcon,
+} from "lucide-react";
 import { EmptyState, KeyNote, AddKeyButton } from "@/components/quiet/empty-state";
 import { cn } from "@/lib/utils";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import { endEnterBlocked, EnterHint, NotSaved, PAGE_TIME_HOW, PracticeTime, Stat, Stats, TaskEnd } from "@/components/task-frame";
+import {
+	endEnterBlocked,
+	EnterHint,
+	NotSaved,
+	PAGE_TIME_HOW,
+	PracticeTime,
+	Stat,
+	Stats,
+	TaskEnd,
+} from "@/components/task-frame";
 import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
@@ -33,13 +51,36 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
 import { BookList, NextUp, type BookGroup, type ListBook, type ListSlot } from "@/components/reading/book-list";
-import { AddReadingDialog, difficultyInfo, EMPTY_READING_DRAFT, linksIn, type ReadingDraft } from "@/components/reading/add-reading-dialog";
-import { cheersFor, genreInfo, gradeAnswers, MAX_SOURCE_WORDS, readXp, type LibraryEntry, type ReadingState, type SourceEntry, type StoryRecord, type StorySource, type StorySentence, type StoryToken, type WritingProgress } from "@/src/core";
+import {
+	AddReadingDialog,
+	difficultyInfo,
+	EMPTY_READING_DRAFT,
+	linksIn,
+	type ReadingDraft,
+} from "@/components/reading/add-reading-dialog";
+import {
+	cheersFor,
+	genreInfo,
+	gradeAnswers,
+	MAX_SOURCE_WORDS,
+	readXp,
+	type LibraryEntry,
+	type ReadingState,
+	type SourceEntry,
+	type StoryRecord,
+	type StorySource,
+	type StorySentence,
+	type StoryToken,
+	type WritingProgress,
+} from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
 
-function voiceFor(story: StoryRecord, s: StorySentence): { voice?: string; gender?: "female" | "male"; style: "narration" | "dialogue" } {
+function voiceFor(
+	story: StoryRecord,
+	s: StorySentence,
+): { voice?: string; gender?: "female" | "male"; style: "narration" | "dialogue" } {
 	const who = s.who && story.cast?.find((c) => c.name === s.who);
 	if (who) return { voice: who.voice, gender: who.gender === "f" ? "female" : "male", style: "dialogue" };
 	return { voice: story.narratorVoice, style: "narration" };
@@ -96,7 +137,9 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 		}
 	}, []);
 
-	const lastRequest = useRef<{ action: "next" | "write"; topic?: string } | { action: "part"; sourceId: string; part: number }>({ action: "next" });
+	const lastRequest = useRef<
+		{ action: "next" | "write"; topic?: string } | { action: "part"; sourceId: string; part: number }
+	>({ action: "next" });
 
 	const requestStory = useCallback(
 		async (action: "next" | "write", topic?: string) => {
@@ -105,7 +148,11 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 			setStage("writing");
 			setError(null);
 			try {
-				const res = await fetch("/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ...(topic ? { topic } : {}) }) });
+				const res = await fetch("/api/read", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ action, ...(topic ? { topic } : {}) }),
+				});
 				const body = (await res.json()) as StoryRecord | { message: string };
 				if (!res.ok || !("sentences" in body)) throw new Error("message" in body ? body.message : `HTTP ${res.status}`);
 				setStory(body);
@@ -168,7 +215,11 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	};
 
 	const postRead = async <T,>(body: Record<string, unknown>): Promise<T> => {
-		const res = await fetch("/api/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+		const res = await fetch("/api/read", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(body),
+		});
 		const answer = (await res.json().catch(() => ({}))) as T & { message?: string };
 		if (!res.ok) throw new Error(answer.message ?? `HTTP ${res.status}`);
 		return answer;
@@ -190,12 +241,22 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 
 	const importLinks = (links: string[], draft: ReadingDraft) => {
 		setLinksBeingRead(links.length);
-		postRead<{ added: number; failed: Array<{ url: string; message: string }> }>({ action: "import", urls: links, difficulty: draft.difficulty })
+		postRead<{ added: number; failed: Array<{ url: string; message: string }> }>({
+			action: "import",
+			urls: links,
+			difficulty: draft.difficulty,
+		})
 			.then(({ added, failed }) => {
 				if (failed.length === 0) return;
 				const one = failed.length === 1;
-				const could = added === 0 ? "None of these could be read" : `${added} added. ${one ? "This one" : `These ${failed.length}`} could not be read`;
-				setAdding({ draft: { ...draft, value: failed.map((f) => f.url).join("\n") }, error: `${could}. Open ${one ? "the page and paste its text" : "each page and paste its text, one at a time,"} instead.` });
+				const could =
+					added === 0
+						? "None of these could be read"
+						: `${added} added. ${one ? "This one" : `These ${failed.length}`} could not be read`;
+				setAdding({
+					draft: { ...draft, value: failed.map((f) => f.url).join("\n") },
+					error: `${could}. Open ${one ? "the page and paste its text" : "each page and paste its text, one at a time,"} instead.`,
+				});
 			})
 			.catch((err: Error) => setAdding({ draft, error: err.message }))
 			.finally(() => {
@@ -211,7 +272,11 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 		setWaitingForOwnText(true);
 		setStage("writing");
 		const value = draft.value.trim();
-		postRead<{ story: StoryRecord }>({ action: "import", difficulty: draft.difficulty, ...(links.length === 1 ? { url: links[0] } : { text: value, title: draft.title }) })
+		postRead<{ story: StoryRecord }>({
+			action: "import",
+			difficulty: draft.difficulty,
+			...(links.length === 1 ? { url: links[0] } : { text: value, title: draft.title }),
+		})
 			.then((imported) => show(imported.story))
 			.catch((err: Error) => {
 				setStage("shelf");
@@ -242,7 +307,15 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 			const activeMs = activeTime.finish();
 			setPracticeMs(activeMs);
 			try {
-				lastSave.current = keepSession(lang?.code ?? "sk", "/api/read", { action: "finish", storyId: story.id, answers: all, tapped, ms: Date.now() - startedAt.current, activeMs, tz: new Date().getTimezoneOffset() });
+				lastSave.current = keepSession(lang?.code ?? "sk", "/api/read", {
+					action: "finish",
+					storyId: story.id,
+					answers: all,
+					tapped,
+					ms: Date.now() - startedAt.current,
+					activeMs,
+					tz: new Date().getTimezoneOffset(),
+				});
 				setOutcome(await sendSession<Outcome>(lastSave.current));
 				void load();
 			} catch (err) {
@@ -316,7 +389,11 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 						}
 					>
 						<p>{error ?? "Something went wrong."}</p>
-						<p>{waitingForOwnText ? "The parts already written are still in the library." : "Episodes you have already read are still in the library."}</p>
+						<p>
+							{waitingForOwnText
+								? "The parts already written are still in the library."
+								: "Episodes you have already read are still in the library."}
+						</p>
 					</EmptyState>
 				</div>
 			</Frame>
@@ -326,8 +403,23 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "shelf" || !story) {
 		return (
 			<Frame>
-				<Shelf state={state} linksBeingRead={linksBeingRead} onOpen={open} onWrite={(topic) => void write(topic)} onAdd={() => setAdding({ draft: EMPTY_READING_DRAFT, error: null })} onOpenPart={openPart} onRemoveSource={removeText} />
-				{adding && <AddReadingDialog initial={adding.draft} error={adding.error} onClose={() => setAdding(null)} onSubmit={importText} />}
+				<Shelf
+					state={state}
+					linksBeingRead={linksBeingRead}
+					onOpen={open}
+					onWrite={(topic) => void write(topic)}
+					onAdd={() => setAdding({ draft: EMPTY_READING_DRAFT, error: null })}
+					onOpenPart={openPart}
+					onRemoveSource={removeText}
+				/>
+				{adding && (
+					<AddReadingDialog
+						initial={adding.draft}
+						error={adding.error}
+						onClose={() => setAdding(null)}
+						onSubmit={importText}
+					/>
+				)}
 			</Frame>
 		);
 	}
@@ -335,7 +427,11 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "questions") {
 		return (
 			<Frame strip={false}>
-				<TopBar story={story} step={`Question ${Math.min(answers.length + 1, story.questions.length)} of ${story.questions.length}`} progress={story.questions.length ? answers.length / story.questions.length : 1} />
+				<TopBar
+					story={story}
+					step={`Question ${Math.min(answers.length + 1, story.questions.length)} of ${story.questions.length}`}
+					progress={story.questions.length ? answers.length / story.questions.length : 1}
+				/>
 				<Check
 					questions={story.questions}
 					answers={answers}
@@ -352,14 +448,36 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 	if (stage === "end") {
 		return (
 			<Frame>
-				<End story={story} tapped={tapped} answers={answers} outcome={outcome} practiceMs={practiceMs} saving={saving} failed={saveFailed} refused={saveRefused} onRetrySave={() => void retrySave()} onAgain={() => open(story.id)} onNext={() => void next()} onOpenPart={openPart} nextPartStoryId={nextPartStoryId(state, story)} onShelf={() => setStage("shelf")} canWrite={state?.canWrite ?? true} unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)} />
+				<End
+					story={story}
+					tapped={tapped}
+					answers={answers}
+					outcome={outcome}
+					practiceMs={practiceMs}
+					saving={saving}
+					failed={saveFailed}
+					refused={saveRefused}
+					onRetrySave={() => void retrySave()}
+					onAgain={() => open(story.id)}
+					onNext={() => void next()}
+					onOpenPart={openPart}
+					nextPartStoryId={nextPartStoryId(state, story)}
+					onShelf={() => setStage("shelf")}
+					canWrite={state?.canWrite ?? true}
+					unreadLeft={(state?.library ?? []).some((s) => s.reads === 0 && s.id !== story.id)}
+				/>
 			</Frame>
 		);
 	}
 
 	return (
 		<Frame strip={false}>
-			<Text story={story} tapped={tapped} onTap={onTap} onDone={() => (story.questions.length ? setStage("questions") : void finish([]))} />
+			<Text
+				story={story}
+				tapped={tapped}
+				onTap={onTap}
+				onDone={() => (story.questions.length ? setStage("questions") : void finish([]))}
+			/>
 		</Frame>
 	);
 }
@@ -392,7 +510,12 @@ function Writing({ initial, ownText }: { initial: WritingProgress | null; ownTex
 		};
 	}, []);
 	const mine = !ownText || !!progress?.title;
-	const heading = progress?.title && ownText ? `Writing “${progress.title}” for you…` : ownText ? "Getting your text ready…" : `Writing ${progress ? (progress.topic ? `“${progress.topic}”` : progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story"}…`;
+	const heading =
+		progress?.title && ownText
+			? `Writing “${progress.title}” for you…`
+			: ownText
+				? "Getting your text ready…"
+				: `Writing ${progress ? (progress.topic ? `“${progress.topic}”` : progress.genre === "robo" ? "the next episode" : `a new story: ${genreInfo(progress.genre).label}`) : "your next story"}…`;
 	const lines = mine ? (progress?.sentences ?? []) : [];
 	return (
 		<Frame>
@@ -405,14 +528,20 @@ function Writing({ initial, ownText }: { initial: WritingProgress | null; ownTex
 						<div>
 							<h1 className="font-ui text-2xl font-[600] text-foreground">{heading}</h1>
 							<p className="mt-1 font-prose text-base text-muted-foreground">
-								{ownText ? "Kept in your library, so it is written once." : `${progress ? `${progress.level} · from the words you know` : "At your level, from the words you know"} · kept in your library, so it is written once.`}
+								{ownText
+									? "Kept in your library, so it is written once."
+									: `${progress ? `${progress.level} · from the words you know` : "At your level, from the words you know"} · kept in your library, so it is written once.`}
 							</p>
 						</div>
 					</div>
 					{lines.length > 0 ? (
 						<div className="mt-8 flex flex-col gap-4" aria-live="polite">
 							{lines.map((line, i) => (
-								<p key={i} className="lh-rise font-prose text-[1.65rem] leading-[1.6] text-foreground" lang={lang?.code}>
+								<p
+									key={i}
+									className="lh-rise font-prose text-[1.65rem] leading-[1.6] text-foreground"
+									lang={lang?.code}
+								>
 									{line}
 								</p>
 							))}
@@ -439,8 +568,8 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
-			{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
-			{children}
+				{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
+				{children}
 			</div>
 		</>
 	);
@@ -451,14 +580,24 @@ function TopBar({ story, step, progress }: { story: StoryRecord; step: string; p
 		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 				{/* The 12px padding makes a 44px touch target; the matching margin keeps the icon on the text edge. */}
-				<Link href="/" aria-label="Leave the story" className="-ml-3 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground">
+				<Link
+					href="/"
+					aria-label="Leave the story"
+					className="-ml-3 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground"
+				>
 					<XIcon className="size-5" />
 				</Link>
 				<div className="min-w-0 flex-1">
 					<p className="truncate text-[14px] font-[600] text-foreground">
 						{kindOf(story)} · <span className="text-ink-3">{step}</span>
 					</p>
-					<div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-well-2">
+					<div
+						role="progressbar"
+						aria-valuemin={0}
+						aria-valuemax={100}
+						aria-valuenow={Math.round(progress * 100)}
+						className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-well-2"
+					>
 						<div className="lh-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
 					</div>
 				</div>
@@ -467,11 +606,10 @@ function TopBar({ story, step, progress }: { story: StoryRecord; step: string; p
 	);
 }
 
-
 // ─── The text ───────────────────────────────────────────────────────────────
 
 /** Opening marks (Slovak „, parentheses, « ¿ ¡) stay with the word after them; closing marks and punctuation stay with the word before. */
-const OPENERS = /^[„(\[«¡¿]+$/;
+const OPENERS = /^[„([«¡¿]+$/;
 
 /**
  * The tokens of a sentence as groups that cannot break inside: a word with the punctuation that touches
@@ -504,7 +642,17 @@ export function groupTokens(tokens: readonly StoryToken[]): Array<{ indexes: num
 	return groups;
 }
 
-function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: string[]; onTap: (key: string) => void; onDone?: () => void }) {
+function Text({
+	story,
+	tapped,
+	onTap,
+	onDone,
+}: {
+	story: StoryRecord;
+	tapped: string[];
+	onTap: (key: string) => void;
+	onDone?: () => void;
+}) {
 	const lang = useActiveLanguage();
 	const [playing, setPlaying] = useState<number | null>(null);
 	const [all, setAll] = useState(false);
@@ -600,7 +748,11 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 		<div className="flex flex-1 flex-col overflow-hidden">
 			<div className="lh-drag lh-wco-gutter shrink-0 select-none">
 				<div className="mx-auto flex h-16 w-full max-w-[40rem] items-center gap-3 px-6 pt-2">
-					<Link href="/" aria-label="Leave the story" className="-ml-3 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground">
+					<Link
+						href="/"
+						aria-label="Leave the story"
+						className="-ml-3 rounded-lg p-3 text-muted-foreground transition-colors hover:bg-well hover:text-foreground"
+					>
 						<XIcon className="size-5" />
 					</Link>
 					<p className="min-w-0 flex-1 truncate text-[14px] font-[600] text-foreground" lang={lang?.code}>
@@ -609,7 +761,13 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 					<Link href="/read" className="q-btn ghost">
 						Library
 					</Link>
-					<button type="button" onClick={() => setLarge((v) => !v)} aria-pressed={large} className="q-btn ghost !px-2.5" title="Text size">
+					<button
+						type="button"
+						onClick={() => setLarge((v) => !v)}
+						aria-pressed={large}
+						className="q-btn ghost !px-2.5"
+						title="Text size"
+					>
 						<span className="text-[13px]">A</span>
 						<span className="-ml-1 text-[17px] leading-none">A</span>
 					</button>
@@ -617,12 +775,19 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 			</div>
 
 			<div className="flex-1 overflow-y-auto pb-32 pt-4 sm:pt-8 [scrollbar-gutter:stable]">
-				<article className="mx-auto w-full max-w-[40rem] px-6 lh-rise" data-testid="read-text" data-word-lookup-enabled="true">
+				<article
+					className="mx-auto w-full max-w-[40rem] px-6 lh-rise"
+					data-testid="read-text"
+					data-word-lookup-enabled="true"
+				>
 					<header className="mb-8">
 						<p className="text-[13px] text-ink-3">
 							{kindOf(story)} · {story.level} · about {minutes} min
 						</p>
-						<h1 className="mt-2 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground" lang={lang?.code}>
+						<h1
+							className="mt-2 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground"
+							lang={lang?.code}
+						>
 							{story.title}
 						</h1>
 						{story.source && (
@@ -640,7 +805,15 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 										{block.speaker}
 									</p>
 								)}
-								<p className={cn("font-prose text-foreground [&_[data-word]]:!py-0", large ? "text-[24px] leading-[1.6] max-sm:text-[21px]" : "text-[21px] leading-[1.6] max-sm:text-[19px]")} lang={lang?.code}>
+								<p
+									className={cn(
+										"font-prose text-foreground [&_[data-word]]:!py-0",
+										large
+											? "text-[24px] leading-[1.6] max-sm:text-[21px]"
+											: "text-[21px] leading-[1.6] max-sm:text-[19px]",
+									)}
+									lang={lang?.code}
+								>
 									{block.sentences.map(({ sentence: s, index: i }) => (
 										<span
 											key={i}
@@ -709,16 +882,30 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 			<div className="absolute inset-x-0 bottom-0 z-30 bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-1px_0_var(--q-line)]">
 				<div className="mx-auto flex w-full max-w-[40rem] items-center justify-center gap-2">
-					<button type="button" onClick={() => void playAll()} className="q-btn sec" data-testid="read-play-all" aria-pressed={all}>
+					<button
+						type="button"
+						onClick={() => void playAll()}
+						className="q-btn sec"
+						data-testid="read-play-all"
+						aria-pressed={all}
+					>
 						{all ? <PauseIcon className="size-4 fill-current" /> : <PlayIcon className="size-4 fill-current" />}
 						{all ? "Pause" : "Play all"}
 					</button>
-					<button type="button" onClick={() => setShowTranslation((v) => !v)} aria-pressed={showTranslation} className={cn("q-btn sec max-sm:!px-3", showTranslation && "t")} title="Show or hide the English (T)">
+					<button
+						type="button"
+						onClick={() => setShowTranslation((v) => !v)}
+						aria-pressed={showTranslation}
+						className={cn("q-btn sec max-sm:!px-3", showTranslation && "t")}
+						title="Show or hide the English (T)"
+					>
 						<LanguagesIcon className="size-4" />
 						<span className="max-sm:sr-only">Translation {showTranslation ? "on" : "off"}</span>
 					</button>
 					<button type="button" onClick={onDone} className="q-btn primary" data-testid="read-done">
-						{story.questions.length ? `Answer ${story.questions.length} ${story.questions.length === 1 ? "question" : "questions"}` : "Done"}
+						{story.questions.length
+							? `Answer ${story.questions.length} ${story.questions.length === 1 ? "question" : "questions"}`
+							: "Done"}
 					</button>
 				</div>
 			</div>
@@ -728,7 +915,41 @@ function Text({ story, tapped, onTap, onDone }: { story: StoryRecord; tapped: st
 
 // ─── The end ────────────────────────────────────────────────────────────────
 
-function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, practiceMs, saving, onAgain, onNext, onOpenPart, nextPartStoryId, onShelf, canWrite, unreadLeft }: { story: StoryRecord; tapped: string[]; answers: number[]; outcome: Outcome | null; practiceMs: number | null; saving: boolean; failed: boolean; refused: boolean; onRetrySave: () => void; onAgain: () => void; onNext: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; nextPartStoryId?: string; onShelf: () => void; canWrite: boolean; unreadLeft: boolean }) {
+function End({
+	failed,
+	refused,
+	onRetrySave,
+	story,
+	tapped,
+	answers,
+	outcome,
+	practiceMs,
+	saving,
+	onAgain,
+	onNext,
+	onOpenPart,
+	nextPartStoryId,
+	onShelf,
+	canWrite,
+	unreadLeft,
+}: {
+	story: StoryRecord;
+	tapped: string[];
+	answers: number[];
+	outcome: Outcome | null;
+	practiceMs: number | null;
+	saving: boolean;
+	failed: boolean;
+	refused: boolean;
+	onRetrySave: () => void;
+	onAgain: () => void;
+	onNext: () => void;
+	onOpenPart: (sourceId: string, part: number, storyId?: string) => void;
+	nextPartStoryId?: string;
+	onShelf: () => void;
+	canWrite: boolean;
+	unreadLeft: boolean;
+}) {
 	const lang = useActiveLanguage();
 	const language = lang?.english ?? "the language";
 	const source = story.source;
@@ -769,7 +990,15 @@ function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, pr
 		<TaskEnd
 			testId="read-end"
 			wide={hasSide}
-			hint={failed ? <NotSaved onRetry={onRetrySave} busy={saving} refused={refused} /> : <EnterHint>{hasNextPart ? "for the next part" : unreadLeft ? "for the next story" : "for the library"}</EnterHint>}
+			hint={
+				failed ? (
+					<NotSaved onRetry={onRetrySave} busy={saving} refused={refused} />
+				) : (
+					<EnterHint>
+						{hasNextPart ? "for the next part" : unreadLeft ? "for the next story" : "for the library"}
+					</EnterHint>
+				)
+			}
 			actions={
 				<>
 					<Link href="/" className={SECONDARY}>
@@ -803,7 +1032,8 @@ function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, pr
 					<h1 className="q-hello" data-testid="read-end-heading">
 						{cheer ? (
 							<>
-								<span lang={lang?.code}>{cheer.text}</span> <span className="ml-1 font-ui text-[15px] font-[550] tracking-normal text-ink-2">{cheer.gloss}</span>
+								<span lang={lang?.code}>{cheer.text}</span>{" "}
+								<span className="ml-1 font-ui text-[15px] font-[550] tracking-normal text-ink-2">{cheer.gloss}</span>
 							</>
 						) : (
 							endHeading(source, reread)
@@ -823,21 +1053,48 @@ function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, pr
 					</div>
 				</header>
 
-				<section className={cn("mt-10 [grid-area:score]", hasSide && "lg:sticky lg:top-16 lg:self-start")} aria-label="Your score" data-testid="read-end-score">
+				<section
+					className={cn("mt-10 [grid-area:score]", hasSide && "lg:sticky lg:top-16 lg:self-start")}
+					aria-label="Your score"
+					data-testid="read-end-score"
+				>
 					<p className="flex items-baseline gap-2.5">
-						<span className="font-ui text-[52px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-foreground">{total ? `${graded.correct} of ${total}` : story.wordCount}</span>
-						<span className="font-ui text-[15px] font-[550] text-ink-2">{total ? "questions right" : "words read"}</span>
+						<span className="font-ui text-[52px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-foreground">
+							{total ? `${graded.correct} of ${total}` : story.wordCount}
+						</span>
+						<span className="font-ui text-[15px] font-[550] text-ink-2">
+							{total ? "questions right" : "words read"}
+						</span>
 					</p>
 					<PracticeTime ms={practiceMs} how={PAGE_TIME_HOW} />
 					<Stats className="mt-7 max-w-none">
-						<Stat label="XP" value={saving || !outcome ? null : failed ? notCounted : `+${outcome.xp}`} ink={failed ? "text-ink-3" : "text-teal-2"} />
+						<Stat
+							label="XP"
+							value={saving || !outcome ? null : failed ? notCounted : `+${outcome.xp}`}
+							ink={failed ? "text-ink-3" : "text-teal-2"}
+						/>
 						{total > 0 && <Stat label="Words read" value={String(story.wordCount)} />}
-						<Stat label="Added to Review" value={saving || !outcome ? null : failed ? notCounted : outcome.queued.length > 0 ? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}` : "None"} ink={failed ? "text-ink-3" : undefined} />
+						<Stat
+							label="Added to Review"
+							value={
+								saving || !outcome
+									? null
+									: failed
+										? notCounted
+										: outcome.queued.length > 0
+											? `${outcome.queued.length} ${outcome.queued.length === 1 ? "word" : "words"}`
+											: "None"
+							}
+							ink={failed ? "text-ink-3" : undefined}
+						/>
 						<Stat label="Words counted as known" value={`${Math.round(story.coverage * 100)}%`} />
 					</Stats>
 					<p className="mt-3 font-prose text-[13px] leading-relaxed text-ink-3">
 						The share of known words is the app's estimate, not a measure of what you understood.
-						{source && (source.difficulty === "full" ? ` This part was put into ${language} by a model, which can get a point wrong.` : " This part was retold by a model, which can leave a point out or get one wrong.")}
+						{source &&
+							(source.difficulty === "full"
+								? ` This part was put into ${language} by a model, which can get a point wrong.`
+								: " This part was retold by a model, which can leave a point out or get one wrong.")}
 					</p>
 				</section>
 
@@ -853,13 +1110,21 @@ function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, pr
 									{source?.url && (
 										<>
 											{" "}
-											<a href={source.url} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-ink-2 underline decoration-line-2 underline-offset-[3px] hover:text-foreground">
+											<a
+												href={source.url}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="whitespace-nowrap text-ink-2 underline decoration-line-2 underline-offset-[3px] hover:text-foreground"
+											>
 												Open the page
 											</a>
 										</>
 									)}
 								</p>
-								<p className="mt-4 whitespace-pre-line font-prose text-[16px] leading-relaxed text-ink-2 select-text" data-testid="read-original">
+								<p
+									className="mt-4 whitespace-pre-line font-prose text-[16px] leading-relaxed text-ink-2 select-text"
+									data-testid="read-original"
+								>
 									{original}
 								</p>
 							</section>
@@ -893,7 +1158,9 @@ function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, pr
 													<span className="text-ink-3">{t.gloss ?? ""}</span>
 												</li>
 											))}
-											{looked.length > 8 && <li className="font-prose text-sm text-ink-3">and {looked.length - 8} more</li>}
+											{looked.length > 8 && (
+												<li className="font-prose text-sm text-ink-3">and {looked.length - 8} more</li>
+											)}
 										</ul>
 									</section>
 								)}
@@ -903,7 +1170,11 @@ function End({ failed, refused, onRetrySave, story, tapped, answers, outcome, pr
 				)}
 			</div>
 			<SourcesNote feature="read" className="mt-14" />
-			{!unreadLeft && !hasNextPart && canWrite && <p className="mt-3 font-prose text-xs text-ink-3">New stories are written in the background and wait in the library.</p>}
+			{!unreadLeft && !hasNextPart && canWrite && (
+				<p className="mt-3 font-prose text-xs text-ink-3">
+					New stories are written in the background and wait in the library.
+				</p>
+			)}
 		</TaskEnd>
 	);
 }
@@ -915,11 +1186,16 @@ const FILTERS_FROM = 6;
 const SEARCH_FROM = 11;
 
 function newWordList(words: ReadonlyArray<string | { sk?: string; lemma?: string }>): string[] {
-	return words.map((w) => (typeof w === "string" ? w : w.sk ?? w.lemma ?? "")).filter(Boolean);
+	return words.map((w) => (typeof w === "string" ? w : (w.sk ?? w.lemma ?? ""))).filter(Boolean);
 }
 
 /** One line of what a story is: level, length, new words, share of words the app counts as known. Parts that do not exist are left out. */
-export function storyMeta(s: { level: string; wordCount: number; coverage: number; newWords: ReadonlyArray<string | { sk?: string; lemma?: string }> }): string {
+export function storyMeta(s: {
+	level: string;
+	wordCount: number;
+	coverage: number;
+	newWords: ReadonlyArray<string | { sk?: string; lemma?: string }>;
+}): string {
 	const parts = [s.level, `about ${Math.max(1, Math.round(s.wordCount / 80))} min`];
 	const fresh = newWordList(s.newWords);
 	if (fresh.length) parts.push(`${fresh.length} new ${fresh.length === 1 ? "word" : "words"}`);
@@ -930,9 +1206,22 @@ export function storyMeta(s: { level: string; wordCount: number; coverage: numbe
 const partsWord = (parts: number) => `${parts} ${parts === 1 ? "part" : "parts"}`;
 
 export function sourceMeta(entry: SourceEntry): string {
-	const notStarted = entry.written > 0 ? "not started" : entry.preparing ? "part 1 is being written" : "not written yet";
-	const progress = entry.finished ? `read · ${partsWord(entry.parts)}` : entry.read === 0 ? `${partsWord(entry.parts)} · ${notStarted}` : `part ${entry.nextPart} of ${entry.parts} is next`;
-	return [entry.site, progress, entry.difficulty === "level" ? null : difficultyInfo(entry.difficulty, "").label.toLowerCase(), entry.shortened ? "a shorter version" : null, entry.truncated ? `only its first ${MAX_SOURCE_WORDS.toLocaleString("en-US")} words` : null].filter(Boolean).join(" · ");
+	const notStarted =
+		entry.written > 0 ? "not started" : entry.preparing ? "part 1 is being written" : "not written yet";
+	const progress = entry.finished
+		? `read · ${partsWord(entry.parts)}`
+		: entry.read === 0
+			? `${partsWord(entry.parts)} · ${notStarted}`
+			: `part ${entry.nextPart} of ${entry.parts} is next`;
+	return [
+		entry.site,
+		progress,
+		entry.difficulty === "level" ? null : difficultyInfo(entry.difficulty, "").label.toLowerCase(),
+		entry.shortened ? "a shorter version" : null,
+		entry.truncated ? `only its first ${MAX_SOURCE_WORDS.toLocaleString("en-US")} words` : null,
+	]
+		.filter(Boolean)
+		.join(" · ");
 }
 
 function sourceLine(source: StorySource): string {
@@ -959,7 +1248,13 @@ function nextPartStoryId(state: ReadingState | null, story: StoryRecord): string
 }
 
 const LEVEL_RANK: Record<string, number> = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
-const LEVEL_NAME: Record<string, string> = { A1: "Beginner", A2: "Elementary", B1: "Intermediate", B2: "Upper intermediate", C1: "Advanced" };
+const LEVEL_NAME: Record<string, string> = {
+	A1: "Beginner",
+	A2: "Elementary",
+	B1: "Intermediate",
+	B2: "Upper intermediate",
+	C1: "Advanced",
+};
 const readMinutes = (words: number) => Math.max(1, Math.round(words / 80));
 
 export function storyBookMeta(s: Pick<LibraryEntry, "wordCount" | "coverage" | "lastScore">): string {
@@ -969,7 +1264,23 @@ export function storyBookMeta(s: Pick<LibraryEntry, "wordCount" | "coverage" | "
 	return parts.join(" · ");
 }
 
-function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRemoveSource }: { state: ReadingState | null; linksBeingRead: number; onOpen: (id: string) => void; onWrite: (topic?: string) => void; onAdd: () => void; onOpenPart: (sourceId: string, part: number, storyId?: string) => void; onRemoveSource: (sourceId: string) => void }) {
+function Shelf({
+	state,
+	linksBeingRead,
+	onOpen,
+	onWrite,
+	onAdd,
+	onOpenPart,
+	onRemoveSource,
+}: {
+	state: ReadingState | null;
+	linksBeingRead: number;
+	onOpen: (id: string) => void;
+	onWrite: (topic?: string) => void;
+	onAdd: () => void;
+	onOpenPart: (sourceId: string, part: number, storyId?: string) => void;
+	onRemoveSource: (sourceId: string) => void;
+}) {
 	const lang = useActiveLanguage();
 	const library = useMemo(() => state?.library ?? [], [state]);
 	const stories = useMemo(() => library.filter((s) => !s.source), [library]);
@@ -983,7 +1294,10 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 
 	const pick = library.find((s) => s.id === state?.current?.id) ?? stories.find((s) => s.reads === 0);
 	const nextBookId = pick?.source?.id ?? pick?.id ?? null;
-	const levels = useMemo(() => [...new Set(stories.map((s) => s.level))].sort((a, b) => (LEVEL_RANK[a] ?? 9) - (LEVEL_RANK[b] ?? 9)), [stories]);
+	const levels = useMemo(
+		() => [...new Set(stories.map((s) => s.level))].sort((a, b) => (LEVEL_RANK[a] ?? 9) - (LEVEL_RANK[b] ?? 9)),
+		[stories],
+	);
 	const filtering = level !== "all" || status !== "all" || query.trim() !== "";
 	const unread = stories.filter((s) => s.reads === 0).length;
 
@@ -1012,36 +1326,57 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 		const shown = stories
 			.filter((s) => (level === "all" ? true : s.level === level))
 			.filter((s) => (status === "all" ? true : status === "unread" ? s.reads === 0 : s.reads > 0))
-			.filter((s) => !q || s.title.toLowerCase().includes(q) || (s.topic ?? "").toLowerCase().includes(q) || (s.genre ? genreInfo(s.genre).label.toLowerCase().includes(q) : false))
+			.filter(
+				(s) =>
+					!q ||
+					s.title.toLowerCase().includes(q) ||
+					(s.topic ?? "").toLowerCase().includes(q) ||
+					(s.genre ? genreInfo(s.genre).label.toLowerCase().includes(q) : false),
+			)
 			.map(storyBook);
 		const shownLevels = levels.filter((l) => shown.some((b) => b.level === l));
 		if (shownLevels.length < 2 && levels.length < 2) return shown.length ? [{ label: "", books: shown }] : [];
 		return shownLevels.map((l) => ({ label: l, name: LEVEL_NAME[l], books: shown.filter((b) => b.level === l) }));
 	}, [stories, levels, level, status, query, storyBook]);
 
-	const sourceBooks = sources.map(
-		(entry): ListBook => ({
-			id: entry.id,
-			title: entry.title,
-			level: entry.level,
-			state: entry.id === nextBookId ? "next" : entry.finished ? "read" : "unread",
-			beingWritten: entry.preparing,
-			kind: entry.site ?? "Your text",
-			length: `${entry.read}/${entry.parts}`,
-			meta: sourceMeta({ ...entry, site: undefined }),
-			about: entry.title,
-			progress: entry.read / Math.max(1, entry.parts),
-			actionLabel: entry.finished ? "Read again" : `Read part ${entry.nextPart}`,
-			onRead: () => onOpenPart(entry.id, entry.nextPart, entry.nextStoryId),
-			onRemove: () => onRemoveSource(entry.id),
-		}),
-	);
+	const sourceBooks = sources.map((entry): ListBook => ({
+		id: entry.id,
+		title: entry.title,
+		level: entry.level,
+		state: entry.id === nextBookId ? "next" : entry.finished ? "read" : "unread",
+		beingWritten: entry.preparing,
+		kind: entry.site ?? "Your text",
+		length: `${entry.read}/${entry.parts}`,
+		meta: sourceMeta({ ...entry, site: undefined }),
+		about: entry.title,
+		progress: entry.read / Math.max(1, entry.parts),
+		actionLabel: entry.finished ? "Read again" : `Read part ${entry.nextPart}`,
+		onRead: () => onOpenPart(entry.id, entry.nextPart, entry.nextStoryId),
+		onRemove: () => onRemoveSource(entry.id),
+	}));
 
 	const pickStory = pick && !pick.source ? stories.find((s) => s.id === pick.id) : undefined;
 	const nextBook = sourceBooks.find((b) => b.id === nextBookId) ?? (pickStory ? storyBook(pickStory) : undefined);
 
-	const addSlot: ListSlot | undefined = canWrite ? { label: "Add a text", hint: "A link or pasted article, at your level", icon: <PlusIcon />, onClick: onAdd, testId: "read-add" } : undefined;
-	const writeSlot: ListSlot | undefined = canWrite ? { label: unread ? "Write another episode" : "Write a new episode", hint: "About a topic you pick", icon: <SparklesIcon />, onClick: () => setAskingTopic((asking) => !asking), expanded: askingTopic, testId: "read-write-next" } : undefined;
+	const addSlot: ListSlot | undefined = canWrite
+		? {
+				label: "Add a text",
+				hint: "A link or pasted article, at your level",
+				icon: <PlusIcon />,
+				onClick: onAdd,
+				testId: "read-add",
+			}
+		: undefined;
+	const writeSlot: ListSlot | undefined = canWrite
+		? {
+				label: unread ? "Write another episode" : "Write a new episode",
+				hint: "About a topic you pick",
+				icon: <SparklesIcon />,
+				onClick: () => setAskingTopic((asking) => !asking),
+				expanded: askingTopic,
+				testId: "read-write-next",
+			}
+		: undefined;
 
 	const ownShelf = (
 		<section className="mt-9" aria-label="Your reading">
@@ -1051,16 +1386,28 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 			</h2>
 			{sources.length === 0 && (
 				<p className="q-line dim mb-2" data-testid="read-sources-empty">
-					An article or a newsletter you mean to read? Add its link or paste the text, and read it here, as easy or as hard as you choose.
+					An article or a newsletter you mean to read? Add its link or paste the text, and read it here, as easy or as
+					hard as you choose.
 				</p>
 			)}
 			{linksBeingRead > 0 && (
-				<p className="mb-2 flex items-center gap-2 text-[14px] text-ink-2" role="status" data-testid="read-links-being-read">
+				<p
+					className="mb-2 flex items-center gap-2 text-[14px] text-ink-2"
+					role="status"
+					data-testid="read-links-being-read"
+				>
 					<LoaderCircleIcon className="size-4 animate-spin motion-reduce:animate-none" />
 					Reading {linksBeingRead} links. They come onto the shelf as they are read.
 				</p>
 			)}
-			{(sources.length > 0 || addSlot) && <BookList groups={sourceBooks.length ? [{ label: "", books: sourceBooks }] : []} slot={addSlot} label="Your reading" testId="read-sources" />}
+			{(sources.length > 0 || addSlot) && (
+				<BookList
+					groups={sourceBooks.length ? [{ label: "", books: sourceBooks }] : []}
+					slot={addSlot}
+					label="Your reading"
+					testId="read-sources"
+				/>
+			)}
 			{!canWrite && sources.length === 0 && (
 				<div className="mt-3">
 					<KeyNote>Your own texts are written with an AI key.</KeyNote>
@@ -1079,14 +1426,28 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 				<div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="read-filters">
 					<div className="q-segc" role="radiogroup" aria-label="Level">
 						{["all", ...levels].map((l) => (
-							<button key={l} type="button" role="radio" aria-checked={level === l} className={cn(level === l && "on")} onClick={() => setLevel(l)}>
+							<button
+								key={l}
+								type="button"
+								role="radio"
+								aria-checked={level === l}
+								className={cn(level === l && "on")}
+								onClick={() => setLevel(l)}
+							>
 								{l === "all" ? "All" : l}
 							</button>
 						))}
 					</div>
 					<div className="q-segc" role="radiogroup" aria-label="Status">
 						{(["all", "unread", "read"] as const).map((st) => (
-							<button key={st} type="button" role="radio" aria-checked={status === st} className={cn(status === st && "on")} onClick={() => setStatus(st)}>
+							<button
+								key={st}
+								type="button"
+								role="radio"
+								aria-checked={status === st}
+								className={cn(status === st && "on")}
+								onClick={() => setStatus(st)}
+							>
 								{st === "all" ? "All" : st === "unread" ? "Unread" : "Read"}
 							</button>
 						))}
@@ -1096,7 +1457,13 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 			{stories.length >= SEARCH_FROM && (
 				<div className="q-jump mb-3 !h-10 !shadow-[0_0_0_1px_var(--q-line-2)]">
 					<SearchIcon className="size-4 text-ink-3" />
-					<input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by title or topic" aria-label="Search stories" className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-ink-3" />
+					<input
+						value={query}
+						onChange={(e) => setQuery(e.target.value)}
+						placeholder="Search by title or topic"
+						aria-label="Search stories"
+						className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-ink-3"
+					/>
 				</div>
 			)}
 			{storyGroups.length > 0 ? (
@@ -1130,7 +1497,12 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 						<label htmlFor="story-topic" className="text-[14px] font-semibold text-foreground">
 							What should it be about? <span className="font-normal text-ink-3">(optional)</span>
 						</label>
-						<button type="button" onClick={() => setAskingTopic(false)} className="-mr-1.5 rounded-md p-2.5 text-ink-3 hover:bg-well hover:text-foreground" aria-label="Close">
+						<button
+							type="button"
+							onClick={() => setAskingTopic(false)}
+							className="-mr-1.5 rounded-md p-2.5 text-ink-3 hover:bg-well hover:text-foreground"
+							aria-label="Close"
+						>
 							<XIcon className="size-4" />
 						</button>
 					</div>
@@ -1141,7 +1513,16 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 						}}
 						className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-center"
 					>
-						<input id="story-topic" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Buying train tickets, meeting a neighbor, finding a flat" className="q-field h-10 w-full shrink-0 px-3.5 text-[14px] sm:flex-1 sm:shrink" autoFocus maxLength={150} />
+						<input
+							id="story-topic"
+							type="text"
+							value={topic}
+							onChange={(e) => setTopic(e.target.value)}
+							placeholder="Buying train tickets, meeting a neighbor, finding a flat"
+							className="q-field h-10 w-full shrink-0 px-3.5 text-[14px] sm:flex-1 sm:shrink"
+							autoFocus
+							maxLength={150}
+						/>
 						<button type="submit" className="q-btn primary shrink-0" data-testid="read-write-submit">
 							<SparklesIcon className="size-4" />
 							Write episode
@@ -1183,7 +1564,9 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 				<div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
 					<div>
 						<h1 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Read</h1>
-						<p className="q-line dim mt-1">Stories at your level, and your own articles and newsletters. Tap any word for its meaning.</p>
+						<p className="q-line dim mt-1">
+							Stories at your level, and your own articles and newsletters. Tap any word for its meaning.
+						</p>
 					</div>
 				</div>
 				{nextBook && (
@@ -1197,11 +1580,27 @@ function Shelf({ state, linksBeingRead, onOpen, onWrite, onAdd, onOpenPart, onRe
 						<EmptyState
 							testid="read-empty"
 							title="No episodes yet"
-							action={canWrite ? <button type="button" onClick={() => onWrite()} className="q-btn primary">Write the first episode</button> : <AddKeyButton />}
-							secondary={<Link href="/" className="q-btn ghost">Back to Today</Link>}
+							action={
+								canWrite ? (
+									<button type="button" onClick={() => onWrite()} className="q-btn primary">
+										Write the first episode
+									</button>
+								) : (
+									<AddKeyButton />
+								)
+							}
+							secondary={
+								<Link href="/" className="q-btn ghost">
+									Back to Today
+								</Link>
+							}
 						>
 							<p>Episodes are short stories at your level, with every word tappable.</p>
-							<p>{canWrite ? "The first one takes about a minute to write, then it is kept here." : "They are written with an AI key. Once you add one, your first episode is ready in about a minute."}</p>
+							<p>
+								{canWrite
+									? "The first one takes about a minute to write, then it is kept here."
+									: "They are written with an AI key. Once you add one, your first episode is ready in about a minute."}
+							</p>
 						</EmptyState>
 					</div>
 				)}

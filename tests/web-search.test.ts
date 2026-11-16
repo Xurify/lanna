@@ -8,7 +8,13 @@ import { describe, it } from "node:test";
 import { createWebTools } from "../src/agent/tools/web.ts";
 import { jobTools } from "../src/agent/tools/jobs.ts";
 import { runResearcherAgent } from "../src/agent/subagents/researcher.ts";
-import { createFauxCore, fauxAssistantMessage, fauxText, fauxToolCall, type FauxResponseStep } from "@earendil-works/pi-ai";
+import {
+	createFauxCore,
+	fauxAssistantMessage,
+	fauxText,
+	fauxToolCall,
+	type FauxResponseStep,
+} from "@earendil-works/pi-ai";
 import type { JobStore } from "../src/core/ports.ts";
 import type { JobRecord } from "../src/core/contracts.ts";
 import type { SearchHit, SearchProvider } from "../src/core/search.ts";
@@ -27,7 +33,8 @@ describe("web_search on the injected port (web.ts)", () => {
 		const { web_search } = createWebTools(() => null);
 		assert.ok(web_search, "web_search is still exposed without a provider");
 		const out = await web_search!.execute!("c1", { query: "anything" });
-		const missing = "web_search is not available: no search engine is configured. " +
+		const missing =
+			"web_search is not available: no search engine is configured. " +
 			"Set a Context, Tavily or Brave search API key in settings. Report in your brief that web search is unavailable.";
 		assert.equal(out.details, missing);
 		assert.deepEqual(out.content, [{ type: "text", text: missing }]);
@@ -87,10 +94,12 @@ describe("web_search on the injected port (web.ts)", () => {
 		// so the happy path runs hermetically: a VALID url must REACH the
 		// fetch stage.
 		const { web_fetch } = createWebTools(() => null);
-		const restoreSeams = stubSafeFetch((async () =>
-			new Response("A plain text page with enough content to matter for the test.", {
-				headers: { "content-type": "text/plain" },
-			})) as typeof fetch);
+		const restoreSeams = stubSafeFetch(
+			(async () =>
+				new Response("A plain text page with enough content to matter for the test.", {
+					headers: { "content-type": "text/plain" },
+				})) as typeof fetch,
+		);
 		try {
 			const ok = await web_fetch!.execute!("c-ok", { url: "https://example.com/page" });
 			assert.ok(
@@ -109,75 +118,89 @@ describe("web_search on the injected port (web.ts)", () => {
 
 describe("keyless researcher loop", () => {
 	it("sends the exact approved missing-credentials guidance in the researcher system prompt", async () => {
-		const approved = "If web_search reports that search is unavailable because credentials are missing, do not retry it with different queries. Use web_fetch when you have source URLs, and continue with any other available sources. If the missing search capability materially limits your work, state the limitation and the missing-key setup needed in your brief. Never invent search results or sources.";
+		const approved =
+			"If web_search reports that search is unavailable because credentials are missing, do not retry it with different queries. Use web_fetch when you have source URLs, and continue with any other available sources. If the missing search capability materially limits your work, state the limitation and the missing-key setup needed in your brief. Never invent search results or sources.";
 		const faux = createFauxCore({});
-		faux.setResponses([(context) => {
-			const system = context.messages.find((m) => m.role === "system");
-			assert.ok(system && system.role === "system");
-			assert.equal(typeof system.content, "string");
-			const prompt = system.content as string;
-			assert.ok(prompt.split("\n\n").includes(approved), "approved paragraph is passed verbatim");
-			assert.match(prompt, /Break the question into 2-4 searchable facets/);
-			assert.match(prompt, /## Gaps/);
-			assert.ok(system.toolsAdded?.some((t) => t.name === "web_search"));
-			assert.ok(system.toolsAdded?.some((t) => t.name === "web_fetch"));
-			return fauxAssistantMessage([fauxText("Prompt verified; no model behavior inferred.")]);
-		}]);
-		assert.equal(await runResearcherAgent("Check the prompt only", {
-			engine: { model: faux.getModel(), streamFn: faux.streamSimple },
-		}), "Prompt verified; no model behavior inferred.");
+		faux.setResponses([
+			(context) => {
+				const system = context.messages.find((m) => m.role === "system");
+				assert.ok(system && system.role === "system");
+				assert.equal(typeof system.content, "string");
+				const prompt = system.content as string;
+				assert.ok(prompt.split("\n\n").includes(approved), "approved paragraph is passed verbatim");
+				assert.match(prompt, /Break the question into 2-4 searchable facets/);
+				assert.match(prompt, /## Gaps/);
+				assert.ok(system.toolsAdded?.some((t) => t.name === "web_search"));
+				assert.ok(system.toolsAdded?.some((t) => t.name === "web_fetch"));
+				return fauxAssistantMessage([fauxText("Prompt verified; no model behavior inferred.")]);
+			},
+		]);
+		assert.equal(
+			await runResearcherAgent("Check the prompt only", {
+				engine: { model: faux.getModel(), streamFn: faux.streamSimple },
+			}),
+			"Prompt verified; no model behavior inferred.",
+		);
 	});
 
 	// These scripts prove tool/loop mechanics, not real-model compliance.
 	for (const searchFirst of [true, false]) {
-		it(searchFirst ? "recovers from missing search keys by fetching a supplied URL" : "fetch-only research needs no search credentials", async () => {
-			const url = "https://example.com/supplied-source";
-			const brief = `## Summary\nVerified supplied source. [Source](${url})`;
-			const steps: FauxResponseStep[] = [];
-			const fetchCall = () => fauxAssistantMessage(
-				[fauxToolCall("web_fetch", { url }, { id: "fetch1" })], { stopReason: "toolUse" },
-			);
-			if (searchFirst) {
-				steps.push(
-					() => {
-						return fauxAssistantMessage(
-							[fauxToolCall("web_search", { query: "supplied source" }, { id: "search1" })], { stopReason: "toolUse" },
-						);
-					},
-					(context) => {
-						const result = context.messages.find((m) => m.role === "toolResult" && m.toolCallId === "search1");
-						assert.ok(result && result.role === "toolResult");
-						assert.equal(result.isError, false, "missing keys do not abort the native loop");
-						assert.match(JSON.stringify(result.content), /no search engine is configured/);
-						return fetchCall();
-					},
-				);
-			} else steps.push(fetchCall());
-			steps.push((context) => {
-				const result = context.messages.find((m) => m.role === "toolResult" && m.toolCallId === "fetch1");
-				assert.ok(result && result.role === "toolResult");
-				assert.equal(result.isError, false);
-				assert.match(JSON.stringify(result.content), /Synthetic verified source content/);
-				return fauxAssistantMessage([fauxText(brief)]);
-			});
-			const faux = createFauxCore({});
-			faux.setResponses(steps);
-			const fetched: string[] = [];
-			const restoreSeams = stubSafeFetch((async (input) => {
-				fetched.push(String(input));
-				assert.equal(String(input), url, "only the supplied URL is fetched");
-				return new Response("Synthetic verified source content", { headers: { "content-type": "text/plain" } });
-			}) as typeof fetch);
-			try {
-				assert.equal(await runResearcherAgent(`Verify ${url}`, {
-					engine: { model: faux.getModel(), streamFn: faux.streamSimple },
-					// No search seam: this is the keyless backstop, not a search stub.
-				}), brief);
-				assert.deepEqual(fetched, [url]);
-			} finally {
-				restoreSeams();
-			}
-		});
+		it(
+			searchFirst
+				? "recovers from missing search keys by fetching a supplied URL"
+				: "fetch-only research needs no search credentials",
+			async () => {
+				const url = "https://example.com/supplied-source";
+				const brief = `## Summary\nVerified supplied source. [Source](${url})`;
+				const steps: FauxResponseStep[] = [];
+				const fetchCall = () =>
+					fauxAssistantMessage([fauxToolCall("web_fetch", { url }, { id: "fetch1" })], { stopReason: "toolUse" });
+				if (searchFirst) {
+					steps.push(
+						() => {
+							return fauxAssistantMessage(
+								[fauxToolCall("web_search", { query: "supplied source" }, { id: "search1" })],
+								{ stopReason: "toolUse" },
+							);
+						},
+						(context) => {
+							const result = context.messages.find((m) => m.role === "toolResult" && m.toolCallId === "search1");
+							assert.ok(result && result.role === "toolResult");
+							assert.equal(result.isError, false, "missing keys do not abort the native loop");
+							assert.match(JSON.stringify(result.content), /no search engine is configured/);
+							return fetchCall();
+						},
+					);
+				} else steps.push(fetchCall());
+				steps.push((context) => {
+					const result = context.messages.find((m) => m.role === "toolResult" && m.toolCallId === "fetch1");
+					assert.ok(result && result.role === "toolResult");
+					assert.equal(result.isError, false);
+					assert.match(JSON.stringify(result.content), /Synthetic verified source content/);
+					return fauxAssistantMessage([fauxText(brief)]);
+				});
+				const faux = createFauxCore({});
+				faux.setResponses(steps);
+				const fetched: string[] = [];
+				const restoreSeams = stubSafeFetch((async (input) => {
+					fetched.push(String(input));
+					assert.equal(String(input), url, "only the supplied URL is fetched");
+					return new Response("Synthetic verified source content", { headers: { "content-type": "text/plain" } });
+				}) as typeof fetch);
+				try {
+					assert.equal(
+						await runResearcherAgent(`Verify ${url}`, {
+							engine: { model: faux.getModel(), streamFn: faux.streamSimple },
+							// No search seam: this is the keyless backstop, not a search stub.
+						}),
+						brief,
+					);
+					assert.deepEqual(fetched, [url]);
+				} finally {
+					restoreSeams();
+				}
+			},
+		);
 	}
 });
 
@@ -230,7 +253,12 @@ describe("keyless research dispatch (jobTools)", () => {
 	it("keyless dispatch preserves the async job acknowledgement and spawn contract", async () => {
 		const ctx = fakeCtx(() => false);
 		const spawned: Array<{ job: JobRecord; input: unknown }> = [];
-		const tools = jobTools({ ...ctx, spawn: (job, input) => { spawned.push({ job, input }); } });
+		const tools = jobTools({
+			...ctx,
+			spawn: (job, input) => {
+				spawned.push({ job, input });
+			},
+		});
 		const input = { question: "Verify the supplied URL", context: "https://example.com/source" };
 		const out = await tools.research!.execute!("keyless-call", input);
 		assert.match(String(out.details), /^Dispatched \(job job_1\)\./);

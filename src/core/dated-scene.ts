@@ -73,7 +73,13 @@ export function dateForChoice(choice: DatedChoice, today: string): string {
 	return isoAddMonths(today, CHOICE_MONTHS[choice]);
 }
 
-const WORDS = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+const WORDS = new Intl.DateTimeFormat("en-US", {
+	weekday: "long",
+	month: "long",
+	day: "numeric",
+	year: "numeric",
+	timeZone: "UTC",
+});
 
 /** "Saturday, December 5, 2026". */
 export function dateInWords(iso: string): string {
@@ -147,19 +153,50 @@ export interface DatedSceneView {
  *  no date at all rather than an invented one. */
 export function datedSceneView(scene: DatedScene, estimate: DatedEstimate, today: string): DatedSceneView {
 	const daysLeft = isoDaysBetween(today, scene.date);
-	const base = { id: scene.id, title: scene.title, words: scene.words ?? null, date: scene.date, dateWords: dateInWords(scene.date), daysLeft, outcome: scene.outcome ?? null, reach: null, daysLater: null };
+	const base = {
+		id: scene.id,
+		title: scene.title,
+		words: scene.words ?? null,
+		date: scene.date,
+		dateWords: dateInWords(scene.date),
+		daysLeft,
+		outcome: scene.outcome ?? null,
+		reach: null,
+		daysLater: null,
+	};
 	if (daysLeft < 0) return { ...base, status: "passed", line: "The date has passed.", outcomeDue: !scene.outcome };
 	const open = { ...base, outcomeDue: false };
-	if (estimate.speed.need > 0 && estimate.speed.basis === "level") return { ...open, status: "no-speed", line: "Speed is not measured yet, so the app gives no date. Six timed sentences in Listen or Watch measure it." };
-	if (estimate.eta.daysPace === null) return { ...open, status: "no-pace", line: "Your pace is not measured yet, so the app gives no date. Seven study days in the last fourteen, and two weeks in the deck, measure it." };
+	if (estimate.speed.need > 0 && estimate.speed.basis === "level")
+		return {
+			...open,
+			status: "no-speed",
+			line: "Speed is not measured yet, so the app gives no date. Six timed sentences in Listen or Watch measure it.",
+		};
+	if (estimate.eta.daysPace === null)
+		return {
+			...open,
+			status: "no-pace",
+			line: "Your pace is not measured yet, so the app gives no date. Seven study days in the last fourteen, and two weeks in the deck, measure it.",
+		};
 	const reachDays = Math.max(0, Math.round(estimate.eta.daysPace));
 	const reach = isoAddDays(today, reachDays);
 	const reachWords = dateInWords(reach);
 	if (reachDays <= daysLeft) {
 		const spare = daysLeft - reachDays;
 		const margin = spare > 0 ? `${days(spare)} to spare` : "just in time";
-		return { ...open, status: "on-track", reach, line: `At your pace of the last 14 days you reach it by ${reachWords}, ${margin}. A projection, not a promise.` };
+		return {
+			...open,
+			status: "on-track",
+			reach,
+			line: `At your pace of the last 14 days you reach it by ${reachWords}, ${margin}. A projection, not a promise.`,
+		};
 	}
 	const daysLater = reachDays - daysLeft;
-	return { ...open, status: "behind", reach, daysLater, line: `Later than the date: at your pace of the last 14 days you reach it on ${reachWords}, ${days(daysLater)} after.` };
+	return {
+		...open,
+		status: "behind",
+		reach,
+		daysLater,
+		line: `Later than the date: at your pace of the last 14 days you reach it on ${reachWords}, ${days(daysLater)} after.`,
+	};
 }

@@ -15,10 +15,13 @@ const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-lang-"));
 process.env.LH_DATA_DIR = dataDir;
 delete process.env.LH_PROFILE;
 
-const { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_IDS } = await import("../src/core/language.ts");
-const { review, intervalDays, retrievability, initialState, nextDue, formatInterval, FSRS5_WEIGHTS } = await import("../src/core/fsrs.ts");
-const { pickClozeExample, mintCard, clozeParts, ratingFor, ratingCeiling, dueCards, lexiconOrder } = await import("../src/core/review.ts");
-const { LANGUAGE_PROFILES, activeProfile, PATHS } = await import("../config.ts");
+const { compareAnswer, diacriticSlips, foldDiacritics, LANGUAGES, LANGUAGE_IDS } =
+	await import("../src/core/language.ts");
+const { review, intervalDays, retrievability, initialState, nextDue, formatInterval, FSRS5_WEIGHTS } =
+	await import("../src/core/fsrs.ts");
+const { pickClozeExample, mintCard, clozeParts, ratingFor, ratingCeiling, dueCards, lexiconOrder } =
+	await import("../src/core/review.ts");
+const { LANGUAGE_PROFILES, activeProfile } = await import("../config.ts");
 const { lookupWord, loadLexicon, formatEntry } = await import("../src/agent/lexicon.ts");
 const { listSourceSegments } = await import("../src/agent/prompt-segments.ts");
 const { isValidSegmentPath } = await import("../src/core/prompt-segments.ts");
@@ -104,7 +107,11 @@ describe("cloze cards", () => {
 		for (const e of lexicon.entries.slice(0, 500)) {
 			for (const ex of e.examples) {
 				if (!ex.cloze) continue;
-				assert.equal(exampleText(ex).slice(ex.cloze.at, ex.cloze.at + ex.cloze.answer.length), ex.cloze.answer, `${e.slug}: ${exampleText(ex)}`);
+				assert.equal(
+					exampleText(ex).slice(ex.cloze.at, ex.cloze.at + ex.cloze.answer.length),
+					ex.cloze.answer,
+					`${e.slug}: ${exampleText(ex)}`,
+				);
 			}
 		}
 	});

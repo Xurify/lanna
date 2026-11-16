@@ -34,11 +34,13 @@ export function answerForPresentation(answer: QuestionAnswerData, input: unknown
 	};
 	// Selected-answer values are stable identities when the record retained
 	// them. Do not normalize those values, recompute a shuffle, or regrade.
-	bindUnique(saved.map((option) => {
-		const values = answer.answers.filter((a) => a.index === option.index).map((a) => a.value);
-		return original.flatMap((o, oi) => values.includes(o.value) ? [oi] : []);
-	}));
-	bindUnique(saved.map((option) => original.flatMap((o, oi) => o.label === option.label ? [oi] : [])));
+	bindUnique(
+		saved.map((option) => {
+			const values = answer.answers.filter((a) => a.index === option.index).map((a) => a.value);
+			return original.flatMap((o, oi) => (values.includes(o.value) ? [oi] : []));
+		}),
+	);
+	bindUnique(saved.map((option) => original.flatMap((o, oi) => (o.label === option.label ? [oi] : []))));
 	// A bijection with one remaining pair has no ordering ambiguity. With
 	// multiple unmatched rows, keep their snapshots rather than guess.
 	if (saved.length === original.length && bindings.size === saved.length - 1) {

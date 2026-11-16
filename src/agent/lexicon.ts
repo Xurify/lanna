@@ -112,7 +112,13 @@ export function lookupWord(query: string, profile: string = activeProfile(), lim
 }
 
 const lookups = processWide("lexicon.lookups", () => new Map<string, SlovakLookup | null>());
-const sentenceKey = (s: string) => s.normalize("NFC").toLocaleLowerCase("sk").replace(/[.!?…"„“]/g, "").replace(/\s+/g, " ").trim();
+const sentenceKey = (s: string) =>
+	s
+		.normalize("NFC")
+		.toLocaleLowerCase("sk")
+		.replace(/[.!?…"„“]/g, "")
+		.replace(/\s+/g, " ")
+		.trim();
 
 /** The dictionary as the Slovak checker reads it (src/core/slovak-check.ts):
  *  each noun form's genders, and the curated example sentences, which a
@@ -123,9 +129,16 @@ export function slovakLookup(profile: string = activeProfile()): SlovakLookup | 
 	let lookup: SlovakLookup | null = null;
 	if (lexicon) {
 		const curated = new Set<string>();
-		for (const e of lexicon.entries) for (const ex of e.examples) if (ex.src === "curated" && !ex.rejected) curated.add(sentenceKey(exampleText(ex)));
+		for (const e of lexicon.entries)
+			for (const ex of e.examples) if (ex.src === "curated" && !ex.rejected) curated.add(sentenceKey(exampleText(ex)));
 		lookup = {
-			genders: (form) => [...new Set((lexicon.byForm.get(form.toLocaleLowerCase("sk")) ?? []).filter((e) => e.pos === "noun" && e.gender).map((e) => e.gender!))],
+			genders: (form) => [
+				...new Set(
+					(lexicon.byForm.get(form.toLocaleLowerCase("sk")) ?? [])
+						.filter((e) => e.pos === "noun" && e.gender)
+						.map((e) => e.gender!),
+				),
+			],
 			isVerifiedExample: (text) => curated.has(sentenceKey(text)),
 		};
 	}
@@ -138,16 +151,21 @@ const CASES = ["nominative", "genitive", "dative", "accusative", "locative", "in
 /** The tool's text rendering of one entry. */
 export function formatEntry(e: LexiconEntry, examples = 3): string {
 	const lemma = entryLemma(e);
-	const lines = [`${lemma} — ${e.en} (${e.cat.toLowerCase()}${e.gender ? `, ${e.gender}` : ""}${e.register ? `, ${e.register}` : ""}${e.rank ? `, frequency rank ${e.rank}` : ""})`];
+	const lines = [
+		`${lemma} — ${e.en} (${e.cat.toLowerCase()}${e.gender ? `, ${e.gender}` : ""}${e.register ? `, ${e.register}` : ""}${e.rank ? `, frequency rank ${e.rank}` : ""})`,
+	];
 	if (e.declension) {
-		lines.push(`  declension (checked against JÚĽŠ) singular: ${e.declension.singular.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
+		lines.push(
+			`  declension (checked against JÚĽŠ) singular: ${e.declension.singular.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`,
+		);
 		lines.push(`  plural: ${e.declension.plural.map((f, i) => `${CASES[i]} ${f}`).join(", ")}`);
 	} else if (e.forms?.length) {
 		lines.push(`  verified forms (unordered): ${e.forms.join(", ")}`);
 	} else {
 		lines.push("  forms: not in the dictionary — do not present a form as certain without saying so");
 	}
-	for (const ex of e.examples.filter((x) => !x.rejected).slice(0, examples)) lines.push(`  e.g. ${exampleText(ex)} — ${ex.en}`);
+	for (const ex of e.examples.filter((x) => !x.rejected).slice(0, examples))
+		lines.push(`  e.g. ${exampleText(ex)} — ${ex.en}`);
 	if (e.related.length) lines.push(`  related: ${e.related.slice(0, 6).join(", ")}`);
 	return lines.join("\n");
 }

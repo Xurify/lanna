@@ -37,8 +37,9 @@ function runningWorkBlocker(chatId: string): Extract<ChatDeleteOutcome, { status
 	// Legacy records kept completed workers running until delivery. A saved
 	// result without a live loop is pending session data, not computing work;
 	// deletion must not depend on a prior recovery poll to recognize it.
-	const runningJobs = stores.jobStore.listJobs(chatId).filter((job) =>
-		job.status === "running" && (!job.result || isJobLive(job.id)));
+	const runningJobs = stores.jobStore
+		.listJobs(chatId)
+		.filter((job) => job.status === "running" && (!job.result || isJobLive(job.id)));
 	if (runningJobs.length > 0) {
 		return {
 			ok: false,

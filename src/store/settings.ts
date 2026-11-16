@@ -20,10 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { SETTINGS_FILE } from "../../config.ts";
-import {
-	sanitizeUserSettings,
-	type UserSettings,
-} from "../core/settings.ts";
+import { sanitizeUserSettings, type UserSettings } from "../core/settings.ts";
 import type { SettingsStore } from "../core/ports.ts";
 
 /** The persisted record, or null when none exists (first boot). Runs the

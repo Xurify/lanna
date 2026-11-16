@@ -108,10 +108,13 @@ export async function runSubagent(tools: AgentTool<any, any>[], opts: SubagentRu
 						if (m.stopReason === "aborted") {
 							// The call was cancelled — no completed step, no billed
 							// usage (the abort path asserts zero steps).
-								aborted = true;
+							aborted = true;
 							break;
 						}
-						if (!usageWasAdmitted(m.usage)) { if (m.stopReason === "error") errorMessage = m.errorMessage; break; }
+						if (!usageWasAdmitted(m.usage)) {
+							if (m.stopReason === "error") errorMessage = m.errorMessage;
+							break;
+						}
 						step++;
 						opts.onUsage?.(m.usage);
 						opts.onAssistantMessage?.(m, step);
@@ -134,11 +137,12 @@ export async function runSubagent(tools: AgentTool<any, any>[], opts: SubagentRu
 					break;
 			}
 		});
-		if (opts.prompt !== undefined) await agent.prompt({
-			role: "user",
-			content: opts.prompt,
-			timestamp: Date.now(),
-		});
+		if (opts.prompt !== undefined)
+			await agent.prompt({
+				role: "user",
+				content: opts.prompt,
+				timestamp: Date.now(),
+			});
 		else await agent.continue();
 	} finally {
 		opts.abortSignal?.removeEventListener("abort", onAbort);
@@ -154,9 +158,7 @@ export async function runSubagent(tools: AgentTool<any, any>[], opts: SubagentRu
 	// 0.87.1: drop the seeded leading SystemMessage (transcript rework —
 	// see ui-stream's settleWith) before slicing past the input count, or
 	// the seed displaces the slice and the last INPUT message leaks in.
-	const newMessages = agent.state.messages
-		.filter((m) => (m as { role?: string }).role !== "system")
-		.slice(before);
+	const newMessages = agent.state.messages.filter((m) => (m as { role?: string }).role !== "system").slice(before);
 	const assistants = newMessages.filter((m) => (m as { role?: string }).role === "assistant") as AssistantMessage[];
 	const last = assistants[assistants.length - 1];
 	const text = last

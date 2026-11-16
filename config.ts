@@ -87,7 +87,12 @@ export function addedLanguageIds(): string[] {
 		return [];
 	}
 	return names
-		.filter((id) => PROFILE_ID_RE.test(id) && !(LANGUAGE_PROFILES as readonly string[]).includes(id) && ["language.json", "course.json"].every((f) => fs.existsSync(path.join(LANGUAGES_DIR, id, f))))
+		.filter(
+			(id) =>
+				PROFILE_ID_RE.test(id) &&
+				!(LANGUAGE_PROFILES as readonly string[]).includes(id) &&
+				["language.json", "course.json"].every((f) => fs.existsSync(path.join(LANGUAGES_DIR, id, f))),
+		)
 		.sort();
 }
 
@@ -122,7 +127,11 @@ export function readProfileChoice(): ProfileChoice {
 	try {
 		const parsed: unknown = JSON.parse(fs.readFileSync(PROFILE_FILE, "utf-8"));
 		const r = parsed && typeof parsed === "object" ? (parsed as { active?: unknown; hidden?: unknown }) : {};
-		const hidden = Array.isArray(r.hidden) ? r.hidden.filter((h): h is string => typeof h === "string" && (LANGUAGE_PROFILES as readonly string[]).includes(h)) : [];
+		const hidden = Array.isArray(r.hidden)
+			? r.hidden.filter(
+					(h): h is string => typeof h === "string" && (LANGUAGE_PROFILES as readonly string[]).includes(h),
+				)
+			: [];
 		return { ...(typeof r.active === "string" ? { active: r.active } : {}), hidden: [...new Set(hidden)] };
 	} catch {
 		return { hidden: [] };
@@ -177,12 +186,14 @@ const RUNNING = ((globalThis as { __lhRunning?: Record<string, Running> }).__lhR
 
 const COURSE_KEY = "__lhCourse";
 const COURSE_RECHECK_MS = 1000;
-const COURSES = ((globalThis as { __lhCourses?: Map<string, { file: string; mtimeMs: number; checkedAt: number; course: unknown }> }).__lhCourses ??= new Map());
+const COURSES = ((
+	globalThis as { __lhCourses?: Map<string, { file: string; mtimeMs: number; checkedAt: number; course: unknown }> }
+).__lhCourses ??= new Map());
 
 function courseFile(profile: LanguageProfile): string {
 	const checkedFile = path.join(LANGUAGES_DIR, profile, "course.json");
 	const shippedFile = path.join(ROOT, "curriculum", profile, "course.json");
-	return fs.existsSync(checkedFile) ? checkedFile : (fs.existsSync(shippedFile) ? shippedFile : checkedFile);
+	return fs.existsSync(checkedFile) ? checkedFile : fs.existsSync(shippedFile) ? shippedFile : checkedFile;
 }
 
 function readCourse(profile: LanguageProfile): unknown {
@@ -384,11 +395,7 @@ export const PATHS = {
 /** Every agent role in the app. The conversation pair (prober/teacher)
  *  resolves chat.model → strong slot; background roles resolve their own
  *  override → tier slot (core/settings-resolution.ts ROLE_SLOT). */
-export type ModelRole =
-	| "prober"
-	| "teacher"
-	| "researcher"
-	| "pdfReader";
+export type ModelRole = "prober" | "teacher" | "researcher" | "pdfReader";
 
 /**
  * THE USER SETTINGS RECORD (settings-storage wave, 2026-09-19): one

@@ -147,8 +147,13 @@ export const wordCheckStore = {
 
 type MeasuredVocabulary = { size: number; at: string; reliable: boolean };
 
-export function latestMeasuredVocabulary(fromLevelCheck: MeasuredVocabulary | undefined): MeasuredVocabulary | undefined {
-	const lastCheck = wordCheckStore.sessions().filter((s) => s.measured).at(-1);
+export function latestMeasuredVocabulary(
+	fromLevelCheck: MeasuredVocabulary | undefined,
+): MeasuredVocabulary | undefined {
+	const lastCheck = wordCheckStore
+		.sessions()
+		.filter((s) => s.measured)
+		.at(-1);
 	if (!lastCheck) return fromLevelCheck;
 	if (fromLevelCheck && fromLevelCheck.at > lastCheck.endedAt) return fromLevelCheck;
 	return { size: lastCheck.after.total, at: lastCheck.endedAt, reliable: true };

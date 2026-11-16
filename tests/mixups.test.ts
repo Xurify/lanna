@@ -32,14 +32,32 @@ import {
 } from "../src/core/mixups.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
-const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] }).words;
+const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] })
+	.words;
 const lex = mixupLexicon(entries);
 
 const at = (n: number) => new Date(Date.UTC(2026, 10, 1, 9, n)).toISOString();
-const miss = (slug: string, answer: string, given: string, n = 0): MixupEvent => ({ slug, answer, given, verdict: "wrong", sentence: `${answer} mi nezavolal.`, at: at(n) });
-const hit = (slug: string, answer: string, n = 0): MixupEvent => ({ slug, answer, given: answer, verdict: "exact", sentence: `${answer} prišiel.`, at: at(n) });
+const miss = (slug: string, answer: string, given: string, n = 0): MixupEvent => ({
+	slug,
+	answer,
+	given,
+	verdict: "wrong",
+	sentence: `${answer} mi nezavolal.`,
+	at: at(n),
+});
+const hit = (slug: string, answer: string, n = 0): MixupEvent => ({
+	slug,
+	answer,
+	given: answer,
+	verdict: "exact",
+	sentence: `${answer} prišiel.`,
+	at: at(n),
+});
 
-const onDay = (e: MixupEvent, day: number): MixupEvent => ({ ...e, at: new Date(Date.UTC(2026, 10, day, 9)).toISOString() });
+const onDay = (e: MixupEvent, day: number): MixupEvent => ({
+	...e,
+	at: new Date(Date.UTC(2026, 10, day, 9)).toISOString(),
+});
 
 const NIKTO = mixupKey("nikto", "niekto");
 const NIC = mixupKey("nic", "nieco");
@@ -86,7 +104,9 @@ test("a miss opens the pair with its family and evidence, and predicts the famil
 
 test("right first tries on two different days mend a mix-up; a later miss opens it again", () => {
 	let record: MixupRecord = tallyMixups({}, [miss("nikto", "Nikto", "Niekto")], lex).record;
-	const rights = Array.from({ length: MIXUP_MEND_HITS }, (_, i) => hit(i % 2 ? "niekto" : "nikto", i % 2 ? "Niekto" : "Nikto", i + 1));
+	const rights = Array.from({ length: MIXUP_MEND_HITS }, (_, i) =>
+		hit(i % 2 ? "niekto" : "nikto", i % 2 ? "Niekto" : "Nikto", i + 1),
+	);
 	const sameDay = tallyMixups(record, rights, lex).record;
 	assert.equal(sameDay[NIKTO]!.hits, MIXUP_MEND_HITS);
 	assert.equal(mixupStatus(sameDay[NIKTO]!), "active", "three right answers in one sitting do not mend a pair");
@@ -104,7 +124,11 @@ test("right first tries on two different days mend a mix-up; a later miss opens 
 
 test("a probe is cleared by right first tries, and a miss on it makes it a real mix-up", () => {
 	const opened = tallyMixups({}, [miss("nikto", "Nikto", "Niekto")], lex).record;
-	const cleared = tallyMixups(opened, Array.from({ length: PROBE_CLEAR_HITS }, (_, i) => hit("nic", "nič", i + 1)), lex).record;
+	const cleared = tallyMixups(
+		opened,
+		Array.from({ length: PROBE_CLEAR_HITS }, (_, i) => hit("nic", "nič", i + 1)),
+		lex,
+	).record;
 	assert.equal(mixupStatus(cleared[NIC]!), "cleared");
 	assert.ok(!mixupList(cleared).some((m) => m.key === NIC), "a cleared probe is not listed");
 	const missed = tallyMixups(opened, [miss("nic", "Nič", "Niečo", 2)], lex).record;
@@ -132,13 +156,21 @@ test("a pair no family names predicts the same edit applied to other words", () 
 		en: slug,
 		cat: "Phrases",
 		related: [],
-		examples: [0, 1, 2].map((i) => ({ sk: `${slug} je tu ${i}.`, en: "", cloze: { answer: slug, at: 0 } })) as LexiconEntry["examples"],
+		examples: [0, 1, 2].map((i) => ({
+			sk: `${slug} je tu ${i}.`,
+			en: "",
+			cloze: { answer: slug, at: 0 },
+		})) as LexiconEntry["examples"],
 	});
 	const tiny = mixupLexicon(["nido", "niedo", "nima", "niema", "nipo", "kolo"].map(word));
 	const found = ruleNeighbours(tiny, "nido", "niedo").map(([a, b]) => mixupKey(a, b));
 	assert.deepEqual(found, [mixupKey("nima", "niema")], "nima / niema follows the ni → nie edit; nipo has no twin");
 	assert.deepEqual(ruleNeighbours(tiny, "nido", "kolo"), [], "a big edit predicts nothing");
-	const { record } = tallyMixups({}, [{ slug: "nido", answer: "nido", given: "niedo", verdict: "wrong", sentence: "", at: at(0) }], tiny);
+	const { record } = tallyMixups(
+		{},
+		[{ slug: "nido", answer: "nido", given: "niedo", verdict: "wrong", sentence: "", at: at(0) }],
+		tiny,
+	);
 	assert.equal(record[mixupKey("nima", "niema")]?.from, mixupKey("nido", "niedo"));
 });
 
@@ -152,7 +184,8 @@ test("the Mix-ups lesson: open pairs typed on both sides, probes as a two-way ch
 	for (const item of plan.items) {
 		assert.equal(item.before + item.answer + item.after, item.sentence, item.id);
 		assert.equal(item.pair?.rule, ni.rule, item.id);
-		if (item.slug === "nikto" || item.slug === "niekto") assert.equal(item.kind, "type", `${item.id}: an open mix-up is produced`);
+		if (item.slug === "nikto" || item.slug === "niekto")
+			assert.equal(item.kind, "type", `${item.id}: an open mix-up is produced`);
 		if (item.kind === "choose") {
 			assert.equal(item.options?.length, 2, item.id);
 			assert.ok(item.options!.includes(item.answer), item.id);
@@ -160,7 +193,10 @@ test("the Mix-ups lesson: open pairs typed on both sides, probes as a two-way ch
 	}
 	const sides = new Set(plan.items.filter((i) => i.slug === "nikto" || i.slug === "niekto").map((i) => i.slug));
 	assert.deepEqual([...sides].sort(), ["niekto", "nikto"], "both sides of the pair");
-	assert.ok(plan.items.some((i) => i.slug === "nic" || i.slug === "nieco"), "the probe is in the lesson");
+	assert.ok(
+		plan.items.some((i) => i.slug === "nic" || i.slug === "nieco"),
+		"the probe is in the lesson",
+	);
 	assert.equal(buildMixupLesson(entries, {}, { seed: 1 }).items.length, 0, "nothing on record, nothing to drill");
 });
 
@@ -183,7 +219,17 @@ test("a card being relearned after a miss is a retry, not a first try", () => {
 
 test("the record keeps at most the cap, dropping settled pairs before open ones", () => {
 	const record: MixupRecord = {};
-	for (let i = 0; i < MIXUP_RECORD_CAP + 5; i++) record[`a${i}~b${i}`] = { a: `a${i}`, b: `b${i}`, words: [`a${i}`, `b${i}`], since: at(i), lastAt: at(i), misses: 1, hits: i < 10 ? MIXUP_MEND_HITS : 0, ...(i < 10 ? { days: ["2026-11-01", "2026-11-02"] } : {}) };
+	for (let i = 0; i < MIXUP_RECORD_CAP + 5; i++)
+		record[`a${i}~b${i}`] = {
+			a: `a${i}`,
+			b: `b${i}`,
+			words: [`a${i}`, `b${i}`],
+			since: at(i),
+			lastAt: at(i),
+			misses: 1,
+			hits: i < 10 ? MIXUP_MEND_HITS : 0,
+			...(i < 10 ? { days: ["2026-11-01", "2026-11-02"] } : {}),
+		};
 	const { record: out } = tallyMixups(record, [miss("nikto", "Nikto", "Niekto", 59)], lex);
 	assert.equal(Object.keys(out).length, MIXUP_RECORD_CAP);
 	assert.ok(out[NIKTO], "the new mix-up stays");

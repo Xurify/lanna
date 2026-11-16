@@ -78,15 +78,16 @@ export function persistTurn(
 			stamped.push(message.id ? message : ({ ...message, id: newMessageId() } as LhMessage));
 		}
 		const tree = record.tree;
-		const blocks = planBlocksFor(record.messages, stamped, tree, [
-			...record.messages,
-			...stamped,
-		]);
+		const blocks = planBlocksFor(record.messages, stamped, tree, [...record.messages, ...stamped]);
 		const messages = [...record.messages, ...stamped, ...blocks];
 		chatStore.saveMessages(chatId, messages);
 		// A tutor unit's session counts once the learner types: the chat's own
 		// opening prompt is the only user message that is not theirs.
-		if (record.tutorUnit && !record.tutorCounted && messages.filter((m) => m.role === "user").length > OPENING_USER_MESSAGES) {
+		if (
+			record.tutorUnit &&
+			!record.tutorCounted &&
+			messages.filter((m) => m.role === "user").length > OPENING_USER_MESSAGES
+		) {
 			chatStore.markTutorCounted(chatId);
 			recordActivity("tutor", record.tutorUnit);
 		}
@@ -96,4 +97,3 @@ export function persistTurn(
 		throw new TurnPersistenceError(err);
 	}
 }
-

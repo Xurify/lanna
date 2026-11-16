@@ -45,24 +45,41 @@ At most 4 patterns, 4 guesses and 4 steps.`;
 function guideEngine(): { engine: PiEngine; model: string } | null {
 	const slot = aiSlot("strong");
 	if (!slot?.model) return null;
-	const spec = { provider: slot.model.provider, id: slot.model.id, ...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}) };
+	const spec = {
+		provider: slot.model.provider,
+		id: slot.model.id,
+		...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}),
+	};
 	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
 }
 
 function stepOf(u: Usage) {
-	return { inputTokens: u.input, outputTokens: u.output, cacheReadTokens: u.cacheRead, cacheWriteTokens: u.cacheWrite, cacheWrite1hTokens: u.cacheWrite1h ?? 0, reasoningTokens: u.reasoning };
+	return {
+		inputTokens: u.input,
+		outputTokens: u.output,
+		cacheReadTokens: u.cacheRead,
+		cacheWriteTokens: u.cacheWrite,
+		cacheWrite1hTokens: u.cacheWrite1h ?? 0,
+		reasoningTokens: u.reasoning,
+	};
 }
 
 /** Write the guide from the saved analysis. The same facts reuse the saved
  *  guide at no cost; `force` writes again. */
-export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: Parameters<typeof runSubagent>[1]["engine"]; model?: string } = {}): Promise<MistakesReport> {
+export async function writeGuide(
+	opts: { force?: boolean; now?: Date; engine?: Parameters<typeof runSubagent>[1]["engine"]; model?: string } = {},
+): Promise<MistakesReport> {
 	const saved = analysisStore.read();
 	const analysis = saved.analysis ?? analyzeNow(opts.now).analysis;
 	const facts = guideFacts(analysis);
 	const key = digest(facts);
-	if (saved.guide?.digest === key && !opts.force) return mistakesReportOf(analysis, saved.guide, saved.listenGuide ?? null);
+	if (saved.guide?.digest === key && !opts.force)
+		return mistakesReportOf(analysis, saved.guide, saved.listenGuide ?? null);
 	const enough = guideReadiness(analysis);
-	if (!enough.ready) throw new Error(`The guide needs at least ${enough.needReps} first tries with ${enough.needWrong} mistakes among them; you have ${enough.reps} and ${enough.wrong}. A few more lessons, then try again.`);
+	if (!enough.ready)
+		throw new Error(
+			`The guide needs at least ${enough.needReps} first tries with ${enough.needWrong} mistakes among them; you have ${enough.reps} and ${enough.wrong}. A few more lessons, then try again.`,
+		);
 	if (!opts.engine) {
 		const status = aiStatus("strong");
 		if (!status.ready) throw new Error(aiMissing(status));
@@ -72,7 +89,14 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 	const steps: ReturnType<typeof stepOf>[] = [];
 	let text: string;
 	try {
-		({ text } = await runSubagent([], { role: "researcher", engine: resolved.engine, systemPrompt: mistakesGuideSystem(), prompt: `Facts:\n${facts}`, maxTurns: 1, onUsage: (u) => steps.push(stepOf(u)) }));
+		({ text } = await runSubagent([], {
+			role: "researcher",
+			engine: resolved.engine,
+			systemPrompt: mistakesGuideSystem(),
+			prompt: `Facts:\n${facts}`,
+			maxTurns: 1,
+			onUsage: (u) => steps.push(stepOf(u)),
+		}));
 	} catch (err) {
 		throw new Error(friendlyAiError(err));
 	}
@@ -86,7 +110,15 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 		p.mixups = addGuideProbes(p.mixups ?? {}, practice.pairs, mixupLexicon(entries, aspectFrames()), at);
 		progressStore.write(p);
 	}
-	const guide: GuideRecord = { text: text.trim(), data, practice, at: (opts.now ?? new Date()).toISOString(), digest: key, model: resolved.model, usage: { model: resolved.model, steps } };
+	const guide: GuideRecord = {
+		text: text.trim(),
+		data,
+		practice,
+		at: (opts.now ?? new Date()).toISOString(),
+		digest: key,
+		model: resolved.model,
+		usage: { model: resolved.model, steps },
+	};
 	const kept = analysisStore.update((latest) => ({ ...latest, analysis: latest.analysis ?? analysis, guide }));
 	return mistakesReportOf(analysis, guide, kept.listenGuide ?? null);
 }

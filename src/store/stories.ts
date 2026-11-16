@@ -56,7 +56,10 @@ function appendJsonl(file: string, value: unknown): void {
 	fs.appendFileSync(file, `${JSON.stringify(value)}\n`, "utf-8");
 }
 
-const parsedStories = processWide("stories.parsed", () => new Map<string, { mtimeMs: number; size: number; story: StoryRecord }>());
+const parsedStories = processWide(
+	"stories.parsed",
+	() => new Map<string, { mtimeMs: number; size: number; story: StoryRecord }>(),
+);
 
 function deepFreeze<T>(value: T): T {
 	if (value && typeof value === "object" && !Object.isFrozen(value)) {
@@ -90,7 +93,9 @@ function indexEntryOf(story: StoryRecord): StoryIndexEntry {
 export const storyStore = {
 	/** Every story's index line, oldest first. */
 	list(): StoryIndexEntry[] {
-		return readJsonl<StoryIndexEntry>(INDEX()).sort((a, b) => a.episode - b.episode || a.createdAt.localeCompare(b.createdAt));
+		return readJsonl<StoryIndexEntry>(INDEX()).sort(
+			(a, b) => a.episode - b.episode || a.createdAt.localeCompare(b.createdAt),
+		);
 	},
 	/** The story as saved. Parsed once per change on disk and shared, so it is frozen. */
 	get(id: string): StoryRecord | null {

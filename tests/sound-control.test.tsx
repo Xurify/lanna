@@ -8,7 +8,13 @@ import { SoundControl } from "../components/sound-control.tsx";
 (globalThis as Record<string, unknown>).React = React;
 const dom = parseHTML("<html><body></body></html>");
 Object.assign(dom.window, { setTimeout, clearTimeout });
-Object.assign(globalThis, { window: dom.window, document: dom.document, Element: dom.window.Element, HTMLElement: dom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true });
+Object.assign(globalThis, {
+	window: dom.window,
+	document: dom.document,
+	Element: dom.window.Element,
+	HTMLElement: dom.window.HTMLElement,
+	IS_REACT_ACT_ENVIRONMENT: true,
+});
 
 const HOVER_WAIT_MS = 750;
 const CLOSE_WAIT_MS = 600;
@@ -43,7 +49,9 @@ test("focus leaving the volume popover keeps it open while the pointer is still 
 		const opened = popoverIn(host);
 		assert.ok(opened, "resting on the speaker opens the popover");
 
-		await act(async () => fire(opened.querySelector('[data-testid="volume-slider"]')!, "focusout", { relatedTarget: null }));
+		await act(async () =>
+			fire(opened.querySelector('[data-testid="volume-slider"]')!, "focusout", { relatedTarget: null }),
+		);
 		await wait(CLOSE_WAIT_MS);
 		assert.ok(popoverIn(host), "focus leaving while the pointer is on the popover does not close it");
 

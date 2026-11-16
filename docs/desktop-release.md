@@ -2,17 +2,17 @@
 
 ## Platforms
 
-| Platform | Build runner | Packages | In-app update |
-|---|---|---|---|
-| macOS, Apple Silicon | `macos-26` (arm64) | signed/notarized DMG + ZIP | ZIP via Squirrel.Mac |
-| Windows, x64 | `windows-2025` | unsigned per-user NSIS installer | NSIS |
-| Linux, x64 | `ubuntu-24.04` | AppImage + `.deb` | AppImage replacement; `.deb` through dpkg/apt with elevation if needed |
+| Platform             | Build runner       | Packages                         | In-app update                                                          |
+| -------------------- | ------------------ | -------------------------------- | ---------------------------------------------------------------------- |
+| macOS, Apple Silicon | `macos-26` (arm64) | signed/notarized DMG + ZIP       | ZIP via Squirrel.Mac                                                   |
+| Windows, x64         | `windows-2025`     | unsigned per-user NSIS installer | NSIS                                                                   |
+| Linux, x64           | `ubuntu-24.04`     | AppImage + `.deb`                | AppImage replacement; `.deb` through dpkg/apt with elevation if needed |
 
 Windows signing is deliberately disabled for this first release. SmartScreen may warn about an unknown publisher on initial installation. AppImage is the primary Linux download because it is self-contained and updates without administrator permission. The installed `electron-updater` 6.8.9 also supports `.deb` updates; an update may request an administrator password. Both use the same download/restart banner.
 
 The custom app bar stays on all three platforms. macOS keeps its left-side traffic lights; Windows/Linux use Electron's native right-side Window Controls Overlay, with CSS space reserved from the overlay's actual geometry. Windows/Linux hide the native menu until Alt is pressed. macOS keeps its system menu.
 
-Icons are per-platform (2026-10-13): macOS compiles the Icon Composer document `build/icon.icon` via actool into `Assets.car` (macOS 26 Liquid Glass) plus a fallback icns that `scripts/after-pack.cjs` replaces with the full-res `build/icon.icns` (actool's caps at 256px); Windows embeds `build/icon.ico`, Linux uses `build/icon.png`, and the fallback icns is generated from the flat design (`build/icon-flat.svg`) by `node scripts/make-icons.mjs`. Building the mac icon needs **macOS 26+ and Xcode 26+** (`actool`): Xcode 26's asset compiler crashes on macOS 15 because its host frameworks lack required symbols. `desktop:dist` injects `DEVELOPER_DIR` locally; release packaging uses `macos-26` and selects Xcode via setup-xcode. The older-OS fallback icon remains included. Linux's desktop identity is `learnharness.desktop`. Public package-maintainer metadata uses the owner's GitHub no-reply address; support goes through [GitHub Issues](https://github.com/amosblomqvist/learnharness/issues).
+Icons are per-platform (2026-10-13): macOS compiles the Icon Composer document `build/icon.icon` via actool into `Assets.car` (macOS 26 Liquid Glass) plus a fallback icns that `scripts/after-pack.cjs` replaces with the full-res `build/icon.icns` (actool's caps at 256px); Windows embeds `build/icon.ico`, Linux uses `build/icon.png`, and the fallback icns is generated from the flat design (`build/icon-flat.svg`) by `node scripts/make-icons.mjs`. Building the mac icon needs **macOS 26+ and Xcode 26+** (`actool`): Xcode 26's asset compiler crashes on macOS 15 because its host frameworks lack required symbols. `desktop:dist` injects `DEVELOPER_DIR` locally; release packaging uses `macos-26` and selects Xcode via setup-xcode. The older-OS fallback icon remains included. Linux's desktop identity is `langharness.desktop`. Public package-maintainer metadata uses the owner's GitHub no-reply address; support goes through [GitHub Issues](https://github.com/Xurify/langharness/issues).
 
 ## Build pipeline
 
@@ -58,16 +58,17 @@ The three jobs upload distinct updater feeds: `latest-mac.yml`, `latest.yml`, `l
 - finds the draft using the same tag matching as the draft job and electron-builder's publisher — `tag_name` equals `v<version>` **or** the bare `<version>`; zero matches, two matches, or an already-published match fail the run, and a draft matched only via the unprefixed form is flagged with a warning (a later run could create a second draft under the `v`-tag and split the assets — rename before publishing);
 - fails unless the release holds **exactly** these 11 assets — nothing missing, nothing extra (a stale name from an older run is an error), nothing zero-size, nothing still in a non-`uploaded` state:
 
-| Asset | Role |
-|---|---|
-| `LearnHarness-<v>-arm64.dmg` + `.blockmap` | macOS installer |
-| `LearnHarness-<v>-arm64-mac.zip` + `.blockmap` | macOS updater payload (Squirrel.Mac installs from the ZIP) |
-| `LearnHarness-<v>-x64-setup.exe` + `.blockmap` | Windows NSIS installer |
-| `LearnHarness-<v>-x86_64.AppImage` | Linux AppImage (no sidecar blockmap) |
-| `LearnHarness-<v>-amd64.deb` | Linux deb (no sidecar blockmap) |
-| `latest-mac.yml` / `latest.yml` / `latest-linux.yml` | updater feeds |
+| Asset                                                | Role                                                       |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| `LangHarness-<v>-arm64.dmg` + `.blockmap`            | macOS installer                                            |
+| `LangHarness-<v>-arm64-mac.zip` + `.blockmap`        | macOS updater payload (Squirrel.Mac installs from the ZIP) |
+| `LangHarness-<v>-x64-setup.exe` + `.blockmap`        | Windows NSIS installer                                     |
+| `LangHarness-<v>-x86_64.AppImage`                    | Linux AppImage (no sidecar blockmap)                       |
+| `LangHarness-<v>-amd64.deb`                          | Linux deb (no sidecar blockmap)                            |
+| `latest-mac.yml` / `latest.yml` / `latest-linux.yml` | updater feeds                                              |
 
-  (The Linux names are deliberate: the user-set `linux.artifactName` applies to both Linux targets, and `${arch}` expands per target — `x86_64` inside the AppImage, `amd64` in the deb — exactly what the installed app-builder-lib 26.15.3 emits. The script's expectations fail closed if `electron-builder.yml` drifts from these shapes.);
+(The Linux names are deliberate: the user-set `linux.artifactName` applies to both Linux targets, and `${arch}` expands per target — `x86_64` inside the AppImage, `amd64` in the deb — exactly what the installed app-builder-lib 26.15.3 emits. The script's expectations fail closed if `electron-builder.yml` drifts from these shapes.);
+
 - downloads the three feeds from the draft and fails unless each parses, carries the `package.json` version, and references **exactly** the uploaded assets — by bare file name only (no paths, traversal, or URLs), with sizes matching the API-reported asset sizes, the ZIP first in `latest-mac.yml`, and the legacy top-level `path`/`sha512` backed by that first entry.
 
 The job only reads (release list + asset downloads); it never creates, edits, publishes, or deletes anything.
@@ -76,20 +77,20 @@ The job only reads (release list + asset downloads); it never creates, edits, pu
 
 Add these under repository **Settings → Secrets and variables → Actions**:
 
-| Secret | Value |
-|---|---|
-| `MAC_CSC_LINK` | Base64-encoded Developer ID Application `.p12` backup, including its private key |
-| `MAC_CSC_KEY_PASSWORD` | Password protecting that `.p12` |
-| `APPLE_ID` | Apple ID used for notarization |
-| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for that Apple ID |
-| `APPLE_TEAM_ID` | `JS6XN22HY6` |
+| Secret                        | Value                                                                            |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| `MAC_CSC_LINK`                | Base64-encoded Developer ID Application `.p12` backup, including its private key |
+| `MAC_CSC_KEY_PASSWORD`        | Password protecting that `.p12`                                                  |
+| `APPLE_ID`                    | Apple ID used for notarization                                                   |
+| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for that Apple ID                                          |
+| `APPLE_TEAM_ID`               | Your Apple Developer Team ID                                                     |
 
 The workflow maps the certificate secrets to electron-builder's `CSC_LINK` / `CSC_KEY_PASSWORD`. GitHub's built-in `GITHUB_TOKEN` supplies `GH_TOKEN` with job-scoped `contents: write`; no separate GitHub token secret is required. Signing credentials are present only for the packaging step, not the Next build. Never commit certificates, passwords, or `.env.local`.
 
 ## First release runbook
 
 1. Push the implementation; run the manual Desktop release workflow.
-2. Human smoke on Windows/Linux: install/open, window buttons and dragging, sidebar at narrow widths, zoom, setup/keys, session/resume, native PDF/SVG verification and demo helper. macOS remains signed/notarized through the production path.
+2. Human smoke on Windows/Linux: install/open, window buttons and dragging, sidebar at narrow widths, zoom, setup/keys, session/resume, native PDF verification and demo helper. macOS remains signed/notarized through the production path.
 3. Add macOS signing/notarization secrets.
 4. Bump `package.json` and the lockfile to the agreed release version; run local gates and push a matching `v...` tag.
 5. Wait for **all three** packaging jobs **and the final Verify draft release job** — the gate mechanically checks the draft's 11 assets and the three update feeds (single draft, right names/version/sizes/upload state, feeds referencing only what the release actually holds). If it fails, fix the cause and re-run the workflow before publishing; electron-builder replaces same-named assets on re-upload, and the gate rejects leftovers.

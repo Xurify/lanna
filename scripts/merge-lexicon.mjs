@@ -54,7 +54,9 @@ export function mergeLexicon(shipped, fresh) {
 	return { lexicon: { ...fresh, words }, stats };
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
+const isMain =
+	process.argv[1] &&
+	path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 if (isMain) {
 	const [shippedPath, freshPath, outPath = shippedPath] = process.argv.slice(2);
 	if (!shippedPath || !freshPath) {

@@ -10,7 +10,15 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { FEATURES, SOURCES, featureById, featuresCiting, sourceById, sourceUrl, sourcesOf } from "../src/core/sources.ts";
+import {
+	FEATURES,
+	SOURCES,
+	featureById,
+	featuresCiting,
+	sourceById,
+	sourceUrl,
+	sourcesOf,
+} from "../src/core/sources.ts";
 
 test("source ids are unique and every cited id exists", () => {
 	assert.equal(new Set(SOURCES.map((s) => s.id)).size, SOURCES.length);
@@ -49,7 +57,11 @@ test("DOIs are shaped like DOIs, and a link exists exactly when there is one", (
 		assert.ok(s.year >= 1960 && s.year <= 2026, `${s.id} has an odd year`);
 		assert.ok(s.cite.includes(String(s.year)) || s.id === "dornyei2009", `${s.id}: the cite and the year disagree`);
 	}
-	assert.equal(new Set(SOURCES.map((s) => s.doi).filter(Boolean)).size, SOURCES.filter((s) => s.doi).length, "two sources share a DOI");
+	assert.equal(
+		new Set(SOURCES.map((s) => s.doi).filter(Boolean)).size,
+		SOURCES.filter((s) => s.doi).length,
+		"two sources share a DOI",
+	);
 });
 
 test("every feature's route is a page that exists", () => {

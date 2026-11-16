@@ -15,9 +15,32 @@
  * same seconds twice. Pure and browser-safe; the server side is `addMinutes`.
  */
 
-export type TimedActivity = "lesson" | "blitz" | "review" | "placement" | "wordcheck" | "listen" | "read" | "watch" | "speak" | "reread" | "fast";
+export type TimedActivity =
+	| "lesson"
+	| "blitz"
+	| "review"
+	| "placement"
+	| "wordcheck"
+	| "listen"
+	| "read"
+	| "watch"
+	| "speak"
+	| "reread"
+	| "fast";
 
-export const TIMED_ACTIVITIES: readonly TimedActivity[] = ["lesson", "blitz", "review", "placement", "wordcheck", "listen", "read", "watch", "speak", "reread", "fast"];
+export const TIMED_ACTIVITIES: readonly TimedActivity[] = [
+	"lesson",
+	"blitz",
+	"review",
+	"placement",
+	"wordcheck",
+	"listen",
+	"read",
+	"watch",
+	"speak",
+	"reread",
+	"fast",
+];
 
 export function isTimedActivity(v: unknown): v is TimedActivity {
 	return typeof v === "string" && (TIMED_ACTIVITIES as readonly string[]).includes(v);
@@ -27,7 +50,19 @@ export function isTimedActivity(v: unknown): v is TimedActivity {
  *  tab, not the measurement itself. */
 /** Watch's cap is the longest video the app takes (90 min, MAX_VIDEO_SEC): a watching counts the
  *  video's playing time, so one send can never be longer than the video. */
-export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = { lesson: 60, blitz: 60, review: 5, placement: 20, wordcheck: 15, listen: 20, read: 20, watch: 90, speak: 20, reread: 10, fast: 10 };
+export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = {
+	lesson: 60,
+	blitz: 60,
+	review: 5,
+	placement: 20,
+	wordcheck: 15,
+	listen: 20,
+	read: 20,
+	watch: 90,
+	speak: 20,
+	reread: 10,
+	fast: 10,
+};
 
 /** What a day's ledger holds (src/store/progress.ts DayRecord). */
 interface MinutesLedger {
@@ -51,7 +86,8 @@ export function addMinutes(day: MinutesLedger, activity: TimedActivity, ms: numb
  *  when the client sent it (a measured 0 counts), else the old wall-clock
  *  `ms` when that is a real duration, else nothing. */
 export function sessionMs(input: { activeMs?: number; ms?: number }): number | undefined {
-	if (typeof input.activeMs === "number" && Number.isFinite(input.activeMs) && input.activeMs >= 0) return input.activeMs;
+	if (typeof input.activeMs === "number" && Number.isFinite(input.activeMs) && input.activeMs >= 0)
+		return input.activeMs;
 	return typeof input.ms === "number" && Number.isFinite(input.ms) && input.ms > 0 ? input.ms : undefined;
 }
 
@@ -77,7 +113,15 @@ export const LINE_DECISION_CAP_MS = 120_000;
  *  playing video counts. A line waiting for "Got it" counts up to its cap, then
  *  the gap rule applies. Questions and paused time count until the gap cap with
  *  no action. */
-export function watchClockOn(s: { watching: boolean; questions: boolean; ready: boolean; playing: boolean; deciding: boolean; decideCapped: boolean; idle: boolean }): boolean {
+export function watchClockOn(s: {
+	watching: boolean;
+	questions: boolean;
+	ready: boolean;
+	playing: boolean;
+	deciding: boolean;
+	decideCapped: boolean;
+	idle: boolean;
+}): boolean {
 	if (!s.watching && !s.questions) return false;
 	if (s.watching && !s.ready) return false;
 	if (s.playing) return true;
@@ -98,14 +142,18 @@ export interface ActiveClock {
 	reset(t?: number): void;
 }
 
-export function createActiveClock(mode: "interactive" | "passive", opts: { gapCapMs?: number; now?: () => number; engaged?: boolean } = {}): ActiveClock {
+export function createActiveClock(
+	mode: "interactive" | "passive",
+	opts: { gapCapMs?: number; now?: () => number; engaged?: boolean } = {},
+): ActiveClock {
 	const cap = opts.gapCapMs ?? GAP_CAP_MS;
 	const clock = opts.now ?? Date.now;
 	let total = 0;
 	let lastAt = clock();
 	let since: number | null = mode === "passive" && opts.engaged !== false ? lastAt : null;
 
-	const pending = (t: number) => (mode === "interactive" ? Math.min(Math.max(0, t - lastAt), cap) : since === null ? 0 : Math.max(0, t - since));
+	const pending = (t: number) =>
+		mode === "interactive" ? Math.min(Math.max(0, t - lastAt), cap) : since === null ? 0 : Math.max(0, t - since);
 
 	return {
 		act(t = clock()) {

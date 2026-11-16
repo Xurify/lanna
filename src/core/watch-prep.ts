@@ -128,14 +128,23 @@ Rules:
 /** The numbered lines, unstudied words marked, for the model (the same view
  *  the study sections get). `rendering` names the captions' language when the
  *  lines are a rendering of them in the learner's language. */
-export function prepPrompt(video: { title: string; channel?: string; segments: readonly Line[] }, level: string, rendering?: { captions: string; language: string }): string {
+export function prepPrompt(
+	video: { title: string; channel?: string; segments: readonly Line[] },
+	level: string,
+	rendering?: { captions: string; language: string },
+): string {
 	const lines = video.segments.slice(0, PREP_PROMPT_LINES).map((s) => {
 		const marked = s.tokens.map((t) => (t.word && t.fresh ? `[${t.text}]` : t.text)).join("");
 		return `${s.i}. ${marked.trim()} — ${s.en.trim()}`;
 	});
-	const cut = video.segments.length > PREP_PROMPT_LINES ? `\n(The video has ${video.segments.length} lines; these are the first ${PREP_PROMPT_LINES}.)` : "";
+	const cut =
+		video.segments.length > PREP_PROMPT_LINES
+			? `\n(The video has ${video.segments.length} lines; these are the first ${PREP_PROMPT_LINES}.)`
+			: "";
 	const by = video.channel ? ` Channel: ${JSON.stringify(video.channel)}.` : "";
-	const note = rendering ? `\nThe captions are ${rendering.captions}; the lines below are a ${rendering.language} rendering of them, so a word can differ from what is said. Copy keys from these lines as written.` : "";
+	const note = rendering
+		? `\nThe captions are ${rendering.captions}; the lines below are a ${rendering.language} rendering of them, so a word can differ from what is said. Copy keys from these lines as written.`
+		: "";
 	return `The video: ${JSON.stringify(video.title)}.${by} The learner's level: ${level}.${cut}${note}\n\n${lines.join("\n")}`;
 }
 
@@ -144,7 +153,12 @@ export function summaryAgainSystem(name: string, level: string): string {
 	return `You write a short summary in ${name} for a learner at level ${level}. Answer with ONE JSON object and nothing else: {"summary": [{"sk": "...", "en": "..."}]}. ${PREP_SUMMARY_MIN + 2} to ${PREP_SUMMARY_MAX - 2} sentences, at most 10 words each, the commonest words, short main clauses. Nothing outside the JSON.`;
 }
 
-export function summaryAgainPrompt(video: { title: string }, summary: readonly { sk: string; en: string }[], hard: readonly string[], keys: readonly string[]): string {
+export function summaryAgainPrompt(
+	video: { title: string },
+	summary: readonly { sk: string; en: string }[],
+	hard: readonly string[],
+	keys: readonly string[],
+): string {
 	return `The video: ${JSON.stringify(video.title)}.
 
 Your summary used too many words the learner does not know. Write it again with simpler, more common words, saying the same things in the same order. Avoid these in particular: ${hard.join(", ")}.${keys.length ? ` These are fine, the learner is about to study them: ${keys.join(", ")}.` : ""}
@@ -246,13 +260,18 @@ export function parseKeys(raw: unknown, video: { segments: readonly Line[] }): P
 		if (out.length >= PREP_KEYS_MAX || !r || typeof r !== "object") continue;
 		const k = r as Record<string, unknown>;
 		const line = Number(k.line);
-		const words = clip(k.words ?? k.word, 80).split(/\s+/).filter(Boolean);
+		const words = clip(k.words ?? k.word, 80)
+			.split(/\s+/)
+			.filter(Boolean);
 		const seg = byIndex.get(line);
 		if (!seg || usedLines.has(line) || !words.length || words.length > PREP_KEY_WORDS_MAX) continue;
 		const token = findSpan(seg.tokens, words);
 		if (token < 0) continue;
 		const end = spanEnd(seg.tokens, token, words.length);
-		const text = seg.tokens.slice(token, end).map((t) => t.text).join("");
+		const text = seg.tokens
+			.slice(token, end)
+			.map((t) => t.text)
+			.join("");
 		if (usedText.has(norm(text))) continue;
 		const t = seg.tokens[token]!;
 		usedLines.add(line);
@@ -276,7 +295,11 @@ export function parseKeys(raw: unknown, video: { segments: readonly Line[] }): P
 export function parsePrepSummary(raw: unknown): Array<{ sk: string; en: string }> {
 	if (!Array.isArray(raw)) return [];
 	return raw
-		.map((s) => (s && typeof s === "object" ? { sk: clip((s as Record<string, unknown>).sk, 240), en: clip((s as Record<string, unknown>).en, 300) } : null))
+		.map((s) =>
+			s && typeof s === "object"
+				? { sk: clip((s as Record<string, unknown>).sk, 240), en: clip((s as Record<string, unknown>).en, 300) }
+				: null,
+		)
 		.filter((s): s is { sk: string; en: string } => !!s && s.sk.length > 0)
 		.slice(0, PREP_SUMMARY_MAX);
 }
@@ -303,13 +326,19 @@ export function parsePrep(text: string, video: { segments: readonly Line[] }): P
 
 /** The keys as words a summary may use freely (they are about to be studied). */
 export function keyWords(keys: readonly PrepKey[]): StoryWord[] {
-	return keys.filter((k) => k.span === 1 && k.lemma).map((k) => ({ lemma: k.lemma!, gloss: k.gloss ?? k.why, ...(k.slug ? { slug: k.slug } : {}) }));
+	return keys
+		.filter((k) => k.span === 1 && k.lemma)
+		.map((k) => ({ lemma: k.lemma!, gloss: k.gloss ?? k.why, ...(k.slug ? { slug: k.slug } : {}) }));
 }
 
 /** The keys as typed gaps in their lines, in line order, built from the
  *  stored lines alone (the same shape the study sections drill). `lines` are
  *  the briefing's own when it has them (foreign captions), else the video's. */
-export function prepReps(video: { id: string; segments: readonly Line[] }, keys: readonly PrepKey[], lines: readonly Line[] = video.segments): SectionRep[] {
+export function prepReps(
+	video: { id: string; segments: readonly Line[] },
+	keys: readonly PrepKey[],
+	lines: readonly Line[] = video.segments,
+): SectionRep[] {
 	const byIndex = new Map(lines.map((s) => [s.i, s]));
 	return keys.flatMap((k) => {
 		const seg = byIndex.get(k.at);
@@ -320,9 +349,18 @@ export function prepReps(video: { id: string; segments: readonly Line[] }, keys:
 			{
 				id: prepRepId(video.id, k.at, k.token),
 				at: k.at,
-				before: seg.tokens.slice(0, k.token).map((x) => x.text).join(""),
-				answer: seg.tokens.slice(k.token, end).map((x) => x.text).join(""),
-				after: seg.tokens.slice(end).map((x) => x.text).join(""),
+				before: seg.tokens
+					.slice(0, k.token)
+					.map((x) => x.text)
+					.join(""),
+				answer: seg.tokens
+					.slice(k.token, end)
+					.map((x) => x.text)
+					.join(""),
+				after: seg.tokens
+					.slice(end)
+					.map((x) => x.text)
+					.join(""),
 				line: seg.sk,
 				en: seg.en,
 				start: seg.start,

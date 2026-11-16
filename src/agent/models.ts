@@ -21,7 +21,7 @@ import { nativeSubscriptionStream } from "./subscription-stream.ts";
 /** App identity is immutable and shared by Models and every native Agent.
  * Agent's default Pi attribution otherwise overrides the Models identity. */
 export const APP_IDENTITY = Object.freeze({
-	userAgent: Object.freeze({ custom: `learnharness/${packageMetadata.version}` }),
+	userAgent: Object.freeze({ custom: `langharness/${packageMetadata.version}` }),
 	attribution: Object.freeze({ name: packageMetadata.name, url: packageMetadata.homepage }),
 });
 
@@ -92,19 +92,26 @@ function defaultThinkingLevel(model: Model<Api>): ThinkingLevel {
  *  key is resolved by pi-ai itself from the environment per request (the
  *  keys seam reflects file-saved keys into env), so the engine never
  *  hardcodes OpenRouter's. */
-export function piEngineForSpec(spec: ResolvedModelSpec, background: boolean | (() => boolean) = true, lifecycle?: ChatGPTDispatchLifecycle): PiEngine {
+export function piEngineForSpec(
+	spec: ResolvedModelSpec,
+	background: boolean | (() => boolean) = true,
+	lifecycle?: ChatGPTDispatchLifecycle,
+): PiEngine {
 	const models: Models = piModels();
 	const nativeId = nativeSubscriptionId(spec.provider);
-	const model = spec.provider === "chatgpt" ? chatGPTModel(spec.id) : nativeId ? nativeSubscriptionModel(spec.provider, spec.id) : models.getModel(spec.provider, spec.id);
+	const model =
+		spec.provider === "chatgpt"
+			? chatGPTModel(spec.id)
+			: nativeId
+				? nativeSubscriptionModel(spec.provider, spec.id)
+				: models.getModel(spec.provider, spec.id);
 	if (!model) {
 		throw new Error(`${spec.provider} catalog has no model ${spec.id}`);
 	}
 	// UNSET level → the baked default order (first entry the model
 	// supports); SET level → pi's native nearest-clamp (model swaps keep
 	// the user's intent and adapt honestly).
-	const level = spec.thinkingLevel
-		? clampThinkingLevel(model, spec.thinkingLevel)
-		: defaultThinkingLevel(model);
+	const level = spec.thinkingLevel ? clampThinkingLevel(model, spec.thinkingLevel) : defaultThinkingLevel(model);
 	return {
 		model,
 		level,
@@ -113,7 +120,12 @@ export function piEngineForSpec(spec: ResolvedModelSpec, background: boolean | (
 		// the pin honest even when config or settings drift off the map.
 		streamFn: (requestModel, context, options) => {
 			const purpose = typeof background === "function" ? background : () => background;
-			const stream = spec.provider === "chatgpt" ? chatGPTStream(purpose, lifecycle) : nativeId ? nativeSubscriptionStream(models.getProvider(nativeId)!, purpose, lifecycle) : models.streamSimple.bind(models);
+			const stream =
+				spec.provider === "chatgpt"
+					? chatGPTStream(purpose, lifecycle)
+					: nativeId
+						? nativeSubscriptionStream(models.getProvider(nativeId)!, purpose, lifecycle)
+						: models.streamSimple.bind(models);
 			return stream(requestModel, context, { ...options, reasoning: level === "off" ? undefined : level });
 		},
 	};
@@ -126,7 +138,5 @@ export function piEngineForSpec(spec: ResolvedModelSpec, background: boolean | (
  *  chat-handler and ALWAYS injects engines; reaching this means a
  *  wiring bug, so it fails loudly instead of guessing a model. */
 export function piEngineFor(role: ModelRole): PiEngine {
-	throw new Error(
-		`no configured model for role "${role}" — set your model slots (settings → models)`,
-	);
+	throw new Error(`no configured model for role "${role}" — set your model slots (settings → models)`);
 }

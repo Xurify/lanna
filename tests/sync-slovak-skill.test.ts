@@ -14,7 +14,12 @@ describe("planning a skill sync", () => {
 		const recorded = files({ "SKILL.md": "v1", "references/a.md": "a1", "references/old.md": "x" });
 		const local = files({ "SKILL.md": "v1", "references/a.md": "a1", "references/old.md": "x", "SOURCE.md": "ours" });
 		const incoming = files({ "SKILL.md": "v2", "references/a.md": "a1", "references/new.md": "n" });
-		assert.deepEqual(planSkillSync(local, recorded, incoming), { add: ["references/new.md"], update: ["SKILL.md"], remove: ["references/old.md"], conflicts: [] });
+		assert.deepEqual(planSkillSync(local, recorded, incoming), {
+			add: ["references/new.md"],
+			update: ["SKILL.md"],
+			remove: ["references/old.md"],
+			conflicts: [],
+		});
 	});
 
 	it("calls an edit made only here a conflict, so a sync cannot undo it", () => {
@@ -38,7 +43,10 @@ describe("planning a skill sync", () => {
 
 	it("rewrites only the commit line of SOURCE.md", () => {
 		const text = "Copied from slovak.wiki at commit `337d5fc1` (2026-10-30). Change it there first.";
-		assert.equal(recordCommit(text, "9abc123", "2026-11-02"), "Copied from slovak.wiki at commit `9abc123` (2026-11-02). Change it there first.");
+		assert.equal(
+			recordCommit(text, "9abc123", "2026-11-02"),
+			"Copied from slovak.wiki at commit `9abc123` (2026-11-02). Change it there first.",
+		);
 		assert.equal(recordCommit("no line here", "9abc123", "2026-11-02"), null);
 	});
 });

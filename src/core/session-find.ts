@@ -16,5 +16,5 @@ export function findSessionTextMatches(text: string, query: string): SessionText
 
 export function stepSessionMatch(index: number, count: number, direction: 1 | -1): number {
 	if (!count) return -1;
-	return ((index + direction) % count + count) % count;
+	return (((index + direction) % count) + count) % count;
 }

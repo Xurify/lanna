@@ -37,7 +37,13 @@ services:
     mem_limit: ${LH_MEM_LIMIT:-2g}
     pids_limit: 512
     healthcheck:
-      test: ["CMD", "node", "-e", "require('node:net').connect(3010,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('node:net').connect(3010,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3

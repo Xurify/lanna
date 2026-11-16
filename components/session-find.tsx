@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { ChevronDownIcon, ChevronUpIcon, SearchIcon, XIcon } from "lucide-react";
 import { kbdEventForAction, stepSessionMatch } from "@/src/core";
 import {
-	sameSessionRange, sessionFindRanges, sessionRangeIdentity, type SessionRangeIdentity,
+	sameSessionRange,
+	sessionFindRanges,
+	sessionRangeIdentity,
+	type SessionRangeIdentity,
 } from "@/components/session-find-dom";
 import { scrollSessionTarget, type SessionScrollContext } from "@/components/session-navigation";
 
@@ -48,9 +51,11 @@ function publishHighlights(ranges: readonly Range[], index: number): void {
  * bar, regardless of where focus happened to be left. Closed Radix exits
  * must not block Find once they have stopped being a surfaced layer. */
 function sessionFindHasForegroundLayer(doc: Document): boolean {
-	return Array.from(doc.querySelectorAll(
-		'[data-lh-menu], [data-radix-popper-content-wrapper], [role="menu"], [role="dialog"], [data-testid="cheat-sheet"]',
-	)).some((element) => {
+	return Array.from(
+		doc.querySelectorAll(
+			'[data-lh-menu], [data-radix-popper-content-wrapper], [role="menu"], [role="dialog"], [data-testid="cheat-sheet"]',
+		),
+	).some((element) => {
 		if (element.getAttribute("data-state") === "closed" || element.hasAttribute("hidden")) return false;
 		const view = doc.defaultView;
 		if (typeof view?.getComputedStyle !== "function") return true;
@@ -62,7 +67,10 @@ function sessionFindHasForegroundLayer(doc: Document): boolean {
 /** Mounted for the lifetime of ONE Chat (which is keyed by chatId). Closing
  * keeps the query/reading position; changing sessions resets all local state.
  * The bar lives outside scopeRef, so it never finds its own query or count. */
-export function SessionFind({ scopeRef, scrollContextRef }: {
+export function SessionFind({
+	scopeRef,
+	scrollContextRef,
+}: {
 	scopeRef: RefObject<HTMLDivElement | null>;
 	scrollContextRef: RefObject<SessionScrollContext | null>;
 }) {
@@ -89,7 +97,10 @@ export function SessionFind({ scopeRef, scrollContextRef }: {
 			if (!open) previousFocus.current = document.activeElement as HTMLElement | null;
 			setOpen(true);
 			// A second Mod+F focuses/selects the retained query, not a second bar.
-			if (open) { inputRef.current?.focus({ preventScroll: true }); inputRef.current?.select(); }
+			if (open) {
+				inputRef.current?.focus({ preventScroll: true });
+				inputRef.current?.select();
+			}
 		};
 		window.addEventListener(kbdEventForAction("find"), onFind);
 		return () => window.removeEventListener(kbdEventForAction("find"), onFind);
@@ -121,7 +132,7 @@ export function SessionFind({ scopeRef, scrollContextRef }: {
 			rangesRef.current = ranges;
 			indexRef.current = index;
 			identityRef.current = ranges[index] ? sessionRangeIdentity(ranges[index]!) : null;
-			setResult((old) => old.index === index && old.count === ranges.length ? old : { index, count: ranges.length });
+			setResult((old) => (old.index === index && old.count === ranges.length ? old : { index, count: ranges.length }));
 			publishHighlights(ranges, index);
 			if (selectFirst && ranges[index]) scrollSessionTarget(ranges[index]!, scope, scrollContextRef.current);
 		};
@@ -131,11 +142,19 @@ export function SessionFind({ scopeRef, scrollContextRef }: {
 		lastQueryRef.current = query;
 		const schedule = () => {
 			if (frame !== null) return;
-			frame = window.requestAnimationFrame(() => { frame = null; refresh(false); });
+			frame = window.requestAnimationFrame(() => {
+				frame = null;
+				refresh(false);
+			});
 		};
 		const observer = new MutationObserver(schedule);
-		observer.observe(scope, { subtree: true, childList: true, characterData: true, attributes: true,
-			attributeFilter: ["hidden", "style", "class", "data-state", "aria-expanded"] });
+		observer.observe(scope, {
+			subtree: true,
+			childList: true,
+			characterData: true,
+			attributes: true,
+			attributeFilter: ["hidden", "style", "class", "data-state", "aria-expanded"],
+		});
 		window.addEventListener("resize", schedule);
 		return () => {
 			observer.disconnect();
@@ -155,11 +174,13 @@ export function SessionFind({ scopeRef, scrollContextRef }: {
 		identityRef.current = ranges[index] ? sessionRangeIdentity(ranges[index]!) : null;
 		setResult({ index, count: ranges.length });
 		publishHighlights(ranges, index);
-		if (ranges[index] && scopeRef.current) scrollSessionTarget(ranges[index]!, scopeRef.current, scrollContextRef.current);
+		if (ranges[index] && scopeRef.current)
+			scrollSessionTarget(ranges[index]!, scopeRef.current, scrollContextRef.current);
 	};
 
 	if (!open) return null;
-	const buttonClass = "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40";
+	const buttonClass =
+		"flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40";
 	return (
 		<div
 			role="search"
@@ -189,15 +210,33 @@ export function SessionFind({ scopeRef, scrollContextRef }: {
 				spellCheck={false}
 				className="lh-input min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
 			/>
-			<output aria-live="polite" data-testid="session-find-count" className="shrink-0 text-xs tabular-nums text-muted-foreground">
+			<output
+				aria-live="polite"
+				data-testid="session-find-count"
+				className="shrink-0 text-xs tabular-nums text-muted-foreground"
+			>
 				{query ? `${result.index + 1}/${result.count}` : ""}
 			</output>
-			<button type="button" aria-label="Previous match" title="Previous match (Shift+Enter)" className={buttonClass}
-				disabled={!result.count} onMouseDown={(event) => event.preventDefault()} onClick={() => step(-1)}>
+			<button
+				type="button"
+				aria-label="Previous match"
+				title="Previous match (Shift+Enter)"
+				className={buttonClass}
+				disabled={!result.count}
+				onMouseDown={(event) => event.preventDefault()}
+				onClick={() => step(-1)}
+			>
 				<ChevronUpIcon className="size-4" aria-hidden />
 			</button>
-			<button type="button" aria-label="Next match" title="Next match (Enter)" className={buttonClass}
-				disabled={!result.count} onMouseDown={(event) => event.preventDefault()} onClick={() => step(1)}>
+			<button
+				type="button"
+				aria-label="Next match"
+				title="Next match (Enter)"
+				className={buttonClass}
+				disabled={!result.count}
+				onMouseDown={(event) => event.preventDefault()}
+				onClick={() => step(1)}
+			>
 				<ChevronDownIcon className="size-4" aria-hidden />
 			</button>
 			<button type="button" aria-label="Close find" title="Close find (Esc)" className={buttonClass} onClick={close}>

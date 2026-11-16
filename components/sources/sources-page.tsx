@@ -26,15 +26,23 @@ export function SourcesPage() {
 				</Link>
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Sources</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
-					Each task here is built from published research, and each says so on its own page. This is the whole list: what the studies found, what they did not show, and the numbers that are our own choice.
+					Each task here is built from published research, and each says so on its own page. This is the whole list:
+					what the studies found, what they did not show, and the numbers that are our own choice.
 				</p>
 				<p className="q-sub max-w-2xl">
-					{SOURCES.length} sources, {linked} with a link to the paper&apos;s record, {read} whose abstract was read against the claim made here. The others have a link that was checked to point at a paper with that title and first author, but were not read in full. Sources marked &ldquo;no link&rdquo; are cited from our notes and unchecked.
+					{SOURCES.length} sources, {linked} with a link to the paper&apos;s record, {read} whose abstract was read
+					against the claim made here. The others have a link that was checked to point at a paper with that title and
+					first author, but were not read in full. Sources marked &ldquo;no link&rdquo; are cited from our notes and
+					unchecked.
 				</p>
 
 				<nav aria-label="Features" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5 font-ui text-[13px]">
 					{FEATURES.map((f) => (
-						<a key={f.id} href={`#${f.id}`} className="text-ink-3 underline decoration-line-2 underline-offset-[3px] hover:text-ink-2">
+						<a
+							key={f.id}
+							href={`#${f.id}`}
+							className="text-ink-3 underline decoration-line-2 underline-offset-[3px] hover:text-ink-2"
+						>
 							{f.title}
 						</a>
 					))}

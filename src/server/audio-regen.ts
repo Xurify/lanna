@@ -76,14 +76,23 @@ export function regenPlan(): RegenPlan {
 			continue;
 		}
 		const text = entry.text;
-		items.push({ entry: { ...entry, text }, lang, reason: entry.tier === "elevenlabs" ? "older model" : "made without ElevenLabs", chars: [...text].length });
+		items.push({
+			entry: { ...entry, text },
+			lang,
+			reason: entry.tier === "elevenlabs" ? "older model" : "made without ElevenLabs",
+			chars: [...text].length,
+		});
 	}
 	return { model, items, chars: items.reduce((n, i) => n + i.chars, 0), kept };
 }
 
 /** The cost of a plan in credits and in dollars at the low and high API rate. */
 export function regenCost(chars: number): { credits: number; usdLow: number; usdHigh: number } {
-	return { credits: chars * CREDITS_PER_CHAR, usdLow: (chars / 1000) * USD_PER_1K_CHARS.low, usdHigh: (chars / 1000) * USD_PER_1K_CHARS.high };
+	return {
+		credits: chars * CREDITS_PER_CHAR,
+		usdLow: (chars / 1000) * USD_PER_1K_CHARS.low,
+		usdHigh: (chars / 1000) * USD_PER_1K_CHARS.high,
+	};
 }
 
 /** Narration for the story narrator and the language voices; a story
@@ -103,7 +112,10 @@ interface RegenResult {
 /** Make each planned clip again, oldest index order, `concurrency` at a time,
  *  stopping before `maxChars` would be passed. A clip is replaced only after
  *  the new audio arrived. */
-export async function regenerate(plan: RegenPlan, opts: { maxChars?: number; concurrency?: number; now?: Date; onClip?: (item: RegenItem, ok: boolean) => void } = {}): Promise<RegenResult> {
+export async function regenerate(
+	plan: RegenPlan,
+	opts: { maxChars?: number; concurrency?: number; now?: Date; onClip?: (item: RegenItem, ok: boolean) => void } = {},
+): Promise<RegenResult> {
 	const stamp = (opts.now ?? new Date()).toISOString().replace(/[:.]/g, "-");
 	const replacedDir = path.join(PATHS.audio, "replaced", stamp);
 	const result: RegenResult = { done: 0, chars: 0, failed: [] };
@@ -120,7 +132,16 @@ export async function regenerate(plan: RegenPlan, opts: { maxChars?: number; con
 	const work = async (item: RegenItem) => {
 		const { entry, lang } = item;
 		try {
-			const spoken = await elevenLabs({ text: entry.text, lang: lang.code, voice: entry.voice, gender: entry.voice === "male" ? "male" : "female", style: styleOf(entry.voice) }, lang);
+			const spoken = await elevenLabs(
+				{
+					text: entry.text,
+					lang: lang.code,
+					voice: entry.voice,
+					gender: entry.voice === "male" ? "male" : "female",
+					style: styleOf(entry.voice),
+				},
+				lang,
+			);
 			if (!spoken || spoken.data.length === 0) throw new Error("ElevenLabs returned nothing");
 			const old = path.join(PATHS.audio, entry.file);
 			if (fs.existsSync(old)) {
@@ -128,7 +149,16 @@ export async function regenerate(plan: RegenPlan, opts: { maxChars?: number; con
 				fs.mkdirSync(path.dirname(moved), { recursive: true });
 				fs.renameSync(old, moved);
 			}
-			storeAudioClip({ key: entry.key, lang: entry.lang, voice: entry.voice, tier: "elevenlabs", ...(spoken.model ? { model: spoken.model } : {}), text: entry.text, ext: "mp3", data: spoken.data });
+			storeAudioClip({
+				key: entry.key,
+				lang: entry.lang,
+				voice: entry.voice,
+				tier: "elevenlabs",
+				...(spoken.model ? { model: spoken.model } : {}),
+				text: entry.text,
+				ext: "mp3",
+				data: spoken.data,
+			});
 			result.done++;
 			result.chars += item.chars;
 			opts.onClip?.(item, true);

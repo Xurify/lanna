@@ -18,5 +18,11 @@ export function bodyTooLarge(request: Request, maxBytes: number): Response | nul
 	if (announced === null) return null;
 	const length = Number(announced);
 	if (Number.isFinite(length) && length >= 0 && length <= maxBytes) return null;
-	return Response.json({ error: "request too large", message: `This request is larger than the ${Math.round(maxBytes / 1024)} KB this route takes.` }, { status: 413 });
+	return Response.json(
+		{
+			error: "request too large",
+			message: `This request is larger than the ${Math.round(maxBytes / 1024)} KB this route takes.`,
+		},
+		{ status: 413 },
+	);
 }

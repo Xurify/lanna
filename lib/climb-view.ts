@@ -16,7 +16,8 @@ export const CLIMB_VIEWS: readonly { id: ClimbView; label: string }[] = [
 /** Values an earlier build wrote: "path" was the list. */
 const LEGACY: Record<string, ClimbView> = { path: "chapters" };
 
-const toView = (v: unknown): ClimbView | undefined => (v === "chapters" || v === "mountain" ? v : typeof v === "string" ? LEGACY[v] : undefined);
+const toView = (v: unknown): ClimbView | undefined =>
+	v === "chapters" || v === "mountain" ? v : typeof v === "string" ? LEGACY[v] : undefined;
 
 /** The URL wins, then the saved choice, then the chapter list. */
 export function resolveClimbView(param: string | string[] | null | undefined, cookie: string | undefined): ClimbView {

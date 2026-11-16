@@ -11,7 +11,7 @@ Started 2026-10-06, owner brain-dump round. Priority 1 — everything else (asse
 
 1. **Graph rendering toggle — separate from the extraction pipeline.**
    Today's graph on/off switch toggles extraction. Wanted: two switches —
-   one for the *pipeline* (named for what it does), one for *rendering*
+   one for the _pipeline_ (named for what it does), one for _rendering_
    ("graph on/off" = the graph view renders or not). Data, chains model,
    extraction all keep working with rendering off.
    - Open: **what is the home view when graph rendering is off?** It must
@@ -46,6 +46,7 @@ migrations with tolerant reads, not free edits plus wipe-your-dev-data.
 Nothing is frozen forever; the discipline changes.
 
 Persistent surfaces (the obligation set):
+
 - `data/chats/*.json` — ChatRecord: messages (pi-ai wire shapes: thinking
   blocks, toolCalls, usage), turns, kind, graphContext. The deepest lock —
   and coupled to the pi-ai library's serialization (a pi-ai bump becomes a
@@ -56,7 +57,8 @@ Persistent surfaces (the obligation set):
 - Client localStorage (camera, filters, zoom, kind filter).
 - `data/jobs/` — treat as scratch/transient, no obligation.
 
-Known gaps to close *before* release (proposals, unruled):
+Known gaps to close _before_ release (proposals, unruled):
+
 - **No schemaVersion anywhere.** Cheap now, load-bearing later: stamp
   ChatRecord, settings, and the ledgers with a version at write time;
   readers default missing → current. This is what makes later migrations

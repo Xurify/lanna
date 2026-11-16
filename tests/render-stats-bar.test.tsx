@@ -11,7 +11,14 @@ import type { TurnUsage } from "../src/core/contracts.ts";
 // Stats bar: folds turn usage, shows "—" for absent data, never a fake $0.
 
 function step(inputTokens: number, outputTokens: number, over: Record<string, number | undefined> = {}) {
-	return { inputTokens, outputTokens, cacheReadTokens: undefined, cacheWriteTokens: undefined, reasoningTokens: undefined, ...over };
+	return {
+		inputTokens,
+		outputTokens,
+		cacheReadTokens: undefined,
+		cacheWriteTokens: undefined,
+		reasoningTokens: undefined,
+		...over,
+	};
 }
 
 function turn(over: Partial<TurnUsage> = {}): TurnUsage {
@@ -27,9 +34,7 @@ function turn(over: Partial<TurnUsage> = {}): TurnUsage {
 
 describe("stats bar", () => {
 	it("renders NOTHING on the left when there are no turns yet (owner, wave 7 sweep)", () => {
-		const html = renderToStaticMarkup(
-			<StatsBar turns={[]} />,
-		);
+		const html = renderToStaticMarkup(<StatsBar turns={[]} />);
 		assert.match(html, /data-testid="stats-bar"/);
 		// Pre-chat the left side is simply empty.
 		assert.ok(!html.includes('data-testid="stats-summary"'), "no summary button pre-chat");
@@ -57,7 +62,11 @@ describe("stats bar", () => {
 
 	it("shows — for cost when every turn is unpriceable, never a fake $0", () => {
 		const html = renderToStaticMarkup(
-			<StatsBar turns={[turn({ model: "nope/unknown" })]} contextTokens={11_000} pricing={sessionCost({ turns: [turn({ model: "nope/unknown" })] })} />,
+			<StatsBar
+				turns={[turn({ model: "nope/unknown" })]}
+				contextTokens={11_000}
+				pricing={sessionCost({ turns: [turn({ model: "nope/unknown" })] })}
+			/>,
 		);
 		assert.match(html, /data-testid="stats-cost">—</);
 		// Unknown model: no limit, but the usage is still an honest reading.

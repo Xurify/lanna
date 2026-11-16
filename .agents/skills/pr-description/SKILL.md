@@ -17,10 +17,10 @@ The rule is **W5**; the shape is `.github/pull_request_template.md`. This repo's
    - **Open every image** before it goes in. A screenshot nobody looked at is not a check.
    - Reference the local screenshot paths directly in the Day | Night table of the PR body:
      ```markdown
-     | Day | Night |
-     | --- | --- |
+     | Day                                       | Night                                         |
+     | ----------------------------------------- | --------------------------------------------- |
      | ![Day Desktop](./shots/page-day-1280.png) | ![Night Desktop](./shots/page-night-1280.png) |
-     | ![Day Mobile](./shots/page-day-390.png) | ![Night Mobile](./shots/page-night-390.png) |
+     | ![Day Mobile](./shots/page-day-390.png)   | ![Night Mobile](./shots/page-night-390.png)   |
      ```
    - Pass each screenshot via `--attach` when running `gh pr create` (or `gh pr edit`):
      ```bash
@@ -41,6 +41,7 @@ The rule is **W5**; the shape is `.github/pull_request_template.md`. This repo's
 ## Uploading screenshots via `gh --attach`
 
 GitHub CLI natively supports media attachments for pull requests via `--attach`:
+
 - Any local image referenced in the Markdown body (e.g. `![Day Desktop](./shots/page-day-1280.png)`) will be uploaded to GitHub's user-attachments storage (`https://github.com/user-attachments/assets/...`) and rewritten in-place by `gh` to point to the uploaded asset URL.
 - This avoids storing binary images in Git or maintaining an orphan `pr-assets` branch.
 - You can attach up to 50 files in a single `gh pr create` or `gh pr edit` invocation.

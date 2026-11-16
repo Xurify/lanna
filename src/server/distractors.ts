@@ -44,7 +44,12 @@ let indexFor: { lexicon: Lexicon; index: NeighborIndex } | null = null;
 
 function neighborIndex(lexicon: Lexicon): NeighborIndex {
 	if (indexFor?.lexicon !== lexicon) {
-		indexFor = { lexicon, index: buildNeighborIndex(lexicon.entries.flatMap((e) => e.examples.filter((x) => !x.rejected).map((x) => x.en ?? ""))) };
+		indexFor = {
+			lexicon,
+			index: buildNeighborIndex(
+				lexicon.entries.flatMap((e) => e.examples.filter((x) => !x.rejected).map((x) => x.en ?? "")),
+			),
+		};
 	}
 	return indexFor.index;
 }
@@ -73,13 +78,20 @@ export function parseNearMisses(text: string, count: number): string[][] | null 
 	try {
 		const raw = (JSON.parse(text.slice(start, end + 1)) as { near?: unknown }).near;
 		if (!Array.isArray(raw) || raw.length !== count) return null;
-		return raw.map((p) => (Array.isArray(p) ? p.filter((s): s is string => typeof s === "string" && s.trim().length > 0).map((s) => s.trim()) : []));
+		return raw.map((p) =>
+			Array.isArray(p)
+				? p.filter((s): s is string => typeof s === "string" && s.trim().length > 0).map((s) => s.trim())
+				: [],
+		);
 	} catch {
 		return null;
 	}
 }
 
-async function writeNearMisses(need: readonly OptionItem[], resolved: { engine: PiEngine; model: string }): Promise<void> {
+async function writeNearMisses(
+	need: readonly OptionItem[],
+	resolved: { engine: PiEngine; model: string },
+): Promise<void> {
 	const input = { in: 0, out: 0 };
 	const prompt = `Sentences (${activeLanguage().english} — right English translation):\n${JSON.stringify(need.map((n) => [n.sentence, n.translation]))}\n\nReturn {"near": [...]} with ${need.length} pairs.`;
 	const { text } = await runSubagent([], {
@@ -101,7 +113,8 @@ async function writeNearMisses(need: readonly OptionItem[], resolved: { engine: 
 	need.forEach((n, i) => {
 		const own = n.translation.trim().toLowerCase();
 		const near = [...new Set(pairs[i]!.filter((s) => s.toLowerCase() !== own))].slice(0, 2);
-		if (near.length > 0) kept.push({ sk: n.sentence, en: n.translation, near, model: resolved.model, createdAt: now, tokens });
+		if (near.length > 0)
+			kept.push({ sk: n.sentence, en: n.translation, near, model: resolved.model, createdAt: now, tokens });
 	});
 	distractorStore.append(kept);
 }
@@ -117,8 +130,18 @@ export async function betterOptions(items: readonly OptionItem[], opts: BetterOp
 		const wrong = (item.options ?? []).filter((o) => o.trim().toLowerCase() !== item.translation.trim().toLowerCase());
 		return chooseOptions(item.translation, near, neighbors(index, item.translation), wrong, rand);
 	};
-	const weak = items.filter((it) => it.translation && choose(it).close < WANT_CLOSE && !distractorStore.get(it.sentence) && !inFlight.has(it.sentence));
-	const resolved = opts.engine ? { engine: opts.engine, model: opts.model ?? "faux:faux" } : weak.length > 0 ? storyEngine() : null;
+	const weak = items.filter(
+		(it) =>
+			it.translation &&
+			choose(it).close < WANT_CLOSE &&
+			!distractorStore.get(it.sentence) &&
+			!inFlight.has(it.sentence),
+	);
+	const resolved = opts.engine
+		? { engine: opts.engine, model: opts.model ?? "faux:faux" }
+		: weak.length > 0
+			? storyEngine()
+			: null;
 	if (resolved && weak.length > 0) {
 		const need = [...new Map(weak.map((w) => [w.sentence, w])).values()].slice(0, BATCH_MAX);
 		for (const n of need) inFlight.add(n.sentence);
@@ -127,7 +150,10 @@ export async function betterOptions(items: readonly OptionItem[], opts: BetterOp
 			.finally(() => {
 				for (const n of need) inFlight.delete(n.sentence);
 			});
-		await Promise.race([job, new Promise<void>((resolve) => setTimeout(resolve, opts.waitMs ?? DEFAULT_WAIT_MS).unref?.())]);
+		await Promise.race([
+			job,
+			new Promise<void>((resolve) => setTimeout(resolve, opts.waitMs ?? DEFAULT_WAIT_MS).unref?.()),
+		]);
 	}
 	for (const item of items) if (item.translation) item.options = choose(item).options;
 }
@@ -139,6 +165,9 @@ export function unitLesson(unit: UnitId, opts: { gender?: AtlasGender } = {}): P
 
 /** A lesson plan with its meaning reps' options made close. */
 export async function lessonWithBetterOptions(plan: LessonPlan, opts?: BetterOptionsOptions): Promise<LessonPlan> {
-	await betterOptions(plan.items.filter((i) => i.kind === "meaning"), opts);
+	await betterOptions(
+		plan.items.filter((i) => i.kind === "meaning"),
+		opts,
+	);
 	return plan;
 }

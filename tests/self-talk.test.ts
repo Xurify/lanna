@@ -41,11 +41,17 @@ test("self-talk: prompt bank contains valid CEFR levels, categories, and starter
 test("self-talk: filtering prompts by level and category works accurately", () => {
 	const a1Prompts = getSelfTalkPrompts({ level: "A1" });
 	assert.ok(a1Prompts.length > 0, "Should have A1 prompts");
-	assert.ok(a1Prompts.every((p) => p.level === "A1"), "All filtered prompts must be A1");
+	assert.ok(
+		a1Prompts.every((p) => p.level === "A1"),
+		"All filtered prompts must be A1",
+	);
 
 	const routinePrompts = getSelfTalkPrompts({ category: "routine" });
 	assert.ok(routinePrompts.length > 0, "Should have routine prompts");
-	assert.ok(routinePrompts.every((p) => p.category === "routine"), "All filtered prompts must be routine");
+	assert.ok(
+		routinePrompts.every((p) => p.category === "routine"),
+		"All filtered prompts must be routine",
+	);
 
 	const specific = getSelfTalkPromptById("around-room");
 	assert.ok(specific !== undefined, "Should find prompt by id");

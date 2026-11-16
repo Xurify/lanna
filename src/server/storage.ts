@@ -43,6 +43,7 @@ export async function measureTree(dir: string): Promise<{ bytes: number; files: 
 export async function storageReport(): Promise<StorageReport> {
 	const paths: Record<StorageArea["id"], string> = { clips: PATHS.audio, progress: PATHS.data, backups: BACKUPS_DIR };
 	const areas: StorageArea[] = [];
-	for (const { id, label } of STORAGE_AREAS) areas.push({ id, label, path: paths[id], ...(await measureTree(paths[id])) });
+	for (const { id, label } of STORAGE_AREAS)
+		areas.push({ id, label, path: paths[id], ...(await measureTree(paths[id])) });
 	return { language: activeLanguage().english, areas };
 }

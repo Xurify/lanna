@@ -7,7 +7,14 @@ import { SKETCH_UNITS, sketchStages, sketchSummary } from "@/components/lesson/c
 
 type CaseKey = "gen" | "dat" | "acc" | "loc" | "ins";
 
-const CASE_OF_UNIT: Record<string, CaseKey> = { gen: "gen", dat: "dat", loc: "loc", ins: "ins", "acc-people": "acc", "acc-fem": "acc" };
+const CASE_OF_UNIT: Record<string, CaseKey> = {
+	gen: "gen",
+	dat: "dat",
+	loc: "loc",
+	ins: "ins",
+	"acc-people": "acc",
+	"acc-fem": "acc",
+};
 
 /** Forms from the paradigm tables of English Wikipedia "Slovak declension" and the slovak.wiki case pages. */
 const FORMS: Record<string, Partial<Record<CaseKey, string>>> = {
@@ -56,6 +63,10 @@ test("a rule line names its case, and no learner-facing text uses a term the lea
 	for (const unit of ["gen", "loc", "ins", "dat"] as const) {
 		assert.match(sketchSummary(unit)!.calls, /In the \w+, the ending depends on the word’s gender/, unit);
 	}
-	const texts = SKETCH_UNITS.flatMap((unit) => [...sketchStages(unit).map((s) => s.why), ...(sketchSummary(unit)?.exceptions ? [sketchSummary(unit)!.exceptions!] : [])]);
-	for (const text of texts) assert.doesNotMatch(text, /\b(hard noun|soft stem|paradigm|declension pattern)\b|\bmen\b/i, text);
+	const texts = SKETCH_UNITS.flatMap((unit) => [
+		...sketchStages(unit).map((s) => s.why),
+		...(sketchSummary(unit)?.exceptions ? [sketchSummary(unit)!.exceptions!] : []),
+	]);
+	for (const text of texts)
+		assert.doesNotMatch(text, /\b(hard noun|soft stem|paradigm|declension pattern)\b|\bmen\b/i, text);
 });

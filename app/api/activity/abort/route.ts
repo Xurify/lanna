@@ -45,7 +45,9 @@ export async function POST(req: Request) {
 	}
 	if (kind === "task") {
 		// A background task (server/tasks.ts): its signal fires and the work ends it.
-		return abortTask(id) ? Response.json({ ok: true }) : Response.json({ ok: false, reason: "not_running" }, { status: 409 });
+		return abortTask(id)
+			? Response.json({ ok: true })
+			: Response.json({ ok: false, reason: "not_running" }, { status: 409 });
 	}
 	if (kind === "turn") {
 		const outcome = abortTurn(id);

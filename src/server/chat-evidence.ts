@@ -18,6 +18,9 @@ export function recordChatAnswer(answer: ChatAnswer, now = new Date()): void {
 		}
 		refreshChatSnapshot(now);
 	} catch (err) {
-		console.warn("[chat] could not update the weak spots from a graded answer:", err instanceof Error ? err.message : err);
+		console.warn(
+			"[chat] could not update the weak spots from a graded answer:",
+			err instanceof Error ? err.message : err,
+		);
 	}
 }

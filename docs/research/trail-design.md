@@ -28,18 +28,18 @@ The sun (gold) is the one action color: Start, Check, Continue. It is also the s
 
 Flat tonal layers, no gradients, no shadows except on menus. The accents are desaturated and lifted for a dark ground, as dark-theme guidance recommends.
 
-| Token | Value | Used for |
-|---|---|---|
-| ground `--background` | `#0f1519` night slate | the page |
-| card `--card` | `#161e24` | cards |
-| raised `--accent` | `#1f2a31` | tiles, hover, the slope behind the trail |
-| edge `--border` | `#2b3842` | hairlines |
-| text `--foreground` / `--muted-foreground` | `#eef2f3` snow / `#93a2aa` | text |
-| sun `--lh-sun` | `#f2b84b` | the action button, streak, XP, done stops, the walked trail, the Review badge |
-| trail red | `#ea5f4f` | input strand; a wrong answer |
-| trail blue | `#4fa3e3` | speaking strand; the tutor |
-| trail green | `#4cc47c` | words & rules strand; a right answer |
-| trail yellow | = sun | speed strand |
+| Token                                      | Value                      | Used for                                                                      |
+| ------------------------------------------ | -------------------------- | ----------------------------------------------------------------------------- |
+| ground `--background`                      | `#0f1519` night slate      | the page                                                                      |
+| card `--card`                              | `#161e24`                  | cards                                                                         |
+| raised `--accent`                          | `#1f2a31`                  | tiles, hover, the slope behind the trail                                      |
+| edge `--border`                            | `#2b3842`                  | hairlines                                                                     |
+| text `--foreground` / `--muted-foreground` | `#eef2f3` snow / `#93a2aa` | text                                                                          |
+| sun `--lh-sun`                             | `#f2b84b`                  | the action button, streak, XP, done stops, the walked trail, the Review badge |
+| trail red                                  | `#ea5f4f`                  | input strand; a wrong answer                                                  |
+| trail blue                                 | `#4fa3e3`                  | speaking strand; the tutor                                                    |
+| trail green                                | `#4cc47c`                  | words & rules strand; a right answer                                          |
+| trail yellow                               | = sun                      | speed strand                                                                  |
 
 Older token names (`go`, `miss`, `warn`, `gold`, `flame`, `xp`, `sky`) are aliases of these, so every screen keeps its meaning without edits. The window frame, the title bar and the web app manifest use the ground.
 
@@ -62,9 +62,9 @@ The owner has not used the built version on the PC. No light theme: the tokens a
 
 ## Sources
 
-- Nation, I. S. P. (2007). The four strands. *Innovation in Language Learning and Teaching*, 1(1), 2–13.
-- Kivetz, R., Urminsky, O., & Zheng, Y. (2006). The goal-gradient hypothesis resurrected. *Journal of Marketing Research*, 43(1), 39–58.
-- Nunes, J. C., & Drèze, X. (2006). The endowed progress effect. *Journal of Consumer Research*, 32(4), 504–512.
+- Nation, I. S. P. (2007). The four strands. _Innovation in Language Learning and Teaching_, 1(1), 2–13.
+- Kivetz, R., Urminsky, O., & Zheng, Y. (2006). The goal-gradient hypothesis resurrected. _Journal of Marketing Research_, 43(1), 39–58.
+- Nunes, J. C., & Drèze, X. (2006). The endowed progress effect. _Journal of Consumer Research_, 32(4), 504–512.
 - Klub slovenských turistov, turistické značenie (STN 01 8025): the four trail colors and the stripe mark.
 - W3C, WCAG 2.1, success criterion 1.4.1 Use of Color.
 - Material Design, dark theme guidance: tonal surfaces and desaturated accents on dark grounds.

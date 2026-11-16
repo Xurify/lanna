@@ -39,7 +39,7 @@ export type KeyAction =
 
 /** Where the cheat sheet groups an action (display only — dispatch is
  *  global; a seam that isn't mounted simply no-ops). */
-export type KeyScope = "global" | "chat" | "graph";
+export type KeyScope = "global" | "chat";
 
 interface KeyActionDef {
 	id: KeyAction;
@@ -184,8 +184,7 @@ export function isTypingSurface(e: KeyboardEvent): boolean {
 }
 
 /** macOS styling for binding display ("⌘D", "⇧⇥", "⌥↑"). */
-const IS_MAC =
-	typeof navigator !== "undefined" && /mac/i.test(navigator.platform || navigator.userAgent);
+const IS_MAC = typeof navigator !== "undefined" && /mac/i.test(navigator.platform || navigator.userAgent);
 
 const MOD_GLYPH = IS_MAC ? "⌘" : "Ctrl+";
 const ALT_GLYPH = IS_MAC ? "⌥" : "Alt+";

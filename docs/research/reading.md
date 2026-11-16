@@ -1,6 +1,6 @@
 # The Read task: graded episodes at the learner's level
 
-*LangHarness, 2026-10-28. Thread "Add a reading task with stories". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/store/stories.ts`, `components/reading/reader.tsx`, `app/read`.*
+_LangHarness, 2026-10-28. Thread "Add a reading task with stories". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/store/stories.ts`, `components/reading/reader.tsx`, `app/read`._
 
 ## Evidence
 
@@ -11,7 +11,7 @@
 
 ## Design
 
-- One episode a day of *Martin in Bratislava*, written on the Cheap model slot: 20 to 25 sentences at A1 up to 30 to 40 at C1 (`STORY_LENGTH`; each sentence 4 to 14 words), about 97 of 100 words known asked of the writer, at most 3 deliberate new words at A1 up to 8 at C1 (`NEW_WORDS_MAX`), each used at least three times, the setting rotated from the learner's purposes (the "something else" note passed word for word).
+- One episode a day of _Martin in Bratislava_, written on the Cheap model slot: 20 to 25 sentences at A1 up to 30 to 40 at C1 (`STORY_LENGTH`; each sentence 4 to 14 words), about 97 of 100 words known asked of the writer, at most 3 deliberate new words at A1 up to 8 at C1 (`NEW_WORDS_MAX`), each used at least three times, the setting rotated from the learner's purposes (the "something else" note passed word for word).
 - Known words come from the deck and word units plus the commonest words up to the level's rank (A1 500, A2 1,000, B1 2,000, B2 3,000, C1 5,000). A draft with under 92% known words (`COVERAGE_FLOOR`) is redrafted once naming the hard words; deliberate new words do not count against coverage.
 - Tap a word for lemma, "here: form", gloss, tags and audio. Per-sentence speaker and translation toggle, Play all.
 - Questions by level (`QUESTION_PLAN`, added after the question "are all the questions simple like this?"): A1 three recall with three options; A2 recall, recall, inference; B1 four questions of four options (recall, inference, vocab, paraphrase); B2 five (inference, vocab, paraphrase, attitude, recall); C1 five (inference, attitude, paraphrase, vocab, inference). The reader labels the kind.

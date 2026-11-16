@@ -43,7 +43,11 @@ describe("progressSummary: the day's snapshots", () => {
 
 	it("rewrites them when a lesson moves them, in the same day", () => {
 		progressSummary(0, NOW);
-		for (let i = 0; i < 3; i++) recordLesson({ unit: "words", mode: "lesson", reps: [rep, rep, rep, rep, rep, rep, rep, rep, rep, rep], tz: 0 }, NOW);
+		for (let i = 0; i < 3; i++)
+			recordLesson(
+				{ unit: "words", mode: "lesson", reps: [rep, rep, rep, rep, rep, rep, rep, rep, rep, rep], tz: 0 },
+				NOW,
+			);
 		const today = progressStore.read().days[DAY]!;
 		assert.equal(today.lessons, 3);
 		assert.equal(today.hoursDone, progressSummary(0, NOW).trajectory.hoursDone);

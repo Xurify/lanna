@@ -67,10 +67,7 @@ function localFontsApi(): LocalFontsApi | null {
 }
 
 /** null or blank = the factory Geist; otherwise the trimmed family. */
-function composeFontFamily(
-	appearance: AppearanceSettings | undefined,
-	family: string | null,
-): AppearanceSettings {
+function composeFontFamily(appearance: AppearanceSettings | undefined, family: string | null): AppearanceSettings {
 	const value = family?.trim() ?? "";
 	return { ...appearance, fontFamily: value === "" ? null : value };
 }
@@ -175,11 +172,7 @@ export function AppearanceSection({
 					}}
 				/>
 			</SettingsRow>
-			<SettingsRow
-				label="Reading font"
-				hint={`Empty = ${DEFAULT_READING_FONT}`}
-				testid="row-font"
-			>
+			<SettingsRow label="Reading font" hint={`Empty = ${DEFAULT_READING_FONT}`} testid="row-font">
 				<span ref={fontMenuOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
 					{/* Trigger styled like ai-section's MenuTrigger (unexported there). The tooltip shows on the closed button only. */}
 					{(() => {
@@ -192,7 +185,9 @@ export function AppearanceSection({
 								onClick={openFontMenu}
 								className="flex h-9 min-w-24 items-center justify-between gap-2 rounded-md bg-card px-2.5 font-ui text-sm text-foreground ring-1 ring-line-2 transition-shadow hover:bg-well focus-visible:ring-2 focus-visible:ring-teal"
 							>
-								<span className="min-w-0 flex-1 truncate text-left">{appearance?.fontFamily || DEFAULT_READING_FONT}</span>
+								<span className="min-w-0 flex-1 truncate text-left">
+									{appearance?.fontFamily || DEFAULT_READING_FONT}
+								</span>
 								<span aria-hidden className="text-muted-foreground">
 									▾
 								</span>
@@ -262,60 +257,58 @@ export function AppearanceSection({
 				hint="Colors and weights. Empty = the built-in look."
 				testid="advanced-appearance"
 			>
-			<SettingsRow
-				label="Background color"
-				hint={`Empty = ${FACTORY_BACKGROUND}`}
-				testid="row-background"
-			>
-				<CommitInput
-					value={appearance?.background ?? ""}
-					placeholder={FACTORY_BACKGROUND}
-					ariaLabel="Background color"
-					testid="input-background"
-					onCommit={(v) => onSectionChange({ ...appearance, background: v === "" ? null : v })}
-				/>
-			</SettingsRow>
-			<SettingsRow label="Heading weight" hint={`${resolved.mdRendering.headingWeight}`} testid="row-heading-weight">
-				<CommitInput
-					type="number"
-					value={String(md?.headingWeight ?? "")}
-					placeholder="900"
-					ariaLabel="Heading weight"
-					testid="input-heading-weight"
-					onCommit={(v) => {
-						// Empty = factory default: absence is the unset representation (Number("") is 0).
-						if (v === "") {
-							onSectionChange({ ...appearance, mdRendering: { ...md, headingWeight: undefined } });
-							return;
+				<SettingsRow label="Background color" hint={`Empty = ${FACTORY_BACKGROUND}`} testid="row-background">
+					<CommitInput
+						value={appearance?.background ?? ""}
+						placeholder={FACTORY_BACKGROUND}
+						ariaLabel="Background color"
+						testid="input-background"
+						onCommit={(v) => onSectionChange({ ...appearance, background: v === "" ? null : v })}
+					/>
+				</SettingsRow>
+				<SettingsRow label="Heading weight" hint={`${resolved.mdRendering.headingWeight}`} testid="row-heading-weight">
+					<CommitInput
+						type="number"
+						value={String(md?.headingWeight ?? "")}
+						placeholder="900"
+						ariaLabel="Heading weight"
+						testid="input-heading-weight"
+						onCommit={(v) => {
+							// Empty = factory default: absence is the unset representation (Number("") is 0).
+							if (v === "") {
+								onSectionChange({ ...appearance, mdRendering: { ...md, headingWeight: undefined } });
+								return;
+							}
+							const n = Number(v);
+							if (!Number.isFinite(n)) return;
+							onSectionChange({
+								...appearance,
+								mdRendering: { ...md, headingWeight: Math.min(900, Math.max(100, Math.round(n))) },
+							});
+						}}
+					/>
+				</SettingsRow>
+				{/* Emphasis inks default to the regular text color; the empty-state labels say so. */}
+				<SettingsRow label="Bold color" hint="Empty = same as text" testid="row-bold-color">
+					<CommitInput
+						value={md?.boldColor ?? ""}
+						placeholder="same as text"
+						ariaLabel="Bold color"
+						testid="input-bold-color"
+						onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, boldColor: v === "" ? null : v } })}
+					/>
+				</SettingsRow>
+				<SettingsRow label="Italic color" hint="Empty = same as text" testid="row-italic-color">
+					<CommitInput
+						value={md?.italicColor ?? ""}
+						placeholder="same as text"
+						ariaLabel="Italic color"
+						testid="input-italic-color"
+						onCommit={(v) =>
+							onSectionChange({ ...appearance, mdRendering: { ...md, italicColor: v === "" ? null : v } })
 						}
-						const n = Number(v);
-						if (!Number.isFinite(n)) return;
-						onSectionChange({
-							...appearance,
-							mdRendering: { ...md, headingWeight: Math.min(900, Math.max(100, Math.round(n))) },
-						});
-					}}
-				/>
-			</SettingsRow>
-			{/* Emphasis inks default to the regular text color; the empty-state labels say so. */}
-			<SettingsRow label="Bold color" hint="Empty = same as text" testid="row-bold-color">
-				<CommitInput
-					value={md?.boldColor ?? ""}
-					placeholder="same as text"
-					ariaLabel="Bold color"
-					testid="input-bold-color"
-					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, boldColor: v === "" ? null : v } })}
-				/>
-			</SettingsRow>
-			<SettingsRow label="Italic color" hint="Empty = same as text" testid="row-italic-color">
-				<CommitInput
-					value={md?.italicColor ?? ""}
-					placeholder="same as text"
-					ariaLabel="Italic color"
-					testid="input-italic-color"
-					onCommit={(v) => onSectionChange({ ...appearance, mdRendering: { ...md, italicColor: v === "" ? null : v } })}
-				/>
-			</SettingsRow>
+					/>
+				</SettingsRow>
 			</SettingsDisclosure>
 		</>
 	);

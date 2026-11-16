@@ -17,7 +17,9 @@ import path from "node:path";
 const [outDir, flag] = process.argv.slice(2);
 const dry = flag === "--dry";
 if (!outDir || !process.env.LH_DATA_DIR) {
-	console.error("usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> tsx scripts/word-check-judge-eval.ts <out-dir> [--dry]");
+	console.error(
+		"usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> tsx scripts/word-check-judge-eval.ts <out-dir> [--dry]",
+	);
 	process.exit(1);
 }
 
@@ -29,7 +31,17 @@ const { judgeMeaning, meaningJudgePrompt, wordCheckModel } = await import("../sr
 const { turnCost } = await import("../src/server/pricing.ts");
 initAuthEnv();
 
-type Kind = "synonym" | "paraphrase" | "other form" | "spelling slip" | "different meaning" | "opposite" | "look-alike word" | "too broad" | "several guesses" | "not a meaning";
+type Kind =
+	| "synonym"
+	| "paraphrase"
+	| "other form"
+	| "spelling slip"
+	| "different meaning"
+	| "opposite"
+	| "look-alike word"
+	| "too broad"
+	| "several guesses"
+	| "not a meaning";
 const ACCEPT: Array<[lemma: string, typed: string, kind: Kind]> = [
 	["auto", "automobile", "synonym"],
 	["pes", "canine", "synonym"],
@@ -110,7 +122,17 @@ const REJECT: Array<[lemma: string, typed: string, kind: Kind]> = [
 const lexicon = loadLexicon();
 if (!lexicon) throw new Error("no lexicon");
 const model = wordCheckModel();
-const usage = { model, steps: [] as Array<{ inputTokens: number | undefined; outputTokens: number | undefined; cacheReadTokens: number | undefined; cacheWriteTokens: number | undefined; cacheWrite1hTokens?: number; reasoningTokens: number | undefined }> };
+const usage = {
+	model,
+	steps: [] as Array<{
+		inputTokens: number | undefined;
+		outputTokens: number | undefined;
+		cacheReadTokens: number | undefined;
+		cacheWriteTokens: number | undefined;
+		cacheWrite1hTokens?: number;
+		reasoningTokens: number | undefined;
+	}>,
+};
 const maxCalls = Number(process.env.EVAL_MAX_CALLS ?? 100);
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -142,14 +164,27 @@ for (const [expected, cases] of [
 		const started = Date.now();
 		const judged = await judgeMeaning(toJudge, usage);
 		const got = judged ? (judged.accepted ? "accept" : "reject") : "no verdict";
-		rows.push({ lemma, typed, kind, expected, glosses, got, markedBy: "model", note: judged?.note ?? "", ms: Date.now() - started });
-		console.log(`${got === expected ? "ok  " : "DIFF"} ${lemma} <- ${JSON.stringify(typed)} [${kind}] expected ${expected}, got ${got}${judged?.note ? `: ${judged.note}` : ""}`);
+		rows.push({
+			lemma,
+			typed,
+			kind,
+			expected,
+			glosses,
+			got,
+			markedBy: "model",
+			note: judged?.note ?? "",
+			ms: Date.now() - started,
+		});
+		console.log(
+			`${got === expected ? "ok  " : "DIFF"} ${lemma} <- ${JSON.stringify(typed)} [${kind}] expected ${expected}, got ${got}${judged?.note ? `: ${judged.note}` : ""}`,
+		);
 	}
 }
 
 if (!dry) {
 	const judged = rows.filter((r) => r.markedBy === "model");
-	const tally = (expected: string, got: string) => judged.filter((r) => r.expected === expected && r.got === got).length;
+	const tally = (expected: string, got: string) =>
+		judged.filter((r) => r.expected === expected && r.got === got).length;
 	let usd: number | null = null;
 	try {
 		usd = turnCost(usage as Parameters<typeof turnCost>[0]);
@@ -162,8 +197,16 @@ if (!dry) {
 		usd,
 		markedByTheDictionary: rows.filter((r) => r.markedBy === "dictionary").length,
 		notInTheDictionary: rows.filter((r) => r.got === "not in the dictionary").length,
-		shouldAccept: { accepted: tally("accept", "accept"), rejected: tally("accept", "reject"), noVerdict: tally("accept", "no verdict") },
-		shouldReject: { accepted: tally("reject", "accept"), rejected: tally("reject", "reject"), noVerdict: tally("reject", "no verdict") },
+		shouldAccept: {
+			accepted: tally("accept", "accept"),
+			rejected: tally("accept", "reject"),
+			noVerdict: tally("accept", "no verdict"),
+		},
+		shouldReject: {
+			accepted: tally("reject", "accept"),
+			rejected: tally("reject", "reject"),
+			noVerdict: tally("reject", "no verdict"),
+		},
 	};
 	fs.writeFileSync(path.join(outDir, "results.json"), JSON.stringify({ summary, rows }, null, "\t"));
 	console.log(JSON.stringify(summary, null, 2));

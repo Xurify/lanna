@@ -91,13 +91,18 @@ class StreamReadError extends Error {
 }
 
 /** Wire events; return true ONLY for the explicit completion marker. */
-async function* sseEvents(reader: ReadableStreamDefaultReader<Uint8Array>): AsyncGenerator<Record<string, unknown>, boolean> {
+async function* sseEvents(
+	reader: ReadableStreamDefaultReader<Uint8Array>,
+): AsyncGenerator<Record<string, unknown>, boolean> {
 	const decoder = new TextDecoder();
 	let buf = "";
 	for (;;) {
 		let chunk: ReadableStreamReadResult<Uint8Array>;
-		try { chunk = await reader.read(); }
-		catch (err) { throw new StreamReadError(err); }
+		try {
+			chunk = await reader.read();
+		} catch (err) {
+			throw new StreamReadError(err);
+		}
 		const { done, value } = chunk;
 		if (done) return false;
 		buf += decoder.decode(value, { stream: true });
@@ -147,9 +152,7 @@ export function absorbed(m: LhMessage, record: readonly LhMessage[]): boolean {
 	if (role === "toolResult") {
 		const toolCallId = (m as ToolResultMessage).toolCallId;
 		return record.some(
-			(r) =>
-				(r as { role?: string }).role === "toolResult" &&
-				(r as ToolResultMessage).toolCallId === toolCallId,
+			(r) => (r as { role?: string }).role === "toolResult" && (r as ToolResultMessage).toolCallId === toolCallId,
 		);
 	}
 	if (role === "custom") {
@@ -291,8 +294,10 @@ export class SessionModel {
 		// assistant can own the banner. While trying again, hide the old
 		// failure from the first Thinking frame, but show a new failure at end.
 		const providerError =
-			latest?.role === "assistant" && latest.stopReason === "error" &&
-			!this.incompleteUsageIds.has(latest.id) && (!live || latest.id === this.liveFailureId)
+			latest?.role === "assistant" &&
+			latest.stopReason === "error" &&
+			!this.incompleteUsageIds.has(latest.id) &&
+			(!live || latest.id === this.liveFailureId)
 				? { message: latest.errorMessage ?? "An error occurred." }
 				: null;
 		return {
@@ -395,8 +400,7 @@ export class SessionModel {
 					if (mid === undefined) return false;
 					this.mutate(() => {
 						const idx = this.tail.findIndex((m) => m.id === mid);
-						this.tail =
-							idx === -1 ? [...this.tail, message as LhMessage] : this.tail.with(idx, message as LhMessage);
+						this.tail = idx === -1 ? [...this.tail, message as LhMessage] : this.tail.with(idx, message as LhMessage);
 					});
 					return true;
 				}
@@ -443,9 +447,7 @@ export class SessionModel {
 			case "tool_execution_end": {
 				// The execution layer: clean question placeholders are IGNORED
 				// downstream (view.ts fork 2); errors keep their validation text.
-				const result = agent.result as
-					| { content?: Array<{ type?: string; text?: string }>; details?: unknown }
-					| null;
+				const result = agent.result as { content?: Array<{ type?: string; text?: string }>; details?: unknown } | null;
 				const text = result?.content?.find((c) => c.type === "text")?.text ?? "The tool call failed.";
 				this.mutate(() => {
 					this.executions = new Map(this.executions).set(agent.toolCallId, {
@@ -462,9 +464,7 @@ export class SessionModel {
 				this.mutate(() => {
 					this.tail = [
 						...this.tail,
-						...(agent.toolResults as ToolResultMessage[]).map(
-							(r) => ({ ...r, id: localId() }) as unknown as LhMessage,
-						),
+						...(agent.toolResults as ToolResultMessage[]).map((r) => ({ ...r, id: localId() }) as unknown as LhMessage),
 					];
 				});
 				return true;
@@ -485,13 +485,17 @@ export class SessionModel {
 			const events = sseEvents(reader);
 			for (;;) {
 				let next: IteratorResult<Record<string, unknown>, boolean>;
-				try { next = await events.next(); }
-				catch (err) {
+				try {
+					next = await events.next();
+				} catch (err) {
 					if (err instanceof StreamReadError) break;
 					throw err;
 				}
 				if (this.consumeAbort !== controller) return;
-				if (next.done) { sawDone = next.value; break; }
+				if (next.done) {
+					sawDone = next.value;
+					break;
+				}
 				const event = next.value;
 				if (event.type === "turn-settled") {
 					// The raced-settle terminal: no turn to attach to — the
@@ -578,12 +582,17 @@ export class SessionModel {
 		this.setStatus("submitted");
 		try {
 			if (refetchRecordFirst) {
-				const recordRes = await this.fetchView(`/api/chats/${encodeURIComponent(this.chatId)}`, controller.signal, !allowRecovery);
+				const recordRes = await this.fetchView(
+					`/api/chats/${encodeURIComponent(this.chatId)}`,
+					controller.signal,
+					!allowRecovery,
+				);
 				if (this.consumeAbort !== controller) return;
 				if (recordRes.ok) {
 					let text: string;
-					try { text = await recordRes.text(); }
-					catch (err) {
+					try {
+						text = await recordRes.text();
+					} catch (err) {
 						if (!allowRecovery && !controller.signal.aborted) throw new StreamReadError(err);
 						throw err;
 					}
@@ -613,7 +622,11 @@ export class SessionModel {
 					});
 				}
 			}
-			const res = await this.fetchView(`/api/chats/${encodeURIComponent(this.chatId)}/stream`, controller.signal, !allowRecovery);
+			const res = await this.fetchView(
+				`/api/chats/${encodeURIComponent(this.chatId)}/stream`,
+				controller.signal,
+				!allowRecovery,
+			);
 			if (this.consumeAbort !== controller) return;
 			if (!res.ok) throw new Error((await res.text()) || "Failed to attach to the running turn.");
 			await this.consumeStream(res, controller, allowRecovery);
@@ -622,7 +635,7 @@ export class SessionModel {
 			// A failed record read can leave the optimistic answer in the tail.
 			// Restore its Submit affordance; the next attempt reconciles first.
 			this.mutate(() => {
-				this.tail = this.tail.filter(m => !this.unconfirmedAnswers.has(m.id));
+				this.tail = this.tail.filter((m) => !this.unconfirmedAnswers.has(m.id));
 				this.unconfirmedAnswers.clear();
 			});
 			this.setError(!allowRecovery && err instanceof StreamReadError ? STREAM_DROPPED : (err as Error).message);
@@ -649,17 +662,22 @@ export class SessionModel {
 				const res = await this.fetch(`/api/chats/${encodeURIComponent(this.chatId)}`, { signal: controller.signal });
 				if (this.consumeAbort !== controller) return;
 				if (!res.ok) throw new Error((await res.text()) || "An error occurred.");
-				const record = await res.json() as { messages?: LhMessage[]; turnInFlight?: boolean; turnError?: string };
+				const record = (await res.json()) as { messages?: LhMessage[]; turnInFlight?: boolean; turnError?: string };
 				if (this.consumeAbort !== controller) return;
 				// No verified record/liveness: retain the draft and never guess
 				// whether a lost acknowledgement meant the input was accepted.
-				if (!Array.isArray(record.messages) || typeof record.turnInFlight !== "boolean") throw new Error("An error occurred.");
+				if (!Array.isArray(record.messages) || typeof record.turnInFlight !== "boolean")
+					throw new Error("An error occurred.");
 				this.setMessages(record.messages, record.turnError);
 				if (record.turnInFlight) {
 					await this.resumeStream(false);
 					return;
 				}
-				if (input.type === "answer" && (answeredCallIds(record.messages).has(input.toolCallId) || danglingQuestionOf(record.messages)?.toolCallId !== input.toolCallId)) {
+				if (
+					input.type === "answer" &&
+					(answeredCallIds(record.messages).has(input.toolCallId) ||
+						danglingQuestionOf(record.messages)?.toolCallId !== input.toolCallId)
+				) {
 					// The call already resolved, or no longer owns the dock. Adopt
 					// truth, never POST that answer a second time.
 					this.setStatus("ready");
@@ -693,9 +711,10 @@ export class SessionModel {
 			optimistic.push(result);
 			this.unconfirmedAnswers.set(result.id, input.toolCallId);
 		}
-		if (optimistic.length > 0) this.mutate(() => {
-			this.tail = [...this.tail, ...optimistic];
-		});
+		if (optimistic.length > 0)
+			this.mutate(() => {
+				this.tail = [...this.tail, ...optimistic];
+			});
 		try {
 			// SUBMITS ARE NOT ABORTABLE BY VIEW TEARDOWN (owner, 2026-10-10 —
 			// the dead-session-start postmortem): the POST must NOT ride
@@ -738,9 +757,9 @@ export class SessionModel {
 			// only THIS optimistic answer, never saved copies/newer live content.
 			// Other input kinds retain their existing optimistic presentation.
 			if (input.type === "answer") {
-				const ids = new Set(optimistic.map(m => m.id));
+				const ids = new Set(optimistic.map((m) => m.id));
 				this.mutate(() => {
-					this.tail = this.tail.filter(m => !ids.has(m.id));
+					this.tail = this.tail.filter((m) => !ids.has(m.id));
 					for (const id of ids) this.unconfirmedAnswers.delete(id);
 				});
 			}
@@ -907,7 +926,12 @@ export class SessionModel {
 	/** Automatic mount/sync continuation is never permission to retry a
 	 * failed turn. Read current model truth, not a stale React closure. */
 	async continueIfOwed(record: readonly LhMessage[]): Promise<void> {
-		if (this.statusValue === "ready" && !this.automaticContinuationBlocked && this.getState().error === null && needsContinuation(record)) {
+		if (
+			this.statusValue === "ready" &&
+			!this.automaticContinuationBlocked &&
+			this.getState().error === null &&
+			needsContinuation(record)
+		) {
 			await this.send({ type: "continue" });
 		}
 	}

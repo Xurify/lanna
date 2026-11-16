@@ -24,6 +24,9 @@ export function profileLanguage(id: string): LanguageInfo | undefined {
 export function activeLanguage(): LanguageInfo {
 	const id = activeProfile();
 	const info = profileLanguage(id);
-	if (!info) throw new Error(`Language "${id}" has no readable language.json. Restore that file, or switch to another language.`);
+	if (!info)
+		throw new Error(
+			`Language "${id}" has no readable language.json. Restore that file, or switch to another language.`,
+		);
 	return info;
 }

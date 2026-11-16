@@ -14,7 +14,10 @@ test("a real pace is quoted only after seven study days of the last fourteen", (
 
 test("levelDates: every level up to the goal, later at a slower pace, reached levels are today", () => {
 	const fast = levelDates({ goal: "B1", hoursDone: 100, minutesPerDay: 60, daysPerWeek: 7, now: NOW });
-	assert.deepEqual(fast.map((l) => l.level), ["A1", "A2", "B1"]);
+	assert.deepEqual(
+		fast.map((l) => l.level),
+		["A1", "A2", "B1"],
+	);
 	assert.equal(fast[0]!.days, 0);
 	assert.equal(fast[0]!.date, "2026-10-28");
 	const slow = levelDates({ goal: "B1", hoursDone: 100, minutesPerDay: 20, daysPerWeek: 3, now: NOW });

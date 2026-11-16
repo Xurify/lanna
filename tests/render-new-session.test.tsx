@@ -19,7 +19,11 @@ import { ChatDraft } from "../components/chat-draft.tsx";
 function fakeFetch(id: string) {
 	const calls: { url: string; method: string; body: unknown }[] = [];
 	const f = (async (url: string, init?: RequestInit) => {
-		calls.push({ url: String(url), method: init?.method ?? "GET", body: init?.body ? JSON.parse(String(init.body)) : null });
+		calls.push({
+			url: String(url),
+			method: init?.method ?? "GET",
+			body: init?.body ? JSON.parse(String(init.body)) : null,
+		});
 		return new Response(JSON.stringify({ id }), { status: 200 });
 	}) as typeof fetch;
 	return { f, calls };
@@ -42,7 +46,7 @@ describe("startDraftSession — the create-on-send contract", () => {
 		assert.equal(calls.length, 1, "a single create call — the birth stamp is server-side");
 	});
 
-	it("the plain chat carries kind:\"chat\" to the create route", async () => {
+	it('the plain chat carries kind:"chat" to the create route', async () => {
 		const { f, calls } = fakeFetch("c_chat");
 		await startDraftSession("this and that", f, "chat");
 		assert.deepEqual(calls[0]!.body, { title: "this and that", kind: "chat" });
@@ -58,14 +62,7 @@ describe("startDraftSession — the create-on-send contract", () => {
 
 describe("DraftShell — the sessionless surface", () => {
 	it("renders the composer blob, the stats bar, and the fresh-chat empty state", () => {
-		const html = renderToStaticMarkup(
-			<DraftShell
-				busy={false}
-				text=""
-				onChange={() => {}}
-				onSend={() => {}}
-			/>,
-		);
+		const html = renderToStaticMarkup(<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} />);
 		// The chat composer, ready for the first message.
 		assert.ok(html.includes('data-testid="composer"'));
 		assert.ok(html.includes('data-testid="stats-model"'));
@@ -103,20 +100,15 @@ describe("DraftShell — the sessionless surface", () => {
 	});
 
 	it("no chat id anywhere — nothing in the markup references a session", () => {
-		const html = renderToStaticMarkup(
-			<DraftShell
-				busy={false}
-				text=""
-				onChange={() => {}}
-				onSend={() => {}}
-			/>,
-		);
+		const html = renderToStaticMarkup(<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} />);
 		assert.ok(!/\/chat\/c[a-z0-9_]+/.test(html));
 	});
 });
 describe("the plain chat draft (/chat/new)", () => {
 	it("opens on the question line, with the language named and no model control", () => {
-		const html = renderToStaticMarkup(<ChatDraft busy={false} text="" onChange={() => {}} onSend={() => {}} language="Slovak" />);
+		const html = renderToStaticMarkup(
+			<ChatDraft busy={false} text="" onChange={() => {}} onSend={() => {}} language="Slovak" />,
+		);
 		assert.match(html, /A Slovak word you keep forgetting/);
 		assert.match(html, /What(?:'|&#x27;)s on your mind\?/);
 		assert.match(html, /Paste it or describe it/);
@@ -126,23 +118,18 @@ describe("the plain chat draft (/chat/new)", () => {
 });
 describe("the probed lesson draft (?mode=teach)", () => {
 	it("keeps the lesson's copy and its model control", () => {
-		const html = renderToStaticMarkup(<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} mode="teach" />);
+		const html = renderToStaticMarkup(
+			<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} mode="teach" />,
+		);
 		assert.ok(html.includes("Your tutor asks a few quick questions to see what you know, then teaches from there."));
 		assert.ok(html.includes('data-testid="stats-model"'));
 		assert.ok(!html.includes("draft-mode"), "no switch between kinds of chat");
 	});
 });
 describe("the practice draft (?mode=practice, 2026-10-04)", () => {
-
 	it("the shell swaps copy: practice title, empty state, placeholder", () => {
 		const html = renderToStaticMarkup(
-			<DraftShell
-				busy={false}
-				text=""
-				onChange={() => {}}
-				onSend={() => {}}
-				mode="practice"
-			/>,
+			<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} mode="practice" />,
 		);
 		assert.match(html, /What should we drill\?/);
 		assert.ok(html.includes("Short drills on one thing. Describe it, pick skills, or paste a sentence of your own."));
@@ -150,10 +137,7 @@ describe("the practice draft (?mode=practice, 2026-10-04)", () => {
 		assert.match(html, /What do you want to practice\?/);
 	});
 
-
-
-
-	it("startDraftSession carries kind:\"practice\" to the create route", async () => {
+	it('startDraftSession carries kind:"practice" to the create route', async () => {
 		let body: Record<string, unknown> | null = null;
 		const f = (async (_url: string, init?: RequestInit) => {
 			body = JSON.parse(String(init?.body));

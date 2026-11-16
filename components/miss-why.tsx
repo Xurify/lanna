@@ -9,11 +9,34 @@ const DASH: Record<Tone, string> = { yours: "bg-miss", needed: "bg-teal" };
 const senseHead = (sense: string) => sense.replace(/\s*\([^)]*\)/g, "").trim();
 const sameWord = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-function Side({ label, word, detail, tone, code, className, testId }: { label: string; word: string; detail?: React.ReactNode; tone: Tone; code?: string; className?: string; testId: string }) {
+function Side({
+	label,
+	word,
+	detail,
+	tone,
+	code,
+	className,
+	testId,
+}: {
+	label: string;
+	word: string;
+	detail?: React.ReactNode;
+	tone: Tone;
+	code?: string;
+	className?: string;
+	testId: string;
+}) {
 	return (
 		<div className={cn("min-w-0", className)} data-testid={testId}>
 			<p className="text-[12px] font-medium text-ink-3">{label}</p>
-			<p lang={code} className={cn("mt-1 break-words font-title text-[22px] leading-tight underline decoration-2 underline-offset-[5px]", UNDERLINE[tone], tone === "yours" ? "text-ink-2" : "font-semibold text-ink")}>
+			<p
+				lang={code}
+				className={cn(
+					"mt-1 break-words font-title text-[22px] leading-tight underline decoration-2 underline-offset-[5px]",
+					UNDERLINE[tone],
+					tone === "yours" ? "text-ink-2" : "font-semibold text-ink",
+				)}
+			>
 				{word}
 			</p>
 			{detail && <p className="mt-1.5 text-[14px] leading-snug text-ink-3">{detail}</p>}
@@ -28,13 +51,21 @@ function Source({ children }: { children: React.ReactNode }) {
 function Marked({ tone, children }: { tone: Tone | undefined; children: React.ReactNode }) {
 	return (
 		<span className="flex gap-2.5">
-			<span aria-hidden="true" className={cn("mt-[0.6em] h-[2px] w-3 shrink-0 rounded-full", tone ? DASH[tone] : "bg-transparent")} />
+			<span
+				aria-hidden="true"
+				className={cn("mt-[0.6em] h-[2px] w-3 shrink-0 rounded-full", tone ? DASH[tone] : "bg-transparent")}
+			/>
 			<span className="min-w-0">{children}</span>
 		</span>
 	);
 }
 
-function yoursDetail(reason: MissReason, other: MissWord | undefined, given: string, w: (text: string) => React.ReactNode): React.ReactNode {
+function yoursDetail(
+	reason: MissReason,
+	other: MissWord | undefined,
+	given: string,
+	w: (text: string) => React.ReactNode,
+): React.ReactNode {
 	if (other) {
 		const spelledAsLemma = other.isLemma && sameWord(given, other.lemma);
 		const which = !other.isLemma ? <>a form of {w(other.lemma)}, </> : spelledAsLemma ? null : <>{w(other.lemma)}, </>;
@@ -48,18 +79,40 @@ function yoursDetail(reason: MissReason, other: MissWord | undefined, given: str
 	}
 	if (reason.slip === "base") return "the dictionary form, with no ending";
 	if (reason.slip === "same-word") return <>{w(reason.lemma)} with another ending</>;
-	if (reason.slip === "other") return reason.inflects ? <>not a form of {w(reason.lemma)}</> : "not a word the dictionary knows";
+	if (reason.slip === "other")
+		return reason.inflects ? <>not a form of {w(reason.lemma)}</> : "not a word the dictionary knows";
 	return undefined;
 }
 
-export function MissWhy({ reason, given, answer, code, className }: { reason: MissReason; given: string; answer: string; code?: string; className?: string }) {
+export function MissWhy({
+	reason,
+	given,
+	answer,
+	code,
+	className,
+}: {
+	reason: MissReason;
+	given: string;
+	answer: string;
+	code?: string;
+	className?: string;
+}) {
 	const typed = given.trim();
 	const lemmaIsLower = reason.lemma.charAt(0) === reason.lemma.charAt(0).toLocaleLowerCase(code);
-	const needed = lemmaIsLower ? answer.trim().charAt(0).toLocaleLowerCase(code) + answer.trim().slice(1) : answer.trim();
+	const needed = lemmaIsLower
+		? answer.trim().charAt(0).toLocaleLowerCase(code) + answer.trim().slice(1)
+		: answer.trim();
 	const other = reason.slip === "other" ? reason.other : undefined;
-	const toneOf = (word: string): Tone | undefined => (sameWord(word, reason.lemma) ? "needed" : other && sameWord(word, other.lemma) ? "yours" : undefined);
+	const toneOf = (word: string): Tone | undefined =>
+		sameWord(word, reason.lemma) ? "needed" : other && sameWord(word, other.lemma) ? "yours" : undefined;
 	const w = (text: string, tone: Tone | undefined = toneOf(text)) => (
-		<b lang={code} className={cn("font-semibold text-ink-2", tone && cn("underline decoration-[1.5px] underline-offset-[3px]", UNDERLINE[tone]))}>
+		<b
+			lang={code}
+			className={cn(
+				"font-semibold text-ink-2",
+				tone && cn("underline decoration-[1.5px] underline-offset-[3px]", UNDERLINE[tone]),
+			)}
+		>
 			{text}
 		</b>
 	);
@@ -119,7 +172,9 @@ export function MissWhy({ reason, given, answer, code, className }: { reason: Mi
 		</div>
 	) : other?.note ? (
 		<div data-testid="review-why-note">
-			{noteSpans(other.note).map((part, i) => (part.word ? <span key={i}>{w(part.text)}</span> : <span key={i}>{part.text}</span>))}
+			{noteSpans(other.note).map((part, i) =>
+				part.word ? <span key={i}>{w(part.text)}</span> : <span key={i}>{part.text}</span>,
+			)}
 			<Source>AI note from the dictionary&apos;s sentences, not checked by a person.</Source>
 		</div>
 	) : other?.notePending ? (
@@ -128,7 +183,9 @@ export function MissWhy({ reason, given, answer, code, className }: { reason: Mi
 		</div>
 	) : example ? (
 		<div data-testid="review-why-example">
-			<span className="block">{example.asks && onlyOneAsks ? <>{w(typed, "yours")} asks a question:</> : <>Your word in use:</>}</span>
+			<span className="block">
+				{example.asks && onlyOneAsks ? <>{w(typed, "yours")} asks a question:</> : <>Your word in use:</>}
+			</span>
 			<i lang={code} className="mt-1 block">
 				{example.text}
 			</i>
@@ -137,13 +194,24 @@ export function MissWhy({ reason, given, answer, code, className }: { reason: Mi
 	) : null;
 
 	const shared = other?.alsoMeans ? <div>Both can mean {senseHead(other.alsoMeans)}.</div> : null;
-	const asksHere = reason.asks && example && onlyOneAsks ? <div>Here {w(needed, "needed")} asks a question.</div> : null;
+	const asksHere =
+		reason.asks && example && onlyOneAsks ? <div>Here {w(needed, "needed")} asks a question.</div> : null;
 	const why = [shared, contrast, asksHere].filter(Boolean);
 
 	return (
 		<div className={cn("lh-fade text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
 			<div className="flex items-stretch">
-				{typed && <Side label="You wrote" word={typed} detail={yoursDetail(reason, other, given, bold)} tone="yours" code={code} className="flex-1 pr-5 @xl:flex-none @xl:min-w-[10rem] @xl:pr-8" testId="review-why-yours" />}
+				{typed && (
+					<Side
+						label="You wrote"
+						word={typed}
+						detail={yoursDetail(reason, other, given, bold)}
+						tone="yours"
+						code={code}
+						className="flex-1 pr-5 @xl:flex-none @xl:min-w-[10rem] @xl:pr-8"
+						testId="review-why-yours"
+					/>
+				)}
 				<Side
 					label={typed ? "Needed here" : "The word here"}
 					word={needed}
@@ -155,7 +223,10 @@ export function MissWhy({ reason, given, answer, code, className }: { reason: Mi
 				/>
 			</div>
 			{why.length > 0 && (
-				<div className="mt-4 flex flex-col gap-2.5 border-t border-[var(--q-line)] pt-3.5" data-testid="review-why-because">
+				<div
+					className="mt-4 flex flex-col gap-2.5 border-t border-[var(--q-line)] pt-3.5"
+					data-testid="review-why-because"
+				>
 					{why.map((line, i) => (
 						<div key={i}>{line}</div>
 					))}

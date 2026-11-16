@@ -5,7 +5,11 @@ import { ensureExperimentInitialized, sttEngine } from "@/src/server";
 export const metadata = { title: "Study" };
 export const dynamic = "force-dynamic";
 
-export default async function InputFirstWeeklyCheckPage({ searchParams }: { searchParams?: Promise<{ week?: string; lang?: string }> }) {
+export default async function InputFirstWeeklyCheckPage({
+	searchParams,
+}: {
+	searchParams?: Promise<{ week?: string; lang?: string }>;
+}) {
 	const params = searchParams ? await searchParams : {};
 	const { config } = ensureExperimentInitialized();
 	const languages = [config.languages.treatment, config.languages.control];

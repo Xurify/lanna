@@ -60,13 +60,22 @@ const norm = (s: string) => s.normalize("NFC").trim();
 const chars = (s: string) => [...s].length;
 const fmt = (n: number) => n.toLocaleString("en-US");
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 1000) / 10 : 0);
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+const esc = (s: string) =>
+	s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 // ── the library: slovak.wiki's curated examples and Tatoeba ───────────────
 const lexiconSource = process.env.LEXICON ? path.resolve(process.env.LEXICON) : "curriculum/slovak/lexicon.json";
-const lexicon = readJson<{ words: Word[] }>(process.env.LEXICON ? path.resolve(process.env.LEXICON) : path.join(REPO, "curriculum/slovak/lexicon.json"), { words: [] });
-const wikiMap = readJson<{ clips: Record<string, Clip> }>(path.join(REPO, "curriculum/slovak/wiki-audio.json"), { clips: {} });
-const manifest = readJson<Record<string, { bytes?: number; kind?: string; voiceId?: string }>>(path.join(WIKI, "content/audio/manifest.json"), {});
+const lexicon = readJson<{ words: Word[] }>(
+	process.env.LEXICON ? path.resolve(process.env.LEXICON) : path.join(REPO, "curriculum/slovak/lexicon.json"),
+	{ words: [] },
+);
+const wikiMap = readJson<{ clips: Record<string, Clip> }>(path.join(REPO, "curriculum/slovak/wiki-audio.json"), {
+	clips: {},
+});
+const manifest = readJson<Record<string, { bytes?: number; kind?: string; voiceId?: string }>>(
+	path.join(WIKI, "content/audio/manifest.json"),
+	{},
+);
 const dictVoice = readJson<{ voiceId?: string }>(path.join(WIKI, "content/audio/config.json"), {}).voiceId;
 
 // The lookup the app makes at runtime (src/server/wiki-audio.ts): the exact
@@ -89,7 +98,13 @@ function match(text: string): { how: Row["how"]; clip?: Clip } {
 const rows: Row[] = lexicon.words.flatMap((w) =>
 	w.examples.map((e) => {
 		const m = match(e.sk);
-		return { text: norm(e.sk), src: e.src === "tatoeba" ? "tatoeba" : "curated", how: m.how, clip: m.clip, cat: w.cat ?? "other" };
+		return {
+			text: norm(e.sk),
+			src: e.src === "tatoeba" ? "tatoeba" : "curated",
+			how: m.how,
+			clip: m.clip,
+			cat: w.cat ?? "other",
+		};
 	}),
 );
 const uniq = new Map<string, Row>();
@@ -98,7 +113,12 @@ const uniqRows = [...uniq.values()];
 
 const byExample = (src: Row["src"]) => {
 	const rs = rows.filter((r) => r.src === src);
-	return { total: rs.length, exact: rs.filter((r) => r.how === "exact").length, accents: rs.filter((r) => r.how === "accents").length, none: rs.filter((r) => r.how === "none").length };
+	return {
+		total: rs.length,
+		exact: rs.filter((r) => r.how === "exact").length,
+		accents: rs.filter((r) => r.how === "accents").length,
+		none: rs.filter((r) => r.how === "none").length,
+	};
 };
 const curated = byExample("curated");
 const tatoeba = byExample("tatoeba");
@@ -106,7 +126,9 @@ const withClip = uniqRows.filter((r) => r.how !== "none");
 const noClip = uniqRows.filter((r) => r.how === "none");
 const clipHashes = new Set(withClip.map((r) => r.clip!.hash));
 const wikiBytes = [...clipHashes].reduce((s, h) => s + (manifest[h]?.bytes ?? 0), 0);
-const dictionaryClips = Object.values(manifest).filter((m) => (m.kind === "lemma" || m.kind === "example") && (!dictVoice || m.voiceId === dictVoice));
+const dictionaryClips = Object.values(manifest).filter(
+	(m) => (m.kind === "lemma" || m.kind === "example") && (!dictVoice || m.voiceId === dictVoice),
+);
 const dictionaryBytes = dictionaryClips.reduce((s, m) => s + (m.bytes ?? 0), 0);
 
 const words = lexicon.words.length;
@@ -141,7 +163,9 @@ for (const f of fs.existsSync(chatsDir) ? fs.readdirSync(chatsDir).filter((x) =>
 const lessonSentences = new Set<string>();
 let lessonReps = 0;
 const lessonsDir = path.join(PROFILE, "lessons");
-for (const f of fs.existsSync(lessonsDir) ? fs.readdirSync(lessonsDir).filter((x) => /^\d{4}-\d{2}-\d{2}\.jsonl$/.test(x)) : []) {
+for (const f of fs.existsSync(lessonsDir)
+	? fs.readdirSync(lessonsDir).filter((x) => /^\d{4}-\d{2}-\d{2}\.jsonl$/.test(x))
+	: []) {
 	for (const day of readJsonl(path.join(lessonsDir, f))) {
 		for (const rep of Array.isArray(day.reps) ? day.reps : []) {
 			lessonReps++;
@@ -156,18 +180,52 @@ const videos = readJsonl(path.join(PROFILE, "videos", "index.jsonl")).length;
 const scenes = readJsonl(path.join(PROFILE, "speak", "index.jsonl")).length;
 
 const numbers = {
-	library: { examples: rows.length, unique: uniqRows.length, words, curated: curated.total, tatoeba: tatoeba.total, withEnglish: rows.filter((r) => r.text).length },
-	wikiClips: { examples: { exact: curated.exact + tatoeba.exact, accents: curated.accents + tatoeba.accents, none: curated.none + tatoeba.none }, uniqueWithClip: withClip.length, uniqueWithoutClip: noClip.length, lemmaWithClip: wordsWithClip, bytesForLibrary: wikiBytes, dictionaryLibraryClips: dictionaryClips.length, dictionaryLibraryBytes: dictionaryBytes },
-	synthesis: { charsForNoClip: noClip.reduce((s, r) => s + chars(r.text), 0), charsForWholeLibrary: uniqRows.reduce((s, r) => s + chars(r.text), 0) },
+	library: {
+		examples: rows.length,
+		unique: uniqRows.length,
+		words,
+		curated: curated.total,
+		tatoeba: tatoeba.total,
+		withEnglish: rows.filter((r) => r.text).length,
+	},
+	wikiClips: {
+		examples: {
+			exact: curated.exact + tatoeba.exact,
+			accents: curated.accents + tatoeba.accents,
+			none: curated.none + tatoeba.none,
+		},
+		uniqueWithClip: withClip.length,
+		uniqueWithoutClip: noClip.length,
+		lemmaWithClip: wordsWithClip,
+		bytesForLibrary: wikiBytes,
+		dictionaryLibraryClips: dictionaryClips.length,
+		dictionaryLibraryBytes: dictionaryBytes,
+	},
+	synthesis: {
+		charsForNoClip: noClip.reduce((s, r) => s + chars(r.text), 0),
+		charsForWholeLibrary: uniqRows.reduce((s, r) => s + chars(r.text), 0),
+	},
 	localAudio: { clips: audio.length, tiers: Object.fromEntries([...tiers].map(([k, v]) => [k, v])) },
-	runtime: { tutorSpokenPhrases: spoken.size, lessonReps, lessonSentences: lessonSentences.size, reviewCards: cards, stories, videos, scenes },
+	runtime: {
+		tutorSpokenPhrases: spoken.size,
+		lessonReps,
+		lessonSentences: lessonSentences.size,
+		reviewCards: cards,
+		stories,
+		videos,
+		scenes,
+	},
 };
 
 console.log(JSON.stringify(numbers, null, 2));
 
 // ── the report ───────────────────────────────────────────────────────────
 type Node = { label: string; value: number; color: string };
-function sankey(left: Node[], right: Node[], links: Array<{ from: number; to: number; value: number; color: string; title: string }>): string {
+function sankey(
+	left: Node[],
+	right: Node[],
+	links: Array<{ from: number; to: number; value: number; color: string; title: string }>,
+): string {
 	const W = 880;
 	const H = 340;
 	const nodeW = 14;
@@ -222,28 +280,51 @@ const audioSankey = sankey(
 		{ label: "Tatoeba", value: tatoeba.total, color: "#e0af68" },
 	],
 	[
-		{ label: "slovak.wiki clip (free, kept)", value: curated.exact + curated.accents + tatoeba.exact + tatoeba.accents, color: "#9ece6a" },
+		{
+			label: "slovak.wiki clip (free, kept)",
+			value: curated.exact + curated.accents + tatoeba.exact + tatoeba.accents,
+			color: "#9ece6a",
+		},
 		{ label: "no clip (needs a voice)", value: curated.none + tatoeba.none, color: "#f7768e" },
 	],
 	[
-		{ from: 0, to: 0, value: curated.exact + curated.accents, color: "#9ece6a", title: `curated with a wiki clip: ${fmt(curated.exact + curated.accents)}` },
+		{
+			from: 0,
+			to: 0,
+			value: curated.exact + curated.accents,
+			color: "#9ece6a",
+			title: `curated with a wiki clip: ${fmt(curated.exact + curated.accents)}`,
+		},
 		{ from: 0, to: 1, value: curated.none, color: "#f7768e", title: `curated with no clip: ${fmt(curated.none)}` },
-		{ from: 1, to: 0, value: tatoeba.exact + tatoeba.accents, color: "#9ece6a", title: `Tatoeba with a wiki clip: ${fmt(tatoeba.exact + tatoeba.accents)}` },
+		{
+			from: 1,
+			to: 0,
+			value: tatoeba.exact + tatoeba.accents,
+			color: "#9ece6a",
+			title: `Tatoeba with a wiki clip: ${fmt(tatoeba.exact + tatoeba.accents)}`,
+		},
 		{ from: 1, to: 1, value: tatoeba.none, color: "#f7768e", title: `Tatoeba with no clip: ${fmt(tatoeba.none)}` },
 	],
 );
 
-const bar = (p: number, color: string) => `<div class="bar"><span style="width:${p}%;background:${color}"></span></div>`;
+const bar = (p: number, color: string) =>
+	`<div class="bar"><span style="width:${p}%;background:${color}"></span></div>`;
 const catRows = [...cats]
 	.sort((a, b) => b[1].words - a[1].words)
-	.map(([name, c]) => `<tr><td>${esc(name)}</td><td class="n">${fmt(c.words)}</td><td class="n">${fmt(c.withClip)}</td><td>${bar(pct(c.withClip, c.words), "#9ece6a")}</td></tr>`)
+	.map(
+		([name, c]) =>
+			`<tr><td>${esc(name)}</td><td class="n">${fmt(c.words)}</td><td class="n">${fmt(c.withClip)}</td><td>${bar(pct(c.withClip, c.words), "#9ece6a")}</td></tr>`,
+	)
 	.join("");
 const tierRows = [...tiers]
 	.sort((a, b) => b[1].clips - a[1].clips)
-	.map(([name, t]) => `<tr><td>${esc(name)}</td><td class="n">${fmt(t.clips)}</td><td class="n">${fmt(t.chars)}</td></tr>`)
+	.map(
+		([name, t]) => `<tr><td>${esc(name)}</td><td class="n">${fmt(t.clips)}</td><td class="n">${fmt(t.chars)}</td></tr>`,
+	)
 	.join("");
 
-const kpi = (value: string, label: string, sub: string) => `<div class="kpi"><div class="v">${value}</div><div class="l">${esc(label)}</div><div class="s">${esc(sub)}</div></div>`;
+const kpi = (value: string, label: string, sub: string) =>
+	`<div class="kpi"><div class="v">${value}</div><div class="l">${esc(label)}</div><div class="s">${esc(sub)}</div></div>`;
 
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

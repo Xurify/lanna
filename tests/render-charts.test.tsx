@@ -29,7 +29,11 @@ describe("progress charts", () => {
 
 	it("the streak calendar fills the days of the streak and says how many in a row", () => {
 		const week = base.week.map((d, i) => ({ ...d, xp: i >= 4 ? 30 : 0 }));
-		const html = renderToStaticMarkup(createElement(StreakCalendar, { data: chartData({ ...base, week, streak: { days: 3 }, log: { longestStreak: 9 } }) }));
+		const html = renderToStaticMarkup(
+			createElement(StreakCalendar, {
+				data: chartData({ ...base, week, streak: { days: 3 }, log: { longestStreak: 9 } }),
+			}),
+		);
 		assert.ok(html.includes("3 days in a row"));
 		assert.ok(html.includes("longest 9"));
 	});
@@ -40,7 +44,11 @@ describe("progress charts", () => {
 	});
 
 	it("level progress shows the XP to the next level and today's goal", () => {
-		const html = renderToStaticMarkup(createElement(LevelProgress, { data: chartData({ ...base, todayXp: 44, level: { level: 5, into: 214, span: 500 } }) }));
+		const html = renderToStaticMarkup(
+			createElement(LevelProgress, {
+				data: chartData({ ...base, todayXp: 44, level: { level: 5, into: 214, span: 500 } }),
+			}),
+		);
 		assert.ok(html.includes("286 XP to level 6"));
 		assert.ok(html.includes("6 XP to today"));
 	});
