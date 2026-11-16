@@ -194,3 +194,13 @@ test("contrastExample prefers a sentence with the typed word, then the shortest,
 	assert.equal(contrastExample(examples, "xyz")?.text, "Dobrý večer!");
 	assert.equal(contrastExample([{ text: "Bez prekladu.", en: "" }], "bez"), undefined);
 });
+
+test("contrastExample prefers a sentence whose translation shows the word's first meaning", () => {
+	const examples = [
+		{ text: "Veľký rešpekt!", en: "Much respect." },
+		{ text: "Zajtra je veľký deň.", en: "Tomorrow is a big day." },
+		{ text: "Každý veľký úspech bol nemožný.", en: "Every great achievement was impossible." },
+	];
+	assert.equal(contrastExample(examples, "veľký", "sk-SK", "big; large; great")?.text, "Zajtra je veľký deň.");
+	assert.equal(contrastExample(examples, "veľký", "sk-SK", "huge")?.text, "Veľký rešpekt!");
+});

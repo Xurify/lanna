@@ -165,6 +165,18 @@ const CASES: { why: string; slug: string; sentence: string; given: string; says:
 		says: ["You wrote vodný adjective · water", "Needed here vody noun · voda, water", "Both can mean water."],
 	},
 	{
+		why: "the other word's example shows its own meaning, not one that looks like the needed word",
+		slug: "vela",
+		sentence: "V lete veľa cestujeme vlakom.",
+		given: "veľký",
+		says: [
+			"You wrote veľký adjective · big",
+			"Needed here veľa adverb · a lot",
+			"veľký in use: Váš dom je veľký. Your house is big.",
+		],
+		never: ["Much respect"],
+	},
+	{
 		why: "the shared meaning comes from any sense, not only the first",
 		slug: "iba",
 		sentence: "Máme iba čaj.",
