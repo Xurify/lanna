@@ -10,7 +10,10 @@ export async function register() {
 	// made that tap wait about half a second; here it costs the server's idle start-up.
 	setTimeout(() => {
 		void import("@/src/server")
-			.then((s) => s.warmDictionary())
+			.then((s) => {
+				s.warmDictionary();
+				s.warmTranscriptionCheck();
+			})
 			.catch(() => {});
 	}, 200);
 }

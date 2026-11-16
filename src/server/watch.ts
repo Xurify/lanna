@@ -15,7 +15,7 @@
  * embedded player, where YouTube's terms allow it.
  */
 
-import { execFile, execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -25,6 +25,7 @@ import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
+import { processWide } from "../core/process-wide.ts";
 import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
 import { FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, FRAGMENT_SOURCE_MAX_SEC, type FragmentRange } from "../core/fragments.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
@@ -306,27 +307,41 @@ function pythonPath(): string | null {
 	return null;
 }
 
-let cachedWhisperAvailable: boolean | null = null;
+const fasterWhisper = processWide("watch.fasterWhisper", () => ({ found: null as boolean | null, checking: null as Promise<boolean> | null }));
 
-function hasFasterWhisper(): boolean {
-	if (process.env.VITEST) return false;
-	if (cachedWhisperAvailable !== null) return cachedWhisperAvailable;
-	const py = pythonPath();
-	const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
-	cachedWhisperAvailable = false;
-	if (py && fs.existsSync(helper)) {
-		try {
-			const out = execFileSync(/*turbopackIgnore: true*/ py, [helper, "check"], { encoding: "utf8", timeout: 60_000, windowsHide: true, env: subprocessEnv() });
-			cachedWhisperAvailable = (JSON.parse(out.trim().split("\n").pop() ?? "{}") as { whisper?: boolean }).whisper === true;
-		} catch {
-			cachedWhisperAvailable = false;
+function checkFasterWhisper(): Promise<boolean> {
+	if (process.env.VITEST) return Promise.resolve(false);
+	if (fasterWhisper.found !== null) return Promise.resolve(fasterWhisper.found);
+	fasterWhisper.checking ??= (async () => {
+		const py = pythonPath();
+		const helper = path.resolve(process.cwd(), "scripts", "spotify_helper.py");
+		let found = false;
+		if (py && fs.existsSync(helper)) {
+			try {
+				const { stdout } = await run(/*turbopackIgnore: true*/ py, [helper, "check"], { encoding: "utf8", timeout: 60_000, windowsHide: true, env: subprocessEnv() });
+				found = (JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { whisper?: boolean }).whisper === true;
+			} catch {
+				found = false;
+			}
 		}
-	}
-	return cachedWhisperAvailable;
+		fasterWhisper.found = found;
+		return found;
+	})();
+	return fasterWhisper.checking;
 }
 
+const YT_DLP_RECHECK_MS = 30_000;
+const ytDlp = processWide("watch.ytDlp", () => ({ path: null as string | null, checkedAt: 0 }));
+
 /** yt-dlp on the PATH (or YTDLP_PATH), when it is. */
-function ytDlpPath(): string | null {
+function ytDlpPath(now = Date.now()): string | null {
+	if (now - ytDlp.checkedAt < YT_DLP_RECHECK_MS) return ytDlp.path;
+	ytDlp.path = findYtDlp();
+	ytDlp.checkedAt = now;
+	return ytDlp.path;
+}
+
+function findYtDlp(): string | null {
 	const configured = process.env.YTDLP_PATH?.trim();
 	if (configured && fs.existsSync(configured)) return configured;
 	const exts = process.platform === "win32" ? ["yt-dlp.exe", "yt-dlp"] : ["yt-dlp"];
@@ -343,11 +358,23 @@ function ytDlpPath(): string | null {
 	return null;
 }
 
-function canTranscribeAudio(): boolean {
-	if (ytDlpPath() !== null && (!!keyValue("DEEPGRAM_API_KEY") || !!keyValue("ELEVENLABS_API_KEY") || hasFasterWhisper())) {
-		return true;
-	}
-	return false;
+const hasTranscriptionKey = () => !!keyValue("DEEPGRAM_API_KEY") || !!keyValue("ELEVENLABS_API_KEY");
+
+async function canTranscribeAudio(): Promise<boolean> {
+	if (ytDlpPath() === null) return false;
+	return hasTranscriptionKey() || checkFasterWhisper();
+}
+
+/** What the Watch page can promise right now, without waiting on Python. */
+function canTranscribeAudioNow(): boolean {
+	if (ytDlpPath() === null) return false;
+	if (hasTranscriptionKey()) return true;
+	void checkFasterWhisper();
+	return fasterWhisper.found === true;
+}
+
+export function warmTranscriptionCheck(): void {
+	void canTranscribeAudio();
 }
 
 /** The captions through yt-dlp: it keeps up with YouTube's changes better
@@ -599,7 +626,7 @@ async function captionsForSpotify(id: string, accepted: readonly string[], signa
 
 async function captionsViaAudioTranscription(id: string, meta: VideoMeta | null, accepted: readonly string[], signal?: AbortSignal): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
-	if (!bin || !canTranscribeAudio()) return null;
+	if (!bin || !(await canTranscribeAudio())) return null;
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-"));
 	try {
 		const { stdout } = await run(bin, ["-x", "--audio-format", "mp3", "--audio-quality", "6", "--no-warnings", "--no-playlist", "--print-json", "-o", path.join(dir, "%(id)s.%(ext)s"), videoUrl(id)], { timeout: 300_000, maxBuffer: 64 * 1024 * 1024, signal, windowsHide: true, env: subprocessEnv() });
@@ -713,7 +740,7 @@ export async function fetchCaptions(id: string, opts: { transcribe?: boolean; la
 	} catch (err) {
 		errors.push(`yt-dlp: ${err instanceof Error ? err.message : String(err)}`);
 	}
-	const canTranscribe = canTranscribeAudio();
+	const canTranscribe = await canTranscribeAudio();
 	if (opts.transcribe && canTranscribe) {
 		opts.onStage?.("transcribing");
 		const got = await captionsViaAudioTranscription(id, meta, langs, opts.signal);
@@ -1158,7 +1185,7 @@ export function watchState(tz?: number, now = new Date()): WatchState {
 	return {
 		library: videoLibrary(),
 		canPrepare: storyEngine() !== null,
-		canTranscribe: canTranscribeAudio(),
+		canTranscribe: canTranscribeAudioNow(),
 		preparing: [...stages.entries()].filter(([, s]) => s.stage !== "done" && s.stage !== "error").map(([id, s]) => ({ id, stage: s.stage })),
 		watchedToday: videoStore.watches().filter((w) => w.day === today).length,
 	};
