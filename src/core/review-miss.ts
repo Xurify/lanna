@@ -1,4 +1,5 @@
 import { foldDiacritics, normalizeAnswer } from "./language.ts";
+import { formContrast, type CaseName, type Declension, type FormMismatch } from "./form-cells.ts";
 import { formSlip, type FormSlip } from "./form-slip.ts";
 import { shortGloss } from "./lesson.ts";
 import { aspectRoles, pairContrastRule } from "./mixups.ts";
@@ -46,6 +47,8 @@ export interface MissReason {
 	asks?: boolean;
 	other?: MissWord;
 	form?: string;
+	givenForm?: string;
+	mismatch?: FormMismatch;
 	trigger?: string;
 	answer?: string;
 	given?: string;
@@ -61,6 +64,9 @@ interface MissInput {
 	asks?: boolean;
 	form?: string;
 	trigger?: string;
+	declension?: Declension;
+	neededCase?: CaseName;
+	isNoun?: boolean;
 	rankedEntriesOfGiven?: readonly MissWord[];
 }
 
@@ -224,8 +230,24 @@ export function missReason(input: MissInput, tag = "sk-SK"): MissReason | undefi
 		slip !== "blank" && !givenIsOwnForm
 			? input.rankedEntriesOfGiven?.find((o) => key(o.lemma) !== key(input.lemma))
 			: undefined;
+	const finalSlip = anotherWord ? "other" : slip;
+	const { givenForm, mismatch } =
+		finalSlip === "same-word"
+			? formContrast(
+					{
+						given: input.given,
+						answer: input.answer,
+						lemma: input.lemma,
+						neededCase: input.neededCase,
+						isNoun: input.isNoun,
+						declension: input.declension,
+						forms: input.forms,
+					},
+					tag,
+				)
+			: {};
 	return {
-		slip: anotherWord ? "other" : slip,
+		slip: finalSlip,
 		lemma: input.lemma,
 		gloss: input.gloss,
 		inflects,
@@ -233,5 +255,7 @@ export function missReason(input: MissInput, tag = "sk-SK"): MissReason | undefi
 		...(anotherWord ? { other: anotherWord } : {}),
 		...(input.form ? { form: input.form } : {}),
 		...(input.trigger ? { trigger: input.trigger } : {}),
+		...(givenForm ? { givenForm } : {}),
+		...(mismatch ? { mismatch } : {}),
 	};
 }

@@ -67,8 +67,10 @@ import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/componen
 import { readOrigin } from "@/components/origin";
 import { StampDisc } from "@/components/stamp";
 import {
+	caseOfUnit,
 	compareAnswer,
 	diacriticSlips,
+	formContrast,
 	formSlip,
 	genderLabel,
 	gradeListen,
@@ -1150,6 +1152,21 @@ function HintPanel({
 	const vocabulary = unitInfo(item.unit).kind === "words";
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const slip = !vocabulary && !pairs ? formSlip({ answer: item.answer, lemma: item.lemma, given: miss }) : undefined;
+	const mismatch =
+		slip === "same-word"
+			? formContrast(
+					{
+						given: miss,
+						answer: item.answer,
+						lemma: item.lemma,
+						neededCase: caseOfUnit(item.unit),
+						isNoun: item.cat === "Nouns",
+						declension: item.declension,
+						forms: item.forms,
+					},
+					tag,
+				).mismatch
+			: undefined;
 	return (
 		<div
 			className="lh-rise mt-6 rounded-[14px] bg-well px-5 py-4"
@@ -1168,7 +1185,7 @@ function HintPanel({
 					<p className="text-foreground">{item.pair.cue}</p>
 				) : slip === "base" ? (
 					<p className="text-foreground">
-						<span className="font-semibold text-miss">“{miss}”</span> is the base form.{" "}
+						<span className="font-semibold text-miss">“{miss}”</span> is the dictionary form.{" "}
 						{item.trigger ? (
 							<>
 								Look at{" "}
@@ -1185,9 +1202,15 @@ function HintPanel({
 							<>Change the ending to fit this sentence.</>
 						)}
 					</p>
+				) : mismatch?.kind === "number" ? (
+					<p className="text-foreground" data-testid="lesson-hint-number">
+						<span className="font-semibold text-miss">“{miss}”</span> is {mismatch.grammarCase} {mismatch.given}. The
+						case is right; this sentence needs the {mismatch.needed}.
+					</p>
 				) : slip === "same-word" ? (
 					<p className="text-foreground">
-						<span className="font-semibold text-miss">“{miss}”</span> has another ending.{" "}
+						<span className="font-semibold text-miss">“{miss}”</span>{" "}
+						{mismatch ? <>is the {mismatch.given.join(" or ")}.</> : "has another ending."}{" "}
 						{item.trigger ? (
 							<>
 								Look at{" "}

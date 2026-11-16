@@ -78,7 +78,14 @@ function yoursDetail(
 		);
 	}
 	if (reason.slip === "base") return "the dictionary form, with no ending";
-	if (reason.slip === "same-word") return <>{w(reason.lemma)} with another ending</>;
+	if (reason.slip === "same-word")
+		return reason.givenForm ? (
+			<>
+				{w(reason.lemma)}, {reason.givenForm}
+			</>
+		) : (
+			<>{w(reason.lemma)} with another ending</>
+		);
 	if (reason.slip === "other")
 		return reason.inflects ? <>not a form of {w(reason.lemma)}</> : "not a word the dictionary knows";
 	return undefined;
@@ -196,7 +203,24 @@ export function MissWhy({
 	const shared = other?.alsoMeans ? <div>Both can mean {senseHead(other.alsoMeans)}.</div> : null;
 	const asksHere =
 		reason.asks && example && onlyOneAsks ? <div>Here {w(needed, "needed")} asks a question.</div> : null;
-	const why = [shared, contrast, asksHere].filter(Boolean);
+	const mismatch = reason.mismatch;
+	const formContrast =
+		typed && mismatch ? (
+			<div data-testid="review-why-mismatch">
+				{mismatch.kind === "number" ? (
+					<>
+						Right case, wrong number. Both are {mismatch.grammarCase}: {w(typed, "yours")} is {mismatch.given},{" "}
+						{w(needed, "needed")} is {mismatch.needed}.
+					</>
+				) : (
+					<>
+						Right number, wrong case. Both are {mismatch.number}: {w(typed, "yours")} is {mismatch.given.join(" or ")},{" "}
+						{w(needed, "needed")} is {mismatch.needed}.
+					</>
+				)}
+			</div>
+		) : null;
+	const why = [formContrast, shared, contrast, asksHere].filter(Boolean);
 
 	return (
 		<div className={cn("lh-fade text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
