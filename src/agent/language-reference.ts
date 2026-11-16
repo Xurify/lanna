@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
+import { processWide } from "../core/process-wide.ts";
 import { referenceAspectPairs, referenceUnits, type AspectPair, type ReferenceUnit } from "../core/reference-contrast.ts";
 
 interface ReferenceSource {
@@ -36,7 +37,7 @@ export function referenceDir(language: string): string | undefined {
 	return source && path.join(PATHS.root, ".claude", "skills", source.folder, "references");
 }
 
-const cache = new Map<string, LanguageReference | null>();
+const cache = processWide("languageReference", () => new Map<string, LanguageReference | null>());
 
 export function languageReference(language: string, tag: string): LanguageReference | null {
 	if (cache.has(language)) return cache.get(language)!;

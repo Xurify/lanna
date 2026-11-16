@@ -8,6 +8,7 @@
  */
 
 import fs from "node:fs";
+import { processWide } from "../core/process-wide.ts";
 import { activeProfile, curriculumFile } from "../../config.ts";
 
 export interface WorldPerson {
@@ -44,7 +45,7 @@ export interface World {
 	beats: Record<string, string>;
 }
 
-const cache = new Map<string, World | null>();
+const cache = processWide("world", () => new Map<string, World | null>());
 
 function worldPath(profile: string = activeProfile()): string {
 	return curriculumFile(profile, "world.json");

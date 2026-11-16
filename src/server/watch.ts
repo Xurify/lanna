@@ -25,6 +25,7 @@ import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
+import { processWide } from "../core/process-wide.ts";
 import { captionLanguageName, type LanguageInfo } from "../core/language.ts";
 import { FRAGMENT_PICK_MAX_SEC, FRAGMENT_PICK_MIN_SEC, FRAGMENT_SOURCE_MAX_SEC, type FragmentRange } from "../core/fragments.ts";
 import { activeLanguage, profileLanguage } from "./active-language.ts";
@@ -893,8 +894,8 @@ async function questionsFor(engine: PiEngine, segments: readonly { sk: string; e
 
 // ─── Preparing a video ──────────────────────────────────────────────────────
 
-const stages = new Map<string, { stage: PrepareStage; error?: string; at: number }>();
-const inFlight = new Map<string, Promise<VideoRecord>>();
+const stages = processWide("watch.stages", () => new Map<string, { stage: PrepareStage; error?: string; at: number }>());
+const inFlight = processWide("watch.inFlight", () => new Map<string, Promise<VideoRecord>>());
 
 /** Is the kept record the cut asked for: the whole video, or this stretch? */
 function sameCut(kept: VideoRecord, range: FragmentRange | undefined): boolean {

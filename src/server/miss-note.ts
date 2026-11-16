@@ -14,6 +14,7 @@ import {
 	parseMissNote,
 	type MissNote,
 } from "../core/miss-note.ts";
+import { processWide } from "../core/process-wide.ts";
 import { mixupKey } from "../core/mixups.ts";
 import type { LexiconEntry } from "../core/review.ts";
 import { missNoteStore } from "../store/miss-notes.ts";
@@ -27,7 +28,7 @@ interface MissNoteOptions {
 	now?: Date;
 }
 
-const inFlight = new Map<string, Promise<MissNote | null>>();
+const inFlight = processWide("missNote.inFlight", () => new Map<string, Promise<MissNote | null>>());
 
 export function cachedMissNote(a: Pick<LexiconEntry, "slug">, b: Pick<LexiconEntry, "slug">): MissNote | undefined {
 	const note = missNoteStore.get(mixupKey(a.slug, b.slug));
