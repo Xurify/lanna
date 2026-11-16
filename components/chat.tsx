@@ -17,6 +17,7 @@ import {
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { ChatPdfButton, DraftPdfChips } from "@/components/chat-pdf-button";
+import { ChatImageButton, DraftImageChips, uploadLearnerImage } from "@/components/chat-image-button";
 import { joinDraft, splitDraft } from "@/src/core";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
@@ -1733,8 +1734,33 @@ export function Chat({
 							// only detach our view.
 							busy={busy}
 							value={draftParts.rest}
-							onChange={(v) => applyText(joinDraft(draftParts.pdfs, v))}
-							attachments={<DraftPdfChips pdfs={draftParts.pdfs} onRemove={(pdf) => applyText(joinDraft(draftParts.pdfs.filter((p) => p !== pdf), draftParts.rest))} />}
+							onChange={(v) => applyText(joinDraft(draftParts.pdfs, v, draftParts.images))}
+							onPaste={async (e) => {
+								const items = e.clipboardData?.items;
+								if (!items) return;
+								for (const item of Array.from(items)) {
+									if (item.type.startsWith("image/")) {
+										const file = item.getAsFile();
+										if (file) {
+											e.preventDefault();
+											try {
+												const img = await uploadLearnerImage(file);
+												applyText(joinDraft(draftParts.pdfs, draftParts.rest, [...draftParts.images, img]));
+											} catch (err) {
+												console.error("Failed to upload pasted image", err);
+											}
+										}
+									}
+								}
+							}}
+							attachments={
+								(draftParts.pdfs.length > 0 || draftParts.images.length > 0) && (
+									<div className="flex flex-col gap-2">
+										<DraftPdfChips pdfs={draftParts.pdfs} onRemove={(pdf) => applyText(joinDraft(draftParts.pdfs.filter((p) => p !== pdf), draftParts.rest, draftParts.images))} />
+										<DraftImageChips images={draftParts.images} onRemove={(img) => applyText(joinDraft(draftParts.pdfs, draftParts.rest, draftParts.images.filter((i) => i !== img)))} />
+									</div>
+								)
+							}
 							inputRef={composerInputRef}
 							onSend={onSend}
 							onStop={abortInFlightTurn}
@@ -1753,7 +1779,14 @@ export function Chat({
 										<ChatPdfButton
 											compact
 											onAttached={(pdf) => {
-												applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest));
+												applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest, draftParts.images));
+												composerInputRef.current?.focus();
+											}}
+										/>
+										<ChatImageButton
+											compact
+											onAttached={(img) => {
+												applyText(joinDraft(draftParts.pdfs, draftParts.rest, [...draftParts.images, img]));
 												composerInputRef.current?.focus();
 											}}
 										/>

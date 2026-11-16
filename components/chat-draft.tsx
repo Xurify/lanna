@@ -6,6 +6,7 @@ import { ArrowUpIcon } from "lucide-react";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { ChatPdfButton, DraftPdfChips } from "@/components/chat-pdf-button";
+import { ChatImageButton, DraftImageChips, uploadLearnerImage } from "@/components/chat-image-button";
 import { joinDraft, splitDraft } from "@/src/core";
 import { Arrow, Box, Figure, Line, Loop, Note, Patch, Sheet } from "@/components/lesson/ink";
 import { SidebarToggle } from "@/components/sidebar";
@@ -104,12 +105,35 @@ export function ChatDraft({
 					</p>
 
 					<div data-testid="composer" className="mt-8 rounded-2xl border border-line-2 bg-card transition-colors focus-within:border-ink-3">
-						<DraftPdfChips pdfs={draft.pdfs} onRemove={(pdf) => onChange(joinDraft(draft.pdfs.filter((p) => p !== pdf), draft.rest))} className="px-4 pt-3" />
+						{(draft.pdfs.length > 0 || draft.images.length > 0) && (
+							<div className="flex flex-col gap-2 px-4 pt-3">
+								<DraftPdfChips pdfs={draft.pdfs} onRemove={(pdf) => onChange(joinDraft(draft.pdfs.filter((p) => p !== pdf), draft.rest, draft.images))} />
+								<DraftImageChips images={draft.images} onRemove={(img) => onChange(joinDraft(draft.pdfs, draft.rest, draft.images.filter((i) => i !== img)))} />
+							</div>
+						)}
 						<textarea
 							ref={inputRef}
 							value={draft.rest}
 							rows={2}
-							onChange={(e) => onChange(joinDraft(draft.pdfs, e.target.value))}
+							onChange={(e) => onChange(joinDraft(draft.pdfs, e.target.value, draft.images))}
+							onPaste={async (e) => {
+								const items = e.clipboardData?.items;
+								if (!items) return;
+								for (const item of Array.from(items)) {
+									if (item.type.startsWith("image/")) {
+										const file = item.getAsFile();
+										if (file) {
+											e.preventDefault();
+											try {
+												const img = await uploadLearnerImage(file);
+												onChange(joinDraft(draft.pdfs, draft.rest, [...draft.images, img]));
+											} catch (err) {
+												console.error("Failed to upload pasted image", err);
+											}
+										}
+									}
+								}
+							}}
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
 									e.preventDefault();
@@ -125,7 +149,13 @@ export function ChatDraft({
 							<DictationBar dictation={dictation} />
 							<ChatPdfButton
 								onAttached={(pdf) => {
-									onChange(joinDraft([...draft.pdfs, pdf], draft.rest));
+									onChange(joinDraft([...draft.pdfs, pdf], draft.rest, draft.images));
+									inputRef.current?.focus();
+								}}
+							/>
+							<ChatImageButton
+								onAttached={(img) => {
+									onChange(joinDraft(draft.pdfs, draft.rest, [...draft.images, img]));
 									inputRef.current?.focus();
 								}}
 							/>

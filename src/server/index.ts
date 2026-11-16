@@ -133,3 +133,4 @@ export * from "./stage.ts";
 export * from "./body-limit.ts";
 export * from "./self-talk.ts";
 export * from "./learner-pdfs.ts";
+export * from "./learner-images.ts";
