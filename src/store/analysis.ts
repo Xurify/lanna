@@ -39,4 +39,11 @@ export const analysisStore = {
 		fs.writeFileSync(tmp, JSON.stringify(file, null, 2), "utf-8");
 		fs.renameSync(tmp, target);
 	},
+	/** Change the file as it is on disk now. A writer that waited on a model
+	 *  uses this, so what another writer saved meanwhile is kept. */
+	update(change: (latest: AnalysisFile) => AnalysisFile): AnalysisFile {
+		const next = change(analysisStore.read());
+		analysisStore.write(next);
+		return next;
+	},
 };

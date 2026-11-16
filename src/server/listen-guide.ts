@@ -83,6 +83,6 @@ export async function writeListenGuide(opts: { force?: boolean; now?: Date; say?
 		}
 	}
 	const listenGuide: ListenGuideRecord = { text: text.trim(), data: parseListenGuide(text), at, digest: key, model, usage: { model, steps } };
-	analysisStore.write({ analysis, guide: saved.guide, listenGuide });
-	return mistakesReportOf(analysis, saved.guide, listenGuide);
+	const kept = analysisStore.update((latest) => ({ ...latest, analysis: latest.analysis ?? analysis, listenGuide }));
+	return mistakesReportOf(analysis, kept.guide, listenGuide);
 }

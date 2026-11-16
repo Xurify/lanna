@@ -169,6 +169,26 @@ describe("the service", () => {
 		assert.equal(changed.listenGuideCurrent, false, "new sentences make it stale");
 		assert.ok(changed.listenGuide, "but it is still there");
 	});
+
+	it("keeps the mistakes guide and the newer snapshot that were saved while the deep read waited on the model", async () => {
+		const before = analysisStore.read();
+		type Guide = NonNullable<typeof before.guide>;
+		const otherGuide = { text: "The guide that finished first.", data: null, at: NOW.toISOString(), digest: "other", model: "faux:faux", usage: { model: "faux:faux", steps: [] } } as unknown as Guide;
+		let newerSnapshotAt = "";
+		const say = async () => {
+			const meanwhile = analyzeNow(new Date("2026-11-20T15:00:00Z"));
+			newerSnapshotAt = meanwhile.analysis?.at ?? "";
+			analysisStore.write({ ...analysisStore.read(), guide: otherGuide });
+			return reply;
+		};
+		const written = await writeListenGuide({ now: NOW, force: true, say });
+		const onDisk = analysisStore.read();
+		assert.equal(onDisk.guide?.digest, "other", "the guide another writer saved is still there");
+		assert.equal(written.guide?.digest, "other");
+		assert.ok(newerSnapshotAt, "the snapshot taken meanwhile has a time");
+		assert.equal(onDisk.analysis?.at, newerSnapshotAt, "the newer snapshot is not rolled back");
+		assert.equal(onDisk.listenGuide?.text, written.listenGuide?.text, "and the deep read is saved too");
+	});
 });
 
 describe("the findings no single figure shows", () => {
