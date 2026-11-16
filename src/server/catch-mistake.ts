@@ -24,6 +24,7 @@ import {
 	type CatchNext,
 	type CatchResult,
 } from "../core/catch-mistake.ts";
+import { processWide } from "../core/process-wide.ts";
 import { getPairsForLanguage } from "../core/pairs.ts";
 import { chooseCatch, CATCH_RECENT_ITEMS } from "../core/catch-pair.ts";
 import { catchStore } from "../store/catch-mistake.ts";
@@ -39,7 +40,7 @@ interface CatchOptions {
 	now?: Date;
 }
 
-const inFlight = new Map<string, Promise<CatchNext>>();
+const inFlight = processWide("catch.inFlight", () => new Map<string, Promise<CatchNext>>());
 
 export function nextCatchItem(opts: CatchOptions = {}): Promise<CatchNext> {
 	const profile = activeProfile();

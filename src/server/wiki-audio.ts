@@ -9,6 +9,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { PATHS } from "../../config.ts";
+import { processWide } from "../core/process-wide.ts";
 import { foldDiacritics } from "../core/language.ts";
 import { audioKey, findAudioClip, storeAudioClip } from "../store/corpus.ts";
 
@@ -21,7 +22,7 @@ interface WikiAudio {
 	folded: Map<string, { kind: string; hash: string } | null>;
 }
 
-const loaded = new Map<string, WikiAudio | null>();
+const loaded = processWide("wikiAudio", () => new Map<string, WikiAudio | null>());
 
 function load(profile: string): WikiAudio | null {
 	if (loaded.has(profile)) return loaded.get(profile)!;

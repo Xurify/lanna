@@ -920,8 +920,8 @@ async function questionsFor(engine: PiEngine, segments: readonly { sk: string; e
 
 // ─── Preparing a video ──────────────────────────────────────────────────────
 
-const stages = new Map<string, { stage: PrepareStage; error?: string; at: number }>();
-const inFlight = new Map<string, Promise<VideoRecord>>();
+const stages = processWide("watch.stages", () => new Map<string, { stage: PrepareStage; error?: string; at: number }>());
+const inFlight = processWide("watch.inFlight", () => new Map<string, Promise<VideoRecord>>());
 
 /** Is the kept record the cut asked for: the whole video, or this stretch? */
 function sameCut(kept: VideoRecord, range: FragmentRange | undefined): boolean {

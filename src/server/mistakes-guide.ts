@@ -87,6 +87,6 @@ export async function writeGuide(opts: { force?: boolean; now?: Date; engine?: P
 		progressStore.write(p);
 	}
 	const guide: GuideRecord = { text: text.trim(), data, practice, at: (opts.now ?? new Date()).toISOString(), digest: key, model: resolved.model, usage: { model: resolved.model, steps } };
-	analysisStore.write({ analysis, guide, listenGuide: saved.listenGuide ?? null });
-	return mistakesReportOf(analysis, guide, saved.listenGuide ?? null);
+	const kept = analysisStore.update((latest) => ({ ...latest, analysis: latest.analysis ?? analysis, guide }));
+	return mistakesReportOf(analysis, guide, kept.listenGuide ?? null);
 }

@@ -29,6 +29,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { loadLexicon } from "../agent/lexicon.ts";
+import { processWide } from "../core/process-wide.ts";
 import { languageByCode, LANGUAGES, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { entryLemma, exampleText } from "../core/review.ts";
@@ -104,7 +105,7 @@ export function elevenLabsReads(code: string, model: string = configuredModel())
 
 /** A model the account refused (not on the plan, unknown id) is skipped for
  *  an hour, so every line does not pay a failed call first. */
-const refused = new Map<string, number>();
+const refused = processWide("tts.refused", () => new Map<string, number>());
 const REFUSED_MS = 3_600_000;
 
 /** The models to try for a language, in order: the configured one, then the
@@ -350,7 +351,7 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	return made;
 }
 
-const inFlight = new Map<string, Promise<TtsClip | null>>();
+const inFlight = processWide("tts.inFlight", () => new Map<string, Promise<TtsClip | null>>());
 
 async function synthesizeFresh(req: TtsRequest, lang: LanguageInfo, key: string): Promise<TtsClip | null> {
 	for (const { tier, ext, run } of TIERS) {
