@@ -41,7 +41,7 @@ import {
 	serializeForSummary,
 	toLlmMessages,
 	type CompactionDetails,
-	type LhMessage,
+	type LannaMessage,
 } from "../core/index.ts";
 import { emit } from "../core/events.ts";
 import type { ChatStore } from "../core/ports.ts";
@@ -157,11 +157,11 @@ export function effectiveThresholdTokens(
  *  carry), so the fallback path runs the plain heuristic over the
  *  CUT-HONORED projection (never the dropped span) plus the additive
  *  prompt term the anchor would have covered. */
-export function projectedContextTokens(messages: readonly LhMessage[], systemPromptTokens: number): number {
+export function projectedContextTokens(messages: readonly LannaMessage[], systemPromptTokens: number): number {
 	const est = estimateContextTokens(messages);
 	if (est.lastUsageIndex !== null) return est.tokens;
 	return (
-		estimateTokens(toLlmMessages(messages as readonly AgentMessage[]) as unknown as readonly LhMessage[]) +
+		estimateTokens(toLlmMessages(messages as readonly AgentMessage[]) as unknown as readonly LannaMessage[]) +
 		systemPromptTokens
 	);
 }

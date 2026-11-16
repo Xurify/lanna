@@ -13,7 +13,7 @@ function attachSubscriptionChild(child, controller) {
 		}
 	};
 	const listener = async (message) => {
-		if (disposed || !child.connected || message?.channel !== "lh:subscriptions" || typeof message.id !== "string")
+		if (disposed || !child.connected || message?.channel !== "lanna:subscriptions" || typeof message.id !== "string")
 			return;
 		const { id, op } = message;
 		try {
@@ -21,15 +21,15 @@ function attachSubscriptionChild(child, controller) {
 			if (op === "lease" && (typeof message.background !== "boolean" || !validScope(message.scope))) throw new Error();
 			const value =
 				op === "snapshot" ? await controller.snapshot() : await controller.lease(message.scope, message.background);
-			send({ channel: "lh:subscriptions", id, op, ok: true, value });
+			send({ channel: "lanna:subscriptions", id, op, ok: true, value });
 		} catch (error) {
-			send({ channel: "lh:subscriptions", id, op, ok: false, error: publicError(error) });
+			send({ channel: "lanna:subscriptions", id, op, ok: false, error: publicError(error) });
 		}
 	};
 	child.on("message", listener);
 	return {
 		send(snapshot) {
-			send({ channel: "lh:subscriptions", op: "changed", snapshot });
+			send({ channel: "lanna:subscriptions", op: "changed", snapshot });
 		},
 		dispose() {
 			disposed = true;

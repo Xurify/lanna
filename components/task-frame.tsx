@@ -29,7 +29,7 @@ export function TaskFrame({ children, strip = true }: { children: React.ReactNod
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
-				{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
+				{strip && <div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
 				{children}
 			</div>
 		</>
@@ -69,7 +69,7 @@ export function TaskTop({
 				aria-label={label}
 			>
 				<div
-					className={cn("lh-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))}
+					className={cn("lanna-fill rounded-full", tone ?? (ink === "bg-miss" ? ink : "bg-teal"))}
 					style={fillStyle(Math.max(0.03, progress))}
 				/>
 			</div>
@@ -157,7 +157,7 @@ export function TaskBar({
 	children?: React.ReactNode;
 }) {
 	return (
-		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+		<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 				{onLeave ? (
 					<button type="button" onClick={onLeave} aria-label="Leave" className={LEAVE}>
@@ -229,7 +229,7 @@ export function OptionTile({
 			data-testid={testId}
 			className={cn(
 				// The tile sits on a card, so it needs its own line: the raise shadow alone vanishes in the dark theme.
-				"lh-press flex min-h-12 items-center gap-3 rounded-[10px] bg-card px-3.5 py-2.5 text-left font-prose text-[19px] font-medium tracking-[-0.01em] text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)]",
+				"lanna-press flex min-h-12 items-center gap-3 rounded-[10px] bg-card px-3.5 py-2.5 text-left font-prose text-[19px] font-medium tracking-[-0.01em] text-foreground shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)]",
 				state === "idle" && !disabled && "hover:bg-well",
 				state === "right" && "bg-teal-wash text-teal-2 shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
 				state === "wrong" && "bg-miss-soft text-miss shadow-[inset_0_0_0_1.5px_var(--q-miss)]",
@@ -324,7 +324,7 @@ export function TaskEnd({
 }
 
 export const PLAY_ROW =
-	"lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
+	"lanna-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2 pointer-coarse:size-11";
 
 export function SentenceRows({
 	children,

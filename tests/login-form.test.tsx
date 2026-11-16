@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
-import { LhAppIcon } from "@/components/lh-mark";
+import { LannaAppIcon } from "@/components/lanna-mark";
 import { LoginForm } from "@/components/login/login-form";
 
 const html = renderToStaticMarkup(createElement(LoginForm, { next: "/read?id=3" }));
@@ -42,7 +42,7 @@ describe("the sign-in form", () => {
 	it("draws the icon exactly as build/icon-flat.svg does", () => {
 		const file = readFileSync(new URL("../build/icon-flat.svg", import.meta.url), "utf8");
 		const fileTile = file.match(/<path d="([^"]+)" fill="#0D6764"/)?.[1];
-		const drawn = renderToStaticMarkup(createElement(LhAppIcon));
+		const drawn = renderToStaticMarkup(createElement(LannaAppIcon));
 		assert.ok(fileTile, "build/icon-flat.svg has the tile");
 		assert.ok(drawn.includes(`d="${fileTile}"`));
 		for (const bar of [

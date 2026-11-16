@@ -46,7 +46,7 @@ function underTestRunner(): boolean {
 }
 
 function testDataRoot(): string {
-	const dir = path.join(os.tmpdir(), `lh-test-data-${process.pid}`);
+	const dir = path.join(os.tmpdir(), `lanna-test-data-${process.pid}`);
 	fs.mkdirSync(dir, { recursive: true });
 	return dir;
 }

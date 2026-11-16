@@ -601,7 +601,7 @@ export function SpeakPlayer({
 								aria-pressed={listening}
 								aria-label={listening ? "Stop and send" : "Say your line"}
 								className={cn(
-									"lh-press relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink disabled:opacity-60 [-webkit-touch-callout:none]",
+									"lanna-press relative flex size-16 shrink-0 touch-none select-none items-center justify-center rounded-full text-sun-ink disabled:opacity-60 [-webkit-touch-callout:none]",
 									listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
 								)}
 								data-testid="speak-mic"
@@ -763,7 +763,7 @@ function TutorBubble({
 			<div
 				className={cn(
 					"rounded-lg rounded-bl-md bg-well px-4 py-3",
-					last && "lh-rise shadow-[0_0_0_1.5px_var(--q-teal)]",
+					last && "lanna-rise shadow-[0_0_0_1.5px_var(--q-teal)]",
 				)}
 			>
 				<div className="flex items-start gap-2">

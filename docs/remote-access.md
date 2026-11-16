@@ -91,13 +91,13 @@ For a server that is always on, such as a VPS: the app at `https://learn.example
        proxy_set_header X-Forwarded-Host $host;
        proxy_set_header X-Forwarded-Proto https;
        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-       proxy_set_header X-LH-Proxy-Secret "<the same 64 characters>";
+       proxy_set_header X-Lanna-Proxy-Secret "<the same 64 characters>";
        proxy_buffering off;
        proxy_read_timeout 3600s;
    }
    ```
 
-   Every line matters. Without `proxy_set_header Host $host`, nginx sends `127.0.0.1:3010` as the host, and the app refuses the request. Without the secret line, every request is refused. `proxy_buffering off` and the long read timeout keep the app's live updates from stalling (not tried under load). If you use Caddy, `reverse_proxy 127.0.0.1:3010 { header_up X-LH-Proxy-Secret "<the same 64 characters>" }` should be all it needs, since Caddy passes the host and sets the forwarded headers itself; that has not been run.
+   Every line matters. Without `proxy_set_header Host $host`, nginx sends `127.0.0.1:3010` as the host, and the app refuses the request. Without the secret line, every request is refused. `proxy_buffering off` and the long read timeout keep the app's live updates from stalling (not tried under load). If you use Caddy, `reverse_proxy 127.0.0.1:3010 { header_up X-Lanna-Proxy-Secret "<the same 64 characters>" }` should be all it needs, since Caddy passes the host and sets the forwarded headers itself; that has not been run.
 
 4. **Set the password** on the server, in the project folder. It asks twice and shows nothing as you type. The first password also turns web access on:
 

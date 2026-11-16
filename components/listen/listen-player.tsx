@@ -537,7 +537,7 @@ export function ListenPlayer({
 			/>
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-1 sm:pt-[4vh]">
-				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
+				<div key={item.id} className={cn(COLUMN, "lanna-rise")}>
 					<PracticeCard
 						icon="listen"
 						title="Listen"
@@ -560,7 +560,7 @@ export function ListenPlayer({
 								onMouseDown={keepFieldFocus}
 								onClick={() => replay()}
 								aria-label={`Play the ${unit}`}
-								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
+								className="lanna-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 								data-testid="listen-play"
 							>
 								<Volume2Icon className="size-6" strokeWidth={1.6} />
@@ -582,7 +582,7 @@ export function ListenPlayer({
 								onClick={() => replay(true)}
 								aria-label="Play slowly"
 								title="Play slowly"
-								className="lh-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
+								className="lanna-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
 								data-testid="listen-slow"
 							>
 								<SnailIcon className="size-5" strokeWidth={1.6} />
@@ -591,7 +591,7 @@ export function ListenPlayer({
 						</div>
 
 						{(current || peeked) && (
-							<div className="lh-rise mt-6" data-testid="listen-sentence" data-word-lookup-enabled="true">
+							<div className="lanna-rise mt-6" data-testid="listen-sentence" data-word-lookup-enabled="true">
 								<p
 									className="font-prose text-[24px] font-[550] leading-[1.35] tracking-[-0.025em] text-foreground sm:text-[30px]"
 									lang={lang?.code}
@@ -670,7 +670,7 @@ export function ListenPlayer({
 												onClick={() => setPeeked(true)}
 												disabled={!canPeek}
 												className={cn(
-													"lh-press inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 font-medium shadow-[inset_0_0_0_1px_var(--q-line-2)] pointer-coarse:h-11",
+													"lanna-press inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 font-medium shadow-[inset_0_0_0_1px_var(--q-line-2)] pointer-coarse:h-11",
 													canPeek ? "text-ink-2 hover:bg-well" : "text-ink-4",
 												)}
 												data-testid="listen-peek"

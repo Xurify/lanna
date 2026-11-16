@@ -66,7 +66,7 @@ import {
 	type SteerMessage,
 } from "../core/contracts.ts";
 import type { TurnInput } from "../core/input-events.ts";
-import { danglingQuestionOf, endsInDismissal, type LhMessage } from "../core/native-messages.ts";
+import { danglingQuestionOf, endsInDismissal, type LannaMessage } from "../core/native-messages.ts";
 import { fireJobAbort, isJobLive } from "../agent/subagents/aborts.ts";
 import { stores, effectiveSettings } from "./stores.ts";
 import { resolveConversationSpec } from "../core/settings-resolution.ts";
@@ -131,12 +131,12 @@ interface WakeState {
 	automaticDeferred: WeakSet<Agent>;
 }
 
-interface LhWakeGlobal {
+interface LannaWakeGlobal {
 	__lhWakePipeline?: WakeState;
 }
 
 function state(): WakeState {
-	const g = globalThis as typeof globalThis & LhWakeGlobal;
+	const g = globalThis as typeof globalThis & LannaWakeGlobal;
 	return (g.__lhWakePipeline ??= {
 		queues: new Map(),
 		liveAgents: new Map(),
@@ -190,7 +190,7 @@ function jobIdOf(steer: SteerMessage): string | null {
 /** Call only after canonical conversation persistence. Streaming visibility
  * is not durable acceptance. The saved marker wins over delivery-bookkeeping
  * failures; acknowledging delivery never changes the worker's outcome. */
-export function noteSteersDurable(chatId: string, persisted: readonly LhMessage[]): void {
+export function noteSteersDurable(chatId: string, persisted: readonly LannaMessage[]): void {
 	for (const message of persisted) {
 		if (message.role === "custom") finalizeSteer(message);
 	}
@@ -324,7 +324,7 @@ export function registerLiveAgent(
  *  (the double-handoff guard — a reconcile keeps it only when its id
  *  never landed in the persisted record). */
 interface UserSteerEntry {
-	message: LhMessage;
+	message: LannaMessage;
 	handedTo?: Agent;
 }
 
@@ -336,7 +336,7 @@ interface UserSteerEntry {
  *  is the stranding safety net: if this agent dies undelivered (question
  *  termination, abort), reconcileUserSteers keeps it parked for the
  *  chat's next run. */
-export function steerLiveChat(chatId: string, message: LhMessage): boolean {
+export function steerLiveChat(chatId: string, message: LannaMessage): boolean {
 	const agent = state().liveAgents.get(chatId);
 	if (!agent) return false;
 	const entry: UserSteerEntry = { message };
@@ -352,7 +352,7 @@ export function steerLiveChat(chatId: string, message: LhMessage): boolean {
  *  (the record holds them); undelivered stay parked for the next run.
  *  Memory-only by design (same tradeoff as job markers): a server
  *  restart drops parked steers — and the whole turn dies with it anyway. */
-export function reconcileUserSteers(chatId: string, persisted: readonly LhMessage[]): void {
+export function reconcileUserSteers(chatId: string, persisted: readonly LannaMessage[]): void {
 	const q = state().userSteers.get(chatId);
 	if (!q || q.length === 0) return;
 	const ids = new Set(persisted.map((m) => (m as { id?: string }).id));

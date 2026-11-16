@@ -14,7 +14,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-fluency-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-fluency-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

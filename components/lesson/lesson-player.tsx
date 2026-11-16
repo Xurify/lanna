@@ -236,9 +236,9 @@ export function LessonPlayer({
 		mode !== "lesson"
 			? null
 			: focus
-				? `lh-lesson:${focus}`
+				? `lanna-lesson:${focus}`
 				: unit
-					? `lh-lesson:${unit}${gender ? `:${gender}` : ""}`
+					? `lanna-lesson:${unit}${gender ? `:${gender}` : ""}`
 					: null;
 	const restoring = useRef(saveKey !== null);
 	const leaveTarget = useRef(readOrigin());
@@ -662,7 +662,7 @@ export function LessonPlayer({
 		return (
 			<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
 				<Frame strip={false}>
-					<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+					<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
 						<div className={cn(COLUMN, "flex h-16 items-center pt-2")}>
 							<button
 								type="button"
@@ -723,7 +723,7 @@ export function LessonPlayer({
 			<Frame strip={false}>
 				{/* Top bar: exit · progress · combo · sound. The whole band drags the
 			    window (its buttons carve themselves out, app/globals.css). */}
-				<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+				<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
 					<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 						<button
 							type="button"
@@ -744,7 +744,7 @@ export function LessonPlayer({
 								aria-label={`${left} seconds left`}
 							>
 								<div
-									className={cn("lh-fill rounded-full", left <= 10 ? "bg-miss" : "bg-teal")}
+									className={cn("lanna-fill rounded-full", left <= 10 ? "bg-miss" : "bg-teal")}
 									style={fillStyle(Math.max(0.03, progress))}
 								/>
 							</div>
@@ -771,7 +771,7 @@ export function LessonPlayer({
 							title="Right in a row"
 						>
 							<ZapIcon
-								className={cn("size-4", combo >= 3 && "fill-teal lh-flicker")}
+								className={cn("size-4", combo >= 3 && "fill-teal lanna-flicker")}
 								strokeWidth={1.6}
 								aria-hidden="true"
 							/>
@@ -780,7 +780,7 @@ export function LessonPlayer({
 							{floater && (
 								<span
 									key={floater.key}
-									className="lh-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-[550] text-teal-2"
+									className="lanna-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-[550] text-teal-2"
 								>
 									{floater.text}
 								</span>
@@ -792,7 +792,7 @@ export function LessonPlayer({
 
 				{/* The rep */}
 				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-					<div key={`${item.id}-${index}`} ref={repBox} className={cn(COLUMN, "lh-rise")}>
+					<div key={`${item.id}-${index}`} ref={repBox} className={cn(COLUMN, "lanna-rise")}>
 						<RepView
 							key={`${item.id}-${index}`}
 							item={item}
@@ -981,7 +981,7 @@ function LeaveDialog({
 }) {
 	return (
 		<div
-			className="lh-fade fixed inset-0 z-50 grid place-items-center bg-[rgb(var(--q-shadow-rgb)/0.45)] p-6"
+			className="lanna-fade fixed inset-0 z-50 grid place-items-center bg-[rgb(var(--q-shadow-rgb)/0.45)] p-6"
 			onClick={onStay}
 		>
 			<div
@@ -990,7 +990,7 @@ function LeaveDialog({
 				aria-labelledby="lesson-leave-title"
 				aria-describedby="lesson-leave-body"
 				onClick={(e) => e.stopPropagation()}
-				className="lh-menu-in q-card w-full max-w-sm p-6 text-center shadow-raise-hi"
+				className="lanna-menu-in q-card w-full max-w-sm p-6 text-center shadow-raise-hi"
 				data-testid="lesson-leave-confirm"
 			>
 				<h2 id="lesson-leave-title" className="font-ui text-xl font-semibold tracking-[-0.018em] text-foreground">
@@ -1064,11 +1064,11 @@ function repIcon(item: LessonItem): QIconName {
 }
 
 const PLAY_BIG =
-	"lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2";
+	"lanna-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2";
 const PLAY_SLOW =
-	"lh-press flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2";
+	"lanna-press flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-card text-ink-3 shadow-[0_0_0_1px_var(--q-line-2)] hover:bg-well hover:text-ink-2";
 const PLAY_SMALL =
-	"lh-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]";
+	"lanna-press flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-wash text-teal-2 hover:bg-[var(--q-teal-line)]";
 /** The target form in a sentence that is read, not blanked (a meaning rep, a twin). */
 const MARKED =
 	"bg-transparent px-0.5 font-semibold text-teal-2 underline decoration-teal decoration-2 underline-offset-[6px]";
@@ -1152,7 +1152,7 @@ function HintPanel({
 	const slip = !vocabulary && !pairs ? formSlip({ answer: item.answer, lemma: item.lemma, given: miss }) : undefined;
 	return (
 		<div
-			className="lh-rise mt-6 rounded-[14px] bg-well px-5 py-4"
+			className="lanna-rise mt-6 rounded-[14px] bg-well px-5 py-4"
 			role="status"
 			aria-live="polite"
 			data-testid="lesson-hint"
@@ -1432,7 +1432,7 @@ function ClozeRep({
 							// Input: the form is there to be met, not produced — marked, never blanked.
 							<mark className={MARKED}>{item.answer}</mark>
 						) : locked ? (
-							<span className={cn("lh-pop", SLOT, verdictInk)}>{pairsRep ? target : item.answer}</span>
+							<span className={cn("lanna-pop", SLOT, verdictInk)}>{pairsRep ? target : item.answer}</span>
 						) : pairsRep && !typed ? (
 							// Dvojičky: the twin's form is the evidence, so it stays marked
 							// and the choice between the two lemmas is the question.
@@ -1483,7 +1483,7 @@ function ClozeRep({
 								onClick={() => void speak(item.sentence)}
 								aria-label="Play the sentence"
 								title="Play again"
-								className="lh-press ml-2 inline-flex size-8 translate-y-[3px] items-center justify-center rounded-full bg-well align-baseline text-ink-2 hover:bg-well-2"
+								className="lanna-press ml-2 inline-flex size-8 translate-y-[3px] items-center justify-center rounded-full bg-well align-baseline text-ink-2 hover:bg-well-2"
 							>
 								<Volume2Icon className="size-4" strokeWidth={1.6} />
 							</button>
@@ -1655,7 +1655,7 @@ function BuildRep({
 			{/* After the answer: the sentence as one line, with a replay button
 			    (it also plays on its own when the answer lands). */}
 			{locked && (
-				<div className="lh-pop mt-6 flex items-center gap-3" data-testid="build-sentence">
+				<div className="lanna-pop mt-6 flex items-center gap-3" data-testid="build-sentence">
 					<button
 						type="button"
 						onClick={() => void speak(item.sentence)}
@@ -1682,7 +1682,7 @@ function BuildRep({
 						type="button"
 						disabled={locked}
 						onClick={() => setPicked((p) => p.filter((_, j) => j !== k))}
-						className={cn("lh-pop", tile)}
+						className={cn("lanna-pop", tile)}
 						lang={lessonLanguage()}
 					>
 						{bank[bi]}
@@ -1796,7 +1796,7 @@ function FeedbackSheet({
 	const inDeck = marked || (item.known !== null && item.known !== undefined);
 	return (
 		<div
-			className={cn("lh-rise", tone.bg)}
+			className={cn("lanna-rise", tone.bg)}
 			data-testid="lesson-feedback"
 			data-verdict={verdict}
 			data-word-lookup-enabled="true"
@@ -1954,7 +1954,7 @@ function FeedbackSheet({
 
 				{/* "Why?" opens here, under the verdict: the lesson stays where it is. */}
 				{open && (
-					<div className="lh-rise mt-3 sm:pl-9" data-testid="lesson-why-panel">
+					<div className="lanna-rise mt-3 sm:pl-9" data-testid="lesson-why-panel">
 						<div className="rounded-[10px] bg-card px-3.5 py-2.5 font-prose text-[15px] leading-relaxed text-foreground shadow-[inset_0_0_0_1px_var(--q-line-2)]">
 							<span className={cn(WHY_LABEL, "mr-2")}>{info.kind === "words" ? "Tip" : "Rule"}</span>
 							{item.trigger && (
@@ -1984,7 +1984,7 @@ function FeedbackSheet({
 							</button>
 						)}
 						{(more || !hasMore) && (
-							<div className="lh-rise mt-2 flex flex-col gap-4">
+							<div className="lanna-rise mt-2 flex flex-col gap-4">
 								{item.pair?.explain && <GrammarExplain explain={item.pair.explain} />}
 								<dl className="grid gap-x-6 gap-y-2 font-prose text-[15px] leading-relaxed sm:grid-cols-[6rem_1fr]">
 									{item.pair?.bridge ? (
@@ -2188,7 +2188,7 @@ function EndScreen({
 				</>
 			}
 		>
-			<div className={cn("lh-end", split && "lh-end-split")}>
+			<div className={cn("lanna-end", split && "lanna-end-split")}>
 				<header className="min-w-0 [grid-area:head]">
 					<p className="q-date flex items-center gap-1.5">
 						<QIcon name={mode === "blitz" ? "fast" : "check"} className="text-teal" />
@@ -2384,7 +2384,7 @@ function RepStrip({ reps }: { reps: Rep[] }) {
 				<li key={i} className="flex-1">
 					<Mark
 						kind={firstTry(r)}
-						className="lh-tile h-full rounded-[3px]"
+						className="lanna-tile h-full rounded-[3px]"
 						style={{ animationDelay: `${Math.round((offset + i) * step)}ms` }}
 					/>
 				</li>
@@ -2541,7 +2541,7 @@ function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
 			<button
 				type="button"
 				onClick={() => void speak(item.sentence)}
-				className="lh-press -mr-1.5 flex size-8 items-center justify-center rounded-full text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-11"
+				className="lanna-press -mr-1.5 flex size-8 items-center justify-center rounded-full text-ink-3 hover:bg-well hover:text-ink-2 pointer-coarse:size-11"
 				aria-label={`Play: ${item.sentence}`}
 				title="Play"
 			>

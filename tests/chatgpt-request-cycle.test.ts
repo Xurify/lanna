@@ -10,7 +10,7 @@ import { createTeacherAgent } from "../src/agent/teacher-agent.ts";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chatgpt-native-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chatgpt-native-"));
 process.env.LANNA_DATA_DIR = path.join(scratch, "data");
 process.env.LANNA_AUTH_FILE = path.join(scratch, "auth.json");
 fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
@@ -22,7 +22,7 @@ import {
 	newAnswerResult,
 	reconstructRequestCause,
 	concludedByDismissalPair,
-	type LhMessage,
+	type LannaMessage,
 } from "../src/core/native-messages.ts";
 
 const originalSend = Object.getOwnPropertyDescriptor(process, "send");
@@ -60,7 +60,7 @@ function revoke(full = false) {
 	background = false;
 	if (full) epoch++;
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch, authorityRevision: epoch, revision: ++revision },
 		status: status(),
@@ -93,7 +93,7 @@ before(() => {
 					? { accountId: "scratch", accessToken: "dummy-oauth-native" }
 					: { status: status(), accountId: "scratch", models: [{ id: model.id, name: "Scratch" }] }),
 			};
-			queueMicrotask(() => ipc({ channel: "lh:chatgpt", id: m.id, op: m.op, ok: true, value }));
+			queueMicrotask(() => ipc({ channel: "lanna:chatgpt", id: m.id, op: m.op, ok: true, value }));
 			callback?.();
 			return true;
 		},
@@ -409,7 +409,7 @@ test("full native record reconstruction preserves original causes and reports ge
 			totalTokens: 0,
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		},
-	} as LhMessage;
+	} as LannaMessage;
 	const result = {
 		role: "toolResult",
 		id: "result",
@@ -419,7 +419,7 @@ test("full native record reconstruction preserves original causes and reports ge
 		details: {},
 		isError: false,
 		timestamp: 4,
-	} as LhMessage;
+	} as LannaMessage;
 	for (const [origin, expected] of [
 		[user, "foreground"],
 		[auto, "background"],
@@ -434,7 +434,7 @@ test("full native record reconstruction preserves original causes and reports ge
 	const question = {
 		...assistant,
 		content: [{ type: "toolCall", id: "question", name: "quiz", arguments: {} }],
-	} as LhMessage;
+	} as LannaMessage;
 	assert.equal(
 		reconstructRequestCause([
 			auto,

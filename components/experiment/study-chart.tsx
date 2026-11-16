@@ -274,7 +274,7 @@ export function StudyChart({
 												href={`${CHECK_ROUTE}?week=${check.week}&lang=${check.language}`}
 												aria-label={`Start the week ${check.week} check in ${lane.language.name}`}
 												className={cn(
-													"lh-press inline-flex h-6 min-w-6 items-center justify-center rounded-md font-semibold pointer-coarse:h-9 pointer-coarse:min-w-9 sm:px-2",
+													"lanna-press inline-flex h-6 min-w-6 items-center justify-center rounded-md font-semibold pointer-coarse:h-9 pointer-coarse:min-w-9 sm:px-2",
 													check === firstOpen
 														? "bg-teal text-sun-ink hover:bg-teal-2"
 														: "bg-teal-wash text-teal-2 hover:bg-well-2",

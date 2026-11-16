@@ -64,7 +64,7 @@ describe("SelectionWordBankBar: isEligibleLearningTarget scoping (LingQ & Clozem
 				</div>
 
 				<!-- AI Tutor message -->
-				<div class="lh-source-passage" id="tutor-passage">
+				<div class="lanna-source-passage" id="tutor-passage">
 					<span id="tutor-text">Vitajte! Máte nejaké otázky o slovenčine?</span>
 				</div>
 
@@ -159,7 +159,7 @@ describe("SelectionWordBankBar: isEligibleLearningTarget scoping (LingQ & Clozem
 		assert.equal(isEligibleLearningTarget(subLine, "sk"), true);
 	});
 
-	it("allows tutor passages in AI chat (.lh-source-passage)", () => {
+	it("allows tutor passages in AI chat (.lanna-source-passage)", () => {
 		const tutorText = document.getElementById("tutor-text")?.firstChild;
 		assert.equal(isEligibleLearningTarget(tutorText, "sk"), true);
 	});

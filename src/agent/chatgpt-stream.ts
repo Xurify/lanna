@@ -64,8 +64,6 @@ export function chatGPTPayload(raw: unknown, selectedModelId: string): Record<st
 	return out;
 }
 
-const RETIRED_TOOL_NAMESPACES = new Set(["learnharness", "langharness"]);
-
 /** Only ChatGPT history is translated. Mixed API-key history keeps its actual identity. */
 export function chatGPTHistory(context: TranscriptContext, logicalModel: Model<Api>): TranscriptContext {
 	// Apply Pi's normal foreign-model signature treatment BEFORE the alias
@@ -73,21 +71,9 @@ export function chatGPTHistory(context: TranscriptContext, logicalModel: Model<A
 	const messages = transformMessages(context.messages, logicalModel);
 	return {
 		...context,
-		messages: messages.map((m) => {
-			if (m.role !== "assistant") return m;
-			const hasLegacyNamespace = m.content.some(
-				(item) => item.type === "toolCall" && RETIRED_TOOL_NAMESPACES.has(item.namespace ?? ""),
-			);
-			const content = hasLegacyNamespace
-				? m.content.map((item) =>
-						item.type === "toolCall" && RETIRED_TOOL_NAMESPACES.has(item.namespace ?? "")
-							? { ...item, namespace: "lanna" }
-							: item,
-					)
-				: m.content;
-			if (m.provider !== "chatgpt" && !hasLegacyNamespace) return m;
-			return { ...m, ...(m.provider === "chatgpt" ? { provider: "openai" } : {}), content };
-		}),
+		messages: messages.map((m) =>
+			m.role === "assistant" && m.provider === "chatgpt" ? { ...m, provider: "openai" } : m,
+		),
 	};
 }
 function empty(model: Model<Api>): AssistantMessage {

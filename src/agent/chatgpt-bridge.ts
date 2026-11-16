@@ -35,7 +35,7 @@ interface BridgeState {
 	counter: number;
 	catalogRequest: number;
 }
-const key = Symbol.for("lh.chatgpt.bridge");
+const key = Symbol.for("lanna.chatgpt.bridge");
 const unavailable = (): ChatGPTStatus => ({
 	available: false,
 	pending: false,
@@ -88,7 +88,7 @@ function bridge(): BridgeState {
 				invalidate?: string;
 				error?: string;
 			};
-			if (m?.channel !== "lh:chatgpt") return;
+			if (m?.channel !== "lanna:chatgpt") return;
 			if (m.kind === "state" && validStamp(m.stamp) && m.stamp.revision >= state.stamp.revision) {
 				acceptStatus(state, { ...m.stamp, status: m.status });
 				if (m.invalidate === "all") {
@@ -113,7 +113,7 @@ function bridge(): BridgeState {
 		process.on("message", (raw: unknown) => {
 			if (desktopIPCConnected()) receive(raw);
 		});
-		onWebSubscriptionPacket("lh:chatgpt", (packet) => {
+		onWebSubscriptionPacket("lanna:chatgpt", (packet) => {
 			if (webSubscriptionsEnabled()) receive(packet);
 		});
 		process.on("disconnect", () => {
@@ -150,7 +150,7 @@ function acceptStatus(state: BridgeState, value: StatusValue) {
 /** Runtime-only: inherited desktop IPC or direct web owner. Never HTTP leases. */
 export function chatGPTRequest<T>(op: "status" | "models" | "lease", fields: Record<string, unknown> = {}): Promise<T> {
 	const state = bridge();
-	if (webSubscriptionsEnabled()) return webSubscriptionRequest<T>("lh:chatgpt", op, fields);
+	if (webSubscriptionsEnabled()) return webSubscriptionRequest<T>("lanna:chatgpt", op, fields);
 	if (!desktopIPCConnected())
 		return Promise.reject(
 			new Error("ChatGPT sign-in is available only in the desktop app with a private server connection."),
@@ -162,7 +162,7 @@ export function chatGPTRequest<T>(op: "status" | "models" | "lease", fields: Rec
 			reject(new Error("The ChatGPT desktop connection timed out."));
 		}, 45000);
 		state.pending.set(id, { op, resolve: (v) => resolve(v as T), reject, timer });
-		process.send!({ ...fields, channel: "lh:chatgpt", id, op }, (error) => {
+		process.send!({ ...fields, channel: "lanna:chatgpt", id, op }, (error) => {
 			if (error) {
 				clearTimeout(timer);
 				state.pending.delete(id);

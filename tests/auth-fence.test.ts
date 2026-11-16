@@ -13,7 +13,7 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 delete process.env.LANNA_AUTH_FILE;
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-auth-fence-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-auth-fence-"));
 process.env.LANNA_DATA_DIR = TMP;
 
 const { AUTH_FILE, ROOT } = await import("../config.ts");

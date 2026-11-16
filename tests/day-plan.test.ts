@@ -11,7 +11,7 @@ import path from "node:path";
 import { describe, test } from "node:test";
 import type { Course } from "../src/core/course.ts";
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-day-plan-"));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-day-plan-"));
 process.env.LANNA_DATA_DIR = dir;
 delete process.env.LANNA_PROFILE;
 

@@ -4,12 +4,12 @@
  * Lesson sounds (redesign): a chime for a right answer, a soft
  * low blip for a miss, a rising run for a combo step and a short fanfare
  * at the end. Synthesized with WebAudio — no audio files to ship — and
- * quiet by design. Mutable per browser (lh-sound = "0"); lh-volume scales
+ * quiet by design. Mutable per browser (lanna-sound = "0"); lanna-volume scales
  * these and the spoken audio together.
  */
 
-const KEY = "lh-sound";
-const VOLUME_KEY = "lh-volume";
+const KEY = "lanna-sound";
+const VOLUME_KEY = "lanna-volume";
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((l) => l());
 

@@ -73,7 +73,7 @@ export const BROWSER_ARGS = [
 export async function startServer({ heavy = true, dev = false } = {}) {
 	if (!dev && !fs.existsSync(path.join(ROOT, ".next", "BUILD_ID")))
 		throw new Error("no production build; run `npm run build` first");
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-perf-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-perf-"));
 	const env = {
 		...process.env,
 		LANNA_DATA_DIR: dir,

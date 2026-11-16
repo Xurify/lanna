@@ -51,7 +51,7 @@ before(async () => {
 			sends++;
 			queueMicrotask(() =>
 				emit({
-					channel: "lh:subscriptions",
+					channel: "lanna:subscriptions",
 					id: message.id,
 					op: message.op,
 					...(denied && message.op === "lease"
@@ -245,7 +245,7 @@ test("background invalidation is provider-specific and preserves foreground cont
 	revision++;
 	const next = snapshot();
 	next.statuses.find((s) => s.providerId === "xai")!.allowBackgroundUse = false;
-	emit({ channel: "lh:subscriptions", op: "changed", snapshot: next });
+	emit({ channel: "lanna:subscriptions", op: "changed", snapshot: next });
 	assert(!foreground.controller.signal.aborted);
 	assert(background.controller.signal.aborted);
 	assert(!other.controller.signal.aborted);
@@ -253,7 +253,7 @@ test("background invalidation is provider-specific and preserves foreground cont
 	stale.statuses.forEach((s) => {
 		s.revision = 0;
 	});
-	emit({ channel: "lh:subscriptions", op: "changed", snapshot: stale });
+	emit({ channel: "lanna:subscriptions", op: "changed", snapshot: stale });
 	foreground.release();
 	background.release();
 	other.release();

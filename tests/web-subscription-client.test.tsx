@@ -11,7 +11,7 @@ const originalFetch = globalThis.fetch;
 const action = "/api/subscriptions/browser?id=00000000-0000-4000-8000-000000000001";
 afterEach(() => {
 	globalThis.fetch = originalFetch;
-	delete window.lh;
+	delete window.lanna;
 });
 
 test("web ChatGPT reserves a new tab before async login, navigates only to an opaque action and receives push/resync", async () => {
@@ -102,7 +102,7 @@ test("native web login retains device prompts; only the explicit Open browser ac
 
 test("Electron dev uses its narrow external-browser bridge, without attempting a renderer popup", async () => {
 	const opened: string[] = [];
-	window.lh = {
+	window.lanna = {
 		expandWindow() {},
 		subscriptionTransport: "web",
 		openSubscriptionBrowser: async (target) => {

@@ -37,7 +37,7 @@ function onChange(hub: Hub, listener: () => void): () => void {
  * same-origin action URL enters app JS; provider URLs remain in the owner.
  * Electron dev has no tabs: its narrow main-process opener performs this step. */
 async function withBrowser<T>(action: () => Promise<Reply<T>>): Promise<T> {
-	const external = window.lh?.subscriptionTransport === "web" ? window.lh.openSubscriptionBrowser : undefined;
+	const external = window.lanna?.subscriptionTransport === "web" ? window.lanna.openSubscriptionBrowser : undefined;
 	const tab = external ? null : window.open("about:blank", "_blank");
 	if (!external && !tab) throw new Error("Allow a sign-in tab to open, then try again.");
 	if (tab) tab.opener = null;
@@ -94,8 +94,8 @@ export function useChatGPTBridge(): ChatGPTControlBridge | undefined {
 		() =>
 			typeof window === "undefined"
 				? undefined
-				: window.lh?.subscriptionTransport !== "web" && window.lh?.chatgpt
-					? window.lh.chatgpt
+				: window.lanna?.subscriptionTransport !== "web" && window.lanna?.chatgpt
+					? window.lanna.chatgpt
 					: createWebChatGPTBridge(hub),
 		[hub],
 	);
@@ -106,8 +106,8 @@ export function useNativeSubscriptionBridge(): NativeSubscriptionControlBridge |
 		() =>
 			typeof window === "undefined"
 				? undefined
-				: window.lh?.subscriptionTransport !== "web" && window.lh?.subscriptions
-					? window.lh.subscriptions
+				: window.lanna?.subscriptionTransport !== "web" && window.lanna?.subscriptions
+					? window.lanna.subscriptions
 					: createWebNativeBridge(hub),
 		[hub],
 	);

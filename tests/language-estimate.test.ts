@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-language-estimate-"));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-language-estimate-"));
 process.env.LANNA_DATA_DIR = dir;
 fs.writeFileSync(
 	path.join(dir, "settings.json"),

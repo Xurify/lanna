@@ -35,7 +35,7 @@ export * from "./chat-lines.ts";
 export * from "./chat-export.ts";
 export * from "./app-content.ts";
 // answer-presentation is not re-exported here: it pulls the Markdown parsers (about 250 KB), and a client component that imports this barrel would ship them on every route. Import them from "./tutor.ts" (client: "@/src/core/tutor").
-// Wave B (owner-approved 2026-09-26): the native record (LhMessage), the
+// Wave B (owner-approved 2026-09-26): the native record (LannaMessage), the
 // and the input-events contract — all
 // pure logic, browser-safe.
 export * from "./native-messages.ts";

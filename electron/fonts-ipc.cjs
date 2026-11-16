@@ -72,7 +72,7 @@ function listInstalledFonts({ platform = process.platform, run = execFile } = {}
 }
 
 function registerFontsIPC(ipcMain, { trusted }) {
-	ipcMain.handle("lh:fonts:list", (event) => {
+	ipcMain.handle("lanna:fonts:list", (event) => {
 		if (!trusted(event)) throw new Error("Untrusted desktop request.");
 		return listInstalledFonts();
 	});

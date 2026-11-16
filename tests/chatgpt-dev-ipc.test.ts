@@ -3,7 +3,7 @@ import test, { after } from "node:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-dev-ipc-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-dev-ipc-"));
 process.env.LANNA_DATA_DIR = scratch;
 process.env.LANNA_AUTH_FILE = path.join(scratch, "auth.json");
 fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}", { mode: 0o600 });
@@ -44,7 +44,7 @@ test("Next-style IPC is not desktop transport; web ownership works without delay
 			else process.env.LANNA_DESKTOP_API_SECRET = capability;
 			// A framework parent cannot establish ChatGPT state by sharing only IPC.
 			(process.emit as (name: string, value: unknown) => boolean)("message", {
-				channel: "lh:chatgpt",
+				channel: "lanna:chatgpt",
 				kind: "state",
 				stamp: { epoch: 1, authorityRevision: 1, revision: 1 },
 				status: {

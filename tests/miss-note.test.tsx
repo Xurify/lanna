@@ -6,7 +6,7 @@ import { after, describe, it } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-miss-note-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-miss-note-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

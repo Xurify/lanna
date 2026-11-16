@@ -51,7 +51,7 @@ export function useActiveLanguage(): LanguageInfo | null {
 // ─── Playback speed (per-viewer preference) ────────────────────────────────
 
 export const SPEEDS = [0.75, 1, 1.25] as const;
-const SPEED_KEY = "lh-tts-speed";
+const SPEED_KEY = "lanna-tts-speed";
 const speedListeners = new Set<() => void>();
 
 function readSpeed(): number {
@@ -341,7 +341,7 @@ export function SpokenPhrase({ text }: { text: string }) {
 	const lang = useActiveLanguage();
 	return (
 		<span
-			className="lh-spoken inline-flex items-baseline gap-0.5 rounded-md bg-primary/5 pl-1.5 pr-0.5 font-medium text-foreground"
+			className="lanna-spoken inline-flex items-baseline gap-0.5 rounded-md bg-primary/5 pl-1.5 pr-0.5 font-medium text-foreground"
 			data-testid="spoken-phrase"
 			lang={lang?.code}
 		>

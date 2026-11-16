@@ -140,7 +140,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 											// Ask-option subtext (owner, 2026-10-12): same markdown path
 											// as the pending dock — LaTeX included. Quiz options carry
 											// none (owner ruling 2026-09-26); the map stays empty for them.
-											<ToolContentResponse className="lh-prose block text-xs text-muted-foreground">
+											<ToolContentResponse className="lanna-prose block text-xs text-muted-foreground">
 												{descByIndex.get(opt.index)}
 											</ToolContentResponse>
 										)}
@@ -162,7 +162,7 @@ export function AnsweredCard({ answer: savedAnswer, input }: { answer: QuestionA
 					</div>
 				)}
 
-				{answer.text && <div className="lh-prose mt-2 whitespace-pre-wrap">“{answer.text}”</div>}
+				{answer.text && <div className="lanna-prose mt-2 whitespace-pre-wrap">“{answer.text}”</div>}
 
 				{/* The confidence record (owner round 6): the slider's rail, disc
 			    removed — the missing handle itself says "this is a record, not a

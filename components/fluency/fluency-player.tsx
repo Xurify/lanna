@@ -325,7 +325,7 @@ function Reread({ initial }: { initial: RereadPlan | null }) {
 				count={phase === "question" ? "question" : phase === "reading" ? `${seconds} s` : `${plan.words} words`}
 			/>
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-				<div className={cn(COLUMN, "lh-rise")}>
+				<div className={cn(COLUMN, "lanna-rise")}>
 					<PracticeCard icon="read" title="Read it faster" sub={`episode ${story.episode} · ${plan.words} words`}>
 						<h2
 							className="mb-5 font-prose text-[28px] font-semibold leading-tight tracking-[-0.028em] text-foreground"
@@ -993,7 +993,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		<TaskFrame strip={false}>
 			<TaskTop progress={progress} label={`${index} of ${total} sentences`} count={`${index + 1}/${total}`} />
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
+				<div key={item.id} className={cn(COLUMN, "lanna-rise")}>
 					<PracticeCard
 						icon="fast"
 						title="Speed"
@@ -1023,7 +1023,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 								type="button"
 								onClick={() => void speak(item.sentence).catch(() => {})}
 								aria-label="Play"
-								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
+								className="lanna-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-[var(--q-on-teal)] shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 								data-testid="fast-play"
 							>
 								<Volume2Icon className="size-6" strokeWidth={1.6} />

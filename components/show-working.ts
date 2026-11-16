@@ -10,7 +10,7 @@
 
 import { useSyncExternalStore } from "react";
 
-const KEY = "lh-show-working";
+const KEY = "lanna-show-working";
 const listeners = new Set<() => void>();
 
 function read(): boolean {

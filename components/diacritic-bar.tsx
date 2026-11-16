@@ -19,8 +19,8 @@ import { AccentChoices, AccentKeyboard, accentsOf, type AccentMenu } from "@/com
 
 type Field = HTMLTextAreaElement | HTMLInputElement;
 
-const OPEN_KEY = "lh-diacritics-open";
-const KEYBOARD_KEY = "lh-keyboard";
+const OPEN_KEY = "lanna-diacritics-open";
+const KEYBOARD_KEY = "lanna-keyboard";
 
 function keyboardWasOpen(): boolean {
 	try {
@@ -110,7 +110,7 @@ function KeyGrid({
 										: `Type ${letter} (Shift for ${letter.toLocaleUpperCase(tag)})`
 								}
 								className={cn(
-									"lh-press flex h-10 min-w-9 items-center justify-center px-1.5 text-[17px] font-medium first:rounded-l-[10px] last:rounded-r-[10px] pointer-coarse:h-11 pointer-coarse:min-w-[42px]",
+									"lanna-press flex h-10 min-w-9 items-center justify-center px-1.5 text-[17px] font-medium first:rounded-l-[10px] last:rounded-r-[10px] pointer-coarse:h-11 pointer-coarse:min-w-[42px]",
 									i > 0 && "shadow-[inset_1px_0_0_var(--q-line-2)]",
 									on ? "text-teal-2 hover:bg-[var(--q-teal-line)]" : "text-foreground hover:bg-well-2",
 								)}
@@ -335,7 +335,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 								accents={accentsOf(families.find((f) => f.base === menu.base))}
 								onPick={pick}
 								grab={grab}
-								className="lh-menu-in origin-left -my-1.5"
+								className="lanna-menu-in origin-left -my-1.5"
 							/>
 						) : (
 							<span>Hold a letter for its accents</span>

@@ -581,12 +581,12 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 		warmTokens.refresh(); // pre-mint at mount (mitigation D) — silent if keyless
 	}, []);
 	useEffect(() => {
-		window.addEventListener("lh:kbd-toggle-dictation", toggle);
-		return () => window.removeEventListener("lh:kbd-toggle-dictation", toggle);
+		window.addEventListener("lanna:kbd-toggle-dictation", toggle);
+		return () => window.removeEventListener("lanna:kbd-toggle-dictation", toggle);
 	}, [toggle]);
 	useEffect(() => {
-		window.addEventListener("lh:kbd-cancel-dictation", cancel);
-		return () => window.removeEventListener("lh:kbd-cancel-dictation", cancel);
+		window.addEventListener("lanna:kbd-cancel-dictation", cancel);
+		return () => window.removeEventListener("lanna:kbd-cancel-dictation", cancel);
 	}, [cancel]);
 
 	return {

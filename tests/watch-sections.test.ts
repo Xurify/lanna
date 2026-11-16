@@ -13,7 +13,7 @@ import * as path from "node:path";
 import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-watch-sections-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-watch-sections-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const core = await import("../src/core/watch-sections.ts");

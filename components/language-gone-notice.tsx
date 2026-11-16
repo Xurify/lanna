@@ -7,7 +7,7 @@ let shown: string | null = null;
 const listeners = new Set<() => void>();
 
 if (typeof window !== "undefined") {
-	shown = document.documentElement.dataset.lhLanguage ?? null;
+	shown = document.documentElement.dataset.lannaLanguage ?? null;
 	if (shown)
 		window.fetch = shownLanguageFetch(window.fetch.bind(window), shown, window.location.origin, () =>
 			listeners.forEach((l) => l()),

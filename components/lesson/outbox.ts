@@ -11,6 +11,7 @@
  */
 
 import type { StampState, UnitId } from "@/src/core";
+import { adoptFormerStorage } from "@/components/former-storage";
 
 export interface Recorded {
 	queued: string[];
@@ -38,7 +39,7 @@ interface Pending {
 	refused?: number;
 }
 
-const KEY = "lh-outbox";
+const KEY = "lanna-outbox";
 
 function storage(): Storage | null {
 	try {
@@ -49,6 +50,7 @@ function storage(): Storage | null {
 }
 
 function read(): Pending[] {
+	adoptFormerStorage(storage());
 	try {
 		const list = JSON.parse(storage()?.getItem(KEY) ?? "[]") as unknown;
 		return Array.isArray(list) ? (list as Pending[]) : [];

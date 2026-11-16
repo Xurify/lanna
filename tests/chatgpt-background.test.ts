@@ -8,7 +8,7 @@ import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-s
 import { piModels } from "../src/agent/models.ts";
 import { toLlmMessages } from "../src/core/native-messages.ts";
 import { buildSubagentSteer } from "../src/core/contracts.ts";
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chatgpt-background-"));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chatgpt-background-"));
 process.env.LANNA_DATA_DIR = path.join(dir, "data");
 process.env.LANNA_AUTH_FILE = path.join(dir, "scratch-auth.json");
 fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
@@ -21,7 +21,7 @@ const ipc = (value: unknown) => (process.emit as (name: string, value: unknown) 
 let revision = 1;
 function connection(background: boolean) {
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: revision++ },
 		invalidate: background ? "none" : "background",
@@ -143,7 +143,11 @@ for (const revokedAfterQueue of [false, true]) {
 			assert(!agent.hasQueuedMessages());
 			// Ordinary lease/catalog replies are not consent changes and must never
 			// reset/replay a learner steer that the agent has already consumed.
-			ipc({ channel: "lh:chatgpt", id: "ordinary-reply-with-no-pending-call", value: { accessToken: "scratch-only" } });
+			ipc({
+				channel: "lanna:chatgpt",
+				id: "ordinary-reply-with-no-pending-call",
+				value: { accessToken: "scratch-only" },
+			});
 			assert(!agent.hasQueuedMessages());
 			const persisted = persistTurn(stores.chatStore, chat.id, 0, agent.state.messages, false);
 			unregisterLiveAgent(chat.id);

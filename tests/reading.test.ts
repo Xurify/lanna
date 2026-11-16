@@ -16,7 +16,7 @@ import { after, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 import type { StoryGenre, StoryRecord } from "../src/core/reading.ts";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-reading-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-reading-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

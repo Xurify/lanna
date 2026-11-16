@@ -72,8 +72,6 @@ Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 - Edge voices need no key, only internet.
 - Piper works offline: set `PIPER_PATH` to the binary and `PIPER_MODEL_SK` to a Slovak `.onnx` voice.
 
-Coming from LangHarness: the settings that started with `LH_` now start with `LANNA_` (`LH_DATA_DIR` is `LANNA_DATA_DIR`, `LH_TAILNET_HOST` is `LANNA_TAILNET_HOST`). Rename them in `.env.local` and `.env`. The desktop app moves its data folder by itself.
-
 On Windows, `npm test` and `npm run desktop:dev` use Unix-style env syntax. Run them from Git Bash, or once run
 `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
 

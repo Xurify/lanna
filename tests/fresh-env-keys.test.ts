@@ -41,7 +41,7 @@ for (const varName of [
 	delete process.env[varName];
 }
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-fresh-env-keys-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-fresh-env-keys-"));
 const AUTH = path.join(TMP, "auth.json");
 process.env.LANNA_AUTH_FILE = AUTH;
 

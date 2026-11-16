@@ -15,13 +15,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
-import type { ChatInput, LhMessage, QuestionAnswerData } from "@/src/core";
+import type { ChatInput, LannaMessage, QuestionAnswerData } from "@/src/core";
 import { SessionModel, type SessionState } from "@/components/session-core";
 
 interface UseChatSessionOptions {
 	chatId: string;
 	/** The native record seed (server-rendered page or a full sync). */
-	initialMessages: LhMessage[];
+	initialMessages: LannaMessage[];
 	/** Transient settlement failure retained by the server, not the transcript. */
 	initialError?: string;
 	/** Reattach on mount: a turn is running server-side with no live view. */
@@ -81,7 +81,7 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 	// (submitted: send, answer, session start, reattach, wake attach) the
 	// sidebar learns it without waiting for its 2.5s poll; at settle the
 	// event clears the row and triggers one immediate refetch. The model
-	// stays pure; this adapter owns the window seam (the lh:chat-renamed
+	// stays pure; this adapter owns the window seam (the lanna:chat-renamed
 	// pattern).
 	const prevStatusRef = useRef(state.status);
 	useEffect(() => {
@@ -91,7 +91,7 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 		const running = state.status === "submitted" || state.status === "streaming";
 		const wasRunning = was === "submitted" || was === "streaming";
 		if (running === wasRunning) return; // submitted→streaming: still running; error↔ready: not
-		window.dispatchEvent(new CustomEvent("lh:turn-state", { detail: { id: chatId, running } }));
+		window.dispatchEvent(new CustomEvent("lanna:turn-state", { detail: { id: chatId, running } }));
 	}, [state.status, chatId]);
 
 	// The reattach settled terminal → the sync-and-continue seam (chat.tsx).
@@ -103,7 +103,7 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 	);
 
 	const send = useCallback((input: ChatInput) => void model.send(input), [model]);
-	const continueIfOwed = useCallback((record: readonly LhMessage[]) => void model.continueIfOwed(record), [model]);
+	const continueIfOwed = useCallback((record: readonly LannaMessage[]) => void model.continueIfOwed(record), [model]);
 	const steer = useCallback((text: string) => void model.steer(text), [model]);
 	const submitAnswer = useCallback(
 		(tool: string, toolCallId: string, output: QuestionAnswerData) => void model.submitAnswer(tool, toolCallId, output),
@@ -121,10 +121,10 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 		[model],
 	);
 	const setMessages = useCallback(
-		(record: LhMessage[], turnError?: string) => model.setMessages(record, turnError),
+		(record: LannaMessage[], turnError?: string) => model.setMessages(record, turnError),
 		[model],
 	);
-	const adoptRecord = useCallback((record: LhMessage[]) => model.adoptRecord(record), [model]);
+	const adoptRecord = useCallback((record: LannaMessage[]) => model.adoptRecord(record), [model]);
 	const stop = useCallback(() => model.stop(), [model]);
 	const clearError = useCallback(() => model.clearError(), [model]);
 	const resumeStream = useCallback(() => void model.resumeStream(), [model]);

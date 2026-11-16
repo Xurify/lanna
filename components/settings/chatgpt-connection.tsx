@@ -89,7 +89,7 @@ const Context = createContext({
  * are used; account IDs remain control values, never displayed account labels. */
 export function ChatGPTUIProvider({ children }: { children: React.ReactNode }) {
 	const bridge = useChatGPTBridge();
-	const web = typeof window !== "undefined" && bridge !== window.lh?.chatgpt;
+	const web = typeof window !== "undefined" && bridge !== window.lanna?.chatgpt;
 	const [status, setStatus] = useState<ChatGPTStatus>(empty);
 	const [dialog, setDialog] = useState<Dialog | null>(null);
 	const [busy, setBusy] = useState(false);

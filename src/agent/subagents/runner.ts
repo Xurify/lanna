@@ -346,7 +346,7 @@ export function createJobRunner(deps: JobRunnerDeps): JobRunner {
 		// Per-job PDF dir (researcher PDF wave, 2026-10-07): web_fetch_pdf
 		// downloads land here; every pdf tool is scoped to it; it dies with
 		// the job (never enters the record).
-		const pdfDir = await fs.mkdtemp(path.join(os.tmpdir(), "lh-research-"));
+		const pdfDir = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-research-"));
 
 		try {
 			jobStore.updateJob(jobId, { activity: "researching" });

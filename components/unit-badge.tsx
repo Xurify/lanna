@@ -34,7 +34,10 @@ export function UnitBadge({
 	const ring = "var(--q-teal)";
 	return (
 		<span
-			className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-here-ring")}
+			className={cn(
+				"relative inline-flex shrink-0 items-center justify-center rounded-full",
+				active && "lanna-here-ring",
+			)}
 			style={{ width: px, height: px }}
 		>
 			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">

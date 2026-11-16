@@ -29,7 +29,7 @@ export function SettingsDialogProvider({ children }: { children: React.ReactNode
 		setLandOnRow(row ?? null);
 		setShow(true);
 	}, []);
-	useEffect(() => window.lh?.onOpenSettings?.((section) => open(section)), [open]);
+	useEffect(() => window.lanna?.onOpenSettings?.((section) => open(section)), [open]);
 	return (
 		<DialogContext.Provider value={{ open }}>
 			{children}

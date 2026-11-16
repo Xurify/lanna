@@ -11,7 +11,7 @@ import * as path from "node:path";
 import { describe, it } from "node:test";
 import { exampleText } from "../src/core/review.ts";
 
-const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-lang-"));
+const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-lang-"));
 process.env.LANNA_DATA_DIR = dataDir;
 delete process.env.LANNA_PROFILE;
 

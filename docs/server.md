@@ -102,7 +102,7 @@ Run these before you set anything up. They decide where the server goes.
       		header_up Host {host}
       		header_up X-Forwarded-Host {host}
       		header_up X-Forwarded-Proto https
-      		header_up X-LH-Proxy-Secret "<the same 64 characters>"
+      		header_up X-Lanna-Proxy-Secret "<the same 64 characters>"
       	}
       }
       ```
@@ -130,7 +130,7 @@ Run these before you set anything up. They decide where the server goes.
       		proxy_set_header X-Forwarded-Proto https;
       		proxy_set_header X-Forwarded-For $remote_addr;
       		proxy_set_header X-Real-IP $remote_addr;
-      		proxy_set_header X-LH-Proxy-Secret "<the same 64 characters>";
+      		proxy_set_header X-Lanna-Proxy-Secret "<the same 64 characters>";
       		proxy_set_header Connection "";
       		proxy_buffering off;
       		proxy_read_timeout 300s;
@@ -242,15 +242,15 @@ The order matters. The point is that two copies never run at the same time, and 
    - `chatgpt-credentials.json`, `github-copilot-credentials.json` and `xai-credentials.json`, but only if they exist.
 
    ```powershell
-   ssh you@your-vps mkdir lh-import
-   scp -r data auth.json you@your-vps:lh-import/
+   ssh you@your-vps mkdir lanna-import
+   scp -r data auth.json you@your-vps:lanna-import/
    ```
 
    Then on the server, put them in place:
 
    ```bash
-   sudo cp -a ~/lh-import/data/. /srv/lanna/data/
-   sudo cp ~/lh-import/auth.json /srv/lanna/keys/auth.json
+   sudo cp -a ~/lanna-import/data/. /srv/lanna/data/
+   sudo cp ~/lanna-import/auth.json /srv/lanna/keys/auth.json
    ```
 
    Keys that exist only in `.env.local` do not move. Enter them in Settings → API keys on the server afterwards. Do not paste keys into a chat (E5).
@@ -259,7 +259,7 @@ The order matters. The point is that two copies never run at the same time, and 
 
    ```bash
    sudo chown -R 10001:10001 /srv/lanna/data /srv/lanna/keys
-   rm -r ~/lh-import
+   rm -r ~/lanna-import
    ```
 
 4. Start the server (section 1, step 5) and open it. Check Today, your streak and one lesson.
@@ -297,7 +297,7 @@ Read this before you make the server public.
 
 - The container sees every connection from Docker's bridge address (`172.17.0.1` here), whatever the real sender. The app never uses the sender's address.
 - **Without `LANNA_PUBLIC_HOST` (Tailscale, or this computer).** The app decides from the `Host` header and the headers a proxy adds (`Forwarded`, `X-Real-IP`, Tailscale's identity headers). A request with a loopback `Host` and none of those headers is treated as coming from this computer, and is let in without pairing. A request addressed to a public name is refused (403), and so is a loopback `Host` that carries `X-Real-IP` or `Forwarded`.
-- **With `LANNA_PUBLIC_HOST` set.** Nothing counts as this computer, whatever the `Host`. A request passes the gate only if it carries `LANNA_PROXY_SECRET` in `X-LH-Proxy-Secret`, names the public host in both `Host` and `X-Forwarded-Host`, and has `X-Forwarded-Proto: https`. Anything else gets 403. A request that passes still needs a session: pages go to `/login`, the API answers 401, and a change must come from the page's own origin.
+- **With `LANNA_PUBLIC_HOST` set.** Nothing counts as this computer, whatever the `Host`. A request passes the gate only if it carries `LANNA_PROXY_SECRET` in `X-Lanna-Proxy-Secret`, names the public host in both `Host` and `X-Forwarded-Host`, and has `X-Forwarded-Proto: https`. Anything else gets 403. A request that passes still needs a session: pages go to `/login`, the API answers 401, and a change must come from the page's own origin.
 - So a reverse proxy that leaves `Host` at its default (nginx sends `127.0.0.1:3010` when you leave out `proxy_set_header Host $host`) is refused, not let in.
 - The boot check starts the server twice. The second time is in public mode: it sets a throwaway password with the bundled command, then checks the refusals above, signs in over HTTP with the proxy's headers set by hand, and checks the cookie and the API. The update script will not switch to an image that fails it.
 

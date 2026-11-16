@@ -87,7 +87,7 @@ export function StampDisc({
 		<span
 			className={cn(
 				"relative inline-flex shrink-0 items-center justify-center rounded-full",
-				pressed && "lh-stamp",
+				pressed && "lanna-stamp",
 				className,
 			)}
 			style={{ width: px, height: px }}
@@ -268,7 +268,7 @@ export function StampsCard({ stamps, className }: { stamps: StampState[] | null;
 								</p>
 								<span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-well-2" aria-hidden="true">
 									<span
-										className="lh-fill block rounded-full bg-teal"
+										className="lanna-fill block rounded-full bg-teal"
 										style={fillStyle(Math.max(s.progress > 0 ? 0.03 : 0, s.progress))}
 									/>
 								</span>

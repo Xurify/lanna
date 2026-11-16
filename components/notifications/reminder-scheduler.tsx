@@ -25,7 +25,7 @@ function getTodayKey(): string {
 function getFiredSlotKeys(): string[] {
 	if (typeof window === "undefined") return [];
 	try {
-		const key = `lh:fired-nudges-${getTodayKey()}`;
+		const key = `lanna:fired-nudges-${getTodayKey()}`;
 		const raw = localStorage.getItem(key);
 		return raw ? (JSON.parse(raw) as string[]) : [];
 	} catch {
@@ -36,7 +36,7 @@ function getFiredSlotKeys(): string[] {
 function recordFiredSlot(slotKey: string): void {
 	if (typeof window === "undefined") return;
 	try {
-		const storageKey = `lh:fired-nudges-${getTodayKey()}`;
+		const storageKey = `lanna:fired-nudges-${getTodayKey()}`;
 		const current = getFiredSlotKeys();
 		if (!current.includes(slotKey)) {
 			current.push(slotKey);

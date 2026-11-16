@@ -194,7 +194,7 @@ export function HoursSheet({
 			aria-label="How long does it take?"
 			data-testid="hours-sheet"
 		>
-			<div className="lh-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150">
+			<div className="lanna-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2 className="text-2xl font-semibold tracking-[-0.022em] text-foreground">How long does it take?</h2>

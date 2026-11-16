@@ -45,7 +45,7 @@ before(async () => {
 		value: (message: any, callback?: () => void) => {
 			queueMicrotask(() => {
 				ipc({
-					channel: "lh:chatgpt",
+					channel: "lanna:chatgpt",
 					id: message.id,
 					op: message.op,
 					...(message.op === "lease" && leaseError
@@ -231,44 +231,6 @@ test("alias resolves only OAuth; native Responses body is stateless/namespaced, 
 	assert(replay.some((item: any) => item.type === "function_call_output" && item.call_id === "call_scratch"));
 });
 
-for (const retired of ["learnharness", "langharness"]) {
-	test(`retired ${retired} toolCall namespace normalizes to lanna on replay without mutating source`, () => {
-		const legacyCall = {
-			type: "toolCall" as const,
-			id: "call_legacy|fc_legacy",
-			name: "scratch_tool",
-			namespace: retired,
-			arguments: { value: "yes" },
-		};
-		const legacyAssistant: AssistantMessage = {
-			role: "assistant",
-			provider: "chatgpt",
-			api: "openai-responses",
-			model: model.id,
-			content: [legacyCall],
-			stopReason: "toolUse",
-			usage: {
-				input: 1,
-				output: 0,
-				cacheRead: 0,
-				cacheWrite: 0,
-				totalTokens: 1,
-				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-			},
-			timestamp: 1,
-		};
-		const transformed = chatGPTHistory(normalizeContext({ messages: [legacyAssistant] }), {
-			...model,
-			provider: "chatgpt",
-		});
-		const replayed = transformed.messages[0] as AssistantMessage;
-		assert.equal(replayed.provider, "openai");
-		assert.equal(replayed.content[0]!.type, "toolCall");
-		assert.equal((replayed.content[0] as { namespace?: string }).namespace, "lanna");
-		assert.equal(legacyCall.namespace, retired, "source toolCall must not be mutated");
-	});
-}
-
 test("mixed history never blanket-relabels API providers or reuses foreign reasoning signatures", () => {
 	const native: AssistantMessage = {
 		role: "assistant",
@@ -351,7 +313,7 @@ test("consent revocation cancels only applicable background streams and preserve
 	const foreground = chatGPTAbortController(false);
 	const background = chatGPTAbortController(true);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 2 },
 		status,
@@ -463,7 +425,7 @@ test("full credential-storage invalidation aborts foreground and background cont
 	const foreground = chatGPTAbortController(false),
 		background = chatGPTAbortController(true);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 2, authorityRevision: 2, revision: 3 },
 		status: { ...status, available: false },

@@ -120,18 +120,18 @@ export function Shelf({
 	return (
 		<PreparingContext.Provider value={preparing}>
 			<div className="relative min-h-dvh bg-background">
-				<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+				<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 				<header className="sticky top-0 z-20 flex items-center gap-2 bg-background px-3 py-2">
 					<SidebarToggle />
 					<Link
 						href="/"
-						className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[13px] text-ink-3 hover:text-ink-2 lh-no-drag"
+						className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[13px] text-ink-3 hover:text-ink-2 lanna-no-drag"
 					>
 						<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
 						Today
 					</Link>
 				</header>
-				<main className="lh-rise @container mx-auto w-full max-w-6xl px-5 pb-24" data-testid="watch-shelf">
+				<main className="lanna-rise @container mx-auto w-full max-w-6xl px-5 pb-24" data-testid="watch-shelf">
 					<div className="flex items-baseline gap-3">
 						<h1 className="text-[32px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Media</h1>
 						{state && state.watchedToday > 0 && (

@@ -9,7 +9,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, it } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-reset-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-reset-"));
 process.env.LANNA_DATA_DIR = TMP;
 process.env.LANNA_PROFILE = "slovak";
 

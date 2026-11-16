@@ -295,14 +295,14 @@ export function Start({
 
 	return (
 		<div className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-background" data-testid="start">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className={cn(COLUMN, "relative flex h-16 items-center gap-4 pt-2")}>
 				{step > 1 && !check && !outcome ? (
 					<button
 						type="button"
 						onClick={() => setStep((step - 1) as Step)}
 						aria-label="Back"
-						className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+						className="lanna-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
 					>
 						<ArrowLeftIcon className="size-5" />
 					</button>
@@ -310,7 +310,7 @@ export function Start({
 					<Link
 						href="/"
 						aria-label="Close"
-						className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+						className="lanna-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
 					>
 						<XIcon className="size-5" />
 					</Link>
@@ -321,7 +321,7 @@ export function Start({
 						type="button"
 						onClick={() => void skipAll()}
 						aria-label="Skip setup"
-						className="lh-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+						className="lanna-no-drag rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
 					>
 						<XIcon className="size-5" />
 					</button>
@@ -339,7 +339,7 @@ export function Start({
 					<button
 						type="button"
 						onClick={() => void skipAll()}
-						className="lh-no-drag font-ui text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+						className="lanna-no-drag font-ui text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 						data-testid="start-skip"
 					>
 						Skip for now
@@ -349,7 +349,7 @@ export function Start({
 
 			<main className={cn(COLUMN, "flex-1 py-6")}>
 				{step === 1 && (
-					<section className="lh-rise" data-testid="start-purposes">
+					<section className="lanna-rise" data-testid="start-purposes">
 						<Heading
 							title={`What is ${target.english} for?`}
 							line={`Pick up to ${MAX_PURPOSES}. This sets your target and which scenes you practice, so the tutor does not have to ask.`}
@@ -424,7 +424,7 @@ export function Start({
 				)}
 
 				{step === 2 && (
-					<section className="lh-rise" data-testid="start-you">
+					<section className="lanna-rise" data-testid="start-you">
 						<Heading
 							title="What you bring"
 							line={`The tutor explains in a language you choose, and knows which of your languages a ${target.english} rule resembles.`}
@@ -472,7 +472,7 @@ export function Start({
 				)}
 
 				{step === 3 && (
-					<section className="lh-rise" data-testid="start-time">
+					<section className="lanna-rise" data-testid="start-time">
 						<Heading
 							title="How much time?"
 							line="A short session every day beats a long one on Sunday. The plan is cut to fit this."
@@ -557,7 +557,7 @@ export function Start({
 				)}
 
 				{step === 4 && !check && !outcome && (
-					<section className="lh-rise" data-testid="start-check">
+					<section className="lanna-rise" data-testid="start-check">
 						<Heading
 							title={
 								edit && goal?.placedAt
@@ -790,8 +790,8 @@ function Result({
 	const title = (id: UnitId) => unitInfo(id).title;
 	const missed = outcome.missed;
 	return (
-		<section className="lh-rise" data-testid="start-result">
-			<div className="lh-pop mx-auto flex size-20 items-center justify-center rounded-full bg-gold/15 text-gold">
+		<section className="lanna-rise" data-testid="start-result">
+			<div className="lanna-pop mx-auto flex size-20 items-center justify-center rounded-full bg-gold/15 text-gold">
 				<FlagIcon className="size-10" />
 			</div>
 			<h1 className="mt-5 text-center font-ui text-4xl font-semibold text-foreground">

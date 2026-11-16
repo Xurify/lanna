@@ -15,7 +15,7 @@ import * as path from "node:path";
 import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-discover-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-discover-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

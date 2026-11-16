@@ -67,7 +67,7 @@ export function Check({
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
 				<div
 					key={i}
-					className={cn(COLUMN, "lh-rise")}
+					className={cn(COLUMN, "lanna-rise")}
 					data-testid="read-question"
 					data-word-lookup-enabled={picked !== null ? "true" : "false"}
 				>

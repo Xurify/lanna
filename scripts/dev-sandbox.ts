@@ -69,7 +69,7 @@ export interface SandboxPlan {
 /** The folder, the port and the environment of one sandbox. Creates the folder. */
 export function planSandbox(opts: { port: number; root?: string; tmp?: string; env?: Env }): SandboxPlan {
 	const root = opts.root ?? ROOT;
-	const dir = fs.mkdtempSync(path.join(opts.tmp ?? os.tmpdir(), "lh-sandbox-"));
+	const dir = fs.mkdtempSync(path.join(opts.tmp ?? os.tmpdir(), "lanna-sandbox-"));
 	assertSafeDataDir(dir, root);
 	if (opts.port === REAL_PORT) throw new Error(`refusing port ${REAL_PORT}: that is your real dev server's port`);
 	const env: Env = { ...(opts.env ?? process.env) };

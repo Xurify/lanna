@@ -48,17 +48,17 @@ const insideRepoData = (p: string) => !path.relative(path.join(REPO_ROOT, "data"
 describe("the test fence holds however the suite is launched", () => {
 	it("a bare `tsx --test` / `node --test` run (only the runner's marker, no NODE_ENV) is fenced", () => {
 		const { base, pid } = baseIn({ NODE_TEST_CONTEXT: "child-v8" });
-		assert.equal(base, path.join(os.tmpdir(), `lh-test-data-${pid}`));
+		assert.equal(base, path.join(os.tmpdir(), `lanna-test-data-${pid}`));
 		assert.ok(!insideRepoData(base), "not the real data/");
 	});
 
 	it("the old way, NODE_ENV=test, still is", () => {
 		const { base, pid } = baseIn({ NODE_ENV: "test" });
-		assert.equal(base, path.join(os.tmpdir(), `lh-test-data-${pid}`));
+		assert.equal(base, path.join(os.tmpdir(), `lanna-test-data-${pid}`));
 	});
 
 	it("an explicit LANNA_DATA_DIR still wins, so tests that set their own folder keep it", () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-fence-own-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-fence-own-"));
 		made.push(dir);
 		assert.equal(baseIn({ NODE_TEST_CONTEXT: "child-v8", LANNA_DATA_DIR: dir }).base, dir);
 	});

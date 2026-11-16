@@ -16,7 +16,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-auth-store-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-auth-store-"));
 process.env.LANNA_AUTH_FILE = path.join(TMP, "auth.json");
 
 // Import AFTER the env redirect — module-load-bound seam.

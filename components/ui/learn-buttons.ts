@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  * action is the teal: one filled button per screen.
  */
 export const BUTTON =
-	"lh-press inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 font-ui text-sm font-[550] tracking-[-0.005em]";
+	"lanna-press inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 font-ui text-sm font-[550] tracking-[-0.005em]";
 export const PRIMARY = cn(
 	BUTTON,
 	"bg-sun text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-sun",

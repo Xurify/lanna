@@ -3,7 +3,7 @@ import test, { after } from "node:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-pricing-transport-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-pricing-transport-"));
 process.env.LANNA_DATA_DIR = scratch;
 process.env.LANNA_PROFILE = "slovak";
 process.env.LANNA_AUTH_FILE = path.join(scratch, "empty-auth.json");

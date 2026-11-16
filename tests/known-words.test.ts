@@ -11,7 +11,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-known-words-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-known-words-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { knownWordStore } = await import("../src/store/known-words.ts");

@@ -101,13 +101,13 @@ export function derivePlanStatuses(tree: PlanTree, messages: readonly PartsCarri
 	return { current, visited };
 }
 
-// ─── the native fold (Wave D: derivePlanStatuses over LhMessage[]) ───────────
+// ─── the native fold (Wave D: derivePlanStatuses over LannaMessage[]) ───────────
 
-import type { LhMessage } from "../native-messages.ts";
+import type { LannaMessage } from "../native-messages.ts";
 
 /** The same derivation over the NATIVE record: quiz CALLS only (any state —
  *  a dangling call still moves position; results feed nothing). */
-export function derivePlanStatusesLh(tree: PlanTree, messages: readonly LhMessage[]): DerivedPlanStatuses {
+export function derivePlanStatusesLh(tree: PlanTree, messages: readonly LannaMessage[]): DerivedPlanStatuses {
 	const ids = new Set(tree.nodes.map((n) => n.id));
 	const runs: string[] = [];
 	for (const m of messages) {

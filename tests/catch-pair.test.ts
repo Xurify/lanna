@@ -22,7 +22,7 @@ import {
 } from "../src/core/catch-pair.ts";
 import { tokenize, type StorySentence } from "../src/core/reading.ts";
 
-const TMP_DATA = process.env.LANNA_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lh-slip-"));
+const TMP_DATA = process.env.LANNA_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lanna-slip-"));
 if (TMP_DATA) process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

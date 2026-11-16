@@ -490,7 +490,7 @@ test(
 	"private JSON file round-trips global state; creation and atomic replacement are owner-only",
 	{ skip: process.platform === "win32" && "Windows has no POSIX file modes" },
 	async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lh-chatgpt-storage-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-chatgpt-storage-"));
 		const file = path.join(dir, "private", "chatgpt-credentials.json");
 		try {
 			const store = fileStore(file);
@@ -725,7 +725,7 @@ for (const holdVerification of [false, true])
 test("strict JSON schema rejects malformed marker/duplicates/token/active identity without changing original bytes", async () => {
 	const f = await loggedIn();
 	f.service.close();
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lh-chatgpt-corrupt-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-chatgpt-corrupt-"));
 	const file = path.join(dir, "chatgpt-credentials.json");
 	try {
 		for (const mutate of [

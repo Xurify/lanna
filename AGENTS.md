@@ -48,7 +48,7 @@ Before you design or restyle any screen, component, page or artifact, read `.cla
 
 - No gradients, glows, colored shadows, glassmorphism, or thick colored top/left card borders.
 - No Inter-everywhere, no italic-serif accent word, no all-caps labels. Bricolage Grotesque for the chrome, Source Sans 3 for prose.
-- No lavender/purple accent. One action color (`--lh-sun`); the trail colors belong to the strands only.
+- No lavender/purple accent. One action color (`--lanna-sun`); the trail colors belong to the strands only.
 - No centered hero with a badge, no rows of identical icon cards, no stat banners or "1, 2, 3" steps for decoration, no emoji navigation.
 - No stock shadcn/ui look: restyle radius, color and shadow to the app's tokens.
 - One layout primitive per screen, one bold choice per screen, body text that passes WCAG AA in both themes.

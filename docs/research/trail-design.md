@@ -35,7 +35,7 @@ Flat tonal layers, no gradients, no shadows except on menus. The accents are des
 | raised `--accent`                          | `#1f2a31`                  | tiles, hover, the slope behind the trail                                      |
 | edge `--border`                            | `#2b3842`                  | hairlines                                                                     |
 | text `--foreground` / `--muted-foreground` | `#eef2f3` snow / `#93a2aa` | text                                                                          |
-| sun `--lh-sun`                             | `#f2b84b`                  | the action button, streak, XP, done stops, the walked trail, the Review badge |
+| sun `--lanna-sun`                          | `#f2b84b`                  | the action button, streak, XP, done stops, the walked trail, the Review badge |
 | trail red                                  | `#ea5f4f`                  | input strand; a wrong answer                                                  |
 | trail blue                                 | `#4fa3e3`                  | speaking strand; the tutor                                                    |
 | trail green                                | `#4cc47c`                  | words & rules strand; a right answer                                          |

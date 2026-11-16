@@ -25,7 +25,7 @@ const model = models.getModels("openai").find((entry) => entry.api === "openai-r
 const copilot = githubCopilotProvider().getModels()[0];
 assert(model && copilot, "Installed SDK catalogs required.");
 
-const profile = await fs.mkdtemp(path.join(os.tmpdir(), "lh-web-runtime-"));
+const profile = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-web-runtime-"));
 await fs.chmod(profile, 0o700);
 for (const name of ["home", "config", "cache", "xdg-data", "data", "pi", "claude", "codex", "tmp"])
 	await fs.mkdir(path.join(profile, name), { mode: 0o700 });

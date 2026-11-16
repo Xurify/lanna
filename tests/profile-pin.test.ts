@@ -11,7 +11,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { describe, it } from "node:test";
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-profile-pin-"));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-profile-pin-"));
 process.env.LANNA_DATA_DIR = dir;
 delete process.env.LANNA_PROFILE;
 const added = path.join(dir, "languages", "czech");

@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, afterEach, describe, it } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-sub-public-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-sub-public-"));
 process.env.LANNA_DATA_DIR = path.join(TMP, "data");
 process.env.LANNA_AUTH_FILE = path.join(TMP, "auth.json");
 fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}", { mode: 0o600 });

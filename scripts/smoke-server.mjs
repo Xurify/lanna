@@ -92,7 +92,7 @@ async function main() {
 	verifyProviderRuntime(STANDALONE, RUNTIME);
 	const port = await freePort();
 	const url = `http://127.0.0.1:${port}`;
-	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-smoke-"));
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-smoke-"));
 	const dataDir = path.join(home, "data");
 	const authFile = path.join(home, "auth.json");
 	fs.writeFileSync(authFile, "{}\n", "utf-8");

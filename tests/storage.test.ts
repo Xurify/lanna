@@ -28,7 +28,7 @@ describe("formatBytes", () => {
 
 describe("measureTree", () => {
 	it("sums every file under the folder, recursively, and treats a missing folder as empty", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "lh-storage-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-storage-"));
 		try {
 			fs.mkdirSync(path.join(root, "a", "b"), { recursive: true });
 			fs.writeFileSync(path.join(root, "one.bin"), Buffer.alloc(10));

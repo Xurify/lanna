@@ -4,14 +4,15 @@
  * Provides:
  * 1. WebAudio synthesized presets (chime, bell, harp, gentle, subtle).
  * 2. Local custom sound loading, caching, and playback (supporting mp3, wav, ogg, etc.).
- * 3. Shares the lesson sound switch and master volume (lh-sound, lh-volume).
+ * 3. Shares the lesson sound switch and master volume (lanna-sound, lanna-volume).
  */
 
 import type { NotificationSoundPreset } from "@/src/core";
 import { soundOn, volume as appVolume } from "@/components/lesson/sound";
+import { adoptFormerStorage } from "@/components/former-storage";
 
-const CUSTOM_SOUND_KEY = "lh:custom-reminder-sound-data";
-const CUSTOM_SOUND_NAME_KEY = "lh:custom-reminder-sound-name";
+const CUSTOM_SOUND_KEY = "lanna:custom-reminder-sound-data";
+const CUSTOM_SOUND_NAME_KEY = "lanna:custom-reminder-sound-name";
 
 let audioCtx: AudioContext | null = null;
 
@@ -63,6 +64,7 @@ export async function saveCustomSound(file: File): Promise<{ name: string; size:
 export function getCustomSoundInfo(): { name: string | null; hasData: boolean } {
 	if (typeof window === "undefined") return { name: null, hasData: false };
 	try {
+		adoptFormerStorage(localStorage);
 		const name = localStorage.getItem(CUSTOM_SOUND_NAME_KEY);
 		const data = localStorage.getItem(CUSTOM_SOUND_KEY);
 		return { name, hasData: Boolean(data) };
@@ -121,6 +123,7 @@ export async function playReminderSound(preset: NotificationSoundPreset): Promis
 	// 1. Custom uploaded sound
 	if (preset === "custom") {
 		try {
+			adoptFormerStorage(localStorage);
 			const dataUrl = localStorage.getItem(CUSTOM_SOUND_KEY);
 			if (dataUrl) {
 				const audio = new Audio(dataUrl);

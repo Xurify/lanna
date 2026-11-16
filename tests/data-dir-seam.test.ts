@@ -21,7 +21,7 @@ const TSX_LOADER = path.join(REPO_ROOT, "node_modules", "tsx", "dist", "loader.m
 
 describe("LANNA_DATA_DIR seam", () => {
 	it("relocates data/chats/graph under LANNA_DATA_DIR, keeps prompts ROOT-anchored", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-seam-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-seam-"));
 		process.env.LANNA_DATA_DIR = dir;
 		try {
 			const { PATHS, ROOT, activeProfile, SETTINGS_FILE } = await import("../config.ts");

@@ -36,7 +36,7 @@ const value = (name: string, revision: number, account = "A", authorityRevision 
 	models: [{ id: model.id, name }],
 });
 function reply(request: any, v: unknown) {
-	ipc({ channel: "lh:chatgpt", id: request.id, op: request.op, ok: true, value: v });
+	ipc({ channel: "lanna:chatgpt", id: request.id, op: request.op, ok: true, value: v });
 }
 before(() => {
 	process.env.LANNA_DESKTOP_SERVER = "1";
@@ -74,7 +74,7 @@ test("consent-only status does not discard current-authority catalog or overwrit
 	const refresh = refreshChatGPTModels([model as never]);
 	const request = pending.at(-1);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 3 },
 		status: status("A", false),
@@ -89,14 +89,14 @@ test("consent-only status does not discard current-authority catalog or overwrit
 	const foreground = chatGPTAbortController(false),
 		background = chatGPTAbortController(true);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 4 },
 		status: status("A", false),
 		invalidate: "background",
 	});
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 1, authorityRevision: 1, revision: 5 },
 		status: status("A", true),
@@ -113,7 +113,7 @@ test("account/full and catalog authority changes reject outstanding old leases w
 	const lease = chatGPTLease(scope, false);
 	const request = pending.at(-1);
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 2, authorityRevision: 2, revision: 6 },
 		status: status("B"),
@@ -129,7 +129,7 @@ test("account/full and catalog authority changes reject outstanding old leases w
 	const newScope = chatGPTScope(model.id);
 	assert.equal(newScope.accountId, "B");
 	ipc({
-		channel: "lh:chatgpt",
+		channel: "lanna:chatgpt",
 		kind: "state",
 		stamp: { epoch: 2, authorityRevision: 3, revision: 8 },
 		status: status("B"),

@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, test } from "node:test";
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-learner-languages-"));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-learner-languages-"));
 process.env.LANNA_DATA_DIR = dir;
 delete process.env.LANNA_PROFILE;
 

@@ -75,16 +75,16 @@ export function appearanceVars(a: ReturnType<typeof resolveAppearance>): Record<
 	}
 	// The ONE documented reading-size variable (typography round 4): prose,
 	// inputs, and session titles all read it, so one setProperty moves them.
-	vars["--lh-prose-size"] = `${a.proseFontSize}px`;
+	vars["--lanna-prose-size"] = `${a.proseFontSize}px`;
 	// Session names: CMU Serif by default; the toggle swaps the title font
 	// to the prose family — covers chat.tsx + new-session.tsx titles with
 	// zero component edits (they use the .font-title utility).
 	if (!a.sessionNameSerif) vars["--font-title"] = "var(--font-ui)";
 	// Markdown rendering: heading weight + the emphasis inks (the vars
 	// were built "ready for the settings UI").
-	vars["--lh-heading-weight"] = String(a.mdRendering.headingWeight);
-	if (a.mdRendering.boldColor !== null) vars["--lh-ink-strong"] = a.mdRendering.boldColor;
-	if (a.mdRendering.italicColor !== null) vars["--lh-ink-italic"] = a.mdRendering.italicColor;
+	vars["--lanna-heading-weight"] = String(a.mdRendering.headingWeight);
+	if (a.mdRendering.boldColor !== null) vars["--lanna-ink-strong"] = a.mdRendering.boldColor;
+	if (a.mdRendering.italicColor !== null) vars["--lanna-ink-italic"] = a.mdRendering.italicColor;
 	return vars;
 }
 

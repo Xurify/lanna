@@ -26,7 +26,7 @@ globalThis.fetch = (async (url: unknown, init?: RequestInit) => {
 
 const { _resetSessionsForTests, keepSession, onSessionSaved, RefusedError, sendSession } =
 	await import("../components/session-save.ts");
-const waiting = () => JSON.parse(store.get("lh-session-outbox") ?? "[]") as Array<{ id: string; lang: string }>;
+const waiting = () => JSON.parse(store.get("lanna-session-outbox") ?? "[]") as Array<{ id: string; lang: string }>;
 
 beforeEach(() => {
 	_resetSessionsForTests();

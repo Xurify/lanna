@@ -10,7 +10,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-regen-"));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-audio-regen-"));
 process.env.LANNA_DATA_DIR = dir;
 after(() => fs.rmSync(dir, { recursive: true, force: true }));
 

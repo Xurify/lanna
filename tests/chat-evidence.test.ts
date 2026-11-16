@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chat-evidence-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chat-evidence-"));
 const originalEnv = process.env;
 process.env = {
 	...(originalEnv.NODE_TEST_CONTEXT ? { NODE_TEST_CONTEXT: originalEnv.NODE_TEST_CONTEXT } : {}),

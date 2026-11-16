@@ -13,7 +13,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-watch-reps-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-watch-reps-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

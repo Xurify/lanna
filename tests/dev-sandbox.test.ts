@@ -28,7 +28,7 @@ after(() => {
 
 describe("planSandbox: data, keys and port of its own", () => {
 	it("puts everything in a new folder outside the repo and hides the real keys", () => {
-		const tmp = scratch("lh-sbx-tmp-");
+		const tmp = scratch("lanna-sbx-tmp-");
 		const plan = planSandbox({
 			port: 4123,
 			tmp,
@@ -55,7 +55,7 @@ describe("planSandbox: data, keys and port of its own", () => {
 	});
 
 	it("is a different folder every time", () => {
-		const tmp = scratch("lh-sbx-tmp-");
+		const tmp = scratch("lanna-sbx-tmp-");
 		const a = planSandbox({ port: 4001, tmp, env: {} });
 		const b = planSandbox({ port: 4002, tmp, env: {} });
 		made.push(a.dir, b.dir);
@@ -63,13 +63,13 @@ describe("planSandbox: data, keys and port of its own", () => {
 	});
 
 	it("never takes the real dev server's port", () => {
-		const tmp = scratch("lh-sbx-tmp-");
+		const tmp = scratch("lanna-sbx-tmp-");
 		assert.throws(() => planSandbox({ port: REAL_PORT, tmp, env: {} }), /3010/);
 		assert.equal(REAL_PORT, 3010);
 	});
 
 	it("refuses a folder inside the repo, where the real data/ lives", () => {
-		const root = scratch("lh-sbx-root-");
+		const root = scratch("lanna-sbx-root-");
 		const inside = path.join(root, "tmp");
 		fs.mkdirSync(inside);
 		assert.throws(() => planSandbox({ port: 4000, tmp: inside, root, env: {} }), /outside the repo/);
@@ -87,7 +87,7 @@ describe("assertSafeDataDir", () => {
 			assert.throws(() => assertSafeDataDir(bad, ROOT), /outside the repo/, bad);
 	});
 	it("accepts a folder elsewhere", () => {
-		assert.doesNotThrow(() => assertSafeDataDir(path.join(os.tmpdir(), "lh-sandbox-x"), ROOT));
+		assert.doesNotThrow(() => assertSafeDataDir(path.join(os.tmpdir(), "lanna-sandbox-x"), ROOT));
 	});
 });
 
@@ -129,7 +129,7 @@ describe("the demo seed only fills an empty folder", () => {
 	const progressFile = (dir: string) => path.join(dir, "profiles", "slovak", "progress.json");
 
 	it("seeds an empty folder with a week that has measured and unmeasured days", () => {
-		const dir = scratch("lh-sbx-seed-");
+		const dir = scratch("lanna-sbx-seed-");
 		const res = run(dir);
 		assert.equal(res.status, 0, res.stderr);
 		const days = Object.values(
@@ -140,7 +140,7 @@ describe("the demo seed only fills an empty folder", () => {
 	});
 
 	it("refuses a folder it already seeded, and leaves it byte for byte as it was", () => {
-		const dir = scratch("lh-sbx-seed-");
+		const dir = scratch("lanna-sbx-seed-");
 		assert.equal(run(dir).status, 0);
 		const before = fs.readFileSync(progressFile(dir));
 		const res = run(dir);
@@ -150,7 +150,7 @@ describe("the demo seed only fills an empty folder", () => {
 	});
 
 	it("refuses a folder with a learner's own progress in it", () => {
-		const dir = scratch("lh-sbx-seed-");
+		const dir = scratch("lanna-sbx-seed-");
 		fs.mkdirSync(path.dirname(progressFile(dir)), { recursive: true });
 		const mine = JSON.stringify({
 			xp: 1234,

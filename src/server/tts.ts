@@ -436,7 +436,7 @@ async function piper(req: TtsRequest, lang: LanguageInfo): Promise<Spoken | null
 	const bin = process.env.PIPER_PATH;
 	const model = envFor("PIPER_MODEL", lang.code);
 	if (!bin || !model) return null;
-	const out = path.join(os.tmpdir(), `lh-piper-${process.pid}-${Date.now()}.wav`);
+	const out = path.join(os.tmpdir(), `lanna-piper-${process.pid}-${Date.now()}.wav`);
 	await new Promise<void>((resolve, reject) => {
 		const child = spawn(bin, ["--model", model, "--output_file", out], { stdio: ["pipe", "ignore", "pipe"] });
 		let err = "";

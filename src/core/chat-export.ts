@@ -3,14 +3,14 @@
  * Pure core: browser-safe, no fs, no network.
  */
 
-import type { LhMessage } from "./native-messages.ts";
-import type { LhViewMessage } from "./view.ts";
+import type { LannaMessage } from "./native-messages.ts";
+import type { LannaViewMessage } from "./view.ts";
 import type { QuestionAnswerData } from "./question-core.ts";
 import { userFacingTextOf } from "./native-messages.ts";
 import { QUESTION_TOOLS } from "./pending.ts";
 import { boardPhrases } from "./chat-board.ts";
 
-type ExportMessage = LhViewMessage | LhMessage;
+type ExportMessage = LannaViewMessage | LannaMessage;
 type Speaker = "Learner" | "Tutor";
 
 export interface ClozeSentence {

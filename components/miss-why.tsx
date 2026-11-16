@@ -199,7 +199,7 @@ export function MissWhy({
 	const why = [shared, contrast, asksHere].filter(Boolean);
 
 	return (
-		<div className={cn("lh-fade text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
+		<div className={cn("lanna-fade text-[15px] leading-snug text-foreground", className)} data-testid="review-why">
 			<div className="flex items-stretch">
 				{typed && (
 					<Side

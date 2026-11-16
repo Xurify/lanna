@@ -156,7 +156,7 @@ function checkImage(dir) {
 	const chrome = process.env.CHROME_PATH;
 	check("CHROME_PATH names a browser", !!chrome && fs.existsSync(chrome), chrome ?? "unset");
 	if (chrome && fs.existsSync(chrome)) {
-		const profile = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chrome-"));
+		const profile = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chrome-"));
 		try {
 			const dom = execFileSync(
 				chrome,
@@ -199,7 +199,7 @@ async function runStartedServer({
 		process.exit(1);
 	}
 	const port = await freePort();
-	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-boot-"));
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-boot-"));
 	fs.writeFileSync(path.join(home, "auth.json"), "{}\n");
 	const env = {
 		PATH: process.env.PATH,
@@ -283,10 +283,10 @@ async function probePublicMode(base) {
 		host: PUBLIC_NAME,
 		"x-forwarded-host": PUBLIC_NAME,
 		"x-forwarded-proto": "https",
-		"x-lh-proxy-secret": SECRET,
+		"x-lanna-proxy-secret": SECRET,
 	};
 	const noSecret = { host: PUBLIC_NAME, "x-forwarded-host": PUBLIC_NAME, "x-forwarded-proto": "https" };
-	const wrongSecret = { ...proxied, "x-lh-proxy-secret": "c".repeat(48) };
+	const wrongSecret = { ...proxied, "x-lanna-proxy-secret": "c".repeat(48) };
 	const notHttps = { ...proxied, "x-forwarded-proto": "http" };
 	const refusals = [
 		["a loopback Host, as nginx sends by default", "/api/settings", {}],
@@ -318,9 +318,9 @@ async function probePublicMode(base) {
 	check("public mode: the right password signs in", right.status === 200, String(right.status));
 	check(
 		"public mode: the session cookie is HttpOnly and Secure",
-		/lh_device=/.test(right.cookie) && /HttpOnly/i.test(right.cookie) && /Secure/i.test(right.cookie),
+		/lanna_device=/.test(right.cookie) && /HttpOnly/i.test(right.cookie) && /Secure/i.test(right.cookie),
 	);
-	const cookie = right.cookie.match(/lh_device=[^;]+/)?.[0] ?? "";
+	const cookie = right.cookie.match(/lanna_device=[^;]+/)?.[0] ?? "";
 	const inside = await request(base, "/api/settings", { ...proxied, cookie });
 	check("public mode: the API answers with the session", inside.status === 200, String(inside.status));
 	const foreign = await post(base, "/api/settings/agent", { ...proxied, cookie, origin: "https://evil.example" }, {});

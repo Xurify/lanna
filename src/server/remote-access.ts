@@ -25,7 +25,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { loopbackHost } from "./desktop-access.ts";
 
-export const DEVICE_COOKIE = "lh_device";
+export const DEVICE_COOKIE = "lanna_device";
 /** A paired device stays signed in this long, unless it is revoked first. */
 export const DEVICE_SESSION_DAYS = 180;
 /** A pairing code works this long, and for this many wrong tries. */
@@ -67,7 +67,7 @@ const PROXY_HEADERS = [
 	"tailscale-app-capabilities",
 ];
 
-export const PROXY_SECRET_HEADER = "x-lh-proxy-secret";
+export const PROXY_SECRET_HEADER = "x-lanna-proxy-secret";
 export const PROXY_SECRET_MIN_LENGTH = 32;
 
 export type PublicMode = { host: string; secretConfigured: boolean; secretOk: boolean };

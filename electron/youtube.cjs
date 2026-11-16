@@ -4,7 +4,7 @@
  * Connect YouTube (Watch picks, 2026-11-05). YouTube's API gives no watch
  * history and no recommendations, so the app reads them the way the YouTube
  * site does: the learner signs in to Google in a window of the app's own,
- * with its own browser session (partition "persist:lh-youtube", nothing
+ * with its own browser session (partition "persist:lanna-youtube", nothing
  * shared with the app window), and the main process later fetches three
  * pages through that session: the history, the home page's
  * recommendations and the subscribed channels, and YouTube's account
@@ -19,7 +19,7 @@
  * recognize as a browser; the Watch page then offers a Takeout export.
  */
 
-const PARTITION = "persist:lh-youtube";
+const PARTITION = "persist:lanna-youtube";
 const SIGN_IN =
 	"https://accounts.google.com/ServiceLogin?service=youtube&passive=true&continue=" +
 	encodeURIComponent(
@@ -151,7 +151,7 @@ function createYouTube({ session, BrowserWindow, userAgent }) {
 
 /** The renderer's only door to it: status, connect, read a list, who is signed in, disconnect. */
 function registerYouTubeIPC(ipcMain, { trusted, youtube, BrowserWindow }) {
-	ipcMain.handle("lh:youtube", async (event, command) => {
+	ipcMain.handle("lanna:youtube", async (event, command) => {
 		if (!trusted(event)) throw new Error("Untrusted desktop request.");
 		const op = command && command.op;
 		if (op === "status") return youtube.status();

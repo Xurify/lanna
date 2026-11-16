@@ -39,7 +39,7 @@ const CONTROL_ERROR = "The connection could not be changed. Try again.";
 
 export function NativeSubscriptionUIProvider({ children }: { children: React.ReactNode }) {
 	const bridge = useNativeSubscriptionBridge();
-	const web = typeof window !== "undefined" && bridge !== window.lh?.subscriptions;
+	const web = typeof window !== "undefined" && bridge !== window.lanna?.subscriptions;
 	const [statuses, setStatuses] = useState<NativeSubscriptionStatus[]>([]);
 	const [dialog, setDialog] = useState<NativeSubscriptionProviderId | null>(null);
 	const [view, setView] = useState<"notice" | "connection" | "manage">("notice");

@@ -60,14 +60,14 @@ describe("StampDisc", () => {
 		);
 		assert.ok(earned.includes('data-testid="stamp-first-step"'));
 		assert.ok(earned.includes('data-earned="true"'));
-		assert.ok(earned.includes("lh-stamp"), "the pressed animation class");
+		assert.ok(earned.includes("lanna-stamp"), "the pressed animation class");
 		assert.ok(!earned.includes('stroke-dasharray="3 5"'), "no dashed rim once earned");
 
 		const words = renderToStaticMarkup(createElement(StampDisc, { state: deeds.find((s) => s.id === "words-50")! }));
 		assert.ok(words.includes('data-earned="false"'));
 		assert.ok(words.includes('stroke-dasharray="3 5"'), "dashed rim before it is earned");
 		assert.ok(words.includes("stroke-dashoffset"), "the arc shows 40 of 50");
-		assert.ok(!words.includes("lh-stamp"));
+		assert.ok(!words.includes("lanna-stamp"));
 	});
 
 	it("prints the level on a chapter or summit stamp", () => {

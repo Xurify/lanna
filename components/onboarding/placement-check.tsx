@@ -205,7 +205,7 @@ export function LadderStage({
 				their own after.
 			</p>
 			<div className="mt-3 h-2 overflow-hidden rounded-full bg-accent" aria-hidden="true">
-				<div className="lh-fill rounded-full bg-go" style={fillStyle(share)} />
+				<div className="lanna-fill rounded-full bg-go" style={fillStyle(share)} />
 			</div>
 
 			<form
@@ -214,7 +214,7 @@ export function LadderStage({
 					e.preventDefault();
 					void submit();
 				}}
-				className="lh-rise mt-8"
+				className="lanna-rise mt-8"
 				data-word-lookup-enabled={result !== null ? "true" : "false"}
 			>
 				<h2 className="font-prose text-2xl font-semibold text-foreground">
@@ -223,7 +223,7 @@ export function LadderStage({
 				<p className="mt-5 font-prose text-[28px] leading-[1.6] text-foreground" lang={lessonLanguage()}>
 					<span>{item.before}</span>
 					{result ? (
-						<span className={cn("lh-pop inline-block rounded-lg px-1.5 font-semibold", ink)}>
+						<span className={cn("lanna-pop inline-block rounded-lg px-1.5 font-semibold", ink)}>
 							{result.verdict === "wrong" ? result.given || "—" : result.judged?.accepted ? result.given : item.answer}
 						</span>
 					) : (
@@ -278,7 +278,7 @@ export function LadderStage({
 
 			{result && result.judged?.accepted && (
 				<p
-					className="lh-rise mt-6 font-prose text-base text-muted-foreground"
+					className="lanna-rise mt-6 font-prose text-base text-muted-foreground"
 					role="status"
 					aria-live="polite"
 					data-testid="placement-accepted"
@@ -290,7 +290,7 @@ export function LadderStage({
 			)}
 			{result && result.verdict === "wrong" && (
 				<div
-					className="lh-rise mt-8 rounded-2xl border border-miss/40 bg-miss-soft px-5 py-4"
+					className="lanna-rise mt-8 rounded-2xl border border-miss/40 bg-miss-soft px-5 py-4"
 					role="status"
 					aria-live="polite"
 					data-testid="placement-miss"
@@ -457,7 +457,7 @@ export function EdgeStage({
 						e.preventDefault();
 						if (!busy && answer.trim()) void step({ answer });
 					}}
-					className="lh-rise mt-8"
+					className="lanna-rise mt-8"
 					data-word-lookup-enabled="false"
 				>
 					<h2 className="font-prose text-2xl font-semibold text-foreground">

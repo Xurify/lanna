@@ -13,7 +13,7 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-plan-feedback-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-plan-feedback-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

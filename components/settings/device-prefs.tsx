@@ -13,8 +13,8 @@ import { SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 
 export type WordTranslationMode = "dictionary" | "hybrid" | "google";
 
-const WORD_TRANSLATION_MODE_KEY = "lh:word-translation-mode";
-const WORD_TRANSLATION_MODE_EVENT = "lh:word-translation-mode-change";
+const WORD_TRANSLATION_MODE_KEY = "lanna:word-translation-mode";
+const WORD_TRANSLATION_MODE_EVENT = "lanna:word-translation-mode-change";
 
 function getWordTranslationMode(): WordTranslationMode {
 	if (typeof window === "undefined") return "hybrid";

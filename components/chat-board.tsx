@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { boardPhrases, chatScore, latestDrawing, type LhViewMessage } from "@/src/core";
+import { boardPhrases, chatScore, latestDrawing, type LannaViewMessage } from "@/src/core";
 import { startDraftSession } from "@/components/new-session";
 import { QUIET, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
 import { SketchFigure } from "@/components/sketch-figure";
 import { SpokenPhrase } from "@/components/speech";
 
-function replyTexts(messages: readonly LhViewMessage[]): string[] {
+function replyTexts(messages: readonly LannaViewMessage[]): string[] {
 	return messages
 		.filter((m) => m.role === "assistant")
 		.map((m) =>
@@ -26,7 +26,7 @@ function replyTexts(messages: readonly LhViewMessage[]): string[] {
 		);
 }
 
-export function useDrill(messages: readonly LhViewMessage[], title: string) {
+export function useDrill(messages: readonly LannaViewMessage[], title: string) {
 	const router = useRouter();
 	const [opening, setOpening] = useState(false);
 	const score = useMemo(() => chatScore(messages), [messages]);
@@ -45,7 +45,7 @@ export function ChatBoard({
 	messages,
 	drill: drillState,
 }: {
-	messages: readonly LhViewMessage[];
+	messages: readonly LannaViewMessage[];
 	drill: ReturnType<typeof useDrill>;
 }) {
 	const { score, drill, opening, label } = drillState;

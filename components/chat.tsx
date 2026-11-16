@@ -47,7 +47,7 @@ import { useServerEvent, useServerResync } from "@/components/server-events";
 import {
 	isProviderKeyRefusal,
 	kbdEventForAction as kbdEventForChat,
-	type LhMessage,
+	type LannaMessage,
 	type ModelSlotName,
 } from "@/src/core";
 import { PlanBlock, PlanPopup, latestTree } from "@/components/plan-block";
@@ -72,7 +72,7 @@ import type {
 	TurnUsage,
 	SessionPricing,
 } from "@/src/core";
-import type { LhViewMessage } from "@/src/core";
+import type { LannaViewMessage } from "@/src/core";
 import { PhaseChip, PhaseDivider } from "@/components/phase-divider";
 import {
 	CompactionCutDivider,
@@ -192,11 +192,11 @@ function SystemLine({ children, testId }: { children: React.ReactNode; testId?: 
 	);
 }
 
-function isSubagentSteer(m: LhViewMessage): boolean {
+function isSubagentSteer(m: LannaViewMessage): boolean {
 	return (m.metadata as { subagentResult?: unknown } | undefined)?.subagentResult != null;
 }
 
-function lastReplyText(messages: readonly LhViewMessage[]): string {
+function lastReplyText(messages: readonly LannaViewMessage[]): string {
 	const last = messages.at(-1);
 	if (!last || last.role !== "assistant") return "";
 	return last.parts
@@ -226,7 +226,7 @@ export function Chat({
 }: {
 	chatId: string;
 	title: string;
-	initialMessages: LhMessage[];
+	initialMessages: LannaMessage[];
 	/** Memory-only settlement notice supplied on reopening. */
 	initialError?: string;
 	/** The session kind (practice sessions, owner 2026-10-04): practice
@@ -329,7 +329,7 @@ export function Chat({
 				});
 				if (!res.ok) throw new Error(`rename failed: ${res.status}`);
 				setTitleText(t);
-				window.dispatchEvent(new CustomEvent("lh:chat-renamed", { detail: { id: chatId, title: t } }));
+				window.dispatchEvent(new CustomEvent("lanna:chat-renamed", { detail: { id: chatId, title: t } }));
 			} catch (err) {
 				console.error("rename failed:", err); // keep the old title
 			}
@@ -356,12 +356,12 @@ export function Chat({
 			setTitleDraft(titleText);
 			setRenaming(true);
 		};
-		window.addEventListener("lh:kbd-rename-session", onRename);
-		return () => window.removeEventListener("lh:kbd-rename-session", onRename);
+		window.addEventListener("lanna:kbd-rename-session", onRename);
+		return () => window.removeEventListener("lanna:kbd-rename-session", onRename);
 	}, [titleText]);
 
 	// The OTHER rename surface (wave 6: the sidebar's inline rename): its
-	// commit dispatches the same lh:chat-renamed event this header's rename
+	// commit dispatches the same lanna:chat-renamed event this header's rename
 	// does — if it renamed THIS chat, patch the header title in place (the
 	// event is the single source of truth; the header is one more listener).
 	useEffect(() => {
@@ -369,8 +369,8 @@ export function Chat({
 			const { id, title } = (e as CustomEvent<{ id: string; title: string }>).detail;
 			if (id === chatId) setTitleText((prev) => (title !== prev ? title : prev));
 		};
-		window.addEventListener("lh:chat-renamed", onRenamed);
-		return () => window.removeEventListener("lh:chat-renamed", onRenamed);
+		window.addEventListener("lanna:chat-renamed", onRenamed);
+		return () => window.removeEventListener("lanna:chat-renamed", onRenamed);
 	}, [chatId]);
 
 	// A chat turn ends right after its record calls, so a steer would wait for the next run; the chat
@@ -432,8 +432,8 @@ export function Chat({
 			else if (target === "plan") setPlanOpen(false);
 			// setup closes itself; null = nothing to do — both claimed.
 		};
-		window.addEventListener("lh:kbd-abort-turn", onAbort);
-		return () => window.removeEventListener("lh:kbd-abort-turn", onAbort);
+		window.addEventListener("lanna:kbd-abort-turn", onAbort);
+		return () => window.removeEventListener("lanna:kbd-abort-turn", onAbort);
 	}, []);
 	const confirmAbort = useCallback(
 		(mode: AbortMode) => {
@@ -665,7 +665,7 @@ export function Chat({
 		void (async () => {
 			const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`);
 			if (!cancelled && res.ok) {
-				const record = (await res.json().catch(() => null)) as { messages?: LhMessage[] } | null;
+				const record = (await res.json().catch(() => null)) as { messages?: LannaMessage[] } | null;
 				if (Array.isArray(record?.messages)) setMessages(record.messages);
 			}
 			if (cancelled) return;
@@ -780,7 +780,7 @@ export function Chat({
 		const res = await fetch(`/api/chats/${chatId}`);
 		if (!res.ok) return;
 		const record = (await res.json()) as {
-			messages?: LhMessage[];
+			messages?: LannaMessage[];
 			turns?: TurnUsage[];
 			pricing?: SessionPricing;
 			turnError?: string;
@@ -823,7 +823,7 @@ export function Chat({
 		try {
 			const res = await fetch(`/api/chats/${chatId}`);
 			if (!res.ok) return;
-			const record = (await res.json()) as { messages?: LhMessage[] };
+			const record = (await res.json()) as { messages?: LannaMessage[] };
 			if (!Array.isArray(record.messages)) return;
 			adoptRecord(record.messages);
 		} catch {
@@ -893,7 +893,7 @@ export function Chat({
 	const [figureFocus, setFigureFocus] = useState<{ svg: string; inverted: boolean } | null>(null);
 
 	// Overlay mirrors for the layered-Esc gate (owner 2026-10-04): the
-	// lh:kbd-abort-turn handler reads these at EVENT time — declared here
+	// lanna:kbd-abort-turn handler reads these at EVENT time — declared here
 	// beside their states, consumed below wherever the states live.
 	const mermaidFocusRef = useRef(mermaidFocus);
 	mermaidFocusRef.current = mermaidFocus;
@@ -1287,7 +1287,7 @@ export function Chat({
 				    only while the sidebar is CLOSED — an auto-height row would
 				    collapse when it disappears and slide the title + chip up.
 				    60px is an ALIGNMENT, not just a size: it equals the sidebar's
-				    LH wordmark band, so the header's border-b continues that
+				    Lanna wordmark band, so the header's border-b continues that
 				    band's bottom edge as one line across the app (owner, round 6). */}
 							<TopBar
 								bare={kind === "chat"}
@@ -1323,7 +1323,7 @@ export function Chat({
 											spellCheck={false}
 											aria-label="Chat title"
 											title="Rename this chat"
-											className="lh-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
+											className="lanna-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
 										/>
 										{/* flex-1 spacer during rename too, so the chips stay at
 							    the right edge; clicks here commit via the header
@@ -1345,7 +1345,7 @@ export function Chat({
 													setRenaming(true);
 												}}
 												className={cn(
-													"lh-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent",
+													"lanna-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent",
 													kind === "chat"
 														? "font-ui text-sm font-medium text-muted-foreground transition-opacity"
 														: "font-title text-2xl font-semibold tracking-tight",
@@ -1374,7 +1374,7 @@ export function Chat({
 												blurAfterPointerClick(e);
 												setPlanOpen(true);
 											}}
-											className="lh-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+											className="lanna-no-drag flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/80 px-2 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-border hover:text-foreground"
 										>
 											<WaypointsIcon className="size-3.5 text-primary" aria-hidden />
 											Plan
@@ -1394,7 +1394,7 @@ export function Chat({
 												setShowWorking(!showWorking);
 											}}
 											className={cn(
-												"lh-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors hover:text-foreground",
+												"lanna-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors hover:text-foreground",
 												showWorking ? "border-border text-foreground" : "border-border/60 text-muted-foreground",
 											)}
 										>
@@ -1434,7 +1434,7 @@ export function Chat({
 								<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
 									<ConversationContent
 										className="min-h-full gap-0 p-0"
-										scrollClassName={kind === "chat" ? "lh-fade-out" : undefined}
+										scrollClassName={kind === "chat" ? "lanna-fade-out" : undefined}
 									>
 										<div
 											data-session-find-root=""
@@ -1579,7 +1579,7 @@ export function Chat({
 																	className={
 																		kind === "chat"
 																			? "whitespace-pre-wrap"
-																			: "lh-prose whitespace-pre-wrap text-foreground"
+																			: "lanna-prose whitespace-pre-wrap text-foreground"
 																	}
 																>
 																	{m.parts
@@ -1593,9 +1593,9 @@ export function Chat({
 																from="assistant"
 																className={cn(
 																	"max-w-full",
-																	kind === "chat" && "lh-voice",
-																	kind === "chat" && localStream && mi === messages.length - 1 && "lh-writing",
-																	kind === "chat" && busy && mi < currentLine && "lh-recede",
+																	kind === "chat" && "lanna-voice",
+																	kind === "chat" && localStream && mi === messages.length - 1 && "lanna-writing",
+																	kind === "chat" && busy && mi < currentLine && "lanna-recede",
 																)}
 															>
 																<MessageContent className="w-full">
@@ -1633,7 +1633,7 @@ export function Chat({
 																			case "text": {
 																				if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
 																				return (
-																					<div key={part.id || pi} className="lh-source-passage">
+																					<div key={part.id || pi} className="lanna-source-passage">
 																						<MessageResponse
 																							{...(kind === "chat" ? { components: chatMdComponents } : {})}
 																						>

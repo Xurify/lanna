@@ -13,7 +13,7 @@ const VERIFY = path.join(ROOT, "scripts", "verify-data.mjs");
 const has = (command: string) => spawnSync("sh", ["-c", `command -v ${command}`]).status === 0;
 const toolsReady = has("bash") && has("flock") && has("git") && has("rsync") && has("tar");
 
-const SCRATCH = fs.mkdtempSync(path.join(os.tmpdir(), "lh-server-scripts-"));
+const SCRATCH = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-server-scripts-"));
 after(() => fs.rmSync(SCRATCH, { recursive: true, force: true }));
 
 let counter = 0;
@@ -158,7 +158,7 @@ describe("backup-data.sh", { skip: !toolsReady }, () => {
 
 	it("exits 4 when the push fails but still keeps the local snapshot", () => {
 		const { home, env } = setup();
-		const result = run(BACKUP, ["backup", "--push-to", "nobody@127.0.0.1:/nonexistent-lh-test"], {
+		const result = run(BACKUP, ["backup", "--push-to", "nobody@127.0.0.1:/nonexistent-lanna-test"], {
 			...env,
 			RSYNC_RSH: "false",
 		});

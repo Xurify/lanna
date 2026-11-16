@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import { pathToFileURL } from "node:url";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-secrets-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-secrets-"));
 process.env.LANNA_DATA_DIR = path.join(TMP, "data");
 process.env.LANNA_AUTH_FILE = path.join(TMP, "auth.json");
 process.env.LANNA_IGNORE_ENV_KEYS = "1";

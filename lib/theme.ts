@@ -5,7 +5,7 @@
  * follow the system, which CSS does with a media query and no script.
  */
 
-export const THEME_COOKIE = "lh-theme";
+export const THEME_COOKIE = "lanna-theme";
 export type ThemeChoice = "system" | "day" | "night";
 
 export function themeFromCookie(value: string | undefined): ThemeChoice {
@@ -18,7 +18,7 @@ export function readThemeChoice(): ThemeChoice {
 		const m = document.cookie.match(new RegExp(`(?:^|; )${THEME_COOKIE}=([^;]*)`));
 		const fromCookie = themeFromCookie(m?.[1]);
 		if (fromCookie !== "system") return fromCookie;
-		const legacy = localStorage.getItem("lh:theme");
+		const legacy = localStorage.getItem("lanna:theme");
 		return legacy === "day" || legacy === "night" ? legacy : "system";
 	} catch {
 		return "system";
@@ -34,7 +34,7 @@ export function applyTheme(choice: ThemeChoice, persist = true): void {
 				choice === "system"
 					? `${THEME_COOKIE}=; path=/; max-age=0; samesite=lax`
 					: `${THEME_COOKIE}=${choice}; path=/; max-age=31536000; samesite=lax`;
-			localStorage.removeItem("lh:theme");
+			localStorage.removeItem("lanna:theme");
 		} catch {
 			// cookies blocked: the choice still applies for this page view
 		}
@@ -43,5 +43,5 @@ export function applyTheme(choice: ThemeChoice, persist = true): void {
 	root.classList.toggle("dark", night);
 	if (choice === "system") root.removeAttribute("data-theme");
 	else root.dataset.theme = choice;
-	window.lh?.setTheme?.(night);
+	window.lanna?.setTheme?.(night);
 }

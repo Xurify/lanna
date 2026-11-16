@@ -43,7 +43,7 @@ One geometry, kept in step by hand:
 - `build/mark.svg`: the mark alone, in the app icon's colors. Source for the home-screen icons (`node scripts/make-pwa-icons.mjs` writes `public/icons/*` and `app/apple-icon.png`).
 - `build/icon-flat.svg`: the squircle app icon. Source for `build/icon.ico`, `build/icon.png` and `build/icon.icns` (`node scripts/make-icons.mjs`).
 - `app/icon.svg`: the browser tab icon.
-- `components/lh-mark.tsx`: the sidebar mark. The cursor is `currentColor` and the line is `var(--q-teal)`, so it follows the theme. Its viewBox is cropped to the drawing.
+- `components/lanna-mark.tsx`: the sidebar mark. The cursor is `currentColor` and the line is `var(--q-teal)`, so it follows the theme. Its viewBox is cropped to the drawing.
 - `build/icon.icon`: the Icon Composer document for macOS 26 (layers `cursor.svg` and `line.svg` on an ink fill).
 
 ### Don't
@@ -54,4 +54,4 @@ One geometry, kept in step by hand:
 
 ## Name
 
-The app is called **Lanna**: short, easy to say in every language it teaches, and not built from the "Lang" prefix that many language products use. It starts with an L, so the mark (the cursor) stays. It was called LangHarness until 0.1.0; the desktop app moves the old LangHarness data folder to the Lanna one on its first start.
+The app is called **Lanna**: short, easy to say in every language it teaches, and not built from the "Lang" prefix that many language products use. It starts with an L, so the mark (the cursor) stays. It was called LangHarness until 0.1.0.

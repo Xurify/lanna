@@ -58,7 +58,7 @@ export function formatProbeError(error, depth = 0) {
 }
 
 export function verifyDemoRuntime(standalone, runtime = process.execPath, browser = false) {
-	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-demo-runtime-"));
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-demo-runtime-"));
 	try {
 		fs.writeFileSync(path.join(home, "auth.json"), "{}\n", { mode: 0o600 });
 		const result = spawnSync(

@@ -16,7 +16,7 @@ import type { Mixup, MixupRecord } from "../src/core/mixups.ts";
 import { PAIRS } from "../src/core/pairs.ts";
 import { chooseCatch, type CatchLexicon, type CatchTarget } from "../src/core/catch-pair.ts";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-catch-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-catch-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

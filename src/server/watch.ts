@@ -487,7 +487,7 @@ async function captionsViaYtDlp(
 ): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin) return null;
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-captions-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-captions-"));
 	try {
 		const subLangs = langs.map((lang) => `${lang},${lang}-orig,${lang}.*`).join(",");
 		const { stdout } = await run(
@@ -791,7 +791,7 @@ async function captionsViaAudioTranscription(
 ): Promise<FetchedCaptions | null> {
 	const bin = ytDlpPath();
 	if (!bin || !(await canTranscribeAudio())) return null;
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-audio-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-audio-"));
 	try {
 		const { stdout } = await run(
 			bin,

@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-path-ids-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-path-ids-"));
 process.env.LANNA_DATA_DIR = path.join(TMP, "data");
 const REPO_SHEETS = path.join(TMP, "repo-sheets");
 process.env.LANNA_REPO_CHEATSHEETS_DIR = REPO_SHEETS;

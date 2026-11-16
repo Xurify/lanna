@@ -165,7 +165,7 @@ export function DraftShell({
 			{/* Window-drag strip — deliberately FIRST in the DOM (the mask
 			    law: no-drag subtraction resolves by DOM order, so every
 			    carved control later in the tree subtracts correctly). */}
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1">
 					<div className="flex min-h-0 w-full flex-1 flex-col" data-testid="draft-surface">

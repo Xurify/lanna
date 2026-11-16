@@ -40,7 +40,7 @@ interface AuthBoot {
 	/** Vars we copied from the file into process.env: deletable. */
 	fillGap: Set<string>;
 }
-const BOOT_KEY = Symbol.for("lh.authBoot");
+const BOOT_KEY = Symbol.for("lanna.authBoot");
 
 function boot(): AuthBoot {
 	const g = globalThis as Record<symbol, AuthBoot | undefined>;

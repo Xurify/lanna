@@ -17,14 +17,14 @@
 
 import type { PlanBlockData, PlanTree } from "./contracts.ts";
 import { derivePlanStatusesLh } from "./contracts.ts";
-import type { LhMessage } from "./native-messages.ts";
+import type { LannaMessage } from "./native-messages.ts";
 import { newPlanBlockMessage } from "./native-messages.ts";
 import type { ToolResultMessage } from "@earendil-works/pi-ai";
 /** The snapshot payload (unchanged since wave 4): statuses derived AT
  *  EMISSION time from the transcript — the block never re-derives. Wave D:
  *  the derivation reads the NATIVE transcript (quiz CALLS only — results
  *  feed nothing, contracts/plan.ts derivePlanStatusesLh). */
-function snapshot(tree: PlanTree, messages: readonly LhMessage[]): PlanBlockData {
+function snapshot(tree: PlanTree, messages: readonly LannaMessage[]): PlanBlockData {
 	const statuses = derivePlanStatusesLh(tree, messages);
 	return {
 		kind: "full",
@@ -41,7 +41,7 @@ function snapshot(tree: PlanTree, messages: readonly LhMessage[]): PlanBlockData
 
 /** The record's plan-block markers, keyed by the plan_init call they
  *  present — the idempotency set for emission. */
-function emittedPlanBlockCalls(messages: readonly LhMessage[]): Set<string> {
+function emittedPlanBlockCalls(messages: readonly LannaMessage[]): Set<string> {
 	const out = new Set<string>();
 	for (const m of messages) {
 		if ((m as { role?: string }).role !== "custom") continue;
@@ -63,11 +63,11 @@ function emittedPlanBlockCalls(messages: readonly LhMessage[]): Set<string> {
  *  derivation reads.
  */
 export function planBlocksFor(
-	record: readonly LhMessage[],
-	newMessages: readonly LhMessage[],
+	record: readonly LannaMessage[],
+	newMessages: readonly LannaMessage[],
 	tree: PlanTree | null | undefined,
-	transcript: readonly LhMessage[],
-): LhMessage[] {
+	transcript: readonly LannaMessage[],
+): LannaMessage[] {
 	if (!tree || tree.nodes.length === 0) return [];
 	const emitted = emittedPlanBlockCalls(record);
 	let last: { toolCallId: string } | null = null;

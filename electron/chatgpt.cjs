@@ -187,7 +187,7 @@ function createChatGPT({
 	const backgroundAllowed = () => state?.allowBackgroundUse !== false && backgroundIntent?.enabled !== false;
 	const notify = (invalidate = "none") => {
 		revision++;
-		onChange({ channel: "lh:chatgpt", kind: "state", stamp: stamp(), status: snapshot(), invalidate });
+		onChange({ channel: "lanna:chatgpt", kind: "state", stamp: stamp(), status: snapshot(), invalidate });
 	};
 	function stop(backgroundOnly = false) {
 		if (backgroundOnly) {

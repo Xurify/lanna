@@ -6,11 +6,11 @@ import { spawnSync } from "node:child_process";
 import { Agent } from "@earendil-works/pi-agent-core";
 import { after, afterEach, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
-import { toLlmMessages, type LhMessage } from "../src/core/native-messages.ts";
+import { toLlmMessages, type LannaMessage } from "../src/core/native-messages.ts";
 import { buildSubagentSteer, type JobKind, type SteerMessage } from "../src/core/contracts.ts";
 
 // Install isolation before importing any storage/configuration composition.
-const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lh-job-delivery-"));
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-job-delivery-"));
 process.env.LANNA_DATA_DIR = path.join(directory, "data");
 process.env.LANNA_AUTH_FILE = path.join(directory, "auth.json");
 fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
@@ -41,7 +41,7 @@ const question = {
 	provider: "faux",
 	model: "faux",
 	timestamp: 1,
-} as unknown as LhMessage;
+} as unknown as LannaMessage;
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(predicate: () => boolean): Promise<void> {
 	const end = Date.now() + 8000;
@@ -80,7 +80,7 @@ function agent() {
 		>[1],
 	};
 }
-function persist(chatId: string, steers: readonly LhMessage[]): void {
+function persist(chatId: string, steers: readonly LannaMessage[]): void {
 	stores.chatStore.saveMessages(chatId, [...stores.chatStore.getChat(chatId)!.messages, ...steers]);
 	noteSteersDurable(chatId, steers);
 }
@@ -365,8 +365,8 @@ test("a racing foreground settlement cannot release an outstanding staged wake",
 		assert(beginTurn(id));
 		registerLiveAgent(id, wake, false, new Set(input.steers.map((message) => message.id)));
 		await wake.continue();
-		nativeCopies = wake.state.messages.filter((message) => (message as LhMessage).id === steer.id).length;
-		persist(id, wake.state.messages.filter((message) => message.role !== "system") as LhMessage[]);
+		nativeCopies = wake.state.messages.filter((message) => (message as LannaMessage).id === steer.id).length;
+		persist(id, wake.state.messages.filter((message) => message.role !== "system") as LannaMessage[]);
 		unregisterLiveAgent(id);
 		endTurn(id);
 		settleSteers(id, stores.chatStore.getChat(id)!.messages, false, wake);

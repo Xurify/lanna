@@ -5,7 +5,7 @@
  * on the first frame.
  */
 
-export const CLIMB_VIEW_COOKIE = "lh-climb-view";
+export const CLIMB_VIEW_COOKIE = "lanna-climb-view";
 export type ClimbView = "chapters" | "mountain";
 
 export const CLIMB_VIEWS: readonly { id: ClimbView; label: string }[] = [

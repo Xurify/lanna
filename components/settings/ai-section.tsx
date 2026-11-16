@@ -259,7 +259,7 @@ function MenuTrigger({
 }
 
 // The dropdowns mount the shared MenuShell, anchored to the open trigger by testid.
-// data-lh-menu marks them as exempt from the outside-click handler.
+// data-lanna-menu marks them as exempt from the outside-click handler.
 
 export function AiSection({
 	agent,
@@ -375,7 +375,7 @@ export function AiSection({
 		const onPointerDown = (e: PointerEvent) => {
 			const target = e.target as Node;
 			if (menuAnchorRef.current?.contains(target)) return;
-			if (target instanceof Element && target.closest("[data-lh-menu]")) return;
+			if (target instanceof Element && target.closest("[data-lanna-menu]")) return;
 			if (target instanceof Element && target.closest('[role="dialog"]')) {
 				setOpenMenu(null);
 			}

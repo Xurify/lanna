@@ -217,13 +217,13 @@ describe("host and proxy helpers", () => {
 	it("reads one cookie from a Cookie header", () => {
 		const headers = new Headers({ cookie: `theme=dark; ${DEVICE_COOKIE}=abc_DEF-123; other=x` });
 		assert.equal(readCookie(headers, DEVICE_COOKIE), "abc_DEF-123");
-		assert.equal(readCookie(new Headers({ cookie: "lh_device_old=1" }), DEVICE_COOKIE), null);
+		assert.equal(readCookie(new Headers({ cookie: "lanna_device_old=1" }), DEVICE_COOKIE), null);
 		assert.equal(readCookie(new Headers(), DEVICE_COOKIE), null);
 	});
 
 	it("writes the device cookie HttpOnly and Lax, and Secure only over HTTPS", () => {
 		const plain = deviceCookie("tok", false);
-		assert.match(plain, /^lh_device=tok; /);
+		assert.match(plain, /^lanna_device=tok; /);
 		assert.match(plain, /HttpOnly/);
 		assert.match(plain, /SameSite=Lax/);
 		assert.match(plain, /Max-Age=15552000/);

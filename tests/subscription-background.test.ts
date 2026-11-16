@@ -9,7 +9,7 @@ import { piModels } from "../src/agent/models.ts";
 import { toLlmMessages } from "../src/core/native-messages.ts";
 import { buildSubagentSteer } from "../src/core/contracts.ts";
 import { NATIVE_SUBSCRIPTIONS } from "../src/core/contracts/subscriptions.ts";
-const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lh-subscription-background-"));
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-subscription-background-"));
 process.env.LANNA_DATA_DIR = path.join(directory, "data");
 process.env.LANNA_AUTH_FILE = path.join(directory, "auth.json");
 fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
@@ -33,7 +33,7 @@ let revision = 0;
 function connection(providerId: string, background: boolean) {
 	revision++;
 	(process.emit as (event: string, value: unknown) => boolean)("message", {
-		channel: "lh:subscriptions",
+		channel: "lanna:subscriptions",
 		op: "changed",
 		snapshot: {
 			statuses: NATIVE_SUBSCRIPTIONS.map((p) => ({

@@ -6,7 +6,7 @@ import { after, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, fauxText, fauxToolCall } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-fast-chat-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-fast-chat-"));
 const originalEnv = process.env;
 const originalFetch = globalThis.fetch;
 process.env = {

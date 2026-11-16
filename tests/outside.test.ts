@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-outside-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-outside-"));
 process.env.LANNA_DATA_DIR = TMP;
 process.env.LANNA_PROFILE = "slovak";
 

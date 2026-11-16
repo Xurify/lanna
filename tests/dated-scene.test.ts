@@ -19,7 +19,7 @@ import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const REAL_PROFILE_DATA = path.resolve("C:/Users/Stream/Projects/langharness/data").toLowerCase();
-const OWN_DIR = process.env.LANNA_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lh-dated-"));
+const OWN_DIR = process.env.LANNA_DATA_DIR ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), "lanna-dated-"));
 if (OWN_DIR) process.env.LANNA_DATA_DIR = OWN_DIR;
 if (path.resolve(process.env.LANNA_DATA_DIR!).toLowerCase().startsWith(REAL_PROFILE_DATA))
 	throw new Error("Tests never run on the real data folder (E6).");

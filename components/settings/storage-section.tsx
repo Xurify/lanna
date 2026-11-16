@@ -29,7 +29,7 @@ function savedHint(id: StorageArea["id"], language: string | null): string {
 
 export function StorageSection() {
 	// Read on the first render, so the cache row never flashes the browser label.
-	const [desktop] = useState(() => typeof window !== "undefined" && Boolean(window.lh?.storage));
+	const [desktop] = useState(() => typeof window !== "undefined" && Boolean(window.lanna?.storage));
 	const [report, setReport] = useState<StorageReport | null>(null);
 	const [loadFailed, setLoadFailed] = useState(false);
 	const [cacheBytes, setCacheBytes] = useState<number | null>(null);
@@ -39,7 +39,7 @@ export function StorageSection() {
 
 	useEffect(() => {
 		let live = true;
-		const storage = window.lh?.storage;
+		const storage = window.lanna?.storage;
 		if (storage) {
 			void storage.cacheSize().then(
 				(bytes) => {
@@ -64,7 +64,7 @@ export function StorageSection() {
 	}, []);
 
 	const clear = async () => {
-		const storage = window.lh?.storage;
+		const storage = window.lanna?.storage;
 		if (!storage || busy) return;
 		setBusy(true);
 		setNotice(null);
@@ -90,7 +90,7 @@ export function StorageSection() {
 					className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-1"
 				>
 					<span className="min-w-0 flex-1">
-						<span className="block font-prose text-(length:--lh-prose-size)">
+						<span className="block font-prose text-(length:--lanna-prose-size)">
 							{desktop ? "App cache" : "Browser cache"}
 						</span>
 						<span className="block text-xs text-muted-foreground">

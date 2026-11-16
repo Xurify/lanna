@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { after, test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-miss-why-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-miss-why-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 

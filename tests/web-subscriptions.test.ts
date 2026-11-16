@@ -8,7 +8,7 @@ import { createModels, type OAuthCredential, type ProviderAuthInteraction } from
 import { githubCopilotProvider } from "@earendil-works/pi-ai/providers/github-copilot";
 import { xaiProvider } from "@earendil-works/pi-ai/providers/xai";
 
-const directory = await fs.mkdtemp(path.join(os.tmpdir(), "lh-web-sub-"));
+const directory = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-web-sub-"));
 process.env.LANNA_AUTH_FILE = path.join(directory, "auth.json");
 process.env.LANNA_DATA_DIR = path.join(directory, "data");
 delete process.env.LANNA_DESKTOP_SERVER;
@@ -213,7 +213,7 @@ function fakeSDK(login: (id: string, interaction: ProviderAuthInteraction) => Pr
 	return { createModels, githubCopilotProvider: () => factory("github-copilot"), xaiProvider: () => factory("xai") };
 }
 test("device browser actions preserve complete URLs privately, are origin-bound, one-use and cancellation-bound", async () => {
-	const scratch = await fs.mkdtemp(path.join(os.tmpdir(), "lh-web-action-"));
+	const scratch = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-web-action-"));
 	let complete!: (credential: OAuthCredential) => void;
 	const pending = new Promise<OAuthCredential>((resolve) => {
 		complete = resolve;
@@ -269,7 +269,7 @@ test("device browser actions preserve complete URLs privately, are origin-bound,
 });
 
 test("web ChatGPT login supplies only an opaque browser action; cancel/replacement invalidates earlier launch", async () => {
-	const scratch = await fs.mkdtemp(path.join(os.tmpdir(), "lh-web-chat-action-"));
+	const scratch = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-web-chat-action-"));
 	const owner = createWebSubscriptionOwner({ directory: scratch, sdk: fakeSDK(async (id) => credentials(id)) });
 	try {
 		const first = await owner.control("chatgpt", { op: "login" }, "http://localhost:3000");

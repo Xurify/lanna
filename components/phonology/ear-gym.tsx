@@ -353,7 +353,7 @@ export function EarGym({
 			</TaskBar>
 
 			<div className="flex flex-1 flex-col overflow-y-auto" data-testid="ear-gym">
-				<div key={`${round}:${index}`} className={cn(COLUMN, "lh-rise shrink-0 pt-8 sm:pt-12")}>
+				<div key={`${round}:${index}`} className={cn(COLUMN, "lanna-rise shrink-0 pt-8 sm:pt-12")}>
 					<PracticeCard
 						icon="ear"
 						title="Ear gym"
@@ -374,7 +374,7 @@ export function EarGym({
 								type="button"
 								onClick={() => replay()}
 								aria-label="Play the word"
-								className="lh-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
+								className="lanna-press flex size-14 shrink-0 items-center justify-center rounded-xl bg-teal text-sun-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(10_84_82/0.35)] hover:bg-teal-2"
 								data-testid="ear-gym-play"
 								data-playing={playing?.hidden ? "" : undefined}
 							>
@@ -393,7 +393,7 @@ export function EarGym({
 								onClick={() => replay(true)}
 								aria-label="Play slowly"
 								title="Play slowly"
-								className="lh-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
+								className="lanna-press flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-teal-wash px-3 text-[13px] font-[550] text-teal-2 hover:bg-well-2 sm:gap-2 sm:px-3.5"
 								data-testid="ear-gym-slow"
 							>
 								<SnailIcon className="size-5" strokeWidth={1.6} />
@@ -429,7 +429,7 @@ export function EarGym({
 							data-testid="ear-gym-cue"
 						>
 							{answered ? (
-								<p className="lh-rise font-prose text-[15px] leading-relaxed text-ink-2">{trial.cue}</p>
+								<p className="lanna-rise font-prose text-[15px] leading-relaxed text-ink-2">{trial.cue}</p>
 							) : (
 								<p className="font-ui text-[13px] leading-relaxed text-ink-3">
 									The underlined letters differ. After you pick, tap a word to hear it.
@@ -582,7 +582,7 @@ function WordTile({
 			data-testid={`ear-gym-option-${n}`}
 			data-state={state}
 			className={cn(
-				"lh-press relative flex items-center gap-4 rounded-xl bg-card p-4 text-start shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)] sm:min-h-[9.25rem] sm:flex-col sm:items-start sm:justify-between sm:gap-5 sm:p-5",
+				"lanna-press relative flex items-center gap-4 rounded-xl bg-card p-4 text-start shadow-[0_0_0_1px_var(--q-line-2),0_1px_2px_rgb(var(--q-shadow-rgb)/0.05)] sm:min-h-[9.25rem] sm:flex-col sm:items-start sm:justify-between sm:gap-5 sm:p-5",
 				state === "idle" && "hover:bg-well",
 				state === "right" && "bg-teal-wash shadow-[inset_0_0_0_1.5px_var(--q-teal)]",
 				state === "wrong" && "bg-miss-soft shadow-[inset_0_0_0_1.5px_var(--q-miss)]",

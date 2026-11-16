@@ -273,7 +273,7 @@ export function Today({
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
 				{/* Phone and tablet: the score is a top bar, since the rail is not there. */}
 				<header
-					className="lh-drag lh-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden"
+					className="lanna-drag lanna-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden"
 					data-testid="today-topbar"
 				>
 					<SidebarToggle />
@@ -369,7 +369,7 @@ export function Today({
 											onClick={() => setSplitting((v) => !v)}
 											aria-expanded={splitting}
 											data-testid="day-split-open"
-											className="lh-press order-3 -my-1 inline-flex h-7 items-center rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground pointer-coarse:h-11"
+											className="lanna-press order-3 -my-1 inline-flex h-7 items-center rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground pointer-coarse:h-11"
 										>
 											Split the day
 										</button>
@@ -463,7 +463,7 @@ export function Today({
 										<Link
 											href="/log"
 											data-testid="open-log"
-											className="lh-press order-3 -my-1 inline-flex h-7 items-center gap-1.5 rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground"
+											className="lanna-press order-3 -my-1 inline-flex h-7 items-center gap-1.5 rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground"
 										>
 											<HistoryIcon className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
 											Open the log

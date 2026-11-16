@@ -34,7 +34,7 @@ Off (the default): the rules the app always had, plus two refusals. A request ca
 
 On: this computer's own requests come first. A request with no proxy marker (`Forwarded`, `X-Real-IP`, a Tailscale identity header, or a tailnet name in `Host` or `x-forwarded-host`) that names only loopback (`localhost`, `127.0.0.1`, `[::1]`) gets the same answer as with the switch off: pages pass, and the API passes the desktop check. So this computer's browser never asks for a code. Any other request came through a proxy or names a tailnet host. Then every name must be loopback or a `.ts.net` name, and the packaged desktop window (its per-launch secret), a live paired-device session, or a public path passes. Public while on: `/pair`, its one `POST`, and the static assets and icons (the matcher skips them). Everything else goes to pairing: a page gets a redirect, an API call gets `401 pairing_required`.
 
-Trust comes from the device's own cookie (`lh_device`, HttpOnly, SameSite=Lax, Secure when HTTPS), never from a header. Tailscale identity headers are not used to grant access: they are missing for tagged devices and for Funnel, so a missing header must never mean "trusted".
+Trust comes from the device's own cookie (`lanna_device`, HttpOnly, SameSite=Lax, Secure when HTTPS), never from a header. Tailscale identity headers are not used to grant access: they are missing for tagged devices and for Funnel, so a missing header must never mean "trusted".
 
 ## Threats and what stops them
 
