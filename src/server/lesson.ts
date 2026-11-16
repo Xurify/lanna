@@ -541,7 +541,16 @@ function dayOfYearOf(key: string): number {
 	return Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 86_400_000);
 }
 
-export function progressSummary(tz?: number, now = new Date()): ProgressSummary {
+/** The experiment's files follow the logs; a failure there never blocks a page. */
+export function syncExperimentQuietly(now: Date): void {
+	try {
+		syncDailyExperimentData(now);
+	} catch {
+		// the next page view tries again
+	}
+}
+
+export function progressSummary(tz?: number, now = new Date(), opts: { syncExperiment?: boolean } = {}): ProgressSummary {
 	const p = progressStore.read();
 	const key = today(tz, now);
 	const active = new Set(Object.entries(p.days).filter(([, d]) => d.xp > 0 || (d.talks ?? 0) + (d.stories ?? 0) + (d.tutors ?? 0) > 0).map(([k]) => k));
@@ -665,11 +674,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 	const xpPerHour = timedMinutes >= 60 ? Math.round((timed.reduce((n, d) => n + (d.xp ?? 0), 0) / timedMinutes) * 60) : null;
 	const stamps = syncStamps(p, curriculum, evidence, key);
 	if (stamps.minted.length) progressStore.write(p);
-	try {
-		syncDailyExperimentData(now);
-	} catch {
-		// Non-blocking sync for experiment
-	}
+	if (opts.syncExperiment !== false) syncExperimentQuietly(now);
 	return {
 		xp: p.xp,
 		level: xpLevel(p.xp),

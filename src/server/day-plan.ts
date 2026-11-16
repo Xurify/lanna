@@ -12,18 +12,19 @@
 import { activeProfile, shownProfiles, withProfile } from "../../config.ts";
 import type { DayLanguage, LanguageDay } from "../core/day-plan.ts";
 import { profileLanguage } from "./active-language.ts";
-import { progressSummary, setGoal } from "./lesson.ts";
+import { progressSummary, setGoal, syncExperimentQuietly } from "./lesson.ts";
 
 export function languageDay(tz?: number, now = new Date()): LanguageDay {
 	const running = activeProfile();
 	const languages: DayLanguage[] = shownProfiles().flatMap((id) => {
 		const info = profileLanguage(id);
 		if (!info) return [];
-		const s = withProfile(id, () => progressSummary(tz, now));
+		const s = withProfile(id, () => progressSummary(tz, now, { syncExperiment: false }));
 		const setUp = Boolean(s.goal.onboardedAt);
 		return [{ id, english: info.english, endonym: info.endonym, running: id === running, minutes: s.goal.minutesPerDay, practiced: s.todayMinutes, setUp, tasks: setUp ? s.plan.tasks : [] }];
 	});
 	languages.sort((a, b) => b.minutes - a.minutes || a.english.localeCompare(b.english));
+	syncExperimentQuietly(now);
 	return {
 		minutes: languages.reduce((n, l) => n + l.minutes, 0),
 		practiced: languages.reduce((n, l) => n + l.practiced, 0),
