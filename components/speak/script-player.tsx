@@ -48,7 +48,7 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 			<TaskFrame>
 				<div className={cn(COLUMN, "my-auto py-10")}>
 					<p className="font-prose text-base text-foreground">This scene has no script yet.</p>
-					<Link href="/speak" className={cn(PRIMARY, "mt-6 self-start")}>
+					<Link href="/speak/tutor" className={cn(PRIMARY, "mt-6 self-start")}>
 						Other scenes
 					</Link>
 				</div>
@@ -122,7 +122,7 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 				}
 				if (e.key !== "Enter" || endEnterBlocked(e)) return;
 				e.preventDefault();
-				router.push(`/speak?scene=${scene}`);
+				router.push(`/speak/tutor?scene=${scene}`);
 				return;
 			}
 			const n = Number(e.key);
@@ -140,10 +140,10 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 					hint={<EnterHint>to say it live</EnterHint>}
 					actions={
 						<>
-							<Link href="/speak" className={SECONDARY}>
+							<Link href="/speak/tutor" className={SECONDARY}>
 								Other scenes
 							</Link>
-							<Link href={`/speak?scene=${scene}`} className={PRIMARY} data-testid="script-live">
+							<Link href={`/speak/tutor?scene=${scene}`} className={PRIMARY} data-testid="script-live">
 								<MicIcon className="size-4" />
 								Say it live
 							</Link>
@@ -171,7 +171,7 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 				label={`line ${turnIndex + 1} of ${total}`}
 				count={`${turnIndex + 1}/${total}`}
 				ink="bg-teal"
-				href="/speak"
+				href="/speak/tutor"
 			/>
 
 			<div ref={listRef} className="flex flex-1 flex-col overflow-y-auto pb-6 pt-4">

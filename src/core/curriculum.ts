@@ -1449,7 +1449,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 			done: speakDone,
 			unit: scene,
 			via: "speak",
-			href: `/speak?scene=${scene}`,
+			href: `/speak/tutor?scene=${scene}`,
 		});
 	} else {
 		tasks.push({
@@ -1459,7 +1459,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 			minutes: TASK_MINUTES.speak,
 			done: speakDone,
 			via: "speak",
-			href: "/speak",
+			href: "/speak/tutor",
 		});
 	}
 

@@ -1,8 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { Arrow, Box, Curve, Dot, Figure, Line, Loop, Patch, Sheet } from "@/components/lesson/ink";
 import type { Point } from "@/components/lesson/ink-paths";
-import { cn } from "@/lib/utils";
 
 const GROUND = 104;
 
@@ -217,68 +215,41 @@ function IslandSketch() {
 
 export type SpeakWayId = "tutor" | "live" | "solo" | "islands";
 
-const WAYS: Array<{ id: SpeakWayId; href: string; title: string; line: string; sketch: () => ReactNode }> = [
+export interface SpeakWay {
+	id: SpeakWayId;
+	href: string;
+	title: string;
+	line: string;
+	Sketch: () => ReactNode;
+}
+
+export const SPEAK_WAYS: SpeakWay[] = [
 	{
 		id: "tutor",
-		href: "/speak",
+		href: "/speak/tutor",
 		title: "With a tutor",
-		line: "The tutor plays the other person and answers out loud, a turn at a time.",
-		sketch: TutorSketch,
+		line: "The tutor plays the other person in a scene and answers you, one turn at a time.",
+		Sketch: TutorSketch,
 	},
 	{
 		id: "live",
 		href: "/speak/live",
-		title: "Live",
-		line: "A real call: you both speak at once, and either of you can interrupt.",
-		sketch: LiveSketch,
+		title: "Live call",
+		line: "A real conversation: you both speak freely, and either of you can interrupt.",
+		Sketch: LiveSketch,
 	},
 	{
 		id: "solo",
 		href: "/speak/self-talk",
 		title: "On your own",
-		line: "Talk alone for a few minutes, then hear it back with what to fix.",
-		sketch: SoloSketch,
+		line: "Talk about a topic for a few minutes, then hear it back with what to fix.",
+		Sketch: SoloSketch,
 	},
 	{
 		id: "islands",
 		href: "/speak/islands",
 		title: "Language islands",
-		line: "One topic prepared well enough to hold a whole conversation.",
-		sketch: IslandSketch,
+		line: "Prepare one topic well enough to hold a whole conversation about it.",
+		Sketch: IslandSketch,
 	},
 ];
-
-export function SpeakWays({ current }: { current: SpeakWayId }) {
-	return (
-		<section className="mt-6" aria-label="Ways to speak" data-testid="speak-ways">
-			<ul className="grid grid-cols-2 gap-x-4 gap-y-5 @2xl:grid-cols-4 @2xl:gap-x-6">
-				{WAYS.map((way) => {
-					const Sketch = way.sketch;
-					const here = way.id === current;
-					return (
-						<li key={way.id}>
-							<Link
-								href={way.href}
-								aria-current={here ? "page" : undefined}
-								data-testid={`speak-way-${way.id}`}
-								className={cn(
-									"group -mx-1 block rounded-xl px-1 pb-1.5 transition-colors",
-									"hover:bg-well/60 focus-visible:bg-well/60 focus-visible:outline-none",
-								)}
-							>
-								<span className="block text-ink-2 transition-colors group-hover:text-foreground">
-									<Sketch />
-								</span>
-								<span className="mt-0.5 flex items-baseline gap-1.5">
-									<span className="font-ui text-[14px] font-[600] text-foreground">{way.title}</span>
-									{here && <span className="font-ui text-[11px] text-teal-2">Here</span>}
-								</span>
-								<span className="mt-0.5 block font-prose text-[12px] leading-snug text-ink-3">{way.line}</span>
-							</Link>
-						</li>
-					);
-				})}
-			</ul>
-		</section>
-	);
-}

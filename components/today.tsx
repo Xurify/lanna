@@ -199,7 +199,8 @@ export function Today({
 		if (task.via === "tutor" && task.unit) {
 			const u = (s?.curriculum.chapters ?? []).flatMap((c) => c.units).find((x) => x.id === task.unit);
 			if (u) tutorUnit(u);
-		} else if (task.via === "speak") router.push(task.href ?? (task.unit ? `/speak?scene=${task.unit}` : "/speak"));
+		} else if (task.via === "speak")
+			router.push(task.href ?? (task.unit ? `/speak/tutor?scene=${task.unit}` : "/speak"));
 	};
 	const open = (t: PlanTask) => {
 		if (t.href) router.push(t.href);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { SpeakHeader } from "@/components/speak/speak-header";
 import { LoaderCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IslandDetail } from "@/components/speak/islands/island-detail";
@@ -70,15 +70,7 @@ export function IslandsPage({
 	}
 
 	return (
-		<div className="mx-auto max-w-3xl px-5 pt-8 pb-24">
-			<Link
-				href="/speak"
-				className="font-ui text-[13px] text-ink-3 hover:text-ink-2"
-				data-testid="islands-back-to-speak"
-			>
-				Speak
-			</Link>
-
+		<div className="@container mx-auto max-w-3xl px-5 pt-[5vh] pb-24">
 			{selected ? (
 				<IslandDetail
 					summary={selected}
@@ -89,11 +81,10 @@ export function IslandsPage({
 				/>
 			) : (
 				<>
-					<h1 className="mt-4 font-ui text-[32px] font-[600] tracking-[-0.33px] text-foreground">Language islands</h1>
-					<p className="mt-2 max-w-prose font-prose text-[15px] leading-relaxed text-ink-2">
-						One topic you prepare well enough to talk about: about twenty chunks, said out loud until the talk holds
-						itself. Islands that share words link to each other, so a conversation can move from one to the next.
-					</p>
+					<SpeakHeader
+						title="Language islands"
+						lead="One topic, about twenty chunks, said out loud until you can hold a conversation about it."
+					/>
 
 					{data.due.length > 0 && (
 						<section className="mt-8" aria-labelledby="due-heading">
@@ -212,9 +203,9 @@ export function IslandsPage({
 						</p>
 					)}
 
-					<p className="mt-10 max-w-2xl font-ui text-[12px] text-ink-3">
-						The vault is checked against the dictionary word by word: a chunk it cannot confirm is left out rather than
-						guessed. Rehearsal time counts toward Speaking.
+					<p className="mt-12 max-w-2xl font-ui text-xs text-ink-3">
+						Islands that share words link to each other. Each chunk is checked against the dictionary; one it cannot
+						confirm is left out, not guessed. Rehearsal time counts toward Speaking.
 					</p>
 				</>
 			)}

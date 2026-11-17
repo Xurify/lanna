@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { SpeakHeader } from "@/components/speak/speak-header";
 import { LoaderCircleIcon, MicIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LiveCall, type LivePhase } from "@/components/speak/live-session";
@@ -167,15 +167,12 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 	if (phase === "ready" && (start || target)) {
 		const title = start?.title ?? target?.title ?? "";
 		return (
-			<div className="mx-auto max-w-3xl px-5 pt-8 pb-24">
-				<Link href="/speak/live" className="font-ui text-[13px] text-ink-3 hover:text-ink-2">
-					Live talk
-				</Link>
-				<h1 className="mt-3 font-ui text-[30px] font-[600] tracking-[-0.02em] text-foreground">{title}</h1>
-				<p className="mt-2 max-w-prose font-prose text-[15px] leading-relaxed text-ink-2">
-					A live call: you speak, the tutor speaks, and either of you can interrupt. It asks about the topic and answers
-					what you actually said.
-				</p>
+			<div className="mx-auto max-w-3xl px-5 pt-[5vh] pb-24">
+				<SpeakHeader
+					title={title}
+					back={{ href: "/speak/live", label: "Live call" }}
+					lead="The tutor asks about the topic and answers what you actually said. Either of you can interrupt."
+				/>
 				{enabled.length > 1 ? (
 					<div className="mt-4 flex flex-wrap items-center gap-2" data-testid="live-engine-picker">
 						<span className="font-ui text-[12px] text-ink-3">Voice</span>
@@ -224,16 +221,11 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 	}
 
 	return (
-		<div className="mx-auto max-w-3xl px-5 pt-8 pb-24">
-			<Link href="/speak" className="font-ui text-[13px] text-ink-3 hover:text-ink-2">
-				Speak
-			</Link>
-			<h1 className="mt-4 font-ui text-[32px] font-[600] tracking-[-0.33px] text-foreground">Live talk</h1>
-			<p className="mt-2 max-w-prose font-prose text-[15px] leading-relaxed text-ink-2">
-				A real conversation, spoken both ways. The tutor hears you as you speak, answers out loud, and waits for you
-				instead of taking turns on a button. End the call and the talk is read back: how much you spoke, how fast you
-				answered, what to repair, and the fillers to reach for next time.
-			</p>
+		<div className="mx-auto max-w-3xl px-5 pt-[5vh] pb-24">
+			<SpeakHeader
+				title="Live call"
+				lead="Talk freely; either of you can interrupt. When you hang up, you see what to repair and the fillers to reach for next time."
+			/>
 
 			{!page.availability.enabled ? (
 				<div className="mt-8 rounded-xl bg-well p-4" data-testid="live-unavailable">

@@ -1,45 +1,30 @@
-import { SpeakPlayer } from "@/components/speak/speak-player";
-import { ScriptPlayer } from "@/components/speak/script-player";
-import { scriptFor } from "@/src/core";
-import { activeLanguage, speakState } from "@/src/server";
+import { redirect } from "next/navigation";
+import { SpeakHome, SPEAK_HOME_VARIANTS, type SpeakHomeVariant } from "@/components/speak/speak-home";
+import { VariantPicker } from "@/components/variant-picker";
+import { liveAvailabilityNow } from "@/src/server";
 
 export const metadata = { title: "Speak" };
 
 export const dynamic = "force-dynamic";
 
-/** Speak: a scene said out loud with the tutor. ?scene=<id> opens that
- *  scene at once (the daily plan's link); without it, the picker. ?mode=typed
- *  opens it with the keyboard on (Today's "Talk in writing"); ?mode=script
- *  walks the scene on its rails first (E13) — no model, graded locally.
- *  The state is read with the page so the scenes are in the first HTML. */
+/** The four ways to speak. Older links that open a scene (`?scene=`, `?mode=`) now live under /speak/tutor. */
 export default async function SpeakPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ scene?: string; mode?: string }>;
+	searchParams: Promise<{ scene?: string; mode?: string; __variant?: string }>;
 }) {
-	const { scene, mode } = await searchParams;
-	const sceneId = scene && /^[a-z]+$/.test(scene) ? scene : null;
-	// Script mode runs its own player and must never auto-start the live
-	// scene (SpeakPlayer starts when sceneId is set). A scene without a
-	// script falls through to the normal player.
-	const language = activeLanguage();
-	const lang = { id: language.id, tag: language.tag };
-	if (mode === "script" && sceneId && scriptFor(sceneId, lang.id)) {
-		return <ScriptPlayer key={`script-${sceneId}`} sceneId={sceneId} langId={lang.id} />;
+	const { scene, mode, __variant } = await searchParams;
+	if (scene || mode) {
+		const forward = new URLSearchParams();
+		if (scene) forward.set("scene", scene);
+		if (mode) forward.set("mode", mode);
+		redirect(`/speak/tutor?${forward.toString()}`);
 	}
-	let state = null;
-	try {
-		state = speakState();
-	} catch {
-		state = null;
-	}
+	const variant = (SPEAK_HOME_VARIANTS.find((v) => v.id === __variant)?.id ?? "gallery") as SpeakHomeVariant;
 	return (
-		<SpeakPlayer
-			key={scene ?? "pick"}
-			initialState={state}
-			sceneId={sceneId}
-			typed={mode === "typed"}
-			sceneLang={lang}
-		/>
+		<>
+			<SpeakHome live={liveAvailabilityNow()} variant={variant} />
+			<VariantPicker groups={[{ label: "Structure", variants: SPEAK_HOME_VARIANTS }]} value={variant} />
+		</>
 	);
 }

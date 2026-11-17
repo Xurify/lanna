@@ -186,7 +186,7 @@ describe("what the app has, for the chat", () => {
 			const href = unitHref({ id: unit.id, kind: unit.kind, scene: unit.scene });
 			if (href) assert.ok(text.includes(`](${href})`), unit.id);
 		}
-		assert.equal(unitHref({ id: "can-order", kind: "goal", scene: "cafe" }), "/speak?scene=cafe");
+		assert.equal(unitHref({ id: "can-order", kind: "goal", scene: "cafe" }), "/speak/tutor?scene=cafe");
 		assert.equal(unitHref({ id: "can-x", kind: "goal" }), null);
 	});
 
@@ -205,7 +205,7 @@ describe("what the app has, for the chat", () => {
 	});
 
 	it("lists scenes, cheatsheets and the latest stories with their links", () => {
-		assert.ok(text.includes("[Kaviareň](/speak?scene=cafe)"));
+		assert.ok(text.includes("[Kaviareň](/speak/tutor?scene=cafe)"));
 		assert.ok(text.includes("[Animals](/words?tab=cheatsheets&sheet=a%20b)"));
 		assert.ok(text.includes("[Story 19](/read?id=s19)"));
 		assert.ok(!text.includes("[Story 7]"), "only the latest stories");

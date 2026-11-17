@@ -467,7 +467,7 @@ export function SpeakPlayer({
 	if (phase === "done" && outcome) {
 		return (
 			<TaskFrame>
-				<EndScreen outcome={outcome} practiceMs={practiceMs} onAgain={() => router.push("/speak")} />
+				<EndScreen outcome={outcome} practiceMs={practiceMs} onAgain={() => router.push("/speak/tutor")} />
 			</TaskFrame>
 		);
 	}
