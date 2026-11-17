@@ -84,7 +84,7 @@ import {
 import { fillStyle } from "@/components/ui/fill";
 import { ChannelLink } from "@/components/watch/channel-link";
 import { useAddToRead } from "@/components/watch/read-import";
-import { Shelf } from "@/components/watch/shelf";
+import { Shelf, type ShelfTab } from "@/components/watch/shelf";
 import { forgetWatchCaches } from "@/components/watch/caches";
 import { StudySections } from "@/components/watch/sections";
 import { GetReady } from "@/components/watch/get-ready";
@@ -133,11 +133,13 @@ export function WatchPlayer({
 	initialVideo,
 	initialUrl,
 	initialDiscover,
+	initialTab,
 }: {
 	initial: WatchState | null;
 	initialVideo?: VideoRecord | null;
 	initialUrl?: string | null;
 	initialDiscover?: DiscoverStateView | null;
+	initialTab?: ShelfTab;
 }) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
@@ -528,6 +530,7 @@ export function WatchPlayer({
 				running={running}
 				starting={starting}
 				discover={discover}
+				initialTab={initialTab}
 				onOpen={open}
 				onPrepare={(url, range) => void prepare(url, false, false, range)}
 				onDelete={(id) => void remove(id)}

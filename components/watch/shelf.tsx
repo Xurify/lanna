@@ -2,13 +2,13 @@
 
 /**
  * The Media shelf (2026-11-07): what the learner sees before a
- * video starts. One shape, the video card, in four places, behind four tabs
- * that stay in reach while the page scrolls:
+ * video starts, behind five tabs that stay in reach while the page scrolls:
  *
  *   For you       the picks from creators and YouTube, by how much each is known
  *   My videos     what is prepared, newest first
  *   Creators      the saved channels and their videos
  *   Your YouTube  the link to the learner's account, or a Takeout export
+ *   Notes         the learner's own notes, each with a linked video (/watch?tab=notes)
  *
  * Above the tabs, always: a link field (paste, Enter) and, when something is
  * ready, the one next step: the newest video not yet watched, or else the best
@@ -37,6 +37,7 @@ import { ChannelLink } from "@/components/watch/channel-link";
 import { CreatorsPanel } from "@/components/watch/creators-panel";
 import { useAddToRead } from "@/components/watch/read-import";
 import { YouTubeSection, type useDiscover } from "@/components/watch/discover";
+import { NotesPanel } from "@/components/watch/notes-panel";
 import { atLevel, PicksPanel } from "@/components/watch/picks-panel";
 import { PreparingContext, usePreparing } from "@/components/watch/preparing";
 import { StretchDialog } from "@/components/watch/stretch-dialog";
@@ -56,7 +57,8 @@ import {
 	type WatchState,
 } from "@/src/core";
 
-type TabId = "picks" | "videos" | "creators" | "youtube";
+export type ShelfTab = "picks" | "videos" | "creators" | "youtube" | "notes";
+type TabId = ShelfTab;
 
 // Survives the shelf unmounting for a video, so "back to the shelf" lands on the tab that was open.
 let lastTab: TabId | null = null;
@@ -72,6 +74,7 @@ export function Shelf({
 	running,
 	starting,
 	discover,
+	initialTab,
 	onOpen,
 	onPrepare,
 	onDelete,
@@ -80,6 +83,7 @@ export function Shelf({
 	running: FeedTask[];
 	starting?: string | null;
 	discover: ReturnType<typeof useDiscover>;
+	initialTab?: ShelfTab;
 	onOpen: (id: string) => void;
 	onPrepare: (url: string, range?: FragmentRange) => void;
 	onDelete: (id: string) => void;
@@ -96,6 +100,7 @@ export function Shelf({
 
 	const [tab, setTabState] = useState<TabId>(
 		() =>
+			initialTab ??
 			lastTab ??
 			(shownPicks > 0
 				? "picks"
@@ -226,6 +231,7 @@ export function Shelf({
 							/>
 						)}
 						{tab === "youtube" && <YouTubeSection d={discover} />}
+						{tab === "notes" && <NotesPanel />}
 					</div>
 				</main>
 				{cutting && (
@@ -496,7 +502,18 @@ const TABS: Array<{ id: TabId; label: string; count?: boolean }> = [
 	{ id: "videos", label: "My videos", count: true },
 	{ id: "creators", label: "Creators", count: true },
 	{ id: "youtube", label: "YouTube" },
+	{ id: "notes", label: "Notes" },
 ];
+
+function revealInRow(tab: HTMLButtonElement | null) {
+	const row = tab?.parentElement;
+	if (!tab || !row) return;
+	const t = tab.getBoundingClientRect();
+	const r = row.getBoundingClientRect();
+	const room = 24;
+	if (t.right > r.right) row.scrollLeft += t.right - r.right + room;
+	else if (t.left < r.left) row.scrollLeft -= r.left - t.left + room;
+}
 
 function Tabs({
 	tab,
@@ -539,6 +556,7 @@ function Tabs({
 					return (
 						<button
 							key={t.id}
+							ref={on ? revealInRow : undefined}
 							type="button"
 							role="tab"
 							id={`watch-tab-${t.id}`}
