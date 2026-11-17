@@ -269,7 +269,7 @@ export function Today({
 	const openMixups = (s?.mixups ?? []).filter((m) => m.status === "active");
 
 	return (
-		<div className="@container h-dvh" data-testid="today">
+		<div className="@container h-dvh" data-own-scroll data-testid="today">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
 				{/* Phone and tablet: the score is a top bar, since the rail is not there. */}
 				<header

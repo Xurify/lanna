@@ -731,7 +731,7 @@ export function ReviewSession() {
 	const caughtUp = !!status?.available && !prompt;
 
 	return (
-		<div className="@container h-dvh" data-testid="review-session">
+		<div className="@container h-dvh" data-own-scroll data-testid="review-session">
 			<div className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] @6xl:grid-cols-[minmax(0,1fr)_376px] @6xl:grid-rows-1">
 				<header className="lanna-drag lanna-wco-gutter relative z-[2] flex h-[60px] items-center gap-2.5 bg-background px-4 shadow-[inset_0_-1px_0_var(--q-line)] @6xl:hidden">
 					<SidebarToggle />
