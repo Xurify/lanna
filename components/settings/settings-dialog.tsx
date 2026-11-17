@@ -56,8 +56,6 @@ import { UsageSection } from "./usage-section.tsx";
 import { LearnerSection } from "./learner-section.tsx";
 import { ResetSection } from "./reset-section.tsx";
 import { StorageSection } from "./storage-section.tsx";
-import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
-import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
 import { sharedJson } from "@/lib/shared-fetch";
 
 /** The nav label is the section's heading. Ids are internal: deep links and tests use them.
@@ -102,13 +100,7 @@ export function SettingsDialogOpen({
 	initialSection: SectionId | null;
 	initialRow: string | null;
 }) {
-	return (
-		<ChatGPTUIProvider>
-			<NativeSubscriptionUIProvider>
-				<SettingsDialog onClose={onClose} initialSection={initialSection} initialRow={initialRow} />
-			</NativeSubscriptionUIProvider>
-		</ChatGPTUIProvider>
-	);
+	return <SettingsDialog onClose={onClose} initialSection={initialSection} initialRow={initialRow} />;
 }
 
 function SettingsDialog({

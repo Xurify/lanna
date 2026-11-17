@@ -71,7 +71,7 @@ for (const config of configArgs) {
 	const [, provider, id, thinkingLevel] = m as unknown as [string, string, string, "low"];
 	const results: Record<string, TurnLog[]> = {};
 	for (const scenario of SCENARIOS) {
-		const engine = piEngineForSpec({ provider, id, thinkingLevel }, false);
+		const engine = piEngineForSpec({ provider, id, thinkingLevel });
 		const agent = createChatAgent(
 			{ answers: { record: () => {} } },
 			{ engine, noteLearnerText: (text) => checkerNote(checkSlovak(text)) },

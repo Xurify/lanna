@@ -50,7 +50,7 @@ function readEngine(): { engine: PiEngine; model: string } | null {
 		id: slot.model.id,
 		...(slot.thinkingLevel ? { thinkingLevel: slot.thinkingLevel } : {}),
 	};
-	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
+	return { engine: piEngineForSpec(spec), model: `${spec.provider}:${spec.id}` };
 }
 
 function stepOf(u: Usage) {

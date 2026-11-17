@@ -835,7 +835,7 @@ export function storyEngine(): { engine: PiEngine; model: string } | null {
 	// Writing a short graded text needs no extended thinking: with the
 	// slot's thinking on, the wait doubled for no better Slovak.
 	const spec = { provider: slot.model.provider, id: slot.model.id, thinkingLevel: "off" as const };
-	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
+	return { engine: piEngineForSpec(spec), model: `${spec.provider}:${spec.id}` };
 }
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {

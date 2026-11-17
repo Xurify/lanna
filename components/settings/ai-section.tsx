@@ -38,8 +38,6 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { modelName } from "@/components/model-names";
 import { CommitInput, SettingsDisclosure, SettingsGroup, SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
 import { MenuOption, ModelMenuList, ThinkingMenuList } from "./model-menu";
-import { ChatGPTBackgroundAccess } from "./chatgpt-connection";
-import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 
 /** Display identity per slot. The roster is the row hint. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
@@ -601,12 +599,7 @@ export function AiSection({
 						>
 							{/* Outside-click anchor: the span holding both triggers. */}
 							<span ref={thisMenuOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
-								{slot !== "strong" && (
-									<>
-										<ChatGPTBackgroundAccess provider={coord?.provider} />
-										<NativeSubscriptionBackgroundAccess provider={coord?.provider} />
-									</>
-								)}
+								{slot !== "strong" && <></>}
 								<MenuTrigger
 									value={modelId ? modelName(catalog, provider, modelId) : ""}
 									emptyLabel="—"

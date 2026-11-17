@@ -50,45 +50,6 @@ ipcRenderer.on("lanna:open-settings", (_event, section) => {
 
 contextBridge.exposeInMainWorld("lanna", {
 	platform: process.platform,
-	...(process.argv?.includes("--lanna-web-subscriptions")
-		? {
-				subscriptionTransport: "web",
-				openSubscriptionBrowser: (action) => ipcRenderer.invoke("lanna:subscriptions:web-browser", action),
-			}
-		: {}),
-	chatgpt: {
-		status: () => ipcRenderer.invoke("lanna:chatgpt:control", { op: "status" }),
-		login: (id) => ipcRenderer.invoke("lanna:chatgpt:control", { op: "login", id }),
-		cancel: () => ipcRenderer.invoke("lanna:chatgpt:control", { op: "cancel" }),
-		select: (id) => ipcRenderer.invoke("lanna:chatgpt:control", { op: "select", id }),
-		disconnect: (id) => ipcRenderer.invoke("lanna:chatgpt:control", { op: "disconnect", id }),
-		logout: (id) => ipcRenderer.invoke("lanna:chatgpt:control", { op: "logout", id }),
-		consent: (enabled) => ipcRenderer.invoke("lanna:chatgpt:control", { op: "consent", enabled }),
-		onChange: (cb) => {
-			const listener = () => cb();
-			ipcRenderer.on("lanna:chatgpt:changed", listener);
-			return () => ipcRenderer.removeListener("lanna:chatgpt:changed", listener);
-		},
-	},
-	subscriptions: {
-		status: () => ipcRenderer.invoke("lanna:subscriptions:control", { op: "status" }),
-		login: (providerId, enabled) =>
-			ipcRenderer.invoke("lanna:subscriptions:control", { op: "login", providerId, enabled }),
-		cancel: (providerId) => ipcRenderer.invoke("lanna:subscriptions:control", { op: "cancel", providerId }),
-		respond: (providerId, attemptId, promptId, value) =>
-			ipcRenderer.invoke("lanna:subscriptions:control", { op: "respond", providerId, attemptId, promptId, value }),
-		open: (providerId, attemptId, actionId) =>
-			ipcRenderer.invoke("lanna:subscriptions:control", { op: "open", providerId, attemptId, actionId }),
-		retry: (providerId) => ipcRenderer.invoke("lanna:subscriptions:control", { op: "retry", providerId }),
-		disconnect: (providerId) => ipcRenderer.invoke("lanna:subscriptions:control", { op: "disconnect", providerId }),
-		consent: (providerId, enabled) =>
-			ipcRenderer.invoke("lanna:subscriptions:control", { op: "consent", providerId, enabled }),
-		onChange: (cb) => {
-			const listener = () => cb();
-			ipcRenderer.on("lanna:subscriptions:changed", listener);
-			return () => ipcRenderer.removeListener("lanna:subscriptions:changed", listener);
-		},
-	},
 	expandWindow: () => ipcRenderer.send("lanna:expand-window"),
 	/** Tell the window frame which theme the page is in, so its background and title bar follow. */
 	setTheme: (night) => ipcRenderer.send("lanna:theme", night === true),

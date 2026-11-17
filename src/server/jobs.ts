@@ -68,13 +68,7 @@ import {
 import type { TurnInput } from "../core/input-events.ts";
 import { danglingQuestionOf, endsInDismissal, type LannaMessage } from "../core/native-messages.ts";
 import { fireJobAbort, isJobLive } from "../agent/subagents/aborts.ts";
-import { stores, effectiveSettings } from "./stores.ts";
-import { resolveConversationSpec } from "../core/settings-resolution.ts";
-import {
-	connectionBackgroundAllowed,
-	isSubscriptionProvider,
-	onSubscriptionChange,
-} from "../agent/subscription-connections.ts";
+import { stores } from "./stores.ts";
 import { isTurnRunning } from "./turn-liveness.ts";
 import type { Agent } from "@earendil-works/pi-agent-core";
 
@@ -127,7 +121,6 @@ interface WakeState {
 	pumping: Set<string>;
 	/** Throttle bookkeeping for the stale-job sweep. */
 	lastSweepAt: number;
-	stopConnectionWatch?: () => void;
 	automaticDeferred: WeakSet<Agent>;
 }
 
@@ -263,12 +256,8 @@ function queueSteer(chatId: string, steer: SteerMessage): QueuedSteer {
  *  beats the loop's synchronous start-poll drain and the marker rides the
  *  run's FIRST LLM call (the native equivalent of the old continuation
  *  coalescing). */
-export function automaticFollowUpAllowed(chatId: string, agent?: Agent): boolean {
-	if (agent && state().automaticDeferred.has(agent)) return false;
-	const provider =
-		agent?.state?.model?.provider ??
-		resolveConversationSpec(stores.chatStore.getChat(chatId)?.settings, effectiveSettings().models.strong)?.provider;
-	return connectionBackgroundAllowed(provider);
+export function automaticFollowUpAllowed(_chatId: string, agent?: Agent): boolean {
+	return !(agent && state().automaticDeferred.has(agent));
 }
 
 function handOffEligible(chatId: string, agent: Agent): void {
@@ -661,28 +650,6 @@ async function pump(chatId: string): Promise<void> {
 			void pump(chatId);
 	}
 }
-
-// Connection changes are the only wake for consent-deferred automatic work.
-// No retry timer, inference, or API-key fallback is started while consent is off.
-state().stopConnectionWatch?.();
-state().stopConnectionWatch = onSubscriptionChange(() => {
-	const s = state();
-	for (const [chatId, agent] of s.liveAgents) {
-		if (!isSubscriptionProvider(agent.state?.model?.provider) || automaticFollowUpAllowed(chatId, agent)) continue;
-		const consumed = new Set(agent.state.messages.map((m) => (m as { id?: string }).id));
-		const pending = (s.queues.get(chatId) ?? []).filter(
-			(entry) => entry.handedTo === agent && !consumed.has(entry.steer.id),
-		);
-		if (pending.length === 0) continue;
-		agent.clearSteeringQueue();
-		for (const entry of pending) entry.handedTo = undefined;
-		for (const entry of s.userSteers.get(chatId) ?? []) if (!consumed.has(entry.message.id)) entry.handedTo = undefined;
-		handOffEligible(chatId, agent); // only unconsumed learner input; never replay consumed steers
-	}
-	for (const chatId of s.queues.keys()) {
-		if (automaticFollowUpAllowed(chatId, s.liveAgents.get(chatId))) void pump(chatId);
-	}
-});
 
 function deferOrReject(chatId: string, entry: QueuedSteer, error: Error): void {
 	entry.waking = false;

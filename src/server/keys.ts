@@ -30,7 +30,8 @@ import {
 	validateKeyShape,
 } from "../core/auth-keys.ts";
 import { authKeySavedAt, authStore } from "../store/auth.ts";
-import { isSubscriptionProvider, subscriptionConnected } from "../agent/subscription-connections.ts";
+import { isSubscriptionProvider } from "../agent/subscriptions.ts";
+import { subscriptionSignedIn } from "../store/subscription-credentials.ts";
 
 // Once-per-process boot record, anchored on globalThis so HMR re-imports
 // do not re-snapshot fill-gapped vars as real env.
@@ -180,7 +181,7 @@ export function redactSecrets(text: string): string {
  * so an env-shadowed key counts. Providers with no key entry are present by definition.
  */
 export function providerKeyPresent(provider: string): boolean {
-	if (isSubscriptionProvider(provider)) return subscriptionConnected(provider);
+	if (isSubscriptionProvider(provider)) return subscriptionSignedIn(provider);
 	const info = AUTH_PROVIDER_KEYS.find((p) => p.id === provider);
 	return info ? keyValue(info.envVar) !== undefined : true;
 }

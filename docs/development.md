@@ -21,7 +21,6 @@ npm run lint         # oxlint + eslint — includes the import law (architecture
 npm run fmt          # format code, JSON, and Markdown with oxfmt
 npm run fmt:check    # check formatting with oxfmt
 npm run typecheck    # tsc --noEmit
-node scripts/smoke-web-subscriptions.mjs # after build: offline Next start/dev + reload gate
 
 npm run desktop:dev    # next dev + Electron shell pointed at it
 npm run desktop:dist   # local signed/notarized macOS arm64 build (LANNA_NOTARY keychain)
@@ -48,13 +47,9 @@ The packaged desktop app takes keys from `userData/auth.json` (BYOK, mode 0600, 
 
 ### Subscription connections in web/dev
 
-Ordinary `npm run dev` and `npm start` support the existing **ChatGPT, GitHub Copilot and Grok** connections in Settings → Keys. No separate launcher or change to Next's listening/LAN behavior is required. `npm run desktop:dev` uses these same dev-server connections; the packaged desktop app keeps its separate main-process credentials and private IPC transport.
+Settings → API keys → Subscriptions signs in with a **ChatGPT, GitHub Copilot or Grok** plan instead of an API key, in the browser, the dev server and the desktop app alike. The server runs the sign-in through pi-ai's own flows (`src/agent/subscriptions.ts`) and keeps the result in `subscriptions.json` beside `auth.json` (the project directory by default, or the directory of `LANNA_AUTH_FILE`): one owner-only plaintext file, ignored by git and left out of the standalone build. A subscription model never falls back to an API key.
 
-Web/dev saves `chatgpt-credentials.json`, `github-copilot-credentials.json` and `xai-credentials.json` **beside the configured API-key `auth.json`**: the project directory by default, or the directory containing `LANNA_AUTH_FILE`. These are owner-only plaintext files, not files under `data/`, desktop Application Support, or a global Pi profile. Git and standalone-build exclusions cover both the files and atomic-write temporary files. Run only one server process per credential directory: refresh serialization is process-local, not a cross-process lock.
-
-Sign-in opens a new tab in the browser that initiated it; permit that tab if your browser blocks popups. **ChatGPT sign-in must be completed in a browser on the server's machine**, because its callback listener remains `127.0.0.1` on that machine. Copilot/Grok use device codes. In the Electron dev shell, provider pages open in the system browser instead. Once connected, credentials and refresh remain server-owned; other browsers using that server share its connections and background-use consent, just as they share its API keys. Disconnect, storage-failure handling, and provider-specific background consent retain the existing behavior; subscription routes never fall back to API-key billing.
-
-This remains a **trusted developer/shared-server mode**, not multi-user hosting. Subscription controls require same-origin JSON/custom-header requests; browser-opening actions are short-lived, origin-bound and one-use. These checks prevent ordinary cross-origin browser controls, **not user authentication or DNS-rebinding protection**. Do not expose an unprotected dev/server instance to untrusted users or the public Internet; a public deployment needs an independent access/host gate. Remote ChatGPT callback routing, per-user accounts and credential import are not implemented.
+ChatGPT's sign-in page returns to a listener on `127.0.0.1:1455` of the machine running Lanna, so finish it in a browser on that machine; if the port is taken, the row asks for the code from the page instead. Copilot and Grok show a code to enter on their page. One account per company. The sign-ins are off while `LANNA_PUBLIC_HOST` is set, and run only one server process per credential directory.
 
 ## Architecture
 

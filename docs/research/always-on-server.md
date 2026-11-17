@@ -44,7 +44,7 @@ The steps are in [remote-access.md](../remote-access.md). Use `bun run desktop:p
 
 ### 2. An always-on machine at home
 
-- **Move the data, do not copy it.** `data/`, `auth.json`, `chatgpt-credentials.json`, `github-copilot-credentials.json`, `xai-credentials.json` and `.env.local` go to the new machine. The PC stops running its own server and opens the new machine's address instead. There is no sync (E7), and only one server may write to a data folder, so two copies would drift apart.
+- **Move the data, do not copy it.** `data/`, `auth.json`, `subscriptions.json` and `.env.local` go to the new machine. The PC stops running its own server and opens the new machine's address instead. There is no sync (E7), and only one server may write to a data folder, so two copies would drift apart.
 - **First pairing on a machine with no screen.** "This computer" means a request over loopback. An SSH tunnel from the PC (`ssh -L 3010:127.0.0.1:3010 <machine>`) makes `http://localhost:3010` on the PC count as that machine. Make the code there, then pair the PC and the phones through the tailnet name.
 - **ChatGPT sign-in.** The sign-in callback listens on a random port of 127.0.0.1 on the server's own machine ([development.md](../development.md)). On a machine with no screen, signing in needs a tunnel to that port, or the credentials file moved over from the PC. Neither is built or tested. Copilot and Grok sign in with device codes, which work from any device.
 - **Some desktop-only features are lost.** These work only in the Electron window, so a browser on another machine goes without them: the YouTube sign-in window (Takeout works instead, E50 Watch picks), clearing the window's cache (E16), and the full list of installed reading fonts.
