@@ -11,10 +11,6 @@
  */
 
 import type { DayLog } from "./daylog.ts";
-import { EXPERIMENT_CONSTANTS, type TodayExperimentStatus } from "./experiment.ts";
-import { catalogLanguage, languageById } from "./language.ts";
-
-const studyLanguageName = (id: string) => languageById(id)?.english ?? catalogLanguage(id)?.english ?? id;
 
 export const NOTIFICATION_SOUND_PRESETS = ["chime", "bell", "harp", "gentle", "subtle", "custom", "none"] as const;
 
@@ -72,7 +68,7 @@ export interface ScheduledNudge {
 	id: string;
 	/** 24h format HH:MM */
 	time: string;
-	source: "scheduled" | "smart_trend" | "evening_deadline" | "deadline_warning" | "streak_saver" | "experiment";
+	source: "scheduled" | "smart_trend" | "evening_deadline" | "deadline_warning" | "streak_saver";
 	languageId?: string;
 	languageName?: string;
 	taskKind?: string;
@@ -233,7 +229,6 @@ export function buildDailyNudges(options: {
 	tasks?: readonly PlanTaskItem[];
 	languageName?: string;
 	languages?: readonly DayLanguageItem[];
-	experiment?: TodayExperimentStatus | null;
 }): ScheduledNudge[] {
 	const { settings } = options;
 	if (!settings.enabled) return [];
@@ -246,12 +241,7 @@ export function buildDailyNudges(options: {
 
 	const todayMinutes = isMulti ? rawLanguages.reduce((n, l) => n + l.practiced, 0) : (options.todayMinutes ?? 0);
 
-	const exp = options.experiment;
-	const experimentPending = Boolean(
-		exp?.active && (!exp.validDay || (exp.weeklyCheckDue && !exp.weeklyCheckCompleted)),
-	);
-
-	if (todayMinutes >= dailyGoal && !experimentPending) return [];
+	if (todayMinutes >= dailyGoal) return [];
 
 	const remainingMinutes = Math.max(0, dailyGoal - todayMinutes);
 
@@ -392,54 +382,13 @@ export function buildDailyNudges(options: {
 		}
 	}
 
-	if (exp?.active) {
-		const check = exp.oldestOpenCheck ?? { week: exp.weekNumber, language: exp.treatment };
-		const short = exp.languages.filter((l) => !l.validDay);
-		if (short.length > 0) {
-			const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
-			const first = short[0]!;
-			const left = short.map((l) => `${need - l.dictationReps} in ${studyLanguageName(l.id)}`).join(" and ");
-			const deadlineTime = "20:30";
-			timeMap.set(deadlineTime, {
-				id: `nudge-study-daily-${deadlineTime}`,
-				time: deadlineTime,
-				source: "experiment",
-				languageId: first.id,
-				languageName: studyLanguageName(first.id),
-				taskKind: "listen",
-				href: "/listen",
-				taskTitle: `${need} Listen sentences`,
-				title: `Study: ${left} to go in Listen`,
-				message: `Day ${exp.dayNumber} of ${exp.totalDays} counts once each language has ${need} typed Listen sentences.`,
-				urgent: true,
-			});
-		}
-
-		if (exp.weeklyCheckDue && !exp.weeklyCheckCompleted) {
-			const checkTime = "19:00";
-			timeMap.set(checkTime, {
-				id: `nudge-study-check-${checkTime}`,
-				time: checkTime,
-				source: "experiment",
-				languageId: check.language,
-				languageName: studyLanguageName(check.language),
-				taskKind: "experiment",
-				href: `/experiments/input-first/check?week=${check.week}&lang=${check.language}`,
-				taskTitle: "Weekly check",
-				title: `Study: the week ${check.week} check is open`,
-				message: `${EXPERIMENT_CONSTANTS.PROBE_ITEMS_PER_WEEK} sentences to hear once and type, then ${EXPERIMENT_CONSTANTS.PRODUCTION_ITEMS_PER_WEEK} to say${exp.checkLastDate ? `, by ${exp.checkLastDate}` : ""}.`,
-				urgent: true,
-			});
-		}
-	}
-
 	return Array.from(timeMap.values()).sort((a, b) => a.time.localeCompare(b.time));
 }
 
 /**
  * Evaluates whether a nudge should fire right now.
  * - Current time HH:MM must match a scheduled nudge.
- * - Goal must be unmet (todayMinutes < dailyGoal) OR experiment pending.
+ * - Goal must be unmet (todayMinutes < dailyGoal).
  * - Must not have already fired today for this slot.
  */
 export function shouldTriggerNudge(options: {
@@ -448,9 +397,8 @@ export function shouldTriggerNudge(options: {
 	now: Date;
 	dailyGoal: number;
 	todayMinutes: number;
-	experimentPending?: boolean;
 }): ScheduledNudge | null {
-	const { nudges, firedKeys, now, dailyGoal, todayMinutes, experimentPending } = options;
+	const { nudges, firedKeys, now, dailyGoal, todayMinutes } = options;
 
 	const currentHour = now.getHours();
 	const currentMinute = now.getMinutes();
@@ -462,10 +410,7 @@ export function shouldTriggerNudge(options: {
 		if (nudge.time === currentTimeStr) {
 			const slotKey = `${nudge.id}-${nudge.time}`;
 			if (!firedSet.has(slotKey) && !firedSet.has(nudge.time)) {
-				// If goal is already met, only fire if it's an experiment nudge or experiment is still pending
-				if (todayMinutes >= dailyGoal && nudge.source !== "experiment" && !experimentPending) {
-					continue;
-				}
+				if (todayMinutes >= dailyGoal) continue;
 				return nudge;
 			}
 		}

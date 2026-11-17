@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import {
-	shouldTriggerNudge,
-	type ScheduledNudge,
-	type NotificationSettings,
-	type TodayExperimentStatus,
-} from "@/src/core";
+import { shouldTriggerNudge, type ScheduledNudge, type NotificationSettings } from "@/src/core";
 import { dispatchReminderAlert } from "./notification-dispatcher.ts";
 import { ReminderBanner } from "./reminder-banner.tsx";
 
@@ -15,7 +10,6 @@ interface ScheduleData {
 	schedule: ScheduledNudge[];
 	todayMinutes: number;
 	dailyGoal: number;
-	experiment?: TodayExperimentStatus | null;
 }
 
 function getTodayKey(): string {
@@ -94,18 +88,12 @@ export function ReminderScheduler() {
 			if (!current || !current.settings.enabled) return;
 
 			const firedKeys = getFiredSlotKeys();
-			const experimentPending = Boolean(
-				current.experiment?.active &&
-				(!current.experiment.validDay ||
-					(current.experiment.weeklyCheckDue && !current.experiment.weeklyCheckCompleted)),
-			);
 			const nudge = shouldTriggerNudge({
 				nudges: current.schedule,
 				firedKeys,
 				now: new Date(),
 				dailyGoal: current.dailyGoal,
 				todayMinutes: current.todayMinutes,
-				experimentPending,
 			});
 
 			if (nudge) {

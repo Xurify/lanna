@@ -1,6 +1,6 @@
 import { ListenPlayer } from "@/components/listen/listen-player";
 import type { ListenPlan } from "@/src/core";
-import { activeProfile, cheatsheetStore, getTodayExperimentStatus, listenFor, sheetListenFor } from "@/src/server";
+import { cheatsheetStore, listenFor, sheetListenFor } from "@/src/server";
 
 export const metadata = { title: "Listen" };
 
@@ -33,6 +33,5 @@ export default async function ListenPage({
 	} catch {
 		plan = null;
 	}
-	const experiment = getTodayExperimentStatus(new Date(), activeProfile());
-	return <ListenPlayer initialPlan={plan} initialExperiment={experiment} />;
+	return <ListenPlayer initialPlan={plan} />;
 }

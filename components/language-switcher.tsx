@@ -20,7 +20,6 @@ import {
 	CircleAlertIcon,
 	ClapperboardIcon,
 	FlagIcon,
-	FlaskConicalIcon,
 	HeadphonesIcon,
 	HistoryIcon,
 	type LucideIcon,
@@ -34,7 +33,7 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { sharedJson } from "@/lib/shared-fetch";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
-import { catalogLanguage, EXPERIMENT_CONSTANTS, type TodayExperimentStatus } from "@/src/core";
+import { catalogLanguage } from "@/src/core";
 
 interface Counts {
 	due: number;
@@ -68,7 +67,6 @@ export function LanguageSwitcher() {
 	const pathname = usePathname();
 	const [profile, setProfile] = useState<ProfileInfo | null>(null);
 	const [counts, setCounts] = useState<Counts | null>(null);
-	const [experiment, setExperiment] = useState<TodayExperimentStatus | null>(null);
 	const [open, setOpen] = useState(false);
 	const { feed } = useActivity();
 	const addsRunning = feed.tasks.filter((t) => t.kind === "language" && t.status === "running");
@@ -83,9 +81,6 @@ export function LanguageSwitcher() {
 			.catch(() => {});
 		void sharedJson<{ counts: Counts }>(`/api/review?peek&tz=${tz}`, 300)
 			.then((s) => setCounts(s.counts))
-			.catch(() => {});
-		void sharedJson<{ experiment?: TodayExperimentStatus | null }>(`/api/progress?tz=${tz}`, 300)
-			.then((s) => setExperiment(s.experiment ?? null))
 			.catch(() => {});
 	}, []);
 
@@ -263,22 +258,18 @@ export function LanguageSwitcher() {
 									href={item.href}
 									testid={`${item.id}-door`}
 									active={lit === item.id}
-									accent={item.id === "experiment" ? "teal" : "sun"}
+									accent="sun"
 									onPress={() => setPressed({ id: item.id, from: pathname })}
 									icon={<Icon className="size-[18px]" />}
 								>
 									{item.label}
-									{item.id === "experiment" && experiment?.active ? (
-										<StudyBadge status={experiment} />
-									) : (
-										item.badge && (
-											<span
-												className="ml-auto rounded-full border border-teal/30 bg-teal-wash px-1.5 py-0.5 text-[10px] font-semibold text-teal tabular-nums"
-												data-testid={`${item.id}-badge`}
-											>
-												{item.badge}
-											</span>
-										)
+									{item.badge && (
+										<span
+											className="ml-auto rounded-full border border-teal/30 bg-teal-wash px-1.5 py-0.5 text-[10px] font-semibold text-teal tabular-nums"
+											data-testid={`${item.id}-badge`}
+										>
+											{item.badge}
+										</span>
 									)}
 									{item.id === "review" && counts && (reviewDue > 0 || reviewNew > 0) && (
 										<span
@@ -320,7 +311,6 @@ const NAV_ICONS: Record<NavId, LucideIcon> = {
 	milestones: FlagIcon,
 	mistakes: CircleAlertIcon,
 	log: HistoryIcon,
-	experiment: FlaskConicalIcon,
 };
 
 function NavItem({
@@ -390,24 +380,5 @@ function NavItem({
 			<span className={cn("shrink-0", active ? (accent === "teal" ? "text-teal" : "text-sun") : "")}>{icon}</span>
 			{children}
 		</Link>
-	);
-}
-
-function StudyBadge({ status }: { status: TodayExperimentStatus }) {
-	const need = EXPERIMENT_CONSTANTS.MIN_REPS_FOR_VALID_DAY;
-	const checkOpen = status.weeklyCheckDue && !status.weeklyCheckCompleted;
-	const left = status.languages.reduce((sum, l) => sum + Math.max(0, need - l.dictationReps), 0);
-	if (!checkOpen && left === 0) return null;
-	return (
-		<span
-			className={cn(
-				"ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
-				checkOpen ? "bg-teal text-sun-ink" : "bg-sun text-sun-ink",
-			)}
-			data-testid="experiment-badge"
-			title={checkOpen ? `The week ${status.weekNumber} check is open` : `${left} typed Listen sentences to go today`}
-		>
-			{checkOpen ? "check" : `${left} to go`}
-		</span>
 	);
 }

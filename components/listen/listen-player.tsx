@@ -70,7 +70,6 @@ import {
 	type ListenPlan,
 	type ListenVerdict,
 	type SheetProgress,
-	type TodayExperimentStatus,
 } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { SheetProgressBar } from "@/components/words/sheet-progress";
@@ -145,15 +144,7 @@ function sourceOf(item: ListenItem): string {
 			: `${item.stretch.length} new words`;
 }
 
-export function ListenPlayer({
-	initialPlan = null,
-	sheet,
-	initialExperiment = null,
-}: {
-	initialPlan?: ListenPlan | null;
-	sheet?: ListenSheet;
-	initialExperiment?: TodayExperimentStatus | null;
-}) {
+export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: ListenPlan | null; sheet?: ListenSheet }) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [plan, setPlan] = useState<ListenPlan | null>(initialPlan);
@@ -523,11 +514,6 @@ export function ListenPlayer({
 	);
 	const stretch = item.stretch.map((w) => w.text);
 
-	const sessionStudyReps = reps.length + (current ? 1 : 0);
-	const studyReps = initialExperiment?.runningLanguageReps ?? null;
-	const liveStudyReps = (studyReps?.dictationReps ?? 0) + sessionStudyReps;
-	const studyActive = !sheet && initialExperiment?.active && studyReps !== null;
-
 	return (
 		<Frame strip={false}>
 			<TaskRound
@@ -539,22 +525,7 @@ export function ListenPlayer({
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-1 sm:pt-[4vh]">
 				<div key={item.id} className={cn(COLUMN, "lanna-rise")}>
-					<PracticeCard
-						icon="listen"
-						title="Listen"
-						sub={sourceOf(item)}
-						right={
-							studyActive ? (
-								<span
-									className={cn("tabular-nums", liveStudyReps >= 5 && "text-teal-2")}
-									title={`Study day ${initialExperiment?.dayNumber}: ${liveStudyReps} of 5 sentences toward a day that counts`}
-									data-testid="listen-study-banner"
-								>
-									Study day {initialExperiment?.dayNumber} · {Math.min(liveStudyReps, 5)} of 5
-								</span>
-							) : undefined
-						}
-					>
+					<PracticeCard icon="listen" title="Listen" sub={sourceOf(item)}>
 						<div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 sm:gap-x-4">
 							<button
 								type="button"

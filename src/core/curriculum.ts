@@ -1137,8 +1137,6 @@ interface PlanInput {
 	day: DayEvidence;
 	review: { due: number; newLeft: number; available: boolean };
 	minutesPerDay: number;
-	/** The experiment arm the learner is on (LearnerGoal.arm); absent = the normal plan. */
-	arm?: "input-first";
 	/** The Continue unit (nextLessonUnit). */
 	next: UnitId;
 	/** For alternating Talk and Story: the day of the year. */
@@ -1186,11 +1184,6 @@ const BUDGET_ORDER: Record<TaskKind, number> = {
 	blitz: 6,
 	words: 7,
 };
-
-/** The tasks an input-first arm keeps (docs/experiments/input-first-russian.md):
- *  meaning-focused input (Listen, Watch, Read) and vocabulary (Review, Words).
- *  Form drills, the tutor, speed (which records speech) and speaking are left out. */
-const INPUT_FIRST_TASKS: ReadonlySet<TaskKind> = new Set<TaskKind>(["review", "listen", "words", "read", "watch"]);
 
 const TASK_MINUTES = {
 	listen: LISTEN_MINUTES,
@@ -1497,18 +1490,17 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	// budget keeps one task per strand before a second form-focused one
 	// (input, speaking and speed before strengthen and words), so a short day
 	// is still balanced rather than all drills (src/core/strands.ts).
-	const offered = input.arm === "input-first" ? tasks.filter((t) => INPUT_FIRST_TASKS.has(t.id)) : tasks;
 	const budget = Math.max(5, input.minutesPerDay);
 	const keep = new Set<TaskKind>();
 	let used = 0;
-	for (const t of [...offered].sort((a, b) => BUDGET_ORDER[a.id] - BUDGET_ORDER[b.id])) {
+	for (const t of [...tasks].sort((a, b) => BUDGET_ORDER[a.id] - BUDGET_ORDER[b.id])) {
 		const must = t.id === "review" || t.id === "lesson";
 		if (must || used + t.minutes <= budget || t.done) {
 			keep.add(t.id);
 			used += t.minutes;
 		}
 	}
-	const kept = offered.filter((t) => keep.has(t.id));
+	const kept = tasks.filter((t) => keep.has(t.id));
 	const carried = new Map((input.carried ?? []).map((c) => [c.id, c.from]));
 	const marked = kept.map((t) => (carried.has(t.id) && !t.done ? { ...t, from: carried.get(t.id) } : t));
 	const ordered = [...marked.filter((t) => t.from), ...marked.filter((t) => !t.from)];

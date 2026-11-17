@@ -23,7 +23,6 @@ import type {
 	Projection,
 	StampState,
 	StrandBalance,
-	TodayExperimentStatus,
 	TrailLog,
 	TrajectoryInput,
 	UnitId,
@@ -75,7 +74,6 @@ export interface Summary {
 	wordsKnown?: number;
 	stamps?: { all: StampState[]; earned: number; total: number; recent: StampState[]; next: StampState[] };
 	log?: TrailLog;
-	experiment?: TodayExperimentStatus | null;
 }
 
 export function greeting(now = new Date()): string {

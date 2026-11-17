@@ -43,7 +43,6 @@ import type {
 	UnitState,
 } from "@/src/core";
 import { TodayLineRow } from "@/components/today-line-row";
-import { StudyEntryRow } from "@/components/study-entry-row";
 import { WhereYouAre } from "@/components/where-you-are";
 import { OutsideListening } from "@/components/outside-listening";
 import { useActiveLanguage } from "@/components/speech";
@@ -345,12 +344,6 @@ export function Today({
 							{line && (
 								<div className="mt-5 q-rise" style={{ animationDelay: ".04s" }} data-testid="today-line">
 									<TodayLineRow line={line} />
-								</div>
-							)}
-
-							{s?.experiment?.active && (
-								<div className="mt-5 q-rise" style={{ animationDelay: ".045s" }} data-testid="study-entry">
-									<StudyEntryRow status={s.experiment} />
 								</div>
 							)}
 

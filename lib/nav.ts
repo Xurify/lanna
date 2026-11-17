@@ -21,8 +21,7 @@ export type NavId =
 	| "progress"
 	| "milestones"
 	| "mistakes"
-	| "log"
-	| "experiment";
+	| "log";
 
 interface NavItemDef {
 	id: NavId;
@@ -49,14 +48,6 @@ export const NAV: readonly NavGroupDef[] = [
 		label: null,
 		items: [
 			{ id: "today", href: "/", label: "Today", hint: "The plan for today" },
-			{
-				id: "experiment",
-				href: "/experiments/input-first",
-				label: "Study",
-				hint: "Russian input-first study vs Slovak control",
-				also: ["/experiments", "/experiments/input-first/check", "/experiment", "/experiment/check"],
-				badge: "42d",
-			},
 			{
 				id: "ask",
 				href: "/chat/new",

@@ -99,9 +99,6 @@ import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
 import { personalLessonFor, personalPlanEntry } from "./personal.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
-import { activeProfile } from "../../config.ts";
-import type { TodayExperimentStatus } from "../core/experiment.ts";
-import { getScheduledArmForDate, getTodayExperimentStatus, syncDailyExperimentData } from "./experiment.ts";
 
 const RECENT_CAP = 240;
 /** Days of history the trajectory draws. */
@@ -547,8 +544,6 @@ export interface ProgressSummary {
 	stamps: StampReport;
 	/** The trail log: the totals, every one an outcome. */
 	log: TrailLog;
-	/** Active 42-day experiment status for today. */
-	experiment?: TodayExperimentStatus | null;
 }
 
 /** The video the daily plan should show: the one watched today (so the
@@ -609,20 +604,7 @@ function dayOfYearOf(key: string): number {
 	return Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 86_400_000);
 }
 
-/** The experiment's files follow the logs; a failure there never blocks a page. */
-export function syncExperimentQuietly(now: Date): void {
-	try {
-		syncDailyExperimentData(now);
-	} catch {
-		// the next page view tries again
-	}
-}
-
-export function progressSummary(
-	tz?: number,
-	now = new Date(),
-	opts: { syncExperiment?: boolean } = {},
-): ProgressSummary {
+export function progressSummary(tz?: number, now = new Date()): ProgressSummary {
 	const p = progressStore.read();
 	const key = today(tz, now);
 	const active = new Set(
@@ -676,8 +658,6 @@ export function progressSummary(
 			earlier.push({ day, tasks: record.planned.map((t) => ({ ...t, done: t.done || doneInLedger(t.id, record) })) });
 	}
 	const carried = carriedTasks(earlier, key, new Set());
-	const scheduledArm = getScheduledArmForDate(activeProfile(), key);
-	const arm = goal.arm ?? (scheduledArm === "input-first" ? "input-first" : undefined);
 	const plan = dailyPlan({
 		state: curriculum,
 		evidence: p.units,
@@ -699,7 +679,6 @@ export function progressSummary(
 		},
 		review,
 		minutesPerDay: goal.minutesPerDay,
-		arm,
 		next,
 		dayOfYear: dayOfYearOf(key),
 		scenes: purposeScenes(goal.purposes ?? []),
@@ -771,7 +750,6 @@ export function progressSummary(
 		timedMinutes >= 60 ? Math.round((timed.reduce((n, d) => n + (d.xp ?? 0), 0) / timedMinutes) * 60) : null;
 	const stamps = syncStamps(p, curriculum, evidence, key);
 	if (stamps.minted.length) progressStore.write(p);
-	if (opts.syncExperiment !== false) syncExperimentQuietly(now);
 	return {
 		xp: p.xp,
 		level: xpLevel(p.xp),
@@ -821,7 +799,6 @@ export function progressSummary(
 		wordsKnown: log.wordsKnown,
 		stamps: stamps.report,
 		log,
-		experiment: getTodayExperimentStatus(now, activeProfile()),
 	};
 }
 

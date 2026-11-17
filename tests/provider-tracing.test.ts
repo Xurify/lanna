@@ -71,7 +71,6 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 			"curriculum/**/*",
 			"src/agent/prompts/**/*",
 			"scripts/spotify_helper.py",
-			"docs/experiments/input-first-russian.md",
 			".claude/skills/slovak-language/references/*.md",
 			"node_modules/pdfjs-dist/legacy/**/*",
 			"node_modules/pdfjs-dist/standard_fonts/**/*",
@@ -95,7 +94,7 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 			.readdirSync(path.join(process.cwd(), ".claude", "skills", "slovak-language", "references"))
 			.map((name) => `.claude/skills/slovak-language/references/${name}`);
 		assert.ok(referenceChapters.length > 0);
-		for (const file of ["scripts/spotify_helper.py", "docs/experiments/input-first-russian.md", ...referenceChapters]) {
+		for (const file of ["scripts/spotify_helper.py", ...referenceChapters]) {
 			assert.equal(fs.existsSync(path.join(process.cwd(), file)), true, file);
 			assert.equal(included(file), true, file);
 		}

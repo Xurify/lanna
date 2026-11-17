@@ -138,13 +138,6 @@ const ROUTES: Array<{
 		words: "history sessions journal activity",
 	},
 	{
-		title: "Study",
-		hint: "Russian input-first study vs Slovak control",
-		href: "/experiments/input-first",
-		icon: "chart",
-		words: "experiment input first sced trial",
-	},
-	{
 		title: "Sources",
 		hint: "The research behind each task",
 		href: "/sources",

@@ -507,8 +507,6 @@ export interface LearnerGoal {
 	level: Cefr;
 	minutesPerDay: number;
 	daysPerWeek?: number;
-	/** An experiment arm (docs/experiments/input-first-russian.md). "input-first" keeps the day to input and vocabulary: no form drills, no tutor, no speaking. Absent = the normal plan. */
-	arm?: "input-first";
 	purposes?: Purpose[];
 	/** The learner's own words for "other". */
 	purposeNote?: string;

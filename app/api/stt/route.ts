@@ -1,9 +1,8 @@
 /**
  * POST /api/stt — one recording in (multipart with the clip as `audio`), its
  * transcript out (src/server/speak.ts transcribe: ElevenLabs Scribe, else
- * Deepgram, in the active language, or in `lang` when the form names one:
- * the Study's weekly check is taken in a language that may not be active). The recording is a 16 kHz mono WAV,
- * the one format the recorder keeps. GET /api/stt — which engine would
+ * Deepgram, in the active language, or in `lang` when the form names one.
+ * The recording is a 16 kHz mono WAV, the one format the recorder keeps. GET /api/stt — which engine would
  * answer, or null. The recording is not kept here: the Speak task keeps
  * the learner's lines with the scene (POST /api/speak turn).
  */

@@ -57,14 +57,9 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
-	// Old links and bookmarks keep working: the Progress page was /plan, and the study was /experiment.
+	// Old links and bookmarks keep working: the Progress page was /plan.
 	async redirects() {
-		return [
-			{ source: "/plan", destination: "/progress", permanent: false },
-			{ source: "/experiment", destination: "/experiments/input-first", permanent: false },
-			{ source: "/experiment/check", destination: "/experiments/input-first/check", permanent: false },
-			{ source: "/experiments", destination: "/experiments/input-first", permanent: false },
-		];
+		return [{ source: "/plan", destination: "/progress", permanent: false }];
 	},
 	async headers() {
 		return [{ source: "/:path*", headers: SECURITY_HEADERS }];
@@ -147,7 +142,6 @@ const nextConfig: NextConfig = {
 			"curriculum/**/*",
 			"src/agent/prompts/**/*",
 			"scripts/spotify_helper.py",
-			"docs/experiments/input-first-russian.md",
 			".claude/skills/slovak-language/references/*.md",
 			"node_modules/pdfjs-dist/legacy/**/*",
 			"node_modules/pdfjs-dist/standard_fonts/**/*",
