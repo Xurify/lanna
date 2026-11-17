@@ -41,7 +41,7 @@ import { QueuedSteersBody, type QueuedSteerLine } from "@/components/queued-stee
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
 import { StatsBar } from "@/components/stats-bar";
-import { useServerEvent, useServerResync } from "@/components/server-events";
+import { useServerEvent } from "@/components/server-events";
 import {
 	isProviderKeyRefusal,
 	kbdEventForAction as kbdEventForChat,
