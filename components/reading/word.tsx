@@ -106,6 +106,7 @@ export function Word({
 	const resolvedCat = token.cat ?? lookupData?.pos;
 	const resolvedGender = token.gender ?? lookupData?.gender;
 	const resolvedFormNote = lookupData?.formNote;
+	const noteParts = splitFormNote(resolvedFormNote, resolvedLemma);
 
 	const toggleFav = async () => {
 		if (!resolvedSlug) return;
@@ -260,7 +261,7 @@ export function Word({
 				>
 					<span className="flex items-start justify-between gap-3">
 						<span className="font-ui text-xl leading-7 font-[600] text-foreground" lang={langCode}>
-							{resolvedLemma}
+							{token.text}
 						</span>
 						{/* -mr: the icons' own padding would push their glyphs in from the card's right edge. */}
 						<span className="-mr-1.5 flex shrink-0 items-center gap-0.5">
@@ -282,7 +283,7 @@ export function Word({
 							<button
 								type="button"
 								onMouseDown={(e) => e.preventDefault()}
-								onClick={() => void speak(resolvedLemma).catch(() => {})}
+								onClick={() => void speak(token.text).catch(() => {})}
 								aria-label="Play the word"
 								className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
 							>
@@ -292,11 +293,11 @@ export function Word({
 					</span>
 					{(resolvedLemma.toLocaleLowerCase(langTag) !== token.text.toLocaleLowerCase(langTag) || resolvedFormNote) && (
 						<span className="block font-ui text-xs text-muted-foreground">
-							here:{" "}
+							{noteParts.before}
 							<span className="font-semibold text-ink-2" lang={langCode}>
-								{token.text}
+								{resolvedLemma}
 							</span>
-							{resolvedFormNote ? ` (${resolvedFormNote})` : ""}
+							{noteParts.after}
 						</span>
 					)}
 					<span className="mt-2 block leading-snug text-foreground">
@@ -437,4 +438,13 @@ export function Tag({ children, className }: { children: React.ReactNode; classN
 			{children}
 		</span>
 	);
+}
+
+export function splitFormNote(formNote: string | undefined, lemma: string): { before: string; after: string } {
+	const marker = ` of ${lemma}`;
+	const at = formNote?.indexOf(marker) ?? -1;
+	if (formNote && at >= 0) {
+		return { before: formNote.slice(0, at + 4), after: formNote.slice(at + marker.length) };
+	}
+	return { before: "from ", after: formNote ? ` · ${formNote}` : "" };
 }
