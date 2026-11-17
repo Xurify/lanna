@@ -220,6 +220,8 @@ export interface AuthKeyStatus {
 	shadowedByEnv: boolean;
 	/** When the app last saved this file-held key (ISO time). Null for env keys and keys with no recorded time. */
 	savedAt?: string | null;
+	/** Stored but switched off: no feature uses it until it is switched back on. */
+	disabled?: boolean;
 	/** Live value of a plain setting (the only status carrying plaintext). Absent for secrets and unset settings. */
 	value?: string;
 }

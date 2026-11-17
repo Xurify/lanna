@@ -12,6 +12,9 @@
  *
  * Unknown file vars are kept verbatim and shown as generic status rows.
  *
+ * A disabled key (auth-disabled.json) keeps its value in the file but is taken out of
+ * process.env, env-owned or not, so no consumer sees it until it is switched back on.
+ *
  * LANNA_IGNORE_ENV_KEYS=1 hides every env key app-wide. Real env vars are deleted from the
  * process, because pi-ai reads provider keys from process.env on every request.
  * Only auth.json counts, and the fill-gap still reflects it so new keys apply mid-session.
@@ -29,7 +32,7 @@ import {
 	maskKey,
 	validateKeyShape,
 } from "../core/auth-keys.ts";
-import { authKeySavedAt, authStore } from "../store/auth.ts";
+import { authKeyDisabled, authKeySavedAt, authStore } from "../store/auth.ts";
 import { isSubscriptionProvider } from "../agent/subscriptions.ts";
 import { subscriptionSignedIn } from "../store/subscription-credentials.ts";
 
@@ -40,12 +43,14 @@ interface AuthBoot {
 	realEnv: Set<string>;
 	/** Vars we copied from the file into process.env: deletable. */
 	fillGap: Set<string>;
+	/** Real env values at first init, so a disabled env key can be switched back on. */
+	realValues: Record<string, string>;
 }
 const BOOT_KEY = Symbol.for("lanna.authBoot");
 
 function boot(): AuthBoot {
 	const g = globalThis as Record<symbol, AuthBoot | undefined>;
-	if (!g[BOOT_KEY]) g[BOOT_KEY] = { realEnv: new Set(), fillGap: new Set() };
+	if (!g[BOOT_KEY]) g[BOOT_KEY] = { realEnv: new Set(), fillGap: new Set(), realValues: {} };
 	return g[BOOT_KEY];
 }
 
@@ -86,15 +91,23 @@ export function initAuthEnv(): void {
 	} else if (record.realEnv.size === 0 && record.fillGap.size === 0) {
 		// First init in this process: what's already in the env is REAL env.
 		for (const name of managed) {
-			if (process.env[name] !== undefined) record.realEnv.add(name);
+			const value = process.env[name];
+			if (value === undefined) continue;
+			record.realEnv.add(name);
+			record.realValues[name] = value;
 		}
 	}
+	const disabled = authKeyDisabled.all();
 	for (const [name, value] of Object.entries(fileVars)) {
-		if (!isManagedName(name)) continue;
+		if (!isManagedName(name) || disabled.has(name)) continue;
 		if (process.env[name] === undefined) {
 			process.env[name] = value;
 			record.fillGap.add(name);
 		}
+	}
+	for (const name of disabled) {
+		delete process.env[name];
+		record.fillGap.delete(name);
 	}
 }
 
@@ -112,10 +125,14 @@ export function resolveKeyStatuses(
 	providerEnvVars: ReadonlySet<string> = new Set(),
 	/** Save times by var name (src/store/auth.ts authKeySavedAt). */
 	savedAt: Readonly<Record<string, string>> = {},
+	/** Switched-off keys: out of env, so their value comes from the file or the boot snapshot. */
+	disabled: ReadonlySet<string> = new Set(),
+	realValues: Readonly<Record<string, string>> = {},
 ): AuthKeyStatus[] {
 	const ids = new Set<string>([...AUTH_KEYS.map((k) => k.id), ...Object.keys(fileVars)]);
 	for (const envVar of providerEnvVars) {
-		if (env[envVar] !== undefined || fileVars[envVar] !== undefined) ids.add(envVar);
+		const held = env[envVar] !== undefined || fileVars[envVar] !== undefined;
+		if (held || (disabled.has(envVar) && realValues[envVar] !== undefined)) ids.add(envVar);
 	}
 	const rows: AuthKeyStatus[] = [];
 	for (const id of ids) {
@@ -123,7 +140,9 @@ export function resolveKeyStatuses(
 		const fileValue = fileVars[id];
 		const isRealEnv = realEnv.has(id);
 		// Env wins. After fill-gap, file values live in env, so realEnv tells a real env var from a reflection.
-		const live = envValue !== undefined ? envValue : fileValue;
+		const isDisabled = disabled.has(id);
+		const live =
+			envValue !== undefined ? envValue : isDisabled && isRealEnv ? (realValues[id] ?? fileValue) : fileValue;
 		const source = isRealEnv ? "env" : live !== undefined ? "file" : "none";
 		rows.push({
 			id,
@@ -131,7 +150,8 @@ export function resolveKeyStatuses(
 			present: live !== undefined,
 			masked: live !== undefined ? `${maskKey(live)} (${live.trim().length} chars)` : null,
 			source,
-			shadowedByEnv: isRealEnv && fileValue !== undefined && envValue !== fileValue,
+			shadowedByEnv: isRealEnv && !isDisabled && fileValue !== undefined && envValue !== fileValue,
+			disabled: isDisabled && live !== undefined,
 			savedAt: source === "file" ? (savedAt[id] ?? null) : null,
 			// Plain settings carry their value to the page; secrets never do.
 			...(isPlainAuthSetting(id) && live !== undefined ? { value: live.trim() } : {}),
@@ -148,12 +168,15 @@ export function keyStatuses(): AuthKeyStatus[] {
 		boot().realEnv,
 		AUTH_PROVIDER_ENV_VARS,
 		authKeySavedAt.all(),
+		authKeyDisabled.all(),
+		boot().realValues,
 	);
 }
 
 /** Live value for one var, env first. The canonical read for consumers outside the server barrel. */
 export function keyValue(id: string): string | undefined {
 	// Fresh-user switch: only the file counts. Guards env keys reintroduced after boot.
+	if (authKeyDisabled.has(id)) return undefined;
 	if (envKeysIgnored()) return authStore.authVars()[id];
 	return process.env[id] ?? authStore.authVars()[id];
 }
@@ -191,6 +214,7 @@ export function saveKey(id: string, value: string): { ok: true; status: AuthKeyS
 	const shape = isProviderEnvVar(id) ? genericProviderKeyGuard(id, value) : validateKeyShape(id, value);
 	if (!shape.ok) return { ok: false, error: shape.error };
 	const trimmed = value.trim();
+	if (authKeyDisabled.has(id)) setKeyEnabled(id, true);
 	authStore.setAuthVar(id, trimmed);
 	authKeySavedAt.set(id, new Date().toISOString());
 	const record = boot();
@@ -204,6 +228,7 @@ export function saveKey(id: string, value: string): { ok: true; status: AuthKeyS
 
 /** Delete one key (DELETE): always removed from the file, and from env only when we set it. */
 export function deleteKey(id: string): AuthKeyStatus {
+	if (authKeyDisabled.has(id)) setKeyEnabled(id, true);
 	authStore.deleteAuthVar(id);
 	authKeySavedAt.delete(id);
 	const record = boot();
@@ -212,6 +237,26 @@ export function deleteKey(id: string): AuthKeyStatus {
 		record.fillGap.delete(id);
 	}
 	return keyStatuses().find((s) => s.id === id)!;
+}
+
+/** Switch a stored key off or on (PATCH) without deleting it. Off takes it out of process.env,
+ *  env-owned or not; on puts back the real env value, else the file's. */
+export function setKeyEnabled(id: string, enabled: boolean): AuthKeyStatus | undefined {
+	const record = boot();
+	authKeyDisabled.set(id, !enabled);
+	if (!enabled) {
+		delete process.env[id];
+		record.fillGap.delete(id);
+	} else if (record.realEnv.has(id) && record.realValues[id] !== undefined && !envKeysIgnored()) {
+		process.env[id] = record.realValues[id];
+	} else {
+		const fileValue = authStore.authVars()[id];
+		if (fileValue !== undefined) {
+			process.env[id] = fileValue;
+			record.fillGap.add(id);
+		}
+	}
+	return keyStatuses().find((s) => s.id === id);
 }
 
 // Reflect the file into env at first import (idempotent).

@@ -96,3 +96,33 @@ export const authStore: AuthStore = {
 		writeMap(map);
 	},
 };
+
+/** Keys the learner switched off without deleting them (var names).
+ *  A sidecar for the same reason as auth-saved.json: auth.json stays a flat env-var map. */
+const DISABLED_FILE = path.join(path.dirname(AUTH_FILE), "auth-disabled.json");
+
+function readDisabled(): string[] {
+	try {
+		const raw = JSON.parse(fs.readFileSync(DISABLED_FILE, "utf-8"));
+		return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string") : [];
+	} catch {
+		return [];
+	}
+}
+
+export const authKeyDisabled = {
+	all(): ReadonlySet<string> {
+		return new Set(readDisabled());
+	},
+	has(name: string): boolean {
+		return readDisabled().includes(name);
+	},
+	set(name: string, disabled: boolean): void {
+		const names = new Set(readDisabled());
+		if (names.has(name) === disabled) return;
+		if (disabled) names.add(name);
+		else names.delete(name);
+		fs.mkdirSync(path.dirname(DISABLED_FILE), { recursive: true });
+		fs.writeFileSync(DISABLED_FILE, `${JSON.stringify([...names].sort(), null, "\t")}\n`);
+	},
+};
