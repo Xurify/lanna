@@ -3,16 +3,14 @@
  * (Wave A, 2026-09-26): serverExecute (tool-execute.ts) races every tool
  * body against the run's AbortSignal and the system-level per-call timeout
  * — aborting the run kills a running tool, the timeout is the net so no
- * tool can hold a turn hostage (the 2.7-minute grep lesson). Question
- * tools bypass the guard entirely (questionResult is instant and carries
- * terminate). The fs tools honor the signal with partial results
- * (fs-tools.test.ts covers their side).
+ * tool can hold a turn hostage (the 2.7-minute grep lesson). The fs tools
+ * honor the signal with partial results (fs-tools.test.ts covers their side).
  */
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { Type } from "typebox";
 import { serverExecute, toolTimeoutMs, toToolResult, type ToolExecuteContext } from "../src/agent/tool-execute.ts";
-import { askUserQuestionTool } from "../src/agent/tools.ts";
+import { practiceTools } from "../src/agent/tools/practice.ts";
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -80,7 +78,7 @@ describe("serverExecute abort + timeout guard", () => {
 		await assert.rejects(pi.execute("c4", {}, ac.signal), /Operation aborted/);
 	});
 });
-describe("serverExecute: cooperative settle, mapping parity, question bypass", () => {
+describe("serverExecute: cooperative settle, authoring failures, mapping parity", () => {
 	it("a cooperative tool settles partial results before the grace", async () => {
 		toolTimeoutMs.current = 2_000;
 		const schema = Type.Object({});
@@ -109,27 +107,21 @@ describe("serverExecute: cooperative settle, mapping parity, question bypass", (
 		assert.equal((result.content[0] as { text?: string }).text, "partial results");
 	});
 
-	it("questionResult is instant, terminates, and carries no details", async () => {
-		const ac = new AbortController();
-		ac.abort(); // a pre-aborted run signal — the placeholder must not care
-		const result = await askUserQuestionTool.execute("c6", { question: "q" }, ac.signal);
-		assert.match((result.content[0] as { text?: string }).text!, /Question posed/);
-		assert.equal(result.details, null);
-		assert.equal(result.terminate, true, "owner Option A: question results end the batch natively");
-	});
-
 	it("authoring failures return an isError result with the retryable problem list", async () => {
-		const result = (await askUserQuestionTool.execute("c7", {
-			question: "q",
-			options: [
-				{ label: "A", value: "same" },
-				{ label: "B", value: "same" },
-			],
-		})) as { isError?: boolean; content: Array<{ text?: string }>; details?: { tool: string; problems: string[] } };
+		const tools = practiceTools({ chatId: "chat_abort", chatStore: { getChat: () => null } });
+		const problem = tools.problem!;
+		const input = { statement: "Decline the noun.", mode: "recall", modelSolution: "the moves" } as const;
+		await problem.execute("c6", input, undefined as never);
+		// A second pose while one is active is an authoring failure, returned not thrown.
+		const result = (await problem.execute("c7", input, undefined as never)) as {
+			isError?: boolean;
+			content: Array<{ text?: string }>;
+			details?: { tool: string; problems: string[] };
+		};
 		assert.equal(result.isError, true, "pi 1.0 convention: returned, not thrown");
-		assert.equal(result.details?.tool, "ask_user_question");
-		assert.match(result.content[0]!.text!, /Invalid tool input for tool "ask_user_question":/);
-		assert.match(result.details!.problems.map((p) => `- ${p}`).join("\n"), /- .*same value/s);
+		assert.equal(result.details?.tool, "problem");
+		assert.match(result.content[0]!.text!, /Invalid tool input for tool "problem":/);
+		assert.match(result.details!.problems.join("\n"), /already active/);
 	});
 
 	it("toToolResult parity: string verbatim, object as JSON, details rides the raw value", () => {

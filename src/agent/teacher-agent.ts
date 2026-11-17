@@ -1,55 +1,32 @@
 import { Agent } from "@earendil-works/pi-agent-core";
 import type { AgentEvent, AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
-import { invalidInputResult, questionResult } from "./tool-execute.ts";
 import { providerEventObserver } from "./provider-events.ts";
 import type { Message, Usage } from "@earendil-works/pi-ai";
-import { APP_IDENTITY, piEngineFor, type PiEngine } from "./models.ts";
+import { APP_IDENTITY, type PiEngine } from "./models.ts";
 import { effectivePromptSegments } from "./prompt-segments.ts";
 import { learnerProfileSegment } from "./learner-profile.ts";
-import {
-	askUserQuestionTool,
-	createProberTools,
-	createTeacherTools,
-	type ProberToolContext,
-	type TeacherToolContext,
-} from "./tools.ts";
 import { practiceTools, type PracticeToolContext } from "./tools/practice.ts";
 import { chatTools, type ChatToolContext } from "./tools/chat.ts";
-import { healToolRecord, withArgumentHeal } from "./tools/heal.ts";
+import { withArgumentHeal } from "./tools/heal.ts";
 import { sendToUserTool } from "./tools/send-to-user.ts";
-import { quizInputProblems } from "../core/question-core.ts";
-import { quizInputObject } from "../core/question-schemas.ts";
-import { QUESTION_TOOLS, filterToggleableTools, type EnabledTools } from "../core/pending.ts";
+import { filterToggleableTools, type EnabledTools } from "../core/pending.ts";
 import { toLlmMessages, PRACTICE_PROBLEM_TOOL } from "../core/native-messages.ts";
 import { closesChatReply } from "../core/chat-answers.ts";
 import { activeProfile } from "../../config.ts";
 
 /**
- * The two teaching-side agents: the PROBER and
- * the TEACHER. Same transcript, different prompts and tool sets; the
- * chat-handler constructs ONE per request off the transcript's seam
- * (probe_done = teacher) — the STATELESS per-turn engine: the persisted record is the source of truth, the
- * agent is rebuilt from it every POST and discarded at turn end.
+ * The two tutor agents: the Ask chat and the practitioner of a tutor unit.
+ * Each is rebuilt per request from the stored record (the record is the
+ * source of truth) and discarded at turn end. Engines are injectable so
+ * tests drive a scripted faux engine.
  *
- * Engines are injectable so tests can pass a scripted faux engine and drive
- * deterministic lessons (see tests/chat-flow.test.ts).
- *
- * System prompts are COMPOSED per agent: system-prompt.md (the shared base:
- * agent, voice, philosophy, accuracy) + every numeric-prefix fragment in
- * that agent's directory (src/agent/prompts/prober/ or
- * src/agent/prompts/teacher/), in sorted filename order, then the shared/
- * fragments as a trailing appendix (question tools, learner files,
- * formatting) — the 2026-09-27 reorder: the agent's job and method lead,
- * the mechanics trail. Joined with `---` separators.
- *
- * ONLY numeric-prefix files load — the loader enforces the convention, so
- * non-fragment documentation (README.md, …) can live in the directories
- * without ever leaking into the model's prompt.
+ * A system prompt is the shared fragments plus the agent's own directory
+ * (src/agent/prompts/<kind>/), numeric-prefix files only, in filename order.
  */
 
 /** Which agent's prompt directory to compose. Practice (2026-10-04)
  *  composes ONLY its own directory — see prompt-segments.ts. */
-type AgentKind = "prober" | "teacher" | "practice" | "chat";
+type AgentKind = "practice" | "chat";
 
 // P2 (2026-09-19): segment discovery + override resolution live in ONE
 // canonical place now — src/store/prompt-overrides.ts (listSourceSegments
@@ -176,10 +153,7 @@ function makeQuestionStopper(kind: AgentKind) {
 			context.message.content
 				.filter(
 					(c) =>
-						c.type === "toolCall" &&
-						c.name !== undefined &&
-						((QUESTION_TOOLS as readonly string[]).includes(c.name) ||
-							(kind === "practice" && c.name === PRACTICE_PROBLEM_TOOL)),
+						c.type === "toolCall" && c.name !== undefined && kind === "practice" && c.name === PRACTICE_PROBLEM_TOOL,
 				)
 				.map((c) => c.id!),
 		);
@@ -193,11 +167,8 @@ function makeQuestionStopper(kind: AgentKind) {
 }
 
 function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: AgentTool<any, any>[]) {
-	// Practice never reaches the role fallback (the handler ALWAYS injects
-	// the session's conversation engine — practice rides the same
-	// conversation-spec resolution as teaching); the cast keeps AgentKind
-	// ("practice" is not a ModelRole) honest about that.
-	const engine = opts.engine ?? piEngineFor(kind as "prober" | "teacher");
+	const engine = opts.engine;
+	if (!engine) throw new Error(`no configured model for the ${kind} agent — set your model slots (settings → models)`);
 	const stopper = makeQuestionStopper(kind);
 	// The learner profile (onboarding, 2026-10-28): what the app knows —
 	// goal, pace, first language, placement, the lesson ledger — joins
@@ -269,68 +240,8 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 }
 
 /**
- * The PROBER (agent A): the quizzing tool (quiz, or explain under free
- * recall — no nodeId either way) + ask + probe_done, lean on
- * probing doctrine. Its whole job is bracketing the learner's edge and
- * concluding with the assessment (probe_done) — which also queues the
- * handoff wake (see tools/probe.ts) and is the transcript seam the
- * handler keys teacher construction on.
- */
-export function createProberAgent(ctx: ProberToolContext, opts: AgentBuildOptions = {}) {
-	return baseAgentOptions("prober", opts, Object.values(createProberTools(ctx, opts.toolToggles)));
-}
-
-/**
- * The TEACHER (agent B): enters at planning (the probe is already
- * concluded — its assessment is in the transcript), owns plan_init and the
- * full toolset (teach questions with validated nodeId, the map, research,
- * figures).
- */
-export function createTeacherAgent(
-	// Optional so tests can construct a bare mock-driven agent (no storage
-	// wiring): without ctx the tools fall back to the validation-free
-	// question set. The handler ALWAYS passes ctx (the composition root).
-	ctx?: TeacherToolContext,
-	opts: AgentBuildOptions = {},
-) {
-	const tools = opts.tools ?? (ctx ? createTeacherTools(ctx, opts.toolToggles) : bareQuestionTools());
-	return baseAgentOptions("teacher", opts, Object.values(tools));
-}
-
-/** The bare teach question set (tests, bare agents): quiz with the shared
- *  authoring refinement (quizInputProblems, run in execute — returns an
- *  invalidInputResult isError result the model retries on, pi 1.0
- *  convention) but NO per-session nodeId check (no record to read),
- *  plus ask. */
-function bareQuestionTools(): Record<string, AgentTool<any>> {
-	// A typed const (not an inline literal): the specific AgentTool typing
-	// gives execute its precise Static input; heterogeneous records take
-	// AgentTool<any>, whose loose Static would smudge it to unknown.
-	const quiz: AgentTool<typeof quizInputObject> = {
-		name: "quiz",
-		label: "quiz",
-		description: "Ask the learner a graded question.",
-		parameters: quizInputObject,
-		executionMode: "sequential",
-		execute: async (_toolCallId, input) => {
-			const problems = quizInputProblems(input);
-			if (problems.length > 0) return invalidInputResult("quiz", problems);
-			return questionResult();
-		},
-	};
-	// healToolRecord (owner, 2026-10-09 — the whitehead generalization):
-	// the bare quiz carried NO prepareArguments at all — not even the
-	// options-unwrap; now it gets the full standard heal like every tool.
-	return healToolRecord({
-		quiz,
-		ask_user_question: askUserQuestionTool,
-	});
-}
-
-/**
  * The PRACTITIONER (practice sessions, owner design 2026-10-04): built
- * from turn 1 of a kind:"practice" session — no prober→teacher split,
- * no plan tools, no question tools. Its ENTIRE registry is
+ * from turn 1 of a kind:"practice" session. Its ENTIRE registry is
  * problem + conclude (tools/practice.ts); the doctrine prompt
  * (prompts/practice/) carries the method. A successful problem pose ends
  * the run, natively for a problem-only batch and via the shared stop hook
@@ -359,8 +270,6 @@ export function createChatAgent(ctx: ChatToolContext, opts: AgentBuildOptions = 
 	return baseAgentOptions("chat", opts, Object.values(tools));
 }
 
-export type ProberAgent = ReturnType<typeof createProberAgent>;
-export type TeacherAgent = ReturnType<typeof createTeacherAgent>;
 export type PracticeAgent = ReturnType<typeof createPracticeAgent>;
 export type ChatAgent = ReturnType<typeof createChatAgent>;
-export type TeachingAgent = ProberAgent | TeacherAgent | PracticeAgent | ChatAgent;
+export type TeachingAgent = PracticeAgent | ChatAgent;

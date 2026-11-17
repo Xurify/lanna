@@ -426,8 +426,7 @@ export function timeAgo(iso: string, now = new Date()): string {
  *  ever wanted. */
 function sessionMeta(chat: ChatListItem): string {
 	if (chat.compacting) return `Summarizing the chat · ${timeAgo(chat.updatedAt)}`;
-	if (chat.pendingQuestion) return `Waiting for your answer · ${timeAgo(chat.updatedAt)}`;
-	if ((chat.kind ?? "teach") === "practice" && chat.pendingProblem) {
+	if (chat.kind === "practice" && chat.pendingProblem) {
 		return `Problem waiting · ${timeAgo(chat.updatedAt)}`;
 	}
 	if (chat.busy) return "Working…";
@@ -500,7 +499,7 @@ function SessionRow({
 			{/* The dumbbell rides the FAR RIGHT (owner round 6, 2026-10-05) —
 			    was left of the name; right-aligned keeps the titles flush with
 			    the teaching rows and reads cleaner. */}
-			{(chat.kind ?? "teach") === "practice" && (
+			{chat.kind === "practice" && (
 				<MessagesSquareIcon className="size-3.5 shrink-0 text-muted-foreground" aria-label="Practice chat" />
 			)}
 		</button>
@@ -569,7 +568,7 @@ function RenameRow({
  *  All / Learn / Practice — a client-side filter over the same snapshot.
  *  It lives behind the search button and applies only while search is
  *  open, so a forgotten filter can never leave the list silently short. */
-type SessionKindFilter = "teach" | "all" | "practice" | "chat";
+type SessionKindFilter = "all" | "practice" | "chat";
 
 function SessionsSidebar() {
 	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth } = useSidebar();
@@ -600,7 +599,7 @@ function SessionsSidebar() {
 		const q = query.trim();
 		let list = chats;
 		if (list && kindFilter !== "all") {
-			list = list.filter((c) => (c.kind ?? "teach") === kindFilter);
+			list = list.filter((c) => c.kind === kindFilter);
 		}
 		if (!list) return list;
 		if (!q) return list;
@@ -1130,7 +1129,7 @@ function SessionsSidebar() {
 									aria-label="Show"
 									data-testid="session-kind-filter"
 								>
-									{(["all", "chat", "teach", "practice"] as const).map((f) => (
+									{(["all", "chat", "practice"] as const).map((f) => (
 										<button
 											key={f}
 											type="button"
@@ -1145,7 +1144,7 @@ function SessionsSidebar() {
 												kindFilter === f ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
 											)}
 										>
-											{f === "teach" ? "Learn" : f === "all" ? "All" : f === "chat" ? "Chat" : "Practice"}
+											{f === "all" ? "All" : f === "chat" ? "Chat" : "Practice"}
 										</button>
 									))}
 								</div>
@@ -1196,7 +1195,7 @@ function SessionsSidebar() {
 										: kindFilter !== "all"
 											? kindFilter === "chat"
 												? "No chats yet."
-												: `No ${kindFilter === "teach" ? "learning" : "practice"} chats yet.`
+												: "No practice chats yet."
 											: "Your chats with the tutor show up here."}
 								</p>
 							) : (

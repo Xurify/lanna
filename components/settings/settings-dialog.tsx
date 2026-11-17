@@ -25,7 +25,7 @@ import { LessonSoundsRow, PlaybackSpeedRow, VolumeRow, WordLookupModeRow } from 
 import { SystemVoicesRow } from "./system-voices.tsx";
 import { SourcesSection } from "./sources-section.tsx";
 import { UpdateSettings } from "./update-settings.tsx";
-import { AiSection, QuizStyleRow } from "./ai-section.tsx";
+import { AiSection } from "./ai-section.tsx";
 import type { ModelsSettings } from "@/src/core";
 import { MENU_CLOSE_EVENT, MENU_OPEN_EVENT } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
@@ -429,14 +429,7 @@ function SettingsDialogBody({
 									hint="Your languages, your goals, and how the tutor explains and checks."
 									testid="section-learner"
 								>
-									<LearnerSection onClose={onClose}>
-										<SettingsGroup label="Quizzes" testid="group-quizzes">
-											<QuizStyleRow
-												agent={record.agent}
-												onSectionChange={(next: AgentSettings) => void write("agent", next)}
-											/>
-										</SettingsGroup>
-									</LearnerSection>
+									<LearnerSection onClose={onClose} />
 								</SettingsSection>
 							)}
 							{active === "data" && (

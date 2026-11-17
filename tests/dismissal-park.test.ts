@@ -24,9 +24,8 @@ process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { chatStore } = await import("../src/store/chats.ts");
 const { applyParkedDismissal, parkDismissal, takeParkedDismissal } = await import("../src/server/dismissal-park.ts");
-const { beginTurn, endTurn, isTurnRunning } = await import("../src/server/turn-liveness.ts");
 const { subscribe } = await import("../src/core/events.ts");
-const { activeProblemOf, answeredCallIds, danglingQuestionOf, dismissedAnswer } = await import("../src/core/index.ts");
+const { activeProblemOf, dismissedAnswer } = await import("../src/core/index.ts");
 const newMessageId = (await import("../src/core/native-messages.ts")).newMessageId;
 
 after(() => {
@@ -97,28 +96,6 @@ describe("the park registry", () => {
 });
 
 describe("applyParkedDismissal — against real records", () => {
-	it("applies a parked question dismissal to the dangling quiz call", () => {
-		const chat = chatWithDanglingQuiz("apply-q");
-		const pending = danglingQuestionOf(chatStore.getChat(chat)!.messages);
-		assert.ok(pending);
-		parkDismissal(chat, {
-			type: "dismiss",
-			toolCallId: pending!.toolCallId,
-			answer: dismissedAnswer("quiz", "What is a cyclic group?"),
-		});
-		let emitted = 0;
-		const off = subscribe((e) => {
-			if (e.type === "record-changed" && e.chatId === chat) emitted++;
-		});
-		applyParkedDismissal(chatStore, chat);
-		off();
-		assert.equal(emitted, 1);
-		// The call is answered now — nothing dangles.
-		assert.equal(danglingQuestionOf(chatStore.getChat(chat)!.messages), null);
-		assert.ok(answeredCallIds(chatStore.getChat(chat)!.messages).has(pending!.toolCallId));
-		assert.equal(takeParkedDismissal(chat), null);
-	});
-
 	it("applies a parked problem dismissal to the active problem", () => {
 		const chat = chatWithActiveProblem();
 		parkDismissal(chat, { type: "dismiss-problem", problemCallId: "call-prob-1" });
@@ -144,41 +121,6 @@ describe("applyParkedDismissal — against real records", () => {
 });
 
 describe("the dismiss route — the park contract (202)", () => {
-	it("parks (202) while a turn runs; the settle apply lands the dismissal", async () => {
-		const chat = chatWithDanglingQuiz("route");
-		const pending = danglingQuestionOf(chatStore.getChat(chat)!.messages);
-		assert.ok(pending);
-		const dismissRoute = await import("../app/api/chats/[id]/dismiss/route.ts");
-
-		// Mid-turn: the route cannot validate against stale truth — park.
-		assert.ok(!isTurnRunning(chat));
-		beginTurn(chat);
-		const res = await dismissRoute.POST(
-			new Request(`http://test/api/chats/${chat}/dismiss`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					input: {
-						type: "dismiss",
-						toolCallId: pending!.toolCallId,
-						answer: dismissedAnswer("quiz", "What is a cyclic group?"),
-					},
-				}),
-			}),
-			{ params: Promise.resolve({ id: chat }) },
-		);
-		assert.equal(res.status, 202);
-		assert.deepEqual(await res.json(), { ok: true, parked: true });
-		// Nothing landed yet — the record still dangles (the turn owns it).
-		assert.ok(danglingQuestionOf(chatStore.getChat(chat)!.messages));
-
-		// The settle: persistTurn (done) → applyParkedDismissal → endTurn.
-		applyParkedDismissal(chatStore, chat);
-		endTurn(chat);
-		assert.equal(danglingQuestionOf(chatStore.getChat(chat)!.messages), null);
-		assert.equal(takeParkedDismissal(chat), null);
-	});
-
 	it("still refuses honestly (400) with no turn and nothing dangling", async () => {
 		const chat = chatStore.createChat("park: nothing dangling").id;
 		const dismissRoute = await import("../app/api/chats/[id]/dismiss/route.ts");

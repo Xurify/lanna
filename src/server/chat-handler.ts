@@ -2,8 +2,6 @@ import type { Usage } from "@earendil-works/pi-ai";
 import {
 	createChatAgent,
 	createPracticeAgent,
-	createProberAgent,
-	createTeacherAgent,
 	type AgentBuildOptions,
 	type TeachingAgent,
 } from "../agent/teacher-agent.ts";
@@ -35,7 +33,7 @@ import { beginTurn, endTurn } from "./turn-liveness.ts";
 import { applyParkedDismissal } from "./dismissal-park.ts";
 import { registerTurn, rememberTurnFailure, unregisterTurn } from "./turn-runs.ts";
 import { persistTurn, TurnPersistenceError } from "./turn-service.ts";
-import { hasProbeDone, danglingQuestionOf } from "../core/native-messages.ts";
+import { danglingQuestionOf } from "../core/native-messages.ts";
 import { composeInstructions } from "../agent/teacher-agent.ts";
 import { ensureCompacted, kickCompaction, effectiveThresholdTokens } from "./compaction.ts";
 import { catalogContextLimits } from "./model-catalog.ts";
@@ -69,13 +67,8 @@ function chatAppContent(chatId: string): string | undefined {
 	}
 }
 
-function compactionKind(record: ChatRecord): "teach" | "practice" | "probe" {
-	if (record.kind === "practice") return "practice";
-	return record.kind === "chat" || hasProbeDone(record.messages) ? "teach" : "probe";
-}
-
-function promptKind(record: ChatRecord): "practice" | "chat" | "teacher" {
-	return record.kind === "practice" || record.kind === "chat" ? record.kind : "teacher";
+function promptKind(record: ChatRecord): "practice" | "chat" {
+	return record.kind === "practice" ? "practice" : "chat";
 }
 
 /** A practice answer in Slovak carries what the checker can say for
@@ -159,7 +152,7 @@ setJobRespawn((jobId) => void jobRunner.runJob(jobId));
 /** The route-facing entry: parse {chatId, input} and run one turn. */
 export async function handleChatRequest(
 	req: Request,
-	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean; kind?: ChatRecord["kind"] }) => TeachingAgent,
+	buildAgent?: (opts: AgentBuildOptions & { kind?: ChatRecord["kind"] }) => TeachingAgent,
 ): Promise<Response> {
 	let body: { chatId?: unknown; input?: unknown };
 	try {
@@ -189,7 +182,7 @@ export async function handleChatRequest(
 export async function handleChatInput(
 	chatId: string,
 	input: TurnInput,
-	buildAgent?: (opts: AgentBuildOptions & { teaching: boolean; kind?: ChatRecord["kind"] }) => TeachingAgent,
+	buildAgent?: (opts: AgentBuildOptions & { kind?: ChatRecord["kind"] }) => TeachingAgent,
 ): Promise<Response> {
 	let record = stores.chatStore.getChat(chatId);
 	if (!record) {
@@ -248,7 +241,6 @@ export async function handleChatInput(
 			chatStore: stores.chatStore,
 			engine: conversationEngine,
 			modelId: modelIdForCompaction,
-			kind: compactionKind(record),
 			thresholdTokens: effectiveThresholdTokens(
 				effective.compaction?.thresholdTokens,
 				catalogContextLimits().get(modelIdForCompaction),
@@ -351,13 +343,6 @@ export async function handleChatInput(
 		});
 	};
 
-	// AGENT CONSTRUCTION BRANCH: the transcript
-	// is the seam — a probe_done call in the record means the probe is
-	// concluded: build the TEACHER (planning + the full toolset). Otherwise
-	// the session is still probing: build the PROBER (quiz/ask + probe_done).
-	// Both share this whole composition (write-ahead persist, liveness,
-	// steers, usage) — only the agent differs.
-	const teaching = hasProbeDone(merged);
 	// BYOK (owner, 2026-09-22): the conversation chain was resolved by the
 	// turn gate above (chat.model override → strong slot → refused) — the
 	// engine build is pure from here; thinking levels clamp natively.
@@ -388,16 +373,28 @@ export async function handleChatInput(
 		// prompt fresh per turn, swapping in any enabled override segments.
 		promptSwitches: effective.agent.prompts,
 	};
-	// PRACTICE BRANCH (owner design, 2026-10-04): a kind:"practice"
-	// session builds the practitioner from turn 1 — no prober→teacher
-	// split, no plan/question/job tools; the whole registry is
-	// problem + conclude. buildAgent stays honored (the test seam is
-	// uniform across kinds).
+	// A practice session builds the practitioner (problem + conclude); every
+	// other session, older kind-less records included, is the Ask chat.
+	// buildAgent is the test seam, uniform across kinds.
 	let turnMessages: () => readonly AgentMessage[] = () => [];
 	const constructed: TeachingAgent = buildAgent
-		? buildAgent({ ...agentOpts, teaching, kind: record.kind })
-		: record.kind === "chat"
-			? createChatAgent(
+		? buildAgent({ ...agentOpts, kind: record.kind })
+		: record.kind === "practice"
+			? createPracticeAgent(
+					{
+						chatId,
+						chatStore: stores.chatStore,
+						jobs: {
+							chatId,
+							jobStore: stores.jobStore,
+							spawn: (job, input) => void jobRunner.runJob(job.id, input),
+							searchAvailable,
+						},
+						review: reviewSeam,
+					},
+					agentOpts,
+				)
+			: createChatAgent(
 					{
 						review: reviewSeam,
 						answers: { record: (answer) => recordChatAnswer({ ...answer, at: new Date().toISOString(), chatId }) },
@@ -420,54 +417,7 @@ export async function handleChatInput(
 						},
 					},
 					{ ...agentOpts, noteLearnerText: chatCheckerNote, appContent: chatAppContent(chatId) },
-				)
-			: record.kind === "practice"
-				? createPracticeAgent(
-						{
-							chatId,
-							chatStore: stores.chatStore,
-							// THE RARELY-NEEDED SET (owner round 10): research + pdf jobs
-							// (same runner/gating as the teacher's — research honestly
-							// absent when no engine is live).
-							jobs: {
-								chatId,
-								jobStore: stores.jobStore,
-								spawn: (job, input) => void jobRunner.runJob(job.id, input),
-								searchAvailable,
-							},
-							review: reviewSeam,
-						},
-						agentOpts,
-					)
-				: teaching
-					? createTeacherAgent(
-							{
-								chatId,
-								chatStore: stores.chatStore,
-								jobStore: stores.jobStore,
-								spawn: (job, input) => void jobRunner.runJob(job.id, input),
-								// The registry drop's signal (2026-09-20): no live engine
-								// = no research tool in the teacher's registry.
-								searchAvailable,
-								review: reviewSeam,
-							},
-							agentOpts,
-						)
-					: createProberAgent(
-							{
-								chatId,
-								chatStore: stores.chatStore,
-								deliver: (steer) => void deliverJobResult(steer),
-								// Fix wave (2026-09-20): the prober carries research + pdf
-								// dispatch (owner ruling — phase-omnipresent), so its ctx
-								// needs the same job wiring as the teacher's.
-								jobStore: stores.jobStore,
-								spawn: (job, input) => void jobRunner.runJob(job.id, input),
-								searchAvailable,
-								review: reviewSeam,
-							},
-							agentOpts,
-						);
+				);
 
 	// A test-injected agent gets no usage collector (tests assert the
 	// transcript, not the money channel); when it's ours, usage flows through
@@ -603,7 +553,6 @@ export async function handleChatInput(
 							chatStore: stores.chatStore,
 							engine: kickEngine,
 							modelId: kickModelId,
-							kind: compactionKind(freshRecord),
 							thresholdTokens: effectiveThresholdTokens(
 								fresh.compaction?.thresholdTokens,
 								catalogContextLimits().get(kickModelId),

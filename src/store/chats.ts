@@ -12,11 +12,9 @@ import * as path from "node:path";
 import { PATHS } from "../../config.ts";
 import { emit } from "../core/events.ts";
 import type { ChatStore } from "../core/ports.ts";
-import type { ChatRecord, ChatSettings, ChatSummary, PlanTree, TurnUsage } from "../core/contracts.ts";
+import type { ChatRecord, ChatSettings, ChatSummary, TurnUsage } from "../core/contracts.ts";
 import { CURRENT_CHAT_VERSION } from "../core/contracts.ts";
 import type { LannaMessage } from "../core/native-messages.ts";
-import { danglingQuestionOf } from "../core/native-messages.ts";
-import { phaseAt3Lh } from "../core/phases.ts";
 
 function chatFile(id: string): string {
 	if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new Error(`Invalid chat id: ${id}`);
@@ -26,10 +24,10 @@ function chatFile(id: string): string {
 /** THE SILENCE LAW (push S6, 2026-10-02): chats-changed announces ONLY
  *  list-SHAPE mutations — createChat, renameChat, deleteChat (below,
  *  each emits post-write). The content writers (saveMessages,
- *  appendTurnUsage, saveSettings, saveTree) are
+ *  appendTurnUsage, saveSettings) are
  *  DELIBERATELY SILENT: saveMessages fires per turn-persist and would
  *  spam the bus, and every list-visible change it causes (title, order,
- *  phase, busy, pendingQuestion) is already announced by turn-started /
+ *  busy) is already announced by turn-started /
  *  turn-settled, which the sidebar refetches on. Silence here is law,
  *  not oversight. */
 function createChat(title: string, kind?: "practice" | "chat"): ChatRecord {
@@ -40,9 +38,7 @@ function createChat(title: string, kind?: "practice" | "chat"): ChatRecord {
 		createdAt: now,
 		updatedAt: now,
 		messages: [],
-		// Practice and chat sessions carry the marker; teach stays ABSENT
-		// (absence reads as teach — pre-practice records never migrate).
-		...(kind ? { kind } : {}),
+		kind: kind ?? "chat",
 	};
 	fs.mkdirSync(PATHS.chats, { recursive: true });
 	writeChat(record);
@@ -90,7 +86,8 @@ function listChats(): ChatSummary[] {
 			.filter((f) => f.endsWith(".json"))
 			.map((f) => getChat(f.slice(0, -5)))
 			.filter((r): r is ChatRecord => r !== null)
-			.map(({ messages, tree: _tree, turns: _turns, ...summary }) => {
+			.map(({ messages, turns: _turns, ...record }) => {
+				const { tree: _tree, ...summary } = record as typeof record & { tree?: unknown };
 				// Per-record isolation (Wave B): a record whose messages fail the
 				// projection (e.g. pre-Wave-B UIMessage-format scratch — the
 				// zero-back-compat wipe makes these "corrupt") must not blank the
@@ -101,18 +98,9 @@ function listChats(): ChatSummary[] {
 						// summaries; usage aggregates ride the full record, the picker
 						// never needs them).
 						...summary,
-						// Normalized kind: absent record field reads as teach.
-						kind: summary.kind ?? "teach",
+						// Older records without a kind are Ask chats.
+						kind: summary.kind ?? "chat",
 						messageCount: messages.length,
-						// Record-derived status for the session picker: phase from the
-						// transcript's explicit events (probe_done concluded / verdict
-						// accepted), pending question
-						// from the native dangling-call scan. Wave D: both folds read
-						// the NATIVE record (core/phases.ts phaseAt3Lh +
-						// native-messages.ts danglingQuestionOf). Liveness (busy) is
-						// NOT record-derived — the API route merges it (ChatListItem).
-						phase: phaseAt3Lh(messages),
-						pendingQuestion: danglingQuestionOf(messages) !== null,
 					};
 				} catch (err) {
 					console.error(`[chat ${summary.id}] summary projection failed:`, err);
@@ -248,22 +236,11 @@ export function restoreChat(id: string): boolean {
 	}
 }
 
-/** Persist the session plan tree (plan tools call this in execute). */
-function saveTree(id: string, tree: PlanTree): void {
-	const record = getChat(id);
-	if (!record) throw new Error(`Chat not found: ${id}`);
-	record.tree = tree;
-	// Deliberately does NOT bump updatedAt: tree mutations piggyback on the
-	// turn's saveMessages, and sidebar ordering shouldn't churn on tree edits.
-	writeChat(record);
-}
-
 export const chatStore: ChatStore = {
 	createChat,
 	getChat,
 	listChats,
 	saveMessages,
-	saveTree,
 	saveSettings,
 	setTutorUnit,
 	markTutorCounted,

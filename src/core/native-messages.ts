@@ -37,7 +37,7 @@ import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage, Message, ToolResultMessage, UserMessage } from "@earendil-works/pi-ai";
 import { QUESTION_TOOLS } from "./pending.ts";
 import { chatTurnEnded } from "./chat-answers.ts";
-import { CONCLUDE_ACK_TEXT, HANDOFF_TEXT, NEXT_PROBLEM_TEXT, THINKING_LABEL } from "./contracts/chat.ts";
+import { CONCLUDE_ACK_TEXT, NEXT_PROBLEM_TEXT, THINKING_LABEL } from "./contracts/chat.ts";
 import { compactAnswerForModel, type QuestionAnswerData } from "./question-core.ts";
 import { activeCompactionOf, keptIndexFor } from "./compaction.ts";
 
@@ -62,11 +62,8 @@ export interface LannaMarkerMessage {
 	id: string;
 	role: "custom";
 	customType:
-		| "graph-context"
-		| "probe-handoff"
 		| "subagent-steer"
 		| "subagent-abort"
-		| "plan-block"
 		| "practice-thinking"
 		| "practice-next"
 		| "problem-dismissed"
@@ -193,35 +190,6 @@ export function newAnswerResult(
 		// our payloads are JSON-safe answer structures, so the cast is honest.
 		details: answer as ToolResultMessage["details"],
 		isError: false,
-		timestamp: Date.now(),
-	};
-}
-
-/** The probe→teach handoff wake: scaffolding, not speech — the model reads
- *  HANDOFF_TEXT, the UI renders the quiet system line. */
-export function newHandoffMessage(chatId: string): LannaMarkerMessage {
-	return {
-		id: `steer_probe_${chatId}`,
-		role: "custom",
-		customType: "probe-handoff",
-		content: HANDOFF_TEXT,
-		display: true,
-		details: { chatId },
-		timestamp: Date.now(),
-	};
-}
-
-/** The plan presentation block: pure UI history (a frozen snapshot), no
- *  model face — toLlmMessages filters it. `planCallId` keys idempotent
- *  emission (one block per successful plan_init call). */
-export function newPlanBlockMessage(planCallId: string, block: unknown): LannaMarkerMessage {
-	return {
-		id: `pb_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`,
-		role: "custom",
-		customType: "plan-block",
-		content: "",
-		display: true,
-		details: { planCallId, block },
 		timestamp: Date.now(),
 	};
 }
@@ -543,9 +511,9 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
 		const role = (m as { role?: string }).role;
 		if (role === "custom") {
 			const marker = m as LannaMarkerMessage;
-			// UI-only markers: plan blocks, and problem dismissals (the
-			// synthesized conclude pair carries the model's face).
-			if (marker.customType === "plan-block" || marker.customType === "problem-dismissed") continue;
+			// UI-only markers have no text (plan blocks in older records), and a
+			// problem dismissal's synthesized conclude pair carries its model face.
+			if (!marker.content || marker.customType === "problem-dismissed") continue;
 			// The ACTIVE compaction marker already rendered as the head —
 			// never twice. (Stale markers before the cut are unreachable; a
 			// marker whose cut could not resolve has no head and renders as
@@ -609,17 +577,6 @@ export function danglingQuestionOf(
 	return null;
 }
 
-/** The probe→teach construction seam (chat-handler): a probe_done call in
- *  the transcript — any state — means the probe is concluded: teach. */
-export function hasProbeDone(messages: readonly LannaMessage[]): boolean {
-	for (const m of messages) {
-		if ((m as { role?: string }).role !== "assistant") continue;
-		const assistant = m as AssistantMessage;
-		if (assistant.content.some((b) => b.type === "toolCall" && b.name === "probe_done")) return true;
-	}
-	return false;
-}
-
 /** Every toolResult id in the record — answer-event validation (the call
  *  must be a DANGLING question call, not an already-answered one). */
 export function answeredCallIds(messages: readonly LannaMessage[]): Set<string> {
@@ -673,11 +630,9 @@ export function nativeInputCause(message: AgentMessage, history: readonly AgentM
 	if (message.role === "user") return "learner";
 	if (message.role === "system" || message.role === "assistant") return "neutral";
 	if (message.role === "custom") {
-		if (["probe-handoff", "subagent-steer", "subagent-abort"].includes(message.customType)) return "automatic";
+		if (["subagent-steer", "subagent-abort"].includes(message.customType)) return "automatic";
 		if (["practice-thinking", "practice-next"].includes(message.customType)) return "learner";
-		return ["graph-context", "plan-block", "problem-dismissed", "compaction"].includes(message.customType)
-			? "neutral"
-			: "unrecognizable";
+		return ["problem-dismissed", "compaction"].includes(message.customType) ? "neutral" : "unrecognizable";
 	}
 	if (message.role === "toolResult") {
 		if (

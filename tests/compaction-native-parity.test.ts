@@ -34,7 +34,7 @@ const call = (chars: number): LannaMessage =>
 		...assistant(chars),
 		content: [
 			{ type: "text", text: "a".repeat(chars) },
-			{ type: "toolCall", name: "quiz", arguments: {}, id: "c" },
+			{ type: "toolCall", name: "pose", arguments: {}, id: "c" },
 		],
 	}) as LannaMessage;
 const result = (chars: number): LannaMessage => ({
@@ -42,7 +42,7 @@ const result = (chars: number): LannaMessage => ({
 	role: "toolResult",
 	content: [{ type: "text", text: "r".repeat(chars) }],
 	toolCallId: "c",
-	toolName: "quiz",
+	toolName: "pose",
 	isError: false,
 	timestamp: 1,
 });
@@ -55,7 +55,7 @@ const image = (): LannaMessage => ({
 const metadata = (): LannaMessage => ({
 	id: `m${serial++}`,
 	role: "custom",
-	customType: "plan-block",
+	customType: "problem-dismissed",
 	content: "invisible".repeat(1000),
 	display: false,
 	details: {},

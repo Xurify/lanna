@@ -61,18 +61,18 @@ test("env off: no observer, no note, no file — zero surface", (t) => {
 	});
 
 	assert.equal(providerEventsEnabled(), false);
-	assert.equal(providerEventObserver("chat_x", "teacher"), undefined);
-	providerEventNote("chat_x", "teacher", "run start"); // must be a silent no-op
+	assert.equal(providerEventObserver("chat_x", "chat"), undefined);
+	providerEventNote("chat_x", "chat", "run start"); // must be a silent no-op
 	assert.equal(fs.existsSync(path.join(dir, "chat_x.jsonl")), false, "nothing written while off");
 });
 
 test("env on: observer writes pinned-shape JSONL lines", (t) => {
 	const dir = withRecorder(t);
 
-	const observe = providerEventObserver("chat_y", "teacher");
+	const observe = providerEventObserver("chat_y", "chat");
 	assert.ok(observe, "enabled → observer exists");
 	observe!({ type: "raw", delta: "hello" }, { provider: "openrouter", id: "z-ai/glm-5.3-flash" });
-	providerEventNote("chat_y", "teacher", "run end");
+	providerEventNote("chat_y", "chat", "run end");
 
 	const lines = readLines(dir, "chat_y");
 	assert.equal(lines.length, 2);
@@ -80,7 +80,7 @@ test("env on: observer writes pinned-shape JSONL lines", (t) => {
 		{ ...lines[0], t: 0 },
 		{
 			t: 0,
-			ctx: "teacher",
+			ctx: "chat",
 			provider: "openrouter",
 			model: "z-ai/glm-5.3-flash",
 			event: { type: "raw", delta: "hello" },
@@ -95,7 +95,7 @@ test("non-serializable adapter payloads degrade to a type note, never throw", (t
 
 	const cyclic: Record<string, unknown> = { type: "chunk" };
 	cyclic.self = cyclic;
-	const observe = providerEventObserver("chat_c", "prober");
+	const observe = providerEventObserver("chat_c", "practice");
 	observe!(cyclic, { provider: "anthropic", id: "claude-fable-5" });
 
 	const [line] = readLines(dir, "chat_c");
@@ -111,7 +111,7 @@ test("the byte cap writes one marker and stops recording", (t) => {
 		providerEventsCap.current = REAL_CAP;
 	});
 
-	const observe = providerEventObserver("chat_cap", "teacher");
+	const observe = providerEventObserver("chat_cap", "chat");
 	assert.ok(observe);
 	observe!({ type: "a", pad: "x".repeat(200) }, { provider: "p", id: "m" }); // crosses → written + marker
 	observe!({ type: "b" }, { provider: "p", id: "m" }); // capped: dropped

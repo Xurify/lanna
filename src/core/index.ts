@@ -20,8 +20,6 @@ export * from "./question-core.ts";
 // through this barrel (shell law: pure core via @/src/core only).
 export * from "./events.ts";
 export * from "./pace.ts";
-export * from "./plan-tree.ts";
-export * from "./phases.ts";
 export * from "./pending.ts";
 export * from "./prompt-segments.ts";
 export * from "./sketch.ts";

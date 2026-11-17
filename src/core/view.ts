@@ -19,10 +19,6 @@
  * result lands on the part that asked it, even turns later); a group's id is
  * its FIRST assistant message's id.
  *
- * Plan blocks: a plan-block marker has no message of its own — its data part
- * splices into the preceding assistant group, IN FLOW right after the last
- * successful plan_init call (the presentation moment).
- *
  * Question tools on the wire (owner fork 2): the agent's closing
  * tool_execution_end carries the in-memory "Question posed" placeholder —
  * projectView IGNORES clean question executions (the part stays
@@ -44,7 +40,6 @@ import {
 import { activeCompactionOf, type CompactionDetails } from "./compaction.ts";
 import { QUESTION_TOOLS } from "./pending.ts";
 import type { SubagentArtifactData, SubagentResultMeta } from "./contracts/jobs.ts";
-import type { PlanBlockData } from "./contracts/chat.ts";
 
 /** A view part — the loose part vocabulary the renderers consume (the same
  *  shape names the pre-Wave-D UIMessage dialect used, so the renderer
@@ -113,17 +108,6 @@ function applyResult(part: LannaViewPart, result: ToolResultMessage): void {
 		part.state = "output-available";
 		part.output = result.details;
 	}
-}
-
-/** Does this assistant group carry a successful plan_init (the splice target)? */
-function lastSuccessfulPlanInit(parts: LannaViewPart[]): number {
-	let idx = -1;
-	parts.forEach((p, i) => {
-		if (p.type !== "tool-plan_init") return;
-		const ok = (p.output as { ok?: unknown } | undefined)?.ok;
-		if (ok === true) idx = i;
-	});
-	return idx;
 }
 
 /** Project the native record (+ live turn working list) into the client's
@@ -373,28 +357,9 @@ function applyResultTo(part: LannaViewPart | undefined, result: ToolResultMessag
 	// rendered nothing) is dropped from the view — the record keeps it.
 }
 
-/** A marker's projected message (handoff/steers) or splice (plan block). */
+/** A marker's projected message. */
 function projectMarker(marker: LannaMarkerMessage, out: LannaViewMessage[]): void {
 	switch (marker.customType) {
-		case "graph-context": {
-			// The session's map context (owner, 2026-10-04): user-side —
-			// a minimal collapsible card ABOVE the first user message;
-			// never a text bubble (scaffolding, like the thinking card).
-			out.push({
-				id: marker.id,
-				role: "user",
-				parts: [{ type: "data-graph-context", id: `gc_${marker.id}`, data: marker.details }],
-			});
-			return;
-		}
-		case "probe-handoff": {
-			out.push({
-				id: marker.id,
-				role: "user",
-				parts: [{ type: "data-probe-handoff", id: `ph_${marker.id}`, data: marker.details }],
-			});
-			return;
-		}
 		case "subagent-steer": {
 			const meta = marker.details as SubagentResultMeta;
 			const artifact = marker.details as {
@@ -472,17 +437,6 @@ function projectMarker(marker: LannaMarkerMessage, out: LannaViewMessage[]): voi
 					},
 				],
 			});
-			return;
-		}
-		case "plan-block": {
-			// No message of its own: splice into the preceding assistant
-			// group, IN FLOW after the last successful plan_init call.
-			const group = out[out.length - 1];
-			if (!group || group.role !== "assistant") return;
-			const idx = lastSuccessfulPlanInit(group.parts);
-			if (idx === -1) return;
-			const { block } = marker.details as { planCallId: string; block: PlanBlockData };
-			group.parts.splice(idx + 1, 0, { type: "data-plan-block", id: marker.id, data: block });
 			return;
 		}
 	}

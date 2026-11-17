@@ -97,28 +97,9 @@ describe("chat-export", () => {
 		assert.ok(md.includes("# not a heading\nkept as written\n"), "a code fence is left alone");
 	});
 
-	it("writes an answered question with its options and the learner's choice, and a drawing kept in a tool result", () => {
+	it("writes the tutor's text and a drawing kept in a tool result, and leaves out a tool the learner never sees", () => {
 		const messages = [
 			{ id: "n-1", role: "assistant", content: [{ type: "text", text: "One quick check." }] },
-			{
-				id: "n-2",
-				role: "toolResult",
-				toolName: "probe",
-				isError: false,
-				details: {
-					kind: "quiz",
-					questionText: 'Complete the sentence: "Čítam ___ knihu."',
-					options: [
-						{ index: 1, label: "túto" },
-						{ index: 2, label: "tú" },
-					],
-					dontKnow: false,
-					answers: [{ label: "tú", value: "b", index: 2 }],
-					correctIndices: [1],
-					correct: false,
-					answeredAt: "2026-11-08T09:37:34.769Z",
-				},
-			},
 			{
 				id: "n-3",
 				role: "toolResult",
@@ -131,12 +112,8 @@ describe("chat-export", () => {
 
 		const md = exportChatMarkdown(messages, { title: "Demonstratives", exportedAt: "2026-11-09" });
 
-		assert.ok(
-			md.includes(
-				'## Tutor\n\nOne quick check.\n\nComplete the sentence: "Čítam ___ knihu."\n\n- túto (correct)\n- tú\n\n## Learner\n\ntú\n',
-			),
-		);
-		assert.ok(md.includes('## Tutor\n\n```svg\n<svg viewBox="0 0 10 10"></svg>\n```'));
+		assert.ok(md.includes("## Tutor\n\nOne quick check."));
+		assert.ok(md.includes('```svg\n<svg viewBox="0 0 10 10"></svg>\n```'));
 		assert.ok(!md.includes("grade"), "a tool the learner never sees leaves no trace");
 	});
 
