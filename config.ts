@@ -298,12 +298,15 @@ const dataRoot = () => path.join(BASE_DATA_ROOT, "profiles", activeProfile());
 // The per-language paths are getters, so they follow a switch.
 export const PATHS = {
 	root: ROOT,
-	/** Teacher system prompt — the agent's instructions (src/agent/). */
 	/** The data root shared by every language profile. */
 	base: BASE_DATA_ROOT,
 	/** The running profile's root (data/profiles/<language>). */
 	get data() {
 		return dataRoot();
+	},
+	/** The PDFs and images the learner sends with the composer's buttons — the only files the tutor may read. */
+	get sentFiles() {
+		return path.join(dataRoot(), "sources");
 	},
 	/** The read-only curriculum assets (seed data, lexicon) per language. */
 	curriculum: path.join(ROOT, "curriculum"),

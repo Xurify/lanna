@@ -19,13 +19,29 @@ import {
 import type { PiEngine } from "../src/agent/models.ts";
 import { runPdfReaderAgent } from "../src/agent/subagents/pdf-reader.ts";
 import type { PdfPageRenderer } from "../src/agent/subagents/pdf-pages.ts";
+import { sendCopy, unsend } from "./fixtures/sent-files.ts";
 
 const FIXTURE = path.join(import.meta.dirname, "fixtures", "sample-3page.pdf");
+const NOT_A_PDF = path.join(import.meta.dirname, "fixtures", "not-a-pdf.txt");
+const SENT = "pdf-reader";
+const OUTSIDE = "Only the PDFs and images the learner sends with the composer's buttons can be read.";
 
 function fauxEngine(steps: FauxResponseStep[]): PiEngine {
 	const faux = createFauxCore({ tokenSize: { min: 64, max: 64 } });
 	faux.setResponses(steps);
 	return { model: faux.getModel(), streamFn: faux.streamSimple };
+}
+
+/** Runs the reader on a path it must refuse, counting any model call. */
+async function refused(input: string) {
+	let modelCalls = 0;
+	const engine = fauxEngine([]);
+	engine.streamFn = () => {
+		modelCalls++;
+		throw new Error("the model must not be called");
+	};
+	const result = await runPdfReaderAgent({ path: input, question: "anything" }, { engine });
+	return { result, modelCalls };
 }
 
 const PNG_1PX = Buffer.from([
@@ -53,34 +69,18 @@ function fakeRenderer(
 }
 
 describe("pdf-reader source paths", () => {
-	let home: string;
-	const relativePath = path.join("Course notes", "sample document.pdf");
-	const originalHome = process.env.HOME;
-	const originalUserProfile = process.env.USERPROFILE;
+	const relativePath = path.join(SENT, "Course notes", "sample document.pdf");
+	let absolutePath: string;
 
 	before(() => {
-		home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-pdf-home-"));
-		const target = path.join(home, relativePath);
-		fs.mkdirSync(path.dirname(target), { recursive: true });
-		fs.copyFileSync(FIXTURE, target);
-		process.env.HOME = home;
-		process.env.USERPROFILE = home;
+		absolutePath = sendCopy(FIXTURE, relativePath);
 	});
 
-	after(() => {
-		if (originalHome === undefined) delete process.env.HOME;
-		else process.env.HOME = originalHome;
-		if (originalUserProfile === undefined) delete process.env.USERPROFILE;
-		else process.env.USERPROFILE = originalUserProfile;
-		fs.rmSync(home, { recursive: true, force: true });
-	});
+	after(() => unsend(SENT));
 
-	for (const kind of ["absolute", "home-relative"] as const) {
-		it(`${kind} path reaches text tools and rendering as the same absolute path`, async () => {
-			const absolutePath = path.join(home, relativePath);
+	for (const kind of ["absolute", "relative"] as const) {
+		it(`${kind} path to a sent PDF reaches text tools and rendering as the same absolute path`, async () => {
 			const inputPath = kind === "absolute" ? absolutePath : relativePath;
-			assert.equal(os.homedir(), home);
-			assert.notEqual(path.resolve(relativePath), absolutePath, "cwd is not the learner's home");
 			const renderer = fakeRenderer();
 			const engine = fauxEngine([
 				fauxAssistantMessage([fauxToolCall("pdf_info", {}, { id: "i1" })], { stopReason: "toolUse" }),
@@ -103,24 +103,57 @@ describe("pdf-reader source paths", () => {
 			);
 			assert.equal(result.path, absolutePath);
 			assert.match(result.brief, /^Read the requested document/);
-			assert.match(lastContext, /Pages: 3/, "metadata opened the home-anchored PDF");
+			assert.match(lastContext, /Pages: 3/, "metadata opened the sent PDF");
 			assert.deepEqual(result.pagesRead, [2, 3]);
-			assert.deepEqual(result.pagesConsulted, [1, 2, 3], "search and extraction opened the home-anchored PDF");
+			assert.deepEqual(result.pagesConsulted, [1, 2, 3], "search and extraction opened the sent PDF");
 			assert.deepEqual(renderer.paths, [absolutePath]);
 		});
 	}
 
-	it("a missing home-relative source fails before any model call", async () => {
-		let modelCalls = 0;
-		const engine = fauxEngine([]);
-		engine.streamFn = () => {
-			modelCalls++;
-			throw new Error("the model must not be called");
-		};
-		const missing = path.join("Course notes", "missing.pdf");
-		const result = await runPdfReaderAgent({ path: missing, question: "anything" }, { engine });
-		assert.equal(result.path, path.join(home, missing));
-		assert.match(result.brief, /^PDF failed:.*ENOENT/);
+	it("a PDF outside the sent-files folder is refused before any model call", async () => {
+		const { result, modelCalls } = await refused(FIXTURE);
+		assert.equal(result.path, FIXTURE);
+		assert.equal(result.brief, `PDF failed: ${OUTSIDE}`);
+		assert.equal(modelCalls, 0);
+		assert.deepEqual(result.pagesRead, []);
+		assert.deepEqual(result.pagesConsulted, []);
+	});
+
+	it("a PDF in the OS temp dir is refused the same way", async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-pdf-outside-"));
+		try {
+			const file = path.join(dir, "sample document.pdf");
+			fs.copyFileSync(FIXTURE, file);
+			const { result, modelCalls } = await refused(file);
+			assert.equal(result.brief, `PDF failed: ${OUTSIDE}`);
+			assert.equal(modelCalls, 0);
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("a symbolic link in the sent-files folder that points outside is refused before any model call", async (t) => {
+		const link = path.join(path.dirname(absolutePath), "escape.pdf");
+		try {
+			fs.symlinkSync(FIXTURE, link, "file");
+		} catch (err) {
+			if ((err as { code?: string }).code === "EPERM") return t.skip("creating symlinks needs privileges on this PC");
+			throw err;
+		}
+		try {
+			const { result, modelCalls } = await refused(link);
+			assert.equal(result.brief, `PDF failed: ${OUTSIDE}`);
+			assert.equal(modelCalls, 0);
+		} finally {
+			fs.rmSync(link, { force: true });
+		}
+	});
+
+	it("a missing sent file fails before any model call", async () => {
+		const missing = path.join(SENT, "Course notes", "missing.pdf");
+		const { result, modelCalls } = await refused(missing);
+		assert.equal(result.path, missing);
+		assert.equal(result.brief, `PDF failed: No such file: ${missing}`);
 		assert.equal(modelCalls, 0);
 		assert.deepEqual(result.pagesRead, []);
 		assert.deepEqual(result.pagesConsulted, []);
@@ -128,14 +161,22 @@ describe("pdf-reader source paths", () => {
 });
 
 describe("pdf-reader loop (faux engine)", () => {
+	let sent: string;
+
+	before(() => {
+		sent = sendCopy(FIXTURE, path.join(SENT, "loop", "sample-3page.pdf"));
+	});
+
+	after(() => unsend(SENT));
+
 	it("triage → extract → final brief: pagesConsulted tracks the extract", async () => {
 		const engine = fauxEngine([
 			fauxAssistantMessage([fauxToolCall("pdf_info", {}, { id: "i1" })], { stopReason: "toolUse" }),
 			fauxAssistantMessage([fauxToolCall("pdf_extract", { pages: "1-2" }, { id: "e1" })], { stopReason: "toolUse" }),
 			fauxAssistantMessage([fauxText("The integral rule appears on page 1 (p. 1). Pages consulted: 1, 2")]),
 		]);
-		const result = await runPdfReaderAgent({ path: FIXTURE, question: "what is the integral of x?" }, { engine });
-		assert.equal(result.path, FIXTURE);
+		const result = await runPdfReaderAgent({ path: sent, question: "what is the integral of x?" }, { engine });
+		assert.equal(result.path, sent);
 		assert.match(result.brief, /integral rule/);
 		assert.deepEqual(result.pagesRead, [1, 2], "extracted pages are read pages");
 		assert.deepEqual(result.pagesConsulted, [1, 2]);
@@ -154,7 +195,7 @@ describe("pdf-reader loop (faux engine)", () => {
 			fauxAssistantMessage([fauxText("Found it on page 1 (p. 1): the integral of x dx.")]),
 		]);
 		const result = await runPdfReaderAgent(
-			{ path: FIXTURE, question: "integral of x?" },
+			{ path: sent, question: "integral of x?" },
 			{ engine, onActivity: (line) => void (line && (nudged ||= line.startsWith("pdf_search"))) },
 		);
 		assert.match(result.brief, /Found it on page 1/);
@@ -174,7 +215,7 @@ describe("pdf-reader loop (faux engine)", () => {
 			fauxAssistantMessage([fauxText("The physics formula is visible on page 2 (p. 2).")]),
 		]);
 		const result = await runPdfReaderAgent(
-			{ path: FIXTURE, question: "what is the force formula?" },
+			{ path: sent, question: "what is the force formula?" },
 			{ engine, pdfPages: renderer },
 		);
 		assert.deepEqual(result.pagesRead, [2, 3], "rendered pages are read pages");
@@ -194,7 +235,7 @@ describe("pdf-reader loop (faux engine)", () => {
 			fauxAssistantMessage([fauxText("Extracted instead: the calculus line (p. 1).")]),
 		]);
 		const result = await runPdfReaderAgent(
-			{ path: FIXTURE, question: "page 1 content?" },
+			{ path: sent, question: "page 1 content?" },
 			{
 				engine,
 				pdfPages: {
@@ -209,14 +250,13 @@ describe("pdf-reader loop (faux engine)", () => {
 		assert.deepEqual(result.pagesConsulted, [1]);
 	});
 
-	it("an unreadable source fails deterministically before any model call", async () => {
+	it("an unreadable sent file fails deterministically before any model call", async () => {
+		const unreadable = sendCopy(NOT_A_PDF, path.join(SENT, "loop", "not-a-pdf.txt"));
 		const engine = fauxEngine([fauxAssistantMessage([fauxText("never reached")])]);
-		const result = await runPdfReaderAgent(
-			{ path: path.join(import.meta.dirname, "fixtures", "not-a-pdf.txt"), question: "anything" },
-			{ engine },
-		);
+		const result = await runPdfReaderAgent({ path: unreadable, question: "anything" }, { engine });
 		// had the model been consulted, the brief would be its text instead
 		assert.match(result.brief, /^PDF failed:/);
+		assert.ok(!result.brief.includes(OUTSIDE), "the file is sent, so the failure is the parse, not the refusal");
 		assert.ok(!result.brief.includes("never reached"));
 		assert.deepEqual(result.pagesRead, []);
 		assert.deepEqual(result.pagesConsulted, []);

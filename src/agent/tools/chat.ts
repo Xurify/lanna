@@ -2,9 +2,6 @@ import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { serverExecute } from "../tool-execute.ts";
 import { readTool } from "./read.ts";
-import { lsTool } from "./ls.ts";
-import { findTool } from "./find.ts";
-import { grepTool } from "./grep.ts";
 import { sourceTools, type SourceToolContext } from "./sources.ts";
 import { healToolRecord } from "./heal.ts";
 import { languageTools, type ReviewSeam } from "./language.ts";
@@ -145,9 +142,6 @@ export function chatTools(ctx: ChatToolContext): Record<string, AgentTool<any>> 
 		pose: poseTool,
 		grade: gradeTool(ctx.answers),
 		read: readTool,
-		ls: lsTool,
-		find: findTool,
-		grep: grepTool,
 		...(sources ? { research: sources.research, pdf: sources.pdf } : {}),
 		...languageTools(ctx.review),
 		...(ctx.drawing ? { draw: drawTool(ctx.drawing) } : {}),

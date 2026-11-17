@@ -132,19 +132,14 @@ export function findPendingToolCall(messages: UIMessage[]): PendingToolCall | nu
  * execution (the bridge defers `tool-input-available` to
  * tool_execution_end — the invalid-input gate for the question dock), so
  * keying the old “Writing a question…” shimmer on ANY streaming tool
- * part mislabeled minutes-long local greps as question-writing. The label
+ * part mislabeled minutes-long tool runs as question-writing. The label
  * now names the actual activity; chat.tsx gates it on `!pending` and
  * renders it as the quiet transcript shimmer.
  */
 const ACTIVITY_LABELS: Record<string, string> = {
 	read: "Reading a file…",
-	ls: "Listing a directory…",
-	find: "Finding files…",
-	grep: "Searching file contents…",
-	research: "Dispatching research…",
+	research: "Researching…",
 	pdf: "Reading a PDF…",
-	plan_init: "Drawing up the plan…",
-	probe_done: "Concluding the assessment…",
 };
 
 /** The activity label for ONE running tool (owner, streaming round
