@@ -47,10 +47,9 @@ After step 4 the share should be under 10%. Measure after every step with the co
 
 - The "teach" session kind (prober, teacher, plan tree, question dock) is gone; the placement follow-up is an Ask chat. Done before the rest of step 4: measured **20.7%** after it.
 
-- Background jobs: `research` and `pdf` become ordinary Tasks (`src/server/tasks.ts`, the `/tasks` page); the job queue and the activity dock go. The result still arrives in the chat.
+- Background jobs: `research` and `pdf` become plain tools that run inside the turn and show their progress in the chat; the job queue, the wake pipeline and the jobs in the activity dock go. Long app work (preparing a video, adding a language, writing a story) stays a Task (`src/server/tasks.ts`, `/tasks`).
 - No new `note_mistake` tool: `grade` already feeds Mistakes; it is widened instead (step 4).
 
 ## Questions for the owner before step 4
 
 - Should the tutor read files on the learner's computer (`read`, `ls`, `find`, `grep`)? Today it can; a language tutor may only need the PDFs and notes the learner hands it.
-- Does Ask need a session plan tree, or is Lanna's daily plan enough?
