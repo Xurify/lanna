@@ -316,8 +316,8 @@ export function Word({
 					</span>
 					{(resolvedCat || resolvedGender || token.fresh || token.assumed || lookupData?.source === "translated") && (
 						<span className="mt-2.5 flex flex-wrap gap-1.5">
-							{resolvedCat && <Tag>{resolvedCat.toLowerCase()}</Tag>}
-							{resolvedGender && <Tag>{resolvedGender}</Tag>}
+							{resolvedCat && <Tag>{wordTypeLabel(resolvedCat)}</Tag>}
+							{resolvedGender && <Tag>{resolvedGender.replace("-", " ")}</Tag>}
 							{token.fresh && <Tag className="bg-teal-wash text-teal-2">new word</Tag>}
 							{token.assumed && <Tag>not studied yet</Tag>}
 							{lookupData?.source === "translated" && <Tag className="bg-teal-wash text-teal-2">translated</Tag>}
@@ -447,4 +447,16 @@ export function splitFormNote(formNote: string | undefined, lemma: string): { be
 		return { before: formNote.slice(0, at + 4), after: formNote.slice(at + marker.length) };
 	}
 	return { before: "from ", after: formNote ? ` · ${formNote}` : "" };
+}
+
+const PART_OF_SPEECH_CATEGORIES: Record<string, string> = {
+	nouns: "noun",
+	verbs: "verb",
+	adjectives: "adjective",
+	adverbs: "adverb",
+};
+
+export function wordTypeLabel(cat: string): string {
+	const lower = cat.toLowerCase();
+	return PART_OF_SPEECH_CATEGORIES[lower] ?? lower;
 }

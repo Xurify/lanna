@@ -51,7 +51,7 @@ export const STORIES_A1: StorySource[] = [
 			},
 			{
 				who: "Matej",
-				sk: "Bývam v Banskej Štiavnici v strednom Slovensku.",
+				sk: "Bývam v Banskej Štiavnici na strednom Slovensku.",
 				en: "I live in Banská Štiavnica in central Slovakia.",
 			},
 			{

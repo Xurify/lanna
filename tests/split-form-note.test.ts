@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { splitFormNote } from "../components/reading/word.tsx";
+import { splitFormNote, wordTypeLabel } from "../components/reading/word.tsx";
 
 describe("splitFormNote", () => {
 	it("cuts a case note around the dictionary form", () => {
@@ -23,5 +23,13 @@ describe("splitFormNote", () => {
 
 	it("puts a note that does not name the dictionary form after it", () => {
 		assert.deepEqual(splitFormNote("je + to", "je to"), { before: "from ", after: " · je + to" });
+	});
+});
+
+describe("wordTypeLabel", () => {
+	it("names a part-of-speech category in the singular", () => {
+		assert.equal(wordTypeLabel("Adjectives"), "adjective");
+		assert.equal(wordTypeLabel("noun"), "noun");
+		assert.equal(wordTypeLabel("Places"), "places");
 	});
 });

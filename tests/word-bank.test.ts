@@ -187,6 +187,12 @@ describe("getWordBank", () => {
 		assert.equal(horach.found, true);
 		assert.equal(horach.lemma, "hora");
 		assert.ok(horach.gloss?.includes("mountain"));
+		assert.equal(horach.formNote, "locative plural of hora");
+
+		assert.equal(lookupSelection("strednom").formNote, "masculine or neuter locative singular of stredný");
+		assert.equal(lookupSelection("kaviarni").formNote, "dative or locative singular of kaviareň");
+		assert.equal(lookupSelection("robia").formNote, "3rd person plural of robiť");
+		assert.equal(lookupSelection("nerobí").gloss?.startsWith("doesn't do"), true);
 
 		const pracujem = lookupSelection("pracujem");
 		assert.equal(pracujem.found, true);
