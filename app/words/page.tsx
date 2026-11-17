@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const TABS: readonly WordsTab[] = ["words", "phrases", "cheatsheets"];
+const TABS: readonly WordsTab[] = ["words", "common", "phrases", "cheatsheets"];
 
 export default async function Page({
 	searchParams,

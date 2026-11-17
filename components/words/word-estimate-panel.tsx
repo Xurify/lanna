@@ -11,7 +11,13 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const dayLabel = (day: string) => `${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1] ?? ""}`;
 const percent = (share: number) => `${Math.max(0, Math.min(100, share * 100))}%`;
 
-export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | null }) {
+export function WordEstimatePanel({
+	initial,
+	revision = 0,
+}: {
+	initial: WordEstimateReport | null;
+	revision?: number;
+}) {
 	const [report, setReport] = useState(initial);
 
 	useEffect(() => {
@@ -25,7 +31,7 @@ export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | n
 		return () => {
 			gone = true;
 		};
-	}, []);
+	}, [revision]);
 
 	const estimate = report?.estimate;
 	if (!report || !estimate) return null;
@@ -110,12 +116,18 @@ export function WordEstimatePanel({ initial }: { initial: WordEstimateReport | n
 				role="img"
 				aria-label={`About ${count(estimate.total)} of the ${count(estimate.dictionary)} words in this dictionary: ${count(fromEvidence)} counted from your own evidence, ${count(estimate.parts.inferred)} estimated.`}
 			>
-				<i style={{ width: percent(fromEvidence / estimate.dictionary) }} />
+				<i
+					style={{
+						width: percent(fromEvidence / estimate.dictionary),
+						borderRadius: estimate.parts.inferred > 0 ? "4px 0 0 4px" : undefined,
+					}}
+				/>
 				<i
 					className="over"
 					style={{
 						left: percent(fromEvidence / estimate.dictionary),
 						width: percent(estimate.parts.inferred / estimate.dictionary),
+						borderRadius: fromEvidence > 0 ? undefined : "4px",
 					}}
 				/>
 			</div>

@@ -48,6 +48,21 @@ function write(value: KnownWordsFile): void {
 
 export const knownWordStore = {
 	read,
+	markMany(words: readonly { slug: string; lemma: string }[], now = new Date()): number {
+		const f = read();
+		const at = now.toISOString();
+		let added = 0;
+		for (const { slug, lemma } of words) {
+			if (Object.hasOwn(f.words, slug)) continue;
+			f.words[slug] = { lemma, at };
+			added++;
+		}
+		if (added > 0) {
+			f.updatedAt = at;
+			write(f);
+		}
+		return added;
+	},
 	has(slug: string): boolean {
 		return Object.hasOwn(read().words, slug);
 	},
