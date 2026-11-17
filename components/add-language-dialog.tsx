@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
 import { CheckIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CountryFlag } from "@/components/ui/country-flag";
@@ -259,24 +260,20 @@ export function AddLanguageDialog({
 
 				<div className="flex shrink-0 flex-col gap-2 border-t border-border/60 px-5 py-4">
 					{error && (
-						<p className="text-xs text-destructive" role="alert">
+						<p className="rounded-lg bg-miss-soft px-3.5 py-2.5 text-sm text-foreground" role="alert">
 							{error}
 						</p>
 					)}
-					<div className="flex items-center justify-end gap-2">
-						<button
-							type="button"
-							onClick={onClose}
-							className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-						>
+					<div className="flex flex-wrap items-center justify-end gap-3">
+						<Button type="button" variant="outline" size="sm" onClick={onClose}>
 							Cancel
-						</button>
-						<button
+						</Button>
+						<Button
 							type="button"
+							size="sm"
 							data-testid="add-language-start"
 							disabled={!choice || busy || (anyAdding && !choice.restoreOnly)}
 							onClick={() => void start()}
-							className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
 						>
 							{choice?.restoreOnly
 								? `Put ${choice.english} back`
@@ -285,7 +282,7 @@ export function AddLanguageDialog({
 									: choice
 										? `Add ${choice.english}`
 										: "Pick a language"}
-						</button>
+						</Button>
 					</div>
 				</div>
 			</div>

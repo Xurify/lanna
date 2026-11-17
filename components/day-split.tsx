@@ -99,7 +99,7 @@ export function DaySplit({
 				</p>
 			)}
 			<div className="mt-3 flex justify-end gap-2">
-				<button type="button" className="q-btn ghost" onClick={onCancel}>
+				<button type="button" className="q-btn sec" onClick={onCancel}>
 					Cancel
 				</button>
 				<button

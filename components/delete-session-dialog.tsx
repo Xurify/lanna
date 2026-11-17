@@ -2,26 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Trash2 } from "lucide-react";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { Button } from "@/components/ui/button";
 import type { ChatListItem } from "@/src/core";
 
 /**
- * Session deletion (wave 6 chunk A; owner flow rework 2026-09-24) — THE
- * destructive-confirmation surface, portaled z-50 like the setup dialog,
- * now in the node dialog's shape (the two must read as one design):
- *
- *   - red title "Delete session?" in the abort-turn look (owner, 2026-10-13
- *     polish: text-sm font-semibold JetBrains Mono via the UI default —
- *     the serif display title is gone), the session name below it in
- *     JetBrains Mono at normal text-sm size (was sized-up text-lg), no
- *     code-block chrome;
- *   - a bottom row Cancel + destructive-red Delete, exactly the node
- *     dialog's pair.
- *
- * Retryable failures render honestly with a Try-again: 409 turn_in_flight /
- * jobs_running ("wait for running work") clears on its own — the server's error line is
- * already written for the user; we show it verbatim. Try-again is just
+ * Confirms sending one chat to the trash. A 409 (a turn or background job is
+ * still running) keeps the dialog open with the server's own line and a
+ * Try again.
  */
 export function DeleteSessionDialog({
 	chat,
@@ -117,49 +106,38 @@ function DeleteSessionBody({
 		<div
 			role="dialog"
 			aria-modal="true"
-			aria-label="Delete chat"
+			aria-labelledby="delete-session-title"
 			data-testid="delete-session-dialog"
 			onClick={(e) => e.stopPropagation()}
-			className="w-[32rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
+			className="w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 		>
-			<h2 className="text-sm font-semibold text-destructive">Delete chat?</h2>
-			{/* The session name below the title in JetBrains Mono (owner,
-			    2026-09-24): no code-block chrome — the font already says
-			    code. Owner, 2026-10-13 polish: normal text-sm size (was
-			    sized-up text-lg), still white. Same shape as the node
-			    dialog. */}
-			<div className="mt-1.5">
-				<code data-testid="session-name-code" className="font-mono text-sm text-foreground">
-					{chat.title}
-				</code>
-			</div>
-			<p className="mt-2 text-sm text-muted-foreground">
-				The chat leaves your list and any background work in it stops. The chat is kept in the trash, so opening its
-				link again lets you put it back.
+			<h2 id="delete-session-title" className="text-base font-semibold text-foreground">
+				Delete this chat?
+			</h2>
+			<p
+				data-testid="session-name-code"
+				className="mt-3 line-clamp-3 rounded-lg bg-well px-3.5 py-2.5 font-mono text-sm break-words text-foreground"
+			>
+				{chat.title}
+			</p>
+			<p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+				It leaves your list and any background work in it stops. It stays in the trash: open its link again to put it
+				back.
 			</p>
 			{failure && (
 				<div
 					role="alert"
 					data-testid="delete-failure"
-					className="mt-3 rounded-sm border border-border/60 px-3 py-2 text-xs"
+					className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg bg-miss-soft px-3.5 py-2.5 text-sm text-foreground"
 				>
-					<span className="text-foreground">{failure.error}</span>
-					<button
-						type="button"
-						data-testid="delete-retry"
-						onClick={onRun}
-						disabled={busy}
-						className="ml-3 text-xs text-foreground underline-offset-2 hover:underline disabled:opacity-40"
-					>
+					<span className="min-w-0">{failure.error}</span>
+					<Button type="button" variant="outline" size="xs" data-testid="delete-retry" onClick={onRun} disabled={busy}>
 						Try again
-					</button>
+					</Button>
 				</div>
 			)}
-			{/* The node dialog's exact bottom row: quiet Cancel, destructive
-			    red Delete (border + text, fill on hover — the app's
-			    established destructive pair). */}
-			<div className="mt-4 flex justify-end gap-2">
-				<Button type="button" variant="ghost" size="sm" data-testid="delete-cancel" onClick={onClose} disabled={busy}>
+			<div className="mt-6 flex flex-wrap justify-end gap-3">
+				<Button type="button" variant="outline" size="sm" data-testid="delete-cancel" onClick={onClose} disabled={busy}>
 					Cancel
 				</Button>
 				<Button
@@ -170,7 +148,8 @@ function DeleteSessionBody({
 					onClick={onRun}
 					disabled={busy}
 				>
-					{busy ? "Deleting…" : "Delete"}
+					<Trash2 aria-hidden />
+					{busy ? "Deleting…" : "Delete chat"}
 				</Button>
 			</div>
 		</div>

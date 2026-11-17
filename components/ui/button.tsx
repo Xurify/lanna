@@ -11,8 +11,7 @@ const buttonVariants = cva(
 			variant: {
 				default:
 					"bg-teal text-primary-foreground hover:bg-teal-2 shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_1px_2px_rgb(10_84_82/0.35)]",
-				destructive:
-					"bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
+				destructive: "bg-danger text-white hover:bg-danger-hover focus-visible:ring-destructive/30",
 				// A quiet destructive action: tinted fill, no border, so it reads as
 				// a button without shouting. The solid `destructive` is for the
 				// confirm step of a dialog.
