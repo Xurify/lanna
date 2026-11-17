@@ -8,12 +8,14 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
 	BookmarkIcon,
 	ChevronDownIcon,
 	EyeOffIcon,
 	LightbulbIcon,
 	LoaderCircleIcon,
+	MessageCircleQuestionIcon,
 	MinusIcon,
 	PlusIcon,
 	SlidersHorizontalIcon,
@@ -30,6 +32,7 @@ import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/componen
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { MissWhy } from "@/components/miss-why";
+import { askAbout, onAskLeaving } from "@/components/lesson/tutor";
 import {
 	compareAnswer,
 	diacriticSlips,
@@ -286,6 +289,10 @@ function DeckSettings({
 	);
 }
 
+function answeredSentence(line: AnsweredLine): string {
+	return line.pieces.map((piece, i) => piece + (line.gaps[i] ?? "")).join("");
+}
+
 function AnsweredRow({
 	line,
 	code,
@@ -309,7 +316,11 @@ function AnsweredRow({
 			</span>
 			<span className="min-w-0">
 				<span className="sr-only">{VERDICT_WORD[line.verdict]}: </span>
-				<span className="block text-[16px] leading-snug text-ink-2" lang={code}>
+				<span
+					className="block text-[16px] leading-snug text-ink-2"
+					lang={code}
+					data-ask-context={answeredSentence(line)}
+				>
 					{line.pieces.map((piece, i) => (
 						<Fragment key={i}>
 							<Masked text={piece} hide={hide} />
@@ -346,12 +357,14 @@ function AnsweredHistory({
 	answeredToday,
 	code,
 	hide,
+	lookup,
 }: {
 	lines: AnsweredLine[];
 	sessionSince: string | undefined;
 	answeredToday: number;
 	code: string;
 	hide: ReadonlySet<string>;
+	lookup: boolean;
 }) {
 	const [earlierOpen, setEarlierOpen] = useState(false);
 	const inSession = (line: AnsweredLine) => sessionSince !== undefined && line.reviewedAt > sessionSince;
@@ -370,7 +383,12 @@ function AnsweredHistory({
 		/>
 	);
 	return (
-		<section className="mt-8" aria-label="Answered today" data-testid="review-answered">
+		<section
+			className="mt-8"
+			aria-label="Answered today"
+			data-testid="review-answered"
+			data-word-lookup-enabled={lookup ? "true" : "false"}
+		>
 			{session.length > 0 && (
 				<>
 					<h2 className="q-sh !mb-0" data-testid="review-session-heading">
@@ -428,6 +446,9 @@ export function ReviewSession() {
 	// Read on first render, so the card never paints the default and then flips.
 	const [mode, setMode] = useState<Mode>(() => (readPref(MODE_KEY, "type") === "choice" ? "choice" : "type"));
 	const [saving, setSaving] = useState(false);
+	const [asking, setAsking] = useState(false);
+	const [askError, setAskError] = useState(false);
+	const router = useRouter();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const bandRef = useRef<HTMLDivElement>(null);
 	const closeSettings = useCallback(() => setSettingsOpen(false), []);
@@ -586,6 +607,27 @@ export function ReviewSession() {
 			window.dispatchEvent(new Event("lanna:review-changed"));
 		} finally {
 			setSaving(false);
+		}
+	};
+
+	useEffect(() => onAskLeaving(() => (verdict ? rate(Math.min(suggested, cap) as Rating) : Promise.resolve())));
+
+	const askSentence = async () => {
+		if (!prompt || asking) return;
+		setAsking(true);
+		setAskError(false);
+		try {
+			await askAbout(router, {
+				kind: "sentence",
+				sentence: prompt.card.sentence,
+				translation: prompt.card.translation,
+				answer: prompt.answer,
+				lemma: prompt.card.lemma,
+				given,
+			});
+		} catch {
+			setAskError(true);
+			setAsking(false);
 		}
 	};
 
@@ -962,6 +1004,7 @@ export function ReviewSession() {
 										}}
 										className="q-sent mt-2 !text-[30px] !leading-[44px] [text-wrap:pretty] @xl:!text-[46px] @xl:!leading-[64px]"
 										lang={lang?.code}
+										data-ask-context={prompt.card.sentence}
 										data-word-lookup-enabled={verdict !== null ? "true" : "false"}
 									>
 										{runs.map((run, i) => {
@@ -1188,6 +1231,29 @@ export function ReviewSession() {
 														{prompt.form && <Note label="form">{prompt.form}</Note>}
 													</p>
 												)}
+												<p className="mt-2 flex flex-wrap items-center gap-x-2 text-[13px] text-ink-3">
+													<button
+														type="button"
+														onClick={() => void askSentence()}
+														disabled={asking}
+														className="q-btn ghost -ml-2.5 !h-8 !text-[13px] !font-[500] !text-teal-2 disabled:opacity-60"
+														title="Saves your rating, then opens a chat with the tutor"
+														data-testid="review-ask"
+													>
+														{asking ? (
+															<LoaderCircleIcon className="size-3.5 animate-spin" aria-hidden="true" />
+														) : (
+															<MessageCircleQuestionIcon className="size-3.5" aria-hidden="true" />
+														)}
+														Ask about this sentence
+													</button>
+													<span>or select any word in it</span>
+													{askError && (
+														<span className="text-miss" role="alert">
+															· Couldn't open the tutor. Check Settings → AI models.
+														</span>
+													)}
+												</p>
 											</div>
 										)}
 									</div>
@@ -1201,6 +1267,7 @@ export function ReviewSession() {
 									answeredToday={counts?.reviewedToday ?? answered.length}
 									code={lang.code}
 									hide={hideInHistory}
+									lookup={!prompt || verdict !== null}
 								/>
 							)}
 

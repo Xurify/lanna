@@ -67,3 +67,55 @@ export function whyPrompt(item: { sentence: string; answer: string; given: strin
 		"Explain in 3 or 4 short lines what decides the form here, compare it with what I wrote, and give me 2 more examples in say: spans. Then give me one quick problem on the same point.",
 	].join(" ");
 }
+
+export function sentencePrompt(card: {
+	sentence: string;
+	translation: string;
+	answer: string;
+	lemma: string;
+	given: string;
+}): string {
+	const wrote = card.given.trim() && card.given.trim() !== card.answer ? `, and I wrote "${card.given.trim()}"` : "";
+	return [
+		`Help me understand this sentence: "${card.sentence}" (${card.translation}).`,
+		`The word I practiced was "${card.answer}" (from ${card.lemma})${wrote}.`,
+		"Go through it piece by piece in short lines: what each part means and why each form is the one it is. Then ask me which part I want to know more about.",
+	].join(" ");
+}
+
+export function partPrompt(part: string, sentence: string): string {
+	const where = sentence && sentence !== part ? ` in "${sentence}"` : "";
+	return [
+		`What does "${part}" mean${where}?`,
+		"Explain in 3 or 4 short lines: what it means here, its dictionary form and why it has this form. Then give me 2 more examples in say: spans.",
+	].join(" ");
+}
+
+const settleBeforeAsking = new Set<() => Promise<void>>();
+
+export function onAskLeaving(settle: () => Promise<void>): () => void {
+	settleBeforeAsking.add(settle);
+	return () => settleBeforeAsking.delete(settle);
+}
+
+export async function askAbout(
+	router: { push: (href: string) => void },
+	ask:
+		| { kind: "sentence"; sentence: string; translation: string; answer: string; lemma: string; given: string }
+		| { kind: "part"; part: string; sentence: string },
+): Promise<void> {
+	await Promise.all([...settleBeforeAsking].map((settle) => settle()));
+	if (ask.kind === "sentence") {
+		return startTutorChat(router, {
+			title: `Explain "${ask.sentence}"`,
+			prompt: sentencePrompt(ask),
+			reuse: { sentence: ask.sentence, answer: ask.sentence, lemma: ask.lemma, given: ask.given },
+		});
+	}
+	const sentence = ask.sentence || ask.part;
+	return startTutorChat(router, {
+		title: `Explain "${ask.part}"`,
+		prompt: partPrompt(ask.part, ask.sentence),
+		reuse: { sentence, answer: ask.part, lemma: "", given: "" },
+	});
+}
