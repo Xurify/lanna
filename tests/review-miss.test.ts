@@ -37,6 +37,9 @@ const card = (id: string, slug: string, lemma: string, sentence: string, answer:
 });
 
 const learning = (c: ReviewCard): ReviewCard => ({ ...c, state: "learning", reps: 2 });
+type Span = import("../src/core/review.ts").Span;
+const gapsAt = (sentence: string, ...words: string[]): Span[] =>
+	words.map((w): Span => [sentence.indexOf(w), sentence.indexOf(w) + w.length]);
 
 reviewStore.writeCards({
 	"vecera#2": card("vecera#2", "vecera", "večera", "Po večeri ideme na prechádzku.", "večeri"),
@@ -46,7 +49,7 @@ reviewStore.writeCards({
 });
 
 test("with several gaps, a miss on another hidden word is the one explained", () => {
-	const r = reviewMiss("ist#0", "Ideme na dovolenka", 3)!;
+	const r = reviewMiss("ist#0", "Ideme na dovolenka", gapsAt("Ideme na dovolenku.", "Ideme", "na", "dovolenku"))!;
 	assert.equal(r.slip, "base");
 	assert.equal(r.lemma, "dovolenka");
 	assert.equal(r.answer, "dovolenku");
@@ -54,7 +57,11 @@ test("with several gaps, a miss on another hidden word is the one explained", ()
 });
 
 test("the right case in the wrong number says so: s bytom for s bytmi", () => {
-	const r = reviewMiss("kseftovat#2", "Kšeftuje bytom v", 3)!;
+	const r = reviewMiss(
+		"kseftovat#2",
+		"Kšeftuje bytom v",
+		gapsAt("Kšeftuje s bytmi v centre.", "Kšeftuje", "bytmi", "v"),
+	)!;
 	assert.equal(r.lemma, "byt");
 	assert.equal(r.slip, "same-word");
 	assert.equal(r.givenForm, "instrumental singular");
@@ -63,7 +70,7 @@ test("the right case in the wrong number says so: s bytom for s bytmi", () => {
 });
 
 test("a missed grammar word the dictionary has no entry for is named from the grammar-word table", () => {
-	const r = reviewMiss("kseft#0", "Na toto kšefte", 3)!;
+	const r = reviewMiss("kseft#0", "Na toto kšefte", gapsAt("Na tom kšefte.", "Na", "tom", "kšefte"))!;
 	assert.equal(r.lemma, "ten");
 	assert.equal(r.answer, "tom");
 	assert.equal(r.other?.lemma, "tento");
@@ -71,8 +78,11 @@ test("a missed grammar word the dictionary has no entry for is named from the gr
 });
 
 test("with several gaps, the card's own word still comes first, and all right explains nothing", () => {
-	assert.equal(reviewMiss("kseft#0", "Na toto kšeft", 3)!.answer, "kšefte");
-	assert.equal(reviewMiss("kseft#0", "Na tom kšefte", 3), null);
+	assert.equal(
+		reviewMiss("kseft#0", "Na toto kšeft", gapsAt("Na tom kšefte.", "Na", "tom", "kšefte"))!.answer,
+		"kšefte",
+	);
+	assert.equal(reviewMiss("kseft#0", "Na tom kšefte", gapsAt("Na tom kšefte.", "Na", "tom", "kšefte")), null);
 });
 
 test("another dictionary word is named with its meaning, even when it shares the stem", () => {

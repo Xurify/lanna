@@ -16,11 +16,13 @@ import { knownForms } from "../core/form-slip.ts";
 import { grammarWord } from "../core/reading.ts";
 import { missReason, missWordOf, startsQuestion, type MissReason, type MissWord } from "../core/review-miss.ts";
 import { languageReference } from "../agent/language-reference.ts";
+import { knownWords } from "./reading.ts";
 import {
-	MAX_BLANK_WORDS,
+	ASSUMED_KNOWN,
 	blankAround,
+	blankAtSpans,
 	blankFromSpans,
-	blankWordsFor,
+	blankSizeFor,
 	dayKey,
 	dueCards,
 	entryLemma,
@@ -38,6 +40,7 @@ import {
 	type ReviewLogEntry,
 	type ReviewSettings,
 	type Span,
+	type WordStrength,
 } from "../core/review.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
@@ -98,6 +101,8 @@ interface ReviewPrompt {
 	/** Words the blank hides, and which of them is the card's word. */
 	words: number;
 	target: number;
+	/** Where the gaps sit in the sentence; the answer sends them back, so it is graded against the blank that was on screen. */
+	spans: Span[];
 	/** Days each rating would schedule — the button labels. */
 	intervals: Record<Rating, number>;
 	/** Four choices including the answer, for multiple-choice mode. */
@@ -197,9 +202,39 @@ function hash(s: string): number {
 	return h >>> 0;
 }
 
-export function blankOf(card: ReviewCard, max: number, words?: number): Blank {
-	const seed = hash(`${card.id}:${card.reps}`);
-	return blankAround(card, card.state === "new" ? 1 : (words ?? blankWordsFor(card.state, max, seed)), seed);
+/** What the learner knows of each word. The deck is the evidence: a word with a card counts by its strongest card's stability, and a card not yet past learning counts as nothing. A word with no card counts as assumed when the learner's level, lessons or own marking say it is known. */
+function wordStrength(cards: Record<string, ReviewCard>): WordStrength {
+	const stabilityBySlug = new Map<string, number>();
+	for (const c of Object.values(cards))
+		if (!c.suspended)
+			stabilityBySlug.set(
+				c.slug,
+				Math.max(stabilityBySlug.get(c.slug) ?? 0, c.state === "review" ? (c.memory?.stability ?? 0) : 0),
+			);
+	const lexicon = loadLexicon();
+	const assumed = knownWords(lexicon).known;
+	return (word) => {
+		const entries = lexicon?.byForm.get(word.toLocaleLowerCase(tag())) ?? [];
+		const tested = entries.filter((e) => stabilityBySlug.has(e.slug));
+		if (tested.length > 0) return Math.max(...tested.map((e) => stabilityBySlug.get(e.slug)!));
+		return entries.some((e) => assumed.has(e.slug)) ? ASSUMED_KNOWN : undefined;
+	};
+}
+
+/** Spans as a request carried them: pairs of whole numbers, or undefined. Whether they fit the sentence is `blankAtSpans`' check. */
+export function spansOf(raw: unknown): Span[] | undefined {
+	if (!Array.isArray(raw)) return undefined;
+	const spans = raw.filter(
+		(pair): pair is Span =>
+			Array.isArray(pair) && pair.length === 2 && pair.every((n) => Number.isInteger(n) && n >= 0),
+	);
+	return spans.length === raw.length ? spans : undefined;
+}
+
+/** The card's blank: the spans the screen showed when they still fit the sentence, otherwise sized by the card's memory and filled with words the deck proves. */
+export function blankOf(card: ReviewCard, spans?: readonly Span[], cards = reviewStore.readCards()): Blank {
+	const shown = card.state === "new" ? undefined : blankAtSpans(card, spans);
+	return shown ?? blankAround(card, blankSizeFor(card), hash(`${card.id}:${card.reps}`), wordStrength(cards));
 }
 
 /** The blank an answer in the log was given to. A line logged before spans were kept, or one whose sentence has changed since, shows the card's word alone. */
@@ -214,7 +249,12 @@ function loggedBlank(card: ReviewCard, spans: Span[] | undefined): Blank {
 		: blankFromSpans(card.sentence, [own], 0);
 }
 
-function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPrompt {
+function prompt(
+	card: ReviewCard,
+	now: Date,
+	settings: ReviewSettings,
+	cards: Record<string, ReviewCard>,
+): ReviewPrompt {
 	const elapsed = card.lastReview ? (now.getTime() - Date.parse(card.lastReview)) / DAY_MS : 0;
 	const entry = loadLexicon()?.bySlug.get(card.slug);
 	const unit = entry
@@ -222,7 +262,7 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 		: null;
 	const form = entry && unit ? describeForm(entry, card.answer, unit) : undefined;
 	const sentenceSource = entry?.examples[Number(card.id.split("#")[1])]?.src;
-	const blank = blankOf(card, settings.blankWords);
+	const blank = blankOf(card, undefined, cards);
 	return {
 		card,
 		pieces: blank.pieces,
@@ -230,6 +270,7 @@ function prompt(card: ReviewCard, now: Date, settings: ReviewSettings): ReviewPr
 		answer: blank.answer,
 		words: blank.words,
 		target: blank.target,
+		spans: blank.spans,
 		intervals: previewIntervals(card.memory, elapsed, { retention: settings.retention }),
 		options: distractors(card),
 		...(entry?.rank !== undefined ? { rank: entry.rank } : {}),
@@ -327,7 +368,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 			).length,
 		},
 		settings: meta.settings,
-		next: next ? prompt(next, now, meta.settings) : null,
+		next: next ? prompt(next, now, meta.settings, cards) : null,
 		answered: answeredToday.lines,
 		leeches: leeches(list)
 			.slice(0, 10)
@@ -346,8 +387,8 @@ interface ReviewAnswer {
 	hints?: number;
 	/** Picked from four rather than typed. */
 	picked?: boolean;
-	/** Words the blank on screen hid (ReviewPrompt.words). */
-	words?: number;
+	/** The blank on screen (ReviewPrompt.spans). */
+	spans?: Span[];
 }
 
 interface ReviewOutcome {
@@ -361,7 +402,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	const card = cards[input.cardId];
 	if (!card) throw new Error(`unknown card ${input.cardId}`);
 	const meta = reviewStore.readMeta();
-	const blank = blankOf(card, meta.settings.blankWords, input.words);
+	const blank = blankOf(card, input.spans, cards);
 	const verdict = compareAnswer(blank.answer, input.given, tag());
 	const word = targetWordOf(blank, input.given);
 	const wordVerdict = blank.words > 1 ? compareAnswer(card.answer, word, tag()) : verdict;
@@ -402,19 +443,19 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	return { verdict, rating, card: updated };
 }
 
-export function reviewMiss(cardId: string, givenAnswer: string, words?: number): MissReason | null {
-	return missOf(cardId, givenAnswer, words)?.reason ?? null;
+export function reviewMiss(cardId: string, givenAnswer: string, spans?: Span[]): MissReason | null {
+	return missOf(cardId, givenAnswer, spans)?.reason ?? null;
 }
 
 export async function reviewMissWithNote(
 	cardId: string,
 	givenAnswer: string,
-	words?: number,
+	spans?: Span[],
 ): Promise<MissReason | null> {
-	const miss = missOf(cardId, givenAnswer, words);
+	const miss = missOf(cardId, givenAnswer, spans);
 	if (!miss?.reason.other?.notePending || !miss.entry || !miss.otherEntry) return miss?.reason ?? null;
 	await ensureMissNote(miss.entry, miss.otherEntry);
-	const after = reviewMiss(cardId, givenAnswer, words);
+	const after = reviewMiss(cardId, givenAnswer, spans);
 	if (!after?.other?.notePending) return after;
 	const { notePending: _unwritten, ...other } = after.other;
 	return { ...after, other };
@@ -460,17 +501,12 @@ function missedGap(
 function missOf(
 	cardId: string,
 	givenAnswer: string,
-	words?: number,
+	spans?: Span[],
 ): { reason: MissReason; entry?: LexiconEntry; otherEntry?: LexiconEntry } | null {
 	const reviewCard = reviewStore.readCards()[cardId];
 	if (!reviewCard) return null;
 	const lexicon = loadLexicon();
-	const missed = missedGap(
-		reviewCard,
-		blankOf(reviewCard, reviewStore.readMeta().settings.blankWords, words),
-		givenAnswer,
-		lexicon,
-	);
+	const missed = missedGap(reviewCard, blankOf(reviewCard, spans), givenAnswer, lexicon);
 	if (!missed) return null;
 	const { card, given } = missed;
 	const entry = lexicon?.bySlug.get(card.slug);
@@ -620,8 +656,6 @@ export function updateReviewSettings(patch: Partial<ReviewSettings>): ReviewSett
 		next.newPerDay = Math.max(0, Math.min(100, Math.round(patch.newPerDay)));
 	if (typeof patch.retention === "number" && Number.isFinite(patch.retention))
 		next.retention = Math.max(0.7, Math.min(0.97, patch.retention));
-	if (typeof patch.blankWords === "number" && Number.isFinite(patch.blankWords))
-		next.blankWords = Math.max(1, Math.min(MAX_BLANK_WORDS, Math.round(patch.blankWords)));
 	reviewStore.writeMeta({ ...meta, settings: next });
 	return next;
 }

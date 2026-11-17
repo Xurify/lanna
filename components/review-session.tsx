@@ -58,6 +58,7 @@ interface Prompt {
 	answer: string;
 	words: number;
 	target: number;
+	spans: Array<[number, number]>;
 	intervals: Record<Rating, number>;
 	options: string[];
 	rank?: number;
@@ -98,7 +99,7 @@ interface Status {
 		pendingNew: number;
 		dueLater: number;
 	};
-	settings: { newPerDay: number; retention: number; blankWords: number };
+	settings: { newPerDay: number; retention: number };
 	next: Prompt | null;
 	answered?: AnsweredLine[];
 	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number }>;
@@ -222,19 +223,7 @@ function comesBack(days: number): string {
 	return `${(days / 365).toFixed(1).replace(/\.0$/, "")} yr`;
 }
 
-function DeckSettings({
-	mode,
-	onMode,
-	blankWords,
-	onBlankWords,
-	className,
-}: {
-	mode: Mode;
-	onMode: (m: Mode) => void;
-	blankWords: number;
-	onBlankWords: (n: number) => void;
-	className?: string;
-}) {
+function DeckSettings({ mode, onMode, className }: { mode: Mode; onMode: (m: Mode) => void; className?: string }) {
 	return (
 		<div
 			className={cn(
@@ -256,28 +245,6 @@ function DeckSettings({
 							data-testid={`review-mode-${m}`}
 						>
 							{m === "type" ? "Typing" : "Choosing"}
-						</button>
-					))}
-				</span>
-			</div>
-			<div
-				className="contents"
-				data-testid="review-blank"
-				title="How many words a card can hide. A new word always hides one. Applies from the next card."
-			>
-				<span id="review-blank-label">Blank</span>
-				<span className="q-segc" role="radiogroup" aria-labelledby="review-blank-label">
-					{[1, 2, 3].map((n) => (
-						<button
-							key={n}
-							type="button"
-							role="radio"
-							aria-checked={blankWords === n}
-							className={cn("!h-8 !px-3 !text-[13px] whitespace-nowrap pointer-coarse:!h-10", blankWords === n && "on")}
-							onClick={() => onBlankWords(n)}
-							data-testid={`review-blank-${n}`}
-						>
-							{n === 1 ? "1 word" : `1–${n}`}
 						</button>
 					))}
 				</span>
@@ -543,7 +510,7 @@ export function ReviewSession() {
 			sfx.wrong();
 			shake(sentenceRef.current);
 			const id = prompt.card.id;
-			const missUrl = `/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}&words=${prompt.words}`;
+			const missUrl = `/api/review/miss?cardId=${encodeURIComponent(id)}&given=${encodeURIComponent(answer)}&spans=${prompt.spans.map(([from, to]) => `${from}-${to}`).join(",")}`;
 			const showMiss = (url: string) =>
 				fetch(url)
 					.then((res) => (res.ok ? (res.json() as Promise<{ reason: MissReason | null }>) : null))
@@ -574,7 +541,7 @@ export function ReviewSession() {
 					rating: Math.min(rating, cap),
 					hints: hint,
 					picked: picks,
-					words: prompt.words,
+					spans: prompt.spans,
 					tz: new Date().getTimezoneOffset(),
 				}),
 			});
@@ -691,16 +658,6 @@ export function ReviewSession() {
 	};
 	// The stepper shows the new value at once; the save lands behind it.
 	const [newPerDay, setNewPerDay] = useState<number | null>(null);
-	const [blankWords, setBlankWords] = useState<number | null>(null);
-	const blankWordsNow = blankWords ?? status?.settings.blankWords ?? 1;
-	const chooseBlankWords = (n: number) => {
-		setBlankWords(n);
-		void fetch("/api/review/settings", {
-			method: "PUT",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ blankWords: n }),
-		});
-	};
 	const chooseMode = (m: Mode) => {
 		setMode(m);
 		writePref(MODE_KEY, m);
@@ -814,12 +771,7 @@ export function ReviewSession() {
 								aria-label="Review settings"
 								className="lanna-menu-in absolute right-4 top-full mt-1 origin-top-right rounded-xl bg-card p-4 shadow-[var(--q-raise-hi)] @xl:right-8"
 							>
-								<DeckSettings
-									mode={mode}
-									onMode={chooseMode}
-									blankWords={blankWordsNow}
-									onBlankWords={chooseBlankWords}
-								/>
+								<DeckSettings mode={mode} onMode={chooseMode} />
 							</div>
 						)}
 					</div>
@@ -918,6 +870,15 @@ export function ReviewSession() {
 													? "Relearning"
 													: "Review"}
 										</span>
+										{prompt.words > 1 && (
+											<span
+												className="-ml-1.5 whitespace-nowrap"
+												title="Words your deck shows you remember for a week or more, then common words at your level. A card hides more of them as its own word gets stronger."
+												data-testid="review-blank-note"
+											>
+												· +{prompt.words - 1} {prompt.words === 2 ? "word" : "words"} you know
+											</span>
+										)}
 										{prompt.sentenceSource && (
 											<span className="-ml-1.5 hidden min-w-0 truncate @lg:inline" data-testid="review-source">
 												· sentence from {SENTENCE_SOURCES[prompt.sentenceSource] ?? prompt.sentenceSource}

@@ -115,13 +115,17 @@ export interface ReviewLogEntry {
 
 export const MAX_BLANK_WORDS = 3;
 
+/** FSRS stability, in days, from which a word counts as proven: its memory holds for a week. */
+export const SOLID_STABILITY_DAYS = 7;
+/** From this stability a card hides a third word. */
+const STRONG_STABILITY_DAYS = 30;
+
 export interface ReviewSettings {
 	newPerDay: number;
 	retention: number;
-	blankWords: number;
 }
 
-export const DEFAULT_REVIEW_SETTINGS: ReviewSettings = { newPerDay: 10, retention: 0.9, blankWords: 1 };
+export const DEFAULT_REVIEW_SETTINGS: ReviewSettings = { newPerDay: 10, retention: 0.9 };
 
 /** Rank order for minting new cards: curated beginner words first, then by
  *  frequency rank, then by slug for determinism. */
@@ -197,10 +201,20 @@ export interface Blank {
 const WORD = /[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*/gu;
 const HAS_LETTER = /\p{L}/u;
 
-export function blankWordsFor(state: CardState, max: number, seed: number): number {
-	const cap = Math.max(1, Math.min(MAX_BLANK_WORDS, Math.floor(max)));
-	return state === "new" ? 1 : 1 + (seed % cap);
+/** How many words a card hides: the card's word alone until its memory is proven, more as it grows, and never more than a third of the sentence, so the rest still carries the meaning. */
+export function blankSizeFor(card: Pick<ReviewCard, "state" | "memory" | "sentence">): number {
+	if (card.state !== "review") return 1;
+	const stability = card.memory?.stability ?? 0;
+	const byMemory = stability >= STRONG_STABILITY_DAYS ? 3 : stability >= SOLID_STABILITY_DAYS ? 2 : 1;
+	const letterWords = [...card.sentence.matchAll(WORD)].filter((m) => HAS_LETTER.test(m[0])).length;
+	return Math.min(byMemory, Math.max(1, Math.floor(letterWords / 3)), MAX_BLANK_WORDS);
 }
+
+/** What the learner knows of a word as it stands in a sentence: its card's FSRS stability in days, `ASSUMED_KNOWN` for a word the level counts as known that the deck has not tested, or undefined. */
+export type WordStrength = (word: string) => number | undefined;
+
+/** Sorts a word the deck has not tested after every word it has proven. */
+export const ASSUMED_KNOWN = 1000;
 
 function nextSeed(seed: number): number {
 	const s = Math.imul(seed ^ (seed >>> 15), 2246822507) >>> 0;
@@ -237,21 +251,44 @@ export function splitOnWords(text: string, hidden: ReadonlySet<string>): Array<{
 	return parts;
 }
 
-/** The card's word plus up to `words - 1` other words of the sentence, anywhere in it, picked by the seed. */
-export function blankAround(card: Pick<ReviewCard, "sentence" | "answer" | "at">, words: number, seed = 0): Blank {
+/** The card's word, and up to `words - 1` other words of the sentence the learner has proven. The weakest proven words go first, since a retrieval that takes effort and still succeeds strengthens memory most; the seed shuffles near ties, so a sentence does not hide the same words every rep. A sentence with fewer proven words hides fewer. */
+export function blankAround(
+	card: Pick<ReviewCard, "sentence" | "answer" | "at">,
+	words: number,
+	seed = 0,
+	strengthOf: WordStrength = () => undefined,
+): Blank {
 	const own: Span = [card.at, card.at + card.answer.length];
-	const others: Span[] = [...card.sentence.matchAll(WORD)]
-		.filter((m) => HAS_LETTER.test(m[0]))
-		.map((m): Span => [m.index, m.index + m[0].length])
-		.filter(([from, to]) => to <= own[0] || from >= own[1]);
-	const spans: Span[] = [own];
 	let s = seed;
-	for (let n = 1; n < Math.min(words, MAX_BLANK_WORDS) && others.length > 0; n++) {
-		s = nextSeed(s);
-		spans.push(others.splice(s % others.length, 1)[0]!);
-	}
+	const others = [...card.sentence.matchAll(WORD)]
+		.filter((m) => HAS_LETTER.test(m[0]))
+		.map((m) => ({ span: [m.index, m.index + m[0].length] as Span, strength: strengthOf(m[0]) }))
+		.filter(
+			({ span: [from, to], strength }) =>
+				(to <= own[0] || from >= own[1]) && strength !== undefined && strength >= SOLID_STABILITY_DAYS,
+		)
+		.map(({ span, strength }) => {
+			s = nextSeed(s);
+			return { span, order: strength! * (1 + (s % 1000) / 1000) };
+		})
+		.sort((a, b) => a.order - b.order);
+	const spans: Span[] = [own, ...others.slice(0, Math.max(0, Math.min(words, MAX_BLANK_WORDS) - 1)).map((o) => o.span)];
 	spans.sort((a, b) => a[0] - b[0]);
 	return blankFromSpans(card.sentence, spans, spans.indexOf(own));
+}
+
+/** The blank cut at spans the screen sent back: whole words of the sentence, in order, one of them the card's word. Undefined when they are not. */
+export function blankAtSpans(
+	card: Pick<ReviewCard, "sentence" | "answer" | "at">,
+	spans: readonly Span[] | undefined,
+): Blank | undefined {
+	if (!spans || spans.length === 0 || spans.length > MAX_BLANK_WORDS) return undefined;
+	const wordAt = new Map([...card.sentence.matchAll(WORD)].map((m) => [m.index, m.index + m[0].length]));
+	const whole = spans.every(
+		([from, to], i) => Number.isInteger(from) && wordAt.get(from) === to && (i === 0 || spans[i - 1]![1] <= from),
+	);
+	const target = spans.findIndex(([from, to]) => from === card.at && to === card.at + card.answer.length);
+	return whole && target >= 0 ? blankFromSpans(card.sentence, [...spans], target) : undefined;
 }
 
 export function targetWordOf(blank: Pick<Blank, "words" | "target">, given: string): string {
