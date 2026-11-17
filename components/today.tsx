@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { HistoryIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { QCheck, QIcon, QPie } from "@/components/quiet/icon";
+import { QIcon, QPie } from "@/components/quiet/icon";
 import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";
 import { EntryRow } from "@/components/log/day-log-view";
@@ -28,7 +28,6 @@ import { SetupDialog } from "@/components/setup-dialog";
 import { useStrongKeyless, useZeroKeys } from "@/components/setup-cta";
 import { useSettingsDialog } from "@/components/settings/settings-context";
 import { startTutorChat } from "@/components/lesson/tutor";
-import { CountryFlag } from "@/components/ui/country-flag";
 import { DaySplit } from "@/components/day-split";
 import { switchLanguage } from "@/components/switch-language";
 import { curriculumUnit, tutorUnitPrompt, weakSpotGroups } from "@/src/core";
@@ -46,17 +45,7 @@ import { TodayLineRow } from "@/components/today-line-row";
 import { WhereYouAre } from "@/components/where-you-are";
 import { OutsideListening } from "@/components/outside-listening";
 import { useActiveLanguage } from "@/components/speech";
-
-/** One thing to do today: a task in a language's plan, or setting a new language up. */
-interface Step {
-	key: string;
-	/** The language it is in, when the day spans several. */
-	lang: DayLanguage | null;
-	/** Null: the language is not set up yet, and this step is its setup. */
-	task: PlanTask | null;
-	minutes: number;
-	done: boolean;
-}
+import { DayPath, type PlanStep as Step } from "@/components/day-path";
 
 /** Minutes a language's setup takes (four screens and the level check). */
 const SETUP_MINUTES = 5;
@@ -235,29 +224,17 @@ export function Today({
 	const done = steps.filter((x) => x.done).length;
 	const total = steps.length;
 	const left = steps.filter((x) => !x.done).reduce((n, x) => n + x.minutes, 0);
-	const row = (x: Step) => {
+	const renderNext = (x: Step) => {
 		const elsewhere = x.lang && !x.lang.running ? x.lang : null;
-		return x === up ? (
-			<li key={x.key} data-testid={`plan-${x.key}`} data-next="true">
-				{x.task ? (
-					<UpNext
-						task={x.task}
-						busy={busy}
-						onOpen={() => start(x)}
-						meta={elsewhere ? `Opens in ${elsewhere.english}.` : x.task.id === "review" && s ? reviewMeta(s) : null}
-					/>
-				) : (
-					<SetupNext lang={x.lang!} busy={busy} onOpen={() => start(x)} />
-				)}
-			</li>
+		return x.task ? (
+			<UpNext
+				task={x.task}
+				busy={busy}
+				onOpen={() => start(x)}
+				meta={elsewhere ? `Opens in ${elsewhere.english}.` : x.task.id === "review" && s ? reviewMeta(s) : null}
+			/>
 		) : (
-			<li key={x.key} data-testid={`plan-${x.key}`}>
-				{x.task ? (
-					<PlanRow task={x.task} busy={busy} onOpen={() => start(x)} />
-				) : (
-					<SetupRow lang={x.lang!} busy={busy} onOpen={() => start(x)} />
-				)}
-			</li>
+			<SetupNext lang={x.lang!} busy={busy} onOpen={() => start(x)} />
 		);
 	};
 	const date = todayDate();
@@ -397,28 +374,9 @@ export function Today({
 										after={s.afterPlan}
 									/>
 								)}
-								{s && total > 0 && !groups && (
-									<ol className="flex flex-col gap-2" data-testid="plan-tasks">
-										{steps.map(row)}
-									</ol>
+								{s && total > 0 && (
+									<DayPath groups={groups} steps={steps} up={up} busy={busy} onStart={start} renderNext={renderNext} />
 								)}
-								{s &&
-									total > 0 &&
-									groups?.map((g, i) => (
-										<div key={g.lang.id} className={cn(i > 0 && "mt-5")} data-testid={`plan-lang-${g.lang.id}`}>
-											<h3 className="mb-2.5 flex items-center gap-2.5 px-1 text-[15px] font-[550] text-foreground">
-												<CountryFlag lang={g.lang.id} className="h-[18px] w-[27px] rounded-[4px]" />
-												{g.lang.endonym}
-												{g.lang.english !== g.lang.endonym && (
-													<span className="font-[450] text-ink-3">{g.lang.english}</span>
-												)}
-												<span className="q-num ml-auto text-[12.5px] font-[450] text-ink-3">
-													{g.lang.practiced} of {g.lang.minutes} min
-												</span>
-											</h3>
-											<ol className="flex flex-col gap-2">{g.steps.map(row)}</ol>
-										</div>
-									))}
 								{s &&
 									total > 0 &&
 									done >= total &&
@@ -582,64 +540,6 @@ export function Today({
 				}}
 			/>
 		</div>
-	);
-}
-
-/** The plan's other tasks: a state box, what to do, its kind as a word, the minutes. */
-function PlanRow({ task, busy, onOpen }: { task: PlanTask; busy: boolean; onOpen: () => void }) {
-	const w = words(task);
-	return (
-		<button
-			type="button"
-			onClick={onOpen}
-			disabled={busy}
-			className={cn(
-				"flex w-full items-center gap-3 rounded-[10px] px-3.5 py-2.5 text-left",
-				task.done ? "bg-transparent" : "bg-well hover:bg-well-2",
-			)}
-		>
-			<span className={cn("q-cb !mt-0 shrink-0", task.done && "!bg-teal !shadow-none")}>{task.done && <QCheck />}</span>
-			<span className="min-w-0 flex-1">
-				<span
-					className={cn(
-						"block truncate text-[15px] tracking-[-0.006em]",
-						task.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground",
-					)}
-				>
-					{w.primary}
-				</span>
-			</span>
-			<span className="q-pill grey shrink-0">{taskLabel(task)}</span>
-			<span className="q-num w-12 shrink-0 text-right text-[12.5px] text-ink-3">{task.minutes} min</span>
-			<span
-				className={cn(
-					"hidden w-12 shrink-0 text-right text-[12px] @xl:block",
-					task.done ? "font-[550] text-teal-2" : "text-ink-4",
-				)}
-			>
-				{task.done ? "Done" : "To do"}
-			</span>
-		</button>
-	);
-}
-
-/** A language in the list that is not set up yet: its setup is its one step. */
-function SetupRow({ lang, busy, onOpen }: { lang: DayLanguage; busy: boolean; onOpen: () => void }) {
-	return (
-		<button
-			type="button"
-			onClick={onOpen}
-			disabled={busy}
-			className="flex w-full items-center gap-3 rounded-[10px] bg-well px-3.5 py-2.5 text-left hover:bg-well-2"
-		>
-			<span className="q-cb !mt-0 shrink-0" />
-			<span className="min-w-0 flex-1 truncate text-[15px] tracking-[-0.006em] text-foreground">
-				Set up {lang.english}
-			</span>
-			<span className="q-pill grey shrink-0">Setup</span>
-			<span className="q-num w-12 shrink-0 text-right text-[12.5px] text-ink-3">{SETUP_MINUTES} min</span>
-			<span className="hidden w-12 shrink-0 text-right text-[12px] text-ink-4 @xl:block">To do</span>
-		</button>
 	);
 }
 
