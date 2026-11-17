@@ -1,810 +1,283 @@
-/**
- * THE SESSION MODEL (Wave D): the chat session's state machine, extracted
- * PURE — no React, one injectable fetch — so the attach/replay/settle/
- * error/abort paths are testable in the repo's node:test world. The React
- * hook (components/session.ts) is a thin adapter: it re-renders on change
- * and projects the view (core/view.ts).
- *
- * ONE VIEW PROTOCOL: every turn is a server-side background process (owner
- * ruling 2026-09-25); this model is a view. Sends POST one explicit input
- * event ({chatId, input}); the response and the reattach stream
- * (GET /api/chats/[id]/stream) are the SAME verbatim AgentEvent SSE,
- * applied by the same function. Status vocabulary (pre-Wave-D parity):
- * ready | submitted | streaming | error.
- */
-
-import type { AgentEvent } from "@earendil-works/pi-agent-core";
-import type { ToolResultMessage } from "@earendil-works/pi-ai";
+import { newProblemDismissedMarker, type ChatInput, type LannaMessage } from "../src/core";
+import { fetchAttach, readBodyText } from "./session/attach";
+import { bodyTextOr, chatPath, errorMessageOf, jsonPost } from "./session/http";
+import { continuationOwed } from "./session/continuation";
 import {
-	needsContinuation,
-	measuredContextTokens,
-	newNextMessage,
-	newProblemDismissedMarker,
-	newThinkingMessage,
-	newUserMessage,
-	projectView,
-	type ChatInput,
-	type LannaMarkerMessage,
-	type LannaMessage,
-	type LannaViewMessage,
-	type LiveExecution,
-} from "../src/core";
+	admitsTurn,
+	adoptAppend,
+	appendTail,
+	beginSubmit,
+	cleanSlate,
+	replaceRecord,
+	retireRunningTurn,
+	settleConsume,
+	withError,
+	withStatus,
+} from "./session/transitions";
+import { localId } from "./session/local-id";
+import { projectSessionState } from "./session/project";
+import { ConnectionDrop, turnFrames, type TurnFrame } from "./session/sse";
+import { dropSteer, newSteerId, queueSteer } from "./session/steer-queue";
+import {
+	initialSessionData,
+	type ConsumeEnd,
+	type SessionData,
+	type SessionKind,
+	type SessionState,
+	type SessionStatus,
+} from "./session/state";
+import { postTurnInput, TURN_RETRY_DEADLINE_MS, TURN_RETRY_POLL_MS, type TurnRetryTiming } from "./session/turn-post";
+import { reduceWireEvent, type WireEvent } from "./session/wire";
 
-export type SessionStatus = "ready" | "submitted" | "streaming" | "error";
+export type { SessionState, SessionStatus, SteerQueueItem } from "./session/state";
+export { absorbed } from "./session/absorb";
+export { visibleQueuedSteers } from "./session/steer-queue";
 
-/** How often to poll turnInFlight while a racing turn runs (409 retry). */
-const TURN_POLL_MS = 500;
-/** Give up waiting (a wake turn can run long) and surface the 409. */
-const TURN_WAIT_MAX_MS = 30_000;
+const TURN_ALREADY_RUNNING = "A turn is already running — try again in a moment.";
 
-interface SessionModelDeps {
-	/** Injectable fetch (tests); defaults to the global. */
-	fetch?: typeof globalThis.fetch;
-	/** Injectable retry timing (tests). */
-	pollMs?: number;
-	waitMaxMs?: number;
-}
+const DONE: ConsumeEnd = { kind: "done" };
+const SETTLED: ConsumeEnd = { kind: "settled" };
+const DROPPED: ConsumeEnd = { kind: "dropped" };
+const ABORTED: ConsumeEnd = { kind: "aborted" };
 
-/** A local optimistic id (never a server stamp — absorption and the
- *  settle swap both key on this prefix). */
-let localSeq = 0;
-function localId(): string {
-	return `c_${Date.now().toString(36)}_${(localSeq++).toString(36)}`;
-}
-
-function delay(ms: number, signal?: AbortSignal): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const t = setTimeout(resolve, ms);
-		signal?.addEventListener(
-			"abort",
-			() => {
-				clearTimeout(t);
-				reject(new DOMException("Aborted", "AbortError"));
-			},
-			{ once: true },
-		);
-	});
-}
-
-async function turnInFlight(model: SessionModel): Promise<boolean | null> {
-	try {
-		const res = await model.fetch(`/api/chats/${encodeURIComponent(model.chatId)}/turn`);
-		if (!res.ok) return null;
-		return ((await res.json()) as { turnInFlight?: boolean }).turnInFlight === true;
-	} catch {
-		return null; // network hiccup: keep waiting, the deadline bounds us
-	}
-}
-
-const STREAM_DROPPED = "The connection dropped before the turn completed.";
-
-/** Mark transport failures without confusing JSON/application bugs with drops. */
-class StreamReadError extends Error {
-	constructor(cause: unknown) {
-		super(cause instanceof Error ? cause.message : String(cause), { cause });
-	}
-}
-
-/** Wire events; return true ONLY for the explicit completion marker. */
-async function* sseEvents(
-	reader: ReadableStreamDefaultReader<Uint8Array>,
-): AsyncGenerator<Record<string, unknown>, boolean> {
-	const decoder = new TextDecoder();
-	let buf = "";
-	for (;;) {
-		let chunk: ReadableStreamReadResult<Uint8Array>;
-		try {
-			chunk = await reader.read();
-		} catch (err) {
-			throw new StreamReadError(err);
-		}
-		const { done, value } = chunk;
-		if (done) return false;
-		buf += decoder.decode(value, { stream: true });
-		for (;;) {
-			const end = buf.indexOf("\n\n");
-			if (end === -1) break;
-			const event = buf.slice(0, end);
-			buf = buf.slice(end + 2);
-			const dataLine = event.split("\n").find((l) => l.startsWith("data: "));
-			if (!dataLine) continue;
-			const data = dataLine.slice("data: ".length);
-			if (data === "[DONE]") return true;
-			yield JSON.parse(data) as Record<string, unknown>;
-		}
-	}
-}
-
-/**
- * Has the record ABSORBED this optimistic tail entry? The write-ahead
- * persists content-identical copies with server-stamped ids — match on the
- * content, not the (local) id; only `c_`-prefixed local entries are ever
- * absorbed (live turn content is never dropped).
- */
-export function absorbed(m: LannaMessage, record: readonly LannaMessage[]): boolean {
-	if (typeof m.id !== "string" || !m.id.startsWith("c_")) return false;
-	const role = (m as { role?: string }).role;
-	if (role === "user") {
-		const content = (m as { content?: unknown }).content;
-		return record.some(
-			(r) => (r as { role?: string }).role === "user" && (r as { content?: unknown }).content === content,
-		);
-	}
-	if (role === "toolResult") {
-		const toolCallId = (m as ToolResultMessage).toolCallId;
-		return record.some(
-			(r) => (r as { role?: string }).role === "toolResult" && (r as ToolResultMessage).toolCallId === toolCallId,
-		);
-	}
-	if (role === "custom") {
-		// Markers (the thinking submission, 2026-10-05 — the doubled-card
-		// bug: the optimistic practice-thinking card was never absorbed, so
-		// the adoption window rendered it beside the write-ahead's server
-		// copy for the whole turn). TOTAL over roles by identity key — a
-		// marker is itself when its customType AND structured details match;
-		// types that never appear optimistically simply never reach here.
-		const marker = m as LannaMarkerMessage;
-		return record.some(
-			(r) =>
-				(r as { role?: string }).role === "custom" &&
-				(r as LannaMarkerMessage).customType === marker.customType &&
-				sameDetails((r as LannaMarkerMessage).details, marker.details),
-		);
-	}
-	return false;
-}
-
-/** Structural deep-equal for marker details (JSON-stable payloads — the
- *  constructors mint plain data). */
-function sameDetails(a: unknown, b: unknown): boolean {
-	return JSON.stringify(a) === JSON.stringify(b);
-}
-
-export interface SessionState {
-	messages: LannaViewMessage[];
-	nativeMessages: LannaMessage[];
-	/** Completed conversation usage; null after compaction or before first usage. */
-	contextTokens: number | null;
-	status: SessionStatus;
-	error: { message: string } | null;
-	/** Steers sent but not yet drained (composer steering, 2026-10-03):
-	 *  the queued indicator's truth. An entry dies when its id lands in
-	 *  the messages (the drain's verbatim events upsert the real card) —
-	 *  visibleQueuedSteers is the pure fold. */
-	steerQueue: SteerQueueItem[];
-}
-
-/** One queued composer steer: the client-minted id (the upsert key) + text. */
-export interface SteerQueueItem {
-	id: string;
-	text: string;
-}
-
-/** The indicator's fold (pure): a queued steer stays visible until its id
- *  lands in the message list — from the live stream's upsert, the settle
- *  sync, or a reload. A steer parked server-side (stranded behind a
- *  question) keeps its line: honest "waiting" until the next run drains it. */
-export function visibleQueuedSteers(
-	queue: readonly SteerQueueItem[],
-	messages: readonly LannaMessage[],
-): SteerQueueItem[] {
-	const ids = new Set(messages.map((m) => (m as { id?: string }).id));
-	return queue.filter((s) => !ids.has(s.id));
-}
-
-interface SessionModelOptions extends SessionModelDeps {
+interface SessionModelOptions {
 	chatId: string;
 	initialMessages: LannaMessage[];
-	/** Retained, memory-only server failure when reopening a session. */
 	initialError?: string;
-	/** Fires on every state change (the hook re-renders). */
+	fetch?: typeof globalThis.fetch;
+	pollMs?: number;
+	waitMaxMs?: number;
 	onChange?: () => void;
-	/** The reattach settled terminal (turn-settled): no turn running, the
-	 *  record is current — the caller refetches it. */
 	onReattachSettled?: () => void;
+}
+
+interface RecordSnapshot {
+	messages?: LannaMessage[];
+	turnError?: string;
 }
 
 export class SessionModel {
 	readonly chatId: string;
-	/** Injectable fetch (tests); defaults to the global. */
 	fetch: typeof globalThis.fetch;
-	/** Steers sent but not yet drained (the queued indicator's truth). */
-	private steerQueueValue: SteerQueueItem[] = [];
-	private readonly pollMs: number;
-	private readonly waitMaxMs: number;
-	private onReattachSettled?: () => void;
-	/** The hook's re-render trigger (set by the adapter). */
 	onChange?: () => void;
-
-	// THE STATE: the record (server canon) + the live tail (this client's
-	// optimistic appends and the streaming turn's messages). The tail dies
-	// at every full sync; the write-ahead absorbs the optimistic entries.
-	private base: LannaMessage[];
-	private tail: LannaMessage[] = [];
-	// The live turn's execution layer (view model mid-turn states):
-	private executions = new Map<string, LiveExecution>();
-	private streamingIds = new Set<string>();
-	private incompleteUsageIds = new Set<string>();
-	/** The in-flight assistant message's client id (see applyWireEvent). */
-	private streamingMessageId: string | null = null;
-	private statusValue: SessionStatus = "ready";
-	/** Request/loop failures are transient; provider failures derive from messages. */
-	private errorValue: { message: string } | null = null;
-	/** Dismissing a banner must not authorize an automatic replacement turn. */
-	private automaticContinuationBlocked = false;
-	/** A completed failure from THIS consume, not the previous attempt's record. */
-	private liveFailureId: string | null = null;
-	// The single live consume (POST response or reattach stream): a newer
-	// consume cancels the older — one reader at a time.
+	private data: SessionData;
+	private readonly timing: TurnRetryTiming;
+	private onReattachSettled?: () => void;
 	private consumeAbort: AbortController | null = null;
-	/** Synchronous ready check for the gate (send/read mount logic). */
-	readyRef = true;
 
-	constructor(opts: SessionModelOptions) {
-		this.chatId = opts.chatId;
-		this.base = opts.initialMessages;
-		this.errorValue = opts.initialError === undefined ? null : { message: opts.initialError };
-		this.automaticContinuationBlocked = opts.initialError !== undefined;
-		// BOUND: the browser's native fetch is a Window method — storing it
-		// unbound makes every call throw "Illegal invocation" in the browser
-		// (Node's undici doesn't care, so the tests never saw it). Always go
-		// through a receiver-preserving wrapper.
-		this.fetch = opts.fetch ?? ((...args) => globalThis.fetch(...args));
-		this.pollMs = opts.pollMs ?? TURN_POLL_MS;
-		this.waitMaxMs = opts.waitMaxMs ?? TURN_WAIT_MAX_MS;
-		this.onChange = opts.onChange;
-		this.onReattachSettled = opts.onReattachSettled;
-	}
-
-	/** Injectable settle hook (the adapter wires its ref). */
-	setReattachSettled(fn: () => void): void {
-		this.onReattachSettled = fn;
-	}
-
-	getState(): SessionState {
-		const live =
-			this.statusValue === "submitted" || this.statusValue === "streaming"
-				? { executions: this.executions, inFlight: true, streamingIds: this.streamingIds }
-				: undefined;
-		const messages = [...this.base, ...this.tail];
-		const latest = messages.at(-1);
-		// One rule for live and restored failures: only the final completed
-		// assistant can own the banner. While trying again, hide the old
-		// failure from the first Thinking frame, but show a new failure at end.
-		const providerError =
-			latest?.role === "assistant" &&
-			latest.stopReason === "error" &&
-			!this.incompleteUsageIds.has(latest.id) &&
-			(!live || latest.id === this.liveFailureId)
-				? { message: latest.errorMessage ?? "An error occurred." }
-				: null;
-		return {
-			messages: projectView(messages, live),
-			nativeMessages: messages,
-			contextTokens: measuredContextTokens(messages, this.incompleteUsageIds),
-			status: this.statusValue,
-			error: this.errorValue ?? providerError,
-			steerQueue: this.steerQueueValue,
+	constructor(options: SessionModelOptions) {
+		this.chatId = options.chatId;
+		this.data = initialSessionData(options.initialMessages, options.initialError);
+		// The browser's native fetch throws "Illegal invocation" unless it is called on the window object.
+		this.fetch = options.fetch ?? ((...args) => globalThis.fetch(...args));
+		this.timing = {
+			pollMs: options.pollMs ?? TURN_RETRY_POLL_MS,
+			waitMaxMs: options.waitMaxMs ?? TURN_RETRY_DEADLINE_MS,
 		};
+		this.onChange = options.onChange;
+		this.onReattachSettled = options.onReattachSettled;
 	}
 
 	get status(): SessionStatus {
-		return this.statusValue;
+		return this.data.status;
 	}
 
-	/** Mutate model state + notify (the hook re-renders). */
-	private mutate(fn: () => void): void {
-		fn();
-		this.onChange?.();
+	get isReady(): boolean {
+		return this.data.status === "ready";
 	}
 
-	private setStatus(status: SessionStatus): void {
-		if (status === "submitted") this.liveFailureId = null;
-		this.statusValue = status;
-		this.readyRef = status === "ready";
-		this.onChange?.();
+	getState(): SessionState {
+		return projectSessionState(this.data);
 	}
 
-	private setError(message: string | null): void {
-		this.errorValue = message === null ? null : { message };
-		if (message !== null) this.automaticContinuationBlocked = true;
-		this.onChange?.();
+	setReattachSettled(listener: () => void): void {
+		this.onReattachSettled = listener;
 	}
 
-	/** The 409 identity-retry fetch (the Wave B contract): the event was
-	 *  never persisted (write-ahead happens only on acceptance), so the
-	 *  retry waits out the running turn and re-POSTs the SAME body. */
-	async postInputEvent(input: ChatInput, signal?: AbortSignal): Promise<Response> {
-		const body = JSON.stringify({ chatId: this.chatId, input });
-		const init: RequestInit = {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body,
-			signal,
-		};
-		let response = await this.fetch("/api/chat", init);
-		let waited = 0;
-		while (response.status === 409) {
-			await response.body?.cancel().catch(() => {});
-			if (signal?.aborted || waited >= this.waitMaxMs) return response;
-			await delay(this.pollMs, signal);
-			waited += this.pollMs;
-			if (signal?.aborted) return response;
-			if ((await turnInFlight(this)) !== false) continue;
-			response = await this.fetch("/api/chat", init); // may 409 again → loop
-		}
-		return response;
+	postInputEvent(input: ChatInput, signal?: AbortSignal): Promise<Response> {
+		return postTurnInput(this.fetch, this.chatId, input, this.timing, signal);
 	}
 
-	/**
-	 * ONE event application for both the POST stream and the reattach
-	 * replay (pi's events carry the FULL partial message — a view REPLACES,
-	 * never assembles deltas). Returns whether the event did VIEW WORK:
-	 * the consume flips submitted→streaming on the first ACTED event, not
-	 * the first wire byte — agent_start/turn_start release nothing, so
-	 * the Thinking… placeholder (gated on submitted) covers the whole
-	 * provider-connect gap (owner, optimistic round 3, 2026-10-02).
-	 */
 	applyWireEvent(event: Record<string, unknown>): boolean {
-		if (event.type === "error") {
-			// Loop-level failure (agent.continue threw outside the stream) —
-			// raw text (owner ruling, Wave D): the banner shows exactly this.
-			this.setError(String(event.errorText ?? "An error occurred."));
-			return false;
-		}
-		const agent = event as unknown as AgentEvent;
-		switch (agent.type) {
-			case "agent_start":
-				// Positive evidence of a new/replayed server-owned turn. Any
-				// later failure in that replay blocks continuation again.
-				this.automaticContinuationBlocked = false;
-				if (this.errorValue !== null) this.setError(null);
-				return false;
-			case "message_start":
-			case "message_update":
-			case "message_end": {
-				const message = agent.message as LannaMessage & {
-					role?: string;
-					id?: string;
-				};
-				if ((message as { role?: string }).role !== "assistant") {
-					// Wave C: markers injected mid-run (pi's follow-up delivery)
-					// arrive as custom-role message_start/message_end events -
-					// UPSERT by id (markers always carry steer_<id> ids; id-less
-					// non-assistant events never occur - injected messages emit
-					// start+end only, no streaming partials). Without this the
-					// live stream dropped the marker until the settle sync.
-					const mid = message.id;
-					if (mid === undefined) return false;
-					this.mutate(() => {
-						const idx = this.tail.findIndex((m) => m.id === mid);
-						this.tail =
-							idx === -1 ? [...this.tail, message as LannaMessage] : this.tail.with(idx, message as LannaMessage);
-					});
-					return true;
-				}
-				// pi streams AssistantMessages with NO id — the id exists only
-				// once the server's persistTurn stamps the record (the live
-				// streaming bug, 2026-09-26: minting a fresh id per event made
-				// every message_update APPEND a full copy — a divider + thinking
-				// block per chunk, cleaned up only by the settle sync). The
-				// in-flight message is tracked by SLOT instead: message_start
-				// mints and remembers the id; updates and the end REPLACE that
-				// same tail entry. Exactly one assistant message streams at a
-				// time (pi's strict start → updates → end ordering per step; the
-				// reattach replay replays the same sequence), so the slot is
-				// unambiguous. An explicit message.id (if one ever appears on
-				// the wire) still wins.
-				const id = message.id ?? this.streamingMessageId ?? localId();
-				const withId = { ...message, id } as LannaMessage;
-				if (agent.type === "message_end") {
-					this.incompleteUsageIds.delete(id);
-					if (message.role === "assistant" && message.stopReason === "error") {
-						this.liveFailureId = id;
-						// A newer provider failure replaces an earlier connection/loop
-						// error, just as the live message_end did before restoration.
-						this.errorValue = null;
-					}
-				} else this.incompleteUsageIds.add(id);
-				if (agent.type === "message_start") {
-					this.streamingMessageId = id;
-					this.streamingIds.add(id);
-					this.mutate(() => {
-						this.tail = [...this.tail, withId];
-					});
-				} else {
-					this.mutate(() => {
-						const idx = this.tail.findIndex((m) => m.id === id);
-						this.tail = idx === -1 ? [...this.tail, withId] : this.tail.with(idx, withId);
-					});
-				}
-				if (agent.type === "message_end") {
-					this.streamingMessageId = null; // slot done — next start mints fresh
-				}
-				return true; // a message event is view work, even empty content
-			}
-			case "tool_execution_end": {
-				const result = agent.result as { content?: Array<{ type?: string; text?: string }>; details?: unknown } | null;
-				const text = result?.content?.find((c) => c.type === "text")?.text ?? "The tool call failed.";
-				this.mutate(() => {
-					this.executions = new Map(this.executions).set(agent.toolCallId, {
-						isError: agent.isError,
-						output: result?.details,
-						errorText: text,
-					});
-				});
-				return true; // the execution layer updated the tool part's card
-			}
-			case "turn_end": {
-				// The results batch: append as native messages (client-stamped
-				// ids — the settle sync lands the server canon).
-				this.mutate(() => {
-					this.tail = [
-						...this.tail,
-						...(agent.toolResults as ToolResultMessage[]).map(
-							(r) => ({ ...r, id: localId() }) as unknown as LannaMessage,
-						),
-					];
-				});
-				return true;
-			}
-			default:
-				return false; // agent_start/turn_start/tool_execution_start|update: no view work
-		}
+		const step = reduceWireEvent(this.data, event as WireEvent);
+		this.commit(step.data);
+		return step.acted;
 	}
 
-	/** Consume one SSE body to its [DONE] terminal. The turn-settled
-	 *  terminal (stream-route only) fires the settle hook and ends. */
-	async consumeStream(res: Response, controller = this.consumeAbort, allowRecovery = true): Promise<void> {
-		if (!res.body) throw new Error("The turn stream body is empty.");
-		const reader = res.body.getReader();
-		let sawEvent = false;
-		let sawDone = false;
+	async consumeStream(
+		response: Response,
+		controller: AbortController | null = this.consumeAbort,
+		allowRecovery = true,
+	): Promise<void> {
+		if (!response.body) throw new Error("The turn stream body is empty.");
+		const reader = response.body.getReader();
+		let end: ConsumeEnd = DROPPED;
 		try {
-			const events = sseEvents(reader);
-			for (;;) {
-				let next: IteratorResult<Record<string, unknown>, boolean>;
-				try {
-					next = await events.next();
-				} catch (err) {
-					if (err instanceof StreamReadError) break;
-					throw err;
-				}
-				if (this.consumeAbort !== controller) return;
-				if (next.done) {
-					sawDone = next.value;
-					break;
-				}
-				const event = next.value;
-				if (event.type === "turn-settled") {
-					// The raced-settle terminal: no turn to attach to — the
-					// record is current; the settle hook refetches.
-					sawDone = true;
-					this.onReattachSettled?.();
-					return;
-				}
-				const acted = this.applyWireEvent(event);
-				if (!sawEvent && acted) {
-					sawEvent = true;
-					if (this.statusValue !== "error") this.setStatus("streaming");
-				}
-			}
+			end = await this.applyFrames(turnFrames(reader), controller);
 		} finally {
 			await reader.cancel().catch(() => {});
 			reader.releaseLock();
-			// A cancelled consume may finish after its replacement has entered
-			// Thinking. Only the current owner can settle shared state.
-			if (this.consumeAbort === controller) {
-				this.streamingIds = new Set();
-				this.executions = new Map();
-				if (sawDone && this.statusValue !== "error") this.setStatus("ready");
-			}
+			if (this.consumeAbort === controller) this.commit(settleConsume(this.data, end));
 		}
-		if (this.consumeAbort !== controller || sawDone) return;
-		if (!allowRecovery) throw new StreamReadError(new Error(STREAM_DROPPED));
-		// One read-only recovery: refresh the canonical base, then replay the
-		// SAME server-owned turn. Never resend the learner's input.
+		if (this.consumeAbort !== controller || end.kind !== "dropped") return;
+		if (!allowRecovery) throw new ConnectionDrop();
 		await this.resumeStream(true, false);
 	}
 
-	private async fetchView(url: string, signal: AbortSignal, recoveringDrop: boolean): Promise<Response> {
-		try {
-			const res = await this.fetch(url, { signal });
-			if (recoveringDrop && !res.ok) throw new Error((await res.text()) || STREAM_DROPPED);
-			return res;
-		} catch (err) {
-			if (recoveringDrop && !signal.aborted) throw new StreamReadError(err);
-			throw err;
-		}
-	}
-
-	/**
-	 * Reattach (the wake/handoff/mount path): a server-side turn with no
-	 * live view of ours. ATTACH-FIRST (owner, reattach round 2026-10-02):
-	 * a fresh-mount reattach passes refetchRecordFirst=false — the page
-	 * render just read the record, so the blocking record round-trip only
-	 * added handshake latency before the instant replay; the running
-	 * turn's partial lives solely in the server event log, and the replay
-	 * rebuilds it regardless of the refetch. Mid-session callers (the
-	 * handoff watch) keep the default: their base may trail the record,
-	 * and the refetch absorbs it (write-ahead adoption) before the replay
-	 * lands on top. The stream then replays the turn from its first event
-	 * through the SAME consume path.
-	 */
 	async resumeStream(refetchRecordFirst = true, allowRecovery = true): Promise<void> {
 		this.consumeAbort?.abort();
 		const controller = new AbortController();
 		this.consumeAbort = controller;
-		// REPLAY ONTO A CLEAN SLATE (owner, optimistic round 3, 2026-10-02):
-		// the reattach stream replays the turn from its FIRST event — an
-		// aborted earlier attempt (React StrictMode's simulated remount)
-		// must not leave partials the replay would DOUBLE onto. The old
-		// record refetch provided this reset accidentally; attach-first
-		// made it explicit.
-		//
-		// THE FLICKER FIX (owner, 2026-10-10 — connection-diet B follow-up):
-		// on the REFETCH path the clear must NOT precede the fetch — send()
-		// just landed the optimistic answer/note cards in the tail, and any
-		// refetch latency (dev-compile stalls measured at 1.7s) re-showed
-		// the answered-away question for the whole window: card vanished,
-		// dock returned, both snapped back only when the record landed.
-		// The refetch block below swaps base+tail ATOMICALLY when the record
-		// arrives (and clears on failure — the clean-slate guard holds on
-		// every path that actually replays onto a stale tail).
-		if (!refetchRecordFirst) {
-			this.mutate(() => {
-				this.incompleteUsageIds.clear();
-				this.tail = [];
-				this.streamingMessageId = null;
-			});
-		}
-		this.setStatus("submitted");
+		if (!refetchRecordFirst) this.commit(cleanSlate(this.data));
+		this.commit(withStatus(this.data, "submitted"));
 		try {
-			if (refetchRecordFirst) {
-				const recordRes = await this.fetchView(
-					`/api/chats/${encodeURIComponent(this.chatId)}`,
-					controller.signal,
-					!allowRecovery,
-				);
-				if (this.consumeAbort !== controller) return;
-				if (recordRes.ok) {
-					let text: string;
-					try {
-						text = await recordRes.text();
-					} catch (err) {
-						if (!allowRecovery && !controller.signal.aborted) throw new StreamReadError(err);
-						throw err;
-					}
-					// Parse outside the transport catch: malformed JSON is a
-					// contract bug, not a connection-drop diagnostic.
-					const record = JSON.parse(text) as { messages?: LannaMessage[]; turnError?: string };
-					if (this.consumeAbort !== controller) return;
-					if (Array.isArray(record.messages)) {
-						this.mutate(() => {
-							this.base = record.messages!;
-							if (record.turnError !== undefined) {
-								this.errorValue = { message: record.turnError };
-								this.automaticContinuationBlocked = true;
-							}
-							this.incompleteUsageIds.clear();
-							this.tail = [];
-						});
-					}
-				} else {
-					// The record did not land — restore the clean-slate guard
-					// before the replay (no atomic swap is coming).
-					this.mutate(() => {
-						this.incompleteUsageIds.clear();
-						this.tail = [];
-						this.streamingMessageId = null;
-					});
-				}
-			}
-			const res = await this.fetchView(
-				`/api/chats/${encodeURIComponent(this.chatId)}/stream`,
+			if (refetchRecordFirst) await this.refetchRecord(controller, allowRecovery);
+			if (this.consumeAbort !== controller) return;
+			const response = await fetchAttach(
+				this.fetch,
+				chatPath(this.chatId, "/stream"),
 				controller.signal,
 				!allowRecovery,
 			);
 			if (this.consumeAbort !== controller) return;
-			if (!res.ok) throw new Error((await res.text()) || "Failed to attach to the running turn.");
-			await this.consumeStream(res, controller, allowRecovery);
-		} catch (err) {
-			if (this.consumeAbort !== controller || controller.signal.aborted) return; // intentionally cancelled
-			this.setError(!allowRecovery && err instanceof StreamReadError ? STREAM_DROPPED : (err as Error).message);
-			this.setStatus("error");
+			if (!response.ok) throw new Error(await bodyTextOr(response, "Failed to attach to the running turn."));
+			await this.consumeStream(response, controller, allowRecovery);
+		} catch (error) {
+			if (this.consumeAbort !== controller || controller.signal.aborted) return;
+			this.fail(error);
 		}
 	}
 
 	async send(input: ChatInput): Promise<void> {
-		const recovering = this.statusValue === "error";
-		if (!this.readyRef && !recovering) return;
+		if (!admitsTurn(this.data.status)) return;
 		this.consumeAbort?.abort();
 		const controller = new AbortController();
 		this.consumeAbort = controller;
-		this.setError(null);
-		this.setStatus("submitted");
-		if (input.type !== "continue") this.automaticContinuationBlocked = false;
-		// The optimistic appends — exactly the messages the server's
-		// write-ahead will persist (inputAppends), with LOCAL ids so
-		// adoption can tell them from the record's absorbed copies.
-		const optimistic: LannaMessage[] = [];
-		if (input.type === "text") optimistic.push({ ...newUserMessage(input.text), id: localId() });
-		else if (input.type === "thinking") {
-			// The practice submissions (2026-10-04): the marker lands
-			// optimistically — the card renders from its details the
-			// moment the button fires.
-			optimistic.push({ ...newThinkingMessage(input.problemCallId, input.text), id: localId() });
-		} else if (input.type === "next") {
-			// The move-on signal (owner round 16): the NEXT PROBLEM line
-			// renders the instant the chip/Enter fires.
-			optimistic.push({ ...newNextMessage(), id: localId() });
-		}
-		if (optimistic.length > 0)
-			this.mutate(() => {
-				this.tail = [...this.tail, ...optimistic];
-			});
+		this.commit(beginSubmit(this.data, input));
 		try {
-			// SUBMITS ARE NOT ABORTABLE BY VIEW TEARDOWN (owner, 2026-10-10 —
-			// the dead-session-start postmortem): the POST must NOT ride
-			// consumeAbort. Diet A's abort-on-unmount (session.ts's stop())
-			// fires on React StrictMode's simulated remount in dev — it killed
-			// the ?prompt first send ~8ms in (POST aborted, never retried:
-			// the page's sentInitial guard had already flipped), leaving the
-			// session dead until a second message, which then persisted
-			// WITHOUT the first — the optimistic tail rode a record that never
-			// contained it. The POST is a ~100ms ack since Diet B; it cannot
-			// starve the connection pool, so it needs no teardown guard. The
-			// STREAM consume stays on the controller — releasing that held
-			// connection is Diet A's whole job.
-			const res = await this.postInputEvent(input);
-			if (res.status === 409) {
-				throw new Error("A turn is already running — try again in a moment.");
-			}
-			if (!res.ok) {
-				// Refusal envelopes (503 BYOK/key gates) and 400s: the RAW body
-				// text rides the error message — the banner shows it, and the
-				// page's refusal flow JSON-parses the envelope out of it.
-				throw new Error((await res.text()) || `The send failed (${res.status}).`);
-			}
-			// CONNECTION DIET B (owner, 2026-10-10 — parallel-session freeze
-			// postmortem): the POST acknowledges and closes; there is no stream
-			// on this response to consume. Attach through the SAME reattach wire
-			// a returning visitor uses (refetch-first: the record refetch absorbs
-			// the server's write-ahead copy of our optimistic messages, then the
-			// replay lands on top). One live view connection per page, always —
-			// the browser's 6-per-origin pool is the scarce resource.
-			await res.text().catch(() => {}); // drain the tiny ack; release the socket
-			// A stop() or a newer send/consume won while the ack was in
-			// flight: the turn is live server-side either way — do not attach
-			// a stream from a view that is gone or superseded.
+			const response = await this.postInputEvent(input);
+			if (response.status === 409) throw new Error(TURN_ALREADY_RUNNING);
+			if (!response.ok) throw new Error(await bodyTextOr(response, `The send failed (${response.status}).`));
+			await response.text().catch(() => {});
 			if (this.consumeAbort !== controller) return;
 			await this.resumeStream(true);
-		} catch (err) {
+		} catch (error) {
 			if (this.consumeAbort !== controller || controller.signal.aborted) return;
-			this.setError((err as Error).message);
-			this.setStatus("error");
+			this.fail(error);
 		}
 	}
 
-	/**
-	 *  STEER (composer steering, owner arc 2026-10-03): the learner's
-	 *  mid-turn message for the RUNNING turn. NOT a turn — no optimistic
-	 *  transcript card, no status flip: the message joins the queued
-	 *  indicator (the quiet line above the composer) and POSTs to the
-	 *  steer route, which hands it to the live agent's steering queue.
-	 *  When pi drains it at the next response boundary, the verbatim
-	 *  message events upsert the real card (the client-minted id is the
-	 *  key) and the indicator's fold drops the line. A 409 means the turn
-	 *  settled mid-send (the race): fall back to the plain text send —
-	 *  the entry is dropped and send() pushes its own optimistic card.
-	 */
 	async steer(text: string): Promise<void> {
-		const t = text.trim();
-		if (!t) return;
-		const id = `steer_${localId()}`;
-		this.steerQueueValue = [...this.steerQueueValue, { id, text: t }];
-		this.onChange?.();
-		const dropSteer = () => {
-			this.steerQueueValue = this.steerQueueValue.filter((s) => s.id !== id);
-			this.onChange?.();
-		};
+		const trimmed = text.trim();
+		if (!trimmed) return;
+		const id = newSteerId();
+		this.commit(queueSteer(this.data, { id, text: trimmed }));
 		try {
-			const res = await this.fetch(`/api/chats/${this.chatId}/steer`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ input: { type: "steer", id, text: t } }),
-			});
-			if (res.ok) return; // parked or delivered — the stream lands the card
-			if (res.status === 409) {
-				dropSteer();
-				await this.send({ type: "text", text: t }); // the settle race: plain send
+			const response = await this.fetch(
+				chatPath(this.chatId, "/steer"),
+				jsonPost({ input: { type: "steer", id, text: trimmed } }),
+			);
+			if (response.ok) return;
+			this.commit(dropSteer(this.data, id));
+			if (response.status === 409) {
+				await this.send({ type: "text", text: trimmed });
 				return;
 			}
-			dropSteer();
-			this.setError((await res.text()) || `The steer failed (${res.status}).`);
-		} catch (err) {
-			dropSteer();
-			this.setError((err as Error).message);
+			this.commit(withError(this.data, await bodyTextOr(response, `The steer failed (${response.status}).`)));
+		} catch (error) {
+			this.commit(dropSteer(this.data, id));
+			this.commit(withError(this.data, errorMessageOf(error)));
 		}
 	}
 
-	/** The problem discard (practice sessions, owner 2026-10-04): the
-	 *  ask-style dismissal — the UI-only marker lands optimistically, then
-	 *  the SILENT route persists it (no turn, no wake). The composer
-	 *  returns; the conclude synthesis rides the user's next input. */
 	async dismissProblem(problemCallId: string): Promise<void> {
-		if (!this.readyRef) return;
-		this.mutate(() => {
-			this.tail = [...this.tail, { ...newProblemDismissedMarker(problemCallId), id: localId() }];
-		});
+		if (this.data.status !== "ready") return;
+		this.commit(appendTail(this.data, [{ ...newProblemDismissedMarker(problemCallId), id: localId() }]));
 		try {
-			const res = await this.fetch(`/api/chats/${this.chatId}/dismiss`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ input: { type: "dismiss-problem", problemCallId } }),
-			});
-			if (!res.ok) throw new Error(`The dismissal failed (${res.status}).`);
-		} catch (err) {
-			this.setError((err as Error).message);
+			const response = await this.fetch(
+				chatPath(this.chatId, "/dismiss"),
+				jsonPost({ input: { type: "dismiss-problem", problemCallId } }),
+			);
+			if (!response.ok) throw new Error(`The dismissal failed (${response.status}).`);
+		} catch (error) {
+			this.commit(withError(this.data, errorMessageOf(error)));
 		}
 	}
 
-	/** Local detach: cancel the consume, keep the partial tail. The page's
-	 *  settle watch adopts the record when the server turn finishes. */
 	stop(): void {
 		this.consumeAbort?.abort();
 		this.consumeAbort = null;
-		this.streamingIds = new Set();
-		this.streamingMessageId = null;
-		this.executions = new Map();
-		this.setStatus("ready");
+		this.commit(withStatus(retireRunningTurn(this.data), "ready"));
 	}
 
-	/** Full snapshot swap (the idle settle sync — server canon). */
 	setMessages(record: LannaMessage[], turnError?: string): void {
-		this.mutate(() => {
-			this.base = record;
-			if (turnError !== undefined) {
-				this.errorValue = { message: turnError };
-				this.automaticContinuationBlocked = true;
-			}
-			this.incompleteUsageIds.clear();
-			this.tail = [];
-			this.streamingMessageId = null; // the tail (and its slot) is gone
-		});
+		this.commit(replaceRecord(this.data, record, turnError));
 	}
 
-	/**
-	 * Append-only adoption (the mid-turn steer/artifact ground rule): swap
-	 * in the record — every current base message must still be present
-	 * (the server appends only) — keeping the live tail, minus the
-	 * optimistic entries the record has absorbed (their server-stamped
-	 * copies just landed; without this the input bubble would double).
-	 */
 	adoptRecord(record: LannaMessage[]): void {
-		const recordIds = new Set(record.map((m) => (m as { id?: string }).id));
-		const baseAbsorbed = this.base.some((m) => !recordIds.has((m as { id?: string }).id));
-		if (baseAbsorbed) return; // not a pure append — the idle full sync is the net
-		this.mutate(() => {
-			this.base = record;
-			this.tail = this.tail.filter((m) => !absorbed(m, record));
-		});
+		this.commit(adoptAppend(this.data, record));
 	}
 
-	async continueIfOwed(record: readonly LannaMessage[], kind: "chat" | "practice" = "chat"): Promise<void> {
-		if (
-			this.statusValue === "ready" &&
-			!this.automaticContinuationBlocked &&
-			this.getState().error === null &&
-			needsContinuation(record, kind)
-		) {
-			await this.send({ type: "continue" });
-		}
+	async continueIfOwed(record: readonly LannaMessage[], kind: SessionKind = "chat"): Promise<void> {
+		if (continuationOwed(this.data, record, kind)) await this.send({ type: "continue" });
 	}
-
-	static needsContinuation = needsContinuation;
 
 	clearError(): void {
-		this.setError(null);
+		this.commit(withError(this.data, null));
+	}
+
+	private commit(next: SessionData): void {
+		if (next === this.data) return;
+		this.data = next;
+		this.onChange?.();
+	}
+
+	private fail(error: unknown): void {
+		this.commit(withStatus(withError(this.data, errorMessageOf(error)), "error"));
+	}
+
+	private async refetchRecord(controller: AbortController, allowRecovery: boolean): Promise<void> {
+		const response = await fetchAttach(this.fetch, chatPath(this.chatId), controller.signal, !allowRecovery);
+		if (this.consumeAbort !== controller) return;
+		if (!response.ok) {
+			this.commit(cleanSlate(this.data));
+			return;
+		}
+		const text = await readBodyText(response, controller.signal, !allowRecovery);
+		const snapshot = JSON.parse(text) as RecordSnapshot;
+		if (this.consumeAbort !== controller) return;
+		this.commit(
+			Array.isArray(snapshot.messages)
+				? replaceRecord(this.data, snapshot.messages, snapshot.turnError)
+				: cleanSlate(this.data),
+		);
+	}
+
+	private async applyFrames(
+		frames: AsyncGenerator<TurnFrame, boolean>,
+		controller: AbortController | null,
+	): Promise<ConsumeEnd> {
+		let sawWork = false;
+		for (;;) {
+			let next: IteratorResult<TurnFrame, boolean>;
+			try {
+				next = await frames.next();
+			} catch (error) {
+				if (error instanceof ConnectionDrop) return DROPPED;
+				throw error;
+			}
+			if (this.consumeAbort !== controller) return ABORTED;
+			if (next.done) return next.value ? DONE : DROPPED;
+			const frame = next.value;
+			if (frame.type === "turn-settled") {
+				this.onReattachSettled?.();
+				return SETTLED;
+			}
+			const acted = this.applyWireEvent(frame);
+			if (acted && !sawWork) {
+				sawWork = true;
+				if (this.data.status !== "error") this.commit(withStatus(this.data, "streaming"));
+			}
+		}
 	}
 }
