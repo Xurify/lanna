@@ -1,7 +1,7 @@
 "use client";
 /**
  * Device preferences stored on this device: spoken audio speed, volume, lesson sounds,
- * and word lookup translation mode (Dictionary, Hybrid, or Google Translate).
+ * and word lookup translation mode (Dictionary, Hybrid, or Translator).
  */
 
 import { useEffect, useState } from "react";
@@ -64,7 +64,7 @@ export function useWordTranslationMode(): [WordTranslationMode, (next: WordTrans
 const WORD_MODE_OPTIONS: readonly { value: WordTranslationMode; label: string }[] = [
 	{ value: "dictionary", label: "Dictionary" },
 	{ value: "hybrid", label: "Hybrid" },
-	{ value: "google", label: "Google Translate" },
+	{ value: "google", label: "Translator" },
 ];
 
 export function WordLookupModeRow() {
@@ -72,7 +72,7 @@ export function WordLookupModeRow() {
 	return (
 		<SettingsRow
 			label="Word lookup translation"
-			hint="Dictionary: the app's own word list, works offline. Hybrid: Google Translate's translation, plus the base form and grammar from the dictionary. Google Translate: its translation only."
+			hint="Dictionary: the app's own word list, works offline. Hybrid: a translator's translation, plus the base form and grammar from the dictionary. Translator: its translation only. The translator is DeepL when its key is set in API keys, otherwise Google Translate."
 			testid="row-word-lookup-mode"
 		>
 			<SettingsSegmented

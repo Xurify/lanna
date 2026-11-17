@@ -155,11 +155,19 @@ export const CREDITS: Credit[] = [
 	},
 
 	{
+		id: "deepl",
+		name: "DeepL",
+		url: "https://www.deepl.com",
+		group: "lookup",
+		use: "word and phrase meanings in the Hybrid and Translator lookup modes, with your DeepL key",
+		fetchedHosts: ["api-free.deepl.com", "api.deepl.com", "www.deepl.com"],
+	},
+	{
 		id: "google-translate",
 		name: "Google Translate",
 		url: "https://translate.google.com",
 		group: "lookup",
-		use: "word meanings in the Hybrid and Google lookup modes",
+		use: "word meanings in the Hybrid and Translator lookup modes when no DeepL key is set",
 		fetchedHosts: ["translate.googleapis.com", "clients5.google.com"],
 	},
 	{

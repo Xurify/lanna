@@ -19,6 +19,7 @@ import { fitPopoverTop, POPOVER_EDGE, POPOVER_GAP } from "@/components/words/pop
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode, type WordTranslationMode } from "@/components/settings/device-prefs";
 import { wordLinks } from "@/components/words/word-links";
+import { translationEngineLabel, type TranslationEngine } from "@/src/core";
 import { askAbout } from "@/components/lesson/tutor";
 
 /**
@@ -98,6 +99,7 @@ interface LookupData {
 	dictionaryGloss?: string;
 	surfaceGloss?: string;
 	googleTranslation?: string;
+	translatedBy?: TranslationEngine;
 	referenceUrl?: string;
 	referenceLabel?: string;
 	pos?: string;
@@ -114,7 +116,7 @@ const MODE_CYCLE: readonly WordTranslationMode[] = ["dictionary", "hybrid", "goo
 const MODE_BADGE_LABELS: Record<WordTranslationMode, string> = {
 	dictionary: "Dict",
 	hybrid: "Hybrid",
-	google: "Google",
+	google: "Transl",
 };
 
 function sentenceAround(range: Range | null): { sentence: string; translation?: string } {
@@ -512,7 +514,7 @@ export function SelectionWordBankBar() {
 				  lookup.gloss &&
 				  lookup.googleTranslation.toLocaleLowerCase("en") !== lookup.gloss.toLocaleLowerCase("en") &&
 				  !lookup.gloss.toLocaleLowerCase("en").includes(lookup.googleTranslation.toLocaleLowerCase("en"))
-				? `Google: "${lookup.googleTranslation}"`
+				? `${translationEngineLabel(lookup.translatedBy)}: "${lookup.googleTranslation}"`
 				: undefined;
 
 	const handleAddWord = async () => {
@@ -634,7 +636,7 @@ export function SelectionWordBankBar() {
 								type="button"
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={cycleTranslationMode}
-								title={`Translation: ${translationMode === "dictionary" ? "Dictionary" : translationMode === "hybrid" ? "Hybrid" : "Google Translate"}. Click to switch.`}
+								title={`Translation: ${translationMode === "dictionary" ? "Dictionary" : translationMode === "hybrid" ? "Hybrid" : "Translator"}. Click to switch.`}
 								data-testid="selection-mode-toggle"
 								className={cn(
 									"rounded-md px-1.5 py-0.5 font-ui text-[10px] font-semibold transition-colors",

@@ -18,16 +18,17 @@ import {
 } from "../src/core/auth-keys.ts";
 
 describe("the catalog", () => {
-	it("is exactly the seven CURATED app-service keys (provider keys live in the provider table)", () => {
+	it("is exactly the eight CURATED app-service keys (provider keys live in the provider table)", () => {
 		assert.deepEqual(
 			AUTH_KEYS.map((k) => k.id),
 			// Lanna adds ElevenLabs (the first TTS tier), the Azure
-			// Speech pair (pronunciation assessment, 2026-10-28), and Context (2026-11-09).
+			// Speech pair (pronunciation assessment, 2026-10-28), Context (2026-11-09) and DeepL (2026-11-17).
 			[
 				"ELEVENLABS_API_KEY",
 				"DEEPGRAM_API_KEY",
 				"AZURE_SPEECH_KEY",
 				"AZURE_SPEECH_REGION",
+				"DEEPL_API_KEY",
 				"CONTEXT_API_KEY",
 				"TAVILY_API_KEY",
 				"BRAVE_API_KEY",
@@ -70,6 +71,12 @@ describe("validateKeyShape (the 400 gate — curated keys)", () => {
 		assert.ok(!validateKeyShape("TAVILY_API_KEY", "sk-or-v1-abcdefghij").ok, "wrong family");
 		assert.ok(!validateKeyShape("TAVILY_API_KEY", "tvly-").ok, "prefix alone is a truncation");
 		assert.ok(!validateKeyShape("TAVILY_API_KEY", "  ").ok, "empty fails");
+	});
+
+	it("DeepL: a Free (:fx) or Pro key passes, a truncated paste fails", () => {
+		assert.ok(validateKeyShape("DEEPL_API_KEY", "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0:fx").ok);
+		assert.ok(validateKeyShape("DEEPL_API_KEY", "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0").ok);
+		assert.ok(!validateKeyShape("DEEPL_API_KEY", "0f1e2d3c-4b5a-6978").ok, "truncated paste");
 	});
 
 	it("Brave: no public format — a ≥20-char truncation guard, no whitespace", () => {

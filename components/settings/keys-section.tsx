@@ -4,7 +4,7 @@
  * paste editor. Env-owned rows are read only, since a paste box there would
  * mislead. The Add-provider control is the last row.
  *
- * Groups: Model API keys, Subscriptions, Speech, Dictation, Web search. Unknown
+ * Groups: Model API keys, Subscriptions, Speech, Dictation, Translation, Web search. Unknown
  * variables stay masked and read only at the end of Model API keys; one held
  * in the file can be deleted (a stray test fixture reached a real profile).
  *
@@ -23,9 +23,10 @@ import { notifySettingsSaved } from "@/components/settings-signal";
 import { ProviderIcon } from "./provider-icons.tsx";
 
 /** Which settings group a service key sits in (adds Speech). */
-function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Web search" {
+function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Translation" | "Web search" {
 	if (id === "ELEVENLABS_API_KEY" || id.startsWith("AZURE_SPEECH_")) return "Speech";
 	if (id === "DEEPGRAM_API_KEY") return "Dictation";
+	if (id === "DEEPL_API_KEY") return "Translation";
 	return "Web search";
 }
 
@@ -616,6 +617,7 @@ export function KeysSection({
 				[
 					{ id: "Speech", label: "Speech (TTS)", testid: "group-speech" },
 					{ id: "Dictation", label: "Dictation (STT)", testid: "group-dictation" },
+					{ id: "Translation", label: "Translation", testid: "group-translation" },
 					{ id: "Web search", label: "Web search", testid: "group-search" },
 				] as const
 			).map(({ id, label, testid }) => (
