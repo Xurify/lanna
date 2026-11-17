@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { parseNoteBody, parseNoteVideo, type Note, type NoteVideo } from "../core/notes.ts";
+import { parseNoteBody, parseNoteTitle, parseNoteVideo, type Note, type NoteVideo } from "../core/notes.ts";
 import { notesStore } from "../store/notes.ts";
 import { videoStore } from "../store/videos.ts";
 
@@ -37,19 +37,24 @@ async function withTitle(video: NoteVideo | null, before: NoteVideo | undefined,
 	return title ? { ...video, title } : video;
 }
 
+type NoteChange = { title?: unknown; body?: unknown; video?: unknown } | null;
+
 export async function createNote(
-	body: { body?: unknown; video?: unknown } | null,
+	body: NoteChange,
 	now = new Date(),
 	lookUp: TitleLookup = lookUpTitle,
 ): Promise<Result> {
 	const text = parseNoteBody(body?.body ?? "");
 	if (!text.ok) return { ok: false, status: 400, message: text.message };
+	const heading = parseNoteTitle(body?.title ?? "");
+	if (!heading.ok) return { ok: false, status: 400, message: heading.message };
 	const link = parseNoteVideo(body?.video ?? null);
 	if (!link.ok) return { ok: false, status: 400, message: link.message };
 	const at = now.toISOString();
 	const video = await withTitle(link.video, undefined, lookUp);
 	const note: Note = {
 		id: crypto.randomUUID(),
+		...(heading.title ? { title: heading.title } : {}),
 		body: text.body,
 		...(video ? { video } : {}),
 		createdAt: at,
@@ -63,7 +68,7 @@ export async function createNote(
 
 export async function updateNote(
 	id: string,
-	body: { body?: unknown; video?: unknown } | null,
+	body: NoteChange,
 	now = new Date(),
 	lookUp: TitleLookup = lookUpTitle,
 ): Promise<Result> {
@@ -75,6 +80,12 @@ export async function updateNote(
 		const text = parseNoteBody(body.body);
 		if (!text.ok) return { ok: false, status: 400, message: text.message };
 		note.body = text.body;
+	}
+	if (body?.title !== undefined) {
+		const heading = parseNoteTitle(body.title);
+		if (!heading.ok) return { ok: false, status: 400, message: heading.message };
+		if (heading.title) note.title = heading.title;
+		else delete note.title;
 	}
 	if (body?.video !== undefined) {
 		const link = parseNoteVideo(body.video);

@@ -13,8 +13,16 @@ const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-notes-"));
 process.env.LANNA_DATA_DIR = TMP;
 process.env.LANNA_PROFILE = "slovak";
 
-const { noteMoments, noteHeading, parseNoteVideo, parseNoteBody, stampFor, MAX_NOTE_CHARS } =
-	await import("../src/core/notes.ts");
+const {
+	noteMoments,
+	noteHeading,
+	parseNoteVideo,
+	parseNoteBody,
+	parseNoteTitle,
+	stampFor,
+	MAX_NOTE_CHARS,
+	MAX_NOTE_TITLE,
+} = await import("../src/core/notes.ts");
 const { createNote, updateNote, removeNote, listNotes } = await import("../src/server/notes.ts");
 const { PATHS } = await import("../config.ts");
 
@@ -107,6 +115,21 @@ test("notes are created, changed, listed newest first and deleted to a trash fil
 	const trash = fs.readFileSync(path.join(PATHS.data, "notes-trash.jsonl"), "utf-8").trim().split("\n");
 	assert.equal(trash.length, 1);
 	assert.equal(JSON.parse(trash[0]!).body, "[0:42] ahoj");
+});
+
+test("a note's own title comes first, is one line, and clearing it falls back to the text", async () => {
+	assert.equal(noteHeading({ title: "  Grammar  ", body: "first line" }), "Grammar");
+	assert.equal(noteHeading({ title: " ", body: "first line" }), "first line");
+	assert.deepEqual(parseNoteTitle("  Two\n lines  "), { ok: true, title: "Two lines" });
+	assert.equal(parseNoteTitle("x".repeat(MAX_NOTE_TITLE + 1)).ok, false);
+
+	const n = await createNote({ title: "Verbs of motion", body: "идти / ходить" }, new Date(), titled);
+	assert.ok(n.ok);
+	assert.equal(n.note.title, "Verbs of motion");
+	const cleared = await updateNote(n.note.id, { title: "" }, new Date(), titled);
+	assert.ok(cleared.ok);
+	assert.equal(cleared.note.title, undefined);
+	assert.equal(cleared.note.body, "идти / ходить");
 });
 
 test("keeping the same video does not look its title up again", async () => {

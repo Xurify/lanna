@@ -37,6 +37,7 @@ const SAME_IN_EVERY_LANGUAGE = new Set([
 	"/map",
 	"/tasks",
 	"/log",
+	"/notes",
 ]);
 
 export function landingAfterSwitch(pathname: string): string {

@@ -8,7 +8,7 @@
  *   My videos     what is prepared, newest first
  *   Creators      the saved channels and their videos
  *   Your YouTube  the link to the learner's account, or a Takeout export
- *   Notes         the learner's own notes, each with a linked video (/watch?tab=notes)
+ *   Notes         the learner's notes, which open on /notes
  *
  * Above the tabs, always: a link field (paste, Enter) and, when something is
  * ready, the one next step: the newest video not yet watched, or else the best

@@ -60,8 +60,8 @@ const ROUTES: Array<{
 	},
 	{
 		title: "Notes",
-		hint: "What you noted while watching, with the video",
-		href: "/watch?tab=notes",
+		hint: "Write anything down, with a video beside it or not",
+		href: "/notes",
 		icon: "read",
 		words: "notes notebook phrases write youtube video timestamps",
 	},

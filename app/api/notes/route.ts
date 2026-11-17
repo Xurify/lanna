@@ -1,7 +1,7 @@
 /**
  * GET /api/notes — every note, newest first (src/server/notes.ts).
- * POST /api/notes {body?, video?} — a new note; video is a YouTube link.
- * PATCH /api/notes?id= {body?, video?} — change a note; video "" unlinks it.
+ * POST /api/notes {title?, body?, video?} — a new note; video is a YouTube link.
+ * PATCH /api/notes?id= {title?, body?, video?} — change a note; video "" unlinks it.
  * DELETE /api/notes?id= — move a note to notes-trash.jsonl.
  */
 
@@ -9,7 +9,7 @@ import { BODY_LIMITS, bodyTooLarge, createNote, listNotes, removeNote, updateNot
 
 export const dynamic = "force-dynamic";
 
-type NoteBody = { body?: unknown; video?: unknown } | null;
+type NoteBody = { title?: unknown; body?: unknown; video?: unknown } | null;
 
 const idOf = (req: Request) => new URL(req.url).searchParams.get("id")?.slice(0, 64) ?? null;
 

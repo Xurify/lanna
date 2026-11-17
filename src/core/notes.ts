@@ -8,6 +8,7 @@ export interface NoteVideo {
 
 export interface Note {
 	id: string;
+	title?: string;
 	body: string;
 	video?: NoteVideo;
 	createdAt: string;
@@ -15,6 +16,7 @@ export interface Note {
 }
 
 export const MAX_NOTE_CHARS = 20_000;
+export const MAX_NOTE_TITLE = 200;
 
 export interface NoteMoment {
 	sec: number;
@@ -47,7 +49,8 @@ export function noteMoments(body: string): NoteMoment[] {
 	return moments;
 }
 
-export function noteHeading(note: Pick<Note, "body" | "video">): string {
+export function noteHeading(note: Pick<Note, "title" | "body" | "video">): string {
+	if (note.title?.trim()) return note.title.trim();
 	const first = note.body.split("\n").map(plainLine).find(Boolean);
 	return first ?? note.video?.title ?? "Untitled note";
 }
@@ -61,6 +64,13 @@ export function parseNoteVideo(raw: unknown): NoteVideoInput {
 	const id = parseVideoUrl(raw);
 	if (!id || isSpotifyId(id)) return { ok: false, message: "That is not a YouTube link." };
 	return { ok: true, video: { id, url: videoUrl(id) } };
+}
+
+export function parseNoteTitle(raw: unknown): { ok: true; title: string } | { ok: false; message: string } {
+	if (typeof raw !== "string") return { ok: false, message: "title must be text" };
+	const title = raw.replace(/\s+/g, " ").trim();
+	if (title.length > MAX_NOTE_TITLE) return { ok: false, message: `A title holds up to ${MAX_NOTE_TITLE} characters.` };
+	return { ok: true, title };
 }
 
 export function parseNoteBody(raw: unknown): { ok: true; body: string } | { ok: false; message: string } {
