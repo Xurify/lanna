@@ -45,6 +45,8 @@ After step 4 the share should be under 10%. Measure after every step with the co
 
 ## Decided with the owner
 
+- The "teach" session kind (prober, teacher, plan tree, question dock) is gone; the placement follow-up is an Ask chat. Done before the rest of step 4: measured **20.7%** after it.
+
 - Background jobs: `research` and `pdf` become ordinary Tasks (`src/server/tasks.ts`, the `/tasks` page); the job queue and the activity dock go. The result still arrives in the chat.
 - No new `note_mistake` tool: `grade` already feeds Mistakes; it is widened instead (step 4).
 
