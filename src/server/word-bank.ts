@@ -13,6 +13,9 @@ import { PATHS } from "../../config.ts";
 import { loadLexicon, lookupWord, type Lexicon } from "../agent/lexicon.ts";
 import { foldDiacritics, referenceLink, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
+import { deeplTranslate } from "./deepl.ts";
+import { keyValue } from "./keys.ts";
+import type { TranslationEngine } from "../core/translation-engine.ts";
 import { GRAMMAR_WORDS, grammarWord } from "../core/reading.ts";
 import { reviewStore } from "../store/review.ts";
 import { savedPhraseStore } from "../store/saved-phrases.ts";
@@ -52,8 +55,10 @@ interface SelectionLookupResult {
 	dictionaryGloss?: string;
 	/** Inflected surface meaning (e.g. "I don't know", "why is he crying"). */
 	surfaceGloss?: string;
-	/** Cached or live Google Translate surface translation. */
+	/** Cached or live machine translation of the surface form (DeepL, Google Translate or MyMemory). */
 	googleTranslation?: string;
+	/** Which service produced `googleTranslation`; absent for cache entries written before it was recorded. */
+	translatedBy?: TranslationEngine;
 	/** Profile-aware reference site link (e.g. slovak.wiki when active profile has a referenceSite). */
 	referenceUrl?: string;
 	/** Label for `referenceUrl` (e.g. "slovak.wiki"). */
@@ -223,6 +228,7 @@ function detectFormNote(
 
 interface CachedTranslation {
 	gloss: string;
+	engine?: TranslationEngine;
 	pos?: string;
 	lemma?: string;
 	alternatives?: string[];
@@ -305,7 +311,9 @@ function buildResultFromEntry(
 	const baseGloss = normalizeEnglishGloss(canonicalEntry.en);
 
 	// Check if we already have a cached Google Translate surface translation for this exact inflected form
-	const cachedSurface = readTranslationCache()[lower]?.gloss;
+	const cachedEntry = readTranslationCache()[lower];
+	const cachedSurface = cachedEntry?.gloss;
+	const cachedSurfaceEngine = cachedEntry?.engine;
 	const surfaceOverride =
 		SURFACE_GLOSS_OVERRIDES[lower] ??
 		deriveVerbSurfaceGloss(lower, canonicalEntry.en, isNegated && lang.code === "sk" && isSlovakVerb(lemmaLower)) ??
@@ -342,6 +350,7 @@ function buildResultFromEntry(
 		dictionaryGloss: rawEntryGloss,
 		surfaceGloss: surfaceOverride,
 		googleTranslation: cachedSurface,
+		translatedBy: cachedSurfaceEngine,
 		referenceUrl: refLink.url,
 		referenceLabel: refLink.label,
 		pos: canonicalEntry.pos ?? canonicalEntry.cat,
@@ -507,6 +516,7 @@ export function lookupSelection(text: string): SelectionLookupResult {
 			gloss: cached.gloss,
 			surfaceGloss: cached.gloss,
 			googleTranslation: cached.gloss,
+			translatedBy: cached.engine,
 			referenceUrl: refLink.url,
 			referenceLabel: refLink.label,
 			pos: cached.pos ?? (/\s/.test(cleaned) ? "Phrase" : "Vocabulary"),
@@ -585,9 +595,10 @@ export function lookupSelection(text: string): SelectionLookupResult {
 }
 
 /**
- * Queries Google Translate (`dict-chrome-ex` + `clients5`) with a fallback to MyMemory
+ * Queries DeepL when a key is set, then Google Translate (`dict-chrome-ex` + `clients5`), then MyMemory,
  * using the active language profile's ISO 639-1 code (`lang.code`, e.g. `sk` or `ru`),
- * and caches the result permanently in `translations-cache.json`.
+ * and caches the result permanently in `translations-cache.json`. With a DeepL key, an entry another
+ * service wrote is translated once more by DeepL; if DeepL fails, the older entry is kept.
  */
 async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTranslation | null> {
 	const lang = activeLang();
@@ -595,7 +606,25 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 	const targetLang = "en";
 	const lower = cleaned.toLocaleLowerCase(lang.tag);
 	const existing = readTranslationCache()[lower];
-	if (existing) return existing;
+	const hasDeepl = Boolean(keyValue("DEEPL_API_KEY")?.trim());
+	if (existing && (existing.engine === "deepl" || !hasDeepl)) return existing;
+
+	if (hasDeepl) {
+		const translated = await deeplTranslate(cleaned, sourceLang);
+		if (translated) {
+			const cachedEntry: CachedTranslation = {
+				gloss: translated,
+				engine: "deepl",
+				pos: existing?.pos,
+				lemma: cleaned,
+				alternatives: existing?.alternatives,
+				updatedAt: new Date().toISOString(),
+			};
+			writeTranslationCacheEntry(lower, cachedEntry);
+			return cachedEntry;
+		}
+		if (existing) return existing;
+	}
 
 	// Tier A: translate.googleapis.com with client=dict-chrome-ex (returns both translation & dictionary POS/alternatives)
 	try {
@@ -624,6 +653,7 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 			if (translated) {
 				const cachedEntry: CachedTranslation = {
 					gloss: translated,
+					engine: "google",
 					pos: partOfSpeech,
 					lemma: cleaned,
 					alternatives,
@@ -655,6 +685,7 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 			if (translated) {
 				const cachedEntry: CachedTranslation = {
 					gloss: translated,
+					engine: "google",
 					lemma: cleaned,
 					updatedAt: new Date().toISOString(),
 				};
@@ -676,6 +707,7 @@ async function fetchAndCacheRemoteTranslation(cleaned: string): Promise<CachedTr
 			if (translated && translated.toLocaleLowerCase(lang.tag) !== lower) {
 				const cachedEntry: CachedTranslation = {
 					gloss: translated,
+					engine: "mymemory",
 					lemma: cleaned,
 					updatedAt: new Date().toISOString(),
 				};
@@ -741,6 +773,7 @@ export async function lookupSelectionAsync(
 				gloss: remote.gloss,
 				surfaceGloss: remote.gloss,
 				googleTranslation: remote.gloss,
+				translatedBy: remote.engine,
 				source: "translated",
 			};
 		}
@@ -759,6 +792,7 @@ export async function lookupSelectionAsync(
 			gloss: combinedGloss,
 			surfaceGloss: syncResult.surfaceGloss ?? (lower !== lemmaLower ? remoteClean : undefined),
 			googleTranslation: remoteClean,
+			translatedBy: remote.engine,
 			alternatives: syncResult.alternatives ?? remote.alternatives,
 		};
 	}
@@ -781,6 +815,7 @@ export async function lookupSelectionAsync(
 		gloss: remote.gloss,
 		surfaceGloss: remote.gloss,
 		googleTranslation: remote.gloss,
+		translatedBy: remote.engine,
 		referenceUrl: refLink.url,
 		referenceLabel: refLink.label,
 		pos: remote.pos ?? (isMultiWord ? "Phrase" : "Vocabulary"),

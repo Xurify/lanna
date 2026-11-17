@@ -31,7 +31,7 @@ export function hasProviderKey(
 	statuses: readonly AuthKeyStatus[],
 	providers: readonly ProviderKeyInfo[] | undefined,
 ): boolean {
-	return classifyKeys(statuses, providers).providerRows.some((s) => s.present);
+	return classifyKeys(statuses, providers).providerRows.some((s) => s.present && !s.disabled);
 }
 
 /** The zero-keys truth for the calling page: TRUE only after a

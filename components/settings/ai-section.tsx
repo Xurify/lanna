@@ -307,13 +307,13 @@ export function AiSection({
 			.catch(() => setPrompts(null));
 		fetch("/api/keys")
 			.then((r) => r.json())
-			.then((body: { keys: { id: string; present: boolean }[] }) => {
+			.then((body: { keys: { id: string; present: boolean; disabled?: boolean }[] }) => {
 				const present: Partial<Record<(typeof SEARCH_ENGINES)[number] | "elevenlabs", boolean>> = {};
 				for (const id of SEARCH_ENGINES) {
 					const envVar = id === "context" ? "CONTEXT_API_KEY" : id === "tavily" ? "TAVILY_API_KEY" : "BRAVE_API_KEY";
-					present[id] = body.keys.some((k) => k.id === envVar && k.present);
+					present[id] = body.keys.some((k) => k.id === envVar && k.present && !k.disabled);
 				}
-				present.elevenlabs = body.keys.some((k) => k.id === "ELEVENLABS_API_KEY" && k.present);
+				present.elevenlabs = body.keys.some((k) => k.id === "ELEVENLABS_API_KEY" && k.present && !k.disabled);
 				setEngineKeys(present);
 			})
 			.catch(() => {});

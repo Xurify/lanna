@@ -1,15 +1,18 @@
 "use client";
 /**
  * Device preferences stored on this device: spoken audio speed, volume, lesson sounds,
- * and word lookup translation mode (Dictionary, Hybrid, or Google Translate).
+ * and word lookup translation mode (Dictionary, Hybrid, or Translator).
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { SPEEDS, setSpeed, useSpeed } from "@/components/speech";
 import { setSoundOn, setVolume, sfx, soundOn } from "@/components/lesson/sound";
 import { useSound } from "@/components/sound-control";
 import { Slider } from "@/components/ui/slider";
+import { useSettingsSaved } from "@/components/settings-signal";
+import type { AuthKeyStatus } from "@/src/core";
 import { SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
+import { ProviderIcon } from "./provider-icons.tsx";
 
 export type WordTranslationMode = "dictionary" | "hybrid" | "google";
 
@@ -61,22 +64,45 @@ export function useWordTranslationMode(): [WordTranslationMode, (next: WordTrans
 	return [mode, update];
 }
 
-const WORD_MODE_OPTIONS: readonly { value: WordTranslationMode; label: string }[] = [
-	{ value: "dictionary", label: "Dictionary" },
-	{ value: "hybrid", label: "Hybrid" },
-	{ value: "google", label: "Google Translate" },
-];
+/** Whether lookups go to DeepL: its key is stored and switched on. Re-read whenever a key is saved, deleted or switched. */
+function useDeeplActive(): boolean {
+	const [active, setActive] = useState(false);
+	const load = () =>
+		fetch("/api/keys")
+			.then((r) => r.json())
+			.then((body: { keys?: AuthKeyStatus[] }) =>
+				setActive(Boolean(body.keys?.some((k) => k.id === "DEEPL_API_KEY" && k.present && !k.disabled))),
+			)
+			.catch(() => setActive(false));
+	useEffect(() => {
+		void load();
+	}, []);
+	useSettingsSaved((section) => {
+		if (section === "keys") void load();
+	});
+	return active;
+}
 
 export function WordLookupModeRow() {
 	const [mode, setMode] = useWordTranslationMode();
+	const deepl = useDeeplActive();
+	const options: readonly { value: WordTranslationMode; label: string; icon?: ReactNode }[] = [
+		{ value: "dictionary", label: "Dictionary" },
+		{ value: "hybrid", label: "Hybrid" },
+		{
+			value: "google",
+			label: "Translator",
+			icon: <ProviderIcon provider={deepl ? "deepl" : "googletranslate"} className="size-3.5" />,
+		},
+	];
 	return (
 		<SettingsRow
 			label="Word lookup translation"
-			hint="Dictionary: the app's own word list, works offline. Hybrid: Google Translate's translation, plus the base form and grammar from the dictionary. Google Translate: its translation only."
+			hint="Dictionary: the app's own word list, works offline. Hybrid: a translator's translation, plus the base form and grammar from the dictionary. Translator: its translation only. The translator is DeepL when its key is set in API keys, otherwise Google Translate."
 			testid="row-word-lookup-mode"
 		>
 			<SettingsSegmented
-				options={WORD_MODE_OPTIONS}
+				options={options}
 				value={mode}
 				onChange={setMode}
 				ariaLabel="Word lookup translation mode"

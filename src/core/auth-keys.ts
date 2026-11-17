@@ -45,6 +45,13 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 		plain: true,
 	},
 	{
+		id: "DEEPL_API_KEY",
+		label: "DeepL",
+		description:
+			"Translates the words and phrases you look up in Hybrid and Translator modes, ahead of Google Translate. A Free key (ending in :fx) covers 500,000 characters a month.",
+		docsUrl: "https://www.deepl.com/your-account/keys",
+	},
+	{
 		id: "CONTEXT_API_KEY",
 		label: "Context",
 		description:
@@ -170,6 +177,9 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 		case "AZURE_SPEECH_KEY":
 			// 32 hex characters today; a length floor only.
 			return nonEmpty(20);
+		case "DEEPL_API_KEY":
+			// A UUID, plus ":fx" on Free keys.
+			return nonEmpty(30);
 		case "AZURE_SPEECH_REGION":
 			return /^[a-z0-9]{4,40}$/.test(value)
 				? { ok: true }
@@ -210,6 +220,8 @@ export interface AuthKeyStatus {
 	shadowedByEnv: boolean;
 	/** When the app last saved this file-held key (ISO time). Null for env keys and keys with no recorded time. */
 	savedAt?: string | null;
+	/** Stored but switched off: no feature uses it until it is switched back on. */
+	disabled?: boolean;
 	/** Live value of a plain setting (the only status carrying plaintext). Absent for secrets and unset settings. */
 	value?: string;
 }

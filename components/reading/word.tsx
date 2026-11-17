@@ -13,7 +13,7 @@ import { BookmarkCheckIcon, CheckIcon, ExternalLinkIcon, PlusIcon, StarIcon, Vol
 import { cn } from "@/lib/utils";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode } from "@/components/settings/device-prefs";
-import { type StoryToken } from "@/src/core";
+import { translationEngineLabel, type StoryToken, type TranslationEngine } from "@/src/core";
 import { wordLinks } from "@/components/words/word-links";
 
 interface LookupFallback {
@@ -22,6 +22,7 @@ interface LookupFallback {
 	gloss?: string;
 	surfaceGloss?: string;
 	googleTranslation?: string;
+	translatedBy?: TranslationEngine;
 	langCode?: string;
 	langTag?: string;
 	langEnglish?: string;
@@ -101,7 +102,7 @@ export function Word({
 		dictGloss &&
 		lookupData.googleTranslation.toLocaleLowerCase("en") !== dictGloss.toLocaleLowerCase("en") &&
 		!dictGloss.toLocaleLowerCase("en").includes(lookupData.googleTranslation.toLocaleLowerCase("en"))
-			? `Google: "${lookupData.googleTranslation}"`
+			? `${translationEngineLabel(lookupData.translatedBy)}: "${lookupData.googleTranslation}"`
 			: undefined;
 	const resolvedCat = token.cat ?? lookupData?.pos;
 	const resolvedGender = token.gender ?? lookupData?.gender;

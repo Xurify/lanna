@@ -115,6 +115,7 @@ export * from "./speak.ts";
 export * from "./fluency.ts";
 export * from "./sources.ts";
 export * from "./credits.ts";
+export * from "./translation-engine.ts";
 export * from "./saved-phrases.ts";
 export * from "./cheatsheets.ts";
 export * from "./sheet-listen.ts";

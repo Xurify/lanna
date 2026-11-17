@@ -4,7 +4,7 @@
  * paste editor. Env-owned rows are read only, since a paste box there would
  * mislead. The Add-provider control is the last row.
  *
- * Groups: Model API keys, Subscriptions, Speech, Dictation, Web search. Unknown
+ * Groups: Model API keys, Subscriptions, Speech, Dictation, Translation, Web search. Unknown
  * variables stay masked and read only at the end of Model API keys; one held
  * in the file can be deleted (a stray test fixture reached a real profile).
  *
@@ -14,7 +14,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AUTH_KEYS, isPlainAuthSetting, type AuthKeyStatus } from "@/src/core";
-import { SettingsGroup } from "./controls.tsx";
+import { SettingsGroup, Toggle } from "./controls.tsx";
 import { SubscriptionsSection } from "./subscriptions-section.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
@@ -23,9 +23,10 @@ import { notifySettingsSaved } from "@/components/settings-signal";
 import { ProviderIcon } from "./provider-icons.tsx";
 
 /** Which settings group a service key sits in (adds Speech). */
-function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Web search" {
+function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Translation" | "Web search" {
 	if (id === "ELEVENLABS_API_KEY" || id.startsWith("AZURE_SPEECH_")) return "Speech";
 	if (id === "DEEPGRAM_API_KEY") return "Dictation";
+	if (id === "DEEPL_API_KEY") return "Translation";
 	return "Web search";
 }
 
@@ -104,6 +105,7 @@ function KeyTableRow({
 	onSave,
 	onDelete,
 	onCancel,
+	onEnabledChange,
 	testid,
 	providerId,
 }: {
@@ -117,6 +119,8 @@ function KeyTableRow({
 	onDelete?: () => Promise<void>;
 	/** Folds the editor. Cancel sits beside Save, so the way out stays visible. */
 	onCancel: () => void;
+	/** Switches a stored key off or on, keeping it saved. */
+	onEnabledChange: (enabled: boolean) => Promise<void>;
 	testid: string;
 	providerId?: string;
 }) {
@@ -247,42 +251,56 @@ function KeyTableRow({
 	}
 
 	return (
-		<div data-testid={testid} className={envOwned ? "opacity-40" : undefined}>
-			<button
-				type="button"
-				aria-expanded={expanded}
-				data-testid={`${testid}-row`}
-				onClick={() => !envOwned && onToggle()}
-				title={
-					envOwned
-						? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.`
-						: undefined
-				}
-				className={`flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-accent/15 px-3.5 py-2.5 text-left transition-colors ${
-					envOwned ? "cursor-default" : "cursor-pointer hover:border-border/80 hover:bg-accent"
-				}`}
-			>
-				<span className="flex items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
-					<ProviderIcon provider={providerId ?? (status.id.replace(/_API_KEY|_KEY/g, "").toLowerCase() || label)} />
-					{label}
-				</span>
-				<span className="flex items-center gap-2">
-					{docsUrl && (
-						<a
-							href={docsUrl}
-							target="_blank"
-							rel="noreferrer"
-							onClick={(e) => e.stopPropagation()}
-							className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-						>
-							Get a key ↗
-						</a>
-					)}
-					<span data-testid={`${testid}-status`} className="font-mono text-[11px] text-muted-foreground">
-						{keyStatusLine(status)}
+		<div data-testid={testid}>
+			<div className="flex items-center gap-3 rounded-xl border border-border/50 bg-accent/15 pr-3.5 transition-colors hover:border-border/80">
+				<button
+					type="button"
+					aria-expanded={expanded}
+					data-testid={`${testid}-row`}
+					onClick={() => !envOwned && onToggle()}
+					title={
+						envOwned
+							? `Set by the ${status.id} environment variable, which wins over a saved key. Remove it from the environment and restart to edit it here.`
+							: undefined
+					}
+					className={`flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl py-2.5 pl-3.5 text-left ${
+						envOwned ? "cursor-default" : "cursor-pointer"
+					} ${envOwned || status.disabled ? "opacity-40" : ""}`}
+				>
+					<span className="flex shrink-0 items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
+						<ProviderIcon provider={providerId ?? (status.id.replace(/_API_KEY|_KEY/g, "").toLowerCase() || label)} />
+						{label}
 					</span>
-				</span>
-			</button>
+					<span className="flex min-w-0 items-center gap-2">
+						{docsUrl && !status.present && (
+							<a
+								href={docsUrl}
+								target="_blank"
+								rel="noreferrer"
+								onClick={(e) => e.stopPropagation()}
+								className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+							>
+								Get a key ↗
+							</a>
+						)}
+						<span
+							data-testid={`${testid}-status`}
+							className="min-w-0 overflow-x-clip font-mono text-[11px] text-ellipsis whitespace-nowrap text-muted-foreground"
+						>
+							{keyStatusLine(status)}
+						</span>
+					</span>
+				</button>
+				{status.present && (
+					<Toggle
+						checked={!status.disabled}
+						onChange={(on) => void onEnabledChange(on)}
+						label={`Use the ${label} key`}
+						title={status.disabled ? "Off: kept, but nothing uses it" : "On: in use"}
+						testid={`${testid}-enabled`}
+					/>
+				)}
+			</div>
 			{error && (
 				<p role="alert" data-testid={`${testid}-error`} className="pl-6 text-xs text-miss">
 					{error}
@@ -516,6 +534,16 @@ export function KeysSection({
 		return null;
 	}
 
+	async function setKeyEnabled(id: string, enabled: boolean): Promise<void> {
+		await fetch(`/api/keys/${id}`, {
+			method: "PATCH",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ enabled }),
+		}).catch(() => undefined);
+		await reload();
+		notifySettingsSaved("keys");
+	}
+
 	async function deleteKey(id: string): Promise<void> {
 		await fetch(`/api/keys/${id}`, { method: "DELETE" }).catch(() => undefined);
 		await reload();
@@ -569,6 +597,7 @@ export function KeysSection({
 							}}
 							onCancel={() => setOpenRow(null)}
 							onDelete={() => deleteKey(status.id)}
+							onEnabledChange={(on) => setKeyEnabled(status.id, on)}
 							testid={`key-${status.id.toLowerCase()}`}
 						/>
 					);
@@ -616,6 +645,7 @@ export function KeysSection({
 				[
 					{ id: "Speech", label: "Speech (TTS)", testid: "group-speech" },
 					{ id: "Dictation", label: "Dictation (STT)", testid: "group-dictation" },
+					{ id: "Translation", label: "Translation", testid: "group-translation" },
 					{ id: "Web search", label: "Web search", testid: "group-search" },
 				] as const
 			).map(({ id, label, testid }) => (
@@ -649,6 +679,7 @@ export function KeysSection({
 									}}
 									onCancel={() => setOpenRow(null)}
 									onDelete={() => deleteKey(status.id)}
+									onEnabledChange={(on) => setKeyEnabled(status.id, on)}
 									testid={`key-${status.id.toLowerCase()}`}
 								/>
 							),

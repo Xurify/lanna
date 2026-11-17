@@ -7,6 +7,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { CapLabel } from "@/components/ui/cap-label";
 
 /** A section block: pronounced mono heading + content. */
 export function SettingsSection({
@@ -145,7 +146,7 @@ export function SettingsSegmented<T extends string | number>({
 	ariaLabel,
 	testid,
 }: {
-	options: readonly { value: T; label: string }[];
+	options: readonly { value: T; label: string; icon?: ReactNode }[];
 	value: T;
 	onChange: (next: T) => void;
 	ariaLabel: string;
@@ -164,9 +165,10 @@ export function SettingsSegmented<T extends string | number>({
 						aria-checked={active}
 						data-testid={`${testid}-${o.value}`}
 						onClick={() => onChange(o.value)}
-						className={cn("whitespace-nowrap", active && "on")}
+						className={cn("whitespace-nowrap", o.icon && "inline-flex items-center gap-1.5", active && "on")}
 					>
-						{o.label}
+						{o.icon}
+						{o.icon ? <CapLabel>{o.label}</CapLabel> : o.label}
 					</button>
 				);
 			})}
