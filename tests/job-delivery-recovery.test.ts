@@ -455,7 +455,8 @@ test("fresh process restores a pending delivery on registration without a jobs p
 		noteSteersDurable(record.id, handed); unregisterLiveAgent(record.id); endTurn(record.id);
 		console.log(JSON.stringify(handed.map(marker => marker.id)));
 	`;
-	const child = spawnSync(process.execPath, ["--import", "tsx", "--input-type=module", "-e", script], {
+	const evalArgs = process.versions.bun ? ["-e", script] : ["--import", "tsx", "--input-type=module", "-e", script];
+	const child = spawnSync(process.execPath, evalArgs, {
 		cwd: process.cwd(),
 		encoding: "utf8",
 		timeout: 15000,

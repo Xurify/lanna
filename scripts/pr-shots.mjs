@@ -50,7 +50,10 @@ for (const shot of shots) {
 	for (const width of options.widths) {
 		await page.setViewport({ width, height: options.height || (width > 600 ? 860 : 844), deviceScaleFactor: 2 });
 		for (const theme of options.themes) {
-			await page.setCookie({ name: "lh-theme", value: theme, url: baseUrl });
+			await page.setCookie(
+				{ name: "lh-theme", value: theme, url: baseUrl },
+				{ name: "lh-language", value: "slovak", url: baseUrl },
+			);
 			await page.goto(new URL(route || "/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
 			await page.evaluate((value) => {
 				const root = document.documentElement;

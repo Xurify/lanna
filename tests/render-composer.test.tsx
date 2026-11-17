@@ -13,6 +13,7 @@ import { describe, it } from "node:test";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { parseHTML } from "linkedom";
+import { ChatAttachMenu } from "../components/chat-attach-menu.tsx";
 import { DraftImageChips } from "../components/chat-image-button.tsx";
 import { Composer, enterAction } from "../components/composer.tsx";
 
@@ -131,6 +132,74 @@ describe("DraftImageChips", () => {
 			});
 			assert.deepEqual(removed, ["/data/sources/image-abc123.png"]);
 			assert.equal(dom.document.querySelector('[role="dialog"]'), null);
+		} finally {
+			try {
+				await act(async () => root.unmount());
+			} finally {
+				host.remove();
+				for (const [i, name] of names.entries()) {
+					if (originals[i]) Object.defineProperty(globalThis, name, originals[i]!);
+					else Reflect.deleteProperty(globalThis, name);
+				}
+			}
+		}
+	});
+});
+
+describe("ChatAttachMenu", () => {
+	it("renders a single + attachment trigger and opens the image/PDF menu on click", async () => {
+		const dom = parseHTML("<html><body></body></html>");
+		const names = [
+			"window",
+			"document",
+			"Element",
+			"HTMLElement",
+			"HTMLInputElement",
+			"HTMLTextAreaElement",
+			"CustomEvent",
+			"requestAnimationFrame",
+			"cancelAnimationFrame",
+			"IS_REACT_ACT_ENVIRONMENT",
+		] as const;
+		const originals = names.map((name) => Object.getOwnPropertyDescriptor(globalThis, name));
+		Object.assign(globalThis, {
+			window: dom.window,
+			document: dom.document,
+			Element: dom.window.Element,
+			HTMLElement: dom.window.HTMLElement,
+			HTMLInputElement: dom.window.HTMLInputElement,
+			HTMLTextAreaElement: dom.window.HTMLTextAreaElement,
+			CustomEvent: dom.window.CustomEvent,
+			requestAnimationFrame: (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 0),
+			cancelAnimationFrame: (id: number) => clearTimeout(id),
+			IS_REACT_ACT_ENVIRONMENT: true,
+		});
+		Object.assign(dom.window, { innerWidth: 390, innerHeight: 844 });
+		const rectProto = dom.window.HTMLElement.prototype as unknown as {
+			getBoundingClientRect?: () => unknown;
+			focus?: () => void;
+		};
+		rectProto.getBoundingClientRect ??= () => ({ top: 400, bottom: 432, left: 48, right: 80, width: 32, height: 32 });
+		rectProto.focus ??= () => {};
+		const host = dom.document.createElement("div");
+		dom.document.body.append(host);
+		const root = createRoot(host);
+		try {
+			await act(async () => {
+				root.render(<ChatAttachMenu onPdfAttached={() => {}} onImageAttached={() => {}} />);
+			});
+			const trigger = host.querySelector('button[data-testid="chat-attach-button"]');
+			assert.ok(trigger);
+			assert.equal(trigger.getAttribute("aria-label"), "Add attachment");
+			assert.equal(dom.document.querySelector('[data-testid="chat-attach-menu"]'), null);
+
+			await act(async () => {
+				trigger.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+			});
+			const menu = dom.document.querySelector('[data-testid="chat-attach-menu"]');
+			assert.ok(menu);
+			assert.ok(menu.querySelector('button[data-testid="chat-image-button"]'));
+			assert.ok(menu.querySelector('button[data-testid="chat-pdf-button"]'));
 		} finally {
 			try {
 				await act(async () => root.unmount());

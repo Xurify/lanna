@@ -28,11 +28,11 @@ function baseIn(extra: Record<string, string>): { base: string; pid: number } {
 	const env: Record<string, string | undefined> = { ...process.env, LH_PROFILE: "" };
 	for (const k of ["NODE_ENV", "NODE_TEST_CONTEXT", "LH_DATA_DIR"]) delete env[k];
 	Object.assign(env, extra);
+	const loaderArgs = process.versions.bun ? [] : ["--import", pathToFileURL(TSX_LOADER).href];
 	const out = execFileSync(
 		process.execPath,
 		[
-			"--import",
-			pathToFileURL(TSX_LOADER).href,
+			...loaderArgs,
 			"--eval",
 			`const m = await import(${JSON.stringify(pathToFileURL(path.join(REPO_ROOT, "config.ts")).href)}); console.log(JSON.stringify({ base: m.PATHS.base, pid: process.pid }));`,
 		],

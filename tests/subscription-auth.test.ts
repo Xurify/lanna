@@ -108,7 +108,7 @@ test(
 	"main loader resolves Pi's import-only PUBLIC package exports and native OAuth without a CLI or network",
 	{
 		skip:
-			Number(process.versions.node.split(".")[0]) < 24 &&
+			(Boolean(process.versions.bun) || Number(process.versions.node.split(".")[0]) < 24) &&
 			"the loader's resolve hook needs Node 24, the runtime Electron ships",
 	},
 	async () => {
