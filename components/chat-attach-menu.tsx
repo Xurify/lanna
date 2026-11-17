@@ -91,12 +91,18 @@ export function ChatAttachMenu({
 						setOpen((v) => !v);
 					}}
 					className={cn(
-						"flex size-8 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-well hover:text-foreground disabled:opacity-60 data-[error=true]:text-miss",
-						!compact && "border border-border/50 bg-card shadow-raise hover:border-border",
+						"flex shrink-0 items-center justify-center text-ink-3 transition-colors hover:bg-well hover:text-foreground disabled:opacity-60 data-[error=true]:text-miss",
+						compact
+							? "size-8 rounded-full"
+							: "size-7 rounded-md border border-border/50 bg-card text-muted-foreground shadow-raise hover:border-border",
 						open && "bg-well text-foreground",
 					)}
 				>
-					{state === "saving" ? <LoaderCircleIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
+					{state === "saving" ? (
+						<LoaderCircleIcon className={cn("animate-spin", compact ? "size-4" : "size-3.5")} />
+					) : (
+						<PlusIcon className={compact ? "size-4" : "size-3.5"} />
+					)}
 				</button>
 			</Hint>
 			{open && (

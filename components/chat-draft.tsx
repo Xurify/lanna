@@ -192,7 +192,9 @@ export function ChatDraft({
 							/>
 							<span className="flex-1" />
 							{setupCta}
-							<span className="hidden font-ui text-xs text-muted-foreground pointer-fine:inline">Enter to ask</span>
+							<span className="hidden shrink-0 font-ui text-xs text-muted-foreground sm:pointer-fine:inline">
+								Enter to ask
+							</span>
 							<button
 								type="button"
 								onClick={send}

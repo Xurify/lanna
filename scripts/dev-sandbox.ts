@@ -174,7 +174,7 @@ async function main(): Promise<void> {
 			});
 		}
 		child.on("exit", (code) => {
-			if (!retriedAdvisory && /Security warning: Critical vulnerability found/i.test(seen) && !/Ready in/i.test(seen)) {
+			if (!retriedAdvisory && /Security warning: Critical vulnerability found/i.test(seen)) {
 				retriedAdvisory = true;
 				launchNext();
 				return;

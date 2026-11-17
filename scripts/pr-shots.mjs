@@ -48,7 +48,14 @@ for (const shot of shots) {
 	if (/^[A-Za-z]:[/]/.test(route))
 		throw new Error(`${name}: Git Bash rewrote the route to ${route}; set MSYS_NO_PATHCONV=1`);
 	for (const width of options.widths) {
-		await page.setViewport({ width, height: options.height || (width > 600 ? 860 : 844), deviceScaleFactor: 2 });
+		const isMobile = width < 600;
+		await page.setViewport({
+			width,
+			height: options.height || (isMobile ? 844 : 860),
+			deviceScaleFactor: 2,
+			isMobile,
+			hasTouch: isMobile,
+		});
 		for (const theme of options.themes) {
 			await page.setCookie(
 				{ name: "lh-theme", value: theme, url: baseUrl },
