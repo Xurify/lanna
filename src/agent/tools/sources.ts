@@ -10,18 +10,13 @@ import type { PiEngine } from "../models.ts";
 import { runPdfReaderAgent } from "../subagents/pdf-reader.ts";
 import { runResearcherAgent } from "../subagents/researcher.ts";
 
-/** A reader may take minutes (several pages, several searches); the general tool limit is 30 seconds. */
 const READER_LIMIT_MS = 5 * 60_000;
 
-/** What research and pdf need from the turn that calls them. */
 export interface SourceToolContext {
 	chatId: string;
-	/** The model a reader runs on; undefined when no model is set for it. */
 	engineFor: (reader: "research" | "pdf") => PiEngine | undefined;
-	/** Why the engine cannot run (its provider has no key), or null. */
 	cannotRun?: (engine: PiEngine) => string | null;
 	search?: () => SearchProvider | null;
-	/** The reader's model calls, priced under the reader's own model. */
 	recordUsage: (model: string, usage: Usage[]) => void;
 }
 
@@ -60,12 +55,10 @@ function textResult<T>(text: string, details: T): AgentToolResult<T> {
 	return { content: [{ type: "text", text }], details };
 }
 
-/** A progress line while the reader works; the result's details come only at the end. */
 function progress(line: string): AgentToolResult<never> {
 	return { content: [{ type: "text", text: line }], details: undefined as never };
 }
 
-/** Run one reader under the turn's abort and the reader limit, and record its model calls. */
 async function runReader<T>(
 	ctx: SourceToolContext,
 	reader: "research" | "pdf",
@@ -96,7 +89,6 @@ async function runReader<T>(
 	}
 }
 
-/** Sources cited in the brief as markdown links, else the pages the researcher fetched. */
 function sourcesOf(brief: string, fetched: readonly string[]): ResearchResult["sources"] {
 	const sources: ResearchResult["sources"] = [];
 	const seen = new Set<string>();

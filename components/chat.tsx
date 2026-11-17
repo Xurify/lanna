@@ -414,7 +414,7 @@ export function Chat({
 	useEffect(() => {
 		if (mountContinuation.current) return;
 		mountContinuation.current = true;
-		if (!turnInFlight) continueIfOwed(initialMessages);
+		if (!turnInFlight) continueIfOwed(initialMessages, kind);
 		// mount-only by design (turnInFlight read at initial value)
 	}, []);
 
@@ -671,8 +671,8 @@ export function Chat({
 		// lastAssistantMessageIsCompleteWithToolCalls check.
 		// Current model truth also guards retained/live failures: canonical
 		// sync must never automatically replace a reply that failed to save.
-		continueIfOwed(record.messages);
-	}, [chatId, setMessages, continueIfOwed]);
+		continueIfOwed(record.messages, kind);
+	}, [chatId, setMessages, continueIfOwed, kind]);
 
 	// The settled terminal's other half (stream-reattach wave): the
 	// transport resolved turn-settled — no turn running, the record is

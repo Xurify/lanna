@@ -16,18 +16,11 @@ import { CONCLUDE_ACK_TEXT } from "../core/contracts/chat.ts";
  *   `details` keeps the problems as data),
  * - the result mapping (string verbatim / object JSON / image results to
  *   native content parts; details carries the record-facing value),
- * - the question-tool placeholder (quiz / ask_user_question): a synthetic
- *   "question posed" result that is NEVER persisted — the record keeps the
- *   tool part output-less until the client answers; the learner's answer
- *   re-enters the next turn as this call's result. terminate: true (owner
- *   Option A, 2026-09-25) ends single-question batches natively; the slim
- *   shouldStopAfterTurn stopper (teacher-agent.ts) holds the belt-and-
- *   suspenders rule for mixed batches.
  *
  * Structural validation is NOT here: pi's loop validates arguments against
  * the tool's TypeBox parameters before execute ever runs (pi-ai's
  * validateToolArguments — the fast TypeBox path). Refinements that no
- * schema can carry (quizInputProblems, the live-tree nodeId check) run at
+ * schema can carry (the live-tree nodeId check) run at
  * the top of the tool's own execute and throw ToolInputError.
  */
 
@@ -186,9 +179,7 @@ export interface ToolExecuteContext {
 /**
  * Build a native AgentTool execute from a tool body — the guard (timeout +
  * abort cascade) plus the shared result mapping, byte-identical to the old
- * toPiTool pipeline for every server-side tool. Question tools do NOT use
- * this: their placeholder is instant (questionResult below) and their
- * refinement checks run before it.
+ * toPiTool pipeline for every server-side tool.
  */
 export function serverExecute<P extends TSchema>(
 	toolName: string,
@@ -212,32 +203,6 @@ export function serverExecute<P extends TSchema>(
 		);
 }
 
-/**
- * The synthetic question-tool result (in-memory only; the record's tool
- * part keeps no output until the learner answers). terminate: true ends
- * the batch natively — pi stops the loop when every finalized result in
- * the batch terminates; the shouldStopAfterTurn stopper covers the mixed
- * batch (question + other calls in one message) that terminate-only
- * semantics would let run on (owner Option A, 2026-09-25).
- */
-export function questionResult(): AgentToolResult<null> {
-	return {
-		content: [
-			{
-				type: "text",
-				text: "Question posed — the turn ends here; the learner's graded answer arrives as this call's result.",
-			},
-		],
-		details: null,
-		terminate: true,
-	};
-}
-
-/** The practice pose's ack (practice sessions, owner 2026-10-04): unlike
- *  a question, this result is FINAL — it persists (persistTurn filters
- *  only QUESTION_TOOLS placeholders), because the learner's submissions
- *  arrive as MESSAGES, never as this call's result. terminate: true ends
- *  the turn at the pose; the commitment rides the call's arguments. */
 export function problemResult(): AgentToolResult<null> {
 	return {
 		content: [

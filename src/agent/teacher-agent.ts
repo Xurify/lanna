@@ -10,7 +10,8 @@ import { chatTools, type ChatToolContext } from "./tools/chat.ts";
 import { withArgumentHeal } from "./tools/heal.ts";
 import { sendToUserTool } from "./tools/send-to-user.ts";
 import { filterToggleableTools, type EnabledTools } from "../core/pending.ts";
-import { toLlmMessages, PRACTICE_PROBLEM_TOOL } from "../core/native-messages.ts";
+import { PRACTICE_PROBLEM_TOOL } from "../core/chat-messages.ts";
+import { toLlmMessages } from "../core/model-context.ts";
 import { closesChatReply } from "../core/chat-answers.ts";
 import { activeProfile } from "../../config.ts";
 
@@ -114,29 +115,7 @@ export interface AgentBuildOptions {
 	appContent?: string;
 }
 
-/**
- * The turn's question-stop rule (Wave A
- * 2026-09-26, owner Option A): a question tool call (quiz /
- * ask_user_question) that RESOLVED — its synthetic "question posed" result
- * is not an error — ends the run: the learner's answer arrives as the next
- * POST. A call that FAILED authoring validation (error result) must NOT
- * stop the run — the model retries within the same turn, exactly the old
- * InvalidToolInputError semantics.
- *
- * Question results also carry terminate: true (tool-execute's
- * questionResult), so single-question batches stop natively at the pi
- * loop's own batch check; this finishTurn hook (0.87.1 rename of
- * shouldStopAfterTurn) is the
- * belt-and-suspenders HALF for the mixed batch (a question + other calls
- * in one message) that terminate-only semantics would let run on — the
- * learner cannot answer while a turn is in flight (per-chat 409), so a
- * cleanly-posed question MUST always end the turn. Practice's problem pose
- * has the same wait-for-the-learner contract, including mixed output/problem
- * batches; failed poses must still retry. maxTurns is gone
- * (owner ruling 2026-09-25: no maximum-agent-turns net on the teaching
- * turn).
- */
-function makeQuestionStopper(kind: AgentKind) {
+function makeTurnStopper(kind: AgentKind) {
 	return (context: {
 		message: { content: Array<{ type: string; id?: string; name?: string; text?: string }> };
 		toolResults: Array<{ toolCallId: string; isError?: boolean }>;
@@ -158,7 +137,7 @@ function makeQuestionStopper(kind: AgentKind) {
 				.map((c) => c.id!),
 		);
 		if (called.size === 0) return false;
-		// Stop only when every question/problem pose resolved cleanly.
+		// Stop only when every problem pose resolved cleanly.
 		for (const result of context.toolResults) {
 			if (called.has(result.toolCallId) && result.isError) return false;
 		}
@@ -169,7 +148,7 @@ function makeQuestionStopper(kind: AgentKind) {
 function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: AgentTool<any, any>[]) {
 	const engine = opts.engine;
 	if (!engine) throw new Error(`no configured model for the ${kind} agent — set your model slots (settings → models)`);
-	const stopper = makeQuestionStopper(kind);
+	const stopper = makeTurnStopper(kind);
 	// The learner profile (onboarding, 2026-10-28): what the app knows —
 	// goal, pace, first language, placement, the lesson ledger — joins
 	// the composition as a trailing block, read fresh per build so a
@@ -216,12 +195,10 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 		// wake's carry-everything semantics (the default "one-at-a-time"
 		// would spend one teacher turn per marker).
 		steeringMode: "all",
-		// Wave B (owner-approved 2026-09-26): the model-facing conversion is
-		// THE app seam — markers flatten to their canonical user text
-		// (HANDOFF_TEXT / steer text, all single-sourced),
-		// UI-only markers (plan-block) drop, the app's id fields strip, and
-		// an abort's dangling question call gets its INTERRUPTED result. It
-		// must never throw (pi's convertToLlm contract).
+		// The model-facing conversion is the app's one seam: markers flatten to
+		// their canonical user text, the app's id fields strip, and an
+		// aborted call gets an interrupted result. It must never throw (pi's
+		// convertToLlm contract).
 		convertToLlm: opts.noteLearnerText
 			? (messages) => withLearnerNotes(toLlmMessages(messages), opts.noteLearnerText!)
 			: toLlmMessages,

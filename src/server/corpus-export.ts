@@ -13,7 +13,7 @@ import path from "node:path";
 import { activeProfile, PATHS } from "../../config.ts";
 import type { ChatRecord } from "../core/contracts.ts";
 import { activeLanguage } from "./active-language.ts";
-import { userFacingTextOf, failedOutputCallIds } from "../core/native-messages.ts";
+import { userFacingTextOf, failedOutputCallIds } from "../core/chat-messages.ts";
 import { chatStore } from "../store/chats.ts";
 import { ensureReadmes, listAudioClips, listWhy, readLessonLog, type LessonLogEntry } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";

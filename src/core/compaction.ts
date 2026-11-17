@@ -34,8 +34,8 @@
  */
 
 import { COMPACTED_HISTORY_HEADER } from "./contracts/chat.ts";
-import type { LannaMessage, LannaMarkerMessage } from "./native-messages.ts";
-import { newMessageId } from "./native-messages.ts";
+import type { LannaMessage, LannaMarkerMessage } from "./chat-messages.ts";
+import { newMessageId } from "./chat-messages.ts";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage, ToolResultMessage, SystemMessage } from "@earendil-works/pi-ai";
 
@@ -185,7 +185,8 @@ export function estimateTokens(messages: readonly (LannaMessage | AgentMessage)[
  * markers have no context, just like native metadata entries. */
 function cutMessage(message: LannaMessage): LannaMessage | null {
 	if (message.role !== "custom") return message;
-	if (["compaction", "plan-block", "problem-dismissed"].includes(message.customType)) return null;
+	if (message.customType === "compaction" || message.customType === "problem-dismissed") return null;
+	if (message.content === "") return null;
 	return message;
 }
 

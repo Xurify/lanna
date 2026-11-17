@@ -147,7 +147,6 @@ function SignInSteps({ status, act }: { status: SubscriptionStatus; act: ReturnT
 	);
 }
 
-/** Sign in with a ChatGPT, GitHub Copilot or Grok plan instead of paying per token with an API key. */
 export function SubscriptionsSection() {
 	const { statuses, unavailable, act } = useSubscriptions();
 	const [error, setError] = useState<string | null>(null);

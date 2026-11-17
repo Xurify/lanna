@@ -11,8 +11,7 @@
  * precisely because the practice heal never reached the quiz tools. The
  * owner ruling: this is ONE standard pattern, applied at EVERY tool —
  * heal what is mechanically recognizable (a JSON-encoded stand-in for
- * the schema-expected shape; the membership-value debris strip lives in
- * core/value-debris), let validation reject the rest honestly.
+ * the schema-expected shape), let validation reject the rest honestly.
  *
  * The pure function lives in core/argument-heal (the display seam needs
  * it too — the tool-parts law); this module is the per-tool/registry

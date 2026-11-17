@@ -1,10 +1,3 @@
-/**
- * Job records of older chats (data/jobs/<id>.json): research and PDF
- * readings once ran as background jobs, each with its own file and cost.
- * Nothing writes them now; Spending still counts their cost, and a chat's
- * records are deleted with the chat.
- */
-
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { PATHS } from "../../config.ts";
@@ -28,7 +21,6 @@ function jobFiles(): string[] {
 	}
 }
 
-/** A chat's past job records, newest first. */
 export function listPastJobs(chatId: string): JobRecord[] {
 	return jobFiles()
 		.map(readJob)

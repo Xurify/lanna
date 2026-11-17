@@ -1,51 +1,16 @@
-/**
- * THE VIEW MODEL (Wave D, owner-approved 2026-09-26): the client's transcript
- * view — native record messages (+ the live turn's working messages) grouped
- * into today's exact render shape. The golden master is the pre-Wave-D UI
- * (owner fork 1): everything the agent produces is ONE continuous document
- * per run — step separators between the loop's steps, artifact and answered
- * cards inline, the teacher's reaction continuing below an answered quiz.
- *
- * This is the grouping canon of the deleted server-side projection
- * (core/projection.ts, Wave B), moved client-side, app-owned, with zero AI-SDK
- * types — plus the LIVE-TURN layer the projection never had: mid-turn tool
- * execution states (input-streaming → input-available/output-error/output),
- * so the dock mounts only after a call clears the validation boundary
- * (tool_execution_end) and the shimmer names the running activity.
- *
- * GROUPING RULE: one assistant view message per GROUP — consecutive assistant
- * + toolResult messages, bounded by user/marker messages; toolResults attach
- * to the tool part of their call (searching backward — an answered quiz's
- * result lands on the part that asked it, even turns later); a group's id is
- * its FIRST assistant message's id.
- *
- * Question tools on the wire (owner fork 2): the agent's closing
- * tool_execution_end carries the in-memory "Question posed" placeholder —
- * projectView IGNORES clean question executions (the part stays
- * input-available; the learner's answer arrives as a real toolResult). The
- * placeholder never persists, so settled records never see it.
- *
- * Pure and deterministic: client-safe (no node deps), same input → same view.
- */
-
-import type { AssistantMessage, ToolResultMessage } from "@earendil-works/pi-ai";
-import type { LannaMarkerMessage, LannaMessage } from "./native-messages.ts";
+import type { AssistantMessage, ToolResultMessage, UserMessage } from "@earendil-works/pi-ai";
 import {
 	modelSolutionForConclude,
 	PRACTICE_CONCLUDE_TOOL,
+	PRACTICE_PROBLEM_TOOL,
 	problemInputForConclude,
 	SEND_TO_USER_TOOL,
 	sendToUserText,
-} from "./native-messages.ts";
+	type LannaMarkerMessage,
+	type LannaMessage,
+} from "./chat-messages.ts";
 import { activeCompactionOf, type CompactionDetails } from "./compaction.ts";
-import { QUESTION_TOOLS } from "./pending.ts";
 
-/** A view part — the loose part vocabulary the renderers consume (the same
- *  shape names the pre-Wave-D UIMessage dialect used, so the renderer
- *  switch and the phase/pending scanners transplant unchanged). The common
- *  fields are optional-typed so the pre-Wave-D renderer code compiles
- *  against it with minimal casts; anything else stays `unknown` through
- *  the index signature. */
 export interface LannaViewPart extends Record<string, unknown> {
 	type: string;
 	id?: string;
@@ -59,7 +24,6 @@ export interface LannaViewPart extends Record<string, unknown> {
 	data?: unknown;
 }
 
-/** A view message: user (bubble) or assistant (one continuous run). */
 export interface LannaViewMessage {
 	id: string;
 	role: "user" | "assistant";
@@ -67,336 +31,222 @@ export interface LannaViewMessage {
 	metadata?: unknown;
 }
 
-/** A tool call's live execution outcome (from tool_execution_end). */
 export interface LiveExecution {
 	isError: boolean;
-	/** The clean result's details payload (the card's output). */
 	output?: unknown;
-	/** The failure text (output-error parts). */
 	errorText?: string;
 }
 
-/** The live turn's execution layer, maintained by the session hook. */
 interface LiveTurnState {
-	/** toolCallId → its execution outcome seen so far. */
 	executions: ReadonlyMap<string, LiveExecution>;
-	/** True while the turn runs — calls with no execution yet render
-	 *  input-streaming (the shimmer); settled dangling calls render
-	 *  input-available (the dock mounts from the record). */
 	inFlight: boolean;
-	/** Ids of the messages THIS consume is streaming (optimistic round 3,
-	 *  2026-10-02): an arrived-but-empty streaming message projects one
-	 *  empty reasoning part — the thinking row — so the placeholder's
-	 *  handoff is seamless; settled empty messages stay hidden. */
 	streamingIds: ReadonlySet<string>;
+}
+
+type AssistantBlock = AssistantMessage["content"][number];
+type ToolCallBlock = Extract<AssistantBlock, { type: "toolCall" }>;
+type CompactionMarker = LannaMarkerMessage & { details: CompactionDetails };
+
+interface AssistantContext {
+	messages: readonly LannaMessage[];
+	live: LiveTurnState | undefined;
+	failedOutputs: ReadonlyMap<string, ToolResultMessage>;
 }
 
 function textPart(text: string): LannaViewPart {
 	return { type: "text", text, state: "done" };
 }
 
-/** The result a tool part should show, from a native toolResult. */
+function messageTextPart(id: string, text: string): LannaViewPart {
+	return { type: "text", id, text, state: "done" };
+}
+
 function applyResult(part: LannaViewPart, result: ToolResultMessage): void {
-	if (result.isError) {
-		part.state = "output-error";
-		part.rawInput = part.input;
-		const text = result.content.find((c) => c.type === "text");
-		part.errorText = text && text.type === "text" ? text.text : "The tool call failed.";
-	} else {
+	if (!result.isError) {
 		part.state = "output-available";
 		part.output = result.details;
+		return;
 	}
+	part.state = "output-error";
+	part.rawInput = part.input;
+	const text = result.content.find((content) => content.type === "text");
+	part.errorText = text?.type === "text" ? text.text : "The tool call failed.";
 }
 
-/** Project the native record (+ live turn working list) into the client's
- *  view messages. Pure: the same input always projects to the same list. */
-export function projectView(messages: readonly LannaMessage[], live?: LiveTurnState): LannaViewMessage[] {
-	const out: LannaViewMessage[] = [];
-	// Output calls become text rather than tool parts, so read settled
-	// failures up front: a failed call must retain the normal error path.
-	const outputErrors = new Map<string, ToolResultMessage>();
-	for (const message of messages) {
-		if (message.role === "toolResult" && message.toolName === SEND_TO_USER_TOOL && message.isError) {
-			outputErrors.set(message.toolCallId, message);
-		}
+function toolPartOf(block: ToolCallBlock, live: LiveTurnState | undefined, streaming: boolean): LannaViewPart {
+	const part: LannaViewPart = { type: `tool-${block.name}`, toolCallId: block.id, input: block.arguments };
+	const execution = live?.executions.get(block.id);
+	if (!execution) {
+		part.state = streaming ? "input-streaming" : "input-available";
+		return part;
 	}
-
-	const lastAssistant = (): LannaViewMessage | undefined => {
-		const last = out[out.length - 1];
-		return last && last.role === "assistant" ? last : undefined;
-	};
-	const findToolPart = (toolCallId: string): LannaViewPart | undefined => {
-		for (let i = out.length - 1; i >= 0; i--) {
-			// NEWEST-FIRST part scan within a group (the Lacan heal, 2026-10-04):
-			// a result pairs with the most RECENT call carrying its id. Unique
-			// ids (the uniquifier guarantees them for new turns) make scan order
-			// irrelevant; for legacy duplicate-id records (DeepSeek's per-response
-			// `call_0`) this routes each answer to its own call instead of letting
-			// a later result overwrite an earlier question's card.
-			const parts = out[i]!.parts;
-			for (let p = parts.length - 1; p >= 0; p--) {
-				const part = parts[p]!;
-				if (part.type.startsWith("tool-") && part.toolCallId === toolCallId) return part;
-			}
-		}
-		return undefined;
-	};
-
-	// The active compaction (owner round 14): the fold emits the CUT
-	// DIVIDER — the longer, at-the-seam marker — immediately BEFORE the
-	// first kept message, so the transcript shows exactly where history
-	// was summarized away. Everything before it stays visible to the
-	// user (full history is never hidden); only the MODEL's context jumps.
-	const compaction = activeCompactionOf(messages);
-
-	for (const m of messages) {
-		const role = (m as { role?: string }).role;
-
-		if (compaction && m.id === compaction.details.firstKeptMessageId) {
-			out.push({
-				id: `cut_${compaction.id}`,
-				role: "user",
-				parts: [
-					{
-						type: "data-compaction-cut",
-						id: `cc_${compaction.id}`,
-						data: { content: compaction.content, details: compaction.details },
-					},
-				],
-			});
-		}
-
-		if (role === "user") {
-			const content = m.content as string | Array<{ type: string; text?: string }>;
-			const texts =
-				typeof content === "string"
-					? [content]
-					: content.filter((c) => c.type === "text").map((c) => (c as { text: string }).text);
-			out.push({ id: m.id, role: "user", parts: texts.map(textPart) });
-			continue;
-		}
-
-		if (role === "custom") {
-			projectMarker(m as LannaMarkerMessage, out);
-			continue;
-		}
-
-		if (role === "toolResult") {
-			applyResultTo(findToolPart((m as ToolResultMessage).toolCallId), m as ToolResultMessage);
-			continue;
-		}
-
-		if (role === "assistant") {
-			const assistant = m as AssistantMessage;
-			// OWNER RULING (2026-09-26): reasoning ALWAYS renders above the
-			// message it belongs to. Providers emit trailing reasoning tokens
-			// (GLM fires a final reasoning burst after the answer), which
-			// lands the thinking block AFTER the text in the persisted
-			// content — presenting arrival order verbatim put the reasoning
-			// UNDER the message. The view canon owns presentation order:
-			// stable-partition each assistant message, reasoning parts first
-			// (their own order kept), then everything else.
-			const rest: LannaViewPart[] = [];
-			const reasoning: LannaViewPart[] = [];
-			let textN = 0;
-			let reasoningN = 0;
-			// LIVE IS POSITIVE EVIDENCE (owner, 2026-10-05): a call renders
-			// live ONLY when its own message is streaming THIS turn — session
-			// busyness alone can never resurrect a settled call (the practice
-			// bug: a thinking submission flipped the POSE turn's problem call
-			// back to a spinner mid-transcript; live cards belong at the
-			// bottom, and this gate is what puts them there by construction).
-			const streamingMessage = live?.streamingIds.has(m.id) === true;
-			for (const block of assistant.content) {
-				if (block.type === "text") {
-					rest.push({ type: "text", id: `${m.id}-t${textN++}`, text: block.text, state: "done" });
-				} else if (block.type === "thinking") {
-					reasoning.push({ type: "reasoning", id: `${m.id}-r${reasoningN++}`, text: block.thinking, state: "done" });
-				} else if (block.type === "toolCall") {
-					const part = toolPartOf(block, live, streamingMessage);
-					if (block.name === SEND_TO_USER_TOOL) {
-						// Failed/aborted generations never execute their calls;
-						// the provider error/abort UI already owns that outcome.
-						if (assistant.stopReason === "error" || assistant.stopReason === "aborted") continue;
-						const error = outputErrors.get(block.id);
-						if (error) applyResult(part, error);
-						if (part.state === "output-error") {
-							rest.push(part);
-						} else {
-							const text = sendToUserText(block);
-							if (text !== undefined) {
-								rest.push({ type: "text", id: `${m.id}-t${textN++}`, text, state: "done" });
-							}
-						}
-						// No live tool card or acknowledgement: this channel is
-						// ordinary prose, including while its arguments stream.
-						continue;
-					}
-					// The conclusion's reveal join (owner round, 2026-10-05): the
-					// hero of a conclude card is the modelSolution committed at POSE
-					// time — a record fold, enriched here so the card renders pure.
-					if (block.name === PRACTICE_CONCLUDE_TOOL) {
-						part.reveal = modelSolutionForConclude(messages, block.id);
-						part.problemInput = problemInputForConclude(messages, block.id);
-					}
-					rest.push(part);
-				}
-			}
-			const parts: LannaViewPart[] = [...reasoning, ...rest];
-			if (parts.length === 0) {
-				// An arrived-but-silent STREAMING message (owner, optimistic
-				// round 3, 2026-10-02): the turn's first applied event can
-				// carry empty content — project ONE empty reasoning part so
-				// the message's ARRIVAL renders the thinking row (chat.tsx's
-				// Reasoning isStreamings the last part: the same spinner +
-				// shimmer as the placeholder it replaces — the handoff is
-				// seamless and the two can never double). Settled empty
-				// messages stay hidden (presentation-only).
-				if (live?.streamingIds.has(m.id)) {
-					parts.push({ type: "reasoning", id: `${m.id}-r0`, text: "", state: "done" });
-				} else {
-					continue;
-				}
-			}
-			const group = lastAssistant();
-			if (group) {
-				// Same group: the step separator renders between the steps.
-				group.parts.push({ type: "step-start" }, ...parts);
-			} else {
-				out.push({ id: m.id, role: "assistant", parts: [{ type: "step-start" }, ...parts] });
-			}
-			continue;
-		}
+	if (execution.isError) {
+		part.state = "output-error";
+		part.rawInput = block.arguments;
+		part.errorText = execution.errorText ?? "The tool call failed.";
+		return part;
 	}
-
-	return out;
-}
-
-/** The dock-owned tools: question tools (client-owned results — the dock
- *  mounts on the dangling call) and the practice pose (its ack is FINAL —
- *  details: null, never replaced — and the card + dock read the call's
- *  input; the placeholder must never flip the part to output-available).
- *  PRACTICE (2026-10-04): problem joins the placeholder fork; conclude is
- *  a NORMAL tool part (its result acks with no payload, details null —
- *  but the ConcludeCard reads the call's input, and output-available with
- *  output undefined renders fine). */
-function isPlaceholderResultTool(name: string): boolean {
-	return (QUESTION_TOOLS as readonly string[]).includes(name) || name === "problem";
-}
-
-/** A tool call block → its view part, with the live execution layer.
- * `streamingMessage` — POSITIVE EVIDENCE (owner, 2026-10-05): this call's
- * own message is streaming THIS turn. The input-streaming shimmer keys on
- * it, never on session busyness: a call from a settled message can never
- * render live, whatever else is running. */
-function toolPartOf(
-	block: { id: string; name: string; arguments?: unknown },
-	live: LiveTurnState | undefined,
-	streamingMessage: boolean,
-): LannaViewPart {
-	const part: LannaViewPart = {
-		type: `tool-${block.name}`,
-		toolCallId: block.id,
-		input: block.arguments,
-	};
-	const exec = live?.executions.get(block.id);
-	const isQuestion = isPlaceholderResultTool(block.name);
-	if (exec) {
-		if (exec.isError) {
-			// An invalid call NEVER becomes input-available — the dock's mount
-			// gate keys on the clean execution end (the live modal-realism
-			// crash: a malformed quiz must never mount).
-			part.state = "output-error";
-			part.rawInput = block.arguments;
-			part.errorText = exec.errorText ?? "The tool call failed.";
-		} else if (isQuestion) {
-			// Fork 2: the clean "Question posed" placeholder is IGNORED —
-			// question tools are client-owned; the dock mounts on the clean
-			// end, the answer arrives as a real toolResult.
-			part.state = "input-available";
-		} else {
-			part.state = "output-available";
-			part.output = exec.output;
-		}
-	} else {
-		// No execution yet: live ONLY on positive evidence — the call's own
-		// message is streaming this turn (its arguments may literally be
-		// mid-write). Anything else is a dangling call from a settled
-		// message — the dock's pending state, never a shimmer.
-		part.state = streamingMessage ? "input-streaming" : "input-available";
+	if (block.name === PRACTICE_PROBLEM_TOOL) {
+		part.state = "input-available";
+		return part;
 	}
+	part.state = "output-available";
+	part.output = execution.output;
 	return part;
 }
 
-function applyResultTo(part: LannaViewPart | undefined, result: ToolResultMessage): void {
-	if (part) {
-		// Fork 2 (owner, Wave D): the clean "Question posed" placeholder
-		// (details: null — tool-execute questionResult) is client-owned
-		// question territory. The dock mounts on the dangling call; the
-		// AnsweredCard renders only the learner's REAL answer (details set).
-		// Flipping the part to output-available on the placeholder would hand
-		// AnsweredCard a null and crash the render (the live crash, 2026-09-26).
-		const tool = part.type.startsWith("tool-") ? part.type.slice("tool-".length) : part.type;
-		const isQuestion = isPlaceholderResultTool(tool);
-		if (isQuestion && !result.isError && result.details == null) {
-			// The placeholder fork (fork 2) stands: the clean pose/ask ack carries
-			// no card data — NEVER output-available. But the call IS settled
-			// (the practice bug, 2026-10-05: this early-return left the part on
-			// whatever toolPartOf guessed, which mid-turn resurrected a settled
-			// problem as a live spinner). input-available is the settled truth:
-			// the ProblemCard reads the call's input, the dock keys on the
-			// native fold — neither wants the ack's (null) payload.
-			part.state = "input-available";
-			return;
-		}
-		applyResult(part, result);
-	}
-	// A result with no visible part (e.g. a call whose assistant message
-	// rendered nothing) is dropped from the view — the record keeps it.
+function outputCallPart(
+	block: ToolCallBlock,
+	message: AssistantMessage & { id: string },
+	context: AssistantContext,
+	streaming: boolean,
+	nextTextId: () => string,
+): LannaViewPart | undefined {
+	if (message.stopReason === "error" || message.stopReason === "aborted") return undefined;
+	const part = toolPartOf(block, context.live, streaming);
+	const failure = context.failedOutputs.get(block.id);
+	if (failure) applyResult(part, failure);
+	if (part.state === "output-error") return part;
+	const text = sendToUserText(block);
+	return text === undefined ? undefined : messageTextPart(nextTextId(), text);
 }
 
-/** A marker's projected message. */
-function projectMarker(marker: LannaMarkerMessage, out: LannaViewMessage[]): void {
+function contentParts(
+	message: AssistantMessage & { id: string },
+	context: AssistantContext,
+	streaming: boolean,
+): LannaViewPart[] {
+	const reasoning: LannaViewPart[] = [];
+	const rest: LannaViewPart[] = [];
+	let textCount = 0;
+	let reasoningCount = 0;
+	const nextTextId = () => `${message.id}-t${textCount++}`;
+	for (const block of message.content) {
+		if (block.type === "text") {
+			rest.push(messageTextPart(nextTextId(), block.text));
+		} else if (block.type === "thinking") {
+			reasoning.push({
+				type: "reasoning",
+				id: `${message.id}-r${reasoningCount++}`,
+				text: block.thinking,
+				state: "done",
+			});
+		} else if (block.type === "toolCall") {
+			if (block.name === SEND_TO_USER_TOOL) {
+				const part = outputCallPart(block, message, context, streaming, nextTextId);
+				if (part) rest.push(part);
+				continue;
+			}
+			const part = toolPartOf(block, context.live, streaming);
+			if (block.name === PRACTICE_CONCLUDE_TOOL) {
+				part.reveal = modelSolutionForConclude(context.messages, block.id);
+				part.problemInput = problemInputForConclude(context.messages, block.id);
+			}
+			rest.push(part);
+		}
+	}
+	return [...reasoning, ...rest];
+}
+
+function assistantParts(message: AssistantMessage & { id: string }, context: AssistantContext): LannaViewPart[] {
+	const streaming = context.live?.streamingIds.has(message.id) === true;
+	const parts = contentParts(message, context, streaming);
+	if (parts.length > 0) return parts;
+	return streaming ? [{ type: "reasoning", id: `${message.id}-r0`, text: "", state: "done" }] : [];
+}
+
+function lastAssistantView(views: readonly LannaViewMessage[]): LannaViewMessage | undefined {
+	const last = views.at(-1);
+	return last?.role === "assistant" ? last : undefined;
+}
+
+function projectAssistant(
+	message: AssistantMessage & { id: string },
+	views: LannaViewMessage[],
+	context: AssistantContext,
+): void {
+	const parts = assistantParts(message, context);
+	if (parts.length === 0) return;
+	const group = lastAssistantView(views);
+	if (group) {
+		group.parts.push({ type: "step-start" }, ...parts);
+		return;
+	}
+	views.push({ id: message.id, role: "assistant", parts: [{ type: "step-start" }, ...parts] });
+}
+
+function userView(message: UserMessage & { id: string }): LannaViewMessage {
+	const texts =
+		typeof message.content === "string"
+			? [message.content]
+			: message.content.flatMap((content) => (content.type === "text" ? [content.text] : []));
+	return { id: message.id, role: "user", parts: texts.map(textPart) };
+}
+
+function findToolPart(views: readonly LannaViewMessage[], toolCallId: string): LannaViewPart | undefined {
+	for (let viewIndex = views.length - 1; viewIndex >= 0; viewIndex--) {
+		const parts = views[viewIndex]!.parts;
+		for (let partIndex = parts.length - 1; partIndex >= 0; partIndex--) {
+			const part = parts[partIndex]!;
+			if (part.type.startsWith("tool-") && part.toolCallId === toolCallId) return part;
+		}
+	}
+	return undefined;
+}
+
+function applyToolResult(part: LannaViewPart | undefined, result: ToolResultMessage): void {
+	if (!part) return;
+	const isPoseAcknowledgement =
+		part.type === `tool-${PRACTICE_PROBLEM_TOOL}` && !result.isError && result.details == null;
+	if (isPoseAcknowledgement) {
+		part.state = "input-available";
+		return;
+	}
+	applyResult(part, result);
+}
+
+function failedOutputResults(messages: readonly LannaMessage[]): Map<string, ToolResultMessage> {
+	const failed = new Map<string, ToolResultMessage>();
+	for (const message of messages) {
+		if (message.role === "toolResult" && message.toolName === SEND_TO_USER_TOOL && message.isError) {
+			failed.set(message.toolCallId, message);
+		}
+	}
+	return failed;
+}
+
+function cutDivider(compaction: CompactionMarker): LannaViewMessage {
+	return {
+		id: `cut_${compaction.id}`,
+		role: "user",
+		parts: [
+			{
+				type: "data-compaction-cut",
+				id: `cc_${compaction.id}`,
+				data: { content: compaction.content, details: compaction.details },
+			},
+		],
+	};
+}
+
+function projectMarker(marker: LannaMarkerMessage, views: LannaViewMessage[]): void {
 	switch (marker.customType) {
-		// Results of the retired background jobs: older records only, not shown.
-		case "subagent-steer":
-		case "subagent-abort":
-			return;
-		case "practice-thinking": {
-			// The learner's working trace / committed answer (practice
-			// sessions): a user-side card keyed on the structured details
-			// (problemCallId, commit, text) — the register lives in the card,
-			// not re-parsed from content.
-			out.push({
+		case "practice-thinking":
+			views.push({
 				id: marker.id,
 				role: "user",
 				parts: [{ type: "data-practice-thinking", id: `pt_${marker.id}`, data: marker.details }],
 			});
 			return;
-		}
-		case "practice-next": {
-			// The learner's explicit move-on signal (owner round 16): a compact
-			// centered system line — the mono-caps chrome register, not prose.
-			// The model reads the marker's content; the transcript never shows
-			// it (the label is chrome, single-sourced in the renderer).
-			out.push({
+		case "practice-next":
+			views.push({
 				id: marker.id,
 				role: "user",
 				parts: [{ type: "data-practice-next", id: `pn_${marker.id}`, data: null }],
 			});
 			return;
-		}
-		case "problem-dismissed":
-			// UI-only (the ask-style dismissal): the synthesized conclude
-			// pair — which rides the NEXT input — carries the record's face.
-			return;
-		case "compaction": {
-			// THE MOMENT DIVIDER (owner round 14): minimal centered small
-			// text at the compaction moment — where the user currently is
-			// (the marker appends at the record's tail). Clicking opens the
-			// full summary. The cut divider is emitted by the fold loop at
-			// the kept boundary (see projectView).
-			out.push({
+		case "compaction":
+			views.push({
 				id: marker.id,
 				role: "user",
 				parts: [
@@ -408,6 +258,31 @@ function projectMarker(marker: LannaMarkerMessage, out: LannaViewMessage[]): voi
 				],
 			});
 			return;
+		default:
+			return;
+	}
+}
+
+export function projectView(messages: readonly LannaMessage[], live?: LiveTurnState): LannaViewMessage[] {
+	const views: LannaViewMessage[] = [];
+	const context: AssistantContext = { messages, live, failedOutputs: failedOutputResults(messages) };
+	const compaction = activeCompactionOf(messages);
+	for (const message of messages) {
+		if (compaction && message.id === compaction.details.firstKeptMessageId) views.push(cutDivider(compaction));
+		switch (message.role) {
+			case "user":
+				views.push(userView(message));
+				break;
+			case "custom":
+				projectMarker(message, views);
+				break;
+			case "toolResult":
+				applyToolResult(findToolPart(views, message.toolCallId), message);
+				break;
+			case "assistant":
+				projectAssistant(message, views, context);
+				break;
 		}
 	}
+	return views;
 }

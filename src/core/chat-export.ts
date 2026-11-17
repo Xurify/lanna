@@ -3,11 +3,9 @@
  * Pure core: browser-safe, no fs, no network.
  */
 
-import type { LannaMessage } from "./native-messages.ts";
+import type { LannaMessage } from "./chat-messages.ts";
 import type { LannaViewMessage } from "./view.ts";
-import type { QuestionAnswerData } from "./question-core.ts";
-import { userFacingTextOf } from "./native-messages.ts";
-import { QUESTION_TOOLS } from "./pending.ts";
+import { userFacingTextOf } from "./chat-messages.ts";
 import { boardPhrases } from "./chat-board.ts";
 
 type ExportMessage = LannaViewMessage | LannaMessage;
@@ -97,30 +95,6 @@ function svgFence(svg: unknown): string {
 	return typeof svg === "string" && svg.trim() ? ["```svg", svg.trim(), "```"].join("\n") : "";
 }
 
-function answeredQuestion(toolName: string | undefined, details: unknown): QuestionAnswerData | null {
-	if (!(QUESTION_TOOLS as readonly string[]).includes(toolName ?? "")) return null;
-	const answer = details as Partial<QuestionAnswerData> | null | undefined;
-	return typeof answer?.questionText === "string" && Array.isArray(answer.answers)
-		? (answer as QuestionAnswerData)
-		: null;
-}
-
-function questionMarkdown(question: QuestionAnswerData): string {
-	const options = (question.options ?? []).map(
-		(option) => `- ${option.label}${question.correctIndices?.includes(option.index) ? " (correct)" : ""}`,
-	);
-	return [question.questionText.trim(), ...(options.length > 0 ? ["", ...options] : [])].join("\n");
-}
-
-function answerMarkdown(question: QuestionAnswerData): string {
-	if (question.dismissed) return "*Skipped.*";
-	if (question.dontKnow) return "*I don't know.*";
-	return [question.text, ...question.answers.map((answer) => answer.label), question.other]
-		.map((given) => given?.trim())
-		.filter(Boolean)
-		.join(", ");
-}
-
 export function exportChatMarkdown(messages: ReadonlyArray<ExportMessage>, opts: ChatExportOptions = {}): string {
 	const title = opts.title?.trim() || "Chat";
 	const date = opts.exportedAt || new Date().toISOString().slice(0, 10);
@@ -132,12 +106,6 @@ export function exportChatMarkdown(messages: ReadonlyArray<ExportMessage>, opts:
 		blocks.push(speaker === speaking ? body : `${SPEAKER_HEADING} ${speaker}\n\n${body}`);
 		speaking = speaker;
 	};
-	const sayQuestion = (toolName: string | undefined, details: unknown) => {
-		const question = answeredQuestion(toolName, details);
-		if (!question) return;
-		say("Tutor", portableMarkdown(questionMarkdown(question)));
-		say("Learner", portableMarkdown(answerMarkdown(question)));
-	};
 
 	for (const message of messages) {
 		if (message.role === "user") {
@@ -147,13 +115,11 @@ export function exportChatMarkdown(messages: ReadonlyArray<ExportMessage>, opts:
 			if (!("parts" in message) || !Array.isArray(message.parts)) continue;
 			for (const part of message.parts) {
 				if (part.type === "tool-draw") say("Tutor", svgFence((part.output as { svg?: unknown } | undefined)?.svg));
-				else sayQuestion(part.type.replace(/^tool-/, ""), part.output);
 			}
 		} else if (message.role === "toolResult") {
 			const result = message as { toolName?: string; isError?: boolean; details?: unknown };
 			if (result.isError) continue;
 			if (result.toolName === "draw") say("Tutor", svgFence((result.details as { svg?: unknown } | undefined)?.svg));
-			else sayQuestion(result.toolName, result.details);
 		}
 	}
 

@@ -72,9 +72,9 @@ data/                runtime state per language profile, git-ignored
 
 See [compaction and accounting](compaction-accounting.md) for the local Pi cutoff port, the context meter and pricing from Pi AI's catalog.
 
-**Client-side question tools.** `quiz` and `ask_user_question` have no server `execute`: the tool call streams to the browser, the learner answers in the dock, the client grades it through `question-core` and returns the verdict with `addToolOutput`, which lets the tutor go on in the same turn. A pending question is saved in the chat record, so a learner can leave and come back mid-question.
+**Practice problems.** A practice session's tutor poses one problem at a time with `problem` and closes it with `conclude`; the problem stays open in the record until then, so a learner can leave and come back mid-problem. Dismissing a problem writes a marker, and the next input turns it into a concluded pair the model reads.
 
-**Background jobs.** `research` and `pdf` run on the server: the tool call returns at once and the tutor keeps going while a runner works. The result comes back as a steer message that a per-chat queue delivers once the turn has ended and no question is open. Delivery is exactly once; stalled jobs are recovered on read. The PDF reader renders pages with pdfjs and Skia (`src/agent/subagents/pdf-pages.ts`), with no browser.
+**Research and PDF reading.** `research` and `pdf` run their reader inside the turn (up to five minutes, stopped with the turn) and return the brief as the tool's result, so the tutor answers from it in the same reply. The reader's model calls are a usage entry of their own, priced under the reader's model. The PDF reader renders pages with pdfjs and Skia (`src/agent/subagents/pdf-pages.ts`), with no browser, and opens only files the learner sent (`data/sources`).
 
 **Dictation.** Optional speech-to-text: the server mints short-lived Deepgram tokens; audio streams from the browser to Deepgram over a WebSocket, never through the server.
 

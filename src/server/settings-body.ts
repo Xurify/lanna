@@ -166,12 +166,6 @@ export function parseAgentSettingsBody(body: unknown): SettingsBodyResult<AgentS
 	const tools = parseBooleanMap(raw.tools, "tools");
 	if (tools.error) return { ok: false, error: tools.error };
 	if (tools.map) {
-		// Unknown tool keys are rejected at WRITE time (user decision
-		// 2026-09-19): the delta is inert while unread, but once the bridge
-		// honors it a persisted bogus key would drift. The writable set is
-		// the job tools + the quizzing-mechanics switch (explain, owner
-		// 2026-09-27). The read-side sanitizer stays lenient for
-		// forward-compat.
 		const supported = WRITABLE_TOOL_KEYS as readonly string[];
 		const retired = RETIRED_TOOL_KEYS as readonly string[];
 		for (const key of Object.keys(tools.map)) {

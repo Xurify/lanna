@@ -29,8 +29,7 @@ import { ChatInputError, dismissAppends, emit } from "../core";
 import type { ChatStore } from "../core/ports.ts";
 
 /** The parked dismissal body — exactly the parsed input the dismiss route
- *  accepted ({type:"dismiss", toolCallId, answer} or
- *  {type:"dismiss-problem", problemCallId}). */
+ *  accepted ({type:"dismiss-problem", problemCallId}). */
 type ParkedDismissal = unknown;
 
 interface LannaGlobal {

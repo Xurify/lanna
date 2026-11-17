@@ -8,7 +8,7 @@ import {
 	pickClozeWord,
 	slugifyTitle,
 } from "../src/core/chat-export.ts";
-import type { LannaMessage } from "../src/core/native-messages.ts";
+import type { LannaMessage } from "../src/core/chat-messages.ts";
 import type { LannaViewMessage } from "../src/core/view.ts";
 
 describe("chat-export", () => {

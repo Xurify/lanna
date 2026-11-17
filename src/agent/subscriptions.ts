@@ -11,7 +11,6 @@ const NATIVE: Record<SubscriptionId, () => Provider> = {
 	"xai-subscription": xaiProvider,
 };
 
-/** A pi provider that only signs in with the subscription, under Lanna's own id, so an API key for the same company can sit beside it. */
 function subscriptionProvider(id: SubscriptionId, name: string): Provider {
 	const base = NATIVE[id]();
 	const oauth = base.auth.oauth;
@@ -45,7 +44,7 @@ export function isSubscriptionProvider(provider: string): provider is Subscripti
 	return SUBSCRIPTIONS.some((s) => s.id === provider);
 }
 
-/** The ChatGPT access token names the account; Copilot and Grok tokens do not. */
+// OpenAI's access token carries the account's email in its profile claim; Copilot and Grok tokens name no account.
 function accountOf(access: unknown): string | undefined {
 	if (typeof access !== "string") return undefined;
 	const payload = access.split(".")[1];
@@ -74,7 +73,6 @@ export interface SubscriptionLogins {
 	signOut(id: SubscriptionId): Promise<void>;
 }
 
-/** Sign-in flows run in this process; the Settings rows poll `status()` and answer prompts through `respond()`. */
 export function subscriptionLogins(
 	models: Models,
 	credentials: CredentialStore,

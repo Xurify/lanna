@@ -19,7 +19,6 @@ function error(message: string, status: number): Response {
 	return Response.json({ error: message }, { status, headers: HEADERS });
 }
 
-/** The proxy already refuses remote and cross-origin API calls; the header keeps a plain form post or link from starting a sign-in. */
 function fromLannasPage(request: Request): boolean {
 	return request.headers.get("x-lanna-subscriptions") === "1" && request.headers.get("sec-fetch-site") !== "cross-site";
 }
