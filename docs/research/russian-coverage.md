@@ -663,19 +663,21 @@ Files read (not edited): `C:\Users\Stream\Projects\langharness\data\languages\ru
 
 ### 5.4 Levels that differ from ТРКИ
 
-| Topic                                        | Draft stage      | ТРКИ level                                                                                                                                | Source |
-| -------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Past tense                                   | A2 (`yesterday`) | A1                                                                                                                                        | S2     |
-| Genitive (у, нет, из, numbers 2–4)           | A2               | A1                                                                                                                                        | S2     |
-| Dative and instrumental, basic meanings      | A2               | A1                                                                                                                                        | S2     |
-| Aspect, the future                           | A2               | A1                                                                                                                                        | S2     |
-| Imperative                                   | A2               | A1                                                                                                                                        | S2     |
-| идти́ / ходи́ть, е́хать / е́здить, пойти́, прийти́ | A2               | A1                                                                                                                                        | S2     |
-| Short adjectives (рад, за́нят, до́лжен, бо́лен) | B1               | A1 (гото́в A2)                                                                                                                             | S2, S3 |
-| Comparatives                                 | B1               | A2 (common forms)                                                                                                                         | S3     |
-| The telephone                                | B1               | A2                                                                                                                                        | S3     |
-| Participles, verbal adverbs                  | B2               | B1 for reading, B2 for use                                                                                                                | S5, S4 |
-| Instrumental plural                          | B1               | the standards list the whole case system from A1 and do not split singular and plural; the problem is that no other plural case is taught | S2, S3 |
+| Topic                                        | Draft stage      | ТРКИ level                  | Source |
+| -------------------------------------------- | ---------------- | --------------------------- | ------ |
+| Past tense                                   | A2 (`yesterday`) | A1                          | S2     |
+| Genitive (у, нет, из, numbers 2–4)           | A2               | A1                          | S2     |
+| Dative and instrumental, basic meanings      | A2               | A1                          | S2     |
+| Aspect, the future                           | A2               | A1                          | S2     |
+| Imperative                                   | A2               | A1                          | S2     |
+| идти́ / ходи́ть, е́хать / е́здить, пойти́, прийти́ | A2               | A1                          | S2     |
+| Short adjectives (рад, за́нят, до́лжен, бо́лен) | B1               | A1 (гото́в A2)               | S2, S3 |
+| Comparatives                                 | B1               | A2 (common forms)           | S3     |
+| The telephone                                | B1               | A2                          | S3     |
+| Participles, verbal adverbs                  | B2               | B1 for reading, B2 for use  | S5, S4 |
+| Instrumental plural                          | B1               | not split from the singular | S2, S3 |
+
+The standards list the whole case system from A1 and do not split singular and plural, so they give no level for the instrumental plural. The problem is that no other plural case is taught.
 
 ### 5.5 Grammar the ТРКИ A1–A2 standards require and no unit teaches
 
