@@ -1,8 +1,8 @@
 import { titleFromPrompt } from "../core/title.ts";
 import { deletePastJobsForChat } from "../store/jobs.ts";
 import { stores } from "./stores.ts";
-import { isTurnRunning } from "./turn-liveness.ts";
-import { clearTurnFailure } from "./turn-runs.ts";
+import { isTurnRunning } from "./turn/liveness.ts";
+import { clearTurnFailure } from "./turn/registry.ts";
 import { discardChatSteers } from "./steers.ts";
 
 /**

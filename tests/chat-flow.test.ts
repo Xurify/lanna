@@ -23,12 +23,12 @@ import {
 	type FauxResponseStep,
 } from "@earendil-works/pi-ai";
 import { createChatAgent } from "../src/agent/teacher-agent.ts";
-import { handleChatRequest } from "../src/server/chat-handler.ts";
+import { handleChatRequest } from "../src/server/turn/request.ts";
 import { effectiveSettings } from "../src/server/stores.ts";
-import { isTurnRunning } from "../src/server/turn-liveness.ts";
+import { isTurnRunning } from "../src/server/turn/liveness.ts";
 import { registerLiveAgent, steerLiveChat, unregisterLiveAgent } from "../src/server/steers.ts";
 import { SessionModel } from "../components/session-core.ts";
-import { abortTurn, runningTurn, settledTurnResponse } from "../src/server/turn-runs.ts";
+import { abortTurn, runningTurn, settledTurnResponse } from "../src/server/turn/registry.ts";
 import { chatStore } from "../src/store/chats.ts";
 import { newUserMessage } from "../src/core/chat-messages.ts";
 import { projectView } from "../src/core/view.ts";

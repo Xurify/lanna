@@ -38,7 +38,7 @@ export async function startTutorChat(
 	},
 ): Promise<void> {
 	// A tutor unit's session counts when the learner first types (the server,
-	// src/server/turn-service.ts), so the chat carries the unit.
+	// src/server/turn/persist.ts), so the chat carries the unit.
 	const tutorUnit = opts.activity === "tutor" && !opts.reuse ? opts.unit : undefined;
 	if (opts.reuse) {
 		const res = await fetch("/api/why", {

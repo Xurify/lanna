@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AgentEvent } from "@earendil-works/pi-agent-core";
-import { ToolCallIdUniquifier, collectToolCallIds } from "../src/server/pi/call-ids.ts";
+import { ToolCallIdUniquifier, collectToolCallIds } from "../src/server/turn/call-ids.ts";
 
 /**
  * THE LACAN INCIDENT (owner-approved fix, 2026-10-04): DeepSeek (via
@@ -103,7 +103,7 @@ describe("ToolCallIdUniquifier", () => {
 
 	it("agent_end carries the full state: prior-turn history verbatim, this turn remapped", () => {
 		const priorTurn = [assistantMsg("m0", ["call_0"]), toolResultMsg("call_0")]; // legacy dupes in the record
-		// seeded exactly as chat-handler seeds it: the record's ids
+		// seeded exactly as the turn runner seeds it: the record's ids
 		const u = new ToolCallIdUniquifier(collectToolCallIds(priorTurn));
 		const m1 = assistantMsg("m1", ["call_0"]);
 		u.event(asEvent({ type: "message_end", message: m1 }));

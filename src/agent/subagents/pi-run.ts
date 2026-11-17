@@ -151,7 +151,7 @@ export async function runSubagent(tools: AgentTool<any, any>[], opts: SubagentRu
 	if (errorMessage !== undefined) throw new Error(errorMessage);
 
 	// 0.87.1: drop the seeded leading SystemMessage (transcript rework —
-	// see ui-stream's settleWith) before slicing past the input count, or
+	// see the turn stream's settle) before slicing past the input count, or
 	// the seed displaces the slice and the last INPUT message leaks in.
 	const newMessages = agent.state.messages.filter((m) => (m as { role?: string }).role !== "system").slice(before);
 	const assistants = newMessages.filter((m) => (m as { role?: string }).role === "assistant") as AssistantMessage[];

@@ -20,7 +20,7 @@ process.env.LANNA_PROFILE = "slovak";
 const { RECENT_DAYS } = await import("../src/core/carry-over.ts");
 const { chatStore } = await import("../src/store/chats.ts");
 const { progressStore } = await import("../src/store/progress.ts");
-const { persistTurn } = await import("../src/server/turn-service.ts");
+const { persistTurn } = await import("../src/server/turn/persist.ts");
 const { progressSummary, recordActivity, recordLesson, setGoal } = await import("../src/server/lesson.ts");
 
 after(() => {

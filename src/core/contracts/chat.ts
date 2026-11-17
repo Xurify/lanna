@@ -171,7 +171,7 @@ export interface ChatSummary {
 }
 
 /** The sidebar's session row: a summary + live liveness. The chats list
- *  route attaches `busy` from the turn-liveness registry ONLY — a running
+ *  route attaches `busy` from the turn liveness registry ONLY — a running
  *  teach turn (owner, minimal-color round: background jobs no longer
  *  count; the sidebar's Background agents section is their channel, and
  *  the row spinner means exactly "a turn is in flight"). The store itself
@@ -179,7 +179,7 @@ export interface ChatSummary {
  *  split at exactly the record/liveness seam. */
 export interface ChatListItem extends ChatSummary {
 	busy: boolean;
-	/** Live compaction liveness (turn-liveness's twin): true while a
+	/** Live compaction liveness (the turn liveness registry's twin): true while a
 	 *  background context compaction holds the chat's model gate. The
 	 *  route attaches it from the compaction registry — never
 	 *  record-derived (the marker persists, the RUN is ephemeral). */

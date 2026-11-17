@@ -60,7 +60,7 @@ app/                 pages and API route handlers
 components/          the UI: Today, lessons, review, read, listen, speak, chat, settings
 curriculum/          per-language word lists, lessons and stories
 src/core/            pure logic: curriculum, lessons, FSRS review, plans, grading, contracts
-src/server/          request handling, the chat turn (chat-handler.ts), jobs, language data
+src/server/          request handling, the chat turn (turn/), jobs, language data
 src/agent/           the tutor chat agent: prompts, tools, models, subscriptions, PDF reader
 src/store/           file adapters behind the core ports
 electron/            the desktop shell; it starts the standalone Next server

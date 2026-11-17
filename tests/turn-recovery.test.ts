@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Agent, AgentMessage } from "@earendil-works/pi-agent-core";
 import type { ChatStore } from "../src/core/ports.ts";
-import { runPiTurn } from "../src/server/pi/ui-stream.ts";
-import { persistTurn } from "../src/server/turn-service.ts";
+import { runPiTurn } from "../src/server/turn/stream.ts";
+import { persistTurn } from "../src/server/turn/persist.ts";
 
 /** No engine or network: exercise the runner's awaited listener seam. */
 function agentEndingWith(loopFailure?: Error): Agent {

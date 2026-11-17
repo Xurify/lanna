@@ -42,7 +42,7 @@ export interface PracticeToolContext {
  *  succeeded against the stale record and every following pose died on
  *  "a problem is already active" until the model gave up ("the problem
  *  slot is stuck"). The gate seeds ONCE from the record at construction
- *  (one practiceTools per turn — chat-handler builds the agent per
+ *  (one practiceTools per turn — the turn runner builds the agent per
  *  request, so there is no cross-turn leakage), and the executes flip
  *  this closure — the intra-turn truth the record cannot hold yet. */
 interface PracticeGate {

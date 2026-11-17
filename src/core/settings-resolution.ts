@@ -14,7 +14,7 @@
  *
  * Deliberately NOT resolved here (see settings.ts module doc):
  * - per-chat overrides: the chat record's ChatSettings applies via the
- *   conversation chain in chat-handler (chat.model → strong slot) — prober
+ *   conversation chain in the turn gates (chat.model → strong slot) — prober
  *   and teacher stay chat-controlled, never settings-record-controlled;
  * - tool toggles: passed through as the delta map; consumers look up by
  *   tool id with absent → enabled (the honoring lives in the agent band);
@@ -112,7 +112,7 @@ export function resolveConversationSpec(
  *  per-role override (background roles only) → SLOT → NOTHING. The
  *  conversation pair (prober/teacher) resolves the same chain MINUS the
  *  role override (their override is the chat's own settings — the
- *  chat-handler overlays it itself). undefined = the chain came up
+ *  the turn gates overlay it themselves). undefined = the chain came up
  *  empty; the per-need refusal gates fire on exactly that. This is the
  *  engine wiring's one call. */
 export function resolveRoleSpec(role: ModelRole, record: UserSettings | null): EffectiveModelSpec | undefined {
