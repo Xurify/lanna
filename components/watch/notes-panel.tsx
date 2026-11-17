@@ -31,8 +31,8 @@ export function NotesPanel() {
 			<div className="mb-4 flex items-center justify-between gap-3">
 				<p className="font-prose text-[14px] text-ink-3">
 					{notes.length === 0
-						? "Write down what you hear. Link a video to a note and stamp its moments."
-						: `${notes.length} ${notes.length === 1 ? "note" : "notes"}, with or without a video`}
+						? "Write down what you hear. Paste a YouTube link into a note and stamp its moments."
+						: `${notes.length} ${notes.length === 1 ? "note" : "notes"}, with links and videos or without`}
 				</p>
 				<Link href="/notes?new=1" className="q-btn sec t h-10 shrink-0 rounded-xl px-3.5" data-testid="notes-new">
 					<PlusIcon className="size-4" strokeWidth={1.8} />

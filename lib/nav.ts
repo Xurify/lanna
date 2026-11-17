@@ -90,7 +90,7 @@ export const NAV: readonly NavGroupDef[] = [
 		items: [
 			{ id: "words", href: "/words", label: "Words", hint: "Everything you have met" },
 			{ id: "grammar", href: "/grammar", label: "Grammar", hint: "Cases, genders, and your score on each" },
-			{ id: "notes", href: "/notes", label: "Notes", hint: "Write anything down, with a video beside it or not" },
+			{ id: "notes", href: "/notes", label: "Notes", hint: "Write anything down, with links and videos" },
 		],
 	},
 	{

@@ -2,17 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-	ArrowLeftIcon,
-	ClockIcon,
-	ExternalLinkIcon,
-	LoaderCircleIcon,
-	PlayIcon,
-	PlusIcon,
-	Trash2Icon,
-	VideoIcon,
-	XIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, ClockIcon, GlobeIcon, LinkIcon, PlayIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { loadYouTubeApi, type YTPlayer } from "@/components/watch/youtube-api";
 import { cn } from "@/lib/utils";
@@ -20,17 +10,21 @@ import {
 	belongsToLayoutAccent,
 	formatClock,
 	MAX_NOTE_CHARS,
+	MAX_NOTE_LINKS,
 	MAX_NOTE_TITLE,
+	normalizeLink,
 	noteHeading,
 	noteMoments,
+	noteVideo,
+	pastedLink,
 	stampFor,
 	type Note,
-	type NoteVideo,
+	type NoteLink,
 } from "@/src/core";
 
 const SAVE_AFTER_MS = 700;
 
-type Change = { title?: string; body?: string; video?: string };
+type Change = { title?: string; body?: string; links?: string[] };
 
 async function send(id: string | null, change: Change): Promise<Note> {
 	const res = await fetch(id ? `/api/notes?id=${encodeURIComponent(id)}` : "/api/notes", {
@@ -50,7 +44,6 @@ function startOfDay(d: Date): number {
 	return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
-/** Today, Yesterday, This week, then month and year, so a long list reads like a notebook's tabs. */
 function dayGroup(iso: string, now = new Date()): string {
 	const days = Math.round((startOfDay(now) - startOfDay(new Date(iso))) / DAY_MS);
 	if (days <= 0) return "Today";
@@ -69,6 +62,24 @@ function shortWhen(iso: string, now = new Date()): string {
 
 function longDate(iso: string): string {
 	return new Date(iso).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+function hostOf(url: string): string {
+	try {
+		return new URL(url).hostname.replace(/^www\./, "");
+	} catch {
+		return url;
+	}
+}
+
+function prettyUrl(url: string): string {
+	try {
+		const u = new URL(url);
+		const rest = decodeURIComponent(u.pathname + u.search).replace(/\/$/, "");
+		return `${u.hostname.replace(/^www\./, "")}${rest}`;
+	} catch {
+		return url;
+	}
 }
 
 function snippet(note: Note): string {
@@ -102,7 +113,7 @@ export function NoteList({
 		else groups.push({ label, notes: [n] });
 	}
 	return (
-		<div className="flex flex-col gap-5" data-testid="notes-list">
+		<div className="flex flex-col gap-4" data-testid="notes-list">
 			{groups.map((g) => (
 				<section key={g.label} aria-label={g.label}>
 					<h2 className="mb-1 px-3 font-ui text-[12.5px] font-[600] text-ink-3">{g.label}</h2>
@@ -110,6 +121,8 @@ export function NoteList({
 						{g.notes.map((n) => {
 							const on = n.id === selectedId;
 							const rest = snippet(n);
+							const hasVideo = !!noteVideo(n);
+							const linkCount = n.links?.length ?? 0;
 							const inner = (
 								<>
 									<span className="flex items-baseline gap-2">
@@ -121,15 +134,17 @@ export function NoteList({
 										</span>
 									</span>
 									<span className="mt-0.5 flex items-center gap-1.5">
-										{n.video && (
+										{hasVideo ? (
 											<PlayIcon
 												className="size-3 shrink-0 fill-current text-teal-2"
 												strokeWidth={0}
-												aria-label="Linked to a video"
+												aria-label="Has a video"
 											/>
-										)}
+										) : linkCount > 0 ? (
+											<LinkIcon className="size-3 shrink-0 text-teal-2" strokeWidth={2} aria-label="Has links" />
+										) : null}
 										<span className="min-w-0 truncate font-prose text-[13.5px] text-ink-3">
-											{rest || (n.video?.title ?? "No text yet")}
+											{rest || n.links?.[0]?.title || "No text yet"}
 										</span>
 									</span>
 								</>
@@ -167,6 +182,8 @@ export function NoteList({
 
 // ─── The page ───────────────────────────────────────────────────────────────
 
+const ROW = "flex h-12 items-center";
+
 export function NotesPage({
 	initial,
 	initialId,
@@ -183,9 +200,9 @@ export function NotesPage({
 	const [chosen, setChosen] = useState(fresh || !!initialId);
 	const [sheetKey, setSheetKey] = useState(0);
 
-	const show = (id: string | null) => {
+	const showUrl = (url: string) => {
 		try {
-			window.history.replaceState(null, "", id ? `/notes?id=${encodeURIComponent(id)}` : "/notes?new=1");
+			window.history.replaceState(null, "", url);
 		} catch {}
 	};
 
@@ -193,24 +210,20 @@ export function NotesPage({
 		setSelectedId(id);
 		setSheetKey((k) => k + 1);
 		setChosen(true);
-		show(id);
+		showUrl(`/notes?id=${encodeURIComponent(id)}`);
 	};
 
 	const startNew = () => {
 		setSelectedId(null);
 		setSheetKey((k) => k + 1);
 		setChosen(true);
-		show(null);
+		showUrl("/notes?new=1");
 	};
 
 	const saved = useCallback((note: Note) => {
 		setNotes((all) => [note, ...all.filter((n) => n.id !== note.id)]);
 		setSelectedId((cur) => {
-			if (cur === null) {
-				try {
-					window.history.replaceState(null, "", `/notes?id=${encodeURIComponent(note.id)}`);
-				} catch {}
-			}
+			if (cur === null) showUrl(`/notes?id=${encodeURIComponent(note.id)}`);
 			return note.id;
 		});
 	}, []);
@@ -221,9 +234,7 @@ export function NotesPage({
 		setSelectedId(rest[0]?.id ?? null);
 		setSheetKey((k) => k + 1);
 		setChosen(false);
-		try {
-			window.history.replaceState(null, "", "/notes");
-		} catch {}
+		showUrl("/notes");
 	};
 
 	const selected = notes.find((n) => n.id === selectedId) ?? null;
@@ -241,15 +252,20 @@ export function NotesPage({
 					Today
 				</Link>
 			</header>
-			<main className="lanna-rise @container mx-auto w-full max-w-6xl px-5 pb-24" data-testid="notes-page">
-				<div className="grid gap-x-8 gap-y-6 @4xl:grid-cols-[18rem_minmax(0,1fr)]">
-					<aside className={cn("min-w-0 @4xl:sticky @4xl:top-16 @4xl:self-start", chosen && "@max-4xl:hidden")}>
-						<div className="mb-5 flex items-center justify-between gap-3 px-3 @4xl:px-0">
-							<h1 className="text-[32px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Notes</h1>
+			<main className="lanna-rise @container mx-auto w-full max-w-7xl px-5" data-testid="notes-page">
+				<div className="grid @4xl:grid-cols-[19rem_minmax(0,1fr)]">
+					<aside
+						className={cn(
+							"flex min-w-0 flex-col pb-10 @4xl:sticky @4xl:top-13 @4xl:h-[calc(100dvh-3.25rem)] @4xl:self-start @4xl:pb-4 @4xl:pr-6",
+							chosen && "@max-4xl:hidden",
+						)}
+					>
+						<div className={cn(ROW, "mb-3 justify-between gap-3 px-3")}>
+							<h1 className="text-[28px] font-semibold leading-none tracking-[-0.028em] text-foreground">Notes</h1>
 							<button
 								type="button"
 								onClick={startNew}
-								className="q-btn sec t h-10 rounded-xl px-3.5"
+								className="q-btn sec t h-9 rounded-xl px-3"
 								data-testid="notes-new"
 							>
 								<PlusIcon className="size-4" strokeWidth={1.8} />
@@ -257,20 +273,20 @@ export function NotesPage({
 							</button>
 						</div>
 						{notes.length > 0 ? (
-							<div className="-mx-3 @4xl:mx-0 @4xl:max-h-[calc(100dvh-10rem)] @4xl:overflow-y-auto">
+							<div className="min-h-0 flex-1 @4xl:-mr-2 @4xl:overflow-y-auto @4xl:pr-2">
 								<NoteList notes={notes} selectedId={selectedId} onSelect={select} />
 							</div>
 						) : (
-							<p className="font-prose text-[15px] leading-relaxed text-ink-3" data-testid="notes-empty">
-								Nothing here yet. Write anything: a phrase you heard, a word to look up, a question for the tutor. Link
-								a YouTube video to a note and you can stamp the moments in it.
+							<p className="px-3 font-prose text-[15px] leading-relaxed text-ink-3" data-testid="notes-empty">
+								Nothing here yet. Write anything: a phrase you heard, a word to look up, a question for the tutor. Paste
+								a link and it becomes a card; a YouTube link plays beside the note.
 							</p>
 						)}
 					</aside>
 
 					<section
 						className={cn(
-							"min-w-0 @4xl:min-h-[calc(100dvh-6rem)] @4xl:border-l @4xl:border-[var(--q-line)] @4xl:pl-10",
+							"flex min-w-0 flex-col pb-16 @4xl:min-h-[calc(100dvh-3.25rem)] @4xl:border-l @4xl:border-[var(--q-line)] @4xl:pl-10 @6xl:pl-14",
 							!chosen && "@max-4xl:hidden",
 						)}
 						aria-label="Note"
@@ -282,9 +298,7 @@ export function NotesPage({
 							onDeleted={deleted}
 							onBack={() => {
 								setChosen(false);
-								try {
-									window.history.replaceState(null, "", "/notes");
-								} catch {}
+								showUrl("/notes");
 							}}
 						/>
 					</section>
@@ -311,10 +325,10 @@ function NoteSheet({
 }) {
 	const [title, setTitle] = useState(note?.title ?? "");
 	const [body, setBody] = useState(note?.body ?? "");
+	const [links, setLinks] = useState<NoteLink[]>(note?.links ?? []);
 	const [save, setSave] = useState<SaveState>("idle");
-	const [linking, setLinking] = useState(false);
+	const [adding, setAdding] = useState(false);
 	const [confirming, setConfirming] = useState(false);
-	const titleField = useRef<HTMLInputElement>(null);
 	const bodyField = useRef<HTMLTextAreaElement>(null);
 	const player = useRef<YTPlayer | null>(null);
 	const id = useRef<string | null>(note?.id ?? null);
@@ -331,7 +345,7 @@ function NoteSheet({
 		}
 		const change = pending.current;
 		if (Object.keys(change).length === 0) return;
-		if (!id.current && !change.title?.trim() && !change.body?.trim() && !change.video) {
+		if (!id.current && !change.title?.trim() && !change.body?.trim() && !change.links?.length) {
 			pending.current = {};
 			return;
 		}
@@ -342,6 +356,7 @@ function NoteSheet({
 				const saved = await send(id.current, change);
 				id.current = saved.id;
 				onSaved(saved);
+				if (change.links && pending.current.links === undefined) setLinks(saved.links ?? []);
 				setSave(Object.keys(pending.current).length ? "saving" : "saved");
 			} catch (err) {
 				pending.current = { ...change, ...pending.current };
@@ -362,16 +377,44 @@ function NoteSheet({
 		[flush],
 	);
 
-	const queue = (change: Change) => {
-		pending.current = { ...pending.current, ...change };
+	const queue = (change: Change, now = false) => {
+		pending.current = {
+			...pending.current,
+			...(id.current ? {} : { title, body }),
+			...change,
+		};
 		setSave("saving");
 		if (timer.current) clearTimeout(timer.current);
-		timer.current = setTimeout(() => void flush().catch(() => {}), SAVE_AFTER_MS);
+		if (now) void flush().catch(() => {});
+		else timer.current = setTimeout(() => void flush().catch(() => {}), SAVE_AFTER_MS);
 	};
 
 	const changeBody = (text: string) => {
 		setBody(text);
-		queue({ body: text, ...(id.current ? {} : { title }) });
+		queue({ body: text });
+	};
+
+	const setLinkList = (next: NoteLink[]) => {
+		setLinks(next);
+		queue({ links: next.map((l) => l.url) }, true);
+	};
+
+	/** Adds a link and returns null, or says why it was not added. */
+	const addLink = (raw: string): string | null => {
+		const found = normalizeLink(raw);
+		if (!found) return "That is not a link.";
+		if (links.some((l) => l.url === found.url)) return null;
+		if (links.length >= MAX_NOTE_LINKS) return `A note holds up to ${MAX_NOTE_LINKS} links.`;
+		setLinkList([...links, found]);
+		return null;
+	};
+
+	const removeLink = (url: string) => setLinkList(links.filter((l) => l.url !== url));
+
+	const playHere = (url: string) => {
+		const picked = links.find((l) => l.url === url);
+		if (!picked) return;
+		setLinkList([picked, ...links.filter((l) => l.url !== url)]);
 	};
 
 	const insertStamp = () => {
@@ -395,25 +438,6 @@ function NoteSheet({
 		});
 	};
 
-	const link = async (url: string) => {
-		pending.current = { ...pending.current, title, body, video: url };
-		try {
-			await flush();
-		} catch (err) {
-			const { video: _refused, ...rest } = pending.current;
-			pending.current = rest;
-			if (Object.keys(rest).length > 0) queue({});
-			else setSave(id.current ? "saved" : "idle");
-			throw err;
-		}
-		setLinking(false);
-	};
-
-	const unlink = async () => {
-		pending.current = { ...pending.current, video: "" };
-		await flush().catch(() => {});
-	};
-
 	const remove = async () => {
 		if (timer.current) clearTimeout(timer.current);
 		pending.current = {};
@@ -434,27 +458,32 @@ function NoteSheet({
 		} catch {}
 	};
 
-	const video = note?.video;
+	const video = noteVideo({ links });
 	const moments = video ? noteMoments(body) : [];
 	const words = body.trim() ? body.trim().split(/\s+/).length : 0;
 
 	return (
-		<div className="mx-auto w-full max-w-[46rem]" data-testid="notes-sheet">
-			<div className="mb-3 flex min-h-9 items-center gap-1">
+		<div className="flex w-full max-w-[50rem] flex-1 flex-col" data-testid="notes-sheet">
+			<div className={cn(ROW, "mb-3 gap-1")}>
 				<button
 					type="button"
 					onClick={() => {
 						void flush().catch(() => {});
 						onBack();
 					}}
-					className="-ml-1.5 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 font-ui text-[14px] text-ink-3 hover:text-ink-2 @4xl:hidden"
+					className="-ml-1.5 mr-2 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 font-ui text-[14px] text-ink-3 hover:text-ink-2 @4xl:hidden"
 					data-testid="notes-back"
 				>
 					<ArrowLeftIcon className="size-4" strokeWidth={1.6} />
 					Notes
 				</button>
-				<span className="flex-1" />
-				<SaveLine state={save} onRetry={() => void flush().catch(() => {})} />
+				<p className="min-w-0 flex-1 truncate font-ui text-[13px] text-ink-3">
+					<span className="@max-md:hidden">{longDate(note?.createdAt ?? new Date().toISOString())} · </span>
+					<span className="tabular-nums">
+						{words} {words === 1 ? "word" : "words"}
+					</span>
+					<SaveLine state={save} onRetry={() => void flush().catch(() => {})} />
+				</p>
 				{video && (
 					<button
 						type="button"
@@ -468,17 +497,15 @@ function NoteSheet({
 						<kbd className="q-kbd hidden pointer-fine:inline-flex">Alt T</kbd>
 					</button>
 				)}
-				{!video && !linking && (
-					<button
-						type="button"
-						onClick={() => setLinking(true)}
-						className="q-btn ghost h-9 rounded-lg px-2.5 text-[13px]"
-						data-testid="notes-link-open"
-					>
-						<VideoIcon className="size-4" strokeWidth={1.7} />
-						<span className="@max-lg:sr-only">Link a video</span>
-					</button>
-				)}
+				<button
+					type="button"
+					onClick={() => setAdding(true)}
+					className="q-btn ghost h-9 rounded-lg px-2.5 text-[13px]"
+					data-testid="notes-link-open"
+				>
+					<LinkIcon className="size-4" strokeWidth={1.7} />
+					<span className="@max-lg:sr-only">Add a link</span>
+				</button>
 				{confirming ? (
 					<span className="flex items-center gap-1" role="group" aria-label="Delete this note?">
 						<button
@@ -511,89 +538,121 @@ function NoteSheet({
 				)}
 			</div>
 
-			<article className="pb-10 pt-2">
-				{linking && !video && <LinkVideo onLink={link} onCancel={() => setLinking(false)} />}
-				{video && (
-					<div className="mb-8">
-						<VideoBox video={video} player={player} onUnlink={() => void unlink()} />
-						{moments.length > 0 && (
-							<ul className="mt-3 flex flex-col" data-testid="notes-moments" aria-label="Moments">
-								{moments.map((m, i) => (
-									<li key={`${m.sec}-${i}`}>
-										<button
-											type="button"
-											onClick={() => seek(m.sec)}
-											className="-mx-2 flex w-[calc(100%+1rem)] items-baseline gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-well"
-										>
-											<span className="shrink-0 font-ui text-[13px] font-[600] tabular-nums text-teal-2">
-												{formatClock(m.sec)}
-											</span>
-											<span className="min-w-0 truncate font-prose text-[14px] text-ink-2">{m.text || "…"}</span>
-										</button>
-									</li>
-								))}
-							</ul>
-						)}
-					</div>
-				)}
-
-				<p className="font-ui text-[13px] text-ink-3">{longDate(note?.createdAt ?? new Date().toISOString())}</p>
-				<label htmlFor="note-title" className="sr-only">
-					Title
-				</label>
-				<input
-					ref={titleField}
-					id="note-title"
-					value={title}
-					maxLength={MAX_NOTE_TITLE}
-					onChange={(e) => {
-						setTitle(e.target.value);
-						queue({ title: e.target.value, ...(id.current ? {} : { body }) });
-					}}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-							e.preventDefault();
-							bodyField.current?.focus();
-						}
-					}}
-					onBlur={() => void flush().catch(() => {})}
-					autoFocus={!note}
-					placeholder="Title"
-					autoComplete="off"
-					className="mt-1 w-full bg-transparent font-ui text-[28px] font-semibold leading-tight tracking-[-0.02em] text-foreground outline-none placeholder:text-ink-4/60"
-					data-testid="notes-title"
-				/>
-				<label htmlFor="note-body" className="sr-only">
-					Note
-				</label>
-				<textarea
-					ref={bodyField}
-					id="note-body"
-					value={body}
-					maxLength={MAX_NOTE_CHARS}
-					onChange={(e) => changeBody(e.target.value)}
-					onBlur={() => void flush().catch(() => {})}
-					onKeyDown={(e) => {
-						if (belongsToLayoutAccent(e.nativeEvent)) return;
-						if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyT" && video) {
-							e.preventDefault();
-							insertStamp();
-						}
-					}}
-					autoFocus={!!note}
-					spellCheck={false}
-					placeholder={
-						video
-							? "Write what you hear. Alt+T puts the video's time here, so you can jump back to it."
-							: "Start writing. A phrase you heard, a word to look up, a question for the tutor…"
+			<label htmlFor="note-title" className="sr-only">
+				Title
+			</label>
+			<input
+				id="note-title"
+				value={title}
+				maxLength={MAX_NOTE_TITLE}
+				onChange={(e) => {
+					setTitle(e.target.value);
+					queue({ title: e.target.value });
+				}}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+						e.preventDefault();
+						bodyField.current?.focus();
 					}
-					className="mt-4 block min-h-[50vh] w-full resize-none bg-transparent font-[family-name:var(--font-read)] text-[18px] leading-[1.68] text-foreground outline-none [field-sizing:content] placeholder:text-ink-4/70"
-					data-testid="notes-body"
-				/>
-			</article>
-			<p className="mt-3 px-1 text-right font-ui text-[12.5px] tabular-nums text-ink-3" aria-live="off">
-				{words} {words === 1 ? "word" : "words"}
-			</p>
+				}}
+				onBlur={() => void flush().catch(() => {})}
+				autoFocus={!note}
+				placeholder="Title"
+				autoComplete="off"
+				className="w-full bg-transparent font-ui text-[30px] font-semibold leading-tight tracking-[-0.022em] text-foreground outline-none placeholder:text-ink-4/60"
+				data-testid="notes-title"
+			/>
+
+			{video?.videoId && (
+				<div className="mt-5">
+					<VideoBox videoId={video.videoId} player={player} />
+					{moments.length > 0 && (
+						<ul className="mt-2 flex flex-col" data-testid="notes-moments" aria-label="Moments">
+							{moments.map((m, i) => (
+								<li key={`${m.sec}-${i}`}>
+									<button
+										type="button"
+										onClick={() => seek(m.sec)}
+										className="-mx-2 flex w-[calc(100%+1rem)] items-baseline gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-well"
+									>
+										<span className="shrink-0 font-ui text-[13px] font-[600] tabular-nums text-teal-2">
+											{formatClock(m.sec)}
+										</span>
+										<span className="min-w-0 truncate font-prose text-[14px] text-ink-2">{m.text || "…"}</span>
+									</button>
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
+			)}
+
+			<label htmlFor="note-body" className="sr-only">
+				Note
+			</label>
+			<textarea
+				ref={bodyField}
+				id="note-body"
+				value={body}
+				maxLength={MAX_NOTE_CHARS}
+				onChange={(e) => changeBody(e.target.value)}
+				onBlur={() => void flush().catch(() => {})}
+				onPaste={(e) => {
+					const link = pastedLink(e.clipboardData.getData("text/plain"));
+					if (link) addLink(link);
+				}}
+				onKeyDown={(e) => {
+					if (belongsToLayoutAccent(e.nativeEvent)) return;
+					if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyT" && video) {
+						e.preventDefault();
+						insertStamp();
+					}
+				}}
+				autoFocus={!!note}
+				spellCheck={false}
+				placeholder={
+					video
+						? "Write what you hear. Alt+T puts the video's time here, so you can jump back to it."
+						: "Start writing. Paste a link and it becomes a card below."
+				}
+				className="mt-4 block min-h-40 w-full resize-none bg-transparent font-[family-name:var(--font-read)] text-[18px] leading-[1.68] text-foreground outline-none [field-sizing:content] placeholder:text-ink-4/70"
+				data-testid="notes-body"
+			/>
+
+			{(links.length > 0 || adding) && (
+				<section className="mt-8 border-t border-[var(--q-line)] pt-5" aria-label="Links" data-testid="notes-links">
+					<div className="mb-3 flex items-center justify-between">
+						<h2 className="font-ui text-[13px] font-[600] text-ink-3">
+							{links.length > 0 ? `Links · ${links.length}` : "Links"}
+						</h2>
+					</div>
+					<ul className="flex flex-col gap-2.5">
+						{links.map((l) => (
+							<li key={l.url}>
+								<LinkCard
+									link={l}
+									playing={l.url === video?.url}
+									onRemove={() => removeLink(l.url)}
+									onPlay={l.videoId && l.url !== video?.url ? () => playHere(l.url) : undefined}
+								/>
+							</li>
+						))}
+					</ul>
+					{adding && <AddLink onAdd={addLink} onDone={() => setAdding(false)} />}
+				</section>
+			)}
+
+			<div
+				aria-hidden="true"
+				onMouseDown={(e) => {
+					e.preventDefault();
+					const el = bodyField.current;
+					if (!el) return;
+					el.focus();
+					el.setSelectionRange(el.value.length, el.value.length);
+				}}
+				className="min-h-24 flex-1 cursor-text"
+			/>
 		</div>
 	);
 }
@@ -601,74 +660,155 @@ function NoteSheet({
 function SaveLine({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
 	if (state === "failed") {
 		return (
-			<button
-				type="button"
-				onClick={onRetry}
-				className="mr-2 font-ui text-[13px] text-miss underline underline-offset-2"
-				role="alert"
-			>
-				Not saved. Try again
-			</button>
+			<>
+				{" · "}
+				<button type="button" onClick={onRetry} className="text-miss underline underline-offset-2" role="alert">
+					Not saved. Try again
+				</button>
+			</>
 		);
 	}
 	return (
-		<span className="mr-2 font-ui text-[13px] text-ink-3" aria-live="polite" data-testid="notes-save-state">
-			{state === "saving" ? "Saving…" : state === "saved" ? "Saved" : ""}
+		<span aria-live="polite" data-testid="notes-save-state">
+			{state === "saving" ? " · Saving…" : state === "saved" ? " · Saved" : ""}
 		</span>
 	);
 }
 
-function LinkVideo({ onLink, onCancel }: { onLink: (url: string) => Promise<void>; onCancel: () => void }) {
+function LinkCard({
+	link,
+	playing,
+	onRemove,
+	onPlay,
+}: {
+	link: NoteLink;
+	playing: boolean;
+	onRemove: () => void;
+	onPlay?: () => void;
+}) {
+	const [imageFailed, setImageFailed] = useState(false);
+	const loading = !link.title && !link.site;
+	const site = link.site ?? hostOf(link.url);
+	return (
+		<div className="group relative flex overflow-hidden rounded-xl border border-[var(--q-line)] bg-card transition-colors hover:border-[var(--q-line-2)] hover:bg-well/40">
+			<a
+				href={link.url}
+				target="_blank"
+				rel="noreferrer"
+				className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-4 py-3"
+				data-testid="notes-link-card"
+			>
+				{loading ? (
+					<>
+						<span className="h-4 w-3/4 animate-pulse rounded bg-well" />
+						<span className="h-3 w-1/2 animate-pulse rounded bg-well" />
+					</>
+				) : (
+					<>
+						<span className="line-clamp-2 font-ui text-[15px] font-[600] leading-snug text-foreground">
+							{link.title ?? prettyUrl(link.url)}
+						</span>
+						{link.description && (
+							<span className="line-clamp-2 font-prose text-[13.5px] leading-snug text-ink-3">{link.description}</span>
+						)}
+					</>
+				)}
+				<span className="mt-0.5 flex min-w-0 items-center gap-1.5 font-ui text-[12.5px] text-ink-3">
+					{link.videoId ? (
+						<PlayIcon className="size-3 shrink-0 fill-current text-teal-2" strokeWidth={0} />
+					) : (
+						<GlobeIcon className="size-3 shrink-0" strokeWidth={1.8} />
+					)}
+					<span className="truncate">{site}</span>
+					{playing && <span className="shrink-0 text-teal-2">· playing above</span>}
+				</span>
+			</a>
+			{link.image && !imageFailed && (
+				<a
+					href={link.url}
+					target="_blank"
+					rel="noreferrer"
+					tabIndex={-1}
+					aria-hidden="true"
+					className="relative hidden w-44 shrink-0 bg-well @lg:block"
+				>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src={link.image}
+						alt=""
+						loading="lazy"
+						referrerPolicy="no-referrer"
+						onError={() => setImageFailed(true)}
+						className="absolute inset-0 size-full object-cover"
+					/>
+				</a>
+			)}
+			<div className="absolute right-2 top-2 flex gap-1 opacity-100 transition-opacity pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100">
+				{onPlay && (
+					<button
+						type="button"
+						onClick={onPlay}
+						className="inline-flex h-7 items-center gap-1 rounded-md bg-background/90 px-2 font-ui text-[12px] font-[600] text-ink-2 hover:text-foreground"
+					>
+						<PlayIcon className="size-3 fill-current" strokeWidth={0} />
+						Play here
+					</button>
+				)}
+				<button
+					type="button"
+					onClick={onRemove}
+					aria-label={`Remove the link to ${link.title ?? hostOf(link.url)}`}
+					className="inline-flex size-7 items-center justify-center rounded-md bg-background/90 text-ink-3 hover:text-foreground"
+					data-testid="notes-link-remove"
+				>
+					<XIcon className="size-3.5" />
+				</button>
+			</div>
+		</div>
+	);
+}
+
+function AddLink({ onAdd, onDone }: { onAdd: (raw: string) => string | null; onDone: () => void }) {
 	const [url, setUrl] = useState("");
-	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	return (
 		<form
-			onSubmit={async (e) => {
+			onSubmit={(e) => {
 				e.preventDefault();
-				if (!url.trim() || busy) return;
-				setBusy(true);
-				setError(null);
-				try {
-					await onLink(url.trim());
-				} catch (err) {
-					setError(err instanceof Error ? err.message : "The link was not saved.");
-					setBusy(false);
+				if (!url.trim()) return onDone();
+				const why = onAdd(url);
+				if (why) setError(why);
+				else {
+					setUrl("");
+					setError(null);
 				}
 			}}
-			className="mb-8 rounded-xl bg-well p-4"
+			className="mt-2.5"
 			data-testid="notes-link"
 		>
-			<label htmlFor="note-video" className="font-ui text-[14px] font-[600] text-foreground">
-				Link a YouTube video
-			</label>
-			<p className="mt-0.5 font-prose text-[13.5px] text-ink-3">
-				It plays here, and Alt+T stamps its time into the note. No subtitles are fetched and nothing is paid for.
-			</p>
-			<div className="mt-3 flex gap-2">
+			<div className="flex gap-2">
+				<label htmlFor="note-link" className="sr-only">
+					Link
+				</label>
 				<input
-					id="note-video"
+					id="note-link"
 					value={url}
-					onChange={(e) => setUrl(e.target.value)}
-					onKeyDown={(e) => e.key === "Escape" && onCancel()}
-					placeholder="https://youtu.be/…"
+					onChange={(e) => {
+						setUrl(e.target.value);
+						setError(null);
+					}}
+					onKeyDown={(e) => e.key === "Escape" && onDone()}
+					onBlur={() => !url.trim() && onDone()}
+					placeholder="Paste a link: an article, a video, a podcast…"
 					autoComplete="off"
 					autoFocus
 					spellCheck={false}
-					className="q-field h-10 min-w-0 flex-1 rounded-lg px-3 font-ui text-[15px]"
+					className="q-field h-11 min-w-0 flex-1 rounded-xl px-4 font-ui text-[15px]"
 					data-testid="notes-link-url"
 				/>
-				<button
-					type="submit"
-					disabled={!url.trim() || busy}
-					className="q-btn sec h-10 rounded-lg px-4"
-					data-testid="notes-link-save"
-				>
-					{busy && <LoaderCircleIcon className="size-4 animate-spin" />}
-					Link
-				</button>
-				<button type="button" onClick={onCancel} className="q-btn ghost h-10 w-10 rounded-lg p-0" aria-label="Cancel">
-					<XIcon className="size-4" />
+				<button type="submit" className="q-btn sec h-11 rounded-xl px-4" data-testid="notes-link-save">
+					<PlusIcon className="size-4" strokeWidth={1.8} />
+					Add
 				</button>
 			</div>
 			{error && (
@@ -680,15 +820,7 @@ function LinkVideo({ onLink, onCancel }: { onLink: (url: string) => Promise<void
 	);
 }
 
-function VideoBox({
-	video,
-	player,
-	onUnlink,
-}: {
-	video: NoteVideo;
-	player: React.RefObject<YTPlayer | null>;
-	onUnlink: () => void;
-}) {
+function VideoBox({ videoId, player }: { videoId: string; player: React.RefObject<YTPlayer | null> }) {
 	const holder = useRef<HTMLDivElement>(null);
 	const [error, setError] = useState<string | null>(null);
 
@@ -701,7 +833,7 @@ function VideoBox({
 				const el = document.createElement("div");
 				holder.current.replaceChildren(el);
 				p = new YT.Player(el, {
-					videoId: video.id,
+					videoId,
 					width: "100%",
 					height: "100%",
 					host: "https://www.youtube-nocookie.com",
@@ -714,7 +846,7 @@ function VideoBox({
 							alive &&
 							setError(
 								e.data === 101 || e.data === 150
-									? "The owner of this video does not allow it to be played here. Watch it on YouTube; your note still works."
+									? "The owner of this video does not allow it to be played here. Open it from its card below; your note still works."
 									: "YouTube could not play this video here.",
 							),
 					},
@@ -728,38 +860,16 @@ function VideoBox({
 				p?.destroy();
 			} catch {}
 		};
-	}, [video.id, player]);
+	}, [videoId, player]);
 
 	return (
-		<div className="flex flex-col gap-2">
+		<div>
 			<div ref={holder} className="aspect-video w-full overflow-hidden rounded-xl bg-well" data-testid="notes-player" />
 			{error && (
-				<p className="font-prose text-[14px] text-miss" role="alert">
+				<p className="mt-2 font-prose text-[14px] text-miss" role="alert">
 					{error}
 				</p>
 			)}
-			<div className="flex items-center gap-1">
-				<p className="min-w-0 flex-1 truncate font-ui text-[13.5px] font-[600] text-ink-2">
-					{video.title ?? "YouTube video"}
-				</p>
-				<a
-					href={video.url}
-					target="_blank"
-					rel="noreferrer"
-					className="q-btn ghost h-8 shrink-0 rounded-lg px-2 text-[13px]"
-				>
-					<ExternalLinkIcon className="size-3.5" strokeWidth={1.8} />
-					YouTube
-				</a>
-				<button
-					type="button"
-					onClick={onUnlink}
-					className="q-btn ghost h-8 shrink-0 rounded-lg px-2 text-[13px] text-ink-3"
-					data-testid="notes-unlink"
-				>
-					Unlink
-				</button>
-			</div>
 		</div>
 	);
 }
