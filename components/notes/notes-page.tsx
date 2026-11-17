@@ -3,21 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, ClockIcon, GlobeIcon, LinkIcon, PlayIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { NoteEditor, type NoteEditorHandle } from "@/components/notes/note-editor";
 import { SidebarToggle } from "@/components/sidebar";
 import { loadYouTubeApi, type YTPlayer } from "@/components/watch/youtube-api";
 import { cn } from "@/lib/utils";
 import {
-	belongsToLayoutAccent,
-	formatClock,
-	MAX_NOTE_CHARS,
 	MAX_NOTE_LINKS,
 	MAX_NOTE_TITLE,
 	normalizeLink,
 	noteHeading,
-	noteMoments,
 	noteVideo,
-	pastedLink,
-	stampFor,
+	noteWords,
+	plainText,
 	type Note,
 	type NoteLink,
 } from "@/src/core";
@@ -83,7 +80,7 @@ function prettyUrl(url: string): string {
 }
 
 function snippet(note: Note): string {
-	const lines = note.body
+	const lines = plainText(note.body)
 		.split("\n")
 		.map((l) => l.trim())
 		.filter(Boolean);
@@ -329,7 +326,7 @@ function NoteSheet({
 	const [save, setSave] = useState<SaveState>("idle");
 	const [adding, setAdding] = useState(false);
 	const [confirming, setConfirming] = useState(false);
-	const bodyField = useRef<HTMLTextAreaElement>(null);
+	const editor = useRef<NoteEditorHandle>(null);
 	const player = useRef<YTPlayer | null>(null);
 	const id = useRef<string | null>(note?.id ?? null);
 	const pending = useRef<Change>({});
@@ -418,24 +415,11 @@ function NoteSheet({
 	};
 
 	const insertStamp = () => {
-		const el = bodyField.current;
 		const p = player.current;
-		if (!el || !p) return;
-		let sec = 0;
+		if (!p) return;
 		try {
-			sec = p.getCurrentTime();
-		} catch {
-			return;
-		}
-		const start = el.selectionStart;
-		const before = body.slice(0, start);
-		const lead = before === "" || before.endsWith("\n") ? "" : "\n";
-		const stamp = `${lead}${stampFor(sec)} `;
-		changeBody(before + stamp + body.slice(el.selectionEnd));
-		requestAnimationFrame(() => {
-			el.focus();
-			el.setSelectionRange(start + stamp.length, start + stamp.length);
-		});
+			editor.current?.insertStamp(p.getCurrentTime());
+		} catch {}
 	};
 
 	const remove = async () => {
@@ -459,8 +443,7 @@ function NoteSheet({
 	};
 
 	const video = noteVideo({ links });
-	const moments = video ? noteMoments(body) : [];
-	const words = body.trim() ? body.trim().split(/\s+/).length : 0;
+	const words = noteWords(body);
 
 	return (
 		<div className="flex w-full max-w-[50rem] flex-1 flex-col" data-testid="notes-sheet">
@@ -552,7 +535,7 @@ function NoteSheet({
 				onKeyDown={(e) => {
 					if (e.key === "Enter" && !e.nativeEvent.isComposing) {
 						e.preventDefault();
-						bodyField.current?.focus();
+						editor.current?.focusEnd();
 					}
 				}}
 				onBlur={() => void flush().catch(() => {})}
@@ -566,58 +549,27 @@ function NoteSheet({
 			{video?.videoId && (
 				<div className="mt-5">
 					<VideoBox videoId={video.videoId} player={player} />
-					{moments.length > 0 && (
-						<ul className="mt-2 flex flex-col" data-testid="notes-moments" aria-label="Moments">
-							{moments.map((m, i) => (
-								<li key={`${m.sec}-${i}`}>
-									<button
-										type="button"
-										onClick={() => seek(m.sec)}
-										className="-mx-2 flex w-[calc(100%+1rem)] items-baseline gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-well"
-									>
-										<span className="shrink-0 font-ui text-[13px] font-[600] tabular-nums text-teal-2">
-											{formatClock(m.sec)}
-										</span>
-										<span className="min-w-0 truncate font-prose text-[14px] text-ink-2">{m.text || "…"}</span>
-									</button>
-								</li>
-							))}
-						</ul>
-					)}
 				</div>
 			)}
 
-			<label htmlFor="note-body" className="sr-only">
-				Note
-			</label>
-			<textarea
-				ref={bodyField}
-				id="note-body"
-				value={body}
-				maxLength={MAX_NOTE_CHARS}
-				onChange={(e) => changeBody(e.target.value)}
-				onBlur={() => void flush().catch(() => {})}
-				onPaste={(e) => {
-					const link = pastedLink(e.clipboardData.getData("text/plain"));
-					if (link) addLink(link);
-				}}
-				onKeyDown={(e) => {
-					if (belongsToLayoutAccent(e.nativeEvent)) return;
-					if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyT" && video) {
-						e.preventDefault();
-						insertStamp();
+			<div className="mt-4">
+				<NoteEditor
+					ref={editor}
+					initial={note?.body ?? ""}
+					autoFocus={!!note}
+					hasVideo={!!video}
+					placeholder={
+						video
+							? "Write what you hear. Alt+T puts the video's time here, so you can jump back to it."
+							: "Start writing. Paste a link to mention it or show it as a card."
 					}
-				}}
-				autoFocus={!!note}
-				spellCheck={false}
-				placeholder={
-					video
-						? "Write what you hear. Alt+T puts the video's time here, so you can jump back to it."
-						: "Start writing. Paste a link and it becomes a card below."
-				}
-				className="mt-4 block min-h-40 w-full resize-none bg-transparent font-[family-name:var(--font-read)] text-[18px] leading-[1.68] text-foreground outline-none [field-sizing:content] placeholder:text-ink-4/70"
-				data-testid="notes-body"
-			/>
+					onChange={changeBody}
+					onBlur={() => void flush().catch(() => {})}
+					onSeek={seek}
+					onStampKey={insertStamp}
+					onCard={(url) => addLink(url)}
+				/>
+			</div>
 
 			{(links.length > 0 || adding) && (
 				<section className="mt-8 border-t border-[var(--q-line)] pt-5" aria-label="Links" data-testid="notes-links">
@@ -646,10 +598,7 @@ function NoteSheet({
 				aria-hidden="true"
 				onMouseDown={(e) => {
 					e.preventDefault();
-					const el = bodyField.current;
-					if (!el) return;
-					el.focus();
-					el.setSelectionRange(el.value.length, el.value.length);
+					editor.current?.focusEnd();
 				}}
 				className="min-h-24 flex-1 cursor-text"
 			/>

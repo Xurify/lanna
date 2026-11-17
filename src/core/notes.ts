@@ -7,6 +7,8 @@ export interface NoteLink {
 	description?: string;
 	/** An https picture, or /api/notes/image?f=<file> for one kept in data/. */
 	image?: string;
+	/** The site's own icon, kept like the picture. */
+	icon?: string;
 	/** Set when the link is a YouTube video, which can play beside the note. */
 	videoId?: string;
 }
@@ -31,14 +33,36 @@ export interface NoteMoment {
 	text: string;
 }
 
-const STAMP = /\[(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\]/g;
+const STAMP = /\[(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\](?!\()/g;
+
+/** A mention in a note's Markdown: `@[Title](https://…)`. A plain Markdown link stays `[text](https://…)`. */
+export const MENTION = /@\[((?:\\.|[^\]\\\n])*)\]\((https?:\/\/[^\s)]+)\)/g;
+
+export function mentionMarkdown(title: string, url: string): string {
+	return `@[${title.replace(/[\\\]]/g, (c) => `\\${c}`).replace(/\n/g, " ")}](${url.replace(/\)/g, "%29")})`;
+}
+
+/** The words of a note's Markdown without its markup: a mention or a link reads as its title. */
+export function plainText(markdown: string): string {
+	return markdown
+		.replace(MENTION, (_, title: string) => title.replace(/\\(.)/g, "$1"))
+		.replace(/!?\[([^\]\n]*)\]\((?:[^)\s]+)\)/g, "$1")
+		.replace(/(\*\*|__|~~|`)/g, "")
+		.replace(/^\s{0,3}(?:#{1,6}\s+|>\s?|[-*+]\s+|\d+[.)]\s+)/gm, "")
+		.replace(/\\([\\`*_{}[\]()#+\-.!>|~])/g, "$1");
+}
 
 const plainLine = (line: string) =>
-	line
+	plainText(line)
 		.replace(STAMP, "")
 		.replace(/\s+/g, " ")
 		.trim()
 		.replace(/^(?:[-*•]|#+)\s*/, "");
+
+export function noteWords(markdown: string): number {
+	const text = plainText(markdown).replace(STAMP, " ").trim();
+	return text ? text.split(/\s+/).length : 0;
+}
 
 export function stampFor(sec: number): string {
 	return `[${formatClock(sec)}]`;
@@ -126,6 +150,18 @@ export interface PageMeta {
 	description?: string;
 	/** Absolute http(s) address of the preview picture. */
 	image?: string;
+	/** Absolute http(s) address of the site's icon: a touch icon first (the biggest), then the plain icon, then /favicon.ico. */
+	icon?: string;
+}
+
+function absoluteHttp(raw: string | undefined, base: string): string | undefined {
+	if (!raw) return undefined;
+	try {
+		const u = new URL(raw, base);
+		return u.protocol === "https:" || u.protocol === "http:" ? u.toString() : undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 const ATTR = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g;
@@ -152,14 +188,19 @@ export function pageMeta(html: string, pageUrl: string): PageMeta {
 		if (key && a.content && !(key in meta)) meta[key] = a.content;
 	}
 	const titleTag = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(head)?.[1];
-	let image: string | undefined;
-	const rawImage = meta["og:image:secure_url"] ?? meta["og:image"] ?? meta["og:image:url"] ?? meta["twitter:image"];
-	if (rawImage) {
-		try {
-			const u = new URL(rawImage, pageUrl);
-			if (u.protocol === "https:" || u.protocol === "http:") image = u.toString();
-		} catch {}
+	const image = absoluteHttp(
+		meta["og:image:secure_url"] ?? meta["og:image"] ?? meta["og:image:url"] ?? meta["twitter:image"],
+		pageUrl,
+	);
+	const icons: Record<string, string> = {};
+	for (const m of head.matchAll(/<link\b[^>]*>/gi)) {
+		const a = attrsOf(m[0]);
+		const rel = (a.rel ?? "").toLowerCase();
+		if (!a.href || /\.svg(\?|$)/i.test(a.href) || a.type === "image/svg+xml") continue;
+		for (const kind of ["apple-touch-icon", "icon"])
+			if (rel.split(/\s+/).includes(kind) && !icons[kind]) icons[kind] = a.href;
 	}
+	const icon = absoluteHttp(icons["apple-touch-icon"] ?? icons.icon ?? "/favicon.ico", pageUrl);
 	let host: string | undefined;
 	try {
 		host = new URL(pageUrl).hostname.replace(/^www\./, "");
@@ -169,5 +210,6 @@ export function pageMeta(html: string, pageUrl: string): PageMeta {
 		site: tidy(meta["og:site_name"], 80) ?? host,
 		description: tidy(meta["og:description"] ?? meta["twitter:description"] ?? meta.description, 300),
 		image,
+		icon,
 	};
 }

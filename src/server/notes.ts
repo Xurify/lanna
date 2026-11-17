@@ -1,6 +1,14 @@
 import crypto from "node:crypto";
 import { safeFetch } from "../agent/safe-fetch.ts";
-import { pageMeta, parseNoteBody, parseNoteLinks, parseNoteTitle, type Note, type NoteLink } from "../core/notes.ts";
+import {
+	normalizeLink,
+	pageMeta,
+	parseNoteBody,
+	parseNoteLinks,
+	parseNoteTitle,
+	type Note,
+	type NoteLink,
+} from "../core/notes.ts";
 import { notesStore, NOTE_IMAGE_TYPES } from "../store/notes.ts";
 import { videoStore } from "../store/videos.ts";
 
@@ -69,13 +77,17 @@ async function webCard(link: Pick<NoteLink, "url">): Promise<NoteLink> {
 		});
 		if (!res.ok || !(res.headers.get("content-type") ?? "").includes("html")) return { url: link.url, site: host };
 		const meta = pageMeta(await res.text(), res.url || link.url);
-		const image = meta.image ? await keepImage(meta.image) : undefined;
+		const [image, icon] = await Promise.all([
+			meta.image ? keepImage(meta.image) : undefined,
+			meta.icon ? keepImage(meta.icon) : undefined,
+		]);
 		return {
 			url: link.url,
 			...(meta.title ? { title: meta.title } : {}),
 			site: meta.site ?? host,
 			...(meta.description ? { description: meta.description } : {}),
 			...(image ? { image } : {}),
+			...(icon ? { icon } : {}),
 		};
 	} catch {
 		return { url: link.url, site: host };
@@ -85,8 +97,28 @@ async function webCard(link: Pick<NoteLink, "url">): Promise<NoteLink> {
 /** A link's card: YouTube's own title and picture for a video, the page's preview tags for anything else. */
 export const lookUpLink: LinkLookup = async (link) => {
 	if (process.env.NODE_ENV === "test") return { ...link };
-	return link.videoId ? youTubeCard(link) : webCard(link);
+	if (!link.videoId) return webCard(link);
+	const [card, icon] = await Promise.all([youTubeCard(link), keepImage("https://www.youtube.com/favicon.ico")]);
+	return icon ? { ...card, icon } : card;
 };
+
+/** The card for a link, from link-previews.json when it was looked up before. */
+async function cardFor(wanted: Pick<NoteLink, "url" | "videoId">, lookUp: LinkLookup): Promise<NoteLink> {
+	const kept = notesStore.previews()[wanted.url];
+	if (kept) {
+		const { at: _at, ...card } = kept;
+		return card;
+	}
+	const card = await lookUp(wanted);
+	if (card.title || card.image || card.icon) notesStore.putPreview(card, new Date().toISOString());
+	return card;
+}
+
+/** The card for one pasted link, for a mention; null when it is not a link. */
+export async function previewLink(raw: string, lookUp: LinkLookup = lookUpLink): Promise<NoteLink | null> {
+	const wanted = normalizeLink(raw);
+	return wanted ? cardFor(wanted, lookUp) : null;
+}
 
 const newestFirst = (notes: Note[]) => [...notes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
@@ -130,7 +162,7 @@ async function cardsFor(
 	before: NoteLink[] | undefined,
 	lookUp: LinkLookup,
 ): Promise<NoteLink[]> {
-	return Promise.all(wanted.map((w) => before?.find((b) => b.url === w.url) ?? lookUp(w)));
+	return Promise.all(wanted.map((w) => before?.find((b) => b.url === w.url) ?? cardFor(w, lookUp)));
 }
 
 function applied(note: Note, parsed: ParsedChange, links: NoteLink[] | undefined, at: string): Note {

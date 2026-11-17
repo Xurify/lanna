@@ -25,11 +25,15 @@ const {
 	parseNoteTitle,
 	pageMeta,
 	stampFor,
+	mentionMarkdown,
+	plainText,
+	noteWords,
+	MENTION,
 	MAX_NOTE_CHARS,
 	MAX_NOTE_TITLE,
 	MAX_NOTE_LINKS,
 } = await import("../src/core/notes.ts");
-const { createNote, updateNote, removeNote, listNotes } = await import("../src/server/notes.ts");
+const { createNote, updateNote, removeNote, listNotes, previewLink } = await import("../src/server/notes.ts");
 const { PATHS } = await import("../config.ts");
 type NoteLink = import("../src/core/notes.ts").NoteLink;
 type Wanted = Pick<NoteLink, "url" | "videoId">;
@@ -113,10 +117,17 @@ test("a page's card comes from Open Graph, then Twitter tags, then plain HTML", 
 		site: "Denník N",
 		description: "Krátky opis.",
 		image: "https://dennikn.sk/img/cover.jpg",
+		icon: "https://dennikn.sk/favicon.ico",
 	});
 	assert.deepEqual(
 		pageMeta(`<title> Only   a title </title><meta name="description" content="Desc">`, "https://www.example.com/x"),
-		{ title: "Only a title", site: "example.com", description: "Desc", image: undefined },
+		{
+			title: "Only a title",
+			site: "example.com",
+			description: "Desc",
+			image: undefined,
+			icon: "https://www.example.com/favicon.ico",
+		},
 	);
 	assert.equal(pageMeta(`<meta property="og:image" content="javascript:alert(1)">`, "https://e.com").image, undefined);
 });
@@ -185,9 +196,14 @@ test("notes are created, changed, listed newest first and deleted to a trash fil
 test("a link already on the note is not looked up again", async () => {
 	let calls = 0;
 	const counting = async (l: Wanted): Promise<NoteLink> => (calls++, { ...l, title: "Title" });
-	const n = await createNote({ links: ["https://sme.sk/"] }, new Date(), counting);
+	const n = await createNote({ links: ["https://counted.example.com/a"] }, new Date(), counting);
 	assert.ok(n.ok);
-	await updateNote(n.note.id, { links: ["https://sme.sk/", VIDEO] }, new Date(), counting);
+	await updateNote(
+		n.note.id,
+		{ links: ["https://counted.example.com/a", "https://counted.example.com/b"] },
+		new Date(),
+		counting,
+	);
 	assert.equal(calls, 2);
 });
 
@@ -199,7 +215,7 @@ test("text saved while a link is looked up is not overwritten when the link land
 		new Promise<NoteLink>((resolve) => {
 			release = () => resolve({ ...l, title: "Slow" });
 		});
-	const linking = updateNote(n.note.id, { links: ["https://sme.sk/"] }, new Date(), slow);
+	const linking = updateNote(n.note.id, { links: ["https://slow.example.com/"] }, new Date(), slow);
 	await new Promise((r) => setTimeout(r, 5));
 	await updateNote(n.note.id, { body: "typed meanwhile" }, new Date(), carded);
 	release();
@@ -207,4 +223,46 @@ test("text saved while a link is looked up is not overwritten when the link land
 	assert.ok(done.ok);
 	assert.equal(done.note.body, "typed meanwhile");
 	assert.equal(done.note.links?.[0]?.title, "Slow");
+});
+
+test("a mention is @[title](url), with the brackets in a title escaped", () => {
+	const md = mentionMarkdown("Cases [and] more", "https://sme.sk/a(1)");
+	assert.equal(md, "@[Cases [and\\] more](https://sme.sk/a(1%29)");
+	const m = [...md.matchAll(MENTION)][0]!;
+	assert.equal(m[1], "Cases [and\\] more");
+	assert.equal(m[2], "https://sme.sk/a(1%29");
+});
+
+test("plain text reads a mention or a link as its title and drops the markup", () => {
+	const md =
+		"## Heading\n- see @[Denník N](https://dennikn.sk/) and [the article](https://sme.sk/x)\n**bold** under\\_score";
+	assert.equal(plainText(md), "Heading\nsee Denník N and the article\nbold under_score");
+	assert.equal(noteWords(`[0:12] ahoj @[Sme](https://sme.sk/)`), 2);
+	assert.equal(noteWords("  "), 0);
+});
+
+test("a time stamp is not mistaken for a link's text", () => {
+	assert.deepEqual(noteMoments("[0:12](https://e.com) and [0:13] here"), [{ sec: 13, text: "0:12 and here" }]);
+});
+
+test("a page's icon: the touch icon first, then the icon, then /favicon.ico, never an SVG", () => {
+	const base = "https://dennikn.sk/a";
+	assert.equal(
+		pageMeta(`<link rel="icon" href="/i.png"><link rel="apple-touch-icon" href="/t.png">`, base).icon,
+		"https://dennikn.sk/t.png",
+	);
+	assert.equal(pageMeta(`<link rel="shortcut icon" href="/f.png">`, base).icon, "https://dennikn.sk/f.png");
+	assert.equal(pageMeta(`<link rel="icon" href="/logo.svg">`, base).icon, "https://dennikn.sk/favicon.ico");
+});
+
+test("a mentioned link is looked up once and kept in link-previews.json", async () => {
+	let calls = 0;
+	const counting = async (l: Wanted): Promise<NoteLink> => (calls++, { ...l, title: "Kept" });
+	const first = await previewLink("https://kept.example.com/page", counting);
+	const again = await previewLink("kept.example.com/page", counting);
+	assert.equal(first?.title, "Kept");
+	assert.deepEqual(again, first);
+	assert.equal(calls, 1);
+	assert.ok(fs.existsSync(path.join(PATHS.data, "link-previews.json")));
+	assert.equal(await previewLink("not a link", counting), null);
 });

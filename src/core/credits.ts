@@ -176,8 +176,8 @@ export const CREDITS: Credit[] = [
 		name: "YouTube",
 		url: "https://www.youtube.com",
 		group: "video",
-		use: "videos, their captions and the player in Watch",
-		fetchedHosts: ["www.youtube.com"],
+		use: "videos, their captions and the player in Watch; a video's title and thumbnail in Notes",
+		fetchedHosts: ["www.youtube.com", "i.ytimg.com"],
 	},
 	{
 		id: "yt-dlp",
