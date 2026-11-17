@@ -2,6 +2,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "radix-ui";
 
+import { withCapLabels } from "@/components/ui/cap-label";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -48,6 +49,7 @@ function Button({
 	variant = "default",
 	size = "default",
 	asChild = false,
+	children,
 	...props
 }: React.ComponentProps<"button"> &
 	VariantProps<typeof buttonVariants> & {
@@ -62,7 +64,9 @@ function Button({
 			data-size={size}
 			className={cn(buttonVariants({ variant, size, className }))}
 			{...props}
-		/>
+		>
+			{asChild ? children : withCapLabels(children)}
+		</Comp>
 	);
 }
 

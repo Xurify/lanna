@@ -262,7 +262,7 @@ export function WordBankPage({
 								)}
 							>
 								<BookOpenIcon className="hidden size-4 sm:block" />
-								<span>Words</span>
+								<span className="cap-center">Words</span>
 								<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
 									{totalWords}
 								</span>
@@ -279,7 +279,7 @@ export function WordBankPage({
 								)}
 							>
 								<BookmarkIcon className="hidden size-4 sm:block" />
-								<span>Saved phrases</span>
+								<span className="cap-center">Saved phrases</span>
 								<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
 									{phrases.length}
 								</span>
@@ -297,7 +297,7 @@ export function WordBankPage({
 								)}
 							>
 								<FileTextIcon className="hidden size-4 sm:block" />
-								<span>Cheatsheets</span>
+								<span className="cap-center">Cheatsheets</span>
 								{sheetCount !== null && (
 									<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
 										{sheetCount}
@@ -466,7 +466,7 @@ export function WordBankPage({
 															>
 																<Volume2Icon className="size-3.5" />
 															</button>
-															<p className="font-prose text-sm text-foreground">{item.example.sk}</p>
+															<p className="cap-center font-prose text-sm text-foreground">{item.example.sk}</p>
 														</div>
 														<p className="mt-1 pl-5.5 font-prose text-xs text-muted-foreground">{item.example.en}</p>
 													</div>
@@ -526,7 +526,7 @@ export function WordBankPage({
 														)}
 													>
 														<StarIcon className={cn("size-4", item.favorite && "fill-gold")} />
-														<span className="text-xs font-semibold">
+														<span className="cap-center text-xs font-semibold">
 															{item.favorite ? "Favorite" : "Add to favorites"}
 														</span>
 													</button>
@@ -538,7 +538,7 @@ export function WordBankPage({
 															className="flex h-8 items-center gap-1.5 px-2 text-teal-2"
 														>
 															<BookmarkCheckIcon className="size-4" />
-															<span className="text-xs font-semibold">In Review</span>
+															<span className="cap-center text-xs font-semibold">In Review</span>
 														</span>
 													) : (
 														<button
@@ -548,7 +548,7 @@ export function WordBankPage({
 															className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 														>
 															<BookmarkIcon className="size-4" />
-															<span className="text-xs font-semibold">Add to Review</span>
+															<span className="cap-center text-xs font-semibold">Add to Review</span>
 														</button>
 													)}
 												</div>

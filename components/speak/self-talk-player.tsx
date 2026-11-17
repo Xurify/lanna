@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CapLabel } from "@/components/ui/cap-label";
 import {
 	COLUMN,
 	Centered,
@@ -331,7 +332,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 						className="lanna-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
 					>
 						<ArrowLeftIcon className="size-3.5" />
-						Today
+						<CapLabel>Today</CapLabel>
 					</Link>
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>

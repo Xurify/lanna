@@ -18,6 +18,7 @@
  */
 
 import { EmptyState } from "@/components/quiet/empty-state";
+import { CapLabel } from "@/components/ui/cap-label";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -710,7 +711,7 @@ export function ListenPlayer({ initialPlan = null, sheet }: { initialPlan?: List
 								className={cn(PRIMARY, TOUCH_TALL)}
 								data-testid="listen-check"
 							>
-								Check
+								<CapLabel>Check</CapLabel>
 								<span className={ENTER_KEY}>
 									<QIcon name="enter" />
 								</span>

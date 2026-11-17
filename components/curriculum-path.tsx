@@ -183,7 +183,7 @@ function TutorSessionHover({ unit }: { unit: UnitState }) {
 						data-testid={`tutor-hint-${unit.id}`}
 					>
 						<BotMessageSquareIcon className="size-3.5 shrink-0 text-xp" aria-hidden="true" />
-						<span className="text-[12px] font-[550]">Tutor</span>
+						<span className="cap-center text-[12px] font-[550]">Tutor</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent
@@ -298,7 +298,7 @@ function CanDoGoalHover({ unit }: { unit: UnitState }) {
 						data-testid={`goal-hint-${unit.id}`}
 					>
 						<FlagIcon className="size-3.5 shrink-0 text-ink-2" aria-hidden="true" />
-						<span className="text-[12px] font-[550]">Goal</span>
+						<span className="cap-center text-[12px] font-[550]">Goal</span>
 					</span>
 				</TooltipTrigger>
 				<TooltipContent

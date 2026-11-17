@@ -304,7 +304,7 @@ function SettingsDialogBody({
 											)}
 										/>
 									)}
-									<span className="flex-1">{s.label}</span>
+									<span className="cap-center flex-1">{s.label}</span>
 									<ChevronRightIcon className="size-4 text-ink-4 md:hidden" aria-hidden />
 								</button>
 							</Fragment>

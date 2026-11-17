@@ -12,6 +12,16 @@
 @custom-variant pointer-coarse (@media (pointer: coarse));
 @custom-variant touch-narrow (@media (pointer: coarse) and (width < 64rem));
 
+/* Chrome places the letters of a centered line box up to 1px above its middle when
+   line-height × font-size is fractional (measured by scripts/icon-align-check.mjs), so a label
+   sits above the icon beside it. Trimming the label to its cap height (CSS Inline Layout 3,
+   text-box) centers the letters themselves; the margins give the line height back so the row
+   keeps its size. */
+@utility cap-center {
+	text-box: trim-both cap alphabetic;
+	margin-block: calc((1lh - 1cap) / 2);
+}
+
 /* Touch screens: the sidebar's rows and buttons are at least 44 px tall, the
    Apple HIG minimum for a tap (docs/research/mobile-ipad.md). */
 @media (pointer: coarse) {
