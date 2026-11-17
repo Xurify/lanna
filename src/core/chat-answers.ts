@@ -21,7 +21,6 @@ export interface ChatScore {
 type ToolPart = { type: string; input?: unknown };
 
 export const CHAT_RECORD_TOOLS: ReadonlySet<string> = new Set(["pose", "grade", "add_to_review", "draw"]);
-const CHAT_DISPATCH_TOOLS: ReadonlySet<string> = new Set(["research", "pdf"]);
 const CHAT_ONLY_TOOLS: ReadonlySet<string> = new Set(["pose", "grade", "draw"]);
 
 type ReplyBlock = { type: string; name?: string; text?: string };
@@ -30,7 +29,7 @@ export function closesChatReply(content: readonly ReplyBlock[]): boolean {
 	const calls = content.filter((b) => b.type === "toolCall");
 	return (
 		calls.length > 0 &&
-		calls.every((b) => b.name !== undefined && (CHAT_RECORD_TOOLS.has(b.name) || CHAT_DISPATCH_TOOLS.has(b.name))) &&
+		calls.every((b) => b.name !== undefined && CHAT_RECORD_TOOLS.has(b.name)) &&
 		content.some((b) => b.type === "text" && (b.text ?? "").trim().length > 0)
 	);
 }

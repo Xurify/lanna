@@ -3,74 +3,22 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import {
-	ActivityIcon,
-	BotIcon,
-	ClapperboardIcon,
-	FileTextIcon,
-	GlobeIcon,
-	PenToolIcon,
-	SearchIcon,
-	SquareIcon,
-} from "lucide-react";
-import type { CallUsage, JobKind, JobRecord } from "@/src/core";
-import { isModelsRefusal, isProviderKeyRefusal, subscriptionLabel, subscriptionLabels } from "@/src/core";
-import { formatTokens, planCostLabel } from "@/components/usage-format";
-import { stampModelLabel } from "@/components/model-names";
-import { useModelCatalog } from "@/components/model-picker";
+import { ActivityIcon, ClapperboardIcon, GlobeIcon, SquareIcon } from "lucide-react";
 import { useServerEvent, useServerResync } from "@/components/server-events";
 
 /**
- * THE BACKGROUND-AGENTS SECTION (owner, sidebar round — the successor of
- * the retired bottom-right floating dock): the bottom strip of the LEFT
- * SIDEBAR, one blob per running BACKGROUND process — session sub-agents
- * (research/visual) and background tasks. Teaching turns are
- * deliberately NOT here: the section exists to give background processes
- * the observability the learner can't otherwise see; an in-flight teaching
- * turn is fully visible where it happens (user decision, 2026-09).
+ * THE BACKGROUND SECTION: the bottom strip of the LEFT SIDEBAR, one row per
+ * RUNNING background task (video preparation, adding a language). Finished
+ * tasks are the ready notice (components/task-notice.tsx) and the Tasks page.
  *
- * Data: ONE feed of GET /api/activity (jobs across ALL chats, title-joined,
- * oldest-first + tasks), fetched when truth moves (events
- * channel, S5) and folded client-side with core/prices.ts.
- * Cost is INFERRED server-side through Pi; the context line is the LAST model call's
- * input+output against the model's limit (JobUsage.lastStep — pending
- * contract) — never a cumulative sum, which would be the wrong number.
- * Absent data renders "—", never zero (the doctrine).
- *
- * Quiet/ambient by design: no entry animations, stable keys, updates land
- * in place — refreshes never flicker. ALWAYS present (owner, sidebar round):
- * empty means EMPTY — the header sits alone, nothing hides; it populates and
- * GROWS when processes run (max-h + internal scroll so a pile never crowds
- * the session list). The sidebar's closed state means the learner opted
- * out — no ambient signal while closed (user decision: invisibility until
- * a clearer observability story wants building). Per blob: kind icon,
- * elapsed, cost, activity line, an explicit END button (POST
- * /api/activity/abort — the wave-4 backend is live): 404/409 mean the
- * process is already gone (refresh, no error); real failures degrade to
- * an inline "Abort failed", never a dead control. Detail (context, model,
- * steps, session link) EXPANDS INLINE — the section scrolls, so a
- * floating popover would clip at its bounds.
+ * Data: ONE feed of GET /api/activity, refetched when the events channel
+ * says the tasks moved, on channel resync, and when the tab becomes visible.
+ * Quiet by design: no entry animations, stable keys, updates land in place.
+ * Elapsed time ticks once a second while rows are shown.
  */
 
-// ─── Wire shapes (client-safe mirrors of server/observability.ts) ────────────
-
-/** JobUsage extended by the pending lastStep contract (the context line). */
-interface FeedUsage extends NonNullable<JobRecord["usage"]> {
-	lastStep?: CallUsage;
-}
-
-export interface FeedJob extends JobRecord {
-	/** Read-time server estimate; absent on older transport payloads. */
-	costUsd?: number | null;
-	title: string;
-	usage?: FeedUsage;
-	/** Server-joined live catalog limit (owner amendment 2026-09-23) —
-	 *  null when the model is missing from pi's catalog (no context line). */
-	contextLimit: number | null;
-}
-
-/** A background task (server/tasks.ts): running ones are blobs, finished ones
- *  are the ready notice (components/task-notice.tsx). */
+/** A background task (server/tasks.ts): running ones are rows here, finished
+ *  ones are the ready notice (components/task-notice.tsx). */
 export interface FeedTask {
 	id: string;
 	kind: "video" | "language";
@@ -88,11 +36,10 @@ export interface FeedTask {
 }
 
 export interface ActivityFeed {
-	jobs: FeedJob[];
 	tasks: FeedTask[];
 }
 
-const EMPTY_FEED: ActivityFeed = { jobs: [], tasks: [] };
+const EMPTY_FEED: ActivityFeed = { tasks: [] };
 
 // ─── The activity feed (composition root: the root layout) ───────────────────
 
@@ -102,15 +49,12 @@ const ActivityContext = createContext<{ feed: ActivityFeed; refresh: () => void 
 });
 
 /**
- * THE ACTIVITY FEED, PUSH-DRIVEN (architecture S5, 2026-10-02): the
- * adaptive poll is RETIRED — the dock refetches exactly when truth moves.
- * Every cause is announced on the events channel: job writes
- * (jobs-changed — the running-jobs blobs), and channel resync (reconnect /
- * dev-restart catch-up) — plus the one client-local cause that predates
- * the channel: visibility, a tab becoming visible refetches at once.
- * Announced fetches ride a 250ms trailing debounce (bursts of job writes);
- * resync and visibility are immediate. A failed
- * fetch keeps the last feed (the dock never flickers to empty on a blip).
+ * THE ACTIVITY FEED, PUSH-DRIVEN: the dock refetches exactly when truth
+ * moves. A task change is announced on the events channel (activity-changed),
+ * and channel resync (reconnect / dev-restart catch-up) and tab visibility
+ * are the two client-local causes. Announced fetches ride a 250ms trailing
+ * debounce (bursts of step updates); resync and visibility are immediate.
+ * A failed fetch keeps the last feed (the dock never flickers to empty on a blip).
  */
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
 	const [feed, setFeed] = useState<ActivityFeed>(EMPTY_FEED);
@@ -127,7 +71,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
 				const res = await fetch("/api/activity");
 				if (res.ok) {
 					const data = (await res.json()) as Partial<ActivityFeed>;
-					if (alive) setFeed({ jobs: data.jobs ?? [], tasks: data.tasks ?? [] });
+					if (alive) setFeed({ tasks: data.tasks ?? [] });
 				}
 			} catch {
 				// transport blip: keep the last feed, announce again next event
@@ -138,7 +82,6 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
 		};
 	}, [nonce]);
 
-	// Announcements → one trailing fetch per burst (the S4 debounce law).
 	const scheduleAnnouncedFetch = () => {
 		if (debounceRef.current) clearTimeout(debounceRef.current);
 		debounceRef.current = setTimeout(() => {
@@ -147,12 +90,10 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
 		}, 250);
 	};
 	useServerEvent("activity-changed", scheduleAnnouncedFetch);
-	useServerEvent("jobs-changed", scheduleAnnouncedFetch);
 	// Reconnect catch-up: events missed while the channel was down.
 	useServerResync(() => refreshRef.current());
 
-	// The visibility nudge: returning to the tab refetches immediately —
-	// anything missed while hidden lands at once.
+	// Returning to the tab refetches at once: anything missed while hidden lands now.
 	useEffect(() => {
 		const onVisibility = () => {
 			if (document.visibilityState === "visible") setNonce((n) => n + 1);
@@ -172,106 +113,37 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
 	return <ActivityContext.Provider value={{ feed, refresh }}>{children}</ActivityContext.Provider>;
 }
 
-/** The activity feed seam for the rest of the shell: the dock's data +
- *  its refresh nudge. Every server-side cause announces itself on the
- *  events channel. */
+/** The activity feed seam for the rest of the shell: the tasks plus the
+ *  refresh nudge. */
 export function useActivity(): { feed: ActivityFeed; refresh: () => void } {
 	return useContext(ActivityContext);
 }
 
 // ─── Pure presentation helpers (exported for tests) ──────────────────────────
 
-/** One dock blob: the unified view of a job or a background task. */
+/** One dock row: a running background task. */
 interface ActivityBlob {
-	/** job.id or task.id. */
 	id: string;
-	process: "job" | "task";
-	/** What a background task does (tasks only). */
-	taskKind?: FeedTask["kind"];
-	/** Sub-agent kind for jobs. */
-	jobKind?: JobKind;
+	kind: FeedTask["kind"];
 	title: string;
-	/** Empty for a task (it has no session). */
-	chatId: string;
-	/** ms epoch — blobs order oldest-first and elapsed counts from it. */
+	/** ms epoch — rows order oldest-first and elapsed counts from it. */
 	startedAt: number;
-	/** Inferred USD cost (jobCost) — null renders "—". */
-	cost: number | null;
-	/** Last model call's footprint vs the model's limit — null renders "—". */
-	context: { used: number; limit: number } | null;
-	/** Latest human-readable activity line (""). */
+	/** The task's current step line ("" when it has none). */
 	activity: string;
-	/** Sub-agent model id, when usage is reported. */
-	model?: string;
-	/** Model calls made so far, when usage is reported. */
-	steps?: number;
 }
 
-/** Merge the feed into one oldest-first blob list (the stable blob order). */
+/** The running tasks as rows, oldest first (the stable row order). */
 export function toBlobs(feed: ActivityFeed): ActivityBlob[] {
-	const blobs: ActivityBlob[] = feed.jobs.map((job) => {
-		const usage = job.usage;
-		let context: ActivityBlob["context"] = null;
-		const lastStep = usage?.lastStep;
-		// Context-meter amendment (owner 2026-09-23): the limit comes off
-		// the FEED (server-joined from pi's live catalog) — no client-side
-		// table. Null limit = no context line (usage-only render is the
-		// blob shape's call — here the line simply hides).
-		const limit = job.contextLimit;
-		if (usage && lastStep && limit !== null && lastStep.inputTokens !== undefined) {
-			// Same metric as the session meter (four normalized buckets — the
-			// context-meter audit, owner 2026-09-23): all four directions.
-			// Provider "input" EXCLUDES cacheRead/cacheWrite, so input+output
-			// alone reads wildly low on cache-heavy jobs.
-			context = {
-				used:
-					lastStep.inputTokens +
-					(lastStep.outputTokens ?? 0) +
-					(lastStep.cacheReadTokens ?? 0) +
-					(lastStep.cacheWriteTokens ?? 0),
-				limit,
-			};
-		}
-		return {
-			id: job.id,
-			process: "job",
-			jobKind: job.kind,
-			title: job.title,
-			chatId: job.chatId,
-			startedAt: Date.parse(job.createdAt) || 0,
-			cost: job.costUsd ?? null,
-			context,
-			// BYOK (owner, 2026-09-22): a refusal is info, not failure —
-			// the honest line the runner left ("failed") reads as setup
-			// needed, matching the dispatch card's quiet tone. The
-			// provider-key refusal twin (zero-keys wave, Platform's
-			// 66dbea9): a pinned model whose key is gone reads as the key
-			// being needed, same quiet tone.
-			activity: isModelsRefusal(job.error)
-				? "needs model setup"
-				: isProviderKeyRefusal(job.error)
-					? "needs a provider key"
-					: (job.activity ?? ""),
-			model: usage?.model,
-			steps: usage?.steps,
-		};
-	});
-	for (const task of feed.tasks) {
-		if (task.status !== "running") continue;
-		blobs.push({
+	return feed.tasks
+		.filter((task) => task.status === "running")
+		.map((task) => ({
 			id: task.id,
-			process: "task",
-			taskKind: task.kind,
+			kind: task.kind,
 			title: task.title,
-			chatId: "",
 			startedAt: task.startedAt,
-			cost: null,
-			context: null,
 			activity: task.step,
-		});
-	}
-	blobs.sort((a, b) => a.startedAt - b.startedAt);
-	return blobs;
+		}))
+		.sort((a, b) => a.startedAt - b.startedAt);
 }
 
 /** Elapsed as a compact ticking string: 45s / 3m 04s / 1h 12m. */
@@ -296,13 +168,12 @@ function useNow(active: boolean): number {
 	return now;
 }
 
-const KIND_ICON: Record<JobKind, typeof SearchIcon> = {
-	research: SearchIcon,
-	visual: PenToolIcon,
-	pdf: FileTextIcon, // sources v0 — type-forced entry (JobKind grew "pdf")
+const TASK_VIEW: Record<FeedTask["kind"], { icon: typeof GlobeIcon; label: string }> = {
+	language: { icon: GlobeIcon, label: "Adding a language" },
+	video: { icon: ClapperboardIcon, label: "Video preparation" },
 };
 
-/** Abort states per blob id: pending (fired) / failed (backend absent). */
+/** Abort states per row id: pending (fired) / failed (backend absent). */
 type AbortState = "pending" | "failed";
 
 export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
@@ -310,17 +181,11 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 	const feed = feedProp ?? ctx.feed;
 	const refresh = ctx.refresh;
 	const blobs = useMemo(() => toBlobs(feed), [feed]);
-	const [openBlob, setOpenBlob] = useState<string | null>(null); // detail, inline-expanded
 	const [abortStates, setAbortStates] = useState<Record<string, AbortState>>({});
 	const now = useNow(blobs.length > 0);
 	// Refs for stable abort handlers (no re-created closures per tick).
-	const abortRef = useRef({ blobs, refresh, setAbortStates });
-	abortRef.current = { blobs, refresh, setAbortStates };
-
-	const totalCost = useMemo(() => {
-		const priced = blobs.map((b) => b.cost).filter((c): c is number => c !== null);
-		return priced.length === 0 ? null : priced.reduce((a, c) => a + c, 0);
-	}, [blobs]);
+	const abortRef = useRef({ refresh, setAbortStates });
+	abortRef.current = { refresh, setAbortStates };
 
 	const abort = useCallback(async (blob: ActivityBlob) => {
 		const { setAbortStates: set } = abortRef.current;
@@ -329,14 +194,11 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 			const res = await fetch("/api/activity/abort", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({
-					kind: blob.process,
-					id: blob.id,
-				}),
+				body: JSON.stringify({ kind: "task", id: blob.id }),
 			});
 			if (!res.ok) {
-				// 404 not_found / 409 not_running: the process is already gone —
-				// the desired end state. Refresh and clear; nothing to report.
+				// 409 not_running: the task already finished — the desired end
+				// state. Refresh and clear; nothing to report.
 				if (res.status === 404 || res.status === 409) {
 					abortRef.current.refresh();
 					set((s) => {
@@ -353,11 +215,9 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 		}
 	}, []);
 
-	// Sidebar-native skin (owner, sidebar round): part of the sidebar's
-	// surface, not a floating card — the border-t separator matches the
-	// sidebar's own edge line, the header matches the "Sessions" label, the
-	// rows match the session rows' hover. Empty means empty: the header sits
-	// alone (the cost span is population, not decoration).
+	// Sidebar-native skin: part of the sidebar's surface, not a floating card —
+	// the border-t separator matches the sidebar's own edge line, the header
+	// matches the "Sessions" label, the rows match the session rows' hover.
 	return (
 		<section data-testid="activity-section" className="border-t border-border px-3 pb-3 pt-2.5">
 			<div
@@ -377,15 +237,6 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 						All tasks
 					</Link>
 				)}
-				{blobs.some((b) => b.process !== "task") && (
-					<span
-						className={feed.tasks.length > 0 ? "tabular-nums" : "ml-auto tabular-nums"}
-						data-testid="activity-total-cost"
-						title="Total cost so far (estimated)"
-					>
-						{planCostLabel(totalCost, subscriptionLabels(blobs.map((blob) => blob.model)))}
-					</span>
-				)}
 			</div>
 			{blobs.length > 0 && (
 				<div className="flex max-h-[40dvh] flex-col gap-1 overflow-y-auto">
@@ -394,8 +245,6 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 							key={blob.id}
 							blob={blob}
 							now={now}
-							detailOpen={openBlob === blob.id}
-							onToggleDetail={() => setOpenBlob((id) => (id === blob.id ? null : blob.id))}
 							abortState={abortStates[blob.id]}
 							onAbort={() => void abort(blob)}
 						/>
@@ -406,86 +255,40 @@ export function ActivitySection({ feed: feedProp }: { feed?: ActivityFeed }) {
 	);
 }
 
-/** One blob: icon + elapsed + cost on the face; click → detail popover. */
+/** One running task: icon, title, step line and elapsed; the row opens the Tasks page. */
 function ActivityBlobRow({
 	blob,
 	now,
-	detailOpen,
-	onToggleDetail,
 	abortState,
 	onAbort,
 }: {
 	blob: ActivityBlob;
 	now: number;
-	detailOpen: boolean;
-	onToggleDetail: () => void;
 	abortState: AbortState | undefined;
 	onAbort: () => void;
 }) {
-	const { catalog } = useModelCatalog();
-	const Icon =
-		blob.process === "task"
-			? blob.taskKind === "language"
-				? GlobeIcon
-				: ClapperboardIcon
-			: (blob.jobKind && KIND_ICON[blob.jobKind]) || BotIcon;
-	const label =
-		blob.process === "task"
-			? blob.taskKind === "language"
-				? "Adding a language"
-				: "Video preparation"
-			: blob.jobKind === "research"
-				? "Researcher"
-				: blob.jobKind === "visual"
-					? "Figure maker"
-					: blob.jobKind === "pdf"
-						? "PDF reader"
-						: "Helper";
-	const face = (
-		<>
-			<Icon className="size-3.5 shrink-0 text-muted-foreground" />
-			<span className="min-w-0 flex-1">
-				<span className="block truncate font-medium text-card-foreground">{blob.title}</span>
-				{blob.activity ? (
-					<span className="block truncate text-muted-foreground" title={blob.activity}>
-						{blob.activity}
-					</span>
-				) : (
-					<span className="block truncate text-muted-foreground/80">{label}</span>
-				)}
-			</span>
-			<span className="flex shrink-0 items-center gap-2 tabular-nums text-muted-foreground">
-				{blob.process !== "task" && (
-					<span data-testid="activity-blob-cost">{planCostLabel(blob.cost, subscriptionLabel(blob.model))}</span>
-				)}
-				<span data-testid="activity-blob-elapsed">{formatElapsed(now - blob.startedAt)}</span>
-			</span>
-		</>
-	);
+	const { icon: Icon, label } = TASK_VIEW[blob.kind];
 	return (
 		<div
-			data-testid={`activity-blob-${blob.process}`}
+			data-testid="activity-blob-task"
 			className="relative rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-accent"
 		>
-			{blob.process === "task" ? (
-				// A task has no cost, context or session to show, so a detail would
-				// only repeat the face: the row opens the Tasks page instead.
-				<Link href="/tasks" className="flex w-full items-center gap-2 pr-7 text-left" data-testid="activity-task-link">
-					{face}
-				</Link>
-			) : (
-				<button
-					type="button"
-					onClick={onToggleDetail}
-					aria-expanded={detailOpen}
-					className="flex w-full items-center gap-2 pr-7 text-left"
-				>
-					{face}
-				</button>
-			)}
-			{/* The explicit END always on the blob's face (SCOPE) — the popover
-			    is for DETAIL, not the control. A failed abort locks the button and
-			    says why; a succeeded one just makes the blob vanish on refresh. */}
+			<Link href="/tasks" className="flex w-full items-center gap-2 pr-7 text-left" data-testid="activity-task-link">
+				<Icon className="size-3.5 shrink-0 text-muted-foreground" />
+				<span className="min-w-0 flex-1">
+					<span className="block truncate font-medium text-card-foreground">{blob.title}</span>
+					{blob.activity ? (
+						<span className="block truncate text-muted-foreground" title={blob.activity}>
+							{blob.activity}
+						</span>
+					) : (
+						<span className="block truncate text-muted-foreground/80">{label}</span>
+					)}
+				</span>
+				<span className="flex shrink-0 items-center gap-2 tabular-nums text-muted-foreground">
+					<span data-testid="activity-blob-elapsed">{formatElapsed(now - blob.startedAt)}</span>
+				</span>
+			</Link>
 			<button
 				type="button"
 				data-testid="activity-abort"
@@ -497,58 +300,6 @@ function ActivityBlobRow({
 			>
 				<SquareIcon className="size-3" />
 			</button>
-
-			{detailOpen && blob.process !== "task" && (
-				<div
-					data-testid="activity-blob-detail"
-					className="mt-1 flex flex-col gap-1 rounded-lg bg-accent/40 p-2 text-muted-foreground"
-				>
-					<div className="mb-1.5 flex items-center gap-2">
-						<Icon className="size-3.5 text-muted-foreground" />
-						<span className="font-medium">{label}</span>
-						<span className="ml-auto tabular-nums text-muted-foreground">{formatElapsed(now - blob.startedAt)}</span>
-					</div>
-					<div className="flex flex-col gap-1 text-muted-foreground">
-						<div className="truncate text-card-foreground" title={blob.title}>
-							{blob.title}
-						</div>
-						{blob.activity && <div className="break-words">{blob.activity}</div>}
-						<div className="flex justify-between gap-2">
-							<span>Cost</span>
-							<span className="tabular-nums text-card-foreground">
-								{planCostLabel(blob.cost, subscriptionLabel(blob.model))}
-							</span>
-						</div>
-						<div className="flex justify-between gap-2">
-							<span>Context</span>
-							<span className="tabular-nums text-card-foreground" data-testid="activity-blob-context">
-								{blob.context === null
-									? "—"
-									: `${formatTokens(blob.context.used)} / ${formatTokens(blob.context.limit)}`}
-							</span>
-						</div>
-						{blob.model && (
-							<div className="flex justify-between gap-2">
-								<span>Model</span>
-								<span className="truncate text-card-foreground">{stampModelLabel(catalog?.models, blob.model)}</span>
-							</div>
-						)}
-						{blob.steps !== undefined && (
-							<div className="flex justify-between gap-2">
-								<span>Steps</span>
-								<span className="tabular-nums text-card-foreground">{blob.steps}</span>
-							</div>
-						)}
-						<a href={`/chat/${blob.chatId}`} className="text-primary hover:underline">
-							Open session →
-						</a>
-					</div>
-					<div className="mt-2 text-muted-foreground/80">
-						{abortState === "failed" && "Couldn't stop it."}
-						{abortState === "pending" && "Stopping…"}
-					</div>
-				</div>
-			)}
 		</div>
 	);
 }

@@ -128,9 +128,11 @@ interface Call {
 	body: string | undefined;
 }
 
+const isTurnProbe = (url: string): boolean => /^\/api\/chats\/[^/]+\/turn$/.test(url);
+
 function installFetch(routes: {
 	chatPOST: (call: Call, attempt: number) => Response;
-	jobsGET?: (poll: number) => boolean;
+	turnGET?: (poll: number) => boolean;
 }): Call[] {
 	const calls: Call[] = [];
 	let poll = 0;
@@ -140,7 +142,7 @@ function installFetch(routes: {
 		if (url === "/api/chat" && init?.method === "POST") {
 			return routes.chatPOST(calls.at(-1)!, calls.filter((c) => c.url === "/api/chat").length);
 		}
-		if (url.startsWith("/api/jobs")) return Response.json({ turnInFlight: routes.jobsGET?.(++poll) ?? false });
+		if (isTurnProbe(url)) return Response.json({ turnInFlight: routes.turnGET?.(++poll) ?? false });
 		throw new Error(`unexpected fetch: ${url}`);
 	}) as typeof globalThis.fetch;
 	return calls;
@@ -178,7 +180,7 @@ describe("postInputEvent (the 409 identity-retry)", { skip: process.env.NO_SLOW 
 		const event: ChatInput = { type: "text", text: "my question while the wake turn ran" };
 		const calls = installFetch({
 			chatPOST: (_c, n) => (n === 1 ? new Response("busy", { status: 409 }) : new Response("stream", { status: 200 })),
-			jobsGET: (poll) => poll <= 1, // first poll: still running; second: done
+			turnGET: (poll) => poll <= 1, // first poll: still running; second: done
 		});
 		const m = model({ pollMs: 10, waitMaxMs: 100 });
 		const res = await m.postInputEvent(event);
@@ -195,7 +197,7 @@ describe("postInputEvent (the 409 identity-retry)", { skip: process.env.NO_SLOW 
 		const m = model({ pollMs: 10, waitMaxMs: 100 });
 		assert.equal((await m.postInputEvent({ type: "text", text: "q" })).status, 200);
 		assert.equal(
-			calls.filter((c) => c.url.startsWith("/api/chats/")).length,
+			calls.filter((c) => c.url.startsWith("/api/chats/") && !isTurnProbe(c.url)).length,
 			0,
 			"the retry never reads the record — the server owns it",
 		);
@@ -219,12 +221,12 @@ describe("postInputEvent (the 409 identity-retry)", { skip: process.env.NO_SLOW 
 	it("gives up after the deadline and surfaces the last 409", async () => {
 		const calls = installFetch({
 			chatPOST: () => new Response("busy", { status: 409 }),
-			jobsGET: () => true,
+			turnGET: () => true,
 		});
 		const m = model({ pollMs: 10, waitMaxMs: 100 });
 		const res = await m.postInputEvent({ type: "text", text: "q" });
 		assert.equal(res.status, 409);
-		const polls = calls.filter((c) => c.url.startsWith("/api/jobs")).length;
+		const polls = calls.filter((c) => isTurnProbe(c.url)).length;
 		assert.ok(polls <= 15, `expected bounded polling (~10×10ms), got ${polls}`);
 	});
 });
@@ -349,7 +351,7 @@ describe("send (one input event, verbatim consumption)", () => {
 		);
 	});
 
-	it("Wave C: markers injected mid-run (custom role, follow-up delivery) append to the tail by id", () => {
+	it("a learner's steer injected mid-run upserts the tail by id, never a second copy", () => {
 		// A never-settling fetch: the send only needs to flip the model into its
 		// streaming status synchronously — its POST floats (never rejects) while
 		// the injected wire events are asserted.
@@ -357,28 +359,17 @@ describe("send (one input event, verbatim consumption)", () => {
 		m.adoptRecord([{ id: "u1", role: "user", content: "hello", timestamp: 1 } as never] as never);
 		void m.send({ type: "text", text: "hello" });
 
-		// pi emits message_start + message_end for an injected follow-up marker
-		// (no streaming partials) — both must UPSERT the same tail slot by id.
-		const marker = {
-			id: "steer_job_x_1",
-			role: "custom",
-			customType: "subagent-steer",
-			content: "The research result arrived.",
-			display: true,
-			details: { jobId: "job_x", kind: "research" },
-			timestamp: 2,
-		};
+		// pi emits message_start + message_end for an injected steer (no
+		// streaming partials) — both must UPSERT the same tail slot by id.
+		const marker = { id: "steer_live_1", role: "user", content: "also cover Venus", timestamp: 2 };
 		m.applyWireEvent({ type: "message_start", message: marker } as never);
 		m.applyWireEvent({ type: "message_end", message: marker } as never);
 
 		const state = m.getState();
 		assert.ok(state.messages.length >= 2, "the marker produced a view message");
 		const tail = state.messages.at(-1)!;
-		assert.equal(tail.role, "user", "a steer marker projects as a user-role view message");
-		assert.ok(
-			tail.parts.some((p) => p.type === "data-subagent-artifact"),
-			"the marker renders its artifact part (SubagentSteerCard)",
-		);
+		assert.equal(tail.role, "user", "a steer projects as a user-role view message");
+		assert.match(JSON.stringify(tail.parts), /also cover Venus/, "the steer's text is on the message");
 
 		// A re-delivery of the same id (message_end replay) must NOT duplicate.
 		m.applyWireEvent({ type: "message_end", message: marker } as never);

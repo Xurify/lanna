@@ -73,7 +73,7 @@ function delay(ms: number, signal?: AbortSignal): Promise<void> {
 
 async function turnInFlight(model: SessionModel): Promise<boolean | null> {
 	try {
-		const res = await model.fetch(`/api/jobs?chatId=${encodeURIComponent(model.chatId)}`);
+		const res = await model.fetch(`/api/chats/${encodeURIComponent(model.chatId)}/turn`);
 		if (!res.ok) return null;
 		return ((await res.json()) as { turnInFlight?: boolean }).turnInFlight === true;
 	} catch {

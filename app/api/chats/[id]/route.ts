@@ -55,20 +55,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 /**
  * DELETE /api/chats/[id] — session deletion (owner rulings 2026-09-22/23).
  * Gates are the server orchestration's (server/chats.ts deleteChatSession):
- * 409 while a turn or background job is running — retryable.
+ * 409 while a turn is running — retryable.
  */
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const outcome = deleteChatSession(id);
 	if (!outcome.ok) {
-		return Response.json(
-			{
-				error: outcome.error,
-				code: outcome.code,
-				...("jobIds" in outcome ? { jobIds: outcome.jobIds } : {}),
-			},
-			{ status: outcome.status },
-		);
+		return Response.json({ error: outcome.error, code: outcome.code }, { status: outcome.status });
 	}
-	return Response.json({ ok: true, jobsRemoved: outcome.jobsRemoved });
+	return Response.json({ ok: true });
 }

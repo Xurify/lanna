@@ -157,8 +157,8 @@ describe("closesChatReply", () => {
 				{ type: "toolCall", name: "research" },
 				{ type: "toolCall", name: "pose" },
 			]),
-			true,
-			"a dispatched job only acknowledges",
+			false,
+			"a research result is read before the reply closes",
 		);
 		assert.equal(
 			closesChatReply([

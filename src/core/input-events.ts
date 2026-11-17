@@ -19,10 +19,6 @@
  *
  * (The plan verdict input died 2026-09-26 with the verdict itself — the
  * learner's post-plan reply is a natural text message.)
- *
- * Server-originated delivery (the wake pipeline's steers) is NOT a client
- * input — the handler accepts it on the same path (TurnInput) so every
- * turn rides one composition.
  */
 
 import type { QuestionAnswerData } from "./question-core.ts";
@@ -56,15 +52,8 @@ export type ChatInput =
 	 *  only with nothing active (mid-problem input rides the dock). */
 	| { type: "next" };
 
-/** A wake-pipeline steer delivery — same turn composition, server-origin.
- *  Wave C (2026-09-26): the idle wake carries EVERY queued marker as its
- *  input appends — with claimSteers deleted, the pump's wake is the only
- *  steer appender left (the in-run path hands markers to pi's own
- *  follow-up queue instead, so it never builds an input event). */
-export type SteerInput = { type: "steers"; steers: LannaMessage[] };
-
 /** Every input the turn composition accepts. */
-export type TurnInput = ChatInput | SteerInput;
+export type TurnInput = ChatInput;
 
 /** The dismissal event (owner design 2026-10-03, "A2"): NEVER composes a
  *  turn — the silent route appends + persists and wakes nothing. The

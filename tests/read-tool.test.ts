@@ -164,19 +164,19 @@ describe("read tool — PDFs", () => {
 		assert.match(text, /\(p\. N\)/, "tells the tutor how to cite");
 	});
 
-	it("sends a long PDF to the pdf job instead of dumping it", async () => {
+	it("sends a long PDF to the pdf tool instead of dumping it", async () => {
 		const file = writePdf(
 			"book.pdf",
 			Array.from({ length: 11 }, () => LINE),
 		);
 		const { text } = await run({ path: file });
-		assert.match(text, /11 pages, too long to read in place\. Dispatch the pdf job/);
+		assert.match(text, /11 pages, too long to read in place\. Call pdf with this path/);
 		assert.doesNotMatch(text, /--- Page/);
 	});
 
-	it("sends a PDF with a textless (scanned) page to the pdf job", async () => {
+	it("sends a PDF with a textless (scanned) page to the pdf tool", async () => {
 		const file = writePdf("scan.pdf", [LINE, ""]);
 		const { text } = await run({ path: file });
-		assert.match(text, /page 2 has little or no text \(likely scanned\)\. Dispatch the pdf job/);
+		assert.match(text, /page 2 has little or no text \(likely scanned\)\. Call pdf with this path/);
 	});
 });

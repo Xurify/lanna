@@ -39,7 +39,6 @@ import {
 } from "./native-messages.ts";
 import { activeCompactionOf, type CompactionDetails } from "./compaction.ts";
 import { QUESTION_TOOLS } from "./pending.ts";
-import type { SubagentArtifactData, SubagentResultMeta } from "./contracts/jobs.ts";
 
 /** A view part — the loose part vocabulary the renderers consume (the same
  *  shape names the pre-Wave-D UIMessage dialect used, so the renderer
@@ -65,7 +64,6 @@ export interface LannaViewMessage {
 	id: string;
 	role: "user" | "assistant";
 	parts: LannaViewPart[];
-	/** The subagentResult meta the steer cards read (marker details). */
 	metadata?: unknown;
 }
 
@@ -360,38 +358,10 @@ function applyResultTo(part: LannaViewPart | undefined, result: ToolResultMessag
 /** A marker's projected message. */
 function projectMarker(marker: LannaMarkerMessage, out: LannaViewMessage[]): void {
 	switch (marker.customType) {
-		case "subagent-steer": {
-			const meta = marker.details as SubagentResultMeta;
-			const artifact = marker.details as {
-				kind: SubagentArtifactData["kind"];
-				result: SubagentArtifactData["result"];
-				ui?: SubagentArtifactData["ui"];
-			};
-			out.push({
-				id: marker.id,
-				role: "user",
-				metadata: { subagentResult: meta },
-				parts: [
-					textPart(marker.content),
-					{
-						type: "data-subagent-artifact",
-						id: `sa_${marker.id}`,
-						data: { kind: artifact.kind, result: artifact.result, ui: artifact.ui },
-					},
-				],
-			});
+		// Results of the retired background jobs: older records only, not shown.
+		case "subagent-steer":
+		case "subagent-abort":
 			return;
-		}
-		case "subagent-abort": {
-			const meta = marker.details as SubagentResultMeta & { aborted: true };
-			out.push({
-				id: marker.id,
-				role: "user",
-				metadata: { subagentResult: meta },
-				parts: [textPart(marker.content), { type: "data-subagent-aborted", id: `sa_${marker.id}`, data: meta }],
-			});
-			return;
-		}
 		case "practice-thinking": {
 			// The learner's working trace / committed answer (practice
 			// sessions): a user-side card keyed on the structured details

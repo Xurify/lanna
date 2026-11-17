@@ -1,12 +1,11 @@
 /** Keyless research availability + the injected search port.
- * No network, no shared data files — the jobStore fake below is in-memory.
+ * No network, no shared data files.
  * A missing search key is a recoverable tool result, not a dispatch gate.
  */
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createWebTools } from "../src/agent/tools/web.ts";
-import { jobTools } from "../src/agent/tools/jobs.ts";
 import { runResearcherAgent } from "../src/agent/subagents/researcher.ts";
 import {
 	createFauxCore,
@@ -15,8 +14,6 @@ import {
 	fauxToolCall,
 	type FauxResponseStep,
 } from "@earendil-works/pi-ai";
-import type { JobStore } from "../src/core/ports.ts";
-import type { JobRecord } from "../src/core/contracts.ts";
 import type { SearchHit, SearchProvider } from "../src/core/search.ts";
 
 function stubProvider(hits: SearchHit[] = [{ title: "t", url: "https://e.com/", snippet: "s" }]): SearchProvider {
@@ -204,83 +201,6 @@ describe("keyless researcher loop", () => {
 	}
 });
 
-/** Minimal in-memory JobStore — registry tests never touch the fs. */
-function fakeJobStore(): JobStore {
-	const jobs = new Map<string, JobRecord>();
-	return {
-		createJob(init) {
-			const job: JobRecord = {
-				id: `job_${jobs.size + 1}`,
-				kind: init.kind,
-				chatId: init.chatId,
-				toolCallId: init.toolCallId,
-				status: "running",
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-				activity: "",
-			} as JobRecord;
-			jobs.set(job.id, job);
-			return job;
-		},
-		getJob: (id) => jobs.get(id) ?? null,
-		updateJob: (id, patch) => {
-			const job = jobs.get(id);
-			if (!job) return null;
-			return Object.assign(job, patch);
-		},
-		listJobs: () => [...jobs.values()],
-		findJobByToolCallId: () => null,
-		deleteJobsForChat: () => 0, // the drop tests never delete
-	};
-}
-
-function fakeCtx(available?: () => boolean) {
-	return {
-		chatId: "chat-drop-test",
-		jobStore: fakeJobStore(),
-		spawn: () => {},
-		...(available ? { searchAvailable: available } : {}),
-	};
-}
-
-describe("keyless research dispatch (jobTools)", () => {
-	it("searchAvailable: false → research remains in the registry", () => {
-		const tools = jobTools(fakeCtx(() => false));
-		assert.ok(tools.research, "research can fetch supplied URLs without a search provider");
-		assert.ok(tools.pdf, "the search-less server keeps its other sub-agents");
-	});
-
-	it("keyless dispatch preserves the async job acknowledgement and spawn contract", async () => {
-		const ctx = fakeCtx(() => false);
-		const spawned: Array<{ job: JobRecord; input: unknown }> = [];
-		const tools = jobTools({
-			...ctx,
-			spawn: (job, input) => {
-				spawned.push({ job, input });
-			},
-		});
-		const input = { question: "Verify the supplied URL", context: "https://example.com/source" };
-		const out = await tools.research!.execute!("keyless-call", input);
-		assert.match(String(out.details), /^Dispatched \(job job_1\)\./);
-		assert.match(String(out.details), /fire-and-forget/);
-		assert.equal(spawned.length, 1);
-		assert.equal(spawned[0]!.job.kind, "research");
-		assert.equal(spawned[0]!.job.toolCallId, "keyless-call");
-		assert.equal(spawned[0]!.job.status, "running");
-		assert.deepEqual(spawned[0]!.input, input);
-	});
-
-	it("searchAvailable: true → research present", () => {
-		const tools = jobTools(fakeCtx(() => true));
-		assert.ok(tools.research, "a keyed server exposes research");
-	});
-
-	it("absent seam = available (tests + any wiring without search)", () => {
-		const tools = jobTools(fakeCtx());
-		assert.ok(tools.research, "the seam is optional — default is honest availability");
-	});
-});
-
 // Exercise live registry factories too: search status must not override
 // the existing per-role/user-toggle policy.
 
@@ -299,44 +219,44 @@ const fakeChatStore = {
 
 const ctxBase = { chatId: "chat-gate-test", chatStore: fakeChatStore };
 
-const jobsCtx = (searchAvailable: boolean) => ({
+const sourcesCtx = (searchAvailable: boolean) => ({
 	chatId: ctxBase.chatId,
-	jobStore: fakeJobStore(),
-	spawn: () => {},
-	searchAvailable: () => searchAvailable,
+	engineFor: () => undefined,
+	recordUsage: () => {},
+	search: () => (searchAvailable ? stubProvider() : null),
 });
 
 describe("keyless role registries", () => {
-	it("the chat registry: unavailable keeps research on the live wiring path", () => {
-		const tools = chatTools({ jobs: jobsCtx(false) });
-		assert.ok(tools.research, "no search key is required to dispatch research");
-		assert.ok(tools.pdf, "the other job tools survive");
+	it("the chat registry: no search engine keeps research", () => {
+		const tools = chatTools({ sources: sourcesCtx(false) });
+		assert.ok(tools.research, "no search key is required to run research");
+		assert.ok(tools.pdf, "the reader survives without a search engine");
 	});
 
 	it("the chat registry: available keeps research", () => {
-		const tools = chatTools({ jobs: jobsCtx(true) });
+		const tools = chatTools({ sources: sourcesCtx(true) });
 		assert.ok(tools.research, "a keyed server exposes research through the chat");
 	});
 
 	it("the practice registry: research + pdf remain with or without search keys", () => {
 		const practice = (searchAvailable: boolean) =>
-			practiceTools({ chatId: ctxBase.chatId, chatStore: fakeChatStore, jobs: jobsCtx(searchAvailable) });
+			practiceTools({ chatId: ctxBase.chatId, chatStore: fakeChatStore, sources: sourcesCtx(searchAvailable) });
 		const on = practice(true);
 		assert.ok(on.research && on.pdf, "research + pdf are available to the practitioner");
 
 		const off = practice(false);
-		assert.ok(off.research, "keyless research dispatch is available in practice too");
+		assert.ok(off.research, "keyless research is available in practice too");
 		assert.ok(off.pdf && off.problem && off.conclude, "pdf is keyless — it survives; the problem tools stay");
 	});
 
 	it("the practice registry: the user toggle still drops research without search keys", () => {
-		const tools = filterToggleableTools(practiceTools({ ...ctxBase, jobs: jobsCtx(false) }), { research: false });
+		const tools = filterToggleableTools(practiceTools({ ...ctxBase, sources: sourcesCtx(false) }), { research: false });
 		assert.equal("research" in tools, false, "toggle-filtered like the chat side");
 		assert.ok(tools.pdf, "pdf unaffected by a research toggle");
 	});
 
 	it("the chat registry: the user toggle still drops research without search keys", () => {
-		const tools = filterToggleableTools(chatTools({ jobs: jobsCtx(false) }), { research: false });
+		const tools = filterToggleableTools(chatTools({ sources: sourcesCtx(false) }), { research: false });
 		assert.equal("research" in tools, false);
 		assert.ok(tools.pdf);
 	});

@@ -6,26 +6,17 @@ import {
 	type TeachingAgent,
 } from "../agent/teacher-agent.ts";
 import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
-import { createJobRunner } from "../agent/subagents/runner.ts";
+import { type SourceToolContext } from "../agent/tools/sources.ts";
 import { activeProfile, type ModelRole } from "../../config.ts";
 import { slovakLookup } from "../agent/lexicon.ts";
 import { checkerNote, checkSlovak } from "../core/slovak-check.ts";
 import type { LannaMessage } from "../core/native-messages.ts";
-import {
-	deliverJobResult,
-	noteSteersDurable,
-	reconcileUserSteers,
-	registerLiveAgent,
-	setJobRespawn,
-	setTurnRunner,
-	settleSteers,
-	unregisterLiveAgent,
-} from "./jobs.ts";
+import { reconcileUserSteers, registerLiveAgent, unregisterLiveAgent } from "./steers.ts";
 import { runPiTurn } from "./pi/ui-stream.ts";
 import { collectToolCallIds } from "./pi/call-ids.ts";
 import { providerEventNote } from "../agent/provider-events.ts";
 import { effectiveSettings, stores } from "./stores.ts";
-import { searchAvailable, searchProvider } from "./search.ts";
+import { searchProvider } from "./search.ts";
 import { providerKeyPresent } from "./keys.ts";
 import { resolveConversationSpec, resolveRoleSpec } from "../core/settings-resolution.ts";
 import { modelsNotConfigured, providerKeyMissing as providerKeyMissingEnvelope } from "../core/settings.ts";
@@ -41,7 +32,6 @@ import { emit } from "../core/events.ts";
 import { settledTurnResponse } from "./turn-runs.ts";
 import { asAgentMessages } from "../core/native-messages.ts";
 import { ChatInputError, inputAppends, parseChatInput, type TurnInput } from "../core/input-events.ts";
-import { steerDelivered } from "../core/contracts.ts";
 import type { CallUsage } from "../core/contracts.ts";
 import type { ChatRecord } from "../core/contracts/chat.ts";
 import { recordChatAnswer } from "./chat-evidence.ts";
@@ -94,60 +84,30 @@ function withSlovakEvidence(message: LannaMessage): LannaMessage {
  * record appends (core/input-events.ts), builds the agent from the record
  * (the record IS the agent state — state.messages = record.messages,
  * continue()), and runs the turn as a background object (pi/ui-stream.ts).
- * Wake-pipeline steers ride the same composition (TurnInput's steer kind).
- *
- * THE SAME COMPOSITION serves both entry points: client requests and the
- * wake pipeline's server-side steers (src/server/jobs.ts) — one code path
- * for write-ahead persistence, turn liveness, and the turn services.
+
  */
+
+function callUsageOf(usage: Usage): CallUsage {
+	return {
+		inputTokens: usage.input,
+		outputTokens: usage.output,
+		cacheReadTokens: usage.cacheRead,
+		cacheWriteTokens: usage.cacheWrite,
+		cacheWrite1hTokens: usage.cacheWrite1h ?? 0,
+		// Optional in pi's Usage — persisted as 0, never dropped.
+		reasoningTokens: usage.reasoning ?? 0,
+	};
+}
 
 function settlementErrorText(error: unknown): string {
 	return error instanceof TurnPersistenceError ? error.message : "An error occurred.";
 }
 
-const jobRunner = createJobRunner({
-	chatStore: stores.chatStore,
-	jobStore: stores.jobStore,
-	deliver: deliverJobResult,
-	// BYOK (owner, 2026-09-22): job engines resolve the chain — role
-	// override → slot → NOTHING — read FRESH per job (a settings PUT
-	// between dispatch and spawn lands); an empty chain flows through as
-	// undefined and the runner refuses the spawn honestly.
-	engineFor: (role) => resolveEngine(role),
-	// Key-presence gate (provider-key interlude, 2026-09-25): the runner
-	// reads the resolved engine's provider and asks THIS check (the agent
-	// layer may not read the key store); a missing key refuses the spawn
-	// with the 503-envelope family instead of dying mid-run.
-	providerKeyMissing: (provider, tier) =>
-		providerKeyPresent(provider) ? null : providerKeyMissingEnvelope(provider, [tier]),
-	// Search port wave (2026-09-20): the researcher's web_search runs on the
-	// injected port — resolved FRESH per job (key rotations land immediately).
-	// null = honestly unavailable; the dispatch-level drop (below) uses the
-	// same signal so keyless servers never see the research tool at all.
-	searchProvider,
-});
-
-// Wake-pipeline wiring (contracts.ts "THE ASYNC PROTOCOL" §4): the pipeline
-// delivers its steers through THIS composition root (one event: the steer
-// marker, appended natively under the turn claim), and crash recovery
-// re-spawns orphaned sub-agent loops through THIS runner.
-setTurnRunner(async (chatId, input) => {
-	const res = await handleChatInput(chatId, input);
-	// Drive the stream to completion server-side — nobody else will read it,
-	// and onFinish (persist, endTurn) only runs when it drains.
-	await res.arrayBuffer().catch(() => undefined);
-	return res.status;
-});
-/** The settings-resolved engine for one role — BYOK (owner, 2026-09-22):
- *  the chain (role override → slot → NOTHING) may end empty, and undefined
- *  flows through to the per-need refusal gates (runner), read
- *  FRESH so a settings PUT between dispatch and spawn lands. */
+/** The settings-resolved engine for one role, read fresh per call; undefined when no model is set for it. */
 function resolveEngine(role: ModelRole): PiEngine | undefined {
 	const spec = resolveRoleSpec(role, stores.settingsStore.readSettings());
 	return spec ? piEngineForSpec(spec) : undefined;
 }
-
-setJobRespawn((jobId) => void jobRunner.runJob(jobId));
 
 /** The route-facing entry: parse {chatId, input} and run one turn. */
 export async function handleChatRequest(
@@ -174,11 +134,7 @@ export async function handleChatRequest(
 	return handleChatInput(chatId, input, buildAgent);
 }
 
-/**
- * The turn composition: one input event → native record appends → one
- * agent turn as a background object. Also the wake pipeline's entry
- * (TurnInput's steer kind appends the marker under the same claim).
- */
+/** The turn composition: one input event → native record appends → one agent turn as a background object. */
 export async function handleChatInput(
 	chatId: string,
 	input: TurnInput,
@@ -253,19 +209,11 @@ export async function handleChatInput(
 	if (!compactedRecord) return Response.json({ error: "Unknown chat" }, { status: 404 });
 	record = compactedRecord;
 
-	// The input's native appends (pure; the honest 400 for an answer with no
-	// pending question call). Computed BEFORE beginTurn so a refused input
-	// leaves no liveness effects; read against the CURRENT record. Wave C:
-	// the idle wake carries EVERY queued marker (steerDelivered filters a
-	// re-fire of an already-landed one) - with claimSteers gone, this wake
-	// input is the only steer appender; in-run delivery rides pi's own
-	// follow-up queue and never builds an input event at all.
+	// The input's native appends (pure). Computed BEFORE beginTurn so a
+	// refused input leaves no liveness effects; read against the CURRENT record.
 	let appends;
 	try {
-		appends =
-			input.type === "steers"
-				? input.steers.filter((s) => !steerDelivered(record.messages, s.id))
-				: inputAppends(record, input).map(withSlovakEvidence);
+		appends = inputAppends(record, input).map(withSlovakEvidence);
 	} catch (err) {
 		if (err instanceof ChatInputError) {
 			return Response.json({ error: err.message }, { status: 400 });
@@ -318,13 +266,6 @@ export async function handleChatInput(
 		endTurn(chatId);
 		return new Response("Your input could not be saved. Please try again.", { status: 500 });
 	}
-	// Visibility bookkeeping is not the canonical save. Its failure must
-	// neither misreport a saved input as lost nor prevent the turn running.
-	try {
-		noteSteersDurable(chatId, merged);
-	} catch (err) {
-		console.error(`[chat ${chatId}] input visibility bookkeeping failed:`, err);
-	}
 
 	// MONEY CHANNEL (wave 4): one collector per request, fed by the agent's
 	// message_end events. Every model call's usage lands in the chat record's
@@ -332,15 +273,24 @@ export async function handleChatInput(
 	const turnUsageId = crypto.randomUUID();
 	const steps: CallUsage[] = [];
 	const collectUsage = (usage: Usage) => {
-		steps.push({
-			inputTokens: usage.input,
-			outputTokens: usage.output,
-			cacheReadTokens: usage.cacheRead,
-			cacheWriteTokens: usage.cacheWrite,
-			cacheWrite1hTokens: usage.cacheWrite1h ?? 0,
-			// Optional in pi's Usage — persisted as 0, never dropped.
-			reasoningTokens: usage.reasoning ?? 0,
-		});
+		steps.push(callUsageOf(usage));
+	};
+	// research and pdf run on their own role's model, so their calls are a
+	// usage entry of their own, priced under that model.
+	const sources: SourceToolContext = {
+		chatId,
+		engineFor: (reader) => resolveEngine(reader === "research" ? "researcher" : "pdfReader"),
+		cannotRun: (readerEngine) =>
+			providerKeyPresent(readerEngine.model.provider) ? null : "its model's provider has no key (Settings → API keys)",
+		search: searchProvider,
+		recordUsage: (model, usage) =>
+			stores.chatStore.appendTurnUsage(chatId, {
+				id: crypto.randomUUID(),
+				messageId: `reader_${turnUsageId}`,
+				at: new Date().toISOString(),
+				model,
+				steps: usage.map(callUsageOf),
+			}),
 	};
 
 	// BYOK (owner, 2026-09-22): the conversation chain was resolved by the
@@ -384,12 +334,7 @@ export async function handleChatInput(
 					{
 						chatId,
 						chatStore: stores.chatStore,
-						jobs: {
-							chatId,
-							jobStore: stores.jobStore,
-							spawn: (job, input) => void jobRunner.runJob(job.id, input),
-							searchAvailable,
-						},
+						sources,
 						review: reviewSeam,
 					},
 					agentOpts,
@@ -409,12 +354,7 @@ export async function handleChatInput(
 									chatId,
 								}),
 						},
-						jobs: {
-							chatId,
-							jobStore: stores.jobStore,
-							spawn: (job, input) => void jobRunner.runJob(job.id, input),
-							searchAvailable,
-						},
+						sources,
 					},
 					{ ...agentOpts, noteLearnerText: chatCheckerNote, appContent: chatAppContent(chatId) },
 				);
@@ -437,12 +377,7 @@ export async function handleChatInput(
 		// coalescing). Settlement still cannot beat the flow below: it needs
 		// a streamed response, which never happens inside the constructor.
 		turnMessages = () => constructed.state.messages;
-		registerLiveAgent(
-			chatId,
-			constructed,
-			input.type !== "steers" && input.type !== "continue",
-			input.type === "steers" ? new Set(appends.map((message) => message.id)) : undefined,
-		);
+		registerLiveAgent(chatId, constructed);
 		// Debug recorder run marker (owner, 2026-10-04): correlates the
 		// JSONL event stream with the record's turns; no-op unless
 		// LANNA_PROVIDER_EVENTS=1.
@@ -480,13 +415,11 @@ export async function handleChatInput(
 				// merely because usage/other settlement work failed.
 				const persisted = stores.chatStore.getChat(chatId)?.messages ?? [];
 				reconcileUserSteers(chatId, persisted);
-				settleSteers(chatId, persisted, true, constructed);
 			},
 			onFinish: (turnMessages, isAborted) => {
 				// Wave B: the record write is the agent's own final state —
 				// the new messages are the slice past the merged base.
 				const stamped = persistTurn(stores.chatStore, chatId, persistBaseCount, turnMessages, isAborted);
-				noteSteersDurable(chatId, stores.chatStore.getChat(chatId)?.messages ?? stamped);
 				// usage log append (idempotent per turn id) — the stats bar
 				// refolds this on the client after the turn settles. The
 				// provenance message is the turn's FIRST new assistant message.
@@ -515,16 +448,8 @@ export async function handleChatInput(
 				// nothing must find the persisted record current — the same
 				// ordering rule as endTurn.
 				unregisterTurn(chatId);
-				// Wave C steer settlement: the live agent is dead (no more
-				// followUp handoffs) - reconcile the steer registry against
-				// what this run actually persisted (in-run injections
-				// resolve; stranded markers return to pending), then let
-				// the pump take any stragglers down the idle wake.
+				// The learner's steers: saved ones are done, stranded ones wait for the chat's next turn.
 				unregisterLiveAgent(chatId);
-				settleSteers(chatId, stamped, false, constructed);
-				// Composer steers (2026-10-03): delivered ids dropped, stranded
-				// ones stay parked for the chat's next run (the registry is the
-				// stranding safety net — the agent's undrained copy died above).
 				reconcileUserSteers(chatId, stamped);
 				// THE SETTLE KICK (owner round 14): the turn settled — if the
 				// projection is now over threshold, the summary starts in the

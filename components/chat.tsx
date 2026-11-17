@@ -32,7 +32,6 @@ import { ChatBoard, useDrill } from "@/components/chat-board";
 import { ChatExportMenu } from "@/components/chat-export";
 import { Separator } from "@/components/ui/separator";
 import { artifactRenderers } from "@/components/artifacts";
-import { SubagentSteerCard } from "@/components/artifacts/steer-card";
 import { Composer } from "@/components/composer";
 import { useEnterSubmits } from "@/components/enter-submits";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
@@ -40,9 +39,8 @@ import { dockStateKey } from "@/components/dock-state-key";
 import { QueuedSteersBody, type QueuedSteerLine } from "@/components/queued-steers";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { useFieldCycle } from "@/components/field-cycle";
-import { JobsContext } from "@/components/jobs-context";
 import { StatsBar } from "@/components/stats-bar";
-import { useServerEvent, useServerResync } from "@/components/server-events";
+import { useServerEvent } from "@/components/server-events";
 import {
 	isProviderKeyRefusal,
 	kbdEventForAction as kbdEventForChat,
@@ -58,7 +56,7 @@ import { ThinkingCard, type PracticeThinkingData } from "@/components/practice-c
 import { TopBar } from "@/components/top-bar";
 import { cn } from "@/lib/utils";
 import { setShowWorking, useShowWorking, WORKING_TOOLS } from "@/components/show-working";
-import type { ArtifactPartProps, JobRecord, TurnUsage, SessionPricing } from "@/src/core";
+import type { ArtifactPartProps, TurnUsage, SessionPricing } from "@/src/core";
 import type { LannaViewMessage } from "@/src/core";
 import {
 	CompactionCutDivider,
@@ -155,10 +153,6 @@ function SystemLine({ children, testId }: { children: React.ReactNode; testId?: 
 			{children}
 		</div>
 	);
-}
-
-function isSubagentSteer(m: LannaViewMessage): boolean {
-	return (m.metadata as { subagentResult?: unknown } | undefined)?.subagentResult != null;
 }
 
 function lastReplyText(messages: readonly LannaViewMessage[]): string {
@@ -715,9 +709,7 @@ export function Chat({
 	// outgoing message, BEFORE the stream produces anything — so a bounded,
 	// self-terminating window of three record fetches (400ms/1s/2s) catches
 	// the insert and shows the marker during the turn, then stops. No
-	// standing poll — the window exists only for these seconds. (The dock
-	// nudges that lived here died at S5: dispatch writes announce jobs-changed
-	// from the store, extraction announces activity-changed at setPhase.)
+	// standing poll — the window exists only for these seconds.
 	const turnStartStatusRef = useRef(status);
 	// The window must survive the submitted→streaming flip (the stream starts
 	// in well under 400ms), so the timers are guarded by this ref — dropped at
@@ -878,106 +870,8 @@ export function Chat({
 		};
 	}, [status, chatId, syncFromServer]);
 
-	// ── Central job observability (contracts.ts "THE ASYNC PROTOCOL" §4) ──
-	// ONE fetch of /api/jobs drives every job surface (transcript dispatch
-	// cards, the sub-agents panel) and re-syncs the transcript exactly once
-	// when a job settles. PUSH (architecture S4, 2026-10-02): the store
-	// announces every job write on the events channel; the interval poll and
-	// its pollMs/jobPartCount gating are RETIRED. The view fetches once on
-	// mount, once per jobs-changed announcement (trailing-debounced — a
-	// sub-agent run writes activity-line bursts; 250ms coalesces them at or
-	// below the old 1s poll cadence), and once on channel resync.
-	//
-	// A settle no longer implies the record is complete: CONTINUATION
-	// COALESCING flips the job done at claim time — while the learner's own
-	// answer turn is still streaming (and a settle can race a second job's
-	// wake turn). Syncing mid-turn would swap in a stale snapshot
-	// mid-stream, which breaks the SDK's in-place continuation merge
-	// (duplicate message ids). So: a settle during a busy turn defers the
-	// sync; the next idle fetch adopts the finished record.
-	const [jobs, setJobs] = useState<JobRecord[]>([]);
 	const localStreamRef = useRef(false);
 	localStreamRef.current = localStream;
-	const jobStatusRef = useRef<Map<string, string>>(new Map());
-	// A settle seen during a busy turn — the sync is owed, not dropped.
-	const pendingSyncRef = useRef(false);
-	// (The dispatch nudge effect that lived here — refreshActivity per new
-	// dispatch tool part — died at S5: the store announces jobs-changed at
-	// the dispatch write; the dock subscribes.)
-	// First-fetch guard (the old first-tick guard): the initial read adopts
-	// existing history (jobs recorded before mount) without nudging — a
-	// nudge is only owed for a running job the feed hasn't seen THIS session.
-	const firstFetchRef = useRef(true);
-	// The trailing debounce for jobs-changed announcements (one timer), and
-	// the ref the timer fires through (a stale closure must never fetch an
-	// old chatId).
-	const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-	const fetchJobsRef = useRef<() => void>(() => {});
-	const fetchJobs = useCallback(async () => {
-		try {
-			const res = await fetch(`/api/jobs?chatId=${encodeURIComponent(chatId)}`);
-			if (!res.ok) return;
-			const data = (await res.json()) as { jobs?: JobRecord[]; turnInFlight?: boolean };
-			const list = data.jobs ?? [];
-			for (const j of list) {
-				const prev = jobStatusRef.current.get(j.id);
-				if (prev === "running" && j.status !== "running") {
-					// A settle — the blob leaves the dock via the store's jobs-changed
-					// announce at this very write (S5); this handler owns the RECORD.
-					// The record is only guaranteed complete when no turn is in
-					// flight — locally or server-side (a coalesced settle fires
-					// mid-turn by design), so the FULL sync waits for idle.
-					// Ground rule (2026-09-15): delivered content shows
-					// immediately anyway — adopt append-only NOW; the idle
-					// sync still settles the record properly.
-					if (localStreamRef.current || data.turnInFlight === true) {
-						pendingSyncRef.current = true;
-						void adoptAppendOnly();
-					} else {
-						void syncFromServer();
-					}
-				}
-				jobStatusRef.current.set(j.id, j.status);
-			}
-			firstFetchRef.current = false;
-			if (pendingSyncRef.current && !localStreamRef.current && data.turnInFlight !== true) {
-				pendingSyncRef.current = false;
-				void syncFromServer();
-			}
-			setJobs(list);
-			// (Wake-turn adoption that lived here — the turnInFlight attach
-			// line — died at S3: turn-started on the events channel owns
-			// discovery now. turnInFlight is STILL READ above: the settle
-			// logic's idle check needs it.)
-		} catch {
-			/* transient fetch failure — the next jobs-changed announcement re-fetches */
-		}
-	}, [chatId, syncFromServer, adoptAppendOnly]);
-	fetchJobsRef.current = () => void fetchJobs();
-	// Mount + chat switch: the IMMEDIATE (non-debounced) initial read. The
-	// firstFetch guard resets with the old rule — true only when this
-	// session has never seen a job (a chat switch keeps the map: job ids
-	// are unique per chat, and a newly-seen running job may still nudge).
-	useEffect(() => {
-		firstFetchRef.current = jobStatusRef.current.size === 0;
-		void fetchJobs();
-	}, [fetchJobs]); // identity changes exactly on chatId
-	useServerEvent("jobs-changed", (p) => {
-		if (p.chatId != null && p.chatId !== chatId) return; // ours or unattributed
-		if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
-		fetchDebounceRef.current = setTimeout(() => {
-			fetchDebounceRef.current = undefined;
-			fetchJobsRef.current();
-		}, 250);
-	});
-	// Reconnect catch-up: events missed while the channel was down.
-	useServerResync(() => fetchJobsRef.current());
-	useEffect(
-		() => () => {
-			if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
-		},
-		[],
-	);
 
 	// ── Server-initiated turn discovery (push-architecture S3, 2026-10-02) ──
 	// Every turn THIS chat runs is announced on the events channel — the
@@ -1137,11 +1031,10 @@ export function Chat({
 					openFigure: (svg, inverted) => setFigureFocus({ svg, inverted }),
 				}}
 			>
-				<JobsContext.Provider value={jobs}>
-					{/* The session surface: the transcript column (header + scroller). The dock overlays the column bottom (outside the scroller); a spacer in the transcript reserves its height. */}
-					<div className="flex h-dvh">
-						<div className="flex min-w-0 flex-1 flex-col">
-							{/* The top bar is its own block (owner, top-fade round 4): in flow
+				{/* The session surface: the transcript column (header + scroller). The dock overlays the column bottom (outside the scroller); a spacer in the transcript reserves its height. */}
+				<div className="flex h-dvh">
+					<div className="flex min-w-0 flex-1 flex-col">
+						{/* The top bar is its own block (owner, top-fade round 4): in flow
 				    above the scroller on the plain page background — no gradient. Its
 				    bottom outline (border-b border-border) matches the one that
 				    separates the left sidebar — same width, same color (owner, r5).
@@ -1151,205 +1044,196 @@ export function Chat({
 				    60px is an ALIGNMENT, not just a size: it equals the sidebar's
 				    Lanna wordmark band, so the header's border-b continues that
 				    band's bottom edge as one line across the app (owner, round 6). */}
-							<TopBar
-								bare={kind === "chat"}
-								// While renaming the bar is NOT a drag surface: app-region:drag
-								// would eat the mousedown, so click-to-escape (below) could
-								// never fire. Rename mode is interactive mode (owner ask) —
-								// TopBar's one escape hatch.
-								drag={!renaming}
-								onMouseDown={(e) => {
-									// Escape hitbox: any mousedown outside the input itself blurs
-									// it, running the existing onBlur commit path. The input is
-									// shrink-to-fit (field-sizing), so the rest of the bar is
-									// this spacer + inert chips — all click-to-exit (owner ask).
-									if (renaming && e.target !== titleInputRef.current) titleInputRef.current?.blur();
-								}}
-							>
-								{renaming ? (
-									<>
-										<input
-											ref={titleInputRef}
-											value={titleDraft}
-											onChange={(e) => setTitleDraft(e.target.value)}
-											onKeyDown={(e) => {
-												if (e.key === "Enter") void commitRename(titleDraft);
-												// stopPropagation claims the Esc (keyboard wave A):
-												// closing rename must not also abort a turn.
-												else if (e.key === "Escape") {
-													e.stopPropagation();
-													setRenaming(false);
-												}
-											}}
-											onBlur={() => void commitRename(titleDraft)}
-											spellCheck={false}
-											aria-label="Chat title"
-											title="Rename this chat"
-											className="lanna-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
-										/>
-										{/* flex-1 spacer during rename too, so the chips stay at
+						<TopBar
+							bare={kind === "chat"}
+							// While renaming the bar is NOT a drag surface: app-region:drag
+							// would eat the mousedown, so click-to-escape (below) could
+							// never fire. Rename mode is interactive mode (owner ask) —
+							// TopBar's one escape hatch.
+							drag={!renaming}
+							onMouseDown={(e) => {
+								// Escape hitbox: any mousedown outside the input itself blurs
+								// it, running the existing onBlur commit path. The input is
+								// shrink-to-fit (field-sizing), so the rest of the bar is
+								// this spacer + inert chips — all click-to-exit (owner ask).
+								if (renaming && e.target !== titleInputRef.current) titleInputRef.current?.blur();
+							}}
+						>
+							{renaming ? (
+								<>
+									<input
+										ref={titleInputRef}
+										value={titleDraft}
+										onChange={(e) => setTitleDraft(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") void commitRename(titleDraft);
+											// stopPropagation claims the Esc (keyboard wave A):
+											// closing rename must not also abort a turn.
+											else if (e.key === "Escape") {
+												e.stopPropagation();
+												setRenaming(false);
+											}
+										}}
+										onBlur={() => void commitRename(titleDraft)}
+										spellCheck={false}
+										aria-label="Chat title"
+										title="Rename this chat"
+										className="lanna-no-drag min-w-[8ch] max-w-[70%] shrink-0 bg-transparent font-title text-2xl font-semibold tracking-tight caret-current outline-none [field-sizing:content]"
+									/>
+									{/* flex-1 spacer during rename too, so the chips stay at
 							    the right edge; clicks here commit via the header
 							    mousedown handler. */}
-										<div className="min-w-4 flex-1" aria-hidden="true" />
-									</>
-								) : (
-									<>
-										<Hint
-											// F2 renames (registry) — surfaced on the hover.
-											label="Rename chat"
-											action="rename-session"
-											side="bottom"
-										>
-											<button
-												type="button"
-												onClick={() => {
-													setTitleDraft(titleText);
-													setRenaming(true);
-												}}
-												className={cn(
-													"lanna-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent",
-													kind === "chat"
-														? "font-ui text-sm font-medium text-muted-foreground transition-opacity"
-														: "font-title text-2xl font-semibold tracking-tight",
-													kind === "chat" && pageTitleInView && "pointer-events-none opacity-0",
-												)}
-												aria-hidden={kind === "chat" && pageTitleInView ? true : undefined}
-												tabIndex={kind === "chat" && pageTitleInView ? -1 : undefined}
-											>
-												{titleText}
-											</button>
-										</Hint>
-										{/* flex-1 spacer: keeps the chips at the right edge AND stays a
-							    drag surface (no carve-out) — the freed bar is grippable. */}
-										<div className="min-w-4 flex-1" aria-hidden="true" />
-									</>
-								)}
-								{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
-					    tool calls are hidden by default; this chip brings them back. */}
-								{kind !== "chat" && (
-									<Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
+									<div className="min-w-4 flex-1" aria-hidden="true" />
+								</>
+							) : (
+								<>
+									<Hint
+										// F2 renames (registry) — surfaced on the hover.
+										label="Rename chat"
+										action="rename-session"
+										side="bottom"
+									>
 										<button
 											type="button"
-											data-testid="show-working"
-											aria-pressed={showWorking}
-											onClick={(e) => {
-												blurAfterPointerClick(e);
-												setShowWorking(!showWorking);
+											onClick={() => {
+												setTitleDraft(titleText);
+												setRenaming(true);
 											}}
 											className={cn(
-												"lanna-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors hover:text-foreground",
-												showWorking ? "border-border text-foreground" : "border-border/60 text-muted-foreground",
+												"lanna-no-drag -mx-1.5 min-w-4 shrink cursor-text truncate rounded-md px-1.5 text-left transition-colors hover:bg-accent",
+												kind === "chat"
+													? "font-ui text-sm font-medium text-muted-foreground transition-opacity"
+													: "font-title text-2xl font-semibold tracking-tight",
+												kind === "chat" && pageTitleInView && "pointer-events-none opacity-0",
 											)}
+											aria-hidden={kind === "chat" && pageTitleInView ? true : undefined}
+											tabIndex={kind === "chat" && pageTitleInView ? -1 : undefined}
 										>
-											<CogIcon className="size-3.5" aria-hidden />
-											{showWorking ? "Hide working" : "Show working"}
+											{titleText}
 										</button>
 									</Hint>
-								)}
-								{messages.length > 0 && (
-									<ChatExportMenu
-										chatId={chatId}
-										title={titleText}
-										messages={messages}
-										nativeMessages={nativeMessages}
-										plain={kind === "chat"}
-									/>
-								)}
-								{kind === "practice" && (
-									<span
-										data-testid="practice-tag"
-										data-phase="practice"
-										aria-hidden="true"
-										className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-xs font-semibold text-muted-foreground"
+									{/* flex-1 spacer: keeps the chips at the right edge AND stays a
+							    drag surface (no carve-out) — the freed bar is grippable. */}
+									<div className="min-w-4 flex-1" aria-hidden="true" />
+								</>
+							)}
+							{/* Show working (redesign 2026-10-27): reasoning + bookkeeping
+					    tool calls are hidden by default; this chip brings them back. */}
+							{kind !== "chat" && (
+								<Hint label={showWorking ? "Hide the tutor's working" : "Show the tutor's working"} side="bottom">
+									<button
+										type="button"
+										data-testid="show-working"
+										aria-pressed={showWorking}
+										onClick={(e) => {
+											blurAfterPointerClick(e);
+											setShowWorking(!showWorking);
+										}}
+										className={cn(
+											"lanna-no-drag flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors hover:text-foreground",
+											showWorking ? "border-border text-foreground" : "border-border/60 text-muted-foreground",
+										)}
 									>
-										<DumbbellIcon className="size-3" />
-										Practice
-									</span>
-								)}
-							</TopBar>
+										<CogIcon className="size-3.5" aria-hidden />
+										{showWorking ? "Hide working" : "Show working"}
+									</button>
+								</Hint>
+							)}
+							{messages.length > 0 && (
+								<ChatExportMenu
+									chatId={chatId}
+									title={titleText}
+									messages={messages}
+									nativeMessages={nativeMessages}
+									plain={kind === "chat"}
+								/>
+							)}
+							{kind === "practice" && (
+								<span
+									data-testid="practice-tag"
+									data-phase="practice"
+									aria-hidden="true"
+									className="pointer-events-none flex shrink-0 select-none items-center gap-1 text-xs font-semibold text-muted-foreground"
+								>
+									<DumbbellIcon className="size-3" />
+									Practice
+								</span>
+							)}
+						</TopBar>
 
-							<SessionFind scopeRef={sessionFindScopeRef} scrollContextRef={scrollContextRef} />
-							<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
-								<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
-									<ConversationContent
-										className="min-h-full gap-0 p-0"
-										scrollClassName={kind === "chat" ? "lanna-fade-out" : undefined}
+						<SessionFind scopeRef={sessionFindScopeRef} scrollContextRef={scrollContextRef} />
+						<div ref={sessionFindScopeRef} className="relative flex min-h-0 flex-1">
+							<Conversation className="h-full min-w-0 flex-1" initial="instant" contextRef={scrollContextRef}>
+								<ConversationContent
+									className="min-h-full gap-0 p-0"
+									scrollClassName={kind === "chat" ? "lanna-fade-out" : undefined}
+								>
+									<div
+										data-session-find-root=""
+										className={cn(
+											COLUMN,
+											"flex flex-1 flex-col gap-4 pt-4",
+											kind === "chat" && "max-w-[42rem] gap-5 pt-10",
+										)}
 									>
-										<div
-											data-session-find-root=""
-											className={cn(
-												COLUMN,
-												"flex flex-1 flex-col gap-4 pt-4",
-												kind === "chat" && "max-w-[42rem] gap-5 pt-10",
-											)}
-										>
-											{messages.length === 0 && !busy && (
-												<ConversationEmptyState
-													title="New chat"
-													description={
-														kind === "practice"
-															? "Your tutor starts with a first problem."
-															: "Ask anything about the language."
-													}
-												/>
-											)}
+										{messages.length === 0 && !busy && (
+											<ConversationEmptyState
+												title="New chat"
+												description={
+													kind === "practice"
+														? "Your tutor starts with a first problem."
+														: "Ask anything about the language."
+												}
+											/>
+										)}
 
-											{messages.map((m, mi) =>
-												m.role === "user" && isSubagentSteer(m) ? (
-													// Sub-agent delivery (wake-pipeline steer): NO message bubble — the
-													// artifact card sits in the transcript column directly, full width
-													// and centered like the tutor's artifacts (contracts.ts "THE ASYNC
-													// PROTOCOL" §4). Key fallback: legacy transcripts (pre id-hygiene)
-													// can still hold empty ids — the index keeps keys unique for them.
-													<SubagentSteerCard key={m.id || `m-${mi}`} message={m} />
-												) : m.role === "user" &&
-												  m.parts.length > 0 &&
-												  m.parts.every((p) => p.type.startsWith("data-")) ? (
-													// Marker cards (custom messages, 2026-10-04): user-side
-													// scaffolding — the graph-context pick, the practice
-													// thinking trace — render as cards in the transcript
-													// column directly, NO chat bubble (the subagent-steer
-													// precedent). The user branch below renders text only;
-													// without this hoist a data-only message read as an
-													// EMPTY bubble (owner report, 2026-10-04).
-													<Fragment key={m.id || `m-${mi}`}>
-														{m.parts.map((part, pi) => {
-															switch (part.type) {
-																case "data-compaction":
-																	return <CompactionMomentDivider key={pi} data={part.data as CompactionDividerData} />;
-																case "data-compaction-cut":
-																	return <CompactionCutDivider key={pi} data={part.data as CompactionDividerData} />;
-																case "data-practice-thinking":
-																	return <ThinkingCard key={pi} data={part.data as PracticeThinkingData} />;
-																case "data-practice-next":
-																	// The learner's move-on signal (owner round 16): a compact
-																	// centered mono-caps line — chrome, the dismissal register.
-																	return (
-																		<div
-																			key={pi}
-																			data-testid="practice-next-line"
-																			className="my-4 flex items-center justify-center gap-1.5 font-ui text-xs font-semibold text-muted-foreground"
-																		>
-																			<ArrowRightIcon className="size-3" />
-																			Next problem
-																		</div>
-																	);
-																default:
-																	return null;
-															}
-														})}
-													</Fragment>
-												) : (
-													<Fragment key={m.id || `m-${mi}`}>
-														{m.role === "user" && lines?.get(mi) ? (
-															<LearnerLineView
-																line={lines.get(mi)!}
-																text={messageText(m)}
-																recede={busy && mi < currentLine}
-																titleRef={lines.get(mi)!.kind === "title" ? setPageTitle : undefined}
-															/>
-														) : m.role === "user" ? (
-															/* THE DOCUMENT ROW (owner round, 2026-10-05): no right-aligned
+										{messages.map((m, mi) =>
+											m.role === "user" && m.parts.length > 0 && m.parts.every((p) => p.type.startsWith("data-")) ? (
+												// Marker cards (custom messages, 2026-10-04): user-side
+												// scaffolding — the graph-context pick, the practice
+												// thinking trace — render as cards in the transcript
+												// column directly, NO chat bubble (the subagent-steer
+												// precedent). The user branch below renders text only;
+												// without this hoist a data-only message read as an
+												// EMPTY bubble (owner report, 2026-10-04).
+												<Fragment key={m.id || `m-${mi}`}>
+													{m.parts.map((part, pi) => {
+														switch (part.type) {
+															case "data-compaction":
+																return <CompactionMomentDivider key={pi} data={part.data as CompactionDividerData} />;
+															case "data-compaction-cut":
+																return <CompactionCutDivider key={pi} data={part.data as CompactionDividerData} />;
+															case "data-practice-thinking":
+																return <ThinkingCard key={pi} data={part.data as PracticeThinkingData} />;
+															case "data-practice-next":
+																// The learner's move-on signal (owner round 16): a compact
+																// centered mono-caps line — chrome, the dismissal register.
+																return (
+																	<div
+																		key={pi}
+																		data-testid="practice-next-line"
+																		className="my-4 flex items-center justify-center gap-1.5 font-ui text-xs font-semibold text-muted-foreground"
+																	>
+																		<ArrowRightIcon className="size-3" />
+																		Next problem
+																	</div>
+																);
+															default:
+																return null;
+														}
+													})}
+												</Fragment>
+											) : (
+												<Fragment key={m.id || `m-${mi}`}>
+													{m.role === "user" && lines?.get(mi) ? (
+														<LearnerLineView
+															line={lines.get(mi)!}
+															text={messageText(m)}
+															recede={busy && mi < currentLine}
+															titleRef={lines.get(mi)!.kind === "title" ? setPageTitle : undefined}
+														/>
+													) : m.role === "user" ? (
+														/* THE DOCUMENT ROW (owner round, 2026-10-05): no right-aligned
 										    bubble — the transcript reads as a document. User text is a
 										    full-width quote block: muted "You" label, muted rail,
 										    FULL-opacity text (learner words are content, not whisper).
@@ -1358,149 +1242,145 @@ export function Chat({
 										    User text renders plain — the model's LaTeX pipeline is not
 										    applied to learner-authored text ($ stays $, no surprises).
 										    Rendered WITHOUT the Message wrapper — that is the bubble. */
-															<div
-																data-testid="user-message"
-																/* THE DOCUMENT, ALL-IN (owner rounds two+three, 2026-10-07):
+														<div
+															data-testid="user-message"
+															/* THE DOCUMENT, ALL-IN (owner rounds two+three, 2026-10-07):
 										    no chat side — the user message is a full-width card-color
 										    BAND, the IDENTICAL geometry as the thinking rows: 5px band
 										    padding, the left gap matches it, the rail fills the 3ch
 										    inset (the band is the authorship mark against the agent's
 										    transparent prose). The "You" label stays — one register
 										    with the thinking labels. */
-																className={
-																	kind === "chat"
-																		? "mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground first:mt-0"
-																		: "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"
-																}
-															>
-																{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
+															className={
+																kind === "chat"
+																	? "mt-12 font-ui text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground first:mt-0"
+																	: "my-3 ml-auto w-fit max-w-[85%] rounded-xl bg-well px-4 py-2.5 font-ui text-sm"
+															}
+														>
+															{/* The rail GROUPS (owner round 4, 2026-10-05): the YOU heading
 												    sits INSIDE the rail, same mono-xs register and same 1ch
 												    rail as the thinking rows — one quote geometry. */}
-																<div className="sr-only">You</div>
-																<div
-																	className={
-																		kind === "chat"
-																			? "whitespace-pre-wrap"
-																			: "lanna-prose whitespace-pre-wrap text-foreground"
-																	}
-																>
-																	{m.parts
-																		.filter((p) => p.type === "text")
-																		.map((p) => p.text)
-																		.join("\n")}
-																</div>
-															</div>
-														) : (
-															<Message
-																from="assistant"
-																className={cn(
-																	"max-w-full",
-																	kind === "chat" && "lanna-voice",
-																	kind === "chat" && localStream && mi === messages.length - 1 && "lanna-writing",
-																	kind === "chat" && busy && mi < currentLine && "lanna-recede",
-																)}
+															<div className="sr-only">You</div>
+															<div
+																className={
+																	kind === "chat"
+																		? "whitespace-pre-wrap"
+																		: "lanna-prose whitespace-pre-wrap text-foreground"
+																}
 															>
-																<MessageContent className="w-full">
-																	{m.parts.map((part, pi) => {
-																		const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
-																		// A tool call that errored BACK TO THE AGENT (validation
-																		// failure, malformed args) is invisible work — the agent
-																		// reads the error and retries. Owner ruling 2026-09-26:
-																		// surface the retry loop as one quiet line, any tool,
-																		// instead of silence,
-																		// so a flailing loop reads as a stall. Aborts are
-																		// terminal — nothing retries — so they stay silent.
-																		if (
-																			part.state === "output-error" &&
-																			part.type.startsWith("tool-") &&
-																			part.errorText !== "Operation aborted" &&
-																			!(kind === "chat" && CHAT_RECORD_TOOLS.has(part.type.slice("tool-".length)))
-																		) {
+																{m.parts
+																	.filter((p) => p.type === "text")
+																	.map((p) => p.text)
+																	.join("\n")}
+															</div>
+														</div>
+													) : (
+														<Message
+															from="assistant"
+															className={cn(
+																"max-w-full",
+																kind === "chat" && "lanna-voice",
+																kind === "chat" && localStream && mi === messages.length - 1 && "lanna-writing",
+																kind === "chat" && busy && mi < currentLine && "lanna-recede",
+															)}
+														>
+															<MessageContent className="w-full">
+																{m.parts.map((part, pi) => {
+																	const isLastPart = mi === messages.length - 1 && pi === m.parts.length - 1;
+																	// A tool call that errored BACK TO THE AGENT (validation
+																	// failure, malformed args) is invisible work — the agent
+																	// reads the error and retries. Owner ruling 2026-09-26:
+																	// surface the retry loop as one quiet line, any tool,
+																	// instead of silence,
+																	// so a flailing loop reads as a stall. Aborts are
+																	// terminal — nothing retries — so they stay silent.
+																	if (
+																		part.state === "output-error" &&
+																		part.type.startsWith("tool-") &&
+																		part.errorText !== "Operation aborted" &&
+																		!(kind === "chat" && CHAT_RECORD_TOOLS.has(part.type.slice("tool-".length)))
+																	) {
+																		return (
+																			<SystemLine key={`retry-${pi}`} testId="tool-retry">
+																				Retrying…
+																			</SystemLine>
+																		);
+																	}
+																	switch (part.type) {
+																		case "text": {
+																			if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
 																			return (
-																				<SystemLine key={`retry-${pi}`} testId="tool-retry">
-																					Retrying…
-																				</SystemLine>
+																				<div key={part.id || pi} className="lanna-source-passage">
+																					<MessageResponse
+																						{...(kind === "chat" ? { components: chatMdComponents } : {})}
+																					>
+																						{part.text}
+																					</MessageResponse>
+																				</div>
 																			);
 																		}
-																		switch (part.type) {
-																			case "text": {
-																				if (kind === "chat" && repeatsEarlierText(m.parts, pi)) return null;
-																				return (
-																					<div key={part.id || pi} className="lanna-source-passage">
-																						<MessageResponse
-																							{...(kind === "chat" ? { components: chatMdComponents } : {})}
-																						>
-																							{part.text}
-																						</MessageResponse>
-																					</div>
-																				);
-																			}
-																			case "reasoning":
-																				// Hidden unless "Show working" is on — except the live
-																				// row while this turn streams, which is the activity signal.
-																				if (kind === "chat")
-																					return status === "streaming" && isLastPart ? (
-																						<TutorWriting key={pi} />
-																					) : null;
-																				if (!showWorking && !(status === "streaming" && isLastPart)) return null;
-																				return (
-																					<Reasoning
-																						key={pi}
-																						isStreaming={status === "streaming" && isLastPart}
-																						className="mb-2"
-																					>
-																						<ReasoningTrigger />
-																						<ReasoningContent>{part.text ?? ""}</ReasoningContent>
-																					</Reasoning>
-																				);
-																			case "step-start":
-																				return pi > 0 && kind !== "chat" ? (
-																					<Separator key={pi} className="my-3" />
-																				) : null;
-																			case "tool-draw": {
-																				const drawn =
-																					part.state === "output-available"
-																						? (part.output as { svg?: string } | null)?.svg
-																						: undefined;
-																				if (drawn) return <SketchFigure key={pi} source={drawn} incomplete={false} />;
-																				return part.state !== "output-available" &&
-																					part.state !== "output-error" &&
-																					busy ? (
-																					<SketchFigure key={pi} source="" incomplete />
-																				) : null;
-																			}
-																			default: {
-																				// A tool call being WRITTEN (owner, streaming round 2026-10-01):
-																				// input-streaming spans the whole execution, and the live card —
-																				// spinner + shimmered activity label, the input watchable on expand
-																				// — replaces the retired transcript bottom line. On settling, the
-																				// registry's card takes over below.
-																				if (part.type.startsWith("tool-") && part.state === "input-streaming") {
-																					if (kind === "chat") return null;
-																					return <LiveToolCard key={pi} part={part as ArtifactPartProps["part"]} />;
-																				}
-																				// Artifact extension point (contracts.ts): job
-																				// parts and future artifacts render via the
-																				// registry — add renderers there, not here.
-																				if (part.type.startsWith("tool-")) {
-																					if (!showWorking && WORKING_TOOLS.has(part.type.slice("tool-".length)))
-																						return null;
-																					const Renderer = artifactRenderers[part.type.slice("tool-".length)];
-																					if (Renderer)
-																						return <Renderer key={pi} part={part as ArtifactPartProps["part"]} />;
-																				}
-																				return null;
-																			}
+																		case "reasoning":
+																			// Hidden unless "Show working" is on — except the live
+																			// row while this turn streams, which is the activity signal.
+																			if (kind === "chat")
+																				return status === "streaming" && isLastPart ? <TutorWriting key={pi} /> : null;
+																			if (!showWorking && !(status === "streaming" && isLastPart)) return null;
+																			return (
+																				<Reasoning
+																					key={pi}
+																					isStreaming={status === "streaming" && isLastPart}
+																					className="mb-2"
+																				>
+																					<ReasoningTrigger />
+																					<ReasoningContent>{part.text ?? ""}</ReasoningContent>
+																				</Reasoning>
+																			);
+																		case "step-start":
+																			return pi > 0 && kind !== "chat" ? <Separator key={pi} className="my-3" /> : null;
+																		case "tool-draw": {
+																			const drawn =
+																				part.state === "output-available"
+																					? (part.output as { svg?: string } | null)?.svg
+																					: undefined;
+																			if (drawn) return <SketchFigure key={pi} source={drawn} incomplete={false} />;
+																			return part.state !== "output-available" &&
+																				part.state !== "output-error" &&
+																				busy ? (
+																				<SketchFigure key={pi} source="" incomplete />
+																			) : null;
 																		}
-																	})}
-																</MessageContent>
-															</Message>
-														)}
-													</Fragment>
-												),
-											)}
+																		default: {
+																			// A tool call being WRITTEN (owner, streaming round 2026-10-01):
+																			// input-streaming spans the whole execution, and the live card —
+																			// spinner + shimmered activity label, the input watchable on expand
+																			// — replaces the retired transcript bottom line. On settling, the
+																			// registry's card takes over below.
+																			if (part.type.startsWith("tool-") && part.state === "input-streaming") {
+																				if (kind === "chat") return null;
+																				return <LiveToolCard key={pi} part={part as ArtifactPartProps["part"]} />;
+																			}
+																			// Artifact extension point (contracts.ts): job
+																			// parts and future artifacts render via the
+																			// registry — add renderers there, not here.
+																			if (part.type.startsWith("tool-")) {
+																				if (!showWorking && WORKING_TOOLS.has(part.type.slice("tool-".length)))
+																					return null;
+																				const Renderer = artifactRenderers[part.type.slice("tool-".length)];
+																				if (Renderer)
+																					return <Renderer key={pi} part={part as ArtifactPartProps["part"]} />;
+																			}
+																			return null;
+																		}
+																	}
+																})}
+															</MessageContent>
+														</Message>
+													)}
+												</Fragment>
+											),
+										)}
 
-											{/* THE placeholder, ACTION-gated (owner, optimistic round
+										{/* THE placeholder, ACTION-gated (owner, optimistic round
 							    3, 2026-10-02): spinner + shimmered Thinking… from the
 							    instant of any action that produces tokens — send,
 							    session start, reattach (status flips to
@@ -1515,217 +1395,211 @@ export function Chat({
 							    provider-connect gap. turnInFlight: the same state
 							    entered by external discovery (wake) / the poll
 							    fallback. Never collapsible itself. */}
-											{/* Compaction (owner round 15): the same register as the
+										{/* Compaction (owner round 15): the same register as the
 						    thinking placeholder — a visible session-wide state while
 						    the summarizer holds the model gate. Mutually exclusive with
 						    the THINKING placeholder by construction (the gate sits
 						    BEFORE beginTurn; the settle kick runs after endTurn). */}
-											{kind === "chat" && heldAnswer !== null && <HeldLine text={heldAnswer} />}
-											{kind === "chat" && !busy && !compacting && !error && (
-												<ChatReplies
-													reply={lastReplyText(messages)}
-													open={questionOpen(messages) || undefined}
-													onPick={sendQuickReply}
-													drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }}
-												/>
-											)}
-											{compacting && (
-												<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
-													<BrailleSpinner label="Summarizing the chat so far" />
-													<Shimmer duration={1}>Summarizing the chat so far…</Shimmer>
-												</span>
-											)}
-											{(status === "submitted" || turnInFlight) && kind === "chat" && <TutorWriting />}
-											{(status === "submitted" || turnInFlight) && kind !== "chat" && (
-												<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
-													<BrailleSpinner label="Thinking" />
-													<Shimmer duration={1}>Thinking…</Shimmer>
-												</span>
-											)}
-											{error && (
-												<div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
-													Something went wrong: {error.message}
-												</div>
-											)}
-										</div>
+										{kind === "chat" && heldAnswer !== null && <HeldLine text={heldAnswer} />}
+										{kind === "chat" && !busy && !compacting && !error && (
+											<ChatReplies
+												reply={lastReplyText(messages)}
+												open={questionOpen(messages) || undefined}
+												onPick={sendQuickReply}
+												drill={{ label: drillState.label, onDrill: drillState.drill, opening: drillState.opening }}
+											/>
+										)}
+										{compacting && (
+											<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
+												<BrailleSpinner label="Summarizing the chat so far" />
+												<Shimmer duration={1}>Summarizing the chat so far…</Shimmer>
+											</span>
+										)}
+										{(status === "submitted" || turnInFlight) && kind === "chat" && <TutorWriting />}
+										{(status === "submitted" || turnInFlight) && kind !== "chat" && (
+											<span className="flex items-center gap-2 font-ui text-xs font-semibold text-muted-foreground">
+												<BrailleSpinner label="Thinking" />
+												<Shimmer duration={1}>Thinking…</Shimmer>
+											</span>
+										)}
+										{error && (
+											<div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
+												Something went wrong: {error.message}
+											</div>
+										)}
+									</div>
 
-										{/* The dock's reserved tail (DockOverlay reports its height):
+									{/* The dock's reserved tail (DockOverlay reports its height):
 						    keeps at-rest transcript content scrolling fully clear of
 						    the overlay — the flow-space replacement for the old
 						    sticky dock. Zero only pre-measurement (the first layout
 						    effect reports before paint). */}
-										<div aria-hidden data-testid="dock-spacer" style={{ height: dockReserve }} />
-									</ConversationContent>
-									{/* The dock: an overlay sibling of the scroller (the
+									<div aria-hidden data-testid="dock-spacer" style={{ height: dockReserve }} />
+								</ConversationContent>
+								{/* The dock: an overlay sibling of the scroller (the
 				    use-stick-to-bottom pattern). The scroll-down button lives
 				    INSIDE the overlay now (owner refinement round, 2026-09-24):
 				    anchored to the dock block's top edge, so it rides every
 				    height morph (typing, the band growing, the
 				    fold) and NEVER overlaps the composer. */}
-									<DockOverlay
-										plain={kind === "chat"}
-										practice={activeProblem}
-										compactionRunning={compacting}
-										onSubmitThinking={submitThinking}
-										chatId={chatId}
-										turns={turns}
-										contextTokens={contextTokens}
-										pricing={pricing}
-										onReserve={setDockReserve}
-										dictationSlot={<DictationBar dictation={dictation} />}
-										dictationCancel={dictation.cancel}
-										queuedSteers={visibleQueuedSteers(steerQueue, nativeMessages)}
-										setupCta={
-											zeroKeys ? (
-												<ZeroKeysPill onOpen={() => setSetupOpen(true)} />
-											) : (
-												!configured && (
-													<div className="relative h-0">
-														<div className="pointer-events-auto absolute inset-x-0 bottom-2 flex justify-center">
-															<button
-																type="button"
-																data-testid="setup-cta"
-																onClick={() => setSetupOpen(true)}
-																className={cn(
-																	buttonVariants({ variant: "accent-soft", size: "sm" }),
-																	"cursor-pointer rounded-full font-ui font-semibold",
-																)}
-															>
-																Add an AI key
-															</button>
-														</div>
+								<DockOverlay
+									plain={kind === "chat"}
+									practice={activeProblem}
+									compactionRunning={compacting}
+									onSubmitThinking={submitThinking}
+									chatId={chatId}
+									turns={turns}
+									contextTokens={contextTokens}
+									pricing={pricing}
+									onReserve={setDockReserve}
+									dictationSlot={<DictationBar dictation={dictation} />}
+									dictationCancel={dictation.cancel}
+									queuedSteers={visibleQueuedSteers(steerQueue, nativeMessages)}
+									setupCta={
+										zeroKeys ? (
+											<ZeroKeysPill onOpen={() => setSetupOpen(true)} />
+										) : (
+											!configured && (
+												<div className="relative h-0">
+													<div className="pointer-events-auto absolute inset-x-0 bottom-2 flex justify-center">
+														<button
+															type="button"
+															data-testid="setup-cta"
+															onClick={() => setSetupOpen(true)}
+															className={cn(
+																buttonVariants({ variant: "accent-soft", size: "sm" }),
+																"cursor-pointer rounded-full font-ui font-semibold",
+															)}
+														>
+															Add an AI key
+														</button>
 													</div>
-												)
+												</div>
 											)
-										}
-										composer={
-											<Composer
-												// Stop aborts ANY in-flight turn (stream-reattach wave): the
-												// square renders while a reattached/wake turn runs too — the
-												// abort channel kills it server-side; stop() alone would
-												// only detach our view.
-												busy={busy}
-												value={draftParts.rest}
-												onChange={(v) => applyText(joinDraft(draftParts.pdfs, v, draftParts.images))}
-												onPaste={async (e) => {
-													const items = e.clipboardData?.items;
-													if (!items) return;
-													for (const item of Array.from(items)) {
-														if (item.type.startsWith("image/")) {
-															const file = item.getAsFile();
-															if (file) {
-																e.preventDefault();
-																try {
-																	const img = await uploadLearnerImage(file);
-																	applyText(joinDraft(draftParts.pdfs, draftParts.rest, [...draftParts.images, img]));
-																} catch (err) {
-																	console.error("Failed to upload pasted image", err);
-																}
+										)
+									}
+									composer={
+										<Composer
+											// Stop aborts ANY in-flight turn (stream-reattach wave): the
+											// square renders while a reattached/wake turn runs too — the
+											// abort channel kills it server-side; stop() alone would
+											// only detach our view.
+											busy={busy}
+											value={draftParts.rest}
+											onChange={(v) => applyText(joinDraft(draftParts.pdfs, v, draftParts.images))}
+											onPaste={async (e) => {
+												const items = e.clipboardData?.items;
+												if (!items) return;
+												for (const item of Array.from(items)) {
+													if (item.type.startsWith("image/")) {
+														const file = item.getAsFile();
+														if (file) {
+															e.preventDefault();
+															try {
+																const img = await uploadLearnerImage(file);
+																applyText(joinDraft(draftParts.pdfs, draftParts.rest, [...draftParts.images, img]));
+															} catch (err) {
+																console.error("Failed to upload pasted image", err);
 															}
 														}
 													}
-												}}
-												attachments={
-													(draftParts.pdfs.length > 0 || draftParts.images.length > 0) && (
-														<div className="flex flex-col gap-2">
-															<DraftPdfChips
-																pdfs={draftParts.pdfs}
-																onRemove={(pdf) =>
-																	applyText(
-																		joinDraft(
-																			draftParts.pdfs.filter((p) => p !== pdf),
-																			draftParts.rest,
-																			draftParts.images,
-																		),
-																	)
-																}
-															/>
-															<DraftImageChips
-																images={draftParts.images}
-																onRemove={(img) =>
-																	applyText(
-																		joinDraft(
-																			draftParts.pdfs,
-																			draftParts.rest,
-																			draftParts.images.filter((i) => i !== img),
-																		),
-																	)
-																}
-															/>
-														</div>
-													)
 												}
-												inputRef={composerInputRef}
-												onSend={onSend}
-												onStop={abortInFlightTurn}
-												canSend={canSend}
-												onEscape={dictation.active ? dictation.cancel : undefined}
-												// The pause affordance (owner round 16): the placeholder
-												// IS the hint — empty state, exactly where Enter-on-empty
-												// applies.
-												nextProblem={nextReady}
-												onNext={sendNext}
-												placeholder={
-													nextReady
-														? "Ask anything, or press Enter for the next one."
-														: kind === "chat"
-															? busy
-																? "Write ahead while the tutor writes"
-																: questionOpen(messages)
-																	? "Write your answer"
-																	: "Ask something else"
-															: undefined
-												}
-												toolbar={
-													kind === "chat" ? (
-														<>
-															<DictationBar dictation={dictation} compact />
-															<ChatPdfButton
-																compact
-																onAttached={(pdf) => {
-																	applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest, draftParts.images));
-																	composerInputRef.current?.focus();
-																}}
-															/>
-															<ChatImageButton
-																compact
-																onAttached={(img) => {
-																	applyText(joinDraft(draftParts.pdfs, draftParts.rest, [...draftParts.images, img]));
-																	composerInputRef.current?.focus();
-																}}
-															/>
-															<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
-														</>
-													) : undefined
-												}
-											/>
-										}
-									/>
-								</Conversation>
-								{kind === "chat" && <ChatBoard messages={messages} drill={drillState} />}
+											}}
+											attachments={
+												(draftParts.pdfs.length > 0 || draftParts.images.length > 0) && (
+													<div className="flex flex-col gap-2">
+														<DraftPdfChips
+															pdfs={draftParts.pdfs}
+															onRemove={(pdf) =>
+																applyText(
+																	joinDraft(
+																		draftParts.pdfs.filter((p) => p !== pdf),
+																		draftParts.rest,
+																		draftParts.images,
+																	),
+																)
+															}
+														/>
+														<DraftImageChips
+															images={draftParts.images}
+															onRemove={(img) =>
+																applyText(
+																	joinDraft(
+																		draftParts.pdfs,
+																		draftParts.rest,
+																		draftParts.images.filter((i) => i !== img),
+																	),
+																)
+															}
+														/>
+													</div>
+												)
+											}
+											inputRef={composerInputRef}
+											onSend={onSend}
+											onStop={abortInFlightTurn}
+											canSend={canSend}
+											onEscape={dictation.active ? dictation.cancel : undefined}
+											// The pause affordance (owner round 16): the placeholder
+											// IS the hint — empty state, exactly where Enter-on-empty
+											// applies.
+											nextProblem={nextReady}
+											onNext={sendNext}
+											placeholder={
+												nextReady
+													? "Ask anything, or press Enter for the next one."
+													: kind === "chat"
+														? busy
+															? "Write ahead while the tutor writes"
+															: questionOpen(messages)
+																? "Write your answer"
+																: "Ask something else"
+														: undefined
+											}
+											toolbar={
+												kind === "chat" ? (
+													<>
+														<DictationBar dictation={dictation} compact />
+														<ChatPdfButton
+															compact
+															onAttached={(pdf) => {
+																applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest, draftParts.images));
+																composerInputRef.current?.focus();
+															}}
+														/>
+														<ChatImageButton
+															compact
+															onAttached={(img) => {
+																applyText(joinDraft(draftParts.pdfs, draftParts.rest, [...draftParts.images, img]));
+																composerInputRef.current?.focus();
+															}}
+														/>
+														<DiacriticBar className="min-w-0 flex-1 px-0 pb-0 sm:justify-start" />
+													</>
+												) : undefined
+											}
+										/>
+									}
+								/>
+							</Conversation>
+							{kind === "chat" && <ChatBoard messages={messages} drill={drillState} />}
 
-								{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
+							{/* The session-scoped focuses (chrome-melt wave, 2026-09-19): mounted
 				    INSIDE the session area — absolute inset-0 siblings of the scroller,
 				    so they own the area below the drag bar, right of the sidebar, and
 				    the top bar stays sharp + draggable while a focus is open. */}
-								{mermaidFocus !== null && <MermaidOverlay chart={mermaidFocus} onClose={() => setMermaidFocus(null)} />}
-								{figureFocus !== null && (
-									<MermaidOverlay
-										svg={figureFocus.svg}
-										inverted={figureFocus.inverted}
-										onClose={() => setFigureFocus(null)}
-									/>
-								)}
-								<AbortTurnDialog
-									mode={abortAsk}
-									onClose={() => setAbortAsk(null)}
-									onConfirm={confirmAbort}
-									busy={busy}
+							{mermaidFocus !== null && <MermaidOverlay chart={mermaidFocus} onClose={() => setMermaidFocus(null)} />}
+							{figureFocus !== null && (
+								<MermaidOverlay
+									svg={figureFocus.svg}
+									inverted={figureFocus.inverted}
+									onClose={() => setFigureFocus(null)}
 								/>
-							</div>
+							)}
+							<AbortTurnDialog mode={abortAsk} onClose={() => setAbortAsk(null)} onConfirm={confirmAbort} busy={busy} />
 						</div>
 					</div>
-				</JobsContext.Provider>
+				</div>
 			</SessionMermaidContext.Provider>
 			{/* The BYOK setup flow (owner, 2026-09-22): one mount serves the
 		    persistent CTA, the refused-send interception, and the job cards'

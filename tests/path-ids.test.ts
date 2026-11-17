@@ -73,7 +73,7 @@ const calls: Call[] = [
 	{ route: "chats/[id]/steer", method: "POST", param: ["id", "id"], body: () => ({ input: "x" }) },
 	{ route: "chats/[id]/settings", method: "PUT", param: ["id", "id"], body: () => ({}) },
 	{ route: "chats/[id]/dismiss", method: "POST", param: ["id", "id"], body: () => ({}) },
-	{ route: "chats/[id]/artifact-ui", method: "POST", param: ["id", "id"], body: () => ({}) },
+	{ route: "chats/[id]/turn", method: "GET", param: ["id", "id"] },
 	{ route: "cheatsheets/[id]", method: "GET", param: ["id", "id"] },
 	{ route: "cheatsheets/[id]", method: "PUT", param: ["id", "id"], body: () => ({ title: "t", text: "a | b" }) },
 	{ route: "cheatsheets/[id]", method: "DELETE", param: ["id", "id"] },

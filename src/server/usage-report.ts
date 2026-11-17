@@ -9,6 +9,7 @@
  * the catalog counts as unpriced and is shown as such.
  */
 
+import { listPastJobs } from "../store/jobs.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
@@ -23,7 +24,6 @@ import { placementStore } from "../store/placement.ts";
 import { wordCheckStore } from "../store/word-check.ts";
 import { videoStore } from "../store/videos.ts";
 import { jobCost, turnCost } from "./pricing.ts";
-import { stores } from "./stores.ts";
 
 function monthOf(iso: string): string {
 	return iso.slice(0, 7);
@@ -116,7 +116,7 @@ export function usageReport(now = new Date()): UsageReport {
 			}
 		}
 		s.costUsd = s.turns > 0 && s.unpricedTurns === s.turns ? null : priced;
-		for (const job of stores.jobStore.listJobs(chat.id)) {
+		for (const job of listPastJobs(chat.id)) {
 			const usd = safeJobCost(job);
 			if (usd !== null) {
 				s.jobsUsd += usd;

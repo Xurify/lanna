@@ -12,7 +12,6 @@ import { describe, it } from "node:test";
 import { Type } from "typebox";
 import { createChatAgent, createPracticeAgent } from "../src/agent/teacher-agent.ts";
 import type { PracticeToolContext } from "../src/agent/tools/practice.ts";
-import { jobStore } from "../src/store/jobs.ts";
 import { parseAgentSettingsBody } from "../src/server/settings-body.ts";
 import { chatStore } from "../src/store/chats.ts";
 import { createFauxCore } from "@earendil-works/pi-ai";
@@ -30,13 +29,14 @@ describe("AgentBuildOptions.toolToggles (the P2 bridge)", () => {
 	const toolNames = (agent: { state: { tools: Array<{ name: string }> } }) =>
 		agent.state.tools.map((t) => t.name).sort();
 
-	it("flows into the chat's registry: a job-tool delta is a no-op on the bare set", () => {
-		// No jobs ctx → bare agent: no research/pdf to drop. A job-tool delta
-		// names tools that are not there — the bridge must not crash on it.
-		const bare = createChatAgent({}, { engine: fauxEngine() });
-		const withDelta = createChatAgent({}, { engine: fauxEngine(), toolToggles: { research: false } });
-		assert.deepEqual(toolNames(withDelta), toolNames(bare));
-		assert.ok(toolNames(bare).includes("pose"), "the chat's commit tool is always on");
+	it("flows into the chat's registry: the research switch drops research and keeps pdf", () => {
+		const sources = { chatId: "chat-toggle-test", engineFor: () => undefined, recordUsage: () => {} };
+		const bare = createChatAgent({ sources }, { engine: fauxEngine() });
+		const withDelta = createChatAgent({ sources }, { engine: fauxEngine(), toolToggles: { research: false } });
+		assert.ok(toolNames(bare).includes("research") && toolNames(bare).includes("pdf"));
+		assert.ok(!toolNames(withDelta).includes("research"), "the delta dropped the research tool");
+		assert.ok(toolNames(withDelta).includes("pdf"), "pdf is untouched by a research delta");
+		assert.ok(toolNames(withDelta).includes("pose"), "the chat's commit tool is always on");
 	});
 
 	it("flows into the practitioner's registry: the delta drops research and keeps the rest", () => {
@@ -44,7 +44,7 @@ describe("AgentBuildOptions.toolToggles (the P2 bridge)", () => {
 		const ctx: PracticeToolContext = {
 			chatId,
 			chatStore,
-			jobs: { chatId, jobStore, spawn: () => {} },
+			sources: { chatId, engineFor: () => undefined, recordUsage: () => {} },
 		};
 		const practice = createPracticeAgent(ctx, { engine: fauxEngine(), toolToggles: { research: false } });
 		const names = toolNames(practice);
@@ -78,7 +78,7 @@ describe("parseAgentSettingsBody: tool keys validate at write time", () => {
 	const parse = (tools: Record<string, boolean>) =>
 		parseAgentSettingsBody({ tools }) as { ok: true; settings: AgentSettings } | { ok: false; error: string };
 
-	it("a valid job-tool delta parses", () => {
+	it("a valid research and pdf delta parses", () => {
 		const r = parse({ research: false, pdf: false });
 		assert.equal(r.ok, true);
 		assert.deepEqual(r.ok && r.settings.tools, { research: false, pdf: false });
