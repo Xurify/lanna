@@ -1415,7 +1415,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 				<SessionsSidebar />
 				{/* The frame is one viewport tall; the content scrolls inside it so
 			    the sidebar stays put. */}
-				<main className="min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+				<main className="min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] has-[[data-own-scroll]]:[scrollbar-gutter:auto]">
 					{/* The SCROLL-PROOF window-drag strip (owner bug report,
 				    2026-10-28: "scrolled down, I can't grab the window"). The
 				    per-page strips are absolute inside the scrolling content,

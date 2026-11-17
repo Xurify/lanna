@@ -216,7 +216,7 @@ export function Chat({
 					openFigure: diagrams.openFigure,
 				}}
 			>
-				<div className="flex h-dvh">
+				<div className="flex h-dvh" data-own-scroll>
 					<div className="flex min-w-0 flex-1 flex-col">
 						<TopBar
 							bare={kind === "chat"}
