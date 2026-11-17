@@ -11,6 +11,7 @@ import {
 	buildBlitz,
 	buildLesson,
 	CONTRAST,
+	isUnitId,
 	lessonScore,
 	streakOf,
 	DAYS_IN_WEEK,
@@ -292,6 +293,15 @@ export function recordLesson(input: LessonResultInput, now = new Date()): Lesson
 	// A Mix-ups or personal lesson is built from targets, not a unit: its
 	// reps count toward no drill and no unit, only the day, XP and the mix-ups.
 	const focused = input.focus !== undefined;
+	if (
+		input.mode === "lesson" &&
+		!focused &&
+		total > 0 &&
+		(!day.lessonUnit || !isUnitId(day.lessonUnit) || (day.units?.[day.lessonUnit] ?? 0) === 0)
+	) {
+		const goal = p.goal ?? defaultGoal();
+		day.lessonUnit = nextLessonUnit(curriculumState(p.units, goal.level, { startChapter: goal.startChapter }));
+	}
 	// Each rep's first try goes to the drill it practiced (a mixed lesson
 	// counts toward the cases it drilled). This runs before `unit` is read:
 	// recordFirstTry returns a new record, and `unit` must be that one.
@@ -650,6 +660,8 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		available: rs.available,
 	};
 	const d = p.days[key];
+	const pinnedLesson =
+		d?.lessonUnit && isUnitId(d.lessonUnit) && (d.units?.[d.lessonUnit] ?? 0) > 0 ? d.lessonUnit : undefined;
 	const earlier: DayPlanSnapshot[] = [];
 	for (let i = 1; i <= RECENT_DAYS; i++) {
 		const day = dayKey(new Date(now.getTime() - i * 86_400_000), tz);
@@ -680,6 +692,7 @@ export function progressSummary(tz?: number, now = new Date()): ProgressSummary 
 		review,
 		minutesPerDay: goal.minutesPerDay,
 		next,
+		lessonUnit: pinnedLesson,
 		dayOfYear: dayOfYearOf(key),
 		scenes: purposeScenes(goal.purposes ?? []),
 		weak: weakSpotList(p.weak).map((w) => w.unit),
