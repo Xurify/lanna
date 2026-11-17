@@ -27,6 +27,7 @@ import {
 	type WordBankSummary,
 	type WordLearningState,
 } from "../core/saved-phrases.ts";
+import { slovakFormCells } from "../core/slovak-form-note.ts";
 import { compareMatches, matchWord, type WordSearchMatch } from "../core/word-search.ts";
 import { entryLemma, exampleText, type LexiconEntry, type ReviewCard } from "../core/review.ts";
 
@@ -146,13 +147,21 @@ function findAffirmativeVerbBase(lexicon: Lexicon | null, entry: LexiconEntry): 
 	return candidate;
 }
 
-function detectPersonLabel(foldedSurface: string): string | undefined {
-	if (/(?:em|im|am|ujem|iem)$/.test(foldedSurface)) return "1st person singular";
-	if (/(?:es|is|as|ujes|ies)$/.test(foldedSurface)) return "2nd person singular";
-	if (/(?:eme|ime|ame|ujeme|ieme)$/.test(foldedSurface)) return "1st person plural";
-	if (/(?:ete|ite|ate|ujete|iete)$/.test(foldedSurface)) return "2nd person plural";
-	if (/(?:l|la|lo|li)$/.test(foldedSurface)) return "past form";
+// Slovak present-tense endings (robím, robíš, robí, robíme, robíte, robia; píšu,
+// nesú) and the past participle in -l, -la, -lo, -li.
+function detectPersonLabel(surface: string): string | undefined {
+	if (/me$/.test(surface)) return "1st person plural";
+	if (/te$/.test(surface)) return "2nd person plural";
+	if (/m$/.test(surface)) return "1st person singular";
+	if (/š$/.test(surface)) return "2nd person singular";
+	if (/(?:l|la|lo|li)$/.test(surface)) return "past tense";
+	if (/(?:ia|ú|u)$/.test(surface)) return "3rd person plural";
+	if (/[íáaei]$/.test(surface)) return "3rd person singular";
 	return undefined;
+}
+
+function isSlovakVerb(lemmaLower: string): boolean {
+	return lemmaLower.endsWith("ť") || lemmaLower.endsWith("ť sa") || lemmaLower.endsWith("ť si");
 }
 
 function detectFormNote(
@@ -161,16 +170,17 @@ function detectFormNote(
 	prefixNote?: string,
 	affirmativeBase?: LexiconEntry,
 ): string | undefined {
-	const tag = activeLang().tag;
+	const lang = activeLang();
+	const tag = lang.tag;
+	const slovak = lang.code === "sk";
 	const lower = surface.toLocaleLowerCase(tag);
 	const lemma = entryLemma(entry);
 	const lemmaLower = lemma.toLocaleLowerCase(tag);
-	const folded = foldDiacritics(lower);
 
 	if (affirmativeBase) {
 		const affirmativeLemma = entryLemma(affirmativeBase);
-		const person = lower === lemmaLower ? "infinitive" : detectPersonLabel(folded);
-		if (person && person !== "infinitive") {
+		const person = slovak && lower !== lemmaLower ? detectPersonLabel(lower) : undefined;
+		if (person) {
 			return `negative ${person} of ${affirmativeLemma} (${affirmativeBase.en})`;
 		}
 		return `negative form of ${affirmativeLemma} (${affirmativeBase.en})`;
@@ -179,7 +189,7 @@ function detectFormNote(
 	if (prefixNote) return prefixNote;
 	if (lower === lemmaLower) return undefined;
 	if (lower.startsWith("ne") && !lemmaLower.startsWith("ne") && lower.length >= 4) {
-		const person = detectPersonLabel(folded);
+		const person = slovak && isSlovakVerb(lemmaLower) ? detectPersonLabel(lower) : undefined;
 		if (person) return `negative ${person} of ${lemma} (${entry.en})`;
 		return `negative form of ${lemma} (${entry.en})`;
 	}
@@ -195,17 +205,19 @@ function detectFormNote(
 		}
 	}
 
-	if (lemmaLower.endsWith("ť") || lemmaLower.endsWith("ť sa") || lemmaLower.endsWith("ť si")) {
-		const person = detectPersonLabel(folded);
+	const tagged = Object.entries(entry.formTags ?? {}).find(([form]) => form.toLocaleLowerCase(tag) === lower)?.[1];
+	if (tagged?.length) return `${tagged.join(", or ")} of ${lemma}`;
+
+	if (!slovak) return `inflected form of ${lemma}`;
+
+	if (isSlovakVerb(lemmaLower)) {
+		const person = detectPersonLabel(lower);
 		if (person) return `${person} of ${lemma}`;
 		return `conjugated form of ${lemma}`;
 	}
 
-	if (/(?:ach|och|iach)$/.test(folded)) return `locative plural of ${lemma}`;
-	if (/(?:ami|mi)$/.test(folded)) return `instrumental plural of ${lemma}`;
-	if (/(?:ou)$/.test(folded)) return `instrumental singular of ${lemma}`;
-	if (/(?:ovi|emu)$/.test(folded)) return `dative singular of ${lemma}`;
-	if (/(?:eho)$/.test(folded)) return `genitive or accusative of ${lemma}`;
+	const cells = slovakFormCells(lower, { lemma, pos: entry.pos, gender: entry.gender });
+	if (cells) return `${cells} of ${lemma}`;
 	return `inflected form of ${lemma}`;
 }
 
@@ -245,7 +257,7 @@ function writeTranslationCacheEntry(key: string, value: CachedTranslation): void
 	}
 }
 
-function deriveVerbSurfaceGloss(foldedSurface: string, baseEn: string, isNegative: boolean): string | undefined {
+function deriveVerbSurfaceGloss(surface: string, baseEn: string, isNegative: boolean): string | undefined {
 	const cleanVerb = baseEn
 		.split(/[;,]/)[0]
 		?.trim()
@@ -254,16 +266,18 @@ function deriveVerbSurfaceGloss(foldedSurface: string, baseEn: string, isNegativ
 		.replace(/^to\s+/i, "")
 		.trim();
 	if (!cleanVerb) return undefined;
-	const person = detectPersonLabel(foldedSurface);
-	if (!person) return undefined;
-	if (isNegative) {
-		if (person === "1st person singular") return `I don't ${cleanVerb}`;
-		if (person === "2nd person sg.") return `you don't ${cleanVerb}`;
-		if (person === "1st person pl.") return `we don't ${cleanVerb}`;
-		if (person === "2nd person pl.") return `you don't ${cleanVerb}`;
-		if (person === "past form") return `didn't ${cleanVerb}`;
-	}
-	return undefined;
+	if (!isNegative) return undefined;
+	const negated: Record<string, string> = {
+		"1st person singular": "I don't",
+		"2nd person singular": "you don't",
+		"3rd person singular": "doesn't",
+		"1st person plural": "we don't",
+		"2nd person plural": "you don't",
+		"3rd person plural": "they don't",
+		"past tense": "didn't",
+	};
+	const person = detectPersonLabel(surface);
+	return person && negated[person] ? `${negated[person]} ${cleanVerb}` : undefined;
 }
 
 function buildResultFromEntry(
@@ -282,7 +296,6 @@ function buildResultFromEntry(
 	const card = Object.values(cards).find((c) => c.slug === canonicalEntry.slug || c.slug === entry.slug);
 	const favorites = new Set(savedPhraseStore.readFavorites());
 	const lower = cleaned.toLocaleLowerCase(lang.tag);
-	const folded = foldDiacritics(lower);
 	const canonicalLemma = canonicalEntry.lemma ?? canonicalEntry.sk ?? "";
 	const lemmaLower = canonicalLemma.toLocaleLowerCase(lang.tag);
 	const isNegated =
@@ -295,7 +308,7 @@ function buildResultFromEntry(
 	const cachedSurface = readTranslationCache()[lower]?.gloss;
 	const surfaceOverride =
 		SURFACE_GLOSS_OVERRIDES[lower] ??
-		deriveVerbSurfaceGloss(folded, canonicalEntry.en, isNegated) ??
+		deriveVerbSurfaceGloss(lower, canonicalEntry.en, isNegated && lang.code === "sk" && isSlovakVerb(lemmaLower)) ??
 		(lower !== lemmaLower ? cachedSurface : undefined);
 
 	let gloss: string;
