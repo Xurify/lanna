@@ -49,7 +49,7 @@ export function AddingRow({ task }: { task: FeedTask }) {
 	const endonym = catalogLanguage(id)?.endonym ?? english;
 	return (
 		<div
-			className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground"
+			className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-muted-foreground"
 			data-testid="profile-adding"
 		>
 			<div className="flex min-w-0 items-center gap-2 truncate">
@@ -195,7 +195,7 @@ export function LanguageSwitcher() {
 											data-testid={`profile-${p.id}`}
 											onClick={() => choose(p.id)}
 											className={cn(
-												"flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors",
+												"flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors",
 												running
 													? "bg-accent font-semibold text-foreground shadow-xs"
 													: "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -222,7 +222,7 @@ export function LanguageSwitcher() {
 									setOpen(false);
 									languages.openAdd();
 								}}
-								className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 							>
 								<PlusIcon className="size-3.5" />
 								<span>Add a language…</span>

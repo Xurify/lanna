@@ -296,7 +296,7 @@ export function LanguagePicker({
 									}}
 									placeholder="Search languages"
 									aria-label="Search languages"
-									className="q-field w-full shrink-0 rounded-xl px-3 py-2 font-ui text-sm font-semibold placeholder:font-normal"
+									className="q-field w-full shrink-0 rounded-sm px-3 py-2 font-ui text-sm font-semibold placeholder:font-normal"
 									data-testid={`${testid}-search`}
 								/>
 								<div className="mt-2 grid max-h-64 min-h-0 flex-1 grid-cols-2 content-start gap-1 overflow-y-auto pr-1">
@@ -310,7 +310,7 @@ export function LanguagePicker({
 												title={l.line}
 												onClick={() => togglePending(l.id)}
 												className={cn(
-													"flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-ui text-sm font-semibold transition-colors",
+													"flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left font-ui text-sm font-semibold transition-colors",
 													on
 														? "bg-go/10 text-foreground"
 														: "text-muted-foreground hover:bg-accent hover:text-foreground",

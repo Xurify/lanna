@@ -102,7 +102,7 @@ export function DatePicker({
 }
 
 const ARROW =
-	"inline-flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-well disabled:opacity-40 pointer-coarse:size-11";
+	"inline-flex size-8 items-center justify-center rounded-sm text-ink-2 hover:bg-well disabled:opacity-40 pointer-coarse:size-11";
 
 function Stepper({
 	label,
@@ -123,7 +123,7 @@ function Stepper({
 		<div
 			role="group"
 			aria-label={label}
-			className="inline-flex items-center rounded-lg bg-card p-0.5 shadow-[0_0_0_1px_var(--q-line-2)]"
+			className="inline-flex items-center rounded-md bg-card p-0.5 shadow-[0_0_0_1px_var(--q-line-2)]"
 		>
 			<button
 				type="button"

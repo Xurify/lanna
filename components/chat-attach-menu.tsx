@@ -124,7 +124,7 @@ export function ChatAttachMenu({
 								setOpen(false);
 								imageInputRef.current?.click();
 							}}
-							className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-well focus-visible:bg-well"
+							className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-well focus-visible:bg-well"
 						>
 							<ImageIcon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 							<span>Add image</span>
@@ -139,7 +139,7 @@ export function ChatAttachMenu({
 								setOpen(false);
 								pdfInputRef.current?.click();
 							}}
-							className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-well focus-visible:bg-well"
+							className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-well focus-visible:bg-well"
 						>
 							<FileTextIcon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 							<span>Add PDF</span>

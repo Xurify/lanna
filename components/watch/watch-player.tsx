@@ -1547,7 +1547,7 @@ function Screen({
 				onShelf={onShelf}
 				right={
 					<div
-						className="flex items-center rounded-lg bg-accent p-0.5 font-ui text-xs font-[600]"
+						className="flex items-center rounded-md bg-accent p-0.5 font-ui text-xs font-[600]"
 						role="group"
 						aria-label="Mode"
 					>
@@ -1556,7 +1556,7 @@ function Screen({
 							onClick={() => switchMode("step")}
 							aria-pressed={step}
 							className={cn(
-								"rounded-md px-2 py-1 transition-colors",
+								"rounded-sm px-2 py-1 transition-colors",
 								step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
 							)}
 							data-testid="watch-mode-step"
@@ -1568,7 +1568,7 @@ function Screen({
 							onClick={() => switchMode("flow")}
 							aria-pressed={!step}
 							className={cn(
-								"rounded-md px-2 py-1 transition-colors",
+								"rounded-sm px-2 py-1 transition-colors",
 								!step ? "bg-card text-foreground shadow-raise" : "text-muted-foreground hover:text-foreground",
 							)}
 							data-testid="watch-mode-flow"

@@ -287,7 +287,7 @@ export function MilestonesPage({
 								onClick={() => setHiddenOpen((value) => !value)}
 								aria-expanded={hiddenOpen}
 								aria-controls="hidden-milestone-list"
-								className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-ui text-sm font-semibold text-muted-foreground hover:bg-well hover:text-foreground"
+								className="-ml-2 inline-flex h-8 items-center gap-2 rounded-md px-2 font-ui pointer-coarse:h-11 text-sm font-semibold text-muted-foreground hover:bg-well hover:text-foreground"
 								data-testid="hidden-milestones-toggle"
 							>
 								Hidden ({report.hiddenMilestones.length})
@@ -881,7 +881,7 @@ function MilestoneCard({
 							type="button"
 							onClick={onRemove}
 							disabled={removing}
-							className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-[var(--q-miss-wash)] hover:text-miss"
+							className="mt-3 -ml-2 inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-ui pointer-coarse:h-11 text-xs font-semibold text-muted-foreground hover:bg-[var(--q-miss-wash)] hover:text-miss"
 							data-testid={`milestone-${m.def.id}-remove`}
 						>
 							<XIcon className="size-3.5" />
