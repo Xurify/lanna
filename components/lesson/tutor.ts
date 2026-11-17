@@ -1,16 +1,14 @@
 "use client";
 
 /**
- * Starting a tutor chat from outside the composer (redesign):
- * a tutor unit, a lesson's "Why?" and the placement follow-up open a session
- * with a prepared first message, the same way the old home composer did
- * (POST /api/chats, then /chat/<id>?prompt=…, whose page delivers the
- * message as turn 1). Talk and Story are not chats any more: they are the
- * Speak and Read screens (decision E8).
- *
- * These run as practice-kind sessions: those skip the placement probe and
- * the plan, and the practice prompt's language section says how to answer.
- * "Why?" is a question, not a course (prompts/practice/20-language-drills.md).
+ * Starting a tutor chat from outside the composer: a tutor unit opens an
+ * Ask-kind session with a prepared first message (POST /api/chats, then
+ * /chat/<id>?prompt=…, whose page delivers the message as turn 1). The
+ * unit's method rides the system prompt's tutor-unit fragment (the
+ * record's tutorUnit), not the message. A lesson's "Why?" reuses the
+ * Why? index instead: POST /api/why looks the (sentence, answer) pair up,
+ * and an existing chat is reopened as it is, with no new turn, so the
+ * explanation is paid for once.
  */
 
 interface WhyReuse {
@@ -36,7 +34,6 @@ export async function startTutorChat(
 		activity?: "tutor";
 		unit?: string;
 		reuse?: WhyReuse;
-		kind?: "practice" | "chat";
 	},
 ): Promise<void> {
 	// A tutor unit's session counts when the learner first types (the server,
@@ -56,7 +53,7 @@ export async function startTutorChat(
 	const res = await fetch("/api/chats", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ title: opts.title, kind: opts.kind ?? "practice", ...(tutorUnit ? { tutorUnit } : {}) }),
+		body: JSON.stringify({ title: opts.title, kind: "chat", ...(tutorUnit ? { tutorUnit } : {}) }),
 	});
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);
 	const { id } = (await res.json()) as { id: string };

@@ -237,6 +237,50 @@ describe("POST /api/chats with kind chat", () => {
 		const { id } = (await res.json()) as { id: string };
 		assert.equal(chatStore.getChat(id)?.kind, "chat");
 	});
+
+	it("a tutor unit's chat opens on the cheap slot and carries the unit", async () => {
+		writeSettings({
+			version: 1,
+			models: {
+				strong: { model: { provider: "anthropic", id: "claude-haiku-5-5" }, thinkingLevel: "high" },
+				cheap: { model: { provider: "anthropic", id: "claude-sonnet-5-5" }, thinkingLevel: "medium" },
+			},
+		});
+		const res = await POST(
+			new Request("http://test/api/chats", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ title: "Tutor: ty a vy", kind: "chat", tutorUnit: "ty-vy" }),
+			}),
+		);
+		const { id } = (await res.json()) as { id: string };
+		const record = chatStore.getChat(id);
+		assert.equal(record?.tutorUnit, "ty-vy");
+		assert.deepEqual(record?.settings, {
+			model: { provider: "anthropic", id: "claude-sonnet-5-5" },
+			thinkingLevel: "medium",
+		});
+	});
+
+	it("a tutor unit's chat with no cheap slot falls back to strong", async () => {
+		writeSettings({
+			version: 1,
+			models: { strong: { model: { provider: "anthropic", id: "claude-haiku-5-5" }, thinkingLevel: "high" } },
+		});
+		const res = await POST(
+			new Request("http://test/api/chats", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ title: "Tutor: ty a vy", tutorUnit: "ty-vy" }),
+			}),
+		);
+		const { id } = (await res.json()) as { id: string };
+		const record = chatStore.getChat(id);
+		assert.deepEqual(record?.settings, {
+			model: { provider: "anthropic", id: "claude-haiku-5-5" },
+			thinkingLevel: "high",
+		});
+	});
 });
 
 describe("the replies under the tutor's message", () => {

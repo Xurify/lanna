@@ -22,7 +22,7 @@ function TutorUnitLink({ unitId, children }: { unitId: string; children: ReactNo
 		if (!unit || busy) return;
 		setBusy(true);
 		void startTutorChat(router, {
-			title: `Tutor: ${unit.title}`,
+			title: unit.title,
 			prompt: tutorUnitPrompt(unit),
 			activity: "tutor",
 			unit: unit.id,

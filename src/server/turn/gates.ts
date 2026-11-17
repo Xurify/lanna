@@ -11,7 +11,6 @@ import { effectiveSettings, stores } from "../stores.ts";
 const CHARS_PER_TOKEN_ESTIMATE = 4;
 
 type ConversationSpec = NonNullable<ReturnType<typeof resolveConversationSpec>>;
-type PromptKind = "practice" | "chat";
 type RefusalEnvelope = ReturnType<typeof modelsNotConfigured> | ReturnType<typeof providerKeyMissing>;
 
 export interface OpenTurn {
@@ -38,22 +37,18 @@ function engineOf(spec: ConversationSpec): PiEngine | undefined {
 	}
 }
 
-function promptKindOf(record: ChatRecord): PromptKind {
-	return record.kind === "practice" ? "practice" : "chat";
+function systemPromptTokensOf(): number {
+	return Math.ceil(composeInstructions("chat").length / CHARS_PER_TOKEN_ESTIMATE);
 }
 
-function systemPromptTokensOf(kind: PromptKind): number {
-	return Math.ceil(composeInstructions(kind).length / CHARS_PER_TOKEN_ESTIMATE);
-}
-
-function compactionDepsFor(engine: PiEngine, thresholdSetting: number | undefined, kind: PromptKind): CompactionDeps {
+function compactionDepsFor(engine: PiEngine, thresholdSetting: number | undefined): CompactionDeps {
 	const modelId = modelIdOf(engine);
 	return {
 		chatStore: stores.chatStore,
 		engine,
 		modelId,
 		thresholdTokens: effectiveThresholdTokens(thresholdSetting, catalogContextLimits().get(modelId)),
-		systemPromptTokens: systemPromptTokensOf(kind),
+		systemPromptTokens: systemPromptTokensOf(),
 	};
 }
 
@@ -74,7 +69,7 @@ export async function passTurnGates(chatId: string, record: ChatRecord): Promise
 			response: Response.json({ error: "The selected model is unavailable." }, { status: 503 }),
 		};
 	}
-	await ensureCompacted(compactionDepsFor(engine, settings.compaction?.thresholdTokens, promptKindOf(record)), chatId);
+	await ensureCompacted(compactionDepsFor(engine, settings.compaction?.thresholdTokens), chatId);
 	const compacted = stores.chatStore.getChat(chatId);
 	if (!compacted) return { outcome: "refused", response: unknownChatResponse() };
 	return { outcome: "open", turn: { record: compacted, engine, settings } };
@@ -88,6 +83,6 @@ export function kickCompactionAfterSettle(chatId: string): void {
 		const spec = resolveConversationSpec(record.settings, settings.models.strong);
 		const engine = spec ? engineOf(spec) : undefined;
 		if (!engine) return null;
-		return compactionDepsFor(engine, settings.compaction?.thresholdTokens, promptKindOf(record));
+		return compactionDepsFor(engine, settings.compaction?.thresholdTokens);
 	}, chatId);
 }

@@ -94,7 +94,7 @@ export function CurriculumPage({
 		if (!unit) return;
 		withTutor(() =>
 			startTutorChat(router, {
-				title: `Tutor: ${unit.title}`,
+				title: unit.title,
 				prompt: tutorUnitPrompt(unit),
 				activity: "tutor",
 				unit: unit.id,

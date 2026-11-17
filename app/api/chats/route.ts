@@ -36,8 +36,8 @@ export async function POST(req: Request) {
 	// record — the practice agent + its tools from turn 1, no extraction.
 	const kind = body.kind === "practice" ? "practice" : "chat";
 	const chat = createChat(titleFromPrompt(title || "Untitled session"), kind);
-	if (typeof body.tutorUnit === "string" && body.tutorUnit)
-		stores.chatStore.setTutorUnit(chat.id, body.tutorUnit.slice(0, 64));
+	const tutorUnit = typeof body.tutorUnit === "string" ? body.tutorUnit.slice(0, 64) : "";
+	if (tutorUnit) stores.chatStore.setTutorUnit(chat.id, tutorUnit);
 	// PER-SESSION MODELS (owner, 2026-09-28): a session owns its model +
 	// thinking level from birth — stamped verbatim from the STRONG slot,
 	// the new-session default. From here the strong slot never reaches
@@ -45,18 +45,19 @@ export async function POST(req: Request) {
 	// (PUT /api/chats/:id/settings). No strong slot configured (fresh BYOK
 	// boot) → no stamp; the turn gate's 503 models_not_configured envelope
 	// refuses honestly until the setup flow fills the slot.
-	// A practice session opens on the Cheap slot, the one for the assistants
-	// that grade work, and falls back to Strong. A chat opens on Strong and
-	// falls back to Cheap.
+	// A tutor unit's chat opens on the Cheap slot too — the one for the
+	// assistants that grade work — and falls back to Strong. A plain chat
+	// opens on Strong and falls back to Cheap.
 	const models = readSettingsRecord()?.models;
+	const opensOnCheap = (kind === "practice" || tutorUnit !== "") && !!models?.cheap?.model;
 	const slot =
-		(kind === "practice" && models?.cheap?.model
-			? models.cheap
-			: (models?.strong ?? (kind === "chat" ? models?.cheap : undefined))) ?? null;
+		(opensOnCheap
+			? models?.cheap
+			: (models?.strong ?? (kind === "chat" && tutorUnit === "" ? models?.cheap : undefined))) ?? null;
 	if (slot?.model) {
 		stores.chatStore.saveSettings(chat.id, {
 			model: { provider: slot.model.provider, id: slot.model.id },
-			thinkingLevel: kind === "chat" ? CHAT_THINKING_LEVEL : slot.thinkingLevel,
+			thinkingLevel: kind === "chat" && tutorUnit === "" ? CHAT_THINKING_LEVEL : slot.thinkingLevel,
 		});
 	}
 	return Response.json({ id: chat.id, title: chat.title });

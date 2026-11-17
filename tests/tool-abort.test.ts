@@ -9,8 +9,13 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { Type } from "typebox";
-import { serverExecute, toolTimeoutMs, toToolResult, type ToolExecuteContext } from "../src/agent/tool-execute.ts";
-import { practiceTools } from "../src/agent/tools/practice.ts";
+import {
+	invalidInputResult,
+	serverExecute,
+	toolTimeoutMs,
+	toToolResult,
+	type ToolExecuteContext,
+} from "../src/agent/tool-execute.ts";
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -107,21 +112,12 @@ describe("serverExecute: cooperative settle, authoring failures, mapping parity"
 		assert.equal((result.content[0] as { text?: string }).text, "partial results");
 	});
 
-	it("authoring failures return an isError result with the retryable problem list", async () => {
-		const tools = practiceTools({ chatId: "chat_abort", chatStore: { getChat: () => null } });
-		const problem = tools.problem!;
-		const input = { statement: "Decline the noun.", mode: "recall", modelSolution: "the moves" } as const;
-		await problem.execute("c6", input, undefined as never);
-		// A second pose while one is active is an authoring failure, returned not thrown.
-		const result = (await problem.execute("c7", input, undefined as never)) as {
-			isError?: boolean;
-			content: Array<{ text?: string }>;
-			details?: { tool: string; problems: string[] };
-		};
+	it("authoring failures return an isError result with the retryable problem list", () => {
+		const result = invalidInputResult("pose", ["answer must not be blank"]);
 		assert.equal(result.isError, true, "pi 1.0 convention: returned, not thrown");
-		assert.equal(result.details?.tool, "problem");
-		assert.match(result.content[0]!.text!, /Invalid tool input for tool "problem":/);
-		assert.match(result.details!.problems.join("\n"), /already active/);
+		assert.equal(result.details?.tool, "pose");
+		assert.match((result.content[0] as { text?: string }).text!, /Invalid tool input for tool "pose":/);
+		assert.match(result.details!.problems.join("\n"), /answer must not be blank/);
 	});
 
 	it("toToolResult parity: string verbatim, object as JSON, details rides the raw value", () => {

@@ -10,10 +10,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { Type } from "typebox";
-import { createChatAgent, createPracticeAgent } from "../src/agent/teacher-agent.ts";
-import type { PracticeToolContext } from "../src/agent/tools/practice.ts";
+import { createChatAgent } from "../src/agent/teacher-agent.ts";
 import { parseAgentSettingsBody } from "../src/server/settings-body.ts";
-import { chatStore } from "../src/store/chats.ts";
 import { createFauxCore } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 import type { AgentSettings } from "../src/core/settings.ts";
@@ -37,20 +35,6 @@ describe("AgentBuildOptions.toolToggles (the P2 bridge)", () => {
 		assert.ok(!toolNames(withDelta).includes("research"), "the delta dropped the research tool");
 		assert.ok(toolNames(withDelta).includes("pdf"), "pdf is untouched by a research delta");
 		assert.ok(toolNames(withDelta).includes("pose"), "the chat's commit tool is always on");
-	});
-
-	it("flows into the practitioner's registry: the delta drops research and keeps the rest", () => {
-		const chatId = chatStore.createChat("Toggle bridge test").id;
-		const ctx: PracticeToolContext = {
-			chatId,
-			chatStore,
-			sources: { chatId, engineFor: () => undefined, recordUsage: () => {} },
-		};
-		const practice = createPracticeAgent(ctx, { engine: fauxEngine(), toolToggles: { research: false } });
-		const names = toolNames(practice);
-		assert.ok(!names.includes("research"), "the delta dropped the research tool");
-		assert.ok(names.includes("pdf"), "pdf is untouched by a research delta");
-		assert.ok(names.includes("problem") && names.includes("conclude"), "the problem gate tools are always on");
 	});
 
 	it("an explicitly injected opts.tools registry is NEVER toggle-filtered", () => {

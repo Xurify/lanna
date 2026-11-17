@@ -320,7 +320,7 @@ export function generateWhyIndex(): number {
 			version: 1,
 			id: chatId,
 			title: seed.title,
-			kind: "practice",
+			kind: "chat",
 			createdAt: now,
 			updatedAt: now,
 			messages: [userMsg, assistantMsg],

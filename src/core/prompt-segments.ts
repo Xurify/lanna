@@ -17,17 +17,12 @@
 export const FRAGMENT_RE = /^\d+-[\w.-]+\.md$/;
 
 /** Which agent's prompt directory to compose. */
-/** Practice (2026-10-04): composes ONLY its own directory — no shared
- *  teaching base, no shared fragments (the doctrine contradicts the
- *  teaching philosophy; its 00-base.md plays the base role). */
-export type PromptAgent = "practice" | "chat";
+export type PromptAgent = "chat";
 
 /** One segment of one agent's composed prompt. */
 export interface PromptSegmentInfo {
-	/** The override/store key — mirrors the source layout ("system-prompt.md",
-	 *  "shared/05-learner-files.md", "teacher/20-teaching.md"). Stable across
-	 *  agents: the base and shared/ fragments use the SAME path in both
-	 *  agents' lists. */
+	/** The override/store key — mirrors the source layout ("chat/10-chat.md",
+	 *  "shared/10-voice.md", "language/10-slovak.md"). */
 	path: string;
 	/** The source text (what the segment runs without an override). */
 	sourceText: string;
@@ -35,7 +30,7 @@ export interface PromptSegmentInfo {
 	overrideText: string | null;
 	/** Effective state: the settings switch AND the file both present. */
 	enabled: boolean;
-	/** True for segments BOTH agents compose — the base and shared/ fragments. */
+	/** True for shared/ and language/ appendix fragments. */
 	shared: boolean;
 }
 
@@ -43,7 +38,7 @@ export interface PromptSegmentInfo {
  *  doc). Exported for the routes, which also check membership in the
  *  CURRENT source segment list. */
 export function isValidSegmentPath(segmentPath: string): boolean {
-	const m = /^(practice|chat|shared|language)\/([\w.-]+\.md)$/.exec(segmentPath);
+	const m = /^(chat|shared|language)\/([\w.-]+\.md)$/.exec(segmentPath);
 	if (!m || m[2] === undefined) return false;
 	return FRAGMENT_RE.test(m[2]);
 }

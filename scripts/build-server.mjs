@@ -85,7 +85,7 @@ for (const extra of ["dist", path.join("node_modules", "electron")]) {
 //    agent reads them from disk at request time).
 for (const asset of [
 	path.join("src", "agent", "prompts", "chat", "10-chat.md"),
-	path.join("src", "agent", "prompts", "practice", "00-base.md"),
+	path.join("src", "agent", "prompts", "chat", "tutor-unit.md"),
 	// Lanna: the language segments and the Slovak curriculum are read
 	// from disk too (prompt composition, lexicon lookups, first-run seeding).
 	path.join("src", "agent", "prompts", "language", "10-slovak.md"),

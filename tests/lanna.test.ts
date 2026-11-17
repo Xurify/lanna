@@ -160,13 +160,11 @@ describe("cloze cards", () => {
 });
 
 describe("language prompts", () => {
-	it("compose the active language into every agent", () => {
+	it("compose the active language into the chat agent", () => {
 		assert.equal(activeProfile(), "slovak");
-		for (const agent of ["chat", "practice"] as const) {
-			const paths = listSourceSegments(agent).map((s) => s.path);
-			assert.ok(paths.includes("language/10-slovak.md"), agent);
-			assert.ok(!paths.includes("language/10-russian.md"), agent);
-		}
+		const paths = listSourceSegments("chat").map((s) => s.path);
+		assert.ok(paths.includes("language/10-slovak.md"));
+		assert.ok(!paths.includes("language/10-russian.md"));
 		assert.ok(isValidSegmentPath("language/10-slovak.md"));
 	});
 	it("say: spans are recognized", () => {
