@@ -20,6 +20,7 @@ import { reviewStore } from "../store/review.ts";
 import { storyStore } from "../store/stories.ts";
 import { readingSourceStore } from "../store/reading-sources.ts";
 import { fluencyStore, speakStore } from "../store/speak.ts";
+import { notesStore } from "../store/notes.ts";
 import { outsideStore } from "../store/outside.ts";
 import { videoStore } from "../store/videos.ts";
 import { knownWordStore } from "../store/known-words.ts";
@@ -278,6 +279,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`cheatsheets.json\` | an array | every cheatsheet you made under Words → Cheatsheets: title, when made and edited, and its sections with their rows (the phrase, how to say it, the meaning, a note) |
 | \`cheatsheet-practice.json\` | an object | Listen and type on your cheatsheets: \`phrases\` (per sheet and phrase: times heard, how many times in a row it was caught by ear, when) and \`sessions[]\` (every session: the sheet, the day, and each phrase with what you typed and the verdict). Your own phrases, unchecked, so none of it is in \`lessons.json\` |
 | \`spoken.json\` | an object | \`scenes[]\` (every spoken scene from the Speak task: scene, level, every line with role, the line in the language, meaning, prompts and repairs, how each of your lines arrived and its recording's file under \`<data>/profiles/<lang>/speak/<id>/\`, the end summary, usage) and \`fluency[]\` (every timed re-read and "say it faster" round) |
+| \`notes.json\` | an array | every note from Media → Notes: the text with its \`[m:ss]\` time stamps, the linked YouTube video (id, link, title), when made and changed |
 | \`outside-listening.json\` | an array | every stretch of listening you logged outside the app: the day, minutes, \`focused\` or \`background\`, and what it was. Logged by hand, never measured |
 
 Text is UTF-8 with diacritics as written. Verdicts: \`exact\`,
@@ -449,6 +451,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		phrases: Object.fromEntries(cheatsheets.map((s) => [s.id, sheetPracticeStore.read(s.id)])),
 		sessions: sheetPracticeStore.readLog(),
 	});
+	write("notes.json", notesStore.read().notes);
 	write("outside-listening.json", outsideStore.read().entries);
 	fs.writeFileSync(path.join(dir, "README.md"), EXPORT_README, "utf-8");
 	return { dir, summary };
