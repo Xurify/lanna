@@ -620,7 +620,6 @@ export function ReviewSession() {
 			await askAbout(router, {
 				kind: "sentence",
 				sentence: prompt.card.sentence,
-				translation: prompt.card.translation,
 				answer: prompt.answer,
 				lemma: prompt.card.lemma,
 				given,

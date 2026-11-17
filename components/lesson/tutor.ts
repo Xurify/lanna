@@ -62,33 +62,18 @@ export async function startTutorChat(
 }
 
 export function whyPrompt(item: { sentence: string; answer: string; given: string; lemma: string }): string {
-	return [
-		`Why? In the sentence "${item.sentence}" the form is "${item.answer}" (from ${item.lemma}), and I wrote "${item.given || "nothing"}".`,
-		"Explain in 3 or 4 short lines what decides the form here, compare it with what I wrote, and give me 2 more examples in say: spans. Then give me one quick problem on the same point.",
-	].join(" ");
+	return `Why? In "${item.sentence}" it is "${item.answer}", and I wrote "${item.given || "nothing"}".`;
 }
 
-export function sentencePrompt(card: {
-	sentence: string;
-	translation: string;
-	answer: string;
-	lemma: string;
-	given: string;
-}): string {
-	const wrote = card.given.trim() && card.given.trim() !== card.answer ? `, and I wrote "${card.given.trim()}"` : "";
-	return [
-		`Help me understand this sentence: "${card.sentence}" (${card.translation}).`,
-		`The word I practiced was "${card.answer}" (from ${card.lemma})${wrote}.`,
-		"Go through it piece by piece in short lines: what each part means and why each form is the one it is. Then ask me which part I want to know more about.",
-	].join(" ");
+export function sentencePrompt(card: { sentence: string; answer: string; given: string }): string {
+	const given = card.given.trim();
+	const miss = given && given !== card.answer ? ` I wrote "${given}" instead of "${card.answer}".` : "";
+	return `What does each part of "${card.sentence}" mean?${miss}`;
 }
 
 export function partPrompt(part: string, sentence: string): string {
 	const where = sentence && sentence !== part ? ` in "${sentence}"` : "";
-	return [
-		`What does "${part}" mean${where}?`,
-		"Explain in 3 or 4 short lines: what it means here, its dictionary form and why it has this form. Then give me 2 more examples in say: spans.",
-	].join(" ");
+	return `What does "${part}" mean${where}, and why this form?`;
 }
 
 const settleBeforeAsking = new Set<() => Promise<void>>();
@@ -101,7 +86,7 @@ export function onAskLeaving(settle: () => Promise<void>): () => void {
 export async function askAbout(
 	router: { push: (href: string) => void },
 	ask:
-		| { kind: "sentence"; sentence: string; translation: string; answer: string; lemma: string; given: string }
+		| { kind: "sentence"; sentence: string; answer: string; lemma: string; given: string }
 		| { kind: "part"; part: string; sentence: string },
 ): Promise<void> {
 	await Promise.all([...settleBeforeAsking].map((settle) => settle()));
