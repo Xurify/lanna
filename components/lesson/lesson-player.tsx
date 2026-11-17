@@ -1473,7 +1473,7 @@ function ClozeRep({
 									{given || " "}
 								</span>
 								{input(
-									"q-write absolute left-0 top-[-15px] h-12 w-full px-1 pt-[30px] pb-0 font-semibold text-foreground outline-none sm:top-[-9px] sm:h-[58px] sm:pt-[24px]",
+									"q-write absolute inset-0 h-full w-full px-1 py-0 font-semibold leading-[inherit] text-foreground outline-none",
 								)}
 							</span>
 						) : (
