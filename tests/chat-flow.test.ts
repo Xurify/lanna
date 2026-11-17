@@ -227,6 +227,17 @@ describe("chat flow (scripted model)", () => {
 		assert.equal(res.status, 404);
 	});
 
+	it("a null body is an unknown chat, not a crash", async () => {
+		const res = await handleChatRequest(
+			new Request("http://test/api/chat", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: "null",
+			}),
+		);
+		assert.equal(res.status, 404);
+	});
+
 	it("refuses malformed inputs with a clean 400 — no liveness effects, no lockout", async () => {
 		const chat = createConfiguredChat("Test: malformed input");
 		createdChats.push(chat.id);

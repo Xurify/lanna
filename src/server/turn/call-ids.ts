@@ -1,7 +1,5 @@
 import type { AgentEvent } from "@earendil-works/pi-agent-core";
 
-// Providers such as DeepSeek (via OpenRouter) reset tool-call ids on every response, so `call_0` recurs across turns.
-
 type ToolCallBlock = { type: "toolCall"; id: string } & Record<string, unknown>;
 
 type IdTable = Map<string, string>;
@@ -36,6 +34,7 @@ export function collectToolCallIds(messages: readonly unknown[]): string[] {
 	});
 }
 
+// Providers such as DeepSeek (via OpenRouter) reset tool-call ids on every response, so `call_0` recurs across turns.
 function mintUnusedId(usedIds: Set<string>, originalId: string): string {
 	const claim = (id: string): string => {
 		usedIds.add(id);
@@ -50,6 +49,7 @@ function mintUnusedId(usedIds: Set<string>, originalId: string): string {
 
 export class ToolCallIdUniquifier {
 	private readonly usedIds: Set<string>;
+	// pi-agent-core's message_end carries the same object it keeps in agent.state.messages, so settlement finds each table by identity.
 	private readonly tablesByMessage = new WeakMap<object, IdTable>();
 	private currentTable: IdTable | null = null;
 

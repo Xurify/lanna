@@ -116,6 +116,7 @@ export async function runTurn(chatId: string, input: TurnInput, buildAgent?: Age
 			onSettleFailure: (error, reportedErrorText) => failSettlement(chatId, error, reportedErrorText),
 			onFinish: (finalMessages, isAborted) => settleTurn(settling, finalMessages, isAborted),
 		});
+		// pi-agent-core starts the loop on a later microtask, so the turn is registered before it can settle.
 		registerTurn(chatId, handle);
 		// Browsers allow six HTTP/1.1 connections per origin, so the POST acknowledges and closes; a view attaches through the stream route.
 		return Response.json({ ok: true });

@@ -112,7 +112,7 @@ export function resolveConversationSpec(
  *  per-role override (background roles only) → SLOT → NOTHING. The
  *  conversation pair (prober/teacher) resolves the same chain MINUS the
  *  role override (their override is the chat's own settings — the
- *  the turn gates overlay it themselves). undefined = the chain came up
+ *  turn gates overlay it themselves). undefined = the chain came up
  *  empty; the per-need refusal gates fire on exactly that. This is the
  *  engine wiring's one call. */
 export function resolveRoleSpec(role: ModelRole, record: UserSettings | null): EffectiveModelSpec | undefined {

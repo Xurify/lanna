@@ -200,6 +200,7 @@ export function runPiTurn(spec: PiTurnSpec): PiTurnHandle {
 
 	const settle = (): void => {
 		try {
+			// pi-agent-core seeds a leading system message from systemPrompt and the tool declarations; the next turn builds its own.
 			const finalMessages = [...agent.state.messages].filter(
 				(message) => (message as { role?: string }).role !== "system",
 			);
