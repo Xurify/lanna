@@ -101,6 +101,14 @@ export const CREDITS: Credit[] = [
 		fetchedHosts: ["api.elevenlabs.io", "elevenlabs.io"],
 	},
 	{
+		id: "phonic",
+		name: "Phonic",
+		url: "https://docs.phonic.ai",
+		group: "voices",
+		use: "speech-to-speech conversation in live talk, with your Phonic key",
+		fetchedHosts: ["phonic.ai", "api.phonic.ai", "docs.phonic.ai"],
+	},
+	{
 		id: "edge-voices",
 		name: "Microsoft neural voices",
 		url: "https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts",

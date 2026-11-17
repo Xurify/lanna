@@ -1,0 +1,20 @@
+{
+	"language": "slovak",
+	"source": ".agents/skills/slovak-language/references/spoken-slovak-and-variation.md",
+	"entries": [
+		{ "sk": "no", "en": "well / no", "job": "time", "level": "A1", "register": "colloquial" },
+		{ "sk": "tak", "en": "so / then", "job": "time", "level": "A1", "register": "colloquial" },
+		{ "sk": "vlastne", "en": "actually", "job": "time", "level": "A2", "register": "colloquial" },
+		{ "sk": "proste", "en": "simply / just", "job": "rephrase", "level": "A2", "register": "colloquial" },
+		{ "sk": "akože", "en": "like / sort of", "job": "rephrase", "level": "B1", "register": "casual" },
+		{ "sk": "hej", "en": "yeah", "job": "agree", "level": "A1", "register": "colloquial" },
+		{ "sk": "jasné", "en": "sure / of course", "job": "agree", "level": "A1", "register": "colloquial" },
+		{ "sk": "áno", "en": "yes", "job": "agree", "level": "A1", "register": "neutral" },
+		{ "sk": "fakt?", "en": "really?", "job": "react", "level": "A2", "register": "colloquial" },
+		{ "sk": "vážne?", "en": "seriously?", "job": "react", "level": "A2", "register": "colloquial" },
+		{ "sk": "super", "en": "great", "job": "react", "level": "A1", "register": "colloquial" },
+		{ "sk": "fajn", "en": "fine", "job": "react", "level": "A1", "register": "colloquial" },
+		{ "sk": "v pohode", "en": "no problem / all good", "job": "react", "level": "A2", "register": "colloquial" },
+		{ "sk": "nevadí", "en": "never mind / it's fine", "job": "react", "level": "A2", "register": "colloquial" }
+	]
+}

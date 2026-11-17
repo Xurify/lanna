@@ -27,7 +27,6 @@ import {
 import { KBD } from "@/components/ui/learn-buttons";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { Recorder, micSupported, transcribeClip } from "@/components/speak/recorder";
-import { SpeakModes } from "@/components/speak/speak-modes";
 import { QIcon } from "@/components/quiet/icon";
 import {
 	SELF_TALK_CATEGORIES,
@@ -334,10 +333,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 						<ArrowLeftIcon className="size-3.5" />
 						<CapLabel>Today</CapLabel>
 					</Link>
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
-						<SpeakModes current="solo" />
-					</div>
+					<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
 					<p className="mt-1 max-w-2xl font-prose text-[15px] text-ink-3">
 						Nobody answers and nobody grades. Pick a topic, say what comes to mind out loud, and keep going until the
 						clock reaches the goal.

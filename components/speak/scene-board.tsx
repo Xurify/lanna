@@ -21,7 +21,7 @@ import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { sceneCounterpart, scriptFor, tutorLineText, type SpeakSceneEntry } from "@/src/core";
 import type { SpeakState } from "@/components/speak/speak-player";
-import { SpeakModes } from "@/components/speak/speak-modes";
+import { SpeakWays } from "@/components/speak/speak-ways";
 
 const GROUPS: Array<{ why: SpeakSceneEntry["why"]; label: string }> = [
 	{ why: "chapter", label: "This chapter" },
@@ -111,15 +111,13 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						<ArrowLeftIcon className="size-3.5" />
 						<CapLabel>Today</CapLabel>
 					</Link>
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
-						<SpeakModes current="tutor" />
-					</div>
+					<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
 					<p className="mt-1 font-prose text-[15px] text-ink-3">
 						{typed || !state?.stt
 							? "The tutor plays the other person and answers out loud. You write your part."
 							: "The tutor plays the other person and answers out loud. You say your part."}
 					</p>
+					<SpeakWays current="tutor" />
 
 					{error && (
 						<p

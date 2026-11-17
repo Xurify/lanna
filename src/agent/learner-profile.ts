@@ -27,6 +27,7 @@ import { activeLanguage, profileLanguage } from "./profile-language.ts";
 import { RECENT_DAYS } from "../core/carry-over.ts";
 import { dayKey } from "../core/review.ts";
 import type { MixupRecord } from "../core/mixups.ts";
+import type { SpeakingIndexEntry } from "../core/speaking-trends.ts";
 import type { WeakRecord } from "../core/weak-spots.ts";
 
 interface ProgressFile {
@@ -109,6 +110,30 @@ export function weakestTopics(limit = 3): Array<{ title: string; accuracy: numbe
 		.map(({ title, accuracy }) => ({ title, accuracy }));
 }
 
+function speakingNote(): string | null {
+	try {
+		const lines = fs
+			.readFileSync(path.join(PATHS.data, "speaking", "index.jsonl"), "utf-8")
+			.split("\n")
+			.filter(Boolean);
+		const recent = lines.slice(-5).map((line) => JSON.parse(line) as SpeakingIndexEntry);
+		const last = recent.at(-1);
+		if (!last) return null;
+		const share = Math.round((recent.reduce((n, r) => n + r.learnerShare, 0) / recent.length) * 100);
+		const english = Math.round((recent.reduce((n, r) => n + r.englishShare, 0) / recent.length) * 100);
+		const replies = recent
+			.map((r) => r.medianReplyMs)
+			.filter((ms): ms is number => typeof ms === "number")
+			.sort((a, b) => a - b);
+		const median = replies.length ? replies[Math.floor(replies.length / 2)]! : null;
+		return `Speaking, from the ${recent.length} most recent live talk${recent.length === 1 ? "" : "s"}: the learner spoke ${share}% of the talk, ${english}% of their words were English${
+			median == null ? "" : `, and their median reply took ${(median / 1000).toFixed(1)} seconds`
+		}. The last was "${last.title}" on ${last.at.slice(0, 10)}, ${Math.round(last.sec / 60)} minutes.`;
+	} catch {
+		return null;
+	}
+}
+
 export function learnerProfileSegment(): string | null {
 	const record = readProgress();
 	if (!record) return null;
@@ -118,7 +143,7 @@ export function learnerProfileSegment(): string | null {
 	if (!goal?.onboardedAt && !hasEvidence) return null;
 	const state = curriculumState(units, goal?.level ?? "B2", { startChapter: goal?.startChapter });
 	const tries = Object.fromEntries(Object.entries(units).map(([id, u]) => [id, u?.first]));
-	return learnerProfileText(
+	const text = learnerProfileText(
 		activeLanguage(),
 		goal,
 		state,
@@ -129,4 +154,6 @@ export function learnerProfileSegment(): string | null {
 		record.mixups,
 		otherStudied(),
 	);
+	const speaking = speakingNote();
+	return speaking ? `${text}\n${speaking}` : text;
 }

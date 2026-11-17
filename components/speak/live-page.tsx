@@ -1,0 +1,292 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { LoaderCircleIcon, MicIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { LiveCall, type LivePhase } from "@/components/speak/live-session";
+import { LivePlayer } from "@/components/speak/live-player";
+import { SessionReport } from "@/components/speak/session-report";
+import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import type { LiveCallInput, LivePageData, LiveStart, LiveTalkResult, LiveToolEvent, LiveTurn } from "@/src/core";
+
+type Target = { kind: "scene" | "island"; ref: string; title: string } | null;
+
+export function LivePage({ initial, target }: { initial: LivePageData; target: Target }) {
+	const page = initial;
+	const [phase, setPhase] = useState<"pick" | "ready" | "call" | "report">(target ? "ready" : "pick");
+	const [start, setStart] = useState<LiveStart | null>(null);
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [notice, setNotice] = useState("");
+	const [callPhase, setCallPhase] = useState<LivePhase>("connecting");
+	const [turns, setTurns] = useState<LiveTurn[]>([]);
+	const [hint, setHint] = useState<LiveToolEvent | null>(null);
+	const [used, setUsed] = useState<string[]>([]);
+	const [level, setLevel] = useState(0);
+	const [elapsed, setElapsed] = useState(0);
+	const [result, setResult] = useState<LiveTalkResult | null>(null);
+	const call = useRef<LiveCall | null>(null);
+	const startedAt = useRef(0);
+
+	useEffect(() => {
+		if (phase !== "call" || !start || call.current) return;
+		startedAt.current = Date.now();
+		const live = new LiveCall(start, {
+			onPhase: (p) => setCallPhase(p),
+			onTurns: setTurns,
+			onLevel: setLevel,
+			onNotice: setNotice,
+			onTool: (event) => {
+				if (event.tool === "prompt_repair") setHint(event);
+				if (event.tool === "vault_word_used" && event.lemma)
+					setUsed((current) => (current.includes(event.lemma!) ? current : [...current, event.lemma!]));
+			},
+			onFinish: (input, reason) => {
+				if (!input) {
+					setError("Nothing was heard, so there is nothing to read. Check the microphone and try again.");
+					setPhase("pick");
+					return;
+				}
+				void save(input, reason);
+			},
+		});
+		call.current = live;
+		live.begin().catch((err: unknown) => {
+			call.current = null;
+			setError(err instanceof Error ? err.message : String(err));
+			setPhase("pick");
+		});
+	}, [phase, start]);
+
+	useEffect(() => {
+		if (phase !== "call" || callPhase === "ended") return;
+		const timer = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 1000)), 500);
+		return () => clearInterval(timer);
+	}, [phase, callPhase]);
+
+	useEffect(() => () => call.current?.abort(), []);
+
+	async function save(input: LiveCallInput, reason: string) {
+		void reason;
+		setPhase("report");
+		try {
+			const res = await fetch("/api/speak/live/end", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ ...input, tz: new Date().getTimezoneOffset() }),
+			});
+			const data = (await res.json().catch(() => ({}))) as LiveTalkResult & { message?: string };
+			if (!res.ok || !data.report) throw new Error(data.message ?? `Something went wrong (${res.status}).`);
+			setResult(data);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+			setResult(null);
+			setPhase("pick");
+		} finally {
+			call.current = null;
+		}
+	}
+
+	async function beginCall(kind: "scene" | "island", ref: string, title?: string) {
+		setBusy(true);
+		setError(null);
+		try {
+			const res = await fetch("/api/speak/live", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ kind, ref }),
+			});
+			const data = (await res.json().catch(() => ({}))) as LiveStart & { message?: string };
+			if (!res.ok || !data.url) throw new Error(data.message ?? `Could not start (${res.status}).`);
+			setStart(title ? { ...data, title } : data);
+			setTurns([]);
+			setHint(null);
+			setUsed([]);
+			setElapsed(0);
+			setCallPhase("connecting");
+			setPhase("call");
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	const endCall = () => void call.current?.finish("You ended the talk.");
+
+	if (result) {
+		return (
+			<SessionReport
+				report={result.report}
+				next={result.next}
+				againHref={result.report.kind === "island" ? `/speak/islands?id=${result.report.ref}` : "/speak/live"}
+				onAgain={() => {
+					setResult(null);
+					setTurns([]);
+					setHint(null);
+					setUsed([]);
+					setElapsed(0);
+					setStart(null);
+					if (start) void beginCall(start.kind, start.ref, start.title);
+				}}
+			/>
+		);
+	}
+
+	if (phase === "call" && start) {
+		return (
+			<LivePlayer
+				title={start.title}
+				turns={turns}
+				hint={hint}
+				used={used}
+				vault={start.vault}
+				level={level}
+				elapsed={elapsed}
+				phase={callPhase === "ended" ? "ending" : callPhase}
+				notice={callPhase === "ending" && !notice ? "Reading the talk…" : notice}
+				lang={start.config.default_language}
+				onEnd={endCall}
+			/>
+		);
+	}
+
+	if (phase === "ready" && (start || target)) {
+		const title = start?.title ?? target?.title ?? "";
+		return (
+			<div className="mx-auto max-w-3xl px-5 pt-8 pb-24">
+				<Link href="/speak/live" className="font-ui text-[13px] text-ink-3 hover:text-ink-2">
+					Live talk
+				</Link>
+				<h1 className="mt-3 font-ui text-[30px] font-[600] tracking-[-0.02em] text-foreground">{title}</h1>
+				<p className="mt-2 max-w-prose font-prose text-[15px] leading-relaxed text-ink-2">
+					A live call: you speak, the tutor speaks, and either of you can interrupt. It asks about the topic and answers
+					what you actually said.
+				</p>
+				<div className="mt-5 flex flex-wrap items-center gap-3">
+					<button
+						type="button"
+						disabled={busy}
+						onClick={() => {
+							if (start) {
+								setTurns([]);
+								setHint(null);
+								setUsed([]);
+								setElapsed(0);
+								setCallPhase("connecting");
+								setPhase("call");
+							} else if (target) void beginCall(target.kind, target.ref, target.title);
+						}}
+						className={PRIMARY}
+						data-testid="live-start"
+					>
+						{busy ? <LoaderCircleIcon className="size-4 animate-spin" /> : <MicIcon className="size-4" />}
+						{busy ? "Connecting…" : "Start the call"}
+					</button>
+					<p className="font-prose text-[13px] text-ink-3">Your browser will ask for the microphone.</p>
+				</div>
+				{error && (
+					<p role="alert" className="mt-4 max-w-prose font-prose text-[14px] text-destructive">
+						{error}
+					</p>
+				)}
+			</div>
+		);
+	}
+
+	return (
+		<div className="mx-auto max-w-3xl px-5 pt-8 pb-24">
+			<Link href="/speak" className="font-ui text-[13px] text-ink-3 hover:text-ink-2">
+				Speak
+			</Link>
+			<h1 className="mt-4 font-ui text-[32px] font-[600] tracking-[-0.33px] text-foreground">Live talk</h1>
+			<p className="mt-2 max-w-prose font-prose text-[15px] leading-relaxed text-ink-2">
+				A real conversation, spoken both ways. The tutor hears you as you speak, answers out loud, and waits for you
+				instead of taking turns on a button. End the call and the talk is read back: how much you spoke, how fast you
+				answered, what to repair, and the fillers to reach for next time.
+			</p>
+
+			{!page.availability.enabled ? (
+				<div className="mt-8 rounded-xl bg-well p-4" data-testid="live-unavailable">
+					<p className="font-ui text-[13px] font-[600] text-ink-2">
+						{page.availability.missing === "language" ? "Not in this language" : "Needs a key"}
+					</p>
+					<p className="mt-1 max-w-prose font-prose text-[14px] text-ink-2">{page.availability.reason}</p>
+				</div>
+			) : (
+				<>
+					{page.islands.length > 0 && (
+						<section className="mt-9" aria-labelledby="live-islands">
+							<h2 id="live-islands" className="q-sh">
+								Your islands
+							</h2>
+							<p className="-mt-1 mb-2 font-prose text-[13px] text-ink-3">
+								The talk that moves an island up its ladder.
+							</p>
+							<ul className="divide-y divide-[var(--q-line)]">
+								{page.islands.map((island) => (
+									<li key={island.id} className="flex items-baseline justify-between gap-3 py-2.5">
+										<span className="min-w-0">
+											<span className="block font-ui text-[15px] font-[600] text-foreground">{island.topic}</span>
+											<span className="mt-0.5 block font-prose text-[13px] text-ink-3">
+												{island.step}
+												{island.needs[0] ? ` · ${island.needs[0]}` : ""}
+											</span>
+										</span>
+										<button
+											type="button"
+											disabled={busy}
+											onClick={() => void beginCall("island", island.id, island.topic)}
+											className={cn(SECONDARY, "shrink-0")}
+										>
+											Talk
+										</button>
+									</li>
+								))}
+							</ul>
+						</section>
+					)}
+
+					<section className="mt-9" aria-labelledby="live-scenes">
+						<h2 id="live-scenes" className="q-sh">
+							Scenes
+						</h2>
+						<p className="-mt-1 mb-2 font-prose text-[13px] text-ink-3">
+							The same situations as Speak, spoken live instead of turn by turn.
+						</p>
+						<ul className="divide-y divide-[var(--q-line)]">
+							{page.scenes.map((scene) => (
+								<li key={scene.id} className="flex items-baseline justify-between gap-3 py-2.5">
+									<span className="min-w-0">
+										<span className="block font-ui text-[15px] font-[600] text-foreground">{scene.title}</span>
+										<span className="mt-0.5 block font-prose text-[13px] text-ink-3">{scene.task}</span>
+									</span>
+									<button
+										type="button"
+										disabled={busy}
+										onClick={() => void beginCall("scene", scene.id, scene.title)}
+										className={cn(SECONDARY, "shrink-0")}
+									>
+										Talk
+									</button>
+								</li>
+							))}
+						</ul>
+					</section>
+				</>
+			)}
+
+			{error && (
+				<p role="alert" className="mt-5 max-w-prose font-prose text-[14px] text-destructive">
+					{error}
+				</p>
+			)}
+
+			<p className="mt-10 max-w-2xl font-ui text-[12px] text-ink-3">
+				Live talk runs on Phonic-1 through your own Phonic key; both voices are generated during the call. The
+				transcript and the report stay on this computer.
+			</p>
+		</div>
+	);
+}

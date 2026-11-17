@@ -24,7 +24,7 @@ import { ProviderIcon } from "./provider-icons.tsx";
 
 /** Which settings group a service key sits in (adds Speech). */
 function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Translation" | "Web search" {
-	if (id === "ELEVENLABS_API_KEY" || id.startsWith("AZURE_SPEECH_")) return "Speech";
+	if (id === "ELEVENLABS_API_KEY" || id === "PHONIC_API_KEY" || id.startsWith("AZURE_SPEECH_")) return "Speech";
 	if (id === "DEEPGRAM_API_KEY") return "Dictation";
 	if (id === "DEEPL_API_KEY") return "Translation";
 	return "Web search";
