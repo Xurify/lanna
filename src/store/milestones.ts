@@ -33,6 +33,7 @@ export interface CustomMilestoneRecord {
 
 interface MilestonesFile {
 	custom: CustomMilestoneRecord[];
+	hiddenBuiltins?: string[];
 }
 
 const FILE = () => path.join(PATHS.data, "milestones.json");
@@ -41,7 +42,12 @@ export const milestoneStore = {
 	read(): MilestonesFile {
 		try {
 			const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Partial<MilestonesFile>;
-			return { custom: Array.isArray(raw.custom) ? raw.custom : [] };
+			return {
+				custom: Array.isArray(raw.custom) ? raw.custom : [],
+				hiddenBuiltins: Array.isArray(raw.hiddenBuiltins)
+					? raw.hiddenBuiltins.filter((id) => typeof id === "string")
+					: [],
+			};
 		} catch {
 			return { custom: [] };
 		}
@@ -73,6 +79,22 @@ export const milestoneStore = {
 		const rec = file.custom.find((c) => c.def.id === id && !c.removedAt);
 		if (!rec) return false;
 		rec.removedAt = now.toISOString();
+		this.write(file);
+		return true;
+	},
+	setBuiltinHidden(id: string, hidden: boolean): void {
+		const file = this.read();
+		const ids = new Set(file.hiddenBuiltins);
+		if (hidden) ids.add(id);
+		else ids.delete(id);
+		file.hiddenBuiltins = [...ids];
+		this.write(file);
+	},
+	restore(id: string): boolean {
+		const file = this.read();
+		const rec = file.custom.find((c) => c.def.id === id);
+		if (!rec) return false;
+		delete rec.removedAt;
 		this.write(file);
 		return true;
 	},

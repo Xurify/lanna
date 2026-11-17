@@ -319,7 +319,8 @@ export type { MilestonesReport };
 const NEXT_WORDS = 24;
 
 function allMilestones(): MilestoneDef[] {
-	return [...MILESTONES, ...milestoneStore.active().map((c) => c.def)];
+	const hidden = new Set(milestoneStore.read().hiddenBuiltins);
+	return [...MILESTONES.filter((m) => !hidden.has(m.id)), ...milestoneStore.active().map((c) => c.def)];
 }
 
 export function milestonesReport(now = new Date(), tz?: number): MilestonesReport {
@@ -359,9 +360,14 @@ export function milestonesReport(now = new Date(), tz?: number): MilestonesRepor
 					open: u.status === "open" || u.status === "started",
 				};
 	const today = dayKey(now, tz ?? now.getTimezoneOffset());
+	const storedMilestones = milestoneStore.read();
 	return {
 		facts,
 		milestones,
+		hiddenMilestones: [
+			...MILESTONES.filter((m) => storedMilestones.hiddenBuiltins?.includes(m.id)),
+			...storedMilestones.custom.filter((c) => c.removedAt).map((c) => c.def),
+		],
 		nextWords,
 		goals,
 		guidedHours: GUIDED_HOURS,
@@ -478,6 +484,19 @@ export async function addCustomMilestone(
 
 export function removeCustomMilestone(id: string, now = new Date()): boolean {
 	return milestoneStore.remove(id, now);
+}
+
+export function setMilestoneHidden(id: string, hidden: boolean, now = new Date()): boolean {
+	if (MILESTONES.some((m) => m.id === id)) {
+		milestoneStore.setBuiltinHidden(id, hidden);
+		return true;
+	}
+	if (!milestoneStore.find(id)) return false;
+	if (hidden) {
+		milestoneStore.remove(id, now);
+		return true;
+	}
+	return milestoneStore.restore(id);
 }
 
 /** Whether a model is configured for the custom mapping. */

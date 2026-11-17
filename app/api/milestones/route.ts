@@ -1,13 +1,4 @@
-/**
- * GET /api/milestones — the report: what the app knows about the learner
- * and, per milestone, the words and speed gaps and the dates
- * (src/server/milestones.ts).
- * POST /api/milestones {text} — a milestone in the learner's words, mapped
- * once by the cheap model slot and kept on disk; returns the new report.
- * DELETE /api/milestones?id= — hide a custom milestone (kept on disk).
- */
-
-import { addCustomMilestone, BODY_LIMITS, bodyTooLarge, milestonesReport, removeCustomMilestone } from "@/src/server";
+import { addCustomMilestone, BODY_LIMITS, bodyTooLarge, milestonesReport, setMilestoneHidden } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -38,8 +29,17 @@ export async function DELETE(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
 	const id = new URL(req.url).searchParams.get("id") ?? "";
-	if (!id.startsWith("custom-"))
-		return Response.json({ message: "only custom milestones can be removed" }, { status: 400 });
-	const removed = removeCustomMilestone(id);
+	const removed = setMilestoneHidden(id, true);
+	if (!removed) return Response.json({ message: "That milestone is not on your list." }, { status: 404 });
 	return Response.json({ removed, report: milestonesReport(new Date(), tzOf(req)) });
+}
+
+export async function PATCH(req: Request) {
+	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
+	if (oversized) return oversized;
+	const body = (await req.json().catch(() => null)) as { id?: unknown } | null;
+	if (!body || typeof body.id !== "string") return Response.json({ message: "id must be a string" }, { status: 400 });
+	if (!setMilestoneHidden(body.id, false))
+		return Response.json({ message: "That milestone is not on your list." }, { status: 404 });
+	return Response.json({ report: milestonesReport(new Date(), tzOf(req)) });
 }
