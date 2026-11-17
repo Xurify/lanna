@@ -117,12 +117,16 @@ const MODE_BADGE_LABELS: Record<WordTranslationMode, string> = {
 	google: "Google",
 };
 
-function sentenceAround(range: Range | null): string {
+function sentenceAround(range: Range | null): { sentence: string; translation?: string } {
 	const node = range?.commonAncestorContainer;
 	const el = node?.nodeType === 1 ? (node as Element) : node?.parentElement;
-	const marked = el?.closest("[data-ask-context]")?.getAttribute("data-ask-context");
+	const marked = el?.closest("[data-ask-context]");
 	const block = el?.closest("p, li, blockquote, h1, h2, h3, td");
-	return (marked || block?.textContent || "").replace(/\s+/g, " ").trim().slice(0, 400);
+	const sentence = (marked?.getAttribute("data-ask-context") || block?.textContent || "")
+		.replace(/\s+/g, " ")
+		.trim()
+		.slice(0, 400);
+	return { sentence, translation: marked?.getAttribute("data-ask-translation") ?? undefined };
 }
 
 export function SelectionWordBankBar() {
@@ -531,7 +535,7 @@ export function SelectionWordBankBar() {
 		if (asking) return;
 		setAsking(true);
 		try {
-			await askAbout(router, { kind: "part", part: selection.text, sentence: sentenceAround(activeRangeRef.current) });
+			await askAbout(router, { kind: "part", part: selection.text, ...sentenceAround(activeRangeRef.current) });
 			window.getSelection()?.removeAllRanges();
 			activeRangeRef.current = null;
 			setSelection(null);

@@ -30,12 +30,14 @@ describe("asking about a review card", () => {
 		await askAbout(router, {
 			kind: "sentence",
 			sentence: "Prosím si pohár vody.",
+			translation: "I'd like a glass of water.",
 			answer: "vody",
 			lemma: "voda",
 			given: "voda",
 		});
 		assert.equal(bodies[0]!.sentence, "Prosím si pohár vody.");
 		assert.equal(bodies[0]!.answer, "Prosím si pohár vody.");
+		assert.equal(bodies[0]!.translation, "I'd like a glass of water.");
 		const prompt = decodeURIComponent(pushed[0]!.split("?prompt=")[1]!);
 		assert.equal(prompt, 'What does each part of "Prosím si pohár vody." mean? I wrote "voda" instead of "vody".');
 	});

@@ -16,9 +16,17 @@ export async function POST(req: Request) {
 	if (oversized) return oversized;
 	const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
 	const sentence = str(body?.sentence);
-	const answer = str(body?.answer, 120);
+	const answer = str(body?.answer);
 	if (!sentence || !answer) return Response.json({ message: "sentence and answer are required" }, { status: 400 });
 	return Response.json(
-		openWhy({ title: str(body?.title, 120), sentence, answer, lemma: str(body?.lemma, 80), given: str(body?.given) }),
+		openWhy({
+			title: str(body?.title, 120),
+			sentence,
+			answer,
+			lemma: str(body?.lemma, 80),
+			given: str(body?.given),
+			translation: str(body?.translation),
+			focus: str(body?.focus, 120),
+		}),
 	);
 }

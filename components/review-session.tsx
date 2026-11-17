@@ -320,6 +320,7 @@ function AnsweredRow({
 					className="block text-[16px] leading-snug text-ink-2"
 					lang={code}
 					data-ask-context={answeredSentence(line)}
+					data-ask-translation={line.translation}
 				>
 					{line.pieces.map((piece, i) => (
 						<Fragment key={i}>
@@ -620,9 +621,10 @@ export function ReviewSession() {
 			await askAbout(router, {
 				kind: "sentence",
 				sentence: prompt.card.sentence,
+				translation: prompt.card.translation,
 				answer: prompt.answer,
 				lemma: prompt.card.lemma,
-				given,
+				given: verdict === "exact" ? "" : given,
 			});
 		} catch {
 			setAskError(true);
@@ -1004,6 +1006,7 @@ export function ReviewSession() {
 										className="q-sent mt-2 !text-[30px] !leading-[44px] [text-wrap:pretty] @xl:!text-[46px] @xl:!leading-[64px]"
 										lang={lang?.code}
 										data-ask-context={prompt.card.sentence}
+										data-ask-translation={prompt.card.translation}
 										data-word-lookup-enabled={verdict !== null ? "true" : "false"}
 									>
 										{runs.map((run, i) => {

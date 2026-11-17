@@ -10,10 +10,12 @@
 
 import { activeLanguage } from "./active-language.ts";
 import { chatStore } from "../store/chats.ts";
-import { countWhyReuse, findWhy, forgetWhy, rememberWhy, whyKey } from "../store/corpus.ts";
+import { countWhyReuse, findWhy, forgetWhy, listWhy, rememberWhy, whyKey } from "../store/corpus.ts";
 import { readSettings } from "../store/settings.ts";
+import { lookupSelection } from "./word-bank.ts";
 import { titleFromPrompt } from "../core/title.ts";
 import { CHAT_THINKING_LEVEL } from "../core/settings.ts";
+import type { AskedAbout } from "../core/asked-about.ts";
 
 interface WhyRequest {
 	title: string;
@@ -21,6 +23,8 @@ interface WhyRequest {
 	answer: string;
 	lemma: string;
 	given: string;
+	translation?: string;
+	focus?: string;
 }
 
 interface WhyOutcome {
@@ -56,8 +60,31 @@ export function openWhy(req: WhyRequest, now = new Date()): WhyOutcome {
 		answer: req.answer,
 		lemma: req.lemma,
 		given: req.given,
+		...(req.translation ? { translation: req.translation } : {}),
+		...(req.focus ? { focus: req.focus } : {}),
 		chatId: chat.id,
 		createdAt: now.toISOString(),
 	});
 	return { id: chat.id, reused: false };
+}
+
+function dictionaryEntry(part: string | null): AskedAbout["entry"] {
+	if (!part) return null;
+	const found = lookupSelection(part);
+	const gloss = found.dictionaryGloss || found.gloss;
+	if (!found.found || !found.lemma || !gloss) return null;
+	return { lemma: found.lemma, pos: found.pos, gloss, formNote: found.formNote };
+}
+
+export function askedAbout(chatId: string): AskedAbout | null {
+	const entry = listWhy().find((candidate) => candidate.chatId === chatId);
+	if (!entry) return null;
+	const part = entry.answer === entry.sentence ? (entry.focus ?? null) : entry.answer;
+	return {
+		sentence: entry.sentence,
+		part,
+		given: entry.given,
+		translation: entry.translation ?? "",
+		entry: entry.answer === entry.sentence ? null : dictionaryEntry(part),
+	};
 }

@@ -18,6 +18,8 @@ interface WhyReuse {
 	answer: string;
 	lemma: string;
 	given: string;
+	translation?: string;
+	focus?: string;
 }
 
 /**
@@ -86,21 +88,28 @@ export function onAskLeaving(settle: () => Promise<void>): () => void {
 export async function askAbout(
 	router: { push: (href: string) => void },
 	ask:
-		| { kind: "sentence"; sentence: string; answer: string; lemma: string; given: string }
-		| { kind: "part"; part: string; sentence: string },
+		| { kind: "sentence"; sentence: string; translation: string; answer: string; lemma: string; given: string }
+		| { kind: "part"; part: string; sentence: string; translation?: string },
 ): Promise<void> {
 	await Promise.all([...settleBeforeAsking].map((settle) => settle()));
 	if (ask.kind === "sentence") {
 		return startTutorChat(router, {
 			title: `Explain "${ask.sentence}"`,
 			prompt: sentencePrompt(ask),
-			reuse: { sentence: ask.sentence, answer: ask.sentence, lemma: ask.lemma, given: ask.given },
+			reuse: {
+				sentence: ask.sentence,
+				answer: ask.sentence,
+				lemma: ask.lemma,
+				given: ask.given,
+				translation: ask.translation,
+				focus: ask.answer,
+			},
 		});
 	}
 	const sentence = ask.sentence || ask.part;
 	return startTutorChat(router, {
 		title: `Explain "${ask.part}"`,
 		prompt: partPrompt(ask.part, ask.sentence),
-		reuse: { sentence, answer: ask.part, lemma: "", given: "" },
+		reuse: { sentence, answer: ask.part, lemma: "", given: "", translation: ask.translation },
 	});
 }
