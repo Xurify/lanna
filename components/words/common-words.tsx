@@ -3,6 +3,7 @@
 import { CheckIcon } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 interface CommonWord {
@@ -51,6 +52,14 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 	const total = ranking?.total ?? 0;
 	const listedCount = useDeferredValue(count);
 	const bands = useMemo(() => bandsOf(ranking ? ranking.items.slice(0, listedCount) : []), [ranking, listedCount]);
+	const stops = useMemo(() => {
+		const presets = PRESETS.filter((preset) => preset < total);
+		const values = [...presets, total];
+		return values.map((val) => ({
+			value: val,
+			label: val === total ? "All" : number(val),
+		}));
+	}, [total]);
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -173,8 +182,19 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 	return (
 		<section aria-labelledby="common-words-title" className="space-y-6">
 			<Intro />
-			<RangeBar count={count} total={total} onSelect={selectCount} />
 			<div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+				<Slider
+					header
+					label="Most common"
+					value={Math.min(count, total)}
+					onChange={selectCount}
+					stops={stops}
+					valueText={
+						count >= total ? `All ${number(total)} words` : `Top ${number(selected.length)} of ${number(total)}`
+					}
+					testid="common-words-slider"
+					valueTestid="common-words-count"
+				/>
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<p className="font-prose text-sm text-muted-foreground" data-testid="common-words-summary">
 						<span className="font-semibold text-foreground tabular-nums">{number(knownCount)}</span> known,{" "}
@@ -244,45 +264,6 @@ function Intro() {
 				know so Read, Listen and Watch can choose material at your level. These are your own marks, not tested recall;
 				your Review schedule stays unchanged.
 			</p>
-		</div>
-	);
-}
-
-function RangeBar({ count, total, onSelect }: { count: number; total: number; onSelect: (next: number) => void }) {
-	const stops = [...new Set([...PRESETS.filter((preset) => preset <= total), total])];
-	return (
-		<div className="sticky top-0 z-10 -mx-4 border-b border-border/80 bg-background px-4 py-2 sm:-mx-6 sm:px-6">
-			<div className="flex items-center justify-between gap-3">
-				<div
-					role="group"
-					aria-label={`Most common words, ${number(total)} in total`}
-					className="flex min-w-0 overflow-x-auto rounded-lg bg-well p-0.5"
-				>
-					{stops.map((stop, index) => {
-						const all = index === stops.length - 1;
-						return (
-							<button
-								key={stop}
-								type="button"
-								aria-pressed={count === stop}
-								aria-label={all ? `All ${number(total)} words` : undefined}
-								onClick={() => onSelect(stop)}
-								className={cn(
-									"h-8 shrink-0 rounded-md px-3 font-ui text-sm transition-colors",
-									count === stop
-										? "bg-card font-semibold text-foreground shadow-[0_0_0_1px_var(--q-line-2)]"
-										: "text-muted-foreground hover:text-foreground",
-								)}
-							>
-								{all ? "All" : number(stop)}
-							</button>
-						);
-					})}
-				</div>
-				<p className="q-num hidden shrink-0 text-sm text-muted-foreground sm:block">
-					{count >= total ? `All ${number(total)} words` : `Top ${number(count)} of ${number(total)}`}
-				</p>
-			</div>
 		</div>
 	);
 }
