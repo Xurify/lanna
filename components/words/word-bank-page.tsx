@@ -1,6 +1,8 @@
 "use client";
 
 import { EmptyState } from "@/components/quiet/empty-state";
+import { Button } from "@/components/ui/button";
+import { AddPhraseDialog, type PhraseDraft } from "@/components/words/add-phrase-dialog";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -73,9 +75,6 @@ export function WordBankPage({
 	const [phraseSearch, setPhraseSearch] = useState("");
 	const [loadingPhrases, setLoadingPhrases] = useState(false);
 	const [showAddModal, setShowAddModal] = useState(false);
-	const [newPhraseText, setNewPhraseText] = useState("");
-	const [newPhraseTrans, setNewPhraseTrans] = useState("");
-	const [newPhraseContext, setNewPhraseContext] = useState("");
 
 	// Load Word Bank
 	const fetchWords = useCallback(
@@ -200,34 +199,26 @@ export function WordBankPage({
 	};
 
 	// Create custom phrase
-	const handleAddPhrase = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!newPhraseText.trim()) return;
-
+	const savePhrase = async (draft: PhraseDraft): Promise<boolean> => {
 		try {
 			const res = await fetch("/api/phrases", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					text: newPhraseText.trim(),
-					translation: newPhraseTrans.trim(),
-					context: newPhraseContext.trim() || "Your own phrase",
+					text: draft.text.trim(),
+					translation: draft.translation.trim(),
+					context: draft.context.trim() || "Your own phrase",
 					source: "manual",
 				}),
 			});
-			if (res.ok) {
-				const saved = (await res.json()) as SavedPhrase;
-				setPhrases((prev) => [saved, ...prev]);
-				setNewPhraseText("");
-				setNewPhraseTrans("");
-				setNewPhraseContext("");
-				setShowAddModal(false);
-				if (summary) {
-					setSummary({ ...summary, savedPhrasesCount: summary.savedPhrasesCount + 1 });
-				}
-			}
-		} catch (err) {
-			console.error("Failed to save custom phrase", err);
+			if (!res.ok) return false;
+			const saved = (await res.json()) as SavedPhrase;
+			setPhrases((prev) => [saved, ...prev]);
+			setShowAddModal(false);
+			if (summary) setSummary({ ...summary, savedPhrasesCount: summary.savedPhrasesCount + 1 });
+			return true;
+		} catch {
+			return false;
 		}
 	};
 
@@ -629,14 +620,10 @@ export function WordBankPage({
 								/>
 							</div>
 
-							<button
-								type="button"
-								onClick={() => setShowAddModal(true)}
-								className="flex items-center justify-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 font-ui text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-							>
-								<PlusIcon className="size-4" />
-								<span>Add your own phrase</span>
-							</button>
+							<Button type="button" onClick={() => setShowAddModal(true)}>
+								<PlusIcon aria-hidden />
+								Add your own phrase
+							</Button>
 						</div>
 
 						{/* Source Filters */}
@@ -725,79 +712,7 @@ export function WordBankPage({
 					</div>
 				)}
 
-				{/* Add Phrase Modal Dialog */}
-				{showAddModal && (
-					<div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4">
-						<div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl">
-							<div className="mb-4 flex items-center justify-between">
-								<h2 className="font-title text-xl font-semibold text-foreground">Add a phrase</h2>
-								<button
-									type="button"
-									onClick={() => setShowAddModal(false)}
-									aria-label="Close"
-									className="text-muted-foreground hover:text-foreground"
-								>
-									<XIcon className="size-5" />
-								</button>
-							</div>
-
-							<form onSubmit={handleAddPhrase} className="space-y-4">
-								<div>
-									<label className="block font-ui text-xs font-semibold text-muted-foreground">Phrase *</label>
-									<input
-										type="text"
-										required
-										autoFocus
-										placeholder="for example Dnes je pekne."
-										value={newPhraseText}
-										onChange={(e) => setNewPhraseText(e.target.value)}
-										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"
-									/>
-								</div>
-
-								<div>
-									<label className="block font-ui text-xs font-semibold text-muted-foreground">
-										English translation
-									</label>
-									<input
-										type="text"
-										placeholder="for example It is nice today."
-										value={newPhraseTrans}
-										onChange={(e) => setNewPhraseTrans(e.target.value)}
-										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"
-									/>
-								</div>
-
-								<div>
-									<label className="block font-ui text-xs font-semibold text-muted-foreground">Context or note</label>
-									<input
-										type="text"
-										placeholder="for example Weather"
-										value={newPhraseContext}
-										onChange={(e) => setNewPhraseContext(e.target.value)}
-										className="q-field mt-1 w-full rounded-xl px-3.5 py-2 font-prose text-sm"
-									/>
-								</div>
-
-								<div className="flex items-center justify-end gap-2 pt-2">
-									<button
-										type="button"
-										onClick={() => setShowAddModal(false)}
-										className="rounded-xl px-4 py-2 font-ui text-xs font-semibold text-muted-foreground hover:text-foreground"
-									>
-										Cancel
-									</button>
-									<button
-										type="submit"
-										className="rounded-xl bg-primary px-5 py-2 font-ui text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-									>
-										Save phrase
-									</button>
-								</div>
-							</form>
-						</div>
-					</div>
-				)}
+				{showAddModal && <AddPhraseDialog onClose={() => setShowAddModal(false)} onSave={savePhrase} />}
 			</div>
 		</div>
 	);

@@ -18,6 +18,7 @@ import { SettingsGroup } from "./controls.tsx";
 import { SubscriptionsSection } from "./subscriptions-section.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
+import { Button } from "@/components/ui/button";
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { ProviderIcon } from "./provider-icons.tsx";
 
@@ -179,15 +180,15 @@ function KeyTableRow({
 					>
 						{reveal ? "Hide" : "Show"}
 					</button>
-					<button
+					<Button
 						type="button"
+						size="sm"
 						onClick={() => void save()}
 						disabled={busy || !value.trim()}
 						data-testid={`${testid}-save`}
-						className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-2xs transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						Save
-					</button>
+					</Button>
 					<button
 						type="button"
 						onClick={() => {
@@ -687,15 +688,15 @@ function AddProviderEditor({
 					autoFocus
 					className="h-8.5 min-w-0 flex-1 rounded-lg border border-border/80 bg-background/80 px-3 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
 				/>
-				<button
+				<Button
 					type="button"
+					size="sm"
 					onClick={() => value.trim() && onSave(value)}
 					disabled={!value.trim()}
 					data-testid={`key-${provider.id}-save`}
-					className="shrink-0 cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-2xs transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					Save
-				</button>
+				</Button>
 				<button
 					type="button"
 					onClick={onCancel}

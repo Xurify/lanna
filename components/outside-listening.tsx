@@ -206,7 +206,7 @@ export function OutsideListening() {
 						>
 							Log {minutes} min
 						</button>
-						<button type="button" className="q-btn ghost" onClick={() => setOpen(false)} disabled={busy}>
+						<button type="button" className="q-btn sec" onClick={() => setOpen(false)} disabled={busy}>
 							Cancel
 						</button>
 					</div>

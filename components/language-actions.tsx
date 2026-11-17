@@ -8,6 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { AddLanguageDialog } from "@/components/add-language-dialog";
@@ -201,47 +202,40 @@ function ConfirmDialog({
 				aria-labelledby={`${testid}-title`}
 				data-testid={testid}
 				onClick={(e) => e.stopPropagation()}
-				className="flex w-full max-w-sm flex-col gap-3 rounded-xl bg-card p-5 shadow-raise-hi animate-in zoom-in-95 duration-150"
+				className="flex w-[28rem] max-w-full flex-col gap-4 rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 			>
 				<div className="flex items-center gap-3">
 					<div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/40">
 						<CountryFlag lang={flag} className="h-[20px] w-[30px] rounded-[4px]" />
 					</div>
 					<div className="min-w-0 flex-1">
-						<h3 id={`${testid}-title`} className="text-sm font-semibold text-foreground">
+						<h3 id={`${testid}-title`} className="text-base font-semibold text-foreground">
 							{title}
 						</h3>
-						<p className="text-xs text-muted-foreground">{lead}</p>
+						<p className="text-sm text-muted-foreground">{lead}</p>
 					</div>
 				</div>
-				<p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
+				<p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
 				{error && (
-					<p className="text-xs text-destructive" role="alert">
+					<p className="rounded-lg bg-miss-soft px-3.5 py-2.5 text-sm text-foreground" role="alert">
 						{error}
 					</p>
 				)}
-				<div className="flex items-center justify-end gap-2 pt-2">
-					<button
-						type="button"
-						onClick={onCancel}
-						className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-					>
+				<div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+					<Button type="button" variant="outline" size="sm" onClick={onCancel}>
 						Cancel
-					</button>
-					<button
+					</Button>
+					<Button
 						ref={confirmRef}
 						type="button"
+						variant={destructive ? "destructive" : "default"}
+						size="sm"
 						data-testid={confirmTestid}
 						disabled={busy}
 						onClick={onConfirm}
-						className={
-							destructive
-								? "rounded-lg bg-danger px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-danger-hover disabled:opacity-50"
-								: "rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
-						}
 					>
 						{confirm}
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>,

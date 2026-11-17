@@ -178,7 +178,7 @@ export function AddReadingDialog({
 				)}
 
 				<div className="mt-4 flex items-center justify-end gap-2">
-					<button type="button" onClick={onClose} className="q-btn ghost">
+					<button type="button" onClick={onClose} className="q-btn sec">
 						Cancel
 					</button>
 					<button

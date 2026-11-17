@@ -905,7 +905,7 @@ function SheetDialog({
 								{status}
 							</p>
 							<div className="ml-auto flex items-center gap-2">
-								<button type="button" className="q-btn ghost" onClick={requestClose}>
+								<button type="button" className="q-btn sec" onClick={requestClose}>
 									Cancel
 								</button>
 								<button type="submit" className="q-btn primary" disabled={!canSave} data-testid="cheatsheet-save">
