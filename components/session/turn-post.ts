@@ -1,5 +1,5 @@
 import type { ChatInput } from "../../src/core";
-import { chatPath, jsonPost, type FetchFn } from "./attach";
+import { chatPath, jsonPost, type Fetch } from "./http";
 
 export const TURN_PATH = "/api/chat";
 export const TURN_RETRY_POLL_MS = 500;
@@ -11,14 +11,14 @@ export interface TurnRetryTiming {
 }
 
 export async function postTurnInput(
-	fetchFn: FetchFn,
+	fetchImplementation: Fetch,
 	chatId: string,
 	input: ChatInput,
 	timing: TurnRetryTiming,
 	signal?: AbortSignal,
 ): Promise<Response> {
 	const init: RequestInit = { ...jsonPost({ chatId, input }), signal };
-	let response = await fetchFn(TURN_PATH, init);
+	let response = await fetchImplementation(TURN_PATH, init);
 	let waitedMs = 0;
 	while (response.status === 409) {
 		await response.body?.cancel().catch(() => {});
@@ -26,15 +26,15 @@ export async function postTurnInput(
 		await delay(timing.pollMs, signal);
 		waitedMs += timing.pollMs;
 		if (signal?.aborted) return response;
-		if (!(await turnIsIdle(fetchFn, chatId))) continue;
-		response = await fetchFn(TURN_PATH, init);
+		if (!(await turnIsIdle(fetchImplementation, chatId))) continue;
+		response = await fetchImplementation(TURN_PATH, init);
 	}
 	return response;
 }
 
-async function turnIsIdle(fetchFn: FetchFn, chatId: string): Promise<boolean> {
+async function turnIsIdle(fetchImplementation: Fetch, chatId: string): Promise<boolean> {
 	try {
-		const response = await fetchFn(chatPath(chatId, "/turn"));
+		const response = await fetchImplementation(chatPath(chatId, "/turn"));
 		if (!response.ok) return false;
 		return ((await response.json()) as { turnInFlight?: unknown }).turnInFlight !== true;
 	} catch {

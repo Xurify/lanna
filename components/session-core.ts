@@ -1,5 +1,6 @@
-import { needsContinuation, newProblemDismissedMarker, type ChatInput, type LannaMessage } from "../src/core";
-import { bodyTextOr, chatPath, errorMessageOf, fetchAttach, jsonPost, readBodyText } from "./session/attach";
+import { newProblemDismissedMarker, type ChatInput, type LannaMessage } from "../src/core";
+import { fetchAttach, readBodyText } from "./session/attach";
+import { bodyTextOr, chatPath, errorMessageOf, jsonPost } from "./session/http";
 import { continuationOwed } from "./session/continuation";
 import {
 	admitsTurn,
@@ -12,7 +13,7 @@ import {
 	settleConsume,
 	withError,
 	withStatus,
-} from "./session/data";
+} from "./session/transitions";
 import { localId } from "./session/local-id";
 import { projectSessionState } from "./session/project";
 import { ConnectionDrop, turnFrames, type TurnFrame } from "./session/sse";
@@ -81,7 +82,7 @@ export class SessionModel {
 		return this.data.status;
 	}
 
-	get readyRef(): boolean {
+	get isReady(): boolean {
 		return this.data.status === "ready";
 	}
 
@@ -89,8 +90,8 @@ export class SessionModel {
 		return projectSessionState(this.data);
 	}
 
-	setReattachSettled(fn: () => void): void {
-		this.onReattachSettled = fn;
+	setReattachSettled(listener: () => void): void {
+		this.onReattachSettled = listener;
 	}
 
 	postInputEvent(input: ChatInput, signal?: AbortSignal): Promise<Response> {
@@ -224,8 +225,6 @@ export class SessionModel {
 	clearError(): void {
 		this.commit(withError(this.data, null));
 	}
-
-	static needsContinuation = needsContinuation;
 
 	private commit(next: SessionData): void {
 		if (next === this.data) return;

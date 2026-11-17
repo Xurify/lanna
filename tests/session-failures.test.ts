@@ -25,7 +25,7 @@ describe("a failed reply", () => {
 		const m = model({ initialMessages: record });
 		assert.equal(m.getState().error?.message, FIXTURE_FAILURE);
 		assert.equal(m.getState().status, "ready");
-		assert.equal(m.readyRef, true, "a restored failure does not block a retry");
+		assert.equal(m.isReady, true, "a restored failure does not block a retry");
 		assert.deepEqual(m.getState().nativeMessages, record, "the saved history stays intact");
 		assert.equal(m.getState().messages.length, 1, "only the user bubble, no permanent error card");
 

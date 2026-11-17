@@ -1,7 +1,7 @@
 import type { AgentEvent } from "@earendil-works/pi-agent-core";
 import type { ToolResultMessage } from "@earendil-works/pi-ai";
 import type { LannaMessage } from "../../src/core";
-import { withError } from "./data";
+import { withError } from "./transitions";
 import { localId } from "./local-id";
 import { type RunningTurn, type SessionData } from "./state";
 

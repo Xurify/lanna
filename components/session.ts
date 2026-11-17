@@ -71,6 +71,6 @@ function sessionActions(model: SessionModel) {
 		stop: () => model.stop(),
 		clearError: () => model.clearError(),
 		resumeStream: () => void model.resumeStream(),
-		setReattachSettled: (fn: () => void) => model.setReattachSettled(fn),
+		setReattachSettled: (listener: () => void) => model.setReattachSettled(listener),
 	};
 }
