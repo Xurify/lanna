@@ -632,7 +632,7 @@ async function transcribeFileViaElevenLabs(
 	if (!key) return null;
 	const audio = fs.readFileSync(audioPath);
 	const form = new FormData();
-	form.append("model_id", "scribe_v2");
+	form.append("model_id", "scribe_v3");
 	form.append("language_code", lang);
 	form.append("file", new Blob([new Uint8Array(audio)], { type: "audio/mpeg" }), path.basename(audioPath));
 	const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
@@ -642,7 +642,7 @@ async function transcribeFileViaElevenLabs(
 		signal,
 	});
 	if (!res.ok) {
-		throw new Error(`ElevenLabs Scribe v2 answered ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
+		throw new Error(`ElevenLabs Scribe v3 answered ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
 	}
 	const body = (await res.json()) as { text?: string; words?: ElevenLabsWord[] };
 	const words = Array.isArray(body.words) ? body.words : [];
@@ -671,8 +671,8 @@ async function transcribeAudioFile(
 		if (got) return { ...got, via: "elevenlabs" };
 		throw new Error(
 			keyValue("ELEVENLABS_API_KEY")
-				? "ElevenLabs Scribe v2 found no speech in this audio."
-				: "ElevenLabs Scribe v2 is selected in Settings → Tutor, but no ELEVENLABS_API_KEY is configured in Settings → API keys.",
+				? "ElevenLabs Scribe v3 found no speech in this audio."
+				: "ElevenLabs Scribe v3 is selected in Settings → AI models, but no ELEVENLABS_API_KEY is configured in Settings → API keys.",
 		);
 	}
 
@@ -702,7 +702,7 @@ async function transcribeAudioFile(
 	if (dgKey) {
 		const audio = fs.readFileSync(audioPath);
 		const res = await fetch(
-			`https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(cloudLang)}&smart_format=true&punctuate=true&utterances=true`,
+			`https://api.deepgram.com/v1/listen?model=nova-3&language=${encodeURIComponent(cloudLang)}&smart_format=true&punctuate=true&utterances=true`,
 			{
 				method: "POST",
 				headers: { authorization: `Token ${dgKey}`, "content-type": "audio/mpeg" },
