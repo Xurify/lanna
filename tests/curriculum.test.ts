@@ -205,14 +205,19 @@ test("the daily plan: review first, listen (input) before the lesson, strengthen
 	assert.equal(plan.tasks[3]!.unit, "acc-fem");
 	assert.equal(plan.done, 0);
 	// After the day's work the same plan is all ticked.
+	const afterEvidence: Record<string, UnitEvidence> = {
+		...evidence,
+		[next]: { lessons: (evidence[next]?.lessons ?? 0) + 1, reps: 42, correct: 35 },
+		"acc-fem": { lessons: 3, reps: 36, correct: 25 },
+		"lx-greetings": { lessons: 1, reps: 12, correct: 12 },
+	};
+	const afterState = curriculumState(afterEvidence, "B2");
 	const after = dailyPlan({
 		...base,
-		evidence: {
-			...evidence,
-			[next]: { lessons: (evidence[next]?.lessons ?? 0) + 1, reps: 12, correct: 11 },
-			"acc-fem": { lessons: 3, reps: 36, correct: 25 },
-			"lx-greetings": { lessons: 1, reps: 12, correct: 12 },
-		},
+		state: afterState,
+		evidence: afterEvidence,
+		next: nextLessonUnit(afterState),
+		lessonUnit: next,
 		review: { due: 0, newLeft: 0, available: true },
 		day: {
 			units: { [next]: 1, "acc-fem": 1, "lx-greetings": 1 },
@@ -260,6 +265,66 @@ test("the daily plan: review first, listen (input) before the lesson, strengthen
 		half.tasks.map((t) => t.id),
 		["review", "listen", "lesson", "read", "speak", "fluency"],
 	);
+});
+
+test("the daily plan: only a lesson on the Continue unit ticks the lesson task, even when finishing it advances next", () => {
+	const evidence: Record<string, UnitEvidence> = {
+		present: { lessons: 2, reps: 30, correct: 24 },
+		"acc-fem": { lessons: 2, reps: 24, correct: 14 },
+	};
+	const state = curriculumState(evidence, "B2");
+	const next = nextLessonUnit(state);
+	const base = {
+		state,
+		evidence,
+		review: { due: 12, newLeft: 10, available: true },
+		minutesPerDay: 35,
+		next,
+		dayOfYear: 301,
+	};
+	const day = (units: Record<string, number>) => ({
+		units,
+		reviews: 0,
+		blitz: 0,
+		talks: 0,
+		stories: 0,
+		tutors: 0,
+	});
+	const task = (plan: ReturnType<typeof dailyPlan>, id: string) => plan.tasks.find((t) => t.id === id)!;
+
+	const wordsUnit = task(dailyPlan({ ...base, day: day({}) }), "words").unit!;
+	const wordsOnly = dailyPlan({ ...base, day: day({ [wordsUnit]: 1 }) });
+	assert.equal(task(wordsOnly, "words").done, true);
+	assert.equal(task(wordsOnly, "lesson").done, false, "another unit's lesson leaves the Continue lesson open");
+
+	const doneEvidence: Record<string, UnitEvidence> = {
+		...evidence,
+		[next]: { lessons: 3, reps: 42, correct: 35 },
+	};
+	const doneState = curriculumState(doneEvidence, "B2");
+	const nextAfter = nextLessonUnit(doneState);
+	assert.notEqual(nextAfter, next);
+	const unpracticedPin = dailyPlan({
+		...base,
+		state: doneState,
+		evidence: doneEvidence,
+		next: nextAfter,
+		lessonUnit: next,
+		day: day({}),
+	});
+	assert.equal(task(unpracticedPin, "lesson").unit, nextAfter);
+	assert.equal(task(unpracticedPin, "lesson").done, false);
+
+	const onContinue = dailyPlan({
+		...base,
+		state: doneState,
+		evidence: doneEvidence,
+		next: nextAfter,
+		lessonUnit: next,
+		day: day({ [next]: 1 }),
+	});
+	assert.equal(task(onContinue, "lesson").unit, next);
+	assert.equal(task(onContinue, "lesson").done, true);
 });
 
 test("the daily plan: only a spoken scene or a tutor session ticks Speak; a weak words unit is Strengthen; carried tasks lead without growing the plan", () => {

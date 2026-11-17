@@ -117,7 +117,12 @@ function introCard(plan: LessonPlan, progress: string, body: React.ReactNode) {
 	const info = unitInfo(plan.unit);
 	return (
 		<div className={cn(COLUMN, "lanna-rise flex flex-1 flex-col")}>
-			<PracticeCard icon="rule" title={info.slovakTerm ?? info.title} sub={info.tagline} right={progress}>
+			<PracticeCard
+				icon="rule"
+				title={info.title}
+				sub={info.slovakTerm ? `${info.slovakTerm} · ${info.tagline}` : info.tagline}
+				right={progress}
+			>
 				{body}
 			</PracticeCard>
 		</div>
