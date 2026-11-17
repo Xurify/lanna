@@ -107,17 +107,16 @@ function deleteSegment(segment: string[]): Promise<Response> {
 describe("isValidSegmentPath (the mirror-layout discipline)", () => {
 	it("accepts the shared base and numeric fragments, rejects everything else", () => {
 		assert.equal(isValidSegmentPath("chat/10-chat.md"), true);
-		assert.equal(isValidSegmentPath("practice/10-doctrine.md"), true);
 		assert.equal(isValidSegmentPath("language/10-slovak.md"), true);
-		// the shared/ fragments dir (sources v1): composed by BOTH agents,
-		// overridable like any other segment
 		assert.equal(isValidSegmentPath("shared/10-personality.md"), true);
 		for (const bad of [
 			"", // empty
 			"system-prompt.md", // the retired shared base — no such segment now
 			"README.md", // no agent dir
 			"chat/README.md", // not numeric-prefixed
+			"chat/tutor-unit.md", // not numeric-prefixed (appended conditionally by turn runner)
 			"chat/10-chat.txt", // not .md
+			"practice/10-doctrine.md", // the retired practice directory
 			"teacher/20-teaching.md", // the retired teacher directory
 			"prober/10-probe-doctrine.md", // the retired prober directory
 			"../chat/10-chat.md", // traversal
@@ -137,17 +136,18 @@ describe("the override store", () => {
 	it("listOverrides is empty with no dir, then lists written mirrors sorted", () => {
 		fs.rmSync(PROMPTS_OVERRIDE_DIR, { recursive: true, force: true });
 		assert.deepEqual(promptOverrides.listOverrides(), []);
-		promptOverrides.writeOverride("practice/00-base.md", "custom base");
+		promptOverrides.writeOverride("shared/10-voice.md", "custom voice");
 		promptOverrides.writeOverride("chat/10-chat.md", "custom chat");
-		assert.deepEqual(promptOverrides.listOverrides(), ["chat/10-chat.md", "practice/00-base.md"]);
+		assert.deepEqual(promptOverrides.listOverrides(), ["chat/10-chat.md", "shared/10-voice.md"]);
+		fs.rmSync(PROMPTS_OVERRIDE_DIR, { recursive: true, force: true });
 	});
 
 	it("readOverride round-trips; delete removes idempotently; invalid paths no-op", () => {
-		promptOverrides.writeOverride("practice/20-language-drills.md", "custom drills");
-		assert.equal(promptOverrides.readOverride("practice/20-language-drills.md"), "custom drills");
-		promptOverrides.deleteOverride("practice/20-language-drills.md");
-		assert.equal(promptOverrides.readOverride("practice/20-language-drills.md"), null);
-		promptOverrides.deleteOverride("practice/20-language-drills.md"); // again: no throw
+		promptOverrides.writeOverride("shared/15-accuracy.md", "custom accuracy");
+		assert.equal(promptOverrides.readOverride("shared/15-accuracy.md"), "custom accuracy");
+		promptOverrides.deleteOverride("shared/15-accuracy.md");
+		assert.equal(promptOverrides.readOverride("shared/15-accuracy.md"), null);
+		promptOverrides.deleteOverride("shared/15-accuracy.md"); // again: no throw
 		// traversal junk never reaches disk
 		promptOverrides.writeOverride("../evil.md", "nope");
 		assert.equal(fs.existsSync(path.join(PROMPTS_OVERRIDE_DIR, "..", "evil.md")), false);
@@ -166,49 +166,19 @@ describe("the override store", () => {
 describe("the source-derived segment list", () => {
 	it("mirrors composeInstructions' discovery: the agent's own fragments sorted, then the language and the shared appendix", () => {
 		const chat = effectivePromptSegments("chat", {});
-		const practice = effectivePromptSegments("practice", {});
-		// Each agent composes its OWN directory first, in filename order; the
-		// active language's doctrine and the shared appendix follow.
 		assert.deepEqual(
 			chat.map((s) => s.path),
 			["chat/10-chat.md", "language/10-slovak.md", "shared/10-voice.md", "shared/15-accuracy.md"],
 		);
-		assert.deepEqual(
-			practice.map((s) => s.path),
-			[
-				"practice/00-base.md",
-				"practice/10-doctrine.md",
-				"practice/20-language-drills.md",
-				"language/10-slovak.md",
-				"shared/10-voice.md",
-				"shared/15-accuracy.md",
-				"shared/16-mental-model.md",
-				"shared/40-formatting.md",
-			],
-		);
 		assert.equal(chat[0]!.shared, false, "the agent's own fragment is not shared");
 		assert.equal(chat[0]!.sourceText.length > 0, true, "the chat doctrine text loads");
-		// Shared fragments compose for BOTH agents under the SAME path key.
 		assert.equal(
 			chat.some((s) => s.path === "shared/10-voice.md" && s.shared),
 			true,
 		);
-		assert.equal(
-			practice.some((s) => s.path === "shared/10-voice.md" && s.shared),
-			true,
-		);
-		// Each agent composes only its own directory — no cross-agent leak.
-		assert.equal(
-			chat.some((s) => s.path.startsWith("practice/")),
-			false,
-		);
-		assert.equal(
-			practice.some((s) => s.path.startsWith("chat/")),
-			false,
-		);
 		// README and other non-numeric files never load.
 		assert.equal(
-			allSegmentPaths().some((p) => p.includes("README")),
+			allSegmentPaths().some((p) => p.includes("README") || p.includes("tutor-unit")),
 			false,
 		);
 	});
@@ -227,11 +197,11 @@ describe("the source-derived segment list", () => {
 		assert.equal(voice.overrideText, null);
 		assert.equal(voice.enabled, false);
 		// a switch for a segment with NO override file never enables it
-		const weird = effectivePromptSegments("practice", { "practice/10-doctrine.md": true });
-		const doctrineNoFile = weird.find((s) => s.path === "practice/10-doctrine.md");
-		assert.ok(doctrineNoFile);
-		assert.equal(doctrineNoFile.enabled, false);
-		assert.equal(doctrineNoFile.overrideText, null);
+		const weird = effectivePromptSegments("chat", { "shared/15-accuracy.md": true });
+		const accuracyNoFile = weird.find((s) => s.path === "shared/15-accuracy.md");
+		assert.ok(accuracyNoFile);
+		assert.equal(accuracyNoFile.enabled, false);
+		assert.equal(accuracyNoFile.overrideText, null);
 		promptOverrides.deleteOverride("chat/10-chat.md");
 	});
 
@@ -239,7 +209,7 @@ describe("the source-derived segment list", () => {
 		// If a fragment vanishes upstream, its switch/override simply stop
 		// composing — nothing here can go stale. Pinned by absence:
 		const before = allSegmentPaths().length;
-		assert.equal(before > 5, true, "the chat and practice fragments plus the shared appendix");
+		assert.equal(before >= 4, true, "the chat fragment plus language and shared appendix");
 	});
 });
 
@@ -262,7 +232,7 @@ describe("composeInstructions: override honoring + the byte-identical source pat
 				.sort()
 				.map((f) => fs.readFileSync(path.join(dir, f), "utf-8").trim())
 				.filter(Boolean);
-		const oldLoader = (kind: "chat" | "practice", sharedAllow: string[]) =>
+		const oldLoader = (kind: "chat", sharedAllow: string[]) =>
 			[
 				...fragmentsOf(`src/agent/prompts/${kind}`),
 				// Lanna: the active (default: slovak) language doctrine.
@@ -270,10 +240,6 @@ describe("composeInstructions: override honoring + the byte-identical source pat
 				...fragmentsOf("src/agent/prompts/shared", (f) => sharedAllow.includes(f)),
 			].join("\n\n---\n\n");
 		assert.equal(composeInstructions("chat"), oldLoader("chat", ["10-voice.md", "15-accuracy.md"]));
-		assert.equal(
-			composeInstructions("practice"),
-			oldLoader("practice", ["10-voice.md", "15-accuracy.md", "16-mental-model.md", "40-formatting.md"]),
-		);
 	});
 
 	it("an enabled override swaps in; switch off or file absent composes source", () => {
@@ -286,25 +252,22 @@ describe("composeInstructions: override honoring + the byte-identical source pat
 			const off = composeInstructions("chat", {});
 			assert.ok(off.includes("# The chat"), "source composes when switch off");
 			// switch on for a segment with NO file → source (enabled needs both)
-			const noFile = composeInstructions("practice", { "practice/10-doctrine.md": true });
-			assert.ok(noFile.includes("# The practice session"), "file absent → source default");
+			const noFile = composeInstructions("chat", { "shared/15-accuracy.md": true });
+			assert.ok(noFile.includes("## Accuracy: non-negotiable"), "file absent → source default");
 		} finally {
 			promptOverrides.deleteOverride("chat/10-chat.md");
 		}
 	});
 
-	it("shared/ fragments are overridable — one edit swaps the fragment in BOTH agents", () => {
+	it("shared/ fragments are overridable — one edit swaps the fragment in", () => {
 		promptOverrides.writeOverride("shared/10-voice.md", "MY SHARED VOICE");
 		try {
 			const switches = { "shared/10-voice.md": true };
-			for (const kind of ["chat", "practice"] as const) {
-				const composed = composeInstructions(kind, switches);
-				assert.ok(composed.includes("MY SHARED VOICE"), `${kind} composes the override`);
-				assert.ok(!composed.includes("## Voice"), `${kind} source fragment is replaced`);
-			}
-			// switches-less: both keep the source fragment (the cached path)
+			const composed = composeInstructions("chat", switches);
+			assert.ok(composed.includes("MY SHARED VOICE"), "chat composes the override");
+			assert.ok(!composed.includes("## Voice"), "chat source fragment is replaced");
+			// switches-less keeps the source fragment (the cached path)
 			assert.ok(composeInstructions("chat").includes("## Voice"));
-			assert.ok(composeInstructions("practice").includes("## Voice"));
 		} finally {
 			promptOverrides.deleteOverride("shared/10-voice.md");
 		}

@@ -12,15 +12,12 @@ import {
 } from "@earendil-works/pi-ai";
 import { streamSimple as streamCodex } from "@earendil-works/pi-ai/api/openai-codex-responses";
 import { APP_IDENTITY, piEngineForSpec, type PiEngine } from "../src/agent/models.ts";
-import { createChatAgent, createPracticeAgent, type AgentBuildOptions } from "../src/agent/teacher-agent.ts";
+import { createChatAgent, type AgentBuildOptions } from "../src/agent/teacher-agent.ts";
 import { runSubagent } from "../src/agent/subagents/pi-run.ts";
 import { healToolRecord } from "../src/agent/tools/heal.ts";
 import metadata from "../package.json" with { type: "json" };
 
-const factories = [
-	(opts: AgentBuildOptions) => createChatAgent({}, opts),
-	(opts: AgentBuildOptions) => createPracticeAgent({} as never, opts),
-];
+const factories = [(opts: AgentBuildOptions) => createChatAgent({}, opts)];
 
 function recordingEngine() {
 	const faux = createFauxCore({});
@@ -80,7 +77,7 @@ describe("native app and conversation identity", { concurrency: false }, () => {
 		assert.ok(!Object.hasOwn(APP_IDENTITY, "sessionId"));
 	});
 
-	it("reconstructed chat/practice Agents reuse the exact chat id across tool rounds", async () => {
+	it("reconstructed chat Agents reuse the exact chat id across tool rounds", async () => {
 		for (const chatId of ["chat_exact_native_123", "chat_independent_456"]) {
 			for (const factory of factories) {
 				const { engine, requests } = recordingEngine();

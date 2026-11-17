@@ -284,7 +284,7 @@ export function Start({
 				target.english +
 				" for.",
 		].join("\n");
-		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "chat" }).catch(() =>
+		void startTutorChat(router, { title: "Placement follow-up", prompt }).catch(() =>
 			setError("Couldn't open the tutor. Check Settings → AI models."),
 		);
 	};

@@ -5,29 +5,20 @@ import type { Message, Usage } from "@earendil-works/pi-ai";
 import { APP_IDENTITY, type PiEngine } from "./models.ts";
 import { effectivePromptSegments } from "./prompt-segments.ts";
 import { learnerProfileSegment } from "./learner-profile.ts";
-import { practiceTools, type PracticeToolContext } from "./tools/practice.ts";
 import { chatTools, type ChatToolContext } from "./tools/chat.ts";
-import { withArgumentHeal } from "./tools/heal.ts";
-import { sendToUserTool } from "./tools/send-to-user.ts";
 import { filterToggleableTools, type EnabledTools } from "../core/pending.ts";
-import { PRACTICE_PROBLEM_TOOL } from "../core/chat-messages.ts";
 import { toLlmMessages } from "../core/model-context.ts";
 import { closesChatReply } from "../core/chat-answers.ts";
 import { activeProfile } from "../../config.ts";
 
 /**
- * The two tutor agents: the Ask chat and the practitioner of a tutor unit.
- * Each is rebuilt per request from the stored record (the record is the
- * source of truth) and discarded at turn end. Engines are injectable so
- * tests drive a scripted faux engine.
+ * The tutor agent: the Ask chat. Rebuilt per request from the stored record
+ * (the record is the source of truth) and discarded at turn end. Engines are
+ * injectable so tests drive a scripted faux engine.
  *
- * A system prompt is the shared fragments plus the agent's own directory
- * (src/agent/prompts/<kind>/), numeric-prefix files only, in filename order.
+ * A system prompt is the shared fragments plus the chat's own directory
+ * (src/agent/prompts/chat/), numeric-prefix files only, in filename order.
  */
-
-/** Which agent's prompt directory to compose. Practice (2026-10-04)
- *  composes ONLY its own directory — see prompt-segments.ts. */
-type AgentKind = "practice" | "chat";
 
 // P2 (2026-09-19): segment discovery + override resolution live in ONE
 // canonical place now — src/store/prompt-overrides.ts (listSourceSegments
@@ -35,8 +26,8 @@ type AgentKind = "practice" | "chat";
 // the static-file seam; the local fragment discovery helpers are retired.
 
 /** Exported for tests: assert what composes into the model's prompt.
- *  Composition order: shared base → shared/ fragments (both agents, the
- *  sources-v1 seam for cross-agent doctrine) → the agent's own fragments.
+ *  Composition order: shared base → shared/ fragments (the sources-v1 seam
+ *  for cross-agent doctrine) → the chat's own fragments.
  *
  *  P2 reconciliation (2026-09-19): composition is DELEGATED to the store
  *  module's effectivePromptSegments — one canonical segment-discovery
@@ -50,7 +41,7 @@ type AgentKind = "practice" | "chat";
  *  tests/prompt-overrides.test.ts). Overrides are a static-file read
  *  through config paths, not request state — the store import carries no
  *  chat/job machinery. */
-export function composeInstructions(kind: AgentKind, switches?: Record<string, boolean>): string {
+export function composeInstructions(kind: "chat" = "chat", switches?: Record<string, boolean>): string {
 	const segments = effectivePromptSegments(kind, switches ?? {});
 	return segments
 		.map((s) => (s.enabled ? s.overrideText! : s.sourceText))
@@ -65,7 +56,7 @@ export function composeInstructions(kind: AgentKind, switches?: Record<string, b
 // turn's composition; the cache serves only the switches-less path.
 const composedInstructionsCache = new Map<string, string>();
 
-function getComposedInstructions(kind: AgentKind): string {
+function getComposedInstructions(kind: "chat"): string {
 	const key = `${kind}:${activeProfile()}`;
 	let cached = composedInstructionsCache.get(key);
 	if (!cached) {
@@ -104,23 +95,23 @@ export interface AgentBuildOptions {
 	 *  exists); absent → the cached pure-source composition. */
 	promptSwitches?: Record<string, boolean>;
 	/** Native conversation identity: the existing persisted chat id, reused
-	 * across reconstructed prober, teacher, and practice Agents.
-	 * Debug: when set AND LANNA_PROVIDER_EVENTS=1, raw provider stream events
-	 *  (pre-normalization) append to data/debug/provider-events/
-	 *  <chatId>.jsonl via providerEventObserver — the GLM-truncation /
-	 *  DeepSeek-id incident layer. Absent or env-off → no observer. */
+	 * across reconstructed prober and teacher Agents. Debug: when set AND
+	 * LANNA_PROVIDER_EVENTS=1, raw provider stream events (pre-normalization)
+	 * append to data/debug/provider-events/<chatId>.jsonl via
+	 * providerEventObserver — the GLM-truncation / DeepSeek-id incident
+	 * layer. Absent or env-off → no observer. */
 	chatId?: string;
 	/** A model-only note appended to the learner's typed text (the chat's checker evidence). */
 	noteLearnerText?: (text: string) => string | null;
 	appContent?: string;
 }
 
-function makeTurnStopper(kind: AgentKind) {
+function makeTurnStopper() {
 	return (context: {
 		message: { content: Array<{ type: string; id?: string; name?: string; text?: string }> };
 		toolResults: Array<{ toolCallId: string; isError?: boolean }>;
 	}): boolean => {
-		if (kind === "chat" && closesChatReply(context.message.content)) {
+		if (closesChatReply(context.message.content)) {
 			const failed = context.toolResults
 				.filter((r) => r.isError)
 				.map((r) => context.message.content.find((c) => c.id === r.toolCallId)?.name ?? r.toolCallId);
@@ -128,38 +119,27 @@ function makeTurnStopper(kind: AgentKind) {
 				console.warn(`[chat] reply kept, record call failed and was not retried: ${failed.join(", ")}`);
 			return true;
 		}
-		const called = new Set(
-			context.message.content
-				.filter(
-					(c) =>
-						c.type === "toolCall" && c.name !== undefined && kind === "practice" && c.name === PRACTICE_PROBLEM_TOOL,
-				)
-				.map((c) => c.id!),
-		);
-		if (called.size === 0) return false;
-		// Stop only when every problem pose resolved cleanly.
-		for (const result of context.toolResults) {
-			if (called.has(result.toolCallId) && result.isError) return false;
-		}
-		return true;
+		return false;
 	};
 }
 
-function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: AgentTool<any, any>[]) {
+function baseAgentOptions(opts: AgentBuildOptions, tools: AgentTool<any, any>[]) {
 	const engine = opts.engine;
-	if (!engine) throw new Error(`no configured model for the ${kind} agent — set your model slots (settings → models)`);
-	const stopper = makeTurnStopper(kind);
+	if (!engine) throw new Error("no configured model for the chat agent — set your model slots (settings → models)");
+	const stopper = makeTurnStopper();
 	// The learner profile (onboarding, 2026-10-28): what the app knows —
 	// goal, pace, first language, placement, the lesson ledger — joins
 	// the composition as a trailing block, read fresh per build so a
 	// lesson between turns changes it. Null on a fresh profile.
 	const profile = learnerProfileSegment();
-	const composed = opts.promptSwitches ? composeInstructions(kind, opts.promptSwitches) : getComposedInstructions(kind);
+	const composed = opts.promptSwitches
+		? composeInstructions("chat", opts.promptSwitches)
+		: getComposedInstructions("chat");
 	const systemPrompt = [composed, opts.appContent, profile].filter(Boolean).join("\n\n---\n\n");
 	// Debug recorder (owner, 2026-10-04): raw provider events when
 	// LANNA_PROVIDER_EVENTS=1 and the caller handed a chatId; undefined is
 	// the normal no-observer path (tests, env-off).
-	const providerEvents = opts.chatId ? providerEventObserver(opts.chatId, kind) : undefined;
+	const providerEvents = opts.chatId ? providerEventObserver(opts.chatId, "chat") : undefined;
 	const agent = new Agent({
 		identity: APP_IDENTITY,
 		sessionId: opts.chatId,
@@ -167,16 +147,7 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 			systemPrompt,
 			model: engine.model,
 			thinkingLevel: engine.level,
-			// Conditional registry inclusion, like the graph-tool gates: when
-			// closed, neither the tool nor its usage instructions reach the model.
-			// Match Claude across providers (including OpenRouter), not the API
-			// transport. Explicit test registries remain caller-owned.
-			tools: [
-				...tools,
-				...(opts.tools === undefined && kind !== "chat" && engine.model.id.toLowerCase().includes("claude")
-					? [withArgumentHeal(sendToUserTool)]
-					: []),
-			],
+			tools,
 			messages: opts.messages ?? [],
 		},
 		streamFn: engine.streamFn,
@@ -216,19 +187,6 @@ function baseAgentOptions(kind: AgentKind, opts: AgentBuildOptions, tools: Agent
 	return agent;
 }
 
-/**
- * The PRACTITIONER (practice sessions, owner design 2026-10-04): built
- * from turn 1 of a kind:"practice" session. Its ENTIRE registry is
- * problem + conclude (tools/practice.ts); the doctrine prompt
- * (prompts/practice/) carries the method. A successful problem pose ends
- * the run, natively for a problem-only batch and via the shared stop hook
- * for a mixed batch (for example, send_to_user + problem).
- */
-export function createPracticeAgent(ctx: PracticeToolContext, opts: AgentBuildOptions = {}) {
-	const tools = opts.tools ?? filterToggleableTools(practiceTools(ctx), opts.toolToggles);
-	return baseAgentOptions("practice", opts, Object.values(tools));
-}
-
 export function withLearnerNotes(messages: Message[], note: (text: string) => string | null): Message[] {
 	return messages.map((message) => {
 		if (message.role !== "user") return message;
@@ -244,9 +202,8 @@ export function withLearnerNotes(messages: Message[], note: (text: string) => st
 
 export function createChatAgent(ctx: ChatToolContext, opts: AgentBuildOptions = {}) {
 	const tools = opts.tools ?? filterToggleableTools(chatTools(ctx), opts.toolToggles);
-	return baseAgentOptions("chat", opts, Object.values(tools));
+	return baseAgentOptions(opts, Object.values(tools));
 }
 
-export type PracticeAgent = ReturnType<typeof createPracticeAgent>;
 export type ChatAgent = ReturnType<typeof createChatAgent>;
-export type TeachingAgent = PracticeAgent | ChatAgent;
+export type TeachingAgent = ChatAgent;

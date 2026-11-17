@@ -1,11 +1,8 @@
-/** Explicit Claude output: closed-network synthetic fixtures only. Native
- * history stays native; UI, extraction, and Markdown read the same prose. */
+/** Historical send_to_user transcript projection, extraction, and Markdown export.
+ * The runtime send_to_user tool and practice agent were removed, while saved
+ * transcripts still render and export historical send_to_user calls. */
 import assert from "node:assert/strict";
-import * as fs from "node:fs";
-import * as os from "node:os";
-import * as path from "node:path";
-import { after, describe, it } from "node:test";
-import { Value } from "typebox/value";
+import { describe, it } from "node:test";
 import {
 	createFauxCore,
 	fauxAssistantMessage,
@@ -15,43 +12,11 @@ import {
 	type FauxResponseStep,
 } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
-import type { AgentBuildOptions } from "../src/agent/teacher-agent.ts";
-import type { LannaMessage } from "../src/core/chat-messages.ts";
-
-// Set the data/auth seams BEFORE importing app modules. Do not read local
-// keys, recordings, or learner sessions, even if a dev server is running.
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-send-to-user-"));
-const originalEnv = process.env;
-const originalFetch = globalThis.fetch;
-process.env = {
-	...(originalEnv.NODE_TEST_CONTEXT ? { NODE_TEST_CONTEXT: originalEnv.NODE_TEST_CONTEXT } : {}),
-	...(originalEnv.NODE_OPTIONS ? { NODE_OPTIONS: originalEnv.NODE_OPTIONS } : {}),
-	NODE_ENV: "test",
-	LANNA_DATA_DIR: path.join(scratch, "data"),
-	LANNA_AUTH_FILE: path.join(scratch, "auth.json"),
-	HOME: path.join(scratch, "home"),
-};
-globalThis.fetch = async () => {
-	throw new Error("CLOSED: unexpected network request");
-};
-after(() => {
-	process.env = originalEnv;
-	globalThis.fetch = originalFetch;
-	fs.rmSync(scratch, { recursive: true, force: true });
-});
-
-const { sendToUserTool } = await import("../src/agent/tools/send-to-user.ts");
-const { createChatAgent, createPracticeAgent, composeInstructions } = await import("../src/agent/teacher-agent.ts");
-const { SEND_TO_USER_TOOL, activeProblemOf, asAgentMessages, newUserMessage, sendToUserText, userFacingTextOf } =
-	await import("../src/core/chat-messages.ts");
-const { toLlmMessages } = await import("../src/core/model-context.ts");
-const { projectView } = await import("../src/core/view.ts");
-const { sessionMarkdown } = await import("../src/core/session-markdown.ts");
-const { runSubagent } = await import("../src/agent/subagents/pi-run.ts");
-const { persistTurn } = await import("../src/server/turn/persist.ts");
-const { runPiTurn } = await import("../src/server/turn/stream.ts");
-const { SessionModel } = await import("../components/session-core.ts");
-const { chatStore } = await import("../src/store/chats.ts");
+import { runSubagent } from "../src/agent/subagents/pi-run.ts";
+import { composeInstructions, createChatAgent } from "../src/agent/teacher-agent.ts";
+import { SEND_TO_USER_TOOL, sendToUserText, userFacingTextOf, type LannaMessage } from "../src/core/chat-messages.ts";
+import { sessionMarkdown } from "../src/core/session-markdown.ts";
+import { projectView } from "../src/core/view.ts";
 
 function scripted(provider: string, id: string, steps: FauxResponseStep[] = []) {
 	const faux = createFauxCore({ provider, models: [{ id }] });
@@ -59,13 +24,6 @@ function scripted(provider: string, id: string, steps: FauxResponseStep[] = []) 
 	const engine: PiEngine = { model: faux.getModel(), streamFn: faux.streamSimple };
 	return { engine, faux };
 }
-
-const chatId = chatStore.createChat("Synthetic output gate").id;
-const factories = {
-	chat: (opts: AgentBuildOptions) =>
-		createChatAgent({ sources: { chatId, engineFor: () => undefined, recordUsage: () => {} } }, opts),
-	practice: (opts: AgentBuildOptions) => createPracticeAgent({ chatId, chatStore }, opts),
-};
 
 function outputCall(message: string | number | null = "An explanation.", id = "send-1") {
 	return { type: "toolCall" as const, id, name: SEND_TO_USER_TOOL, arguments: { message } };
@@ -91,44 +49,8 @@ function prose(messages: ReturnType<typeof projectView>): string[] {
 		.flatMap((m) => m.parts.filter((p) => p.type === "text").map((p) => p.text!));
 }
 
-describe("send_to_user model gate", () => {
-	for (const [provider, id, enabled] of [
-		["anthropic", "claude-opus-5-5", true],
-		["anthropic", "claude-haiku-4-5-20251001", true],
-		["openrouter", "anthropic/claude-opus-5.5", true],
-		["openrouter", "anthropic/claude-sonnet-5.5", true],
-		["amazon-bedrock", "us.anthropic.claude-opus-5-5-v1:0", true],
-		["fixture", "CLAUDE-fixture", true],
-		["openrouter", "z-ai/glm-5.3-flash", false],
-		["openai", "gpt-4o-mini", false],
-		["anthropic", "opaque-alias", false],
-	] as const) {
-		it(`${provider}/${id}: ${enabled ? "includes" : "omits"} tool and description in the practice agent, never the chat`, () => {
-			const { engine } = scripted(provider, id);
-			for (const [kind, factory] of Object.entries(factories)) {
-				const agent = factory({ engine });
-				const output = agent.state.tools.find((tool) => tool.name === SEND_TO_USER_TOOL);
-				// The Ask chat never carries the learner-output tool (baseAgentOptions: kind !== "chat").
-				const expected = enabled && kind === "practice";
-				assert.equal(Boolean(output), expected, kind);
-				if (expected) {
-					assert.equal(output!.description, sendToUserTool.description);
-					assert.equal(typeof output!.prepareArguments, "function", "standard argument healing is wired");
-				}
-				assert.equal(agent.state.systemPrompt, composeInstructions(kind as keyof typeof factories));
-				assert.ok(!agent.state.systemPrompt.includes(SEND_TO_USER_TOOL), "no added prompt instructions");
-			}
-		});
-	}
-
-	it("explicitly injected chat/practice test registries remain unchanged", () => {
-		const { engine } = scripted("anthropic", "claude-opus-5-5");
-		for (const factory of [factories.chat, factories.practice]) {
-			assert.deepEqual(factory({ engine, tools: {} }).state.tools, []);
-		}
-	});
-
-	it("background agents do not acquire a learner-output tool", async () => {
+describe("send_to_user retired from active agents", () => {
+	it("chat agent and background subagents do not expose a learner-output tool", async () => {
 		let calls = 0;
 		const { engine } = scripted("anthropic", "claude-opus-5-5", [
 			(context) => {
@@ -139,6 +61,17 @@ describe("send_to_user model gate", () => {
 				return fauxAssistantMessage("Synthetic background result.");
 			},
 		]);
+		const agent = createChatAgent(
+			{ sources: { chatId: "chat-no-send-to-user", engineFor: () => undefined, recordUsage: () => {} } },
+			{ engine },
+		);
+		assert.equal(
+			agent.state.tools.some((tool) => tool.name === SEND_TO_USER_TOOL),
+			false,
+		);
+		assert.equal(agent.state.systemPrompt, composeInstructions("chat"));
+		assert.ok(!agent.state.systemPrompt.includes(SEND_TO_USER_TOOL));
+
 		await runSubagent([], {
 			role: "researcher",
 			engine,
@@ -150,21 +83,7 @@ describe("send_to_user model gate", () => {
 	});
 });
 
-describe("send_to_user mechanics", () => {
-	it("requires nonblank text and acknowledges without echoing or terminating", async () => {
-		assert.equal(sendToUserTool.name, SEND_TO_USER_TOOL);
-		for (const input of [{}, { message: "" }, { message: " \n\t" }, { message: 3 }, { message: null }]) {
-			assert.equal(Value.Check(sendToUserTool.parameters, input), false);
-		}
-		const message = "**A full explanation**\n\n$$a = b$$";
-		assert.equal(Value.Check(sendToUserTool.parameters, { message }), true);
-		const result = await sendToUserTool.execute("send-1", { message });
-		assert.ok(!result.isError);
-		assert.ok(!result.terminate);
-		assert.ok(!JSON.stringify(result).includes(message));
-		assert.deepEqual(result.content, [{ type: "text", text: "Message received for display." }]);
-	});
-
+describe("send_to_user extraction", () => {
 	it("only extracts the output tool's nonblank message, without modifying it", () => {
 		const message = "  **Keep spacing and math** $x$\n";
 		assert.equal(sendToUserText(outputCall(message)), message);
@@ -282,172 +201,4 @@ describe("send_to_user interrupted generations", () => {
 			assert.equal(sessionMarkdown(messages, { anchors: false }), "### Teacher\n\nKeep ordinary text.");
 		});
 	}
-});
-
-describe("send_to_user native flow (offline)", () => {
-	it("output alone continues the loop, so the model receives its native acknowledgement", async () => {
-		const { engine, faux } = scripted("anthropic", "claude-opus-5-5", [
-			fauxAssistantMessage([outputCall("Read this first.")], { stopReason: "toolUse" }),
-			(context) => {
-				assert.ok(context.messages.some((m) => m.role === "toolResult" && m.toolName === SEND_TO_USER_TOOL));
-				return fauxAssistantMessage([fauxText("Final plain reply.")]);
-			},
-		]);
-		const agent = createPracticeAgent({ chatId, chatStore }, { engine });
-		await agent.prompt("Synthetic request.");
-		assert.equal(faux.state.callCount, 2);
-	});
-
-	for (const outputFirst of [true, false]) {
-		it(`output + practice problem stops after the pose (${outputFirst ? "output first" : "problem first"})`, async () => {
-			const output = outputCall("Try this practice problem.");
-			const problem = fauxToolCall(
-				"problem",
-				{
-					statement: "What is two plus two?",
-					mode: "recall",
-					modelSolution: "Four.",
-				},
-				{ id: "problem-1" },
-			);
-			const { engine, faux } = scripted("anthropic", "claude-opus-5-5", [
-				fauxAssistantMessage(outputFirst ? [output, problem] : [problem, output], { stopReason: "toolUse" }),
-				fauxAssistantMessage("Premature continuation must not run."),
-			]);
-			const agent = createPracticeAgent({ chatId, chatStore }, { engine });
-			await agent.prompt("Pose a synthetic problem.");
-			assert.equal(faux.state.callCount, 1, "wait for the learner after a successful mixed-batch pose");
-			const results = agent.state.messages.filter((m) => m.role === "toolResult");
-			assert.equal(results.length, 2);
-			assert.ok(results.every((m) => !m.isError));
-		});
-	}
-
-	for (const stopReason of ["error", "aborted"] as const) {
-		it(`${stopReason} mixed output/problem generation never executes or activates the pose`, async () => {
-			const { engine, faux } = scripted("anthropic", "claude-opus-5-5", [
-				fauxAssistantMessage(
-					[
-						outputCall("Undelivered introduction."),
-						fauxToolCall(
-							"problem",
-							{
-								statement: "What is two plus two?",
-								mode: "recall",
-								modelSolution: "Four.",
-							},
-							{ id: "unfinished-problem" },
-						),
-					],
-					{ stopReason },
-				),
-			]);
-			const agent = createPracticeAgent({ chatId, chatStore }, { engine });
-			await agent.prompt("Pose a synthetic problem.");
-			assert.equal(faux.state.callCount, 1);
-			assert.ok(!agent.state.messages.some((m) => m.role === "toolResult"));
-			const messages = agent.state.messages.map((m, i) => ({ ...m, id: `interrupted-${i}` })) as LannaMessage[];
-			assert.equal(activeProblemOf(messages), null);
-			assert.deepEqual(prose(projectView(messages)), []);
-		});
-	}
-
-	it("a rejected mixed-batch practice pose retries, then stops after the successful pose", async () => {
-		const { engine, faux } = scripted("anthropic", "claude-opus-5-5", [
-			fauxAssistantMessage(
-				[
-					outputCall("Try this practice problem."),
-					fauxToolCall("problem", { statement: "Incomplete problem.", mode: "recall" }, { id: "bad-problem" }),
-				],
-				{ stopReason: "toolUse" },
-			),
-			fauxAssistantMessage(
-				[
-					outputCall("Here is the corrected problem.", "send-2"),
-					fauxToolCall(
-						"problem",
-						{
-							statement: "What is two plus two?",
-							mode: "recall",
-							modelSolution: "Four.",
-						},
-						{ id: "good-problem" },
-					),
-				],
-				{ stopReason: "toolUse" },
-			),
-			fauxAssistantMessage("Premature continuation must not run."),
-		]);
-		const agent = createPracticeAgent({ chatId, chatStore }, { engine });
-		await agent.prompt("Pose a synthetic problem.");
-		assert.equal(faux.state.callCount, 2, "failed authoring retries; successful pose waits for the learner");
-		const results = agent.state.messages.filter((m) => m.role === "toolResult" && m.toolName === "problem");
-		assert.equal(results.length, 2);
-		assert.ok(results[0]?.role === "toolResult" && results[0].isError);
-		assert.ok(results[1]?.role === "toolResult" && !results[1].isError);
-	});
-
-	it("output + problem streams, persists natively, replays, and reloads as prose before the problem", async () => {
-		const lesson = "**Synthetic lesson:** four is twice two. $2 + 2 = 4$";
-		const problem = {
-			statement: "What is two plus two?",
-			mode: "recall",
-			modelSolution: "Four.",
-		};
-		const { engine, faux } = scripted("openrouter", "anthropic/claude-opus-5.5", [
-			fauxAssistantMessage(
-				[
-					fauxThinking("Synthetic private thought."),
-					outputCall(lesson),
-					fauxToolCall("problem", problem, { id: "problem-1" }),
-				],
-				{ stopReason: "toolUse" },
-			),
-		]);
-		const chat = chatStore.createChat("Synthetic native output flow");
-		const user = newUserMessage("Explain synthetic arithmetic.");
-		chatStore.saveMessages(chat.id, [user]);
-		const agent = createPracticeAgent({ chatId: chat.id, chatStore }, { engine, messages: asAgentMessages([user]) });
-		const handle = runPiTurn({
-			agent,
-			updateFlushMs: 0,
-			onFinish: (messages, aborted) => {
-				persistTurn(chatStore, chat.id, 1, messages, aborted);
-			},
-		});
-		const wire = await new Response(handle.subscribe()).text();
-		assert.ok(wire.endsWith("data: [DONE]\n\n"));
-		assert.equal(faux.state.callCount, 1, "the problem pose stops the mixed batch");
-		const saved = chatStore.getChat(chat.id)!.messages;
-		const response = saved.find((m) => m.role === "assistant")!;
-		assert.equal(response.role, "assistant");
-		if (response.role !== "assistant") assert.fail("missing assistant");
-		assert.deepEqual(
-			response.content.map((c) => c.type),
-			["thinking", "toolCall", "toolCall"],
-		);
-		assert.deepEqual(response.content[1], outputCall(lesson));
-		assert.ok(
-			saved.some((m) => m.role === "toolResult" && m.toolName === SEND_TO_USER_TOOL),
-			"native output ack persists",
-		);
-		assert.ok(
-			saved.some((m) => m.role === "toolResult" && m.toolName === "problem"),
-			"the practice pose result is final and persists",
-		);
-		const providerHistory = toLlmMessages(asAgentMessages(saved));
-		assert.deepEqual(
-			providerHistory.find((m) => m.role === "assistant")!.content,
-			response.content,
-			"next request keeps native call/thinking structure",
-		);
-		assert.deepEqual(prose(projectView(saved)), [lesson]);
-		const parts = projectView(saved).flatMap((m) => m.parts);
-		assert.ok(parts.findIndex((p) => p.type === "text") < parts.findIndex((p) => p.type === "tool-problem"));
-		const client = new SessionModel({ chatId: chat.id, initialMessages: [user], fetch: globalThis.fetch });
-		await client.consumeStream(new Response(wire));
-		assert.deepEqual(prose(client.getState().messages), [lesson], "native event replay shows the lesson exactly once");
-		assert.deepEqual(prose(projectView(JSON.parse(JSON.stringify(saved)))), [lesson], "reload preserves the lesson");
-		assert.equal(sessionMarkdown(saved).split(lesson).length - 1, 1);
-	});
 });

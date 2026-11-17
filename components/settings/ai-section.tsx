@@ -144,24 +144,27 @@ function composeTranscriptionEngine(
 /** Hint under a prompt row whose override is in use. Shown only while the switch is on. */
 const PROMPT_IN_USE_HINT = "Your version is in use";
 
-/** One prompt section: Ask, Practice, then Shared. */
+/** One prompt section: Tutor, then Shared. */
 interface PromptSection {
-	id: "chat" | "practice" | "shared";
+	id: "chat" | "shared";
 	label: string;
 	/** Says what the section's instructions do. Agent names are internal. */
 	hint?: string;
 	segments: SegmentInfo[];
 }
 
-type PromptView = { chat: SegmentInfo[]; practice: SegmentInfo[] };
+type PromptView = { chat: SegmentInfo[] };
 
-/** Splits the per-agent lists into three sections. Shared segments arrive in both lists, so they are taken once, from the chat list. */
+/** Splits the chat's prompt list into its own doctrine and the shared language/voice appendix. */
 function sectionedSegments(view: PromptView): PromptSection[] {
-	const own = (who: "chat" | "practice") => view[who].filter((s) => !s.shared);
 	return [
-		{ id: "chat", label: "Ask", hint: "How the tutor talks with you in Ask", segments: own("chat") },
-		{ id: "practice", label: "Practice", hint: "How the tutor runs a unit's practice", segments: own("practice") },
-		{ id: "shared", label: "Shared", hint: "Used by both", segments: view.chat.filter((s) => s.shared) },
+		{ id: "chat", label: "Tutor", hint: "How the tutor runs a session", segments: view.chat.filter((s) => !s.shared) },
+		{
+			id: "shared",
+			label: "Shared",
+			hint: "Language, voice, and accuracy rules",
+			segments: view.chat.filter((s) => s.shared),
+		},
 	];
 }
 

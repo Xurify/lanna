@@ -1,13 +1,10 @@
-import {
-	createChatAgent,
-	createPracticeAgent,
-	type AgentBuildOptions,
-	type TeachingAgent,
-} from "../../agent/teacher-agent.ts";
+import fs from "node:fs";
+import path from "node:path";
+import { createChatAgent, type AgentBuildOptions, type TeachingAgent } from "../../agent/teacher-agent.ts";
 import { piEngineForSpec, type PiEngine } from "../../agent/models.ts";
 import type { SourceToolContext } from "../../agent/tools/sources.ts";
 import { slovakLookup } from "../../agent/lexicon.ts";
-import { activeProfile, type ModelRole } from "../../../config.ts";
+import { activeProfile, PATHS, type ModelRole } from "../../../config.ts";
 import { asAgentMessages, type LannaMessage } from "../../core/chat-messages.ts";
 import type { ChatRecord } from "../../core/contracts/chat.ts";
 import { checkerNote, checkSlovak } from "../../core/slovak-check.ts";
@@ -55,6 +52,21 @@ function chatAppContent(chatId: string): string | undefined {
 	}
 }
 
+const TUTOR_UNIT_FRAGMENT = path.join(PATHS.root, "src", "agent", "prompts", "chat", "tutor-unit.md");
+
+/** A chat opened on a course unit (the record's tutorUnit) composes the
+ *  unit-session fragment after the app content; other chats compose
+ *  nothing. The file is not a numbered fragment: segment discovery must
+ *  not compose it into every chat. */
+function tutorUnitFragment(chatId: string): string | undefined {
+	if (!stores.chatStore.getChat(chatId)?.tutorUnit) return undefined;
+	try {
+		return fs.readFileSync(TUTOR_UNIT_FRAGMENT, "utf-8").trim();
+	} catch {
+		return undefined;
+	}
+}
+
 export function withSlovakEvidence(message: LannaMessage): LannaMessage {
 	if (activeProfile() !== "slovak" || message.role !== "custom" || message.customType !== "practice-thinking") {
 		return message;
@@ -98,18 +110,6 @@ function agentOptionsOf(plan: TurnAgentPlan): AgentBuildOptions {
 	};
 }
 
-function practiceAgentOf(plan: TurnAgentPlan, options: AgentBuildOptions): TeachingAgent {
-	return createPracticeAgent(
-		{
-			chatId: plan.chatId,
-			chatStore: stores.chatStore,
-			sources: sourcesFor(plan.chatId, plan.usage),
-			review: reviewSeam,
-		},
-		options,
-	);
-}
-
 function chatAgentOf(plan: TurnAgentPlan, options: AgentBuildOptions): TeachingAgent {
 	const agent: TeachingAgent = createChatAgent(
 		{
@@ -130,7 +130,11 @@ function chatAgentOf(plan: TurnAgentPlan, options: AgentBuildOptions): TeachingA
 			},
 			sources: sourcesFor(plan.chatId, plan.usage),
 		},
-		{ ...options, noteLearnerText: chatCheckerNote, appContent: chatAppContent(plan.chatId) },
+		{
+			...options,
+			noteLearnerText: chatCheckerNote,
+			appContent: [chatAppContent(plan.chatId), tutorUnitFragment(plan.chatId)].filter(Boolean).join("\n\n---\n\n"),
+		},
 	);
 	return agent;
 }
@@ -138,5 +142,5 @@ function chatAgentOf(plan: TurnAgentPlan, options: AgentBuildOptions): TeachingA
 export function buildTurnAgent(plan: TurnAgentPlan, buildAgent?: AgentFactory): TeachingAgent {
 	const options = agentOptionsOf(plan);
 	if (buildAgent) return buildAgent({ ...options, kind: plan.kind });
-	return plan.kind === "practice" ? practiceAgentOf(plan, options) : chatAgentOf(plan, options);
+	return chatAgentOf(plan, options);
 }

@@ -167,7 +167,7 @@ const TUTORS = (language: string): CourseTutor[] => [
 		title: "Sounds and spelling",
 		tagline: "How it is written and said",
 		glyph: "ear",
-		brief: `${language} sounds and spelling: the letters an English speaker lacks, where the stress falls, and the spellings that trip learners. Read each example to me with say: spans and have me read some back.`,
+		brief: `${language} sounds and spelling: the letters an English speaker lacks, where the stress falls, and the spellings that trip learners. Give every example as a say: span so I can hear it, then test me on hearing and spelling them.`,
 	},
 	{
 		id: "address",

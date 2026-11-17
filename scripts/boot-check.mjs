@@ -26,7 +26,7 @@ const OUTSIDE_ADDRESS = "203.0.113.9";
 const REQUIRED_ASSETS = [
 	"server.js",
 	"src/agent/prompts/chat/10-chat.md",
-	"src/agent/prompts/practice/00-base.md",
+	"src/agent/prompts/chat/tutor-unit.md",
 	"src/agent/prompts/language/10-slovak.md",
 	"curriculum/slovak/lexicon.json",
 	"curriculum/slovak/world.json",

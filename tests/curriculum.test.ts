@@ -5,6 +5,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import path from "node:path";
 import { test } from "node:test";
 import {
 	allChapters,
@@ -393,11 +394,17 @@ test("the daily plan: only a spoken scene or a tutor session ticks Speak; a weak
 	assert.match(task(plain, "read")!.line, /^Read the next part of the story/);
 });
 
-test("a tutor unit's prompt carries its brief and the answer-first doctrine", () => {
+test("a tutor unit's first message carries the brief, and the method rides the system prompt", () => {
 	const p = tutorUnitPrompt(curriculumUnit("aspect")!);
+	assert.match(p, /^Lesson with the tutor: /);
 	assert.match(p, /robiť/);
-	assert.match(p, /answer-first/);
-	assert.match(p, /say: spans/);
+	assert.doesNotMatch(p, /problems|answer-first|say: spans/);
+	const fragment = fs.readFileSync(
+		path.join(process.cwd(), "src", "agent", "prompts", "chat", "tutor-unit.md"),
+		"utf-8",
+	);
+	assert.match(fragment, /eight problems/);
+	assert.match(fragment, /three forms/);
 });
 
 test("the daily plan: a slipping unit becomes Strengthen after a weak spot and a mix-up, never the Continue unit", () => {

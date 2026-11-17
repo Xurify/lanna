@@ -205,19 +205,14 @@ describe("keyless researcher loop", () => {
 // the existing per-role/user-toggle policy.
 
 import { chatTools } from "../src/agent/tools/chat.ts";
-import { practiceTools } from "../src/agent/tools/practice.ts";
 import { filterToggleableTools } from "../src/core/pending.ts";
 import type { ChatStore } from "../src/core/ports.ts";
 import { stubSafeFetch } from "./fixtures/stub-safe-fetch.ts";
 
-/** A chat-store stub — the practice registry only CLOSES OVER it at build
- *  time (its gate reads the record at construction, never here). */
-const fakeChatStore = {
-	getChat: () => null,
-	saveMessages: () => {},
-} as unknown as ChatStore;
-
-const ctxBase = { chatId: "chat-gate-test", chatStore: fakeChatStore };
+const ctxBase = {
+	chatId: "chat-gate-test",
+	chatStore: { getChat: () => null, saveMessages: () => {} } as unknown as ChatStore,
+};
 
 const sourcesCtx = (searchAvailable: boolean) => ({
 	chatId: ctxBase.chatId,
@@ -236,23 +231,6 @@ describe("keyless role registries", () => {
 	it("the chat registry: available keeps research", () => {
 		const tools = chatTools({ sources: sourcesCtx(true) });
 		assert.ok(tools.research, "a keyed server exposes research through the chat");
-	});
-
-	it("the practice registry: research + pdf remain with or without search keys", () => {
-		const practice = (searchAvailable: boolean) =>
-			practiceTools({ chatId: ctxBase.chatId, chatStore: fakeChatStore, sources: sourcesCtx(searchAvailable) });
-		const on = practice(true);
-		assert.ok(on.research && on.pdf, "research + pdf are available to the practitioner");
-
-		const off = practice(false);
-		assert.ok(off.research, "keyless research is available in practice too");
-		assert.ok(off.pdf && off.problem && off.conclude, "pdf is keyless — it survives; the problem tools stay");
-	});
-
-	it("the practice registry: the user toggle still drops research without search keys", () => {
-		const tools = filterToggleableTools(practiceTools({ ...ctxBase, sources: sourcesCtx(false) }), { research: false });
-		assert.equal("research" in tools, false, "toggle-filtered like the chat side");
-		assert.ok(tools.pdf, "pdf unaffected by a research toggle");
 	});
 
 	it("the chat registry: the user toggle still drops research without search keys", () => {

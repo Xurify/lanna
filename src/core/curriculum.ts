@@ -180,7 +180,7 @@ const slovakCurriculum = (): CurriculumUnit[] => [
 		"dĺžeň, mäkčeň, stress on the first syllable",
 		"ear",
 		"n_seed_ph_spelling",
-		"Slovak sounds and spelling: stress on the first syllable, the dĺžeň (length changes meaning: pas/pás), the mäkčeň and soft d t n l before e and i, and the rhythmic law. Read each example to me with say: spans and make me read some back.",
+		"Slovak sounds and spelling: stress on the first syllable, the dĺžeň (length changes meaning: pas/pás), the mäkčeň and soft d t n l before e and i, and the rhythmic law. Give every example as a say: span so I can hear it, then test me on hearing and spelling them.",
 		{ slovakTerm: "Hláskoslovie a pravopis", grammarTerm: "Phonetics & orthography" },
 	),
 	drill("lx-questions"),
@@ -1515,13 +1515,11 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	};
 }
 
-/** A tutor unit's first message: the brief plus the doctrine the practice
- *  prompt already follows (answer first, hint before reveal). */
+/** A tutor unit's first message: what the learner sees. The unit's method
+ *  (a counted problem set, retests, the three forms) rides the system
+ *  prompt's tutor-unit fragment (src/agent/prompts/chat/tutor-unit.md),
+ *  read when the record carries the unit — not in the learner's words. */
 export function tutorUnitPrompt(unit: CurriculumUnit): string {
 	const cleanTitle = bareUnitTitle(unit.title);
-	return [
-		`Lesson with the tutor: ${cleanTitle}. ${unit.brief ?? unit.tagline}`,
-		"Keep it answer-first: explain in at most four short lines (with a bridge to a language I know where one helps), then give me eight quick problems one at a time, answered in the language I am learning.",
-		"On a miss, name the trigger and let me try once more before you give the form. Use say: spans for every example in the language I am learning. End with the three forms to remember.",
-	].join(" ");
+	return `Lesson with the tutor: ${cleanTitle}. ${unit.brief ?? unit.tagline}`;
 }
