@@ -6,6 +6,15 @@ import { Hint } from "@/components/ui/hint";
 import type { AttachedPdf } from "@/src/core";
 import { cn } from "@/lib/utils";
 
+export async function uploadLearnerPdf(file: File): Promise<AttachedPdf> {
+	const body = new FormData();
+	body.append("file", file);
+	const res = await fetch("/api/learner-pdfs", { method: "POST", body });
+	const data = (await res.json().catch(() => ({}))) as Partial<AttachedPdf> & { message?: string };
+	if (!res.ok || !data.path) throw new Error(data.message ?? "The PDF could not be added.");
+	return { path: data.path, name: data.name ?? file.name, pages: data.pages ?? 0 };
+}
+
 export function ChatPdfButton({
 	onAttached,
 	compact = false,
@@ -21,12 +30,8 @@ export function ChatPdfButton({
 		setState("saving");
 		setError(null);
 		try {
-			const body = new FormData();
-			body.append("file", file);
-			const res = await fetch("/api/learner-pdfs", { method: "POST", body });
-			const data = (await res.json().catch(() => ({}))) as Partial<AttachedPdf> & { message?: string };
-			if (!res.ok || !data.path) throw new Error(data.message ?? "The PDF could not be added.");
-			onAttached({ path: data.path, name: data.name ?? file.name, pages: data.pages ?? 0 });
+			const attached = await uploadLearnerPdf(file);
+			onAttached(attached);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "The PDF could not be added.");
 		} finally {

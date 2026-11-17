@@ -51,11 +51,11 @@ describe("LANNA_DATA_DIR seam", () => {
 			NODE_ENV: "production",
 		};
 		delete env.NODE_TEST_CONTEXT;
+		const loaderArgs = process.versions.bun ? [] : ["--import", pathToFileURL(TSX_LOADER).href];
 		const out = execFileSync(
 			process.execPath,
 			[
-				"--import",
-				pathToFileURL(TSX_LOADER).href,
+				...loaderArgs,
 				"--eval",
 				`const m = await import(${JSON.stringify(pathToFileURL(path.join(REPO_ROOT, "config.ts")).href)}); console.log(JSON.stringify({ data: m.PATHS.data, chats: m.PATHS.chats }));`,
 			],

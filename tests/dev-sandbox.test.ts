@@ -119,8 +119,9 @@ describe("explainFailure: Next locks the .next folder, so a second dev server ca
 
 describe("the demo seed only fills an empty folder", () => {
 	const seed = path.join(ROOT, "scripts", "demo-measured-minutes.ts");
+	const loaderArgs = process.versions.bun ? [] : ["--import", "tsx"];
 	const run = (dataDir?: string) =>
-		spawnSync(process.execPath, ["--import", "tsx", seed], {
+		spawnSync(process.execPath, [...loaderArgs, seed], {
 			cwd: ROOT,
 			encoding: "utf8",
 			timeout: 90_000,

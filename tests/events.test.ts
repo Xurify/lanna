@@ -38,11 +38,12 @@ describe("event bus", () => {
 
 	it("one listener throwing NEVER breaks the others (error isolation)", () => {
 		const got: string[] = [];
-		subscribe(() => {
+		const offThrow = subscribe(() => {
 			throw new Error("listener bug");
 		});
 		const off = subscribe((e) => got.push(e.type));
 		emit("turn-settled", { chatId: "chat_b" });
+		offThrow();
 		off();
 		assert.deepEqual(got, ["turn-settled"]);
 	});

@@ -5,8 +5,9 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { ArrowUpIcon } from "lucide-react";
 import { DictationBar, joinDictation, useDictation } from "@/components/dictation";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { ChatPdfButton, DraftPdfChips } from "@/components/chat-pdf-button";
-import { ChatImageButton, DraftImageChips, uploadLearnerImage } from "@/components/chat-image-button";
+import { ChatAttachMenu } from "@/components/chat-attach-menu";
+import { DraftPdfChips } from "@/components/chat-pdf-button";
+import { DraftImageChips, uploadLearnerImage } from "@/components/chat-image-button";
 import { joinDraft, splitDraft } from "@/src/core";
 import { Arrow, Box, Figure, Line, Loop, Note, Patch, Sheet } from "@/components/lesson/ink";
 import { SidebarToggle } from "@/components/sidebar";
@@ -177,30 +178,30 @@ export function ChatDraft({
 							aria-label="Ask your tutor"
 							className="block max-h-60 min-h-20 w-full resize-none bg-transparent px-5 pt-4 font-ui text-lg leading-snug text-foreground outline-none [field-sizing:content] placeholder:text-ink-4"
 						/>
-						<div className="flex items-center gap-2 px-3 pb-3">
+						<div className="flex min-w-0 items-center gap-2 px-3 pb-3">
 							<DictationBar dictation={dictation} />
-							<ChatPdfButton
-								onAttached={(pdf) => {
+							<ChatAttachMenu
+								onPdfAttached={(pdf) => {
 									onChange(joinDraft([...draft.pdfs, pdf], draft.rest, draft.images));
 									inputRef.current?.focus();
 								}}
-							/>
-							<ChatImageButton
-								onAttached={(img) => {
+								onImageAttached={(img) => {
 									onChange(joinDraft(draft.pdfs, draft.rest, [...draft.images, img]));
 									inputRef.current?.focus();
 								}}
 							/>
 							<span className="flex-1" />
 							{setupCta}
-							<span className="hidden font-ui text-xs text-muted-foreground pointer-fine:inline">Enter to ask</span>
+							<span className="hidden shrink-0 font-ui text-xs text-muted-foreground sm:pointer-fine:inline">
+								Enter to ask
+							</span>
 							<button
 								type="button"
 								onClick={send}
 								disabled={!canSend}
 								aria-label="Ask"
 								className={cn(
-									"lanna-press flex size-9 items-center justify-center rounded-full transition-colors",
+									"lanna-press flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
 									canSend ? "bg-sun text-sun-ink" : "bg-well text-ink-4",
 								)}
 							>

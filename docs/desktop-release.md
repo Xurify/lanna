@@ -2,11 +2,11 @@
 
 ## Platforms
 
-| Platform             | Build runner       | Packages                         | In-app update                                                          |
-| -------------------- | ------------------ | -------------------------------- | ---------------------------------------------------------------------- |
-| macOS, Apple Silicon | `macos-26` (arm64) | signed/notarized DMG + ZIP       | ZIP via Squirrel.Mac                                                   |
-| Windows, x64         | `windows-2025`     | unsigned per-user NSIS installer | NSIS                                                                   |
-| Linux, x64           | `ubuntu-24.04`     | AppImage + `.deb`                | AppImage replacement; `.deb` through dpkg/apt with elevation if needed |
+| Platform             | Build runner       | Packages                         | In-app update                                                     |
+| -------------------- | ------------------ | -------------------------------- | ----------------------------------------------------------------- |
+| macOS, Apple Silicon | `macos-26` (arm64) | signed/notarized DMG + ZIP       | ZIP via Squirrel.Mac                                              |
+| Windows, x64         | `windows-2025`     | unsigned per-user NSIS installer | NSIS                                                              |
+| Linux, x64           | `ubuntu-24.04`     | AppImage + `.deb`                | AppImage: replaced in place; `.deb`: dpkg/apt, elevated if needed |
 
 Windows signing is deliberately disabled for this first release. SmartScreen may warn about an unknown publisher on initial installation. AppImage is the primary Linux download because it is self-contained and updates without administrator permission. The installed `electron-updater` 6.8.9 also supports `.deb` updates; an update may request an administrator password. Both use the same download/restart banner.
 

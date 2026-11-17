@@ -9,8 +9,11 @@ import { fileURLToPath } from "node:url";
 
 const script = fileURLToPath(new URL("../scripts/smoke-provider-runtime.mjs", import.meta.url));
 const checkout = fileURLToPath(new URL("..", import.meta.url));
+const nodeBin = process.versions.bun
+	? spawnSync("node", ["-p", "process.execPath"], { encoding: "utf8" }).stdout?.trim() || "node"
+	: process.execPath;
 const run = (payload: string) =>
-	spawnSync(process.execPath, [script, "--standalone", payload], { encoding: "utf8", timeout: 40_000 });
+	spawnSync(nodeBin, [script, "--standalone", payload, "--runtime", nodeBin], { encoding: "utf8", timeout: 40_000 });
 
 describe("offline native Pi Google initialization gate", () => {
 	it("reaches the sentinel for direct Google and Google-backed OpenCode adapters using the real SDK", () => {
