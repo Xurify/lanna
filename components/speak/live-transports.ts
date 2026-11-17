@@ -300,9 +300,11 @@ class OpenAITransport implements Transport {
 				this.cb.onTutorStart();
 				break;
 			case "response.output_audio_transcript.delta":
+			case "response.audio_transcript.delta":
 				if (event.delta) this.cb.onTutorText(event.delta);
 				break;
 			case "response.output_audio_transcript.done":
+			case "response.audio_transcript.done":
 				this.cb.onTutorEnd();
 				break;
 			case "response.function_call_arguments.done":

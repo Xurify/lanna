@@ -176,9 +176,22 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 					A live call: you speak, the tutor speaks, and either of you can interrupt. It asks about the topic and answers
 					what you actually said.
 				</p>
-				<p className="mt-2 font-ui text-[12px] text-ink-3" data-testid="live-engine">
-					Voice: {liveProviderLabel(engine ?? start?.provider ?? page.availability.provider ?? "phonic")}
-				</p>
+				{enabled.length > 1 ? (
+					<div className="mt-4 flex flex-wrap items-center gap-2" data-testid="live-engine-picker">
+						<span className="font-ui text-[12px] text-ink-3">Voice</span>
+						<ChoiceMenu
+							quiet
+							value={engine ?? enabled[0]!.id}
+							options={enabled.map((option) => ({ value: option.id, label: option.label }))}
+							onChange={(next) => setEngine(next as LiveProviderId)}
+							ariaLabel="Voice engine"
+						/>
+					</div>
+				) : (
+					<p className="mt-2 font-ui text-[12px] text-ink-3" data-testid="live-engine">
+						Voice: {liveProviderLabel(engine ?? start?.provider ?? page.availability.provider ?? "phonic")}
+					</p>
+				)}
 				<div className="mt-5 flex flex-wrap items-center gap-3">
 					<button
 						type="button"
