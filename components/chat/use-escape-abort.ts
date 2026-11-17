@@ -3,9 +3,9 @@ import type { AbortMode } from "@/components/abort-turn-dialog";
 import { useLatest } from "@/components/chat/use-latest";
 import type { ActivePracticeProblem } from "@/components/chat/practice-dock";
 
-type EscAbortTarget = "mermaid" | "setup" | "problem" | "turn" | null;
+type EscapeAbortTarget = "mermaid" | "setup" | "problem" | "turn" | null;
 
-interface EscState {
+interface EscapeState {
 	abortAsk: boolean;
 	mermaidFocus: boolean;
 	setupOpen: boolean;
@@ -13,7 +13,7 @@ interface EscState {
 	busy: boolean;
 }
 
-function escAbortTarget(state: EscState): EscAbortTarget {
+function escAbortTarget(state: EscapeState): EscapeAbortTarget {
 	if (state.abortAsk) return null;
 	if (state.mermaidFocus) return "mermaid";
 	if (state.setupOpen) return "setup";
@@ -23,7 +23,7 @@ function escAbortTarget(state: EscState): EscAbortTarget {
 }
 
 interface EscapeAbortInput {
-	mermaidOpen: boolean;
+	diagramOpen: boolean;
 	setupOpen: boolean;
 	activeProblem: ActivePracticeProblem | null;
 	busy: boolean;
@@ -41,7 +41,7 @@ export function useEscapeAbort(input: EscapeAbortInput) {
 			const current = latest.current;
 			const target = escAbortTarget({
 				abortAsk: current.abortAsk !== null,
-				mermaidFocus: current.mermaidOpen,
+				mermaidFocus: current.diagramOpen,
 				setupOpen: current.setupOpen,
 				problem: current.activeProblem !== null,
 				busy: current.busy,

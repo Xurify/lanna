@@ -12,7 +12,7 @@ export function useDiagramFocus() {
 	return {
 		mermaidFocus,
 		figureFocus,
-		mermaidOpen: mermaidFocus !== null || figureFocus !== null,
+		diagramOpen: mermaidFocus !== null || figureFocus !== null,
 		openMermaid: setMermaidFocus,
 		openFigure: (svg: string, inverted: boolean) => setFigureFocus({ svg, inverted }),
 		closeMermaid: () => setMermaidFocus(null),

@@ -152,7 +152,7 @@ export function Chat({
 	});
 	const diagrams = useDiagramFocus();
 	const escape = useEscapeAbort({
-		mermaidOpen: diagrams.mermaidOpen,
+		diagramOpen: diagrams.diagramOpen,
 		setupOpen: setup.setupOpen,
 		activeProblem,
 		busy,

@@ -82,11 +82,11 @@ export function DockOverlay({
 	});
 
 	const blockStyle = {
-		"--dock-max-h": geometry.dockMaxH ? `${geometry.dockMaxH}px` : undefined,
+		"--dock-max-h": geometry.dockMaxHeight ? `${geometry.dockMaxHeight}px` : undefined,
 	} as CSSProperties;
 
 	return (
-		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: geometry.sbInset }}>
+		<div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ right: geometry.scrollbarInset }}>
 			<div className="h-24" />
 			<div
 				ref={blockRef}

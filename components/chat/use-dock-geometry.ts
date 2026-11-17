@@ -20,8 +20,8 @@ interface DockGeometryInput {
 }
 
 export function useDockGeometry({ scrollRef, blockRef }: DockGeometryInput) {
-	const [sbInset, setSbInset] = useState(0);
-	const [dockMaxH, setDockMaxH] = useState<number | null>(null);
+	const [scrollbarInset, setSbInset] = useState(0);
+	const [dockMaxHeight, setDockMaxH] = useState<number | null>(null);
 	const geometryStampedAt = useRef(0);
 	const growthStampedAt = useRef(0);
 
@@ -76,5 +76,5 @@ export function useDockGeometry({ scrollRef, blockRef }: DockGeometryInput) {
 		return now - geometryStampedAt.current < MOVE_MUTE_MS || now - growthStampedAt.current < MOVE_MUTE_MS;
 	};
 
-	return { sbInset, dockMaxH, stampGeometry, isMuted };
+	return { scrollbarInset, dockMaxHeight, stampGeometry, isMuted };
 }

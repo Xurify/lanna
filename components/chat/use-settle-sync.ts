@@ -45,9 +45,9 @@ export function useStreamFailureRecovery({
 		let cancelled = false;
 		void (async () => {
 			try {
-				const res = await fetch(`/api/chats/${chatId}`);
-				if (!res.ok || cancelled) return;
-				const record = (await res.json()) as { turnInFlight?: boolean };
+				const response = await fetch(`/api/chats/${chatId}`);
+				if (!response.ok || cancelled) return;
+				const record = (await response.json()) as { turnInFlight?: boolean };
 				if (cancelled) return;
 				if (record.turnInFlight === true) setTurnInFlight(true);
 				else void syncFromServer();

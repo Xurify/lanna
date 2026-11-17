@@ -19,12 +19,12 @@ export function useSessionTitle({ chatId, initialTitle }: { chatId: string; init
 			const trimmed = next.trim();
 			if (trimmed === "" || trimmed === titleText) return;
 			try {
-				const res = await fetch(`/api/chats/${chatId}`, {
+				const response = await fetch(`/api/chats/${chatId}`, {
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ title: trimmed }),
 				});
-				if (!res.ok) throw new Error(`rename failed: ${res.status}`);
+				if (!response.ok) throw new Error(`rename failed: ${response.status}`);
 				setTitleText(trimmed);
 				window.dispatchEvent(new CustomEvent("lanna:chat-renamed", { detail: { id: chatId, title: trimmed } }));
 			} catch (error) {

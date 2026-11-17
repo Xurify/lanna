@@ -23,9 +23,9 @@ export function useSessionRecord({ chatId, kind, setMessages, continueIfOwed, ad
 
 	const syncTurns = useCallback(async () => {
 		try {
-			const res = await fetch(`/api/chats/${chatId}`);
-			if (!res.ok) return;
-			const record = (await res.json()) as RecordPayload;
+			const response = await fetch(`/api/chats/${chatId}`);
+			if (!response.ok) return;
+			const record = (await response.json()) as RecordPayload;
 			if (Array.isArray(record.turns)) setTurns(record.turns);
 			setPricing(record.pricing);
 		} catch {
@@ -38,9 +38,9 @@ export function useSessionRecord({ chatId, kind, setMessages, continueIfOwed, ad
 	}, [syncTurns]);
 
 	const syncFromServer = useCallback(async () => {
-		const res = await fetch(`/api/chats/${chatId}`);
-		if (!res.ok) return;
-		const record = (await res.json()) as RecordPayload;
+		const response = await fetch(`/api/chats/${chatId}`);
+		if (!response.ok) return;
+		const record = (await response.json()) as RecordPayload;
 		if (Array.isArray(record.turns)) setTurns(record.turns);
 		setPricing(record.pricing);
 		if (!Array.isArray(record.messages)) return;
@@ -50,9 +50,9 @@ export function useSessionRecord({ chatId, kind, setMessages, continueIfOwed, ad
 
 	const adoptAppendOnly = useCallback(async () => {
 		try {
-			const res = await fetch(`/api/chats/${chatId}`);
-			if (!res.ok) return;
-			const record = (await res.json()) as { messages?: LannaMessage[] };
+			const response = await fetch(`/api/chats/${chatId}`);
+			if (!response.ok) return;
+			const record = (await response.json()) as { messages?: LannaMessage[] };
 			if (!Array.isArray(record.messages)) return;
 			adoptRecord(record.messages);
 		} catch {

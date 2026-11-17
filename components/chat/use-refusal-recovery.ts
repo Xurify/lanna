@@ -28,9 +28,9 @@ export function useRefusalRecovery({
 		if (!refused) return;
 		let cancelled = false;
 		void (async () => {
-			const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`);
-			if (!cancelled && res.ok) {
-				const record = (await res.json().catch(() => null)) as { messages?: LannaMessage[] } | null;
+			const response = await fetch(`/api/chats/${encodeURIComponent(chatId)}`);
+			if (!cancelled && response.ok) {
+				const record = (await response.json().catch(() => null)) as { messages?: LannaMessage[] } | null;
 				if (Array.isArray(record?.messages)) setMessages(record.messages);
 			}
 			if (cancelled) return;
