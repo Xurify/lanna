@@ -605,7 +605,7 @@ function RenameRow({
 type SessionKindFilter = "all" | "practice" | "chat";
 
 const CTX_ITEM =
-	"flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-foreground transition-colors hover:bg-accent";
+	"flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-left text-foreground transition-colors hover:bg-accent";
 const CTX_ICON = "size-3.5 shrink-0 text-muted-foreground";
 
 function SessionsSidebar() {
@@ -1477,7 +1477,7 @@ function SessionsSidebar() {
 								if (target) setDeleting(target);
 								setCtxChatId(null);
 							}}
-							className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left font-semibold text-miss transition-colors hover:bg-miss-soft"
+							className="flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-left font-semibold text-miss transition-colors hover:bg-miss-soft"
 						>
 							<Trash2Icon className="size-3.5 shrink-0" aria-hidden="true" />
 							Delete

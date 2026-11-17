@@ -64,7 +64,7 @@ function ExportItem({
 			data-testid={testid}
 			disabled={disabled}
 			onClick={onSelect}
-			className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-accent focus-visible:bg-accent disabled:text-ink-3 disabled:hover:bg-transparent"
+			className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-accent focus-visible:bg-accent disabled:text-ink-3 disabled:hover:bg-transparent"
 		>
 			<span className="flex size-4 shrink-0 items-center justify-center text-ink-3" aria-hidden="true">
 				{icon}

@@ -33,7 +33,7 @@ export function MenuOption({
 			type="button"
 			{...props}
 			className={cn(
-				"rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent hover:text-foreground",
+				"rounded-sm px-2 py-1.5 text-left transition-colors hover:bg-accent hover:text-foreground",
 				highlighted && "bg-accent text-foreground ring-1 ring-inset ring-foreground/25",
 				className,
 			)}
@@ -111,7 +111,7 @@ export function ModelMenuList({
 					}
 				}}
 				placeholder="Search models…"
-				className="lanna-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
+				className="lanna-input mb-1.5 w-full rounded-sm border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
 			/>
 			{!models && <div className="px-2 py-3 text-center text-muted-foreground">Loading models…</div>}
 			{models && results.length === 0 && (
@@ -256,7 +256,7 @@ export function ProviderMenuList({
 					}
 				}}
 				placeholder="Search providers…"
-				className="lanna-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
+				className="lanna-input mb-1.5 w-full rounded-sm border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
 			/>
 			{results.length === 0 && <div className="px-2 py-3 text-center text-muted-foreground">No providers match.</div>}
 			<ul ref={listRef} data-testid="provider-list" className="flex max-h-72 flex-col overflow-y-auto px-1">
@@ -267,7 +267,7 @@ export function ProviderMenuList({
 							data-testid={`provider-option-${p.id.replace(/[^a-z0-9-]/gi, "_")}`}
 							data-idx={i}
 							onClick={() => onPick(p)}
-							className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-accent hover:text-foreground ${
+							className={`flex w-full items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-left outline-none transition-colors hover:bg-accent hover:text-foreground ${
 								i === menuIdx ? "bg-accent text-foreground ring-1 ring-inset ring-foreground/25" : ""
 							}`}
 						>
@@ -370,7 +370,7 @@ export function FontMenuList({
 					}
 				}}
 				placeholder="Search fonts…"
-				className="lanna-input mb-1.5 w-full rounded-lg border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
+				className="lanna-input mb-1.5 w-full rounded-sm border bg-background px-2 py-1.5 text-foreground outline-none focus:ring-1 focus:ring-ring"
 			/>
 			{!families && <div className="px-2 py-3 text-center text-muted-foreground">Loading fonts…</div>}
 			<ul ref={listRef} data-testid="font-list" className="flex max-h-72 flex-col overflow-y-auto px-1">
