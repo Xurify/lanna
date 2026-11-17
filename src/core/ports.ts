@@ -44,6 +44,8 @@ export interface ChatStore {
 	 * Like saveSettings: a rename is NOT conversation activity — updatedAt
 	 * stays put, so sidebar order never churns on a rename. */
 	renameChat(id: string, title: string): ChatRecord;
+	/** Archive or unarchive a session; like a rename, updatedAt stays put. */
+	setArchived(id: string, archived: boolean): ChatRecord;
 	/** Delete the session record entirely (session-deletion wave 6, owner
 	 *  2026-09-22). False when the id is unknown. Job cleanup is the caller's
 	 *  choreography (the DELETE route), not the store's. */

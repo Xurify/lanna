@@ -43,6 +43,8 @@ export interface ChatRecord {
 	tutorUnit?: string;
 	/** The unit's session has been counted (on the learner's first typed message). */
 	tutorCounted?: boolean;
+	/** When the learner archived the chat; absent while it is in the list. */
+	archivedAt?: string;
 	/** SCHEMA STAMP (schema-versioning wave, owner 2026-10-10): LAZY v1 —
 	 *  existing records stay unstamped (absence reads as v1); every write
 	 *  stamps the current version. A record stamped NEWER than this build
@@ -164,6 +166,8 @@ export interface ChatSummary {
 	/** Practice sessions (2026-10-04): a posed problem with no conclude —
 	 *  the sidebar meta's "Problem waiting". Absent on teaching sessions. */
 	pendingProblem: boolean;
+	/** Archived chats leave the sidebar's list for its Archived view. */
+	archived: boolean;
 	/** The record's model-control settings — rides the list payload via the
 	 *  summary spread (the picker never needs it from here; the full record
 	 *  is its source). */

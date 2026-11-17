@@ -5,7 +5,7 @@ import { Fira_Sans, Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "./press.css";
 import { AppShell, SidebarProvider } from "@/components/sidebar";
-import { SIDEBAR_MAX, SIDEBAR_WIDTH_COOKIE } from "@/lib/sidebar-size";
+import { CHATS_HEIGHT_COOKIE, SIDEBAR_MAX, SIDEBAR_WIDTH_COOKIE } from "@/lib/sidebar-size";
 import { appearanceVars, resolveAppearance } from "@/lib/appearance-vars";
 import { activeProfile, readSettingsRecord } from "@/src/server";
 import { activeCourse, type AppearanceSettings } from "@/src/core";
@@ -84,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	const theme = themeFromCookie(jar.get(THEME_COOKIE)?.value);
 	const sidebarCollapsed = jar.get("lanna-sidebar")?.value === "collapsed";
 	const sidebarWidth = Number(jar.get(SIDEBAR_WIDTH_COOKIE)?.value) || SIDEBAR_MAX;
+	const chatsHeight = Number(jar.get(CHATS_HEIGHT_COOKIE)?.value) || 0;
 	// Saved appearance goes into the first HTML (no flash of the factory
 	// palette or font before the client provider would have applied it).
 	let appearance: AppearanceSettings | undefined;
@@ -118,7 +119,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				 and pages all subscribe as the polls retire (push S3, 2026-10-02). */}
 				<ServerEventsProvider>
 					<AppearanceProvider initialDelta={appearance}>
-						<SidebarProvider defaultCollapsed={sidebarCollapsed} defaultWidth={sidebarWidth}>
+						<SidebarProvider
+							defaultCollapsed={sidebarCollapsed}
+							defaultWidth={sidebarWidth}
+							defaultChatsHeight={chatsHeight}
+						>
 							<ActivityProvider>
 								<AppShell>{children}</AppShell>
 								<TaskNotice />

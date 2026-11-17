@@ -43,7 +43,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 	if (oversized) return oversized;
 	const { id } = await params;
 	if (!getChat(id)) return Response.json({ error: "Not found" }, { status: 404 });
-	const body = (await req.json().catch(() => null)) as { title?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { title?: unknown; archived?: unknown } | null;
+	if (typeof body?.archived === "boolean" && body.title === undefined) {
+		const record = stores.chatStore.setArchived(id, body.archived);
+		return Response.json({ archived: !!record.archivedAt });
+	}
 	if (typeof body?.title !== "string" || body.title.trim() === "") {
 		return Response.json({ error: "title must be a non-empty string" }, { status: 400 });
 	}

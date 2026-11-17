@@ -24,7 +24,7 @@ export default async function NewSessionPage({ searchParams }: { searchParams: P
 			language={activeLanguage().english}
 			weakTopics={weakestTopics(3)}
 			recent={listChats()
-				.filter((c) => c.kind === "chat")
+				.filter((c) => c.kind === "chat" && !c.archived)
 				.slice(0, 3)
 				.map((c) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt }))}
 		/>
