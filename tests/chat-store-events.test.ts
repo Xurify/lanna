@@ -44,6 +44,27 @@ describe("chat store events (S6: the silence law)", () => {
 		off();
 	});
 
+	it("setArchived announces, keeps updatedAt and flags the summary", () => {
+		const chat = chatStore.createChat("Archive fixture");
+		let announces = 0;
+		const off = subscribe((e) => {
+			if (e.type === "chats-changed") announces++;
+		});
+
+		chatStore.setArchived(chat.id, true);
+		assert.equal(announces, 1, "archive announces (a list-shape write)");
+		const archived = chatStore.listChats().find((c) => c.id === chat.id)!;
+		assert.equal(archived.archived, true);
+		assert.equal(archived.updatedAt, chat.updatedAt, "archiving does not reorder the list");
+
+		chatStore.setArchived(chat.id, false);
+		assert.equal(announces, 2, "unarchive announces");
+		assert.equal(chatStore.listChats().find((c) => c.id === chat.id)!.archived, false);
+		assert.equal(chatStore.getChat(chat.id)!.archivedAt, undefined);
+		off();
+		chatStore.deleteChat(chat.id);
+	});
+
 	it("deleteChat on a missing id stays silent", () => {
 		let announces = 0;
 		const off = subscribe((e) => {

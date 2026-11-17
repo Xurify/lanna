@@ -8,8 +8,13 @@ import { MenuShell } from "@/components/menu-shell";
 import { DeleteSessionDialog } from "@/components/delete-session-dialog";
 import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import {
+	ArchiveIcon,
+	ArchiveRestoreIcon,
 	CheckIcon,
+	ChevronLeftIcon,
+	FileDownIcon,
 	MessagesSquareIcon,
+	PencilIcon,
 	PlusIcon,
 	ListChecksIcon,
 	PanelLeftCloseIcon,
@@ -20,12 +25,20 @@ import {
 	XIcon,
 } from "lucide-react";
 import { ActivitySection, toBlobs, useActivity } from "@/components/activity-dock";
-import { LannaMark } from "@/components/lanna-mark";
+import { LannaAppIcon } from "@/components/lanna-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BrailleSpinner } from "@/components/braille-spinner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { JumpProvider } from "@/components/quiet/jump";
-import { SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_WIDTH_COOKIE, clampSidebarWidth } from "@/lib/sidebar-size";
+import {
+	CHATS_HEIGHT_COOKIE,
+	CHATS_MIN_HEIGHT,
+	SIDEBAR_MAX,
+	SIDEBAR_MIN,
+	SIDEBAR_WIDTH_COOKIE,
+	clampChatsHeight,
+	clampSidebarWidth,
+} from "@/lib/sidebar-size";
 import {
 	preloadSettingsDialog,
 	SettingsDialogProvider,
@@ -141,6 +154,9 @@ const SidebarContext = createContext<{
 	/** The open sidebar's width in px, between SIDEBAR_MIN and SIDEBAR_MAX. */
 	width: number;
 	setWidth: (px: number) => void;
+	/** The chats section's chosen height in px; 0 leaves it to fill the space left. */
+	chatsHeight: number;
+	setChatsHeight: (px: number) => void;
 }>({
 	open: false,
 	drawer: false,
@@ -151,6 +167,8 @@ const SidebarContext = createContext<{
 	toggleCollapsed: () => {},
 	width: 288,
 	setWidth: () => {},
+	chatsHeight: 0,
+	setChatsHeight: () => {},
 });
 
 export function useSidebar() {
@@ -170,13 +188,17 @@ export function SidebarProvider({
 	children,
 	defaultCollapsed = false,
 	defaultWidth = SIDEBAR_MAX,
+	defaultChatsHeight = 0,
 }: {
 	children: React.ReactNode;
 	defaultCollapsed?: boolean;
 	defaultWidth?: number;
+	defaultChatsHeight?: number;
 }) {
 	const [width, setWidthState] = useState(clampSidebarWidth(defaultWidth));
 	const setWidth = useCallback((px: number) => setWidthState(clampSidebarWidth(px)), []);
+	const [chatsHeight, setChatsHeightState] = useState(clampChatsHeight(defaultChatsHeight));
+	const setChatsHeight = useCallback((px: number) => setChatsHeightState(clampChatsHeight(px)), []);
 	// The folded state is kept in a cookie the server reads, so the first paint already has the right width (no shift on load).
 	const [collapsed, setCollapsed] = useState(defaultCollapsed);
 	const pathname = usePathname();
@@ -311,7 +333,19 @@ export function SidebarProvider({
 
 	return (
 		<SidebarContext.Provider
-			value={{ open, drawer, phone, toggle, closeDrawer, collapsed: folded, toggleCollapsed, width, setWidth }}
+			value={{
+				open,
+				drawer,
+				phone,
+				toggle,
+				closeDrawer,
+				collapsed: folded,
+				toggleCollapsed,
+				width,
+				setWidth,
+				chatsHeight,
+				setChatsHeight,
+			}}
 		>
 			{/* transitions gated on mount: no slide-in flash on page load */}
 			<div
@@ -451,13 +485,13 @@ function SessionRow({
 	active: boolean;
 	/** The click: opens the chat, or toggles it while selecting (the parent reads the modifier keys). */
 	onOpen: (e: React.MouseEvent<HTMLButtonElement>) => void;
-	/** Bulk-delete selection: rows show a checkbox and a click toggles. */
+	/** Bulk selection (archive or delete): rows show a checkbox and a click toggles. */
 	selectMode?: boolean;
 	selected?: boolean;
 	/** Keyboard-cycle highlight (shortcut wave A: Alt+↑/↓ + Alt+Enter) —
 	 *  visually distinct from the active session, which stays filled. */
 	kbdSelected?: boolean;
-	/** Right-click opens the context menu (wave 6: Rename / Delete). */
+	/** Right-click opens the context menu. */
 	onContextMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
 	return (
@@ -570,13 +604,34 @@ function RenameRow({
  *  open, so a forgotten filter can never leave the list silently short. */
 type SessionKindFilter = "all" | "practice" | "chat";
 
+const CTX_ITEM =
+	"flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-foreground transition-colors hover:bg-accent";
+const CTX_ICON = "size-3.5 shrink-0 text-muted-foreground";
+
 function SessionsSidebar() {
-	const { open, drawer, phone, toggle, closeDrawer, collapsed, toggleCollapsed, width, setWidth } = useSidebar();
+	const {
+		open,
+		drawer,
+		phone,
+		toggle,
+		closeDrawer,
+		collapsed,
+		toggleCollapsed,
+		width,
+		setWidth,
+		chatsHeight,
+		setChatsHeight,
+	} = useSidebar();
 	const visible = phone ? drawer : open;
 	const [chats, setChats] = useState<ChatListItem[] | null>(null);
 	const [query, setQuery] = useState("");
 	const [searching, setSearching] = useState(false);
 	const [kindFilter, setKindFilter] = useState<SessionKindFilter>("all");
+	const [viewArchived, setViewArchived] = useState(false);
+	const archivedCount = useMemo(() => (chats ?? []).filter((c) => c.archived).length, [chats]);
+	const inArchive = viewArchived && archivedCount > 0;
+	const chatsSectionRef = useRef<HTMLElement>(null);
+	const navScrollRef = useRef<HTMLDivElement>(null);
 	const searchBoxRef = useRef<HTMLDivElement>(null);
 	const { feed } = useActivity();
 	const agentsRunning = useMemo(() => toBlobs(feed).length > 0 || feed.tasks.length > 0, [feed]);
@@ -597,7 +652,7 @@ function SessionsSidebar() {
 	 * keeps the natural list order (scores are all 0, sort is stable). */
 	const shown = useMemo(() => {
 		const q = query.trim();
-		let list = chats;
+		let list = chats?.filter((c) => c.archived === inArchive) ?? null;
 		if (list && kindFilter !== "all") {
 			list = list.filter((c) => c.kind === kindFilter);
 		}
@@ -608,7 +663,7 @@ function SessionsSidebar() {
 			.filter((r): r is { c: (typeof list)[number]; score: number } => r.score !== null)
 			.sort((a, b) => b.score - a.score)
 			.map((r) => r.c);
-	}, [chats, query, kindFilter]);
+	}, [chats, query, kindFilter, inArchive]);
 
 	const refreshInFlightRef = useRef(false);
 	const refresh = useCallback(async () => {
@@ -810,11 +865,18 @@ function SessionsSidebar() {
 				setCtxChatId(null);
 			}
 		};
+		const onScroll = (e: Event) => {
+			if (e.target instanceof Element && e.target.closest("[data-lanna-menu]")) return;
+			setCtxChatId(null);
+		};
 		document.addEventListener("pointerdown", onPointerDown);
 		document.addEventListener("keydown", onKeyDown);
+		// Scroll does not bubble; the capture phase sees every scroll container's scroll.
+		document.addEventListener("scroll", onScroll, true);
 		return () => {
 			document.removeEventListener("pointerdown", onPointerDown);
 			document.removeEventListener("keydown", onKeyDown);
+			document.removeEventListener("scroll", onScroll, true);
 		};
 	}, [ctxChatId]);
 
@@ -860,6 +922,25 @@ function SessionsSidebar() {
 			if (ids.some((id) => pathname === `/chat/${id}`)) router.push("/");
 		},
 		[pathname, router],
+	);
+
+	const setArchived = useCallback(
+		async (ids: string[], archived: boolean) => {
+			const targets = new Set(ids);
+			setChats((prev) => (prev ? prev.map((c) => (targets.has(c.id) ? { ...c, archived } : c)) : prev));
+			const results = await Promise.allSettled(
+				ids.map(async (id) => {
+					const res = await fetch(`/api/chats/${id}`, {
+						method: "PUT",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ archived }),
+					});
+					if (!res.ok) throw new Error(`archive failed: ${res.status}`);
+				}),
+			);
+			if (results.some((r) => r.status === "rejected")) void refresh();
+		},
+		[refresh],
 	);
 
 	useEffect(() => {
@@ -958,13 +1039,13 @@ function SessionsSidebar() {
 								aria-label="Home"
 								className="lanna-no-drag flex size-9 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
 							>
-								<LannaMark className="size-6" />
+								<LannaAppIcon className="size-7 rounded-[7px]" />
 							</Link>
 						</Hint>
 						<Link
 							href="/"
 							tabIndex={-1}
-							className="lanna-no-drag mr-auto ml-1.5 text-[15px] font-extrabold tracking-tight"
+							className="lanna-no-drag mr-auto ml-1.5 flex items-center text-[15px] font-extrabold tracking-tight"
 						>
 							Lanna
 						</Link>
@@ -994,7 +1075,11 @@ function SessionsSidebar() {
 					</div>
 
 					{/* On a short window the navigation scrolls on its own; the tutor below keeps a reserved height, so the chats are never squeezed or pushed out of sight. */}
-					<div className="min-h-0 overflow-y-auto pt-1 [scrollbar-gutter:stable]" data-testid="sidebar-nav-scroll">
+					<div
+						ref={navScrollRef}
+						className="min-h-0 overflow-y-auto pt-1 [scrollbar-gutter:stable]"
+						data-testid="sidebar-nav-scroll"
+					>
 						<LanguageSwitcher />
 					</div>
 
@@ -1002,9 +1087,17 @@ function SessionsSidebar() {
 					    Search and the kind filter sit behind one button: most days
 					    the list is short and the controls are noise. */}
 					<section
+						ref={chatsSectionRef}
 						aria-label="Chats"
-						className="mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3"
+						style={chatsHeight ? { minHeight: chatsMinHeight(chatsHeight) } : undefined}
+						className="relative mx-3 mt-2 flex min-h-[13rem] shrink-0 flex-1 flex-col border-t border-border/50 pt-3"
 					>
+						<ChatsResizer
+							sectionRef={chatsSectionRef}
+							navRef={navScrollRef}
+							height={chatsHeight}
+							setHeight={setChatsHeight}
+						/>
 						<div ref={searchBoxRef} className="flex flex-col gap-1.5">
 							<div className="flex h-8 items-center">
 								{searching ? (
@@ -1072,8 +1165,23 @@ function SessionsSidebar() {
 									</span>
 								) : (
 									<>
-										<h2 className="px-2.5 text-xs font-bold text-muted-foreground">Chats</h2>
-										<Hint label={selectMode ? "Done selecting" : "Select chats to delete"} side="bottom">
+										{inArchive ? (
+											<button
+												type="button"
+												data-testid="session-archive-back"
+												onClick={() => {
+													setViewArchived(false);
+													setKbdIndex(null);
+												}}
+												className="-ml-1 flex h-8 items-center gap-1 rounded-lg pr-2 pl-1 text-xs font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+											>
+												<ChevronLeftIcon className="size-3.5" />
+												Archived
+											</button>
+										) : (
+											<h2 className="px-2.5 text-xs font-bold text-muted-foreground">Chats</h2>
+										)}
+										<Hint label={selectMode ? "Done selecting" : "Select chats to archive or delete"} side="bottom">
 											<Button
 												type="button"
 												variant="ghost"
@@ -1221,21 +1329,51 @@ function SessionsSidebar() {
 									),
 								)
 							)}
+							{!inArchive && archivedCount > 0 && !query.trim() && (
+								<button
+									type="button"
+									data-testid="session-archive-open"
+									onClick={() => {
+										setViewArchived(true);
+										setKbdIndex(null);
+									}}
+									className="mt-1 flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								>
+									<ArchiveIcon className="size-3.5" />
+									Archived
+									<span className="ml-auto tabular-nums">{archivedCount}</span>
+								</button>
+							)}
 						</div>
 						{selectMode && (
-							<div className="pt-3 pb-4">
+							<div className="flex gap-1.5 pt-3 pb-4">
+								<Button
+									type="button"
+									variant="secondary"
+									data-testid="session-select-archive"
+									onClick={() => {
+										void setArchived(
+											selectedChats.map((c) => c.id),
+											!inArchive,
+										);
+										exitSelect();
+									}}
+									disabled={selectedChats.length === 0}
+									className="min-w-0 flex-1 rounded-lg font-semibold"
+								>
+									{inArchive ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
+									{inArchive ? "Unarchive" : "Archive"}
+								</Button>
 								<Button
 									type="button"
 									variant="destructive-soft"
 									data-testid="session-select-delete"
 									onClick={() => setBulkOpen(true)}
 									disabled={selectedChats.length === 0}
-									className="w-full rounded-lg font-semibold"
+									className="min-w-0 flex-1 rounded-lg font-semibold"
 								>
 									<Trash2Icon />
-									{selectedChats.length === 0
-										? "Select chats to delete"
-										: `Delete ${selectedChats.length} ${selectedChats.length === 1 ? "chat" : "chats"}`}
+									Delete
 								</Button>
 							</div>
 						)}
@@ -1273,12 +1411,6 @@ function SessionsSidebar() {
 						preferredSide="down"
 						menuClass="flex w-52 flex-col gap-0.5 rounded-xl border bg-card p-2 text-xs shadow-xl"
 					>
-						{/* The two management actions first, then the extraction block
-						    (owner refinement round, 2026-09-24): Rename/Delete stay at the
-						    top, the coverage numbers + Extract affordance sit below the
-						    hairline — the block is info + a stateful affordance, the
-						    actions above it. Fetched on menu open (the block mounts WITH
-						    the menu); 409 = benign. Renders nothing on a failed read. */}
 						<button
 							type="button"
 							data-testid="ctx-rename"
@@ -1286,15 +1418,11 @@ function SessionsSidebar() {
 								setRenamingId(ctxChatId);
 								setCtxChatId(null);
 							}}
-							className="flex items-center rounded-lg px-2.5 py-1.5 text-left text-foreground transition-colors hover:bg-accent"
+							className={CTX_ITEM}
 						>
+							<PencilIcon className={CTX_ICON} aria-hidden="true" />
 							Rename
 						</button>
-						{/* Export as Markdown (owner, release polish 2026-10-06): the
-					    session-markdown engine's user-facing debut — same-origin
-						    anchor download; the route's Content-Disposition names the
-						    file. Sits with the management actions, above Delete (the
-						    destructive action stays last — the danger-fence law). */}
 						<button
 							type="button"
 							data-testid="ctx-export-md"
@@ -1303,15 +1431,44 @@ function SessionsSidebar() {
 								setCtxChatId(null);
 								const a = document.createElement("a");
 								a.href = `/api/chats/${chatId}/markdown`;
-								a.download = ""; // the route's filename wins
+								a.download = ""; // the route's Content-Disposition filename wins
 								document.body.appendChild(a);
 								a.click();
 								a.remove();
 							}}
-							className="flex items-center rounded-lg px-2.5 py-1.5 text-left text-foreground transition-colors hover:bg-accent"
+							className={CTX_ITEM}
 						>
-							Save as text file…
+							<FileDownIcon className={CTX_ICON} aria-hidden="true" />
+							Save as text file
 						</button>
+						{chats?.find((c) => c.id === ctxChatId)?.archived ? (
+							<button
+								type="button"
+								data-testid="ctx-archive"
+								onClick={() => {
+									setCtxChatId(null);
+									void setArchived([ctxChatId], false);
+								}}
+								className={CTX_ITEM}
+							>
+								<ArchiveRestoreIcon className={CTX_ICON} aria-hidden="true" />
+								Unarchive
+							</button>
+						) : (
+							<button
+								type="button"
+								data-testid="ctx-archive"
+								onClick={() => {
+									setCtxChatId(null);
+									void setArchived([ctxChatId], true);
+								}}
+								className={CTX_ITEM}
+							>
+								<ArchiveIcon className={CTX_ICON} aria-hidden="true" />
+								Archive
+							</button>
+						)}
+						<div className="mx-1 my-1 border-t border-border/60" aria-hidden="true" />
 						<button
 							type="button"
 							data-testid="ctx-delete"
@@ -1320,11 +1477,11 @@ function SessionsSidebar() {
 								if (target) setDeleting(target);
 								setCtxChatId(null);
 							}}
-							className="flex items-center rounded-lg px-2.5 py-1.5 text-left text-foreground transition-colors hover:bg-miss-soft hover:text-miss"
+							className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left font-semibold text-miss transition-colors hover:bg-miss-soft"
 						>
-							Delete…
+							<Trash2Icon className="size-3.5 shrink-0" aria-hidden="true" />
+							Delete
 						</button>
-						<div className="my-0.5 border-t border-border/60" aria-hidden="true" />
 					</MenuShell>
 				)}
 
@@ -1340,6 +1497,82 @@ function SessionsSidebar() {
 				{open && <SidebarResizer width={width} setWidth={setWidth} />}
 			</aside>
 		</>
+	);
+}
+
+function chatsMinHeight(px: number): string {
+	return `max(${CHATS_MIN_HEIGHT}px, min(${px}px, 100% - 10rem))`;
+}
+
+const NAV_FLOOR = 48;
+
+function saveChatsHeight(px: number) {
+	document.cookie = px
+		? `${CHATS_HEIGHT_COOKIE}=${clampChatsHeight(px)}; path=/; max-age=31536000; samesite=lax`
+		: `${CHATS_HEIGHT_COOKIE}=; path=/; max-age=0; samesite=lax`;
+}
+
+/** The drag edge on the chats section's top border: drag up for a taller list, down to give the room back, double-click to return to the default, arrow keys for 16 px steps. */
+function ChatsResizer({
+	sectionRef,
+	navRef,
+	height,
+	setHeight,
+}: {
+	sectionRef: React.RefObject<HTMLElement | null>;
+	navRef: React.RefObject<HTMLElement | null>;
+	height: number;
+	setHeight: (px: number) => void;
+}) {
+	const tallest = () => {
+		const section = sectionRef.current?.getBoundingClientRect().height ?? 0;
+		return section + Math.max(0, (navRef.current?.clientHeight ?? 0) - NAV_FLOOR);
+	};
+	const current = () => Math.round(sectionRef.current?.getBoundingClientRect().height ?? height);
+	const start = (e: React.PointerEvent<HTMLDivElement>) => {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		const y0 = e.clientY;
+		const h0 = current();
+		const max = tallest();
+		let last = h0;
+		const move = (ev: PointerEvent) => {
+			last = Math.max(CHATS_MIN_HEIGHT, Math.min(max, h0 + y0 - ev.clientY));
+			setHeight(last);
+		};
+		const end = () => {
+			window.removeEventListener("pointermove", move);
+			window.removeEventListener("pointerup", end);
+			window.removeEventListener("pointercancel", end);
+			saveChatsHeight(last);
+		};
+		window.addEventListener("pointermove", move);
+		window.addEventListener("pointerup", end);
+		window.addEventListener("pointercancel", end);
+	};
+	return (
+		<div
+			role="separator"
+			aria-orientation="horizontal"
+			aria-label="Chats height"
+			aria-valuemin={CHATS_MIN_HEIGHT}
+			aria-valuenow={height || undefined}
+			tabIndex={0}
+			data-testid="chats-resizer"
+			onPointerDown={start}
+			onDoubleClick={() => {
+				setHeight(0);
+				saveChatsHeight(0);
+			}}
+			onKeyDown={(e) => {
+				if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+				e.preventDefault();
+				const next = Math.max(CHATS_MIN_HEIGHT, Math.min(tallest(), current() + (e.key === "ArrowUp" ? 16 : -16)));
+				setHeight(next);
+				saveChatsHeight(next);
+			}}
+			className="lanna-no-drag absolute inset-x-0 -top-[4px] z-10 h-[7px] cursor-row-resize touch-none rounded-full transition-colors hover:bg-teal/30 focus-visible:bg-teal/40 focus-visible:outline-none active:bg-teal/50"
+		/>
 	);
 }
 

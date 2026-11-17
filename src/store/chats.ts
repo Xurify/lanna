@@ -100,6 +100,7 @@ function listChats(): ChatSummary[] {
 						...summary,
 						// Older records without a kind are Ask chats.
 						kind: summary.kind ?? "chat",
+						archived: !!summary.archivedAt,
 						messageCount: messages.length,
 					};
 				} catch (err) {
@@ -176,6 +177,16 @@ function renameChat(id: string, title: string): ChatRecord {
 	return record;
 }
 
+function setArchived(id: string, archived: boolean): ChatRecord {
+	const record = getChat(id);
+	if (!record) throw new Error(`Chat not found: ${id}`);
+	if (archived) record.archivedAt = record.archivedAt ?? new Date().toISOString();
+	else delete record.archivedAt;
+	writeChat(record);
+	emit("chats-changed", {});
+	return record;
+}
+
 /** Delete the session from the list (session-deletion wave 6, owner
  *  2026-09-22). False when the id is unknown — the route turns that into
  *  a 404. The record's graph traces and jobs are the route's choreography
@@ -245,6 +256,7 @@ export const chatStore: ChatStore = {
 	setTutorUnit,
 	markTutorCounted,
 	renameChat,
+	setArchived,
 	deleteChat,
 	appendTurnUsage,
 };
