@@ -1,7 +1,7 @@
 /**
- * REVIEW BLANK LENGTH (2026-11-11): a card that has been
- * answered once can hide up to three words: the card's word and other
- * words of the sentence, picked anew each rep (E102), one field each.
+ * REVIEW BLANKS (2026-11-17): how many words a card hides follows the card's
+ * own memory (FSRS stability), and the extra words are ones the deck proves
+ * the learner knows, weakest first. No setting.
  *
  * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
@@ -16,8 +16,9 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-review-blank-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 
-const { blankAround, blankWordsFor, splitOnWords, targetWordOf, wordsOf } = await import("../src/core/review.ts");
-const { answerReview, blankOf, reviewStatus, updateReviewSettings } = await import("../src/server/review.ts");
+const { ASSUMED_KNOWN, blankAround, blankAtSpans, blankSizeFor, splitOnWords, targetWordOf, wordsOf } =
+	await import("../src/core/review.ts");
+const { answerReview, blankOf, reviewStatus, spansOf } = await import("../src/server/review.ts");
 const { progressStore } = await import("../src/store/progress.ts");
 const { reviewStore } = await import("../src/store/review.ts");
 type ReviewCard = import("../src/core/review.ts").ReviewCard;
@@ -33,6 +34,10 @@ const cardOn = (sentence: string, answer: string): Pick<ReviewCard, "sentence" |
 
 const sentenceOf = (b: { pieces: string[]; gaps: string[] }) => b.pieces.map((p, i) => p + (b.gaps[i] ?? "")).join("");
 const SEEDS = Array.from({ length: 60 }, (_, i) => i * 7919);
+const strengths =
+	(days: Record<string, number>) =>
+	(word: string): number | undefined =>
+		days[word.toLowerCase()];
 
 test("a blank of one word is the word alone", () => {
 	const blank = blankAround(cardOn("Ja som doma.", "som"), 1);
@@ -46,49 +51,59 @@ test("a blank of one word is the word alone", () => {
 	});
 });
 
-test("a longer blank hides other words from anywhere in the sentence, in sentence order, with the card's word at target", () => {
+test("only words the learner has proven are hidden next to the card's word, in sentence order", () => {
 	const card = cardOn("Keď prší, ostanem doma, lebo je zima.", "ostanem");
-	const blanks = SEEDS.map((seed) => blankAround(card, 3, seed));
-	for (const b of blanks) {
-		assert.equal(b.words, 3);
+	const know = strengths({ prší: 12, doma: 40, je: 3 });
+	for (const seed of SEEDS) {
+		const b = blankAround(card, 3, seed, know);
+		assert.deepEqual(b.gaps, ["prší", "ostanem", "doma"]);
 		assert.equal(b.gaps[b.target], "ostanem");
 		assert.equal(sentenceOf(b), card.sentence);
 		assert.equal(b.answer, b.gaps.join(" "));
-		assert.deepEqual(
-			[...b.spans].sort((x, y) => x[0] - y[0]),
-			b.spans,
-		);
 	}
-	const picked = new Set(blanks.flatMap((b) => b.gaps));
-	for (const w of ["Keď", "prší", "doma", "lebo", "je", "zima"]) assert.ok(picked.has(w), `${w} is picked on some rep`);
-	assert.ok(
-		blanks.some((b) => b.pieces.slice(1, -1).some((p) => /\p{L}/u.test(p))),
-		"some blanks are split by words left showing",
-	);
 });
 
-test("the same seed gives the same blank, and other seeds give other blanks", () => {
-	const card = cardOn("Ako ďaleko je to od stanice?", "stanice");
-	assert.deepEqual(blankAround(card, 2, 42), blankAround(card, 2, 42));
-	assert.ok(new Set(SEEDS.map((seed) => blankAround(card, 2, seed).answer)).size >= 4);
+test("words the level assumes known come after every word the deck has proven", () => {
+	const card = cardOn("Keď prší, ostanem doma, lebo je zima.", "ostanem");
+	const know = strengths({ keď: ASSUMED_KNOWN, je: ASSUMED_KNOWN, zima: 400 });
+	for (const seed of SEEDS) assert.deepEqual(blankAround(card, 2, seed, know).gaps, ["ostanem", "zima"]);
+	assert.deepEqual(new Set(SEEDS.map((seed) => blankAround(card, 3, seed, know).gaps.join(" "))).size, 2);
+});
+
+test("a sentence with fewer proven words than asked for hides fewer", () => {
+	const card = cardOn("Keď prší, ostanem doma, lebo je zima.", "ostanem");
+	assert.deepEqual(blankAround(card, 3, 0, strengths({ zima: 20 })).gaps, ["ostanem", "zima"]);
+	assert.deepEqual(blankAround(card, 3, 0).gaps, ["ostanem"]);
+});
+
+test("the weakest proven word goes first, and near ties change from rep to rep", () => {
+	const card = cardOn("Keď prší, ostanem doma, lebo je zima.", "ostanem");
+	const far = strengths({ prší: 8, zima: 200 });
+	for (const seed of SEEDS) assert.deepEqual(blankAround(card, 2, seed, far).gaps, ["prší", "ostanem"]);
+	const close = strengths({ prší: 10, zima: 11 });
+	assert.deepEqual(blankAround(card, 2, 42, close), blankAround(card, 2, 42, close));
+	assert.equal(new Set(SEEDS.map((seed) => blankAround(card, 2, seed, close).answer)).size, 2);
 });
 
 test("a one-word sentence has nothing more to hide", () => {
-	assert.deepEqual(blankAround(cardOn("Ahoj!", "Ahoj"), 3), {
-		pieces: ["", "!"],
-		gaps: ["Ahoj"],
-		spans: [[0, 4]],
-		answer: "Ahoj",
-		words: 1,
-		target: 0,
-	});
+	assert.deepEqual(
+		blankAround(cardOn("Ahoj!", "Ahoj"), 3, 0, () => 100),
+		{
+			pieces: ["", "!"],
+			gaps: ["Ahoj"],
+			spans: [[0, 4]],
+			answer: "Ahoj",
+			words: 1,
+			target: 0,
+		},
+	);
 });
 
 test("quotes, punctuation and numbers are never hidden", () => {
 	for (const seed of SEEDS) {
-		for (const g of blankAround(cardOn("Povedala „Dobrý deň“ potichu.", "Dobrý"), 3, seed).gaps)
+		for (const g of blankAround(cardOn("Povedala „Dobrý deň“ potichu.", "Dobrý"), 3, seed, () => 100).gaps)
 			assert.match(g, /^\p{L}+$/u);
-		assert.deepEqual(blankAround(cardOn("Mám 3 sestry.", "sestry"), 2, seed).gaps, ["Mám", "sestry"]);
+		assert.deepEqual(blankAround(cardOn("Mám 3 sestry.", "sestry"), 2, seed, () => 100).gaps, ["Mám", "sestry"]);
 	}
 });
 
@@ -106,23 +121,56 @@ test("the day's list can hide exactly the words of the blank on screen", () => {
 	assert.deepEqual(splitOnWords("Jeho záujmy", hide), [{ text: "Jeho záujmy", hidden: false }]);
 });
 
-test("a card seen for the first time hides one word; after that the length varies up to the limit", () => {
+test("the blank grows with the card's own memory and stays within a third of the sentence", () => {
+	const long = "Keď prší, ostanem celý deň doma, lebo je zima.";
+	const at = (state: ReviewCard["state"], stability?: number, sentence = long) =>
+		blankSizeFor({ state, sentence, ...(stability ? { memory: { stability, difficulty: 5 } } : {}) });
+	assert.equal(at("new"), 1);
+	assert.equal(at("learning", 90), 1);
+	assert.equal(at("review", 3), 1);
+	assert.equal(at("review", 7), 2);
+	assert.equal(at("review", 29), 2);
+	assert.equal(at("review", 30), 3);
+	assert.equal(at("review", 300, "Na tom kšefte sme veľa zarobili."), 2);
+	assert.equal(at("review", 300, "Ja som doma."), 1);
+});
+
+test("spans sent back are kept only when they are whole words of the sentence, in order, with the card's word", () => {
+	const card = cardOn("Ako ďaleko je to od stanice?", "stanice");
 	assert.deepEqual(
-		[0, 1, 2, 3].map((seed) => blankWordsFor("new", 3, seed)),
-		[1, 1, 1, 1],
+		blankAtSpans(card, [
+			[11, 13],
+			[20, 27],
+		])?.gaps,
+		["je", "stanice"],
 	);
-	assert.deepEqual(
-		[0, 1, 2, 3].map((seed) => blankWordsFor("review", 3, seed)),
-		[1, 2, 3, 1],
+	assert.equal(blankAtSpans(card, [[11, 13]]), undefined);
+	assert.equal(
+		blankAtSpans(card, [
+			[12, 13],
+			[20, 27],
+		]),
+		undefined,
 	);
-	assert.deepEqual(
-		[0, 1, 2, 3].map((seed) => blankWordsFor("learning", 2, seed)),
-		[1, 2, 1, 2],
+	assert.equal(
+		blankAtSpans(card, [
+			[20, 27],
+			[11, 13],
+		]),
+		undefined,
 	);
-	assert.deepEqual(
-		[0, 1, 2, 3].map((seed) => blankWordsFor("review", 1, seed)),
-		[1, 1, 1, 1],
+	assert.equal(
+		blankAtSpans(card, [
+			[0, 3],
+			[4, 10],
+			[11, 13],
+			[20, 27],
+		]),
+		undefined,
 	);
+	assert.deepEqual(spansOf([[1, 2]]), [[1, 2]]);
+	assert.equal(spansOf([[1, "2"]]), undefined);
+	assert.equal(spansOf("1-2"), undefined);
 });
 
 test("the word typed in the place of the card's word is found by position", () => {
@@ -131,12 +179,6 @@ test("the word typed in the place of the card's word is found by position", () =
 	assert.equal(targetWordOf(blank, "  ja   som  doma "), "som");
 	assert.equal(targetWordOf(blank, "som"), "som");
 	assert.equal(targetWordOf({ words: 1, target: 0 }, "som"), "som");
-});
-
-test("the blank length setting is kept between one and three", () => {
-	assert.equal(updateReviewSettings({ blankWords: 9 }).blankWords, 3);
-	assert.equal(updateReviewSettings({ blankWords: 0 }).blankWords, 1);
-	assert.equal(updateReviewSettings({ blankWords: 2 }).blankWords, 2);
 });
 
 const stanica = (id: string, state: ReviewCard["state"]): ReviewCard => ({
@@ -155,25 +197,37 @@ const stanica = (id: string, state: ReviewCard["state"]): ReviewCard => ({
 	createdAt: NOW.toISOString(),
 });
 
+const { loadLexicon } = await import("../src/agent/lexicon.ts");
+const dalekoSlug = loadLexicon()!.byForm.get("ďaleko")![0]!.slug;
+const proven = (slug: string, stability: number): ReviewCard => ({
+	...stanica(`${slug}#0`, "review"),
+	slug,
+	memory: { stability, difficulty: 5 },
+	due: "2027-01-01T00:00:00Z",
+});
+const strong = (id: string): ReviewCard => ({ ...stanica(id, "review"), memory: { stability: 12, difficulty: 5 } });
+
 reviewStore.writeCards({
-	"stanica#both": stanica("stanica#both", "review"),
-	"stanica#slip": stanica("stanica#slip", "review"),
+	[`${dalekoSlug}#0`]: proven(dalekoSlug, 20),
+	"stanica#both": strong("stanica#both"),
+	"stanica#slip": strong("stanica#slip"),
 	"stanica#fresh": stanica("stanica#fresh", "new"),
 });
 
-test("the whole blank is graded: every word right is right, and the log keeps where the words were", () => {
-	const blank = blankOf(reviewStore.readCards()["stanica#both"]!, 3, 2);
-	const out = answerReview({ cardId: "stanica#both", given: blank.answer, words: 2 }, NOW);
+test("a card with a proven memory hides a word the deck proves, and the answer is graded on the blank sent back", () => {
+	const blank = blankOf(reviewStore.readCards()["stanica#both"]!);
+	assert.deepEqual(blank.gaps, ["ďaleko", "stanice"]);
+	const out = answerReview({ cardId: "stanica#both", given: blank.answer, spans: blank.spans }, NOW);
 	assert.equal(out.verdict, "exact");
 	assert.equal(reviewStore.readLog().at(-1)?.words, 2);
 	assert.deepEqual(reviewStore.readLog().at(-1)?.spans, blank.spans);
 });
 
 test("a wrong other word misses the card but counts the card's word as right on its drill", () => {
-	const blank = blankOf(reviewStore.readCards()["stanica#slip"]!, 3, 2);
+	const blank = blankOf(reviewStore.readCards()["stanica#slip"]!);
 	const given = blank.gaps.map((g, i) => (i === blank.target ? g : "xyz")).join(" ");
 	const before = progressStore.read().units["gen"]?.first ?? { reps: 0, right: 0, accents: 0, slips: {} };
-	const out = answerReview({ cardId: "stanica#slip", given, words: 2 }, NOW);
+	const out = answerReview({ cardId: "stanica#slip", given, spans: blank.spans }, NOW);
 	assert.equal(out.verdict, "wrong");
 	assert.equal(out.rating, 1);
 	assert.deepEqual(progressStore.read().units["gen"]?.first, {
@@ -183,20 +237,42 @@ test("a wrong other word misses the card but counts the card's word as right on 
 	});
 });
 
-test("a new card is always one word, whatever length was asked for", () => {
-	const out = answerReview({ cardId: "stanica#fresh", given: "stanice", words: 3 }, NOW);
+test("a new card is always one word, whatever blank is sent back", () => {
+	const out = answerReview(
+		{
+			cardId: "stanica#fresh",
+			given: "stanice",
+			spans: [
+				[4, 10],
+				[20, 27],
+			],
+		},
+		NOW,
+	);
 	assert.equal(out.verdict, "exact");
 	assert.equal(reviewStore.readLog().at(-1)?.words, undefined);
 });
 
-test("the prompt carries the blank: its words, the answer and the sentence around it", () => {
+test("the prompt carries the blank: its words, where they are, the answer and the sentence around it", () => {
 	reviewStore.writeCards({
-		"stanica#due": { ...stanica("stanica#due", "review"), reps: 1, due: "2026-11-10T00:00:00Z" },
+		[`${dalekoSlug}#0`]: proven(dalekoSlug, 20),
+		"stanica#due": { ...strong("stanica#due"), reps: 1, due: "2026-11-10T00:00:00Z" },
 	});
-	updateReviewSettings({ blankWords: 3 });
 	const next = reviewStatus(NOW, 0, { mint: false }).next!;
-	assert.ok(next.words >= 1 && next.words <= 3);
+	assert.equal(next.words, 2);
+	assert.deepEqual(next.gaps, ["ďaleko", "stanice"]);
+	assert.deepEqual(blankAtSpans(next.card, next.spans)?.gaps, next.gaps);
 	assert.equal(sentenceOf(next), next.card.sentence);
 	assert.equal(next.gaps[next.target], "stanice");
 	assert.equal(next.answer, next.gaps.join(" "));
+});
+
+test("a word the deck holds but has not proven is never hidden, even when the level assumes it known", () => {
+	reviewStore.writeCards({
+		[`${dalekoSlug}#0`]: { ...proven(dalekoSlug, 20), state: "learning" },
+		"stanica#shaky": strong("stanica#shaky"),
+	});
+	const blank = blankOf(reviewStore.readCards()["stanica#shaky"]!);
+	assert.equal(blank.words, 2);
+	assert.ok(!blank.gaps.includes("ďaleko"));
 });
