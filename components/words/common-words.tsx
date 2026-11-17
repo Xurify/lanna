@@ -19,6 +19,8 @@ type Filter = "all" | "unknown";
 const SLIDER_STEP = 50;
 const BAND_SIZE = 100;
 const WHOLE_RANKING = 100_000;
+// Adolphs & Schmitt (2007): 2,000 word families cover most casual text; 500 is a usable starter.
+const PRESETS = [200, 500, 1000, 2000];
 const number = (value: number) => value.toLocaleString("en-US");
 
 function bandsOf(words: CommonWord[]) {
@@ -186,6 +188,26 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 					testid="common-words-slider"
 					valueTestid="common-words-count"
 				/>
+				{sliderMax >= PRESETS[0]! && (
+					<div role="group" aria-label="Quick picks" className="flex flex-wrap items-center gap-1.5">
+						{PRESETS.filter((preset) => preset <= sliderMax).map((preset) => (
+							<button
+								key={preset}
+								type="button"
+								aria-pressed={count === preset}
+								onClick={() => selectCount(preset)}
+								className={cn(
+									"h-8 rounded-lg px-3 font-ui text-sm transition-colors",
+									count === preset
+										? "bg-card font-semibold text-foreground shadow-[0_0_0_1px_var(--q-line-2)]"
+										: "bg-well text-muted-foreground hover:text-foreground",
+								)}
+							>
+								Top {number(preset)}
+							</button>
+						))}
+					</div>
+				)}
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<p className="font-prose text-sm text-muted-foreground" data-testid="common-words-summary">
 						<span className="font-semibold text-foreground tabular-nums">{number(knownCount)}</span> known,{" "}
@@ -195,7 +217,7 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 						<FilterSwitch value={filter} onChange={setFilter} />
 						{!confirming && (
 							<Button disabled={saving !== null || unmarked === 0} onClick={() => setConfirming(true)}>
-								{unmarked === 0 ? "All marked known" : `Mark top ${number(selected.length)} known`}
+								{unmarked === 0 ? "All marked known" : `Mark ${number(unmarked)} known`}
 							</Button>
 						)}
 					</div>
@@ -225,7 +247,7 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 					</p>
 				)}
 			</div>
-			<p className="font-prose text-sm text-muted-foreground">Tap a word to mark it known; tap again to undo.</p>
+			<p className="font-prose text-sm text-muted-foreground">Tap a word to mark or un-mark it.</p>
 			<div className="space-y-10">
 				{bands.map((band) => (
 					<Band
