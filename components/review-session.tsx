@@ -34,6 +34,8 @@ import { SoundControl } from "@/components/sound-control";
 import { MissWhy } from "@/components/miss-why";
 import { askAbout, onAskLeaving } from "@/components/lesson/tutor";
 import {
+	applyGapInput,
+	belongsToLayoutAccent,
 	compareAnswer,
 	diacriticSlips,
 	ratingCeiling,
@@ -491,7 +493,13 @@ export function ReviewSession() {
 	const gaps = prompt?.gaps ?? [];
 	const typed = gaps.map((_, i) => (fields[i] ?? "").trim());
 	const given = givenParts.join(" ");
-	const focusGap = (i: number) => inputRefs.current[i]?.focus();
+	const focusGap = (i: number, caret?: "start" | "end") => {
+		const el = inputRefs.current[i];
+		if (!el) return;
+		el.focus();
+		if (caret === "start") el.setSelectionRange(0, 0);
+		else if (caret === "end") el.setSelectionRange(el.value.length, el.value.length);
+	};
 	const focusOpenGap = () =>
 		focusGap(
 			Math.max(
@@ -512,8 +520,8 @@ export function ReviewSession() {
 	const cap = ratingCeiling(verdict ?? "exact", help);
 
 	useEffect(() => {
-		if (status?.next && !verdict && !picks) inputRefs.current[0]?.focus();
-	}, [status?.next, verdict, picks]);
+		if (cardId && !verdict && !picks) inputRefs.current[0]?.focus();
+	}, [cardId, verdict, picks]);
 	// Tab moves through the blanks in sentence order and wraps. Refs are null for
 	// blanks that are not on screen, so the filter keeps only the live ones.
 	const cycleBlanks = useCallback(() => inputRefs.current.filter((el): el is HTMLInputElement => el !== null), []);
@@ -641,6 +649,7 @@ export function ReviewSession() {
 	// pick an option before the answer when choosing.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
+			if (belongsToLayoutAccent(e) || e.repeat) return;
 			if (!verdict) {
 				const opt = picks ? prompt?.options[Number(e.key) - 1] : undefined;
 				if (opt && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -649,12 +658,16 @@ export function ReviewSession() {
 				}
 				return;
 			}
-			if (e.key === "Enter") {
+			if (e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+				if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 				e.preventDefault();
 				void rate(suggested);
 			} else if (
 				["1", "2", "3", "4"].includes(e.key) &&
-				!(e.target instanceof HTMLInputElement) &&
+				!(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) &&
+				!e.metaKey &&
+				!e.ctrlKey &&
+				!e.altKey &&
 				Number(e.key) <= cap
 			) {
 				setSuggested(Number(e.key) as Rating);
@@ -680,15 +693,9 @@ export function ReviewSession() {
 		[prompt, verdict],
 	);
 	const typeInGap = (i: number, value: string) => {
-		const [head, ...rest] = value.split(/\s+/);
-		const spill = i < gaps.length - 1 && rest.length > 0;
-		setFields((now) => {
-			const next = gaps.map((_, k) => now[k] ?? "");
-			next[i] = spill ? head! : value;
-			if (spill && rest.join(" ")) next[i + 1] = rest.join(" ");
-			return next;
-		});
-		if (spill) focusGap(i + 1);
+		const { advanceTo } = applyGapInput(fields, gaps.length, i, value);
+		setFields((now) => applyGapInput(now, gaps.length, i, value).fields);
+		if (advanceTo !== null) focusGap(advanceTo, "start");
 	};
 
 	const saveNewPerDay = async (n: number) => {
@@ -1028,9 +1035,11 @@ export function ReviewSession() {
 																		value={fields[i] ?? ""}
 																		onChange={(e) => typeInGap(i, e.target.value)}
 																		onKeyDown={(e) => {
+																			if (belongsToLayoutAccent(e.nativeEvent)) return;
 																			const el = e.currentTarget;
 																			const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
-																			const atEnd = el.selectionStart === el.value.length;
+																			const atEnd =
+																				el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
 																			// HTML's implicit submission skips a form with more than one text field and no submit button, so Enter is handled here.
 																			if (e.key === "Enter" && gaps.length > 1) {
 																				e.preventDefault();
@@ -1042,16 +1051,17 @@ export function ReviewSession() {
 																				((e.key === "Backspace" && !el.value) || (e.key === "ArrowLeft" && atStart))
 																			) {
 																				e.preventDefault();
-																				focusGap(i - 1);
+																				focusGap(i - 1, "end");
 																			} else if (i < gaps.length - 1 && e.key === "ArrowRight" && atEnd) {
 																				e.preventDefault();
-																				focusGap(i + 1);
+																				focusGap(i + 1, "start");
 																			}
 																		}}
 																		aria-label={
 																			gaps.length > 1 ? `Missing word ${i + 1} of ${gaps.length}` : "Missing word"
 																		}
 																		autoComplete="off"
+																		autoCapitalize="off"
 																		autoCorrect="off"
 																		spellCheck={false}
 																		size={1}

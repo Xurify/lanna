@@ -16,7 +16,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-review-blank-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 
-const { ASSUMED_KNOWN, blankAround, blankAtSpans, blankSizeFor, splitOnWords, targetWordOf, wordsOf } =
+const { ASSUMED_KNOWN, applyGapInput, blankAround, blankAtSpans, blankSizeFor, splitOnWords, targetWordOf, wordsOf } =
 	await import("../src/core/review.ts");
 const { answerReview, blankOf, reviewStatus, spansOf } = await import("../src/server/review.ts");
 const { progressStore } = await import("../src/store/progress.ts");
@@ -275,4 +275,11 @@ test("a word the deck holds but has not proven is never hidden, even when the le
 	const blank = blankOf(reviewStore.readCards()["stanica#shaky"]!);
 	assert.equal(blank.words, 2);
 	assert.ok(!blank.gaps.includes("ďaleko"));
+});
+
+test("multi-gap typing ignores a stray space on an empty blank and advances after a typed word", () => {
+	assert.deepEqual(applyGapInput(["", "doma"], 2, 0, " "), { fields: ["", "doma"], advanceTo: null });
+	assert.deepEqual(applyGapInput(["", "doma"], 2, 0, "som "), { fields: ["som", "doma"], advanceTo: 1 });
+	assert.deepEqual(applyGapInput(["", ""], 2, 0, "  ja doma"), { fields: ["ja", "doma"], advanceTo: 1 });
+	assert.deepEqual(applyGapInput(["", ""], 1, 0, " "), { fields: [" "], advanceTo: null });
 });

@@ -14,8 +14,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon, KeyboardIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpeedToggle, useActiveLanguage } from "@/components/speech";
-import { baseLetter, belongsToLayoutAccent, letterFamilies, liveFamily, pressLetter } from "@/src/core";
+import {
+	belongsToLayoutAccent,
+	isSyntheticUnicodeLetter,
+	letterFamilies,
+	liveFamily,
+	pickAccent,
+	pressLetter,
+} from "@/src/core";
 import { AccentChoices, AccentKeyboard, accentsOf, type AccentMenu } from "@/components/accent-keyboard";
+import { useHoldAccents } from "@/components/hold-accents";
 
 type Field = HTMLTextAreaElement | HTMLInputElement;
 
@@ -31,9 +39,12 @@ function keyboardWasOpen(): boolean {
 }
 
 function isTextField(el: EventTarget | null): el is Field {
+	if (el instanceof HTMLTextAreaElement) return !el.disabled && !el.readOnly;
 	return (
-		el instanceof HTMLTextAreaElement ||
-		(el instanceof HTMLInputElement && (el.type === "text" || el.type === "search" || el.type === ""))
+		el instanceof HTMLInputElement &&
+		!el.disabled &&
+		!el.readOnly &&
+		(el.type === "text" || el.type === "search" || el.type === "")
 	);
 }
 
@@ -135,9 +146,24 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	const [open, setOpen] = useState(true);
 	const [live, setLive] = useState<string | null>(null);
 	const families = useMemo(() => (lang ? letterFamilies(lang.specialLetters, lang.tag) : []), [lang]);
-	const [menu, setMenu] = useState<AccentMenu | null>(null);
+	const [menu, setMenuState] = useState<AccentMenu | null>(null);
+	const menuRef = useRef<AccentMenu | null>(null);
+	const menuFieldRef = useRef<Field | null>(null);
+	const openedByRepeatRef = useRef(false);
+	const suppressedRepeatBaseRef = useRef<string | null>(null);
+	const [holdAccents, setHoldAccents] = useHoldAccents();
+	const holdAccentsRef = useRef(holdAccents);
+	holdAccentsRef.current = holdAccents;
 	const [keyboardOpen, setKeyboardOpen] = useState(keyboardWasOpen);
 	const keyboardRef = useRef<HTMLDivElement>(null);
+
+	const setMenu = useCallback((next: AccentMenu | null, byRepeat = false) => {
+		menuRef.current = next;
+		openedByRepeatRef.current = next ? byRepeat : false;
+		if (!next) menuFieldRef.current = null;
+		setMenuState(next);
+	}, []);
+
 	const toggleKeyboard = useCallback(() => {
 		setKeyboardOpen((was) => {
 			try {
@@ -155,6 +181,7 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 			// The physical key left of 1, whatever the layout types there (` or ;). Chrome on Windows cancels a dead key's pending accent when its keydown is prevented, and the cancel can take earlier letters with it.
 			if (
 				e.code !== "Backquote" ||
+				e.repeat ||
 				belongsToLayoutAccent(e) ||
 				e.metaKey ||
 				e.ctrlKey ||
@@ -177,48 +204,79 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		const byBase = new Map(families.map((f) => [f.base, f]));
 		const onKeyDown = (e: KeyboardEvent) => {
 			if (e.defaultPrevented || !window.matchMedia("(pointer: fine)").matches) return;
+			if (!keyboardRef.current?.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return;
 			if (belongsToLayoutAccent(e)) {
-				if (menu) setMenu(null);
+				if (menuRef.current) setMenu(null);
+				// Windows PowerToys Quick Accent and similar utilities inject accents via SendInput(KEYEVENTF_UNICODE -> VK_PACKET 231); yield automatically so Lanna's hold menu never fights them again.
+				if (isSyntheticUnicodeLetter(e) && holdAccentsRef.current) {
+					suppressedRepeatBaseRef.current = null;
+					setHoldAccents(false);
+				}
 				return;
 			}
-			if (menu) {
-				const accents = accentsOf(byBase.get(menu.base));
+			const activeMenu = menuRef.current;
+			if (activeMenu) {
+				const accents = accentsOf(byBase.get(activeMenu.base));
 				const n = Number(/^(?:Digit|Numpad)([1-9])$/.exec(e.code)?.[1] ?? 0);
-				if (n >= 1 && n <= accents.length) {
+				if (n >= 1 && n <= accents.length && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
 					e.preventDefault();
 					e.stopPropagation();
+					if (openedByRepeatRef.current) suppressedRepeatBaseRef.current = activeMenu.base;
 					pickRef.current(accents[n - 1]!);
 					return;
 				}
-				if (e.key === "Escape") {
+				if (e.key === "Escape" && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault();
 					e.stopPropagation();
+					if (openedByRepeatRef.current) suppressedRepeatBaseRef.current = activeMenu.base;
 					setMenu(null);
 					return;
 				}
-				if (e.repeat && e.key.toLocaleLowerCase(lang.tag) === menu.base) {
+				if (e.repeat && e.key.toLocaleLowerCase(lang.tag) === activeMenu.base) {
 					e.preventDefault();
 					return;
 				}
 				setMenu(null);
 				return;
 			}
+			if (!holdAccentsRef.current) return;
 			if (!e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1 || !isTextField(e.target)) return;
 			const base = e.key.toLocaleLowerCase(lang.tag);
+			if (suppressedRepeatBaseRef.current === base) {
+				e.preventDefault();
+				return;
+			}
 			if (byBase.get(base)?.base !== base || accentsOf(byBase.get(base)).length === 0) return;
 			e.preventDefault();
-			setMenu({ base, held: true });
+			menuFieldRef.current = e.target;
+			setMenu({ base, held: true }, true);
+		};
+		const onKeyUp = (e: KeyboardEvent) => {
+			if (suppressedRepeatBaseRef.current && e.key.toLocaleLowerCase(lang.tag) === suppressedRepeatBaseRef.current) {
+				suppressedRepeatBaseRef.current = null;
+			}
 		};
 		const onPointerDown = (e: PointerEvent) => {
-			if (menu && !(e.target instanceof Element && e.target.closest("[data-testid=keyboard]"))) setMenu(null);
+			if (menuRef.current && !(e.target instanceof Element && e.target.closest("[data-testid=keyboard]"))) {
+				suppressedRepeatBaseRef.current = null;
+				setMenu(null);
+			}
+		};
+		const onWindowBlur = () => {
+			suppressedRepeatBaseRef.current = null;
+			if (menuRef.current) setMenu(null);
 		};
 		document.addEventListener("keydown", onKeyDown, true);
+		document.addEventListener("keyup", onKeyUp, true);
 		document.addEventListener("pointerdown", onPointerDown, true);
+		window.addEventListener("blur", onWindowBlur);
 		return () => {
 			document.removeEventListener("keydown", onKeyDown, true);
+			document.removeEventListener("keyup", onKeyUp, true);
 			document.removeEventListener("pointerdown", onPointerDown, true);
+			window.removeEventListener("blur", onWindowBlur);
 		};
-	}, [variant, lang, families, menu]);
+	}, [variant, lang, families, setHoldAccents, setMenu]);
 
 	useEffect(() => {
 		if (variant !== "keys" || !lang) return;
@@ -244,10 +302,14 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		}
 		const onFocus = (e: FocusEvent) => {
 			if (isTextField(e.target)) lastField.current = e.target;
+			if (menuRef.current && e.target !== menuFieldRef.current) {
+				suppressedRepeatBaseRef.current = null;
+				setMenu(null);
+			}
 		};
 		document.addEventListener("focusin", onFocus);
 		return () => document.removeEventListener("focusin", onFocus);
-	}, []);
+	}, [setMenu]);
 
 	const toggle = () => {
 		setOpen((o) => {
@@ -279,21 +341,17 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 	};
 
 	const pick = (letter: string) => {
-		const held = menu?.held ? menu.base : null;
+		const currentMenu = menuRef.current;
+		const held = currentMenu?.held ? currentMenu.base : null;
 		setMenu(null);
 		if (!held || !lang) return press(letter, false);
 		grabbed.current = null;
 		const field = fieldInUse(lastField.current);
 		if (!field) return;
 		const start = field.selectionStart ?? field.value.length;
-		const before = start > 0 ? ([...field.value.slice(0, start)].at(-1) ?? "") : "";
-		if (!before || baseLetter(before, lang.tag) !== held) return insertAtCaret(field, letter);
-		const typed = before === before.toLocaleLowerCase(lang.tag) ? letter : letter.toLocaleUpperCase(lang.tag);
-		setFieldValue(
-			field,
-			field.value.slice(0, start - before.length) + typed + field.value.slice(start),
-			start - before.length + typed.length,
-		);
+		const end = field.selectionEnd ?? start;
+		const next = pickAccent(field.value, start, end, held, letter, lang.tag);
+		setFieldValue(field, next.value, next.caret);
 	};
 	useEffect(() => {
 		pickRef.current = pick;
@@ -312,12 +370,15 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 		const onKey = (key: string, shift: boolean) => {
 			const family = families.find((f) => f.base === key);
 			press(key, shift);
-			if (accentsOf(family).length) setMenu({ base: key, held: true });
+			if (accentsOf(family).length) {
+				menuFieldRef.current = fieldInUse(lastField.current);
+				setMenu({ base: key, held: true });
+			}
 		};
 		return (
 			<div className={className}>
 				<div ref={keyboardRef} className="hidden pointer-fine:block" data-testid="keyboard" data-open={keyboardOpen}>
-					<div className="flex min-h-8 items-center gap-2 text-[13px] text-ink-3">
+					<div className="flex min-h-8 flex-wrap items-center gap-2 text-[13px] text-ink-3">
 						<button
 							type="button"
 							onMouseDown={(e) => e.preventDefault()}
@@ -338,7 +399,25 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 								className="lanna-menu-in origin-left -my-1.5"
 							/>
 						) : (
-							<span>Hold a letter for its accents</span>
+							<button
+								type="button"
+								onMouseDown={(e) => e.preventDefault()}
+								onClick={() => {
+									suppressedRepeatBaseRef.current = null;
+									setMenu(null);
+									setHoldAccents(!holdAccents);
+								}}
+								aria-pressed={holdAccents}
+								title={
+									holdAccents
+										? "Hold a letter for its accents. Click to turn off if you use Windows Quick Accent or another accent tool."
+										: "Hold-letter accents are off so they won't clash with Quick Accent or OS accents. Click to turn back on."
+								}
+								className="-mx-1.5 rounded-md px-1.5 py-1 text-[13px] text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
+								data-testid="hold-accents-toggle"
+							>
+								{holdAccents ? "Hold a letter for its accents" : "Hold-letter accents off · Turn on"}
+							</button>
 						)}
 					</div>
 					<div className={cn(keyboardOpen ? "mt-2" : "invisible h-0")}>

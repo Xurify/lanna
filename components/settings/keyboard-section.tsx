@@ -19,7 +19,8 @@ import {
 	type KeyAction,
 	type KeyScope,
 } from "@/src/core";
-import { SettingsRow } from "./controls.tsx";
+import { SettingsRow, Toggle } from "./controls.tsx";
+import { useHoldAccents } from "@/components/hold-accents";
 
 const SCOPES: { scope: KeyScope; label: string }[] = [
 	{ scope: "global", label: "Global" },
@@ -43,6 +44,7 @@ export function KeyboardSection() {
 	const [rebinding, setRebinding] = useState<KeyAction | null>(null);
 	const [nonce, setNonce] = useState(0);
 	const [confirmReset, setConfirmReset] = useState(false);
+	const [holdAccents, setHoldAccents] = useHoldAccents();
 
 	// localStorage is read post-mount (SSR-safe); `nonce` re-reads after writes.
 	useEffect(() => {
@@ -86,6 +88,24 @@ export function KeyboardSection() {
 
 	return (
 		<>
+			<div data-testid="kbd-scope-typing">
+				<p className="mb-1 text-xs text-muted-foreground">Typing</p>
+				<div className="flex flex-col gap-2">
+					<SettingsRow
+						label="Hold a letter for its accents"
+						hint="Open Lanna's accent picker when holding a key. Turns off automatically when Windows PowerToys Quick Accent or another external accent tool types an accented letter."
+						testid="kbd-row-hold-accents"
+						stack={false}
+					>
+						<Toggle
+							checked={holdAccents}
+							onChange={setHoldAccents}
+							label="Hold a letter for its accents"
+							testid="toggle-hold-accents"
+						/>
+					</SettingsRow>
+				</div>
+			</div>
 			{SCOPES.map(({ scope, label }) => {
 				const actions = KEYBOARD_ACTIONS.filter((a) => a.scope === scope);
 				if (!actions.length) return null;

@@ -55,6 +55,7 @@ import { sfx, soundOn } from "@/components/lesson/sound";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import {
 	almostCount,
+	belongsToLayoutAccent,
 	isWatchItem,
 	judgeTyped,
 	LISTEN_XP,
@@ -649,6 +650,7 @@ export function ListenPlayer({
 									value={draft}
 									onChange={(e) => setDraft(e.target.value)}
 									onKeyDown={(e) => {
+										if (belongsToLayoutAccent(e.nativeEvent)) return;
 										if (e.key === "Enter") {
 											e.preventDefault();
 											submit();
