@@ -15,7 +15,7 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 ## Speak (`/speak`)
 
 - Six scenes from the learner's purposes (café, asking the way, a new colleague, the shop, the doctor, family); the chapter's own scene and the purposes' scenes come first; the daily plan rotates them by day once no tutor unit is open.
-- The learner holds Space or taps the mic; recording stops on silence. Speech-to-text is ElevenLabs Scribe if that key exists, else Deepgram nova-2; typing is always there.
+- The learner holds Space or taps the mic; recording stops on silence. Speech-to-text is ElevenLabs Scribe v3 if that key exists, else Groq's Whisper, else Deepgram Nova-3; typing is always there.
 - The tutor plays the other person on the Cheap slot, in Slovak audio and text with the meaning a tap away. A slip in a case ending, verb ending or aspect comes back as a prompt to repair ("do škol…? skús ešte raz"), never a recast; a repaired turn earns extra XP; everything else waits.
 - After about eight lines, or _Koniec_: at most three corrections (yours → the right line, the rule in a few words, played aloud), two phrases to keep, the slips' words into the review deck.
 - Sessions and recordings are kept under `data/profiles/<lang>/speak/`. Cost shows under Spending as "Speaking".
@@ -28,7 +28,7 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 
 ## Clarity scoring
 
-- Engine "azure" when `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` are set (Settings → Keys → Speech; Slovak is covered; the free tier is 5 hours a month): accuracy, fluency, completeness and prosody (stress and rhythm, the nearest honest measure of accent), sound by sound.
+- Engine "azure" when `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` are set (Settings → Keys → Speech; Slovak is covered; the free tier is 5 hours a month): accuracy, fluency and completeness, sound by sound. No prosody (stress and rhythm) for Slovak: Microsoft computes it for `en-US` only, so a spoken line has no accent measure — see [speech-models.md](speech-models.md).
 - Engine "match" otherwise: the words speech-to-text could make out against the expected words.
 - Say it faster: a pass counts only if it was inside the window **and** clear (70 or more), so a fast mumble does not pass; the verdict waits for the score.
 - Speak: each spoken line gets a chip ("Mostly clear · 83"); a line at 85 or more earns +2 XP; the end screen shows the scene's average.

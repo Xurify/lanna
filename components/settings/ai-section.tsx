@@ -57,7 +57,7 @@ const SEARCH_ENGINE_LABELS: Record<(typeof SEARCH_ENGINES)[number], string> = {
 
 const TRANSCRIPTION_ENGINE_LABELS: Record<TranscriptionEngineId, string> = {
 	whisper: "Whisper (large-v3-turbo)",
-	elevenlabs: "ElevenLabs Scribe v2",
+	elevenlabs: "ElevenLabs Scribe v3",
 };
 
 /** Toggleable tools. Changing this list needs the user's sign-off. */
@@ -697,7 +697,7 @@ export function AiSection({
 					return (
 						<SettingsRow
 							label="Transcription engine"
-							hint="Transcribes Spotify tracks and captionless videos. Automatic prefers local Whisper (large-v3-turbo) and falls back to ElevenLabs Scribe v2."
+							hint="Transcribes Spotify tracks and captionless videos. Automatic prefers local Whisper (large-v3-turbo) and falls back to ElevenLabs Scribe v3."
 							testid="transcription-engine-row"
 						>
 							<span ref={open ? menuAnchorRef : undefined} className="relative flex items-center gap-2">

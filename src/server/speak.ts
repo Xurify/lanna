@@ -258,7 +258,7 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 	}
 	if (engine === "elevenlabs") {
 		const form = new FormData();
-		form.set("model_id", "scribe_v2");
+		form.set("model_id", "scribe_v3");
 		form.set("language_code", ISO3[lang] ?? lang);
 		form.set("tag_audio_events", "false");
 		form.set("diarize", "false");
@@ -275,7 +275,7 @@ export async function transcribe(audio: Uint8Array, lang = code()): Promise<{ te
 		const data = (await res.json()) as { text?: string };
 		return { text: (data.text ?? "").trim(), engine };
 	}
-	const url = `https://api.deepgram.com/v1/listen?model=nova-2&language=${encodeURIComponent(lang)}&smart_format=true&punctuate=true`;
+	const url = `https://api.deepgram.com/v1/listen?model=nova-3&language=${encodeURIComponent(lang)}&smart_format=true&punctuate=true`;
 	const res = await fetch(url, {
 		method: "POST",
 		headers: { Authorization: `Token ${keyValue("DEEPGRAM_API_KEY")!}`, "Content-Type": "audio/wav" },

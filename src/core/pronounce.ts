@@ -8,10 +8,10 @@
  *
  *   azure — Azure Speech's pronunciation assessment, which covers Slovak
  *           at phoneme level: accuracy (how close each sound was to a
- *           native speaker's), fluency (pauses, hesitation), completeness
- *           (words left out) and, where the locale has it, prosody
- *           (stress, rhythm, intonation — the nearest honest measure of
- *           "accent"). Needs AZURE_SPEECH_KEY + AZURE_SPEECH_REGION.
+ *           native speaker's), fluency (pauses, hesitation) and
+ *           completeness (words left out). Microsoft returns ProsodyScore
+ *           (stress and rhythm) for en-US only, so a Slovak line has no
+ *           accent measure. Needs AZURE_SPEECH_KEY + AZURE_SPEECH_REGION.
  *   match — intelligibility from speech-to-text alone: the words the
  *           engine heard against the words expected. A word that was
  *           recognized was said clearly enough; a missing one was not.
