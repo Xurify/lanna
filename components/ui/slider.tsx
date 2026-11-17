@@ -97,10 +97,10 @@ export function Slider({
 	const text = valueText ?? (unit ? `${Math.round(value * 100)}%` : String(value));
 	const tickValues =
 		ticks === true
-			? Math.round((effectiveMax - effectiveMin) / step) <= 12
+			? Math.round((effectiveMax - effectiveMin) / continuousStep) <= 12
 				? Array.from(
-						{ length: Math.round((effectiveMax - effectiveMin) / step) + 1 },
-						(_, i) => effectiveMin + i * step,
+						{ length: Math.round((effectiveMax - effectiveMin) / continuousStep) + 1 },
+						(_, i) => effectiveMin + i * continuousStep,
 					)
 				: []
 			: ticks
@@ -245,7 +245,7 @@ export function Slider({
 				ref={track}
 				className={cn(
 					"relative rounded-full bg-line-2",
-					vertical ? "my-2 h-[calc(100%-1rem)] w-[3px]" : "mx-2 h-[3px] w-[calc(100%-1rem)]",
+					vertical ? "my-2 h-[calc(100%-1rem)] w-1" : "mx-2 h-1 w-[calc(100%-1rem)]",
 				)}
 			>
 				<div
@@ -260,8 +260,8 @@ export function Slider({
 									key={stop.value}
 									aria-hidden="true"
 									className={cn(
-										"absolute -translate-y-1/2 -translate-x-1/2 rounded-full transition-colors",
-										vertical ? "left-1/2 w-2 h-0.5" : "top-1/2 size-1",
+										"absolute size-1.5 -translate-x-1/2 rounded-full transition-colors",
+										vertical ? "left-1/2 translate-y-1/2" : "top-1/2 -translate-y-1/2",
 										value >= stop.value ? "bg-teal" : "bg-ink-4",
 									)}
 									style={vertical ? { bottom: `${p}%` } : { left: `${p}%` }}
@@ -315,8 +315,6 @@ export function Slider({
 					<div className="relative mx-2 h-full">
 						{stopList.map((stop, i) => {
 							const p = (i / (stopList.length - 1)) * 100;
-							const isFirst = i === 0;
-							const isLast = i === stopList.length - 1;
 							const isActive = value === stop.value;
 							return (
 								<button
@@ -328,11 +326,10 @@ export function Slider({
 										set(stop.value, true);
 									}}
 									className={cn(
-										"absolute font-ui text-xs tabular-nums transition-colors cursor-pointer -translate-y-1/2 top-1/2",
-										isFirst ? "left-0 text-left" : isLast ? "right-0 text-right" : "-translate-x-1/2 text-center",
+										"absolute font-ui text-xs tabular-nums transition-colors cursor-pointer top-1/2 -translate-x-1/2 -translate-y-1/2 text-center",
 										isActive ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground",
 									)}
-									style={!isFirst && !isLast ? { left: `${p}%` } : undefined}
+									style={{ left: `${p}%` }}
 								>
 									{stop.label}
 								</button>
