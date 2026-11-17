@@ -16,8 +16,9 @@ import {
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { DiacriticBar } from "@/components/diacritic-bar";
-import { ChatPdfButton, DraftPdfChips } from "@/components/chat-pdf-button";
-import { ChatImageButton, DraftImageChips, uploadLearnerImage } from "@/components/chat-image-button";
+import { ChatAttachMenu } from "@/components/chat-attach-menu";
+import { DraftPdfChips } from "@/components/chat-pdf-button";
+import { DraftImageChips, uploadLearnerImage } from "@/components/chat-image-button";
 import { joinDraft, splitDraft } from "@/src/core";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
@@ -1680,16 +1681,13 @@ export function Chat({
 													kind === "chat" ? (
 														<>
 															<DictationBar dictation={dictation} compact />
-															<ChatPdfButton
+															<ChatAttachMenu
 																compact
-																onAttached={(pdf) => {
+																onPdfAttached={(pdf) => {
 																	applyText(joinDraft([...draftParts.pdfs, pdf], draftParts.rest, draftParts.images));
 																	composerInputRef.current?.focus();
 																}}
-															/>
-															<ChatImageButton
-																compact
-																onAttached={(img) => {
+																onImageAttached={(img) => {
 																	applyText(joinDraft(draftParts.pdfs, draftParts.rest, [...draftParts.images, img]));
 																	composerInputRef.current?.focus();
 																}}

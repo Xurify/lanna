@@ -132,14 +132,15 @@ async function main(): Promise<void> {
 	console.log(rule);
 
 	if (args.includes("--seed")) {
-		const seed = spawnSync(
-			process.execPath,
-			["--import", "tsx", path.join(ROOT, "scripts", "demo-measured-minutes.ts")],
-			{ cwd: ROOT, env: plan.env as NodeJS.ProcessEnv, stdio: "inherit" },
-		);
+		const loaderArgs = process.versions.bun ? [] : ["--import", "tsx"];
+		const seed = spawnSync(process.execPath, [...loaderArgs, path.join(ROOT, "scripts", "demo-measured-minutes.ts")], {
+			cwd: ROOT,
+			env: plan.env as NodeJS.ProcessEnv,
+			stdio: "inherit",
+		});
 		if (seed.status !== 0) process.exit(seed.status ?? 1);
 		// Four hand-made episodes for the Read screens (scripts/fixtures/series-episodes.ts).
-		const stories = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "scripts", "seed-stories.ts")], {
+		const stories = spawnSync(process.execPath, [...loaderArgs, path.join(ROOT, "scripts", "seed-stories.ts")], {
 			cwd: ROOT,
 			env: plan.env as NodeJS.ProcessEnv,
 			stdio: "inherit",
@@ -148,29 +149,42 @@ async function main(): Promise<void> {
 	}
 
 	const next = createRequire(import.meta.url).resolve("next/dist/bin/next");
-	const child = spawn(process.execPath, [next, "dev", "-H", "127.0.0.1", "-p", String(plan.port)], {
-		cwd: ROOT,
-		env: plan.env as NodeJS.ProcessEnv,
-		stdio: ["inherit", "pipe", "pipe"],
-	});
-	let seen = "";
-	for (const [stream, sink] of [
-		[child.stdout, process.stdout],
-		[child.stderr, process.stderr],
-	] as const) {
-		stream.on("data", (chunk: Buffer) => {
-			sink.write(chunk);
-			seen = (seen + chunk.toString()).slice(-4000);
-		});
-	}
-	const stop = () => killTree(child.pid);
+	const nodeRuntime = process.versions.bun ? "node" : process.execPath;
+	let activeChild: ReturnType<typeof spawn> | undefined;
+	let retriedAdvisory = false;
+	const stop = () => killTree(activeChild?.pid);
 	process.on("SIGINT", stop);
 	process.on("SIGTERM", stop);
-	child.on("exit", (code) => {
-		const why = explainFailure(seen);
-		if (why) console.error(why);
-		process.exit(code ?? 0);
-	});
+
+	function launchNext(): void {
+		const child = spawn(nodeRuntime, [next, "dev", "-H", "127.0.0.1", "-p", String(plan.port)], {
+			cwd: ROOT,
+			env: plan.env as NodeJS.ProcessEnv,
+			stdio: ["inherit", "pipe", "pipe"],
+		});
+		activeChild = child;
+		let seen = "";
+		for (const [stream, sink] of [
+			[child.stdout, process.stdout],
+			[child.stderr, process.stderr],
+		] as const) {
+			stream.on("data", (chunk: Buffer) => {
+				sink.write(chunk);
+				seen = (seen + chunk.toString()).slice(-4000);
+			});
+		}
+		child.on("exit", (code) => {
+			if (!retriedAdvisory && /Security warning: Critical vulnerability found/i.test(seen)) {
+				retriedAdvisory = true;
+				launchNext();
+				return;
+			}
+			const why = explainFailure(seen);
+			if (why) console.error(why);
+			process.exit(code ?? 0);
+		});
+	}
+	launchNext();
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
