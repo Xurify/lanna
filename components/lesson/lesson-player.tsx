@@ -67,6 +67,7 @@ import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/componen
 import { readOrigin } from "@/components/origin";
 import { StampDisc } from "@/components/stamp";
 import {
+	bareUnitTitle,
 	belongsToLayoutAccent,
 	caseOfUnit,
 	compareAnswer,
@@ -2090,6 +2091,18 @@ function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; va
 
 // ─── End screen ─────────────────────────────────────────────────────────────
 
+function nextLessonLabel(
+	mode: Mode,
+	focus: LessonFocus | undefined,
+	unit: UnitId,
+	nextUnit: { id: string; title: string } | null,
+): string {
+	if (mode === "blitz") return "Go again";
+	if (focus) return "Another round";
+	if (nextUnit && nextUnit.id !== unit) return `Next: ${bareUnitTitle(nextUnit.title)}`;
+	return "Next lesson";
+}
+
 function EndScreen({
 	mode,
 	focus,
@@ -2191,7 +2204,7 @@ function EndScreen({
 	const toGoal = recorded ? Math.max(0, recorded.summary.dailyGoal - recorded.summary.todayXp) : 0;
 	const queued = recorded?.queued.length ?? 0;
 	const enterHint = mode === "blitz" ? "to go again" : focus ? "for another round" : "for the next lesson";
-	const nextLabel = mode === "blitz" ? "Go again" : focus ? "Another round" : "Next lesson";
+	const nextLabel = nextLessonLabel(mode, focus, unit, nextUnit);
 
 	return (
 		<TaskEnd
@@ -2210,8 +2223,14 @@ function EndScreen({
 							{nextLabel}
 						</button>
 					) : (
-						<button type="button" disabled={!canGoOn} onClick={goOn} className={PRIMARY} data-testid="lesson-next">
-							{nextLabel}
+						<button
+							type="button"
+							disabled={!canGoOn}
+							onClick={goOn}
+							className={cn(PRIMARY, "max-w-full whitespace-nowrap")}
+							data-testid="lesson-next"
+						>
+							<span className="truncate">{nextLabel}</span>
 						</button>
 					)}
 				</>

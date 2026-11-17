@@ -120,4 +120,62 @@ describe("Today", () => {
 		assert.equal(s.pace.windowDays, RECENT_DAYS);
 		assert.equal(s.pace.dailyAverage, Math.round(35 / RECENT_DAYS));
 	});
+
+	it("keeps today's lesson task ticked when completing the Continue unit advances next, and ignores a words lesson", () => {
+		const dayNow = new Date("2026-10-29T10:00:00Z");
+		const before = progressSummary(0, dayNow);
+		const wordsTask = before.plan.tasks.find((t) => t.id === "words")!;
+		const lessonUnit = before.next;
+		assert.notEqual(wordsTask.unit, lessonUnit);
+
+		const afterWords = recordLesson(
+			{
+				unit: wordsTask.unit! as Parameters<typeof recordLesson>[0]["unit"],
+				mode: "lesson",
+				reps: [{ itemId: "w#0", slug: "w", kind: "choose", verdict: "exact" }],
+				tz: 0,
+			},
+			dayNow,
+		);
+		assert.equal(afterWords.summary.plan.tasks.find((t) => t.id === "words")?.done, true);
+		const afterWordsLesson = afterWords.summary.plan.tasks.find((t) => t.id === "lesson");
+		assert.equal(afterWordsLesson?.unit, lessonUnit);
+		assert.equal(afterWordsLesson?.done, false);
+
+		const blitzDay = new Date("2026-10-30T10:00:00Z");
+		recordLesson(
+			{
+				unit: lessonUnit,
+				mode: "blitz",
+				reps: [{ itemId: "b#0", slug: "b", kind: "choose", verdict: "exact" }],
+				tz: 0,
+			},
+			blitzDay,
+		);
+		recordLesson(
+			{
+				unit: lessonUnit,
+				mode: "lesson",
+				focus: "mixups",
+				reps: [{ itemId: "m#0", slug: "m", kind: "type", verdict: "exact" }],
+				tz: 0,
+			},
+			blitzDay,
+		);
+		assert.equal(progressStore.read().days["2026-10-30"]?.lessonUnit, undefined);
+
+		const perfectReps = Array.from({ length: 10 }, (_, i) => ({
+			itemId: `r#${i}`,
+			slug: `r${i}`,
+			kind: "type" as const,
+			verdict: "exact" as const,
+		}));
+		const afterContinue = recordLesson({ unit: lessonUnit, mode: "lesson", reps: perfectReps, tz: 0 }, dayNow);
+		assert.notEqual(afterContinue.summary.next, lessonUnit, "next advances once the unit is aced");
+		const lessonTask = afterContinue.summary.plan.tasks.find((t) => t.id === "lesson");
+		assert.equal(lessonTask?.unit, lessonUnit);
+		assert.equal(lessonTask?.done, true);
+		const saved = progressStore.read().days["2026-10-29"]?.planned?.find((t) => t.id === "lesson");
+		assert.equal(saved?.done, true);
+	});
 });

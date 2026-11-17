@@ -70,6 +70,7 @@ export interface DayRecord {
 	words?: number;
 	/** The day's plan as last shown: each task and whether it was done (carry-over). */
 	planned?: Array<{ id: string; title: string; done: boolean }>;
+	lessonUnit?: string;
 }
 
 /** The learner's goal and profile: the target level and planned minutes

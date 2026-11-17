@@ -102,11 +102,15 @@ interface CurriculumUnit {
 	grammarTerm?: string;
 }
 
+export function bareUnitTitle(title: string): string {
+	return title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+}
+
 const drill = (id: UnitId, extra: Partial<CurriculumUnit> = {}): CurriculumUnit => {
 	const u = allUnits().find((x) => x.id === id);
 	if (!u) throw new Error(`curriculum: no lesson unit "${id}"`);
 	const prefix = u.kind === "words" ? "Words" : "Grammar";
-	const rawTitle = u.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+	const rawTitle = bareUnitTitle(u.title);
 	return {
 		id,
 		kind: u.kind === "words" ? "words" : "drill",
@@ -130,7 +134,7 @@ const tutor = (
 	brief: string,
 	extra: Partial<CurriculumUnit> = {},
 ): CurriculumUnit => {
-	const rawTitle = title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+	const rawTitle = bareUnitTitle(title);
 	return {
 		id,
 		kind: "tutor",
@@ -151,7 +155,7 @@ const goal = (
 	scene: string | undefined,
 	extra: Partial<CurriculumUnit> = {},
 ): CurriculumUnit => {
-	const rawTitle = title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+	const rawTitle = bareUnitTitle(title);
 	return {
 		id,
 		kind: "goal",
@@ -1139,6 +1143,7 @@ interface PlanInput {
 	minutesPerDay: number;
 	/** The Continue unit (nextLessonUnit). */
 	next: UnitId;
+	lessonUnit?: UnitId;
 	/** For alternating Talk and Story: the day of the year. */
 	dayOfYear: number;
 	/** Talk scenes the learner's purposes call for (src/core/onboarding.ts);
@@ -1251,19 +1256,17 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	});
 
 	// 3. New ground: a lesson on the Continue unit.
-	const next = byId.get(input.next);
-	const nextUnitInfo = isUnitId(input.next) ? unitInfo(input.next) : undefined;
+	const activeNext = input.lessonUnit && (day.units[input.lessonUnit] ?? 0) > 0 ? input.lessonUnit : input.next;
+	const next = byId.get(activeNext);
+	const nextUnitInfo = isUnitId(activeNext) ? unitInfo(activeNext) : undefined;
 	const slovakLabel = next?.slovakTerm ?? nextUnitInfo?.slovakTerm;
 	const grammarLabel = next?.grammarTerm ?? nextUnitInfo?.grammarTerm;
 	const isWords = next?.kind === "words" || nextUnitInfo?.kind === "words";
 	const prefix = isWords ? "Words" : "Grammar";
 	const termSuffix = slovakLabel ? ` · ${slovakLabel}` : "";
 	const lineGrammar = grammarLabel ? `${grammarLabel} — ` : "";
-	const newGroundDone = Object.keys(day.units).some((id) => {
-		const u = byId.get(id);
-		return !!u && (u.kind === "drill" || u.kind === "words") && lessonsBeforeToday(id) < 3 && (day.units[id] ?? 0) > 0;
-	});
-	const nextClean = next ? next.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "") : "";
+	const newGroundDone = (day.units[activeNext] ?? 0) > 0;
+	const nextClean = next ? bareUnitTitle(next.title) : "";
 	tasks.push({
 		id: "lesson",
 		title: next ? `${prefix}: ${nextClean}${termSuffix}` : "Grammar lesson",
@@ -1274,8 +1277,8 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 			: "The next step on your path",
 		minutes: TASK_MINUTES.lesson,
 		done: newGroundDone,
-		unit: input.next,
-		href: `/lesson?unit=${input.next}`,
+		unit: activeNext,
+		href: `/lesson?unit=${activeNext}`,
 	});
 
 	// 4. Strengthen: a weak spot on record first (the check or the deck
@@ -1283,23 +1286,23 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	//    drill (not the Continue unit), else a blitz across the units started.
 	const spot = (input.weak ?? [])
 		.map((id) => byId.get(id))
-		.find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
+		.find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== activeNext && u.status !== "locked");
 	const worseUnit = spot
 		? undefined
 		: (input.worse ?? [])
 				.map((id) => byId.get(id))
-				.find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== input.next && u.status !== "locked");
+				.find((u) => u && (u.kind === "drill" || u.kind === "words") && u.id !== activeNext && u.status !== "locked");
 	const weak =
 		spot ??
 		worseUnit ??
 		all
 			.filter(
-				(u) => u.kind === "drill" && u.id !== input.next && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85,
+				(u) => u.kind === "drill" && u.id !== activeNext && lessonsBeforeToday(u.id) >= 1 && (u.accuracy ?? 1) < 0.85,
 			)
 			.sort((a, b) => (a.accuracy ?? 1) - (b.accuracy ?? 1))[0];
 	const strengthenDone =
 		Object.keys(day.units).some(
-			(id) => id !== input.next && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0,
+			(id) => id !== activeNext && (lessonsBeforeToday(id) >= 1 || id === spot?.id) && (day.units[id] ?? 0) > 0,
 		) ||
 		day.blitz > 0 ||
 		(day.mixups ?? 0) > 0 ||
@@ -1326,7 +1329,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	} else if (weak) {
 		const weakInfo = isUnitId(weak.id) ? unitInfo(weak.id) : undefined;
 		const weakSlovak = weak.slovakTerm ?? weakInfo?.slovakTerm;
-		const weakClean = weak.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+		const weakClean = bareUnitTitle(weak.title);
 		tasks.push({
 			id: "strengthen",
 			title: `Strengthen: ${weakClean}${weakSlovak ? ` · ${weakSlovak}` : ""}`,
@@ -1355,15 +1358,15 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	//    A words unit that Strengthen already takes is left to it.
 	const wordsUnit = all.find(
 		(u) =>
-			u.kind === "words" && u.id !== input.next && u.id !== spot?.id && (u.status === "open" || u.status === "started"),
+			u.kind === "words" && u.id !== activeNext && u.id !== spot?.id && (u.status === "open" || u.status === "started"),
 	);
 	if (wordsUnit) {
 		const wordsDone = Object.keys(day.units).some(
-			(id) => byId.get(id)?.kind === "words" && id !== input.next && id !== spot?.id && (day.units[id] ?? 0) > 0,
+			(id) => byId.get(id)?.kind === "words" && id !== activeNext && id !== spot?.id && (day.units[id] ?? 0) > 0,
 		);
 		const wordsInfo = isUnitId(wordsUnit.id) ? unitInfo(wordsUnit.id) : undefined;
 		const wordsSlovak = wordsUnit.slovakTerm ?? wordsInfo?.slovakTerm;
-		const wordsClean = wordsUnit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+		const wordsClean = bareUnitTitle(wordsUnit.title);
 		tasks.push({
 			id: "words",
 			title: `Words: ${wordsClean}${wordsSlovak ? ` · ${wordsSlovak}` : ""}`,
@@ -1424,7 +1427,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	const scene = scenes.length ? scenes[input.dayOfYear % scenes.length] : undefined;
 	const speakDone = (day.speaks ?? 0) + (tutorUnit ? day.tutors : 0) > 0;
 	if (tutorUnit) {
-		const tutorClean = tutorUnit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+		const tutorClean = bareUnitTitle(tutorUnit.title);
 		tasks.push({
 			id: "speak",
 			title: `With the tutor: ${tutorClean}`,
@@ -1515,7 +1518,7 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 /** A tutor unit's first message: the brief plus the doctrine the practice
  *  prompt already follows (answer first, hint before reveal). */
 export function tutorUnitPrompt(unit: CurriculumUnit): string {
-	const cleanTitle = unit.title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+	const cleanTitle = bareUnitTitle(unit.title);
 	return [
 		`Lesson with the tutor: ${cleanTitle}. ${unit.brief ?? unit.tagline}`,
 		"Keep it answer-first: explain in at most four short lines (with a bridge to a language I know where one helps), then give me eight quick problems one at a time, answered in the language I am learning.",
