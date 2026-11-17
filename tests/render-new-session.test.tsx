@@ -61,14 +61,15 @@ describe("startDraftSession — the create-on-send contract", () => {
 });
 
 describe("DraftShell — the sessionless surface", () => {
-	it("renders the composer blob, the stats bar, and the fresh-chat empty state", () => {
+	it("renders the composer blob and the empty state with its starting points", () => {
 		const html = renderToStaticMarkup(<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} />);
-		// The chat composer, ready for the first message.
+		// The composer, ready for the first message.
 		assert.ok(html.includes('data-testid="composer"'));
-		assert.ok(html.includes('data-testid="stats-model"'));
 		// No CTA by default: a configured surface stays quiet.
 		assert.ok(!html.includes('data-testid="setup-cta"'));
-		assert.ok(html.includes("Your tutor asks a few quick questions to see what you know, then teaches from there."));
+		assert.match(html, /What should we drill\?/);
+		assert.ok(html.includes("Short drills on one thing. Describe it, pick skills, or paste a sentence of your own."));
+		assert.ok(html.includes('data-testid="draft-suggestions"'));
 		// The pointer-events pattern (953b22b): the wrapper stays inert…
 		assert.ok(html.includes("pointer-events-none"));
 		// …and the blob re-enables it.
@@ -116,16 +117,6 @@ describe("the plain chat draft (/chat/new)", () => {
 		assert.ok(!html.includes('data-testid="stats-model"'));
 	});
 });
-describe("the probed lesson draft (?mode=teach)", () => {
-	it("keeps the lesson's copy and its model control", () => {
-		const html = renderToStaticMarkup(
-			<DraftShell busy={false} text="" onChange={() => {}} onSend={() => {}} mode="teach" />,
-		);
-		assert.ok(html.includes("Your tutor asks a few quick questions to see what you know, then teaches from there."));
-		assert.ok(html.includes('data-testid="stats-model"'));
-		assert.ok(!html.includes("draft-mode"), "no switch between kinds of chat");
-	});
-});
 describe("the practice draft (?mode=practice, 2026-10-04)", () => {
 	it("the shell swaps copy: practice title, empty state, placeholder", () => {
 		const html = renderToStaticMarkup(
@@ -148,7 +139,7 @@ describe("the practice draft (?mode=practice, 2026-10-04)", () => {
 		assert.deepEqual(body, { title: "the parity chain", kind: "practice" });
 	});
 
-	it("the teaching default is unchanged — no kind key on the wire", async () => {
+	it("no mode sends no kind key on the wire — the server gives the record its chat kind", async () => {
 		let body: Record<string, unknown> | null = null;
 		const f = (async (_url: string, init?: RequestInit) => {
 			body = JSON.parse(String(init?.body));

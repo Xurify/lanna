@@ -30,12 +30,6 @@ import { ChatDraft, type ChatStarterTopic } from "@/components/chat-draft";
 const DOCK = "mx-auto w-full max-w-[46rem] px-4";
 
 /** One-tap starting points for an empty draft (they fill the composer). */
-const TEACH_IDEAS = [
-	"Ordering food in a café",
-	"Talking about my weekend",
-	"The past tense",
-	"Cases after prepositions",
-];
 const PRACTICE_IDEAS = [
 	"Verb endings in the present",
 	"Accusative after mám, vidím",
@@ -99,13 +93,13 @@ export function DraftShell({
 	onChange,
 	onSend,
 	setupCta,
-	mode = "teach",
+	mode = "practice",
 }: {
 	busy: boolean;
 	text: string;
 	onChange: (v: string) => void;
 	onSend: () => void;
-	mode?: "teach" | "practice";
+	mode?: "practice";
 	/** The first-run CTA (fix wave chunk B): the same "Set up your models"
 	 *  affordance home carries, rendered above the draft shell — passed by
 	 *  NewSession, which owns the configured state and the SetupDialog. */
@@ -185,7 +179,7 @@ export function DraftShell({
 									className="pointer-events-auto mt-3 flex max-w-lg flex-wrap justify-center gap-2"
 									data-testid="draft-suggestions"
 								>
-									{(mode === "practice" ? PRACTICE_IDEAS : TEACH_IDEAS).map((idea) => (
+									{PRACTICE_IDEAS.map((idea) => (
 										<button
 											key={idea}
 											type="button"
@@ -248,7 +242,7 @@ export function NewSession({
 	recent = [],
 }: {
 	initialConfigured: boolean;
-	mode?: "chat" | "teach" | "practice";
+	mode?: "chat" | "practice";
 	language?: string;
 	weakTopics?: readonly ChatStarterTopic[];
 	recent?: ReadonlyArray<{ id: string; title: string; updatedAt: string }>;
@@ -332,7 +326,7 @@ export function NewSession({
 				.catch(() => setBusy(false));
 			return;
 		}
-		void startDraftSession(draft, fetch, mode === "teach" ? undefined : mode)
+		void startDraftSession(draft, fetch, mode)
 			.then((target) => {
 				if (target) router.push(target);
 				else setBusy(false);

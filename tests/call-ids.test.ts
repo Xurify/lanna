@@ -21,7 +21,7 @@ import { ToolCallIdUniquifier, collectToolCallIds } from "../src/server/pi/call-
 const assistantMsg = (id: string, callIds: string[]): any => ({
 	id,
 	role: "assistant",
-	content: callIds.map((cid) => ({ type: "toolCall", id: cid, name: "quiz", arguments: {} })),
+	content: callIds.map((cid) => ({ type: "toolCall", id: cid, name: "pose", arguments: {} })),
 });
 const toolResultMsg = (callId: string): any => ({
 	id: `r_${callId}`,
@@ -49,7 +49,7 @@ describe("ToolCallIdUniquifier", () => {
 			assert.equal(firstCallId(e), "call_0~2", `${t} shows the mint`);
 		}
 		const exec = u.event(
-			asEvent({ type: "tool_execution_end", toolCallId: "call_0", toolName: "quiz", result: null, isError: false }),
+			asEvent({ type: "tool_execution_end", toolCallId: "call_0", toolName: "pose", result: null, isError: false }),
 		) as { toolCallId: string };
 		assert.equal(exec.toolCallId, "call_0~2");
 		// settle: the SAME mint, paired call + result (m1 is the state object)

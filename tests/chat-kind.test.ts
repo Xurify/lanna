@@ -118,7 +118,7 @@ describe("the chat agent's tools", () => {
 				review: { enqueue: () => [], digest: () => "" },
 				jobs: { chatId: "c", jobStore: {} as never, spawn: () => {}, searchAvailable: () => true },
 			},
-			{ engine: claudeEngine(), toolToggles: { pdf: false, research: false, explain: false } },
+			{ engine: claudeEngine(), toolToggles: { pdf: false, research: false } },
 		);
 		const names = agent.state.tools.map((tool) => tool.name);
 		assert.ok(!names.includes("pdf"));
@@ -227,7 +227,7 @@ describe("POST /api/chats with kind chat", () => {
 		});
 	});
 
-	it("an unknown kind still makes the probed lesson", async () => {
+	it("an unknown kind is stored as a chat — every record carries a kind", async () => {
 		const res = await POST(
 			new Request("http://test/api/chats", {
 				method: "POST",
@@ -236,7 +236,7 @@ describe("POST /api/chats with kind chat", () => {
 			}),
 		);
 		const { id } = (await res.json()) as { id: string };
-		assert.equal(chatStore.getChat(id)?.kind, undefined);
+		assert.equal(chatStore.getChat(id)?.kind, "chat");
 	});
 });
 

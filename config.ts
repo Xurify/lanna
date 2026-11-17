@@ -299,7 +299,6 @@ const dataRoot = () => path.join(BASE_DATA_ROOT, "profiles", activeProfile());
 export const PATHS = {
 	root: ROOT,
 	/** Teacher system prompt — the agent's instructions (src/agent/). */
-	teacherPrompt: path.join(ROOT, "src", "agent", "system-prompt.md"),
 	/** The data root shared by every language profile. */
 	base: BASE_DATA_ROOT,
 	/** The running profile's root (data/profiles/<language>). */

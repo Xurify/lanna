@@ -203,36 +203,6 @@ test("missing or blank research question records an honest failure without invok
 	}
 });
 
-test("repeated recovery behind a question yields one handed and one durable marker", async () => {
-	const owner = chat(true);
-	const { job, steer } = pending(owner.id);
-	let wakes = 0;
-	setTurnRunner(async () => {
-		wakes++;
-		return 500;
-	});
-	sweep();
-	sweep();
-	sweep();
-	const first = deliverJobResult(steer);
-	assert.strictEqual(deliverJobResult(steer), first, "duplicate callers share one logical delivery");
-	const next = agent();
-	assert(beginTurn(owner.id));
-	registerLiveAgent(owner.id, next.value);
-	assert.deepEqual(
-		next.handed.map((message) => message.id),
-		[steer.id],
-	);
-	persist(owner.id, next.handed);
-	unregisterLiveAgent(owner.id);
-	settleSteers(owner.id, next.handed);
-	endTurn(owner.id);
-	await first;
-	assert.equal(wakes, 0);
-	assert.equal(stores.chatStore.getChat(owner.id)!.messages.filter((message) => message.id === steer.id).length, 1);
-	assert.equal(stores.jobStore.getJob(job.id)!.delivery?.status, "delivered");
-});
-
 for (const refused of [409, 403])
 	test(`duplicate during a ${refused} wake retains one logical owner`, async () => {
 		const owner = chat();

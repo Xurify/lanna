@@ -84,8 +84,8 @@ for (const extra of ["dist", path.join("node_modules", "electron")]) {
 // 3) Sanity: the runtime-read prompt assets must be present (the teacher
 //    agent reads them from disk at request time).
 for (const asset of [
-	path.join("src", "agent", "system-prompt.md"),
-	path.join("src", "agent", "prompts", "teacher", "20-teaching.md"),
+	path.join("src", "agent", "prompts", "chat", "10-chat.md"),
+	path.join("src", "agent", "prompts", "practice", "00-base.md"),
 	// Lanna: the language segments and the Slovak curriculum are read
 	// from disk too (prompt composition, lexicon lookups, first-run seeding).
 	path.join("src", "agent", "prompts", "language", "10-slovak.md"),

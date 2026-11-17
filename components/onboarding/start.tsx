@@ -267,7 +267,7 @@ export function Start({
 
 	const stageError = useCallback((msg: string) => setError(msg), []);
 
-	/** The Socratic follow-up: a Learn session seeded with the misses. */
+	/** The Socratic follow-up: an Ask chat seeded with the misses. */
 	const goDeeper = () => {
 		const missed = outcome?.missed ?? [];
 		const lines = missed
@@ -284,7 +284,7 @@ export function Start({
 				target.english +
 				" for.",
 		].join("\n");
-		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "teach" }).catch(() =>
+		void startTutorChat(router, { title: "Placement follow-up", prompt, kind: "chat" }).catch(() =>
 			setError("Couldn't open the tutor. Check Settings → AI models."),
 		);
 	};

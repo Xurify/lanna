@@ -20,7 +20,7 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "..");
 const TSX_LOADER = path.join(REPO_ROOT, "node_modules", "tsx", "dist", "loader.mjs");
 
 describe("LANNA_DATA_DIR seam", () => {
-	it("relocates data/chats/graph under LANNA_DATA_DIR, keeps prompts ROOT-anchored", async () => {
+	it("relocates data/chats/graph under LANNA_DATA_DIR, keeps read-only assets ROOT-anchored", async () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-seam-"));
 		process.env.LANNA_DATA_DIR = dir;
 		try {
@@ -32,11 +32,7 @@ describe("LANNA_DATA_DIR seam", () => {
 			assert.equal(PATHS.data, profileDir);
 			assert.equal(PATHS.chats, path.join(profileDir, "chats"));
 			assert.equal(SETTINGS_FILE, path.join(dir, "settings.json"));
-			assert.equal(
-				PATHS.teacherPrompt,
-				path.join(ROOT, "src", "agent", "system-prompt.md"),
-				"read-only prompt assets stay bundle-anchored on purpose",
-			);
+			assert.equal(PATHS.curriculum, path.join(ROOT, "curriculum"), "read-only assets stay bundle-anchored on purpose");
 		} finally {
 			delete process.env.LANNA_DATA_DIR;
 		}

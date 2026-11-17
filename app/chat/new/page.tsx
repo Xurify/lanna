@@ -20,7 +20,7 @@ export default async function NewSessionPage({ searchParams }: { searchParams: P
 	return (
 		<NewSession
 			initialConfigured={slotsConfigured(readSettingsRecord()?.models)}
-			mode={mode === "practice" || mode === "teach" ? mode : "chat"}
+			mode={mode === "practice" ? mode : "chat"}
 			language={activeLanguage().english}
 			weakTopics={weakestTopics(3)}
 			recent={listChats()
