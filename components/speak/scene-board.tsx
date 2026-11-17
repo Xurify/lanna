@@ -15,7 +15,7 @@ import Link from "next/link";
 import { ArrowLeftIcon, KeyboardIcon, ListChecksIcon, LoaderCircleIcon, MicIcon, RepeatIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CapLabel } from "@/components/ui/cap-label";
-import { EmptyState, AddKeyButton } from "@/components/quiet/empty-state";
+import { SettingsLink } from "@/components/settings/settings-link";
 import { TaskFrame } from "@/components/task-frame";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -112,11 +112,6 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						<CapLabel>Today</CapLabel>
 					</Link>
 					<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
-					<p className="mt-1 font-prose text-[15px] text-ink-3">
-						{typed || !state?.stt
-							? "The tutor plays the other person and answers out loud. You write your part."
-							: "The tutor plays the other person and answers out loud. You say your part."}
-					</p>
 					<SpeakWays current="tutor" />
 
 					{error && (
@@ -132,18 +127,13 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						</p>
 					)}
 					{state && !state.canSpeak && (
-						<EmptyState
-							className="mt-6 max-w-none"
-							testid="speak-nomodel"
-							title="Say a scene out loud with a tutor"
-							action={<AddKeyButton />}
-						>
-							<p>In a scene the tutor plays the other person and answers what you say. That needs an AI key.</p>
-							<p>
-								Step by step works without one: pick a scene and walk through it line by line.
-								{state.stt ? "" : " Speaking by voice also takes a speech-to-text key, which is optional."}
-							</p>
-						</EmptyState>
+						<p className="mt-5 font-prose text-[13px] text-ink-3" data-testid="speak-nomodel">
+							Scenes run step by step without an AI key.{" "}
+							<SettingsLink keys className="underline hover:text-ink-2">
+								Add a key
+							</SettingsLink>{" "}
+							to have the tutor answer you out loud.
+						</p>
 					)}
 
 					{!state && !error && (

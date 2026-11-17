@@ -109,6 +109,14 @@ export const CREDITS: Credit[] = [
 		fetchedHosts: ["phonic.ai", "api.phonic.ai", "docs.phonic.ai"],
 	},
 	{
+		id: "openai-realtime",
+		name: "OpenAI Realtime",
+		url: "https://developers.openai.com/api/docs/guides/realtime",
+		group: "voices",
+		use: "speech-to-speech conversation in live talk, with your OpenAI key",
+		fetchedHosts: ["api.openai.com", "developers.openai.com"],
+	},
+	{
 		id: "edge-voices",
 		name: "Microsoft neural voices",
 		url: "https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts",

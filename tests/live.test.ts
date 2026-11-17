@@ -46,25 +46,48 @@ describe("pcmChunks", () => {
 });
 
 describe("liveAvailability", () => {
-	it("keeps Slovak and Russian, and says why Estonian is out", () => {
-		assert.deepEqual(liveAvailability({ code: "sk", english: "Slovak" }, true), { enabled: true, lang: "sk" });
-		assert.deepEqual(liveAvailability({ code: "ru", english: "Russian" }, true), { enabled: true, lang: "ru" });
-		const et = liveAvailability({ code: "et", english: "Estonian" }, true);
-		assert.equal(et.enabled, false);
-		if (!et.enabled) {
-			assert.equal(et.missing, "language");
-			assert.match(et.reason, /Estonian/);
-			assert.match(et.reason, /Rehearse/);
-		}
+	it("offers both engines that speak Slovak, and starts on the one with a key", () => {
+		const both = liveAvailability({ code: "sk", english: "Slovak" }, { phonic: true, openai: true });
+		assert.equal(both.enabled, true);
+		assert.equal(both.provider, "phonic");
+		assert.deepEqual(
+			both.options.map((o) => o.id),
+			["phonic", "openai"],
+		);
+		assert.equal(both.options[0]!.lang, "sk");
+		const openaiOnly = liveAvailability({ code: "sk", english: "Slovak" }, { openai: true });
+		assert.equal(openaiOnly.provider, "openai");
+		assert.equal(openaiOnly.options[0]!.enabled, false);
 	});
 
-	it("names the key and the screen to add it on", () => {
-		const sk = liveAvailability({ code: "sk", english: "Slovak" }, false);
+	it("offers Estonian only through OpenAI, because Phonic does not speak it", () => {
+		const noKey = liveAvailability({ code: "et", english: "Estonian" }, { phonic: true });
+		assert.deepEqual(
+			noKey.options.map((o) => o.id),
+			["openai"],
+		);
+		assert.equal(noKey.enabled, false);
+		assert.equal(noKey.missing, "key");
+		assert.match(noKey.reason ?? "", /OpenAI/);
+		const withKey = liveAvailability({ code: "et", english: "Estonian" }, { phonic: true, openai: true });
+		assert.equal(withKey.enabled, true);
+		assert.equal(withKey.provider, "openai");
+	});
+
+	it("says so when no engine speaks the language", () => {
+		const none = liveAvailability({ code: "ja", english: "Japanese" }, { phonic: true, openai: true });
+		assert.equal(none.enabled, false);
+		assert.equal(none.missing, "language");
+		assert.match(none.reason ?? "", /Japanese/);
+	});
+
+	it("names the keys to add and the screen to add them on", () => {
+		const sk = liveAvailability({ code: "sk", english: "Slovak" }, {});
 		assert.equal(sk.enabled, false);
-		if (!sk.enabled) {
-			assert.equal(sk.missing, "key");
-			assert.match(sk.reason, /Settings/);
-		}
+		assert.equal(sk.missing, "key");
+		assert.match(sk.reason ?? "", /Settings/);
+		assert.match(sk.options[0]!.reason ?? "", /PHONIC_API_KEY/);
+		assert.match(sk.options[1]!.reason ?? "", /OPENAI_API_KEY/);
 	});
 });
 

@@ -1,9 +1,9 @@
 /**
- * Live talk (Phonic-1): full-duplex speech with the tutor, alongside the
- * turn-by-turn scene. Supported languages and their codes are Phonic's own
- * list (https://docs.phonic.ai/docs/build/agents/supported_languages); a
- * language Phonic does not speak is never hidden, only disabled with the
- * reason. Pure and browser-safe.
+ * Live talk: full-duplex speech with the tutor, alongside the turn-by-turn
+ * scene, on one of two engines. Each engine speaks the languages its vendor
+ * lists (Phonic: docs.phonic.ai/docs/build/agents/supported_languages;
+ * OpenAI: the gpt-realtime language list), and a language no engine speaks is
+ * never hidden, only disabled with the reason. Pure and browser-safe.
  */
 
 import type { Cefr } from "./curriculum.ts";
@@ -22,26 +22,87 @@ export function phonicCode(code: string): string | null {
 	return PHONIC_LANGUAGES[code] ?? null;
 }
 
-export type LiveAvailability =
-	| { enabled: true; lang: string }
-	| { enabled: false; reason: string; missing: "language" | "key" };
+export type LiveProviderId = "phonic" | "openai";
 
-export function liveAvailability(language: LiveLanguage, hasKey: boolean): LiveAvailability {
-	const lang = phonicCode(language.code);
-	if (!lang)
+export interface LiveProviderInfo {
+	id: LiveProviderId;
+	label: string;
+	keyEnv: string;
+	keyLabel: string;
+	/** ISO 639-1 codes the engine speaks: Phonic's own list, and gpt-realtime's published set. */
+	languages: readonly string[];
+}
+
+export const LIVE_PROVIDERS: readonly LiveProviderInfo[] = [
+	{ id: "phonic", label: "Phonic-1", keyEnv: "PHONIC_API_KEY", keyLabel: "Phonic", languages: ["sk", "ru"] },
+	{
+		id: "openai",
+		label: "OpenAI Realtime",
+		keyEnv: "OPENAI_API_KEY",
+		keyLabel: "OpenAI",
+		languages: ["sk", "ru", "et"],
+	},
+];
+
+export function liveProviderLabel(id: LiveProviderId): string {
+	return LIVE_PROVIDERS.find((p) => p.id === id)?.label ?? id;
+}
+
+export interface LiveOption {
+	id: LiveProviderId;
+	label: string;
+	keyEnv: string;
+	keyLabel: string;
+	/** The code the engine takes for this language; both engines take ISO 639-1. */
+	lang: string;
+	enabled: boolean;
+	reason?: string;
+}
+
+export interface LiveAvailability {
+	enabled: boolean;
+	/** The engine a call starts on unless the learner picks another. */
+	provider?: LiveProviderId;
+	/** The engines that speak this language; the rest are not offered. */
+	options: LiveOption[];
+	missing?: "language" | "key";
+	reason?: string;
+}
+
+export function liveAvailability(
+	language: LiveLanguage,
+	keys: Partial<Record<LiveProviderId, boolean>>,
+): LiveAvailability {
+	const options: LiveOption[] = LIVE_PROVIDERS.filter((p) => p.languages.includes(language.code)).map((p) => {
+		const has = keys[p.id] === true;
+		return {
+			id: p.id,
+			label: p.label,
+			keyEnv: p.keyEnv,
+			keyLabel: p.keyLabel,
+			lang: language.code,
+			enabled: has,
+			...(has ? {} : { reason: `${p.keyLabel} has no key yet: add ${p.keyEnv} in Settings → API keys.` }),
+		};
+	});
+	if (options.length === 0)
 		return {
 			enabled: false,
+			options,
 			missing: "language",
-			reason: `Live talk is not available in ${language.english} yet: Phonic does not speak it. Rehearse and the turn-by-turn scene still work.`,
+			reason: `Live talk is not available in ${language.english} yet: none of the voice engines speaks it. Rehearse and the turn-by-turn scene still work.`,
 		};
-	if (!hasKey)
+	const first = options.find((o) => o.enabled);
+	if (!first) {
+		const labels = options.map((o) => o.keyLabel).join(" or ");
 		return {
 			enabled: false,
+			options,
 			missing: "key",
-			reason:
-				"Live talk needs a Phonic key. Add it in Settings → API keys; without one, Rehearse and the turn-by-turn scene still work.",
+			reason: `Live talk needs a key for ${labels}. Add it in Settings → API keys; without one, Rehearse and the turn-by-turn scene still work.`,
 		};
-	return { enabled: true, lang };
+	}
+	return { enabled: true, provider: first.id, options };
 }
 
 /** A short live talk, and the bars the ladder's Holding step needs. */
@@ -49,12 +110,12 @@ export const LIVE_MIN_TALK_SEC = 180;
 
 export interface LiveTurn {
 	role: "tutor" | "learner";
-	/** The transcript: verbatim from the local clip for a learner turn, Phonic's for the tutor. */
+	/** The transcript: verbatim from the local clip for a learner turn, the engine's for the tutor. */
 	text: string;
 	/** Ms from the first turn of the talk. */
 	start: number;
 	end: number;
-	/** The learner's words came from Phonic only: accuracy is approximate. */
+	/** The learner's words came from the engine only: accuracy is approximate. */
 	approximate?: boolean;
 }
 
@@ -78,7 +139,7 @@ export interface LiveCallInput {
 	turns: LiveTurn[];
 	/** Gaps over one second inside the learner's own turns, measured from the mic. */
 	pausesMs: number[];
-	/** Every learner turn used Phonic's transcript, not a local one. */
+	/** Every learner turn used the engine's transcript, not a local one. */
 	approximate: boolean;
 	startedAt: string;
 	endedAt: string;
@@ -192,6 +253,19 @@ export const END_TALK_TOOL = {
 
 export const LIVE_TOOLS = [PROMPT_REPAIR_TOOL, VAULT_WORD_TOOL, NEW_CHUNK_TOOL, FILLER_TOOL, END_TALK_TOOL];
 
+export interface LiveToolSchema {
+	name: string;
+	description: string;
+	parameters: Record<string, unknown>;
+}
+
+/** The same five tools in the shape OpenAI's function calling takes. */
+export const LIVE_TOOL_SCHEMAS: readonly LiveToolSchema[] = LIVE_TOOLS.map((tool) => ({
+	name: tool.tool_schema.function.name,
+	description: tool.tool_schema.function.description,
+	parameters: tool.tool_schema.function.parameters as Record<string, unknown>,
+}));
+
 export interface LiveSceneRow {
 	id: string;
 	title: string;
@@ -234,11 +308,11 @@ export interface LiveConfig {
 	tools: typeof LIVE_TOOLS;
 }
 
-export interface LiveStart {
-	token: string;
-	url: string;
-	config: LiveConfig;
+export interface LiveStartCommon {
+	provider: LiveProviderId;
 	level: Cefr;
+	/** The code the engine is speaking in, so the screen can print it on a line of the language. */
+	language: string;
 	title: string;
 	kind: "scene" | "island";
 	ref: string;
@@ -247,6 +321,11 @@ export interface LiveStart {
 	/** Fillers from the language's kit the learner might reach for. */
 	fillers: string[];
 }
+
+/** Phonic takes one config frame on its socket; OpenAI WebRTC takes the session on the client secret. */
+export type LiveStart =
+	| (LiveStartCommon & { provider: "phonic"; token: string; url: string; config: LiveConfig })
+	| (LiveStartCommon & { provider: "openai"; token: string; callUrl: string; model: string });
 
 export function liveXp(sec: number, learnerTurns: number): number {
 	if (learnerTurns === 0) return 0;

@@ -6,9 +6,19 @@ import { LoaderCircleIcon, MicIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LiveCall, type LivePhase } from "@/components/speak/live-session";
 import { LivePlayer } from "@/components/speak/live-player";
+import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { SessionReport } from "@/components/speak/session-report";
 import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
-import type { LiveCallInput, LivePageData, LiveStart, LiveTalkResult, LiveToolEvent, LiveTurn } from "@/src/core";
+import {
+	liveProviderLabel,
+	type LiveCallInput,
+	type LivePageData,
+	type LiveProviderId,
+	type LiveStart,
+	type LiveTalkResult,
+	type LiveToolEvent,
+	type LiveTurn,
+} from "@/src/core";
 
 type Target = { kind: "scene" | "island"; ref: string; title: string } | null;
 
@@ -26,6 +36,8 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 	const [level, setLevel] = useState(0);
 	const [elapsed, setElapsed] = useState(0);
 	const [result, setResult] = useState<LiveTalkResult | null>(null);
+	const [engine, setEngine] = useState<LiveProviderId | null>(page.availability.provider ?? null);
+	const enabled = page.availability.options.filter((o) => o.enabled);
 	const call = useRef<LiveCall | null>(null);
 	const startedAt = useRef(0);
 
@@ -95,10 +107,10 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 			const res = await fetch("/api/speak/live", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ kind, ref }),
+				body: JSON.stringify({ kind, ref, provider: engine ?? undefined }),
 			});
 			const data = (await res.json().catch(() => ({}))) as LiveStart & { message?: string };
-			if (!res.ok || !data.url) throw new Error(data.message ?? `Could not start (${res.status}).`);
+			if (!res.ok || !data.token) throw new Error(data.message ?? `Could not start (${res.status}).`);
 			setStart(title ? { ...data, title } : data);
 			setTurns([]);
 			setHint(null);
@@ -146,7 +158,7 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 				elapsed={elapsed}
 				phase={callPhase === "ended" ? "ending" : callPhase}
 				notice={callPhase === "ending" && !notice ? "Reading the talk…" : notice}
-				lang={start.config.default_language}
+				lang={start.language}
 				onEnd={endCall}
 			/>
 		);
@@ -163,6 +175,9 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 				<p className="mt-2 max-w-prose font-prose text-[15px] leading-relaxed text-ink-2">
 					A live call: you speak, the tutor speaks, and either of you can interrupt. It asks about the topic and answers
 					what you actually said.
+				</p>
+				<p className="mt-2 font-ui text-[12px] text-ink-3" data-testid="live-engine">
+					Voice: {liveProviderLabel(engine ?? start?.provider ?? page.availability.provider ?? "phonic")}
 				</p>
 				<div className="mt-5 flex flex-wrap items-center gap-3">
 					<button
@@ -216,6 +231,23 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 				</div>
 			) : (
 				<>
+					{enabled.length > 1 && (
+						<div className="mt-5 flex flex-wrap items-center gap-2" data-testid="live-engine-picker">
+							<span className="font-ui text-[12px] text-ink-3">Voice</span>
+							<ChoiceMenu
+								quiet
+								value={engine ?? enabled[0]!.id}
+								options={enabled.map((option) => ({ value: option.id, label: option.label }))}
+								onChange={(next) => setEngine(next as LiveProviderId)}
+								ariaLabel="Voice engine"
+							/>
+						</div>
+					)}
+					{enabled.length === 1 && (
+						<p className="mt-4 font-ui text-[12px] text-ink-3" data-testid="live-engine">
+							Voice: {enabled[0]!.label}
+						</p>
+					)}
 					{page.islands.length > 0 && (
 						<section className="mt-9" aria-labelledby="live-islands">
 							<h2 id="live-islands" className="q-sh">
@@ -284,8 +316,9 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 			)}
 
 			<p className="mt-10 max-w-2xl font-ui text-[12px] text-ink-3">
-				Live talk runs on Phonic-1 through your own Phonic key; both voices are generated during the call. The
-				transcript and the report stay on this computer.
+				Live talk runs on your own key, on {enabled.length > 1 ? "either engine" : "the engine you have a key for"}:{" "}
+				Phonic-1 or OpenAI Realtime. Both voices are generated during the call; the transcript and the report stay on
+				this computer.
 			</p>
 		</div>
 	);

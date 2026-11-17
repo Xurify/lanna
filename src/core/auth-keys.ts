@@ -48,7 +48,7 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 		id: "PHONIC_API_KEY",
 		label: "Phonic",
 		description:
-			"Live talk: full-duplex speech with the tutor, where you and the tutor can interrupt each other. During a call your microphone audio goes to Phonic; the transcript and the report stay on this computer. Without it, Rehearse and the turn-by-turn scene still work.",
+			"Live talk, on one of its two engines: full-duplex speech with the tutor, where you and the tutor can interrupt each other. Your OpenAI key works as well. During a call your microphone audio goes to that engine; the transcript and the report stay on this computer. Without either key, Rehearse and the turn-by-turn scene still work.",
 		docsUrl: "https://phonic.ai/",
 	},
 	{

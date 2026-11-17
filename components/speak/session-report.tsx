@@ -43,7 +43,7 @@ export function SessionReport({
 			</h1>
 			<p className="mt-2 max-w-prose font-prose text-[15px] text-ink-2">
 				{report.approximate
-					? "The counts came from your voice. Your words are Phonic's transcript, so the wording may be a little off."
+					? "The counts came from your voice. Your words are the voice engine's transcript, so the wording may be a little off."
 					: "Your lines were transcribed from your own voice, so the quotes below are what you said."}
 			</p>
 

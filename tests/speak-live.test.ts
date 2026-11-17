@@ -45,6 +45,8 @@ describe("liveStart", () => {
 			assert.match(calls[0]!.url, /api\.phonic\.ai\/v1\/auth\/session_token$/);
 			const headers = calls[0]!.init?.headers as Record<string, string>;
 			assert.match(headers.authorization ?? "", /^Bearer phonic_test_key/);
+			assert.equal(start.provider, "phonic");
+			if (start.provider !== "phonic") throw new Error("Phonic should be the engine with only a Phonic key");
 			assert.match(start.url, /wss:\/\/api\.phonic\.ai\/v1\/sts\/ws\?session_token=tok-abc/);
 			assert.equal(start.config.default_language, "sk");
 			assert.equal(start.config.input_format, "pcm_16000");
@@ -65,6 +67,38 @@ describe("liveStart", () => {
 			await assert.rejects(() => liveStart("scene", SPEAK_SCENES[0]!.id), /Settings/);
 		} finally {
 			process.env.PHONIC_API_KEY = key;
+		}
+	});
+
+	it("mints an OpenAI client secret with the same five tools when that engine is chosen", async () => {
+		const real = globalThis.fetch;
+		const calls: Array<{ url: string; init?: RequestInit }> = [];
+		process.env.OPENAI_API_KEY = "openai_test_key_1234567890";
+		globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+			calls.push({ url: String(input), init });
+			return new Response(JSON.stringify({ value: "ek_test", expires_at: 1 }), {
+				status: 200,
+				headers: { "content-type": "application/json" },
+			});
+		}) as typeof fetch;
+		try {
+			const start = await liveStart("scene", SPEAK_SCENES[0]!.id, "openai");
+			assert.equal(start.provider, "openai");
+			if (start.provider !== "openai") throw new Error("OpenAI should be the chosen engine");
+			assert.match(calls[0]!.url, /api\.openai\.com\/v1\/realtime\/client_secrets$/);
+			const headers = (calls[0]!.init?.headers ?? {}) as Record<string, string>;
+			assert.match(headers.authorization ?? "", /^Bearer openai_test_key/);
+			const body = JSON.parse(String(calls[0]!.init?.body)) as {
+				session: { instructions: string; audio: { input: { transcription: { language: string } } }; tools: unknown[] };
+			};
+			assert.equal(body.session.audio.input.transcription.language, "sk");
+			assert.equal(body.session.tools.length, 5);
+			assert.match(body.session.instructions, /Slovak/);
+			assert.equal(start.token, "ek_test");
+			assert.match(start.callUrl, /\/v1\/realtime\/calls$/);
+		} finally {
+			globalThis.fetch = real;
+			delete process.env.OPENAI_API_KEY;
 		}
 	});
 

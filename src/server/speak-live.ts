@@ -1,16 +1,14 @@
 /**
  * Live speaking (2026-11-17) — behind /speak/live and /api/speak/live.
- * A full-duplex call with the tutor over Phonic-1: the microphone streams
- * to Phonic's speech-to-speech socket, the tutor's voice comes back as it
- * is generated, and both sides can interrupt each other. The session token
- * is minted here (the key never reaches the browser), the system prompt and
- * the tools are built here, and the call's transcript and timing are read
- * back on the server at the end (src/server/speaking-analysis.ts).
- *
- * Protocol: https://docs.phonic.ai — POST /v1/auth/session_token with a
- * bearer key returns { session_token, expires_at }; the socket is
- * wss://api.phonic.ai/v1/sts/ws?session_token=…; the server sends
- * ready_to_start_conversation, then the client sends one config message.
+ * A full-duplex call with the tutor on one of two engines, both with the
+ * learner's own key. Phonic-1: POST /v1/auth/session_token with a bearer key
+ * returns { session_token, expires_at }, and the browser opens
+ * wss://api.phonic.ai/v1/sts/ws?session_token=… (docs.phonic.ai). OpenAI:
+ * POST /v1/realtime/client_secrets returns an ek_ client secret the browser
+ * posts its SDP offer with to /v1/realtime/calls (GA Realtime API). The key
+ * never reaches the browser, the prompt and the tools are built here, and the
+ * talk's transcript and timing are read back at the end
+ * (src/server/speaking-analysis.ts).
  */
 
 import { briefParts, SPEAK_SCENES, type SpeakScene } from "../core/speak.ts";
@@ -18,11 +16,14 @@ import { islandReadiness, type Island } from "../core/islands.ts";
 import {
 	LIVE_MIN_TALK_SEC,
 	LIVE_TOOLS,
+	LIVE_TOOL_SCHEMAS,
+	liveAvailability,
 	phonicCode,
 	type LiveAvailability,
 	type LiveCallInput,
 	type LiveConfig,
 	type LivePageData,
+	type LiveProviderId,
 	type LiveStart,
 } from "../core/live.ts";
 import type { SpeakingReport, SpeakingTrends } from "../core/speaking-trends.ts";
@@ -35,34 +36,27 @@ import { keyValue, redactSecrets } from "./keys.ts";
 import { sceneFor } from "./speak.ts";
 import { analyseTalk, speakingReports, talkLevel, type TalkOutcome } from "./speaking-analysis.ts";
 
-const TOKEN_TTL_SEC = 600;
 const PHONIC_TOKEN_URL = "https://api.phonic.ai/v1/auth/session_token";
 const PHONIC_SOCKET = "wss://api.phonic.ai/v1/sts/ws";
+const PHONIC_TTL_SEC = 600;
+// GA Realtime API: the server mints the client secret, the browser posts its
+// SDP offer to this URL with it (developers.openai.com/api/docs/guides/realtime-webrtc).
+const OPENAI_SECRETS_URL = "https://api.openai.com/v1/realtime/client_secrets";
+const OPENAI_CALLS_URL = "https://api.openai.com/v1/realtime/calls";
+const OPENAI_MODEL = "gpt-realtime-2.1";
+const OPENAI_TRANSCRIBE = "gpt-4o-transcribe";
+const OPENAI_VOICE = "marin";
 
 export function hasPhonicKey(): boolean {
 	return !!keyValue("PHONIC_API_KEY");
 }
 
-export function liveAvailabilityNow(): LiveAvailability {
-	const lang = activeLanguage();
-	return liveStatusAvailability(lang.code, lang.english);
+function providerKeys(): Partial<Record<LiveProviderId, boolean>> {
+	return { phonic: hasPhonicKey(), openai: !!keyValue("OPENAI_API_KEY") };
 }
 
-function liveStatusAvailability(code: string, english: string): LiveAvailability {
-	if (!phonicCode(code))
-		return {
-			enabled: false,
-			missing: "language",
-			reason: `Live talk is not available in ${english} yet: Phonic does not speak it. Rehearse and the turn-by-turn scene still work.`,
-		};
-	if (!hasPhonicKey())
-		return {
-			enabled: false,
-			missing: "key",
-			reason:
-				"Live talk needs a Phonic key. Add it in Settings → API keys; without one, Rehearse and the turn-by-turn scene still work.",
-		};
-	return { enabled: true, lang: phonicCode(code)! };
+export function liveAvailabilityNow(): LiveAvailability {
+	return liveAvailability(activeLanguage(), providerKeys());
 }
 
 export function livePage(now = new Date()): LivePageData {
@@ -130,13 +124,13 @@ function sceneBrief(scene: SpeakScene): string {
 
 // ─── The call ───────────────────────────────────────────────────────────────
 
-async function mintToken(): Promise<{ token: string; url: string }> {
+async function mintPhonic(): Promise<{ token: string; url: string }> {
 	const key = keyValue("PHONIC_API_KEY");
 	if (!key) throw new Error("Live talk needs a Phonic key: add PHONIC_API_KEY in Settings → API keys, then try again.");
 	const res = await fetch(PHONIC_TOKEN_URL, {
 		method: "POST",
 		headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-		body: JSON.stringify({ ttl_seconds: TOKEN_TTL_SEC }),
+		body: JSON.stringify({ ttl_seconds: PHONIC_TTL_SEC }),
 	});
 	const raw = await res.text();
 	if (!res.ok) throw new Error(`Phonic refused the session token (${res.status}): ${redactSecrets(raw).slice(0, 200)}`);
@@ -151,17 +145,82 @@ async function mintToken(): Promise<{ token: string; url: string }> {
 	return { token, url: `${PHONIC_SOCKET}?session_token=${encodeURIComponent(token)}` };
 }
 
-export async function liveStart(kind: "scene" | "island", ref: string): Promise<LiveStart> {
+async function mintOpenAI({
+	instructions,
+	language,
+}: {
+	instructions: string;
+	language: string;
+}): Promise<{ token: string; model: string }> {
+	const key = keyValue("OPENAI_API_KEY");
+	if (!key)
+		throw new Error("Live talk needs an OpenAI key: add OPENAI_API_KEY in Settings → API keys, then try again.");
+	const res = await fetch(OPENAI_SECRETS_URL, {
+		method: "POST",
+		headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+		body: JSON.stringify({
+			session: {
+				type: "realtime",
+				model: OPENAI_MODEL,
+				instructions,
+				audio: {
+					input: {
+						transcription: { model: OPENAI_TRANSCRIBE, language },
+						turn_detection: { type: "semantic_vad" },
+					},
+					output: { voice: OPENAI_VOICE },
+				},
+				tools: LIVE_TOOL_SCHEMAS.map((tool) => ({
+					type: "function",
+					name: tool.name,
+					description: tool.description,
+					parameters: tool.parameters,
+				})),
+			},
+		}),
+	});
+	const raw = await res.text();
+	if (!res.ok) throw new Error(`OpenAI refused the call (${res.status}): ${redactSecrets(raw).slice(0, 200)}`);
+	let token = "";
+	try {
+		const body = JSON.parse(raw) as { value?: unknown };
+		token = typeof body.value === "string" ? body.value : "";
+	} catch {
+		token = "";
+	}
+	if (!token) throw new Error("OpenAI answered without a client secret.");
+	return { token, model: OPENAI_MODEL };
+}
+
+export async function liveStart(kind: "scene" | "island", ref: string, provider?: LiveProviderId): Promise<LiveStart> {
 	const availability = liveAvailabilityNow();
 	if (!availability.enabled) throw new Error(availability.reason);
+	const option = availability.options.find((o) => o.id === (provider ?? availability.provider));
+	if (!option) throw new Error("That voice engine does not speak this language.");
+	if (!option.enabled) throw new Error(option.reason);
 	const code = activeLanguage().code;
 	const scene = kind === "scene" ? sceneFor(ref) : null;
 	const island = kind === "island" ? islandStore.get(ref) : null;
 	if (kind === "scene" && !scene) throw new Error("No such scene.");
 	if (kind === "island" && !island) throw new Error("No such island.");
-	const { token, url } = await mintToken();
+	const instructions = `${liveSystem()}\n\n${kind === "island" ? islandBrief(island!) : sceneBrief(scene!)}`;
+	const kit = fillerKit();
+	const common = {
+		level: talkLevel(),
+		language: option.lang,
+		title: island?.topic ?? scene!.title,
+		kind,
+		ref,
+		vault: (island?.chunks ?? []).map((c) => ({ id: c.id, sk: c.sk, en: c.en })),
+		fillers: kit?.entries.slice(0, 8).map((e) => e.sk) ?? [],
+	};
+	if (option.id === "openai") {
+		const { token, model } = await mintOpenAI({ instructions, language: option.lang });
+		return { ...common, provider: "openai", token, callUrl: OPENAI_CALLS_URL, model };
+	}
+	const { token, url } = await mintPhonic();
 	const config: LiveConfig = {
-		system_prompt: `${liveSystem()}\n\n${kind === "island" ? islandBrief(island!) : sceneBrief(scene!)}`,
+		system_prompt: instructions,
 		default_language: phonicCode(code)!,
 		input_format: "pcm_16000",
 		output_format: "pcm_24000",
@@ -169,18 +228,7 @@ export async function liveStart(kind: "scene" | "island", ref: string): Promise<
 		generate_welcome_message: true,
 		tools: LIVE_TOOLS,
 	};
-	const kit = fillerKit();
-	return {
-		token,
-		url,
-		config,
-		level: talkLevel(),
-		title: island?.topic ?? scene!.title,
-		kind,
-		ref,
-		vault: (island?.chunks ?? []).map((c) => ({ id: c.id, sk: c.sk, en: c.en })),
-		fillers: kit?.entries.slice(0, 8).map((e) => e.sk) ?? [],
-	};
+	return { ...common, provider: "phonic", token, url, config };
 }
 
 export async function liveEnd(input: LiveCallInput, tz?: number): Promise<TalkOutcome> {
