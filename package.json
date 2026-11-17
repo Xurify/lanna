@@ -83,7 +83,7 @@
 		"@types/unbzip2-stream": "1.4.3",
 		"@typescript-eslint/parser": "^8.73.0",
 		"electron": "^45.3.3",
-		"electron-builder": "^26.18.0",
+		"electron-builder": "26.18.0",
 		"eslint": "^9.39.5",
 		"eslint-import-resolver-typescript": "^4.4.5",
 		"eslint-plugin-import": "^2.32.0",
