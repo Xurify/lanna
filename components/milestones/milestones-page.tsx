@@ -67,7 +67,7 @@ import {
 	type NextWord,
 } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
-import { DatePicker } from "@/components/milestones/date-picker";
+import { MilestoneForm } from "@/components/milestones/milestone-form";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { useServerValue } from "@/components/use-server-value";
 
@@ -137,15 +137,10 @@ export function MilestonesPage({
 }) {
 	const [report, setReport] = useServerValue<MilestonesReport | null>(initialReport);
 	const [error, setError] = useState<string | null>(null);
-	const [text, setText] = useState("");
-	const [adding, setAdding] = useState(false);
 	const [open, setOpen] = useState<string | null>(null);
 	const [sourcesOpen, setSourcesOpen] = useState(true);
+	const [hiddenOpen, setHiddenOpen] = useState(false);
 	const [queued, setQueued] = useState<Set<string>>(new Set());
-	const [datedText, setDatedText] = useState("");
-	const [datedDate, setDatedDate] = useState<string | null>(null);
-	const [datedAdding, setDatedAdding] = useState(false);
-	const [datedError, setDatedError] = useState<string | null>(null);
 
 	const reload = useCallback(async () => {
 		try {
@@ -160,56 +155,25 @@ export function MilestonesPage({
 		if (!initialReport) void reload();
 	}, [initialReport, reload]);
 
-	const add = async () => {
-		const t = text.trim();
-		if (!t || adding) return;
-		setAdding(true);
+	const [changingVisibility, setChangingVisibility] = useState(false);
+	const changeVisibility = async (id: string, hidden: boolean) => {
+		if (changingVisibility) return;
+		setChangingVisibility(true);
 		setError(null);
 		try {
-			const res = await fetch(`/api/milestones?tz=${new Date().getTimezoneOffset()}`, {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ text: t }),
+			const url = `/api/milestones?tz=${new Date().getTimezoneOffset()}${hidden ? `&id=${encodeURIComponent(id)}` : ""}`;
+			const res = await fetch(url, {
+				method: hidden ? "DELETE" : "PATCH",
+				...(hidden ? {} : { headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }),
 			});
-			const body = (await res.json()) as { message?: string; id?: string; report?: MilestonesReport };
+			const body = (await res.json()) as { message?: string; report?: MilestonesReport };
 			if (!res.ok || !body.report) throw new Error(body.message ?? `HTTP ${res.status}`);
 			setReport(body.report);
-			setText("");
-			if (body.id) setOpen(body.id);
+			if (hidden) setOpen(null);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		} finally {
-			setAdding(false);
-		}
-	};
-	const remove = async (id: string) => {
-		const res = await fetch(`/api/milestones?id=${encodeURIComponent(id)}&tz=${new Date().getTimezoneOffset()}`, {
-			method: "DELETE",
-		});
-		const body = (await res.json().catch(() => null)) as { report?: MilestonesReport } | null;
-		if (body?.report) setReport(body.report);
-	};
-	const addDated = async () => {
-		const t = datedText.trim();
-		if (!t || !datedDate || datedAdding) return;
-		setDatedAdding(true);
-		setDatedError(null);
-		try {
-			const res = await fetch(`/api/milestones/dated?tz=${new Date().getTimezoneOffset()}`, {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ text: t, date: datedDate }),
-			});
-			const body = (await res.json()) as { message?: string; id?: string; report?: MilestonesReport };
-			if (!res.ok || !body.report) throw new Error(body.message ?? `HTTP ${res.status}`);
-			setReport(body.report);
-			setDatedText("");
-			setDatedDate(null);
-			if (body.id) setOpen(body.id);
-		} catch (err) {
-			setDatedError(err instanceof Error ? err.message : String(err));
-		} finally {
-			setDatedAdding(false);
+			setChangingVisibility(false);
 		}
 	};
 	const saveOutcome = async (id: string, line: string): Promise<string | null> => {
@@ -273,105 +237,91 @@ export function MilestonesPage({
 
 				{facts && <Evidence facts={facts} />}
 
-				{report && sorted.length > 0 && <Timeline items={sorted} paceKnown={(facts?.paceDays ?? 0) >= MIN_PACE_DAYS} />}
-
-				<ol className="mt-6 flex flex-col gap-3" data-testid="milestone-list">
-					{sorted.map((m) => (
-						<MilestoneCard
-							key={m.def.id}
-							m={m}
-							facts={facts}
-							goals={report?.goals ?? {}}
-							open={open === m.def.id}
-							onToggle={() => setOpen(open === m.def.id ? null : m.def.id)}
-							onRemove={m.def.custom ? () => void remove(m.def.id) : undefined}
-							scene={report?.scenes[m.def.id]}
-							onSaveOutcome={(line) => saveOutcome(m.def.id, line)}
-						/>
-					))}
-				</ol>
-
-				{/* Your own milestone, in your words. */}
-				<section className="mt-6 rounded-xl border border-dashed border-line-2 p-4" data-testid="milestone-add">
-					<h2 className="font-ui text-sm font-semibold text-foreground">Add your own</h2>
-					<p className="mt-1 font-prose text-sm text-muted-foreground">
-						Say it the way you would to a friend: “follow my mother-in-law on the phone”, “read a lease”, “watch let's
-						plays”. The AI works out once what kind of language it needs, and keeps the answer.
-					</p>
-					<form
-						className="mt-3 flex flex-wrap items-stretch gap-2"
-						onSubmit={(e) => {
-							e.preventDefault();
-							void add();
-						}}
-					>
-						<SceneInput
-							value={text}
-							onChange={setText}
-							placeholder={modelReady ? "I want to be able to…" : "Turn on AI in Settings → AI models to add your own"}
-							disabled={!modelReady || adding}
-							label="Your milestone"
-							testId="milestone-input"
-						/>
-						<button
-							type="submit"
-							disabled={!modelReady || adding || text.trim().length < 3}
-							className="q-btn primary h-11"
-							data-testid="milestone-submit"
-						>
-							<PlusIcon className="q-ico" />
-							{adding ? "Estimating…" : "Estimate"}
-						</button>
-					</form>
-				</section>
-
-				{/* A scene with a date: the same text box, and the day it should work. */}
-				<section className="mt-6 rounded-xl border border-dashed border-line-2 p-4" data-testid="dated-add">
-					<h2 className="font-ui text-sm font-semibold text-foreground">Add a scene with a date</h2>
-					<p className="mt-1 font-prose text-sm text-muted-foreground">
-						One scene you want to handle, in your own words, and the day you want to be ready for it. The app says
-						whether your real pace gets you there, and asks how it went once the day has passed.
-					</p>
-					<form
-						className="mt-3 flex flex-col gap-4"
-						onSubmit={(e) => {
-							e.preventDefault();
-							void addDated();
-						}}
-					>
-						<div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-							<SceneInput
-								value={datedText}
-								onChange={setDatedText}
-								placeholder={
-									modelReady
-										? "lunch with friends in the city, in the language"
-										: "Turn on AI in Settings → AI models to add a scene"
-								}
-								disabled={!modelReady || datedAdding}
-								label="Your scene"
-								testId="dated-input"
-								className="w-full sm:flex-1"
-							/>
-							<button
-								type="submit"
-								disabled={!modelReady || datedAdding || datedText.trim().length < 3 || !datedDate}
-								className="q-btn primary h-11 w-full sm:w-auto"
-								data-testid="dated-submit"
-							>
-								<PlusIcon className="q-ico" />
-								{datedAdding ? "Adding…" : "Add the scene"}
-							</button>
+				<section className="mt-10" aria-labelledby="your-milestones" data-testid="your-milestones">
+					<div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+						<div className="min-w-0">
+							<h2 id="your-milestones" className="font-ui text-lg font-semibold text-foreground">
+								Your milestones
+							</h2>
+							<p className="mt-1 max-w-xl font-prose text-sm text-muted-foreground">
+								Soonest first. Open one to see what is missing, or hide one you do not need.
+							</p>
 						</div>
-						{report && <DatePicker value={datedDate} today={report.today} onChange={setDatedDate} />}
-					</form>
-					{datedError && (
-						<p role="alert" className="mt-3 font-ui text-sm text-miss">
-							{datedError}
+						<a href="#milestone-add" className="q-btn sec min-h-11 shrink-0" data-testid="milestone-add-link">
+							<PlusIcon className="q-ico" />
+							Add a milestone
+						</a>
+					</div>
+
+					{report && sorted.length > 0 && (
+						<Timeline items={sorted} paceKnown={(facts?.paceDays ?? 0) >= MIN_PACE_DAYS} />
+					)}
+
+					{report && sorted.length === 0 && (
+						<p className="mt-4 q-card p-4 font-prose text-sm text-muted-foreground" data-testid="milestones-empty">
+							Every milestone is hidden. Restore one below, or add your own.
 						</p>
+					)}
+
+					<ol className="mt-4 flex flex-col gap-3" data-testid="milestone-list">
+						{sorted.map((m) => (
+							<MilestoneCard
+								key={m.def.id}
+								m={m}
+								facts={facts}
+								goals={report?.goals ?? {}}
+								open={open === m.def.id}
+								onToggle={() => setOpen(open === m.def.id ? null : m.def.id)}
+								onRemove={() => void changeVisibility(m.def.id, true)}
+								removing={changingVisibility}
+								scene={report?.scenes[m.def.id]}
+								onSaveOutcome={(line) => saveOutcome(m.def.id, line)}
+							/>
+						))}
+					</ol>
+
+					{report && report.hiddenMilestones.length > 0 && (
+						<div className="mt-3" data-testid="hidden-milestones">
+							<button
+								type="button"
+								onClick={() => setHiddenOpen((value) => !value)}
+								aria-expanded={hiddenOpen}
+								aria-controls="hidden-milestone-list"
+								className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-ui text-sm font-semibold text-muted-foreground hover:bg-well hover:text-foreground"
+								data-testid="hidden-milestones-toggle"
+							>
+								Hidden ({report.hiddenMilestones.length})
+								<ChevronDownIcon className={cn("size-4 shrink-0 transition-transform", hiddenOpen && "rotate-180")} />
+							</button>
+							<ul id="hidden-milestone-list" hidden={!hiddenOpen} className="mt-1 q-card divide-y divide-line-2 px-4">
+								{report.hiddenMilestones.map((milestone) => (
+									<li key={milestone.id} className="flex items-center justify-between gap-3 py-2">
+										<span className="min-w-0 font-prose text-sm text-foreground">{milestone.title}</span>
+										<button
+											type="button"
+											disabled={changingVisibility}
+											onClick={() => void changeVisibility(milestone.id, false)}
+											aria-label={`Restore ${milestone.title}`}
+											className="q-btn sec min-h-11 shrink-0"
+											data-testid={`milestone-${milestone.id}-restore`}
+										>
+											Restore
+										</button>
+									</li>
+								))}
+							</ul>
+						</div>
 					)}
 				</section>
 
+				<MilestoneForm
+					modelReady={modelReady}
+					today={report?.today}
+					onAdded={(next, id) => {
+						setReport(next);
+						if (id) setOpen(id);
+					}}
+				/>
 				{report && report.nextWords.length > 0 && (
 					<NextWords words={report.nextWords} queued={queued} onQueue={queue} />
 				)}
@@ -420,8 +370,9 @@ export function MilestonesPage({
 								Listen and Read (planned), or at the deck's real growth over the last two weeks. Speed grows with study
 								hours at your planned minutes × days, or at your real minutes a day over the last two weeks. The
 								milestone's date is the later of the two. Everything is an estimate, and it changes as the evidence
-								does. A scene with a date is on track when the estimate at your real pace falls on or before its date;
-								otherwise the page gives the days it falls later. With no measured speed or pace, it gives no date.
+								does. A milestone with a target date is on track when the estimate at your real pace falls on or before
+								its date; otherwise the page gives the days it falls later. With no measured speed or pace, it gives no
+								date.
 							</p>
 							<ol className="flex flex-col gap-3">
 								{MILESTONE_SOURCES.map((s) => (
@@ -749,6 +700,7 @@ function MilestoneCard({
 	open,
 	onToggle,
 	onRemove,
+	removing,
 	scene,
 	onSaveOutcome,
 }: {
@@ -758,6 +710,7 @@ function MilestoneCard({
 	open: boolean;
 	onToggle: () => void;
 	onRemove?: () => void;
+	removing?: boolean;
 	scene?: DatedSceneView;
 	onSaveOutcome?: (line: string) => Promise<string | null>;
 }) {
@@ -927,11 +880,12 @@ function MilestoneCard({
 						<button
 							type="button"
 							onClick={onRemove}
-							className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-[var(--q-miss-wash)] hover:text-miss"
+							disabled={removing}
+							className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 py-1 font-ui text-xs font-semibold text-muted-foreground hover:bg-[var(--q-miss-wash)] hover:text-miss"
 							data-testid={`milestone-${m.def.id}-remove`}
 						>
 							<XIcon className="size-3.5" />
-							Remove this milestone
+							Hide this milestone
 						</button>
 					)}
 				</div>
@@ -1006,7 +960,6 @@ function SceneDates({ scene, onSave }: { scene: DatedSceneView; onSave: (line: s
 	);
 }
 
-/** The custom-milestone text box, shared by "Add your own" and "Add a scene with a date". */
 function SceneInput({
 	value,
 	onChange,

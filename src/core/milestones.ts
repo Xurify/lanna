@@ -577,6 +577,7 @@ export interface NextWord {
 export interface MilestonesReport {
 	facts: LearnerFacts;
 	milestones: MilestoneEstimate[];
+	hiddenMilestones: MilestoneDef[];
 	/** The commonest dictionary words the learner is not credited with. */
 	nextWords: NextWord[];
 	/** The map's can-do goals, by id: title and whether they are done. */
