@@ -7,9 +7,9 @@ import { ProblemCard, ConcludeCard } from "@/components/practice-cards";
 /**
  * Artifact renderer registry — the extension point for tool-part UI.
  *
- * chat.tsx renders any tool part it doesn't specially handle (i.e. not
+ * components/chat/assistant-part.tsx renders any tool part it doesn't specially handle (i.e. not
  * quiz/ask) by looking the tool name up here. Add your renderer — do NOT
- * edit chat.tsx.
+ * edit the chat screen.
  *
  * Typical shape: while the part is input-available render a working line;
  * when output-available render the artifact itself from part.output.

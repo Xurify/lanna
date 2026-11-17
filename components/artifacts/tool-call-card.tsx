@@ -9,7 +9,7 @@ import type { ArtifactPartProps } from "@/src/core";
  * argument — expandable to the full input and output. The user's spec:
  * "at least the tool name; for read, the file name; everything collapsed
  * by default; not distracting — background stuff." Unregistered tools
- * still render nothing (chat.tsx's registry default); this card is only
+ * still render nothing (the chat screen's registry default); this card is only
  * for the learner-filesystem set (read/ls/find/grep) where the call IS
  * worth a trace in the transcript.
  */
