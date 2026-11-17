@@ -267,7 +267,7 @@ export function Start({
 
 	const stageError = useCallback((msg: string) => setError(msg), []);
 
-	/** The Socratic follow-up: a Learn session seeded with the misses. */
+	/** The Socratic follow-up: an Ask chat seeded with the misses. */
 	const goDeeper = () => {
 		const missed = outcome?.missed ?? [];
 		const lines = missed
