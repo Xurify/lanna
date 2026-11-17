@@ -14,7 +14,7 @@ export interface SavedLearnerImage {
 }
 
 export function learnerImageDir(): string {
-	return path.join(PATHS.data, "sources");
+	return PATHS.sentFiles;
 }
 
 export function learnerImageFileName(original: string, ext: string): string {

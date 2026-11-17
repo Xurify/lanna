@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { AssistantMessage, Message, ToolResultMessage, Usage, Tool } from "@earendil-works/pi-ai";
 import { normalizeContext } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
-import { resolveSourcePath } from "../tools/fs-shared.ts";
+import { resolveSentFile } from "../tools/sent-files.ts";
 import { piEngineFor, type PiEngine, type ThinkingLevel } from "../models.ts";
 import { providerEventObserver, type ProviderEventObserver } from "../provider-events.ts";
 import type { PdfResult, PdfToolInput } from "../../core/contracts.ts";
@@ -170,7 +170,18 @@ const UNREAD_FINISH_MESSAGE =
 export async function runPdfReaderAgent(input: PdfReaderInput, opts: PdfReaderOptions = {}): Promise<PdfResult> {
 	const renderer = opts.pdfPages ?? pdfPages;
 	const maxIterations = opts.maxIterations ?? MAX_ITERATIONS;
-	const pdfPath = resolveSourcePath(input.path);
+	let pdfPath: string;
+	try {
+		pdfPath = await resolveSentFile(input.path);
+	} catch (err) {
+		return {
+			path: input.path,
+			question: input.question,
+			brief: `PDF failed: ${(err as Error).message}`,
+			pagesRead: [],
+			pagesConsulted: [],
+		};
+	}
 
 	// Deterministic upfront failure: unreadable / unparseable
 	// for renders — the brief never starts on a broken source.

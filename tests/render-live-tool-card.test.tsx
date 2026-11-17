@@ -28,16 +28,16 @@ describe("LiveToolCard (the working-state grammar)", () => {
 		assert.match(html, /notes\.md/);
 	});
 
-	it("unknown tools stay generic; jobs get their dispatch labels", () => {
+	it("unknown tools stay generic; research names its work", () => {
 		assert.match(renderToStaticMarkup(<LiveToolCard part={part("mystery_tool", {}) as never} />), /Working…/);
 		assert.match(
 			renderToStaticMarkup(<LiveToolCard part={part("research", { query: "x" }) as never} />),
-			/Dispatching research…/,
+			/Researching…/,
 		);
 	});
 
 	it("no input yet renders a placeholder, not an empty pre", () => {
-		const html = renderToStaticMarkup(<LiveToolCard part={part("grep", undefined) as never} />);
+		const html = renderToStaticMarkup(<LiveToolCard part={part("read", undefined) as never} />);
 		assert.match(html, /<pre[^>]*>…<\/pre>/);
 	});
 });

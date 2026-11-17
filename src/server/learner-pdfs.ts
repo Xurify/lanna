@@ -14,7 +14,7 @@ export interface SavedLearnerPdf {
 }
 
 export function learnerPdfDir(): string {
-	return path.join(PATHS.data, "sources");
+	return PATHS.sentFiles;
 }
 
 export function learnerPdfFileName(original: string): string {

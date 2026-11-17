@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 import {
 	createFauxCore,
 	createModels,
@@ -25,9 +25,11 @@ import { runPdfReaderAgent } from "../src/agent/subagents/pdf-reader.ts";
 import type { PdfPageRenderer } from "../src/agent/subagents/pdf-pages.ts";
 import { AUTH_PROVIDER_KEYS } from "../src/core/auth-keys.ts";
 import { providerEventsDir } from "../src/agent/provider-events.ts";
+import { sendCopy, unsend } from "./fixtures/sent-files.ts";
 
 const OR_KEY = "dummy-openrouter-MUST-NOT-REACH-other-endpoints";
 const FIXTURE = path.join(import.meta.dirname, "fixtures", "sample-3page.pdf");
+let sentPdf = "";
 const PNG = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==",
 	"base64",
@@ -157,7 +159,7 @@ function callsFor(loop: Loop, round: number): Call[] {
 function fakeRenderer(renders: string[]): PdfPageRenderer {
 	return {
 		renderPdfPages: async (file, pages, opts) => {
-			assert.equal(file, FIXTURE);
+			assert.equal(file, sentPdf);
 			assert.deepEqual(pages, [1]);
 			assert.equal(opts?.dpi, 100);
 			renders.push("pdf:1");
@@ -179,13 +181,13 @@ async function runLoop(loop: Loop, engine: PiEngine, signal = new AbortControlle
 		// Direct recording cases enable the observer into an isolated temp dir.
 		chatId: "provider-neutral-offline",
 	};
-	const result = await runPdfReaderAgent({ path: FIXTURE, question: "Read page 1" }, opts);
+	const result = await runPdfReaderAgent({ path: sentPdf, question: "Read page 1" }, opts);
 	return { result, renders, activities, usages };
 }
 
 function assertSuccess(loop: Loop, run: Awaited<ReturnType<typeof runLoop>>) {
 	assert.equal(run.result.brief, FINAL);
-	assert.equal(run.result.path, FIXTURE);
+	assert.equal(run.result.path, sentPdf);
 	assert.deepEqual(run.result.pagesRead, [1]);
 	assert.deepEqual(run.result.pagesConsulted, [1]);
 	assert.deepEqual(run.renders, ["pdf:1"]);
@@ -196,6 +198,11 @@ function assertSuccess(loop: Loop, run: Awaited<ReturnType<typeof runLoop>>) {
 
 // All global/env cases in this file are deliberately serial.
 describe("provider-neutral raw agent loops", { concurrency: false }, () => {
+	before(() => {
+		sentPdf = sendCopy(FIXTURE, path.join("provider-neutral", "sample-3page.pdf"));
+	});
+	after(() => unsend("provider-neutral"));
+
 	for (const loop of LOOPS) {
 		it(`${loop}: every actual stream request has NO credential override (recording faux engine)`, async () => {
 			await isolated({ OPENROUTER_API_KEY: OR_KEY, LANNA_PROVIDER_EVENTS: "1" }, async () => {

@@ -5,8 +5,6 @@
  * nothing touches the network.
  */
 import assert from "node:assert/strict";
-import * as fs from "node:fs";
-import * as os from "node:os";
 import * as path from "node:path";
 import { after, before, describe, it } from "node:test";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
@@ -24,6 +22,7 @@ import { sourceTools, type SourceToolContext } from "../src/agent/tools/sources.
 import { createPdfTools } from "../src/agent/subagents/pdf-reader.ts";
 import { webTools } from "../src/agent/tools/web.ts";
 import { stubSafeFetch } from "./fixtures/stub-safe-fetch.ts";
+import { sendCopy, unsend } from "./fixtures/sent-files.ts";
 
 const BRIEF = `## Summary
 sigma.js v3 is current.
@@ -173,38 +172,26 @@ describe("research tool", () => {
 
 describe("pdf tool", () => {
 	const PDF_FIXTURE = path.join(import.meta.dirname, "fixtures", "sample-3page.pdf");
-	const relativePath = path.join("Course notes", "sample document.pdf");
-	let home: string;
-	const originalHome = process.env.HOME;
-	const originalUserProfile = process.env.USERPROFILE;
+	const SENT = "source-tools";
+	const relativePath = path.join(SENT, "Course notes", "sample document.pdf");
+	let sent: string;
 
 	before(() => {
-		home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-pdf-tool-home-"));
-		const target = path.join(home, relativePath);
-		fs.mkdirSync(path.dirname(target), { recursive: true });
-		fs.copyFileSync(PDF_FIXTURE, target);
-		process.env.HOME = home;
-		process.env.USERPROFILE = home;
+		sent = sendCopy(PDF_FIXTURE, relativePath);
 	});
 
-	after(() => {
-		if (originalHome === undefined) delete process.env.HOME;
-		else process.env.HOME = originalHome;
-		if (originalUserProfile === undefined) delete process.env.USERPROFILE;
-		else process.env.USERPROFILE = originalUserProfile;
-		fs.rmSync(home, { recursive: true, force: true });
-	});
+	after(() => unsend(SENT));
 
 	it("reads the PDF in the call and returns the brief with the pages it read and consulted", async () => {
 		const engine = pdfReaderEngine();
 		const { tools, recorded } = toolsWith({ pdf: engine });
 
-		const { text, details } = await run(tools.pdf, { path: PDF_FIXTURE, question: "What is the integral of x dx?" });
+		const { text, details } = await run(tools.pdf, { path: sent, question: "What is the integral of x dx?" });
 
 		const result = details as PdfResult;
 		assert.match(text, /integral rule/);
 		assert.equal(result.brief, text);
-		assert.equal(result.path, PDF_FIXTURE);
+		assert.equal(result.path, sent);
 		assert.deepEqual(result.pagesRead, [1, 2], "extracted pages are READ pages");
 		assert.deepEqual(result.pagesConsulted, [1, 2]);
 		assert.deepEqual(
@@ -213,16 +200,30 @@ describe("pdf tool", () => {
 		);
 	});
 
-	it("a home-relative path resolves to the PDF's absolute path in the result", async () => {
+	it("a relative path resolves inside the sent-files folder to the PDF's real path", async () => {
 		const { tools } = toolsWith({ pdf: pdfReaderEngine() });
 		const { details } = await run(tools.pdf, { path: relativePath, question: "What is the integral of x dx?" });
 		const result = details as PdfResult;
-		assert.equal(result.path, path.join(home, relativePath));
+		assert.equal(result.path, sent);
 		assert.deepEqual(result.pagesRead, [1, 2]);
 	});
 
+	it("a PDF outside the sent-files folder is refused, and no reader runs", async () => {
+		const { tools, recorded } = toolsWith({ pdf: pdfReaderEngine() });
+		const { text, details } = await run(tools.pdf, { path: PDF_FIXTURE, question: "anything" });
+		assert.equal(
+			text,
+			"PDF failed: Only the PDFs and images the learner sends with the composer's buttons can be read.",
+		);
+		assert.equal((details as PdfResult).path, PDF_FIXTURE);
+		assert.deepEqual(recorded, []);
+	});
+
 	it("an unreadable source returns 'PDF failed: …' with no pages read", async () => {
-		const badPath = path.join(import.meta.dirname, "fixtures", "not-a-pdf.txt");
+		const badPath = sendCopy(
+			path.join(import.meta.dirname, "fixtures", "not-a-pdf.txt"),
+			path.join(SENT, "not-a-pdf.txt"),
+		);
 		const { tools } = toolsWith({ pdf: pdfReaderEngine() });
 		const { text, details } = await run(tools.pdf, { path: badPath, question: "anything" });
 		assert.match(text, /^PDF failed:/);
@@ -233,9 +234,9 @@ describe("pdf tool", () => {
 
 	it("no pdf model set: the brief says so, and no reader runs", async () => {
 		const { tools, recorded } = toolsWith({});
-		const { text, details } = await run(tools.pdf, { path: PDF_FIXTURE, question: "anything" });
+		const { text, details } = await run(tools.pdf, { path: sent, question: "anything" });
 		assert.equal(text, "PDF failed: no model is set for it (Settings → AI models).");
-		assert.equal((details as PdfResult).path, PDF_FIXTURE);
+		assert.equal((details as PdfResult).path, sent);
 		assert.deepEqual(recorded, []);
 	});
 });

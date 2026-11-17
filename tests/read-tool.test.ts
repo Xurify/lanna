@@ -10,10 +10,16 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { describe, it } from "node:test";
+import { after, describe, it } from "node:test";
 import { readTool } from "../src/agent/tools/read.ts";
+import { PATHS } from "../config.ts";
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-read-test-"));
+const tmp = path.join(PATHS.sentFiles, "read-tool");
+fs.mkdirSync(tmp, { recursive: true });
+after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+
+const OUTSIDE = "Only the PDFs and images the learner sends with the composer's buttons can be read.";
+const TEXT_FIXTURE = path.join(import.meta.dirname, "fixtures", "cheatsheet-a.txt");
 
 function write(name: string, content: string): string {
 	const file = path.join(tmp, name);
@@ -38,18 +44,9 @@ describe("read tool — text semantics", () => {
 		assert.equal(details, "hello\nworld", "the record part output carries the string verbatim");
 	});
 
-	it("resolves relative paths against the learner's home (sources v1 anchoring)", async () => {
-		// sources v1: the harness has no meaningful cwd — "find my notes" must
-		// work from a bare relative path, so the home directory is the anchor
-		// (fs-shared resolveSourcePath). Scratch file in home, cleaned up.
-		const rel = `lanna-read-rel-test-${process.pid}.txt`;
-		const homeFile = path.join(os.homedir(), rel);
-		fs.writeFileSync(homeFile, "rel", "utf-8");
-		try {
-			assert.equal((await run({ path: rel })).text, "rel");
-		} finally {
-			fs.unlinkSync(homeFile);
-		}
+	it("resolves a relative path inside the sent-files folder", async () => {
+		write("relative.txt", "rel");
+		assert.equal((await run({ path: path.join("read-tool", "relative.txt") })).text, "rel");
 	});
 
 	it("honors offset (1-indexed) and limit", async () => {
@@ -66,7 +63,7 @@ describe("read tool — text semantics", () => {
 	});
 
 	it("a missing file throws (pi's error-result semantics)", async () => {
-		await assert.rejects(() => run({ path: path.join(tmp, "nope.txt") }), /ENOENT/);
+		await assert.rejects(() => run({ path: path.join(tmp, "nope.txt") }), /No such file: .*nope\.txt$/);
 	});
 
 	it("truncates at 2000 lines with a use-offset continuation notice", async () => {
@@ -178,5 +175,26 @@ describe("read tool — PDFs", () => {
 		const file = writePdf("scan.pdf", [LINE, ""]);
 		const { text } = await run({ path: file });
 		assert.match(text, /page 2 has little or no text \(likely scanned\)\. Call pdf with this path/);
+	});
+});
+
+describe("read tool — only the learner's sent files", () => {
+	it("refuses a file in the OS temp dir, which is outside the sent-files folder", async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-read-outside-"));
+		try {
+			const file = path.join(dir, "notes.txt");
+			fs.writeFileSync(file, "outside");
+			await assert.rejects(() => run({ path: file }), { message: OUTSIDE });
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("refuses a fixture in the repository", async () => {
+		await assert.rejects(() => run({ path: TEXT_FIXTURE }), { message: OUTSIDE });
+	});
+
+	it("refuses a relative path that climbs out of the sent-files folder", async () => {
+		await assert.rejects(() => run({ path: path.relative(PATHS.sentFiles, TEXT_FIXTURE) }), { message: OUTSIDE });
 	});
 });

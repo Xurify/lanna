@@ -3,32 +3,16 @@ import * as path from "node:path";
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { serverExecute, type ImageFileResult } from "../tool-execute.ts";
-import { assertNotSecret, resolveSourcePath } from "./fs-shared.ts";
+import { resolveSentFile } from "./sent-files.ts";
 import { pdfExtract, pdfInfo } from "../subagents/pdf-ops.ts";
 
 /**
- * The read tool — sources v0 (2026-09): a Node port of pi's read semantics
- * for the learner's local files. The flow is learner-owned: he pastes file
- * paths into the chat, the agent reads on its own terms (nothing is
- * auto-injected). Unrestricted local reads are the user-decided v0 scope —
- * this is a personal study harness, not a multi-tenant service.
- *
- * Ported behaviors (mirroring pi's dist/core/tools/read.js):
- * - text files: utf-8, offset (1-indexed) / limit slicing, and the
- *   2000-line / 50KB truncation ceiling with actionable "use offset=N"
- *   continuation notices — a huge file never silently floods the context.
- * - image files (jpg/png/gif/webp/bmp): returned as native image content
- *   parts so the vision-capable model actually SEES them (teacher's
- *   glm-5.3-flash accepts image input per pi's zai catalog; tool-execute's
- *   toToolResult maps ImageFileResult to pi's ImageContent).
- * - unreadable/missing files throw — pi turns that into an error tool
- *   result the model sees and recovers from.
- *
- * Usage guidance ships in the description (the self-contained-tools
- * principle, user-decided 2026-09: system prompts reference only
- * always-on tools — read IS always-on, but its doctrine still lives here).
+ * The read tool: a file the learner sent with the composer's PDF or Image
+ * button (its path is in their message) — never anything else on the disk.
+ * Images come back as image content the model sees; a short PDF with real
+ * text comes back as text by page; a long or scanned PDF points to the pdf
+ * tool. Text output keeps pi's 2000-line / 50KB ceiling with offset/limit.
  */
-
 const MAX_LINES = 2000;
 
 const INLINE_PDF_MAX_PAGES = 10;
@@ -91,24 +75,16 @@ function readTextSlice(text: string, offset: number | undefined, limit: number |
 	return `${selected.join("\n")}\n\n[Showing lines ${startLine + 1}-${endLineDisplay} of ${totalLines} (${reason}). Use offset=${endLineDisplay + 1} to continue.]`;
 }
 
-/**
- * The read tool, shared verbatim by the prober and the teacher. Sources v1
- * (2026-09-19): the description is pi-verbatim (user: copy tool usage
- * guidance exactly) — the teaching doctrine moved to the shared prompt
- * fragment (prompts/shared/). Relative paths resolve against the
- * learner's home (fs-shared.ts), the harness's anchor.
- */
 export const readTool: AgentTool<typeof readInput> = {
 	name: "read",
 	label: "read",
-	description: `Read the contents of a file. Supports text files, images (jpg, png, gif, webp, bmp) and short PDFs. Images are sent as attachments. A PDF of up to ${INLINE_PDF_MAX_PAGES} pages with real text comes back as text marked "--- Page N ---"; a longer or scanned PDF returns a note to use the pdf tool instead. For text files, output is truncated to 2000 lines or 50.0KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.`,
+	description: `Read a file the learner sent with the PDF or Image button; its path is in their message. Nothing else on their computer can be read. Supports images (jpg, png, gif, webp, bmp), short PDFs and text files. Images are sent as attachments. A PDF of up to ${INLINE_PDF_MAX_PAGES} pages with real text comes back as text marked "--- Page N ---"; a longer or scanned PDF returns a note to use the pdf tool instead. For text files, output is truncated to 2000 lines or 50.0KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.`,
 	parameters: readInput,
 	execute: serverExecute(
 		"read",
 		readInput,
 		async ({ path: rawPath, offset, limit }): Promise<string | ImageFileResult> => {
-			const absolute = resolveSourcePath(rawPath);
-			await assertNotSecret(absolute);
+			const absolute = await resolveSentFile(rawPath);
 			const ext = path.extname(absolute).toLowerCase();
 			const mime = IMAGE_MIME[ext];
 			if (ext === ".pdf") return readPdf(absolute);

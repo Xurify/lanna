@@ -17,9 +17,6 @@
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { readTool } from "./read.ts";
-import { lsTool } from "./ls.ts";
-import { findTool } from "./find.ts";
-import { grepTool } from "./grep.ts";
 import { sourceTools, type SourceToolContext } from "./sources.ts";
 import { activeProblemOf } from "../../core/native-messages.ts";
 import type { LannaMessage } from "../../core/native-messages.ts";
@@ -199,9 +196,6 @@ export function practiceTools(ctx: PracticeToolContext): Record<string, AgentToo
 		problem: problemTool(gate),
 		conclude: concludeTool(gate),
 		read: readTool,
-		ls: lsTool,
-		find: findTool,
-		grep: grepTool,
 		...(sources ? { research: sources.research, pdf: sources.pdf } : {}),
 		...languageTools(ctx.review),
 	});

@@ -19,20 +19,12 @@ function toolPart(tool: string, state: string) {
 }
 
 describe("streamingToolActivity (the turn-activity label)", () => {
-	it("local tools name their actual activity", () => {
-		assert.equal(
-			streamingToolActivity([msg("assistant", [toolPart("grep", "input-streaming")])]),
-			"Searching file contents…",
-		);
+	it("tools name their actual activity", () => {
 		assert.equal(streamingToolActivity([msg("assistant", [toolPart("read", "input-streaming")])]), "Reading a file…");
-		assert.equal(streamingToolActivity([msg("assistant", [toolPart("find", "input-streaming")])]), "Finding files…");
-		assert.equal(
-			streamingToolActivity([msg("assistant", [toolPart("ls", "input-streaming")])]),
-			"Listing a directory…",
-		);
+		assert.equal(streamingToolActivity([msg("assistant", [toolPart("research", "input-streaming")])]), "Researching…");
 	});
 
-	it("job dispatch tools get their own labels; unknown tools stay generic", () => {
+	it("the pdf reader has its own label; unknown tools stay generic", () => {
 		assert.equal(streamingToolActivity([msg("assistant", [toolPart("pdf", "input-streaming")])]), "Reading a PDF…");
 		assert.equal(streamingToolActivity([msg("assistant", [toolPart("mystery_tool", "input-streaming")])]), "Working…");
 	});
@@ -40,7 +32,7 @@ describe("streamingToolActivity (the turn-activity label)", () => {
 	it("no activity once the call settles or the turn ends", () => {
 		// output-available = done executing → no shimmer (the transcript
 		// shows the settled card instead).
-		assert.equal(streamingToolActivity([msg("assistant", [toolPart("grep", "output-available")])]), null);
+		assert.equal(streamingToolActivity([msg("assistant", [toolPart("research", "output-available")])]), null);
 		// the last message being the user's = nothing running.
 		assert.equal(streamingToolActivity([msg("user", [{ type: "text", text: "hi" }])]), null);
 		assert.equal(streamingToolActivity([]), null);
@@ -48,7 +40,7 @@ describe("streamingToolActivity (the turn-activity label)", () => {
 
 	it("the SECOND streaming part wins only if the first settles — parts scan forward", () => {
 		// A settled call followed by a live one: the live one is the activity.
-		const parts = [toolPart("read", "output-available"), toolPart("grep", "input-streaming")];
-		assert.equal(streamingToolActivity([msg("assistant", parts)]), "Searching file contents…");
+		const parts = [toolPart("read", "output-available"), toolPart("research", "input-streaming")];
+		assert.equal(streamingToolActivity([msg("assistant", parts)]), "Researching…");
 	});
 });
