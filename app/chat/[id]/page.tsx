@@ -1,7 +1,15 @@
 import { Chat } from "@/components/chat";
 import { SessionGone } from "@/components/session-gone";
 import { slotsConfigured } from "@/src/core";
-import { compactionInFlight, getChat, isTurnRunning, readSettingsRecord, trashedChat, turnFailure } from "@/src/server";
+import {
+	askedAbout,
+	compactionInFlight,
+	getChat,
+	isTurnRunning,
+	readSettingsRecord,
+	trashedChat,
+	turnFailure,
+} from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +42,7 @@ export default async function ChatPage({
 			initialError={turnFailure(chat.id)}
 			initialConfigured={slotsConfigured(record?.models)}
 			initialPrompt={prompt}
+			about={askedAbout(chat.id)}
 			// A teacher turn that outlived its client: the remounted view must
 			// attach (busy shimmer + poll), never resurrect the stale record.
 			initiallyInFlight={isTurnRunning(chat.id)}

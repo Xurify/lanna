@@ -371,6 +371,8 @@ interface WhyEntry {
 	lemma: string;
 	/** The learner's answer the first time they asked. */
 	given: string;
+	translation?: string;
+	focus?: string;
 	chatId: string;
 	createdAt: string;
 	/** How many times the chat was reopened instead of regenerated. */

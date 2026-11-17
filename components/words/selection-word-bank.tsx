@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
 	BookmarkCheckIcon,
 	BookmarkIcon,
 	CheckIcon,
 	ExternalLinkIcon,
+	MessageCircleQuestionIcon,
 	PinIcon,
 	PinOffIcon,
 	StarIcon,
@@ -18,6 +19,7 @@ import { fitPopoverTop, POPOVER_EDGE, POPOVER_GAP } from "@/components/words/pop
 import { speak, useActiveLanguage } from "@/components/speech";
 import { useWordTranslationMode, type WordTranslationMode } from "@/components/settings/device-prefs";
 import { wordLinks } from "@/components/words/word-links";
+import { askAbout } from "@/components/lesson/tutor";
 
 /**
  * Evaluates whether a DOM node is valid target-language learning content.
@@ -115,8 +117,22 @@ const MODE_BADGE_LABELS: Record<WordTranslationMode, string> = {
 	google: "Google",
 };
 
+function sentenceAround(range: Range | null): { sentence: string; translation?: string } {
+	const node = range?.commonAncestorContainer;
+	const el = node?.nodeType === 1 ? (node as Element) : node?.parentElement;
+	const marked = el?.closest("[data-ask-context]");
+	const block = el?.closest("p, li, blockquote, h1, h2, h3, td");
+	const sentence = (marked?.getAttribute("data-ask-context") || block?.textContent || "")
+		.replace(/\s+/g, " ")
+		.trim()
+		.slice(0, 400);
+	return { sentence, translation: marked?.getAttribute("data-ask-translation") ?? undefined };
+}
+
 export function SelectionWordBankBar() {
 	const pathname = usePathname();
+	const router = useRouter();
+	const [asking, setAsking] = useState(false);
 	const [selection, setSelection] = useState<SelectionInfo | null>(null);
 	const [lookup, setLookup] = useState<LookupData | null>(null);
 	const [loadingLookup, setLoadingLookup] = useState(false);
@@ -515,6 +531,19 @@ export function SelectionWordBankBar() {
 		}).catch(() => {});
 	};
 
+	const handleAsk = async () => {
+		if (asking) return;
+		setAsking(true);
+		try {
+			await askAbout(router, { kind: "part", part: selection.text, ...sentenceAround(activeRangeRef.current) });
+			window.getSelection()?.removeAllRanges();
+			activeRangeRef.current = null;
+			setSelection(null);
+		} finally {
+			setAsking(false);
+		}
+	};
+
 	const handleSavePhrase = async () => {
 		if (phraseSaved) return;
 		setPhraseSaved(true);
@@ -736,7 +765,7 @@ export function SelectionWordBankBar() {
 				</div>
 
 				{/* Action buttons */}
-				<div className="flex items-center gap-1.5">
+				<div className="flex flex-wrap items-center gap-1.5">
 					<button
 						type="button"
 						onMouseDown={(e) => e.preventDefault()}
@@ -800,6 +829,19 @@ export function SelectionWordBankBar() {
 								Save phrase
 							</>
 						)}
+					</button>
+
+					<button
+						type="button"
+						onMouseDown={(e) => e.preventDefault()}
+						onClick={() => void handleAsk()}
+						disabled={asking}
+						title="Ask the tutor about this, in a chat"
+						data-testid="selection-ask"
+						className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent px-3 py-1.5 font-ui text-xs font-semibold text-foreground transition-colors whitespace-nowrap hover:bg-well-2 disabled:opacity-60"
+					>
+						<MessageCircleQuestionIcon className="size-3.5" />
+						Ask
 					</button>
 				</div>
 			</div>

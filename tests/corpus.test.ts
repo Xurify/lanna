@@ -22,7 +22,7 @@ const { PATHS } = await import("../config.ts");
 const corpus = await import("../src/store/corpus.ts");
 const { chatStore } = await import("../src/store/chats.ts");
 const { recordLesson } = await import("../src/server/lesson.ts");
-const { openWhy } = await import("../src/server/why.ts");
+const { askedAbout, openWhy } = await import("../src/server/why.ts");
 const { exportCorpus, exportDialogue, sentencesFrom } = await import("../src/server/corpus-export.ts");
 const { ttsCacheKey } = await import("../src/server/tts.ts");
 
@@ -427,5 +427,30 @@ describe("ElevenLabs reads Estonian with a model that knows it", () => {
 			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;
 			else process.env.ELEVENLABS_API_KEY = hadKey;
 		}
+	});
+});
+
+describe("what a chat was asked about", () => {
+	it("gives a sentence question its sentence, translation and the word that was needed", () => {
+		const { id } = openWhy({
+			title: "t",
+			sentence: "Na stanici ma čakal nejaký muž.",
+			answer: "Na stanici ma čakal nejaký muž.",
+			lemma: "muž",
+			given: "xyz",
+			translation: "A man was waiting for me at the station.",
+			focus: "muž",
+		});
+		assert.deepEqual(askedAbout(id), {
+			sentence: "Na stanici ma čakal nejaký muž.",
+			part: "muž",
+			given: "xyz",
+			translation: "A man was waiting for me at the station.",
+			entry: null,
+		});
+	});
+
+	it("knows nothing about a chat that was not opened from a question", () => {
+		assert.equal(askedAbout("chat_nobody_asked"), null);
 	});
 });

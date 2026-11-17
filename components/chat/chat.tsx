@@ -18,6 +18,7 @@ import { ChatActionsContext } from "@/components/chat/chat-actions";
 import { SessionTitle } from "@/components/chat/header-title";
 import { HeaderActions } from "@/components/chat/header-actions";
 import { Transcript } from "@/components/chat/transcript";
+import type { AskedAbout as AskedAboutData } from "@/src/core";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { DockOverlay } from "@/components/chat/dock";
 import { SetupCta } from "@/components/chat/setup-pill";
@@ -54,6 +55,7 @@ interface ChatProps {
 	initiallyInFlight?: boolean;
 	initiallyCompacting?: boolean;
 	initialConfigured?: boolean;
+	about?: AskedAboutData | null;
 }
 
 export function Chat({
@@ -66,6 +68,7 @@ export function Chat({
 	initiallyCompacting = false,
 	initialConfigured = false,
 	kind = "chat",
+	about = null,
 }: ChatProps) {
 	const {
 		messages,
@@ -268,6 +271,7 @@ export function Chat({
 										drill={drill}
 										onPageTitle={setPageTitle}
 										onPickReply={sendActions.sendQuickReply}
+										about={about}
 									/>
 									<div aria-hidden data-testid="dock-spacer" style={{ height: dockReserve }} />
 								</ConversationContent>
