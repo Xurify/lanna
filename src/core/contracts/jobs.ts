@@ -7,7 +7,6 @@
  * of "ai" (safe everywhere: server, client, tests).
  */
 import type { CallUsage } from "./chat.ts";
-import type { LannaMessage, LannaMarkerMessage } from "../native-messages.ts";
 
 // ─── Async sub-agent jobs (vision §2.5; plan.md Wave 0 protocol) ────────────
 
@@ -199,22 +198,6 @@ export interface ResearchResult {
 	sources: { title: string; url: string }[];
 }
 
-export interface VisualToolInput {
-	/** Precise brief for ONE visual (what it must show, exactly). */
-	brief: string;
-}
-
-export interface VisualResult {
-	/** Complete SVG markup (verified by the maker looking at the render). */
-	svg: string;
-	notes?: string;
-}
-
-/** The pdf-reader (sources v0, 2026-09): reads a learner-provided PDF on
- *  the teacher's behalf — triage, targeted extraction, look-at-the-page
- *  renders inside its own loop — and returns a text brief with page
- *  citations (user-decided: rendered images never leave the sub-agent's
- *  context; the teacher gets text). */
 export interface PdfToolInput {
 	/** Path to the learner's PDF (relative or absolute). */
 	path: string;
@@ -236,155 +219,4 @@ export interface PdfResult {
 	/** Every page whose content entered the loop, search-hit context lines
 	 *  included — the full audit set (the brief's citations may point here). */
 	pagesConsulted: number[];
-}
-
-// ─── Sub-agent steer messages (THE ASYNC PROTOCOL §3–4) ─────────────────────
-//
-// Wave B (owner-approved 2026-09-26): steers are NATIVE record messages —
-// LannaMarkerMessage customs (role "custom"), the custom-message taxonomy's
-// wake members. The model-facing text rides `content` (single-sourced
-// below); the UI payload (the artifact, the abort badge) rides `details`
-// and never reaches the model (toLlmMessages maps the marker to a user
-// message carrying `content` only). The deterministic id (`steer_<jobId>`)
-// IS the idempotency key — steerDelivered matches on it.
-
-/** Message metadata marking a sub-agent steer (contracts.ts §3). */
-export interface SubagentResultMeta {
-	jobId: string;
-	kind: JobKind;
-	toolCallId: string;
-	/** Present only on an abort steer (2026-09 abort semantics): the
-	 * learner aborted the job (it lands as error "Aborted by learner");
-	 * the teacher is told so its promise of a result doesn't hang
-	 * silently in the lesson. */
-	aborted?: true;
-}
-
-/** The data-subagent-artifact part payload: what the UI renders. */
-export interface SubagentArtifactData {
-	kind: JobKind;
-	result: ResearchResult | VisualResult | PdfResult;
-	/** The learner's pinned UI state (invert switch) riding the record. */
-	ui?: { inverted?: boolean };
-}
-
-/** A result steer's marker details: the UI's meta + artifact in one
- *  payload (the projection splits it into metadata + data part). */
-export interface SteerDetails extends SubagentResultMeta {
-	result: ResearchResult | VisualResult | PdfResult;
-	/** LEARNER UI state pinned onto the artifact (owner, 2026-10-07): the
-	 *  invert switch's position, persisted so navigating away and back (or
-	 *  restarting) keeps it. A VIEW preference — never enters the teacher's
-	 *  context, never exports (the markdown engine reads `result` only). */
-	ui?: { inverted?: boolean };
-}
-
-/** Set a steer message's ui.inverted (pure): returns a NEW message array
- *  with the target's details updated — no-op (same array) when the message
- *  is missing or not an invertible artifact steer. The silent route's
- *  whole body. */
-export function setSteerUiInverted(
-	messages: readonly LannaMessage[],
-	messageId: string,
-	inverted: boolean,
-): LannaMessage[] {
-	return messages.map((m) => {
-		if (m.id !== messageId) return m;
-		const d = (m as LannaMarkerMessage).details as Partial<SteerDetails> | undefined;
-		if (!d || d.kind !== "visual") return m;
-		return { ...m, details: { ...d, ui: { ...d.ui, inverted } } } as LannaMessage;
-	});
-}
-
-/** Anything the wake pipeline may queue and deliver — a native marker. */
-export type SteerMessage = LannaMarkerMessage;
-
-/** Whether a result is the failure shape (svg empty, failure brief). */
-export function isSubagentFailure(kind: JobKind, result: ResearchResult | VisualResult | PdfResult): boolean {
-	if (kind === "research") {
-		const r = result as ResearchResult;
-		return r.sources.length === 0 && /^Research failed:/i.test(r.brief);
-	}
-	if (kind === "pdf") {
-		const r = result as PdfResult;
-		return /^PDF failed:/i.test(r.brief);
-	}
-	const r = result as VisualResult;
-	return typeof r.svg !== "string" || r.svg.length === 0;
-}
-
-/** The model-facing text of a steer: what the result IS, what to do with it. */
-function steerText(kind: JobKind, result: ResearchResult | VisualResult | PdfResult): string {
-	if (isSubagentFailure(kind, result)) {
-		if (kind === "research")
-			return `${(result as ResearchResult).brief}\n\nContinue with what you can establish and flag the uncertainty to the learner.`;
-		if (kind === "pdf")
-			return `${(result as PdfResult).brief}\n\nContinue with what you can establish from the session and flag the gap to the learner.`;
-		return `The figure could not be made: ${(result as VisualResult).notes ?? "unknown reason"}. Fall back to prose or mermaid, or re-call visual with a tighter brief.`;
-	}
-	if (kind === "research")
-		return `Research complete — the researcher's full brief follows. Weave it into the lesson and cite its sources when you use its findings:\n\n${(result as ResearchResult).brief}`;
-	if (kind === "pdf")
-		return `PDF reading complete — the reader's brief on "${(result as PdfResult).path}" follows, with page citations. Weave it into the lesson and cite pages when you use it:\n\n${(result as PdfResult).brief}`;
-	return `The figure is drawn, verified by inspection, and rendered in the lesson. Maker notes: ${
-		(result as VisualResult).notes ?? "(none)"
-	}.\nReference its elements as you teach.`;
-}
-
-/**
- * Build the steer message for a finished job (pure — shared by the runner,
- * the wake pipeline, and tests). Deterministic id per job makes re-delivery
- * idempotent.
- */
-export function buildSubagentSteer(
-	job: Pick<JobRecord, "id" | "kind" | "toolCallId">,
-	result: ResearchResult | VisualResult | PdfResult,
-): SteerMessage {
-	return {
-		id: `steer_${job.id}`,
-		role: "custom",
-		customType: "subagent-steer",
-		content: steerText(job.kind, result),
-		display: true,
-		details: {
-			jobId: job.id,
-			kind: job.kind,
-			toolCallId: job.toolCallId,
-			result,
-		},
-		timestamp: Date.now(),
-	};
-}
-
-/** Build the abort steer for an aborted job (pure — shared by the
- * abort path in src/server/jobs.ts and tests). Same id space as the result
- * steer (same id space — exactly one delivers). */
-export function buildAbortSteer(job: Pick<JobRecord, "id" | "kind" | "toolCallId">): SteerMessage {
-	const meta = { jobId: job.id, kind: job.kind, toolCallId: job.toolCallId, aborted: true } as const;
-	return {
-		id: `steer_${job.id}`,
-		role: "custom",
-		customType: "subagent-abort",
-		content: abortText(job.kind),
-		display: true,
-		details: meta,
-		timestamp: Date.now(),
-	};
-}
-
-/** What the teacher reads: one line telling it the result is not coming,
- * how to acknowledge, and that re-dispatching is allowed. */
-function abortText(kind: JobKind): string {
-	if (kind === "research")
-		return "Research aborted — the learner aborted the research job, so no brief is coming. Acknowledge it in one line and continue teaching without it (or offer to re-dispatch it).";
-	if (kind === "pdf")
-		return "The PDF reading job was aborted by the learner — no brief is coming. Acknowledge it in one line and continue without it (a re-dispatch is fine if the learner wants it).";
-	return "The figure job was aborted by the learner — no figure is coming. Acknowledge it in one line and teach without it (a re-dispatch is fine if the learner wants it).";
-}
-
-/** True when the transcript already carries this steer — idempotent
- *  delivery for ANY steer kind: every steer id is deterministic per its
- *  event (steer_<jobId> for jobs, steer_probe_<chatId> for the handoff). */
-export function steerDelivered(messages: LannaMessage[], steerId: string): boolean {
-	return messages.some((m) => m.id === steerId);
 }

@@ -3,8 +3,8 @@
  * directly to the endgame — notify → fetch, no standing polls).
  *
  * One bus, every layer: server emits turn lifecycle here, the store
- * adapters emit job/chat mutations, the agent layer's background
- * registries (extraction) emit activity changes — and
+ * adapters emit chat mutations, the background tasks emit activity
+ * changes — and
  * GET /api/events turns every emission into an SSE frame for any open
  * window. The events carry the FACT, never the data: consumers fetch
  * truth on receipt (push the poke, pull the data), so payloads stay
@@ -31,10 +31,7 @@ export interface ServerEvents {
 	 *  by this event reads a durable record; ordering is guaranteed in
 	 *  chat-handler's onFinish). */
 	"turn-settled": { chatId: string };
-	/** A job record changed (dispatch, progress, settle, abort, recovery).
-	 *  chatId when known — consumers that own one chat filter on it. */
-	"jobs-changed": { chatId?: string };
-	/** An extraction run changed phase (activity dock). */
+	/** A background task changed (start, step, finish, abort) — activity dock. */
 	"activity-changed": Record<string, never>;
 	/** The session list changed (create, delete, title). */
 	"chats-changed": Record<string, never>;
@@ -60,7 +57,6 @@ export type ServerEventType = keyof ServerEvents;
 export const SERVER_EVENT_TYPES = [
 	"turn-started",
 	"turn-settled",
-	"jobs-changed",
 	"activity-changed",
 	"chats-changed",
 	"subscriptions-changed",

@@ -17,12 +17,12 @@ describe("event bus", () => {
 		const got: ServerEvent[] = [];
 		const off = subscribe((e) => got.push(e));
 		emit("turn-started", { chatId: "chat_a" });
-		emit("jobs-changed", { chatId: "chat_a" });
+		emit("record-changed", { chatId: "chat_a" });
 		emit("activity-changed", {});
 		off();
 		assert.deepEqual(got, [
 			{ type: "turn-started", chatId: "chat_a" },
-			{ type: "jobs-changed", chatId: "chat_a" },
+			{ type: "record-changed", chatId: "chat_a" },
 			{ type: "activity-changed" },
 		]);
 	});

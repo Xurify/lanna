@@ -7,13 +7,11 @@
  */
 
 import { chatStore } from "../store/chats.ts";
-import { jobStore } from "../store/jobs.ts";
 import { settingsStore } from "../store/settings.ts";
 import { resolveSettings, type EffectiveSettings } from "../core/settings-resolution.ts";
 /** The wired adapters. */
 export const stores = {
 	chatStore,
-	jobStore,
 	settingsStore,
 };
 /**

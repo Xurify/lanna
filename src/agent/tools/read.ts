@@ -101,7 +101,7 @@ function readTextSlice(text: string, offset: number | undefined, limit: number |
 export const readTool: AgentTool<typeof readInput> = {
 	name: "read",
 	label: "read",
-	description: `Read the contents of a file. Supports text files, images (jpg, png, gif, webp, bmp) and short PDFs. Images are sent as attachments. A PDF of up to ${INLINE_PDF_MAX_PAGES} pages with real text comes back as text marked "--- Page N ---"; a longer or scanned PDF returns a note to dispatch the pdf job instead. For text files, output is truncated to 2000 lines or 50.0KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.`,
+	description: `Read the contents of a file. Supports text files, images (jpg, png, gif, webp, bmp) and short PDFs. Images are sent as attachments. A PDF of up to ${INLINE_PDF_MAX_PAGES} pages with real text comes back as text marked "--- Page N ---"; a longer or scanned PDF returns a note to use the pdf tool instead. For text files, output is truncated to 2000 lines or 50.0KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.`,
 	parameters: readInput,
 	execute: serverExecute(
 		"read",
@@ -138,12 +138,12 @@ async function readPdf(absolute: string): Promise<string> {
 			info.page_count > INLINE_PDF_MAX_PAGES
 				? `${info.page_count} pages, too long to read in place`
 				: `page${thinPages.length === 1 ? "" : "s"} ${thinPages.join(", ")} ha${thinPages.length === 1 ? "s" : "ve"} little or no text (likely scanned)`;
-		return `${name}: ${why}. Dispatch the pdf job with this path and your question; it can search and render pages.`;
+		return `${name}: ${why}. Call pdf with this path and your question; it can search and render pages.`;
 	}
 	const text = await pdfExtract(absolute, "all");
 	return [
 		`${name}: ${info.page_count} page${info.page_count === 1 ? "" : "s"}, text extracted below.`,
-		"Cite each claim as (p. N). Copy forms exactly as printed, with diacritics. If accents look broken, dispatch the pdf job to read the pages by eye.",
+		"Cite each claim as (p. N). Copy forms exactly as printed, with diacritics. If accents look broken, call pdf to read the pages by eye.",
 		"",
 		text,
 	].join("\n");

@@ -58,7 +58,6 @@ const { persistTurn } = await import("../src/server/turn-service.ts");
 const { runPiTurn } = await import("../src/server/pi/ui-stream.ts");
 const { SessionModel } = await import("../components/session-core.ts");
 const { chatStore } = await import("../src/store/chats.ts");
-const { jobStore } = await import("../src/store/jobs.ts");
 
 function scripted(provider: string, id: string, steps: FauxResponseStep[] = []) {
 	const faux = createFauxCore({ provider, models: [{ id }] });
@@ -69,7 +68,8 @@ function scripted(provider: string, id: string, steps: FauxResponseStep[] = []) 
 
 const chatId = chatStore.createChat("Synthetic output gate").id;
 const factories = {
-	chat: (opts: AgentBuildOptions) => createChatAgent({ jobs: { chatId, jobStore, spawn: () => {} } }, opts),
+	chat: (opts: AgentBuildOptions) =>
+		createChatAgent({ sources: { chatId, engineFor: () => undefined, recordUsage: () => {} } }, opts),
 	practice: (opts: AgentBuildOptions) => createPracticeAgent({ chatId, chatStore }, opts),
 };
 

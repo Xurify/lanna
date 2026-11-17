@@ -52,7 +52,7 @@ describe("notify hub + wireSource (the client channel wiring)", () => {
 		hub.subscribe("turn-settled", (p) => got.push(`settled:${p.chatId}`));
 		src.push("turn-started", { chatId: "chat_wire" });
 		src.push("turn-settled", { chatId: "chat_wire" });
-		src.push("jobs-changed", { chatId: "chat_wire" }); // no subscriber — no-op
+		src.push("record-changed", { chatId: "chat_wire" }); // no subscriber — no-op
 		assert.deepEqual(got, ["chat_wire", "settled:chat_wire"]);
 	});
 

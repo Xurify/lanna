@@ -1,7 +1,6 @@
 import type { ComponentType } from "react";
 import type { ArtifactPartProps } from "@/src/core";
 import { JobCard, PdfJobCard } from "@/components/artifacts/job-card";
-import { VisualCard } from "@/components/artifacts/visual-card";
 import { ToolCallCard } from "@/components/artifacts/tool-call-card";
 import { ProblemCard, ConcludeCard } from "@/components/practice-cards";
 
@@ -12,16 +11,12 @@ import { ProblemCard, ConcludeCard } from "@/components/practice-cards";
  * quiz/ask) by looking the tool name up here. Add your renderer — do NOT
  * edit chat.tsx.
  *
- * Typical shape: while the part is input-available render an activity card
- * (the chat view's jobs feed reads GET /api/jobs?chatId=…; on completion call
- * ChatActionsContext.syncFromServer()); when output-available render the
- * artifact itself from part.output.
+ * Typical shape: while the part is input-available render a working line;
+ * when output-available render the artifact itself from part.output.
  */
 export const artifactRenderers: Record<string, ComponentType<ArtifactPartProps>> = {
 	research: JobCard,
 	pdf: PdfJobCard, // sources v0 — live smoke 2026-09-19 caught the gap: without this the tool-pdf dispatch part rendered nothing
-	// Retired figure tool: older chats still carry its calls.
-	visual: VisualCard,
 	// The learner-filesystem set (sources v1): one quiet expandable
 	// tool-call card each — collapsed one-liner (tool name + headline
 	// argument), full input/output on expand.

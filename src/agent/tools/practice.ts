@@ -20,7 +20,7 @@ import { readTool } from "./read.ts";
 import { lsTool } from "./ls.ts";
 import { findTool } from "./find.ts";
 import { grepTool } from "./grep.ts";
-import { jobTools, type JobToolContext } from "./jobs.ts";
+import { sourceTools, type SourceToolContext } from "./sources.ts";
 import { activeProblemOf } from "../../core/native-messages.ts";
 import type { LannaMessage } from "../../core/native-messages.ts";
 import { concludeResult, invalidInputResult, problemResult } from "../tool-execute.ts";
@@ -32,8 +32,8 @@ export interface PracticeToolContext {
 	chatId: string;
 	chatStore: { getChat(id: string): { messages: LannaMessage[]; kind?: string } | null };
 	/** THE RARELY-NEEDED SET (owner round 10, 2026-10-05): the research +
-	 *  pdf jobs (both keyless). Absent (tests) = absent from the registry. */
-	jobs?: JobToolContext;
+	 *  pdf readers. Absent (tests) = absent from the registry. */
+	sources?: SourceToolContext;
 	/** Lanna: the spaced-review seam (add_to_review / review_status). */
 	review?: ReviewSeam;
 }
@@ -190,7 +190,7 @@ export function practiceTools(ctx: PracticeToolContext): Record<string, AgentToo
 	// prober carry), the research + pdf jobs (available without search
 	// keys; the agent builder applies the research/pdf settings toggles), and
 	// the prober's map readers when the settings gate opened.
-	const jobs = ctx.jobs ? jobTools(ctx.jobs) : null;
+	const sources = ctx.sources ? sourceTools(ctx.sources) : null;
 	// healToolRecord (owner, 2026-10-09 — the whitehead generalization):
 	// the standard argument heal over the WHOLE registry. problem/conclude
 	// keep their own prepareArguments as the composed inner pass; the double
@@ -202,8 +202,7 @@ export function practiceTools(ctx: PracticeToolContext): Record<string, AgentToo
 		ls: lsTool,
 		find: findTool,
 		grep: grepTool,
-		...(jobs?.research ? { research: jobs.research } : {}),
-		...(jobs ? { pdf: jobs.pdf! } : {}),
+		...(sources ? { research: sources.research, pdf: sources.pdf } : {}),
 		...languageTools(ctx.review),
 	});
 }

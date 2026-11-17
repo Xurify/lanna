@@ -95,12 +95,14 @@ describe("the chat agent's prompt", () => {
 	});
 });
 
+const sources = { chatId: "c", engineFor: () => undefined, recordUsage: () => {} };
+
 describe("the chat agent's tools", () => {
-	it("holds the commit and grade pair, the checks, the learner's files and the jobs, and no learner-output tool even on a Claude model", () => {
+	it("holds the commit and grade pair, the checks, the learner's files and the sources, and no learner-output tool even on a Claude model", () => {
 		const agent = createChatAgent(
 			{
 				review: { enqueue: () => [], digest: () => "" },
-				jobs: { chatId: "c", jobStore: {} as never, spawn: () => {}, searchAvailable: () => true },
+				sources,
 			},
 			{ engine: claudeEngine() },
 		);
@@ -116,14 +118,14 @@ describe("the chat agent's tools", () => {
 		const agent = createChatAgent(
 			{
 				review: { enqueue: () => [], digest: () => "" },
-				jobs: { chatId: "c", jobStore: {} as never, spawn: () => {}, searchAvailable: () => true },
+				sources,
 			},
 			{ engine: claudeEngine(), toolToggles: { pdf: false, research: false } },
 		);
 		const names = agent.state.tools.map((tool) => tool.name);
 		assert.ok(!names.includes("pdf"));
 		assert.ok(!names.includes("research"));
-		assert.ok(names.includes("read") && names.includes("pose"), "only the job switches apply here");
+		assert.ok(names.includes("read") && names.includes("pose"), "only the source switches apply here");
 	});
 
 	it("grade records what the learner answered through the seam", async () => {

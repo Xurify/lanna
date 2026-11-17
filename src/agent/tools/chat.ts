@@ -5,7 +5,7 @@ import { readTool } from "./read.ts";
 import { lsTool } from "./ls.ts";
 import { findTool } from "./find.ts";
 import { grepTool } from "./grep.ts";
-import { jobTools, type JobToolContext } from "./jobs.ts";
+import { sourceTools, type SourceToolContext } from "./sources.ts";
 import { healToolRecord } from "./heal.ts";
 import { languageTools, type ReviewSeam } from "./language.ts";
 import type { ChatAnswer } from "../../core/chat-answers.ts";
@@ -22,7 +22,7 @@ export interface ChatDrawingSeam {
 export interface ChatToolContext {
 	review?: ReviewSeam;
 	answers?: ChatAnswerSeam;
-	jobs?: JobToolContext;
+	sources?: SourceToolContext;
 	drawing?: ChatDrawingSeam;
 }
 
@@ -140,7 +140,7 @@ function drawTool(seam: ChatDrawingSeam): AgentTool<typeof drawInput, ChatDrawin
 }
 
 export function chatTools(ctx: ChatToolContext): Record<string, AgentTool<any>> {
-	const jobs = ctx.jobs ? jobTools(ctx.jobs) : null;
+	const sources = ctx.sources ? sourceTools(ctx.sources) : null;
 	return healToolRecord({
 		pose: poseTool,
 		grade: gradeTool(ctx.answers),
@@ -148,8 +148,7 @@ export function chatTools(ctx: ChatToolContext): Record<string, AgentTool<any>> 
 		ls: lsTool,
 		find: findTool,
 		grep: grepTool,
-		...(jobs?.research ? { research: jobs.research } : {}),
-		...(jobs?.pdf ? { pdf: jobs.pdf } : {}),
+		...(sources ? { research: sources.research, pdf: sources.pdf } : {}),
 		...languageTools(ctx.review),
 		...(ctx.drawing ? { draw: drawTool(ctx.drawing) } : {}),
 	});
