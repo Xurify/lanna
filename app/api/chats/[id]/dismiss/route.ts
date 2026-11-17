@@ -1,23 +1,15 @@
 /**
- * THE SILENT DISMISSAL ROUTE (owner design 2026-10-03, "A2"): ESC-abort
- * from a pending question writes the dismissed toolResult to the record
- * and wakes NOTHING — no beginTurn, no agent, no tokens. The session
- * enters the derived dismissal pause (endsInDismissal): job deliveries
- * hold in the wake pipeline's steer queue, the continuation fold demands
- * nothing, and the user's next plain message is the wake that carries
- * the dismissal (plus any held deliveries) into the agent's context.
- *
- * Parallel question calls: each dismissal completes exactly its own call
- * (results bind by toolCallId, not position), so the dock advances
- * call-by-call and the composer returns only when nothing dangles.
+ * THE SILENT DISMISSAL ROUTE (owner design 2026-10-03, "A2"): discarding a
+ * posed practice problem writes its UI-only marker and wakes NOTHING — no
+ * beginTurn, no agent, no tokens. The conclude synthesis rides the user's
+ * next input.
  *
  * Guards mirror the turn route's honesty: 404 unknown chat, 400 for an
- * input that targets no dangling question call (or isn't a real
- * dismissal). A RUNNING turn no longer refuses (owner, 2026-10-04 — the
- * GLM practice-loop incident): the dismissal is PARKED server-side and
- * the turn's settle path applies it against the persisted record, so
- * ESC-discard now doubles as the turn abort's bookkeeper (the client
- * fires both).
+ * input that targets no active problem. A RUNNING turn no longer refuses
+ * (owner, 2026-10-04 — the GLM practice-loop incident): the dismissal is
+ * PARKED server-side and the turn's settle path applies it against the
+ * persisted record, so ESC-discard doubles as the turn abort's
+ * bookkeeper (the client fires both).
  */
 import { ChatInputError, dismissAppends, emit, parseDismissInput } from "@/src/core";
 import { BODY_LIMITS, bodyTooLarge, getChat, isTurnRunning, parkDismissal, stores } from "@/src/server";

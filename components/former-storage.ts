@@ -1,10 +1,3 @@
-/**
- * Before the rename to Lanna these keys started with "lh". Lessons and
- * sessions not yet sent to the server, and an uploaded reminder sound, would
- * be lost under the new keys, so each moves over once. Remove this file when
- * every browser and the desktop app have opened Lanna once.
- */
-
 const QUEUES: Array<[former: string, current: string]> = [
 	["lh-outbox", "lanna-outbox"],
 	["lh-session-outbox", "lanna-session-outbox"],

@@ -17,10 +17,7 @@ import type { AgentEvent } from "@earendil-works/pi-agent-core";
 import type { ToolResultMessage } from "@earendil-works/pi-ai";
 import {
 	needsContinuation,
-	danglingQuestionOf,
-	answeredCallIds,
 	measuredContextTokens,
-	newAnswerResult,
 	newNextMessage,
 	newProblemDismissedMarker,
 	newThinkingMessage,
@@ -31,8 +28,6 @@ import {
 	type LannaMessage,
 	type LannaViewMessage,
 	type LiveExecution,
-	type QuestionAnswerData,
-	type QuestionDraft,
 } from "../src/core";
 
 export type SessionStatus = "ready" | "submitted" | "streaming" | "error";
@@ -118,20 +113,6 @@ async function* sseEvents(
 			yield JSON.parse(data) as Record<string, unknown>;
 		}
 	}
-}
-
-/** The dangling question call's tool name (the optimistic answer result's
- *  toolName — the server stamps the same from its own record scan). */
-export function pendingCallTool(messages: readonly LannaMessage[], toolCallId: string): string | null {
-	for (const m of messages) {
-		if ((m as { role?: string }).role !== "assistant") continue;
-		const content = (m as { content?: unknown }).content;
-		if (!Array.isArray(content)) continue;
-		for (const block of content as Array<{ type?: string; id?: string; name?: string }>) {
-			if (block.type === "toolCall" && block.id === toolCallId) return block.name ?? null;
-		}
-	}
-	return null;
 }
 
 /**
@@ -240,9 +221,6 @@ export class SessionModel {
 	// at every full sync; the write-ahead absorbs the optimistic entries.
 	private base: LannaMessage[];
 	private tail: LannaMessage[] = [];
-	private questionDrafts = new Map<string, QuestionDraft>();
-	/** Only learner answers submitted through send(), never silent dismissals. */
-	private unconfirmedAnswers = new Map<string, string>();
 	// The live turn's execution layer (view model mid-turn states):
 	private executions = new Map<string, LiveExecution>();
 	private streamingIds = new Set<string>();
@@ -446,8 +424,8 @@ export class SessionModel {
 				return true; // a message event is view work, even empty content
 			}
 			case "tool_execution_end": {
-				// The execution layer: clean question placeholders are IGNORED
-				// downstream (view.ts fork 2); errors keep their validation text.
+				// The execution layer: errors keep their validation text; clean
+				// results are projected by view.ts.
 				const result = agent.result as { content?: Array<{ type?: string; text?: string }>; details?: unknown } | null;
 				const text = result?.content?.find((c) => c.type === "text")?.text ?? "The tool call failed.";
 				this.mutate(() => {
@@ -610,7 +588,6 @@ export class SessionModel {
 								this.errorValue = { message: record.turnError };
 								this.automaticContinuationBlocked = true;
 							}
-							this.forgetResolvedDrafts(record.messages!);
 							this.incompleteUsageIds.clear();
 							this.tail = [];
 						});
@@ -635,12 +612,6 @@ export class SessionModel {
 			await this.consumeStream(res, controller, allowRecovery);
 		} catch (err) {
 			if (this.consumeAbort !== controller || controller.signal.aborted) return; // intentionally cancelled
-			// A failed record read can leave the optimistic answer in the tail.
-			// Restore its Submit affordance; the next attempt reconciles first.
-			this.mutate(() => {
-				this.tail = this.tail.filter((m) => !this.unconfirmedAnswers.has(m.id));
-				this.unconfirmedAnswers.clear();
-			});
 			this.setError(!allowRecovery && err instanceof StreamReadError ? STREAM_DROPPED : (err as Error).message);
 			this.setStatus("error");
 		}
@@ -648,7 +619,7 @@ export class SessionModel {
 
 	/**
 	 * SEND: one explicit input event. Optimistic appends first (the instant
-	 * answer/note UX — the server's write-ahead persists the canon), then
+	 * card UX — the server's write-ahead persists the canon), then
 	 * POST + consume. Ready-gated: one turn per client at a time (the
 	 * server's 409 + identity retry covers the wake-race window).
 	 */
@@ -660,39 +631,6 @@ export class SessionModel {
 		this.consumeAbort = controller;
 		this.setError(null);
 		this.setStatus("submitted");
-		if (recovering && input.type === "answer") {
-			try {
-				const res = await this.fetch(`/api/chats/${encodeURIComponent(this.chatId)}`, { signal: controller.signal });
-				if (this.consumeAbort !== controller) return;
-				if (!res.ok) throw new Error((await res.text()) || "An error occurred.");
-				const record = (await res.json()) as { messages?: LannaMessage[]; turnInFlight?: boolean; turnError?: string };
-				if (this.consumeAbort !== controller) return;
-				// No verified record/liveness: retain the draft and never guess
-				// whether a lost acknowledgement meant the input was accepted.
-				if (!Array.isArray(record.messages) || typeof record.turnInFlight !== "boolean")
-					throw new Error("An error occurred.");
-				this.setMessages(record.messages, record.turnError);
-				if (record.turnInFlight) {
-					await this.resumeStream(false);
-					return;
-				}
-				if (
-					input.type === "answer" &&
-					(answeredCallIds(record.messages).has(input.toolCallId) ||
-						danglingQuestionOf(record.messages)?.toolCallId !== input.toolCallId)
-				) {
-					// The call already resolved, or no longer owns the dock. Adopt
-					// truth, never POST that answer a second time.
-					this.setStatus("ready");
-					return;
-				}
-			} catch (err) {
-				if (this.consumeAbort !== controller || controller.signal.aborted) return;
-				this.setError((err as Error).message);
-				this.setStatus("error");
-				return;
-			}
-		}
 		if (input.type !== "continue") this.automaticContinuationBlocked = false;
 		// The optimistic appends — exactly the messages the server's
 		// write-ahead will persist (inputAppends), with LOCAL ids so
@@ -708,11 +646,6 @@ export class SessionModel {
 			// The move-on signal (owner round 16): the NEXT PROBLEM line
 			// renders the instant the chip/Enter fires.
 			optimistic.push({ ...newNextMessage(), id: localId() });
-		} else if (input.type === "answer") {
-			const tool = pendingCallTool([...this.base, ...this.tail], input.toolCallId) ?? "quiz";
-			const result = { ...newAnswerResult(input.toolCallId, tool, input.answer), id: localId() };
-			optimistic.push(result);
-			this.unconfirmedAnswers.set(result.id, input.toolCallId);
 		}
 		if (optimistic.length > 0)
 			this.mutate(() => {
@@ -756,16 +689,6 @@ export class SessionModel {
 			await this.resumeStream(true);
 		} catch (err) {
 			if (this.consumeAbort !== controller || controller.signal.aborted) return;
-			// Restore the question when acceptance failed or is unknown. Remove
-			// only THIS optimistic answer, never saved copies/newer live content.
-			// Other input kinds retain their existing optimistic presentation.
-			if (input.type === "answer") {
-				const ids = new Set(optimistic.map((m) => m.id));
-				this.mutate(() => {
-					this.tail = this.tail.filter((m) => !ids.has(m.id));
-					for (const id of ids) this.unconfirmedAnswers.delete(id);
-				});
-			}
 			this.setError((err as Error).message);
 			this.setStatus("error");
 		}
@@ -813,37 +736,6 @@ export class SessionModel {
 		}
 	}
 
-	/** The answer path (the dock): the answer IS the question call's tool
-	 *  result (fork 1), riding as its input event. */
-	submitAnswer(tool: string, toolCallId: string, output: QuestionAnswerData): Promise<void> {
-		void tool;
-		return this.send({ type: "answer", toolCallId, answer: output });
-	}
-
-	/** The dismissal path (owner design 2026-10-03, "A2"): the skipped
-	 * toolResult lands optimistically, then the SILENT route persists it
-	 * — no turn, no stream, nothing wakes. The session pauses at the
-	 * user's choice; the next plain send is the wake. On failure the
-	 * durable record wins: the error surfaces, the record-changed sync
-	 * (or any later refetch) replaces the optimistic append with truth. */
-	async dismissQuestion(toolCallId: string, answer: QuestionAnswerData): Promise<void> {
-		if (!this.readyRef) return;
-		const tool = pendingCallTool([...this.base, ...this.tail], toolCallId) ?? "quiz";
-		this.mutate(() => {
-			this.tail = [...this.tail, { ...newAnswerResult(toolCallId, tool, answer), id: localId() }];
-		});
-		try {
-			const res = await this.fetch(`/api/chats/${this.chatId}/dismiss`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ input: { type: "dismiss", toolCallId, answer } }),
-			});
-			if (!res.ok) throw new Error(`The dismissal failed (${res.status}).`);
-		} catch (err) {
-			this.setError((err as Error).message);
-		}
-	}
-
 	/** The problem discard (practice sessions, owner 2026-10-04): the
 	 *  ask-style dismissal — the UI-only marker lands optimistically, then
 	 *  the SILENT route persists it (no turn, no wake). The composer
@@ -876,23 +768,6 @@ export class SessionModel {
 		this.setStatus("ready");
 	}
 
-	/** Submission snapshots outlive the dock, not the session mount. */
-	questionDraft(toolCallId: string): QuestionDraft | undefined {
-		return this.questionDrafts.get(toolCallId);
-	}
-
-	saveQuestionDraft(toolCallId: string, draft: Partial<QuestionDraft>): void {
-		this.questionDrafts.set(toolCallId, { ...this.questionDrafts.get(toolCallId), ...draft });
-	}
-
-	private forgetResolvedDrafts(record: readonly LannaMessage[]): void {
-		const answered = answeredCallIds(record);
-		for (const id of answered) this.questionDrafts.delete(id);
-		for (const [id, callId] of this.unconfirmedAnswers) {
-			if (answered.has(callId)) this.unconfirmedAnswers.delete(id);
-		}
-	}
-
 	/** Full snapshot swap (the idle settle sync — server canon). */
 	setMessages(record: LannaMessage[], turnError?: string): void {
 		this.mutate(() => {
@@ -901,7 +776,6 @@ export class SessionModel {
 				this.errorValue = { message: turnError };
 				this.automaticContinuationBlocked = true;
 			}
-			this.forgetResolvedDrafts(record);
 			this.incompleteUsageIds.clear();
 			this.tail = [];
 			this.streamingMessageId = null; // the tail (and its slot) is gone
@@ -921,7 +795,6 @@ export class SessionModel {
 		if (baseAbsorbed) return; // not a pure append — the idle full sync is the net
 		this.mutate(() => {
 			this.base = record;
-			this.forgetResolvedDrafts(record);
 			this.tail = this.tail.filter((m) => !absorbed(m, record));
 		});
 	}
@@ -939,7 +812,7 @@ export class SessionModel {
 		}
 	}
 
-	/** The mount/sync continuation fold (native-messages.ts). */
+	/** The mount/sync continuation fold (chat-messages.ts). */
 	static needsContinuation = needsContinuation;
 
 	clearError(): void {

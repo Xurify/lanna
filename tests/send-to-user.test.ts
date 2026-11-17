@@ -16,7 +16,7 @@ import {
 } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 import type { AgentBuildOptions } from "../src/agent/teacher-agent.ts";
-import type { LannaMessage } from "../src/core/native-messages.ts";
+import type { LannaMessage } from "../src/core/chat-messages.ts";
 
 // Set the data/auth seams BEFORE importing app modules. Do not read local
 // keys, recordings, or learner sessions, even if a dev server is running.
@@ -42,15 +42,9 @@ after(() => {
 
 const { sendToUserTool } = await import("../src/agent/tools/send-to-user.ts");
 const { createChatAgent, createPracticeAgent, composeInstructions } = await import("../src/agent/teacher-agent.ts");
-const {
-	SEND_TO_USER_TOOL,
-	activeProblemOf,
-	asAgentMessages,
-	newUserMessage,
-	sendToUserText,
-	toLlmMessages,
-	userFacingTextOf,
-} = await import("../src/core/native-messages.ts");
+const { SEND_TO_USER_TOOL, activeProblemOf, asAgentMessages, newUserMessage, sendToUserText, userFacingTextOf } =
+	await import("../src/core/chat-messages.ts");
+const { toLlmMessages } = await import("../src/core/model-context.ts");
 const { projectView } = await import("../src/core/view.ts");
 const { sessionMarkdown } = await import("../src/core/session-markdown.ts");
 const { runSubagent } = await import("../src/agent/subagents/pi-run.ts");

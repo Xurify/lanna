@@ -30,10 +30,10 @@ import { registerLiveAgent, steerLiveChat, unregisterLiveAgent } from "../src/se
 import { SessionModel } from "../components/session-core.ts";
 import { abortTurn, runningTurn, settledTurnResponse } from "../src/server/turn-runs.ts";
 import { chatStore } from "../src/store/chats.ts";
-import { newUserMessage } from "../src/core/native-messages.ts";
+import { newUserMessage } from "../src/core/chat-messages.ts";
 import { projectView } from "../src/core/view.ts";
 import type { PiEngine } from "../src/agent/models.ts";
-import type { LannaMessage } from "../src/core/native-messages.ts";
+import type { LannaMessage } from "../src/core/chat-messages.ts";
 
 // Route-level pins (the chat-birth-stamp pattern): the route handlers,
 // driven directly. Env is the runner's (the same the static store imports

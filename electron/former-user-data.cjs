@@ -5,12 +5,7 @@ const path = require("node:path");
 
 const FORMER_NAME = "LangHarness";
 
-/**
- * The app was called LangHarness before Lanna, and Electron names the
- * userData folder after the app. Moves the old folder (chats, keys, progress)
- * to the new name once. Returns the folder to use: the new one, or the old one
- * when it cannot be moved (Windows refuses while the old app still runs).
- */
+// Electron names the userData folder after the app, so the rename to Lanna would start an empty one.
 function adoptFormerUserData(userData, name) {
 	const parent = path.dirname(userData);
 	const base = path.basename(userData);

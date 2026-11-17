@@ -21,10 +21,10 @@
  */
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import { absorbed, pendingCallTool, SessionModel } from "../components/session-core.ts";
+import { absorbed, SessionModel } from "../components/session-core.ts";
 import type { ChatInput } from "../src/core/input-events.ts";
-import type { LannaMessage } from "../src/core/native-messages.ts";
-import { newUserMessage, newAnswerResult, newThinkingMessage, needsContinuation } from "../src/core/native-messages.ts";
+import type { LannaMessage } from "../src/core/chat-messages.ts";
+import { newUserMessage, newThinkingMessage, needsContinuation } from "../src/core/chat-messages.ts";
 import { newCompactionMarker, projectView } from "../src/core/index.ts";
 
 const realFetch = globalThis.fetch;
@@ -1297,12 +1297,12 @@ describe("adoptRecord — append-only adoption", () => {
 		assert.ok(absorbed(optimistic, [userText("u1", "topic"), serverCopy]), "content match absorbs the local copy");
 		assert.ok(!absorbed(serverCopy, [optimistic]), "server stamps are never absorbed");
 		assert.ok(!absorbed({ ...newUserMessage("my question") }, [serverCopy]), "an id-less message is never absorbed");
-		// The answer result absorbs by toolCallId (ids differ, content may too —
-		// the toolCallId is the identity of an answer).
-		const answer = { ...newAnswerResult("call-1", "pose", { correct: true }), id: "c_local_2" } as LannaMessage;
+		// A tool result absorbs by toolCallId (ids differ, content may too —
+		// the toolCallId is the identity of a result).
+		const result = { ...resultMsg("call-1", "pose"), id: "c_local_2" } as LannaMessage;
 		assert.ok(
-			absorbed(answer, [{ ...newAnswerResult("call-1", "pose", { correct: true }), id: "srv_10" } as LannaMessage]),
-			"the answer result absorbs by toolCallId",
+			absorbed(result, [{ ...resultMsg("call-1", "pose"), id: "srv_10" } as LannaMessage]),
+			"the tool result absorbs by toolCallId",
 		);
 	});
 
@@ -1333,8 +1333,14 @@ function assistantWithCall(id: string, callId: string, name = "research"): Lanna
 
 function resultMsg(callId: string, name = "research"): LannaMessage {
 	return {
-		...newAnswerResult(callId, name, { ok: true }),
 		id: `r_${callId}`,
+		role: "toolResult",
+		toolCallId: callId,
+		toolName: name,
+		content: [{ type: "text", text: "ok" }],
+		details: { ok: true },
+		isError: false,
+		timestamp: 0,
 	} as unknown as LannaMessage;
 }
 
@@ -1352,21 +1358,37 @@ describe("needsContinuation (the native lastAssistantMessageIsCompleteWithToolCa
 	it("an orphan result (no asking assistant) never continues", () => {
 		assert.equal(needsContinuation([userText("u1", "topic"), resultMsg("call-x")]), false);
 	});
-});
 
-// ─── the dismissal pause (owner design 2026-10-03, "A2") ────────────────────
+	it("a closed reply with text and only record tools (add_to_review) does not ask for a continue", () => {
+		const reply = {
+			id: "a1",
+			role: "assistant",
+			content: [
+				{ type: "text", text: "I saved that word for review." },
+				{ type: "toolCall", id: "call-review", name: "add_to_review", arguments: { words: ["kniha"] } },
+			],
+			stopReason: "toolUse",
+			timestamp: 0,
+		} as unknown as LannaMessage;
+		const messages = [userText("u1", "topic"), reply, resultMsg("call-review", "add_to_review")];
+		assert.equal(needsContinuation(messages), false);
+	});
 
-// ─── the pending-call tool scan ─────────────────────────────────────────────
-
-describe("pendingCallTool", () => {
-	it("finds the dangling call's tool name (the optimistic answer's stamp)", () => {
-		const messages = [assistantWithCall("a1", "call-q1", "pose")];
-		assert.equal(pendingCallTool(messages, "call-q1"), "pose");
-		assert.equal(pendingCallTool(messages, "call-zz"), null);
+	it("a reply with text and a job tool still continues", () => {
+		const reply = {
+			id: "a1",
+			role: "assistant",
+			content: [
+				{ type: "text", text: "Let me look that up." },
+				{ type: "toolCall", id: "call-research", name: "research", arguments: { topic: "x" } },
+			],
+			stopReason: "toolUse",
+			timestamp: 0,
+		} as unknown as LannaMessage;
+		const messages = [userText("u1", "topic"), reply, resultMsg("call-research", "research")];
+		assert.equal(needsContinuation(messages), true);
 	});
 });
-
-// ─── newAnswerResult: the two-audience split (owner, 2026-10-02) ────────────
 
 // ─── the practice live-view law (owner, 2026-10-05) ─────────────────────────
 //

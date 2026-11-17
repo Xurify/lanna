@@ -1,6 +1,6 @@
 import { Type } from "typebox";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { SEND_TO_USER_TOOL } from "../../core/native-messages.ts";
+import { SEND_TO_USER_TOOL } from "../../core/chat-messages.ts";
 import { serverExecute } from "../tool-execute.ts";
 
 const sendToUserInput = Type.Object({

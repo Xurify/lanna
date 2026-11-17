@@ -15,7 +15,7 @@ import path from "node:path";
 import { PATHS } from "../../config.ts";
 import type { ChatRecord, TurnUsage } from "../core/contracts.ts";
 import type { SessionMode, SessionSpend, UsageReport } from "../core/usage-report.ts";
-import { userFacingTextOf } from "../core/native-messages.ts";
+import { userFacingTextOf } from "../core/chat-messages.ts";
 import { chatStore } from "../store/chats.ts";
 import { listAudioClips } from "../store/corpus.ts";
 import { storyStore } from "../store/stories.ts";

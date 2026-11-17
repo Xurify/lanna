@@ -26,7 +26,7 @@ import { createPortal } from "react-dom";
 import { ThinkingBlock } from "@/components/thinking-block";
 import { usePopoverDismiss } from "@/components/popover-dismiss";
 
-/** The practice-thinking marker's details (native-messages.ts). */
+/** The practice-thinking marker's details (chat-messages.ts). */
 export interface PracticeThinkingData {
 	problemCallId: string;
 	/** Legacy records (pre 2026-10-05) carry the old two-lane flag; ignored. */

@@ -10,7 +10,7 @@ import { type SourceToolContext } from "../agent/tools/sources.ts";
 import { activeProfile, type ModelRole } from "../../config.ts";
 import { slovakLookup } from "../agent/lexicon.ts";
 import { checkerNote, checkSlovak } from "../core/slovak-check.ts";
-import type { LannaMessage } from "../core/native-messages.ts";
+import type { LannaMessage } from "../core/chat-messages.ts";
 import { reconcileUserSteers, registerLiveAgent, unregisterLiveAgent } from "./steers.ts";
 import { runPiTurn } from "./pi/ui-stream.ts";
 import { collectToolCallIds } from "./pi/call-ids.ts";
@@ -24,13 +24,10 @@ import { beginTurn, endTurn } from "./turn-liveness.ts";
 import { applyParkedDismissal } from "./dismissal-park.ts";
 import { registerTurn, rememberTurnFailure, unregisterTurn } from "./turn-runs.ts";
 import { persistTurn, TurnPersistenceError } from "./turn-service.ts";
-import { danglingQuestionOf } from "../core/native-messages.ts";
 import { composeInstructions } from "../agent/teacher-agent.ts";
 import { ensureCompacted, kickCompaction, effectiveThresholdTokens } from "./compaction.ts";
 import { catalogContextLimits } from "./model-catalog.ts";
-import { emit } from "../core/events.ts";
-import { settledTurnResponse } from "./turn-runs.ts";
-import { asAgentMessages } from "../core/native-messages.ts";
+import { asAgentMessages } from "../core/chat-messages.ts";
 import { ChatInputError, inputAppends, parseChatInput, type TurnInput } from "../core/input-events.ts";
 import type { CallUsage } from "../core/contracts.ts";
 import type { ChatRecord } from "../core/contracts/chat.ts";
@@ -78,8 +75,8 @@ function withSlovakEvidence(message: LannaMessage): LannaMessage {
  * engine — the Next route handler in app/api/chat is a one-line wrapper.
  *
  * THE INPUT-EVENTS CONTRACT (Wave B, owner ruling 2026-09-26): POST /api/chat
- * carries {chatId, input} — one explicit event (text / answer / verdict /
- * continue), never a client transcript. The server owns the record; this
+ * carries {chatId, input} — one explicit event (text / continue /
+ * thinking / next), never a client transcript. The server owns the record; this
  * module is the TURN COMPOSITION ROOT: it turns the event into native
  * record appends (core/input-events.ts), builds the agent from the record
  * (the record IS the agent state — state.messages = record.messages,
@@ -219,28 +216,6 @@ export async function handleChatInput(
 			return Response.json({ error: err.message }, { status: 400 });
 		}
 		throw err;
-	}
-
-	// THE PARALLEL-QUESTION GATE (owner, 2026-10-03 — the deepseek parallel
-	// batch incident): an answer that leaves a SIBLING question dangling
-	// defers its wake. The dock advances to the next question (the client's
-	// optimistic result + record-changed carry the view); the LAST answer
-	// fires the one reaction turn with every result ADJACENT to its calling
-	// assistant message — the provider shape law (a tool result appended
-	// after an intervening assistant message is rejected, which stranded
-	// the sibling question permanently pre-fix). Nothing else can generate
-	// while a question dangles (job wakes wait, continuation folds refuse,
-	// the composer gates), so adjacency holds by construction.
-	if (input.type === "answer" && danglingQuestionOf([...record.messages, ...appends]) !== null) {
-		const merged = [...record.messages, ...appends];
-		try {
-			stores.chatStore.saveMessages(chatId, merged);
-		} catch (err) {
-			console.error(`[chat ${chatId}] write-ahead persist failed:`, err);
-			return new Response("Your input could not be saved. Please try again.", { status: 500 });
-		}
-		emit("record-changed", { chatId });
-		return settledTurnResponse(); // the cheap terminal — no beginTurn, no turn
 	}
 
 	// One turn per chat, ever. A second request while a turn runs means a

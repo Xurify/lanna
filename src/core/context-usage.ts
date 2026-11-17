@@ -1,5 +1,5 @@
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import type { LannaMessage } from "./native-messages.ts";
+import type { LannaMessage } from "./chat-messages.ts";
 
 /** Latest completed conversation measurement, never a request-size estimate.
  * Ordered compaction markers invalidate every earlier reading. Live callers

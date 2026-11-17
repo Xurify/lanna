@@ -47,11 +47,9 @@ function write(file: string, data: SubscriptionFile): void {
 }
 
 export interface SubscriptionCredentialStore extends CredentialStore {
-	/** The stable id of this installation, created on first use. */
 	deviceId(): string;
 }
 
-/** Subscription sign-ins (ChatGPT, Copilot, Grok) as pi-ai credentials, one per provider id, in one 0600 file next to auth.json. */
 export function fileSubscriptionCredentials(file = SUBSCRIPTIONS_FILE): SubscriptionCredentialStore {
 	const queues = new Map<string, Promise<unknown>>();
 

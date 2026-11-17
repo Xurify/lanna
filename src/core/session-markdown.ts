@@ -20,7 +20,7 @@
  * learning evidence); custom markers are invisible, same as the view.
  */
 
-import type { LannaMessage } from "./native-messages.ts";
+import type { LannaMessage } from "./chat-messages.ts";
 import {
 	failedOutputCallIds,
 	PRACTICE_CONCLUDE_TOOL,
@@ -28,7 +28,7 @@ import {
 	problemInputForConclude,
 	SEND_TO_USER_TOOL,
 	userFacingTextOf,
-} from "./native-messages.ts";
+} from "./chat-messages.ts";
 import type { ToolResultMessage } from "@earendil-works/pi-ai";
 
 /** The practice join context (owner-approved, 2026-10-06 export round):

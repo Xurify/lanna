@@ -9,7 +9,7 @@
  * adapters may import core; core NEVER imports an adapter.
  */
 
-import type { LannaMessage } from "./native-messages.ts";
+import type { LannaMessage } from "./chat-messages.ts";
 import type { ChatRecord, ChatSettings, ChatSummary, TurnUsage } from "./contracts.ts";
 import type { UserSettings } from "./settings.ts";
 

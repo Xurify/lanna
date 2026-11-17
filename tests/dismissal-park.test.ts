@@ -25,8 +25,8 @@ process.env.LANNA_DATA_DIR = TMP_DATA;
 const { chatStore } = await import("../src/store/chats.ts");
 const { applyParkedDismissal, parkDismissal, takeParkedDismissal } = await import("../src/server/dismissal-park.ts");
 const { subscribe } = await import("../src/core/events.ts");
-const { activeProblemOf, dismissedAnswer } = await import("../src/core/index.ts");
-const newMessageId = (await import("../src/core/native-messages.ts")).newMessageId;
+const { activeProblemOf } = await import("../src/core/index.ts");
+const newMessageId = (await import("../src/core/chat-messages.ts")).newMessageId;
 
 after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
@@ -121,16 +121,14 @@ describe("applyParkedDismissal — against real records", () => {
 });
 
 describe("the dismiss route — the park contract (202)", () => {
-	it("still refuses honestly (400) with no turn and nothing dangling", async () => {
-		const chat = chatStore.createChat("park: nothing dangling").id;
+	it("still refuses honestly (400) with no turn and nothing active", async () => {
+		const chat = chatStore.createChat("park: nothing active").id;
 		const dismissRoute = await import("../app/api/chats/[id]/dismiss/route.ts");
 		const res = await dismissRoute.POST(
 			new Request(`http://test/api/chats/${chat}/dismiss`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					input: { type: "dismiss", toolCallId: "call-nowhere", answer: dismissedAnswer("quiz", "?") },
-				}),
+				body: JSON.stringify({ input: { type: "dismiss-problem", problemCallId: "call-nowhere" } }),
 			}),
 			{ params: Promise.resolve({ id: chat }) },
 		);

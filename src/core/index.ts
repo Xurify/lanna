@@ -14,7 +14,6 @@
 export * from "./contracts.ts";
 export * from "./ports.ts";
 
-export * from "./question-core.ts";
 // The event bus (push architecture, 2026-10-02): vocabulary + emit/subscribe
 // for every layer; the browser shell consumes the types + the runtime names
 // through this barrel (shell law: pure core via @/src/core only).
@@ -33,10 +32,8 @@ export * from "./chat-lines.ts";
 export * from "./chat-export.ts";
 export * from "./app-content.ts";
 // answer-presentation is not re-exported here: it pulls the Markdown parsers (about 250 KB), and a client component that imports this barrel would ship them on every route. Import them from "./tutor.ts" (client: "@/src/core/tutor").
-// Wave B (owner-approved 2026-09-26): the native record (LannaMessage), the
-// and the input-events contract — all
-// pure logic, browser-safe.
-export * from "./native-messages.ts";
+export * from "./chat-messages.ts";
+export * from "./model-context.ts";
 export * from "./compaction.ts";
 export * from "./input-events.ts";
 // Wave D (owner-approved 2026-09-26): the client view model — the grouping

@@ -13,8 +13,8 @@
  */
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { LannaMessage } from "../core/native-messages.ts";
-import { newMessageId } from "../core/native-messages.ts";
+import type { LannaMessage } from "../core/chat-messages.ts";
+import { newMessageId } from "../core/chat-messages.ts";
 import type { ChatStore } from "../core/ports.ts";
 import { recordActivity } from "./lesson.ts";
 

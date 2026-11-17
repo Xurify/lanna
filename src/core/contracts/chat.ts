@@ -6,7 +6,7 @@
  * master. Pure types + protocol docs + tiny pure helpers.
  */
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
-import type { LannaMessage } from "../native-messages.ts";
+import type { LannaMessage } from "../chat-messages.ts";
 
 // ─── Chat records (the session store's on-disk format) ───────────────────────
 

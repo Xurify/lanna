@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
-import type { ChatInput, LannaMessage, QuestionAnswerData } from "@/src/core";
+import type { ChatInput, LannaMessage } from "@/src/core";
 import { SessionModel, type SessionState } from "@/components/session-core";
 
 interface UseChatSessionOptions {
@@ -105,21 +105,7 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 	const send = useCallback((input: ChatInput) => void model.send(input), [model]);
 	const continueIfOwed = useCallback((record: readonly LannaMessage[]) => void model.continueIfOwed(record), [model]);
 	const steer = useCallback((text: string) => void model.steer(text), [model]);
-	const submitAnswer = useCallback(
-		(tool: string, toolCallId: string, output: QuestionAnswerData) => void model.submitAnswer(tool, toolCallId, output),
-		[model],
-	);
-	const dismissQuestion = useCallback(
-		(toolCallId: string, answer: QuestionAnswerData) => void model.dismissQuestion(toolCallId, answer),
-		[model],
-	);
 	const dismissProblem = useCallback((problemCallId: string) => void model.dismissProblem(problemCallId), [model]);
-	const questionDraft = useCallback((toolCallId: string) => model.questionDraft(toolCallId), [model]);
-	const saveQuestionDraft = useCallback(
-		(toolCallId: string, draft: Parameters<SessionModel["saveQuestionDraft"]>[1]) =>
-			model.saveQuestionDraft(toolCallId, draft),
-		[model],
-	);
 	const setMessages = useCallback(
 		(record: LannaMessage[], turnError?: string) => model.setMessages(record, turnError),
 		[model],
@@ -139,11 +125,7 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 		send,
 		continueIfOwed,
 		steer,
-		submitAnswer,
-		dismissQuestion,
 		dismissProblem,
-		questionDraft,
-		saveQuestionDraft,
 		setMessages,
 		adoptRecord,
 		stop,
