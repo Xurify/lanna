@@ -26,10 +26,11 @@ import { WORDS_PAGE_SIZE } from "@/components/words/page-size";
 import { fillStyle } from "@/components/ui/fill";
 import { CheatsheetsTab } from "@/components/words/cheatsheets";
 import { WordEstimatePanel } from "@/components/words/word-estimate-panel";
+import { CommonWords } from "@/components/words/common-words";
 
 const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
-export type WordsTab = "words" | "phrases" | "cheatsheets";
+export type WordsTab = "words" | "common" | "phrases" | "cheatsheets";
 
 export function WordBankPage({
 	initialTab = "words",
@@ -46,6 +47,7 @@ export function WordBankPage({
 }) {
 	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
+	const [knownRevision, setKnownRevision] = useState(0);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
 	const [sheetOpen, setSheetOpen] = useState(initialTab === "cheatsheets" && !!initialSheet);
 	const setActiveTab = (tab: WordsTab) => {
@@ -247,7 +249,7 @@ export function WordBankPage({
 							)}
 						</div>
 
-						<WordEstimatePanel initial={initialEstimate} />
+						<WordEstimatePanel initial={initialEstimate} revision={knownRevision} />
 
 						{/* Primary Tab Selector */}
 						<div className="mb-6 flex overflow-x-auto border-b border-border/80">
@@ -266,6 +268,20 @@ export function WordBankPage({
 								<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
 									{totalWords}
 								</span>
+							</button>
+
+							<button
+								type="button"
+								onClick={() => setActiveTab("common")}
+								aria-pressed={activeTab === "common"}
+								className={cn(
+									"min-h-11 shrink-0 whitespace-nowrap border-b-2 px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
+									activeTab === "common"
+										? "border-teal text-foreground"
+										: "border-transparent text-muted-foreground hover:text-foreground",
+								)}
+							>
+								Common words
 							</button>
 
 							<button
@@ -311,6 +327,8 @@ export function WordBankPage({
 				{activeTab === "cheatsheets" && (
 					<CheatsheetsTab initialSheet={initialSheet} onCount={setSheetCount} onOpenChange={setSheetOpen} />
 				)}
+
+				{activeTab === "common" && <CommonWords onKnownChange={() => setKnownRevision((v) => v + 1)} />}
 
 				{/* ──────────────── TAB 1: WORD BANK ──────────────── */}
 				{activeTab === "words" && (
