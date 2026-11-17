@@ -165,6 +165,18 @@ const CASES: { why: string; slug: string; sentence: string; given: string; says:
 		says: ["You wrote vodný adjective · water", "Needed here vody noun · voda, water", "Both can mean water."],
 	},
 	{
+		why: "the other word's example shows its own meaning, not one that looks like the needed word",
+		slug: "vela",
+		sentence: "V lete veľa cestujeme vlakom.",
+		given: "veľký",
+		says: [
+			"You wrote veľký adjective · big",
+			"Needed here veľa adverb · a lot",
+			"veľký in use: Váš dom je veľký. Your house is big.",
+		],
+		never: ["Much respect"],
+	},
+	{
 		why: "the shared meaning comes from any sense, not only the first",
 		slug: "iba",
 		sentence: "Máme iba čaj.",
@@ -248,4 +260,55 @@ CASES.forEach((c, i) => {
 		for (const s of c.says) assert.ok(text.includes(s), `"${s}" in: ${text}`);
 		for (const s of c.never ?? []) assert.ok(!text.includes(s), `no "${s}" in: ${text}`);
 	});
+});
+
+test("the right case in the wrong number names both forms and both numbers", () => {
+	const text = textOf(
+		renderToStaticMarkup(
+			<MissWhy
+				reason={{
+					slip: "same-word",
+					lemma: "byt",
+					gloss: "apartment",
+					inflects: true,
+					form: "instrumental plural of byt (masculine-inanimate)",
+					trigger: "s",
+					givenForm: "instrumental singular",
+					mismatch: { kind: "number", grammarCase: "instrumental", given: "singular", needed: "plural" },
+				}}
+				given="bytom"
+				answer="bytmi"
+			/>,
+		),
+	);
+	for (const s of [
+		"You wrote bytom byt, instrumental singular",
+		"instrumental plural (masculine-inanimate), after s",
+		"Right case, wrong number. Both are instrumental: bytom is singular, bytmi is plural.",
+	])
+		assert.ok(text.includes(s), `"${s}" in: ${text}`);
+	assert.ok(!text.includes("with another ending"), text);
+});
+
+test("the right number in the wrong case names both cases", () => {
+	const text = textOf(
+		renderToStaticMarkup(
+			<MissWhy
+				reason={{
+					slip: "same-word",
+					lemma: "byt",
+					gloss: "apartment",
+					inflects: true,
+					givenForm: "locative singular",
+					mismatch: { kind: "case", number: "singular", given: ["locative"], needed: "instrumental" },
+				}}
+				given="byte"
+				answer="bytom"
+			/>,
+		),
+	);
+	assert.ok(
+		text.includes("Right number, wrong case. Both are singular: byte is locative, bytom is instrumental."),
+		text,
+	);
 });

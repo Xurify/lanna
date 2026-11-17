@@ -1,6 +1,6 @@
 "use client";
 
-import type { Ref } from "react";
+import { useCallback, useState, type Ref } from "react";
 import { FileTextIcon, ImageIcon } from "lucide-react";
 import {
 	answerMark,
@@ -10,6 +10,7 @@ import {
 	type AttachedPdf,
 	type LearnerLine,
 } from "@/src/core";
+import { ImageViewer } from "@/components/image-viewer";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<AnswerTone, string> = {
@@ -48,34 +49,44 @@ function PdfChips({ pdfs, className }: { pdfs: readonly AttachedPdf[]; className
 }
 
 function ImageChips({ images, className }: { images: readonly AttachedImage[]; className?: string }) {
+	const [open, setOpen] = useState<{ src: string; name: string } | null>(null);
+	const close = useCallback(() => setOpen(null), []);
 	if (images.length === 0) return null;
 	return (
-		<ul data-testid="attached-images" className={cn("flex flex-wrap gap-2.5", className)}>
-			{images.map((img) => {
-				const fileName = img.path.split(/[/\\]/).pop() ?? img.name;
-				return (
-					<li
-						key={img.path}
-						title={img.path}
-						className="flex max-w-full flex-col gap-1.5 rounded-xl border border-line-2 bg-well p-2 font-ui text-[13px] text-ink-2"
-					>
-						{/* eslint-disable-next-line @next/next/no-img-element */}
-						<img
-							src={`/api/learner-images?file=${encodeURIComponent(fileName)}`}
-							alt={img.name}
-							className="max-h-60 max-w-xs rounded-lg object-contain bg-background/40"
-							onError={(e) => {
-								(e.currentTarget as HTMLElement).style.display = "none";
-							}}
-						/>
-						<div className="flex items-center gap-1.5 px-0.5">
-							<ImageIcon className="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
-							<span className="truncate max-w-[220px]">{img.name}</span>
-						</div>
-					</li>
-				);
-			})}
-		</ul>
+		<>
+			<ul data-testid="attached-images" className={cn("flex flex-wrap gap-2.5", className)}>
+				{images.map((img) => {
+					const fileName = img.path.split(/[/\\]/).pop() ?? img.name;
+					const src = `/api/learner-images?file=${encodeURIComponent(fileName)}`;
+					return (
+						<li key={img.path} className="max-w-full">
+							<button
+								type="button"
+								title={`View ${img.name}`}
+								aria-label={`View ${img.name}`}
+								onClick={() => setOpen({ src, name: img.name })}
+								className="flex max-w-full cursor-zoom-in flex-col gap-1.5 rounded-xl border border-line-2 bg-well p-2 text-left font-ui text-[13px] text-ink-2 transition-colors hover:border-ink-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal"
+							>
+								{/* eslint-disable-next-line @next/next/no-img-element */}
+								<img
+									src={src}
+									alt=""
+									className="max-h-60 max-w-xs rounded-lg object-contain bg-background/40 max-sm:max-w-full"
+									onError={(e) => {
+										(e.currentTarget as HTMLElement).style.display = "none";
+									}}
+								/>
+								<span className="flex items-center gap-1.5 px-0.5">
+									<ImageIcon className="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
+									<span className="truncate max-w-[220px]">{img.name}</span>
+								</span>
+							</button>
+						</li>
+					);
+				})}
+			</ul>
+			<ImageViewer src={open?.src ?? null} name={open?.name ?? ""} onClose={close} />
+		</>
 	);
 }
 
