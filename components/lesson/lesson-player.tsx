@@ -1473,8 +1473,12 @@ function ClozeRep({
 									{given || " "}
 								</span>
 								{input(
-									"q-write absolute inset-0 h-full w-full px-1 py-0 font-semibold leading-[inherit] text-foreground outline-none",
+									"peer absolute inset-0 h-full w-full rounded-none bg-transparent px-1 py-0 font-semibold leading-[inherit] text-foreground outline-none",
 								)}
+								<span
+									aria-hidden="true"
+									className="pointer-events-none absolute inset-x-0 top-[31px] h-0.5 bg-ink-4 peer-focus:bg-teal sm:top-[47px]"
+								/>
 							</span>
 						) : (
 							<span className="q-blank mx-1 w-[5ch]" aria-label="blank" />
