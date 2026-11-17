@@ -46,6 +46,7 @@ import {
 } from "@/components/settings/settings-context";
 import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
+import { CapLabel } from "@/components/ui/cap-label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { fuzzyScore } from "@/src/core";
@@ -1196,7 +1197,7 @@ function SessionsSidebar() {
 												)}
 											>
 												<ListChecksIcon className="size-3.5" />
-												<span className="hidden text-[12px] font-[550] @[15rem]:inline">
+												<span className="cap-center hidden text-[12px] font-[550] @[15rem]:inline">
 													{selectMode ? "Done" : "Select"}
 												</span>
 											</Button>
@@ -1394,7 +1395,7 @@ function SessionsSidebar() {
 								className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 							>
 								<SettingsIcon className="size-[18px]" />
-								Settings
+								<CapLabel>Settings</CapLabel>
 							</button>
 						</Hint>
 					</div>
@@ -1421,7 +1422,7 @@ function SessionsSidebar() {
 							className={CTX_ITEM}
 						>
 							<PencilIcon className={CTX_ICON} aria-hidden="true" />
-							Rename
+							<CapLabel>Rename</CapLabel>
 						</button>
 						<button
 							type="button"
@@ -1439,7 +1440,7 @@ function SessionsSidebar() {
 							className={CTX_ITEM}
 						>
 							<FileDownIcon className={CTX_ICON} aria-hidden="true" />
-							Save as text file
+							<CapLabel>Save as text file</CapLabel>
 						</button>
 						{chats?.find((c) => c.id === ctxChatId)?.archived ? (
 							<button
@@ -1452,7 +1453,7 @@ function SessionsSidebar() {
 								className={CTX_ITEM}
 							>
 								<ArchiveRestoreIcon className={CTX_ICON} aria-hidden="true" />
-								Unarchive
+								<CapLabel>Unarchive</CapLabel>
 							</button>
 						) : (
 							<button
@@ -1465,7 +1466,7 @@ function SessionsSidebar() {
 								className={CTX_ITEM}
 							>
 								<ArchiveIcon className={CTX_ICON} aria-hidden="true" />
-								Archive
+								<CapLabel>Archive</CapLabel>
 							</button>
 						)}
 						<div className="mx-1 my-1 border-t border-border/60" aria-hidden="true" />
@@ -1480,7 +1481,7 @@ function SessionsSidebar() {
 							className="flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-left font-semibold text-miss transition-colors hover:bg-miss-soft"
 						>
 							<Trash2Icon className="size-3.5 shrink-0" aria-hidden="true" />
-							Delete
+							<CapLabel>Delete</CapLabel>
 						</button>
 					</MenuShell>
 				)}

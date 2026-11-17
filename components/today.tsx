@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { HistoryIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QIcon, QPie } from "@/components/quiet/icon";
+import { CapLabel } from "@/components/ui/cap-label";
 import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";
 import { EntryRow } from "@/components/log/day-log-view";
@@ -417,7 +418,7 @@ export function Today({
 											className="lanna-press order-3 -my-1 inline-flex h-7 items-center gap-1.5 rounded-md bg-well px-2.5 text-[12.5px] font-[550] text-ink-2 hover:bg-well-2 hover:text-foreground"
 										>
 											<HistoryIcon className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
-											Open the log
+											<CapLabel>Open the log</CapLabel>
 										</Link>
 									</h2>
 									{dayLog && dayLog.entries.length > 0 ? (

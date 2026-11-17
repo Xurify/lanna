@@ -28,6 +28,7 @@ import {
 	Trash2Icon,
 } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
+import { CapLabel } from "@/components/ui/cap-label";
 import { useActiveLanguage } from "@/components/speech";
 import type { FeedTask } from "@/components/activity-dock";
 import { KeyNote } from "@/components/quiet/empty-state";
@@ -339,7 +340,7 @@ function LinkField({
 						data-testid="watch-prepare"
 					>
 						<ListPlusIcon className="size-4" strokeWidth={1.8} />
-						{spotify ? "Add track" : "Add video"}
+						<CapLabel>{spotify ? "Add track" : "Add video"}</CapLabel>
 					</button>
 					<button
 						type="button"

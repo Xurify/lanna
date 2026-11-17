@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2Icon, MicIcon } from "lucide-react";
 import { useSettingsDialog } from "@/components/settings/settings-context";
+import { CapLabel } from "@/components/ui/cap-label";
 import { Hint } from "@/components/ui/hint";
 import { setDictationActive } from "@/components/dictation-active";
 
@@ -695,7 +696,11 @@ export function DictationBar({ dictation, compact = false }: { dictation: Dictat
 					}
 				>
 					<MicIcon className={compact ? "size-4" : "size-3.5"} />
-					{(!compact || error) && <span className="max-w-full truncate">{error ?? "Dictate"}</span>}
+					{(!compact || error) && (
+						<span className="cap-center max-w-full overflow-x-clip text-ellipsis whitespace-nowrap">
+							{error ?? "Dictate"}
+						</span>
+					)}
 				</button>
 			</Hint>
 		);
@@ -718,7 +723,7 @@ export function DictationBar({ dictation, compact = false }: { dictation: Dictat
 					className="flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-destructive/10 px-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
 				>
 					{phase === "stopping" ? <Loader2Icon className="size-3.5 animate-spin" /> : <MicIcon className="size-3.5" />}
-					Stop
+					<CapLabel>Stop</CapLabel>
 				</button>
 			</Hint>
 			<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-destructive" aria-hidden />

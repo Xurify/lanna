@@ -20,6 +20,7 @@
  */
 
 import { EmptyState } from "@/components/quiet/empty-state";
+import { CapLabel } from "@/components/ui/cap-label";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -1213,7 +1214,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 									) : (
 										<MicOffIcon className="size-4" strokeWidth={1.6} />
 									)}
-									{useMic ? "Mic on" : "Mic off"}
+									<CapLabel>{useMic ? "Mic on" : "Mic off"}</CapLabel>
 								</button>
 								<div className="font-prose text-[13px] leading-snug text-ink-3" data-testid="fast-mic-why">
 									<p>

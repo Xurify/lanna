@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, KeyboardIcon, ListChecksIcon, LoaderCircleIcon, MicIcon, RepeatIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CapLabel } from "@/components/ui/cap-label";
 import { EmptyState, AddKeyButton } from "@/components/quiet/empty-state";
 import { TaskFrame } from "@/components/task-frame";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
@@ -108,7 +109,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						className="lanna-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
 					>
 						<ArrowLeftIcon className="size-3.5" />
-						Today
+						<CapLabel>Today</CapLabel>
 					</Link>
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
@@ -313,7 +314,7 @@ function SceneSheet({
 				{scene.scripted && (
 					<Link href={script} className={QUIET} data-testid={tid(`scene-script-${scene.id}`)}>
 						<ListChecksIcon className="size-4" />
-						Step by step
+						<CapLabel>Step by step</CapLabel>
 					</Link>
 				)}
 			</>
@@ -322,7 +323,7 @@ function SceneSheet({
 		actions = (
 			<Link href={script} className={PRIMARY} data-testid={tid(`scene-script-${scene.id}`)}>
 				<ListChecksIcon className="size-4" />
-				Step by step
+				<CapLabel>Step by step</CapLabel>
 			</Link>
 		);
 	} else {

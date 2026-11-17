@@ -26,6 +26,7 @@ import {
 	TableIcon,
 	ZapIcon,
 } from "lucide-react";
+import { withCapLabels } from "@/components/ui/cap-label";
 import { NAV, navItemFor, type NavId } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { MenuShell } from "@/components/menu-shell";
@@ -378,7 +379,7 @@ function NavItem({
 				/>
 			)}
 			<span className={cn("shrink-0", active ? (accent === "teal" ? "text-teal" : "text-sun") : "")}>{icon}</span>
-			{children}
+			{withCapLabels(children)}
 		</Link>
 	);
 }
