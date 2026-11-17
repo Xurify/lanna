@@ -6,33 +6,35 @@ What each page does is on the page, and the research behind each task is on **So
 
 ## Pages
 
-| Page                         | Route                                                                                                                                  |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Today                        | `/`                                                                                                                                    |
-| Setup                        | `/start`                                                                                                                               |
-| Lesson, Blitz                | `/lesson?unit=<id>`, `/lesson?mode=blitz`                                                                                              |
-| Chapter exam                 | `/exam?chapter=<id>`                                                                                                                   |
-| Curriculum                   | `/curriculum`                                                                                                                          |
-| Review                       | `/review`                                                                                                                              |
-| Words, Phrases, Cheatsheets  | `/words`, `/words?tab=cheatsheets`                                                                                                     |
-| Grammar                      | `/grammar`                                                                                                                             |
-| Mistakes                     | `/mistakes`                                                                                                                            |
-| Catch the mistake            | `/catch`                                                                                                                               |
-| Listen                       | `/listen`                                                                                                                              |
-| Today's line                 | `/line`                                                                                                                                |
-| Read                         | `/read`: the library of stories, and your own articles and newsletters (a link or pasted text), retold at your level or not simplified |
-| Speak, Talk in writing       | `/speak`, `/speak?mode=typed`                                                                                                          |
-| Speed                        | `/speed`                                                                                                                               |
-| Sound                        | `/sound?id=<id>`                                                                                                                       |
-| Ear gym                      | `/phonology`                                                                                                                           |
-| Media (Watch, Get ready)     | `/watch`                                                                                                                               |
-| Chat                         | `/chat/new`, `/chat/<id>`                                                                                                              |
-| When can I…?                 | `/milestones`                                                                                                                          |
-| Progress, Stamps             | `/progress`, `/progress#stamps`                                                                                                        |
-| Sources                      | `/sources`                                                                                                                             |
-| Tasks                        | `/tasks`                                                                                                                               |
-| Log (what was done each day) | `/log`                                                                                                                                 |
-| Pair a device                | `/pair`                                                                                                                                |
+| Page                         | Route                                     |
+| ---------------------------- | ----------------------------------------- |
+| Today                        | `/`                                       |
+| Setup                        | `/start`                                  |
+| Lesson, Blitz                | `/lesson?unit=<id>`, `/lesson?mode=blitz` |
+| Chapter exam                 | `/exam?chapter=<id>`                      |
+| Curriculum                   | `/curriculum`                             |
+| Review                       | `/review`                                 |
+| Words, Phrases, Cheatsheets  | `/words`, `/words?tab=cheatsheets`        |
+| Grammar                      | `/grammar`                                |
+| Mistakes                     | `/mistakes`                               |
+| Catch the mistake            | `/catch`                                  |
+| Listen                       | `/listen`                                 |
+| Today's line                 | `/line`                                   |
+| Read                         | `/read`                                   |
+| Speak, Talk in writing       | `/speak`, `/speak?mode=typed`             |
+| Speed                        | `/speed`                                  |
+| Sound                        | `/sound?id=<id>`                          |
+| Ear gym                      | `/phonology`                              |
+| Media (Watch, Get ready)     | `/watch`                                  |
+| Chat                         | `/chat/new`, `/chat/<id>`                 |
+| When can I…?                 | `/milestones`                             |
+| Progress, Stamps             | `/progress`, `/progress#stamps`           |
+| Sources                      | `/sources`                                |
+| Tasks                        | `/tasks`                                  |
+| Log (what was done each day) | `/log`                                    |
+| Pair a device                | `/pair`                                   |
+
+**Read** holds the story library and your own articles and newsletters (a link or pasted text), retold at your level or left as they are.
 
 Languages: Slovak is built in. Every other language is added from the language menu, **Add a language…**, which builds its course in the background ([docs/adding-a-language.md](docs/adding-a-language.md)). Each language keeps its own data under `data/profiles/<language>/`, and each device keeps its own language.
 
@@ -42,7 +44,14 @@ Everything the app generates or you produce stays on disk in open formats, with 
 
 ## Phone and iPad
 
-A phone or iPad reaches the app over your own Tailscale network. It is off by default. In Settings → Devices, turn on **Remote access**, run `tailscale serve --bg 3010` once on this computer (Tailscale signed in, HTTPS certificates on), then choose **Make a code** and type the six digits on the phone within five minutes. The server still listens on this computer only, and Funnel stays off. Share, then Add to Home Screen, opens it full screen. Steps: [docs/remote-access.md](docs/remote-access.md). An always-on server: [docs/server.md](docs/server.md).
+A phone or iPad reaches the app over your own Tailscale network. It is off by default.
+
+1. In Settings → Devices, turn on **Remote access**.
+2. On this computer, run `tailscale serve --bg 3010` once (Tailscale signed in, HTTPS certificates on).
+3. Choose **Make a code** and type the six digits on the phone within five minutes.
+4. On the phone, Share → Add to Home Screen opens it full screen.
+
+The server still listens on this computer only, and Funnel stays off. Full steps: [docs/remote-access.md](docs/remote-access.md). An always-on server: [docs/server.md](docs/server.md).
 
 ## Where the thinking lives
 
@@ -64,16 +73,19 @@ Add an AI key or connect a subscription directly in Settings → API keys (AI ke
 
 Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 
-- `ELEVENLABS_API_KEY`: the best voice, and speech-to-text for the Speak task (Scribe). Change the voice with `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`. Every language is read with `eleven_v4` (set `ELEVENLABS_MODEL_ID` for another); an account without it falls back to `eleven_v3`, then `eleven_multilingual_v2` for the 29 languages that one reads. Single words and the tutor's lines in a language without its own ElevenLabs voice use Edge unless `ELEVENLABS_VOICE_ID_<CODE>` (for example `ELEVENLABS_VOICE_ID_ET`) names one. `npm run audio:regen` lists the kept clips the newest model would make better (an older model, or an Edge clip in a voice ElevenLabs has) with their characters and cost, and spends nothing; `npm run audio:regen -- --yes` makes them again (`--max-chars` caps the spend). Replaced files move to `data/audio/replaced/<stamp>/`.
+- `ELEVENLABS_API_KEY`: the best voice, and speech-to-text for the Speak task (Scribe).
+  - Voice: `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`. For another language, `ELEVENLABS_VOICE_ID_<CODE>` (for example `ELEVENLABS_VOICE_ID_ET`); without one, single words and the tutor's lines in that language use Edge.
+  - Model: `eleven_v4` for every language (`ELEVENLABS_MODEL_ID` for another). An account without it falls back to `eleven_v3`, then `eleven_multilingual_v2` (29 languages).
+  - `npm run audio:regen` lists the kept clips the newest model would make better (an older model, or an Edge clip in a voice ElevenLabs has), with characters and cost, and spends nothing. `npm run audio:regen -- --yes` remakes them (`--max-chars` caps the spend). Replaced files move to `data/audio/replaced/<stamp>/`.
 - `DEEPGRAM_API_KEY`: speech-to-text for the Speak task when there is no ElevenLabs key (and the composer's dictation).
 - `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`: Azure Speech pronunciation assessment (Slovak is covered) for Speak and Speed — a phoneme-level score for every spoken line. Without them clarity is judged from the transcript alone.
-- `LANNA_PRON_SCRIPT=1`: dev only — a made-up pronunciation score for working on the screens without a key. `LANNA_STT_SCRIPT=<text>`: dev only — every recording transcribes to that text.
+- `LANNA_PRON_SCRIPT=1`: dev only — a made-up pronunciation score for working on the screens without a key.
+- `LANNA_STT_SCRIPT=<text>`: dev only — every recording transcribes to that text.
 - `LANNA_SPEAK_SCRIPT=<file>`: dev only — a JSON array of scripted tutor replies for working on the Speak screen without a model.
 - Edge voices need no key, only internet.
 - Piper works offline: set `PIPER_PATH` to the binary and `PIPER_MODEL_SK` to a Slovak `.onnx` voice.
 
-On Windows, `npm test` and `npm run desktop:dev` use Unix-style env syntax. Run them from Git Bash, or once run
-`npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
+On Windows, `npm test` and `npm run desktop:dev` use Unix-style env syntax. Run them from Git Bash, or once run `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
 
 ## Refresh the curriculum
 
@@ -82,9 +94,7 @@ npm run lexicon:export   # reads ../slovak.wiki, writes curriculum/slovak/lexico
 npm run seed:build       # curriculum/slovak/seed-source.json → seed.json
 ```
 
-The seed source is hand-written. Edit nodes, chains, clusters or goals
-there, then rebuild. An existing profile is not re-seeded. To start
-fresh, delete `data/profiles/slovak/`.
+The seed source is hand-written. Edit nodes, chains, clusters or goals there, then rebuild. An existing profile is not re-seeded. To start fresh, delete `data/profiles/slovak/`.
 
 ## Limits worth knowing
 

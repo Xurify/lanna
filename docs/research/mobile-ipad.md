@@ -54,17 +54,19 @@ Options for the next slice, with a recommendation:
 
 Method: the sandbox (`npm run dev:sandbox -- --seed`): a throwaway data folder outside the repo, fake keys, a free port. Playwright with a 390 × 844 and an 820 × 1180 viewport at 2× device pixels, touch emulation on. Screenshots are in the project audit folder, `audit/mobile/` (see its README).
 
-| Check                                                           | Result                                                                                                                                                                                                                                                                  |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Horizontal overflow, Today, lesson, review, Read at 390 and 820 | none                                                                                                                                                                                                                                                                    |
-| Bottom navigation, phone                                        | 57 px                                                                                                                                                                                                                                                                   |
-| Keycap hints visible on touch                                   | 0                                                                                                                                                                                                                                                                       |
-| Reader word card inside the screen, 390 px                      | yes (was 15 px over)                                                                                                                                                                                                                                                    |
-| Sidebar controls under 44 px, drawer open                       | 0                                                                                                                                                                                                                                                                       |
-| Reader controls under 44 px, excluding words in running text    | 0                                                                                                                                                                                                                                                                       |
-| ESLint on the changed files                                     | clean                                                                                                                                                                                                                                                                   |
-| Typecheck                                                       | 89 errors, all in files this slice did not touch, the same count as main                                                                                                                                                                                                |
-| Test suite                                                      | 2,772 tests: 2,759 pass, 13 fail in 6 files (automatic updates, desktop payload and platform, say-it-faster round, rejected examples, server title guard, subscription auth). The same 18 failing lines occur on a clean worktree of main, so they predate this change. |
+| Check                                                           | Result                                                                   |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Horizontal overflow, Today, lesson, review, Read at 390 and 820 | none                                                                     |
+| Bottom navigation, phone                                        | 57 px                                                                    |
+| Keycap hints visible on touch                                   | 0                                                                        |
+| Reader word card inside the screen, 390 px                      | yes (was 15 px over)                                                     |
+| Sidebar controls under 44 px, drawer open                       | 0                                                                        |
+| Reader controls under 44 px, excluding words in running text    | 0                                                                        |
+| ESLint on the changed files                                     | clean                                                                    |
+| Typecheck                                                       | 89 errors, all in files this slice did not touch, the same count as main |
+| Test suite                                                      | 2,759 of 2,772 pass; the 13 failures predate this change (below)         |
+
+The 13 failing tests are in 6 files (automatic updates, desktop payload and platform, say-it-faster round, rejected examples, server title guard, subscription auth). The same 18 failing lines occur on a clean worktree of main, so they predate this change.
 
 **Not verified:** Safari on iOS and iPadOS (no device here); the Home Screen launch; the real microphone on a device; the Electron window; the PC itself; a generated story from the live model (the reader was checked with a synthetic A1 episode); pronunciation scoring.
 

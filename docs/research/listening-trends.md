@@ -15,13 +15,11 @@ Each Listen rep logs the sentence, what was typed or picked, the verdict, time t
 
 A typed sentence is aligned with the one played, word by word (a similar word is one substitution, not a drop and an add), and each difference gets one cause (`src/core/listen-analysis.ts`):
 
-| Kind       | Causes                                                                                                                                                                                                                                                                              |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Vocabulary | the stretch word, whatever the difference looks like                                                                                                                                                                                                                                |
-| Hearing    | vowel length (á é í ó ú ý ŕ ĺ), ô heard as a plain o (it is a diphthong, not a long o), soft ľ ň ď ť, š ž č against s z c, voiced against unvoiced (d/t, b/p, z/s, g/k, v/f, h/ch), a short word dropped (v z s sa si je…), a word not caught, a word added, a different word heard |
-| Grammar    | the right word with the wrong ending                                                                                                                                                                                                                                                |
-| Spelling   | i for y (the two sound the same in Slovak), e or a for ä (ä is said like e)                                                                                                                                                                                                         |
-| Typing     | a one-letter slip that sounds the same                                                                                                                                                                                                                                              |
+- **Vocabulary**: the stretch word, whatever the difference looks like.
+- **Hearing**: vowel length (á é í ó ú ý ŕ ĺ), ô heard as a plain o (it is a diphthong, not a long o), soft ľ ň ď ť, š ž č against s z c, voiced against unvoiced (d/t, b/p, z/s, g/k, v/f, h/ch), a short word dropped (v z s sa si je…), a word not caught, a word added, a different word heard.
+- **Grammar**: the right word with the wrong ending.
+- **Spelling**: i for y (the two sound the same in Slovak), e or a for ä (ä is said like e).
+- **Typing**: a one-letter slip that sounds the same.
 
 Because the sentence's only unmet word is known, a difference on any other word is not a vocabulary gap, which is what makes the split honest. A picked meaning shows only whether the sentence was understood, so it counts toward accuracy and effort but has no cause. That is why Listen became typing-only the same day: the causes need typed sentences, and the owner had already found picking too easy.
 
