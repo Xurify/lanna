@@ -19,11 +19,11 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 // ── the seam, BEFORE any config-loading import ──────────────────────────────
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-dismissal-park-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-dismissals-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { chatStore } = await import("../src/store/chats.ts");
-const { applyParkedDismissal, parkDismissal, takeParkedDismissal } = await import("../src/server/dismissal-park.ts");
+const { applyParkedDismissal, parkDismissal, takeParkedDismissal } = await import("../src/server/turn/dismissals.ts");
 const { subscribe } = await import("../src/core/events.ts");
 const { activeProblemOf } = await import("../src/core/index.ts");
 const newMessageId = (await import("../src/core/chat-messages.ts")).newMessageId;

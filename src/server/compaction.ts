@@ -10,7 +10,7 @@
  *     projected context is over threshold: the summary starts NOW, in
  *     the background, while the learner reads/answers — usually done
  *     long before the next input arrives.
- *   - TURN-START GATE — every turn (client POST or wake) awaits any
+ *   - TURN-START GATE — every turn (client POST) awaits any
  *     in-flight compaction for its chat BEFORE appends or beginTurn;
  *     if the record is STILL over threshold (cold sessions, kicks that
  *     lost their engine), compaction runs synchronously inside the
@@ -84,7 +84,7 @@ async function subagentSummarizer(prompt: string, engine: PiEngine): Promise<{ s
 	return { summary: text, usage };
 }
 
-/** Everything the service needs from its host (chat-handler wires the
+/** Everything the service needs from its host (the turn gates wire the
  *  production versions; tests inject). */
 export interface CompactionDeps {
 	/** Eligibility only for NEW runs; structural waits still apply. */
@@ -97,7 +97,7 @@ export interface CompactionDeps {
 	/** The effective trigger threshold, RESOLVED by the caller:
 	 *  min(settings threshold, contextWindow − reserve) — the owner's
 	 *  effective-trigger ruling. The catalog window lookup is the
-	 *  caller's (chat-handler has the model id at hand). */
+	 *  caller's (the turn gates have the model id at hand). */
 	thresholdTokens: number;
 	/** The composed system prompt's token estimate (chars/4) — the
 	 *  projection the provider actually receives starts with it. */
@@ -290,7 +290,7 @@ export async function ensureCompacted(deps: CompactionDeps, chatId: string): Pro
  * The settle kick (fire-and-forget): the turn settled, the learner is
  * about to read/answer — if the projection is over threshold, the
  * summary starts NOW and finishes inside the pause. Wired at
- * chat-handler's onFinish tail; engineless or over-threshold-nothing
+ * the turn's settle tail; engineless or over-threshold-nothing
  * are silent no-ops. The next turn's ensureCompacted gate picks up
  * whatever this leaves running.
  */

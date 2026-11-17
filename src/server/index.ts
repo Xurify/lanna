@@ -4,7 +4,7 @@
  * here; nothing under app/ touches src/store or src/agent directly.
  */
 
-export * from "./chat-handler.ts";
+export * from "./turn/request.ts";
 export * from "./events-stream.ts";
 export * from "./chats.ts";
 export * from "./steers.ts";
@@ -23,7 +23,7 @@ export { progressStore } from "../store/progress.ts";
 export { isValidSegmentPath } from "../core/prompt-segments.ts";
 // The canonical segment discovery/resolution lives in the agent layer
 // (composition is an agent concern); the barrel re-exports it for the
-// routes — server→agent is the lawful direction (chat-handler precedent).
+// routes — server→agent is the lawful direction (the turn gates precedent).
 export { effectivePromptSegments, allSegmentPaths } from "../agent/prompt-segments.ts";
 
 // The auth/keys composition (auth-keys wave, 2026-09-19): the curated
@@ -33,11 +33,11 @@ export { effectivePromptSegments, allSegmentPaths } from "../agent/prompt-segmen
 export * from "./keys.ts";
 export * from "./search.ts";
 export * from "./settings-body.ts";
-export * from "./turn-liveness.ts";
-export * from "./turn-runs.ts";
-export * from "./dismissal-park.ts";
+export * from "./turn/liveness.ts";
+export * from "./turn/registry.ts";
+export * from "./turn/dismissals.ts";
 export * from "./compaction.ts";
-export { piTurnResponse } from "./pi/ui-stream.ts";
+export { piTurnResponse } from "./turn/stream.ts";
 export * from "./observability.ts";
 export * from "./tasks.ts";
 export * from "./model-catalog.ts";

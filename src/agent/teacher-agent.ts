@@ -75,7 +75,7 @@ function getComposedInstructions(kind: AgentKind): string {
 	return cached;
 }
 
-// Money channel (wave 4): the chat-handler passes a per-turn collector;
+// Money channel (wave 4): the turn runner passes a per-turn collector;
 // every model call's usage lands in the chat record's turns log
 // (ChatStore.appendTurnUsage). The narrow param keeps the seam honest.
 export type StepUsageCollector = (usage: Usage) => void;
@@ -92,7 +92,7 @@ export interface AgentBuildOptions {
 	 *  An explicit registry is NEVER toggle-filtered — the caller owns it. */
 	tools?: Record<string, AgentTool<any>>;
 	/** The resolved per-user tool toggles (core/pending EnabledTools — the
-	 *  2026-09-19 P2 bridge: Platform's chat-handler passes
+	 *  2026-09-19 P2 bridge: the turn runner passes
 	 *  effective.agent.tools; the factories drop any tool explicitly false.
 	 *  THE DEFINITIVE toggleable set is TOGGLEABLE_TOOLS (job tools only);
 	 *  the filtering is generic, but writes validate against the list). */

@@ -1,5 +1,5 @@
 /**
- * persistTurn (src/server/turn-service.ts): the canonical write of a turn's
+ * persistTurn (src/server/turn/persist.ts): the canonical write of a turn's
  * native history. Empty message ids are stamped here, and the turn persists
  * only its own tail, so the record stays append-only.
  */
@@ -8,7 +8,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import { PATHS } from "../config.ts";
-import { persistTurn } from "../src/server/turn-service.ts";
+import { persistTurn } from "../src/server/turn/persist.ts";
 import { chatStore } from "../src/store/chats.ts";
 
 const createdChats: string[] = [];

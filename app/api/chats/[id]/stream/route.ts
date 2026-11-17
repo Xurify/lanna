@@ -11,7 +11,7 @@
  *
  * 404 mirrors the POST handler's unknown-chat. Framework route is a thin
  * wrapper over the server barrel (the import law); tests drive the seams
- * (turn-runs + ui-stream) directly.
+ * (turn/registry + turn/stream) directly.
  */
 import { getChat, runningTurn, piTurnResponse, settledTurnResponse } from "@/src/server";
 

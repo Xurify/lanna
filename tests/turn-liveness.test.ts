@@ -1,5 +1,5 @@
 /**
- * Turn liveness registry unit tests (src/server/turn-liveness.ts): one turn
+ * Turn liveness registry unit tests (src/server/turn/liveness.ts): one turn
  * per chat, ever — begin/end round trip, double-begin rejection, restart
  * after end. The 30-minute stale-eviction TTL is not tested (it is a leak
  * guard, not a behavior). The lifecycle-emitter pins ride the same seams:
@@ -9,9 +9,9 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { beginTurn, endTurn, isTurnRunning } from "../src/server/turn-liveness.ts";
+import { beginTurn, endTurn, isTurnRunning } from "../src/server/turn/liveness.ts";
 import { subscribe, type ServerEvent } from "../src/core/events.ts";
-import { rememberTurnFailure, settledTurnResponse } from "../src/server/turn-runs.ts";
+import { rememberTurnFailure, settledTurnResponse } from "../src/server/turn/registry.ts";
 
 describe("turn liveness registry", () => {
 	it("retains a late-attach failure notice until the next accepted begin", async () => {

@@ -23,12 +23,12 @@ import {
 	type FauxResponseStep,
 } from "@earendil-works/pi-ai";
 import { createChatAgent } from "../src/agent/teacher-agent.ts";
-import { handleChatRequest } from "../src/server/chat-handler.ts";
+import { handleChatRequest } from "../src/server/turn/request.ts";
 import { effectiveSettings } from "../src/server/stores.ts";
-import { isTurnRunning } from "../src/server/turn-liveness.ts";
+import { isTurnRunning } from "../src/server/turn/liveness.ts";
 import { registerLiveAgent, steerLiveChat, unregisterLiveAgent } from "../src/server/steers.ts";
 import { SessionModel } from "../components/session-core.ts";
-import { abortTurn, runningTurn, settledTurnResponse } from "../src/server/turn-runs.ts";
+import { abortTurn, runningTurn, settledTurnResponse } from "../src/server/turn/registry.ts";
 import { chatStore } from "../src/store/chats.ts";
 import { newUserMessage } from "../src/core/chat-messages.ts";
 import { projectView } from "../src/core/view.ts";
@@ -224,6 +224,17 @@ after(() => {
 describe("chat flow (scripted model)", () => {
 	it("rejects unknown chats", async () => {
 		const res = await handleChatRequest(post("chat_nonexistent", { type: "text", text: "hi" }));
+		assert.equal(res.status, 404);
+	});
+
+	it("a null body is an unknown chat, not a crash", async () => {
+		const res = await handleChatRequest(
+			new Request("http://test/api/chat", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: "null",
+			}),
+		);
 		assert.equal(res.status, 404);
 	});
 

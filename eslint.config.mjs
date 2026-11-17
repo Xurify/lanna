@@ -14,7 +14,7 @@ import importPlugin from "eslint-plugin-import";
  *                    core: adapters implement core/ports.ts, never the reverse)
  *   src/agent/**   →  never imports src/server, src/store (dependencies —
  *                    the storage ports, the composition — arrive via
- *                    factories/closures from the chat-handler)
+ *                    factories/closures from the turn runner)
  *
  * tests/ and scripts/ are internal — unrestricted.
  */

@@ -48,8 +48,8 @@ const { toLlmMessages } = await import("../src/core/model-context.ts");
 const { projectView } = await import("../src/core/view.ts");
 const { sessionMarkdown } = await import("../src/core/session-markdown.ts");
 const { runSubagent } = await import("../src/agent/subagents/pi-run.ts");
-const { persistTurn } = await import("../src/server/turn-service.ts");
-const { runPiTurn } = await import("../src/server/pi/ui-stream.ts");
+const { persistTurn } = await import("../src/server/turn/persist.ts");
+const { runPiTurn } = await import("../src/server/turn/stream.ts");
 const { SessionModel } = await import("../components/session-core.ts");
 const { chatStore } = await import("../src/store/chats.ts");
 

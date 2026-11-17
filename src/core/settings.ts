@@ -97,7 +97,7 @@ export const DEFAULT_THINKING_ORDER = [
 export const CHAT_THINKING_LEVEL: ThinkingLevel = "low";
 
 /** The machine-readable NOT-CONFIGURED refusal envelope (owner, 2026-09-22):
- *  every per-need gate — the turn gate in chat-handler, a job spawn, a
+ *  every per-need gate — the turn gate, a job spawn, a
  *  notes import — refuses with this exact shape. HTTP callers get 503 +
  *  this JSON; in-band consumers (the job record's error field) carry the
  *  human `error` line. `missing` names the slot TIER(S) the refused
