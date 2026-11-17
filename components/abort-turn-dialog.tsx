@@ -74,18 +74,18 @@ export function AbortTurnBody({
 			{...backdropDismiss}
 		>
 			<div
-				className="mx-4 w-full max-w-sm rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
+				className="w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150"
 				onClick={(e) => e.stopPropagation()}
 			>
-				<h2 className="text-sm font-semibold text-card-foreground" data-testid="abort-turn-title">
+				<h2 className="text-base font-semibold text-foreground" data-testid="abort-turn-title">
 					{copy.title}
 				</h2>
-				<p className="mt-1.5 text-xs text-muted-foreground" data-testid="abort-turn-line">
+				<p className="mt-3 text-sm leading-relaxed text-muted-foreground" data-testid="abort-turn-line">
 					{copy.line}
 					{busy && mode !== "turn" ? " The tutor's current answer stops too." : ""}
 				</p>
-				<div className="mt-4 flex justify-end gap-2">
-					<Button type="button" variant="ghost" size="sm" data-testid="abort-turn-cancel" onClick={onClose}>
+				<div className="mt-6 flex flex-wrap justify-end gap-3">
+					<Button type="button" variant="outline" size="sm" data-testid="abort-turn-cancel" onClick={onClose}>
 						Cancel
 					</Button>
 					<Button type="button" variant="destructive" size="sm" data-testid="abort-turn-confirm" onClick={onConfirm}>
