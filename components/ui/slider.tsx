@@ -26,7 +26,7 @@ export function Slider({
 	label,
 	min = 0,
 	max = 1,
-	step = 0.05,
+	step,
 	valueText,
 	header = false,
 	ticks,
@@ -63,30 +63,36 @@ export function Slider({
 	const stopValues = stopList?.map((s) => s.value);
 	const unit = !stopValues && min === 0 && max === 1;
 
-	const currentIndex = stopValues
-		? stopValues.reduce(
-				(bestIdx, currVal, idx) => (Math.abs(currVal - value) < Math.abs(stopValues[bestIdx]! - value) ? idx : bestIdx),
-				0,
-			)
-		: -1;
-
 	const effectiveMin = stopValues && stopValues.length > 0 ? stopValues[0]! : min;
 	const effectiveMax = stopValues && stopValues.length > 0 ? stopValues[stopValues.length - 1]! : max;
+	const continuousStep = step ?? (min === 0 && max === 1 ? 0.05 : 1);
 
 	const clamp = (v: number) => {
-		if (stopValues && stopValues.length > 0) {
-			return stopValues.reduce((prev, curr) => (Math.abs(curr - v) < Math.abs(prev - v) ? curr : prev));
-		}
-		return Math.min(effectiveMax, Math.max(effectiveMin, Math.round((v - effectiveMin) / step) * step + effectiveMin));
+		return Math.min(
+			effectiveMax,
+			Math.max(effectiveMin, Math.round((v - effectiveMin) / continuousStep) * continuousStep + effectiveMin),
+		);
 	};
 
-	const share = stopValues
-		? stopValues.length > 1
-			? currentIndex / (stopValues.length - 1)
-			: 1
-		: effectiveMax > effectiveMin
-			? (Math.min(effectiveMax, Math.max(effectiveMin, value)) - effectiveMin) / (effectiveMax - effectiveMin)
-			: 0;
+	const share = (() => {
+		if (!stopValues || stopValues.length <= 1) {
+			return effectiveMax > effectiveMin
+				? (Math.min(effectiveMax, Math.max(effectiveMin, value)) - effectiveMin) / (effectiveMax - effectiveMin)
+				: 0;
+		}
+		if (value <= stopValues[0]!) return 0;
+		if (value >= stopValues[stopValues.length - 1]!) return 1;
+		const segments = stopValues.length - 1;
+		for (let i = 0; i < segments; i++) {
+			const a = stopValues[i]!;
+			const b = stopValues[i + 1]!;
+			if (value >= a && value <= b) {
+				const t = b === a ? 0 : (value - a) / (b - a);
+				return (i + t) / segments;
+			}
+		}
+		return 0;
+	})();
 
 	const text = valueText ?? (unit ? `${Math.round(value * 100)}%` : String(value));
 	const tickValues =
@@ -107,10 +113,30 @@ export function Slider({
 		if (!rect || !length) return value;
 		const along = vertical ? rect.bottom - e.clientY : e.clientX - rect.left;
 		const fraction = Math.min(1, Math.max(0, along / length));
+
 		if (stopValues && stopValues.length > 1) {
-			const idx = Math.round(fraction * (stopValues.length - 1));
-			return stopValues[idx]!;
+			const segments = stopValues.length - 1;
+			// Magnetic "sticky" snapping near milestone stops
+			const SNAP_THRESHOLD = 0.025;
+			for (let k = 0; k < stopValues.length; k++) {
+				const stopFraction = k / segments;
+				if (Math.abs(fraction - stopFraction) <= SNAP_THRESHOLD) {
+					return stopValues[k]!;
+				}
+			}
+			// Between stops: interpolate freely with natural steps
+			const x = fraction * segments;
+			const i = Math.min(Math.floor(x), segments - 1);
+			const t = x - i;
+			const a = stopValues[i]!;
+			const b = stopValues[i + 1]!;
+			const raw = a + t * (b - a);
+
+			const stepSize = step ?? (raw < 200 ? 10 : raw < 1000 ? 25 : raw < 2000 ? 50 : 100);
+			const stepped = Math.round((raw - a) / stepSize) * stepSize + a;
+			return Math.min(b, Math.max(a, stepped));
 		}
+
 		return clamp(effectiveMin + fraction * (effectiveMax - effectiveMin));
 	};
 
@@ -155,28 +181,58 @@ export function Slider({
 			onPointerCancel={() => setDragging(false)}
 			onKeyDown={(e) => {
 				if (stopValues && stopValues.length > 0) {
-					let next: number | null = null;
-					if (e.key === "Home") next = stopValues[0]!;
-					else if (e.key === "End") next = stopValues[stopValues.length - 1]!;
-					else if (e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "PageUp") {
-						const jump = e.key === "PageUp" ? 2 : 1;
-						next = stopValues[Math.min(stopValues.length - 1, currentIndex + jump)]!;
-					} else if (e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "PageDown") {
-						const jump = e.key === "PageDown" ? 2 : 1;
-						next = stopValues[Math.max(0, currentIndex - jump)]!;
-					}
-					if (next !== null) {
+					if (e.key === "Home") {
 						e.preventDefault();
+						set(stopValues[0]!, true);
+						return;
+					}
+					if (e.key === "End") {
+						e.preventDefault();
+						set(stopValues[stopValues.length - 1]!, true);
+						return;
+					}
+					if (e.key === "PageUp") {
+						const nextStop = stopValues.find((s) => s > value);
+						if (nextStop !== undefined) {
+							e.preventDefault();
+							set(nextStop, true);
+						}
+						return;
+					}
+					if (e.key === "PageDown") {
+						const prevStop = [...stopValues].reverse().find((s) => s < value);
+						if (prevStop !== undefined) {
+							e.preventDefault();
+							set(prevStop, true);
+						}
+						return;
+					}
+					if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+						e.preventDefault();
+						const stepSize = step ?? (value < 200 ? 10 : value < 1000 ? 25 : value < 2000 ? 50 : 100);
+						const target = value + stepSize;
+						const intermediateStop = stopValues.find((s) => s > value && s <= target);
+						const next = intermediateStop !== undefined ? intermediateStop : Math.min(effectiveMax, target);
 						set(next, true);
+						return;
+					}
+					if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+						e.preventDefault();
+						const stepSize = step ?? (value <= 200 ? 10 : value <= 1000 ? 25 : value <= 2000 ? 50 : 100);
+						const target = value - stepSize;
+						const intermediateStop = [...stopValues].reverse().find((s) => s < value && s >= target);
+						const next = intermediateStop !== undefined ? intermediateStop : Math.max(effectiveMin, target);
+						set(next, true);
+						return;
 					}
 					return;
 				}
 				const big = e.key === "PageUp" || e.key === "PageDown" ? 10 : 1;
 				const delta =
 					e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "PageUp"
-						? step * big
+						? continuousStep * big
 						: e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "PageDown"
-							? -step * big
+							? -continuousStep * big
 							: 0;
 				const next =
 					e.key === "Home" ? effectiveMin : e.key === "End" ? effectiveMax : delta ? clamp(value + delta) : null;
@@ -206,7 +262,7 @@ export function Slider({
 									className={cn(
 										"absolute -translate-y-1/2 -translate-x-1/2 rounded-full transition-colors",
 										vertical ? "left-1/2 w-2 h-0.5" : "top-1/2 size-1",
-										i <= currentIndex ? "bg-teal" : "bg-ink-4",
+										value >= stop.value ? "bg-teal" : "bg-ink-4",
 									)}
 									style={vertical ? { bottom: `${p}%` } : { left: `${p}%` }}
 								/>
@@ -261,7 +317,7 @@ export function Slider({
 							const p = (i / (stopList.length - 1)) * 100;
 							const isFirst = i === 0;
 							const isLast = i === stopList.length - 1;
-							const isActive = i === currentIndex;
+							const isActive = value === stop.value;
 							return (
 								<button
 									key={stop.value}

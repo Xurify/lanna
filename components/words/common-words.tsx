@@ -37,7 +37,7 @@ function bandsOf(words: CommonWord[]) {
 }
 
 export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
-	const [count, setCount] = useState(200);
+	const [count, setCount] = useState(0);
 	const [ranking, setRanking] = useState<{ total: number; items: CommonWord[] } | null>(null);
 	const [filter, setFilter] = useState<Filter>("all");
 	const [confirming, setConfirming] = useState(false);
@@ -54,10 +54,10 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 	const bands = useMemo(() => bandsOf(ranking ? ranking.items.slice(0, listedCount) : []), [ranking, listedCount]);
 	const stops = useMemo(() => {
 		const presets = PRESETS.filter((preset) => preset < total);
-		const values = [...presets, total];
+		const values = [0, ...presets, total];
 		return values.map((val) => ({
 			value: val,
-			label: val === total ? "All" : number(val),
+			label: val === 0 ? "0" : val === total ? "All" : number(val),
 		}));
 	}, [total]);
 
@@ -190,7 +190,11 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 					onChange={selectCount}
 					stops={stops}
 					valueText={
-						count >= total ? `All ${number(total)} words` : `Top ${number(selected.length)} of ${number(total)}`
+						count === 0
+							? "0 words"
+							: count >= total
+								? `All ${number(total)} words`
+								: `Top ${number(selected.length)} of ${number(total)}`
 					}
 					testid="common-words-slider"
 					valueTestid="common-words-count"
@@ -204,7 +208,7 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 						<FilterSwitch value={filter} onChange={setFilter} />
 						{!confirming && (
 							<Button disabled={saving !== null || unmarked === 0} onClick={() => setConfirming(true)}>
-								{unmarked === 0 ? "All marked known" : `Mark ${number(unmarked)} known`}
+								{count === 0 ? "Mark known" : unmarked === 0 ? "All marked known" : `Mark ${number(unmarked)} known`}
 							</Button>
 						)}
 					</div>
@@ -234,7 +238,11 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 					</p>
 				)}
 			</div>
-			<p className="font-prose text-sm text-muted-foreground">Tap a word to mark or un-mark it.</p>
+			<p className="font-prose text-sm text-muted-foreground">
+				{count === 0
+					? "Slide or tap a segment to select common words to view and mark."
+					: "Tap a word to mark or un-mark it."}
+			</p>
 			<div className="space-y-10">
 				{bands.map((band) => (
 					<Band
