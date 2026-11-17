@@ -49,6 +49,5 @@ export function AssistantMessage({ message, isLast, kind, status, busy, showWork
 
 function partKey(part: MessagePart, index: number, kind: SessionKind): string | number {
 	if (isRetryPart(part, kind)) return `retry-${index}`;
-	if (part.type === "text" && part.id) return part.id;
 	return index;
 }
