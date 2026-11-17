@@ -672,7 +672,7 @@ async function transcribeAudioFile(
 		throw new Error(
 			keyValue("ELEVENLABS_API_KEY")
 				? "ElevenLabs Scribe v3 found no speech in this audio."
-				: "ElevenLabs Scribe v3 is selected in Settings → Tutor, but no ELEVENLABS_API_KEY is configured in Settings → API keys.",
+				: "ElevenLabs Scribe v3 is selected in Settings → AI models, but no ELEVENLABS_API_KEY is configured in Settings → API keys.",
 		);
 	}
 
