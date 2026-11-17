@@ -12,7 +12,7 @@
  * like Deepgram do not count — they unlock no models). Live updates ride
  * the lanna:settings-saved "keys" signal (keys-section dispatches after
  * save AND delete; the setup dialog's first-key screen dispatches on
- * its own save), the same re-read pattern chat.tsx uses for "models".
+ * its own save), the same re-read pattern the chat screen uses for "models".
  */
 
 import type { AuthKeyStatus } from "@/src/core";

@@ -1,6 +1,6 @@
 /**
  * The dock shell's variant key (the WAAPI height-morph trigger,
- * components/chat.tsx DockOverlay). Whenever this string CHANGES between
+ * components/chat/dock.tsx). Whenever this string CHANGES between
  * renders, the shell morphs its height (120ms) and re-reserves the
  * transcript tail; when it stays the same, height changes are measured
  * only (typing growth never animates).
