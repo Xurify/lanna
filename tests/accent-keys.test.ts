@@ -6,7 +6,14 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { belongsToLayoutAccent, letterFamilies, liveFamily, pressLetter } from "../src/core/accent-keys.ts";
+import {
+	belongsToLayoutAccent,
+	isSyntheticUnicodeLetter,
+	letterFamilies,
+	liveFamily,
+	pickAccent,
+	pressLetter,
+} from "../src/core/accent-keys.ts";
 
 const SLOVAK = ["á", "ä", "č", "ď", "é", "í", "ĺ", "ľ", "ň", "ó", "ô", "ŕ", "š", "ť", "ú", "ý", "ž"];
 const RUSSIAN = ["ё", "й", "ъ", "ы", "ь", "э"];
@@ -78,10 +85,11 @@ test("a family lights up only when one of its keys would change the letter", () 
 	assert.equal(liveFamily(families, "ä", 1, 1, "et-EE"), null, "ä is the family's only letter");
 });
 
-test("a dead key or a key inside a composition belongs to the learner's layout", () => {
+test("a dead key, IME composition, or Windows VK_PACKET belongs to external accent input", () => {
 	assert.equal(belongsToLayoutAccent({ key: "Dead", isComposing: false, keyCode: 192 }), true, "Estonian ˇ left of 1");
 	assert.equal(belongsToLayoutAccent({ key: "c", isComposing: true, keyCode: 67 }), true, "the letter after it");
 	assert.equal(belongsToLayoutAccent({ key: "Process", isComposing: false, keyCode: 229 }), true);
+	assert.equal(belongsToLayoutAccent({ key: "á", isComposing: false, keyCode: 231 }), true, "Windows VK_PACKET");
 	assert.equal(
 		belongsToLayoutAccent({ key: "`", isComposing: false, keyCode: 192 }),
 		false,
@@ -92,4 +100,20 @@ test("a dead key or a key inside a composition belongs to the learner's layout",
 		false,
 		"Slovak ; still opens the Keyboard",
 	);
+});
+
+test("isSyntheticUnicodeLetter identifies Windows VK_PACKET non-ASCII letters", () => {
+	assert.equal(isSyntheticUnicodeLetter({ key: "á", keyCode: 231 }), true);
+	assert.equal(isSyntheticUnicodeLetter({ key: "Č", keyCode: 231 }), true);
+	assert.equal(isSyntheticUnicodeLetter({ key: "ё", keyCode: 231 }), true);
+	assert.equal(isSyntheticUnicodeLetter({ key: "a", keyCode: 231 }), false);
+	assert.equal(isSyntheticUnicodeLetter({ key: "Backspace", keyCode: 231 }), false);
+	assert.equal(isSyntheticUnicodeLetter({ key: "á", keyCode: 56 }), false);
+});
+
+test("pickAccent replaces the held plain letter, preserves case, and replaces active selections", () => {
+	assert.deepEqual(pickAccent("ca", 2, 2, "a", "á", "sk-SK"), { value: "cá", caret: 2 });
+	assert.deepEqual(pickAccent("Z", 1, 1, "z", "ž", "sk-SK"), { value: "Ž", caret: 1 });
+	assert.deepEqual(pickAccent("caxt", 2, 3, "a", "á", "sk-SK"), { value: "caát", caret: 3 });
+	assert.deepEqual(pickAccent("b", 1, 1, "a", "á", "sk-SK"), { value: "bá", caret: 2 });
 });

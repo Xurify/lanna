@@ -67,6 +67,7 @@ import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/componen
 import { readOrigin } from "@/components/origin";
 import { StampDisc } from "@/components/stamp";
 import {
+	belongsToLayoutAccent,
 	caseOfUnit,
 	compareAnswer,
 	diacriticSlips,
@@ -1332,6 +1333,7 @@ function ClozeRep({
 	useEffect(() => {
 		if ((item.kind !== "choose" && !meaning) || locked || retypes) return;
 		const onKey = (e: KeyboardEvent) => {
+			if (belongsToLayoutAccent(e) || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
 			const n = Number(e.key);
 			const opt = item.options?.[n - 1];
 			if (opt && opt !== miss) {

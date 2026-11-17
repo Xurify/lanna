@@ -297,6 +297,25 @@ export function targetWordOf(blank: Pick<Blank, "words" | "target">, given: stri
 	return typed.length === blank.words ? typed[blank.target]! : given;
 }
 
+export function applyGapInput(
+	current: readonly string[],
+	gapCount: number,
+	index: number,
+	value: string,
+): { fields: string[]; advanceTo: number | null } {
+	const next = Array.from({ length: gapCount }, (_, k) => current[k] ?? "");
+	if (gapCount <= 1 || !/\s/.test(value)) {
+		next[index] = value;
+		return { fields: next, advanceTo: null };
+	}
+	const trimmedStart = value.replace(/^\s+/, "");
+	const [head = "", ...rest] = trimmedStart.split(/\s+/);
+	const spill = index < gapCount - 1 && head.length > 0 && rest.length > 0;
+	next[index] = spill ? head : trimmedStart;
+	if (spill && rest.join(" ")) next[index + 1] = rest.join(" ");
+	return { fields: next, advanceTo: spill ? index + 1 : null };
+}
+
 /** Local-day key ("2026-10-26") for the new-cards-per-day budget. */
 export function dayKey(d: Date, timeZoneOffsetMinutes = d.getTimezoneOffset()): string {
 	return new Date(d.getTime() - timeZoneOffsetMinutes * 60_000).toISOString().slice(0, 10);
