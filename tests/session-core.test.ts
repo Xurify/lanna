@@ -1388,6 +1388,31 @@ describe("needsContinuation (the native lastAssistantMessageIsCompleteWithToolCa
 		const messages = [userText("u1", "topic"), reply, resultMsg("call-research", "research")];
 		assert.equal(needsContinuation(messages), true);
 	});
+
+	it("a practice reply with text and only record tools still continues to its next problem", () => {
+		const reply = {
+			id: "a1",
+			role: "assistant",
+			content: [
+				{ type: "text", text: "Saved for review." },
+				{ type: "toolCall", id: "call-review", name: "add_to_review", arguments: { words: ["kniha"] } },
+			],
+			stopReason: "toolUse",
+			timestamp: 0,
+		} as unknown as LannaMessage;
+		const messages = [userText("u1", "topic"), reply, resultMsg("call-review", "add_to_review")];
+		assert.equal(needsContinuation(messages, "practice"), true);
+		assert.equal(needsContinuation(messages, "chat"), false);
+	});
+
+	it("a skipped question from an older chat does not restart the tutor", () => {
+		const skipped = {
+			...(resultMsg("call-quiz", "quiz") as object),
+			details: { dismissed: true },
+		} as unknown as LannaMessage;
+		const messages = [userText("u1", "topic"), assistantWithCall("a1", "call-quiz", "quiz"), skipped];
+		assert.equal(needsContinuation(messages), false);
+	});
 });
 
 // ─── the practice live-view law (owner, 2026-10-05) ─────────────────────────

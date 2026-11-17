@@ -203,10 +203,6 @@ export function serverExecute<P extends TSchema>(
 		);
 }
 
-/** The practice pose's ack (practice sessions, owner 2026-10-04): FINAL —
- *  it persists, because the learner's submissions arrive as MESSAGES,
- *  never as this call's result. terminate: true ends the turn at the
- *  pose; the commitment rides the call's arguments. */
 export function problemResult(): AgentToolResult<null> {
 	return {
 		content: [

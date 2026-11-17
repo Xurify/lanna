@@ -255,9 +255,19 @@ function trailingResultsStart(messages: readonly LannaMessage[]): number {
 	return start;
 }
 
-export function needsContinuation(messages: readonly LannaMessage[]): boolean {
+const LEGACY_QUESTION_TOOLS: ReadonlySet<string> = new Set(["quiz", "probe", "ask_user_question", "explain", "recall"]);
+
+function isSkippedLegacyQuestion(message: LannaMessage): boolean {
+	if (message.role !== "toolResult") return false;
+	const result = message as LannaMessage & ToolResultMessage;
+	return (
+		LEGACY_QUESTION_TOOLS.has(result.toolName) && (result.details as { dismissed?: unknown } | null)?.dismissed === true
+	);
+}
+
+export function needsContinuation(messages: readonly LannaMessage[], kind: "chat" | "practice" = "chat"): boolean {
 	const last = messages.at(-1);
-	if (last?.role !== "toolResult") return false;
+	if (last?.role !== "toolResult" || isSkippedLegacyQuestion(last)) return false;
 	const start = trailingResultsStart(messages);
 	const owner = messages[start - 1];
 	if (owner?.role !== "assistant" || !Array.isArray(owner.content)) return false;
@@ -266,7 +276,7 @@ export function needsContinuation(messages: readonly LannaMessage[]): boolean {
 		(result) => result.toolName === PRACTICE_PROBLEM_TOOL && !result.isError && result.details == null,
 	);
 	if (posedProblem) return false;
-	if (closesChatReply(owner.content)) return false;
+	if (kind === "chat" && closesChatReply(owner.content)) return false;
 	const answered = new Set(results.map((result) => result.toolCallId));
 	const calls = owner.content.filter((block) => block.type === "toolCall");
 	return calls.length > 0 && calls.every((call) => answered.has(call.id));

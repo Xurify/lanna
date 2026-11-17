@@ -99,6 +99,12 @@ describe("parseAgentSettingsBody: tool keys validate at write time", () => {
 		assert.deepEqual(r.ok && r.settings.tools, { pdf: true });
 	});
 
+	it("a saved toggle for the removed explain switch is dropped, so the section still saves", () => {
+		const r = parse({ explain: true, research: true });
+		assert.equal(r.ok, true);
+		assert.deepEqual(r.ok && r.settings.tools, { research: true });
+	});
+
 	it("absent tools field is fine (absent = enabled everywhere)", () => {
 		const r = parseAgentSettingsBody({}) as { ok: boolean };
 		assert.equal(r.ok, true);

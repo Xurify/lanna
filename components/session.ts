@@ -103,7 +103,10 @@ export function useChatSession({ chatId, initialMessages, initialError, initiall
 	);
 
 	const send = useCallback((input: ChatInput) => void model.send(input), [model]);
-	const continueIfOwed = useCallback((record: readonly LannaMessage[]) => void model.continueIfOwed(record), [model]);
+	const continueIfOwed = useCallback(
+		(record: readonly LannaMessage[], kind: "chat" | "practice") => void model.continueIfOwed(record, kind),
+		[model],
+	);
 	const steer = useCallback((text: string) => void model.steer(text), [model]);
 	const dismissProblem = useCallback((problemCallId: string) => void model.dismissProblem(problemCallId), [model]);
 	const setMessages = useCallback(

@@ -1,6 +1,6 @@
 export const TOGGLEABLE_TOOLS = ["research", "pdf"] as const;
 
-export const RETIRED_TOOL_KEYS = ["visual"] as const;
+export const RETIRED_TOOL_KEYS = ["visual", "explain"] as const;
 
 export const WRITABLE_TOOL_KEYS = TOGGLEABLE_TOOLS;
 

@@ -424,8 +424,6 @@ export class SessionModel {
 				return true; // a message event is view work, even empty content
 			}
 			case "tool_execution_end": {
-				// The execution layer: errors keep their validation text; clean
-				// results are projected by view.ts.
 				const result = agent.result as { content?: Array<{ type?: string; text?: string }>; details?: unknown } | null;
 				const text = result?.content?.find((c) => c.type === "text")?.text ?? "The tool call failed.";
 				this.mutate(() => {
@@ -617,12 +615,6 @@ export class SessionModel {
 		}
 	}
 
-	/**
-	 * SEND: one explicit input event. Optimistic appends first (the instant
-	 * card UX — the server's write-ahead persists the canon), then
-	 * POST + consume. Ready-gated: one turn per client at a time (the
-	 * server's 409 + identity retry covers the wake-race window).
-	 */
 	async send(input: ChatInput): Promise<void> {
 		const recovering = this.statusValue === "error";
 		if (!this.readyRef && !recovering) return;
@@ -799,20 +791,17 @@ export class SessionModel {
 		});
 	}
 
-	/** Automatic mount/sync continuation is never permission to retry a
-	 * failed turn. Read current model truth, not a stale React closure. */
-	async continueIfOwed(record: readonly LannaMessage[]): Promise<void> {
+	async continueIfOwed(record: readonly LannaMessage[], kind: "chat" | "practice" = "chat"): Promise<void> {
 		if (
 			this.statusValue === "ready" &&
 			!this.automaticContinuationBlocked &&
 			this.getState().error === null &&
-			needsContinuation(record)
+			needsContinuation(record, kind)
 		) {
 			await this.send({ type: "continue" });
 		}
 	}
 
-	/** The mount/sync continuation fold (chat-messages.ts). */
 	static needsContinuation = needsContinuation;
 
 	clearError(): void {
