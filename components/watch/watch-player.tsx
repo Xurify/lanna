@@ -84,11 +84,19 @@ import {
 import { fillStyle } from "@/components/ui/fill";
 import { ChannelLink } from "@/components/watch/channel-link";
 import { useAddToRead } from "@/components/watch/read-import";
-import { Shelf } from "@/components/watch/shelf";
+import { Shelf, type ShelfTab } from "@/components/watch/shelf";
 import { forgetWatchCaches } from "@/components/watch/caches";
 import { StudySections } from "@/components/watch/sections";
 import { GetReady } from "@/components/watch/get-ready";
 import { useDiscover } from "@/components/watch/discover";
+import {
+	loadYouTubeApi,
+	PLAYER_ERROR_AUDIO,
+	PLAYER_STATE,
+	type PlayerEvents,
+	type YTNamespace,
+	type YTPlayer,
+} from "@/components/watch/youtube-api";
 import { useServerValue } from "@/components/use-server-value";
 import { videoUrl, type DiscoverStateView, type FragmentRange } from "@/src/core";
 import { SourcesNote } from "@/components/sources/sources-note";
@@ -125,11 +133,13 @@ export function WatchPlayer({
 	initialVideo,
 	initialUrl,
 	initialDiscover,
+	initialTab,
 }: {
 	initial: WatchState | null;
 	initialVideo?: VideoRecord | null;
 	initialUrl?: string | null;
 	initialDiscover?: DiscoverStateView | null;
+	initialTab?: ShelfTab;
 }) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
@@ -520,6 +530,7 @@ export function WatchPlayer({
 				running={running}
 				starting={starting}
 				discover={discover}
+				initialTab={initialTab}
 				onOpen={open}
 				onPrepare={(url, range) => void prepare(url, false, false, range)}
 				onDelete={(id) => void remove(id)}
@@ -1044,30 +1055,6 @@ function Ring({ value, floor, tone }: { value: number; floor: number; tone: stri
 
 // ─── The screen: YouTube's player with both subtitles ───────────────────────
 
-interface YTPlayer {
-	playVideo(): void;
-	pauseVideo(): void;
-	seekTo(seconds: number, allowSeekAhead: boolean): void;
-	getCurrentTime(): number;
-	setPlaybackRate(rate: number): void;
-	destroy(): void;
-	/** Undocumented but long-standing: drops the player's own caption
-	 *  module, so a track the viewer left switched on does not show the
-	 *  line we are hiding. */
-	unloadModule?(name: string): void;
-}
-interface PlayerEvents {
-	onReady: () => void;
-	onStateChange: (e: { data: number }) => void;
-	onError: (e: { data: number }) => void;
-}
-/** YouTube's IFrame API state numbers; the audio player reports the same. */
-const PLAYER_STATE = { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 } as const;
-const PLAYER_ERROR_AUDIO = -1;
-interface YTNamespace {
-	Player: new (el: HTMLElement, opts: Record<string, unknown>) => YTPlayer;
-}
-
 function mountAudioPlayer(holder: HTMLElement, id: string, events: PlayerEvents): YTPlayer {
 	const src = `/api/watch/audio?id=${encodeURIComponent(id)}`;
 	const cover = document.createElement("img");
@@ -1102,42 +1089,6 @@ function mountAudioPlayer(holder: HTMLElement, id: string, events: PlayerEvents)
 			audio.load();
 		},
 	};
-}
-declare global {
-	interface Window {
-		YT?: YTNamespace;
-		onYouTubeIframeAPIReady?: () => void;
-	}
-}
-
-let apiPromise: Promise<YTNamespace> | null = null;
-
-/** YouTube's IFrame Player API, loaded once. */
-function loadYouTubeApi(): Promise<YTNamespace> {
-	if (window.YT?.Player) return Promise.resolve(window.YT);
-	if (apiPromise) return apiPromise;
-	apiPromise = new Promise<YTNamespace>((resolve, reject) => {
-		const previous = window.onYouTubeIframeAPIReady;
-		window.onYouTubeIframeAPIReady = () => {
-			previous?.();
-			if (window.YT) resolve(window.YT);
-		};
-		const s = document.createElement("script");
-		s.src = "https://www.youtube.com/iframe_api";
-		s.async = true;
-		s.onerror = () => {
-			apiPromise = null;
-			reject(new Error("YouTube's player did not load. Is the internet on?"));
-		};
-		document.head.appendChild(s);
-		setTimeout(() => {
-			if (!window.YT?.Player) {
-				apiPromise = null;
-				reject(new Error("YouTube's player did not load. Is the internet on?"));
-			}
-		}, 20_000);
-	});
-	return apiPromise;
 }
 
 interface LineState {

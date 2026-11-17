@@ -58,6 +58,13 @@ const ROUTES: Array<{
 		icon: "play",
 		words: "youtube video spotify song track watch",
 	},
+	{
+		title: "Notes",
+		hint: "Write anything down, with links and videos",
+		href: "/notes",
+		icon: "read",
+		words: "notes notebook phrases write link links bookmark youtube video timestamps",
+	},
 	{ title: "Speak", hint: "A scene said out loud", href: "/speak", icon: "speak", words: "scene talk voice" },
 	{
 		title: "Ear gym",

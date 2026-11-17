@@ -10,8 +10,12 @@ export const dynamic = "force-dynamic";
  *  end. ?id=<video> opens a prepared video from the library; ?url=<link>
  *  prepares one. The state and the picks are read with the page so the
  *  library is in the first HTML and never swaps. */
-export default async function WatchPage({ searchParams }: { searchParams: Promise<{ id?: string; url?: string }> }) {
-	const { id, url } = await searchParams;
+export default async function WatchPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ id?: string; url?: string; tab?: string }>;
+}) {
+	const { id, url, tab } = await searchParams;
 	let state = null;
 	let video = null;
 	let discover = null;
@@ -33,6 +37,7 @@ export default async function WatchPage({ searchParams }: { searchParams: Promis
 			initialVideo={video}
 			initialUrl={url ?? null}
 			initialDiscover={discover}
+			initialTab={tab === "notes" ? "notes" : undefined}
 		/>
 	);
 }

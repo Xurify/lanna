@@ -88,6 +88,7 @@ export * from "./pairs.ts";
 export * from "./sounds.ts";
 export * from "./curriculum.ts";
 export * from "./after-plan.ts";
+export * from "./notes.ts";
 export * from "./outside.ts";
 export * from "./day-plan.ts";
 export * from "./arc.ts";

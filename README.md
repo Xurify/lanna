@@ -6,33 +6,34 @@ What each page does is on the page, and the research behind each task is on **So
 
 ## Pages
 
-| Page                         | Route                                     |
-| ---------------------------- | ----------------------------------------- |
-| Today                        | `/`                                       |
-| Setup                        | `/start`                                  |
-| Lesson, Blitz                | `/lesson?unit=<id>`, `/lesson?mode=blitz` |
-| Chapter exam                 | `/exam?chapter=<id>`                      |
-| Curriculum                   | `/curriculum`                             |
-| Review                       | `/review`                                 |
-| Words, Phrases, Cheatsheets  | `/words`, `/words?tab=cheatsheets`        |
-| Grammar                      | `/grammar`                                |
-| Mistakes                     | `/mistakes`                               |
-| Catch the mistake            | `/catch`                                  |
-| Listen                       | `/listen`                                 |
-| Today's line                 | `/line`                                   |
-| Read                         | `/read`                                   |
-| Speak, Talk in writing       | `/speak`, `/speak?mode=typed`             |
-| Speed                        | `/speed`                                  |
-| Sound                        | `/sound?id=<id>`                          |
-| Ear gym                      | `/phonology`                              |
-| Media (Watch, Get ready)     | `/watch`                                  |
-| Chat                         | `/chat/new`, `/chat/<id>`                 |
-| When can I…?                 | `/milestones`                             |
-| Progress, Stamps             | `/progress`, `/progress#stamps`           |
-| Sources                      | `/sources`                                |
-| Tasks                        | `/tasks`                                  |
-| Log (what was done each day) | `/log`                                    |
-| Pair a device                | `/pair`                                   |
+| Page                         | Route                                      |
+| ---------------------------- | ------------------------------------------ |
+| Today                        | `/`                                        |
+| Setup                        | `/start`                                   |
+| Lesson, Blitz                | `/lesson?unit=<id>`, `/lesson?mode=blitz`  |
+| Chapter exam                 | `/exam?chapter=<id>`                       |
+| Curriculum                   | `/curriculum`                              |
+| Review                       | `/review`                                  |
+| Words, Phrases, Cheatsheets  | `/words`, `/words?tab=cheatsheets`         |
+| Grammar                      | `/grammar`                                 |
+| Mistakes                     | `/mistakes`                                |
+| Catch the mistake            | `/catch`                                   |
+| Listen                       | `/listen`                                  |
+| Today's line                 | `/line`                                    |
+| Read                         | `/read`                                    |
+| Speak, Talk in writing       | `/speak`, `/speak?mode=typed`              |
+| Speed                        | `/speed`                                   |
+| Sound                        | `/sound?id=<id>`                           |
+| Ear gym                      | `/phonology`                               |
+| Media (Watch, Get ready)     | `/watch`                                   |
+| Notes                        | `/notes`, `/notes?id=<id>`, `/notes?new=1` |
+| Chat                         | `/chat/new`, `/chat/<id>`                  |
+| When can I…?                 | `/milestones`                              |
+| Progress, Stamps             | `/progress`, `/progress#stamps`            |
+| Sources                      | `/sources`                                 |
+| Tasks                        | `/tasks`                                   |
+| Log (what was done each day) | `/log`                                     |
+| Pair a device                | `/pair`                                    |
 
 **Read** holds the story library and your own articles and newsletters (a link or pasted text), retold at your level or left as they are.
 
