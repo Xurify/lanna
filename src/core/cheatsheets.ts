@@ -1,5 +1,5 @@
 /**
- * Cheatsheets (LangHarness): the learner's own phrase lists, kept per language.
+ * Cheatsheets: the learner's own phrase lists, kept per language.
  *
  * The text format is one line per phrase, with up to four fields:
  *

@@ -1,5 +1,5 @@
 /**
- * CHAPTER ARC PINS (LangHarness, 2026-10-30): the seven steps in one order,
+ * CHAPTER ARC PINS (2026-10-30): the seven steps in one order,
  * the mapping on one chapter by hand, a words and a forms step for every
  * chapter bar the named exceptions, the scene steps, and no tutor unit or
  * unit in two steps.

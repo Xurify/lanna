@@ -1,5 +1,5 @@
 /**
- * The trajectory (LangHarness, 2026-10-29) — where the learner will be if
+ * The trajectory (2026-10-29) — where the learner will be if
  * they keep this pace: the past drawn from the day records, the future
  * drawn forward at a pace, on one of three measures (hours toward the
  * level, units done, words met). Pure and browser-safe; the Today card and

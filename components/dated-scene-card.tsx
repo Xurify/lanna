@@ -1,6 +1,6 @@
 /**
  * A scene with a date, as a row inside Today's "Where you are" card
- * (LangHarness, 2026-11-06; creator-hooks proposal 3). The days left are the
+ * (2026-11-06; creator-hooks proposal 3). The days left are the
  * figure; the status is a word, never a color alone; the line under it is the
  * app's own estimate or its honest "not measured yet". It links to Speak to
  * rehearse, and to Milestones once the date has passed with no line written.

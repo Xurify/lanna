@@ -20,8 +20,6 @@ export * from "./question-core.ts";
 // through this barrel (shell law: pure core via @/src/core only).
 export * from "./events.ts";
 export * from "./pace.ts";
-export * from "./plan-tree.ts";
-export * from "./phases.ts";
 export * from "./pending.ts";
 export * from "./prompt-segments.ts";
 export * from "./sketch.ts";
@@ -35,7 +33,7 @@ export * from "./chat-lines.ts";
 export * from "./chat-export.ts";
 export * from "./app-content.ts";
 // answer-presentation is not re-exported here: it pulls the Markdown parsers (about 250 KB), and a client component that imports this barrel would ship them on every route. Import them from "./tutor.ts" (client: "@/src/core/tutor").
-// Wave B (owner-approved 2026-09-26): the native record (LhMessage), the
+// Wave B (owner-approved 2026-09-26): the native record (LannaMessage), the
 // and the input-events contract — all
 // pure logic, browser-safe.
 export * from "./native-messages.ts";
@@ -48,13 +46,8 @@ export * from "./view.ts";
 export * from "./prices.ts";
 export * from "./context-usage.ts";
 export * from "./usage-report.ts";
-export type { ChatGPTStatus, ChatGPTControlBridge } from "./contracts/chatgpt.ts";
-export { NATIVE_SUBSCRIPTIONS } from "./contracts/subscriptions.ts";
-export type {
-	NativeSubscriptionProviderId,
-	NativeSubscriptionStatus,
-	NativeSubscriptionControlBridge,
-} from "./contracts/subscriptions.ts";
+export { SUBSCRIPTIONS } from "./contracts/subscriptions.ts";
+export type { SubscriptionId, SubscriptionLogin, SubscriptionStatus } from "./contracts/subscriptions.ts";
 export * from "./fuzzy.ts";
 // settings.ts + settings-resolution.ts (settings-storage wave, 2026-09-19):
 // the user-settings record's shape/sanitizer (pure) and its fully-resolved
@@ -73,7 +66,7 @@ export * from "./keyboard.ts";
 // ONE session→markdown formatter — the extractor's view and the user-facing
 // export share it. Pure, browser-safe.
 export * from "./session-markdown.ts";
-// LangHarness: target languages + answer comparison, the FSRS scheduler,
+// Lanna: target languages + answer comparison, the FSRS scheduler,
 // and the cloze review model (all pure, browser-safe).
 export * from "./language.ts";
 export * from "./cheers.ts";

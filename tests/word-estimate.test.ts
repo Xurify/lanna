@@ -5,9 +5,9 @@ import * as path from "node:path";
 import { after, describe, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-word-estimate-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-word-estimate-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const core = await import("../src/core/word-estimate.ts");
 const { rng } = await import("../src/core/lesson.ts");

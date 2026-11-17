@@ -25,7 +25,7 @@ import { LessonSoundsRow, PlaybackSpeedRow, VolumeRow, WordLookupModeRow } from 
 import { SystemVoicesRow } from "./system-voices.tsx";
 import { SourcesSection } from "./sources-section.tsx";
 import { UpdateSettings } from "./update-settings.tsx";
-import { AiSection, QuizStyleRow } from "./ai-section.tsx";
+import { AiSection } from "./ai-section.tsx";
 import type { ModelsSettings } from "@/src/core";
 import { MENU_CLOSE_EVENT, MENU_OPEN_EVENT } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
@@ -56,8 +56,6 @@ import { UsageSection } from "./usage-section.tsx";
 import { LearnerSection } from "./learner-section.tsx";
 import { ResetSection } from "./reset-section.tsx";
 import { StorageSection } from "./storage-section.tsx";
-import { ChatGPTUIProvider } from "./chatgpt-connection.tsx";
-import { NativeSubscriptionUIProvider } from "./subscription-connections.tsx";
 import { sharedJson } from "@/lib/shared-fetch";
 
 /** The nav label is the section's heading. Ids are internal: deep links and tests use them.
@@ -102,13 +100,7 @@ export function SettingsDialogOpen({
 	initialSection: SectionId | null;
 	initialRow: string | null;
 }) {
-	return (
-		<ChatGPTUIProvider>
-			<NativeSubscriptionUIProvider>
-				<SettingsDialog onClose={onClose} initialSection={initialSection} initialRow={initialRow} />
-			</NativeSubscriptionUIProvider>
-		</ChatGPTUIProvider>
-	);
+	return <SettingsDialog onClose={onClose} initialSection={initialSection} initialRow={initialRow} />;
 }
 
 function SettingsDialog({
@@ -260,7 +252,7 @@ function SettingsDialogBody({
 					</div>
 					<div className="min-w-0">
 						<h2 className="truncate font-ui text-base font-semibold tracking-[-0.01em] text-foreground">Settings</h2>
-						<p className="text-xs text-muted-foreground max-md:hidden">How LangHarness teaches, sounds and looks</p>
+						<p className="text-xs text-muted-foreground max-md:hidden">How Lanna teaches, sounds and looks</p>
 					</div>
 				</div>
 				<button
@@ -379,7 +371,7 @@ function SettingsDialogBody({
 							{active === "keys" && (
 								<SettingsSection
 									title="API keys"
-									hint="The keys and subscriptions that let LangHarness use AI models and AI voices."
+									hint="The keys and subscriptions that let Lanna use AI models and AI voices."
 									testid="section-keys"
 								>
 									<KeysSection initialRow={initialRow ?? undefined} />
@@ -388,7 +380,7 @@ function SettingsDialogBody({
 							{active === "ai" && (
 								<SettingsSection
 									title="AI models"
-									hint="Which AI models LangHarness uses, what they may look up, and their instructions. Needs an API key."
+									hint="Which AI models Lanna uses, what they may look up, and their instructions. Needs an API key."
 									testid="section-ai"
 								>
 									<AiSection
@@ -425,7 +417,7 @@ function SettingsDialogBody({
 							{active === "devices" && (
 								<SettingsSection
 									title="Devices"
-									hint="Use LangHarness on a phone or iPad over your own Tailscale network. Off by default: until you turn it on, only this computer can open the app."
+									hint="Use Lanna on a phone or iPad over your own Tailscale network. Off by default: until you turn it on, only this computer can open the app."
 									testid="section-devices"
 								>
 									<DevicesSection />
@@ -437,14 +429,7 @@ function SettingsDialogBody({
 									hint="Your languages, your goals, and how the tutor explains and checks."
 									testid="section-learner"
 								>
-									<LearnerSection onClose={onClose}>
-										<SettingsGroup label="Quizzes" testid="group-quizzes">
-											<QuizStyleRow
-												agent={record.agent}
-												onSectionChange={(next: AgentSettings) => void write("agent", next)}
-											/>
-										</SettingsGroup>
-									</LearnerSection>
+									<LearnerSection onClose={onClose} />
 								</SettingsSection>
 							)}
 							{active === "data" && (

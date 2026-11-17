@@ -11,12 +11,11 @@ import {
 	keptIndexFor,
 	newCompactionMarker,
 	newUserMessage,
-	planTreeToText,
 	serializeForSummary,
 	toLlmMessages,
 	COMPACTED_HISTORY_HEADER,
-	type LhMessage,
-	type LhMarkerMessage,
+	type LannaMessage,
+	type LannaMarkerMessage,
 } from "../src/core/index.ts";
 import type { ToolResultMessage } from "@earendil-works/pi-ai";
 import { projectView } from "../src/core/view.ts";
@@ -35,37 +34,37 @@ import { projectView } from "../src/core/view.ts";
  * - a corrupt cut degrades honestly (everything renders — never throw).
  */
 
-const assistantWithCall = (id: string, callId: string, text = "Let me quiz you."): LhMessage =>
+const assistantWithCall = (id: string, callId: string, text = "Let me pose one."): LannaMessage =>
 	({
 		id,
 		role: "assistant",
 		content: [
 			{ type: "text", text },
-			{ type: "toolCall", id: callId, name: "quiz", arguments: { question: "Q?" } },
+			{ type: "toolCall", id: callId, name: "pose", arguments: { answer: "Q?" } },
 		],
 		timestamp: 1,
 	}) as never;
 
-const assistantText = (id: string, text: string): LhMessage =>
+const assistantText = (id: string, text: string): LannaMessage =>
 	({ id, role: "assistant", content: [{ type: "text", text }], timestamp: 1 }) as never;
 
-const resultFor = (callId: string, text: string): LhMessage & ToolResultMessage =>
+const resultFor = (callId: string, text: string): LannaMessage & ToolResultMessage =>
 	({
 		id: `r_${callId}`,
 		role: "toolResult",
 		toolCallId: callId,
-		toolName: "quiz",
+		toolName: "pose",
 		content: [{ type: "text", text }],
 		isError: false,
 		timestamp: 2,
 	}) as never;
 
-const big = (id: string, kb = 8): LhMessage => newUserMessage(`${id}: ${"x".repeat(kb * 1024)}`);
+const big = (id: string, kb = 8): LannaMessage => newUserMessage(`${id}: ${"x".repeat(kb * 1024)}`);
 
 // ─── the anchored estimator (pi's law — 2026-10-05 incident fix) ─────────────
 
 describe("estimateContextTokens (usage-anchored, pi's law)", () => {
-	const usageAssistant = (id: string, total: number, trailing = false): LhMessage =>
+	const usageAssistant = (id: string, total: number, trailing = false): LannaMessage =>
 		({
 			id,
 			role: "assistant",
@@ -88,7 +87,7 @@ describe("estimateContextTokens (usage-anchored, pi's law)", () => {
 			newUserMessage(`${"x".repeat(400_000)}`), // 100k chars of DROPPED-span text
 			usageAssistant("a1", 30_000),
 			newUserMessage("y".repeat(4_000)), // 1k estimated tokens AFTER the anchor
-		] as LhMessage[];
+		] as LannaMessage[];
 		// ^ newUserMessage signature: (text, ts?) — second arg timestamp
 		const est = estimateContextTokens(msgs);
 		assert.equal(est.lastUsageIndex !== null, true);
@@ -102,7 +101,7 @@ describe("estimateContextTokens (usage-anchored, pi's law)", () => {
 			usageAssistant("a1", 30_000),
 			usageAssistant("a2", 99_999, true), // aborted after the real one
 			{ ...usageAssistant("a3", 0), stopReason: "toolUse" }, // zero usage
-		] as LhMessage[];
+		] as LannaMessage[];
 		const est = estimateContextTokens(msgs);
 		assert.equal(est.lastUsageIndex, 0);
 		assert.equal(est.tokens, 30_000 + estimateMessageTokens(msgs[1]!) + estimateMessageTokens(msgs[2]!));
@@ -114,13 +113,13 @@ describe("estimateContextTokens (usage-anchored, pi's law)", () => {
 			tokensBefore: 500_000,
 			at: "2026-10-05T00:00:00.000Z",
 		});
-		const msgs = [usageAssistant("a1", 500_000), marker as LhMessage, newUserMessage("kept tail")] as LhMessage[];
+		const msgs = [usageAssistant("a1", 500_000), marker as LannaMessage, newUserMessage("kept tail")] as LannaMessage[];
 		const est = estimateContextTokens(msgs);
 		assert.equal(est.lastUsageIndex, null, "the marker invalidates every anchor behind it");
 	});
 
 	it("unanchored (no usage at all): the plain heuristic over everything", () => {
-		const msgs = [big("m1", 4), big("m2", 4)] as LhMessage[]; // 2 × 4,116ish chars
+		const msgs = [big("m1", 4), big("m2", 4)] as LannaMessage[]; // 2 × 4,116ish chars
 		const est = estimateContextTokens(msgs);
 		assert.equal(est.lastUsageIndex, null);
 		assert.equal(est.tokens, estimateTokens(msgs));
@@ -135,7 +134,7 @@ describe("estimateMessageTokens (wire text only — the 3x-inflation fix)", () =
 			content: [
 				{ type: "text", text: "x".repeat(400) },
 				{ type: "thinking", thinking: "y".repeat(800), thinkingSignature: "sig" },
-				{ type: "toolCall", id: "c1", name: "quiz", arguments: { q: "z".repeat(200) } },
+				{ type: "toolCall", id: "c1", name: "pose", arguments: { q: "z".repeat(200) } },
 			],
 			usage: {
 				input: 9_999_999,
@@ -148,8 +147,8 @@ describe("estimateMessageTokens (wire text only — the 3x-inflation fix)", () =
 			},
 			responseId: "r".repeat(300),
 			timestamp: 1,
-		} as never as LhMessage;
-		const expected = Math.ceil((400 + 800 + ("quiz".length + JSON.stringify({ q: "z".repeat(200) }).length)) / 4);
+		} as never as LannaMessage;
+		const expected = Math.ceil((400 + 800 + ("pose".length + JSON.stringify({ q: "z".repeat(200) }).length)) / 4);
 		assert.equal(estimateMessageTokens(m), expected); // usage/responseId/signature inflate nothing
 	});
 
@@ -242,7 +241,7 @@ describe("the compaction marker", () => {
 			firstKeptMessageId: "m2",
 			tokensBefore: 1,
 			at: "t",
-		}) as LhMarkerMessage & { details: { firstKeptMessageId: string } };
+		}) as LannaMarkerMessage & { details: { firstKeptMessageId: string } };
 		const messages = [newUserMessage("a"), newUserMessage("b"), newUserMessage("c")];
 		messages[0]!.id = "m1";
 		messages[1]!.id = "m2";
@@ -251,7 +250,7 @@ describe("the compaction marker", () => {
 			firstKeptMessageId: "zzz",
 			tokensBefore: 1,
 			at: "t",
-		}) as LhMarkerMessage & { details: { firstKeptMessageId: string } };
+		}) as LannaMarkerMessage & { details: { firstKeptMessageId: string } };
 		assert.equal(keptIndexFor(messages as never, gone as never), -1);
 	});
 });
@@ -323,65 +322,28 @@ describe("toLlmMessages honors the cut", () => {
 // ─── the summarizer input ────────────────────────────────────────────────────
 
 describe("serializeForSummary + buildCompactionPrompt", () => {
-	it("labels roles; truncates long tool results; skips plan blocks", () => {
+	it("labels roles; truncates long tool results", () => {
 		const long = "y".repeat(5_000);
-		const messages: LhMessage[] = [
-			newUserMessage("hello"),
-			assistantText("a1", "lecture"),
-			resultFor("c1", long),
-			{
-				id: "pb",
-				role: "custom",
-				customType: "plan-block",
-				content: "",
-				display: true,
-				details: {},
-				timestamp: 1,
-			} as never,
-		];
+		const messages: LannaMessage[] = [newUserMessage("hello"), assistantText("a1", "lecture"), resultFor("c1", long)];
 		const text = serializeForSummary(messages);
 		assert.ok(text.includes("[LEARNER] hello"));
 		assert.ok(text.includes("[TUTOR] lecture"));
-		assert.ok(text.includes("[RESULT for quiz]"));
+		assert.ok(text.includes("[RESULT for pose]"));
 		assert.ok(text.includes("…[truncated]"));
 		assert.ok(!text.includes("yyyyy".repeat(1000)), "truncation bounded the result");
-		assert.ok(!text.toLowerCase().includes("plan-block"), "UI-only markers never serialize");
 	});
 
-	it("the prompt demands the four sections in order and carries the plan tree verbatim", () => {
-		const prompt = buildCompactionPrompt({
-			spanText: "TRANSCRIPT",
-			planTreeText: "- [done] A (a1)\n- A → B",
-			kind: "teach",
-		});
-		const order = [
-			"The learner's understanding",
-			"The teaching arc",
-			"The plan dependency tree",
-			"The current moment",
-		].map((s) => prompt.indexOf(s));
+	it("the prompt demands the three sections in order and carries the transcript", () => {
+		const prompt = buildCompactionPrompt({ spanText: "TRANSCRIPT" });
+		const order = ["The learner's understanding", "The teaching arc", "The current moment"].map((s) =>
+			prompt.indexOf(s),
+		);
 		assert.deepEqual(
 			order,
 			[...order].sort((a, b) => a - b),
 			"sections appear in the ruled order",
 		);
 		assert.ok(prompt.includes("TRANSCRIPT"));
-		assert.ok(prompt.includes("- [done] A (a1)"));
-	});
-
-	it("planTreeToText: statuses derive from the transcript; edges render; empty tree → null", () => {
-		assert.equal(planTreeToText(undefined, []), null);
-		const tree = {
-			nodes: [
-				{ id: "a", title: "Alpha", summary: "first" },
-				{ id: "b", title: "Beta" },
-			],
-			edges: [{ from: "a", to: "b" }],
-			version: 1,
-		};
-		const text = planTreeToText(tree as never, [])!;
-		assert.ok(text.includes("Alpha (a) — first"));
-		assert.ok(text.includes("Alpha → Beta"));
 	});
 });
 
@@ -391,14 +353,14 @@ describe("serializeForSummary + buildCompactionPrompt", () => {
 // at the kept boundary. Both carry the full summary payload.
 // ---------------------------------------------------------------------------
 describe("projectView compaction dividers", () => {
-	const record = (): LhMessage[] => [
+	const record = (): LannaMessage[] => [
 		{ id: "old1", role: "user", content: "earliest", timestamp: 1 },
 		{ id: "kept", role: "user", content: "recent", timestamp: 2 },
 		newCompactionMarker("SUMMARY TEXT", {
 			firstKeptMessageId: "kept",
 			tokensBefore: 12345,
 			at: new Date(0).toISOString(),
-		}) as unknown as LhMessage,
+		}) as unknown as LannaMessage,
 	];
 
 	it("emits the cut divider BEFORE the first kept message", () => {
@@ -438,17 +400,17 @@ describe("toLlmMessages carries the leading system message (request chrome)", ()
 		id: "sys",
 		role: "system",
 		content: "SYSTEM PROMPT + tool declarations",
-		toolsAdded: [{ name: "quiz" }, { name: "plan_init" }],
+		toolsAdded: [{ name: "pose" }, { name: "grade" }],
 		timestamp: 0,
 	};
-	const record = (): LhMessage[] => [
+	const record = (): LannaMessage[] => [
 		{ id: "old", role: "user", content: "dropped history", timestamp: 1 },
 		{ id: "kept", role: "user", content: "kept tail", timestamp: 2 },
 		newCompactionMarker("SUMMARY", {
 			firstKeptMessageId: "kept",
 			tokensBefore: 99,
 			at: new Date(0).toISOString(),
-		}) as unknown as LhMessage,
+		}) as unknown as LannaMessage,
 	];
 
 	it("chrome FIRST, then the compaction head, then the kept tail — never dropped by the cut", () => {
@@ -464,7 +426,7 @@ describe("toLlmMessages carries the leading system message (request chrome)", ()
 	});
 
 	it("without a cut the chrome renders EXACTLY ONCE (no duplicate)", () => {
-		const plain = [{ id: "u1", role: "user", content: "hello", timestamp: 1 }] as unknown as LhMessage[];
+		const plain = [{ id: "u1", role: "user", content: "hello", timestamp: 1 }] as unknown as LannaMessage[];
 		const out = toLlmMessages([chrome, ...plain] as never);
 		assert.equal(out.filter((m) => m.role === "system").length, 1);
 		assert.equal(out[0]!.role, "system");

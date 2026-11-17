@@ -47,7 +47,7 @@ function Starter({ children, onPick, detail }: { children: ReactNode; onPick: ()
 		<button
 			type="button"
 			onClick={onPick}
-			className="lh-press group flex w-full items-baseline justify-between gap-4 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-well"
+			className="lanna-press group flex w-full items-baseline justify-between gap-4 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-well"
 		>
 			<span className="font-ui text-[15px] text-foreground">{children}</span>
 			{detail && <span className="shrink-0 font-ui text-xs tabular-nums text-muted-foreground">{detail}</span>}
@@ -96,7 +96,7 @@ export function ChatDraft({
 
 	return (
 		<div className="relative flex h-dvh flex-col" data-testid="draft-surface">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 px-3 py-2">
 				<div className="pointer-events-auto">
 					<SidebarToggle />
@@ -201,7 +201,7 @@ export function ChatDraft({
 								disabled={!canSend}
 								aria-label="Ask"
 								className={cn(
-									"lh-press flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
+									"lanna-press flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
 									canSend ? "bg-sun text-sun-ink" : "bg-well text-ink-4",
 								)}
 							>

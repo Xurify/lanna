@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "How long does it take?" (LangHarness, 2026-10-28) — the research behind
+ * "How long does it take?" (2026-10-28) — the research behind
  * the goal line's hours, in one sheet: the guided-hour bands per CEFR
  * level (Cambridge's figures for English next to this app's estimate for
  * language being learned), the FSI yardsticks for categories I and III, and what the
@@ -194,7 +194,7 @@ export function HoursSheet({
 			aria-label="How long does it take?"
 			data-testid="hours-sheet"
 		>
-			<div className="lh-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150">
+			<div className="lanna-rise max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 shadow-raise-hi animate-in zoom-in-95 duration-150">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2 className="text-2xl font-semibold tracking-[-0.022em] text-foreground">How long does it take?</h2>

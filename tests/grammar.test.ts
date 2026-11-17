@@ -1,5 +1,5 @@
 /**
- * GRAMMAR ATLAS PINS (LangHarness, phase 4; first tries 2026-10-31): the 6 × 3
+ * GRAMMAR ATLAS PINS (phase 4; first tries 2026-10-31): the 6 × 3
  * table, the mapping (A-fem → acc-fem, A-masc → acc-people, one drill per
  * case for G, D, L, I), every mapped id a real unit, each cell's first-try
  * accuracy = right / tries from its gender column, and "not yet" with no

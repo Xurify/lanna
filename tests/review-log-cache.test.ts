@@ -3,7 +3,7 @@
  * changes, so a sidebar load does not re-parse a year of reviews. The cache must never show
  * a log that differs from the file: appends update it, any other change to the file drops it.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -12,9 +12,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-review-log-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-review-log-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { reviewStore } = await import("../src/store/review.ts");
 const { reviewStatus } = await import("../src/server/review.ts");

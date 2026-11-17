@@ -6,15 +6,15 @@ import { after, describe, it } from "node:test";
 import { createFauxCore } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chat-kind-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chat-kind-"));
 const originalEnv = process.env;
 const originalFetch = globalThis.fetch;
 process.env = {
 	...(originalEnv.NODE_TEST_CONTEXT ? { NODE_TEST_CONTEXT: originalEnv.NODE_TEST_CONTEXT } : {}),
 	...(originalEnv.NODE_OPTIONS ? { NODE_OPTIONS: originalEnv.NODE_OPTIONS } : {}),
 	NODE_ENV: "test",
-	LH_DATA_DIR: path.join(scratch, "data"),
-	LH_AUTH_FILE: path.join(scratch, "auth.json"),
+	LANNA_DATA_DIR: path.join(scratch, "data"),
+	LANNA_AUTH_FILE: path.join(scratch, "auth.json"),
 	HOME: path.join(scratch, "home"),
 };
 globalThis.fetch = async () => {
@@ -118,7 +118,7 @@ describe("the chat agent's tools", () => {
 				review: { enqueue: () => [], digest: () => "" },
 				jobs: { chatId: "c", jobStore: {} as never, spawn: () => {}, searchAvailable: () => true },
 			},
-			{ engine: claudeEngine(), toolToggles: { pdf: false, research: false, explain: false } },
+			{ engine: claudeEngine(), toolToggles: { pdf: false, research: false } },
 		);
 		const names = agent.state.tools.map((tool) => tool.name);
 		assert.ok(!names.includes("pdf"));
@@ -227,7 +227,7 @@ describe("POST /api/chats with kind chat", () => {
 		});
 	});
 
-	it("an unknown kind still makes the probed lesson", async () => {
+	it("an unknown kind is stored as a chat — every record carries a kind", async () => {
 		const res = await POST(
 			new Request("http://test/api/chats", {
 				method: "POST",
@@ -236,7 +236,7 @@ describe("POST /api/chats with kind chat", () => {
 			}),
 		);
 		const { id } = (await res.json()) as { id: string };
-		assert.equal(chatStore.getChat(id)?.kind, undefined);
+		assert.equal(chatStore.getChat(id)?.kind, "chat");
 	});
 });
 

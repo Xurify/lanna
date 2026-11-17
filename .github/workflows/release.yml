@@ -125,7 +125,7 @@ jobs:
           xcode-version: latest-stable
       - run: npm ci
       - name: Native renderer tests on this OS
-        run: npx electron --import tsx --test tests/pdf-native-render.test.ts tests/pdf-ops.test.ts tests/browser-service.test.ts
+        run: npx electron --import tsx --test tests/pdf-native-render.test.ts tests/pdf-ops.test.ts
         env:
           NODE_ENV: test
           ELECTRON_RUN_AS_NODE: "1"
@@ -176,39 +176,25 @@ jobs:
         run: |
           case "$RUNNER_OS" in
             macOS)
-              app="dist/mac-arm64/LangHarness.app/Contents"
+              app="dist/mac-arm64/Lanna.app/Contents"
               payload="$app/Resources/server/standalone"
-              runtime="$app/MacOS/LangHarness"
+              runtime="$app/MacOS/Lanna"
               ;;
             Windows)
               payload="dist/win-unpacked/resources/server/standalone"
-              runtime="dist/win-unpacked/LangHarness.exe"
+              runtime="dist/win-unpacked/Lanna.exe"
               ;;
             Linux)
               payload="dist/linux-unpacked/resources/server/standalone"
-              runtime="dist/linux-unpacked/langharness"
+              runtime="dist/linux-unpacked/lanna"
               ;;
           esac
           node scripts/smoke-provider-runtime.mjs --standalone "$payload"
           node scripts/smoke-provider-runtime.mjs --standalone "$payload" --runtime "$runtime"
-      - name: Exercise packaged demo runtime (own Electron, no system Chrome)
-        run: |
-          case "$RUNNER_OS" in
-            macOS)
-              app="dist/mac-arm64/LangHarness.app/Contents"
-              node scripts/smoke-demo-runtime.mjs --standalone "$app/Resources/server/standalone" --runtime "$app/MacOS/LangHarness" --browser
-              ;;
-            Windows)
-              node scripts/smoke-demo-runtime.mjs --standalone dist/win-unpacked/resources/server/standalone --runtime dist/win-unpacked/LangHarness.exe --browser
-              ;;
-            Linux)
-              xvfb-run -a node scripts/smoke-demo-runtime.mjs --standalone dist/linux-unpacked/resources/server/standalone --runtime dist/linux-unpacked/langharness --browser
-              ;;
-          esac
       - name: Save installers and update metadata
         uses: actions/upload-artifact@v7
         with:
-          name: langharness-${{ matrix.platform }}
+          name: lanna-${{ matrix.platform }}
           retention-days: 7
           if-no-files-found: error
           path: |

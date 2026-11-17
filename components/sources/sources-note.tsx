@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The research behind a page, folded under it (LangHarness, 2026-11-06,
+ * The research behind a page, folded under it (2026-11-06,
  * decision E63). Closed it is one quiet line; open it says what the
  * research found, what it did not show, which numbers are the app's own
  * choice, and links every source. The text lives in src/core/sources.ts

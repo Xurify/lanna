@@ -1,8 +1,8 @@
 /**
- * AI STATUS (LangHarness, 2026-11-01): a slot with no key looks set in
+ * AI STATUS (2026-11-01): a slot with no key looks set in
  * Settings and fails at the first call, so the status checks the provider's
  * key first and says what to fix; a provider's "not configured" error is
- * turned into the same plain message. Runs under an isolated LH_DATA_DIR.
+ * turned into the same plain message. Runs under an isolated LANNA_DATA_DIR.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -10,9 +10,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-ai-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-ai-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 delete process.env.ANTHROPIC_API_KEY;
 
 const { aiMissing, aiStatus, friendlyAiError } = await import("../src/server/ai-status.ts");

@@ -1,7 +1,7 @@
 /**
- * Does the plain chat (E76) answer fast, short and checked? (LangHarness, 2026-11-08)
+ * Does the plain chat (E76) answer fast, short and checked? (2026-11-08)
  *
- *   LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> \
+ *   LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<auth.json> \
  *     tsx scripts/eval-chat.ts <out-dir> <provider>/<model>:<thinking> ...
  *
  *   e.g. anthropic/claude-haiku-5-5:low anthropic/claude-sonnet-5-5:low
@@ -17,9 +17,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const [outDir, ...configArgs] = process.argv.slice(2);
-if (!outDir || configArgs.length === 0 || !process.env.LH_DATA_DIR) {
+if (!outDir || configArgs.length === 0 || !process.env.LANNA_DATA_DIR) {
 	console.error(
-		"usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<auth.json> tsx scripts/eval-chat.ts <out-dir> <provider>/<model>:<thinking> ...",
+		"usage: LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<auth.json> tsx scripts/eval-chat.ts <out-dir> <provider>/<model>:<thinking> ...",
 	);
 	process.exit(1);
 }
@@ -71,7 +71,7 @@ for (const config of configArgs) {
 	const [, provider, id, thinkingLevel] = m as unknown as [string, string, string, "low"];
 	const results: Record<string, TurnLog[]> = {};
 	for (const scenario of SCENARIOS) {
-		const engine = piEngineForSpec({ provider, id, thinkingLevel }, false);
+		const engine = piEngineForSpec({ provider, id, thinkingLevel });
 		const agent = createChatAgent(
 			{ answers: { record: () => {} } },
 			{ engine, noteLearnerText: (text) => checkerNote(checkSlovak(text)) },

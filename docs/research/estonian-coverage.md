@@ -661,7 +661,7 @@ Correct as written: Toomemägi park, Põlva, Raekoja plats (Town Hall Square), T
 
 Story consistency (not a fact error): Liis's mother hosts dinner "in your flat in Karlova", while Liis's brother Rasmus "visits on weekends". If the family lives in Karlova too, "visits" needs a reason.
 
-Spelling: world.json uses British spellings ("centre" ×5, "cosy" ×3, "neighbour" ×2); LangHarness uses American spelling (center, cozy, neighbor).
+Spelling: world.json uses British spellings ("centre" ×5, "cosy" ×3, "neighbour" ×2); Lanna uses American spelling (center, cozy, neighbor).
 
 ### 5.7 language.json (one line)
 

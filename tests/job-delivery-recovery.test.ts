@@ -6,14 +6,14 @@ import { spawnSync } from "node:child_process";
 import { Agent } from "@earendil-works/pi-agent-core";
 import { after, afterEach, test } from "node:test";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
-import { toLlmMessages, type LhMessage } from "../src/core/native-messages.ts";
+import { toLlmMessages, type LannaMessage } from "../src/core/native-messages.ts";
 import { buildSubagentSteer, type JobKind, type SteerMessage } from "../src/core/contracts.ts";
 
 // Install isolation before importing any storage/configuration composition.
-const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lh-job-delivery-"));
-process.env.LH_DATA_DIR = path.join(directory, "data");
-process.env.LH_AUTH_FILE = path.join(directory, "auth.json");
-fs.writeFileSync(process.env.LH_AUTH_FILE, "{}");
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-job-delivery-"));
+process.env.LANNA_DATA_DIR = path.join(directory, "data");
+process.env.LANNA_AUTH_FILE = path.join(directory, "auth.json");
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, "{}");
 const { stores } = await import("../src/server/stores.ts");
 const { jobTools } = await import("../src/agent/tools/jobs.ts");
 const { createJobRunner, researchModelOverride } = await import("../src/agent/subagents/runner.ts");
@@ -41,7 +41,7 @@ const question = {
 	provider: "faux",
 	model: "faux",
 	timestamp: 1,
-} as unknown as LhMessage;
+} as unknown as LannaMessage;
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(predicate: () => boolean): Promise<void> {
 	const end = Date.now() + 8000;
@@ -80,7 +80,7 @@ function agent() {
 		>[1],
 	};
 }
-function persist(chatId: string, steers: readonly LhMessage[]): void {
+function persist(chatId: string, steers: readonly LannaMessage[]): void {
 	stores.chatStore.saveMessages(chatId, [...stores.chatStore.getChat(chatId)!.messages, ...steers]);
 	noteSteersDurable(chatId, steers);
 }
@@ -201,36 +201,6 @@ test("missing or blank research question records an honest failure without invok
 		assert.match(steers[0]!.content, /^Research failed: the research question is unavailable\./);
 		assert.equal(stores.jobStore.getJob(job.id)!.delivery?.status, "pending");
 	}
-});
-
-test("repeated recovery behind a question yields one handed and one durable marker", async () => {
-	const owner = chat(true);
-	const { job, steer } = pending(owner.id);
-	let wakes = 0;
-	setTurnRunner(async () => {
-		wakes++;
-		return 500;
-	});
-	sweep();
-	sweep();
-	sweep();
-	const first = deliverJobResult(steer);
-	assert.strictEqual(deliverJobResult(steer), first, "duplicate callers share one logical delivery");
-	const next = agent();
-	assert(beginTurn(owner.id));
-	registerLiveAgent(owner.id, next.value);
-	assert.deepEqual(
-		next.handed.map((message) => message.id),
-		[steer.id],
-	);
-	persist(owner.id, next.handed);
-	unregisterLiveAgent(owner.id);
-	settleSteers(owner.id, next.handed);
-	endTurn(owner.id);
-	await first;
-	assert.equal(wakes, 0);
-	assert.equal(stores.chatStore.getChat(owner.id)!.messages.filter((message) => message.id === steer.id).length, 1);
-	assert.equal(stores.jobStore.getJob(job.id)!.delivery?.status, "delivered");
 });
 
 for (const refused of [409, 403])
@@ -365,8 +335,8 @@ test("a racing foreground settlement cannot release an outstanding staged wake",
 		assert(beginTurn(id));
 		registerLiveAgent(id, wake, false, new Set(input.steers.map((message) => message.id)));
 		await wake.continue();
-		nativeCopies = wake.state.messages.filter((message) => (message as LhMessage).id === steer.id).length;
-		persist(id, wake.state.messages.filter((message) => message.role !== "system") as LhMessage[]);
+		nativeCopies = wake.state.messages.filter((message) => (message as LannaMessage).id === steer.id).length;
+		persist(id, wake.state.messages.filter((message) => message.role !== "system") as LannaMessage[]);
 		unregisterLiveAgent(id);
 		endTurn(id);
 		settleSteers(id, stores.chatStore.getChat(id)!.messages, false, wake);
@@ -464,8 +434,8 @@ test("fresh process restores a pending delivery on registration without a jobs p
 			PATH: process.env.PATH,
 			HOME: path.join(directory, "home"),
 			NODE_ENV: "test",
-			LH_DATA_DIR: process.env.LH_DATA_DIR,
-			LH_AUTH_FILE: process.env.LH_AUTH_FILE,
+			LANNA_DATA_DIR: process.env.LANNA_DATA_DIR,
+			LANNA_AUTH_FILE: process.env.LANNA_AUTH_FILE,
 		},
 	});
 	assert.equal(child.status, 0, child.stderr);

@@ -506,7 +506,7 @@ export function WordBankPage({
 													<div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
 														<div
 															className={cn(
-																"lh-fill rounded-full",
+																"lanna-fill rounded-full",
 																item.retention >= 80
 																	? "bg-go"
 																	: item.retention >= 40

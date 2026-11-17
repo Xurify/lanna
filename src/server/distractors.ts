@@ -1,5 +1,5 @@
 /**
- * Meaning questions with wrong answers worth reading (LangHarness,
+ * Meaning questions with wrong answers worth reading (Lanna,
  * 2026-10-30). A lesson's meaning reps come out of the
  * local builders with length-matched wrong meanings, which a learner can rule
  * out without knowing a word of the language. This swaps them for close ones:

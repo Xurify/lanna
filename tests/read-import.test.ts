@@ -6,9 +6,9 @@ import { after, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage, type FauxResponseStep } from "@earendil-works/pi-ai";
 import type { StoryRecord } from "../src/core/reading.ts";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-read-import-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-read-import-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 (process.env as Record<string, string | undefined>).NODE_ENV = "test";
 
 const core = await import("../src/core/reading.ts");

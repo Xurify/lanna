@@ -1,5 +1,5 @@
 /**
- * TRAJECTORY PINS (LangHarness, 2026-10-29): the pace read from the last
+ * TRAJECTORY PINS (2026-10-29): the pace read from the last
  * 14 days, the past from the day snapshots (jumps kept, older days pieced
  * together to meet the first one), the credited rate measured per practice
  * hour with placement days left out, and the date the target lands.

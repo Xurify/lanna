@@ -1,11 +1,11 @@
 /**
- * PRONUNCIATION PINS (LangHarness, 2026-10-28): clarity as well as speed.
+ * PRONUNCIATION PINS (2026-10-28): clarity as well as speed.
  * The two engines land in one shape (Azure's detailed result read into
  * it; intelligibility from a transcript), a fast pass counts only in the
  * window AND clear, the report names the sounds and words that stay low,
  * and the report reads the fluency log and the scenes on disk.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -14,9 +14,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-pron-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-pron-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 // A speech key in this machine's environment would make the engine the test expects to be none.
 for (const id of ["ELEVENLABS_API_KEY", "GROQ_API_KEY", "DEEPGRAM_API_KEY", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION"])
 	delete process.env[id];

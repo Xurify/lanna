@@ -5,8 +5,8 @@
  *   2. steer helpers (pure, contracts.ts): buildSubagentSteer shape per kind,
  *      isSubagentFailure, steerDelivered
  *   3. dispatch (async protocol §2): drive handleChatRequest with a scripted
- *      mock teacher that emits a research tool call → the tool part resolves
- *      IMMEDIATELY with the fire-and-forget ack (the teacher's turn
+ *      mock chat that emits a research tool call → the tool part resolves
+ *      IMMEDIATELY with the fire-and-forget ack (the chat's turn
  *      CONTINUES — no turn break at the call), a job record exists, and the
  *      test runner (fake deliver) produces the steer
  *   4. runner completion: a fake researcher model (web_search call → final
@@ -14,10 +14,10 @@
  *      the steer carries the brief + sources, the fake deliver flips the
  *      job done
  *   5. runner failure: a model that throws → the failure steer still fires
- *      (the teacher learns the outcome) and the job lands error
+ *      (the chat learns the outcome) and the job lands error
  *   6. the wake pipeline (src/server/jobs.ts): server-side steer delivery —
  *      happy path (fires the injected turn runner, flips the job), pending-
- *      quiz deferral, 409 retry, idempotent redelivery
+ *      409 retry, idempotent redelivery
  *
  * Cleanup follows tests/chat-flow.test.ts: created chat/job files removed in
  * finally blocks / the after() hook.
@@ -47,10 +47,9 @@ import {
 	type ResearchResult,
 	type SteerMessage,
 	type VisualResult,
-	buildProbeHandoffSteer,
 } from "../src/core/contracts.ts";
-import { composeInstructions, createTeacherAgent } from "../src/agent/teacher-agent.ts";
-import { createTeacherTools } from "../src/agent/tools.ts";
+import { createChatAgent, composeInstructions } from "../src/agent/teacher-agent.ts";
+import { jobTools } from "../src/agent/tools/jobs.ts";
 import { webTools } from "../src/agent/tools/web.ts";
 import { handleChatRequest } from "../src/server/chat-handler.ts";
 import { runningTurn } from "../src/server/turn-runs.ts";
@@ -81,7 +80,7 @@ import type { SearchProvider } from "../src/core/search.ts";
 import { PATHS } from "../config.ts";
 import { projectView as projectNative } from "../src/core/view.ts";
 import { subscribe } from "../src/core/events.ts";
-import type { LhMessage } from "../src/core/native-messages.ts";
+import type { LannaMessage } from "../src/core/native-messages.ts";
 import type { SteerInput } from "../src/core/input-events.ts";
 import { stubSafeFetch } from "./fixtures/stub-safe-fetch.ts";
 
@@ -102,7 +101,7 @@ function trackChat(id: string) {
 /** Wave B native fixture: user text + an assistant tool call + its ack —
  *  the record is agent history; the runner's transcript scan (input
  *  resolution) reads it through the projection. */
-function nativeToolMessages(text: string, tool: string, toolCallId: string, input: unknown): LhMessage[] {
+function nativeToolMessages(text: string, tool: string, toolCallId: string, input: unknown): LannaMessage[] {
 	return [
 		{ id: "u1", role: "user", content: text, timestamp: 1 } as never,
 		{
@@ -335,7 +334,7 @@ describe("steer helpers (contracts.ts)", () => {
 		const job = { id: "job_x", kind: "research" as const, toolCallId: "call-x" };
 		const steer = buildSubagentSteer(job, research);
 		assert.equal(steer.id, "steer_job_x", "deterministic id per job — idempotent delivery");
-		// Wave B: steers are LhMarkerMessage customs — role "custom", the
+		// Wave B: steers are LannaMarkerMessage customs — role "custom", the
 		// model reads `content`, the UI reads `details` (never model-visible).
 		assert.equal(steer.role, "custom");
 		assert.equal(steer.customType, "subagent-steer");
@@ -440,11 +439,6 @@ describe("steer helpers (contracts.ts)", () => {
 		assert.equal(steerDelivered([], steer.id), false);
 		assert.equal(steerDelivered([steer], steer.id), true);
 		assert.equal(steerDelivered([steer], "steer_job_z"), false);
-		// the probe handoff shares the id-space contract
-		const handoff = buildProbeHandoffSteer("chat_q");
-		assert.equal(handoff.id, "steer_probe_chat_q");
-		assert.equal(steerDelivered([handoff], handoff.id), true);
-		assert.equal(steerDelivered([steer], handoff.id), false);
 	});
 
 	it("failure steers tell the teacher how to recover (research/visual wording)", () => {
@@ -532,8 +526,8 @@ const RESEARCH_INPUT = {
 	context: "Choosing a graph rendering library for the lesson.",
 };
 
-/** A teacher that calls research (text → call), then plain text thereafter. */
-function researchCallingTeacher(): PiEngine {
+/** A chat that calls research (text → call), then plain text thereafter. */
+function researchCallingChat(): PiEngine {
 	return fauxEngine([
 		fauxAssistantMessage(
 			[
@@ -547,7 +541,7 @@ function researchCallingTeacher(): PiEngine {
 }
 
 describe("dispatch (async protocol §2)", () => {
-	it("the research call resolves immediately with an ack; the turn continues and the runner steers", async () => {
+	it("the research call resolves immediately with an ack; the chat reply closes there and the runner steers", async () => {
 		const chat = chatStore.createChat("Test: research dispatch");
 		trackChat(chat.id);
 		// BYOK turn gate (owner, 2026-09-22): the scripted chat needs a
@@ -562,23 +556,24 @@ describe("dispatch (async protocol §2)", () => {
 			deliver: delivery.deliver,
 			searchProvider: () => search,
 		});
-		const engine = researchCallingTeacher();
-		const tools = createTeacherTools({
+		const engine = researchCallingChat();
+		const tools = jobTools({
 			chatId: chat.id,
-			chatStore,
 			jobStore,
 			spawn: (job, input) => void testRunner.runJob(job.id, input),
 		});
 		// The handler hands the factory the native build options — the
 		// record IS the agent state (Wave B: no adapter conversion).
 		const agent: Parameters<typeof handleChatRequest>[1] = (opts) =>
-			createTeacherAgent(undefined, { engine, tools, messages: opts.messages });
+			createChatAgent({}, { engine, tools, messages: opts.messages });
 
 		researchModelOverride.current = researcherModel();
 		const body = await drainTurn(post(chat.id, { type: "text", text: "teach me graph rendering" }), agent);
 
-		// The teacher's SAME turn carried on past the tool call.
-		assert.ok(body.includes("Back with the brief."), "the turn continued after the dispatch");
+		// A dispatch closes the chat reply (closesChatReply): the run ends at
+		// the call, so the scripted follow-up never streams. The brief arrives
+		// later as a wake.
+		assert.ok(!body.includes("Back with the brief."), "the reply closed at the dispatch — no follow-up turn");
 
 		const saved = projectNative(chatStore.getChat(chat.id)!.messages);
 		const part = saved[1]!.parts.find((p) => p.type === "tool-research");
@@ -793,7 +788,7 @@ describe("pdf runner (sources v0)", () => {
 	const originalUserProfile = process.env.USERPROFILE;
 
 	before(() => {
-		home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-pdf-job-home-"));
+		home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-pdf-job-home-"));
 		const target = path.join(home, relativePath);
 		fs.mkdirSync(path.dirname(target), { recursive: true });
 		fs.copyFileSync(PDF_FIXTURE, target);
@@ -944,7 +939,7 @@ describe("researcher agent", () => {
 		// the tool set is what the loop sees.
 		assert.ok(webTools.web_search, "web_search available");
 		assert.ok(webTools.web_fetch, "web_fetch available");
-		assert.equal(Object.keys(webTools).length, 2, "ONLY the web tools — no question/plan tools");
+		assert.equal(Object.keys(webTools).length, 2, "ONLY the web tools — no question tools");
 		// reset any accidental global override
 		researchModelOverride.current = undefined;
 	});
@@ -988,44 +983,6 @@ describe("wake pipeline (src/server/jobs.ts)", () => {
 		return { chatId: chat.id, jobId: job.id, steer };
 	}
 
-	it("delivers a PROBE HANDOFF steer the same way — the teacher's wake turn", async () => {
-		const chat = chatStore.createChat("Test: probe handoff wake");
-		trackChat(chat.id);
-		// The concluded probe: a persisted probe_done call + result (the
-		// native seam the chat-handler's construction branch keys on) and no
-		// open question.
-		chatStore.saveMessages(chat.id, nativeToolMessages("teach me calc", "probe_done", "call-pd", { ok: true }));
-		const handoff = buildProbeHandoffSteer(chat.id);
-		let seen: { chatId: string; steers: SteerMessage[] } | undefined;
-		setTurnRunner(async (cid, input) => {
-			seen = { chatId: cid, steers: (input as SteerInput).steers as SteerMessage[] };
-			return 200;
-		});
-
-		await deliverJobResult(handoff);
-		await waitFor(() => seen !== undefined, 8000, "handoff wake fired");
-		const firedHandoff = seen!;
-		assert.equal(firedHandoff.chatId, chat.id);
-		assert.equal(firedHandoff.steers.length, 1);
-		assert.equal(firedHandoff.steers[0]!.id, `steer_probe_${chat.id}`, "the handoff IS the wake turn's input");
-	});
-
-	it("a redelivered handoff dedupes via the transcript (idempotent by steer id)", async () => {
-		const chat = chatStore.createChat("Test: handoff idempotent");
-		trackChat(chat.id);
-		const handoff = buildProbeHandoffSteer(chat.id);
-		// The transcript already carries the steer (a previous wake completed).
-		chatStore.saveMessages(chat.id, [handoff as never]);
-		let fired = 0;
-		setTurnRunner(async () => {
-			fired++;
-			return 200;
-		});
-
-		await deliverJobResult(handoff);
-		assert.equal(fired, 0, "already delivered — the pump resolves without firing a wake");
-	});
-
 	it("delivers: fires the turn runner with the record + steer, then flips the job done", async () => {
 		const { chatId, jobId, steer } = setup();
 		let seen: { chatId: string; steers: SteerMessage[] } | undefined;
@@ -1043,124 +1000,6 @@ describe("wake pipeline (src/server/jobs.ts)", () => {
 		assert.equal(seen.chatId, chatId);
 		assert.equal(seen.steers.length, 1);
 		assert.equal(seen.steers[0]!.id, steer.id, "the steer IS the wake turn's input");
-	});
-
-	it("waits while a question part is pending, and fires once it clears", async () => {
-		const { chatId, jobId, steer } = setup();
-		let fired = 0;
-		setTurnRunner(async () => {
-			fired++;
-			return 200;
-		});
-
-		// A dangling question call blocks the wake (the model would reject an
-		// unanswered tool call — fork 1: the record ends at the call).
-		chatStore.saveMessages(chatId, [
-			{ id: "u1", role: "user", content: "hello", timestamp: 1 } as never,
-			{
-				id: "a1",
-				role: "assistant",
-				content: [
-					{
-						type: "toolCall",
-						id: "quiz-call",
-						name: "quiz",
-						arguments: { question: "q", choices: ["a", "b"] } as never,
-					},
-				],
-				api: "openai-completions",
-				provider: "openrouter",
-				model: "test",
-				usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-				stopReason: "toolUse",
-				timestamp: 1,
-			} as never,
-		]);
-
-		// The delivery promise floats while the quiz blocks — awaiting it now
-		// would deadlock the test (the pump defers until the gate opens).
-		const delivery = deliverJobResult(steer);
-
-		await delay(1200);
-		assert.equal(fired, 0, "no wake while the quiz is pending");
-		assert.equal(jobStore.getJob(jobId)!.status, "done", "worker is finished while delivery waits");
-		assert.equal(jobStore.getJob(jobId)!.delivery?.status, "pending");
-
-		// The learner answers: the real tool result clears the dangling call.
-		const record = chatStore.getChat(chatId)!;
-		chatStore.saveMessages(chatId, [
-			...record.messages,
-			{
-				id: "r1",
-				role: "toolResult",
-				toolCallId: "quiz-call",
-				toolName: "quiz",
-				content: [{ type: "text", text: "answered" }],
-				details: { answer: "a", correct: true, explanation: "" },
-				isError: false,
-				timestamp: 1,
-			} as never,
-		]);
-
-		await waitFor(() => fired > 0, 8000, "wake after the quiz answer");
-		await delivery; // now it resolves — the steer was delivered
-		await waitFor(() => jobStore.getJob(jobId)!.status !== "running", 8000, "job flip after the deferred wake");
-		assert.equal(jobStore.getJob(jobId)!.status, "done");
-	});
-
-	it("the dismissal pause holds deliveries — no wake until the user's next turn settles (A2)", async () => {
-		const { chatId, jobId, steer } = setup();
-		let fired = 0;
-		setTurnRunner(async () => {
-			fired++;
-			return 200;
-		});
-
-		// The record ends in a DISMISSAL (owner design 2026-10-03): the
-		// question was skipped via the silent route — no dangling call (the
-		// quiz gate would pass), so ONLY the dismissal pause holds the wake.
-		chatStore.saveMessages(chatId, [
-			{ id: "u1", role: "user", content: "hello", timestamp: 1 } as never,
-			{
-				id: "a1",
-				role: "assistant",
-				content: [{ type: "toolCall", id: "quiz-call", name: "quiz", arguments: { question: "q" } as never }],
-				api: "openai-completions",
-				provider: "openrouter",
-				model: "test",
-				usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-				stopReason: "toolUse",
-				timestamp: 1,
-			} as never,
-			{
-				id: "r1",
-				role: "toolResult",
-				toolCallId: "quiz-call",
-				toolName: "quiz",
-				content: [{ type: "text", text: "skipped" }],
-				details: { kind: "quiz", questionText: "q", dontKnow: false, answers: [], dismissed: true, answeredAt: "t" },
-				isError: false,
-				timestamp: 1,
-			} as never,
-		]);
-
-		const delivery = deliverJobResult(steer);
-
-		await delay(1200);
-		assert.equal(fired, 0, "no wake while the session sits dismissal-paused");
-		assert.equal(jobStore.getJob(jobId)!.delivery?.status, "pending", "the delivery holds (queued, not lost)");
-
-		// The user's next message is the wake — its turn settles, and the
-		// settlement re-pump lands the held delivery right after it.
-		const record = chatStore.getChat(chatId)!;
-		const afterUser = [...record.messages, { id: "u2", role: "user", content: "moving on", timestamp: 2 } as never];
-		chatStore.saveMessages(chatId, afterUser);
-		settleSteers(chatId, afterUser);
-
-		await waitFor(() => fired > 0, 8000, "wake after the pause lifts");
-		await delivery;
-		await waitFor(() => jobStore.getJob(jobId)!.status !== "running", 8000, "job flip after the held wake");
-		assert.equal(jobStore.getJob(jobId)!.status, "done");
 	});
 
 	it("retries with backoff on a 409 (a client turn raced in) and delivers on the retry", async () => {
@@ -1255,89 +1094,6 @@ describe("wake pipeline (src/server/jobs.ts)", () => {
 			// The marker returned to pending — the pump's idle wake delivers it.
 			await delivery;
 			assert.equal(fired, 1, "the stranded marker rode the idle wake");
-			assert.equal(jobStore.getJob(jobId)!.status, "done");
-		});
-
-		it("a probe-handoff NEVER rides a live run — it waits the turn out and wakes", async () => {
-			const chat = chatStore.createChat("Test: handoff never live");
-			trackChat(chat.id);
-			chatStore.saveMessages(chat.id, nativeToolMessages("teach me calc", "probe_done", "call-pd", { ok: true }));
-			const handoff = buildProbeHandoffSteer(chat.id);
-			const { handed, agent } = fakeAgent();
-			const fired: SteerMessage[][] = [];
-			setTurnRunner(async (_cid, input) => {
-				fired.push((input as SteerInput).steers as SteerMessage[]);
-				return 200;
-			});
-
-			assert.ok(beginTurn(chat.id));
-			registerLiveAgent(chat.id, agent as never);
-
-			const delivery = deliverJobResult(handoff);
-			await delay(1200);
-			assert.equal(handed.length, 0, "the handoff was NOT handed to the live agent");
-			assert.equal(fired.length, 0, "no wake while the prober's turn streams");
-
-			// The prober's turn settles — now the handoff wakes the TEACHER.
-			unregisterLiveAgent(chat.id);
-			settleSteers(chat.id, []);
-			endTurn(chat.id);
-			await delivery;
-			assert.equal(fired.length, 1);
-			assert.equal(fired[0]![0]!.id, handoff.id, "the handoff rode the wake");
-		});
-
-		it("registerLiveAgent immediately steers pending markers into the NEW run (the parked-behind-quiz path)", async () => {
-			const { chatId, jobId, steer } = setup();
-			const { handed, agent } = fakeAgent();
-			let fired = 0;
-			setTurnRunner(async () => {
-				fired++;
-				return 200;
-			});
-
-			// A dangling question has the pump parked in waitForIdle: the
-			// marker is pending but no live run exists to take it.
-			chatStore.saveMessages(chatId, [
-				...nativeToolMessages("teach me", "probe_done", "call-q", { ok: true }),
-				{
-					id: "a-q",
-					role: "assistant",
-					content: [
-						{
-							type: "toolCall",
-							id: "quiz-call",
-							name: "quiz",
-							arguments: { question: "q", choices: ["a", "b"] } as never,
-						},
-					],
-					api: "openai-completions",
-					provider: "openrouter",
-					model: "test",
-					usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-					stopReason: "toolUse",
-					timestamp: 1,
-				} as never,
-			]);
-			const delivery = deliverJobResult(steer);
-			await delay(300); // let the pump park behind the dangling question
-			assert.equal(handed.length, 0, "nothing to hand to — no live agent");
-
-			// The learner answers: the handler registers the answer run's agent
-			// BEFORE runPiTurn, so the marker is steered into it synchronously —
-			// it rides the run's START steering poll (first LLM call).
-			assert.ok(beginTurn(chatId));
-			registerLiveAgent(chatId, agent as never);
-			assert.equal(handed.length, 1, "registration itself steered the marker in");
-			assert.equal(handed[0]!.id, steer.id);
-
-			// The answer run persisted the marker — the parked pump's wake
-			// re-check resolves it without ever firing a turn.
-			unregisterLiveAgent(chatId);
-			settleSteers(chatId, [steer as never]);
-			endTurn(chatId);
-			await delivery;
-			assert.equal(fired, 0, "the parked wake never fired — the run delivered");
 			assert.equal(jobStore.getJob(jobId)!.status, "done");
 		});
 
@@ -1470,159 +1226,53 @@ describe("persistTurn (native history, Wave B)", () => {
 		assert.equal(record.messages.length, 2, "the base record is untouched — append-only");
 		assert.match(record.messages[1]!.id, /^msg_/);
 	});
-
-	it("drops clean question placeholders, keeps errored ones (fork 1: the record ends at the unanswered call)", () => {
-		const chat = chatStore.createChat("Test: persist placeholder filtering");
-		trackChat(chat.id);
-		const stamped = persistTurn(
-			chatStore,
-			chat.id,
-			0,
-			[
-				{
-					id: "",
-					role: "assistant",
-					content: [{ type: "toolCall", id: "q1", name: "quiz", arguments: { question: "q?" } as never }],
-					api: "openai-completions",
-					provider: "openrouter",
-					model: "test",
-					usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-					stopReason: "toolUse",
-					timestamp: 1,
-				} as never,
-				// The loop's synthetic "question posed" result — never a fact.
-				{
-					id: "",
-					role: "toolResult",
-					toolCallId: "q1",
-					toolName: "quiz",
-					content: [{ type: "text", text: "question posed" }],
-					details: "question posed",
-					isError: false,
-					timestamp: 1,
-				} as never,
-				// An ERRORED authoring call DOES persist — the model's retry context.
-				{
-					id: "",
-					role: "toolResult",
-					toolCallId: "q1",
-					toolName: "quiz",
-					content: [{ type: "text", text: "bad options" }],
-					details: "bad options",
-					isError: true,
-					timestamp: 1,
-				} as never,
-			],
-			false,
-		);
-		assert.equal(stamped.length, 2, "the clean placeholder is filtered, the errored result stays");
-		const record = chatStore.getChat(chat.id)!;
-		assert.equal(record.messages.length, 2);
-		assert.equal((record.messages[1] as { isError: boolean }).isError, true);
-	});
 });
 
 // ─── prompt composition hygiene (the README leak) ─────────────────────────────
 
 describe("prompt composition", () => {
 	it("loads ONLY numeric-prefix fragments — README.md never enters the system prompt", () => {
-		const instructions = composeInstructions("teacher");
+		const instructions = composeInstructions("chat");
 		assert.ok(!instructions.includes("Prompt fragments"), "README content must not leak");
 		assert.ok(!instructions.includes("Rules for adding a fragment"), "README content must not leak (rules)");
-		// every numeric fragment DOES compose, verbatim, after the base prompt
-		const base = fs.readFileSync("src/agent/system-prompt.md", "utf-8").trim();
-		assert.ok(instructions.startsWith(base), "base prompt first");
-		for (const f of fs
-			.readdirSync("src/agent/prompts")
-			.filter((f) => /^\d+-[\w.-]+\.md$/.test(f))
-			.sort()) {
-			const body = fs.readFileSync(`src/agent/prompts/${f}`, "utf-8").trim();
+		for (const f of fs.readdirSync("src/agent/prompts/chat").filter((f) => /^\d+-[\w.-]+\.md$/.test(f))) {
+			const body = fs.readFileSync(`src/agent/prompts/chat/${f}`, "utf-8").trim();
 			assert.ok(instructions.includes(body), `fragment ${f} must compose verbatim`);
 		}
 	});
 
-	it("the question principles compose into the teacher prompt; the probe's quick-measurement revision landed", () => {
-		const teacher = composeInstructions("teacher");
-		// the T2a doctrine fragment (user-locked wording 2026-09-15): verbatim presence
-		for (const pin of [
-			"Answerable by reasoning from the session",
-			"Never just reciting your words back",
-			"Prefer problems that apply the knowledge",
-			"Catch confusion early, and make it nameable",
-		]) {
-			assert.ok(teacher.includes(pin), `teacher prompt lost the principle: ${pin}`);
-		}
-		// it loads in sorted fragment order: right after 20-teaching, before 30-jobs
-		assert.ok(
-			teacher.indexOf("Question principles") > teacher.indexOf("# Teach — one step at a time"),
-			"principles sit after the teaching loop",
-		);
-		// the prober's doctrine: the "no rush" framing is gone, quick measurement in
-		const prober = composeInstructions("prober");
-		assert.ok(!prober.includes("There is no rush"), "the old no-rush framing is retired");
-		assert.ok(
-			prober.includes("every wasted question is resolution the final map doesn't get"),
-			"the efficiency-is-resolution directive is in",
-		);
-		assert.ok(!prober.includes("Question principles"), "the teach-phase fragment never composes into the prober");
+	it("the chat composes its own doctrine with the shared voice and accuracy; the practice doctrine stays out", () => {
+		const chat = composeInstructions("chat");
+		assert.ok(chat.startsWith("# The chat"), "the chat's own doctrine leads");
+		assert.ok(chat.includes("## Grading an answer"), "the chat's grading doctrine is in");
+		assert.ok(chat.includes("## Voice"), "the shared voice composes into the chat");
+		assert.ok(chat.includes("## Accuracy: non-negotiable"), "the shared accuracy rule composes into the chat");
+		assert.ok(!chat.includes("# The practice session"), "the practice doctrine never composes into the chat");
 	});
 
-	it("the predict-check cycle composes into the teacher; the craft chunk reaches BOTH agents (owner 2026-10-03)", () => {
-		const teacher = composeInstructions("teacher");
-		// the cycle doctrine (28-predictions.md) — teacher-only
-		assert.ok(teacher.includes("predict → teach → check"), "the cycle line is in");
-		assert.ok(teacher.includes('The prediction (`type: "predict"`)'), "the prediction role section is in");
-		assert.ok(teacher.includes("Skip the prediction"), "the skip rule is in");
-		assert.ok(teacher.includes('The check (`type: "check"`)'), "the check role section is in");
-		// the craft + thinking channels (shared/20-question-tools.md) — BOTH agents
-		const prober = composeInstructions("prober");
-		for (const [name, prompt] of [
-			["teacher", teacher],
-			["prober", prober],
-		] as const) {
-			assert.ok(prompt.includes("asymmetry"), `${name} carries the option craft (moved out of tool descriptions)`);
-			assert.ok(prompt.includes("TRANSCRIBED SPEECH"), `${name} reads dictated thinking leniently`);
-			assert.ok(prompt.includes("thinkingWhileReading"), `${name} knows the reading channel`);
-		}
-		// the cycle is teach-phase doctrine — it never composes into the prober
-		assert.ok(!prober.includes("predict → teach → check"), "the teaching cycle stays out of the prober");
-	});
-
-	it("the sources-v0 prompt lines compose: read/pdf doctrine in the teacher, the read line in the prober", () => {
-		const teacher = composeInstructions("teacher");
-		assert.ok(teacher.includes("Learner source files"), "the teacher carries the source-files section");
-		assert.ok(teacher.includes("brief with page citations"), "the pdf brief's citation duty is stated");
-		const prober = composeInstructions("prober");
-		assert.ok(prober.includes("the `read` tool can inspect it directly"), "the prober knows it can read learner files");
-	});
-
-	it("the sources-v1 shared fragment composes into BOTH agents (find/ls/grep doctrine)", () => {
-		for (const kind of ["teacher", "prober"] as const) {
-			const instructions = composeInstructions(kind);
-			assert.ok(instructions.includes("## Learner files"), `${kind} carries the shared learner-files fragment`);
-			assert.ok(instructions.includes("find it yourself with `find`"), `${kind} knows to locate files itself`);
-			assert.ok(instructions.includes("home directory"), `${kind} knows the home-anchored path rule`);
-		}
-		// the agent's OWN fragments compose before the shared appendix
-		// (the reorder's order rule, 2026-09-27: job and method lead)
-		const teacher = composeInstructions("teacher");
-		assert.ok(
-			teacher.indexOf("## Learner source files") < teacher.indexOf("## Learner files"),
-			"the teacher's own 40-jobs section precedes the shared learner-files fragment",
-		);
+	it("the practice composes its own doctrine with the shared formatting guide; the chat doctrine stays out", () => {
+		const practice = composeInstructions("practice");
+		assert.ok(practice.includes("# The practice session"), "the practice doctrine is in");
+		assert.ok(practice.includes("## Formatting: the learner receives documents"), "the formatting guide is in");
+		assert.ok(!practice.includes("# The chat"), "the chat doctrine never composes into practice");
+		assert.ok(!practice.includes("## Grading an answer"), "the chat grading doctrine stays out of practice");
 	});
 
 	it("guards prompt size — no fragment can silently balloon (the README-leak class)", () => {
 		// The wave-1 leak: README.md (815 bytes / ~200 tokens) rode into every
-		// teacher turn until the numeric-prefix filter stopped it. This guard
-		// catches the sibling failure mode — an accidental dump pasted into a
-		// fragment. Thresholds: largest real fragment is 40-demos.md at ~3.2k
-		// chars; 8k is generous headroom. Composed total ≤ 60k chars.
-		for (const f of fs.readdirSync("src/agent/prompts").filter((f) => /^\d+-[\w.-]+\.md$/.test(f))) {
-			const body = fs.readFileSync(`src/agent/prompts/${f}`, "utf-8").trim();
-			assert.ok(body.length <= 8_000, `fragment ${f} is ${body.length} chars — over the 8k guard`);
+		// turn until the numeric-prefix filter stopped it. This guard catches
+		// the sibling failure mode — an accidental dump pasted into a fragment.
+		// Thresholds: the largest real fragment is chat/10-chat.md at ~13.4k
+		// chars (the chat doctrine is one file); 16k keeps headroom above it.
+		// Composed total ≤ 60k chars.
+		for (const dir of ["chat", "practice", "shared", "language", "drawing"]) {
+			for (const f of fs.readdirSync(`src/agent/prompts/${dir}`).filter((f) => /^\d+-[\w.-]+\.md$/.test(f))) {
+				const body = fs.readFileSync(`src/agent/prompts/${dir}/${f}`, "utf-8").trim();
+				assert.ok(body.length <= 16_000, `fragment ${dir}/${f} is ${body.length} chars — over the 16k guard`);
+			}
 		}
-		assert.ok(composeInstructions("teacher").length <= 60_000, "composed system prompt over the 60k guard");
+		assert.ok(composeInstructions("chat").length <= 60_000, "composed chat prompt over the 60k guard");
+		assert.ok(composeInstructions("practice").length <= 60_000, "composed practice prompt over the 60k guard");
 	});
 });
 

@@ -21,4 +21,4 @@ Two edits here are not yet in slovak.wiki. Both come from mistakes the accuracy 
 
 ## Paths that differ
 
-Paths in `SKILL.md` and `references/slovak-wiki-authoring.md` (`content/dictionary/words.json`, `src/lib/catalog/entries.ts`) are slovak.wiki's. In LangHarness the same dictionary is `curriculum/slovak/lexicon.json`, and the tutor reaches it through its `lookup_word` tool.
+Paths in `SKILL.md` and `references/slovak-wiki-authoring.md` (`content/dictionary/words.json`, `src/lib/catalog/entries.ts`) are slovak.wiki's. In Lanna the same dictionary is `curriculum/slovak/lexicon.json`, and the tutor reaches it through its `lookup_word` tool.

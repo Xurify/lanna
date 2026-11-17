@@ -14,10 +14,52 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { formatProbeError, probeEnv } from "./smoke-demo-runtime.mjs";
+
+/** @param {Record<string, string | undefined>} env @param {string} home @returns {Record<string, string | undefined>} */
+export function probeEnv(env, home) {
+	const clean = Object.fromEntries(
+		Object.entries(env).filter(
+			([key]) =>
+				!/KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL/i.test(key) &&
+				!/^(AWS_|GOOGLE_|GCLOUD_|CLOUDSDK_|AZURE_|ANTHROPIC_|OPENAI_|OPENROUTER_|GEMINI_)/.test(key) &&
+				!["NODE_OPTIONS", "NODE_PATH", "LANNA_DEV_URL", "ELECTRON_RUN_AS_NODE"].includes(key),
+		),
+	);
+	return {
+		...clean,
+		HOME: home,
+		USERPROFILE: home,
+		APPDATA: path.join(home, "config"),
+		LOCALAPPDATA: path.join(home, "local"),
+		XDG_CONFIG_HOME: path.join(home, "config"),
+		XDG_CACHE_HOME: path.join(home, "cache"),
+		LANNA_DATA_DIR: path.join(home, "data"),
+		LANNA_AUTH_FILE: path.join(home, "auth.json"),
+		LANNA_IGNORE_ENV_KEYS: "1",
+		NODE_ENV: "production",
+	};
+}
+
+// Keep fetch's nested cause (including AggregateError socket failures), but
+// never dump arbitrary error properties such as request headers or environment.
+export function formatProbeError(error, depth = 0) {
+	if (depth > 5) return "[cause chain truncated]";
+	if (!error || typeof error !== "object") return String(error);
+	const lines = [
+		typeof error.stack === "string" ? error.stack : `${error.name ?? "Error"}: ${error.message ?? "unknown error"}`,
+	];
+	for (const field of ["code", "errno", "syscall", "address", "port"]) {
+		if (["string", "number"].includes(typeof error[field])) lines.push(`${field}: ${error[field]}`);
+	}
+	if (error.cause !== undefined) lines.push(`cause: ${formatProbeError(error.cause, depth + 1)}`);
+	if (Array.isArray(error.errors)) {
+		for (const nested of error.errors.slice(0, 8)) lines.push(`aggregate: ${formatProbeError(nested, depth + 1)}`);
+	}
+	return lines.join("\n");
+}
 
 export function verifyProviderRuntime(standalone, runtime = process.execPath) {
-	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-provider-runtime-"));
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-provider-runtime-"));
 	try {
 		fs.writeFileSync(path.join(home, "auth.json"), "{}\n", { mode: 0o600 });
 		const result = spawnSync(runtime, [fileURLToPath(import.meta.url), "--probe", path.resolve(standalone)], {
@@ -107,7 +149,7 @@ async function probe(standalone) {
 			models.setProvider(provider);
 			const model = provider.getModels().find((candidate) => candidate.api === "google-generative-ai");
 			assert.ok(model, `${name}: missing Google-backed catalog model`);
-			const sentinel = `LH_OFFLINE_ON_PAYLOAD_${randomUUID()}`;
+			const sentinel = `LANNA_OFFLINE_ON_PAYLOAD_${randomUUID()}`;
 			let reached = 0;
 			const result = await models
 				.streamSimple(
@@ -135,6 +177,7 @@ async function probe(standalone) {
 		for (const [name, factory] of [
 			["github-copilot", "githubCopilotProvider"],
 			["xai", "xaiProvider"],
+			["openai", "openaiProvider"],
 		]) {
 			const provider = (await import(new URL(`providers/${name}.js`, entry).href))[factory]();
 			const credential = {
@@ -142,7 +185,7 @@ async function probe(standalone) {
 				access:
 					name === "github-copilot"
 						? "tid=offline;proxy-ep=proxy.individual.githubcopilot.com;"
-						: "offline-xai-oauth-not-a-token",
+						: `offline-${name}-oauth-not-a-token`,
 				refresh: "offline-refresh-not-a-token",
 				expires: Date.now() + 3600000,
 				availableModelIds: provider.getModels().map((model) => model.id),
@@ -154,7 +197,7 @@ async function probe(standalone) {
 			for (const model of provider.getModels()) {
 				if (seenApis.has(model.api)) continue;
 				seenApis.add(model.api);
-				const sentinel = `LH_OFFLINE_SUBSCRIPTION_${randomUUID()}`;
+				const sentinel = `LANNA_OFFLINE_SUBSCRIPTION_${randomUUID()}`;
 				let reached = 0;
 				const result = await provider
 					.streamSimple(

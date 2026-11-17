@@ -1,7 +1,7 @@
 /**
- * How often does a model mislead a Slovak learner? (LangHarness, 2026-11-01)
+ * How often does a model mislead a Slovak learner? (2026-11-01)
  *
- *   LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<sandbox>/auth.json \
+ *   LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<sandbox>/auth.json \
  *     tsx scripts/eval-slovak-accuracy.ts <out-dir> <model>:<level>[:skill] ...
  *
  *   e.g. claude-haiku-5-5:max:skill claude-sonnet-5-5:medium
@@ -24,9 +24,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const [outDir, ...configArgs] = process.argv.slice(2);
-if (!outDir || configArgs.length === 0 || !process.env.LH_DATA_DIR) {
+if (!outDir || configArgs.length === 0 || !process.env.LANNA_DATA_DIR) {
 	console.error(
-		"usage: LH_DATA_DIR=<sandbox> LH_AUTH_FILE=<sandbox>/auth.json tsx scripts/eval-slovak-accuracy.ts <out-dir> <model>:<level>[:skill] ...",
+		"usage: LANNA_DATA_DIR=<sandbox> LANNA_AUTH_FILE=<sandbox>/auth.json tsx scripts/eval-slovak-accuracy.ts <out-dir> <model>:<level>[:skill] ...",
 	);
 	process.exit(1);
 }
@@ -155,7 +155,7 @@ async function ask(model: string, level: string, skill: boolean, item: Item) {
 			ms: 0,
 		};
 	}
-	const engine = piEngineForSpec({ provider: "anthropic", id: model, thinkingLevel: level as never }, true);
+	const engine = piEngineForSpec({ provider: "anthropic", id: model, thinkingLevel: level as never });
 	let cost = 0;
 	let output = 0;
 	let reasoning = 0;

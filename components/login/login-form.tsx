@@ -1,7 +1,7 @@
 "use client";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { LhAppIcon } from "@/components/lh-mark";
+import { LannaAppIcon } from "@/components/lanna-mark";
 
 function waitText(seconds: number): string {
 	const minutes = Math.max(1, Math.ceil(seconds / 60));
@@ -43,7 +43,7 @@ export function LoginForm({ next }: { next: string }) {
 					: (body?.error ?? "Could not sign in. Try again."),
 			);
 		} catch {
-			setError("LangHarness could not be reached. Check your connection, then try again.");
+			setError("Lanna could not be reached. Check your connection, then try again.");
 		} finally {
 			setBusy(false);
 		}
@@ -52,12 +52,12 @@ export function LoginForm({ next }: { next: string }) {
 	return (
 		<main className="flex min-h-dvh w-full items-center justify-center px-6 py-10 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
 			<div className="-mt-[6vh] w-full max-w-[320px]">
-				<LhAppIcon className="mx-auto size-14" />
+				<LannaAppIcon className="mx-auto size-14" />
 				<h1
 					className="mt-5 text-center font-ui text-[22px] font-semibold tracking-tight text-foreground"
 					data-testid="login-heading"
 				>
-					Welcome to Lang<span className="text-sun">Harness</span>
+					Welcome to Lanna
 				</h1>
 				<p className="mt-1.5 text-center text-[15px] leading-snug text-[var(--q-ink-2)]">
 					Enter your password to continue.

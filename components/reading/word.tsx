@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * A tappable word (LangHarness, 2026-10-28) — shared by the Read and
+ * A tappable word (2026-10-28) — shared by the Read and
  * Watch tasks. The popover under (or above) the word shows the dictionary
  * form, the form "here", the gloss, the part of speech and whether the word
  * is new to the learner. A fresh word carries a dotted underline so the eye
@@ -245,7 +245,7 @@ export function Word({
 					role="dialog"
 					aria-label={`About ${token.text}`}
 					className={cn(
-						"lh-menu-in absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-lg border bg-card p-4 text-left font-prose text-base shadow-raise-hi",
+						"lanna-menu-in absolute z-30 block w-max min-w-[15rem] max-w-[22rem] rounded-lg border bg-card p-4 text-left font-prose text-base shadow-raise-hi",
 						placeAbove ? "bottom-full mb-2" : "top-full mt-2",
 						side === "left" ? "left-0" : "right-0",
 						placeAbove
@@ -394,7 +394,7 @@ export function Word({
 							title={known ? "Counted as known. Press to undo." : "Count this word as known from now on"}
 							data-testid="word-popover-known"
 							className={cn(
-								"lh-press flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
+								"lanna-press flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
 								known ? "bg-teal-wash text-teal-2" : "bg-well text-foreground hover:bg-well-2",
 							)}
 						>
@@ -408,7 +408,7 @@ export function Word({
 							disabled={inDeck && isFav}
 							data-testid="word-popover-add-bank"
 							className={cn(
-								"lh-press flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
+								"lanna-press flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-3 font-ui text-[13px] font-[550] transition-colors",
 								inDeck && isFav ? "bg-teal-wash text-teal-2" : "bg-well text-foreground hover:bg-well-2",
 							)}
 						>

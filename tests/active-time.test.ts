@@ -1,11 +1,11 @@
 /**
- * MEASURED MINUTES PINS (LangHarness, 2026-10-29): the active-time clock
+ * MEASURED MINUTES PINS (2026-10-29): the active-time clock
  * (interactive gaps capped, passive visible-and-focused), the per-activity
  * ledger, the strand balance reading measured minutes before estimates,
  * the server handlers that record them and the endpoint that takes the
  * time of a session left unfinished.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -14,9 +14,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, beforeEach, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-active-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-active-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const {
 	ACTIVITY_CAP_MIN,

@@ -148,12 +148,12 @@ export function ModelControl({
 	const effectiveLevel = storedLevel ?? (entry ? defaultOrderLevel(levels) : undefined);
 
 	// Outside click or Esc closes the open menu. The menu body is portaled to body,
-	// so its rows are carved out via [data-lh-menu]; otherwise a row's pointerdown counts as outside.
+	// so its rows are carved out via [data-lanna-menu]; otherwise a row's pointerdown counts as outside.
 	useEffect(() => {
 		if (open === null) return;
 		const onPointerDown = (e: PointerEvent) => {
 			const t = e.target as Element;
-			if (t instanceof Element && t.closest("[data-lh-menu]")) return;
+			if (t instanceof Element && t.closest("[data-lanna-menu]")) return;
 			if (containerRef.current && !containerRef.current.contains(t)) {
 				setOpen(null);
 			}
@@ -242,8 +242,8 @@ export function ModelControl({
 			setError(null);
 			refresh();
 		};
-		window.addEventListener("lh:kbd-open-model-picker", onOpenPicker);
-		return () => window.removeEventListener("lh:kbd-open-model-picker", onOpenPicker);
+		window.addEventListener("lanna:kbd-open-model-picker", onOpenPicker);
+		return () => window.removeEventListener("lanna:kbd-open-model-picker", onOpenPicker);
 	}, [refresh]);
 
 	useEffect(() => {
@@ -254,8 +254,8 @@ export function ModelControl({
 			if (next === undefined) return;
 			apply(effectiveProvider ?? "", effectiveId ?? "", next);
 		};
-		window.addEventListener("lh:kbd-cycle-thinking", onCycleThinking);
-		return () => window.removeEventListener("lh:kbd-cycle-thinking", onCycleThinking);
+		window.addEventListener("lanna:kbd-cycle-thinking", onCycleThinking);
+		return () => window.removeEventListener("lanna:kbd-cycle-thinking", onCycleThinking);
 	}, [levels, effectiveLevel, effectiveProvider, effectiveId, apply]);
 
 	// A fresh pick always writes a level. The stored level rides along; the server clamps it

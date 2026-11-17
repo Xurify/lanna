@@ -4,9 +4,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-line-flow-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-line-flow-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { lineState, recordLine } = await import("../src/server/line.ts");
 const { progressStore } = await import("../src/store/progress.ts");

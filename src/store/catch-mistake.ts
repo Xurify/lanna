@@ -1,5 +1,5 @@
 /**
- * Catch the mistake items (LangHarness, 2026-11-06): the active profile's
+ * Catch the mistake items (2026-11-06): the active profile's
  * data/profiles/<language>/catch-mistake.json, one entry per item. An item is
  * kept once it is made, so a visit before the answer does not call the model
  * again. Written through a temp file and a rename, as watch-reps is.

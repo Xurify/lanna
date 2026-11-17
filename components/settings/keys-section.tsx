@@ -15,13 +15,13 @@
 import { useEffect, useRef, useState } from "react";
 import { AUTH_KEYS, isPlainAuthSetting, type AuthKeyStatus } from "@/src/core";
 import { SettingsGroup } from "./controls.tsx";
-import { SubscriptionConnections } from "./subscription-connections.tsx";
+import { SubscriptionsSection } from "./subscriptions-section.tsx";
 import { ProviderMenuList } from "./model-menu.tsx";
 import { MenuShell } from "@/components/menu-shell";
 import { notifySettingsSaved } from "@/components/settings-signal";
 import { ProviderIcon } from "./provider-icons.tsx";
 
-/** Which settings group a service key sits in (LangHarness adds Speech). */
+/** Which settings group a service key sits in (adds Speech). */
 function TOOL_KEY_GROUP(id: string): "Speech" | "Dictation" | "Web search" {
 	if (id === "ELEVENLABS_API_KEY" || id.startsWith("AZURE_SPEECH_")) return "Speech";
 	if (id === "DEEPGRAM_API_KEY") return "Dictation";
@@ -392,7 +392,7 @@ function AddProviderRow({ addable, onPick }: { addable: ProviderKeyInfo[]; onPic
 		const onPointerDown = (e: PointerEvent) => {
 			const target = e.target as Node;
 			if (anchorRef.current?.contains(target)) return;
-			if (target instanceof Element && target.closest("[data-lh-menu]")) return;
+			if (target instanceof Element && target.closest("[data-lanna-menu]")) return;
 			if (target instanceof Element && target.closest('[role="dialog"]')) setOpen(false);
 		};
 		const onKeyDown = (e: KeyboardEvent) => {
@@ -608,7 +608,7 @@ export function KeysSection({
 			</SettingsGroup>
 
 			<SettingsGroup label="Subscriptions" testid="group-subscriptions">
-				<SubscriptionConnections />
+				<SubscriptionsSection />
 			</SettingsGroup>
 
 			{(

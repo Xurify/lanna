@@ -36,10 +36,8 @@ import {
 } from "@/src/core";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { modelName } from "@/components/model-names";
-import { CommitInput, SettingsDisclosure, SettingsGroup, SettingsRow, SettingsSegmented, Toggle } from "./controls.tsx";
+import { CommitInput, SettingsDisclosure, SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
 import { MenuOption, ModelMenuList, ThinkingMenuList } from "./model-menu";
-import { ChatGPTBackgroundAccess } from "./chatgpt-connection";
-import { NativeSubscriptionBackgroundAccess } from "./subscription-connections";
 
 /** Display identity per slot. The roster is the row hint. */
 const SLOT_META: Record<ModelSlotName, { label: string; roster: string }> = {
@@ -74,12 +72,6 @@ const TOOL_COPY: Record<(typeof TOGGLE_TOOLS)[number], { label: string; hint: st
 	pdf: { label: "Read PDFs", hint: "Reads the PDFs you add with the PDF button and cites their pages." },
 };
 
-/** The quiz style's two options (the engine's `explain` switch). */
-const QUIZ_OPTIONS: readonly { value: "choice" | "free"; label: string }[] = [
-	{ value: "choice", label: "Multiple choice" },
-	{ value: "free", label: "Free recall" },
-];
-
 const THINKING_LEVELS: readonly ThinkingLevel[] = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
 
 /** SegmentInfo as GET /api/settings/prompts returns it. */
@@ -101,36 +93,6 @@ interface ModelsBody {
 /** One tool toggled; the rest of the section is carried verbatim. */
 function composeTool(agent: AgentSettings | undefined, id: string, on: boolean): AgentSettings {
 	return { ...agent, tools: { ...agent?.tools, [id]: on } };
-}
-
-/** Exactly one mechanic is active: `explain: true` is free recall, anything else multiple choice. `quiz` is never written here (see quizMechanics in agent/tools.ts). */
-/** Lives under Learning: it is how the learner is quizzed, stored with the tutor's tools. */
-export function QuizStyleRow({
-	agent,
-	onSectionChange,
-}: {
-	agent: AgentSettings | undefined;
-	onSectionChange: (next: AgentSettings) => void;
-}) {
-	return (
-		<SettingsRow
-			label="Quiz style"
-			hint="How the tutor checks what you know. Multiple choice: pick an answer. Free recall: type it, with no options."
-			testid="quiz-mechanics-row"
-		>
-			<SettingsSegmented
-				options={QUIZ_OPTIONS}
-				value={agent?.tools?.explain === true ? "free" : "choice"}
-				onChange={(m) => onSectionChange(composeQuizMechanics(agent, m))}
-				ariaLabel="Quiz style"
-				testid="quiz-mechanics"
-			/>
-		</SettingsRow>
-	);
-}
-
-function composeQuizMechanics(agent: AgentSettings | undefined, mechanics: "choice" | "free"): AgentSettings {
-	return { ...agent, tools: { ...agent?.tools, explain: mechanics === "free" } };
 }
 
 /** One slot's override. Empty model = Default (factory pin); empty thinking keeps the resolved level. */
@@ -182,27 +144,24 @@ function composeTranscriptionEngine(
 /** Hint under a prompt row whose override is in use. Shown only while the switch is on. */
 const PROMPT_IN_USE_HINT = "Your version is in use";
 
-/** One prompt section: Teacher, Prober, then Shared. */
+/** One prompt section: Ask, Practice, then Shared. */
 interface PromptSection {
-	id: "teacher" | "prober" | "shared";
+	id: "chat" | "practice" | "shared";
 	label: string;
 	/** Says what the section's instructions do. Agent names are internal. */
 	hint?: string;
 	segments: SegmentInfo[];
 }
 
-/** Splits the per-agent lists into three sections. Shared segments arrive in both lists, so they are taken once, from the teacher list. */
-function sectionedSegments(view: { prober: SegmentInfo[]; teacher: SegmentInfo[] }): PromptSection[] {
-	const own = (who: "prober" | "teacher") => view[who].filter((s) => !s.shared);
+type PromptView = { chat: SegmentInfo[]; practice: SegmentInfo[] };
+
+/** Splits the per-agent lists into three sections. Shared segments arrive in both lists, so they are taken once, from the chat list. */
+function sectionedSegments(view: PromptView): PromptSection[] {
+	const own = (who: "chat" | "practice") => view[who].filter((s) => !s.shared);
 	return [
-		{ id: "teacher", label: "Teaching", hint: "How the tutor explains and guides a lesson", segments: own("teacher") },
-		{ id: "prober", label: "Checking", hint: "How the tutor checks what you know", segments: own("prober") },
-		{
-			id: "shared",
-			label: "Shared",
-			hint: "Used by both",
-			segments: view.teacher.filter((s) => s.shared),
-		},
+		{ id: "chat", label: "Ask", hint: "How the tutor talks with you in Ask", segments: own("chat") },
+		{ id: "practice", label: "Practice", hint: "How the tutor runs a unit's practice", segments: own("practice") },
+		{ id: "shared", label: "Shared", hint: "Used by both", segments: view.chat.filter((s) => s.shared) },
 	];
 }
 
@@ -259,7 +218,7 @@ function MenuTrigger({
 }
 
 // The dropdowns mount the shared MenuShell, anchored to the open trigger by testid.
-// data-lh-menu marks them as exempt from the outside-click handler.
+// data-lanna-menu marks them as exempt from the outside-click handler.
 
 export function AiSection({
 	agent,
@@ -286,7 +245,7 @@ export function AiSection({
 	const [engineKeys, setEngineKeys] = useState<
 		Partial<Record<(typeof SEARCH_ENGINES)[number] | "elevenlabs", boolean>>
 	>({});
-	const [prompts, setPrompts] = useState<{ prober: SegmentInfo[]; teacher: SegmentInfo[] } | null>(null);
+	const [prompts, setPrompts] = useState<PromptView | null>(null);
 	const [openSegment, setOpenSegment] = useState<string | null>(null);
 	const [segmentDraft, setSegmentDraft] = useState<Record<string, string>>({});
 	const [segmentStatus, setSegmentStatus] = useState<string | null>(null);
@@ -308,7 +267,7 @@ export function AiSection({
 	const readPrompts = useCallback(() => {
 		fetch("/api/settings/prompts")
 			.then((r) => r.json())
-			.then((body: { prober: SegmentInfo[]; teacher: SegmentInfo[] }) => setPrompts(body))
+			.then((body: PromptView) => setPrompts(body))
 			.catch(() => {});
 	}, []);
 
@@ -344,7 +303,7 @@ export function AiSection({
 		readModels();
 		fetch("/api/settings/prompts")
 			.then((r) => r.json())
-			.then((body: { prober: SegmentInfo[]; teacher: SegmentInfo[] }) => setPrompts(body))
+			.then((body: PromptView) => setPrompts(body))
 			.catch(() => setPrompts(null));
 		fetch("/api/keys")
 			.then((r) => r.json())
@@ -375,7 +334,7 @@ export function AiSection({
 		const onPointerDown = (e: PointerEvent) => {
 			const target = e.target as Node;
 			if (menuAnchorRef.current?.contains(target)) return;
-			if (target instanceof Element && target.closest("[data-lh-menu]")) return;
+			if (target instanceof Element && target.closest("[data-lanna-menu]")) return;
 			if (target instanceof Element && target.closest('[role="dialog"]')) {
 				setOpenMenu(null);
 			}
@@ -601,12 +560,7 @@ export function AiSection({
 						>
 							{/* Outside-click anchor: the span holding both triggers. */}
 							<span ref={thisMenuOpen ? menuAnchorRef : undefined} className="relative flex items-center gap-2">
-								{slot !== "strong" && (
-									<>
-										<ChatGPTBackgroundAccess provider={coord?.provider} />
-										<NativeSubscriptionBackgroundAccess provider={coord?.provider} />
-									</>
-								)}
+								{slot !== "strong" && <></>}
 								<MenuTrigger
 									value={modelId ? modelName(catalog, provider, modelId) : ""}
 									emptyLabel="—"

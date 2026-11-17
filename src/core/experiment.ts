@@ -673,7 +673,7 @@ export function generateSummaryMarkdown(
 	}
 
 	lines.push(``);
-	lines.push(`*Generated automatically by LangHarness experiment tracker.*`);
+	lines.push(`*Generated automatically by Lanna experiment tracker.*`);
 	return lines.join("\n");
 }
 

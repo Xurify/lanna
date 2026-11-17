@@ -27,9 +27,9 @@ import {
 	newUserMessage,
 	projectView,
 	type ChatInput,
-	type LhMarkerMessage,
-	type LhMessage,
-	type LhViewMessage,
+	type LannaMarkerMessage,
+	type LannaMessage,
+	type LannaViewMessage,
 	type LiveExecution,
 	type QuestionAnswerData,
 	type QuestionDraft,
@@ -122,7 +122,7 @@ async function* sseEvents(
 
 /** The dangling question call's tool name (the optimistic answer result's
  *  toolName — the server stamps the same from its own record scan). */
-export function pendingCallTool(messages: readonly LhMessage[], toolCallId: string): string | null {
+export function pendingCallTool(messages: readonly LannaMessage[], toolCallId: string): string | null {
 	for (const m of messages) {
 		if ((m as { role?: string }).role !== "assistant") continue;
 		const content = (m as { content?: unknown }).content;
@@ -140,7 +140,7 @@ export function pendingCallTool(messages: readonly LhMessage[], toolCallId: stri
  * content, not the (local) id; only `c_`-prefixed local entries are ever
  * absorbed (live turn content is never dropped).
  */
-export function absorbed(m: LhMessage, record: readonly LhMessage[]): boolean {
+export function absorbed(m: LannaMessage, record: readonly LannaMessage[]): boolean {
 	if (typeof m.id !== "string" || !m.id.startsWith("c_")) return false;
 	const role = (m as { role?: string }).role;
 	if (role === "user") {
@@ -162,12 +162,12 @@ export function absorbed(m: LhMessage, record: readonly LhMessage[]): boolean {
 		// copy for the whole turn). TOTAL over roles by identity key — a
 		// marker is itself when its customType AND structured details match;
 		// types that never appear optimistically simply never reach here.
-		const marker = m as LhMarkerMessage;
+		const marker = m as LannaMarkerMessage;
 		return record.some(
 			(r) =>
 				(r as { role?: string }).role === "custom" &&
-				(r as LhMarkerMessage).customType === marker.customType &&
-				sameDetails((r as LhMarkerMessage).details, marker.details),
+				(r as LannaMarkerMessage).customType === marker.customType &&
+				sameDetails((r as LannaMarkerMessage).details, marker.details),
 		);
 	}
 	return false;
@@ -180,8 +180,8 @@ function sameDetails(a: unknown, b: unknown): boolean {
 }
 
 export interface SessionState {
-	messages: LhViewMessage[];
-	nativeMessages: LhMessage[];
+	messages: LannaViewMessage[];
+	nativeMessages: LannaMessage[];
 	/** Completed conversation usage; null after compaction or before first usage. */
 	contextTokens: number | null;
 	status: SessionStatus;
@@ -205,7 +205,7 @@ export interface SteerQueueItem {
  *  question) keeps its line: honest "waiting" until the next run drains it. */
 export function visibleQueuedSteers(
 	queue: readonly SteerQueueItem[],
-	messages: readonly LhMessage[],
+	messages: readonly LannaMessage[],
 ): SteerQueueItem[] {
 	const ids = new Set(messages.map((m) => (m as { id?: string }).id));
 	return queue.filter((s) => !ids.has(s.id));
@@ -213,7 +213,7 @@ export function visibleQueuedSteers(
 
 interface SessionModelOptions extends SessionModelDeps {
 	chatId: string;
-	initialMessages: LhMessage[];
+	initialMessages: LannaMessage[];
 	/** Retained, memory-only server failure when reopening a session. */
 	initialError?: string;
 	/** Fires on every state change (the hook re-renders). */
@@ -238,8 +238,8 @@ export class SessionModel {
 	// THE STATE: the record (server canon) + the live tail (this client's
 	// optimistic appends and the streaming turn's messages). The tail dies
 	// at every full sync; the write-ahead absorbs the optimistic entries.
-	private base: LhMessage[];
-	private tail: LhMessage[] = [];
+	private base: LannaMessage[];
+	private tail: LannaMessage[] = [];
 	private questionDrafts = new Map<string, QuestionDraft>();
 	/** Only learner answers submitted through send(), never silent dismissals. */
 	private unconfirmedAnswers = new Map<string, string>();
@@ -385,7 +385,7 @@ export class SessionModel {
 			case "message_start":
 			case "message_update":
 			case "message_end": {
-				const message = agent.message as LhMessage & {
+				const message = agent.message as LannaMessage & {
 					role?: string;
 					id?: string;
 				};
@@ -400,7 +400,8 @@ export class SessionModel {
 					if (mid === undefined) return false;
 					this.mutate(() => {
 						const idx = this.tail.findIndex((m) => m.id === mid);
-						this.tail = idx === -1 ? [...this.tail, message as LhMessage] : this.tail.with(idx, message as LhMessage);
+						this.tail =
+							idx === -1 ? [...this.tail, message as LannaMessage] : this.tail.with(idx, message as LannaMessage);
 					});
 					return true;
 				}
@@ -417,7 +418,7 @@ export class SessionModel {
 				// unambiguous. An explicit message.id (if one ever appears on
 				// the wire) still wins.
 				const id = message.id ?? this.streamingMessageId ?? localId();
-				const withId = { ...message, id } as LhMessage;
+				const withId = { ...message, id } as LannaMessage;
 				if (agent.type === "message_end") {
 					this.incompleteUsageIds.delete(id);
 					if (message.role === "assistant" && message.stopReason === "error") {
@@ -464,7 +465,9 @@ export class SessionModel {
 				this.mutate(() => {
 					this.tail = [
 						...this.tail,
-						...(agent.toolResults as ToolResultMessage[]).map((r) => ({ ...r, id: localId() }) as unknown as LhMessage),
+						...(agent.toolResults as ToolResultMessage[]).map(
+							(r) => ({ ...r, id: localId() }) as unknown as LannaMessage,
+						),
 					];
 				});
 				return true;
@@ -598,7 +601,7 @@ export class SessionModel {
 					}
 					// Parse outside the transport catch: malformed JSON is a
 					// contract bug, not a connection-drop diagnostic.
-					const record = JSON.parse(text) as { messages?: LhMessage[]; turnError?: string };
+					const record = JSON.parse(text) as { messages?: LannaMessage[]; turnError?: string };
 					if (this.consumeAbort !== controller) return;
 					if (Array.isArray(record.messages)) {
 						this.mutate(() => {
@@ -662,7 +665,7 @@ export class SessionModel {
 				const res = await this.fetch(`/api/chats/${encodeURIComponent(this.chatId)}`, { signal: controller.signal });
 				if (this.consumeAbort !== controller) return;
 				if (!res.ok) throw new Error((await res.text()) || "An error occurred.");
-				const record = (await res.json()) as { messages?: LhMessage[]; turnInFlight?: boolean; turnError?: string };
+				const record = (await res.json()) as { messages?: LannaMessage[]; turnInFlight?: boolean; turnError?: string };
 				if (this.consumeAbort !== controller) return;
 				// No verified record/liveness: retain the draft and never guess
 				// whether a lost acknowledgement meant the input was accepted.
@@ -694,7 +697,7 @@ export class SessionModel {
 		// The optimistic appends — exactly the messages the server's
 		// write-ahead will persist (inputAppends), with LOCAL ids so
 		// adoption can tell them from the record's absorbed copies.
-		const optimistic: LhMessage[] = [];
+		const optimistic: LannaMessage[] = [];
 		if (input.type === "text") optimistic.push({ ...newUserMessage(input.text), id: localId() });
 		else if (input.type === "thinking") {
 			// The practice submissions (2026-10-04): the marker lands
@@ -882,7 +885,7 @@ export class SessionModel {
 		this.questionDrafts.set(toolCallId, { ...this.questionDrafts.get(toolCallId), ...draft });
 	}
 
-	private forgetResolvedDrafts(record: readonly LhMessage[]): void {
+	private forgetResolvedDrafts(record: readonly LannaMessage[]): void {
 		const answered = answeredCallIds(record);
 		for (const id of answered) this.questionDrafts.delete(id);
 		for (const [id, callId] of this.unconfirmedAnswers) {
@@ -891,7 +894,7 @@ export class SessionModel {
 	}
 
 	/** Full snapshot swap (the idle settle sync — server canon). */
-	setMessages(record: LhMessage[], turnError?: string): void {
+	setMessages(record: LannaMessage[], turnError?: string): void {
 		this.mutate(() => {
 			this.base = record;
 			if (turnError !== undefined) {
@@ -912,7 +915,7 @@ export class SessionModel {
 	 * optimistic entries the record has absorbed (their server-stamped
 	 * copies just landed; without this the input bubble would double).
 	 */
-	adoptRecord(record: LhMessage[]): void {
+	adoptRecord(record: LannaMessage[]): void {
 		const recordIds = new Set(record.map((m) => (m as { id?: string }).id));
 		const baseAbsorbed = this.base.some((m) => !recordIds.has((m as { id?: string }).id));
 		if (baseAbsorbed) return; // not a pure append — the idle full sync is the net
@@ -925,7 +928,7 @@ export class SessionModel {
 
 	/** Automatic mount/sync continuation is never permission to retry a
 	 * failed turn. Read current model truth, not a stale React closure. */
-	async continueIfOwed(record: readonly LhMessage[]): Promise<void> {
+	async continueIfOwed(record: readonly LannaMessage[]): Promise<void> {
 		if (
 			this.statusValue === "ready" &&
 			!this.automaticContinuationBlocked &&

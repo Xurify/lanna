@@ -14,7 +14,7 @@ const patterns = nextConfig.outputFileTracingExcludes!["*"];
 
 describe("standalone JavaScript tracing exclusions and native workaround policy", () => {
 	for (const windows of [false, true]) {
-		const root = windows ? "C:\\build\\langharness" : "/build/langharness";
+		const root = windows ? "C:\\build\\lanna" : "/build/lanna";
 		const file = (relative: string) =>
 			root + (windows ? "\\" : "/") + (windows ? relative.replaceAll("/", "\\") : relative);
 		const ignored = picomatch(patterns, { contains: true, dot: true, windows });
@@ -25,12 +25,8 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 				"auth.json",
 				".env",
 				".env.local",
-				"chatgpt-credentials.json",
-				"github-copilot-credentials.json",
-				"xai-credentials.json",
-				"chatgpt-credentials.json.fixture.tmp",
-				"github-copilot-credentials.json.fixture.tmp",
-				"xai-credentials.json.fixture.tmp",
+				"subscriptions.json",
+				"subscriptions.json.fixture.tmp",
 			]) {
 				assert.equal(ignored(file(relative)), true, relative);
 			}
@@ -68,14 +64,7 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 		assert.equal(ignore(`${root}/node_modules/gcp-metadata/build/src/index.js`), false);
 	});
 	it("preserves all secret exclusions exactly", () => {
-		assert.deepEqual(patterns, [
-			"**/data/**/*",
-			"auth.json",
-			"chatgpt-credentials.json*",
-			"github-copilot-credentials.json*",
-			"xai-credentials.json*",
-			".env*",
-		]);
+		assert.deepEqual(patterns, ["**/data/**/*", "auth.json", "subscriptions.json*", ".env*"]);
 	});
 	it("retains exactly the narrow native-Turbopack closure workaround and existing runtime includes", () => {
 		assert.deepEqual(nextConfig.outputFileTracingIncludes!["*"], [
@@ -84,12 +73,12 @@ describe("standalone JavaScript tracing exclusions and native workaround policy"
 			"scripts/spotify_helper.py",
 			"docs/experiments/input-first-russian.md",
 			".claude/skills/slovak-language/references/*.md",
-			"node_modules/@puppeteer/browsers/lib/browser-data/**/*.js",
 			"node_modules/pdfjs-dist/legacy/**/*",
 			"node_modules/pdfjs-dist/standard_fonts/**/*",
 			"node_modules/@napi-rs/canvas-*/**/*",
 			"node_modules/@earendil-works/pi-ai/dist/providers/data/**/*",
-			"node_modules/@earendil-works/pi-ai/dist/auth/oauth/{load,github-copilot,xai,device-code}.js",
+			"node_modules/@earendil-works/pi-ai/dist/auth/oauth/{load,github-copilot,xai,device-code,openai-chatgpt,pkce}.js",
+			"node_modules/@earendil-works/pi-ai/dist/utils/{oauth-page,provider-env}.js",
 			"node_modules/@earendil-works/pi-ai/dist/utils/sleep.js",
 			"node_modules/@earendil-works/pi-agent-core/dist/**/*.json",
 			"node_modules/gcp-metadata/**/*",

@@ -21,7 +21,7 @@
 
 <!-- One link per part of the diff, to the file and lines at the head commit (a SHA, not a branch), the part the learner sees first. -->
 
-- [Part](https://github.com/Xurify/langharness/blob/SHA/path#L10-L40): what it does
+- [Part](https://github.com/Xurify/lanna/blob/SHA/path#L10-L40): what it does
 
 ## Removed
 

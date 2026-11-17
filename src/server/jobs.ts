@@ -66,15 +66,9 @@ import {
 	type SteerMessage,
 } from "../core/contracts.ts";
 import type { TurnInput } from "../core/input-events.ts";
-import { danglingQuestionOf, endsInDismissal, type LhMessage } from "../core/native-messages.ts";
+import { danglingQuestionOf, endsInDismissal, type LannaMessage } from "../core/native-messages.ts";
 import { fireJobAbort, isJobLive } from "../agent/subagents/aborts.ts";
-import { stores, effectiveSettings } from "./stores.ts";
-import { resolveConversationSpec } from "../core/settings-resolution.ts";
-import {
-	connectionBackgroundAllowed,
-	isSubscriptionProvider,
-	onSubscriptionChange,
-} from "../agent/subscription-connections.ts";
+import { stores } from "./stores.ts";
 import { isTurnRunning } from "./turn-liveness.ts";
 import type { Agent } from "@earendil-works/pi-agent-core";
 
@@ -127,16 +121,15 @@ interface WakeState {
 	pumping: Set<string>;
 	/** Throttle bookkeeping for the stale-job sweep. */
 	lastSweepAt: number;
-	stopConnectionWatch?: () => void;
 	automaticDeferred: WeakSet<Agent>;
 }
 
-interface LhWakeGlobal {
+interface LannaWakeGlobal {
 	__lhWakePipeline?: WakeState;
 }
 
 function state(): WakeState {
-	const g = globalThis as typeof globalThis & LhWakeGlobal;
+	const g = globalThis as typeof globalThis & LannaWakeGlobal;
 	return (g.__lhWakePipeline ??= {
 		queues: new Map(),
 		liveAgents: new Map(),
@@ -190,7 +183,7 @@ function jobIdOf(steer: SteerMessage): string | null {
 /** Call only after canonical conversation persistence. Streaming visibility
  * is not durable acceptance. The saved marker wins over delivery-bookkeeping
  * failures; acknowledging delivery never changes the worker's outcome. */
-export function noteSteersDurable(chatId: string, persisted: readonly LhMessage[]): void {
+export function noteSteersDurable(chatId: string, persisted: readonly LannaMessage[]): void {
 	for (const message of persisted) {
 		if (message.role === "custom") finalizeSteer(message);
 	}
@@ -263,12 +256,8 @@ function queueSteer(chatId: string, steer: SteerMessage): QueuedSteer {
  *  beats the loop's synchronous start-poll drain and the marker rides the
  *  run's FIRST LLM call (the native equivalent of the old continuation
  *  coalescing). */
-export function automaticFollowUpAllowed(chatId: string, agent?: Agent): boolean {
-	if (agent && state().automaticDeferred.has(agent)) return false;
-	const provider =
-		agent?.state?.model?.provider ??
-		resolveConversationSpec(stores.chatStore.getChat(chatId)?.settings, effectiveSettings().models.strong)?.provider;
-	return connectionBackgroundAllowed(provider);
+export function automaticFollowUpAllowed(_chatId: string, agent?: Agent): boolean {
+	return !(agent && state().automaticDeferred.has(agent));
 }
 
 function handOffEligible(chatId: string, agent: Agent): void {
@@ -278,7 +267,7 @@ function handOffEligible(chatId: string, agent: Agent): void {
 	// remain deliverable, including the first poll of an answer run.
 	if (automaticFollowUpAllowed(chatId, agent) && queue && queue.length > 0) {
 		for (const entry of queue) {
-			if (!entry.waking && !entry.deferred && entry.handedTo !== agent && entry.steer.customType !== "probe-handoff") {
+			if (!entry.waking && !entry.deferred && entry.handedTo !== agent) {
 				agent.steer(entry.steer);
 				entry.handedTo = agent;
 			}
@@ -324,7 +313,7 @@ export function registerLiveAgent(
  *  (the double-handoff guard — a reconcile keeps it only when its id
  *  never landed in the persisted record). */
 interface UserSteerEntry {
-	message: LhMessage;
+	message: LannaMessage;
 	handedTo?: Agent;
 }
 
@@ -336,7 +325,7 @@ interface UserSteerEntry {
  *  is the stranding safety net: if this agent dies undelivered (question
  *  termination, abort), reconcileUserSteers keeps it parked for the
  *  chat's next run. */
-export function steerLiveChat(chatId: string, message: LhMessage): boolean {
+export function steerLiveChat(chatId: string, message: LannaMessage): boolean {
 	const agent = state().liveAgents.get(chatId);
 	if (!agent) return false;
 	const entry: UserSteerEntry = { message };
@@ -352,7 +341,7 @@ export function steerLiveChat(chatId: string, message: LhMessage): boolean {
  *  (the record holds them); undelivered stay parked for the next run.
  *  Memory-only by design (same tradeoff as job markers): a server
  *  restart drops parked steers — and the whole turn dies with it anyway. */
-export function reconcileUserSteers(chatId: string, persisted: readonly LhMessage[]): void {
+export function reconcileUserSteers(chatId: string, persisted: readonly LannaMessage[]): void {
 	const q = state().userSteers.get(chatId);
 	if (!q || q.length === 0) return;
 	const ids = new Set(persisted.map((m) => (m as { id?: string }).id));
@@ -483,11 +472,6 @@ export function abortJob(jobId: string): AbortOutcome {
 }
 
 function chatIdOf(steer: SteerMessage): string {
-	// The probe handoff carries its chat directly in the marker details (the
-	// job record would say it too, but the details are the cheap path).
-	if (steer.customType === "probe-handoff") {
-		return (steer.details as { chatId: string }).chatId;
-	}
 	// The chat is resolvable from the job record; the steer's details
 	// carry jobId, which indexes the store.
 	const jobId = jobIdOf(steer);
@@ -553,18 +537,7 @@ async function pump(chatId: string): Promise<void> {
 			if (live && isTurnRunning(chatId)) {
 				handOffEligible(chatId, live);
 				const handable = stillPending.filter((e) => e.handedTo === live);
-				// probe-handoffs never ride a live run (owner ruling: the
-				// handoff must START the teacher's run) — if any remain
-				// pending, wait the run out and loop to the wake below.
-				const handoffWaits = stillPending.some((e) => e.steer.customType === "probe-handoff");
-				if (handable.length > 0 && !handoffWaits) {
-					return; // the run delivers; settleSteers re-pumps the rest
-				}
-				if (handable.length > 0) {
-					await delay(POLL_MS);
-					await waitForIdle(chatId);
-					continue;
-				}
+				if (handable.length > 0) return; // the run delivers; settleSteers re-pumps the rest
 			}
 
 			// VEHICLE 2 — THE IDLE WAKE: one server-side turn carrying EVERY
@@ -661,28 +634,6 @@ async function pump(chatId: string): Promise<void> {
 			void pump(chatId);
 	}
 }
-
-// Connection changes are the only wake for consent-deferred automatic work.
-// No retry timer, inference, or API-key fallback is started while consent is off.
-state().stopConnectionWatch?.();
-state().stopConnectionWatch = onSubscriptionChange(() => {
-	const s = state();
-	for (const [chatId, agent] of s.liveAgents) {
-		if (!isSubscriptionProvider(agent.state?.model?.provider) || automaticFollowUpAllowed(chatId, agent)) continue;
-		const consumed = new Set(agent.state.messages.map((m) => (m as { id?: string }).id));
-		const pending = (s.queues.get(chatId) ?? []).filter(
-			(entry) => entry.handedTo === agent && !consumed.has(entry.steer.id),
-		);
-		if (pending.length === 0) continue;
-		agent.clearSteeringQueue();
-		for (const entry of pending) entry.handedTo = undefined;
-		for (const entry of s.userSteers.get(chatId) ?? []) if (!consumed.has(entry.message.id)) entry.handedTo = undefined;
-		handOffEligible(chatId, agent); // only unconsumed learner input; never replay consumed steers
-	}
-	for (const chatId of s.queues.keys()) {
-		if (automaticFollowUpAllowed(chatId, s.liveAgents.get(chatId))) void pump(chatId);
-	}
-});
 
 function deferOrReject(chatId: string, entry: QueuedSteer, error: Error): void {
 	entry.waking = false;

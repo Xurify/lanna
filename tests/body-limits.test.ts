@@ -4,8 +4,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-body-limits-"));
-process.env.LH_DATA_DIR = TMP;
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-body-limits-"));
+process.env.LANNA_DATA_DIR = TMP;
 
 const { BODY_LIMITS, bodyTooLarge } = await import("../src/server/body-limit.ts");
 

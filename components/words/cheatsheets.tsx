@@ -703,7 +703,7 @@ function SheetDialog({
 
 	return (
 		<div
-			className="lh-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4"
+			className="lanna-fade fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4"
 			onMouseDown={(e) => e.target === e.currentTarget && requestClose()}
 		>
 			<form
@@ -718,7 +718,7 @@ function SheetDialog({
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="cheatsheet-dialog-title"
-				className="lh-menu-in q-card flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden"
+				className="lanna-menu-in q-card flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col overflow-hidden"
 				data-testid="cheatsheet-dialog"
 			>
 				<div className="flex items-center justify-between gap-3 px-5 pb-3 pt-5 sm:px-6 sm:pt-6">
@@ -1289,7 +1289,7 @@ function CheatRowItem({
 						type="button"
 						onClick={() => void speak(row.text).catch(() => {})}
 						aria-label={`Play ${row.text}`}
-						className="lh-press grid size-8 place-items-center rounded-full bg-well text-ink-2 hover:text-foreground pointer-coarse:size-11"
+						className="lanna-press grid size-8 place-items-center rounded-full bg-well text-ink-2 hover:text-foreground pointer-coarse:size-11"
 					>
 						<Volume2Icon className="size-4" />
 					</button>

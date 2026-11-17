@@ -39,7 +39,7 @@ globalThis.fetch = (async (_url: unknown, init?: RequestInit) => {
 
 const outbox = await import("../components/lesson/outbox.ts");
 const waiting = () =>
-	JSON.parse(store.get("lh-outbox") ?? "[]") as Array<{ id: string; lang: string; refused?: number }>;
+	JSON.parse(store.get("lanna-outbox") ?? "[]") as Array<{ id: string; lang: string; refused?: number }>;
 
 beforeEach(() => {
 	store.clear();

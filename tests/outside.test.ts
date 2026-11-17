@@ -1,7 +1,7 @@
 /**
  * LISTENING OUTSIDE THE APP (2026-11-07): what an entry may hold, the
  * 14-day summary and its weights, the milestone's extra speed date, and the
- * server round trip under an isolated LH_DATA_DIR.
+ * server round trip under an isolated LANNA_DATA_DIR.
  */
 
 import assert from "node:assert/strict";
@@ -10,9 +10,9 @@ import os from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-outside-"));
-process.env.LH_DATA_DIR = TMP;
-process.env.LH_PROFILE = "slovak";
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-outside-"));
+process.env.LANNA_DATA_DIR = TMP;
+process.env.LANNA_PROFILE = "slovak";
 
 const { parseEntry, outsideSummary, OUTSIDE_WEIGHT, MAX_DAY_MINUTES } = await import("../src/core/outside.ts");
 const { estimateMilestone, creditedSpeed, MILESTONES } = await import("../src/core/milestones.ts");

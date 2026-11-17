@@ -1,5 +1,5 @@
 /**
- * The vocabulary-size check (LangHarness, 2026-10-28): a yes/no test in
+ * The vocabulary-size check (2026-10-28): a yes/no test in
  * the X_Lex / Eurocentres Vocabulary Size Test tradition (Meara & Milton
  * 2003; Milton 2009). Forty real lemmas sampled across five frequency
  * bands of the dictionary plus eight pseudowords that look Slovak; the

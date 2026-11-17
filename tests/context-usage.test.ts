@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import { measuredContextTokens, newCompactionMarker, type LhMessage } from "../src/core/index.ts";
+import { measuredContextTokens, newCompactionMarker, type LannaMessage } from "../src/core/index.ts";
 import { SessionModel } from "../components/session-core.ts";
 
-function assistant(id: string, stopReason: AssistantMessage["stopReason"] = "stop", total = 999_999): LhMessage {
+function assistant(id: string, stopReason: AssistantMessage["stopReason"] = "stop", total = 999_999): LannaMessage {
 	return {
 		id,
 		role: "assistant",
@@ -23,7 +23,7 @@ function assistant(id: string, stopReason: AssistantMessage["stopReason"] = "sto
 			totalTokens: total,
 			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		},
-	} as LhMessage;
+	} as LannaMessage;
 }
 const marker = () =>
 	newCompactionMarker("educational summary", { firstKeptMessageId: "old", tokensBefore: 110_001, at: "fixture" });

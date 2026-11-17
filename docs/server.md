@@ -1,11 +1,11 @@
-# Running LangHarness on an always-on machine
+# Running Lanna on an always-on machine
 
 This guide puts the server on a machine that stays on, so the phone and the iPad work while the PC is off. The plan and the reasons are in [plans/always-on-server.md](plans/always-on-server.md) and [research/always-on-server.md](research/always-on-server.md). The decision is E91.
 
 The server runs as a container. The image holds the app, Chromium and yt-dlp. Your data, keys and cheatsheets stay in three folders on the machine and never go into the image.
 
 ```
-/srv/langharness/            LH_HOME: everything that is yours
+/srv/lanna/            LANNA_HOME: everything that is yours
   data/  keys/  sheets/      mounted into the container
   backups/  state/  logs/    made by the scripts
   repo/                      the git checkout (compose.yaml, scripts, .env)
@@ -36,9 +36,9 @@ Run these before you set anything up. They decide where the server goes.
 2. **A user for the server.** One user owns the files and runs the scripts. Its number is 10001, the same as the user inside the container, so no file ever needs a different owner.
 
    ```bash
-   sudo useradd --system --uid 10001 --create-home --home-dir /srv/langharness --shell /usr/sbin/nologin langharness
-   sudo usermod -aG docker langharness
-   sudo -u langharness mkdir -p /srv/langharness/data /srv/langharness/keys /srv/langharness/sheets
+   sudo useradd --system --uid 10001 --create-home --home-dir /srv/lanna --shell /usr/sbin/nologin lanna
+   sudo usermod -aG docker lanna
+   sudo -u lanna mkdir -p /srv/lanna/data /srv/lanna/keys /srv/lanna/sheets
    ```
 
    Membership of the `docker` group is the same as root on this machine. If flags.games runs here, keep that in mind; rootless Docker avoids it but is a separate setup.
@@ -46,27 +46,27 @@ Run these before you set anything up. They decide where the server goes.
 3. **The code.**
 
    ```bash
-   sudo -u langharness git clone https://github.com/Xurify/langharness.git /srv/langharness/repo
+   sudo -u lanna git clone https://github.com/Xurify/lanna.git /srv/lanna/repo
    ```
 
    If the repository is private, the server needs a read-only deploy key (GitHub → the repository's Settings → Deploy keys), and the clone uses the `git@github.com:` address.
 
-4. **Settings.** Create `/srv/langharness/repo/.env` (it is not in git):
+4. **Settings.** Create `/srv/lanna/repo/.env` (it is not in git):
 
    ```
-   LH_HOME=/srv/langharness
+   LANNA_HOME=/srv/lanna
    TZ=Europe/Bratislava
    ```
 
-   For a public address (7b) add `LH_PUBLIC_HOST` and `LH_PROXY_SECRET` as shown there. Other settings, all optional: `LH_PORT` (default 3010), `LH_MEM_LIMIT` (default 2g), `LH_UPDATE_YTDLP=1` (update yt-dlp each time the container starts, instead of using the version pinned in the image), `LH_DOCKER_BUILD_ARGS` (extra `docker build` arguments, such as `--build-arg NODE_IMAGE=mirror.gcr.io/library/node:26-bookworm-slim` when Docker Hub refuses with "429 Too Many Requests").
+   For a public address (7b) add `LANNA_PUBLIC_HOST` and `LANNA_PROXY_SECRET` as shown there. Other settings, all optional: `LANNA_PORT` (default 3010), `LANNA_MEM_LIMIT` (default 2g), `LANNA_UPDATE_YTDLP=1` (update yt-dlp each time the container starts, instead of using the version pinned in the image), `LANNA_DOCKER_BUILD_ARGS` (extra `docker build` arguments, such as `--build-arg NODE_IMAGE=mirror.gcr.io/library/node:26-bookworm-slim` when Docker Hub refuses with "429 Too Many Requests").
 
 5. **First start.** The update script builds the image, runs the boot check, and starts the container:
 
    ```bash
-   sudo -u langharness /srv/langharness/repo/scripts/update-server.sh
+   sudo -u lanna /srv/lanna/repo/scripts/update-server.sh
    ```
 
-   The first build takes several minutes. Afterwards, `sudo -u langharness /srv/langharness/repo/scripts/update-server.sh status` shows what runs.
+   The first build takes several minutes. Afterwards, `sudo -u lanna /srv/lanna/repo/scripts/update-server.sh status` shows what runs.
 
 6. **The port.** The container's port is published on the VPS's loopback only (`127.0.0.1:3010`). Never change that to `3010:3010`: Docker writes its own firewall rules, so ufw would not stop the world from reaching it.
 7. **Reaching it.** Two ways.
@@ -77,19 +77,19 @@ Run these before you set anything up. They decide where the server goes.
    ssh -L 3010:127.0.0.1:3010 you@your-vps
    ```
 
-   Open `http://localhost:3010` on the PC, go to Settings → Devices, turn on Remote access, and make a code. Then pair the phone and the iPad through the Tailscale address, as in [remote-access.md](remote-access.md). `docker compose exec langharness node cli/remote-code.mjs` prints a pairing code on the server, so the tunnel is only needed if you prefer Settings.
+   Open `http://localhost:3010` on the PC, go to Settings → Devices, turn on Remote access, and make a code. Then pair the phone and the iPad through the Tailscale address, as in [remote-access.md](remote-access.md). `docker compose exec lanna node cli/remote-code.mjs` prints a pairing code on the server, so the tunnel is only needed if you prefer Settings.
 
    **b. A public address with a password.** The app at `https://learn.example.com`, with no Tailscale app on the phone. The rules are in E93; the proxy details and the day-to-day commands are in [remote-access.md](remote-access.md#at-a-public-address-a-server-with-a-domain).
 
-   1. Make a secret that only the proxy and the app know, and add both lines to `/srv/langharness/repo/.env`:
+   1. Make a secret that only the proxy and the app know, and add both lines to `/srv/lanna/repo/.env`:
 
       ```bash
       openssl rand -hex 32
       ```
 
       ```
-      LH_PUBLIC_HOST=learn.example.com
-      LH_PROXY_SECRET=<the 64 characters from the command above>
+      LANNA_PUBLIC_HOST=learn.example.com
+      LANNA_PROXY_SECRET=<the 64 characters from the command above>
       ```
 
    2. Add a DNS record for `learn.example.com` that points at the VPS, and add the name to the reverse proxy flags.games already uses. Every header line matters: the app refuses a request that lacks the secret, the right `Host`, or `X-Forwarded-Proto https`.
@@ -102,7 +102,7 @@ Run these before you set anything up. They decide where the server goes.
       		header_up Host {host}
       		header_up X-Forwarded-Host {host}
       		header_up X-Forwarded-Proto https
-      		header_up X-LH-Proxy-Secret "<the same 64 characters>"
+      		header_up X-Lanna-Proxy-Secret "<the same 64 characters>"
       	}
       }
       ```
@@ -130,7 +130,7 @@ Run these before you set anything up. They decide where the server goes.
       		proxy_set_header X-Forwarded-Proto https;
       		proxy_set_header X-Forwarded-For $remote_addr;
       		proxy_set_header X-Real-IP $remote_addr;
-      		proxy_set_header X-LH-Proxy-Secret "<the same 64 characters>";
+      		proxy_set_header X-Lanna-Proxy-Secret "<the same 64 characters>";
       		proxy_set_header Connection "";
       		proxy_buffering off;
       		proxy_read_timeout 300s;
@@ -143,9 +143,9 @@ Run these before you set anything up. They decide where the server goes.
    3. Start the container with the new settings, then set the password. It asks twice and shows nothing as you type. The first password also turns web access on:
 
       ```bash
-      cd /srv/langharness/repo
-      sudo -u langharness docker compose up -d
-      sudo -u langharness docker compose exec langharness node cli/web-password.mjs
+      cd /srv/lanna/repo
+      sudo -u lanna docker compose up -d
+      sudo -u lanna docker compose exec lanna node cli/web-password.mjs
       ```
 
       The same container has `node cli/remote-code.mjs`, which prints a pairing code for a Tailscale device (7a) and replaces the SSH tunnel.
@@ -154,26 +154,26 @@ Run these before you set anything up. They decide where the server goes.
 
 8. **Updates and backups on a timer.** As root, create these four files.
 
-   `/etc/systemd/system/langharness-update.service`:
+   `/etc/systemd/system/lanna-update.service`:
 
    ```
    [Unit]
-   Description=Update LangHarness to the newest main
+   Description=Update Lanna to the newest main
    After=docker.service network-online.target
    Wants=network-online.target
 
    [Service]
    Type=oneshot
-   User=langharness
-   ExecStart=/srv/langharness/repo/scripts/update-server.sh
+   User=lanna
+   ExecStart=/srv/lanna/repo/scripts/update-server.sh
    SuccessExitStatus=75
    ```
 
-   `/etc/systemd/system/langharness-update.timer`:
+   `/etc/systemd/system/lanna-update.timer`:
 
    ```
    [Unit]
-   Description=Check for a newer LangHarness every 10 minutes
+   Description=Check for a newer Lanna every 10 minutes
 
    [Timer]
    OnBootSec=5min
@@ -183,23 +183,23 @@ Run these before you set anything up. They decide where the server goes.
    WantedBy=timers.target
    ```
 
-   `/etc/systemd/system/langharness-backup.service`:
+   `/etc/systemd/system/lanna-backup.service`:
 
    ```
    [Unit]
-   Description=Back up the LangHarness data
+   Description=Back up the Lanna data
 
    [Service]
    Type=oneshot
-   User=langharness
-   ExecStart=/srv/langharness/repo/scripts/backup-data.sh backup --push-to nas-user@your-nas:/volume1/langharness-backups
+   User=lanna
+   ExecStart=/srv/lanna/repo/scripts/backup-data.sh backup --push-to nas-user@your-nas:/volume1/lanna-backups
    ```
 
-   `/etc/systemd/system/langharness-backup.timer`:
+   `/etc/systemd/system/lanna-backup.timer`:
 
    ```
    [Unit]
-   Description=Back up the LangHarness data every night
+   Description=Back up the Lanna data every night
 
    [Timer]
    OnCalendar=*-*-* 03:30:00
@@ -210,47 +210,47 @@ Run these before you set anything up. They decide where the server goes.
    WantedBy=timers.target
    ```
 
-   Then `sudo systemctl daemon-reload && sudo systemctl enable --now langharness-update.timer langharness-backup.timer`. The `--push-to` part copies the snapshots to the NAS over ssh; it needs a key for the `langharness` user that the NAS accepts (`ssh-copy-id`). Leave `--push-to` out for a local-only backup. Read the results with `journalctl -u langharness-update` and `/srv/langharness/logs/update.log`.
+   Then `sudo systemctl daemon-reload && sudo systemctl enable --now lanna-update.timer lanna-backup.timer`. The `--push-to` part copies the snapshots to the NAS over ssh; it needs a key for the `lanna` user that the NAS accepts (`ssh-copy-id`). Leave `--push-to` out for a local-only backup. Read the results with `journalctl -u lanna-update` and `/srv/lanna/logs/update.log`.
 
 ## 2. The Synology NAS
 
 Everything in section 1 applies, with these changes. Nothing here has been run on a NAS yet.
 
 1. **Packages.** In Package Center install Container Manager, Tailscale, and Git Server (it provides `git`). Sign Tailscale in to your account.
-2. **A shared folder.** In Control Panel → Shared Folder create `langharness`. Turn on snapshots for it in Snapshot Replication (daily, keep 14 or more). Inside it make `data`, `keys`, `sheets` and `backups`.
-3. **Who owns the files.** Over SSH, run `id your-user` and note the numbers. Put them in `.env` as `LH_UID` and `LH_GID`, and make that user the owner of the three folders. The container starts with an error that names the folder when it cannot write to one.
-4. **The code.** Clone the repo into `/volume1/docker/langharness-repo` and create `.env` there with `LH_HOME=/volume1/langharness`, `LH_UID`, `LH_GID` and `TZ`.
+2. **A shared folder.** In Control Panel → Shared Folder create `lanna`. Turn on snapshots for it in Snapshot Replication (daily, keep 14 or more). Inside it make `data`, `keys`, `sheets` and `backups`.
+3. **Who owns the files.** Over SSH, run `id your-user` and note the numbers. Put them in `.env` as `LANNA_UID` and `LANNA_GID`, and make that user the owner of the three folders. The container starts with an error that names the folder when it cannot write to one.
+4. **The code.** Clone the repo into `/volume1/docker/lanna-repo` and create `.env` there with `LANNA_HOME=/volume1/lanna`, `LANNA_UID`, `LANNA_GID` and `TZ`.
 5. **Docker needs root on DSM.** Run the scripts as root (`sudo -i`). The first start is `bash scripts/update-server.sh`.
 6. **Tailscale.** The package's command is `/var/packages/Tailscale/target/bin/tailscale`. Run `serve --bg 3010` with it, and pair as in section 1, step 7a.
-7. **Timers.** Systemd is not available to you. In Control Panel → Task Scheduler create two scheduled tasks, run as root. The first runs every 10 minutes: `cd /volume1/docker/langharness-repo && bash scripts/update-server.sh`. The second runs daily at 03:30: `cd /volume1/docker/langharness-repo && bash scripts/backup-data.sh backup`. Add a Hyper Backup task for `langharness/backups` to an external disk or cloud if you want a copy off the box.
+7. **Timers.** Systemd is not available to you. In Control Panel → Task Scheduler create two scheduled tasks, run as root. The first runs every 10 minutes: `cd /volume1/docker/lanna-repo && bash scripts/update-server.sh`. The second runs daily at 03:30: `cd /volume1/docker/lanna-repo && bash scripts/backup-data.sh backup`. Add a Hyper Backup task for `lanna/backups` to an external disk or cloud if you want a copy off the box.
 8. **If the NAS is too small to build.** Build on the PC (Docker Desktop), then load the image on the NAS. Use `linux/arm64` for an ARM model:
 
    ```bash
-   docker buildx build --platform linux/amd64 -t langharness:manual --output type=docker,dest=langharness.tar .
+   docker buildx build --platform linux/amd64 -t lanna:manual --output type=docker,dest=lanna.tar .
    ```
 
-   Copy `langharness.tar` to the NAS, run `docker load -i langharness.tar` there, then put `LH_IMAGE=langharness:manual` in `.env` and run `docker compose up -d`. The update script is not used in this case, so updates are manual.
+   Copy `lanna.tar` to the NAS, run `docker load -i lanna.tar` there, then put `LANNA_IMAGE=lanna:manual` in `.env` and run `docker compose up -d`. The update script is not used in this case, so updates are manual.
 
 ## 3. Moving your data from the PC
 
 The order matters. The point is that two copies never run at the same time, and the PC's copy is the last thing to change.
 
-1. Quit LangHarness on the PC, including the desktop window.
-2. Copy these from the PC's project folder to your own login on the server (PowerShell has `scp`), because the `langharness` user cannot log in:
+1. Quit Lanna on the PC, including the desktop window.
+2. Copy these from the PC's project folder to your own login on the server (PowerShell has `scp`), because the `lanna` user cannot log in:
    - the `data` folder;
    - `auth.json`;
-   - `chatgpt-credentials.json`, `github-copilot-credentials.json` and `xai-credentials.json`, but only if they exist.
+   - `subscriptions.json`, but only if it exists.
 
    ```powershell
-   ssh you@your-vps mkdir lh-import
-   scp -r data auth.json you@your-vps:lh-import/
+   ssh you@your-vps mkdir lanna-import
+   scp -r data auth.json you@your-vps:lanna-import/
    ```
 
    Then on the server, put them in place:
 
    ```bash
-   sudo cp -a ~/lh-import/data/. /srv/langharness/data/
-   sudo cp ~/lh-import/auth.json /srv/langharness/keys/auth.json
+   sudo cp -a ~/lanna-import/data/. /srv/lanna/data/
+   sudo cp ~/lanna-import/auth.json /srv/lanna/keys/auth.json
    ```
 
    Keys that exist only in `.env.local` do not move. Enter them in Settings → API keys on the server afterwards. Do not paste keys into a chat (E5).
@@ -258,8 +258,8 @@ The order matters. The point is that two copies never run at the same time, and 
 3. Give the files to the container's user, then delete the import folder:
 
    ```bash
-   sudo chown -R 10001:10001 /srv/langharness/data /srv/langharness/keys
-   rm -r ~/lh-import
+   sudo chown -R 10001:10001 /srv/lanna/data /srv/lanna/keys
+   rm -r ~/lanna-import
    ```
 
 4. Start the server (section 1, step 5) and open it. Check Today, your streak and one lesson.
@@ -274,20 +274,20 @@ The order matters. The point is that two copies never run at the same time, and 
 **Restore drill.** Do this once, now, and again after any change to the backup:
 
 ```bash
-sudo -u langharness /srv/langharness/repo/scripts/backup-data.sh list
+sudo -u lanna /srv/lanna/repo/scripts/backup-data.sh list
 ```
 
 ```bash
-sudo -u langharness /srv/langharness/repo/scripts/backup-data.sh restore latest --into /srv/langharness/restore-test
+sudo -u lanna /srv/lanna/repo/scripts/backup-data.sh restore latest --into /srv/lanna/restore-test
 ```
 
 The restore reads every JSON file back and prints the count with problems. To see it in the app, start a throwaway container on the restored copy and open it through an SSH tunnel to port 3020:
 
 ```bash
-docker run --rm -p 127.0.0.1:3020:3010 --read-only --tmpfs /tmp:exec,mode=1777 --tmpfs /app/.next/cache:mode=1777 -v /srv/langharness/restore-test/data:/data -v /srv/langharness/restore-test/keys:/keys -v /srv/langharness/restore-test/sheets:/sheets langharness:local
+docker run --rm -p 127.0.0.1:3020:3010 --read-only --tmpfs /tmp:exec,mode=1777 --tmpfs /app/.next/cache:mode=1777 -v /srv/lanna/restore-test/data:/data -v /srv/lanna/restore-test/keys:/keys -v /srv/lanna/restore-test/sheets:/sheets lanna:local
 ```
 
-Use the image tag `update-server.sh status` shows if `langharness:local` does not exist. Delete `restore-test` afterwards.
+Use the image tag `update-server.sh status` shows if `lanna:local` does not exist. Delete `restore-test` afterwards.
 
 **Reading the backup's exit code.** 0 is done. 3 means a JSON file stopped parsing since the night before; the snapshot is kept, and `DAMAGED` inside it names the files. 4 means the copy to the other machine failed while the local snapshot is fine. Damage the app already tolerated (it skips unreadable lines) does not raise 3 again, only new damage does.
 
@@ -296,8 +296,8 @@ Use the image tag `update-server.sh status` shows if `langharness:local` does no
 Read this before you make the server public.
 
 - The container sees every connection from Docker's bridge address (`172.17.0.1` here), whatever the real sender. The app never uses the sender's address.
-- **Without `LH_PUBLIC_HOST` (Tailscale, or this computer).** The app decides from the `Host` header and the headers a proxy adds (`Forwarded`, `X-Real-IP`, Tailscale's identity headers). A request with a loopback `Host` and none of those headers is treated as coming from this computer, and is let in without pairing. A request addressed to a public name is refused (403), and so is a loopback `Host` that carries `X-Real-IP` or `Forwarded`.
-- **With `LH_PUBLIC_HOST` set.** Nothing counts as this computer, whatever the `Host`. A request passes the gate only if it carries `LH_PROXY_SECRET` in `X-LH-Proxy-Secret`, names the public host in both `Host` and `X-Forwarded-Host`, and has `X-Forwarded-Proto: https`. Anything else gets 403. A request that passes still needs a session: pages go to `/login`, the API answers 401, and a change must come from the page's own origin.
+- **Without `LANNA_PUBLIC_HOST` (Tailscale, or this computer).** The app decides from the `Host` header and the headers a proxy adds (`Forwarded`, `X-Real-IP`, Tailscale's identity headers). A request with a loopback `Host` and none of those headers is treated as coming from this computer, and is let in without pairing. A request addressed to a public name is refused (403), and so is a loopback `Host` that carries `X-Real-IP` or `Forwarded`.
+- **With `LANNA_PUBLIC_HOST` set.** Nothing counts as this computer, whatever the `Host`. A request passes the gate only if it carries `LANNA_PROXY_SECRET` in `X-Lanna-Proxy-Secret`, names the public host in both `Host` and `X-Forwarded-Host`, and has `X-Forwarded-Proto: https`. Anything else gets 403. A request that passes still needs a session: pages go to `/login`, the API answers 401, and a change must come from the page's own origin.
 - So a reverse proxy that leaves `Host` at its default (nginx sends `127.0.0.1:3010` when you leave out `proxy_set_header Host $host`) is refused, not let in.
 - The boot check starts the server twice. The second time is in public mode: it sets a throwaway password with the bundled command, then checks the refusals above, signs in over HTTP with the proxy's headers set by hand, and checks the cookie and the API. The update script will not switch to an image that fails it.
 
@@ -319,7 +319,7 @@ Not checked:
 - Anything on the VPS: your Docker version, a reverse proxy in front of the container (the Caddy and nginx snippets were not run), certbot, and whether YouTube accepts the address.
 - An arm64 image. The Dockerfile has a checksum for the arm64 yt-dlp (read from the release's checksum list, not downloaded), and the lockfile has the arm64 native packages, but no arm64 build was made.
 - The systemd units. There is no systemd here.
-- `LH_UPDATE_YTDLP=1` when it succeeds. Here the update failed because this machine's network replaces TLS certificates, so only the fallback to the pinned version ran.
+- `LANNA_UPDATE_YTDLP=1` when it succeeds. Here the update failed because this machine's network replaces TLS certificates, so only the fallback to the pinned version ran.
 - `--push-to` over ssh. It ran against a local folder; the ssh path was only run to the point of failing.
 - Memory while the tutor drives Chromium, and how a 2 GB cap fares under that.
 - Moving real data. Nothing was moved from the PC.

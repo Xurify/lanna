@@ -2,9 +2,9 @@
  * CHAT STORE EVENT PINS (push-architecture S6, 2026-10-02): the sidebar's
  * 2.5s poll died — list truth now rides chats-changed. The store's law:
  * list-SHAPE writes (create/rename/delete) announce post-write; content
- * writes (messages/usage/settings/tree) are DELIBERATELY silent — the
+ * writes (messages/usage/settings) are DELIBERATELY silent — the
  * silence law is pinned here so it reads as law, not oversight. Runs
- * under an isolated LH_DATA_DIR (the chat-birth-stamp discipline: the
+ * under an isolated LANNA_DATA_DIR (the chat-birth-stamp discipline: the
  * seam is set before any config-loading import, so every app-module
  * import is dynamic).
  */
@@ -16,8 +16,8 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 // ── the seam, BEFORE any config-loading import ──────────────────────────────
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chat-store-events-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chat-store-events-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { chatStore } = await import("../src/store/chats.ts");
 const { subscribe } = await import("../src/core/events.ts");
@@ -64,7 +64,7 @@ describe("chat store events (S6: the silence law)", () => {
 		// saveMessages: fires per turn-persist — would spam the bus during
 		// turns; its list-visible effects arrive via turn-started/settled.
 		chatStore.saveMessages(chat.id, [{ id: "m1", role: "user", content: "hello", timestamp: 1 } as never]);
-		// usage appends + settings + tree: record CONTENT, not list shape.
+		// usage appends + settings: record CONTENT, not list shape.
 		chatStore.appendTurnUsage(chat.id, {
 			id: "t1",
 			messageId: "m1",
@@ -73,7 +73,6 @@ describe("chat store events (S6: the silence law)", () => {
 			steps: [],
 		});
 		chatStore.saveSettings(chat.id, {});
-		chatStore.saveTree(chat.id, { nodes: [], edges: [], version: 1 });
 
 		assert.equal(announces, 0, "the silence law: content writes never announce");
 		off();

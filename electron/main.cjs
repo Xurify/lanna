@@ -1,10 +1,10 @@
 /**
- * LangHarness — the Electron shell (wrapper milestone, 2026-09-17).
+ * Lanna — the Electron shell (wrapper milestone, 2026-09-17).
  *
  * What this process is and is not:
  *   IS:  a thin launcher + security guard around the app's real server —
  *        `next build`'s standalone server.js (Next 16), spawned as a child
- *        on 127.0.0.1 with the BYOK auth file and the LH_DATA_DIR seam.
+ *        on 127.0.0.1 with the BYOK auth file and the LANNA_DATA_DIR seam.
  *   NOT: a host for any app logic. Everything — teacher turns, extraction,
  *        the graph — runs in the Next server, unchanged.
  *
@@ -19,14 +19,14 @@
  *   - keys ride the child's ENV, never argv; auth.json (BYOK) is a flat
  *     {VAR: value} JSON map, plaintext, mode 0600 — server-managed since
  *     the auth-keys wave (2026-09-19): the child reads/writes it DIRECTLY
- *     (LH_AUTH_FILE below) and reflects values into its own env. The old
+ *     (LANNA_AUTH_FILE below) and reflects values into its own env. The old
  *     spawn-time env injection retired with that wave — a copy made here
  *     would shadow every settings-page key change until restart.
  */
 
 const { app, BrowserWindow, clipboard, Menu, ipcMain, session, shell } = require("electron");
 
-/** The window frame in the two themes (the page's --q-bg and --q-ink). Day is the default; the page reports its theme through "lh:theme". */
+/** The window frame in the two themes (the page's --q-bg and --q-ink). Day is the default; the page reports its theme through "lanna:theme". */
 /** Whether the last session ended in Night, kept beside the window state so the window is the right color from its first frame. */
 function savedNight() {
 	try {
@@ -53,16 +53,12 @@ const CHROME = {
 	day: { color: "#ffffff", symbolColor: "#16181b" },
 	night: { color: "#101214", symbolColor: "#ecedee" },
 };
-const { createChatGPT, fileStore } = require("./chatgpt.cjs");
-const { attachChatGPTChild, trustedSender, chatGPTControl } = require("./chatgpt-ipc.cjs");
-const { createSubscriptions, loadSubscriptionSDK } = require("./subscriptions.cjs");
-const { attachSubscriptionChild, subscriptionControl } = require("./subscription-ipc.cjs");
-const { desktopAPIHeaders } = require("./desktop-api.cjs");
-const { openWebSubscriptionBrowser } = require("./web-subscription-browser.cjs");
+const { desktopAPIHeaders, trustedSender } = require("./desktop-api.cjs");
 const { registerStorageIPC } = require("./storage-ipc.cjs");
 const { registerFontsIPC } = require("./fonts-ipc.cjs");
 const { createYouTube, registerYouTubeIPC } = require("./youtube.cjs");
 const { attachContextMenu } = require("./context-menu.cjs");
+const { adoptFormerUserData } = require("./former-user-data.cjs");
 const { randomBytes } = require("node:crypto");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
@@ -74,16 +70,14 @@ const path = require("node:path");
 // renderer owns the number; this is the IPC widen target).
 const SIDEBAR_AUTOCLOSE = 900;
 
-// LangHarness fork: its own name, so it never shares userData (chats,
-// keys, graph) with an installed upstream LearnHarness.
-const PRODUCT_NAME = "LangHarness";
+const PRODUCT_NAME = "Lanna";
 
 // APP NAME → userData (owner, 2026-10-10): the Application Support dir is
-// exactly "LangHarness" in dev AND packaged. Packaged Electron would
+// exactly "Lanna" in dev AND packaged. Packaged Electron would
 // otherwise derive it from package.json "name" (now lowercase
-// "langharness"), and productName metadata alone doesn't reach app.name.
-// Must run before the LH_DEV_URL suffix below — dev becomes
-// "LangHarness-dev".
+// "lanna"), and productName metadata alone doesn't reach app.name.
+// Must run before the LANNA_DEV_URL suffix below — dev becomes
+// "Lanna-dev".
 app.setName(PRODUCT_NAME);
 
 // Audio playback hardening:
@@ -104,7 +98,7 @@ const AUTH_FILE = () => path.join(app.getPath("userData"), "auth.json");
 const DATA_DIR = () => path.join(app.getPath("userData"), "data");
 
 /** The packaged standalone server (extraResources → Resources/server).
- *  In dev LH_DEV_URL short-circuits everything: no spawn, no packaging —
+ *  In dev LANNA_DEV_URL short-circuits everything: no spawn, no packaging —
  *  the window points at the running `next dev` server (full HMR). */
 function serverEntry() {
 	// extraResources ships the whole .next payload under server/standalone/
@@ -113,81 +107,29 @@ function serverEntry() {
 }
 
 // ─── Single instance: two instances would fight over the data dir ─────────
-// ─── Browser-service helper (Wave E stage 3, owner 2026-10-10) ────────
-// The render engines for agent jobs: PDFs rasterize natively
-// (pdfjs + Skia — no browser); only a page that executes JS needs one. The
-// app's own Chromium serves that via this helper — the server spawns
-//   <this binary> --browser-service
-// and connects over CDP (system Chrome stays the fallback). Handshake:
-// the helper prints "BROWSER_SERVICE_CDP <port>" on stdout once the CDP
-// endpoint listens. Lifetime: parent IPC disconnect/death = quit.
-// MUST run before the single-instance lock — a helper is a second
-// instance of this very binary, and before the LH_DEV_URL redirect — the
-// helper owns no user data at all.
-if (process.argv.includes("--browser-service")) {
-	const { waitForBrowserService } = require("./browser-service-readiness.cjs");
-	// Own the helper's entire startup lifetime, including the readiness wait.
-	const lifetime = new AbortController();
-	const parentClosed = () => {
-		lifetime.abort(new Error("browser-service parent IPC disconnected"));
-		app.quit();
-	};
-	(async () => {
-		try {
-			// Full Windows Electron replaces stdin with synthetic EOF. Use the
-			// real Node IPC channel, and refuse to start an unowned helper.
-			if (!process.channel || !process.connected) throw new Error("browser-service requires connected parent IPC");
-			process.once("disconnect", parentClosed);
-			app.dock?.hide();
-			const port = await freePort();
-			// Must land before app-ready for Chromium to pick it up.
-			app.commandLine.appendSwitch("remote-debugging-port", String(port));
-			await app.whenReady();
-			// A hidden window keeps the app lifecycle ordinary on every
-			// platform (no window-all-closed handler is installed here).
-			const win = new BrowserWindow({ show: false });
-			await win.loadURL("about:blank");
-			// Window load is not a DevTools HTTP readiness barrier. Confirm the
-			// endpoint before both production and smoke clients see the handshake.
-			await waitForBrowserService(port, { signal: lifetime.signal });
-			if (!lifetime.signal.aborted) console.log(`BROWSER_SERVICE_CDP ${port}`);
-		} catch (err) {
-			if (lifetime.signal.aborted) return; // Parent disconnect is normal.
-			console.error("browser-service failed:", err);
-			app.exit(1);
-		}
-	})();
-} else {
-	// Dev shell (LH_DEV_URL) runs BESIDE the packaged app, not instead of it:
-	// its own userData so (a) the single-instance lock — checked below — doesn't
-	// silently kill it, and (b) it never reads/writes the real app's
-	// localStorage, auth.json, or logs. Must run before the lock check.
-	if (process.env.LH_DEV_URL) {
-		app.setPath("userData", `${app.getPath("userData")}-dev`);
-	}
+// Dev shell (LANNA_DEV_URL) runs BESIDE the packaged app, not instead of it:
+// its own userData so (a) the single-instance lock — checked below — doesn't
+// silently kill it, and (b) it never reads/writes the real app's
+// localStorage, auth.json, or logs. Must run before the lock check.
+if (process.env.LANNA_DEV_URL) {
+	app.setPath("userData", `${app.getPath("userData")}-dev`);
+}
+app.setPath("userData", adoptFormerUserData(app.getPath("userData"), PRODUCT_NAME));
 
-	// The whole normal boot — lock included — lives in this else: a helper is
-	// a SECOND instance of this very binary on purpose (the running app owns
-	// the lock), so it must never reach this check.
-	if (!app.requestSingleInstanceLock()) {
-		app.quit();
-	} else {
-		app.on("second-instance", () => {
-			const win = BrowserWindow.getAllWindows()[0];
-			if (win) {
-				if (win.isMinimized()) win.restore();
-				win.focus();
-			}
-		});
-		main();
-	}
+if (!app.requestSingleInstanceLock()) {
+	app.quit();
+} else {
+	app.on("second-instance", () => {
+		const win = BrowserWindow.getAllWindows()[0];
+		if (win) {
+			if (win.isMinimized()) win.restore();
+			win.focus();
+		}
+	});
+	main();
 }
 
 let serverProcess = null;
-let chatgpt = null;
-let chatgptChild = null;
-let subscriptions = null;
-let subscriptionChild = null;
 // Per-launch request capability, never OAuth tokens and never renderer state.
 let desktopAPISecret = null;
 let reopenWindow = null;
@@ -220,7 +162,7 @@ function freePort() {
 
 /** BYOK keys: auth.json in userData, flat {VAR: value} map, 0600 —
  *  SERVER-MANAGED since the auth-keys wave (2026-09-19). This shell no
- *  longer reads or injects it: the child gets LH_AUTH_FILE below and does
+ *  longer reads or injects it: the child gets LANNA_AUTH_FILE below and does
  *  its own read/reflect/write, so a key saved in the settings page takes
  *  effect on the next model call — no restart. Real environment variables
  *  still win over the file inside the child (its documented rule). */
@@ -232,7 +174,7 @@ function log(line) {
 	// piped run) must not die on its next log line when the pipe breaks.
 	// The file below stays the durable channel.
 	try {
-		console.log(`[lh ${stamp}] ${line}`);
+		console.log(`[lanna ${stamp}] ${line}`);
 	} catch {
 		/* stdout gone — userData/logs/main.log still carries it */
 	}
@@ -264,20 +206,18 @@ function startServer(port) {
 					NODE_ENV: "production",
 					PORT: String(port),
 					HOSTNAME: "127.0.0.1", // the server defaults to 0.0.0.0 — never
-					LH_DATA_DIR: DATA_DIR(),
+					LANNA_DATA_DIR: DATA_DIR(),
 					// The auth/keys store — the child reads AND writes this file itself
 					// (no env injection anymore: a spawn-time copy would shadow every
 					// settings-page key change until restart; env wins over file).
-					LH_AUTH_FILE: AUTH_FILE(),
-					LH_DESKTOP_SERVER: "1",
-					LH_DESKTOP_API_SECRET: desktopAPISecret,
+					LANNA_AUTH_FILE: AUTH_FILE(),
+					LANNA_DESKTOP_SERVER: "1",
+					LANNA_DESKTOP_API_SECRET: desktopAPISecret,
 				},
 				stdio: ["ignore", "pipe", "pipe", "ipc"],
 			},
 		);
 		serverProcess = child;
-		chatgptChild = attachChatGPTChild(child, chatgpt);
-		subscriptionChild = attachSubscriptionChild(child, subscriptions);
 		const fwd = (buf) =>
 			buf
 				.toString()
@@ -289,12 +229,6 @@ function startServer(port) {
 		child.on("exit", (code, signal) => {
 			log(`server exited (code=${code} signal=${signal})`);
 			serverProcess = null;
-			chatgptChild?.dispose();
-			chatgptChild = null;
-			subscriptionChild?.dispose();
-			subscriptionChild = null;
-			chatgpt?.close();
-			subscriptions?.close();
 		});
 		resolve(child);
 	});
@@ -318,8 +252,6 @@ function waitUntilUp(url, tries = 150) {
 }
 
 function killServer() {
-	chatgpt?.close();
-	subscriptions?.close();
 	if (!serverProcess) return;
 	const child = serverProcess;
 	serverProcess = null;
@@ -348,13 +280,13 @@ function createWindow(url) {
 		...(DEV_ICON ? { icon: DEV_ICON } : {}),
 		// Merged chrome (owner, 2026-09-17): the system title bar is gone;
 		// the app's own 60px header bands ARE the title bar. The traffic
-		// lights float over the sidebar's LH wordmark band, vertically
+		// lights float over the sidebar's Lanna wordmark band, vertically
 		// Aligned to the PHASE PILL's drawn box, not the band's geometric
 		// center (owner ask, 2026-09-17): macOS centers each 12px circle at
 		// y+6.75, and the pill box center measures 29.25 in the running app
 		// (band 0–59.5, pill box 19–39.5) — y 22.5 lands the circles at
 		// 29.25, exactly on the pill. Wordmark gutter: components/sidebar.tsx.
-		// Dragging comes from the renderer's .lh-drag bands (app/globals.css).
+		// Dragging comes from the renderer's .lanna-drag bands (app/globals.css).
 		...(process.platform === "darwin"
 			? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 16, y: 22.5 } }
 			: {
@@ -372,7 +304,6 @@ function createWindow(url) {
 			sandbox: true,
 			nodeIntegration: false,
 			backgroundThrottling: false,
-			...(process.env.LH_DEV_URL ? { additionalArguments: ["--lh-web-subscriptions"] } : {}),
 			preload: path.join(__dirname, "preload.cjs"),
 		},
 		// Live-resize + first-paint flash (owner, 2026-09-17): during a resize
@@ -388,7 +319,7 @@ function createWindow(url) {
 		// below it even a wrapped chrome row gets cramped and the chat header
 		// (lights gutter 92 + toggle + title) runs out of room. The sidebar
 		// auto-closes below 928 = 640 + 288 (sidebar) in the renderer
-		// (components/sidebar.tsx, SIDEBAR_AUTOCLOSE); its "lh:expand-window"
+		// (components/sidebar.tsx, SIDEBAR_AUTOCLOSE); its "lanna:expand-window"
 		// IPC widens the window back to that threshold.
 		minWidth: 640,
 		minHeight: 600,
@@ -432,12 +363,12 @@ function createWindow(url) {
 
 	void win.loadURL(url);
 	// Zoom truth reaches the renderer for EVERY load (reload, nav): the
-	// renderer's --lh-zoom must never go stale. The fallback catcher below
+	// renderer's --lanna-zoom must never go stale. The fallback catcher below
 	// covers ⌘= / layout variants the menu's ⌘Plus may not claim — menu-
 	// claimed keys never reach before-input-event, so exactly one of the
 	// two applies any given zoom keypress.
 	win.webContents.on("did-finish-load", () => {
-		win.webContents.send("lh:zoom", win.webContents.getZoomFactor());
+		win.webContents.send("lanna:zoom", win.webContents.getZoomFactor());
 	});
 	win.webContents.on("before-input-event", (event, input) => {
 		if (input.type !== "keyDown" || !(input.meta || input.control)) return;
@@ -458,8 +389,8 @@ function createWindow(url) {
  * hiddenInset) drift out of relation to the scaled chrome: the graph
  * button rides away from them zoomed in, content slides under them
  * zoomed out. Here zoom is explicit: a factor ladder, applied through
- * setZoomFactor, and broadcast to the renderer ("lh:zoom" — it publishes
- * --lh-zoom so gutter lengths can divide by it and stay PHYSICAL-
+ * setZoomFactor, and broadcast to the renderer ("lanna:zoom" — it publishes
+ * --lanna-zoom so gutter lengths can divide by it and stay PHYSICAL-
  * constant). The traffic lights themselves stay at their construction
  * position ({x:16, y:22.5} — Electron 44 has NO runtime setter, only
  * the BrowserWindow option), which is HIG-correct anyway: native lights
@@ -485,14 +416,14 @@ const ZOOM_LADDER = [0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
  *  - THE UPDATER CAN NEVER TAKE THE APP DOWN: every event and check is
  *    caught and logged (feed down, disk full, bad signature — all just
  *    log lines; the app keeps working, update or no update).
- *  - LH_UPDATE_FEED (env): overrides the baked GitHub feed with a generic
+ *  - LANNA_UPDATE_FEED (env): overrides the baked GitHub feed with a generic
  *    local server — the pre-release verification drill (serve
  *    latest-mac.yml + zip + blockmap from any localhost HTTP dir and
  *    watch a real installed copy find/download/restart). Test-only seam.
  *
  * Install path: the downloaded update applies on quit (autoInstallOnAppQuit
  * — Squirrel.Mac stages natively and swaps on relaunch). The renderer
- * banner asks for an immediate restart via "lh:update-install"; we kill
+ * banner asks for an immediate restart via "lanna:update-install"; we kill
  * the child server FIRST — deterministic ordering: the server lives
  * inside the .app bundle Squirrel is about to replace (extraResources),
  * and before-quit alone would race the swap. */
@@ -509,7 +440,7 @@ function reportUpdateStatus(status, version = null) {
 		updateState = { status, version: typeof version === "string" ? version : null, revision: updateState.revision + 1 };
 		for (const win of BrowserWindow.getAllWindows()) {
 			try {
-				win.webContents.send("lh:update-status", updateState);
+				win.webContents.send("lanna:update-status", updateState);
 			} catch {
 				/* window mid-teardown — snapshot retrieval covers a later load */
 			}
@@ -575,10 +506,10 @@ function setupAutoUpdater() {
 		reportUpdateStatus("disabled");
 		return;
 	}
-	const feed = process.env.LH_UPDATE_FEED;
+	const feed = process.env.LANNA_UPDATE_FEED;
 	if (feed) {
 		autoUpdater.setFeedURL({ provider: "generic", url: feed });
-		log(`auto-update: LH_UPDATE_FEED override → ${feed}`);
+		log(`auto-update: LANNA_UPDATE_FEED override → ${feed}`);
 	}
 	autoUpdater.autoDownload = true;
 	autoUpdater.autoInstallOnAppQuit = true;
@@ -613,7 +544,7 @@ function checkForUpdatesFromMenu() {
 			win.focus();
 			const openSettings = () => {
 				try {
-					win.webContents.send("lh:open-settings", "general");
+					win.webContents.send("lanna:open-settings", "general");
 				} catch {
 					/* window closed */
 				}
@@ -639,7 +570,7 @@ function zoomStep(win, dir) {
 function applyZoom(win, factor) {
 	factor = Math.min(2, Math.max(0.75, factor)); // ladder clamps; ⌘0 = 1
 	win.webContents.setZoomFactor(factor);
-	win.webContents.send("lh:zoom", factor);
+	win.webContents.send("lanna:zoom", factor);
 }
 
 /** macOS needs an application menu with the Edit roles — without one,
@@ -679,7 +610,7 @@ function installMenu() {
 				{ type: "separator" },
 				// OWNED zoom (see applyZoom): the roles change zoomLevel
 				// silently; these broadcast the factor and re-seat the
-				// traffic lights. The renderer's --lh-zoom depends on
+				// traffic lights. The renderer's --lanna-zoom depends on
 				// hearing every change.
 				{
 					label: "Actual Size",
@@ -707,8 +638,6 @@ function installMenu() {
 
 async function main() {
 	app.on("window-all-closed", () => {
-		chatgpt?.pause();
-		subscriptions?.pause();
 		// macOS convention: the app stays resident, reactivated from the Dock.
 		if (process.platform !== "darwin") app.quit();
 	});
@@ -726,12 +655,12 @@ async function main() {
 	// later." with a Playback ID, seen 2026-10-28): the player is served a
 	// build for a browser it does not recognize. Present as the Chrome we
 	// are; nothing else keys off these tokens.
-	app.userAgentFallback = app.userAgentFallback.replace(/ (learnharness|langharness|LangHarness|Electron)\/\S+/g, "");
+	app.userAgentFallback = app.userAgentFallback.replace(/ (Lanna|lanna|Electron)\/\S+/g, "");
 
-	// Dev mode: point at a running `next dev` server (LH_DEV_URL) — no
+	// Dev mode: point at a running `next dev` server (LANNA_DEV_URL) — no
 	// spawn, no packaging, full HMR. The rest of this shell still applies
 	// (guards, menu, single instance).
-	const devUrl = process.env.LH_DEV_URL;
+	const devUrl = process.env.LANNA_DEV_URL;
 	const url = devUrl ?? `http://127.0.0.1:${await freePort()}`;
 	if (!devUrl) {
 		desktopAPISecret = randomBytes(32).toString("hex");
@@ -740,24 +669,6 @@ async function main() {
 		session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ["<all_urls>"] }, (details, callback) => {
 			callback({ requestHeaders: desktopAPIHeaders(details, ownedOrigin, desktopAPISecret, [...trustedAppWindows]) });
 		});
-		chatgpt = createChatGPT({
-			store: fileStore(path.join(app.getPath("userData"), "chatgpt-credentials.json")),
-			openExternal: (target) => shell.openExternal(target),
-			onChange: (value) => {
-				chatgptChild?.send(value);
-				for (const win of BrowserWindow.getAllWindows()) win.webContents.send("lh:chatgpt:changed");
-			},
-		});
-		subscriptions = createSubscriptions({
-			directory: app.getPath("userData"),
-			loadSDK: () => loadSubscriptionSDK(path.dirname(serverEntry())),
-			openExternal: (target) => shell.openExternal(target),
-			onChange: (snapshot) => {
-				subscriptionChild?.send(snapshot);
-				for (const win of BrowserWindow.getAllWindows()) win.webContents.send("lh:subscriptions:changed");
-			},
-		});
-		await subscriptions.ready;
 		log(`starting server: ${serverEntry()}`);
 		log(
 			`data dir: ${DATA_DIR()}${fs.existsSync(AUTH_FILE()) ? " · auth.json: present" : " · auth.json: ABSENT (no BYOK keys yet)"}`,
@@ -769,53 +680,6 @@ async function main() {
 		log(`dev mode: ${devUrl}`);
 	}
 
-	// Renderer controls contain no token/URL/code operation. The separate server
-	// child is the only recipient of credential leases over inherited IPC.
-	ipcMain.handle("lh:chatgpt:control", async (event, command) => {
-		if (
-			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
-			!trustedSender(event, new URL(url).origin, BrowserWindow)
-		)
-			return { error: "Untrusted desktop request." };
-		if (!chatgpt || !serverProcess?.connected)
-			return {
-				available: false,
-				pending: false,
-				activeId: null,
-				accounts: [],
-				error:
-					"ChatGPT sign-in requires the desktop app's private server connection. Browser-only and externally launched development servers keep API-key connections.",
-			};
-		return chatGPTControl(command, chatgpt);
-	});
-
-	ipcMain.handle("lh:subscriptions:control", async (event, command) => {
-		if (
-			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
-			!trustedSender(event, new URL(url).origin, BrowserWindow)
-		)
-			throw new Error("Untrusted desktop request.");
-		if (!subscriptions || !serverProcess?.connected) {
-			if (command?.op === "status") return [];
-			throw new Error("Subscription sign-in requires the desktop app's private server connection.");
-		}
-		return subscriptionControl(command, subscriptions);
-	});
-
-	// The dev shell has no browser tabs. Only a one-use action on its own
-	// Next server may be resolved here; never accept an arbitrary external URL.
-	ipcMain.handle("lh:subscriptions:web-browser", async (event, action) => {
-		if (
-			!devUrl ||
-			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
-			!trustedSender(event, new URL(url).origin, BrowserWindow)
-		)
-			throw new Error("Untrusted development request.");
-		await openWebSubscriptionBrowser(action, new URL(url).origin, {
-			openExternal: (target) => shell.openExternal(target),
-		});
-	});
-
 	installMenu();
 
 	// Auto-update (Wave C): wire the updater before the window so the
@@ -823,8 +687,8 @@ async function main() {
 	// interval fire after it below. setupAutoUpdater's contract: failures
 	// are log lines — this can never block boot.
 	setupAutoUpdater();
-	ipcMain.on("lh:update-install", () => installUpdateNow());
-	ipcMain.handle("lh:update:get", (event) => {
+	ipcMain.on("lanna:update-install", () => installUpdateNow());
+	ipcMain.handle("lanna:update:get", (event) => {
 		if (
 			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
 			!trustedSender(event, new URL(url).origin, BrowserWindow)
@@ -832,7 +696,7 @@ async function main() {
 			throw new Error("Untrusted desktop request.");
 		return updateState;
 	});
-	ipcMain.handle("lh:update:check", (event) => {
+	ipcMain.handle("lanna:update:check", (event) => {
 		if (
 			!trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) ||
 			!trustedSender(event, new URL(url).origin, BrowserWindow)
@@ -874,12 +738,12 @@ async function main() {
 	// accommodate a narrow window + open sidebar. Top-left stays fixed, the
 	// window grows right. No-op when already wide.
 	// The renderer's first paint can race did-finish-load — it asks for
-	// the current factor itself (mirrors "lh:zoom" pushes).
+	// the current factor itself (mirrors "lanna:zoom" pushes).
 	ipcMain.handle(
-		"lh:zoom:get",
+		"lanna:zoom:get",
 		(event) => BrowserWindow.fromWebContents(event.sender)?.webContents.getZoomFactor() ?? 1,
 	);
-	ipcMain.on("lh:theme", (event, night) => {
+	ipcMain.on("lanna:theme", (event, night) => {
 		const win = BrowserWindow.fromWebContents(event.sender);
 		if (!win) return;
 		const c = night === true ? CHROME.night : CHROME.day;
@@ -888,7 +752,7 @@ async function main() {
 		// Only the Windows and Linux frames have an overlay to recolor.
 		if (process.platform !== "darwin") win.setTitleBarOverlay?.({ ...c });
 	});
-	ipcMain.on("lh:expand-window", (event) => {
+	ipcMain.on("lanna:expand-window", (event) => {
 		const win = BrowserWindow.fromWebContents(event.sender);
 		if (!win) return;
 		const { x, y, width, height } = win.getBounds();
@@ -896,8 +760,6 @@ async function main() {
 		if (width < target) win.setBounds({ x, y, width: target, height });
 	});
 	reopenWindow = () => {
-		chatgpt?.resume();
-		subscriptions?.resume();
 		return createWindow(url);
 	};
 	app.on("activate", () => {

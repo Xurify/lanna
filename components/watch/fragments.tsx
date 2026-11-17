@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Watch → fragments (LangHarness, 2026-11-06): pick a stretch of a video
+ * Watch → fragments (2026-11-06): pick a stretch of a video
  * instead of all of it. The strip shows how much of each moment the learner
  * knows; the best stretches are marked and listed (found on the server with
  * no model call, src/core/fragments.ts); a stretch can also be dragged out by

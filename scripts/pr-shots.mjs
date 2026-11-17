@@ -58,8 +58,8 @@ for (const shot of shots) {
 		});
 		for (const theme of options.themes) {
 			await page.setCookie(
-				{ name: "lh-theme", value: theme, url: baseUrl },
-				{ name: "lh-language", value: "slovak", url: baseUrl },
+				{ name: "lanna-theme", value: theme, url: baseUrl },
+				{ name: "lanna-language", value: "slovak", url: baseUrl },
 			);
 			await page.goto(new URL(route || "/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
 			await page.evaluate((value) => {

@@ -1,5 +1,5 @@
 /**
- * Form-reading tasks for the aspect chapters (LangHarness, 2026-11-04). Two
+ * Form-reading tasks for the aspect chapters (2026-11-04). Two
  * kinds of rep, both built from data the learner can already see, so they
  * reach them in the shipped state (the aspect pairs have no two-sided deck
  * yet, so the drills do not):

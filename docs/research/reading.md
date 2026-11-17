@@ -1,6 +1,6 @@
 # The Read task: graded episodes at the learner's level
 
-_LangHarness, 2026-10-28. Thread "Add a reading task with stories". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/store/stories.ts`, `components/reading/reader.tsx`, `app/read`._
+_Lanna, 2026-10-28. Thread "Add a reading task with stories". Code: `src/core/reading.ts`, `src/server/reading.ts`, `src/store/stories.ts`, `components/reading/reader.tsx`, `app/read`._
 
 ## Evidence
 

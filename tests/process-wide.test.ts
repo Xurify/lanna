@@ -4,9 +4,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-process-wide-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-process-wide-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 after(() => fs.rmSync(TMP_DATA, { recursive: true, force: true }));
 

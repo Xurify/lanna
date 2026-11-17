@@ -12,8 +12,8 @@ export type UpdateState = {
 	revision: number;
 };
 
-const APP_VERSION = process.env.LH_VERSION ?? "";
-const HOMEPAGE = process.env.LH_HOMEPAGE ?? "";
+const APP_VERSION = process.env.LANNA_VERSION ?? "";
+const HOMEPAGE = process.env.LANNA_HOMEPAGE ?? "";
 const MANUAL_UPDATE_HINT = "Checking downloads available updates. Downloaded updates install when you quit the app.";
 const AUTO_UPDATE_HINT =
 	"Check at startup and every 24 hours. Turning this off does not stop updates already in progress or ready to install.";
@@ -26,8 +26,8 @@ export function useUpdateState() {
 	const [state, setState] = useState<UpdateState | null>(null);
 	const [failed, setFailed] = useState(false);
 	useEffect(() => {
-		const lh = window.lh;
-		if (!lh) return;
+		const lanna = window.lanna;
+		if (!lanna) return;
 		let live = true;
 		let revision = -1;
 		const accept = (next: UpdateState) => {
@@ -36,8 +36,8 @@ export function useUpdateState() {
 			setState(next);
 			setFailed(false);
 		};
-		const off = lh.onUpdateStatus?.(accept);
-		void lh
+		const off = lanna.onUpdateStatus?.(accept);
+		void lanna
 			.getUpdateState?.()
 			.then(accept)
 			.catch(() => {
@@ -95,7 +95,7 @@ export function UpdateSettings({
 	const releaseNotes = version && homepage ? `${homepage}/releases/tag/v${version}` : null;
 	const check = () => {
 		setCheckFailed(false);
-		void window.lh?.checkForUpdates?.().catch(() => setCheckFailed(true));
+		void window.lanna?.checkForUpdates?.().catch(() => setCheckFailed(true));
 	};
 
 	return (
@@ -132,7 +132,7 @@ export function UpdateSettings({
 							size="xs"
 							className="cursor-pointer"
 							data-testid="update-restart"
-							onClick={() => window.lh?.installUpdate?.()}
+							onClick={() => window.lanna?.installUpdate?.()}
 						>
 							Restart
 						</Button>

@@ -12,7 +12,7 @@ Windows signing is deliberately disabled for this first release. SmartScreen may
 
 The custom app bar stays on all three platforms. macOS keeps its left-side traffic lights; Windows/Linux use Electron's native right-side Window Controls Overlay, with CSS space reserved from the overlay's actual geometry. Windows/Linux hide the native menu until Alt is pressed. macOS keeps its system menu.
 
-Icons are per-platform (2026-10-13): macOS compiles the Icon Composer document `build/icon.icon` via actool into `Assets.car` (macOS 26 Liquid Glass) plus a fallback icns that `scripts/after-pack.cjs` replaces with the full-res `build/icon.icns` (actool's caps at 256px); Windows embeds `build/icon.ico`, Linux uses `build/icon.png`, and the fallback icns is generated from the flat design (`build/icon-flat.svg`) by `node scripts/make-icons.mjs`. Building the mac icon needs **macOS 26+ and Xcode 26+** (`actool`): Xcode 26's asset compiler crashes on macOS 15 because its host frameworks lack required symbols. `desktop:dist` injects `DEVELOPER_DIR` locally; release packaging uses `macos-26` and selects Xcode via setup-xcode. The older-OS fallback icon remains included. Linux's desktop identity is `langharness.desktop`. Public package-maintainer metadata uses the owner's GitHub no-reply address; support goes through [GitHub Issues](https://github.com/Xurify/langharness/issues).
+Icons are per-platform (2026-10-13): macOS compiles the Icon Composer document `build/icon.icon` via actool into `Assets.car` (macOS 26 Liquid Glass) plus a fallback icns that `scripts/after-pack.cjs` replaces with the full-res `build/icon.icns` (actool's caps at 256px); Windows embeds `build/icon.ico`, Linux uses `build/icon.png`, and the fallback icns is generated from the flat design (`build/icon-flat.svg`) by `node scripts/make-icons.mjs`. Building the mac icon needs **macOS 26+ and Xcode 26+** (`actool`): Xcode 26's asset compiler crashes on macOS 15 because its host frameworks lack required symbols. `desktop:dist` injects `DEVELOPER_DIR` locally; release packaging uses `macos-26` and selects Xcode via setup-xcode. The older-OS fallback icon remains included. Linux's desktop identity is `lanna.desktop`. Public package-maintainer metadata uses the owner's GitHub no-reply address; support goes through [GitHub Issues](https://github.com/Xurify/lanna/issues).
 
 ## Build pipeline
 
@@ -27,7 +27,7 @@ Each OS installs its own dependencies and builds its own Next standalone tree:
 
 The shell/updater live in `app.asar`; the standalone server and native renderer binaries ship unpacked as `extraResources`. **Do not cross-build the server payload.** Next traces the build machine's native binaries, so a macOS-built standalone tree is not a Windows/Linux payload.
 
-`npm run desktop:dist` remains the local macOS signing path, using the `LH_NOTARY` keychain profile. For a local Windows/Linux build, run steps 1–5 above, then:
+`npm run desktop:dist` remains the local macOS signing path, using the `LANNA_NOTARY` keychain profile. For a local Windows/Linux build, run steps 1–5 above, then:
 
 ```sh
 # On Windows:
@@ -60,11 +60,11 @@ The three jobs upload distinct updater feeds: `latest-mac.yml`, `latest.yml`, `l
 
 | Asset                                                | Role                                                       |
 | ---------------------------------------------------- | ---------------------------------------------------------- |
-| `LangHarness-<v>-arm64.dmg` + `.blockmap`            | macOS installer                                            |
-| `LangHarness-<v>-arm64-mac.zip` + `.blockmap`        | macOS updater payload (Squirrel.Mac installs from the ZIP) |
-| `LangHarness-<v>-x64-setup.exe` + `.blockmap`        | Windows NSIS installer                                     |
-| `LangHarness-<v>-x86_64.AppImage`                    | Linux AppImage (no sidecar blockmap)                       |
-| `LangHarness-<v>-amd64.deb`                          | Linux deb (no sidecar blockmap)                            |
+| `Lanna-<v>-arm64.dmg` + `.blockmap`                  | macOS installer                                            |
+| `Lanna-<v>-arm64-mac.zip` + `.blockmap`              | macOS updater payload (Squirrel.Mac installs from the ZIP) |
+| `Lanna-<v>-x64-setup.exe` + `.blockmap`              | Windows NSIS installer                                     |
+| `Lanna-<v>-x86_64.AppImage`                          | Linux AppImage (no sidecar blockmap)                       |
+| `Lanna-<v>-amd64.deb`                                | Linux deb (no sidecar blockmap)                            |
 | `latest-mac.yml` / `latest.yml` / `latest-linux.yml` | updater feeds                                              |
 
 (The Linux names are deliberate: the user-set `linux.artifactName` applies to both Linux targets, and `${arch}` expands per target — `x86_64` inside the AppImage, `amd64` in the deb — exactly what the installed app-builder-lib 26.15.3 emits. The script's expectations fail closed if `electron-builder.yml` drifts from these shapes.);

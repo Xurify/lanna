@@ -12,50 +12,50 @@ import {
 	estimateMessageTokens,
 	newCompactionMarker,
 	KEEP_RECENT_TOKENS,
-	type LhMessage,
+	type LannaMessage,
 } from "../src/core/index.ts";
 
 let serial = 0;
-const user = (chars: number): LhMessage => ({
+const user = (chars: number): LannaMessage => ({
 	id: `u${serial++}`,
 	role: "user",
 	content: "u".repeat(chars),
 	timestamp: 1,
 });
-const assistant = (chars: number): LhMessage =>
+const assistant = (chars: number): LannaMessage =>
 	({
 		id: `a${serial++}`,
 		role: "assistant",
 		content: [{ type: "text", text: "a".repeat(chars) }],
 		timestamp: 1,
-	}) as LhMessage;
-const call = (chars: number): LhMessage =>
+	}) as LannaMessage;
+const call = (chars: number): LannaMessage =>
 	({
 		...assistant(chars),
 		content: [
 			{ type: "text", text: "a".repeat(chars) },
-			{ type: "toolCall", name: "quiz", arguments: {}, id: "c" },
+			{ type: "toolCall", name: "pose", arguments: {}, id: "c" },
 		],
-	}) as LhMessage;
-const result = (chars: number): LhMessage => ({
+	}) as LannaMessage;
+const result = (chars: number): LannaMessage => ({
 	id: `r${serial++}`,
 	role: "toolResult",
 	content: [{ type: "text", text: "r".repeat(chars) }],
 	toolCallId: "c",
-	toolName: "quiz",
+	toolName: "pose",
 	isError: false,
 	timestamp: 1,
 });
-const image = (): LhMessage => ({
+const image = (): LannaMessage => ({
 	id: `i${serial++}`,
 	role: "user",
 	content: [{ type: "image", data: "fixture", mimeType: "image/png" }],
 	timestamp: 1,
 });
-const metadata = (): LhMessage => ({
+const metadata = (): LannaMessage => ({
 	id: `m${serial++}`,
 	role: "custom",
-	customType: "plan-block",
+	customType: "problem-dismissed",
 	content: "invisible".repeat(1000),
 	display: false,
 	details: {},
@@ -63,7 +63,7 @@ const metadata = (): LhMessage => ({
 });
 
 test("local cutoff matches published native golden boundaries and estimator values", () => {
-	const cases: [string, LhMessage[], number, number, number[]][] = [
+	const cases: [string, LannaMessage[], number, number, number[]][] = [
 		["exact threshold", [user(40), user(40), user(40)], 20, 1, [10, 10, 10]],
 		["under budget", [user(4), assistant(4)], 20, 0, [1, 1]],
 		["split turn", [user(400), assistant(40), assistant(40)], 15, 1, [100, 10, 10]],
@@ -103,7 +103,7 @@ test("opaque signatures remain unmeasured and preserved; system/image allowances
 	const signed = {
 		...assistant(4),
 		content: [{ type: "thinking", thinking: "", thinkingSignature: "opaque".repeat(100_000) }],
-	} as LhMessage;
+	} as LannaMessage;
 	assert.equal(estimateMessageTokens(signed), 0);
 	assert.equal((signed as { content: { thinkingSignature: string }[] }).content[0]!.thinkingSignature.length, 600_000);
 	const system = {

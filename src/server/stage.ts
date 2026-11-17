@@ -1,5 +1,5 @@
 /**
- * The stage sentence on Today (LangHarness, 2026-11-05) — the milestones'
+ * The stage sentence on Today (2026-11-05) — the milestones'
  * own measures, read through src/core/stage.ts. No new measurement lives here.
  */
 

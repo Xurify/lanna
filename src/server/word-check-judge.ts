@@ -69,10 +69,10 @@ export function parseMeaningJudgement(text: string): MeaningJudgement | null {
 let scripted: { file: string; engine: PiEngine } | null = null;
 
 /** A scripted marker for screenshots and UI work without a key:
- *  LH_WORD_CHECK_SCRIPT=<path to JSON {"accept": ["typed answer", …], "note": "…"}>.
+ *  LANNA_WORD_CHECK_SCRIPT=<path to JSON {"accept": ["typed answer", …], "note": "…"}>.
  *  Dev only; never set in the desktop app. */
 function scriptedEngine(): PiEngine | null {
-	const scriptPath = process.env.LH_WORD_CHECK_SCRIPT;
+	const scriptPath = process.env.LANNA_WORD_CHECK_SCRIPT;
 	if (!scriptPath || process.env.NODE_ENV === "production") return null;
 	let file: string;
 	try {

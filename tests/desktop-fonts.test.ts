@@ -57,13 +57,13 @@ describe("installed fonts", () => {
 		const handlers = new Map<string, (e: unknown) => unknown>();
 		const ipc = { handle: (c: string, h: (e: unknown) => unknown) => handlers.set(c, h) };
 		fonts.registerFontsIPC(ipc, { trusted: () => false });
-		assert.throws(() => handlers.get("lh:fonts:list")!({}), /Untrusted/);
+		assert.throws(() => handlers.get("lanna:fonts:list")!({}), /Untrusted/);
 	});
 
 	it("the preload forwards to that one channel", () => {
 		assert.match(
 			readFileSync(new URL("../electron/preload.cjs", import.meta.url), "utf-8"),
-			/fonts: \{\s*list: \(\) => ipcRenderer\.invoke\("lh:fonts:list"\)/,
+			/fonts: \{\s*list: \(\) => ipcRenderer\.invoke\("lanna:fonts:list"\)/,
 		);
 	});
 });

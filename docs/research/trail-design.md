@@ -1,6 +1,6 @@
 # The trail design (2026-11-02)
 
-**Question:** the first redesign made LangHarness feel like a language app, but in the best-known app's own forms (a winding road of round icons, a flame, a chunky green button, confetti). The owner wanted a direction of its own that still keeps what works: one next step, a visible path, streaks and XP, feedback in a fixed place, and a pathway that is clear and beautiful. What should that direction be, and why would it work for a learner of Slovak?
+**Question:** the first redesign made Lanna feel like a language app, but in the best-known app's own forms (a winding road of round icons, a flame, a chunky green button, confetti). The owner wanted a direction of its own that still keeps what works: one next step, a visible path, streaks and XP, feedback in a fixed place, and a pathway that is clear and beautiful. What should that direction be, and why would it work for a learner of Slovak?
 
 **Outcome:** the trail design, on branch `feat/trail-design` (one PR). Rule E30. It replaces the look built on `feat/language-app-redesign` (PR #79, left open and untouched for comparison).
 
@@ -35,7 +35,7 @@ Flat tonal layers, no gradients, no shadows except on menus. The accents are des
 | raised `--accent`                          | `#1f2a31`                  | tiles, hover, the slope behind the trail                                      |
 | edge `--border`                            | `#2b3842`                  | hairlines                                                                     |
 | text `--foreground` / `--muted-foreground` | `#eef2f3` snow / `#93a2aa` | text                                                                          |
-| sun `--lh-sun`                             | `#f2b84b`                  | the action button, streak, XP, done stops, the walked trail, the Review badge |
+| sun `--lanna-sun`                          | `#f2b84b`                  | the action button, streak, XP, done stops, the walked trail, the Review badge |
 | trail red                                  | `#ea5f4f`                  | input strand; a wrong answer                                                  |
 | trail blue                                 | `#4fa3e3`                  | speaking strand; the tutor                                                    |
 | trail green                                | `#4cc47c`                  | words & rules strand; a right answer                                          |

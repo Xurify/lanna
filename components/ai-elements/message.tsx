@@ -5,14 +5,14 @@ import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
 
 import type { ComponentProps, HTMLAttributes } from "react";
-import type { LhViewMessage } from "@/src/core";
+import type { LannaViewMessage } from "@/src/core";
 import { memo } from "react";
 import remarkBreaks from "remark-breaks";
 import { Streamdown, type PluginConfig } from "streamdown";
 import { mdComponents } from "@/components/md-blocks";
 
 type MessageProps = HTMLAttributes<HTMLDivElement> & {
-	from: LhViewMessage["role"];
+	from: LannaViewMessage["role"];
 };
 
 export const Message = ({ className, from, ...props }: MessageProps) => (
@@ -70,7 +70,7 @@ export const MessageResponse = memo(
 				className={cn(
 					// Source Sans 3 + emphasis-color tokens on every markdown surface
 					// (labels stay JetBrains Mono). Unlayered plain CSS wins over text-sm.
-					"lh-prose size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+					"lanna-prose size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
 					className,
 				)}
 				components={mdComponents}

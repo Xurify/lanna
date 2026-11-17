@@ -204,7 +204,7 @@ function Sentence({
 						disabled={disabled}
 						aria-pressed={tap?.sentence === sentence && tap.token === i}
 						onClick={() => onTap({ sentence, token: i })}
-						className={`lh-press min-h-11 rounded px-0.5 align-middle ${tap?.sentence === sentence && tap.token === i ? "bg-teal-wash font-[600]" : "hover:bg-muted"}`}
+						className={`lanna-press min-h-11 rounded px-0.5 align-middle ${tap?.sentence === sentence && tap.token === i ? "bg-teal-wash font-[600]" : "hover:bg-muted"}`}
 					>
 						{t.text}
 					</button>

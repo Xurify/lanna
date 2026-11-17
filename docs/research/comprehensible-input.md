@@ -1,6 +1,6 @@
-# Comprehensible Input and LangHarness
+# Comprehensible Input and Lanna
 
-_LangHarness research note, 28 October 2026. The same note as a page: https://claude.ai/artifact/Tt3n8CesrkeKGfwt1fMErK._
+_Lanna research note, 28 October 2026. The same note as a page: https://claude.ai/artifact/Tt3n8CesrkeKGfwt1fMErK._
 
 What the comprehensible-input school claims, what forty years of research kept and threw out, where the app stands against it, and what changed in the app as a result.
 
@@ -35,7 +35,7 @@ Nobody has found a way to test whether a text is exactly one step beyond a learn
 | 98%         | 68%                                         |
 | 100%        | 75%                                         |
 
-661 readers of two academic texts. The relationship is linear in the measured range; even knowing every word gave only 75%, because background knowledge does the rest. LangHarness aims its input at 95 to 98% known words: hard enough to carry something new, easy enough to read instead of decode.
+661 readers of two academic texts. The relationship is linear in the measured range; even knowing every word gave only 75%, because background knowledge does the rest. Lanna aims its input at 95 to 98% known words: hard enough to carry something new, easy enough to read instead of decode.
 
 For listening the bar is a little lower: van Zeeland and Schmitt (2013) found informal listening comfortable at about 95% coverage, because speech carries tone, rhythm and context that text does not.
 
@@ -65,7 +65,7 @@ Paul Nation's answer to the input-versus-practice argument is to stop arguing an
 
 TPRS has a handful of small classroom studies, mostly positive for vocabulary and motivation (Lichtman's 2018 review). Dreaming Spanish and the Automatic Language Growth method behind it have thousands of testimonials and no controlled study. The claim that speaking early does lasting damage has no experimental support; Krashen himself only says output is not the cause of acquisition, not that it harms. Their real contribution is practical: a huge library of graded input, a visible hours count, and a culture of doing a lot of it.
 
-## Where LangHarness stands
+## Where Lanna stands
 
 Every activity in the app sorted into Nation's strands, with the minutes a full day's plan gives each one. The minutes are the plan's own estimates; the share is what matters.
 

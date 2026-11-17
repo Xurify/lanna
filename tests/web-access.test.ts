@@ -31,7 +31,7 @@ import {
 
 const HOST = "learn.example.com";
 const SECRET = "s".repeat(40);
-const ENV = { LH_PUBLIC_HOST: HOST, LH_PROXY_SECRET: SECRET };
+const ENV = { LANNA_PUBLIC_HOST: HOST, LANNA_PROXY_SECRET: SECRET };
 
 const PROXIED = { host: HOST, "x-forwarded-host": HOST, "x-forwarded-proto": "https", [PROXY_SECRET_HEADER]: SECRET };
 
@@ -57,10 +57,10 @@ function request(
 	};
 }
 
-describe("public mode is off unless LH_PUBLIC_HOST is set", () => {
+describe("public mode is off unless LANNA_PUBLIC_HOST is set", () => {
 	it("gives no public mode without the variable, so the old rules apply", () => {
 		assert.equal(publicModeFrom(new Headers(PROXIED), {}), null);
-		assert.equal(publicModeFrom(new Headers(PROXIED), { LH_PUBLIC_HOST: "  " }), null);
+		assert.equal(publicModeFrom(new Headers(PROXIED), { LANNA_PUBLIC_HOST: "  " }), null);
 	});
 
 	it("leaves this computer's own request on the old rules when the variable is not set", () => {
@@ -156,10 +156,13 @@ describe("what makes a request not the proxy's", () => {
 		assert.match(refused({ headers: { [PROXY_SECRET_HEADER]: "x".repeat(40) } }), /only through its reverse proxy/);
 		assert.match(refused({ headers: { [PROXY_SECRET_HEADER]: SECRET.slice(1) } }), /only through its reverse proxy/);
 		assert.match(
-			refused({ env: { LH_PUBLIC_HOST: HOST, LH_PROXY_SECRET: "short" }, headers: { [PROXY_SECRET_HEADER]: "short" } }),
+			refused({
+				env: { LANNA_PUBLIC_HOST: HOST, LANNA_PROXY_SECRET: "short" },
+				headers: { [PROXY_SECRET_HEADER]: "short" },
+			}),
 			/not set up/,
 		);
-		assert.match(refused({ env: { LH_PUBLIC_HOST: HOST } }), /not set up/);
+		assert.match(refused({ env: { LANNA_PUBLIC_HOST: HOST } }), /not set up/);
 	});
 
 	it("looks like this computer to nobody: a default nginx Host of 127.0.0.1 is refused, with or without the secret", () => {
@@ -376,7 +379,7 @@ describe("inside Docker, where every connection comes from 172.17.0.1", () => {
 		assert.equal(refused(raw({ ...good, "x-forwarded-proto": "http" })), true);
 	});
 
-	it("keeps desktop and dev as they were when LH_PUBLIC_HOST is not set: this computer passes, a marked request does not", () => {
+	it("keeps desktop and dev as they were when LANNA_PUBLIC_HOST is not set: this computer passes, a marked request does not", () => {
 		const unset = {};
 		for (const host of loopbackNames) {
 			assert.deepEqual(decideAccess(raw({ host, ...bridge }, {}, unset)), { action: "allow" }, host);

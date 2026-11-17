@@ -1,5 +1,5 @@
 /**
- * Placement checks on disk (LangHarness, 2026-10-28):
+ * Placement checks on disk (2026-10-28):
  *
  *   placement/<id>.json      the whole check: every ladder item with the
  *                            learner's answer and verdict, the model's

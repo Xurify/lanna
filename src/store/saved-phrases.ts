@@ -1,5 +1,5 @@
 /**
- * Saved Phrases and Word Favorites Persistence (LangHarness) — the active profile's
+ * Saved Phrases and Word Favorites Persistence — the active profile's
  * data/profiles/<language>/saved/:
  *
  *   phrases.json    saved / bookmarked phrases and sentences with translations

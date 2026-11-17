@@ -15,7 +15,7 @@
  *
  * UI-ONLY CONTENT (owner ruling, fork 1 + the plan's custom-message
  * taxonomy): the probe→teach handoff, sub-agent steers,
- * and plan blocks are LhMarkerMessage — this app's declaration-merged
+ * and plan blocks are LannaMarkerMessage — this app's declaration-merged
  * member of pi-agent-core's CustomAgentMessages extension point, shaped
  * exactly like pi's own CustomMessage ({role:"custom", customType,
  * content, display, details}). ONE seam — toLlmMessages, wired as the
@@ -37,7 +37,7 @@ import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage, Message, ToolResultMessage, UserMessage } from "@earendil-works/pi-ai";
 import { QUESTION_TOOLS } from "./pending.ts";
 import { chatTurnEnded } from "./chat-answers.ts";
-import { CONCLUDE_ACK_TEXT, HANDOFF_TEXT, NEXT_PROBLEM_TEXT, THINKING_LABEL } from "./contracts/chat.ts";
+import { CONCLUDE_ACK_TEXT, NEXT_PROBLEM_TEXT, THINKING_LABEL } from "./contracts/chat.ts";
 import { compactAnswerForModel, type QuestionAnswerData } from "./question-core.ts";
 import { activeCompactionOf, keptIndexFor } from "./compaction.ts";
 
@@ -57,16 +57,13 @@ const INTERRUPTED_TEXT =
  * model-visible), `display` marks messages the UI renders (our projection
  * keys rendering on customType; the flag documents intent).
  */
-export interface LhMarkerMessage {
+export interface LannaMarkerMessage {
 	/** Record identity (pi messages carry no id — see the file header). */
 	id: string;
 	role: "custom";
 	customType:
-		| "graph-context"
-		| "probe-handoff"
 		| "subagent-steer"
 		| "subagent-abort"
-		| "plan-block"
 		| "practice-thinking"
 		| "practice-next"
 		| "problem-dismissed"
@@ -81,16 +78,16 @@ export interface LhMarkerMessage {
 
 declare module "@earendil-works/pi-agent-core" {
 	interface CustomAgentMessages {
-		lhMarker: LhMarkerMessage;
+		lannaMarker: LannaMarkerMessage;
 	}
 }
 
 /** A record message: a native pi message (or our marker) plus the record id. */
-export type LhMessage = (UserMessage | AssistantMessage | ToolResultMessage | LhMarkerMessage) & { id: string };
+export type LannaMessage = (UserMessage | AssistantMessage | ToolResultMessage | LannaMarkerMessage) & { id: string };
 
 /** A record message list is assignable to the agent's context — that IS
  *  the replay (ui-stream/chat-handler assign it to initialState.messages). */
-export function asAgentMessages(messages: readonly LhMessage[]): AgentMessage[] {
+export function asAgentMessages(messages: readonly LannaMessage[]): AgentMessage[] {
 	return messages as unknown as AgentMessage[];
 }
 
@@ -129,7 +126,7 @@ export function userFacingTextOf(content: unknown, failedOutputCalls?: ReadonlyS
 /** Failed output calls remain retry context, not delivered teaching.
  * Truncated calls can have valid-looking partial arguments. Failed/aborted
  * generations do not execute their calls at all, so may have no result. */
-export function failedOutputCallIds(messages: readonly LhMessage[]): ReadonlySet<string> {
+export function failedOutputCallIds(messages: readonly LannaMessage[]): ReadonlySet<string> {
 	const failed = new Set<string>();
 	for (const message of messages) {
 		if (message.role === "toolResult" && message.toolName === SEND_TO_USER_TOOL && message.isError) {
@@ -154,7 +151,7 @@ export function newMessageId(): string {
 //     core/input-events.ts; steers in core/contracts/jobs.ts) ─────────────────
 
 /** A learner-authored user message (text input, verdict note). */
-export function newUserMessage(text: string): LhMessage & UserMessage {
+export function newUserMessage(text: string): LannaMessage & UserMessage {
 	return {
 		id: newMessageId(),
 		role: "user",
@@ -168,7 +165,7 @@ export function newUserMessage(text: string): LhMessage & UserMessage {
  *  rides agent.steer(), the live stream's message events, and the settled
  *  record, so the optimistic queued indicator and the transcript card
  *  upsert by one identity. */
-export function newUserSteer(text: string, id: string): LhMessage & UserMessage {
+export function newUserSteer(text: string, id: string): LannaMessage & UserMessage {
 	return { id, role: "user", content: text, timestamp: Date.now() };
 }
 
@@ -178,7 +175,11 @@ export function newUserSteer(text: string, id: string): LhMessage & UserMessage 
  *  arguments already carry the question/options/explanation/commitment;
  *  restating them doubled every answer's tokens), while `details` keeps
  *  the FULL graded QuestionAnswerData for the record and the UI. */
-export function newAnswerResult(toolCallId: string, toolName: string, answer: unknown): LhMessage & ToolResultMessage {
+export function newAnswerResult(
+	toolCallId: string,
+	toolName: string,
+	answer: unknown,
+): LannaMessage & ToolResultMessage {
 	return {
 		id: newMessageId(),
 		role: "toolResult",
@@ -189,35 +190,6 @@ export function newAnswerResult(toolCallId: string, toolName: string, answer: un
 		// our payloads are JSON-safe answer structures, so the cast is honest.
 		details: answer as ToolResultMessage["details"],
 		isError: false,
-		timestamp: Date.now(),
-	};
-}
-
-/** The probe→teach handoff wake: scaffolding, not speech — the model reads
- *  HANDOFF_TEXT, the UI renders the quiet system line. */
-export function newHandoffMessage(chatId: string): LhMarkerMessage {
-	return {
-		id: `steer_probe_${chatId}`,
-		role: "custom",
-		customType: "probe-handoff",
-		content: HANDOFF_TEXT,
-		display: true,
-		details: { chatId },
-		timestamp: Date.now(),
-	};
-}
-
-/** The plan presentation block: pure UI history (a frozen snapshot), no
- *  model face — toLlmMessages filters it. `planCallId` keys idempotent
- *  emission (one block per successful plan_init call). */
-export function newPlanBlockMessage(planCallId: string, block: unknown): LhMarkerMessage {
-	return {
-		id: `pb_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`,
-		role: "custom",
-		customType: "plan-block",
-		content: "",
-		display: true,
-		details: { planCallId, block },
 		timestamp: Date.now(),
 	};
 }
@@ -235,7 +207,7 @@ export const PRACTICE_CONCLUDE_TOOL = "conclude";
  *  content label is the single "Your thinking"; `details` keeps the raw
  *  payload for the transcript card. One problem may carry many
  *  submissions. */
-export function newThinkingMessage(problemCallId: string, text: string): LhMarkerMessage {
+export function newThinkingMessage(problemCallId: string, text: string): LannaMarkerMessage {
 	return {
 		id: newMessageId(),
 		role: "custom",
@@ -253,7 +225,7 @@ export function newThinkingMessage(problemCallId: string, text: string): LhMarke
  *  single-sourced NEXT_PROBLEM_TEXT — the model's unambiguous go-ahead;
  *  the transcript renders its own compact line off the marker (never
  *  the content). */
-export function newNextMessage(): LhMarkerMessage {
+export function newNextMessage(): LannaMarkerMessage {
 	return {
 		id: newMessageId(),
 		role: "custom",
@@ -271,7 +243,7 @@ export function newNextMessage(): LhMarkerMessage {
  *  (concludedByDismissalPair below) — the agent sees the dismissal as a
  *  conclude call it "made" with outcome "dismissed", so the slot-freed
  *  state and the dismissal read through the one vocabulary it owns. */
-export function newProblemDismissedMarker(problemCallId: string): LhMarkerMessage {
+export function newProblemDismissedMarker(problemCallId: string): LannaMarkerMessage {
 	return {
 		id: newMessageId(),
 		role: "custom",
@@ -292,7 +264,7 @@ export function newProblemDismissedMarker(problemCallId: string): LhMarkerMessag
  *  pair appends at most once per marker). */
 export function concludedByDismissalPair(
 	problemCallId: string,
-): [LhMessage & AssistantMessage, LhMessage & ToolResultMessage] {
+): [LannaMessage & AssistantMessage, LannaMessage & ToolResultMessage] {
 	const callId = `call_conc_${problemCallId}`;
 	const now = Date.now();
 	// The stamps are placeholders by design: history serialization reads
@@ -341,7 +313,7 @@ export function concludedByDismissalPair(
  *  subject is the call, not a dangling result). */
 /** The ids of tool calls whose results are CLEAN (not errored) — the only
  *  calls that ever happened, per the honest-activation ruling. */
-function cleanToolCallIds(messages: readonly LhMessage[]): Set<string> {
+function cleanToolCallIds(messages: readonly LannaMessage[]): Set<string> {
 	const ids = new Set<string>();
 	for (const m of messages) {
 		if ((m as { role?: string }).role !== "toolResult") continue;
@@ -357,7 +329,10 @@ function cleanToolCallIds(messages: readonly LhMessage[]): Set<string> {
  *  re-authored (the slim schema dropped solutionReveal); legacy conclude
  *  inputs that still carry their own solutionReveal fall back to it at the
  *  card. Undefined when the pose carries no string solution. */
-export function modelSolutionForConclude(messages: readonly LhMessage[], concludeCallId: string): string | undefined {
+export function modelSolutionForConclude(
+	messages: readonly LannaMessage[],
+	concludeCallId: string,
+): string | undefined {
 	const input = problemInputForConclude(messages, concludeCallId);
 	return typeof input?.modelSolution === "string" ? input.modelSolution : undefined;
 }
@@ -369,7 +344,7 @@ export function modelSolutionForConclude(messages: readonly LhMessage[], conclud
  * and refusal law as the reveal: a pose the record never acked (a
  * refused call) folds nothing. */
 export function problemInputForConclude(
-	messages: readonly LhMessage[],
+	messages: readonly LannaMessage[],
 	concludeCallId: string,
 ): { statement?: unknown; mode?: unknown; target?: unknown; modelSolution?: unknown } | undefined {
 	let mi = messages.findIndex(
@@ -395,7 +370,7 @@ export function problemInputForConclude(
 	return undefined;
 }
 
-export function activeProblemOf(messages: readonly LhMessage[]): { toolCallId: string; input: unknown } | null {
+export function activeProblemOf(messages: readonly LannaMessage[]): { toolCallId: string; input: unknown } | null {
 	// HONEST ACTIVATION (owner ruling, 2026-10-05 — the BKT incident):
 	// calls count only through their RESULTS — a problem activates on its
 	// clean ack, a conclude frees on its clean ack; errored and dangling
@@ -405,7 +380,7 @@ export function activeProblemOf(messages: readonly LhMessage[]): { toolCallId: s
 		const m = messages[mi]!;
 		const role = (m as { role?: string }).role;
 		if (role === "custom") {
-			const marker = m as LhMarkerMessage;
+			const marker = m as LannaMarkerMessage;
 			if (marker.customType === "problem-dismissed") return null;
 			continue;
 		}
@@ -432,13 +407,13 @@ export function activeProblemOf(messages: readonly LhMessage[]): { toolCallId: s
  *  text/continue appends read this: the pair rides the user's next input
  *  (input-events). Newest-marker-wins scan: the first dismissal marker or
  *  conclude call from the end decides. */
-export function pendingProblemDismissalOf(messages: readonly LhMessage[]): string | null {
+export function pendingProblemDismissalOf(messages: readonly LannaMessage[]): string | null {
 	const cleanCallIds = cleanToolCallIds(messages);
 	for (let mi = messages.length - 1; mi >= 0; mi--) {
 		const m = messages[mi]!;
 		const role = (m as { role?: string }).role;
 		if (role === "custom") {
-			const marker = m as LhMarkerMessage;
+			const marker = m as LannaMarkerMessage;
 			if (marker.customType === "problem-dismissed") {
 				return (marker.details as { problemCallId?: unknown }).problemCallId as string;
 			}
@@ -501,12 +476,12 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
 	// (header + summary) rendered ONCE, up top. The marker itself is then
 	// skipped in place — it must never render twice. A cut naming a
 	// missing id degrades honestly (everything renders — never throw).
-	const lhMessages = messages as readonly LhMessage[];
-	const active = activeCompactionOf(lhMessages);
+	const lannaMessages = messages as readonly LannaMessage[];
+	const active = activeCompactionOf(lannaMessages);
 	let start = 0;
 	let head: Message | null = null;
 	if (active) {
-		const kept = keptIndexFor(lhMessages, active);
+		const kept = keptIndexFor(lannaMessages, active);
 		if (kept > 0) {
 			start = kept;
 			head = {
@@ -535,10 +510,10 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
 		const m = messages[i]!;
 		const role = (m as { role?: string }).role;
 		if (role === "custom") {
-			const marker = m as LhMarkerMessage;
-			// UI-only markers: plan blocks, and problem dismissals (the
-			// synthesized conclude pair carries the model's face).
-			if (marker.customType === "plan-block" || marker.customType === "problem-dismissed") continue;
+			const marker = m as LannaMarkerMessage;
+			// UI-only markers have no text (plan blocks in older records), and a
+			// problem dismissal's synthesized conclude pair carries its model face.
+			if (!marker.content || marker.customType === "problem-dismissed") continue;
 			// The ACTIVE compaction marker already rendered as the head —
 			// never twice. (Stale markers before the cut are unreachable; a
 			// marker whose cut could not resolve has no head and renders as
@@ -552,7 +527,7 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
 			continue;
 		}
 		// Strip the record id: the wire carries the native shape only.
-		const { id: _id, ...native } = m as LhMessage;
+		const { id: _id, ...native } = m as LannaMessage;
 		out.push(native as Message);
 		// Dangling-call synthesis: an assistant message whose toolCalls have
 		// no results in the remaining tail (abort mid-question) — the
@@ -584,7 +559,7 @@ export function toLlmMessages(messages: readonly AgentMessage[]): Message[] {
  *  NEWEST assistant message's FIRST question-tool call with no result in
  *  the tail — one question at a time, the dock's subject. */
 export function danglingQuestionOf(
-	messages: readonly LhMessage[],
+	messages: readonly LannaMessage[],
 ): { toolCallId: string; tool: string; input: unknown } | null {
 	for (let mi = messages.length - 1; mi >= 0; mi--) {
 		const m = messages[mi]!;
@@ -602,20 +577,9 @@ export function danglingQuestionOf(
 	return null;
 }
 
-/** The probe→teach construction seam (chat-handler): a probe_done call in
- *  the transcript — any state — means the probe is concluded: teach. */
-export function hasProbeDone(messages: readonly LhMessage[]): boolean {
-	for (const m of messages) {
-		if ((m as { role?: string }).role !== "assistant") continue;
-		const assistant = m as AssistantMessage;
-		if (assistant.content.some((b) => b.type === "toolCall" && b.name === "probe_done")) return true;
-	}
-	return false;
-}
-
 /** Every toolResult id in the record — answer-event validation (the call
  *  must be a DANGLING question call, not an already-answered one). */
-export function answeredCallIds(messages: readonly LhMessage[]): Set<string> {
+export function answeredCallIds(messages: readonly LannaMessage[]): Set<string> {
 	return resultIdsFrom(messages);
 }
 
@@ -641,7 +605,7 @@ export function answeredCallIds(messages: readonly LhMessage[]): Set<string> {
 /** Is this record message a user-dismissed question result? The full
  *  answer rides the toolResult's `details` (newAnswerResult) — the
  *  dismissal pause and the continuation fold both read it. */
-function isDismissedResult(m: LhMessage): boolean {
+function isDismissedResult(m: LannaMessage): boolean {
 	if ((m as { role?: string }).role !== "toolResult") return false;
 	const details = (m as { details?: unknown }).details as { dismissed?: unknown } | undefined;
 	return details?.dismissed === true;
@@ -653,7 +617,7 @@ function isDismissedResult(m: LhMessage): boolean {
  *  the wake pipeline holds job deliveries in the steer queue until the
  *  next send. Derived from the tail — no latch to persist or clear; any
  *  user message flips it off by changing the record. */
-export function endsInDismissal(messages: readonly LhMessage[]): boolean {
+export function endsInDismissal(messages: readonly LannaMessage[]): boolean {
 	const last = messages[messages.length - 1];
 	return last !== undefined && isDismissedResult(last);
 }
@@ -666,11 +630,9 @@ export function nativeInputCause(message: AgentMessage, history: readonly AgentM
 	if (message.role === "user") return "learner";
 	if (message.role === "system" || message.role === "assistant") return "neutral";
 	if (message.role === "custom") {
-		if (["probe-handoff", "subagent-steer", "subagent-abort"].includes(message.customType)) return "automatic";
+		if (["subagent-steer", "subagent-abort"].includes(message.customType)) return "automatic";
 		if (["practice-thinking", "practice-next"].includes(message.customType)) return "learner";
-		return ["graph-context", "plan-block", "problem-dismissed", "compaction"].includes(message.customType)
-			? "neutral"
-			: "unrecognizable";
+		return ["problem-dismissed", "compaction"].includes(message.customType) ? "neutral" : "unrecognizable";
 	}
 	if (message.role === "toolResult") {
 		if (
@@ -699,7 +661,7 @@ export function nativeInputCause(message: AgentMessage, history: readonly AgentM
 	return "unrecognizable";
 }
 /** Full persisted native record, including pre-compaction causes. Never guessed foreground. */
-export function reconstructRequestCause(messages: readonly LhMessage[]): ReconstructedCause {
+export function reconstructRequestCause(messages: readonly LannaMessage[]): ReconstructedCause {
 	let inherited: ReconstructedCause = "ambiguous";
 	let triggers: NativeInputCause[] = [];
 	const seen = new Map<string, string>();
@@ -743,7 +705,7 @@ export function reconstructRequestCause(messages: readonly LhMessage[]): Reconst
 	return resolve();
 }
 
-export function needsContinuation(messages: readonly LhMessage[]): boolean {
+export function needsContinuation(messages: readonly LannaMessage[]): boolean {
 	const last = messages[messages.length - 1];
 	if (!last || (last as { role?: string }).role !== "toolResult") return false;
 	// The trailing results batch (contiguous by construction — the agent

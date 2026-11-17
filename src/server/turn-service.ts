@@ -13,11 +13,8 @@
  */
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { ToolResultMessage } from "@earendil-works/pi-ai";
-import type { LhMessage } from "../core/native-messages.ts";
+import type { LannaMessage } from "../core/native-messages.ts";
 import { newMessageId } from "../core/native-messages.ts";
-import { QUESTION_TOOLS } from "../core/pending.ts";
-import { planBlocksFor } from "../core/plan-blocks.ts";
 import type { ChatStore } from "../core/ports.ts";
 import { recordActivity } from "./lesson.ts";
 
@@ -60,26 +57,16 @@ export function persistTurn(
 	baseCount: number,
 	turnMessages: readonly AgentMessage[],
 	isAborted: boolean,
-): LhMessage[] {
+): LannaMessage[] {
 	try {
 		const record = chatStore.getChat(chatId);
 		if (!record) throw new Error(`Chat not found: ${chatId}`);
-		const stamped: LhMessage[] = [];
+		const stamped: LannaMessage[] = [];
 		for (const m of turnMessages.slice(baseCount)) {
-			const message = m as LhMessage;
-			// The placeholder question result: loop device, never a record fact.
-			if (
-				(message as { role?: string }).role === "toolResult" &&
-				(QUESTION_TOOLS as readonly string[]).includes((message as ToolResultMessage).toolName) &&
-				!(message as ToolResultMessage).isError
-			) {
-				continue;
-			}
-			stamped.push(message.id ? message : ({ ...message, id: newMessageId() } as LhMessage));
+			const message = m as LannaMessage;
+			stamped.push(message.id ? message : ({ ...message, id: newMessageId() } as LannaMessage));
 		}
-		const tree = record.tree;
-		const blocks = planBlocksFor(record.messages, stamped, tree, [...record.messages, ...stamped]);
-		const messages = [...record.messages, ...stamped, ...blocks];
+		const messages = [...record.messages, ...stamped];
 		chatStore.saveMessages(chatId, messages);
 		// A tutor unit's session counts once the learner types: the chat's own
 		// opening prompt is the only user message that is not theirs.

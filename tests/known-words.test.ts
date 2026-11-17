@@ -2,7 +2,7 @@
  * Words marked as known (E71): kept per profile, counted as met wherever
  * "known" is measured, a kept video measured again once the list changed,
  * and the word popover's lookup saying so. Runs under an isolated
- * LH_DATA_DIR, so app modules are imported after it.
+ * LANNA_DATA_DIR, so app modules are imported after it.
  */
 
 import assert from "node:assert/strict";
@@ -11,8 +11,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-known-words-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-known-words-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { knownWordStore } = await import("../src/store/known-words.ts");
 const { knownWords } = await import("../src/server/reading.ts");

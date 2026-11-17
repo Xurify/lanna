@@ -1,6 +1,6 @@
 ---
 name: grammar-explanations
-description: "How LangHarness writes an explanation of a Slovak grammar rule (a case walk-through, a table, a rule line, a Why? line, a chat answer): every form and rule comes from a source, the whole paradigm is covered, a rule is stated as a rule with its exceptions, every example says its case, and no word is used that the learner was not given. Use before and after writing or changing any rule text, example form, table row or grammar claim, in the app, on slovak.wiki or in chat."
+description: "How Lanna writes an explanation of a Slovak grammar rule (a case walk-through, a table, a rule line, a Why? line, a chat answer): every form and rule comes from a source, the whole paradigm is covered, a rule is stated as a rule with its exceptions, every example says its case, and no word is used that the learner was not given. Use before and after writing or changing any rule text, example form, table row or grammar claim, in the app, on slovak.wiki or in chat."
 ---
 
 # Grammar explanations

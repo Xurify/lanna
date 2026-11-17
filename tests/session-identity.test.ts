@@ -12,19 +12,13 @@ import {
 } from "@earendil-works/pi-ai";
 import { streamSimple as streamCodex } from "@earendil-works/pi-ai/api/openai-codex-responses";
 import { APP_IDENTITY, piEngineForSpec, type PiEngine } from "../src/agent/models.ts";
-import {
-	createProberAgent,
-	createTeacherAgent,
-	createPracticeAgent,
-	type AgentBuildOptions,
-} from "../src/agent/teacher-agent.ts";
+import { createChatAgent, createPracticeAgent, type AgentBuildOptions } from "../src/agent/teacher-agent.ts";
 import { runSubagent } from "../src/agent/subagents/pi-run.ts";
 import { healToolRecord } from "../src/agent/tools/heal.ts";
 import metadata from "../package.json" with { type: "json" };
 
 const factories = [
-	(opts: AgentBuildOptions) => createProberAgent({ chatId: opts.chatId, searchAvailable: () => false } as never, opts),
-	(opts: AgentBuildOptions) => createTeacherAgent(undefined, opts),
+	(opts: AgentBuildOptions) => createChatAgent({}, opts),
 	(opts: AgentBuildOptions) => createPracticeAgent({} as never, opts),
 ];
 
@@ -78,7 +72,7 @@ async function closed<T>(run: () => Promise<T>): Promise<T> {
 describe("native app and conversation identity", { concurrency: false }, () => {
 	it("shares one deeply frozen metadata-derived identity, without mutable conversation state", () => {
 		assert.deepEqual(APP_IDENTITY, {
-			userAgent: { custom: `langharness/${metadata.version}` },
+			userAgent: { custom: `lanna/${metadata.version}` },
 			attribution: { name: metadata.name, url: metadata.homepage },
 		});
 		for (const value of [APP_IDENTITY, APP_IDENTITY.userAgent, APP_IDENTITY.attribution])
@@ -86,7 +80,7 @@ describe("native app and conversation identity", { concurrency: false }, () => {
 		assert.ok(!Object.hasOwn(APP_IDENTITY, "sessionId"));
 	});
 
-	it("reconstructed prober/teacher/practice Agents reuse the exact chat id across tool rounds", async () => {
+	it("reconstructed chat/practice Agents reuse the exact chat id across tool rounds", async () => {
 		for (const chatId of ["chat_exact_native_123", "chat_independent_456"]) {
 			for (const factory of factories) {
 				const { engine, requests } = recordingEngine();
@@ -168,10 +162,10 @@ describe("native app and conversation identity", { concurrency: false }, () => {
 				};
 				for (const factory of factories)
 					await factory({ engine, chatId: "chat_wire_exact", tools: {} }).prompt("offline");
-				assert.equal(requests.length, 3);
+				assert.equal(requests.length, factories.length);
 				for (const request of requests) {
 					assert.equal(new URL(request.url).pathname, endpoint);
-					assert.equal(request.headers.get("user-agent"), `langharness/${metadata.version}`);
+					assert.equal(request.headers.get("user-agent"), `lanna/${metadata.version}`);
 					if (provider === "opencode-go") {
 						assert.equal(new URL(request.url).origin, "https://opencode.ai");
 						assert.equal(request.headers.get("x-opencode-client"), metadata.name);
@@ -199,7 +193,7 @@ describe("native app and conversation identity", { concurrency: false }, () => {
 				body = JSON.parse(await request.text());
 				return new Response("{}", { status: 400, headers: { "content-type": "application/json" } });
 			};
-			await createTeacherAgent(undefined, { engine, chatId: sessionId, tools: {} }).prompt("offline");
+			await createChatAgent({}, { engine, chatId: sessionId, tools: {} }).prompt("offline");
 			assert.equal(body.prompt_cache_key, Array.from(sessionId).slice(0, 64).join(""));
 			assert.equal(headers.get("session_id"), sessionId);
 		}));

@@ -6,7 +6,7 @@
  *
  *   npx tsx scripts/rebuild-lexicon.ts estonian russian
  *
- * The data folder is LH_DATA_DIR, else ./data. The old lexicon.json is kept
+ * The data folder is LANNA_DATA_DIR, else ./data. The old lexicon.json is kept
  * beside it as build/lexicon-before-<date>.json.
  */
 

@@ -1,6 +1,6 @@
-# Phonological Acquisition: Empirical Research and Pedagogical Applications for LangHarness
+# Phonological Acquisition: Empirical Research and Pedagogical Applications for Lanna
 
-_LangHarness Research Synthesis, November 2026. Theoretical grounding, empirical evidence, and implementation architecture for second-language speech perception, articulatory production, and automated pronunciation assessment._
+_Lanna Research Synthesis, November 2026. Theoretical grounding, empirical evidence, and implementation architecture for second-language speech perception, articulatory production, and automated pronunciation assessment._
 
 ---
 
@@ -19,7 +19,7 @@ Decades of empirical research in psycholinguistics, acoustic phonetics, and Comp
 5. **Orthography corrupts phonological representations:** Presenting written text simultaneously with acoustic input triggers top-down orthographic interference, causing learners to construct spurious phonetic categories based on L1 grapheme-to-phoneme rules (Bassetti 2006; Nimz 2016).
 6. **Intelligibility hinges on functional load:** Phonological errors do not degrade communication equally; pedagogical systems must prioritize high-functional-load contrasts (lexical minimal pairs, morphological markers) over low-functional-load phonetic subtleties (Catford 1987; Munro & Derwing 2006; Levis 2018).
 
-This document outlines the theoretical foundations and describes the architecture of phonological training implemented in LangHarness.
+This document outlines the theoretical foundations and describes the architecture of phonological training implemented in Lanna.
 
 ---
 
@@ -50,9 +50,9 @@ Logan, Lively & Pisoni (1991) and Bradlow et al. (1997, 1999) established the em
 
 ---
 
-## 2. Architecture Implemented in LangHarness
+## 2. Architecture Implemented in Lanna
 
-LangHarness translates these psycholinguistic principles into four concrete components:
+Lanna translates these psycholinguistic principles into four concrete components:
 
 1. **Curated Minimal-Pair Phonology Dataset (`curriculum/slovak/phonology-pairs.json`):**
    - High-contrast minimal pairs targeting Slovak phonemic distinctions:

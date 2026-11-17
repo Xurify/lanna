@@ -65,7 +65,7 @@ export function LogPage({ initial = null }: { initial?: { today: string; days: D
 	const isToday = log?.day === today;
 	return (
 		<div className="relative min-h-dvh bg-background" data-testid="log-page">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>
@@ -129,7 +129,7 @@ export function LogPage({ initial = null }: { initial?: { today: string; days: D
 				) : (
 					<p className="q-line dim mt-6">
 						{failed
-							? "The log could not be loaded. Check that LangHarness is still running, then reload."
+							? "The log could not be loaded. Check that Lanna is still running, then reload."
 							: days
 								? "No days yet. Each finished task shows up here."
 								: "\u00a0"}

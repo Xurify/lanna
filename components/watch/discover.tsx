@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Watch → picks (LangHarness, 2026-11-05): the shared state behind the shelf's
+ * Watch → picks (2026-11-05): the shared state behind the shelf's
  * For you and Creators tabs (useDiscover, post), and the link to the
  * learner's YouTube (the desktop app's own sign-in window, or a Google
  * Takeout export). The work is on the server (src/server/discover.ts); the
@@ -88,7 +88,7 @@ export function YouTubeSection({ d }: { d: Discover }) {
 	const accountRead = !signedOut && !!state && LISTS.some((l) => state.youtube[l]?.via === "account");
 
 	useEffect(() => {
-		const yt = window.lh?.youtube;
+		const yt = window.lanna?.youtube;
 		if (!yt) return;
 		void yt.status().then(
 			(s) => setDesktop({ connected: s.connected }),
@@ -97,7 +97,7 @@ export function YouTubeSection({ d }: { d: Discover }) {
 	}, []);
 
 	const readAccount = useCallback(async () => {
-		const yt = window.lh?.youtube;
+		const yt = window.lanna?.youtube;
 		if (!yt) return;
 		setBusy("Reading your history, recommendations and subscriptions…");
 		setMessage(null);
@@ -142,7 +142,7 @@ export function YouTubeSection({ d }: { d: Discover }) {
 	}, [apply, name]);
 
 	const connect = async () => {
-		const yt = window.lh?.youtube;
+		const yt = window.lanna?.youtube;
 		if (!yt) return;
 		setBusy("Sign in to Google in the window that opened…");
 		setMessage(null);
@@ -155,7 +155,7 @@ export function YouTubeSection({ d }: { d: Discover }) {
 	};
 
 	const disconnect = async () => {
-		const yt = window.lh?.youtube;
+		const yt = window.lanna?.youtube;
 		if (!yt) return;
 		const s = await yt.disconnect().catch(() => ({ available: true, connected: false }));
 		setDesktop({ connected: s.connected });

@@ -1,5 +1,5 @@
 /**
- * Where you are (LangHarness, 2026-11-06; creator-hooks proposals 3 and 4):
+ * Where you are (2026-11-06; creator-hooks proposals 3 and 4):
  * one card on Today for the horizon. The stage sentence names the gap that
  * limits the learner; two meters under it carry the same numbers, the binding
  * one in teal, with the need as a marker on the track; a dated scene, when

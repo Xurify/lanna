@@ -3,40 +3,32 @@
  *
  * Part of the domain-split contracts (src/core/contracts/): each domain file
  * is owned outright by its stream — cross-domain schema changes go through
- * master. Pure types + protocol docs + tiny pure helpers. See docs/vision.md.
+ * master. Pure types + protocol docs + tiny pure helpers.
  */
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
-import type { LhMessage } from "../native-messages.ts";
-import type { Phase3 } from "../phases.ts";
-import type { PlanNodeStatus, PlanTree } from "./plan.ts";
+import type { LannaMessage } from "../native-messages.ts";
 
 // ─── Chat records (the session store's on-disk format) ───────────────────────
 
 /** One persisted session: data/chats/<id>.json. Wave B (owner-approved
- * 2026-09-26): the stored messages are pi-NATIVE history (LhMessage — the
+ * 2026-09-26): the stored messages are pi-NATIVE history (LannaMessage — the
  * agent loop's own shapes, provider/model/usage/thinkingSignature stamped
  * by pi) — the canonical session record IS the agent state; replay is
  * `state.messages = record.messages` + continue(). The client-shaped view
  * is the client's own grouping fold (core/view.ts, Wave D) — a pending quiz
  * is an unanswered question tool call, which is exactly what makes
  * resume-mid-question free. */
-/** The session's kind (practice sessions, owner 2026-10-04): "teach" is
- *  the default and ABSENT on pre-practice records (no migration — absence
- *  reads as teach); "practice" marks an adaptive-practice session — the
- *  practice agent and its two tools; "chat" is the plain conversation with
- *  the tutor — short replies, inline drawings, only the checking tools. */
-export type ChatKind = "teach" | "practice" | "chat";
+/** "chat" is Ask, the conversation with the tutor (also every record without a kind); "practice" is a tutor unit's adaptive practice — the practice agent and its two tools. */
+export type ChatKind = "practice" | "chat";
 
 export interface ChatRecord {
 	id: string;
 	title: string;
 	createdAt: string;
 	updatedAt: string;
-	messages: LhMessage[];
-	/** The session's kind — absent = teach (pre-practice records). */
+	messages: LannaMessage[];
+	/** Absent on older records, which read as "chat". */
 	kind?: ChatKind;
-	/** The session's plan tree (vision §2) — written by plan tools via saveTree. */
-	tree?: PlanTree;
 	/** Append-only usage log (observability, 2026-09): one entry per model
 	 * turn. DELIBERATELY a parallel log, not per-message metadata — the client
 	 * re-POSTs its message list every turn and its copies never carry
@@ -121,43 +113,6 @@ export interface TurnUsage {
 	steps: CallUsage[];
 }
 
-// ─── Plan blocks (the plan lives in the chat) ────────────────────────────────
-
-/** Payload of the persisted `data-plan-block` UI part (2026-09 design): a
- * SNAPSHOT of the plan at the moment it changed, rendered as a block in the
- * chat flow. Attached to the assistant message that carries the plan_init
- * tool call (kind "full") or the answered check quiz part (kind
- * "neighborhood"). Data parts never reach the model (convertToModelMessages
- * drops them) — the block is pure UI history, reappearing identically on
- * reload because it lives in the record.
- *
- * Rendering contract: a "full" block renders the whole DAG borderless,
- * horizontally filling the chat column, natural height; a "neighborhood"
- * block renders current node + direct parents + direct children in its own
- * small container, the current node glowing — clearly a fragment, not the
- * whole plan. Clicking either opens the full plan in a popup. */
-
-/** The model-facing text of the probe→teach handoff wake (the custom-message
- *  scheme): the wake message carries only the data-probe-handoff part, and
- *  the adapter flattens it to THIS. Single-sourced so the prober's seam, the
- *  tests, and reality can't drift apart.
- *
- *  REASONING-FIRST PACING (owner, 2026-09-26): the wake is the one per-turn
- *  cue on the launch turn — the old one-liner read as a dispatch order
- *  ("author now") and the teacher skipped the deliberation the planning
- *  fragment asks for. So the wake paces it: reason out the optimal way to
- *  teach THIS person THIS thing BEFORE plan_init. Honest to the machinery
- *  — plan_init is still the first tool, the plan map still the first
- *  artifact, and presenting still ends the turn (the verdict death,
- *  2026-09-26: the learner's next message is a natural reply — a change
- *  request or the go-ahead). */
-export const HANDOFF_TEXT =
-	"Next: plan the full teaching arc from my current understanding to the goal understanding. " +
-	"Apply the teaching methodology in your system prompt, and find the optimal way to teach me this. " +
-	"Find the unconditional truths, plan the motivated derivations/discoveries, so every reasoning step has to land as obviously true. " +
-	"Take your time here and really think this through. " +
-	"When it's genuinely reasoned out, call plan_init and present the plan; I'll accept it or ask for changes.";
-
 // ─── Practice sessions (owner, 2026-10-04) — marker + ack texts ──────────────
 // Single-sourced here per the marker law: the model-facing text of every
 // custom marker lives in core/contracts, never in the flattening seam.
@@ -197,43 +152,15 @@ export const NEXT_PROBLEM_TEXT =
 export const COMPACTED_HISTORY_HEADER =
 	"[SESSION HISTORY COMPACTED] The transcript before this point was summarized to fit the context window; the summary below replaces it. Everything after this message is the verbatim recent transcript.";
 
-export interface PlanBlockData {
-	/** Only "full" survives (the 2026-09-11 pivot): the plan renders IN
-	 *  FLOW once, at authoring. The neighborhood fragments are retired —
-	 *  position derives live from the transcript (the persistent DAG
-	 *  window is the successor). */
-	kind: "full";
-	at: string;
-	/** The current node at snapshot time (the glow target; null = none). */
-	current: string | null;
-	/** All nodes of the authored tree. Statuses are the snapshot's,
-	 * derived at emission time — the block never re-derives at render. */
-	nodes: Array<{ id: string; title: string; status: PlanNodeStatus }>;
-	edges: Array<{ from: string; to: string }>;
-}
-
-/** The list view's shape (messageCount instead of full messages) + the
- *  per-session status the picker renders. `phase` and `pendingQuestion`
- *  derive from the stored record (tree + messages); the store computes
- *  them in listChats. Liveness (`busy`) is NOT record-derived — the API
- *  route merges it in (see ChatListItem).
- *
- *  Phase semantics (three phases, event-driven — docs/probe-teach-split.md
- *  §4): probe ends at the concluded probe_done, plan ends at the successful
- *  plan_init; derived from the transcript (core/phases.ts phaseAt3).
- */
+/** The list view's shape (messageCount instead of full messages). Liveness (`busy`) is NOT record-derived — the API route merges it in (see ChatListItem). */
 export interface ChatSummary {
 	id: string;
 	title: string;
 	createdAt: string;
 	updatedAt: string;
-	/** Normalized kind (absent record field reads as teach). */
+	/** Normalized kind (absent record field reads as chat). */
 	kind: ChatKind;
 	messageCount: number;
-	/** The session's current phase, derived from the stored plan tree. */
-	phase: Phase3;
-	/** An unanswered quiz/ask question is waiting for the learner. */
-	pendingQuestion: boolean;
 	/** Practice sessions (2026-10-04): a posed problem with no conclude —
 	 *  the sidebar meta's "Problem waiting". Absent on teaching sessions. */
 	pendingProblem: boolean;

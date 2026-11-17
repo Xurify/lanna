@@ -473,7 +473,7 @@ export function WeeklyCheckPlayer({
 			</CheckTop>
 
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-				<div key={item.id} className={cn(COLUMN, "lh-rise")}>
+				<div key={item.id} className={cn(COLUMN, "lanna-rise")}>
 					<PracticeCard
 						icon={listening ? "listen" : "check"}
 						title="Weekly check"
@@ -502,7 +502,7 @@ export function WeeklyCheckPlayer({
 									disabled={played}
 									autoFocus
 									aria-label="Play the sentence once"
-									className="lh-press group relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--q-card),0_0_0_4px_var(--q-teal)] disabled:cursor-not-allowed"
+									className="lanna-press group relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--q-card),0_0_0_4px_var(--q-teal)] disabled:cursor-not-allowed"
 									data-testid="check-play"
 								>
 									<svg viewBox="0 0 72 72" className="absolute inset-0 size-full -rotate-90" aria-hidden="true">
@@ -567,7 +567,7 @@ export function WeeklyCheckPlayer({
 										autoFocus
 										aria-label={mic === "recording" ? "Stop recording" : `Say the sentence in ${language.name}`}
 										aria-pressed={mic === "recording"}
-										className="lh-press group relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--q-card),0_0_0_4px_var(--q-teal)] disabled:cursor-not-allowed"
+										className="lanna-press group relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--q-card),0_0_0_4px_var(--q-teal)] disabled:cursor-not-allowed"
 										data-testid="check-mic"
 									>
 										<svg viewBox="0 0 72 72" className="absolute inset-0 size-full" aria-hidden="true">
@@ -651,7 +651,7 @@ export function WeeklyCheckPlayer({
 
 						<div className="mt-6 min-h-[4.5rem]" data-testid="check-feedback">
 							{answer ? (
-								<div className="lh-rise">
+								<div className="lanna-rise">
 									<p
 										className="font-prose text-[30px] font-[550] leading-[1.4] tracking-[-0.025em] text-foreground"
 										lang={language.code}
@@ -882,7 +882,7 @@ function EndScreen({
 
 function CheckTop({ count, children }: { count: string; children?: React.ReactNode }) {
 	return (
-		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+		<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 				<Link
 					href={STUDY_ROUTE}

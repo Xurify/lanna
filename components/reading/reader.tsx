@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The reader (LangHarness, 2026-10-28) — the Read task's screen. One
+ * The reader (2026-10-28) — the Read task's screen. One
  * episode of a graded story at the learner's level: the text in large
  * Slovak type, every word tappable for its dictionary form and meaning,
  * every sentence with its own play button and a Play all that reads the
@@ -523,7 +523,7 @@ function Writing({ initial, ownText }: { initial: WritingProgress | null; ownTex
 				<div className={cn(COLUMN, lines.length === 0 && "m-auto max-w-md text-center")} data-testid="read-writing">
 					<div className={cn("flex items-center gap-4", lines.length === 0 && "flex-col")}>
 						<div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2">
-							<SparklesIcon className="size-7 lh-flicker" />
+							<SparklesIcon className="size-7 lanna-flicker" />
 						</div>
 						<div>
 							<h1 className="font-ui text-2xl font-[600] text-foreground">{heading}</h1>
@@ -539,7 +539,7 @@ function Writing({ initial, ownText }: { initial: WritingProgress | null; ownTex
 							{lines.map((line, i) => (
 								<p
 									key={i}
-									className="lh-rise font-prose text-[1.65rem] leading-[1.6] text-foreground"
+									className="lanna-rise font-prose text-[1.65rem] leading-[1.6] text-foreground"
 									lang={lang?.code}
 								>
 									{line}
@@ -568,7 +568,7 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 	return (
 		<>
 			<div className="fixed inset-y-0 right-0 left-0 z-40 flex flex-col bg-background md:left-[var(--sidebar-cols,3.25rem)]">
-				{strip && <div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
+				{strip && <div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />}
 				{children}
 			</div>
 		</>
@@ -577,7 +577,7 @@ function Frame({ children, strip = true }: { children: React.ReactNode; strip?: 
 
 function TopBar({ story, step, progress }: { story: StoryRecord; step: string; progress: number }) {
 	return (
-		<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+		<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
 			<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 				{/* The 12px padding makes a 44px touch target; the matching margin keeps the icon on the text edge. */}
 				<Link
@@ -598,7 +598,7 @@ function TopBar({ story, step, progress }: { story: StoryRecord; step: string; p
 						aria-valuenow={Math.round(progress * 100)}
 						className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-well-2"
 					>
-						<div className="lh-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
+						<div className="lanna-fill rounded-full bg-teal" style={fillStyle(Math.max(0.02, progress))} />
 					</div>
 				</div>
 			</div>
@@ -746,7 +746,7 @@ function Text({
 
 	return (
 		<div className="flex flex-1 flex-col overflow-hidden">
-			<div className="lh-drag lh-wco-gutter shrink-0 select-none">
+			<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
 				<div className="mx-auto flex h-16 w-full max-w-[40rem] items-center gap-3 px-6 pt-2">
 					<Link
 						href="/"
@@ -776,7 +776,7 @@ function Text({
 
 			<div className="flex-1 overflow-y-auto pb-32 pt-4 sm:pt-8 [scrollbar-gutter:stable]">
 				<article
-					className="mx-auto w-full max-w-[40rem] px-6 lh-rise"
+					className="mx-auto w-full max-w-[40rem] px-6 lanna-rise"
 					data-testid="read-text"
 					data-word-lookup-enabled="true"
 				>
@@ -1023,7 +1023,7 @@ function End({
 				</>
 			}
 		>
-			<div className={cn("lh-end", hasSide && "lh-end-split")}>
+			<div className={cn("lanna-end", hasSide && "lanna-end-split")}>
 				<header className="min-w-0 [grid-area:head]">
 					<p className="q-date flex items-center gap-1.5">
 						<QIcon name="read" className="text-teal" />
@@ -1556,7 +1556,7 @@ function Shelf({
 
 	return (
 		<div className="flex flex-1 flex-col overflow-y-auto pb-16 pt-8 [scrollbar-gutter:stable]">
-			<div className={cn(COLUMN, "max-w-5xl lh-rise")} data-testid="read-shelf-list">
+			<div className={cn(COLUMN, "max-w-5xl lanna-rise")} data-testid="read-shelf-list">
 				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
 					<XIcon className="size-3.5" strokeWidth={1.6} />
 					Today

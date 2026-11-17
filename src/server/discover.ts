@@ -1,5 +1,5 @@
 /**
- * Picks for Watch (LangHarness, 2026-11-05) — behind /api/watch/discover.
+ * Picks for Watch (2026-11-05) — behind /api/watch/discover.
  * The learner saves creators (a channel link, an @handle or one of their
  * videos); the app reads their newest uploads from the channel's feed,
  * and the videos from the learner's YouTube history, recommendations and

@@ -1,9 +1,9 @@
 /**
- * MY MISTAKES ON DISK (LangHarness, 2026-11-01): the first visit takes a
+ * MY MISTAKES ON DISK (2026-11-01): the first visit takes a
  * snapshot, "Analyze now" takes a new one with a later time and keeps the
  * guide, and a guide is reused while its facts stand. The model call itself
  * is not run here: a saved guide stands in for one. Runs under an isolated
- * LH_DATA_DIR, so every app-module import is dynamic.
+ * LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -11,9 +11,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-mistakes-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-mistakes-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { recordLesson } = await import("../src/server/lesson.ts");
 const { mistakesReport, analyzeNow, writeGuide } = await import("../src/server/mistakes.ts");

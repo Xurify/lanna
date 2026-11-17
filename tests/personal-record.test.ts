@@ -1,8 +1,8 @@
 /**
- * THE PERSONAL LESSON ON DISK (LangHarness, 2026-11-01), end to end with a
+ * THE PERSONAL LESSON ON DISK (2026-11-01), end to end with a
  * scripted model: the guide's reply is read, its targets are kept with the
  * guide, its pairs become probes, the plan offers the lesson, and finishing
- * it counts the day and moves no unit. Runs under an isolated LH_DATA_DIR.
+ * it counts the day and moves no unit. Runs under an isolated LANNA_DATA_DIR.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -11,9 +11,9 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import { createFauxCore, fauxAssistantMessage } from "@earendil-works/pi-ai";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-personal-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-personal-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { recordLesson, personalFor } = await import("../src/server/lesson.ts");
 const { analyzeNow, writeGuide } = await import("../src/server/mistakes.ts");

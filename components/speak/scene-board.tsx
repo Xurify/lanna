@@ -105,7 +105,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 				<div className="mx-auto w-full max-w-5xl px-5 pt-[5vh] pb-12 @md:px-6">
 					<Link
 						href="/"
-						className="lh-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
+						className="lanna-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
 					>
 						<ArrowLeftIcon className="size-3.5" />
 						Today
@@ -172,7 +172,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 															data-scene-row={s.id}
 															data-testid={`scene-${s.id}`}
 															className={cn(
-																"lh-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors",
+																"lanna-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors",
 																on ? "bg-well" : "hover:bg-well",
 															)}
 														>
@@ -336,7 +336,7 @@ function SceneSheet({
 	return (
 		<article
 			className={cn(
-				inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lh-rise border-l border-[var(--q-line)] pl-8",
+				inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lanna-rise border-l border-[var(--q-line)] pl-8",
 			)}
 			data-testid={tid("speak-sheet")}
 			aria-label={scene.title}

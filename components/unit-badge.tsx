@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { UnitIcon } from "@/components/lesson/unit-icon";
 
 /**
- * A unit's circle on the path (LangHarness): its icon, with a ring that
+ * A unit's circle on the path: its icon, with a ring that
  * fills toward completion, a gold check once done, a lock while its
  * chapter or prerequisites are still ahead. Shared by the Today page's
  * Continue card and the curriculum path.
@@ -34,7 +34,10 @@ export function UnitBadge({
 	const ring = "var(--q-teal)";
 	return (
 		<span
-			className={cn("relative inline-flex shrink-0 items-center justify-center rounded-full", active && "lh-here-ring")}
+			className={cn(
+				"relative inline-flex shrink-0 items-center justify-center rounded-full",
+				active && "lanna-here-ring",
+			)}
 			style={{ width: px, height: px }}
 		>
 			<svg width={px} height={px} className="absolute inset-0 -rotate-90" aria-hidden="true">

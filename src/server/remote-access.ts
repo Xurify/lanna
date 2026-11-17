@@ -1,5 +1,5 @@
 /**
- * Remote access (E21, 2026-11-01): who may open LangHarness from another
+ * Remote access (E21, 2026-11-01): who may open Lanna from another
  * device. OFF by default, and then nothing changes: the server answers this
  * computer only, as it always has.
  *
@@ -25,7 +25,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { loopbackHost } from "./desktop-access.ts";
 
-export const DEVICE_COOKIE = "lh_device";
+export const DEVICE_COOKIE = "lanna_device";
 /** A paired device stays signed in this long, unless it is revoked first. */
 export const DEVICE_SESSION_DAYS = 180;
 /** A pairing code works this long, and for this many wrong tries. */
@@ -37,18 +37,18 @@ export const PAIRING_CODE_DIGITS = 6;
 const DEFAULT_PORT = 3010;
 
 const REMOTE_OFF_MESSAGE = "Remote access is off. Turn it on in Settings → Devices, on this computer.";
-const ONLY_THIS_COMPUTER_API = "The LangHarness API only answers this computer.";
-const ONLY_THIS_COMPUTER_PAGE = "LangHarness only answers this computer.";
-const DESKTOP_ONLY_API = "Desktop API access requires the trusted LangHarness window.";
+const ONLY_THIS_COMPUTER_API = "The Lanna API only answers this computer.";
+const ONLY_THIS_COMPUTER_PAGE = "Lanna only answers this computer.";
+const DESKTOP_ONLY_API = "Desktop API access requires the trusted Lanna window.";
 const ADDRESS_NOT_ALLOWED = "This address is not allowed. Use this computer’s Tailscale name.";
 const PUBLIC_NOT_CONFIGURED =
-	"The public address is not set up: LH_PUBLIC_HOST must be a host name, and LH_PROXY_SECRET at least 32 characters.";
+	"The public address is not set up: LANNA_PUBLIC_HOST must be a host name, and LANNA_PROXY_SECRET at least 32 characters.";
 const ONLY_THROUGH_PROXY = "This address answers only through its reverse proxy.";
 const PUBLIC_ADDRESS_MISMATCH = "This address is not allowed. Use the public address.";
 const HTTPS_REQUIRED = "This address needs HTTPS.";
 const WEB_ACCESS_OFF =
 	"Web access is off. Turn it on in Settings → Devices, or run npm run web:password on the server.";
-const CROSS_ORIGIN = "This request did not come from LangHarness’s own page.";
+const CROSS_ORIGIN = "This request did not come from Lanna’s own page.";
 
 /**
  * Headers that only a proxy sends. The x-forwarded-* family is deliberately not
@@ -67,7 +67,7 @@ const PROXY_HEADERS = [
 	"tailscale-app-capabilities",
 ];
 
-export const PROXY_SECRET_HEADER = "x-lh-proxy-secret";
+export const PROXY_SECRET_HEADER = "x-lanna-proxy-secret";
 export const PROXY_SECRET_MIN_LENGTH = 32;
 
 export type PublicMode = { host: string; secretConfigured: boolean; secretOk: boolean };
@@ -81,7 +81,7 @@ export type AccessInput = {
 	enabled: boolean;
 	/** The packaged desktop window: its per-launch secret matched. */
 	desktopWindow: boolean;
-	/** The pre-remote desktop check (desktopAPIAuthorized): with LH_DESKTOP_SERVER=1 the API needs the secret. */
+	/** The pre-remote desktop check (desktopAPIAuthorized): with LANNA_DESKTOP_SERVER=1 the API needs the secret. */
 	desktopApiOk: boolean;
 	/** A live, unexpired paired-device session was presented. */
 	paired: boolean;
@@ -148,9 +148,9 @@ export function publicModeFrom(
 	headers: Headers,
 	env: Record<string, string | undefined> = process.env,
 ): PublicMode | null {
-	const host = env.LH_PUBLIC_HOST?.trim().toLowerCase();
+	const host = env.LANNA_PUBLIC_HOST?.trim().toLowerCase();
 	if (!host) return null;
-	const secret = env.LH_PROXY_SECRET ?? "";
+	const secret = env.LANNA_PROXY_SECRET ?? "";
 	const secretConfigured = secret.length >= PROXY_SECRET_MIN_LENGTH;
 	const supplied = headers.get(PROXY_SECRET_HEADER);
 	return {

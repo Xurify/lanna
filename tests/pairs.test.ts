@@ -1,5 +1,5 @@
 /**
- * PAIRS PINS (LangHarness, phase 3, Dvojičky): the pairs file's shape, the
+ * PAIRS PINS (phase 3, Dvojičky): the pairs file's shape, the
  * drop rule (fewer than three verified sentences), the rep invariants (two
  * options, the target form really in the sentence, exactly one correct),
  * and the units sitting right after their chapter's forms step.

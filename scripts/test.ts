@@ -5,7 +5,7 @@
  * - `tsx --test tests/*.test.ts tests/*.test.tsx` ran 268 files inside Node's
  *   test runner with heavy tsx loader startup per child process (~190s on Windows),
  *   and hit Windows command-line length limits when expanded by shells.
- * - Several test files mutate module-load process globals (`process.env.LH_DATA_DIR`,
+ * - Several test files mutate module-load process globals (`process.env.LANNA_DATA_DIR`,
  *   `globalThis.window`, `globalThis.document`, `globalThis.fetch`), so running all
  *   268 files in a single `bun test` process causes cross-file state collisions.
  * - Spawning isolated `bun test <file>` workers across CPU cores gives full
@@ -73,7 +73,7 @@ async function main(): Promise<void> {
 	const runner = resolveRunner();
 	const concurrency = Math.max(
 		1,
-		Math.min(files.length, Number(process.env.LH_TEST_JOBS) || Math.min(os.cpus().length, 12)),
+		Math.min(files.length, Number(process.env.LANNA_TEST_JOBS) || Math.min(os.cpus().length, 12)),
 	);
 	const start = performance.now();
 

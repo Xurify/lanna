@@ -10,9 +10,9 @@ import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, test } from "node:test";
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-language-add-"));
-process.env.LH_DATA_DIR = dir;
-delete process.env.LH_PROFILE;
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-language-add-"));
+process.env.LANNA_DATA_DIR = dir;
+delete process.env.LANNA_PROFILE;
 
 const build = await import("../src/core/language-build.ts");
 const { languageById, parseLanguageInfo, referenceLink } = await import("../src/core/language.ts");

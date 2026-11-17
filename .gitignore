@@ -14,9 +14,7 @@ dist/
 # dev auth/keys store (auth-keys wave): repo-root auth.json — secrets never committed
 auth.json
 auth-saved.json
-chatgpt-credentials.json*
-github-copilot-credentials.json*
-xai-credentials.json*
+subscriptions.json*
 
 # dev-fresh launcher scratch (fresh-user sim): disposable per launch
 .fresh-data/
@@ -27,7 +25,7 @@ xai-credentials.json*
 _backup-before-redesign/
 _backup-before-curriculum/
 *.bundle
-langharness-2.tar.gz
+lanna-2.tar.gz
 
 # Deploy leftovers from assistant threads (never needed)
 _handoff/

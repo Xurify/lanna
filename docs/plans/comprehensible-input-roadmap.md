@@ -1,12 +1,12 @@
 # Comprehensible Input & SLA Roadmap: Watch/Read Tuning, Silent Period, and Error Correction
 
-_LangHarness Architecture & Roadmap Plan, November 2026. Aligned with Krashen (1982, 1985), Nation (2007), and modern SLA cognitive research._
+_Lanna Architecture & Roadmap Plan, November 2026. Aligned with Krashen (1982, 1985), Nation (2007), and modern SLA cognitive research._
 
 ---
 
 ## 1. Executive Summary
 
-While LangHarness established the four strands (Nation 2007) and built initial Watch and Read tasks, our cognitive audit reveals three critical pedagogical bottlenecks:
+While Lanna established the four strands (Nation 2007) and built initial Watch and Read tasks, our cognitive audit reveals three critical pedagogical bottlenecks:
 
 1. **The Comprehensible Input (CI) Pipeline in Watch/Read is raw:** Authentic YouTube videos often drop to 75–80% coverage (overwhelming the working memory), while Read episodes test forms immediately rather than allowing multiple immersion sweeps.
 2. **Onboarding lacks a "Silent Period":** New language profiles force oral production, speech recognition, and active cloze generation from Day 1, spiking the learner's _Affective Filter_ and triggering reliance on L1 translation crutches.
@@ -46,7 +46,7 @@ This roadmap details the three implementation phases to resolve these gaps.
 
 In natural first and second language acquisition, learners undergo an initial stage (weeks to months) where they produce little to no oral language. During this phase, internal competence is constructed through receptive listening. Forcing early speech forces learners to substitute native-language (L1) syntactic structures, generating fossilized bad habits and speech anxiety.
 
-### B.2. Structural Implementation in LangHarness
+### B.2. Structural Implementation in Lanna
 
 - **A0 / Early A1 Mode ("Receptive Foundation"):**
   - All microphone tasks (`speak`, `fluency`, oral shadowing) are deactivated during the first 14 days or until 200 receptive sentences are comprehended.

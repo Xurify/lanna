@@ -292,7 +292,7 @@ export function WordCheck() {
 
 							<div className="mt-4 flex min-h-28 flex-col gap-2">
 								{feedback ? (
-									<div className="lh-fade" data-testid="word-check-feedback" data-no-word-lookup="true">
+									<div className="lanna-fade" data-testid="word-check-feedback" data-no-word-lookup="true">
 										<p className="font-prose text-[17px] text-foreground">
 											<span lang={lang?.code} className="font-semibold">
 												{feedback.lemma}

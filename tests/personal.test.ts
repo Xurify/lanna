@@ -1,5 +1,5 @@
 /**
- * THE PERSONAL LESSON (LangHarness, 2026-11-01): the guide's model names
+ * THE PERSONAL LESSON (2026-11-01): the guide's model names
  * targets, the lexicon decides which survive, and the lesson is built from
  * verified sentences only. Pins: what resolvePractice keeps and drops, the
  * rep invariants (every rep a real sentence, targets interleaved, open pairs

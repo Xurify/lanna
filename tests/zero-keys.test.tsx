@@ -13,6 +13,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { hasProviderKey, strongKeyless, ZeroKeysPill } from "../components/setup-cta.tsx";
 import type { ModelCatalogResponse } from "../src/core/index.ts";
 import { SetupKeysBody } from "../components/setup-dialog.tsx";
+import { ServerEventsProvider } from "../components/server-events.tsx";
 import { DICTATION_KEYLESS, DEEPGRAM_KEY_ID } from "../components/dictation.tsx";
 import type { AuthKeyStatus } from "../src/core/auth-keys.ts";
 import type { ProviderKeyInfo } from "../components/settings/keys-section.tsx";
@@ -77,10 +78,16 @@ describe("SetupKeysBody — stage 1's self-contained first-key screen", () => {
 	};
 
 	it("before a pick: the provider trigger, no key input yet", () => {
-		const html = renderToStaticMarkup(createElement(SetupKeysBody, { ...base, providers: PROVIDERS, provider: null }));
+		const html = renderToStaticMarkup(
+			createElement(
+				ServerEventsProvider,
+				null,
+				createElement(SetupKeysBody, { ...base, providers: PROVIDERS, provider: null }),
+			),
+		);
 		assert.ok(
-			html.indexOf('data-testid="setup-key-provider"') < html.indexOf('data-testid="chatgpt-login"'),
-			"API keys remain primary, ChatGPT is secondary",
+			html.indexOf('data-testid="setup-key-provider"') < html.indexOf('data-testid="subscriptions"'),
+			"API keys remain primary, subscriptions are secondary",
 		);
 		assert.doesNotMatch(html, /chatgpt-privacy-notice|OpenAI privacy|Manage usage/);
 		assert.ok(html.includes("Choose your AI provider and paste its API key. You’ll pick your models next."));
@@ -92,7 +99,11 @@ describe("SetupKeysBody — stage 1's self-contained first-key screen", () => {
 
 	it("after a pick: the paste input + Save join", () => {
 		const html = renderToStaticMarkup(
-			createElement(SetupKeysBody, { ...base, providers: PROVIDERS, provider: PROVIDERS[0]! }),
+			createElement(
+				ServerEventsProvider,
+				null,
+				createElement(SetupKeysBody, { ...base, providers: PROVIDERS, provider: PROVIDERS[0]! }),
+			),
 		);
 		assert.ok(html.includes('data-testid="setup-key-input"'));
 		assert.ok(html.includes('data-testid="setup-key-save"'));
@@ -102,12 +113,16 @@ describe("SetupKeysBody — stage 1's self-contained first-key screen", () => {
 
 	it("a shape-gate 400 keeps its line inline — no Settings round-trip chrome", () => {
 		const html = renderToStaticMarkup(
-			createElement(SetupKeysBody, {
-				...base,
-				providers: PROVIDERS,
-				provider: PROVIDERS[0]!,
-				error: "Expected 20+ characters",
-			}),
+			createElement(
+				ServerEventsProvider,
+				null,
+				createElement(SetupKeysBody, {
+					...base,
+					providers: PROVIDERS,
+					provider: PROVIDERS[0]!,
+					error: "Expected 20+ characters",
+				}),
+			),
 		);
 		assert.ok(html.includes('data-testid="setup-key-error"'));
 		assert.ok(html.includes("Expected 20+ characters"));

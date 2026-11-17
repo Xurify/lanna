@@ -16,19 +16,19 @@ import {
 } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../src/agent/models.ts";
 import type { AgentBuildOptions } from "../src/agent/teacher-agent.ts";
-import type { LhMessage } from "../src/core/native-messages.ts";
+import type { LannaMessage } from "../src/core/native-messages.ts";
 
 // Set the data/auth seams BEFORE importing app modules. Do not read local
 // keys, recordings, or learner sessions, even if a dev server is running.
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lh-send-to-user-"));
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-send-to-user-"));
 const originalEnv = process.env;
 const originalFetch = globalThis.fetch;
 process.env = {
 	...(originalEnv.NODE_TEST_CONTEXT ? { NODE_TEST_CONTEXT: originalEnv.NODE_TEST_CONTEXT } : {}),
 	...(originalEnv.NODE_OPTIONS ? { NODE_OPTIONS: originalEnv.NODE_OPTIONS } : {}),
 	NODE_ENV: "test",
-	LH_DATA_DIR: path.join(scratch, "data"),
-	LH_AUTH_FILE: path.join(scratch, "auth.json"),
+	LANNA_DATA_DIR: path.join(scratch, "data"),
+	LANNA_AUTH_FILE: path.join(scratch, "auth.json"),
 	HOME: path.join(scratch, "home"),
 };
 globalThis.fetch = async () => {
@@ -41,8 +41,7 @@ after(() => {
 });
 
 const { sendToUserTool } = await import("../src/agent/tools/send-to-user.ts");
-const { createProberAgent, createTeacherAgent, createPracticeAgent, composeInstructions } =
-	await import("../src/agent/teacher-agent.ts");
+const { createChatAgent, createPracticeAgent, composeInstructions } = await import("../src/agent/teacher-agent.ts");
 const {
 	SEND_TO_USER_TOOL,
 	activeProblemOf,
@@ -70,19 +69,17 @@ function scripted(provider: string, id: string, steps: FauxResponseStep[] = []) 
 
 const chatId = chatStore.createChat("Synthetic output gate").id;
 const factories = {
-	prober: (opts: AgentBuildOptions) =>
-		createProberAgent({ chatId, chatStore, jobStore, deliver: () => {}, spawn: () => {} }, opts),
-	teacher: (opts: AgentBuildOptions) => createTeacherAgent({ chatId, chatStore, jobStore, spawn: () => {} }, opts),
+	chat: (opts: AgentBuildOptions) => createChatAgent({ jobs: { chatId, jobStore, spawn: () => {} } }, opts),
 	practice: (opts: AgentBuildOptions) => createPracticeAgent({ chatId, chatStore }, opts),
 };
 
 function outputCall(message: string | number | null = "An explanation.", id = "send-1") {
 	return { type: "toolCall" as const, id, name: SEND_TO_USER_TOOL, arguments: { message } };
 }
-function assistant(content: unknown[], id = "a1"): LhMessage {
-	return { ...fauxAssistantMessage(""), content, id } as LhMessage;
+function assistant(content: unknown[], id = "a1"): LannaMessage {
+	return { ...fauxAssistantMessage(""), content, id } as LannaMessage;
 }
-function ack(callId = "send-1", isError = false): LhMessage {
+function ack(callId = "send-1", isError = false): LannaMessage {
 	return {
 		id: `result-${callId}`,
 		role: "toolResult",
@@ -112,13 +109,15 @@ describe("send_to_user model gate", () => {
 		["openai", "gpt-4o-mini", false],
 		["anthropic", "opaque-alias", false],
 	] as const) {
-		it(`${provider}/${id}: ${enabled ? "includes" : "omits"} tool and description in all conversation agents`, () => {
+		it(`${provider}/${id}: ${enabled ? "includes" : "omits"} tool and description in the practice agent, never the chat`, () => {
 			const { engine } = scripted(provider, id);
 			for (const [kind, factory] of Object.entries(factories)) {
 				const agent = factory({ engine });
 				const output = agent.state.tools.find((tool) => tool.name === SEND_TO_USER_TOOL);
-				assert.equal(Boolean(output), enabled, kind);
-				if (enabled) {
+				// The Ask chat never carries the learner-output tool (baseAgentOptions: kind !== "chat").
+				const expected = enabled && kind === "practice";
+				assert.equal(Boolean(output), expected, kind);
+				if (expected) {
 					assert.equal(output!.description, sendToUserTool.description);
 					assert.equal(typeof output!.prepareArguments, "function", "standard argument healing is wired");
 				}
@@ -128,9 +127,9 @@ describe("send_to_user model gate", () => {
 		});
 	}
 
-	it("explicitly injected teacher/practice test registries remain unchanged", () => {
+	it("explicitly injected chat/practice test registries remain unchanged", () => {
 		const { engine } = scripted("anthropic", "claude-opus-5-5");
-		for (const factory of [factories.teacher, factories.practice]) {
+		for (const factory of [factories.chat, factories.practice]) {
 			assert.deepEqual(factory({ engine, tools: {} }).state.tools, []);
 		}
 	});
@@ -191,7 +190,7 @@ describe("send_to_user mechanics", () => {
 				fauxThinking("Not lesson prose."),
 				fauxText("First"),
 				outputCall(message),
-				fauxToolCall("quiz", { question: "Q?" }),
+				fauxToolCall("pose", { answer: "Q", focus: "f" }),
 			]),
 			["First", message],
 		);
@@ -205,7 +204,7 @@ describe("send_to_user transcript projection", () => {
 				fauxText("Before."),
 				outputCall("**The lesson.** $x = 1$"),
 				fauxThinking("Private reasoning."),
-				fauxToolCall("quiz", { question: "Q?" }, { id: "quiz-1" }),
+				fauxToolCall("pose", { answer: "Q", focus: "f" }, { id: "pose-1" }),
 				fauxText("After."),
 			]),
 			ack(),
@@ -214,7 +213,7 @@ describe("send_to_user transcript projection", () => {
 		const view = projectView(messages);
 		assert.deepEqual(
 			view[0]!.parts.map((p) => p.type),
-			["step-start", "reasoning", "text", "text", "tool-quiz", "text"],
+			["step-start", "reasoning", "text", "text", "tool-pose", "text"],
 		);
 		assert.deepEqual(prose(view), ["Before.", "**The lesson.** $x = 1$", "After."]);
 		assert.equal(view[0]!.parts.find((p) => p.type === "reasoning")!.text, "Private reasoning.");
@@ -300,7 +299,7 @@ describe("send_to_user native flow (offline)", () => {
 				return fauxAssistantMessage([fauxText("Final plain reply.")]);
 			},
 		]);
-		const agent = createTeacherAgent(undefined, { engine });
+		const agent = createPracticeAgent({ chatId, chatStore }, { engine });
 		await agent.prompt("Synthetic request.");
 		assert.equal(faux.state.callCount, 2);
 	});
@@ -353,7 +352,7 @@ describe("send_to_user native flow (offline)", () => {
 			await agent.prompt("Pose a synthetic problem.");
 			assert.equal(faux.state.callCount, 1);
 			assert.ok(!agent.state.messages.some((m) => m.role === "toolResult"));
-			const messages = agent.state.messages.map((m, i) => ({ ...m, id: `interrupted-${i}` })) as LhMessage[];
+			const messages = agent.state.messages.map((m, i) => ({ ...m, id: `interrupted-${i}` })) as LannaMessage[];
 			assert.equal(activeProblemOf(messages), null);
 			assert.deepEqual(prose(projectView(messages)), []);
 		});
@@ -394,29 +393,27 @@ describe("send_to_user native flow (offline)", () => {
 		assert.ok(results[1]?.role === "toolResult" && !results[1].isError);
 	});
 
-	it("output + question streams, persists natively, replays, and reloads as prose before the question", async () => {
+	it("output + problem streams, persists natively, replays, and reloads as prose before the problem", async () => {
 		const lesson = "**Synthetic lesson:** four is twice two. $2 + 2 = 4$";
-		const quiz = {
-			type: "check",
-			nodeId: "synthetic",
-			question: "What is two plus two?",
-			options: [
-				{ label: "Four", value: "4" },
-				{ label: "Five", value: "5" },
-			],
-			correctAnswer: "4",
-			explanation: "Add two pairs.",
+		const problem = {
+			statement: "What is two plus two?",
+			mode: "recall",
+			modelSolution: "Four.",
 		};
 		const { engine, faux } = scripted("openrouter", "anthropic/claude-opus-5.5", [
 			fauxAssistantMessage(
-				[fauxThinking("Synthetic private thought."), outputCall(lesson), fauxToolCall("quiz", quiz, { id: "quiz-1" })],
+				[
+					fauxThinking("Synthetic private thought."),
+					outputCall(lesson),
+					fauxToolCall("problem", problem, { id: "problem-1" }),
+				],
 				{ stopReason: "toolUse" },
 			),
 		]);
 		const chat = chatStore.createChat("Synthetic native output flow");
 		const user = newUserMessage("Explain synthetic arithmetic.");
 		chatStore.saveMessages(chat.id, [user]);
-		const agent = createTeacherAgent(undefined, { engine, messages: asAgentMessages([user]) });
+		const agent = createPracticeAgent({ chatId: chat.id, chatStore }, { engine, messages: asAgentMessages([user]) });
 		const handle = runPiTurn({
 			agent,
 			updateFlushMs: 0,
@@ -426,7 +423,7 @@ describe("send_to_user native flow (offline)", () => {
 		});
 		const wire = await new Response(handle.subscribe()).text();
 		assert.ok(wire.endsWith("data: [DONE]\n\n"));
-		assert.equal(faux.state.callCount, 1, "question stops the mixed batch as before");
+		assert.equal(faux.state.callCount, 1, "the problem pose stops the mixed batch");
 		const saved = chatStore.getChat(chat.id)!.messages;
 		const response = saved.find((m) => m.role === "assistant")!;
 		assert.equal(response.role, "assistant");
@@ -441,8 +438,8 @@ describe("send_to_user native flow (offline)", () => {
 			"native output ack persists",
 		);
 		assert.ok(
-			!saved.some((m) => m.role === "toolResult" && m.toolName === "quiz"),
-			"question placeholder remains transient",
+			saved.some((m) => m.role === "toolResult" && m.toolName === "problem"),
+			"the practice pose result is final and persists",
 		);
 		const providerHistory = toLlmMessages(asAgentMessages(saved));
 		assert.deepEqual(
@@ -452,7 +449,7 @@ describe("send_to_user native flow (offline)", () => {
 		);
 		assert.deepEqual(prose(projectView(saved)), [lesson]);
 		const parts = projectView(saved).flatMap((m) => m.parts);
-		assert.ok(parts.findIndex((p) => p.type === "text") < parts.findIndex((p) => p.type === "tool-quiz"));
+		assert.ok(parts.findIndex((p) => p.type === "text") < parts.findIndex((p) => p.type === "tool-problem"));
 		const client = new SessionModel({ chatId: chat.id, initialMessages: [user], fetch: globalThis.fetch });
 		await client.consumeStream(new Response(wire));
 		assert.deepEqual(prose(client.getState().messages), [lesson], "native event replay shows the lesson exactly once");

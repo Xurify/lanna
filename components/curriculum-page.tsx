@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /curriculum — the whole map, every chapter open (LangHarness). The Today
+ * /curriculum — the whole map, every chapter open. The Today
  * page shows the same path folded to the current chapter; this is where
  * the learner sees how far the road goes and what each stage buys.
  */
@@ -107,7 +107,7 @@ export function CurriculumPage({
 
 	return (
 		<div className="relative min-h-dvh bg-background">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>

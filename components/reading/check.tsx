@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The comprehension check (LangHarness, 2026-10-28) — shared by the Read
+ * The comprehension check (2026-10-28) — shared by the Read
  * and Watch tasks: one Slovak question at a time, its kind named over
  * it, three or four options (keys 1–4), the right one spoken and marked,
  * Continue (Enter) to the next.
@@ -67,7 +67,7 @@ export function Check({
 			<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[9vh]">
 				<div
 					key={i}
-					className={cn(COLUMN, "lh-rise")}
+					className={cn(COLUMN, "lanna-rise")}
 					data-testid="read-question"
 					data-word-lookup-enabled={picked !== null ? "true" : "false"}
 				>

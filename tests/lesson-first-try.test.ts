@@ -1,5 +1,5 @@
 /**
- * LESSON FIRST TRIES ON THE SERVER (LangHarness, 2026-10-31): a recorded
+ * LESSON FIRST TRIES ON THE SERVER (2026-10-31): a recorded
  * lesson counts each rep's first answer — the one before any cue — on the
  * drill the rep practiced, split by the word's gender column
  * (progress.json units: first, byGender), and the lesson log keeps the
@@ -7,7 +7,7 @@
  * and the end-of-lesson retry never count; a mixed lesson counts toward
  * the cases it drilled.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -16,9 +16,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-lesson-first-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-lesson-first-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { recordLesson } = await import("../src/server/lesson.ts");
 const { progressStore } = await import("../src/store/progress.ts");

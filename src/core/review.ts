@@ -1,5 +1,5 @@
 /**
- * Spaced review (LangHarness) — the cloze deck's pure model. Browser-safe.
+ * Spaced review — the cloze deck's pure model. Browser-safe.
  *
  * A card is one sentence from the lexicon with one word blanked out
  * (Clozemaster-style). Cards are minted lazily from the lexicon in

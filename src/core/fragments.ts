@@ -1,5 +1,5 @@
 /**
- * Fragments of a video (LangHarness, 2026-11-06) — the stretches of a long
+ * Fragments of a video (2026-11-06) — the stretches of a long
  * video worth watching, found from its captions with no model call.
  *
  * Why: a 45-minute vlog the learner knows 70% of is noise, but two minutes

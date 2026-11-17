@@ -5,12 +5,12 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import { pathToFileURL } from "node:url";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-secrets-"));
-process.env.LH_DATA_DIR = path.join(TMP, "data");
-process.env.LH_AUTH_FILE = path.join(TMP, "auth.json");
-process.env.LH_IGNORE_ENV_KEYS = "1";
-delete process.env.LH_DESKTOP_SERVER;
-delete process.env.LH_DESKTOP_API_SECRET;
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-secrets-"));
+process.env.LANNA_DATA_DIR = path.join(TMP, "data");
+process.env.LANNA_AUTH_FILE = path.join(TMP, "auth.json");
+process.env.LANNA_IGNORE_ENV_KEYS = "1";
+delete process.env.LANNA_DESKTOP_SERVER;
+delete process.env.LANNA_DESKTOP_API_SECRET;
 
 const canary = (name: string) => `canary-${name}-7f3a9c2e51b84d60a1c3e5f70912ab34-wxyz`;
 const SECRETS: Record<string, string> = {
@@ -32,68 +32,44 @@ const CREDENTIAL_TOKENS = [
 	canary("xai-access"),
 ];
 
-fs.mkdirSync(process.env.LH_DATA_DIR, { recursive: true });
-fs.writeFileSync(process.env.LH_AUTH_FILE, JSON.stringify(SECRETS), { mode: 0o600 });
+fs.mkdirSync(process.env.LANNA_DATA_DIR, { recursive: true });
+fs.writeFileSync(process.env.LANNA_AUTH_FILE, JSON.stringify(SECRETS), { mode: 0o600 });
 fs.writeFileSync(
-	path.join(TMP, "chatgpt-credentials.json"),
+	path.join(TMP, "subscriptions.json"),
 	JSON.stringify({
 		version: 1,
-		hostId: "h",
-		allowBackgroundUse: true,
-		activeId: "a",
-		registrations: [
-			{
-				id: "a",
-				clientId: "c",
-				issuer: "https://auth.openai.com",
-				subject: "s",
-				email: "person@example.invalid",
-				tokens: {
-					accessToken: CREDENTIAL_TOKENS[0],
-					refreshToken: CREDENTIAL_TOKENS[1],
-					idToken: CREDENTIAL_TOKENS[2],
-					scopes: [],
-					expiresAt: Date.now() + 3_600_000,
-				},
+		deviceId: "00000000-0000-4000-8000-000000000000",
+		credentials: {
+			chatgpt: {
+				type: "oauth",
+				access: CREDENTIAL_TOKENS[0],
+				refresh: CREDENTIAL_TOKENS[1],
+				idToken: CREDENTIAL_TOKENS[2],
+				expires: Date.now() + 3_600_000,
 			},
-		],
-	}),
-	{ mode: 0o600 },
-);
-fs.writeFileSync(
-	path.join(TMP, "github-copilot-credentials.json"),
-	JSON.stringify({
-		version: 1,
-		allowBackgroundUse: true,
-		connectionId: "00000000-0000-4000-8000-000000000001",
-		credential: {
-			type: "oauth",
-			access: CREDENTIAL_TOKENS[3],
-			refresh: CREDENTIAL_TOKENS[4],
-			expires: Date.now() + 3_600_000,
+			"github-copilot-subscription": {
+				type: "oauth",
+				access: CREDENTIAL_TOKENS[3],
+				refresh: CREDENTIAL_TOKENS[4],
+				expires: Date.now() + 3_600_000,
+			},
+			"xai-subscription": {
+				type: "oauth",
+				access: CREDENTIAL_TOKENS[5],
+				refresh: "r",
+				expires: Date.now() + 3_600_000,
+			},
 		},
-	}),
-	{ mode: 0o600 },
-);
-fs.writeFileSync(
-	path.join(TMP, "xai-credentials.json"),
-	JSON.stringify({
-		version: 1,
-		allowBackgroundUse: true,
-		connectionId: "00000000-0000-4000-8000-000000000002",
-		credential: { type: "oauth", access: CREDENTIAL_TOKENS[5], refresh: "r", expires: Date.now() + 3_600_000 },
 	}),
 	{ mode: 0o600 },
 );
 
 const { initAuthEnv, redactSecrets } = await import("../src/server/keys.ts");
 initAuthEnv();
-const { webSubscriptionOwner } = await import("../src/server/web-subscriptions.ts");
 
 const originalFetch = globalThis.fetch;
 after(() => {
 	globalThis.fetch = originalFetch;
-	webSubscriptionOwner().close();
 	fs.rmSync(TMP, { recursive: true, force: true });
 });
 
@@ -176,19 +152,24 @@ describe("no route answers with a key or a sign-in token", () => {
 	});
 
 	it("the subscription status shows who is connected and no token", async () => {
-		const { subscriptionControlsResponse } = await import("../src/server/web-subscription-http.ts");
-		const origin = "http://localhost:3010";
-		const response = await subscriptionControlsResponse(
-			new Request(`${origin}/api/subscriptions`, {
-				headers: {
-					host: "localhost:3010",
-					origin,
-					"sec-fetch-site": "same-origin",
-					"x-langharness-subscriptions": "1",
-				},
+		const { subscriptionsResponse } = await import("../src/server/subscriptions.ts");
+		const response = await subscriptionsResponse(
+			new Request("http://localhost:3010/api/subscriptions", {
+				headers: { "sec-fetch-site": "same-origin", "x-lanna-subscriptions": "1" },
 			}),
 		);
-		assert.deepEqual(leaks(await response.text()), []);
+		const text = await response.text();
+		assert.equal(response.status, 200);
+		assert.deepEqual(leaks(text), []);
+		const statuses = JSON.parse(text) as { id: string; connected: boolean }[];
+		assert.deepEqual(
+			statuses.map((s) => [s.id, s.connected]),
+			[
+				["chatgpt", true],
+				["github-copilot-subscription", true],
+				["xai-subscription", true],
+			],
+		);
 	});
 
 	it("a provider that echoes the key back in an error does not get it to the page", async () => {
@@ -221,7 +202,7 @@ describe("redactSecrets", () => {
 	});
 
 	it("does not treat a short value as a secret to cut out of the text", () => {
-		fs.writeFileSync(process.env.LH_AUTH_FILE!, JSON.stringify({ ...SECRETS, SHORT_VAR: "abc" }), { mode: 0o600 });
+		fs.writeFileSync(process.env.LANNA_AUTH_FILE!, JSON.stringify({ ...SECRETS, SHORT_VAR: "abc" }), { mode: 0o600 });
 		assert.equal(redactSecrets("abc abc"), "abc abc");
 	});
 });

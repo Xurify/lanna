@@ -1,5 +1,5 @@
 /**
- * Listening trends (LangHarness, 2026-11-03): what the Listen task's log says
+ * Listening trends (2026-11-03): what the Listen task's log says
  * about why sentences were missed, and whether that is changing. Pure and
  * browser-safe, no model call: the page shows it from the saved snapshot, and
  * the guide may read it later.

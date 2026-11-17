@@ -12,7 +12,7 @@
  *
  * Unknown file vars are kept verbatim and shown as generic status rows.
  *
- * LH_IGNORE_ENV_KEYS=1 hides every env key app-wide. Real env vars are deleted from the
+ * LANNA_IGNORE_ENV_KEYS=1 hides every env key app-wide. Real env vars are deleted from the
  * process, because pi-ai reads provider keys from process.env on every request.
  * Only auth.json counts, and the fill-gap still reflects it so new keys apply mid-session.
  */
@@ -30,7 +30,8 @@ import {
 	validateKeyShape,
 } from "../core/auth-keys.ts";
 import { authKeySavedAt, authStore } from "../store/auth.ts";
-import { isSubscriptionProvider, subscriptionConnected } from "../agent/subscription-connections.ts";
+import { isSubscriptionProvider } from "../agent/subscriptions.ts";
+import { subscriptionSignedIn } from "../store/subscription-credentials.ts";
 
 // Once-per-process boot record, anchored on globalThis so HMR re-imports
 // do not re-snapshot fill-gapped vars as real env.
@@ -40,7 +41,7 @@ interface AuthBoot {
 	/** Vars we copied from the file into process.env: deletable. */
 	fillGap: Set<string>;
 }
-const BOOT_KEY = Symbol.for("lh.authBoot");
+const BOOT_KEY = Symbol.for("lanna.authBoot");
 
 function boot(): AuthBoot {
 	const g = globalThis as Record<symbol, AuthBoot | undefined>;
@@ -60,7 +61,7 @@ export function providerKeyList() {
 
 /** Fresh-user switch: env keys are invisible app-wide. Read per call. */
 export function envKeysIgnored(): boolean {
-	return process.env.LH_IGNORE_ENV_KEYS === "1";
+	return process.env.LANNA_IGNORE_ENV_KEYS === "1";
 }
 
 /**
@@ -180,7 +181,7 @@ export function redactSecrets(text: string): string {
  * so an env-shadowed key counts. Providers with no key entry are present by definition.
  */
 export function providerKeyPresent(provider: string): boolean {
-	if (isSubscriptionProvider(provider)) return subscriptionConnected(provider);
+	if (isSubscriptionProvider(provider)) return subscriptionSignedIn(provider);
 	const info = AUTH_PROVIDER_KEYS.find((p) => p.id === provider);
 	return info ? keyValue(info.envVar) !== undefined : true;
 }

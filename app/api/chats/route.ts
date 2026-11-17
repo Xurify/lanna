@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 	const title = typeof body.title === "string" ? body.title : "";
 	// Practice sessions (owner, 2026-10-04): kind "practice" marks the
 	// record — the practice agent + its tools from turn 1, no extraction.
-	const kind = body.kind === "practice" || body.kind === "chat" ? body.kind : undefined;
+	const kind = body.kind === "practice" ? "practice" : "chat";
 	const chat = createChat(titleFromPrompt(title || "Untitled session"), kind);
 	if (typeof body.tutorUnit === "string" && body.tutorUnit)
 		stores.chatStore.setTutorUnit(chat.id, body.tutorUnit.slice(0, 64));
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 	// refuses honestly until the setup flow fills the slot.
 	// A practice session opens on the Cheap slot, the one for the assistants
 	// that grade work, and falls back to Strong. A chat opens on Strong and
-	// falls back to Cheap. Learn a topic has no kind and takes Strong.
+	// falls back to Cheap.
 	const models = readSettingsRecord()?.models;
 	const slot =
 		(kind === "practice" && models?.cheap?.model

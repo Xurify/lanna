@@ -1,6 +1,6 @@
 # Speak and fluency: the two missing strands, and honest pronunciation scores
 
-_LangHarness, 2026-10-28. Thread "Build speaking and fluency tasks". Code: `src/core/speak.ts`, `src/core/fluency.ts`, `src/core/pronounce.ts`, their `src/server/` counterparts, `components/speak/`, `app/speak`, `app/speed` (called Fluency when this was written)._
+_Lanna, 2026-10-28. Thread "Build speaking and fluency tasks". Code: `src/core/speak.ts`, `src/core/fluency.ts`, `src/core/pronounce.ts`, their `src/server/` counterparts, `components/speak/`, `app/speak`, `app/speed` (called Fluency when this was written)._
 
 ## Why
 
@@ -36,4 +36,4 @@ Before this pass the app had no meaning-focused output strand and no fluency str
 
 ## Status
 
-No Azure key was set at deploy time, so the live scores are "match" until one is set. Cloud screenshots used made-up scores from the dev seam (`LH_PRON_SCRIPT=1`), so their numbers are not real. Unverified by the owner.
+No Azure key was set at deploy time, so the live scores are "match" until one is set. Cloud screenshots used made-up scores from the dev seam (`LANNA_PRON_SCRIPT=1`), so their numbers are not real. Unverified by the owner.

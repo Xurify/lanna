@@ -1,6 +1,6 @@
 # Shadowing and the sound step (Zvuk)
 
-_LangHarness research note, 8 November 2026._
+_Lanna research note, 8 November 2026._
 
 The question: how should the sound step (Zvuk, `docs/plans/chapter-arc.md` phase 7) train a learner's ear and mouth for one contrast, given what Olle Kjellin's tutorial _Quality Practise Pronunciation with Audacity_ (v1.8.1, 2018) and Stephen Krashen's _Principles and Practice in Second Language Acquisition_ (1982) say?
 

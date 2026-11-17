@@ -382,7 +382,7 @@ describe("the tools and readers that fetch for someone else", () => {
 		const fs = await import("node:fs/promises");
 		const os = await import("node:os");
 		const path = await import("node:path");
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lh-safe-fetch-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lanna-safe-fetch-"));
 		try {
 			let reached = 0;
 			safeFetchSeams.transport = async () => {

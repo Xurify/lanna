@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
 		staleTimes: { static: 30 },
 	},
 	// Public build metadata only; no new runtime Electron version API.
-	env: { LH_VERSION: pkg.version, LH_HOMEPAGE: pkg.homepage },
+	env: { LANNA_VERSION: pkg.version, LANNA_HOMEPAGE: pkg.homepage },
 	// Desktop target (Electron wrapper, 2026-09-17): standalone output = a
 	// self-contained .next/standalone/server.js the Electron shell spawns
 	// on 127.0.0.1. Harmless for plain web deploys (extra build output).
@@ -93,7 +93,9 @@ const nextConfig: NextConfig = {
 	// never hydrates and pairing does nothing. The name lives in .env.local, which is
 	// not committed, and only the dev server reads it, so a build never carries it.
 	allowedDevOrigins:
-		process.env.NODE_ENV === "development" && process.env.LH_TAILNET_HOST ? [process.env.LH_TAILNET_HOST] : undefined,
+		process.env.NODE_ENV === "development" && process.env.LANNA_TAILNET_HOST
+			? [process.env.LANNA_TAILNET_HOST]
+			: undefined,
 	// SAFETY (empirically verified 2026-09-17): without this, output file
 	// tracing sweeps the repo's real data/ — chat records, graph ledgers —
 	// INTO the standalone bundle. A shipped desktop app would carry the
@@ -102,7 +104,7 @@ const nextConfig: NextConfig = {
 	// SECRETS (2026-10-08, caught in the payload audit): the same sweep
 	// ships the repo-root auth.json — the DEV BYOK key store — byte-identical
 	// into the DMG (the packaged app never reads it: the shell passes
-	// LH_AUTH_FILE → userData). Excluded here; build-server.mjs also REFUSES
+	// LANNA_AUTH_FILE → userData). Excluded here; build-server.mjs also REFUSES
 	// to package any standalone still containing it. .env* belt-and-braces
 	// the same class. Next also copies loaded bare .env after tracing;
 	// the build-server refusal remains required even with these excludes.
@@ -127,14 +129,7 @@ const nextConfig: NextConfig = {
 	// helpers use the app's own binary). Runtime dependencies' dist/ dirs
 	// stay intact, and the script guards against leaked data/keys.
 	outputFileTracingExcludes: {
-		"*": [
-			"**/data/**/*",
-			"auth.json",
-			"chatgpt-credentials.json*",
-			"github-copilot-credentials.json*",
-			"xai-credentials.json*",
-			".env*",
-		],
+		"*": ["**/data/**/*", "auth.json", "subscriptions.json*", ".env*"],
 	},
 	// Empirically verified gaps (2026-09-17 standalone smoke): the tracer
 	// misses JSON loaded via `import ... with { type: "json" }` attributes —
@@ -154,9 +149,6 @@ const nextConfig: NextConfig = {
 			"scripts/spotify_helper.py",
 			"docs/experiments/input-first-russian.md",
 			".claude/skills/slovak-language/references/*.md",
-			// The standalone trace omitted this entire runtime-imported directory
-			// in 0.3.0, so importing puppeteer-core failed before browser startup.
-			"node_modules/@puppeteer/browsers/lib/browser-data/**/*.js",
 			"node_modules/pdfjs-dist/legacy/**/*",
 			"node_modules/pdfjs-dist/standard_fonts/**/*",
 			// Wave E (2026-10-10): pdf_render paints via @napi-rs/canvas — its
@@ -166,10 +158,10 @@ const nextConfig: NextConfig = {
 			// resolves to exactly one Skia binary per build.
 			"node_modules/@napi-rs/canvas-*/**/*",
 			"node_modules/@earendil-works/pi-ai/dist/providers/data/**/*",
-			// Public native OAuth factories load these flows through variable imports.
-			// Electron main uses the same standalone SDK; the offline runtime gate
-			// evaluates their real toAuth paths without login or provider requests.
-			"node_modules/@earendil-works/pi-ai/dist/auth/oauth/{load,github-copilot,xai,device-code}.js",
+			// pi-ai loads its OAuth flows through variable imports the tracer cannot
+			// follow; the ChatGPT flow's own static imports ride along with it.
+			"node_modules/@earendil-works/pi-ai/dist/auth/oauth/{load,github-copilot,xai,device-code,openai-chatgpt,pkce}.js",
+			"node_modules/@earendil-works/pi-ai/dist/utils/{oauth-page,provider-env}.js",
 			"node_modules/@earendil-works/pi-ai/dist/utils/sleep.js",
 			"node_modules/@earendil-works/pi-agent-core/dist/**/*.json",
 			// Next 16.3.2 native Turbopack applies unanchored excludes while

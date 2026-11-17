@@ -1,6 +1,6 @@
 # Watch picks: finding videos from the learner's YouTube and saved creators
 
-_LangHarness, 2026-11-05. Branch `feat/watch-creators`. Code: `src/core/discover.ts`, `src/server/discover.ts`, `src/store/discover.ts`, `electron/youtube.cjs`, `components/watch/discover.tsx`, `app/api/watch/discover`._
+_Lanna, 2026-11-05. Branch `feat/watch-creators`. Code: `src/core/discover.ts`, `src/server/discover.ts`, `src/store/discover.ts`, `electron/youtube.cjs`, `components/watch/discover.tsx`, `app/api/watch/discover`._
 
 ## The ask
 
@@ -17,7 +17,7 @@ The owner: "connect our YouTube account and analyze your YouTube history and/or 
 | A channel's Atom feed (`/feeds/videos.xml?channel_id=`)                                                       |                                                                             |                                    |               | none, no key                                                                                                                          | **chosen** for saved creators (the 15 newest uploads)                       |
 | YouTube's own web API (`youtubei/v1`: `search` with the subtitles filter, `browse`, `navigation/resolve_url`) |                                                                             |                                    |               | none, no key                                                                                                                          | **chosen** for search, a channel's videos when the feed fails, and @handles |
 
-The signed-in window uses its own Electron session (`persist:lh-youtube`), so nothing is shared with the app window and the cookies never leave Electron's storage. The main process fetches three pages through that session with `session.fetch(..., { credentials: "include" })`: `/feed/history`, the home page and `/feed/channels`. Only the page text goes to the renderer, which hands it to the server; the server keeps the lists of videos and channels (`videos/discover/youtube.json`), never a cookie.
+The signed-in window uses its own Electron session (`persist:lanna-youtube`), so nothing is shared with the app window and the cookies never leave Electron's storage. The main process fetches three pages through that session with `session.fetch(..., { credentials: "include" })`: `/feed/history`, the home page and `/feed/channels`. Only the page text goes to the renderer, which hands it to the server; the server keeps the lists of videos and channels (`videos/discover/youtube.json`), never a cookie.
 
 ## What the live trial showed (the owner's PC, 2026-11-05)
 

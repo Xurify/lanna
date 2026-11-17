@@ -2,12 +2,11 @@ import { Agent, type AgentEvent, type AgentMessage, type AgentTool } from "@eare
 import type { AssistantMessage, ToolResultMessage, Usage } from "@earendil-works/pi-ai";
 import { randomUUID } from "node:crypto";
 import { APP_IDENTITY, piEngineFor, type PiEngine } from "../models.ts";
-import { usageWasAdmitted } from "../subscription-request-cycle.ts";
 import { providerEventObserver } from "../provider-events.ts";
 import type { ModelRole } from "../../../config.ts";
 
 /**
- * The shared sub-agent runner (docs/pi-engine-swap.md §6): one helper every
+ * The shared sub-agent runner: one helper every
  * background agent (researcher, visual-maker, extractor,
  * auditor) runs on — a stateless pi Agent built per call, driven to
  * completion, with the seams the job runner and the money channel need.
@@ -43,7 +42,7 @@ interface SubagentRunOptions {
 	onPartialText?: (text: string) => void;
 	/** Extra stop rule (extractor: stop after a clean submit). */
 	shouldStop?: (message: AssistantMessage, toolResults: ToolResultMessage[]) => boolean;
-	/** Debug: when set AND LH_PROVIDER_EVENTS=1, raw provider stream
+	/** Debug: when set AND LANNA_PROVIDER_EVENTS=1, raw provider stream
 	 *  events append to data/debug/provider-events/<chatId>.jsonl (context
 	 *  "job:<role>"). Absent or env-off → no observer. */
 	chatId?: string;
@@ -109,10 +108,6 @@ export async function runSubagent(tools: AgentTool<any, any>[], opts: SubagentRu
 							// The call was cancelled — no completed step, no billed
 							// usage (the abort path asserts zero steps).
 							aborted = true;
-							break;
-						}
-						if (!usageWasAdmitted(m.usage)) {
-							if (m.stopReason === "error") errorMessage = m.errorMessage;
 							break;
 						}
 						step++;

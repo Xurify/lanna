@@ -1,5 +1,5 @@
 /**
- * Slovak rules a program can check for certain (LangHarness, 2026-11-01).
+ * Slovak rules a program can check for certain (2026-11-01).
  *
  * The accuracy eval (docs/research/slovak-accuracy-eval.md) found models
  * accepting "s sestrou" with the rule in their context, and rejecting

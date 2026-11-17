@@ -1,5 +1,5 @@
 /**
- * Dvojičky — contrast pairs (LangHarness, 2026-10-30): the twins a learner
+ * Dvojičky — contrast pairs (2026-10-30): the twins a learner
  * mixes up, taught as a choice between two forms in real sentences. The
  * data lives in curriculum/slovak/pairs.json (authored, not generated);
  * this module is the pure machinery on top of it: which verified lexicon

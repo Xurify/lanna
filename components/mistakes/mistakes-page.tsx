@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * My mistakes (/mistakes, LangHarness 2026-11-01): what the lesson log says
+ * My mistakes (/mistakes, Lanna 2026-11-01): what the lesson log says
  * about where you go wrong and whether it is getting better, when it was
  * last read, and an optional personal guide written from it. The analysis
  * is local and free; only the guide uses a model, and only when asked.
@@ -79,7 +79,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 	const a = report?.analysis ?? null;
 	return (
 		<div className="relative min-h-dvh bg-background">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>

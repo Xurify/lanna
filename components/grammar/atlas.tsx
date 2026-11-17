@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /grammar — the grammar atlas (LangHarness, phase 4). Six cases down the
+ * /grammar — the grammar atlas (phase 4). Six cases down the
  * side, three genders across the top; each cell is the drill that teaches
  * it, showing the learner's first-try accuracy (or "not yet"). Pointing at a
  * cell — hover, focus or press — shows the unit's rule under the table, and
@@ -31,7 +31,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 
 	return (
 		<div className="relative min-h-dvh bg-background">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>

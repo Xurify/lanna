@@ -1,6 +1,6 @@
 "use strict";
 
-const HEADER = "x-langharness-desktop";
+const HEADER = "x-lanna-desktop";
 
 /** Called for EVERY outgoing request, so redirects cannot carry the secret
  * to another origin. Never expose this function or its secret to preload. */
@@ -32,4 +32,13 @@ function desktopAPIHeaders(details, origin, secret, windows) {
 	}
 	return headers;
 }
-module.exports = { desktopAPIHeaders, HEADER };
+/** Only the app's own top frame, on its own origin, may call the privileged IPC channels. */
+function trustedSender(event, origin, BrowserWindow) {
+	const win = BrowserWindow.fromWebContents(event.sender);
+	try {
+		return !!win && event.senderFrame === event.sender.mainFrame && new URL(event.senderFrame.url).origin === origin;
+	} catch {
+		return false;
+	}
+}
+module.exports = { desktopAPIHeaders, trustedSender, HEADER };

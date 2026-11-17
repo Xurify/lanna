@@ -3,14 +3,14 @@
  * Pure core: browser-safe, no fs, no network.
  */
 
-import type { LhMessage } from "./native-messages.ts";
-import type { LhViewMessage } from "./view.ts";
+import type { LannaMessage } from "./native-messages.ts";
+import type { LannaViewMessage } from "./view.ts";
 import type { QuestionAnswerData } from "./question-core.ts";
 import { userFacingTextOf } from "./native-messages.ts";
 import { QUESTION_TOOLS } from "./pending.ts";
 import { boardPhrases } from "./chat-board.ts";
 
-type ExportMessage = LhViewMessage | LhMessage;
+type ExportMessage = LannaViewMessage | LannaMessage;
 type Speaker = "Learner" | "Tutor";
 
 export interface ClozeSentence {
@@ -124,7 +124,7 @@ function answerMarkdown(question: QuestionAnswerData): string {
 export function exportChatMarkdown(messages: ReadonlyArray<ExportMessage>, opts: ChatExportOptions = {}): string {
 	const title = opts.title?.trim() || "Chat";
 	const date = opts.exportedAt || new Date().toISOString().slice(0, 10);
-	const blocks: string[] = [`# ${title}`, `*Exported from LangHarness · ${date}*`, "---"];
+	const blocks: string[] = [`# ${title}`, `*Exported from Lanna · ${date}*`, "---"];
 
 	let speaking: Speaker | null = null;
 	const say = (speaker: Speaker, body: string) => {
@@ -276,7 +276,7 @@ export function exportChatJson(
 ): string {
 	const payload = {
 		version: 1,
-		format: "langharness-chat-export",
+		format: "lanna-chat-export",
 		chatId,
 		title: title.trim() || "Chat",
 		exportedAt: new Date().toISOString(),

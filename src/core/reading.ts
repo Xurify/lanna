@@ -1,5 +1,5 @@
 /**
- * Reading (LangHarness, 2026-10-28; Xurify: "do we have a reading
+ * Reading (2026-10-28; Xurify: "do we have a reading
  * part/task in our app? Where we could read a story or whatnot?") — the
  * pure model behind the Read task: graded stories at the learner's level,
  * every word tappable for its meaning and form, every sentence spoken, a

@@ -1,5 +1,5 @@
 /**
- * PHONOLOGICAL ACQUISITION TESTS (LangHarness, 2026-11).
+ * PHONOLOGICAL ACQUISITION TESTS (2026-11).
  *
  * Verifies the empirical phonology engine:
  * 1. Articulatory motor cues & diagnostic guidance: tests/sound-notes.test.tsx

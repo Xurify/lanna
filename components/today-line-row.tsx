@@ -1,5 +1,5 @@
 /**
- * Today's line on Today (LangHarness, 2026-11-06; docs/research/creator-hooks.md,
+ * Today's line on Today (2026-11-06; docs/research/creator-hooks.md,
  * proposal 1). A row, not a card: the plan's next step keeps the one Start on
  * the page (E4a), and the row only says where the day's line stands and opens
  * it. Same anatomy as a plan row, so the page stays one kind of thing.

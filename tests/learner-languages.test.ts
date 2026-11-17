@@ -10,9 +10,9 @@ import os from "node:os";
 import path from "node:path";
 import { describe, test } from "node:test";
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lh-learner-languages-"));
-process.env.LH_DATA_DIR = dir;
-delete process.env.LH_PROFILE;
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-learner-languages-"));
+process.env.LANNA_DATA_DIR = dir;
+delete process.env.LANNA_PROFILE;
 
 const czech = path.join(dir, "languages", "czech");
 fs.mkdirSync(czech, { recursive: true });

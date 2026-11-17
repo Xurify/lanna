@@ -1,5 +1,5 @@
 /**
- * Word Bank and Saved Phrases service (LangHarness).
+ * Word Bank and Saved Phrases service.
  *
  * Unifies the learner's vocabulary from:
  * - Active review deck cards (FSRS retention and state)

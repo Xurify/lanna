@@ -14,7 +14,7 @@
  *   optimistic entries the write-ahead absorbed never double their
  *   bubbles;
  * - the view application (applyWireEvent → projectView): full-partial
- *   replaces, the fork-2 question-placeholder ignore, execution states,
+ *   replaces, execution states,
  *   raw error display (owner ruling);
  * - the continuation fold (needsContinuation): the mount/sync seam's
  *   native replacement for lastAssistantMessageIsCompleteWithToolCalls.
@@ -23,17 +23,9 @@ import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { absorbed, pendingCallTool, SessionModel } from "../components/session-core.ts";
 import type { ChatInput } from "../src/core/input-events.ts";
-import type { LhMessage } from "../src/core/native-messages.ts";
-import {
-	newUserMessage,
-	newAnswerResult,
-	newThinkingMessage,
-	needsContinuation,
-	endsInDismissal,
-} from "../src/core/native-messages.ts";
-import { newCompactionMarker, newPlanBlockMessage, projectView } from "../src/core/index.ts";
-import { dismissedAnswer } from "../src/core/question-core.ts";
-import { buildAnswer, type QuestionData } from "../src/core/question-core.ts";
+import type { LannaMessage } from "../src/core/native-messages.ts";
+import { newUserMessage, newAnswerResult, newThinkingMessage, needsContinuation } from "../src/core/native-messages.ts";
+import { newCompactionMarker, projectView } from "../src/core/index.ts";
 
 const realFetch = globalThis.fetch;
 afterEach(() => {
@@ -94,7 +86,7 @@ function dietFetch(opts: {
 	}) as typeof globalThis.fetch;
 }
 
-function assistantMsg(id: string, text: string): LhMessage {
+function assistantMsg(id: string, text: string): LannaMessage {
 	return {
 		id,
 		role: "assistant",
@@ -104,7 +96,7 @@ function assistantMsg(id: string, text: string): LhMessage {
 		timestamp: 0,
 		provider: "openrouter",
 		model: "test",
-	} as unknown as LhMessage;
+	} as unknown as LannaMessage;
 }
 
 /** A streaming assistant partial (pi events carry the FULL partial — and
@@ -210,7 +202,7 @@ describe("postInputEvent (the 409 identity-retry)", { skip: process.env.NO_SLOW 
 	});
 
 	it("loops on repeated 409s, re-POSTing the same event each time", async () => {
-		const event: ChatInput = { type: "answer", toolCallId: "call-1", answer: { correct: true } as never };
+		const event: ChatInput = { type: "text", text: "try again" };
 		const calls = installFetch({
 			chatPOST: (_c, n) => (n <= 2 ? new Response("busy", { status: 409 }) : new Response("stream", { status: 200 })),
 		});
@@ -357,133 +349,6 @@ describe("send (one input event, verbatim consumption)", () => {
 		);
 	});
 
-	it("the optimistic answer result attaches to the pending quiz part at once", async () => {
-		const quizCall = {
-			id: "call-1",
-			role: "assistant",
-			content: [
-				{ type: "text", text: "Q?" },
-				{ type: "toolCall", id: "call-1", name: "quiz", arguments: { question: "Q?", choices: ["a", "b"] } },
-			],
-			stopReason: "toolUse",
-			usage: { input: 0, output: 0, total: 0, cacheReads: 0, cacheWrites: 0 },
-			provider: "openrouter",
-			model: "test",
-			timestamp: 0,
-		} as unknown as LhMessage;
-		let postBody = "";
-		globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-			if (String(input) === "/api/chat") {
-				postBody = init?.body as string;
-				return sseResponse("[DONE]");
-			}
-			throw new Error(`unexpected fetch: ${String(input)}`);
-		}) as typeof globalThis.fetch;
-		const m = model({ initialMessages: [newUserMessage("hi"), quizCall] });
-		const pending = m.submitAnswer("quiz", "call-1", { correct: true } as never);
-		// The dock's AnsweredCard state — before any server round-trip:
-		const state = m.getState();
-		const quizPart = state.messages.flatMap((v) => v.parts).find((p) => p.type === "tool-quiz")!;
-		assert.equal(quizPart.state, "output-available");
-		assert.deepEqual(quizPart.output, { correct: true });
-		await pending;
-		assert.deepEqual(JSON.parse(postBody), {
-			chatId: "chat_x",
-			input: { type: "answer", toolCallId: "call-1", answer: { correct: true } },
-		});
-	});
-
-	it("ignores the question placeholder's clean execution end (fork 2) and keeps errors", async () => {
-		// The dock's mount gate keys on the part STATE the live execution
-		// layer drives MID-STREAM: a clean question execution stays
-		// input-available (the in-memory "Question posed" placeholder
-		// never shows); an INVALID call is output-error and NEVER mounts
-		// (the modal-realism crash pin).
-		const enc = new TextEncoder();
-		let push: (e: unknown) => void = () => {};
-		const body = new ReadableStream<Uint8Array>({
-			start(controller) {
-				push = (e) =>
-					controller.enqueue(enc.encode(e === "[DONE]" ? "data: [DONE]\n\n" : `data: ${JSON.stringify(e)}\n\n`));
-			},
-		});
-		globalThis.fetch = dietFetch({ userText: "q", stream: () => new Response(body, { status: 200 }) });
-		const m = model();
-		const done = m.send({ type: "text", text: "q" });
-		const settle = () => new Promise((r) => setTimeout(r, 0));
-		push({
-			type: "message_start",
-			message: {
-				role: "assistant",
-				content: [
-					{ type: "toolCall", id: "q1", name: "quiz", arguments: {} },
-					{ type: "toolCall", id: "bad1", name: "quiz", arguments: {} },
-				],
-			},
-		});
-		await settle();
-		push({
-			type: "tool_execution_end",
-			toolCallId: "q1",
-			toolName: "quiz",
-			isError: false,
-			result: { content: [{ type: "text", text: "Question posed" }], details: { placeholder: true } },
-		});
-		push({
-			type: "tool_execution_end",
-			toolCallId: "bad1",
-			toolName: "quiz",
-			isError: true,
-			result: {
-				content: [{ type: "text", text: "correctAnswer does not match any option value" }],
-				details: undefined,
-			},
-		});
-		await settle();
-		const parts = m
-			.getState()
-			.messages.flatMap((v) => v.parts)
-			.filter((p) => p.type === "tool-quiz");
-		assert.equal(parts.length, 2);
-		assert.equal(parts[0]!.state, "input-available", "the clean placeholder is IGNORED — the dock mounts on it");
-		assert.equal(parts[1]!.state, "output-error");
-		assert.equal(parts[1]!.errorText, "correctAnswer does not match any option value");
-		// turn_end carries the placeholder as a toolResult MESSAGE (details:
-		// null — tool-execute questionResult): it must not flip the part to
-		// output-available either — the AnsweredCard would read .dismissed off
-		// null and crash the whole render (the live crash, 2026-09-26).
-		push({
-			type: "turn_end",
-			message: { role: "assistant", content: [{ type: "text", text: "" }], stopReason: "toolUse" },
-			toolResults: [
-				{
-					id: "tr_q1",
-					role: "toolResult",
-					toolCallId: "q1",
-					toolName: "quiz",
-					content: [
-						{
-							type: "text",
-							text: "Question posed — the turn ends here; the learner's graded answer arrives as this call's result.",
-						},
-					],
-					details: null,
-					isError: false,
-				} as never,
-			],
-		});
-		await settle();
-		const afterTurnEnd = m
-			.getState()
-			.messages.flatMap((v) => v.parts)
-			.filter((p) => p.type === "tool-quiz");
-		assert.equal(afterTurnEnd[0]!.state, "input-available", "the placeholder toolResult keeps the dock's mount state");
-		assert.equal(afterTurnEnd[0]!.output, undefined, "no null output ever reaches the AnsweredCard");
-		push({ type: "agent_end", messages: [] });
-		push("[DONE]");
-		await done;
-	});
-
 	it("Wave C: markers injected mid-run (custom role, follow-up delivery) append to the tail by id", () => {
 		// A never-settling fetch: the send only needs to flip the model into its
 		// streaming status synchronously — its POST floats (never rejects) while
@@ -550,8 +415,8 @@ describe("send (one input event, verbatim consumption)", () => {
 // ─── provider failures: one final-entry rule for live and saved records ──────
 
 describe("provider-error banner (live and saved)", () => {
-	function failed(id = "failed", errorMessage: string | undefined = "Google 500: fixture failure"): LhMessage {
-		return { ...assistantMsg(id, ""), content: [], stopReason: "error", errorMessage } as LhMessage;
+	function failed(id = "failed", errorMessage: string | undefined = "Google 500: fixture failure"): LannaMessage {
+		return { ...assistantMsg(id, ""), content: [], stopReason: "error", errorMessage } as LannaMessage;
 	}
 
 	it("restores an empty failed response on load and full sync without adding a transcript card", () => {
@@ -571,20 +436,19 @@ describe("provider-error banner (live and saved)", () => {
 	});
 
 	it("uses the existing fallback wording when the saved failure has no error text", () => {
-		const withoutText = { ...failed(), errorMessage: undefined } as LhMessage;
+		const withoutText = { ...failed(), errorMessage: undefined } as LannaMessage;
 		assert.equal(model({ initialMessages: [withoutText] }).getState().error?.message, "An error occurred.");
 		assert.equal(model().getState().error, null);
 	});
 
-	it("any later entry supersedes the failure, including plan/compaction markers and aborts", () => {
+	it("any later entry supersedes the failure, including compaction markers and aborts", () => {
 		const failure = failed();
-		const later: LhMessage[] = [
+		const later: LannaMessage[] = [
 			newUserMessage("retry"),
 			assistantMsg("success", "Hello"),
-			{ ...assistantMsg("aborted", ""), stopReason: "aborted", errorMessage: "Aborted" } as LhMessage,
+			{ ...assistantMsg("aborted", ""), stopReason: "aborted", errorMessage: "Aborted" } as LannaMessage,
 			newThinkingMessage("problem", "my attempt"),
 			resultMsg("call"),
-			newPlanBlockMessage("plan", { kind: "full", nodes: [], edges: [], current: null }),
 			newCompactionMarker("summary", {
 				firstKeptMessageId: failure.id,
 				tokensBefore: 100,
@@ -1029,15 +893,7 @@ describe("truncated stream recovery", () => {
 });
 
 describe("automatic continuation after recovery failure", () => {
-	const question = {
-		...assistantMsg("question", ""),
-		content: [{ type: "toolCall", id: "q1", name: "quiz", arguments: { question: "Q?" } }],
-	} as LhMessage;
-	const answer = buildAnswer(
-		{ id: "q1", kind: "quiz", question: "Q?", mode: "single-select", options: [], createdAt: "fixture" },
-		{ dontKnow: true },
-	);
-	const answered = [question, newAnswerResult("q1", "quiz", answer)];
+	const answered = [assistantWithCall("dispatch", "r1", "research"), resultMsg("r1", "research")];
 
 	it("a retained failure seeds the banner and blocks continuation even after banner dismissal", async () => {
 		let posts = 0;
@@ -1089,230 +945,6 @@ describe("automatic continuation after recovery failure", () => {
 });
 
 // ─── failed answer submissions (no replay without canonical reconciliation) ──
-
-describe("answer submission recovery", () => {
-	const question = {
-		...assistantMsg("question", "Q?"),
-		content: [{ type: "toolCall", id: "q1", name: "quiz", arguments: { question: "Q?" } }],
-	} as LhMessage;
-	const answer = buildAnswer(
-		{ id: "q1", kind: "quiz", question: "Q?", mode: "single-select", options: [], createdAt: "fixture" },
-		{ dontKnow: true, thinking: "keep my reasoning" },
-	);
-
-	it("restores the question after a failed POST and checks the record before another POST", async () => {
-		const calls: string[] = [];
-		let posts = 0;
-		const m = model({
-			initialMessages: [question],
-			fetch: async (url) => {
-				calls.push(String(url));
-				if (String(url) === "/api/chat") {
-					posts++;
-					return posts === 1 ? new Response("request refused", { status: 500 }) : Response.json({ ok: true });
-				}
-				if (String(url).endsWith("/stream")) return sseResponse("[DONE]");
-				return Response.json({ messages: [question], turnInFlight: false });
-			},
-		});
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.equal(m.getState().messages[0]!.parts.find((p) => p.toolCallId === "q1")!.state, "input-available");
-		assert.equal(m.status, "error");
-		m.clearError(); // dismissing the banner must not disable recovery
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.equal(posts, 2, "error must not permanently close the send gate");
-		assert.deepEqual(calls.slice(0, 3), ["/api/chat", "/api/chats/chat_x", "/api/chat"]);
-	});
-
-	it("retains all submitted draft channels until the canonical answer resolves the call", async () => {
-		const form = {
-			selection: { selected: new Set([1]), otherSelected: true, dontKnow: false },
-			thinking: "reasoning",
-			other: "custom answer",
-			text: "free text",
-			confidenceIndex: 4,
-		};
-		const m = model({
-			initialMessages: [question],
-			fetch: async () => {
-				throw new TypeError("offline");
-			},
-		});
-		m.saveQuestionDraft("q1", { form });
-		m.saveQuestionDraft("q1", { readingThinking: "reading reasoning" });
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.deepEqual(m.questionDraft("q1"), { form, readingThinking: "reading reasoning" });
-		m.setMessages([question]);
-		assert.deepEqual(m.questionDraft("q1"), { form, readingThinking: "reading reasoning" });
-		assert.equal(m.questionDraft("q2"), undefined, "a different question never inherits the draft");
-		m.adoptRecord([question, newAnswerResult("q1", "quiz", answer)]);
-		assert.equal(m.questionDraft("q1"), undefined, "only confirmed native resolution clears it");
-	});
-
-	it("a final 409 restores the question instead of leaving an optimistic answer", async () => {
-		const m = model({
-			initialMessages: [question],
-			waitMaxMs: 0,
-			fetch: async () => new Response("busy", { status: 409 }),
-		});
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.equal(m.getState().nativeMessages.length, 1);
-		assert.equal(m.status, "error");
-	});
-
-	it("does not repost an answer whose acceptance acknowledgement was lost", async () => {
-		let posts = 0;
-		const saved = JSON.parse(JSON.stringify([question, newAnswerResult("q1", "quiz", answer)])) as LhMessage[];
-		const m = model({
-			initialMessages: [question],
-			fetch: async (url) => {
-				if (String(url) === "/api/chat") {
-					posts++;
-					throw new TypeError("failed fetch");
-				}
-				return Response.json({ messages: saved, turnInFlight: false });
-			},
-		});
-		await m.submitAnswer("quiz", "q1", answer);
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.equal(posts, 1);
-		assert.equal(m.status, "ready");
-		assert.deepEqual(m.getState().nativeMessages, saved);
-	});
-
-	it("reattaches to an accepted running turn instead of posting another answer", async () => {
-		const calls: string[] = [];
-		const m = model({
-			initialMessages: [question],
-			fetch: async (url) => {
-				calls.push(String(url));
-				if (String(url) === "/api/chat") throw new TypeError("failed fetch");
-				if (String(url).endsWith("/stream")) return sseResponse("[DONE]");
-				return Response.json({ messages: [question, newAnswerResult("q1", "quiz", answer)], turnInFlight: true });
-			},
-		});
-		await m.submitAnswer("quiz", "q1", answer);
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.deepEqual(calls, ["/api/chat", "/api/chats/chat_x", "/api/chats/chat_x/stream"]);
-		assert.equal(m.status, "ready");
-	});
-
-	it("keeps the question and makes no further POST while reconciliation is unreachable", async () => {
-		const calls: string[] = [];
-		const m = model({
-			initialMessages: [question],
-			fetch: async (url) => {
-				calls.push(String(url));
-				throw new TypeError("offline");
-			},
-		});
-		await m.submitAnswer("quiz", "q1", answer);
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.deepEqual(calls, ["/api/chat", "/api/chats/chat_x"]);
-		assert.equal(m.status, "error");
-		assert.equal(
-			m.getState().nativeMessages.some((m) => m.role === "toolResult"),
-			false,
-		);
-	});
-
-	it("does not undo an acknowledged dismissal when an unrelated send's record read fails", async () => {
-		const m = model({
-			initialMessages: [question],
-			fetch: async (url) => {
-				if (String(url).endsWith("/dismiss") || String(url) === "/api/chat") return Response.json({ ok: true });
-				throw new TypeError("record read failed");
-			},
-		});
-		await m.dismissQuestion("q1", dismissedAnswer("quiz", "Q?"));
-		await m.send({ type: "text", text: "move on" });
-		assert.equal(m.status, "error");
-		const part = m
-			.getState()
-			.messages.flatMap((m) => m.parts)
-			.find((p) => p.toolCallId === "q1")!;
-		assert.equal(part.state, "output-available");
-		assert.equal((part.output as { dismissed: boolean }).dismissed, true);
-	});
-
-	it("restores an unconfirmed optimistic answer when the post-ack record read fails", async () => {
-		let posts = 0;
-		let reads = 0;
-		const saved = JSON.parse(JSON.stringify([question, newAnswerResult("q1", "quiz", answer)])) as LhMessage[];
-		const m = model({
-			initialMessages: [question],
-			fetch: async (url) => {
-				if (String(url) === "/api/chat") {
-					posts++;
-					return Response.json({ ok: true });
-				}
-				if (++reads === 1) throw new TypeError("record read failed");
-				return Response.json({ messages: saved, turnInFlight: false });
-			},
-		});
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.equal(m.status, "error");
-		assert.equal(
-			m.getState().nativeMessages.some((m) => m.role === "toolResult"),
-			false,
-		);
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.equal(posts, 1, "the acknowledged answer must not be reposted");
-		assert.equal(m.status, "ready");
-		assert.deepEqual(m.getState().nativeMessages, saved);
-	});
-
-	for (const next of [
-		{ type: "text", text: "a distinct new message" },
-		{ type: "thinking", problemCallId: "problem1", text: "new practice thinking" },
-	] as const) {
-		it(`preserves the existing POST/409-wait path for a new ${next.type} submission after an error`, async () => {
-			const posted: ChatInput[] = [];
-			const m = model({
-				pollMs: 0,
-				fetch: async (url, init) => {
-					if (String(url) === "/api/chat") {
-						posted.push(JSON.parse(String(init?.body)).input);
-						if (posted.length === 1) throw new TypeError("failed fetch");
-						if (posted.length === 2) return new Response("busy", { status: 409 });
-						return Response.json({ ok: true });
-					}
-					if (String(url).startsWith("/api/jobs")) return Response.json({ turnInFlight: false });
-					if (String(url).endsWith("/stream")) return sseResponse("[DONE]");
-					return Response.json({ messages: [], turnInFlight: true });
-				},
-			});
-			await m.send({ type: "text", text: "original input" });
-			await m.send(next);
-			assert.deepEqual(posted, [{ type: "text", text: "original input" }, next, next]);
-			assert.equal(m.status, "ready");
-		});
-	}
-
-	it("adopts a changed pending question instead of sending the stale answer", async () => {
-		let posts = 0;
-		const newer = {
-			...question,
-			id: "new-question",
-			content: [{ type: "toolCall", id: "q2", name: "quiz", arguments: {} }],
-		} as LhMessage;
-		const m = model({
-			initialMessages: [question],
-			fetch: async (url) => {
-				if (String(url) === "/api/chat") {
-					posts++;
-					throw new TypeError("failed fetch");
-				}
-				return Response.json({ messages: [question, newer], turnInFlight: false });
-			},
-		});
-		await m.submitAnswer("quiz", "q1", answer);
-		await m.submitAnswer("quiz", "q1", answer);
-		assert.equal(posts, 1);
-		assert.deepEqual(m.getState().nativeMessages, [question, newer]);
-		assert.equal(m.status, "ready");
-	});
-});
 
 // ─── reattach (resumeStream) ────────────────────────────────────────────────
 
@@ -1465,13 +1097,13 @@ describe("resumeStream (the reattach path)", () => {
 				return Response.json({ ok: true });
 			}
 			if (url === "/api/chats/chat_x") {
-				return Response.json({ messages: [{ id: "u1", role: "user", content: "quiz me", timestamp: 1 }] });
+				return Response.json({ messages: [{ id: "u1", role: "user", content: "teach me", timestamp: 1 }] });
 			}
 			if (url === "/api/chats/chat_x/stream") return new Response("data: [DONE]\n\n", { status: 200 });
 			throw new Error(`unexpected fetch: ${url}`);
 		}) as typeof globalThis.fetch;
 		const m = model();
-		const sending = m.send({ type: "text", text: "quiz me" });
+		const sending = m.send({ type: "text", text: "teach me" });
 		await new Promise((r) => setTimeout(r, 5)); // the POST is in flight
 		m.stop(); // StrictMode's simulated unmount lands mid-submit
 		resolvePost(); // the ack completes anyway
@@ -1637,7 +1269,7 @@ describe("resumeStream (the reattach path)", () => {
 
 // ─── adoption (append-only ground rules, owner 2026-09-15) ──────────────────
 
-function userText(id: string, text: string): LhMessage {
+function userText(id: string, text: string): LannaMessage {
 	return { ...newUserMessage(text), id };
 }
 
@@ -1648,7 +1280,7 @@ describe("adoptRecord — append-only adoption", () => {
 			type: "message_start",
 			message: { role: "assistant", content: [{ type: "text", text: "streaming" }] },
 		});
-		const steer = { ...newUserMessage("steered content"), id: "steer_1" } as LhMessage & { role: "user" };
+		const steer = { ...newUserMessage("steered content"), id: "steer_1" } as LannaMessage & { role: "user" };
 		const record = [userText("u1", "topic"), steer];
 		m.adoptRecord(record);
 		const ids = m.getState().nativeMessages.map((x) => x.id);
@@ -1669,16 +1301,16 @@ describe("adoptRecord — append-only adoption", () => {
 	it("absorbs the optimistic entries the record has taken over (no doubled bubbles)", () => {
 		// A text send's optimistic bubble (local c_ id): the write-ahead's
 		// server copy absorbs it by CONTENT — the bubble never doubles.
-		const optimistic = { ...newUserMessage("my question"), id: "c_local_1" } as LhMessage;
-		const serverCopy = { ...newUserMessage("my question"), id: "srv_9" } as LhMessage;
+		const optimistic = { ...newUserMessage("my question"), id: "c_local_1" } as LannaMessage;
+		const serverCopy = { ...newUserMessage("my question"), id: "srv_9" } as LannaMessage;
 		assert.ok(absorbed(optimistic, [userText("u1", "topic"), serverCopy]), "content match absorbs the local copy");
 		assert.ok(!absorbed(serverCopy, [optimistic]), "server stamps are never absorbed");
 		assert.ok(!absorbed({ ...newUserMessage("my question") }, [serverCopy]), "an id-less message is never absorbed");
 		// The answer result absorbs by toolCallId (ids differ, content may too —
 		// the toolCallId is the identity of an answer).
-		const answer = { ...newAnswerResult("call-1", "quiz", { correct: true }), id: "c_local_2" } as LhMessage;
+		const answer = { ...newAnswerResult("call-1", "pose", { correct: true }), id: "c_local_2" } as LannaMessage;
 		assert.ok(
-			absorbed(answer, [{ ...newAnswerResult("call-1", "quiz", { correct: true }), id: "srv_10" } as LhMessage]),
+			absorbed(answer, [{ ...newAnswerResult("call-1", "pose", { correct: true }), id: "srv_10" } as LannaMessage]),
 			"the answer result absorbs by toolCallId",
 		);
 	});
@@ -1695,7 +1327,7 @@ describe("adoptRecord — append-only adoption", () => {
 
 // ─── the continuation fold (mount/sync seam) ────────────────────────────────
 
-function assistantWithCall(id: string, callId: string, name = "research"): LhMessage {
+function assistantWithCall(id: string, callId: string, name = "research"): LannaMessage {
 	return {
 		id,
 		role: "assistant",
@@ -1705,14 +1337,14 @@ function assistantWithCall(id: string, callId: string, name = "research"): LhMes
 		provider: "openrouter",
 		model: "test",
 		timestamp: 0,
-	} as unknown as LhMessage;
+	} as unknown as LannaMessage;
 }
 
-function resultMsg(callId: string, name = "research"): LhMessage {
+function resultMsg(callId: string, name = "research"): LannaMessage {
 	return {
 		...newAnswerResult(callId, name, { ok: true }),
 		id: `r_${callId}`,
-	} as unknown as LhMessage;
+	} as unknown as LannaMessage;
 }
 
 describe("needsContinuation (the native lastAssistantMessageIsCompleteWithToolCalls)", () => {
@@ -1726,28 +1358,6 @@ describe("needsContinuation (the native lastAssistantMessageIsCompleteWithToolCa
 		assert.equal(needsContinuation(messages), false);
 	});
 
-	it("a dangling question never fires a turn (the dock owns it)", () => {
-		const messages = [userText("u1", "topic"), assistantWithCall("a1", "call-q1", "quiz")];
-		assert.equal(needsContinuation(messages), false);
-	});
-
-	it("parallel quizzes: only ALL-answered continues (the dock still owns the open one)", () => {
-		const messages = [
-			userText("u1", "topic"),
-			{
-				...assistantWithCall("a1", "call-a"),
-				content: [
-					{ type: "toolCall", id: "call-a", name: "quiz", arguments: {} },
-					{ type: "toolCall", id: "call-b", name: "quiz", arguments: {} },
-				],
-			} as unknown as LhMessage,
-			resultMsg("call-a", "quiz"),
-		];
-		assert.equal(needsContinuation(messages), false);
-		const both = [...messages, resultMsg("call-b", "quiz")];
-		assert.equal(needsContinuation(both), true, "once the dock answers B, the agent owes the reaction");
-	});
-
 	it("an orphan result (no asking assistant) never continues", () => {
 		assert.equal(needsContinuation([userText("u1", "topic"), resultMsg("call-x")]), false);
 	});
@@ -1755,134 +1365,17 @@ describe("needsContinuation (the native lastAssistantMessageIsCompleteWithToolCa
 
 // ─── the dismissal pause (owner design 2026-10-03, "A2") ────────────────────
 
-describe("the dismissal pause (needsContinuation + endsInDismissal)", () => {
-	/** The record's silent dismiss write: the toolResult the dismiss route
-	 *  appends (full answer in details — the folds read it there). */
-	function dismissedMsg(callId: string): LhMessage {
-		return {
-			...newAnswerResult(callId, "quiz", dismissedAnswer("quiz", "Pick a planet")),
-			id: `d_${callId}`,
-		} as unknown as LhMessage;
-	}
-
-	it("an all-dismissed tail demands NO continuation — the session waits for the user", () => {
-		const messages = [userText("u1", "topic"), assistantWithCall("a1", "call-q1", "quiz"), dismissedMsg("call-q1")];
-		assert.equal(needsContinuation(messages), false);
-		assert.equal(endsInDismissal(messages), true, "the pause predicate reads the same tail");
-	});
-
-	it("parallel dismissals: each silent write its own call — still paused", () => {
-		const assistant = {
-			...assistantWithCall("a1", "call-a"),
-			content: [
-				{ type: "toolCall", id: "call-a", name: "quiz", arguments: {} },
-				{ type: "toolCall", id: "call-b", name: "ask_user_question", arguments: {} },
-			],
-		} as unknown as LhMessage;
-		const messages = [
-			userText("u1", "topic"),
-			assistant,
-			dismissedMsg("call-a"),
-			{
-				...newAnswerResult("call-b", "ask_user_question", dismissedAnswer("ask", "Why?")),
-				id: "d_call-b",
-			} as unknown as LhMessage,
-		];
-		assert.equal(endsInDismissal(messages), true);
-		assert.equal(needsContinuation(messages), false, "dismissed by id, not by position — the batch rule holds");
-	});
-
-	it("mixed tail answered-then-dismissed: the LAST resolution decides — no wake (round-1 incident)", () => {
-		const assistant = {
-			...assistantWithCall("a1", "call-a"),
-			content: [
-				{ type: "toolCall", id: "call-a", name: "quiz", arguments: {} },
-				{ type: "toolCall", id: "call-b", name: "quiz", arguments: {} },
-			],
-		} as unknown as LhMessage;
-		const messages = [userText("u1", "topic"), assistant, resultMsg("call-a", "quiz"), dismissedMsg("call-b")];
-		assert.equal(endsInDismissal(messages), true, "tail ends in the dismissal");
-		assert.equal(
-			needsContinuation(messages),
-			false,
-			"ending on a dismissal = the user signaled stop — the reaction rides the next message",
-		);
-	});
-
-	it("mixed tail dismissed-then-answered: the answer IS owed its reaction (round-2 wake)", () => {
-		const assistant = {
-			...assistantWithCall("a1", "call-a"),
-			content: [
-				{ type: "toolCall", id: "call-a", name: "quiz", arguments: {} },
-				{ type: "toolCall", id: "call-b", name: "quiz", arguments: {} },
-			],
-		} as unknown as LhMessage;
-		const messages = [userText("u1", "topic"), assistant, dismissedMsg("call-a"), resultMsg("call-b", "quiz")];
-		assert.equal(endsInDismissal(messages), false);
-		assert.equal(needsContinuation(messages), true, "ending on a real answer = the reaction is owed");
-	});
-
-	it("any user message un-pauses (the derived tail flips)", () => {
-		const messages = [
-			userText("u1", "topic"),
-			assistantWithCall("a1", "call-q1", "quiz"),
-			dismissedMsg("call-q1"),
-			userText("u2", "moving on"),
-		];
-		assert.equal(endsInDismissal(messages), false);
-	});
-
-	it("a normal answer is not a dismissal (the predicate stays honest)", () => {
-		const messages = [
-			userText("u1", "topic"),
-			assistantWithCall("a1", "call-q1", "quiz"),
-			resultMsg("call-q1", "quiz"),
-		];
-		assert.equal(endsInDismissal(messages), false);
-	});
-});
-
 // ─── the pending-call tool scan ─────────────────────────────────────────────
 
 describe("pendingCallTool", () => {
 	it("finds the dangling call's tool name (the optimistic answer's stamp)", () => {
-		const messages = [assistantWithCall("a1", "call-q1", "ask_user_question")];
-		assert.equal(pendingCallTool(messages, "call-q1"), "ask_user_question");
+		const messages = [assistantWithCall("a1", "call-q1", "pose")];
+		assert.equal(pendingCallTool(messages, "call-q1"), "pose");
 		assert.equal(pendingCallTool(messages, "call-zz"), null);
 	});
 });
 
 // ─── newAnswerResult: the two-audience split (owner, 2026-10-02) ────────────
-
-describe("newAnswerResult two audiences", () => {
-	it("MODEL sees the compact learner-only record; details keeps the FULL graded answer", () => {
-		const qd: QuestionData = {
-			id: "call-1",
-			kind: "quiz",
-			question: "Which planet is closest to the Sun?",
-			mode: "single-select",
-			options: [
-				{ label: "Mercury", value: "mercury" },
-				{ label: "Venus", value: "venus" },
-			],
-			correctIndices: [1],
-			explanation: "Mercury orbits closest.",
-			createdAt: "2026-01-01T00:00:00Z",
-		};
-		const full = buildAnswer(qd, { values: ["mercury"], confidence: 70, thinking: "guessed" });
-		const msg = newAnswerResult("call-1", "quiz", full);
-		const modelSees = JSON.parse((msg.content as { type: "text"; text: string }[])[0]!.text);
-		assert.deepEqual(modelSees, {
-			kind: "quiz",
-			answers: [{ index: 1, label: "Mercury" }],
-			correct: true,
-			confidence: 70,
-			thinking: "guessed",
-		});
-		assert.equal(msg.details, full, "details is the full QuestionAnswerData verbatim");
-		assert.equal((msg.details as { questionText?: string }).questionText, "Which planet is closest to the Sun?");
-	});
-});
 
 // ─── the practice live-view law (owner, 2026-10-05) ─────────────────────────
 //
@@ -1893,14 +1386,14 @@ describe("newAnswerResult two audiences", () => {
 // adoption window rendered the submission twice for the whole turn.
 
 /** The post-settle pose-turn record of a practice session. */
-function poseRecord(): LhMessage[] {
+function poseRecord(): LannaMessage[] {
 	return [
 		{ id: "m1", role: "user", content: "db practice" },
 		{
 			id: "m3",
 			role: "assistant",
 			content: [{ type: "toolCall", id: "call-p1", name: "problem", arguments: { statement: "Q?" } }],
-		} as unknown as LhMessage,
+		} as unknown as LannaMessage,
 		{
 			id: "m4",
 			role: "toolResult",
@@ -1908,8 +1401,8 @@ function poseRecord(): LhMessage[] {
 			toolName: "problem",
 			content: [{ type: "text", text: "Problem posed — the turn ends here." }],
 			details: null,
-		} as unknown as LhMessage,
-	] as LhMessage[];
+		} as unknown as LannaMessage,
+	] as LannaMessage[];
 }
 
 describe("the live-view law — live is positive evidence, not session busyness", () => {
@@ -1931,7 +1424,7 @@ describe("the live-view law — live is positive evidence, not session busyness"
 				id: "c_as1",
 				role: "assistant",
 				content: [{ type: "toolCall", id: "call-c1", name: "conclude", arguments: { outcome: "solved" } }],
-			} as unknown as LhMessage,
+			} as unknown as LannaMessage,
 		];
 		const view = projectView(messages, live);
 		const conclude = view.flatMap((m) => m.parts).find((p) => p.type === "tool-conclude");
@@ -1947,8 +1440,8 @@ describe("the live-view law — live is positive evidence, not session busyness"
 				id: "m2",
 				role: "assistant",
 				content: [{ type: "toolCall", id: "call-p9", name: "problem", arguments: { statement: "Q?" } }],
-			} as unknown as LhMessage,
-		] as LhMessage[];
+			} as unknown as LannaMessage,
+		] as LannaMessage[];
 		const view = projectView(messages, live);
 		const part = view.flatMap((m) => m.parts).find((p) => p.type === "tool-problem");
 		assert.equal(part!.state, "input-available", "no evidence, no shimmer — even mid-turn");
@@ -1957,11 +1450,11 @@ describe("the live-view law — live is positive evidence, not session busyness"
 
 describe("absorbed — the custom role (the doubled thinking card)", () => {
 	it("absorbs the optimistic thinking marker by customType + details", () => {
-		const optimistic = { ...newThinkingMessage("call-p1", "my trace"), id: "c_opt1" } as LhMessage;
-		const serverCopy = { ...newThinkingMessage("call-p1", "my trace"), id: "srv_1" } as LhMessage;
+		const optimistic = { ...newThinkingMessage("call-p1", "my trace"), id: "c_opt1" } as LannaMessage;
+		const serverCopy = { ...newThinkingMessage("call-p1", "my trace"), id: "srv_1" } as LannaMessage;
 		assert.ok(absorbed(optimistic, [...poseRecord(), serverCopy]), "same submission → the local copy drops");
 		// A DIFFERENT submission (different text) is its own marker.
-		const other = { ...newThinkingMessage("call-p1", "a later, different trace"), id: "srv_2" } as LhMessage;
+		const other = { ...newThinkingMessage("call-p1", "a later, different trace"), id: "srv_2" } as LannaMessage;
 		assert.ok(!absorbed(optimistic, [...poseRecord(), other]), "different details → not the same submission");
 		// The c_ gate: server stamps are never absorbed, whatever the role.
 		assert.ok(!absorbed(serverCopy, [optimistic]), "server ids never drop");
@@ -1972,14 +1465,14 @@ describe("absorbed — the custom role (the doubled thinking card)", () => {
 		// the tail (client id), then the +400ms adoption fetch swaps in the
 		// write-ahead record (server id). ONE card must remain.
 		const m = model({ chatId: "chat_x", initialMessages: poseRecord() });
-		const optimistic = { ...newThinkingMessage("call-p1", "my trace"), id: "c_opt1" } as LhMessage;
+		const optimistic = { ...newThinkingMessage("call-p1", "my trace"), id: "c_opt1" } as LannaMessage;
 		m.applyWireEvent({ type: "message_start", message: optimistic });
 		assert.equal(
 			m.getState().nativeMessages.filter((x) => (x as { role?: string }).role === "custom").length,
 			1,
 			"the optimistic marker is in the tail",
 		);
-		const serverCopy = { ...newThinkingMessage("call-p1", "my trace"), id: "srv_1" } as LhMessage;
+		const serverCopy = { ...newThinkingMessage("call-p1", "my trace"), id: "srv_1" } as LannaMessage;
 		m.adoptRecord([...poseRecord(), serverCopy]);
 		const customs = m.getState().nativeMessages.filter((x) => (x as { role?: string }).role === "custom");
 		assert.equal(customs.length, 1, "the server copy replaced the optimistic one — no doubling");

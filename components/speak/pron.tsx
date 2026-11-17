@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Pronunciation on screen (LangHarness, 2026-10-28): the chip a spoken
+ * Pronunciation on screen (2026-10-28): the chip a spoken
  * line gets, and the "work on" block the end screens share (src/core/
  * pronounce.ts for the scores and the report).
  */
@@ -123,7 +123,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 											aria-expanded={isExpanded}
 											title={title}
 											className={cn(
-												"lh-press flex items-center gap-2 rounded-lg border px-2.5 py-1 font-prose text-base",
+												"lanna-press flex items-center gap-2 rounded-lg border px-2.5 py-1 font-prose text-base",
 												isExpanded ? "border-teal bg-teal-wash" : "border-border bg-card hover:bg-well",
 											)}
 										>
@@ -148,7 +148,7 @@ export function PronWorkOn({ report, className }: { report: PronReport | undefin
 					</ul>
 
 					{note && (
-						<div className="lh-rise mt-2 rounded-lg bg-well p-4" data-testid="pron-cue">
+						<div className="lanna-rise mt-2 rounded-lg bg-well p-4" data-testid="pron-cue">
 							<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 								<p className="flex flex-wrap items-baseline gap-x-2 font-ui text-[13px] text-ink-3">
 									<span className="font-prose text-[19px] font-semibold text-foreground" lang={lang?.code}>

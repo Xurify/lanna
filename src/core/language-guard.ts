@@ -1,6 +1,6 @@
-export const SHOWN_LANGUAGE_HEADER = "x-lh-language";
+export const SHOWN_LANGUAGE_HEADER = "x-lanna-language";
 
-export const DEVICE_LANGUAGE_COOKIE = "lh-language";
+export const DEVICE_LANGUAGE_COOKIE = "lanna-language";
 
 export const LANGUAGE_GONE = "language_gone";
 

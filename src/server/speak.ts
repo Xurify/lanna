@@ -1,5 +1,5 @@
 /**
- * Speak service (LangHarness, 2026-10-28) — behind /speak and /api/speak.
+ * Speak service (2026-10-28) — behind /speak and /api/speak.
  * A spoken scene with the tutor on the cheap model slot: one model call a
  * turn, no tools, the whole dialogue sent each time (a scene is ten short
  * lines; the transcript is far smaller than a chat's tool-laden prompt).
@@ -134,12 +134,12 @@ interface SpeakOptions {
 }
 
 /** A scripted tutor for screenshots and UI work without a key:
- *  LH_SPEAK_SCRIPT=<path to a JSON array of reply objects>. Dev only;
+ *  LANNA_SPEAK_SCRIPT=<path to a JSON array of reply objects>. Dev only;
  *  never set in the desktop app. Each call answers with the next entry
  *  (the last one repeats). */
 let scripted: { file: string; engine: PiEngine; model: string } | null = null;
 function scriptedEngine(): { engine: PiEngine; model: string } | null {
-	const file = process.env.LH_SPEAK_SCRIPT;
+	const file = process.env.LANNA_SPEAK_SCRIPT;
 	if (!file || process.env.NODE_ENV === "production") return null;
 	// One reader per process, so the replies advance across calls.
 	if (scripted?.file === file) return scripted;
@@ -211,9 +211,9 @@ type SttEngine = "elevenlabs" | "deepgram" | "groq";
 
 /** Which speech-to-text engine a line would go to; null when neither key
  *  is set (the screen then takes typing only). */
-/** Dev only: LH_STT_SCRIPT=<text> answers every recording with that
+/** Dev only: LANNA_STT_SCRIPT=<text> answers every recording with that
  *  transcript, so the spoken flow runs without a key. */
-const sttScript = () => (process.env.NODE_ENV !== "production" ? process.env.LH_STT_SCRIPT : undefined);
+const sttScript = () => (process.env.NODE_ENV !== "production" ? process.env.LANNA_STT_SCRIPT : undefined);
 
 export function sttEngine(): SttEngine | null {
 	if (sttScript()) return "elevenlabs";

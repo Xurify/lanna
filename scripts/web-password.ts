@@ -9,7 +9,7 @@ function promptHidden(question: string): Promise<string> {
 		if (!stdin.isTTY) {
 			reject(
 				new Error(
-					"There is no terminal to type in. Set LH_WEB_PASSWORD_FILE to a file that holds the password, or - for standard input.",
+					"There is no terminal to type in. Set LANNA_WEB_PASSWORD_FILE to a file that holds the password, or - for standard input.",
 				),
 			);
 			return;
@@ -39,7 +39,7 @@ function promptHidden(question: string): Promise<string> {
 }
 
 async function readPassword(): Promise<string> {
-	const file = process.env.LH_WEB_PASSWORD_FILE;
+	const file = process.env.LANNA_WEB_PASSWORD_FILE;
 	if (file) return fs.readFileSync(file === "-" ? 0 : file, "utf8").replace(/\r?\n$/, "");
 	console.log(
 		`Choose a password of ${PASSWORD_MIN_LENGTH} to ${PASSWORD_MAX_LENGTH} characters. A few ordinary words in a row is a good one.`,

@@ -1,6 +1,6 @@
-import { subscriptionControlsResponse } from "@/src/server";
+import { subscriptionsResponse } from "@/src/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const GET = subscriptionControlsResponse;
-export const POST = subscriptionControlsResponse;
+export const GET = subscriptionsResponse;
+export const POST = subscriptionsResponse;

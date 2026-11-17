@@ -1,7 +1,7 @@
 /**
- * A heavy scratch profile for scripts/perf-check.mjs (LangHarness, 2026-11-02).
+ * A heavy scratch profile for scripts/perf-check.mjs (2026-11-02).
  *
- *   LH_DATA_DIR=<an empty folder> tsx scripts/perf-seed.ts [cards] [logLines]
+ *   LANNA_DATA_DIR=<an empty folder> tsx scripts/perf-seed.ts [cards] [logLines]
  *
  * The demo week has a handful of days and no review deck, so every read is
  * instant and the app looks fast. A learner a year in has thousands of cards
@@ -9,20 +9,20 @@
  * most requests. This fills the folder with that: `cards` cards (default 1500),
  * answered through the real service so every file has its real shape, and
  * `logLines` log lines (default 20000) by repeating the real ones. Refuses
- * without LH_DATA_DIR and refuses a folder that already has review data.
+ * without LANNA_DATA_DIR and refuses a folder that already has review data.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
-const dir = process.env.LH_DATA_DIR;
+const dir = process.env.LANNA_DATA_DIR;
 if (!dir) {
 	console.error(
-		"Set LH_DATA_DIR to an empty folder first: this script writes a profile and must not touch your real data.",
+		"Set LANNA_DATA_DIR to an empty folder first: this script writes a profile and must not touch your real data.",
 	);
 	process.exit(1);
 }
-process.env.LH_PROFILE = "slovak";
+process.env.LANNA_PROFILE = "slovak";
 const cards = Number(process.argv[2] ?? 1500);
 const logLines = Number(process.argv[3] ?? 20000);
 

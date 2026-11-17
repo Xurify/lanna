@@ -1,4 +1,4 @@
-# Desirable difficulties and LangHarness
+# Desirable difficulties and Lanna
 
 _Owner's rule, 2026-10-28: "things should be hard and the user should face
 struggle because that is where the learning happens… even though people

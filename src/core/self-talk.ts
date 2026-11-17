@@ -1,5 +1,5 @@
 /**
- * Guided Self-Talk (LangHarness, 2026-11-12) — solo speaking practice
+ * Guided Self-Talk (2026-11-12) — solo speaking practice
  * inspired by Dr. Lýdia Machová's Language Mentoring methodology.
  *
  * Why (docs/research/comprehensible-input.md & Machová 2018):

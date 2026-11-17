@@ -47,7 +47,7 @@ async function fetchWork(
 	for (let attempt = 0; attempt < 5; attempt++) {
 		try {
 			const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, {
-				headers: { "User-Agent": "langharness-source-check/1.0" },
+				headers: { "User-Agent": "lanna-source-check/1.0" },
 			});
 			if (res.status === 404) return "missing";
 			if (res.ok) {

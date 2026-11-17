@@ -5,7 +5,7 @@ import { SourceItem } from "@/components/sources/sources-note";
 import { FEATURES, SOURCES, sourcesOf } from "@/src/core";
 
 /**
- * /sources — the research behind every task (LangHarness, 2026-11-06).
+ * /sources — the research behind every task (2026-11-06).
  * For each feature: what the studies found, what they did not show and
  * which numbers are the app's own choice, then the references. A source
  * that two features lean on appears under each.
@@ -15,7 +15,7 @@ export function SourcesPage() {
 	const linked = SOURCES.filter((s) => s.doi).length;
 	return (
 		<div className="relative min-h-dvh bg-background">
-			<div className="lh-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
+			<div className="lanna-drag absolute inset-x-0 top-0 h-13" aria-hidden="true" />
 			<header className="sticky top-0 z-10 flex items-center gap-2 bg-background px-3 py-2">
 				<SidebarToggle />
 			</header>

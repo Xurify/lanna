@@ -96,8 +96,8 @@ export function LanguageSwitcher() {
 		if (open) refresh();
 	}, [open, refresh]);
 	useEffect(() => {
-		window.addEventListener("lh:review-changed", refresh);
-		return () => window.removeEventListener("lh:review-changed", refresh);
+		window.addEventListener("lanna:review-changed", refresh);
+		return () => window.removeEventListener("lanna:review-changed", refresh);
 	}, [refresh]);
 
 	// Close menu on outside click or Esc

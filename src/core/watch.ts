@@ -1,5 +1,5 @@
 /**
- * Watch (LangHarness, 2026-10-28; Xurify: "input YouTube videos in and the
+ * Watch (2026-10-28; Xurify: "input YouTube videos in and the
  * app helps turn that into comprehensible input or like a guided video,
  * but video format (so like double subtitles — so I see both as I
  * watch)") — the pure model behind the Watch task: a YouTube video the

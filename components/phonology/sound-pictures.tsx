@@ -82,7 +82,7 @@ export function SoundPictures({
 						type="button"
 						onClick={() => hear(figure.word)}
 						aria-label={`Play ${figure.word}`}
-						className="lh-press group grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] items-center gap-3 rounded-xl bg-well px-4 py-2.5 text-start hover:bg-well-2 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]"
+						className="lanna-press group grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] items-center gap-3 rounded-xl bg-well px-4 py-2.5 text-start hover:bg-well-2 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]"
 					>
 						<Caption figure={figure} langCode={langCode} />
 						<SoundDrawing
@@ -98,7 +98,7 @@ export function SoundPictures({
 						type="button"
 						onClick={() => hear(figure.word)}
 						aria-label={`Play ${figure.word}`}
-						className="lh-press group flex flex-col rounded-xl bg-well px-3 pb-3.5 pt-2 text-start hover:bg-well-2 sm:px-4"
+						className="lanna-press group flex flex-col rounded-xl bg-well px-3 pb-3.5 pt-2 text-start hover:bg-well-2 sm:px-4"
 					>
 						<SoundDrawing
 							picture={figure.picture}

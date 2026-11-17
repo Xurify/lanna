@@ -136,7 +136,7 @@ for (const route of ROUTES) {
 			const context = await browser.createBrowserContext();
 			const page = await context.newPage();
 			await page.setViewport({ width, height, isMobile: width < 500, hasTouch: width < 500 });
-			await page.setCookie({ name: "lh-theme", value: theme, url: `${base}/` });
+			await page.setCookie({ name: "lanna-theme", value: theme, url: `${base}/` });
 			const cdp = await page.createCDPSession();
 			await cdp.send("Network.enable");
 			await cdp.send("Network.emulateNetworkConditions", {
@@ -192,7 +192,7 @@ if (flag("interact")) {
 		const context = await browser.createBrowserContext();
 		const page = await context.newPage();
 		await page.setViewport({ width, height, isMobile: width < 500, hasTouch: width < 500 });
-		await page.setCookie({ name: "lh-theme", value: "day", url: `${base}/` });
+		await page.setCookie({ name: "lanna-theme", value: "day", url: `${base}/` });
 		await page.evaluateOnNewDocument(() => {
 			window.__raw = 0;
 			window.__top = [];

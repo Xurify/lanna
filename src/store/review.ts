@@ -1,5 +1,5 @@
 /**
- * Spaced-review persistence (LangHarness) — the active profile's
+ * Spaced-review persistence — the active profile's
  * data/profiles/<language>/review/:
  *
  *   cards.json    every minted card by id (read-modify-write, atomic

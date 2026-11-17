@@ -19,8 +19,8 @@ import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
 // ── the seam, BEFORE any config-loading import (the birth-stamp discipline) ─
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-compaction-"));
-process.env.LH_DATA_DIR = TMP_DATA;
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-compaction-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
 
 const { chatStore } = await import("../src/store/chats.ts");
 const { ensureCompacted, kickCompaction, awaitCompaction, effectiveThresholdTokens, projectedContextTokens } =
@@ -29,7 +29,7 @@ import type { CompactionDeps } from "../src/server/compaction.ts";
 const { subscribe } = await import("../src/core/events.ts");
 const { activeCompactionOf, newUserMessage, measuredContextTokens, COMPACTED_HISTORY_HEADER } =
 	await import("../src/core/index.ts");
-import type { LhMessage } from "../src/core/index.ts";
+import type { LannaMessage } from "../src/core/index.ts";
 
 after(() => {
 	fs.rmSync(TMP_DATA, { recursive: true, force: true });
@@ -37,7 +37,7 @@ after(() => {
 
 // ── fixtures ────────────────────────────────────────────────────────────────
 
-const big = (text: string, kb = 100): LhMessage => newUserMessage(`${text}: ${"x".repeat(kb * 1024)}`);
+const big = (text: string, kb = 100): LannaMessage => newUserMessage(`${text}: ${"x".repeat(kb * 1024)}`);
 
 /** A chat whose record projects far over any test threshold. */
 function overThresholdChat(label: string): string {
@@ -54,7 +54,6 @@ const depsOf = (chatId: string, thresholdTokens: number): CompactionDeps => ({
 	// identity rides the marker's provenance) — a minimal stand-in.
 	engine: { model: { provider: "faux", id: "test", contextWindow: 1_000_000 } } as never,
 	modelId: "faux:test",
-	kind: "teach",
 	thresholdTokens,
 	systemPromptTokens: 100,
 	summarize: async (prompt) => {
@@ -247,7 +246,7 @@ describe("the compaction service", () => {
 			stopReason: "stop",
 			usage: { input: 120_000, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 120_001 },
 			timestamp: 1,
-		} as LhMessage;
+		} as LannaMessage;
 		chatStore.saveMessages(chat.id, [newUserMessage("tiny visible history"), assistant]);
 		const before = summarizeCalls;
 		await ensureCompacted(depsOf(chat.id, 40_000), chat.id);
@@ -265,7 +264,7 @@ describe("the compaction service", () => {
 			stopReason: "stop",
 			usage: { input: 120_000, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 120_001 },
 			timestamp: 1,
-		} as LhMessage;
+		} as LannaMessage;
 		chatStore.saveMessages(id, [...chatStore.getChat(id)!.messages, assistant]);
 		let release!: () => void;
 		const gate = new Promise<void>((done) => {

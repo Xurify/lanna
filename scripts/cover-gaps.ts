@@ -3,7 +3,7 @@
  * general scene because no scene matches their topic (the ink-drawing
  * skill, "Story covers"):
  *
- *   LH_DATA_DIR=<profile folder> npx tsx scripts/cover-gaps.ts
+ *   LANNA_DATA_DIR=<profile folder> npx tsx scripts/cover-gaps.ts
  *
  * Each story is listed with the cover it shows and where that came from:
  * "writer" (the story writer named it), "words" (its title or theme

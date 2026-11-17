@@ -1,5 +1,5 @@
 /**
- * The video library (LangHarness watch, 2026-10-28) — the active
+ * The video library (watch, 2026-10-28) — the active
  * profile's data/profiles/<language>/videos/:
  *
  *   <id>.json              one YouTube video as prepared: every line with

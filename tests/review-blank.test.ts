@@ -1,9 +1,9 @@
 /**
- * REVIEW BLANK LENGTH (LangHarness, 2026-11-11): a card that has been
+ * REVIEW BLANK LENGTH (2026-11-11): a card that has been
  * answered once can hide up to three words: the card's word and other
  * words of the sentence, picked anew each rep (E102), one field each.
  *
- * Runs under an isolated LH_DATA_DIR, so every app-module import is dynamic.
+ * Runs under an isolated LANNA_DATA_DIR, so every app-module import is dynamic.
  */
 
 import assert from "node:assert/strict";
@@ -12,9 +12,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-review-blank-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-review-blank-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { blankAround, blankWordsFor, splitOnWords, targetWordOf, wordsOf } = await import("../src/core/review.ts");
 const { answerReview, blankOf, reviewStatus, updateReviewSettings } = await import("../src/server/review.ts");

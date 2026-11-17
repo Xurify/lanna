@@ -1,5 +1,5 @@
 /**
- * ASPECT TASKS AND THE FIXTURE PATH (LangHarness, 2026-11-04). Pins the form-
+ * ASPECT TASKS AND THE FIXTURE PATH (2026-11-04). Pins the form-
  * reading tasks in the aspect chapters (src/core/aspect-tasks.ts): the grid
  * never offers budem + a perfective, the perfective present carries its note,
  * the cue reps are spans of their own verified sentence with same-length

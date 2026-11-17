@@ -1,5 +1,5 @@
 /**
- * Word variants and doublets (LangHarness) — accepted alternate spellings
+ * Word variants and doublets — accepted alternate spellings
  * and synonymous lexical twins (e.g. zas ↔ zase / zasa, späť ↔ naspäť).
  * Pure and browser-safe.
  */

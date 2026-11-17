@@ -1,5 +1,5 @@
 /**
- * Listen (LangHarness, 2026-10-28) — the meaning-focused input strand,
+ * Listen (2026-10-28) — the meaning-focused input strand,
  * built locally. Ten real sentences from the dictionary that the learner
  * can follow (at most one unknown word each, and the session at or above
  * LISTEN_FLOOR), each heard first with the text hidden, typed, then read

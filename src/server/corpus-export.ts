@@ -1,5 +1,5 @@
 /**
- * The corpus export (LangHarness, 2026-10-27) — `npm run corpus:export`
+ * The corpus export (2026-10-27) — `npm run corpus:export`
  * (scripts/corpus-export.ts) and, one day, a Settings button. Reads every
  * store of the active profile plus the shared audio library and writes
  * one normalized, app-independent file per kind of content into
@@ -256,7 +256,7 @@ export function sentencesFrom(lessons: LessonLogEntry[]): ExportedSentence[] {
 	return [...map.values()].sort((a, b) => a.sentence.localeCompare(b.sentence, "sk"));
 }
 
-const EXPORT_README = `# LangHarness corpus export
+const EXPORT_README = `# Lanna corpus export
 
 A clean snapshot of everything generated or produced while learning, in
 plain JSON. Made by \`npm run corpus:export\`; the raw data folders are the

@@ -1,5 +1,5 @@
 /**
- * The grammar atlas (LangHarness, 2026-10-30; first tries 2026-10-31): the six
+ * The grammar atlas (2026-10-30; first tries 2026-10-31): the six
  * Slovak cases down the side, the three genders across the top, and each cell
  * pointing at the drill that teaches it, or "not yet" while no drill exists.
  * A cell's percentage is its first-try accuracy for that case and gender

@@ -15,8 +15,8 @@
  * Electron shell does (electron/main.cjs) — with --electron it uses
  * Electron's bundled Node via ELECTRON_RUN_AS_NODE, otherwise host Node —
  * 127.0.0.1 on a kernel-assigned
- * free port, NODE_ENV=production, a THROWAWAY LH_DATA_DIR and an EMPTY
- * LH_AUTH_FILE under os.tmpdir() (no real keys or data ever touch it) —
+ * free port, NODE_ENV=production, a THROWAWAY LANNA_DATA_DIR and an EMPTY
+ * LANNA_AUTH_FILE under os.tmpdir() (no real keys or data ever touch it) —
  * polls GET / until it answers (200, or the first-run redirect to /start
  * that an empty profile gets), then probes the GET-only API surface (setup,
  * graph / models / settings — no side effects). Any other status, an early server
@@ -26,8 +26,7 @@
  * way, same day).
  */
 import { spawn } from "node:child_process";
-import { probeEnv, verifyDemoRuntime } from "./smoke-demo-runtime.mjs";
-import { verifyProviderRuntime } from "./smoke-provider-runtime.mjs";
+import { probeEnv, verifyProviderRuntime } from "./smoke-provider-runtime.mjs";
 import { createRequire } from "node:module";
 import * as fs from "node:fs";
 import * as http from "node:http";
@@ -85,14 +84,11 @@ function isFirstRunRedirect(res) {
 }
 
 async function main() {
-	// HTTP boot alone never imports the dynamically loaded demo engine.
-	// Fail before packaging if its standalone dependency graph is incomplete.
-	verifyDemoRuntime(STANDALONE, RUNTIME);
 	// /api/models only reads catalogs; initialize the real lazy SDK offline too.
 	verifyProviderRuntime(STANDALONE, RUNTIME);
 	const port = await freePort();
 	const url = `http://127.0.0.1:${port}`;
-	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-smoke-"));
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-smoke-"));
 	const dataDir = path.join(home, "data");
 	const authFile = path.join(home, "auth.json");
 	fs.writeFileSync(authFile, "{}\n", "utf-8");
@@ -123,8 +119,8 @@ async function main() {
 			NODE_ENV: "production",
 			PORT: String(port),
 			HOSTNAME: "127.0.0.1",
-			LH_DATA_DIR: dataDir,
-			LH_AUTH_FILE: authFile,
+			LANNA_DATA_DIR: dataDir,
+			LANNA_AUTH_FILE: authFile,
 		},
 		stdio: ["ignore", "pipe", "pipe"],
 	});

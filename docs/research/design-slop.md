@@ -1,6 +1,6 @@
 # What makes a UI look AI-made, and how agents should avoid it
 
-**Question:** agents build most LangHarness screens. Which visual defaults make a generated UI read as "AI slop", and how do we keep agents off them?
+**Question:** agents build most Lanna screens. Which visual defaults make a generated UI read as "AI slop", and how do we keep agents off them?
 
 **Date:** 2026-11-02
 
@@ -22,7 +22,7 @@ The tells fall into five groups:
 
 Remedies: pick one layout primitive and repeat it (the highest-leverage change), make one bold choice rather than many safe ones, choose a palette and typeface with a point of view, meet contrast standards, restyle shadcn tokens, and write design decisions down where the agent reads them every session. The article measures pages with deterministic DOM and CSS checks run in Playwright rather than a model judging screenshots.
 
-## What it means for LangHarness
+## What it means for Lanna
 
 Most of the remedies are already rules: the trail design (E30) has one action color, flat surfaces, no gradients or shadows, and its own type pair; E4a bans uppercase on learning screens; E31 caps the top of Today at four indicators. What was missing is the agent-facing side: a list of the tells next to the rule that replaces each, read before design work starts, and a cheap check on the diff after. The skill does both. Its checks are greps over added lines, in the article's deterministic spirit, without a Playwright run.
 

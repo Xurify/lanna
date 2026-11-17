@@ -1,5 +1,5 @@
 /**
- * SCRIPTED SCENES PINS (LangHarness, phase 5, E13): every scene has a
+ * SCRIPTED SCENES PINS (phase 5, E13): every scene has a
  * script of six to ten turns, every turn a tutor line and exactly three
  * options with exactly one correct, the correct lines built from lexicon
  * words, and the grader's results — right, wrong with an explanation, and

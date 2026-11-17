@@ -9,12 +9,12 @@
 #   backup-data.sh verify <snapshot>
 #   backup-data.sh restore <snapshot> --into <empty folder>
 #
-# <snapshot> is a folder name under $LH_HOME/backups, "latest", or a path.
-# Settings come from the environment, else from KEY=value lines in $LH_REPO/.env:
-#   LH_HOME          required: the folder with data/, keys/ and sheets/
-#   LH_REPO          the git checkout (default: the folder above this script)
-#   LH_KEEP_BACKUPS  snapshots to keep (default: 14)
-#   LH_IMAGE         the image to read files with when node is not installed on this machine
+# <snapshot> is a folder name under $LANNA_HOME/backups, "latest", or a path.
+# Settings come from the environment, else from KEY=value lines in $LANNA_REPO/.env:
+#   LANNA_HOME          required: the folder with data/, keys/ and sheets/
+#   LANNA_REPO          the git checkout (default: the folder above this script)
+#   LANNA_KEEP_BACKUPS  snapshots to keep (default: 14)
+#   LANNA_IMAGE         the image to read files with when node is not installed on this machine
 #
 # Exit codes: 0 done, 1 usage, 2 missing tool or setting, 3 the copy has JSON
 # files that do not parse and did not before (the snapshot is kept, named in
@@ -23,12 +23,12 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LH_REPO="${LH_REPO:-$(cd "$HERE/.." && pwd)}"
+LANNA_REPO="${LANNA_REPO:-$(cd "$HERE/.." && pwd)}"
 . "$HERE/lib/server-env.sh"
 
-LH_HOME="$(env_value LH_HOME)"
-LH_KEEP_BACKUPS="$(env_value LH_KEEP_BACKUPS)"; LH_KEEP_BACKUPS="${LH_KEEP_BACKUPS:-14}"
-LH_IMAGE="$(env_value LH_IMAGE)"
+LANNA_HOME="$(env_value LANNA_HOME)"
+LANNA_KEEP_BACKUPS="$(env_value LANNA_KEEP_BACKUPS)"; LANNA_KEEP_BACKUPS="${LANNA_KEEP_BACKUPS:-14}"
+LANNA_IMAGE="$(env_value LANNA_IMAGE)"
 
 COMMAND="backup"
 PUSH_TO=""
@@ -39,7 +39,7 @@ SNAPSHOT=""
 while [ $# -gt 0 ]; do
 	case "$1" in
 		backup|list|verify|restore) COMMAND="$1" ;;
-		--keep) LH_KEEP_BACKUPS="${2:?--keep needs a number}"; shift ;;
+		--keep) LANNA_KEEP_BACKUPS="${2:?--keep needs a number}"; shift ;;
 		--push-to) PUSH_TO="${2:?--push-to needs user@host:path}"; shift ;;
 		--no-verify) VERIFY=0 ;;
 		--into) TARGET="${2:?--into needs a folder}"; shift ;;
@@ -50,11 +50,11 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-[ -n "$LH_HOME" ] || { echo "backup-data: set LH_HOME (in $LH_REPO/.env or the environment)" >&2; exit 2; }
+[ -n "$LANNA_HOME" ] || { echo "backup-data: set LANNA_HOME (in $LANNA_REPO/.env or the environment)" >&2; exit 2; }
 command -v rsync >/dev/null || { echo "backup-data: rsync is not installed" >&2; exit 2; }
 command -v flock >/dev/null || { echo "backup-data: flock is not installed" >&2; exit 2; }
 
-BACKUPS="$LH_HOME/backups"
+BACKUPS="$LANNA_HOME/backups"
 PARTS=(data keys sheets)
 STAMP_PATTERN='[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z'
 
@@ -88,10 +88,10 @@ resolve_snapshot() {
 run_verify() {
 	if command -v node >/dev/null; then
 		node "$HERE/verify-data.mjs" "$1"
-	elif [ -n "$LH_IMAGE" ] && command -v docker >/dev/null; then
-		docker run --rm --network none --user "$(id -u):$(id -g)" -v "$1:/snapshot:ro" --entrypoint node "$LH_IMAGE" /app/verify-data.mjs /snapshot
+	elif [ -n "$LANNA_IMAGE" ] && command -v docker >/dev/null; then
+		docker run --rm --network none --user "$(id -u):$(id -g)" -v "$1:/snapshot:ro" --entrypoint node "$LANNA_IMAGE" /app/verify-data.mjs /snapshot
 	else
-		echo "backup-data: reading the copy needs node, or docker with LH_IMAGE set" >&2
+		echo "backup-data: reading the copy needs node, or docker with LANNA_IMAGE set" >&2
 		exit 2
 	fi
 }
@@ -101,11 +101,11 @@ run_verify() {
 copy_parts() {
 	local destination="$1" base="${2:-}" part link rc
 	for part in "${PARTS[@]}"; do
-		[ -d "$LH_HOME/$part" ] || continue
+		[ -d "$LANNA_HOME/$part" ] || continue
 		link=()
 		[ -n "$base" ] && [ -d "$base/$part" ] && link=("--link-dest=$base/$part")
 		rc=0
-		rsync -aH --delete ${link[@]+"${link[@]}"} "$LH_HOME/$part/" "$destination/$part/" || rc=$?
+		rsync -aH --delete ${link[@]+"${link[@]}"} "$LANNA_HOME/$part/" "$destination/$part/" || rc=$?
 		if [ "$rc" != 0 ] && [ "$rc" != 24 ]; then
 			echo "backup-data: copying $part failed (rsync exit $rc)" >&2
 			return 1
@@ -143,7 +143,7 @@ do_restore() {
 	mkdir -p "$TARGET"
 	local target_real home_real
 	target_real="$(cd "$TARGET" && pwd -P)"
-	home_real="$(cd "$LH_HOME" && pwd -P)"
+	home_real="$(cd "$LANNA_HOME" && pwd -P)"
 	case "$target_real/" in
 		"$home_real"/data/*|"$home_real"/keys/*|"$home_real"/sheets/*|"$home_real"/)
 			echo "backup-data: restore into a scratch folder, not into the live data" >&2
@@ -184,7 +184,7 @@ do_backup() {
 		found="$(new_damage "$partial/VERIFY.tsv" "$previous_report")"
 		if [ -n "$found" ]; then
 			log "files that did not parse; copying again in case the app was writing"
-			sleep "${LH_BACKUP_RETRY_SECONDS:-5}"
+			sleep "${LANNA_BACKUP_RETRY_SECONDS:-5}"
 			copy_parts "$partial" "$latest"
 			run_verify "$partial" >"$partial/VERIFY.tsv"
 			found="$(new_damage "$partial/VERIFY.tsv" "$previous_report")"
@@ -204,7 +204,7 @@ do_backup() {
 	local count=0 name
 	while read -r name; do
 		count=$((count + 1))
-		if [ "$count" -gt "$LH_KEEP_BACKUPS" ]; then
+		if [ "$count" -gt "$LANNA_KEEP_BACKUPS" ]; then
 			rm -rf "${BACKUPS:?}/$name"
 			log "removed old snapshot $name"
 		fi

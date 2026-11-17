@@ -137,7 +137,7 @@ function MermaidInline({ chart }: { chart: string }) {
 	// so a chart would otherwise stretch to the full column and render its
 	// text larger than the session's own text. Cap the holder at the width
 	// where the chart's 16px base font lands at the SESSION font (measured
-	// live from the wrapper — --lh-prose-size today): a chart may shrink to
+	// live from the wrapper — --lanna-prose-size today): a chart may shrink to
 	// fit the column, but never blow its text up past the chat's.
 	const holderRef = useRef<HTMLDivElement>(null);
 	const [capW, setCapW] = useState<number | null>(null);
@@ -227,7 +227,7 @@ function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 
 	// Inline code: no data-block (the pre handler stamps block fences only).
 	if (!("data-block" in props)) {
-		// LangHarness: `say: …` is a target-language phrase with a play button.
+		// Lanna: `say: …` is a target-language phrase with a play button.
 		const spoken = spokenText(codeSource(children));
 		if (spoken) return <SpokenPhrase text={spoken} />;
 		return (
@@ -408,12 +408,12 @@ function MarkdownTable(props: ComponentProps<"table"> & ExtraProps) {
 
 /** Bold as the REAL element (appearance fix, 2026-09-23): streamdown's
  *  default `strong` renders `<span class="font-semibold" data-streamdown=
- *  "strong">` — and `.lh-prose :where(strong, b)` matches strong/b
+ *  "strong">` — and `.lanna-prose :where(strong, b)` matches strong/b
  *  ELEMENTS, so neither the factory ink (#ee928c) nor a settings
  *  boldColor ever landed on bold text (italic worked: streamdown leaves
  *  `em` native). Rendering the semantic element restores screen-reader
  *  emphasis AND lets the designed token rule apply unmodified — color
- *  --lh-ink-strong, weight 700 (beating the old 600 utility). */
+ *  --lanna-ink-strong, weight 700 (beating the old 600 utility). */
 function MarkdownStrong(props: ComponentProps<"strong"> & ExtraProps) {
 	const { children, className, node: _node, ...rest } = props;
 	return (

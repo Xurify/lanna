@@ -1,15 +1,15 @@
 ---
 name: add-language
-description: Guides the agent to scaffold, configure, and validate a new language profile in LangHarness following token-minimization and schema conventions.
+description: Guides the agent to scaffold, configure, and validate a new language profile in Lanna following token-minimization and schema conventions.
 ---
 
 # Add Language Skill
 
-Use this skill whenever the user asks to add, configure, or support a new target language in LangHarness (e.g. Czech, Romanian, German, Spanish, French, Italian, Japanese, etc.).
+Use this skill whenever the user asks to add, configure, or support a new target language in Lanna (e.g. Czech, Romanian, German, Spanish, French, Italian, Japanese, etc.).
 
 ## Philosophy & Core Rules
 
-1. **Token Minimization**: Do not reinvent code or add heavy runtime prompt abstractions. LangHarness uses declarative code registries and static JSON schemas.
+1. **Token Minimization**: Do not reinvent code or add heavy runtime prompt abstractions. Lanna uses declarative code registries and static JSON schemas.
 2. **Profile Isolation**: Each target language stores its learner records, FSRS reviews, and knowledge graphs under `<data>/profiles/<language>/`. The server reads the active profile from `config.ts` `LANGUAGE_PROFILES`.
 3. **No Parity Drift**: `LANGUAGE_PROFILES` in `config.ts` and `LANGUAGE_IDS` in `src/core/language.ts` MUST always have identical sorted arrays.
 4. **Cloze Integrity**: In `curriculum/<language>/lexicon.json`, every `cloze.answer` MUST match `text.slice(at, at + answer.length)`.
@@ -80,7 +80,7 @@ Create markdown guidance for the LLM teacher:
 Run the automated test runner:
 
 ```bash
-node ./node_modules/tsx/dist/cli.mjs --test tests/multi-language.test.ts tests/langharness.test.ts
+node ./node_modules/tsx/dist/cli.mjs --test tests/multi-language.test.ts tests/lanna.test.ts
 ```
 
 Verify all tests pass with code 0.

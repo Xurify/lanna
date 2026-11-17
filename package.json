@@ -1,9 +1,9 @@
 {
-	"name": "langharness",
+	"name": "lanna",
 	"version": "0.1.0",
 	"private": true,
 	"description": "An agent harness for learning languages: adaptive teaching, drills, reading, and speaking.",
-	"homepage": "https://github.com/Xurify/langharness",
+	"homepage": "https://github.com/Xurify/lanna",
 	"license": "AGPL-3.0-only",
 	"author": {
 		"name": "Xurify"
@@ -41,7 +41,7 @@
 		"remote:off": "bun scripts/remote-access-off.ts",
 		"remote:code": "bun scripts/remote-code.ts",
 		"web:password": "bun scripts/web-password.ts",
-		"desktop:dist": "rm -rf dist .next/standalone && next build && node scripts/smoke-provider-runtime.mjs && node scripts/build-server.mjs && node scripts/smoke-server.mjs && DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer} APPLE_KEYCHAIN_PROFILE=LH_NOTARY electron-builder --mac --arm64"
+		"desktop:dist": "rm -rf dist .next/standalone && next build && node scripts/smoke-provider-runtime.mjs && node scripts/build-server.mjs && node scripts/smoke-server.mjs && DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer} APPLE_KEYCHAIN_PROFILE=LANNA_NOTARY electron-builder --mac --arm64"
 	},
 	"dependencies": {
 		"@earendil-works/pi-agent-core": "1.4.0",
@@ -61,7 +61,6 @@
 		"next": "^16.4.4",
 		"pdfjs-dist": "^6.3.289",
 		"pele": "^1.13.0",
-		"puppeteer-core": "^25.8.0",
 		"radix-ui": "^1.6.7",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
@@ -91,9 +90,10 @@
 		"oxfmt": "^0.79.0",
 		"oxlint": "^1.94.0",
 		"oxlint-tsgolint": "^7.0.2007",
+		"puppeteer-core": "^25.8.0",
 		"tailwindcss": "^4.3.3",
 		"tsx": "^4.19.0",
 		"typescript": "^5.6.0"
 	},
-	"desktopName": "langharness.desktop"
+	"desktopName": "lanna.desktop"
 }

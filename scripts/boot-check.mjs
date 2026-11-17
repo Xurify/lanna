@@ -25,8 +25,8 @@ const OUTSIDE_ADDRESS = "203.0.113.9";
 
 const REQUIRED_ASSETS = [
 	"server.js",
-	"src/agent/system-prompt.md",
-	"src/agent/prompts/teacher/20-teaching.md",
+	"src/agent/prompts/chat/10-chat.md",
+	"src/agent/prompts/practice/00-base.md",
 	"src/agent/prompts/language/10-slovak.md",
 	"curriculum/slovak/lexicon.json",
 	"curriculum/slovak/world.json",
@@ -156,7 +156,7 @@ function checkImage(dir) {
 	const chrome = process.env.CHROME_PATH;
 	check("CHROME_PATH names a browser", !!chrome && fs.existsSync(chrome), chrome ?? "unset");
 	if (chrome && fs.existsSync(chrome)) {
-		const profile = fs.mkdtempSync(path.join(os.tmpdir(), "lh-chrome-"));
+		const profile = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chrome-"));
 		try {
 			const dom = execFileSync(
 				chrome,
@@ -199,7 +199,7 @@ async function runStartedServer({
 		process.exit(1);
 	}
 	const port = await freePort();
-	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lh-boot-"));
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-boot-"));
 	fs.writeFileSync(path.join(home, "auth.json"), "{}\n");
 	const env = {
 		PATH: process.env.PATH,
@@ -207,10 +207,10 @@ async function runStartedServer({
 		NODE_ENV: "production",
 		NEXT_TELEMETRY_DISABLED: "1",
 		HOSTNAME: "127.0.0.1",
-		LH_DATA_DIR: path.join(home, "data"),
-		LH_AUTH_FILE: path.join(home, "auth.json"),
-		LH_REPO_CHEATSHEETS_DIR: path.join(home, "sheets"),
-		LH_IGNORE_ENV_KEYS: "1",
+		LANNA_DATA_DIR: path.join(home, "data"),
+		LANNA_AUTH_FILE: path.join(home, "auth.json"),
+		LANNA_REPO_CHEATSHEETS_DIR: path.join(home, "sheets"),
+		LANNA_IGNORE_ENV_KEYS: "1",
 		...(process.env.CHROME_PATH ? { CHROME_PATH: process.env.CHROME_PATH } : {}),
 	};
 	prepare({ home, env });
@@ -271,7 +271,7 @@ function setPassword({ home, env }) {
 	const file = path.join(home, "password.txt");
 	fs.writeFileSync(file, `${PASSWORD}\n`, { mode: 0o600 });
 	execFileSync(process.execPath, [CLI], {
-		env: { ...env, LH_WEB_PASSWORD_FILE: file },
+		env: { ...env, LANNA_WEB_PASSWORD_FILE: file },
 		stdio: "ignore",
 		timeout: 60_000,
 	});
@@ -283,10 +283,10 @@ async function probePublicMode(base) {
 		host: PUBLIC_NAME,
 		"x-forwarded-host": PUBLIC_NAME,
 		"x-forwarded-proto": "https",
-		"x-lh-proxy-secret": SECRET,
+		"x-lanna-proxy-secret": SECRET,
 	};
 	const noSecret = { host: PUBLIC_NAME, "x-forwarded-host": PUBLIC_NAME, "x-forwarded-proto": "https" };
-	const wrongSecret = { ...proxied, "x-lh-proxy-secret": "c".repeat(48) };
+	const wrongSecret = { ...proxied, "x-lanna-proxy-secret": "c".repeat(48) };
 	const notHttps = { ...proxied, "x-forwarded-proto": "http" };
 	const refusals = [
 		["a loopback Host, as nginx sends by default", "/api/settings", {}],
@@ -318,9 +318,9 @@ async function probePublicMode(base) {
 	check("public mode: the right password signs in", right.status === 200, String(right.status));
 	check(
 		"public mode: the session cookie is HttpOnly and Secure",
-		/lh_device=/.test(right.cookie) && /HttpOnly/i.test(right.cookie) && /Secure/i.test(right.cookie),
+		/lanna_device=/.test(right.cookie) && /HttpOnly/i.test(right.cookie) && /Secure/i.test(right.cookie),
 	);
-	const cookie = right.cookie.match(/lh_device=[^;]+/)?.[0] ?? "";
+	const cookie = right.cookie.match(/lanna_device=[^;]+/)?.[0] ?? "";
 	const inside = await request(base, "/api/settings", { ...proxied, cookie });
 	check("public mode: the API answers with the session", inside.status === 200, String(inside.status));
 	const foreign = await post(base, "/api/settings/agent", { ...proxied, cookie, origin: "https://evil.example" }, {});
@@ -334,7 +334,7 @@ async function runPublicMode() {
 	}
 	await runStartedServer({
 		label: " in public mode",
-		extraEnv: { LH_PUBLIC_HOST: PUBLIC_NAME, LH_PROXY_SECRET: SECRET },
+		extraEnv: { LANNA_PUBLIC_HOST: PUBLIC_NAME, LANNA_PROXY_SECRET: SECRET },
 		prepare: setPassword,
 		probe: probePublicMode,
 		isUp: (res) => res.status === 403,

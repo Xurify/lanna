@@ -1,5 +1,5 @@
 /**
- * Picks for Watch (LangHarness, 2026-11-05; owner: "connect our YouTube
+ * Picks for Watch (2026-11-05; owner: "connect our YouTube
  * account and analyze your YouTube history and/or our recommended and then
  * pick videos or find videos based off that", and "import and save
  * creators so the process of adding YouTube videos is easier or more

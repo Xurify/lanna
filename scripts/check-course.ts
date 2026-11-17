@@ -3,7 +3,7 @@
  * language's lexicon: what checkCourse keeps and drops, how many Tatoeba
  * sentences each grammar lesson draws, and a few of them with the blank.
  *
- *   LH_DATA_DIR=<data> npx tsx scripts/check-course.ts estonian [samples]
+ *   LANNA_DATA_DIR=<data> npx tsx scripts/check-course.ts estonian [samples]
  */
 
 import fs from "node:fs";

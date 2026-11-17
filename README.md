@@ -1,4 +1,4 @@
-# LangHarness
+# Lanna
 
 Version 0.1.0 — a local-first, agent-assisted language learning harness (Slovak built in, plus any language added from the app), with bridges from the languages you already know.
 
@@ -67,8 +67,8 @@ Optional speech keys (Settings → API keys → Speech, or `.env.local`):
 - `ELEVENLABS_API_KEY`: the best voice, and speech-to-text for the Speak task (Scribe). Change the voice with `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`. Every language is read with `eleven_v4` (set `ELEVENLABS_MODEL_ID` for another); an account without it falls back to `eleven_v3`, then `eleven_multilingual_v2` for the 29 languages that one reads. Single words and the tutor's lines in a language without its own ElevenLabs voice use Edge unless `ELEVENLABS_VOICE_ID_<CODE>` (for example `ELEVENLABS_VOICE_ID_ET`) names one. `npm run audio:regen` lists the kept clips the newest model would make better (an older model, or an Edge clip in a voice ElevenLabs has) with their characters and cost, and spends nothing; `npm run audio:regen -- --yes` makes them again (`--max-chars` caps the spend). Replaced files move to `data/audio/replaced/<stamp>/`.
 - `DEEPGRAM_API_KEY`: speech-to-text for the Speak task when there is no ElevenLabs key (and the composer's dictation).
 - `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`: Azure Speech pronunciation assessment (Slovak is covered) for Speak and Speed — a phoneme-level score for every spoken line. Without them clarity is judged from the transcript alone.
-- `LH_PRON_SCRIPT=1`: dev only — a made-up pronunciation score for working on the screens without a key. `LH_STT_SCRIPT=<text>`: dev only — every recording transcribes to that text.
-- `LH_SPEAK_SCRIPT=<file>`: dev only — a JSON array of scripted tutor replies for working on the Speak screen without a model.
+- `LANNA_PRON_SCRIPT=1`: dev only — a made-up pronunciation score for working on the screens without a key. `LANNA_STT_SCRIPT=<text>`: dev only — every recording transcribes to that text.
+- `LANNA_SPEAK_SCRIPT=<file>`: dev only — a JSON array of scripted tutor replies for working on the Speak screen without a model.
 - Edge voices need no key, only internet.
 - Piper works offline: set `PIPER_PATH` to the binary and `PIPER_MODEL_SK` to a Slovak `.onnx` voice.
 
@@ -96,7 +96,7 @@ fresh, delete `data/profiles/slovak/`.
 
 ## Tests
 
-`npm test` runs every file in `tests/`. Run it with `NODE_ENV=test` and `LH_DATA_DIR` set to a scratch folder, never the real profile.
+`npm test` runs every file in `tests/`. Run it with `NODE_ENV=test` and `LANNA_DATA_DIR` set to a scratch folder, never the real profile.
 
 ## License
 

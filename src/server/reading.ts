@@ -1,5 +1,5 @@
 /**
- * Reading service (LangHarness, 2026-10-28) — behind /read and /api/read.
+ * Reading service (2026-10-28) — behind /read and /api/read.
  * Writes graded episodes of an ongoing story at the learner's level on the
  * cheap model slot, glosses every word against the lexicon, keeps every
  * episode on disk (src/store/stories.ts), and records each reading: the
@@ -835,7 +835,7 @@ export function storyEngine(): { engine: PiEngine; model: string } | null {
 	// Writing a short graded text needs no extended thinking: with the
 	// slot's thinking on, the wait doubled for no better Slovak.
 	const spec = { provider: slot.model.provider, id: slot.model.id, thinkingLevel: "off" as const };
-	return { engine: piEngineForSpec(spec, true), model: `${spec.provider}:${spec.id}` };
+	return { engine: piEngineForSpec(spec), model: `${spec.provider}:${spec.id}` };
 }
 
 function stepOf(u: Usage): StoryUsage["steps"][number] {

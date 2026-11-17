@@ -1,5 +1,5 @@
 /**
- * LESSON CORE PINS (LangHarness redesign): the lesson screen builds every
+ * LESSON CORE PINS (redesign): the lesson screen builds every
  * rep locally from the lexicon, so the classifier, the builder's
  * determinism, the combo XP and the streak rule are the whole contract.
  */

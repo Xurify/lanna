@@ -26,7 +26,7 @@ import { wordLinks } from "@/components/words/word-links";
  * 1. Word/phrase selection lookup is DISABLED by default everywhere.
  * 2. It is ONLY enabled inside explicitly designated learning containers:
  *    [data-word-lookup-enabled="true"], [data-selectable-words="true"],
- *    article[data-word-lookup-enabled="true"], [data-word-column], .lh-source-passage.
+ *    article[data-word-lookup-enabled="true"], [data-word-column], .lanna-source-passage.
  * 3. In exercises & drills (lessons, reviews, exams, fluency, listen):
  *    Lookup is strictly disabled before the learner answers ([data-word-lookup-enabled="false"])
  *    to prevent cheating / giving away hints (Clozemaster rule).
@@ -56,7 +56,7 @@ export function isEligibleLearningTarget(node: Node | null | undefined, activeLa
 
 	// 3. Opt-in only: Must be inside an explicitly enabled learning container
 	const lookupContainer = el.closest(
-		"[data-word-lookup-enabled='true'], [data-selectable-words='true'], [data-learning-content='true'], article, [data-word-column], .lh-source-passage",
+		"[data-word-lookup-enabled='true'], [data-selectable-words='true'], [data-learning-content='true'], article, [data-word-column], .lanna-source-passage",
 	);
 
 	if (!lookupContainer) {
@@ -107,7 +107,7 @@ interface LookupData {
 	favorite?: boolean;
 }
 
-const DOCK_STORAGE_KEY = "lh:selection-bar-docked";
+const DOCK_STORAGE_KEY = "lanna:selection-bar-docked";
 const MODE_CYCLE: readonly WordTranslationMode[] = ["dictionary", "hybrid", "google"];
 const MODE_BADGE_LABELS: Record<WordTranslationMode, string> = {
 	dictionary: "Dict",
@@ -575,10 +575,10 @@ export function SelectionWordBankBar() {
 			data-selection-bar
 			data-testid="selection-word-bank-bar"
 			style={positionStyle}
-			className="lh-no-drag fixed z-50 w-max min-w-[18.5rem] max-w-[23.5rem] pointer-events-auto"
+			className="lanna-no-drag fixed z-50 w-max min-w-[18.5rem] max-w-[23.5rem] pointer-events-auto"
 		>
 			<div
-				className="lh-menu-in origin-top flex flex-col gap-2 overflow-y-auto rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl"
+				className="lanna-menu-in origin-top flex flex-col gap-2 overflow-y-auto rounded-2xl border-2 border-border bg-card/98 p-3 shadow-2xl"
 				style={{ maxHeight: `calc(100dvh - ${POPOVER_EDGE * 2}px)` }}
 			>
 				{/* Always-visible header: headword, POS/morphology, and translation */}

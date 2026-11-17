@@ -8,8 +8,8 @@ import {
 	pickClozeWord,
 	slugifyTitle,
 } from "../src/core/chat-export.ts";
-import type { LhMessage } from "../src/core/native-messages.ts";
-import type { LhViewMessage } from "../src/core/view.ts";
+import type { LannaMessage } from "../src/core/native-messages.ts";
+import type { LannaViewMessage } from "../src/core/view.ts";
 
 describe("chat-export", () => {
 	it("slugifies titles into clean filename slugs", () => {
@@ -20,7 +20,7 @@ describe("chat-export", () => {
 	});
 
 	it("exports a chat session to clean Markdown with SVG drawings", () => {
-		const messages: LhViewMessage[] = [
+		const messages: LannaViewMessage[] = [
 			{
 				id: "m-1",
 				role: "user",
@@ -50,14 +50,14 @@ describe("chat-export", () => {
 			exportedAt: "2026-11-08",
 		});
 
-		assert.ok(md.startsWith("# Demonstratives\n\n*Exported from LangHarness · 2026-11-08*"));
+		assert.ok(md.startsWith("# Demonstratives\n\n*Exported from Lanna · 2026-11-08*"));
 		assert.ok(md.includes("## Learner\n\nWhy is it ten muž, but táto kniha?"));
 		assert.ok(md.includes('## Tutor\n\n**ten muž** = "that man"'), "a say: span reads as the bold form, not as code");
 		assert.ok(md.includes('```svg\n<svg viewBox="0 0 320 180"><text>ten muž</text></svg>\n```'));
 	});
 
 	it("keeps the tutor's line breaks, puts its headings under the speaker, and drops links that only open in the app", () => {
-		const messages: LhViewMessage[] = [
+		const messages: LannaViewMessage[] = [
 			{
 				id: "m-1",
 				role: "assistant",
@@ -97,28 +97,9 @@ describe("chat-export", () => {
 		assert.ok(md.includes("# not a heading\nkept as written\n"), "a code fence is left alone");
 	});
 
-	it("writes an answered question with its options and the learner's choice, and a drawing kept in a tool result", () => {
+	it("writes the tutor's text and a drawing kept in a tool result, and leaves out a tool the learner never sees", () => {
 		const messages = [
 			{ id: "n-1", role: "assistant", content: [{ type: "text", text: "One quick check." }] },
-			{
-				id: "n-2",
-				role: "toolResult",
-				toolName: "probe",
-				isError: false,
-				details: {
-					kind: "quiz",
-					questionText: 'Complete the sentence: "Čítam ___ knihu."',
-					options: [
-						{ index: 1, label: "túto" },
-						{ index: 2, label: "tú" },
-					],
-					dontKnow: false,
-					answers: [{ label: "tú", value: "b", index: 2 }],
-					correctIndices: [1],
-					correct: false,
-					answeredAt: "2026-11-08T09:37:34.769Z",
-				},
-			},
 			{
 				id: "n-3",
 				role: "toolResult",
@@ -127,21 +108,17 @@ describe("chat-export", () => {
 				details: { svg: '<svg viewBox="0 0 10 10"></svg>' },
 			},
 			{ id: "n-4", role: "toolResult", toolName: "grade", isError: false, details: { correct: true } },
-		] as unknown as LhMessage[];
+		] as unknown as LannaMessage[];
 
 		const md = exportChatMarkdown(messages, { title: "Demonstratives", exportedAt: "2026-11-09" });
 
-		assert.ok(
-			md.includes(
-				'## Tutor\n\nOne quick check.\n\nComplete the sentence: "Čítam ___ knihu."\n\n- túto (correct)\n- tú\n\n## Learner\n\ntú\n',
-			),
-		);
-		assert.ok(md.includes('## Tutor\n\n```svg\n<svg viewBox="0 0 10 10"></svg>\n```'));
+		assert.ok(md.includes("## Tutor\n\nOne quick check."));
+		assert.ok(md.includes('```svg\n<svg viewBox="0 0 10 10"></svg>\n```'));
 		assert.ok(!md.includes("grade"), "a tool the learner never sees leaves no trace");
 	});
 
 	it("makes a Clozemaster sentence from each glossed phrase that holds a word the tutor sent to Review", () => {
-		const messages: LhViewMessage[] = [
+		const messages: LannaViewMessage[] = [
 			{
 				id: "m-1",
 				role: "assistant",
@@ -182,7 +159,7 @@ describe("chat-export", () => {
 	});
 
 	it("writes the Clozemaster file as bare tab-separated rows: no header, no braces, no line break after the last row", () => {
-		const messages: LhViewMessage[] = [
+		const messages: LannaViewMessage[] = [
 			{
 				id: "m-1",
 				role: "assistant",
@@ -202,7 +179,7 @@ describe("chat-export", () => {
 	});
 
 	it("exports a chat session as valid JSON with metadata", () => {
-		const messages: LhViewMessage[] = [
+		const messages: LannaViewMessage[] = [
 			{
 				id: "m-1",
 				role: "user",
@@ -221,7 +198,7 @@ describe("chat-export", () => {
 		};
 
 		assert.equal(parsed.version, 1);
-		assert.equal(parsed.format, "langharness-chat-export");
+		assert.equal(parsed.format, "lanna-chat-export");
 		assert.equal(parsed.chatId, "chat-123");
 		assert.equal(parsed.title, "Greetings");
 		assert.equal(parsed.messages.length, 1);

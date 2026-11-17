@@ -121,7 +121,7 @@ The exam is a required gate, but it can't block anyone until we trust it. So it 
 
 1. Branch named after the work. PR assigned to the owner. Nothing merged by me (W2).
 2. Tests with `NODE_ENV=test node --import tsx --test <files>`. Typecheck with `node node_modules/typescript/bin/tsc --noEmit`, since the `tsc` shim on this PC does not resolve. Lint with `npx eslint` on the changed files.
-3. A live check on a scratch profile: `LH_DATA_DIR` and `LH_AUTH_FILE` pointing at a temp folder, with no real keys. No model call without the owner's approval. Screenshots go in the PR.
+3. A live check on a scratch profile: `LANNA_DATA_DIR` and `LANNA_AUTH_FILE` pointing at a temp folder, with no real keys. No model call without the owner's approval. Screenshots go in the PR.
 4. The decision and its why go in the PR description. The research note is updated if the evidence changes.
 5. Before blaming a change for a failing test, run the same files on `main` in the same environment. PR #37 found 28 failures that were already there.
 

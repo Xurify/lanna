@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Starting a tutor chat from outside the composer (LangHarness redesign):
+ * Starting a tutor chat from outside the composer (redesign):
  * a tutor unit, a lesson's "Why?" and the placement follow-up open a session
  * with a prepared first message, the same way the old home composer did
  * (POST /api/chats, then /chat/<id>?prompt=…, whose page delivers the
@@ -34,7 +34,7 @@ export async function startTutorChat(
 		activity?: "tutor";
 		unit?: string;
 		reuse?: WhyReuse;
-		kind?: "practice" | "teach";
+		kind?: "practice" | "chat";
 	},
 ): Promise<void> {
 	// A tutor unit's session counts when the learner first types (the server,
@@ -54,8 +54,6 @@ export async function startTutorChat(
 	const res = await fetch("/api/chats", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		// A "teach" session (the placement follow-up) runs the prober with
-		// the learner profile in its prompt, then the teacher.
 		body: JSON.stringify({ title: opts.title, kind: opts.kind ?? "practice", ...(tutorUnit ? { tutorUnit } : {}) }),
 	});
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);

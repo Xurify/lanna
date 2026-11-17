@@ -1,5 +1,5 @@
 /**
- * Today's line (LangHarness, 2026-11-05; docs/research/creator-hooks.md,
+ * Today's line (2026-11-05; docs/research/creator-hooks.md,
  * proposal 1). One real sentence, a little above the learner's level, is
  * played with no text in the morning. The learner types what they caught.
  * Once they have practiced that day, the same sentence plays again and the

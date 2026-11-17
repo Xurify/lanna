@@ -1,5 +1,5 @@
 /**
- * Guided Self-Talk Server Handler (LangHarness, 2026-11-12)
+ * Guided Self-Talk Server Handler (2026-11-12)
  *
  * Records finished self-talk sessions into the day's ledger, counting
  * active speaking time toward the Speaking strand (P9 & P2), awarding XP,

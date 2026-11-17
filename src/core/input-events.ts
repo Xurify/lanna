@@ -26,7 +26,7 @@
  */
 
 import type { QuestionAnswerData } from "./question-core.ts";
-import type { LhMessage } from "./native-messages.ts";
+import type { LannaMessage } from "./native-messages.ts";
 import {
 	activeProblemOf,
 	concludedByDismissalPair,
@@ -61,7 +61,7 @@ export type ChatInput =
  *  input appends — with claimSteers deleted, the pump's wake is the only
  *  steer appender left (the in-run path hands markers to pi's own
  *  follow-up queue instead, so it never builds an input event). */
-export type SteerInput = { type: "steers"; steers: LhMessage[] };
+export type SteerInput = { type: "steers"; steers: LannaMessage[] };
 
 /** Every input the turn composition accepts. */
 export type TurnInput = ChatInput | SteerInput;
@@ -129,7 +129,7 @@ export function parseUserSteerInput(input: unknown): UserSteerInput {
 /** The native appends a dismissal makes (pure — same orphan discipline
  *  as answers: the call must be a DANGLING question call, or — the
  *  practice variant — the ACTIVE problem). */
-export function dismissAppends(record: { messages: LhMessage[] }, input: DismissInput): LhMessage[] {
+export function dismissAppends(record: { messages: LannaMessage[] }, input: DismissInput): LannaMessage[] {
 	if (input.type === "dismiss-problem") {
 		const active = activeProblemOf(record.messages);
 		if (!active || active.toolCallId !== input.problemCallId) {
@@ -194,7 +194,7 @@ export function parseChatInput(input: unknown): ChatInput {
  * else 400s honestly instead of silently interrupting a question or
  * double-answering.
  */
-export function inputAppends(record: { messages: LhMessage[]; kind?: string }, input: ChatInput): LhMessage[] {
+export function inputAppends(record: { messages: LannaMessage[]; kind?: string }, input: ChatInput): LannaMessage[] {
 	switch (input.type) {
 		case "text":
 			return [...dismissalConclusion(record), newUserMessage(input.text)];
@@ -235,7 +235,7 @@ export function inputAppends(record: { messages: LhMessage[]; kind?: string }, i
  *  (synthetic conclude call + ack) rides ahead of it, so the agent reads
  *  the dismissal through its own vocabulary and the slot frees. Pure;
  *  empty when nothing dismissals pend. */
-function dismissalConclusion(record: { messages: LhMessage[] }): LhMessage[] {
+function dismissalConclusion(record: { messages: LannaMessage[] }): LannaMessage[] {
 	const problemCallId = pendingProblemDismissalOf(record.messages);
 	return problemCallId ? concludedByDismissalPair(problemCallId) : [];
 }

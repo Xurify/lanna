@@ -1,3 +1,5 @@
+import { adoptFormerStorage } from "@/components/former-storage";
+
 export interface PendingSession {
 	id: string;
 	lang: string;
@@ -5,10 +7,11 @@ export interface PendingSession {
 	body: string;
 }
 
-const KEY = "lh-session-outbox";
+const KEY = "lanna-session-outbox";
 
 function read(): PendingSession[] {
 	try {
+		adoptFormerStorage(localStorage);
 		const list: unknown = JSON.parse(localStorage.getItem(KEY) ?? "[]");
 		return Array.isArray(list) ? (list as PendingSession[]) : [];
 	} catch {

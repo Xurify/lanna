@@ -9,9 +9,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, it } from "node:test";
 
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lh-reset-"));
-process.env.LH_DATA_DIR = TMP;
-process.env.LH_PROFILE = "slovak";
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-reset-"));
+process.env.LANNA_DATA_DIR = TMP;
+process.env.LANNA_PROFILE = "slovak";
 
 const { PATHS } = await import("../config.ts");
 const { resetProfileData, dataLocations } = await import("../src/server/reset.ts");

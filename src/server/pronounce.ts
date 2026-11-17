@@ -1,5 +1,5 @@
 /**
- * Pronunciation service (LangHarness, 2026-10-28) — behind /api/pronounce.
+ * Pronunciation service (2026-10-28) — behind /api/pronounce.
  * Scores one recording against the line it should be (src/core/
  * pronounce.ts for the shape and the rules):
  *
@@ -54,10 +54,10 @@ function azureKeys(): { key: string; region: string } | null {
 	return key && region && /^[a-z0-9]{4,40}$/.test(region) ? { key, region } : null;
 }
 
-/** Dev only: LH_PRON_SCRIPT=1 scores every line without a key, with a
+/** Dev only: LANNA_PRON_SCRIPT=1 scores every line without a key, with a
  *  made-up but steady result (for working on the screens). */
 function scripted(): boolean {
-	return process.env.NODE_ENV !== "production" && process.env.LH_PRON_SCRIPT === "1";
+	return process.env.NODE_ENV !== "production" && process.env.LANNA_PRON_SCRIPT === "1";
 }
 
 function scriptedScore(reference: string, heard?: string): PronScore {

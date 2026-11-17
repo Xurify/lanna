@@ -71,7 +71,7 @@ export function LessonIntro({ plan, onStart }: { plan: LessonPlan; onStart: () =
 					{onSummary ? (
 						<SummaryStage summary={summary!} />
 					) : (
-						<figure className="lh-rise flex flex-col items-center" data-testid="intro-stage">
+						<figure className="lanna-rise flex flex-col items-center" data-testid="intro-stage">
 							<p className="max-w-md text-center font-ui text-[13px] text-ink-3" data-testid="intro-lead">
 								{sketchLead(plan.unit)}
 							</p>
@@ -116,7 +116,7 @@ export function LessonIntro({ plan, onStart }: { plan: LessonPlan; onStart: () =
 function introCard(plan: LessonPlan, progress: string, body: React.ReactNode) {
 	const info = unitInfo(plan.unit);
 	return (
-		<div className={cn(COLUMN, "lh-rise flex flex-1 flex-col")}>
+		<div className={cn(COLUMN, "lanna-rise flex flex-1 flex-col")}>
 			<PracticeCard icon="rule" title={info.slovakTerm ?? info.title} sub={info.tagline} right={progress}>
 				{body}
 			</PracticeCard>
@@ -268,7 +268,7 @@ function SummaryStage({ summary }: { summary: SketchSummary }) {
 	const link = referencePageUrl(`/grammar/cases/${summary.slug}`);
 	return (
 		<div
-			className="lh-rise flex flex-col items-start gap-3 font-prose text-[15px] leading-relaxed text-foreground"
+			className="lanna-rise flex flex-col items-start gap-3 font-prose text-[15px] leading-relaxed text-foreground"
 			data-testid="intro-summary"
 		>
 			<p className="font-ui text-[13px] font-semibold text-ink-3">The rule in short</p>

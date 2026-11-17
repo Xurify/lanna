@@ -1,5 +1,5 @@
 /**
- * Catch the mistake (LangHarness, 2026-11-06): a short exercise apart from the
+ * Catch the mistake (2026-11-06): a short exercise apart from the
  * Read episodes. It shows two or three sentences with one wrong word, from a
  * pair the learner mixes up. The learner taps the wrong word, then types the
  * word that belongs there, which is graded with compareAnswer.

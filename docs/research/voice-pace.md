@@ -10,7 +10,7 @@ The pace varies from clip to clip, and that is how the voice is made, so it is l
 
 ## What was measured
 
-49 slovak.wiki clips (the default Slovak voice for any dictionary word or example, `wiki-audio.ts`) from the perf sandboxes, 40 of them distinct sentences of 3 or more syllables. Length by `ffprobe`, syllables by `countSyllables` (`src/core/pace.ts`, a Slovak rule set: vowels, ia/ie/iu as one, syllabic r and l). Reproduce on any profile with `LH_DATA_DIR=… npx tsx scripts/audio-pace.ts`.
+49 slovak.wiki clips (the default Slovak voice for any dictionary word or example, `wiki-audio.ts`) from the perf sandboxes, 40 of them distinct sentences of 3 or more syllables. Length by `ffprobe`, syllables by `countSyllables` (`src/core/pace.ts`, a Slovak rule set: vowels, ia/ie/iu as one, syllabic r and l). Reproduce on any profile with `LANNA_DATA_DIR=… npx tsx scripts/audio-pace.ts`.
 
 |         | syllables a second                                       |
 | ------- | -------------------------------------------------------- |

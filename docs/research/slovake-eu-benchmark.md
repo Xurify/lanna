@@ -1,6 +1,6 @@
 # slovake.eu: what a free course does that we don't
 
-Date: 2026-10-30. Question: what should LangHarness copy from the structure of slovake.eu's course, and what should it leave alone? Rule W4: sources are listed here, and the index in [README.md](README.md) is updated.
+Date: 2026-10-30. Question: what should Lanna copy from the structure of slovake.eu's course, and what should it leave alone? Rule W4: sources are listed here, and the index in [README.md](README.md) is updated.
 
 ## Sources and method
 
@@ -55,7 +55,7 @@ Our engine is stronger on everything the course lacks: FSRS review, the adaptive
 
 ## Mapping
 
-| slovake.eu                        | LangHarness today                                                                 | Gap                                     | Idea (plan phase)           |
+| slovake.eu                        | Lanna today                                                                       | Gap                                     | Idea (plan phase)           |
 | --------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------- | --------------------------- |
 | A fixed arc in every chapter      | 19 chapters over 120 units (`src/core/curriculum.ts`)                             | no shared shape per chapter             | A. Chapter arc              |
 | A story with named characters     | Read episodes of Robo in Bratislava (`src/core/reading.ts`), not tied to chapters | no cast shared across tasks             | B. Story bible              |

@@ -1,5 +1,5 @@
 /**
- * ASPECT AND DEMONSTRATIVE DRILLS (LangHarness, 2026-11-04). Pins what ships:
+ * ASPECT AND DEMONSTRATIVE DRILLS (2026-11-04). Pins what ships:
  * the aspect family's twelve pairs and the verifier's eighteen approved rows
  * (two perfective, sixteen imperfective); the balance gate (a pair is drilled
  * and recorded only with rows of both aspects, so the shipped data drills

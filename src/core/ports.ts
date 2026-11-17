@@ -9,8 +9,8 @@
  * adapters may import core; core NEVER imports an adapter.
  */
 
-import type { LhMessage } from "./native-messages.ts";
-import type { ChatRecord, ChatSettings, ChatSummary, JobKind, JobRecord, PlanTree, TurnUsage } from "./contracts.ts";
+import type { LannaMessage } from "./native-messages.ts";
+import type { ChatRecord, ChatSettings, ChatSummary, JobKind, JobRecord, TurnUsage } from "./contracts.ts";
 import type { UserSettings } from "./settings.ts";
 
 // ─── ChatStore — the session record's home (data/chats) ─────────────────────
@@ -26,9 +26,8 @@ export interface ChatStore {
 	listChats(): ChatSummary[];
 	/** Persist the full native message list (the record IS the agent
 	 * state — Wave B, owner-approved 2026-09-26). */
-	saveMessages(id: string, messages: LhMessage[]): void;
+	saveMessages(id: string, messages: LannaMessage[]): void;
 	/** Persist the session plan tree (plan tools call this in execute). */
-	saveTree(id: string, tree: PlanTree): void;
 	/** Append one usage entry to the record's turn log (the money channel,
 	 * 2026-09): idempotent per turn id — each request carries its own, so
 	 * a turn persisted twice appends once while continuation turns (which

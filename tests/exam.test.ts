@@ -1,10 +1,10 @@
 /**
- * EXAM PINS (LangHarness, phase 6a, E14): every chapter draws eight choose
+ * EXAM PINS (phase 6a, E14): every chapter draws eight choose
  * items from its own word and drill units (three words, three forms, two
  * more; a pairs unit takes one form slot with a Dvojičky rep), the answer
  * is always among the options, the draw is deterministic per seed, the
  * scorer counts and misses, 80% passes, and a finished attempt is kept on
- * the record. Runs under an isolated LH_DATA_DIR, so every app-module
+ * the record. Runs under an isolated LANNA_DATA_DIR, so every app-module
  * import is dynamic.
  */
 
@@ -14,9 +14,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lh-exam-"));
-process.env.LH_DATA_DIR = TMP_DATA;
-process.env.LH_PROFILE = "slovak";
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-exam-"));
+process.env.LANNA_DATA_DIR = TMP_DATA;
+process.env.LANNA_PROFILE = "slovak";
 
 const { allChapters } = await import("../src/core/curriculum.ts");
 const { unitInfo } = await import("../src/core/lesson.ts");

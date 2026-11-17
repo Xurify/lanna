@@ -6,7 +6,7 @@
  *
  * THE CONTRACT: full history stays persisted in the record — extraction
  * and the user's transcript keep reading everything. A compaction marker
- * (LhMarkerMessage, customType "compaction") carries a summary plus the
+ * (LannaMarkerMessage, customType "compaction") carries a summary plus the
  * cut (firstKeptMessageId); toLlmMessages — the ONE model-facing seam —
  * projects [summary] + [messages from the cut onward] on every request.
  * The live agent never holds dropped messages because every run is built
@@ -33,10 +33,8 @@
  * model can continue mid-thought.
  */
 
-import type { PlanTree } from "./contracts/plan.ts";
-import { derivePlanStatusesLh, derivedNodeStatus } from "./contracts/plan.ts";
 import { COMPACTED_HISTORY_HEADER } from "./contracts/chat.ts";
-import type { LhMessage, LhMarkerMessage } from "./native-messages.ts";
+import type { LannaMessage, LannaMarkerMessage } from "./native-messages.ts";
 import { newMessageId } from "./native-messages.ts";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage, ToolResultMessage, SystemMessage } from "@earendil-works/pi-ai";
@@ -78,7 +76,7 @@ export function calculateContextTokens(usage: {
  * whole message — record scaffolding (ids, usage, responseId, app-side
  * details, escaped quotes/backslashes) inflates ~3x (measured on the
  * 2026-10-05 relational-databases incident: 84k estimated vs ~30k real). */
-export function estimateMessageTokens(message: LhMessage | AgentMessage): number {
+export function estimateMessageTokens(message: LannaMessage | AgentMessage): number {
 	const content: unknown = (message as { content?: unknown }).content;
 	let chars = 0;
 	if ((message as { role?: string }).role === "assistant") {
@@ -128,10 +126,11 @@ function textCharsOfContent(content: unknown): number {
  * so pre-marker usage is not a valid anchor (pi's "don't trust usage
  * captured before a later compaction" law). Index into messages, or
  * null. */
-function lastAssistantUsageIndex(messages: readonly (LhMessage | AgentMessage)[]): number | null {
+function lastAssistantUsageIndex(messages: readonly (LannaMessage | AgentMessage)[]): number | null {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const m = messages[i]!;
-		if ((m as { role?: string }).role === "custom" && (m as LhMarkerMessage).customType === "compaction") return null;
+		if ((m as { role?: string }).role === "custom" && (m as LannaMarkerMessage).customType === "compaction")
+			return null;
 		if ((m as { role?: string }).role !== "assistant") continue;
 		const a = m as AssistantMessage & { stopReason?: string };
 		if (a.stopReason === "aborted" || a.stopReason === "error") continue;
@@ -158,7 +157,7 @@ interface ContextTokenEstimate {
  * it. The heuristic never re-estimates history the provider already
  * counted (the relational-databases bug: full-record JSON.stringify/4
  * tripled the true context and fired a 30k session at an 80k threshold). */
-export function estimateContextTokens(messages: readonly (LhMessage | AgentMessage)[]): ContextTokenEstimate {
+export function estimateContextTokens(messages: readonly (LannaMessage | AgentMessage)[]): ContextTokenEstimate {
 	const anchor = lastAssistantUsageIndex(messages);
 	if (anchor === null) {
 		let trailing = 0;
@@ -173,7 +172,7 @@ export function estimateContextTokens(messages: readonly (LhMessage | AgentMessa
 }
 
 /** Estimate a whole message list (the plain heuristic — cut-walk use). */
-export function estimateTokens(messages: readonly (LhMessage | AgentMessage)[]): number {
+export function estimateTokens(messages: readonly (LannaMessage | AgentMessage)[]): number {
 	let total = 0;
 	for (const m of messages) total += estimateMessageTokens(m);
 	return total;
@@ -184,7 +183,7 @@ export function estimateTokens(messages: readonly (LhMessage | AgentMessage)[]):
 /** Model-visible entry adapter for the local Pi 1.4.0 cutoff port.
  * Compaction entries are boundaries, not ordinary cut candidates; UI-only
  * markers have no context, just like native metadata entries. */
-function cutMessage(message: LhMessage): LhMessage | null {
+function cutMessage(message: LannaMessage): LannaMessage | null {
 	if (message.role !== "custom") return message;
 	if (["compaction", "plan-block", "problem-dismissed"].includes(message.customType)) return null;
 	return message;
@@ -198,7 +197,7 @@ function cutMessage(message: LhMessage): LhMessage | null {
  * Returns the first kept record index; a zero/no-progress cut drops nothing.
  * Keep this and estimateMessageTokens aligned deliberately when upgrading Pi.
  */
-export function compactionCutIndex(messages: readonly LhMessage[], keepRecentTokens = KEEP_RECENT_TOKENS): number {
+export function compactionCutIndex(messages: readonly LannaMessage[], keepRecentTokens = KEEP_RECENT_TOKENS): number {
 	const previous = activeCompactionOf(messages);
 	const previousKept = previous ? keptIndexFor(messages, previous) : -1;
 	const start = Math.max(0, previousKept);
@@ -253,7 +252,7 @@ export interface CompactionDetails {
  * (header + summary — single-sourced header); the marker rides the
  * record at the compaction MOMENT (near the transcript end), while the
  * cut it names sits deep in history: the UI renders both places. */
-export function newCompactionMarker(summary: string, details: CompactionDetails): LhMarkerMessage {
+export function newCompactionMarker(summary: string, details: CompactionDetails): LannaMarkerMessage {
 	return {
 		id: newMessageId(),
 		role: "custom",
@@ -269,16 +268,16 @@ export function newCompactionMarker(summary: string, details: CompactionDetails)
  * compactions — the last one rules; older markers fall inside the
  * dropped span and never render). */
 export function activeCompactionOf(
-	messages: readonly LhMessage[],
-): (LhMarkerMessage & { details: CompactionDetails }) | null {
+	messages: readonly LannaMessage[],
+): (LannaMarkerMessage & { details: CompactionDetails }) | null {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const m = messages[i]!;
 		if ((m as { role?: string }).role !== "custom") continue;
-		const marker = m as LhMarkerMessage;
+		const marker = m as LannaMarkerMessage;
 		if (marker.customType === "compaction") {
 			const details = marker.details as Partial<CompactionDetails>;
 			if (typeof details.firstKeptMessageId === "string") {
-				return marker as LhMarkerMessage & { details: CompactionDetails };
+				return marker as LannaMarkerMessage & { details: CompactionDetails };
 			}
 		}
 	}
@@ -289,8 +288,8 @@ export function activeCompactionOf(
  * marker names an id that no longer exists (corrupt/foreign) — callers
  * fall back to rendering everything (honest degradation, never throw). */
 export function keptIndexFor(
-	messages: readonly LhMessage[],
-	marker: LhMarkerMessage & { details: CompactionDetails },
+	messages: readonly LannaMessage[],
+	marker: LannaMarkerMessage & { details: CompactionDetails },
 ): number {
 	const id = marker.details.firstKeptMessageId;
 	for (let i = 0; i < messages.length; i++) {
@@ -304,7 +303,7 @@ export function keptIndexFor(
 /** Serialize a message span as labeled text for the summarizer. Tool
  * results truncate at ~2k chars (the kept tail carries them verbatim for
  * the model; the SUMMARY only needs their gist). */
-export function serializeForSummary(messages: readonly LhMessage[]): string {
+export function serializeForSummary(messages: readonly LannaMessage[]): string {
 	const lines: string[] = [];
 	for (const m of messages) {
 		const role = (m as { role?: string }).role;
@@ -331,52 +330,24 @@ export function serializeForSummary(messages: readonly LhMessage[]): string {
 				}`,
 			);
 		} else if (role === "custom") {
-			const marker = m as LhMarkerMessage;
-			if (marker.customType === "plan-block") continue; // UI-only
+			const marker = m as LannaMarkerMessage;
 			lines.push(`[SYSTEM NOTE] ${marker.content}`);
 		}
 	}
 	return lines.join("\n\n");
 }
 
-/** Render the plan dependency tree verbatim (owner requirement: the tree
- * persists through compaction). Structure from record.tree, statuses
- * derived from the transcript (the record's own law: the tree carries
- * structure only). Empty tree → absent section (nothing persisted). */
-export function planTreeToText(tree: PlanTree | undefined, messages: readonly LhMessage[]): string | null {
-	if (!tree || tree.nodes.length === 0) return null;
-	const statuses = derivePlanStatusesLh(tree, messages);
-	const byId = new Map(tree.nodes.map((n) => [n.id, n]));
-	const lines: string[] = [];
-	for (const node of tree.nodes) {
-		const status = derivedNodeStatus(statuses, node.id);
-		const summary = node.summary ? ` — ${node.summary}` : "";
-		lines.push(`- [${status}] ${node.title} (${node.id})${summary}`);
-	}
-	for (const edge of tree.edges) {
-		const from = byId.get(edge.from);
-		const to = byId.get(edge.to);
-		if (from && to) lines.push(`- ${from.title} → ${to.title} (${from.id} → ${to.id})`);
-	}
-	return lines.join("\n");
-}
-
 /**
  * The summarizer prompt. The summary's REQUIRED SHAPE (owner rulings):
- * the learner's understanding AND its evolution, the teaching arc, the
- * plan tree verbatim, and the current moment — in that order of stress.
+ * the learner's understanding AND its evolution, the teaching arc, and
+ * the current moment — in that order of stress.
  * The summarizer is the session's own model (owner ruling), writing for
  * its own future self: the summary replaces everything before the cut.
  */
 export function buildCompactionPrompt(input: {
 	/** The span to summarize, pre-serialized (serializeForSummary). */
 	spanText: string;
-	/** The plan tree rendered (planTreeToText) or null. */
-	planTreeText: string | null;
-	/** The session kind (wording: tutor vs practice agent). */
-	kind: "teach" | "practice" | "probe";
 }): string {
-	const planSection = input.planTreeText ?? "No plan tree exists in this session (nothing was persisted).";
 	return `You are compacting the earlier part of a tutoring session — writing the summary your future self will read INSTEAD of that transcript. Everything before the cut is replaced by what you write; everything after stays verbatim. The learner's transcript below labels the learner as [LEARNER], the tutoring agent as [TUTOR], tool traffic as [RESULT …]/[SYSTEM NOTE].
 
 Write the summary with EXACTLY these sections, in this order:
@@ -385,17 +356,12 @@ Write the summary with EXACTLY these sections, in this order:
 The most detailed picture you can give of what this learner knows and how that EVOLVED across the session: what they answered and how well (quiz outcomes, correct reasoning, mistakes), their stated or displayed confidence, misconceptions that surfaced, which were corrected and which still stand. This section carries the most weight — future teaching decisions hang on it.
 
 ## The teaching arc
-How the session progressed: what was covered and in what order, which explanations landed and which didn't, how the learner responded, where the momentum went. Include probe-phase findings if present.
-
-## The plan dependency tree
-Reproduce the session's current plan tree verbatim from the structure below — do not drop nodes, edges, or statuses.
-
-${planSection}
+How the session progressed: what was covered and in what order, which explanations landed and which didn't, how the learner responded, where the momentum went.
 
 ## The current moment
 What is happening RIGHT NOW at the cut: any question or problem awaiting the learner's answer, any commitment the agent has made that a later turn must honor, and the immediate next step.
 
-Rules: no praise, no filler, no speculation beyond the transcript. Every claim about the learner must be traceable to what they actually said or answered. Keep every identifier (proposition ids, node ids, file paths) exact.
+Rules: no praise, no filler, no speculation beyond the transcript. Every claim about the learner must be traceable to what they actually said or answered. Keep every identifier (file paths, unit ids) exact.
 
 TRANSCRIPT TO SUMMARIZE:
 
