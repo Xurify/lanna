@@ -26,6 +26,11 @@ function stepTitle(x: PlanStep): string {
 	return x.task ? words(x.task).primary : `Set up ${x.lang?.english ?? ""}`;
 }
 
+/** A Watch step not done yet, in the language running now: its video can be swapped for another. */
+export function choosable(x: PlanStep): boolean {
+	return x.task?.id === "watch" && !x.done && (!x.lang || x.lang.running);
+}
+
 function stepLabel(x: PlanStep): string {
 	return x.task ? taskLabel(x.task) : "Setup";
 }
@@ -37,6 +42,7 @@ export function DayPath({
 	busy,
 	onStart,
 	renderNext,
+	onChooseVideo,
 }: {
 	groups: PlanGroup[] | null;
 	steps: PlanStep[];
@@ -44,6 +50,8 @@ export function DayPath({
 	busy: boolean;
 	onStart: (x: PlanStep) => void;
 	renderNext: (x: PlanStep) => React.ReactNode;
+	/** What a Watch row does instead of starting: lets the learner pick the video first. */
+	onChooseVideo?: () => void;
 }) {
 	const stops: Array<{ lang: DayLanguage | null; steps: PlanStep[] }> = groups ?? [{ lang: null, steps }];
 	const [unfolded, setUnfolded] = useState<Record<string, boolean>>({});
@@ -140,7 +148,8 @@ export function DayPath({
 												<button
 													type="button"
 													disabled={busy}
-													onClick={() => onStart(x)}
+													onClick={() => (onChooseVideo && choosable(x) ? onChooseVideo() : onStart(x))}
+													aria-haspopup={onChooseVideo && choosable(x) ? "dialog" : undefined}
 													className="-ml-2 flex w-[calc(100%+8px)] items-baseline gap-3 rounded-lg px-2 py-2 text-left hover:bg-well pointer-coarse:py-3"
 												>
 													<span

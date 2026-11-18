@@ -47,7 +47,8 @@ import { shownDay, useHiddenLanguages } from "@/components/hidden-languages";
 import { WhereYouAre } from "@/components/where-you-are";
 import { OutsideListening } from "@/components/outside-listening";
 import { useActiveLanguage } from "@/components/speech";
-import { DayPath, type PlanStep as Step } from "@/components/day-path";
+import { choosable, DayPath, type PlanStep as Step } from "@/components/day-path";
+import { ChooseVideo } from "@/components/watch/choose-video";
 
 /** Minutes a language's setup takes (four screens and the level check). */
 const SETUP_MINUTES = 5;
@@ -90,11 +91,13 @@ export function Today({
 	const [setupOpen, setSetupOpen] = useState(false);
 	const [pending, setPending] = useState<null | (() => Promise<void>)>(null);
 	const [busy, setBusy] = useState(false);
+	const [choosingVideo, setChoosingVideo] = useState(false);
 	const zeroKeys = useZeroKeys();
 	const strongKeyless = useStrongKeyless();
 	const settings = useSettingsDialog();
 	const keyless = !configured || zeroKeys || strongKeyless;
 
+	const closeChooser = useCallback(() => setChoosingVideo(false), []);
 	const load = useCallback(() => {
 		void fetch(`/api/progress?tz=${new Date().getTimezoneOffset()}`)
 			.then((r) => {
@@ -150,7 +153,7 @@ export function Today({
 	}, [lessonUpNext]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Enter" || !enterable || !s || setupOpen) return;
+			if (e.key !== "Enter" || !enterable || !s || setupOpen || choosingVideo) return;
 			if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 			const t = e.target as HTMLElement | null;
 			// A focused control answers Enter itself.
@@ -236,12 +239,14 @@ export function Today({
 				task={x.task}
 				busy={busy}
 				onOpen={() => start(x)}
+				onChooseVideo={choosable(x) ? () => setChoosingVideo(true) : undefined}
 				meta={elsewhere ? `Opens in ${elsewhere.english}.` : x.task.id === "review" && s ? reviewMeta(s) : null}
 			/>
 		) : (
 			<SetupNext lang={x.lang!} busy={busy} onOpen={() => start(x)} />
 		);
 	};
+	const watchTask = tasks.find((t) => t.id === "watch") ?? null;
 	const date = todayDate();
 	const toGoal = s ? Math.max(0, s.dailyGoal - s.todayXp) : 0;
 	const streak = s?.streak.days ?? 0;
@@ -380,7 +385,15 @@ export function Today({
 									/>
 								)}
 								{s && total > 0 && (
-									<DayPath groups={groups} steps={steps} up={up} busy={busy} onStart={start} renderNext={renderNext} />
+									<DayPath
+										groups={groups}
+										steps={steps}
+										up={up}
+										busy={busy}
+										onStart={start}
+										renderNext={renderNext}
+										onChooseVideo={() => setChoosingVideo(true)}
+									/>
 								)}
 								{s &&
 									total > 0 &&
@@ -403,6 +416,14 @@ export function Today({
 										/>
 									))}
 							</section>
+
+							{choosingVideo && (
+								<ChooseVideo
+									current={watchTask?.href ? new URLSearchParams(watchTask.href.split("?")[1]).get("id") : null}
+									onClose={closeChooser}
+									onChosen={(id) => router.push(`/watch?id=${id}`)}
+								/>
+							)}
 
 							<WhereYouAre stage={stage} scene={soonest} />
 
@@ -595,11 +616,13 @@ function UpNext({
 	task,
 	busy,
 	onOpen,
+	onChooseVideo,
 	meta,
 }: {
 	task: PlanTask;
 	busy: boolean;
 	onOpen: () => void;
+	onChooseVideo?: () => void;
 	meta: React.ReactNode;
 }) {
 	const w = words(task);
@@ -621,6 +644,19 @@ function UpNext({
 						</p>
 					)}
 					{meta && <p className="q-rv-meta">{meta}</p>}
+					{onChooseVideo && (
+						<p className="q-rv-meta">
+							<button
+								type="button"
+								onClick={onChooseVideo}
+								aria-haspopup="dialog"
+								data-testid="plan-choose-video"
+								className="font-[550] text-ink-2 underline decoration-[var(--q-dash)] underline-offset-2 hover:text-foreground"
+							>
+								Pick another video
+							</button>
+						</p>
+					)}
 				</div>
 				<button
 					type="button"

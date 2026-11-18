@@ -19,13 +19,14 @@
  * (src/server/tasks.ts, listed in GET /api/activity). A video already kept is
  * returned whole, and a captions error answers as without it.
  * POST /api/watch {action: "delete", videoId} — take a video out of the
- * library (its watchings stay).
+ * library (its watchings stay). * POST /api/watch {action: "choose", videoId, tz?} — the video today's
+ * plan shows, in place of the newest one not watched yet.
  * POST /api/watch {action: "finish", videoId, mode, stats, answers,
  * tapped, ms?, tz?} — a finished watching: XP, the check, the words sent
  * to the review deck, a fresh summary.
  */
 
-import { isVideoId, type SegmentStat, type WatchMode } from "@/src/core";
+import { dayKey, isVideoId, type SegmentStat, type WatchMode } from "@/src/core";
 import {
 	BODY_LIMITS,
 	bodyTooLarge,
@@ -134,6 +135,13 @@ export async function POST(req: Request) {
 		return videoStore.remove(body.videoId)
 			? Response.json({ ok: true })
 			: Response.json({ message: "no such video" }, { status: 404 });
+	}
+	if (body.action === "choose") {
+		if (typeof body.videoId !== "string" || !isVideoId(body.videoId))
+			return Response.json({ message: "videoId is required" }, { status: 400 });
+		if (!videoStore.get(body.videoId)) return Response.json({ message: "no such video" }, { status: 404 });
+		videoStore.choose(dayKey(new Date(), tzOf(body.tz)), body.videoId);
+		return Response.json({ ok: true });
 	}
 	if (body.action === "import-read") {
 		if (typeof body.videoId !== "string" || !isVideoId(body.videoId))
