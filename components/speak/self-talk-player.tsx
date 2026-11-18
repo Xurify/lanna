@@ -336,6 +336,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 }
 
 function Help({ prompt, lang, stuck = false }: { prompt: SelfTalkPrompt; lang?: string; stuck?: boolean }) {
+	if (prompt.starters.length === 0 && prompt.suggestedWords.length === 0) return null;
 	return (
 		<>
 			<div className="mt-7">

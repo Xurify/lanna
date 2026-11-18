@@ -1,14 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, MicIcon, ShuffleIcon, Volume2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeftIcon, ChevronRightIcon, MicIcon, PlusIcon, ShuffleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskFrame } from "@/components/task-frame";
-import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { CapLabel } from "@/components/ui/cap-label";
 import { SpeakHeader } from "@/components/speak/speak-header";
 import { speak } from "@/components/speech";
-import { SELF_TALK_CATEGORIES, SELF_TALK_PROMPTS, type SelfTalkPrompt } from "@/src/core";
+import {
+	OWN_TOPIC_MAX,
+	SELF_TALK_CATEGORIES,
+	SELF_TALK_PROMPTS,
+	ownTopicPrompt,
+	type SelfTalkPrompt,
+} from "@/src/core";
+
+const OWN_KEY = "lanna.selfTalk.ownTopics";
+
+function readOwn(): string[] {
+	try {
+		const raw: unknown = JSON.parse(localStorage.getItem(OWN_KEY) ?? "[]");
+		return Array.isArray(raw) ? raw.filter((t): t is string => typeof t === "string" && !!t.trim()) : [];
+	} catch {
+		return [];
+	}
+}
+
+function writeOwn(topics: string[]): void {
+	try {
+		localStorage.setItem(OWN_KEY, JSON.stringify(topics));
+	} catch {
+		return;
+	}
+}
 
 export interface SelfTalkDeckProps {
 	selected: string;
@@ -19,7 +44,8 @@ export interface SelfTalkDeckProps {
 }
 
 const clockOf = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
-const categoryOf = (p: SelfTalkPrompt) => SELF_TALK_CATEGORIES.find((c) => c.id === p.category)?.label ?? "";
+const categoryOf = (p: SelfTalkPrompt) =>
+	p.category === "own" ? "Your topic" : (SELF_TALK_CATEGORIES.find((c) => c.id === p.category)?.label ?? "");
 const CATEGORIES = SELF_TALK_CATEGORIES.filter((c) => SELF_TALK_PROMPTS.some((p) => p.category === c.id));
 
 const CHIP =
@@ -73,7 +99,12 @@ function Starters({ prompt, lang }: { prompt: SelfTalkPrompt; lang?: string }) {
 
 export function SelfTalkDeck({ selected, onSelect, onStart, lang, error }: SelfTalkDeckProps) {
 	const [category, setCategory] = useState<string | null>(null);
-	const pool = category ? SELF_TALK_PROMPTS.filter((p) => p.category === category) : SELF_TALK_PROMPTS;
+	const [own, setOwn] = useState<string[]>([]);
+	const [draft, setDraft] = useState("");
+	useEffect(() => setOwn(readOwn()), []);
+	const ownPrompts = own.map((t) => ownTopicPrompt(t)).filter((p): p is SelfTalkPrompt => !!p);
+	const everything = [...ownPrompts, ...SELF_TALK_PROMPTS];
+	const pool = category ? everything.filter((p) => p.category === category) : everything;
 	const index = Math.max(
 		0,
 		pool.findIndex((p) => p.id === selected),
@@ -94,7 +125,11 @@ export function SelfTalkDeck({ selected, onSelect, onStart, lang, error }: SelfT
 	return (
 		<Frame lead="Draw a topic and talk until the clock reaches the goal. Nobody answers, nobody grades." error={error}>
 			<div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="Topics">
-				{[{ id: null, label: "All topics" }, ...CATEGORIES].map((c) => {
+				{[
+					{ id: null, label: "All topics" },
+					...(own.length ? [{ id: "own", label: "Your topics" }] : []),
+					...CATEGORIES,
+				].map((c) => {
 					const on = category === c.id;
 					return (
 						<button
@@ -103,7 +138,7 @@ export function SelfTalkDeck({ selected, onSelect, onStart, lang, error }: SelfT
 							aria-pressed={on}
 							onClick={() => {
 								setCategory(c.id);
-								const first = c.id ? SELF_TALK_PROMPTS.find((p) => p.category === c.id) : SELF_TALK_PROMPTS[0];
+								const first = c.id ? everything.find((p) => p.category === c.id) : everything[0];
 								show(first);
 							}}
 							className={cn(CHIP, on ? "bg-foreground text-background" : "bg-well text-ink-2 hover:text-foreground")}
@@ -113,6 +148,34 @@ export function SelfTalkDeck({ selected, onSelect, onStart, lang, error }: SelfT
 					);
 				})}
 			</div>
+
+			<form
+				className="mt-4 flex max-w-xl gap-2"
+				onSubmit={(e) => {
+					e.preventDefault();
+					const topic = draft.trim().slice(0, OWN_TOPIC_MAX);
+					if (!topic) return;
+					const next = [topic, ...own.filter((t) => t !== topic)].slice(0, 30);
+					setOwn(next);
+					writeOwn(next);
+					setDraft("");
+					setCategory(null);
+					show(ownTopicPrompt(topic));
+				}}
+			>
+				<input
+					value={draft}
+					onChange={(e) => setDraft(e.target.value)}
+					placeholder="Your own topic, in any words"
+					aria-label="Your own topic"
+					maxLength={OWN_TOPIC_MAX}
+					className="h-9 min-w-0 flex-1 rounded-md bg-well px-3 font-prose text-[15px] text-foreground outline-none placeholder:text-ink-3 focus-visible:ring-2 focus-visible:ring-ring"
+				/>
+				<button type="submit" disabled={!draft.trim()} className={SECONDARY} data-testid="self-talk-own">
+					<PlusIcon className="size-4" />
+					<CapLabel>Add</CapLabel>
+				</button>
+			</form>
 
 			<div className="relative mx-auto mt-10 max-w-2xl">
 				<div
@@ -161,6 +224,20 @@ export function SelfTalkDeck({ selected, onSelect, onStart, lang, error }: SelfT
 							<ShuffleIcon className="size-4" />
 							<CapLabel>Another topic</CapLabel>
 						</button>
+						{prompt.category === "own" && (
+							<button
+								type="button"
+								onClick={() => {
+									const next = own.filter((t) => ownTopicPrompt(t)?.id !== prompt.id);
+									setOwn(next);
+									writeOwn(next);
+									show(SELF_TALK_PROMPTS[0]);
+								}}
+								className={QUIET}
+							>
+								<CapLabel>Remove this topic</CapLabel>
+							</button>
+						)}
 						<span className="ml-auto flex gap-2">
 							<button
 								type="button"
