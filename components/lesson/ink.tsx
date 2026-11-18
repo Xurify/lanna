@@ -21,12 +21,15 @@ export function Stroke({
 	tone = "ink",
 	width = 1.4,
 	opacity,
+	seconds,
 }: {
 	d: string;
 	delay?: number;
 	tone?: InkTone;
 	width?: number;
 	opacity?: number;
+	/** The stroke is drawn at a steady pace over this long, to show a length of time. */
+	seconds?: number;
 }) {
 	return (
 		<path
@@ -37,7 +40,11 @@ export function Stroke({
 			strokeLinecap="round"
 			strokeLinejoin="round"
 			opacity={opacity}
-			style={delayed(delay)}
+			style={
+				seconds === undefined
+					? delayed(delay)
+					: { ...delayed(delay), animationDuration: `${seconds}s`, animationTimingFunction: "linear" }
+			}
 		/>
 	);
 }
