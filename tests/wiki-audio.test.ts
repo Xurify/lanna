@@ -70,23 +70,30 @@ describe("wiki audio", () => {
 		assert.ok(await wikiClip("slovak", "sk", "súd"));
 	});
 
-	it("a sound contrast word keeps the wiki recording without ElevenLabs and is read by ElevenLabs with it", async () => {
+	it("a sound contrast word is the shared ElevenLabs clip without a key, and ElevenLabs reads any other word with one", async () => {
 		const hadKey = process.env.ELEVENLABS_API_KEY;
 		delete process.env.ELEVENLABS_API_KEY;
 		try {
-			const without = await synthesize({ text: "tam", lang: "sk", voice: "female", prefer: "elevenlabs" });
-			assert.equal(without?.tier, "wiki");
-
-			process.env.ELEVENLABS_API_KEY = "test-key";
 			const before = urls.length;
-			const made = await synthesize({ text: "tam", lang: "sk", voice: "female", prefer: "elevenlabs" });
-			assert.equal(made?.tier, "elevenlabs");
-			assert.match(urls[before]!, /^https:\/\/api\.elevenlabs\.io\//);
+			const shared = await synthesize({ text: "tam", lang: "sk", voice: "female", prefer: "elevenlabs" });
+			assert.equal(shared?.tier, "elevenlabs");
+			assert.match(urls[before]!, /^https:\/\/[^/]+\/sound-guide\/sk\/eleven_v\d\/[0-9a-f]{16}\.mp3$/);
 			const again = await synthesize({ text: "tam", lang: "sk", voice: "female", prefer: "elevenlabs" });
-			assert.equal(again?.file, made.file);
-			assert.equal(urls.length, before + 1, "paid for once");
+			assert.equal(again?.file, shared.file);
+			assert.equal(urls.length, before + 1, "downloaded once");
 			const plain = await synthesize({ text: "tam", lang: "sk", voice: "female" });
 			assert.equal(plain?.tier, "wiki", "a dictionary play still gets the wiki recording");
+
+			const unshared = await synthesize({ text: "sused", lang: "sk", voice: "female", prefer: "elevenlabs" });
+			assert.equal(unshared?.tier, "wiki", "no shared clip and no key: the usual order");
+
+			process.env.ELEVENLABS_API_KEY = "test-key";
+			const paid = urls.length;
+			const made = await synthesize({ text: "sused", lang: "sk", voice: "female", prefer: "elevenlabs" });
+			assert.equal(made?.tier, "elevenlabs");
+			assert.match(urls[paid]!, /^https:\/\/api\.elevenlabs\.io\//);
+			await synthesize({ text: "ťava", lang: "sk", voice: "female", prefer: "elevenlabs" });
+			assert.doesNotMatch(urls.at(-1)!, /api\.elevenlabs\.io/, "a shared word is never paid for");
 		} finally {
 			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;
 			else process.env.ELEVENLABS_API_KEY = hadKey;
