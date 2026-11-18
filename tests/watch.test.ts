@@ -937,6 +937,31 @@ test("a model that fails keeps the video for later, with no English or questions
 	assert.equal(task.status, "done");
 	assert.match(task.note ?? "", /Kept for later, without English or questions: The model's API key is out of credit/);
 	assert.match(task.note ?? "", /Regenerate/);
+
+	const good = await watch.prepareVideo("https://youtu.be/HHHHHHHHHHH", {
+		engine: fauxEngine([
+			fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+			fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+		]),
+		model: "faux:watch",
+		captions,
+		force: true,
+	});
+	assert.equal(good.translatedBy, "model");
+	await assert.rejects(
+		watch.prepareVideo("https://youtu.be/HHHHHHHHHHH", {
+			engine: { model: base.getModel(), streamFn },
+			model: "faux:watch",
+			captions,
+			force: true,
+		}),
+		/usage limits/,
+	);
+	assert.equal(
+		videoStore.get("HHHHHHHHHHH")?.translatedBy,
+		"model",
+		"a Regenerate that fails keeps the English it had",
+	);
 	videoStore.remove(v.id);
 });
 

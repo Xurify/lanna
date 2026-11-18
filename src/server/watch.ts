@@ -1504,6 +1504,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 			...(estimated ? { coverageEstimated: true } : {}),
 		};
 		signal.throwIfAborted();
+		if (modelFailure && videoStore.get(id)) throw new Error(modelFailure);
 		videoStore.put(record);
 		ensureReadmes();
 		setStage(id, "done");
