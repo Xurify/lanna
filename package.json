@@ -32,6 +32,8 @@
 		"sources:check": "bun scripts/check-sources.ts",
 		"miss:coverage": "bun scripts/miss-contrast-coverage.ts",
 		"corpus:export": "bun scripts/corpus-export.ts",
+		"corpus:push": "bun scripts/corpus-cloud.ts push",
+		"corpus:pull": "bun scripts/corpus-cloud.ts pull",
 		"audio:regen": "bun scripts/regen-audio.ts",
 		"audio:sounds": "bun scripts/regen-audio.ts --sounds",
 		"audio:sounds:push": "bun scripts/push-sound-audio.ts",
