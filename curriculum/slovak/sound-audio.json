@@ -1,0 +1,146 @@
+{
+	"base": "https://pub-1a5bbcb021154ecbbd463fb77354ff89.r2.dev",
+	"voice": "female",
+	"clips": {
+		"biely": {
+			"object": "sound-guide/sk/eleven_v4/80e9f0820991b588.mp3",
+			"model": "eleven_v4"
+		},
+		"cena": {
+			"object": "sound-guide/sk/eleven_v4/f97fcd96029226a6.mp3",
+			"model": "eleven_v4"
+		},
+		"chata": {
+			"object": "sound-guide/sk/eleven_v4/7fc24f42496e8c1e.mp3",
+			"model": "eleven_v4"
+		},
+		"cudziu": {
+			"object": "sound-guide/sk/eleven_v4/d04bd118db42d51d.mp3",
+			"model": "eleven_v4"
+		},
+		"ďakujem": {
+			"object": "sound-guide/sk/eleven_v4/b13377e5eae4b76f.mp3",
+			"model": "eleven_v4"
+		},
+		"dlaň": {
+			"object": "sound-guide/sk/eleven_v4/d84c9a00c13607af.mp3",
+			"model": "eleven_v4"
+		},
+		"dom": {
+			"object": "sound-guide/sk/eleven_v4/96710cb3dc108208.mp3",
+			"model": "eleven_v4"
+		},
+		"džús": {
+			"object": "sound-guide/sk/eleven_v4/b00a9e25cb5491fb.mp3",
+			"model": "eleven_v4"
+		},
+		"hrad": {
+			"object": "sound-guide/sk/eleven_v4/04ddd96a9361b261.mp3",
+			"model": "eleven_v4"
+		},
+		"kino": {
+			"object": "sound-guide/sk/eleven_v4/603a9c24c7d3ff8e.mp3",
+			"model": "eleven_v4"
+		},
+		"krk": {
+			"object": "sound-guide/sk/eleven_v4/7ca5e68fec691470.mp3",
+			"model": "eleven_v4"
+		},
+		"ľad": {
+			"object": "sound-guide/sk/eleven_v4/01b7856ae3497dd2.mp3",
+			"model": "eleven_v4"
+		},
+		"lampa": {
+			"object": "sound-guide/sk/eleven_v4/b3d8f22cd71eac74.mp3",
+			"model": "eleven_v4"
+		},
+		"medza": {
+			"object": "sound-guide/sk/eleven_v4/ea827ef337f5c694.mp3",
+			"model": "eleven_v4"
+		},
+		"móda": {
+			"object": "sound-guide/sk/eleven_v4/0d97967d576191e3.mp3",
+			"model": "eleven_v4"
+		},
+		"mäso": {
+			"object": "sound-guide/sk/eleven_v4/9f0b238e54048451.mp3",
+			"model": "eleven_v4"
+		},
+		"noc": {
+			"object": "sound-guide/sk/eleven_v4/6794a2ab4b9f5943.mp3",
+			"model": "eleven_v4"
+		},
+		"noha": {
+			"object": "sound-guide/sk/eleven_v4/d38f83fc78f1c75a.mp3",
+			"model": "eleven_v4"
+		},
+		"pas": {
+			"object": "sound-guide/sk/eleven_v4/9d5c63d1bf15c27a.mp3",
+			"model": "eleven_v4"
+		},
+		"pás": {
+			"object": "sound-guide/sk/eleven_v4/4d41e12c9809897d.mp3",
+			"model": "eleven_v4"
+		},
+		"pekné": {
+			"object": "sound-guide/sk/eleven_v4/5a3966eea30e4449.mp3",
+			"model": "eleven_v4"
+		},
+		"pes": {
+			"object": "sound-guide/sk/eleven_v4/f6daf4ee7e5501ec.mp3",
+			"model": "eleven_v4"
+		},
+		"piatok": {
+			"object": "sound-guide/sk/eleven_v4/b0eb8670bd06ab90.mp3",
+			"model": "eleven_v4"
+		},
+		"pivo": {
+			"object": "sound-guide/sk/eleven_v4/34bfeacf5af31caf.mp3",
+			"model": "eleven_v4"
+		},
+		"ruka": {
+			"object": "sound-guide/sk/eleven_v4/36754feed5b4270a.mp3",
+			"model": "eleven_v4"
+		},
+		"stĺp": {
+			"object": "sound-guide/sk/eleven_v4/47485dcaeba9b6a7.mp3",
+			"model": "eleven_v4"
+		},
+		"stôl": {
+			"object": "sound-guide/sk/eleven_v4/f25ccdcd192f7c48.mp3",
+			"model": "eleven_v4"
+		},
+		"sud": {
+			"object": "sound-guide/sk/eleven_v4/b8c5f311d75c742c.mp3",
+			"model": "eleven_v4"
+		},
+		"súd": {
+			"object": "sound-guide/sk/eleven_v4/7900bca2bfb91115.mp3",
+			"model": "eleven_v4"
+		},
+		"tam": {
+			"object": "sound-guide/sk/eleven_v4/a19f73efb0917d88.mp3",
+			"model": "eleven_v4"
+		},
+		"ťava": {
+			"object": "sound-guide/sk/eleven_v4/995fd88429f71ebf.mp3",
+			"model": "eleven_v4"
+		},
+		"víno": {
+			"object": "sound-guide/sk/eleven_v4/3b113ba4481ab6bd.mp3",
+			"model": "eleven_v4"
+		},
+		"vlk": {
+			"object": "sound-guide/sk/eleven_v4/8ac3348b2fdcaf31.mp3",
+			"model": "eleven_v4"
+		},
+		"voda": {
+			"object": "sound-guide/sk/eleven_v4/3f370d7d7eef32e0.mp3",
+			"model": "eleven_v4"
+		},
+		"vŕba": {
+			"object": "sound-guide/sk/eleven_v4/8c0c79bd4bc76967.mp3",
+			"model": "eleven_v4"
+		}
+	}
+}

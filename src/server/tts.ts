@@ -44,6 +44,7 @@ import {
 } from "../store/corpus.ts";
 import { reviewStore } from "../store/review.ts";
 import { keyValue, redactSecrets } from "./keys.ts";
+import { sharedClip } from "./shared-audio.ts";
 import { wikiClip } from "./wiki-audio.ts";
 
 export type TtsTier = "elevenlabs" | "edge" | "piper";
@@ -514,6 +515,8 @@ export function keptByElevenLabs(key: string, code: string): boolean {
 
 async function elevenLabsFirst(req: TtsRequest, lang: LanguageInfo, key: string): Promise<TtsClip | null> {
 	if (keptByElevenLabs(key, lang.code)) return cached(key, lang.code);
+	const shared = await sharedClip(lang.id, lang.code, req.voice ?? "female", req.text);
+	if (shared) return { file: shared.file, contentType: "audio/mpeg", tier: "elevenlabs" };
 	try {
 		const spoken = await elevenLabs(req, lang);
 		if (!spoken || spoken.data.length === 0) return null;
