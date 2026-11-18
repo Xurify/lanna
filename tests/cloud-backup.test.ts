@@ -11,6 +11,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import {
+	AccountNotVisible,
 	BucketMissing,
 	cloudflareBucket,
 	ensureBucket,
@@ -158,6 +159,20 @@ describe("the bucket", () => {
 			await assert.rejects(
 				() => bucket.list(),
 				(err: unknown) => err instanceof BucketMissing,
+			);
+		} finally {
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
+	});
+
+	it("reads a token that cannot list an account as that, not as a missing login", async () => {
+		process.env.CLOUDFLARE_API_TOKEN = "cloudflare-test-token";
+		try {
+			const fetcher = (async () =>
+				new Response(JSON.stringify({ result: [] }), { status: 200 })) as unknown as typeof fetch;
+			await assert.rejects(
+				() => cloudflareBucket("lanna", fetcher),
+				(err: unknown) => err instanceof AccountNotVisible,
 			);
 		} finally {
 			delete process.env.CLOUDFLARE_API_TOKEN;

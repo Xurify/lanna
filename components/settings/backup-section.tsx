@@ -12,6 +12,7 @@ import { CapLabel } from "@/components/ui/cap-label";
 import {
 	BACKUP_AREAS,
 	backupOutcome,
+	CLOUDFLARE_TOKEN_URL,
 	formatBytes,
 	timeAgo,
 	type BackupArea,
@@ -22,11 +23,16 @@ import {
 import { ProviderIcon } from "./provider-icons.tsx";
 import { SettingsGroup, SettingsRow } from "./controls.tsx";
 
-type Action = "check" | "upload" | "restore" | "connect" | "disconnect";
+type Action = "check" | "upload" | "restore" | "connect" | "disconnect" | "save-token";
+
+/** The one key the bucket is read with when there is no wrangler login (Settings → API keys). */
+const R2_TOKEN_KEY = "CLOUDFLARE_API_TOKEN";
 
 const LOAD_FAILED = "Couldn’t read the backup status. Refresh to try again.";
 const CHECK_FAILED = "Couldn’t check the bucket. Try again in a moment.";
 const SIGNING_IN = "Waiting for your browser…";
+const TOKEN_FAILED = "Couldn’t save the token. Try again.";
+const TOKEN_PLACEHOLDER = "Paste the R2 token…";
 
 function fileCount(files: number): string {
 	return files === 1 ? "1 file" : `${files.toLocaleString()} files`;
@@ -44,11 +50,23 @@ function jobLine(job: BackupJob): string {
 	return job.error ?? `${done} ${job.done} of ${job.total} files.`;
 }
 
+/** What the row says about the way in, so the control beside it needs no explaining. */
+function whereHint(auth: BackupState["auth"]): string {
+	if (auth === null)
+		return "Your own private bucket. Sign in with Cloudflare, or paste an R2 token: Get a key opens Cloudflare's token page with the rights filled in.";
+	if (auth.via === "env") return "Your own private bucket. The token comes from .env.local, so remove it there.";
+	if (auth.via === "settings") return "Your own private bucket, reached with the R2 token saved under API keys.";
+	return "Your own private bucket.";
+}
+
 export function BackupSection() {
 	const [state, setState] = useState<BackupState | null>(null);
 	const [loadFailed, setLoadFailed] = useState(false);
 	const [busy, setBusy] = useState<Action | null>(null);
 	const [notice, setNotice] = useState<string | null>(null);
+	const [tokenOpen, setTokenOpen] = useState(false);
+	const [token, setToken] = useState("");
+	const [tokenError, setTokenError] = useState<string | null>(null);
 	const asked = useRef(false);
 
 	const load = useCallback(async () => {
@@ -80,6 +98,34 @@ export function BackupSection() {
 			setBusy(null);
 		}
 	}, []);
+
+	/** Save the pasted token under API keys, then read the bucket with it — one step for a machine with no wrangler. */
+	async function saveToken() {
+		const value = token.trim();
+		if (!value || busy) return;
+		setBusy("save-token");
+		setNotice(null);
+		setTokenError(null);
+		try {
+			const res = await fetch(`/api/keys/${R2_TOKEN_KEY}`, {
+				method: "PUT",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ value }),
+			});
+			const body = (await res.json().catch(() => null)) as { error?: string } | null;
+			if (!res.ok) {
+				setTokenError(body?.error ?? TOKEN_FAILED);
+				return;
+			}
+			setToken("");
+			setTokenOpen(false);
+			await act("check");
+		} catch {
+			setTokenError(TOKEN_FAILED);
+		} finally {
+			setBusy(null);
+		}
+	}
 
 	useEffect(() => {
 		void load();
@@ -141,16 +187,7 @@ export function BackupSection() {
 	return (
 		<>
 			<SettingsGroup label="Where the copy goes" testid="backup-where">
-				<SettingsRow
-					label="Cloudflare R2"
-					hint={
-						auth === null
-							? "Your own private bucket. Sign in the way wrangler does, or save an R2 token under API keys."
-							: "Your own private bucket."
-					}
-					testid="backup-row-bucket"
-					stack={false}
-				>
+				<SettingsRow label="Cloudflare R2" hint={whereHint(auth)} testid="backup-row-bucket" stack={auth === null}>
 					<span className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
 						<ProviderIcon provider="cloudflare" />
 						<CapLabel className="font-mono text-xs text-foreground">{state?.bucket ?? "…"}</CapLabel>
@@ -159,18 +196,30 @@ export function BackupSection() {
 							{busy === "connect" ? SIGNING_IN : account}
 						</span>
 						{state !== null && auth === null && (
-							<Button
-								type="button"
-								size="xs"
-								variant="outline"
-								className="cursor-pointer disabled:cursor-not-allowed"
-								disabled={working}
-								aria-busy={busy === "connect"}
-								onClick={() => void act("connect")}
-								data-testid="backup-connect"
-							>
-								Sign in
-							</Button>
+							<>
+								<Button
+									type="button"
+									size="xs"
+									variant="outline"
+									className="cursor-pointer disabled:cursor-not-allowed"
+									disabled={working}
+									aria-busy={busy === "connect"}
+									onClick={() => void act("connect")}
+									data-testid="backup-connect"
+								>
+									Sign in
+								</Button>
+								<a
+									href={CLOUDFLARE_TOKEN_URL}
+									target="_blank"
+									rel="noreferrer"
+									onClick={() => setTokenOpen(true)}
+									className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+									data-testid="backup-get-key"
+								>
+									Get a key ↗
+								</a>
+							</>
 						)}
 						{auth?.via === "wrangler" && (
 							<Button
@@ -186,8 +235,56 @@ export function BackupSection() {
 								Sign out
 							</Button>
 						)}
+						{auth?.via === "settings" && (
+							<Button
+								type="button"
+								size="xs"
+								variant="outline"
+								className="cursor-pointer disabled:cursor-not-allowed"
+								disabled={working}
+								aria-busy={busy === "disconnect"}
+								onClick={() => void act("disconnect")}
+								data-testid="backup-forget"
+							>
+								Remove token
+							</Button>
+						)}
+						{state !== null && auth === null && tokenOpen && (
+							<span className="flex w-full flex-wrap items-center gap-2" data-testid="backup-token">
+								<input
+									type="password"
+									value={token}
+									onChange={(e) => setToken(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") void saveToken();
+									}}
+									placeholder={TOKEN_PLACEHOLDER}
+									aria-label="Cloudflare R2 token"
+									autoComplete="off"
+									spellCheck={false}
+									disabled={busy !== null}
+									data-testid="backup-token-input"
+									className="h-8.5 min-w-0 flex-1 rounded-lg border border-border/80 bg-background/80 px-2.5 font-mono text-xs text-foreground outline-hidden placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
+								/>
+								<Button
+									type="button"
+									size="xs"
+									disabled={working || !token.trim()}
+									aria-busy={busy === "save-token"}
+									onClick={() => void saveToken()}
+									data-testid="backup-token-save"
+								>
+									Connect
+								</Button>
+							</span>
+						)}
 					</span>
 				</SettingsRow>
+				{tokenError && (
+					<p role="alert" className="px-1 text-xs text-miss" data-testid="backup-token-error">
+						{tokenError}
+					</p>
+				)}
 			</SettingsGroup>
 			<SettingsGroup
 				label="What is in it"

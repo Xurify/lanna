@@ -5,8 +5,9 @@
  * only writes files that are missing here.
  *
  * Objects are read and written through Cloudflare's API with the login
- * `wrangler login` made on this computer, or a CLOUDFLARE_API_TOKEN in
- * .env.local (developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects).
+ * `wrangler login` made on this computer, or a CLOUDFLARE_API_TOKEN saved under
+ * API keys or in .env.local
+ * (developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects).
  * An object's etag is the MD5 of its bytes when it was uploaded in one
  * request (developers.cloudflare.com/r2/objects/upload-objects), which is how
  * a file is known to be the same without downloading it.
@@ -19,7 +20,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { BackupAuth } from "../core/backup.ts";
 import { authStore } from "../store/auth.ts";
-import { keyValue } from "./keys.ts";
+import { deleteKey, keyValue } from "./keys.ts";
 
 export const BACKUP_BUCKET = "lanna";
 const PREFIX = "data/";
@@ -232,6 +233,14 @@ export class CloudflareHttpError extends Error {
 /** The bucket is not in the account yet: a check says that instead of reading out a 404. */
 export class BucketMissing extends Error {}
 
+/** The token is real but cannot list an account, which reading the bucket needs before anything else. */
+export class AccountNotVisible extends Error {}
+
+/** Drop the token saved under API keys, so Settings → Backup can sign this computer out of it. */
+export function forgetStoredToken(): void {
+	deleteKey(ENV_TOKEN);
+}
+
 type Fetcher = typeof fetch;
 
 function cloudflareCall(fetcher: Fetcher) {
@@ -253,10 +262,7 @@ async function cloudflareAccount(call: (url: string, init?: RequestInit) => Prom
 	const account =
 		process.env.CLOUDFLARE_ACCOUNT_ID ??
 		((await (await call(`${API}/accounts`)).json()) as { result: Array<{ id: string }> }).result[0]?.id;
-	if (!account)
-		throw new Error(
-			"That token cannot see a Cloudflare account: give it R2 access to one, or run `npx wrangler login`.",
-		);
+	if (!account) throw new AccountNotVisible();
 	return account;
 }
 

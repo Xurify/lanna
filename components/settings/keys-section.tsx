@@ -276,7 +276,7 @@ function KeyTableRow({
 						{label}
 					</span>
 					<span className="flex min-w-0 items-center gap-2">
-						{docsUrl && !status.present && (
+						{docsUrl && (
 							<a
 								href={docsUrl}
 								target="_blank"
@@ -284,7 +284,7 @@ function KeyTableRow({
 								onClick={(e) => e.stopPropagation()}
 								className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 							>
-								Get a key ↗
+								{status.present ? "Get another key ↗" : "Get a key ↗"}
 							</a>
 						)}
 						<span

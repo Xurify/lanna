@@ -51,6 +51,18 @@ describe("the catalog", () => {
 		assert.ok(!isKnownAuthKey("GOOGLE_CSE_ID"));
 	});
 
+	it("hands Cloudflare's token page the R2 rights, already chosen", () => {
+		const url = new URL(AUTH_KEYS.find((k) => k.id === "CLOUDFLARE_API_TOKEN")!.docsUrl);
+		assert.equal(`${url.origin}${url.pathname}`, "https://dash.cloudflare.com/profile/api-tokens");
+		assert.deepEqual(JSON.parse(url.searchParams.get("permissionGroupKeys")!), [
+			{ key: "workers_r2", type: "edit" },
+			{ key: "account_settings", type: "read" },
+		]);
+		assert.equal(url.searchParams.get("accountId"), "*");
+		assert.equal(url.searchParams.get("zoneId"), "all");
+		assert.equal(url.searchParams.get("name"), "Lanna backup");
+	});
+
 	it("isKnownAuthKey: catalog yes, everything else no", () => {
 		assert.ok(isKnownAuthKey("DEEPGRAM_API_KEY"));
 		assert.ok(isKnownAuthKey("CONTEXT_API_KEY"));

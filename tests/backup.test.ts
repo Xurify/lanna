@@ -17,7 +17,7 @@ process.env.LANNA_PROFILE = "slovak";
 
 const { BackupError, backupError, backupState, checkBackup, connectBackup, disconnectBackup, startBackup } =
 	await import("../src/server/backup.ts");
-const { BucketMissing, whoamiAccount, wranglerAuth } = await import("../src/server/cloud-backup.ts");
+const { AccountNotVisible, BucketMissing, whoamiAccount, wranglerAuth } = await import("../src/server/cloud-backup.ts");
 const { backupOutcome } = await import("../src/core/backup.ts");
 
 after(() => fs.rmSync(DATA, { recursive: true, force: true }));
@@ -167,6 +167,14 @@ describe("backup status", () => {
 		assert.match(backupError(new BucketMissing()), /bucket `lanna` is not in this Cloudflare account yet/);
 	});
 
+	it("names the rights a token needs before it can read a bucket at all", () => {
+		assert.match(
+			backupError(new AccountNotVisible()),
+			/Workers R2 Storage Edit and Account Settings Read/,
+			"a real token that cannot list accounts is not a missing login",
+		);
+	});
+
 	it("keeps an unfamiliar failure as it came, in one line", () => {
 		assert.equal(
 			backupError(new Error("getaddrinfo ENOTFOUND api.cloudflare.com\nmore noise")),
@@ -218,9 +226,12 @@ describe("backup sign-in", () => {
 		const { authStore } = await import("../src/store/auth.ts");
 		const shell = fakeShell({ whoami: WHOAMI });
 		assert.equal((await backupState(shell.run)).auth?.via, "wrangler");
+		await checkBackup({ bucket: memoryBucket() });
 		authStore.setAuthVar("CLOUDFLARE_API_TOKEN", "token-saved-while-running");
 		try {
-			assert.deepEqual((await backupState(shell.run)).auth, { via: "settings", account: null });
+			const next = await backupState(shell.run);
+			assert.deepEqual(next.auth, { via: "settings", account: null });
+			assert.equal(next.last, null, "the check the login answered goes with the login");
 		} finally {
 			authStore.deleteAuthVar("CLOUDFLARE_API_TOKEN");
 		}
@@ -249,5 +260,41 @@ describe("backup sign-in", () => {
 			() => disconnectBackup(fakeShell({}).run),
 			(err: unknown) => err instanceof BackupError && /sign out/.test(err.message),
 		);
+	});
+
+	it("drops the token saved under API keys when the backup is disconnected, with no wrangler", async () => {
+		const { authStore } = await import("../src/store/auth.ts");
+		authStore.setAuthVar("CLOUDFLARE_API_TOKEN", "token-saved-under-api-keys");
+		const shell = fakeShell({});
+		try {
+			assert.deepEqual((await backupState(shell.run)).auth, { via: "settings", account: null });
+			const next = await disconnectBackup(shell.run);
+			assert.equal(next.auth, null);
+			assert.equal(next.last, null);
+			assert.equal(
+				shell.ran.some((command) => /wrangler@4 (login|logout)/.test(command)),
+				false,
+				"dropping a token is not a wrangler sign-out",
+			);
+			assert.equal(authStore.authVars().CLOUDFLARE_API_TOKEN, undefined);
+			assert.equal(process.env.CLOUDFLARE_API_TOKEN, undefined, "and nothing left in the environment");
+			assert.equal((await backupState(shell.run)).auth, null, "the answer is kept for the next look");
+		} finally {
+			authStore.deleteAuthVar("CLOUDFLARE_API_TOKEN");
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
+	});
+
+	it("leaves a token that comes from .env.local alone, and says where it is", async () => {
+		process.env.CLOUDFLARE_API_TOKEN = "token-in-env";
+		try {
+			await assert.rejects(
+				() => disconnectBackup(fakeShell({}).run),
+				(err: unknown) => err instanceof BackupError && /\.env\.local/.test(err.message),
+			);
+			assert.equal(process.env.CLOUDFLARE_API_TOKEN, "token-in-env", "the token is still in use");
+		} finally {
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
 	});
 });

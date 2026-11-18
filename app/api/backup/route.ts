@@ -1,10 +1,10 @@
 /**
  * GET /api/backup — the data folder against the private `lanna` bucket
  * (server/backup.ts): the last check, any upload or restore running now, and
- * the Cloudflare login the bucket is read with.
+ * the Cloudflare login or R2 token the bucket is read with.
  * POST {action: "check" | "upload" | "restore" | "connect" | "disconnect"} —
- * a fresh check, the job, or wrangler signing in or out. All of them need the
- * login `wrangler login` makes on this computer.
+ * a fresh check, the job, or the way in changing: wrangler signing in or out,
+ * or the token saved under API keys being dropped.
  */
 
 import {

@@ -16,6 +16,22 @@ export interface AuthKeyInfo {
 	plain?: boolean;
 }
 
+/**
+ * The R2 token page with its permissions already filled in
+ * (developers.cloudflare.com/fundamentals/api/how-to/account-owned-token-template).
+ * A user token URL matches each `key` against a permission group and drops what it
+ * cannot resolve, so these are the permission-reference keys: Workers R2 Storage
+ * Edit reads and writes the bucket, Account Settings Read finds the account.
+ */
+const CLOUDFLARE_R2_PERMISSIONS = [
+	{ key: "workers_r2", type: "edit" },
+	{ key: "account_settings", type: "read" },
+];
+
+export const CLOUDFLARE_TOKEN_URL = `https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=${encodeURIComponent(
+	JSON.stringify(CLOUDFLARE_R2_PERMISSIONS),
+)}&accountId=${encodeURIComponent("*")}&zoneId=all&name=${encodeURIComponent("Lanna backup")}`;
+
 export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 	{
 		id: "ELEVENLABS_API_KEY",
@@ -83,8 +99,8 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 		id: "CLOUDFLARE_API_TOKEN",
 		label: "Cloudflare R2",
 		description:
-			"Backs up the data folder to a private R2 bucket in your own Cloudflare account (Settings → Backup), instead of signing in with wrangler. A token (not a Global API Key) with R2 read and write access to one account: Lanna lists that account's buckets, creates `lanna` when it is missing, and uploads or brings back files.",
-		docsUrl: "https://dash.cloudflare.com/profile/api-tokens",
+			"Backs up the data folder to a private R2 bucket in your own Cloudflare account (Settings → Backup), instead of signing in with wrangler. The link opens Cloudflare's token page with the R2 permissions filled in; a token (not a Global API Key) with R2 read and write access to one account is enough: Lanna lists that account's buckets, creates `lanna` when it is missing, and uploads or brings back files.",
+		docsUrl: CLOUDFLARE_TOKEN_URL,
 	},
 ] as const;
 
