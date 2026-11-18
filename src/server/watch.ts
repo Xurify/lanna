@@ -100,7 +100,7 @@ import {
 	type KnownWords,
 } from "./reading.ts";
 import { enqueueWords } from "./review.ts";
-import { failTask, finishTask, startTask, updateTask } from "./tasks.ts";
+import { briefError, failTask, finishTask, startTask, updateTask } from "./tasks.ts";
 
 const run = promisify(execFile);
 const code = () => activeLanguage().code;
@@ -1409,13 +1409,20 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		}
 		const usage: StoryUsage = { model: model ?? "faux:faux", steps: [] };
 		setStage(id, "translating");
-		const en = await translateLines(
-			engine,
-			lines.map((l) => l.sk),
-			usage,
-			fetched.meta.title,
-			fetched.source.trackLang,
-		);
+		let modelFailure: string | null = null;
+		const keepWithoutModel = (err: unknown): null => {
+			if (signal.aborted || (err instanceof Error && err.name === "AbortError")) throw err;
+			modelFailure ??= err instanceof Error ? err.message : String(err);
+			return null;
+		};
+		const en =
+			(await translateLines(
+				engine,
+				lines.map((l) => l.sk),
+				usage,
+				fetched.meta.title,
+				fetched.source.trackLang,
+			).catch(keepWithoutModel)) ?? lines.map(() => "");
 		signal.throwIfAborted();
 		const untranslated = en.filter((t) => t === "").length;
 		const segments = glossSegments(lines, en, lexicon, k);
@@ -1424,7 +1431,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		// usable rendering the share is left out (coverageKind "none") instead of guessed low.
 		let measured = segments;
 		let estimated = false;
-		if (fetched.source.trackLang !== code()) {
+		if (fetched.source.trackLang !== code() && !modelFailure) {
 			try {
 				const sk = await renderInLanguage(
 					engine,
@@ -1449,7 +1456,9 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		}
 		setStage(id, "questions");
 		const questions =
-			opts.questions === false ? [] : await questionsFor(engine, segments, k, fetched.meta.title, usage);
+			opts.questions === false || modelFailure
+				? []
+				: ((await questionsFor(engine, segments, k, fetched.meta.title, usage).catch(keepWithoutModel)) ?? []);
 		setStage(id, "saving");
 		const rankOf = commonness(lexicon);
 		const preTeach = pickPreTeach(measured, undefined, rankOf);
@@ -1490,7 +1499,7 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 				words.filter((t) => t.fresh || t.assumed).map((t) => t.slug ?? t.text.toLocaleLowerCase("sk-SK")),
 			).size,
 			usage,
-			translatedBy: "model",
+			translatedBy: untranslated === lines.length ? "none" : "model",
 			...(untranslated ? { untranslated } : {}),
 			...(estimated ? { coverageEstimated: true } : {}),
 		};
@@ -1498,7 +1507,15 @@ export function prepareVideo(url: string, opts: PrepareOptions = {}): Promise<Vi
 		videoStore.put(record);
 		ensureReadmes();
 		setStage(id, "done");
-		finishTask(taskIdOf(id), { title: record.title, href: `/watch?id=${id}` });
+		finishTask(taskIdOf(id), {
+			title: record.title,
+			href: `/watch?id=${id}`,
+			...(modelFailure
+				? {
+						note: `Kept for later, ${record.translatedBy === "none" ? "without English or questions" : "without questions"}: ${briefError(modelFailure)} Open it and choose Regenerate when the model works.`,
+					}
+				: {}),
+		});
 		return record;
 	})();
 	inFlight.set(key, job);
