@@ -130,6 +130,7 @@ function facts(over: Partial<LearnerFacts> = {}): LearnerFacts {
 		words: { basis: "level", credited: 2880 },
 		met: 400,
 		solid: 120,
+		marked: 0,
 		assumed: 3200,
 		vocabulary: 3600,
 		wordsPerDayPlanned: 15,

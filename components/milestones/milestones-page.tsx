@@ -424,11 +424,7 @@ function Evidence({ facts }: { facts: LearnerFacts }) {
 					value={facts.level}
 					line={`where the curriculum has you${facts.placed ? " (placement set the start; lessons move it)" : ""} · ${Math.round(facts.levelProgress * 100)}% through it`}
 				/>
-				<Fact
-					label="Words"
-					value={n(facts.vocabulary)}
-					line={`${n(facts.met)} met in the deck and lessons (${n(facts.solid)} solid) · ${n(facts.assumed)} more ${facts.words.basis === "measured" ? `from your word check${facts.words.measuredAt ? ` on ${facts.words.measuredAt.slice(0, 10)}` : ""}${facts.words.reliable === false ? " (generous: some made-up words were ticked)" : ""}` : `credited for the ${facts.level === "A1" ? "part of A1" : `levels before ${facts.level} and the part of it`} behind you; a word check (re-check) measures it`}`}
-				/>
+				<Fact label="Words" value={n(facts.vocabulary)} line={wordsLine(facts)} />
 				<Fact label="Speed" value={`${facts.speed.wpm} w/min`} line={speedLine} dim={facts.speed.basis === "level"} />
 				<Fact
 					label="Pace"
@@ -1098,4 +1094,17 @@ function NextWords({
 			</div>
 		</section>
 	);
+}
+
+function wordsLine(facts: LearnerFacts): string {
+	const source =
+		facts.words.basis === "measured"
+			? `from your word check${facts.words.measuredAt ? ` on ${facts.words.measuredAt.slice(0, 10)}` : ""}${facts.words.reliable === false ? " (generous: some made-up words were ticked)" : ""}`
+			: `credited for the ${facts.level === "A1" ? "part of A1" : `levels before ${facts.level} and the part of it`} behind you; a word check (re-check) measures it`;
+	const parts = [
+		facts.met > 0 ? `${n(facts.met)} met in the deck and lessons (${n(facts.solid)} solid)` : "",
+		facts.marked > 0 ? `${n(facts.marked)} marked known on the Words page` : "",
+		facts.assumed > 0 ? `${n(facts.assumed)} more ${source}` : "",
+	].filter(Boolean);
+	return parts.length > 0 ? parts.join(" · ") : "none counted yet; a word check measures it";
 }

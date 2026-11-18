@@ -71,6 +71,7 @@ const facts = (basis: "listen" | "level", paceDays: number): Facts => ({
 	words: { basis: "level", credited: 3000 },
 	met: 900,
 	solid: 300,
+	marked: 0,
 	assumed: 2000,
 	vocabulary: 4000,
 	wordsPerDayPlanned: 8,

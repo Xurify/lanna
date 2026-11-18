@@ -63,6 +63,7 @@ import { readLessonLog } from "../store/corpus.ts";
 import { milestoneStore, type CustomMilestoneRecord } from "../store/milestones.ts";
 import { defaultGoal, progressStore } from "../store/progress.ts";
 import { reviewStore } from "../store/review.ts";
+import { knownWordStore } from "../store/known-words.ts";
 import { latestMeasuredVocabulary } from "../store/word-check.ts";
 import { DEFAULT_DAYS_PER_WEEK } from "../core/onboarding.ts";
 import { aiMissing, aiStatus, friendlyAiError } from "./ai-status.ts";
@@ -74,8 +75,10 @@ import { activeLanguage } from "./active-language.ts";
 interface WordSets {
 	met: Set<string>;
 	solid: number;
+	/** Marked known on the Words page and not met in the deck or a lesson. */
+	marked: Set<string>;
 	assumed: Set<string>;
-	/** met ∪ assumed */
+	/** met ∪ marked ∪ assumed */
 	known: Set<string>;
 	/** Where the map has the learner now. */
 	level: Cefr;
@@ -120,13 +123,18 @@ export function wordSets(lexicon: Lexicon | null): WordSets {
 		for (const lemma of u.lemmas ?? [])
 			for (const e of lexicon?.byForm.get(lemma.toLocaleLowerCase("sk-SK")) ?? []) met.add(e.slug);
 	}
+	const marked = new Set<string>();
+	for (const slug of knownWordStore.slugs()) if (!met.has(slug)) marked.add(slug);
 	const assumed = new Set<string>();
-	if (lexicon) for (const slug of frequencyOrder(lexicon).slice(0, credited)) if (!met.has(slug)) assumed.add(slug);
+	if (lexicon)
+		for (const slug of frequencyOrder(lexicon).slice(0, credited))
+			if (!met.has(slug) && !marked.has(slug)) assumed.add(slug);
 	return {
 		met,
 		solid,
+		marked,
 		assumed,
-		known: new Set([...met, ...assumed]),
+		known: new Set([...met, ...marked, ...assumed]),
 		level,
 		levelProgress: state.levelProgress,
 		placed,
@@ -290,6 +298,7 @@ export function learnerFacts(lexicon: Lexicon | null = loadLexicon(), now = new 
 		},
 		met: sets.met.size,
 		solid: sets.solid,
+		marked: sets.marked.size,
 		assumed: sets.assumed.size,
 		vocabulary: sets.known.size,
 		wordsPerDayPlanned: newPerDay + INPUT_WORDS_PER_DAY,

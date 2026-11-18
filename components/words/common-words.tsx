@@ -5,6 +5,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { markedReach } from "@/src/core";
 
 interface CommonWord {
 	slug: string;
@@ -50,6 +51,7 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 	const knownCount = selected.filter((word) => word.known).length;
 	const unmarked = selected.length - knownCount;
 	const total = ranking?.total ?? 0;
+	const markedInAll = useMemo(() => ranking?.items.filter((word) => word.known).length ?? 0, [ranking]);
 	const listedCount = useDeferredValue(count);
 	const bands = useMemo(() => bandsOf(ranking ? ranking.items.slice(0, listedCount) : []), [ranking, listedCount]);
 	const stops = useMemo(() => {
@@ -71,7 +73,17 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 			.then((data) => {
 				if (controller.signal.aborted) return;
 				setRanking(data);
-				setCount((value) => Math.min(value, data.total));
+				setCount((value) =>
+					value > 0
+						? Math.min(value, data.total)
+						: Math.min(
+								markedReach(
+									data.items.map((word) => word.known),
+									PRESETS,
+								),
+								data.total,
+							),
+				);
 			})
 			.catch((err: unknown) => {
 				if (!controller.signal.aborted) setError(err instanceof Error ? err.message : "Could not load words.");
@@ -203,6 +215,13 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 					<p className="font-prose text-sm text-muted-foreground" data-testid="common-words-summary">
 						<span className="font-semibold text-foreground tabular-nums">{number(knownCount)}</span> known,{" "}
 						<span className="font-semibold text-foreground tabular-nums">{number(unmarked)}</span> to learn
+						{markedInAll > knownCount && (
+							<>
+								{" "}
+								· <span className="font-semibold text-foreground tabular-nums">{number(markedInAll)}</span> marked in
+								all
+							</>
+						)}
 					</p>
 					<div className="flex flex-wrap items-center gap-2">
 						<FilterSwitch value={filter} onChange={setFilter} />
