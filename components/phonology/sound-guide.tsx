@@ -6,9 +6,8 @@ import { cn } from "@/lib/utils";
 import { KBD, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { onFocusedControl, PracticeCard } from "@/components/task-frame";
 import { SourcesNote } from "@/components/sources/sources-note";
-import { speak } from "@/components/speech";
 import { getPhonologyData, getSoundNote, getSoundNotes, type SoundNote } from "@/src/core";
-import { SoundPictures } from "./sound-pictures";
+import { hearSoundWord, SoundPictures } from "./sound-pictures";
 
 export function SoundGuide({
 	languageId,
@@ -43,7 +42,7 @@ export function SoundGuide({
 			}
 			if (e.key === " " && note && !onFocusedControl(e)) {
 				e.preventDefault();
-				void speak(note.word).catch(() => {});
+				hearSoundWord(note.word);
 			}
 		};
 		window.addEventListener("keydown", onKey);
@@ -95,7 +94,7 @@ export function SoundGuide({
 							<span className="font-ui text-[13px] text-ink-3">{note.meaning}</span>
 							<button
 								type="button"
-								onClick={() => void speak(note.word).catch(() => {})}
+								onClick={() => hearSoundWord(note.word)}
 								aria-label={`Play ${note.word}`}
 								className={cn(SECONDARY, "h-10 gap-2.5 pointer-coarse:h-11")}
 								data-testid="sound-hear"

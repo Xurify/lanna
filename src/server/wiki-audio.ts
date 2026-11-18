@@ -47,10 +47,13 @@ function load(profile: string): WikiAudio | null {
 }
 
 /** The wiki clip for a text: exact first, then ignoring accents (a sentence
- *  that lost its diacritics on the way still finds its recording). */
+ *  that lost its diacritics on the way still finds its recording). One word
+ *  is never matched without its accents: sud (barrel) is not súd (court). */
 function find(wiki: WikiAudio, text: string) {
 	const t = text.normalize("NFC").trim();
-	return wiki.clips.get(t) ?? wiki.folded.get(foldDiacritics(t).toLowerCase()) ?? null;
+	const exact = wiki.clips.get(t);
+	if (exact || !/\s/.test(t)) return exact ?? null;
+	return wiki.folded.get(foldDiacritics(t).toLowerCase()) ?? null;
 }
 
 function wikiAudioKey(lang: string, text: string): string {

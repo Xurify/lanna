@@ -62,4 +62,34 @@ describe("wiki audio", () => {
 		const clip = await synthesize({ text: "Je to dobrý človek.", lang: "sk", voice: "female" });
 		assert.equal(clip?.tier, "wiki");
 	});
+
+	it("never gives one word the recording of another that differs by an accent", async () => {
+		const before = urls.length;
+		assert.equal(await wikiClip("slovak", "sk", "sud"), null, "the wiki has súd, not sud");
+		assert.equal(urls.length, before);
+		assert.ok(await wikiClip("slovak", "sk", "súd"));
+	});
+
+	it("a sound contrast word keeps the wiki recording without ElevenLabs and is read by ElevenLabs with it", async () => {
+		const hadKey = process.env.ELEVENLABS_API_KEY;
+		delete process.env.ELEVENLABS_API_KEY;
+		try {
+			const without = await synthesize({ text: "tam", lang: "sk", voice: "female", prefer: "elevenlabs" });
+			assert.equal(without?.tier, "wiki");
+
+			process.env.ELEVENLABS_API_KEY = "test-key";
+			const before = urls.length;
+			const made = await synthesize({ text: "tam", lang: "sk", voice: "female", prefer: "elevenlabs" });
+			assert.equal(made?.tier, "elevenlabs");
+			assert.match(urls[before]!, /^https:\/\/api\.elevenlabs\.io\//);
+			const again = await synthesize({ text: "tam", lang: "sk", voice: "female", prefer: "elevenlabs" });
+			assert.equal(again?.file, made.file);
+			assert.equal(urls.length, before + 1, "paid for once");
+			const plain = await synthesize({ text: "tam", lang: "sk", voice: "female" });
+			assert.equal(plain?.tier, "wiki", "a dictionary play still gets the wiki recording");
+		} finally {
+			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;
+			else process.env.ELEVENLABS_API_KEY = hadKey;
+		}
+	});
 });

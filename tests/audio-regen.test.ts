@@ -17,7 +17,8 @@ after(() => fs.rmSync(dir, { recursive: true, force: true }));
 const { PATHS } = await import("../config.ts");
 const corpus = await import("../src/store/corpus.ts");
 const { LANGUAGE_CATALOG, registerLanguage } = await import("../src/core/language.ts");
-const { regenCost, regenPlan, regenerate } = await import("../src/server/audio-regen.ts");
+const { regenCost, regenPlan, regenerate, soundGuidePlan } = await import("../src/server/audio-regen.ts");
+const { soundGuideWords } = await import("../src/core/sound-notes.ts");
 
 registerLanguage({ ...LANGUAGE_CATALOG.find((l) => l.id === "estonian")!, specialLetters: ["õ", "ä", "ö", "ü"] });
 const NARRATOR = "YJsJ2Mt3VRr0gCiTY6DA";
@@ -88,6 +89,39 @@ describe("audio regeneration", () => {
 				["chlieb"],
 				"a second run picks up only what failed",
 			);
+		} finally {
+			globalThis.fetch = realFetch;
+			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;
+			else process.env.ELEVENLABS_API_KEY = hadKey;
+		}
+	});
+
+	it("plans every Sound guide word ElevenLabs has not read, made or not, and makes them", async () => {
+		put("sk", "female", "ťava", "edge");
+		put("sk", "female", "dom", "elevenlabs", "eleven_v4");
+		const plan = soundGuidePlan();
+		const reasonOf = (text: string) => plan.items.find((i) => i.entry.text === text)?.reason;
+		assert.equal(reasonOf("ťava"), "made without ElevenLabs");
+		assert.equal(reasonOf("tam"), "not made yet");
+		assert.equal(reasonOf("dom"), undefined);
+		assert.equal(plan.kept["already read by ElevenLabs"], 1);
+		assert.equal(plan.items.length, soundGuideWords("slovak").length - 1);
+		assert.equal(plan.kept["no ElevenLabs voice for Estonian words (Edge)"], soundGuideWords("estonian").length);
+
+		const realFetch = globalThis.fetch;
+		const hadKey = process.env.ELEVENLABS_API_KEY;
+		process.env.ELEVENLABS_API_KEY = "test-key";
+		globalThis.fetch = (async () => new Response(new Uint8Array([7]), { status: 200 })) as typeof fetch;
+		try {
+			const now = new Date("2026-11-17T12:00:00Z");
+			const result = await regenerate(plan, { now });
+			assert.equal(result.done, plan.items.length);
+			const tava = corpus.findAudioClip(corpus.audioKey("sk", "female", "ťava"))!;
+			assert.equal(tava.tier, "elevenlabs");
+			const moved = path.join(PATHS.audio, "replaced", now.toISOString().replace(/[:.]/g, "-"), tava.file);
+			assert.equal(fs.readFileSync(moved, "utf-8"), "old ťava");
+			assert.equal(corpus.findAudioClip(corpus.audioKey("sk", "female", "tam"))?.tier, "elevenlabs");
+			assert.equal(soundGuidePlan().items.length, 0);
 		} finally {
 			globalThis.fetch = realFetch;
 			if (hadKey === undefined) delete process.env.ELEVENLABS_API_KEY;
