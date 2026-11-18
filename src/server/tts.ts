@@ -38,6 +38,7 @@ import {
 	audioKey,
 	findAudioClip,
 	migrateLegacyAudio,
+	setAsideAudioClip,
 	storeAudioClip,
 	type MigrationCandidate,
 } from "../store/corpus.ts";
@@ -62,6 +63,10 @@ interface TtsRequest {
 	style?: "narration" | "dialogue";
 	/** Skip tiers (e.g. ["elevenlabs"] to save credits). */
 	skip?: TtsTier[];
+	/** The two words of a sound contrast are read by one voice and one model:
+	 *  ElevenLabs reads the word even where slovak.wiki has a recording or
+	 *  another tier made a clip. Without ElevenLabs the usual order applies. */
+	prefer?: "elevenlabs";
 }
 
 const VOICE_ID = /^[A-Za-z0-9_-]{8,64}$/;
@@ -473,23 +478,60 @@ export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
 	const lang = languageByCode(req.lang) ?? [activeLanguage()].find((l) => l.code === req.lang);
 	if (!lang) throw new Error(`unsupported language "${req.lang}"`);
 	migrateAudioOnce();
+	const key = ttsCacheKey(req);
+	if (req.prefer === "elevenlabs" && !req.skip?.includes("elevenlabs")) {
+		const preferred = await once(`${key}|prefer`, () => elevenLabsFirst(req, lang, key));
+		if (preferred) return preferred;
+	}
 	// slovak.wiki's own recording beats any clip made here, for the default voice.
 	if (lang.code === "sk" && (req.voice === undefined || req.voice === "female")) {
 		const wiki = await wikiClip("slovak", lang.code, req.text);
 		if (wiki) return { file: wiki.file, contentType: "audio/mpeg", tier: "wiki" };
 	}
-	const key = ttsCacheKey(req);
 	const hit = cached(key, lang.code);
 	if (hit) return hit;
-	const job = `${key}|${req.skip?.join(",") ?? ""}`;
+	return once(`${key}|${req.skip?.join(",") ?? ""}`, () => synthesizeFresh(req, lang, key));
+}
+
+const inFlight = processWide("tts.inFlight", () => new Map<string, Promise<TtsClip | null>>());
+
+function once(job: string, run: () => Promise<TtsClip | null>): Promise<TtsClip | null> {
 	const pending = inFlight.get(job);
 	if (pending) return pending;
-	const made = synthesizeFresh(req, lang, key).finally(() => inFlight.delete(job));
+	const made = run().finally(() => inFlight.delete(job));
 	inFlight.set(job, made);
 	return made;
 }
 
-const inFlight = processWide("tts.inFlight", () => new Map<string, Promise<TtsClip | null>>());
+/** True when the kept clip at this key was made by an ElevenLabs model that reads the language. */
+export function keptByElevenLabs(key: string, code: string): boolean {
+	const hit = findAudioClip(key);
+	return hit?.tier === "elevenlabs" && elevenLabsReads(code, hit.model ?? LEGACY_MODEL);
+}
+
+async function elevenLabsFirst(req: TtsRequest, lang: LanguageInfo, key: string): Promise<TtsClip | null> {
+	if (keptByElevenLabs(key, lang.code)) return cached(key, lang.code);
+	try {
+		const spoken = await elevenLabs(req, lang);
+		if (!spoken || spoken.data.length === 0) return null;
+		const replaced = findAudioClip(key);
+		if (replaced) setAsideAudioClip(replaced);
+		const stored = storeAudioClip({
+			key,
+			lang: lang.code,
+			voice: req.voice ?? "female",
+			tier: "elevenlabs",
+			text: req.text,
+			ext: "mp3",
+			data: spoken.data,
+			...(spoken.model ? { model: spoken.model } : {}),
+		});
+		return { file: stored.absolute, contentType: "audio/mpeg", tier: "elevenlabs" };
+	} catch (err) {
+		console.warn("[tts] elevenlabs failed, falling through:", err instanceof Error ? err.message : err);
+		return null;
+	}
+}
 
 async function synthesizeFresh(req: TtsRequest, lang: LanguageInfo, key: string): Promise<TtsClip | null> {
 	for (const { tier, ext, run } of TIERS) {

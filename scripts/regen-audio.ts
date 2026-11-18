@@ -3,13 +3,14 @@
  * npm run audio:regen -- --yes        — make it again with the newest ElevenLabs model
  *   --max-chars 50000                 stop before this many characters are spent
  *   --concurrency 3                   clips at a time
+ * npm run audio:sounds [-- --yes]     — only the words the Sound guide plays, made or not
  *
  * Reads the real data folder (src/server/audio-regen.ts). Replaced files move
  * to data/audio/replaced/<stamp>/; nothing is deleted. Safe to stop and run
  * again: a clip already made by the newest model is skipped.
  */
 
-import { regenCost, regenPlan, regenerate, USD_PER_1K_CHARS } from "../src/server/audio-regen.ts";
+import { regenCost, regenPlan, regenerate, soundGuidePlan, USD_PER_1K_CHARS } from "../src/server/audio-regen.ts";
 import { keyValue } from "../src/server/keys.ts";
 
 const args = process.argv.slice(2);
@@ -21,7 +22,8 @@ const yes = args.includes("--yes");
 const maxChars = flag("--max-chars") ? Number(flag("--max-chars")) : undefined;
 const concurrency = flag("--concurrency") ? Number(flag("--concurrency")) : 3;
 
-const plan = regenPlan();
+const sounds = args.includes("--sounds");
+const plan = sounds ? soundGuidePlan() : regenPlan();
 const byGroup = new Map<string, { clips: number; chars: number }>();
 for (const i of plan.items) {
 	const k = `${i.lang.english} · ${i.reason}`;
@@ -46,7 +48,7 @@ if (Object.keys(plan.kept).length) {
 }
 
 if (!yes) {
-	console.log("\nNothing was spent. Run `npm run audio:regen -- --yes` to make them again.");
+	console.log(`\nNothing was spent. Run \`npm run ${sounds ? "audio:sounds" : "audio:regen"} -- --yes\` to make them.`);
 	process.exit(0);
 }
 if (!keyValue("ELEVENLABS_API_KEY")) {

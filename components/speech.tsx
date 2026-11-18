@@ -191,6 +191,8 @@ interface SpeakOptions {
 	style?: "narration" | "dialogue";
 	/** The snail button: this one play is slower, the speed setting stays as it is. */
 	slow?: boolean;
+	/** The two words of a sound contrast: ElevenLabs reads both when it can. */
+	prefer?: "elevenlabs";
 }
 
 /** Always slower than the learner's own speed, but not below 0.6×, where the
@@ -257,6 +259,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 	if (opts.voice) q.set("voice", opts.voice);
 	if (opts.gender) q.set("gender", opts.gender);
 	if (opts.style) q.set("style", opts.style);
+	if (opts.prefer) q.set("prefer", opts.prefer);
 	const url = `/api/tts?${q.toString()}`;
 	const res = await fetch(url).catch(() => null);
 	// A newer call or a mute arrived while this one was loading: drop it.

@@ -1,5 +1,5 @@
 /**
- * GET /api/tts?text=…&lang=sk|ru[&voice=female|male|<voice id>][&gender=female|male][&style=narration|dialogue][&skip=elevenlabs] —
+ * GET /api/tts?text=…&lang=sk|ru[&voice=female|male|<voice id>][&gender=female|male][&style=narration|dialogue][&skip=elevenlabs][&prefer=elevenlabs] —
  * speech for a word or sentence (src/server/tts.ts: ElevenLabs → Edge →
  * Piper, cached on disk). 200 = audio; 204 + x-tts-fallback: browser =
  * no tier worked, speak it with window.speechSynthesis.
@@ -21,11 +21,12 @@ export async function GET(req: Request) {
 	const gender = url.searchParams.get("gender") === "male" ? "male" : "female";
 	const style = url.searchParams.get("style") === "dialogue" ? "dialogue" : "narration";
 	const skip = (url.searchParams.get("skip") ?? "").split(",").filter((t): t is TtsTier => TIERS.has(t as TtsTier));
+	const prefer = url.searchParams.get("prefer") === "elevenlabs" ? ("elevenlabs" as const) : undefined;
 	if (!text) return Response.json({ message: "text is required" }, { status: 400 });
 	if (text.length > TTS_MAX_CHARS)
 		return Response.json({ message: `text is longer than ${TTS_MAX_CHARS} characters` }, { status: 413 });
 	try {
-		const clip = await synthesize({ text, lang, voice, gender, style, skip });
+		const clip = await synthesize({ text, lang, voice, gender, style, skip, ...(prefer ? { prefer } : {}) });
 		if (!clip) return new Response(null, { status: 204, headers: { "x-tts-fallback": "browser" } });
 		const data = fs.readFileSync(clip.file);
 		return new Response(new Uint8Array(data), {

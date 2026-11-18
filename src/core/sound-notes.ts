@@ -94,6 +94,11 @@ export function getSoundNote(target: string, languageId: string | undefined): So
 	);
 }
 
+export function soundGuideWords(languageId: string | undefined): string[] {
+	const sounds = getSoundNotes(languageId)?.sounds ?? [];
+	return [...new Set(sounds.flatMap((s) => [s.word, s.next?.word, s.also?.word]).filter((w): w is string => !!w))];
+}
+
 export function soundNotesForPairs(family: string, languageId: string | undefined): SoundNote[] {
 	return getSoundNotes(languageId)?.sounds.filter((s) => s.pairs === family) ?? [];
 }

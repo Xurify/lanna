@@ -142,6 +142,16 @@ export function findAudioClip(key: string): (AudioClipEntry & { absolute: string
 	return null;
 }
 
+/** Nothing is deleted (E1): a clip about to be replaced moves to audio/replaced/<stamp>/. */
+export function setAsideAudioClip(entry: { file: string }, now: Date = new Date()): void {
+	if (!entry.file) return;
+	const old = path.join(PATHS.audio, entry.file);
+	if (!fs.existsSync(old)) return;
+	const moved = path.join(PATHS.audio, "replaced", now.toISOString().replace(/[:.]/g, "-"), entry.file);
+	fs.mkdirSync(path.dirname(moved), { recursive: true });
+	fs.renameSync(old, moved);
+}
+
 /** Write a clip and its index line; returns the entry with its absolute path. */
 export function storeAudioClip(input: {
 	key: string;
