@@ -560,7 +560,12 @@ export function WatchPlayer({
 					regenError={regen?.id === video.id ? regen.error : undefined}
 					onRegenerate={() => {
 						setRegen({ id: video.id, at: Date.now() });
-						void prepare(video.url, video.source.kind === "transcription", true);
+						void prepare(
+							video.url,
+							video.source.kind === "transcription",
+							true,
+							video.fragment ? { startSec: video.fragment.startSec, endSec: video.fragment.endSec } : undefined,
+						);
 					}}
 				/>
 			</Frame>
@@ -782,9 +787,11 @@ function Preview({
 							? "YouTube's automatic captions"
 							: "transcribed from the audio"}
 					{video.source.trackLang !== video.lang ? ` in ${captionLanguageName(video.source.trackLang)}` : ""}
-					{video.untranslated
-						? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation`
-						: ""}
+					{video.translatedBy === "none"
+						? " · no English translation yet: Regenerate adds it"
+						: video.untranslated
+							? ` · ${video.untranslated} ${video.untranslated === 1 ? "line has" : "lines have"} no English translation`
+							: ""}
 				</p>
 				<h1 className="mt-1 font-ui text-3xl font-[600] text-foreground" lang={video.lang}>
 					{video.title}

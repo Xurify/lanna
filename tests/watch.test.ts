@@ -939,6 +939,61 @@ test("a line the model never translates stays in the video with no English, and 
 	assert.equal(v.untranslated, 1);
 });
 
+test("a model that fails keeps the video for later, with no English or questions, and the notice says why", async () => {
+	const { listTasks, resetTasks } = await import("../src/server/tasks.ts");
+	resetTasks();
+	const base = createFauxCore({ tokenSize: { min: 64, max: 64 } });
+	const streamFn: typeof base.streamSimple = () => {
+		throw new Error(
+			'400 {"type":"error","error":{"type":"invalid_request_error","message":"You have reached your specified API usage limits."}}',
+		);
+	};
+	const v = await watch.prepareVideo("https://youtu.be/HHHHHHHHHHH", {
+		engine: { model: base.getModel(), streamFn },
+		model: "faux:watch",
+		captions,
+		now: new Date("2026-11-17T10:00:00Z"),
+	});
+	assert.equal(v.translatedBy, "none");
+	assert.equal(v.untranslated, lines.length);
+	assert.deepEqual(v.questions, []);
+	assert.deepEqual(
+		v.segments.map((s) => s.sk),
+		lines.map((l) => l.sk),
+	);
+	assert.ok(videoStore.get("HHHHHHHHHHH"), "the video is on the shelf");
+	const task = listTasks().find((t) => t.id === "video:HHHHHHHHHHH")!;
+	assert.equal(task.status, "done");
+	assert.match(task.note ?? "", /Kept for later, without English or questions: The model's API key is out of credit/);
+	assert.match(task.note ?? "", /Regenerate/);
+
+	const good = await watch.prepareVideo("https://youtu.be/HHHHHHHHHHH", {
+		engine: fauxEngine([
+			fauxAssistantMessage(JSON.stringify({ t: TRANSLATIONS })),
+			fauxAssistantMessage(JSON.stringify(QUESTIONS)),
+		]),
+		model: "faux:watch",
+		captions,
+		force: true,
+	});
+	assert.equal(good.translatedBy, "model");
+	await assert.rejects(
+		watch.prepareVideo("https://youtu.be/HHHHHHHHHHH", {
+			engine: { model: base.getModel(), streamFn },
+			model: "faux:watch",
+			captions,
+			force: true,
+		}),
+		/usage limits/,
+	);
+	assert.equal(
+		videoStore.get("HHHHHHHHHHH")?.translatedBy,
+		"model",
+		"a Regenerate that fails keeps the English it had",
+	);
+	videoStore.remove(v.id);
+});
+
 test("a preparation is a background task: running with its step, done with where to open it, failed with why", async () => {
 	const { listTasks, resetTasks, abortTask } = await import("../src/server/tasks.ts");
 	resetTasks();

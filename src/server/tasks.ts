@@ -59,14 +59,44 @@ export const TASKS_KEPT = 20;
 const TERMINAL_CODES = /\x1b\[[0-9;?]*[A-Za-z]/g;
 const ERROR_CHARS = 240;
 
-/** What a Tasks row shows for a failure: the last line, with terminal codes removed and a length cap. */
+// Provider SDKs (Anthropic, OpenAI) put the HTTP status and the raw JSON body in Error.message: `400 {"error":{"message":"..."}}`.
+const PROVIDER_ERROR = /^(\d{3})\s+(\{.*\})$/s;
+const OUT_OF_CREDIT = /usage limits?|credit balance|quota|billing/i;
+const AI_MODELS_HINT = "Pick another model in Settings → AI models, or raise the limit with the provider.";
+
+function providerMessage(line: string): string {
+	const match = PROVIDER_ERROR.exec(line);
+	if (!match) return line;
+	let body: unknown;
+	try {
+		body = JSON.parse(match[2]!);
+	} catch {
+		return line;
+	}
+	const record = body as { error?: { message?: unknown } | string; message?: unknown };
+	const inner =
+		typeof record.error === "object" && typeof record.error?.message === "string"
+			? record.error.message
+			: typeof record.error === "string"
+				? record.error
+				: typeof record.message === "string"
+					? record.message
+					: null;
+	if (!inner) return line;
+	const sentence = /[.!?]$/.test(inner.trim()) ? inner.trim() : `${inner.trim()}.`;
+	return OUT_OF_CREDIT.test(sentence)
+		? `The model's API key is out of credit: ${sentence} ${AI_MODELS_HINT}`
+		: sentence;
+}
+
+/** What a Tasks row shows for a failure: the last line, with terminal codes removed, a provider's JSON body read, and a length cap. */
 export function briefError(message: string): string {
 	const lines = message
 		.replace(TERMINAL_CODES, "")
 		.split(/\r\n|\r|\n/)
 		.map((line) => line.trim())
 		.filter(Boolean);
-	const last = lines.length ? lines[lines.length - 1]! : "Something went wrong";
+	const last = lines.length ? providerMessage(lines[lines.length - 1]!) : "Something went wrong";
 	return last.length > ERROR_CHARS ? `${last.slice(0, ERROR_CHARS - 3)}...` : last;
 }
 
