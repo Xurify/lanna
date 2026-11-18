@@ -63,6 +63,20 @@ export const knownWordStore = {
 		}
 		return added;
 	},
+	unmarkMany(slugs: readonly string[], now = new Date()): number {
+		const f = read();
+		let removed = 0;
+		for (const slug of slugs) {
+			if (!Object.hasOwn(f.words, slug)) continue;
+			delete f.words[slug];
+			removed++;
+		}
+		if (removed > 0) {
+			f.updatedAt = now.toISOString();
+			write(f);
+		}
+		return removed;
+	},
 	has(slug: string): boolean {
 		return Object.hasOwn(read().words, slug);
 	},

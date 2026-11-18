@@ -41,7 +41,7 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 	const [count, setCount] = useState(0);
 	const [ranking, setRanking] = useState<{ total: number; items: CommonWord[] } | null>(null);
 	const [filter, setFilter] = useState<Filter>("all");
-	const [confirming, setConfirming] = useState(false);
+	const [confirming, setConfirming] = useState<"mark" | "unmark" | null>(null);
 	const [saving, setSaving] = useState<string | null>(null);
 	const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
 	const [error, setError] = useState("");
@@ -52,6 +52,9 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 	const unmarked = selected.length - knownCount;
 	const total = ranking?.total ?? 0;
 	const markedInAll = useMemo(() => ranking?.items.filter((word) => word.known).length ?? 0, [ranking]);
+	const reach = useMemo(() => markedReach(ranking?.items.map((word) => word.known) ?? [], []), [ranking]);
+	const markedBeyond =
+		ranking && reach > count ? ranking.items.slice(count, reach).filter((word) => word.known).length : 0;
 	const listedCount = useDeferredValue(count);
 	const bands = useMemo(() => bandsOf(ranking ? ranking.items.slice(0, listedCount) : []), [ranking, listedCount]);
 	const stops = useMemo(() => {
@@ -93,7 +96,7 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 
 	function selectCount(next: number) {
 		setCount(next);
-		setConfirming(false);
+		setConfirming(null);
 		setNotice("");
 	}
 
@@ -133,7 +136,7 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 		}
 	}
 
-	async function markRange(from: number, to: number) {
+	async function markRange(from: number, to: number, known = true) {
 		if (saving) return;
 		const key = `${from}-${to}`;
 		setSaving(key);
@@ -143,13 +146,17 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 			const res = await fetch("/api/words/common", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ from, count: to }),
+				body: JSON.stringify({ from, count: to, known }),
 			});
 			if (!res.ok) throw new Error();
-			const result = (await res.json()) as { added: number };
-			setKnown((word) => word.rank >= from && word.rank <= to, true);
-			setConfirming(false);
-			setNotice(`${number(result.added)} words from ${number(from)} to ${number(to)} marked known.`);
+			const result = (await res.json()) as { added?: number; removed?: number };
+			setKnown((word) => word.rank >= from && word.rank <= to, known);
+			setConfirming(null);
+			setNotice(
+				known
+					? `${number(result.added ?? 0)} words from ${number(from)} to ${number(to)} marked known.`
+					: `${number(result.removed ?? 0)} words from ${number(from)} to ${number(to)} no longer marked.`,
+			);
 			onKnownChange();
 		} catch {
 			setError("Could not save known words. Try again.");
@@ -225,21 +232,44 @@ export function CommonWords({ onKnownChange }: { onKnownChange: () => void }) {
 					</p>
 					<div className="flex flex-wrap items-center gap-2">
 						<FilterSwitch value={filter} onChange={setFilter} />
+						{!confirming && markedBeyond > 0 && (
+							<Button variant="outline" disabled={saving !== null} onClick={() => setConfirming("unmark")}>
+								{count === 0
+									? `Un-mark ${number(markedBeyond)}`
+									: `Un-mark ${number(markedBeyond)} past ${number(count)}`}
+							</Button>
+						)}
 						{!confirming && (
-							<Button disabled={saving !== null || unmarked === 0} onClick={() => setConfirming(true)}>
+							<Button disabled={saving !== null || unmarked === 0} onClick={() => setConfirming("mark")}>
 								{count === 0 ? "Mark known" : unmarked === 0 ? "All marked known" : `Mark ${number(unmarked)} known`}
 							</Button>
 						)}
 					</div>
 				</div>
-				{confirming && (
+				{confirming === "unmark" && (
+					<div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+						<p className="min-w-0 flex-1 font-prose text-sm text-foreground">
+							Un-mark the {number(markedBeyond)} words from {number(count + 1)} to {number(reach)}?
+							{count > 0 && ` The top ${number(count)} stay marked.`} Your Review schedule stays unchanged.
+						</p>
+						<div className="flex gap-2">
+							<Button variant="outline" disabled={saving !== null} onClick={() => setConfirming(null)}>
+								Cancel
+							</Button>
+							<Button disabled={saving !== null} onClick={() => void markRange(count + 1, reach, false)}>
+								{saving === `${count + 1}-${reach}` ? "Saving…" : "Un-mark"}
+							</Button>
+						</div>
+					</div>
+				)}
+				{confirming === "mark" && (
 					<div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
 						<p className="min-w-0 flex-1 font-prose text-sm text-foreground">
 							Mark {number(unmarked)} more words as known? Words you marked before stay marked, and you can undo any
 							word by tapping it.
 						</p>
 						<div className="flex gap-2">
-							<Button variant="outline" disabled={saving !== null} onClick={() => setConfirming(false)}>
+							<Button variant="outline" disabled={saving !== null} onClick={() => setConfirming(null)}>
 								Cancel
 							</Button>
 							<Button disabled={saving !== null} onClick={() => void markRange(1, selected.length)}>
