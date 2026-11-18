@@ -1492,7 +1492,6 @@ html[data-sidebar-resizing] .sidebar-motion {
 	mask-image: linear-gradient(to bottom, #000 calc(100% - 9rem), transparent calc(100% - 2rem));
 }
 
-
 @keyframes speak-arc {
 	0%,
 	100% {
@@ -1586,5 +1585,43 @@ html[data-speak-motion="still"] .ink-fade {
 	}
 	.speak-arc {
 		opacity: 1;
+	}
+}
+@keyframes speak-deal {
+	from {
+		opacity: 0;
+		transform: translateX(var(--speak-deal-x, 24px)) rotate(var(--speak-deal-r, 2deg));
+	}
+}
+.speak-deal {
+	animation: speak-deal 380ms var(--ease-out) both;
+}
+html[data-speak-motion="lively"] .speak-deal {
+	--speak-deal-x: 70px;
+	--speak-deal-r: 7deg;
+}
+html[data-speak-motion="still"] .speak-deal {
+	animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.speak-deal {
+		animation: none;
+	}
+}
+@keyframes speak-bob {
+	0%,
+	100% {
+		translate: 0 0;
+	}
+	50% {
+		translate: 0 -4px;
+	}
+}
+html[data-speak-motion="lively"] .speak-bob {
+	animation: speak-bob 3.6s var(--ease-in-out) calc(var(--i, 0) * -0.7s) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+	html[data-speak-motion="lively"] .speak-bob {
+		animation: none;
 	}
 }

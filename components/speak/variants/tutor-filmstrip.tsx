@@ -53,7 +53,6 @@ export function TutorFilmstrip({
 
 	useEffect(() => {
 		go(active, false);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [scenes.length]);
 
 	useEffect(() => {

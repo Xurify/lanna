@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LoaderCircleIcon, MicIcon, RepeatIcon, SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SpeakHeader } from "@/components/speak/speak-header";
+import { SoloBoard, SoloDeck } from "@/components/speak/variants/solo-picks";
 import {
 	COLUMN,
 	Centered,
@@ -68,7 +69,13 @@ function stopTimer(timer: { current: ReturnType<typeof setInterval> | null }) {
 	timer.current = null;
 }
 
-export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string | null }) {
+export function SelfTalkPlayer({
+	initialPromptId,
+	layout = "deck",
+}: {
+	initialPromptId?: string | null;
+	layout?: string;
+}) {
 	const lang = useActiveLanguage();
 	const router = useRouter();
 	const [phase, setPhase] = useState<Phase>("pick");
@@ -267,25 +274,44 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 				</div>
 				<Dock testId="self-talk-dock">
 					<div className={cn(COLUMN, "flex min-h-24 items-center gap-4 py-4")}>
-						<button
-							type="button"
-							onClick={() => void finish()}
-							aria-label="Done talking"
-							className={cn(
-								"lanna-press relative flex size-16 shrink-0 items-center justify-center rounded-full text-sun-ink",
-								listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
-							)}
-							data-testid="self-talk-stop"
-						>
-							{listening && (
-								<span
-									className="absolute inset-0 rounded-full bg-miss/40"
-									style={{ transform: `scale(${1 + level * 0.6})` }}
-									aria-hidden="true"
+						<span className="relative flex size-[84px] shrink-0 items-center justify-center">
+							<svg viewBox="0 0 84 84" className="absolute inset-0 -rotate-90" aria-hidden="true">
+								<circle cx="42" cy="42" r="39" className="fill-none stroke-well" strokeWidth="3" />
+								<circle
+									cx="42"
+									cy="42"
+									r="39"
+									pathLength={1}
+									strokeDasharray="1 1"
+									strokeDashoffset={1 - Math.min(1, elapsed / prompt.targetSec)}
+									strokeLinecap="round"
+									className={cn(
+										"fill-none transition-[stroke-dashoffset] duration-700 ease-linear",
+										elapsed >= prompt.targetSec ? "stroke-teal-2" : "stroke-teal",
+									)}
+									strokeWidth="3"
 								/>
-							)}
-							<SquareIcon className="relative size-6 fill-current" />
-						</button>
+							</svg>
+							<button
+								type="button"
+								onClick={() => void finish()}
+								aria-label="Done talking"
+								className={cn(
+									"lanna-press relative flex size-16 shrink-0 items-center justify-center rounded-full text-sun-ink",
+									listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
+								)}
+								data-testid="self-talk-stop"
+							>
+								{listening && (
+									<span
+										className="absolute inset-0 rounded-full bg-miss/40"
+										style={{ transform: `scale(${1 + level * 0.6})` }}
+										aria-hidden="true"
+									/>
+								)}
+								<SquareIcon className="relative size-6 fill-current" />
+							</button>
+						</span>
 						<div className="min-w-0 flex-1">
 							{listening ? (
 								<Meter level={level} />
@@ -311,6 +337,13 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 				</Dock>
 			</TaskFrame>
 		);
+
+	if (layout === "deck" || layout === "board") {
+		const Pick = layout === "deck" ? SoloDeck : SoloBoard;
+		return (
+			<Pick selected={prompt.id} onSelect={setSelected} onStart={() => void start()} lang={lang?.code} error={error} />
+		);
+	}
 
 	const sheet = (inline: boolean) => (
 		<PromptSheet

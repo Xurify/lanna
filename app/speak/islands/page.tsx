@@ -1,3 +1,5 @@
+import { VariantPicker } from "@/components/variant-picker";
+import { LAYOUTS, chosen, harnessGroups } from "@/components/speak/variants/harness";
 import { IslandsPage } from "@/components/speak/islands/islands-page";
 import type { IslandPageData } from "@/src/core";
 import { islandPage, liveAvailabilityNow } from "@/src/server";
@@ -6,8 +8,12 @@ export const metadata = { title: "Language islands" };
 
 export const dynamic = "force-dynamic";
 
-export default async function IslandsRoute({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
-	const { id } = await searchParams;
+export default async function IslandsRoute({
+	searchParams,
+}: {
+	searchParams: Promise<{ id?: string; __variant?: string; __motion?: string }>;
+}) {
+	const { id, __variant, __motion } = await searchParams;
 	let page: IslandPageData | null = null;
 	try {
 		page = islandPage();
@@ -22,5 +28,15 @@ export default async function IslandsRoute({ searchParams }: { searchParams: Pro
 			</div>
 		);
 	}
-	return <IslandsPage initial={page} initialId={id ?? null} live={liveAvailabilityNow()} />;
+	return (
+		<>
+			<IslandsPage
+				initial={page}
+				initialId={id ?? null}
+				live={liveAvailabilityNow()}
+				layout={chosen(LAYOUTS.islands, __variant)}
+			/>
+			<VariantPicker groups={harnessGroups("islands", __variant, __motion)} />
+		</>
+	);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { MicIcon, SquareIcon } from "lucide-react";
+import { SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CallStage } from "@/components/speak/speak-motion";
 import { SECONDARY } from "@/components/ui/learn-buttons";
