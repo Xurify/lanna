@@ -9,8 +9,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { TodayLink } from "@/components/today-link";
 import {
-	ArrowLeftIcon,
 	ArrowRightIcon,
 	CheckIcon,
 	CompassIcon,
@@ -85,10 +85,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="mistakes">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="q-ico size-3.5" />
-					Today
-				</Link>
+				<TodayLink />
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Mistakes</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Read from your first tries: the answer you gave before any hint. A miss you then got right still counts here,

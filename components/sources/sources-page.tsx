@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { TodayLink } from "@/components/today-link";
 import { SidebarToggle } from "@/components/sidebar";
 import { SourceItem } from "@/components/sources/sources-note";
 import { FEATURES, SOURCES, sourcesOf } from "@/src/core";
@@ -20,10 +20,7 @@ export function SourcesPage() {
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="sources">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
-					Today
-				</Link>
+				<TodayLink />
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Sources</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Each task here is built from published research, and each says so on its own page. This is the whole list:

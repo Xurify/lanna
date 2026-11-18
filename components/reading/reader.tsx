@@ -20,6 +20,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { TodayLink } from "@/components/today-link";
 import { useRouter } from "next/navigation";
 import {
 	LanguagesIcon,
@@ -1556,10 +1557,7 @@ function Shelf({
 	return (
 		<div className="flex flex-1 flex-col overflow-y-auto pb-16 pt-8 [scrollbar-gutter:stable]">
 			<div className={cn(COLUMN, "max-w-5xl lanna-rise")} data-testid="read-shelf-list">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<XIcon className="size-3.5" strokeWidth={1.6} />
-					Today
-				</Link>
+				<TodayLink closes />
 				<div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
 					<div>
 						<h1 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Read</h1>

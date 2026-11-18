@@ -7,8 +7,8 @@
  */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { TodayLink } from "@/components/today-link";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { DayLogView } from "@/components/log/day-log-view";
@@ -70,10 +70,7 @@ export function LogPage({ initial = null }: { initial?: { today: string; days: D
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
-					Today
-				</Link>
+				<TodayLink />
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em]">Log</h1>
 				<p className="q-line dim mt-1">What you did each day, from your own records.</p>
 

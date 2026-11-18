@@ -16,8 +16,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { TodayLink } from "@/components/today-link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, FlagIcon, LoaderCircleIcon } from "lucide-react";
+import { FlagIcon, LoaderCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { HoursSheet } from "@/components/hours-sheet";
@@ -162,10 +163,7 @@ export function PlanPage({
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="plan">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
-					Today
-				</Link>
+				<TodayLink />
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Progress</h1>
 				<p className="q-line dim mt-1">Your goal, your pace, and when the hours add up to it.</p>
 
