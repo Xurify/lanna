@@ -2,9 +2,9 @@
 
 import { Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak } from "@/components/speech";
+import { speak, useVoicing } from "@/components/speech";
 import type { SoundNeighbor, SoundNote, SoundPicture } from "@/src/core";
-import { SoundDrawing } from "./mouth";
+import { LiveSoundDrawing } from "./sound-motion";
 
 interface Figure extends SoundNeighbor {
 	quiet: boolean;
@@ -77,6 +77,7 @@ export function SoundPictures({
 	const figures = figuresOf(note);
 	if (figures.length === 0) return null;
 	const length = figures[0]!.picture.kind === "length";
+	const voicing = useVoicing();
 	return (
 		<div
 			className={cn(length ? "flex flex-col gap-2" : "grid grid-cols-2 gap-3", className)}
@@ -93,10 +94,11 @@ export function SoundPictures({
 						className="lanna-press group grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] items-center gap-3 rounded-xl bg-well px-4 py-2.5 text-start hover:bg-well-2 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]"
 					>
 						<Caption figure={figure} langCode={langCode} />
-						<SoundDrawing
+						<LiveSoundDrawing
 							picture={figure.picture}
 							seed={seed}
 							quiet={figure.quiet}
+							playing={voicing === figure.word}
 							className="h-auto w-full max-w-[19rem]"
 						/>
 					</button>
@@ -108,10 +110,11 @@ export function SoundPictures({
 						aria-label={`Play ${figure.word}`}
 						className="lanna-press group flex flex-col rounded-xl bg-well px-3 pb-3.5 pt-2 text-start hover:bg-well-2 sm:px-4"
 					>
-						<SoundDrawing
+						<LiveSoundDrawing
 							picture={figure.picture}
 							seed={seed}
 							quiet={figure.quiet}
+							playing={voicing === figure.word}
 							className="mx-auto h-auto w-full max-w-[15rem]"
 						/>
 						<Caption figure={figure} langCode={langCode} />

@@ -381,24 +381,88 @@ export interface MouthPaths {
 	place: { cx: number; cy: number; rx: number; ry: number } | null;
 }
 
-export function mouthPaths(spec: MouthSpec, seed: number): MouthPaths {
+/** The mouth on its way from one sound's position to the one drawn: 0 is
+ *  `from`, 1 is the drawing as it stands. `tipDrop` lowers the tip alone. */
+export interface MouthMotion {
+	from: MouthSpec;
+	progress: number;
+	tipDrop?: number;
+}
+
+export const REST_MOUTH: MouthSpec = { tongue: "rest", lips: "neutral" };
+
+const SETTLE_MS = 180;
+const REACH_MS = 420;
+const TRILL_MS = 540;
+const TRILL_TAPS = 3;
+const TRILL_DROP = 4;
+
+/** How long a mouth moves after its word starts playing. */
+export function mouthMotionMs(spec: MouthSpec): number {
+	return SETTLE_MS + REACH_MS + (spec.tongue === "tip-ridge-trill" ? TRILL_MS : 0);
+}
+
+const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+
+/** The mouth at a moment after its word started: it lets go to rest, moves
+ *  to the sound's position, and for a rolled r the tip then taps. */
+export function mouthMotionAt(spec: MouthSpec, elapsedMs: number): MouthMotion {
+	if (elapsedMs < SETTLE_MS) return { from: REST_MOUTH, progress: 1 - easeInOut(elapsedMs / SETTLE_MS) };
+	const reaching = (elapsedMs - SETTLE_MS) / REACH_MS;
+	if (reaching < 1) return { from: REST_MOUTH, progress: easeInOut(reaching) };
+	const tapping = (elapsedMs - SETTLE_MS - REACH_MS) / TRILL_MS;
+	if (spec.tongue !== "tip-ridge-trill" || tapping >= 1) return { from: REST_MOUTH, progress: 1 };
+	return { from: REST_MOUTH, progress: 1, tipDrop: TRILL_DROP * Math.abs(Math.sin(Math.PI * TRILL_TAPS * tapping)) };
+}
+
+const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+const mixPoints = (a: readonly Point[], b: readonly Point[], t: number): Point[] =>
+	a.map(([x, y], i): Point => [mix(x, b[i]![0], t), mix(y, b[i]![1], t)]);
+
+const jawOf = (spec: MouthSpec) => (spec.lips === "lip-to-teeth" ? 0 : TONGUES[spec.tongue].jaw);
+
+const SURFACE_POINTS = 5;
+
+function tongueOutline(spec: MouthSpec, even: boolean): { points: Point[]; tipIndex: number } {
 	const form = TONGUES[spec.tongue];
-	const lips = LIPS[spec.lips];
-	const accent: MouthMark = spec.mark ?? (spec.lips === "lip-to-teeth" ? "lips" : "tongue");
-	const jaw = spec.lips === "lip-to-teeth" ? 0 : form.jaw;
+	const jaw = jawOf(spec);
 	const raised = form.tip[1] < 90;
 	const tip: Point = [form.tip[0], form.tip[1] + (raised ? 0 : jaw)];
+	const end: Point = [78, 112 + jaw];
 	const under: Point[] = raised
-		? [
-				[tip[0] + 5, tip[1] + 12],
-				[tip[0] + 13, tip[1] + 24],
-				[78, 112 + jaw],
-			]
-		: [
-				[tip[0] + 9, tip[1] + 8],
-				[78, 112 + jaw],
-			];
-	const outline: Point[] = [...ROOT, ...form.surface, tip, ...under];
+		? [[tip[0] + 5, tip[1] + 12], [tip[0] + 13, tip[1] + 24], end]
+		: even
+			? [[tip[0] + 9, tip[1] + 8], [(tip[0] + 9 + end[0]) / 2, (tip[1] + 8 + end[1]) / 2], end]
+			: [[tip[0] + 9, tip[1] + 8], end];
+	let surface: readonly Point[] = form.surface;
+	if (even && surface.length < SURFACE_POINTS) {
+		const [a, b, c, d] = surface as [Point, Point, Point, Point];
+		// The point a Catmull-Rom curve through a, b, c, d passes halfway between b and c.
+		const middle: Point = [(-a[0] + 9 * b[0] + 9 * c[0] - d[0]) / 16, (-a[1] + 9 * b[1] + 9 * c[1] - d[1]) / 16];
+		surface = [a, b, middle, c, d];
+	}
+	return { points: [...ROOT, ...surface, tip, ...under], tipIndex: ROOT.length + surface.length };
+}
+
+export function mouthPaths(spec: MouthSpec, seed: number, motion?: MouthMotion): MouthPaths {
+	const form = TONGUES[spec.tongue];
+	const accent: MouthMark = spec.mark ?? (spec.lips === "lip-to-teeth" ? "lips" : "tongue");
+	const progress = motion ? Math.min(1, Math.max(0, motion.progress)) : 1;
+	const moving = motion !== undefined && progress < 1;
+	const jaw = moving ? mix(jawOf(motion.from), jawOf(spec), progress) : jawOf(spec);
+	const settled = tongueOutline(spec, moving);
+	const outline = moving
+		? mixPoints(tongueOutline(motion.from, true).points, settled.points, progress)
+		: settled.points;
+	if (motion?.tipDrop)
+		outline[settled.tipIndex] = [outline[settled.tipIndex]![0], outline[settled.tipIndex]![1] + motion.tipDrop];
+	const lips = moving
+		? {
+				upper: mixPoints(LIPS[motion.from.lips].upper, LIPS[spec.lips].upper, progress),
+				lower: mixPoints(LIPS[motion.from.lips].lower, LIPS[spec.lips].lower, progress),
+				place: LIPS[spec.lips].place,
+			}
+		: LIPS[spec.lips];
 	const lower = lowered(lips.lower, jaw);
 	const place = accent === "lips" ? lips.place : accent === "throat" ? THROAT_PLACE : form.place;
 	return {

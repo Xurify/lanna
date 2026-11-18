@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SoundDrawing } from "@/components/phonology/mouth";
-import { lengthPaths, mouthPaths } from "@/components/phonology/mouth-paths";
+import { lengthPaths, mouthMotionAt, mouthMotionMs, mouthPaths, REST_MOUTH } from "@/components/phonology/mouth-paths";
 import { getPhonologyData } from "../src/core/phonology.ts";
 import { pronReport, type PronScore } from "../src/core/pronounce.ts";
 import {
@@ -238,5 +238,48 @@ describe("mouth drawings", () => {
 		const end = (units: number) => Math.max(...numbers(lengthPaths(units, 3).wave).filter((_, i) => i % 2 === 0));
 		assert.ok(end(1) < end(2) && end(2) < end(3));
 		assert.ok(end(2) / end(1) > 1.6);
+	});
+});
+
+describe("mouth motion", () => {
+	const soft = { tongue: "body-roof", lips: "neutral" } as const;
+	const rolled = { tongue: "tip-ridge-trill", lips: "neutral" } as const;
+
+	it("starts and ends on the drawing as it stands", () => {
+		const still = mouthPaths(soft, 5);
+		assert.deepEqual(mouthPaths(soft, 5, mouthMotionAt(soft, 0)), still);
+		assert.deepEqual(mouthPaths(soft, 5, mouthMotionAt(soft, mouthMotionMs(soft))), still);
+		assert.deepEqual(mouthPaths(soft, 5, { from: REST_MOUTH, progress: 1 }), still);
+	});
+
+	it("passes through rest on the way, with every number finite", () => {
+		const still = mouthPaths(soft, 5);
+		const atRest = mouthPaths(soft, 5, { from: REST_MOUTH, progress: 0 });
+		assert.notEqual(atRest.tongue, still.tongue);
+		const restTop = Math.min(...numbers(atRest.tongue).filter((_, i) => i % 2 === 1));
+		const softTop = Math.min(...numbers(still.tongue).filter((_, i) => i % 2 === 1));
+		assert.ok(restTop > softTop + 15, "at rest the tongue is well below the roof");
+		for (let ms = 0; ms <= mouthMotionMs(soft); ms += 20) {
+			const frame = mouthPaths(soft, 5, mouthMotionAt(soft, ms));
+			for (const d of [frame.tongue, frame.tongueBody, frame.lowerLip, frame.upperLip, frame.chin])
+				assert.ok(numbers(d).every(Number.isFinite) && !d.includes("NaN"), `frame at ${ms} ms`);
+		}
+	});
+
+	it("rounds the lips on the way to a rounded sound", () => {
+		const round = { tongue: "back-high", lips: "round" } as const;
+		const half = mouthPaths(round, 5, { from: REST_MOUTH, progress: 0.5 });
+		assert.notEqual(half.upperLip, mouthPaths(round, 5).upperLip);
+		assert.notEqual(half.upperLip, mouthPaths(REST_MOUTH, 5).upperLip);
+	});
+
+	it("only a rolled r taps after it arrives", () => {
+		assert.ok(mouthMotionMs(rolled) > mouthMotionMs(soft));
+		const arrived = mouthMotionMs(soft);
+		const drops = [40, 90, 180, 270, 360, 450].map((ms) => mouthMotionAt(rolled, arrived + ms).tipDrop ?? 0);
+		assert.ok(Math.max(...drops) > 2, "the tip leaves the ridge");
+		assert.ok(Math.min(...drops) < 1.5, "and comes back to it");
+		assert.equal(mouthMotionAt(soft, arrived + 90).tipDrop, undefined);
+		assert.notEqual(mouthPaths(rolled, 5, mouthMotionAt(rolled, arrived + 90)).tongue, mouthPaths(rolled, 5).tongue);
 	});
 });

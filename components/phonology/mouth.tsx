@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Sheet, Stroke } from "@/components/lesson/ink";
 import { patchD } from "@/components/lesson/ink-paths";
 import type { MouthSpec, SoundPicture } from "@/src/core";
-import { LENGTH_VIEWBOX, MOUTH_VIEWBOX, lengthPaths, mouthPaths } from "./mouth-paths";
+import { LENGTH_VIEWBOX, MOUTH_VIEWBOX, lengthPaths, mouthPaths, type MouthMotion } from "./mouth-paths";
 
 const delayed = (seconds: number) => ({ "--ink-delay": `${seconds}s` }) as CSSProperties;
 
@@ -11,14 +11,16 @@ export function Mouth({
 	spec,
 	seed,
 	quiet = false,
+	motion,
 	className,
 }: {
 	spec: MouthSpec;
 	seed: number;
 	quiet?: boolean;
+	motion?: MouthMotion;
 	className?: string;
 }) {
-	const m = mouthPaths(spec, seed);
+	const m = mouthPaths(spec, seed, motion);
 	const lit = (part: typeof m.accent) => !quiet && m.accent === part;
 	const wash = quiet ? "fill-foreground/[0.14]" : "fill-teal/20";
 	return (
@@ -55,24 +57,37 @@ export function Mouth({
 	);
 }
 
+export const LENGTH_UNIT_SECONDS = 0.45;
+
 export function LengthWave({
 	units,
 	seed,
 	quiet = false,
+	replay = 0,
 	className,
 }: {
 	units: 1 | 2 | 3;
 	seed: number;
 	quiet?: boolean;
+	/** Each new number draws the wave again, at a steady pace, for a time in proportion to its units. */
+	replay?: number;
 	className?: string;
 }) {
 	const l = lengthPaths(units, seed);
+	const seconds = replay > 0 ? units * LENGTH_UNIT_SECONDS : undefined;
 	return (
 		<Sheet viewBox={LENGTH_VIEWBOX} className={className}>
 			<Stroke d={l.base} tone="soft" />
 			<Stroke d={l.start} tone="graphite" delay={0.1} />
-			<Stroke d={l.wave} tone={quiet ? "graphite" : "mark"} width={2.1} delay={0.2} />
-			<Stroke d={l.end} tone="graphite" delay={0.8} />
+			<Stroke
+				key={`wave-${replay}`}
+				d={l.wave}
+				tone={quiet ? "graphite" : "mark"}
+				width={2.1}
+				delay={seconds === undefined ? 0.2 : 0}
+				seconds={seconds}
+			/>
+			<Stroke key={`end-${replay}`} d={l.end} tone="graphite" delay={seconds ?? 0.8} />
 		</Sheet>
 	);
 }
