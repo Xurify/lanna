@@ -90,6 +90,14 @@ function indexEntryOf(story: StoryRecord): StoryIndexEntry {
 	};
 }
 
+function writeStoryFile(story: StoryRecord): void {
+	const file = storyFile(story.id);
+	fs.mkdirSync(path.dirname(file), { recursive: true });
+	const tmp = `${file}.${process.pid}.tmp`;
+	fs.writeFileSync(tmp, JSON.stringify(story, null, "\t"), "utf-8");
+	fs.renameSync(tmp, file);
+}
+
 export const storyStore = {
 	/** Every story's index line, oldest first. */
 	list(): StoryIndexEntry[] {
@@ -113,12 +121,12 @@ export const storyStore = {
 	},
 	/** Write the story and its index line. */
 	put(story: StoryRecord): void {
-		const file = storyFile(story.id);
-		fs.mkdirSync(path.dirname(file), { recursive: true });
-		const tmp = `${file}.${process.pid}.tmp`;
-		fs.writeFileSync(tmp, JSON.stringify(story, null, "\t"), "utf-8");
-		fs.renameSync(tmp, file);
+		writeStoryFile(story);
 		appendJsonl(INDEX(), indexEntryOf(story));
+	},
+	/** Rewrite a kept story whose index line does not change (its voices). */
+	replace(story: StoryRecord): void {
+		writeStoryFile(story);
 	},
 	appendRead(entry: ReadLogEntry): void {
 		appendJsonl(READS(), entry);

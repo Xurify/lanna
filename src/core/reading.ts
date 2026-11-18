@@ -358,6 +358,41 @@ export interface StoryRecord {
 	ruleIssues?: number;
 }
 
+/** How the reader speaks a sentence: a cast member's line in their own
+ *  voice as dialogue, everything else in the narrator's voice. The audio
+ *  cache is keyed on this voice, so a clip made ahead of time must use it. */
+export function storySpeech(
+	story: Pick<StoryRecord, "cast" | "narratorVoice">,
+	s: Pick<StorySentence, "who">,
+): { voice?: string; gender?: "female" | "male"; style: "narration" | "dialogue" } {
+	const who = s.who && story.cast?.find((c) => c.name === s.who);
+	if (who) return { voice: who.voice, gender: who.gender === "f" ? "female" : "male", style: "dialogue" };
+	return { voice: story.narratorVoice, style: "narration" };
+}
+
+/** A batch making ElevenLabs audio for every story (src/server/story-audio.ts). */
+export interface StoryAudioJob {
+	total: number;
+	done: number;
+	failed: number;
+	chars: number;
+	startedAt: string;
+	finishedAt?: string;
+	/** The first failure's message, so a wrong key or an empty balance is said. */
+	error?: string;
+}
+
+export interface StoryAudioStatus {
+	hasKey: boolean;
+	stories: number;
+	/** Stories whose every sentence already has an ElevenLabs clip. */
+	storiesReady: number;
+	sentences: number;
+	chars: number;
+	cost: { credits: number; usdLow: number; usdHigh: number };
+	job: StoryAudioJob | null;
+}
+
 export interface StoryIndexEntry {
 	id: string;
 	series: string;

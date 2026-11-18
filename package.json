@@ -34,6 +34,7 @@
 		"corpus:export": "bun scripts/corpus-export.ts",
 		"audio:regen": "bun scripts/regen-audio.ts",
 		"audio:sounds": "bun scripts/regen-audio.ts --sounds",
+		"audio:stories": "bun scripts/story-audio.ts",
 		"desktop:dev": "node scripts/desktop-dev.mjs",
 		"desktop:prod": "node scripts/desktop-dev.mjs --prod",
 		"dev:fresh": "bash scripts/dev-fresh.sh",

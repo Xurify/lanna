@@ -372,7 +372,10 @@ export async function elevenLabs(req: TtsRequest, lang: LanguageInfo): Promise<S
 			},
 		);
 		if (res.ok) return { data: Buffer.from(await res.arrayBuffer()), model };
-		last = new Error(`ElevenLabs ${model} ${res.status}: ${redactSecrets(await res.text()).slice(0, 200)}`);
+		const body = redactSecrets(await res.text());
+		last = new Error(`ElevenLabs ${model} ${res.status}: ${body.slice(0, 200)}`);
+		// ElevenLabs answers 404 "voice_not_found" for a voice the account lacks: every model would refuse it, and the model itself is fine.
+		if (body.includes("voice_not_found")) break;
 		// A refusal of the model is remembered; a rate limit or a server hiccup is not.
 		if (res.status >= 400 && res.status < 500 && res.status !== 429) refused.set(model, Date.now() + REFUSED_MS);
 	}

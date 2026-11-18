@@ -33,20 +33,25 @@ interface VoiceInfo {
 export const NARRATOR_VOICE = "YJsJ2Mt3VRr0gCiTY6DA";
 
 /** ElevenLabs premade voices that read Slovak well with the multilingual
- *  model. Ids are the long-standing premade set; `availableVoices` trims
- *  the palette to what the account actually lists. */
+ *  models: the default set every account lists (read from /v1/voices on
+ *  2026-11-17; the older Rachel, Josh, Elli set was retired and answers
+ *  404). `availableVoiceIds` trims the palette to what the account lists. */
 export const VOICE_PALETTE: readonly VoiceInfo[] = [
-	{ id: "MF3mGyEYCl7XYWbV9V6O", label: "Elli", gender: "f", age: "young" },
-	{ id: "AZnzlk1XvdvUeBnXmlld", label: "Domi", gender: "f", age: "young" },
-	{ id: "21m00Tcm4TlvDb8ZT3nW", label: "Rachel", gender: "f", age: "adult" },
-	{ id: "EXAVITQu4vr4xnSDxMaL", label: "Bella", gender: "f", age: "adult" },
-	{ id: "z9fAnlkpzviPz146aGWa", label: "Glinda", gender: "f", age: "old" },
-	{ id: "jBpfuIE2acCO8z3wKNLl", label: "Gigi", gender: "f", age: "child" },
-	{ id: "TxGEqnHsHyW5TpYSbr9w", label: "Josh", gender: "m", age: "young" },
-	{ id: "pNInz6obpnDQGcFmaJgB", label: "Adam", gender: "m", age: "young" },
-	{ id: "ErXwobaYiN019PkySvjV", label: "Antoni", gender: "m", age: "adult" },
-	{ id: "VR6AewLTigWG4xSOukaG", label: "Arnold", gender: "m", age: "adult" },
-	{ id: "2EiwWnXFnvU5JabPnv8n", label: "Clyde", gender: "m", age: "old" },
+	{ id: "cgSgspJ2msm6clMCkdW9", label: "Jessica", gender: "f", age: "young" },
+	{ id: "FGY2WhTYpPnrIDTdsKH5", label: "Laura", gender: "f", age: "young" },
+	{ id: "hpp4J3VqNfWAUOO0d1Us", label: "Bella", gender: "f", age: "adult" },
+	{ id: "Xb7hH8MSUJpSbSDYk0k2", label: "Alice", gender: "f", age: "adult" },
+	{ id: "pFZP5JQG7iQjIQuC4Bku", label: "Lily", gender: "f", age: "adult" },
+	{ id: "EXAVITQu4vr4xnSDxMaL", label: "Sarah", gender: "f", age: "old" },
+	{ id: "XrExE9yKIg1WjnnlVkGX", label: "Matilda", gender: "f", age: "old" },
+	{ id: "TX3LPaxmHKxFdv7VOQHJ", label: "Liam", gender: "m", age: "young" },
+	{ id: "bIHbv24MWmeRgasZH58o", label: "Will", gender: "m", age: "young" },
+	{ id: "pNInz6obpgDQGcFmaJgB", label: "Adam", gender: "m", age: "adult" },
+	{ id: "iP95p4xoKVk53GoZ742B", label: "Chris", gender: "m", age: "adult" },
+	{ id: "cjVigY5qzO86Huf0OWal", label: "Eric", gender: "m", age: "adult" },
+	{ id: "onwK4e9ZLuTAKqWW03F9", label: "Daniel", gender: "m", age: "adult" },
+	{ id: "pqHfZKP75CvOlQylNhV4", label: "Bill", gender: "m", age: "old" },
+	{ id: "JBFqnCBsd6RMkjVDRZzb", label: "George", gender: "m", age: "old" },
 	{ id: "SOYHLrjzK2X1ezoPC6cr", label: "Harry", gender: "m", age: "child" },
 ];
 
