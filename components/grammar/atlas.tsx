@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { TodayLink } from "@/components/today-link";
 import { cn } from "@/lib/utils";
 import { SidebarToggle } from "@/components/sidebar";
 import { ATLAS_CASES, ATLAS_GENDERS, slipLine, unitInfo, type AtlasCell } from "@/src/core";
@@ -36,10 +36,7 @@ export function GrammarAtlas({ initial }: { initial: AtlasCell[] | null }) {
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-16" data-testid="grammar">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="size-3.5" strokeWidth={1.6} />
-					Today
-				</Link>
+				<TodayLink />
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Grammar</h1>
 				{!first ? (
 					<p className="q-line dim mt-2 max-w-2xl" data-testid="grammar-none">

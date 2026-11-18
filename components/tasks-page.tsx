@@ -12,7 +12,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, CheckIcon, LoaderCircleIcon, SquareIcon, XIcon } from "lucide-react";
+import { TodayLink } from "@/components/today-link";
+import { CheckIcon, LoaderCircleIcon, SquareIcon, XIcon } from "lucide-react";
 import { SidebarToggle } from "@/components/sidebar";
 import { EmptyState } from "@/components/quiet/empty-state";
 import { formatElapsed, useActivity, type FeedTask } from "@/components/activity-dock";
@@ -51,10 +52,7 @@ export function TasksPage({ tasks: tasksProp }: { tasks?: FeedTask[] } = {}) {
 				<SidebarToggle />
 			</header>
 			<main className="mx-auto w-full max-w-3xl px-5 pb-20" data-testid="tasks">
-				<Link href="/" className="inline-flex min-h-6 items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-2">
-					<ArrowLeftIcon className="q-ico size-3.5" />
-					Today
-				</Link>
+				<TodayLink />
 				<h1 className="mt-3 text-[34px] font-semibold leading-[1.15] tracking-[-0.028em] text-foreground">Tasks</h1>
 				<p className="q-line dim mt-2 max-w-2xl">
 					Work that runs in the background, so a page does not have to wait: preparing a video, adding a language. What
