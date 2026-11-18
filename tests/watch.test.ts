@@ -247,6 +247,21 @@ test("dailyPlan: a waiting video is a Watch task; none when nothing waits", () =
 	});
 	assert.equal(done.tasks.find((t) => t.id === "watch")!.done, true);
 	assert.equal(strandMinutes({ watches: 2 }).input, 16);
+
+	const tight = { ...base, minutesPerDay: 15 };
+	const long = { id: "dQw4w9WgXcQ", title: "Bratislava", minutes: 20, coverage: 0.91 };
+	const notPicked = dailyPlan({ ...tight, watch: long });
+	assert.ok(!notPicked.tasks.some((t) => t.id === "watch"), "a long video the plan chose is cut on a short day");
+	const picked = dailyPlan({ ...tight, watch: { ...long, chosen: true } });
+	assert.ok(
+		picked.tasks.some((t) => t.id === "watch"),
+		"a video the learner picked is kept",
+	);
+	assert.deepEqual(
+		picked.tasks.filter((t) => t.id !== "watch").map((t) => t.id),
+		notPicked.tasks.map((t) => t.id),
+		"and it does not push the other strands out",
+	);
 });
 
 test("extractJsonAfter reads a player response out of a watch page whole", () => {
@@ -510,6 +525,20 @@ describe("a video on a scripted engine", () => {
 		});
 		assert.equal(v.usage.steps.length, 3);
 		assert.equal(v.segments[0]!.en, TRANSLATIONS[0]);
+	});
+
+	test("the video picked for today is the Watch task; a pick from another day is not", async () => {
+		const { dayKey } = await import("../src/core/review.ts");
+		const watchHref = () => progressSummary().plan.tasks.find((t) => t.id === "watch")?.href;
+		const [older, newer] = videoStore.list().map((e) => e.id);
+		assert.equal(watchHref(), `/watch?id=${newer}`, "with no pick, the newest not watched");
+		videoStore.choose(dayKey(new Date()), older!);
+		assert.equal(watchHref(), `/watch?id=${older}`);
+		const long = { ...videoStore.get(older!)!, durationSec: 3600 };
+		videoStore.put(long);
+		assert.equal(watchHref(), `/watch?id=${older}`, "a long pick is kept past the day's minutes");
+		videoStore.choose("2000-01-01", older!);
+		assert.equal(watchHref(), `/watch?id=${newer}`);
 	});
 
 	test("recordWatch: the day's watching, XP, the first-listen stats, the words into the deck, the log the milestone page reads", () => {

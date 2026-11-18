@@ -26,6 +26,11 @@ function stepTitle(x: PlanStep): string {
 	return x.task ? words(x.task).primary : `Set up ${x.lang?.english ?? ""}`;
 }
 
+/** A Watch step not done yet, in the language running now: its video can be swapped for another. */
+export function choosable(x: PlanStep): boolean {
+	return x.task?.id === "watch" && !x.done && (!x.lang || x.lang.running);
+}
+
 function stepLabel(x: PlanStep): string {
 	return x.task ? taskLabel(x.task) : "Setup";
 }
@@ -37,6 +42,7 @@ export function DayPath({
 	busy,
 	onStart,
 	renderNext,
+	onChooseVideo,
 }: {
 	groups: PlanGroup[] | null;
 	steps: PlanStep[];
@@ -44,6 +50,8 @@ export function DayPath({
 	busy: boolean;
 	onStart: (x: PlanStep) => void;
 	renderNext: (x: PlanStep) => React.ReactNode;
+	/** Opens the picker for the video a Watch step shows. */
+	onChooseVideo?: () => void;
 }) {
 	const stops: Array<{ lang: DayLanguage | null; steps: PlanStep[] }> = groups ?? [{ lang: null, steps }];
 	const [unfolded, setUnfolded] = useState<Record<string, boolean>>({});
@@ -137,25 +145,39 @@ export function DayPath({
 														x.done ? "bg-teal" : "bg-background shadow-[inset_0_0_0_2px_var(--q-box)]",
 													)}
 												/>
-												<button
-													type="button"
-													disabled={busy}
-													onClick={() => onStart(x)}
-													className="-ml-2 flex w-[calc(100%+8px)] items-baseline gap-3 rounded-lg px-2 py-2 text-left hover:bg-well pointer-coarse:py-3"
-												>
-													<span
-														className={cn(
-															"min-w-0 flex-1 truncate text-[14.5px]",
-															x.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground",
-														)}
-														title={stepTitle(x)}
+												<div className="-ml-2 flex w-[calc(100%+8px)] items-center gap-1">
+													<button
+														type="button"
+														disabled={busy}
+														onClick={() => onStart(x)}
+														className="flex min-w-0 flex-1 items-baseline gap-3 rounded-lg px-2 py-2 text-left hover:bg-well pointer-coarse:py-3"
 													>
-														{stepTitle(x)}
-													</span>
-													<span className="shrink-0 text-[12px] text-ink-3 @max-sm:hidden">{stepLabel(x)}</span>
-													<span className="q-num w-11 shrink-0 text-right text-[12px] text-ink-3">{x.minutes} min</span>
-													<span className="sr-only">{x.done ? "Done" : "To do"}</span>
-												</button>
+														<span
+															className={cn(
+																"min-w-0 flex-1 truncate text-[14.5px]",
+																x.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground",
+															)}
+															title={stepTitle(x)}
+														>
+															{stepTitle(x)}
+														</span>
+														<span className="shrink-0 text-[12px] text-ink-3 @max-sm:hidden">{stepLabel(x)}</span>
+														<span className="q-num w-11 shrink-0 text-right text-[12px] text-ink-3">
+															{x.minutes} min
+														</span>
+														<span className="sr-only">{x.done ? "Done" : "To do"}</span>
+													</button>
+													{onChooseVideo && choosable(x) && (
+														<button
+															type="button"
+															onClick={onChooseVideo}
+															data-testid="plan-choose-video"
+															className="lanna-press inline-flex h-7 shrink-0 items-center rounded-md px-2 text-[12.5px] font-[550] text-ink-2 hover:bg-well hover:text-foreground pointer-coarse:h-11"
+														>
+															Change
+														</button>
+													)}
+												</div>
 											</li>
 										),
 									)}

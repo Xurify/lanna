@@ -21,6 +21,8 @@
  *                          about, its parts, the keys and a short version at
  *                          the learner's level, with what it cost
  *                          (src/core/watch-prep.ts)
+ *   chosen.json            the video the learner picked for a day's plan
+ *                          ({day, videoId}); only the latest day is kept.
  *   sentences.jsonl        one line per model verdict on a sentence the
  *                          learner wrote for the end of a video
  *                          (SentenceCheckEntry, docs/plans/watch-sentences.md).
@@ -41,6 +43,7 @@ import type { PrepRecord } from "../core/watch-prep.ts";
 const INDEX = () => path.join(PATHS.videos, "index.jsonl");
 const WATCHES = () => path.join(PATHS.videos, "watches.jsonl");
 const SENTENCES = () => path.join(PATHS.videos, "sentences.jsonl");
+const CHOSEN = () => path.join(PATHS.videos, "chosen.json");
 const SECTIONS = (id: string) => path.join(PATHS.videos, "sections", `${id}.json`);
 const PREP = (id: string) => path.join(PATHS.videos, "prep", `${id}.json`);
 
@@ -265,5 +268,14 @@ export const videoStore = {
 	/** Every watching, oldest first. */
 	watches(): WatchLogEntry[] {
 		return readJsonl<WatchLogEntry>(WATCHES());
+	},
+	/** The video the learner picked for the plan on this day, if any. */
+	chosenFor(day: string): string | null {
+		const rec = readJson<{ day?: unknown; videoId?: unknown }>(CHOSEN());
+		return rec?.day === day && typeof rec.videoId === "string" && isVideoId(rec.videoId) ? rec.videoId : null;
+	},
+	choose(day: string, videoId: string): void {
+		if (!isVideoId(videoId)) throw new Error(`bad video id ${videoId}`);
+		writeJson(CHOSEN(), { day, videoId });
 	},
 };

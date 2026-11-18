@@ -9,6 +9,7 @@ const options = {
 	chrome: process.env.CHROME_PATH,
 	height: 0,
 	reducedMotion: false,
+	click: "",
 };
 const positional = [];
 for (let i = 0; i < args.length; i += 1) {
@@ -18,13 +19,14 @@ for (let i = 0; i < args.length; i += 1) {
 	else if (arg === "--chrome") options.chrome = args[++i];
 	else if (arg === "--height") options.height = Number(args[++i]);
 	else if (arg === "--reduced-motion") options.reducedMotion = true;
+	else if (arg === "--click") options.click = args[++i] ?? "";
 	else positional.push(arg);
 }
 
 const [baseUrl, outDir, ...shots] = positional;
 if (!baseUrl || !outDir || shots.length === 0) {
 	console.error(
-		"usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path] [--height px] [--reduced-motion]",
+		"usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path] [--height px] [--reduced-motion] [--click css selector]",
 	);
 	process.exit(1);
 }
@@ -76,6 +78,10 @@ for (const shot of shots) {
 				root.classList.toggle("dark", value === "night");
 			}, theme);
 			await new Promise((resolve) => setTimeout(resolve, 900));
+			if (options.click) {
+				await page.click(options.click);
+				await new Promise((resolve) => setTimeout(resolve, 900));
+			}
 			const file = path.join(outDir, `${name}-${theme}-${width}.png`);
 			const element = selector ? await page.$(selector) : null;
 			if (selector && !element) throw new Error(`${name}: nothing matches ${selector}`);

@@ -557,20 +557,28 @@ export interface ProgressSummary {
 }
 
 /** The video the daily plan should show: the one watched today (so the
- *  task reads as done), else the newest added and not watched yet;
- *  undefined when neither exists. */
-function pendingWatch(
-	day: string,
-):
-	| { id: string; title: string; minutes: number; coverage?: number; estimated?: boolean; captionLang?: string }
+ *  task reads as done), else the one the learner picked for today, else
+ *  the newest added and not watched yet; undefined when none exists. */
+function pendingWatch(day: string):
+	| {
+			id: string;
+			title: string;
+			minutes: number;
+			coverage?: number;
+			estimated?: boolean;
+			captionLang?: string;
+			chosen?: boolean;
+	  }
 	| undefined {
 	try {
 		const watches = videoStore.watches();
 		const library = videoStore.list();
 		const todays = watches.filter((w) => w.day === day).at(-1);
 		const watched = new Set(watches.map((w) => w.videoId));
+		const chosen = videoStore.chosenFor(day);
 		const v =
 			(todays && library.find((e) => e.id === todays.videoId)) ??
+			(chosen ? library.find((e) => e.id === chosen) : undefined) ??
 			[...library].reverse().find((e) => !watched.has(e.id));
 		// Nothing waits: the picks are read again when stale, and the best one prepared
 		// when the learner keeps one ready. Imported late: discover imports this module.
@@ -587,6 +595,7 @@ function pendingWatch(
 					id: v.id,
 					title: v.title,
 					minutes: watchMinutes(v.durationSec),
+					...(v.id === chosen ? { chosen: true } : {}),
 					...(coverageKind(v) === "none"
 						? { captionLang: captionLanguageName(v.trackLang!) }
 						: { coverage: v.coverage, ...(coverageKind(v) === "estimated" ? { estimated: true } : {}) }),

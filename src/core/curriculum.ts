@@ -1165,7 +1165,16 @@ interface PlanInput {
 	/** A video the learner added and has not watched yet (src/core/watch.ts):
 	 *  it joins the plan as input until it is watched. */
 	/** A video with captions in another language: coverage is an estimate (`estimated`), or absent with the language's name when none was made. */
-	watch?: { id: string; title: string; minutes: number; coverage?: number; estimated?: boolean; captionLang?: string };
+	watch?: {
+		id: string;
+		title: string;
+		minutes: number;
+		coverage?: number;
+		estimated?: boolean;
+		captionLang?: string;
+		/** The learner picked it for today, so the budget never cuts it. */
+		chosen?: boolean;
+	};
 	/** An episode read before today exists, so a timed re-read is possible. */
 	reread?: boolean;
 	/** The story's title: the one read today, else the one /read opens next; absent while none is written. */
@@ -1492,11 +1501,17 @@ export function dailyPlan(input: PlanInput): DailyPlan {
 	// Cut to the planned minutes, keeping review and the lesson. A tight
 	// budget keeps one task per strand before a second form-focused one
 	// (input, speaking and speed before strengthen and words), so a short day
-	// is still balanced rather than all drills (src/core/strands.ts).
+	// is still balanced rather than all drills (src/core/strands.ts). A video
+	// the learner picked is kept on top of the budget, so a long one does not
+	// push the other strands out.
 	const budget = Math.max(5, input.minutesPerDay);
 	const keep = new Set<TaskKind>();
 	let used = 0;
 	for (const t of [...tasks].sort((a, b) => BUDGET_ORDER[a.id] - BUDGET_ORDER[b.id])) {
+		if (t.id === "watch" && input.watch?.chosen === true) {
+			keep.add(t.id);
+			continue;
+		}
 		const must = t.id === "review" || t.id === "lesson";
 		if (must || used + t.minutes <= budget || t.done) {
 			keep.add(t.id);
