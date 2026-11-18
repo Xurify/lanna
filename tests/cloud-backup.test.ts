@@ -58,7 +58,7 @@ describe("cloud backup", () => {
 		});
 		const bucket = memoryBucket();
 
-		const first = pushPlan(localFiles(root), await bucket.list());
+		const first = pushPlan(await localFiles(root), await bucket.list());
 		assert.deepEqual(
 			first.upload.map((file) => file.path),
 			["audio/sk/female/ťava-0123456789ab.mp3", "profiles/slovak/chats/a.json", "settings.json"],
@@ -67,7 +67,7 @@ describe("cloud backup", () => {
 
 		fs.writeFileSync(path.join(root, "profiles/slovak/chats/a.json"), "two");
 		fs.rmSync(path.join(root, "settings.json"));
-		const second = pushPlan(localFiles(root), await bucket.list());
+		const second = pushPlan(await localFiles(root), await bucket.list());
 		assert.deepEqual(
 			second.upload.map((file) => file.path),
 			["profiles/slovak/chats/a.json"],
@@ -83,7 +83,7 @@ describe("cloud backup", () => {
 		bucket.objects.set("access.json", Buffer.from("never restored"));
 		const root = folder("laptop", { "profiles/slovak/progress.json": "made here" });
 
-		const plan = pullPlan(localFiles(root), await bucket.list());
+		const plan = pullPlan(await localFiles(root), await bucket.list());
 		assert.deepEqual(
 			plan.download.map((file) => file.path),
 			["profiles/slovak/speak/s1/01.wav"],
@@ -100,7 +100,7 @@ describe("cloud backup", () => {
 		const bucket = memoryBucket();
 		bucket.objects.set("notes.json", Buffer.from("from the cloud"));
 		const root = folder("race", {});
-		const plan = pullPlan(localFiles(root), await bucket.list());
+		const plan = pullPlan(await localFiles(root), await bucket.list());
 		fs.mkdirSync(root, { recursive: true });
 		fs.writeFileSync(path.join(root, "notes.json"), "written meanwhile");
 

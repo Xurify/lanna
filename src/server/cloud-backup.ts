@@ -5,20 +5,26 @@
  * only writes files that are missing here.
  *
  * Objects are read and written through Cloudflare's API with the login
- * `wrangler login` made (developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects).
+ * `wrangler login` made on this computer, or a CLOUDFLARE_API_TOKEN in
+ * .env.local (developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects).
  * An object's etag is the MD5 of its bytes when it was uploaded in one
  * request (developers.cloudflare.com/r2/objects/upload-objects), which is how
  * a file is known to be the same without downloading it.
  */
 
-import { execSync } from "node:child_process";
+import { exec } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { promisify } from "node:util";
+import type { BackupAuth } from "../core/backup.ts";
 
 export const BACKUP_BUCKET = "lanna";
 const PREFIX = "data/";
 const API = "https://api.cloudflare.com/client/v4";
+const WRANGLER = "npx -y wrangler@4";
+const ENV_TOKEN = "CLOUDFLARE_API_TOKEN";
+const LOGIN_TIMEOUT = 180_000;
 
 const LEFT_OUT = [
 	{ path: "access.json", why: "the paired devices' token hashes belong to this computer" },
@@ -45,21 +51,21 @@ export function leftOut(): string[] {
 	return LEFT_OUT.map((rule) => `${rule.path} (${rule.why})`);
 }
 
-export function localFiles(root: string): BackupFile[] {
+export async function localFiles(root: string): Promise<BackupFile[]> {
 	const files: BackupFile[] = [];
-	const walk = (dir: string) => {
-		for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+	const walk = async (dir: string): Promise<void> => {
+		for (const entry of await fs.promises.readdir(dir, { withFileTypes: true })) {
 			const absolute = path.join(dir, entry.name);
 			const relative = path.relative(root, absolute).split(path.sep).join("/");
 			if (entry.isDirectory()) {
-				if (backedUp(`${relative}/`)) walk(absolute);
+				if (backedUp(`${relative}/`)) await walk(absolute);
 			} else if (entry.isFile() && backedUp(relative)) {
-				const data = fs.readFileSync(absolute);
+				const data = await fs.promises.readFile(absolute);
 				files.push({ path: relative, size: data.length, md5: createHash("md5").update(data).digest("hex") });
 			}
 		}
 	};
-	if (fs.existsSync(root)) walk(root);
+	if (fs.existsSync(root)) await walk(root);
 	return files.sort((a, b) => a.path.localeCompare(b.path));
 }
 
@@ -156,18 +162,54 @@ const CONTENT_TYPES: Record<string, string> = {
 	".webp": "image/webp",
 };
 
-function wranglerToken(): string {
-	const out = execSync("npx -y wrangler@4 auth token --json", { encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] });
-	return (JSON.parse(out) as { token: string }).token;
+export type ShellRun = (command: string, options?: { timeout?: number }) => Promise<{ stdout: string; stderr: string }>;
+
+const execAsync = promisify(exec);
+
+export const shellRun: ShellRun = async (command, options = {}) => {
+	const { stdout, stderr } = await execAsync(command, { ...options, encoding: "utf-8" });
+	return { stdout, stderr };
+};
+
+async function cloudflareToken(run: ShellRun = shellRun): Promise<string> {
+	const fromEnv = process.env[ENV_TOKEN]?.trim();
+	if (fromEnv) return fromEnv;
+	const { stdout } = await run(`${WRANGLER} auth token --json`);
+	return (JSON.parse(stdout) as { token: string }).token;
+}
+
+// `wrangler whoami` names the email it is signed in with, and closes the sentence with a full stop.
+const WHOAMI_EMAIL = /associated with the email\s+([\w.+-]+@[\w-]+(?:\.[\w-]+)+)/;
+
+export function whoamiAccount(out: string): string | null {
+	return WHOAMI_EMAIL.exec(out)?.[1] ?? null;
+}
+
+export async function wranglerAuth(run: ShellRun = shellRun): Promise<BackupAuth | null> {
+	if (process.env[ENV_TOKEN]?.trim()) return { via: "env", account: null };
+	try {
+		return { via: "wrangler", account: whoamiAccount((await run(`${WRANGLER} whoami`)).stdout) };
+	} catch {
+		return null;
+	}
+}
+
+/** Wrangler's own sign-in: it opens the browser and waits for the callback. */
+export async function cloudflareSignIn(run: ShellRun = shellRun): Promise<void> {
+	await run(`${WRANGLER} login`, { timeout: LOGIN_TIMEOUT });
+}
+
+export async function cloudflareSignOut(run: ShellRun = shellRun): Promise<void> {
+	await run(`${WRANGLER} logout`);
 }
 
 export async function cloudflareBucket(name = BACKUP_BUCKET): Promise<Bucket> {
-	let token = wranglerToken();
+	let token = await cloudflareToken();
 	const call = async (url: string, init: RequestInit = {}): Promise<Response> => {
 		const send = () => fetch(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
 		let res = await send();
 		if (res.status === 401) {
-			token = wranglerToken();
+			token = await cloudflareToken();
 			res = await send();
 		}
 		if (!res.ok)

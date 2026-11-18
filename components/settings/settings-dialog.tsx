@@ -38,6 +38,7 @@ import {
 	BotIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
+	CloudUploadIcon,
 	CoinsIcon,
 	DatabaseIcon,
 	GraduationCapIcon,
@@ -56,6 +57,7 @@ import { UsageSection } from "./usage-section.tsx";
 import { LearnerSection } from "./learner-section.tsx";
 import { ResetSection } from "./reset-section.tsx";
 import { StorageSection } from "./storage-section.tsx";
+import { BackupSection } from "./backup-section.tsx";
 import { sharedJson } from "@/lib/shared-fetch";
 
 /** The nav label is the section's heading. Ids are internal: deep links and tests use them.
@@ -72,6 +74,7 @@ const SECTIONS = [
 	{ id: "keys", label: "API keys" },
 	{ id: "usage", label: "Spending" },
 	{ id: "data", label: "Data" },
+	{ id: "backup", label: "Backup" },
 	{ id: "sources", label: "Sources" },
 ] as const;
 export type SectionId = (typeof SECTIONS)[number]["id"];
@@ -88,6 +91,7 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 	general: SlidersHorizontalIcon,
 	sound: Volume2Icon,
 	data: DatabaseIcon,
+	backup: CloudUploadIcon,
 	sources: BookMarkedIcon,
 };
 
@@ -444,6 +448,15 @@ function SettingsDialogBody({
 							{active === "data" && (
 								<SettingsSection title="Reset" hint="Start over from scratch" testid="section-reset">
 									<ResetSection />
+								</SettingsSection>
+							)}
+							{active === "backup" && (
+								<SettingsSection
+									title="Backup"
+									hint="A copy of everything the app keeps, in your own Cloudflare R2 bucket. This computer stays the one Lanna reads and writes."
+									testid="section-backup"
+								>
+									<BackupSection />
 								</SettingsSection>
 							)}
 							{active === "sources" && (
