@@ -28,6 +28,7 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 	const [start, setStart] = useState<LiveStart | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [speaker, setSpeaker] = useState<"tutor" | "learner" | null>(null);
 	const [notice, setNotice] = useState("");
 	const [callPhase, setCallPhase] = useState<LivePhase>("connecting");
 	const [turns, setTurns] = useState<LiveTurn[]>([]);
@@ -48,6 +49,7 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 			onPhase: (p) => setCallPhase(p),
 			onTurns: setTurns,
 			onLevel: setLevel,
+			onSpeaker: setSpeaker,
 			onNotice: setNotice,
 			onTool: (event) => {
 				if (event.tool === "prompt_repair") setHint(event);
@@ -155,6 +157,7 @@ export function LivePage({ initial, target }: { initial: LivePageData; target: T
 				used={used}
 				vault={start.vault}
 				level={level}
+				speaker={speaker}
 				elapsed={elapsed}
 				phase={callPhase === "ended" ? "ending" : callPhase}
 				notice={callPhase === "ending" && !notice ? "Reading the talk…" : notice}

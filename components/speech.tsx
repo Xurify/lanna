@@ -124,12 +124,32 @@ let stopCurrent: (() => void) | null = null;
  *  the learner moves on or mutes never starts. */
 let generation = 0;
 
+let voicing: string | null = null;
+const voicingListeners = new Set<() => void>();
+function setVoicing(text: string | null): void {
+	if (voicing === text) return;
+	voicing = text;
+	for (const listener of voicingListeners) listener();
+}
+
+export function useVoicing(): string | null {
+	return useSyncExternalStore(
+		(listener) => {
+			voicingListeners.add(listener);
+			return () => voicingListeners.delete(listener);
+		},
+		() => voicing,
+		() => null,
+	);
+}
+
 /** Silence everything now: the clip or voice playing, and a clip still loading. */
 export function stopSpeaking(): void {
 	generation++;
 	const stop = stopCurrent;
 	stopCurrent = null;
 	stop?.();
+	setVoicing(null);
 	if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
 }
 
@@ -149,6 +169,7 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 			);
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;
+			setVoicing(null);
 			resolve();
 		};
 		const stop = () => {
@@ -158,6 +179,7 @@ function speakWithBrowser(text: string, lang: LanguageInfo, rate: number): Promi
 		stopCurrent = stop;
 		u.onend = finish;
 		u.onerror = finish;
+		setVoicing(text);
 		window.speechSynthesis.speak(u);
 	});
 }
@@ -259,6 +281,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 		const finish = () => {
 			if (stopCurrent === stop) stopCurrent = null;
 			if (playing?.audio === audio) playing = null;
+			setVoicing(null);
 			URL.revokeObjectURL(src);
 			resolve();
 		};
@@ -274,6 +297,7 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 		};
 		stopCurrent = stop;
 		playing = { audio, gain };
+		setVoicing(text);
 		audio.onended = finish;
 		audio.onerror = (err) => {
 			console.warn("[Speech] audio element error:", err);

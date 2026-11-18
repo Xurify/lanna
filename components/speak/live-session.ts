@@ -28,6 +28,7 @@ export interface LiveCallbacks {
 	onTurns: (turns: LiveTurn[]) => void;
 	onTool: (event: LiveToolEvent) => void;
 	onLevel: (level: number) => void;
+	onSpeaker?: (who: "tutor" | "learner" | null) => void;
 	onNotice: (text: string) => void;
 	onFinish: (input: LiveCallInput | null, reason: string) => void;
 }
@@ -151,10 +152,12 @@ export class LiveCall {
 		const turn: LocalTurn = { role: "learner", text: "", start: at, end: at, clip: [] };
 		this.turns.push(turn);
 		this.openLearner = turn;
+		this.cb.onSpeaker?.("learner");
 	}
 
 	private closeLearner(): void {
 		if (!this.openLearner) return;
+		this.cb.onSpeaker?.(null);
 		if (this.quietSince !== null && this.quietCounted) this.pauses.push(this.ms() - this.quietSince);
 		this.quietSince = null;
 		this.openLearner.end = this.ms();
@@ -190,10 +193,12 @@ export class LiveCall {
 		const turn: LocalTurn = { role: "tutor", text: "", start: at, end: at, clip: [] };
 		this.turns.push(turn);
 		this.openTutor = turn;
+		this.cb.onSpeaker?.("tutor");
 	}
 
 	private closeTutor(): void {
 		if (!this.openTutor) return;
+		this.cb.onSpeaker?.(null);
 		this.openTutor.end = this.ms();
 		this.openTutor = null;
 		this.emit();
