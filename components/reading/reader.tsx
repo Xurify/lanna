@@ -477,6 +477,10 @@ export function Reader({ initial, initialStory }: { initial: ReadingState | null
 				tapped={tapped}
 				onTap={onTap}
 				onDone={() => (story.questions.length ? setStage("questions") : void finish([]))}
+				onLibrary={() => {
+					if (new URLSearchParams(window.location.search).has("id")) router.push("/read");
+					else setStage("shelf");
+				}}
 			/>
 		</Frame>
 	);
@@ -647,11 +651,13 @@ function Text({
 	tapped,
 	onTap,
 	onDone,
+	onLibrary,
 }: {
 	story: StoryRecord;
 	tapped: string[];
 	onTap: (key: string) => void;
 	onDone?: () => void;
+	onLibrary: () => void;
 }) {
 	const lang = useActiveLanguage();
 	const [playing, setPlaying] = useState<number | null>(null);
@@ -758,9 +764,9 @@ function Text({
 					<p className="min-w-0 flex-1 truncate text-[14px] font-[600] text-foreground" lang={lang?.code}>
 						{story.title}
 					</p>
-					<Link href="/read" className="q-btn ghost">
+					<button type="button" onClick={onLibrary} className="q-btn ghost">
 						Library
-					</Link>
+					</button>
 					<button
 						type="button"
 						onClick={() => setLarge((v) => !v)}
