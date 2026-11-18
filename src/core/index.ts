@@ -150,3 +150,4 @@ export * from "./fillers.ts";
 export * from "./speech-metrics.ts";
 export * from "./speaking-trends.ts";
 export * from "./time-ago.ts";
+export * from "./common-words.ts";

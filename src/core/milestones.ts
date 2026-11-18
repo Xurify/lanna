@@ -460,9 +460,11 @@ export interface LearnerFacts {
 	met: number;
 	/** Of those, stable for a week or more in the deck. */
 	solid: number;
+	/** Words marked known on the Words page, beyond the ones met. */
+	marked: number;
 	/** Words the level implies (LEVEL_VOCAB) beyond the ones met. */
 	assumed: number;
-	/** The working vocabulary: met, or the level's figure when that is larger. */
+	/** The working vocabulary: met, marked and assumed together. */
 	vocabulary: number;
 	/** New words a day the plan introduces when followed. */
 	wordsPerDayPlanned: number;

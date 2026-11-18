@@ -15,6 +15,8 @@ const { savedPhraseStore } = await import("../src/store/saved-phrases.ts");
 const { loadLexicon } = await import("../src/agent/lexicon.ts");
 const { knownWords } = await import("../src/server/reading.ts");
 const { wordEstimateReport } = await import("../src/server/word-estimate.ts");
+const { learnerFacts, wordSets } = await import("../src/server/milestones.ts");
+const { markedReach } = await import("../src/core/common-words.ts");
 const { withProfile } = await import("../config.ts");
 const { languageById } = await import("../src/core/language.ts");
 const commonRoute = await import("../app/api/words/common/route.ts");
@@ -54,6 +56,12 @@ test("top 200 then top 500 select exact prefixes, preserve marks, and leave Revi
 	const report = wordEstimateReport();
 	assert.equal(report.estimate!.parts.marked, 501);
 	assert.equal(report.measured, false);
+	const sets = wordSets(loadLexicon());
+	assert.equal(sets.marked.size, 501, "Milestones counts the same marks as the Words page");
+	for (const word of initial.items) assert.equal(sets.known.has(word.slug), true);
+	const facts = learnerFacts(loadLexicon());
+	assert.equal(facts.marked, 501);
+	assert.ok(facts.vocabulary >= 501);
 });
 
 test("individual corrections use the existing API and survive reloading the common list", async () => {
@@ -172,4 +180,17 @@ test("a band marks only its own ranks and the API rejects a bad start", async ()
 		assert.equal(response.status, 400);
 	}
 	assert.throws(() => markCommonWordsKnown(10, new Date(), 11));
+});
+
+test("the slider opens at the edge of what is marked", () => {
+	const stops = [200, 500, 1000, 2000];
+	const marked = (n: number, of: number) => Array.from({ length: of }, (_, i) => i < n);
+	assert.equal(markedReach(marked(0, 3000), stops), 0);
+	assert.equal(markedReach(marked(1000, 3000), stops), 1000);
+	assert.equal(markedReach(marked(600, 3000), stops), 1000);
+	const withGaps = marked(1000, 3000).map((known, i) => known && i % 20 !== 5);
+	assert.equal(markedReach(withGaps, stops), 1000, "a few un-marked words keep the prefix");
+	const stray = Array.from({ length: 3000 }, (_, i) => i === 2500);
+	assert.equal(markedReach(stray, stops), 0, "one rare word marked is not a prefix");
+	assert.equal(markedReach(marked(2500, 2600), stops), 2500, "past the last stop: the reach itself");
 });
