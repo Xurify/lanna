@@ -16,6 +16,7 @@ import { CountryFlag } from "@/components/ui/country-flag";
 import { useBackdropDismiss } from "@/components/backdrop-dismiss";
 import { addLanguage } from "@/components/switch-language";
 import { thinkingLabel } from "@/components/thinking-default";
+import { useHiddenLanguages } from "@/components/hidden-languages";
 
 interface CatalogRow {
 	id: string;
@@ -66,6 +67,7 @@ export function AddLanguageDialog({
 	initial?: string;
 }) {
 	const [rows, setRows] = useState<CatalogRow[] | null>(null);
+	const hidden = useHiddenLanguages();
 	const [picked, setPicked] = useState<string | null>(initial ?? null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -171,34 +173,36 @@ export function AddLanguageDialog({
 						data-testid="add-language-list"
 					>
 						{rows === null && !error && <p className="px-2.5 py-2 text-xs text-muted-foreground">Loading…</p>}
-						{rows?.map((r) => {
-							const unavailable = r.ready || r.adding;
-							const selected = picked === r.id;
-							return (
-								<button
-									key={r.id}
-									type="button"
-									role="option"
-									aria-selected={selected}
-									aria-disabled={unavailable}
-									disabled={unavailable}
-									data-testid={`add-language-${r.id}`}
-									onClick={() => setPicked(r.id)}
-									className={cn(
-										"flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
-										selected
-											? "bg-accent font-semibold text-foreground ring-1 ring-inset ring-primary/50"
-											: "text-foreground hover:bg-accent",
-										unavailable && "cursor-default text-muted-foreground hover:bg-transparent",
-									)}
-								>
-									<CountryFlag lang={r.id} />
-									<span className="truncate">{r.endonym}</span>
-									<span className="truncate text-xs font-normal text-muted-foreground">({r.english})</span>
-									<span className="ml-auto shrink-0 text-xs font-normal text-muted-foreground">{statusOf(r)}</span>
-								</button>
-							);
-						})}
+						{rows
+							?.filter((r) => !(r.ready && hidden.includes(r.id)))
+							.map((r) => {
+								const unavailable = r.ready || r.adding;
+								const selected = picked === r.id;
+								return (
+									<button
+										key={r.id}
+										type="button"
+										role="option"
+										aria-selected={selected}
+										aria-disabled={unavailable}
+										disabled={unavailable}
+										data-testid={`add-language-${r.id}`}
+										onClick={() => setPicked(r.id)}
+										className={cn(
+											"flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+											selected
+												? "bg-accent font-semibold text-foreground ring-1 ring-inset ring-primary/50"
+												: "text-foreground hover:bg-accent",
+											unavailable && "cursor-default text-muted-foreground hover:bg-transparent",
+										)}
+									>
+										<CountryFlag lang={r.id} />
+										<span className="truncate">{r.endonym}</span>
+										<span className="truncate text-xs font-normal text-muted-foreground">({r.english})</span>
+										<span className="ml-auto shrink-0 text-xs font-normal text-muted-foreground">{statusOf(r)}</span>
+									</button>
+								);
+							})}
 					</div>
 
 					<p className="text-xs leading-relaxed text-muted-foreground">

@@ -43,6 +43,7 @@ import type {
 	UnitState,
 } from "@/src/core";
 import { TodayLineRow } from "@/components/today-line-row";
+import { shownDay, useHiddenLanguages } from "@/components/hidden-languages";
 import { WhereYouAre } from "@/components/where-you-are";
 import { OutsideListening } from "@/components/outside-listening";
 import { useActiveLanguage } from "@/components/speech";
@@ -78,7 +79,9 @@ export function Today({
 	const dated = initialDated;
 	const soonest = dated?.awaitingOutcome[0] ?? dated?.next ?? null;
 	const [s, setS] = useState<Summary | null>(initialSummary);
-	const [day, setDay] = useState<LanguageDay | null>(initialDay);
+	const [loadedDay, setDay] = useState<LanguageDay | null>(initialDay);
+	const hiddenLanguages = useHiddenLanguages();
+	const day = loadedDay && shownDay(loadedDay, hiddenLanguages);
 	const [splitting, setSplitting] = useState(false);
 	const [switchNote, setSwitchNote] = useState<string | null>(null);
 	const [failed, setFailed] = useState(false);
