@@ -12,16 +12,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, KeyboardIcon, ListChecksIcon, LoaderCircleIcon, MicIcon, RepeatIcon } from "lucide-react";
+import { KeyboardIcon, ListChecksIcon, LoaderCircleIcon, MicIcon, RepeatIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CapLabel } from "@/components/ui/cap-label";
-import { EmptyState, AddKeyButton } from "@/components/quiet/empty-state";
+import { SettingsLink } from "@/components/settings/settings-link";
 import { TaskFrame } from "@/components/task-frame";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { sceneCounterpart, scriptFor, tutorLineText, type SpeakSceneEntry } from "@/src/core";
 import type { SpeakState } from "@/components/speak/speak-player";
-import { SpeakModes } from "@/components/speak/speak-modes";
+import { SpeakHeader } from "@/components/speak/speak-header";
 
 const GROUPS: Array<{ why: SpeakSceneEntry["why"]; label: string }> = [
 	{ why: "chapter", label: "This chapter" },
@@ -104,22 +104,7 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 		<TaskFrame>
 			<div className="@container flex flex-1 flex-col overflow-y-auto">
 				<div className="mx-auto w-full max-w-5xl px-5 pt-[5vh] pb-12 @md:px-6">
-					<Link
-						href="/"
-						className="lanna-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
-					>
-						<ArrowLeftIcon className="size-3.5" />
-						<CapLabel>Today</CapLabel>
-					</Link>
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
-						<SpeakModes current="tutor" />
-					</div>
-					<p className="mt-1 font-prose text-[15px] text-ink-3">
-						{typed || !state?.stt
-							? "The tutor plays the other person and answers out loud. You write your part."
-							: "The tutor plays the other person and answers out loud. You say your part."}
-					</p>
+					<SpeakHeader title="With a tutor" lead="Pick a scene. The tutor plays the other person and answers you." />
 
 					{error && (
 						<p
@@ -132,20 +117,6 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 								Try again
 							</button>
 						</p>
-					)}
-					{state && !state.canSpeak && (
-						<EmptyState
-							className="mt-6 max-w-none"
-							testid="speak-nomodel"
-							title="Say a scene out loud with a tutor"
-							action={<AddKeyButton />}
-						>
-							<p>In a scene the tutor plays the other person and answers what you say. That needs an AI key.</p>
-							<p>
-								Step by step works without one: pick a scene and walk through it line by line.
-								{state.stt ? "" : " Speaking by voice also takes a speech-to-text key, which is optional."}
-							</p>
-						</EmptyState>
 					)}
 
 					{!state && !error && (
@@ -217,13 +188,22 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 					)}
 
 					{state && (
-						<p className="mt-10 font-ui text-xs text-muted-foreground">
+						<p className="mt-12 max-w-2xl font-ui text-xs text-ink-3" data-testid="speak-setup">
+							{!state.canSpeak ? (
+								<span data-testid="speak-nomodel">
+									Without an AI key, scenes run step by step.{" "}
+									<SettingsLink keys className="underline hover:text-ink-2">
+										Add a key
+									</SettingsLink>{" "}
+									to have the tutor answer you out loud.{" "}
+								</span>
+							) : null}
 							{state.stt
-								? `Voice: ${state.stt === "elevenlabs" ? "ElevenLabs" : state.stt === "groq" ? "Groq" : "Deepgram"} speech-to-text, your recordings kept with the scene.`
-								: "No speech-to-text key yet (ElevenLabs, Groq or Deepgram in Settings → API keys): lines are typed until then."}
+								? `Speech-to-text: ${state.stt === "elevenlabs" ? "ElevenLabs" : state.stt === "groq" ? "Groq" : "Deepgram"}.`
+								: "No speech-to-text key yet, so lines are typed."}
 						</p>
 					)}
-					<SourcesNote feature="speak" className="mt-6" />
+					<SourcesNote feature="speak" className="mt-3" />
 				</div>
 			</div>
 		</TaskFrame>
@@ -254,7 +234,7 @@ function SceneSheet({
 	const unfinished = state?.unfinished?.scene === scene.id ? state.unfinished : null;
 	const opening = scene.scripted ? scriptFor(scene.id, lang.id)?.turns[0]?.tutor : undefined;
 	const tid = (id: string) => (inline ? undefined : id);
-	const script = `/speak?scene=${scene.id}&mode=script`;
+	const script = `/speak/tutor?scene=${scene.id}&mode=script`;
 	const voice = (
 		<>
 			<MicIcon className="size-4" />

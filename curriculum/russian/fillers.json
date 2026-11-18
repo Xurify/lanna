@@ -1,0 +1,11 @@
+{
+	"language": "russian",
+	"source": ".agents/skills/russian-language/references/spoken-russian-and-particles.md",
+	"entries": [
+		{ "sk": "ну", "en": "well", "job": "time", "level": "A1", "register": "colloquial" },
+		{ "sk": "вот", "en": "here / so", "job": "rephrase", "level": "A2", "register": "colloquial" },
+		{ "sk": "да", "en": "yes / well", "job": "agree", "level": "A1", "register": "colloquial" },
+		{ "sk": "же", "en": "after all", "job": "agree", "level": "B1", "register": "colloquial" },
+		{ "sk": "ведь", "en": "surely / after all", "job": "rephrase", "level": "B1", "register": "colloquial" }
+	]
+}

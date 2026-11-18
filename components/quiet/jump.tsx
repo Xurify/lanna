@@ -76,7 +76,7 @@ const ROUTES: Array<{
 	{
 		title: "Talk in writing",
 		hint: "A role-play in writing",
-		href: "/speak?mode=typed",
+		href: "/speak/tutor?mode=typed",
 		icon: "tutor",
 		words: "chat typed",
 	},

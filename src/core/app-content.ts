@@ -9,7 +9,7 @@ export interface AppContentInput {
 }
 
 export function unitHref(u: Pick<UnitState, "id" | "kind" | "scene">): string | null {
-	if (u.kind === "goal") return u.scene ? `/speak?scene=${u.scene}` : null;
+	if (u.kind === "goal") return u.scene ? `/speak/tutor?scene=${u.scene}` : null;
 	return `/lesson?unit=${u.id}`;
 }
 
@@ -92,7 +92,7 @@ export function appContentText(input: AppContentInput): string {
 		lines.push(
 			"",
 			"Spoken scenes: " +
-				input.scenes.map((s) => `[${linkText(s.title)}](/speak?scene=${s.id}) (${s.blurb})`).join(" · ") +
+				input.scenes.map((s) => `[${linkText(s.title)}](/speak/tutor?scene=${s.id}) (${s.blurb})`).join(" · ") +
 				".",
 		);
 	if (input.sheets.length)

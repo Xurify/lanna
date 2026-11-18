@@ -3,7 +3,13 @@ import path from "node:path";
 import puppeteer from "puppeteer-core";
 
 const args = process.argv.slice(2);
-const options = { themes: ["day", "night"], widths: [1280, 390], chrome: process.env.CHROME_PATH, height: 0 };
+const options = {
+	themes: ["day", "night"],
+	widths: [1280, 390],
+	chrome: process.env.CHROME_PATH,
+	height: 0,
+	reducedMotion: false,
+};
 const positional = [];
 for (let i = 0; i < args.length; i += 1) {
 	const arg = args[i];
@@ -11,13 +17,14 @@ for (let i = 0; i < args.length; i += 1) {
 	else if (arg === "--widths") options.widths = (args[++i] ?? "").split(",").map(Number);
 	else if (arg === "--chrome") options.chrome = args[++i];
 	else if (arg === "--height") options.height = Number(args[++i]);
+	else if (arg === "--reduced-motion") options.reducedMotion = true;
 	else positional.push(arg);
 }
 
 const [baseUrl, outDir, ...shots] = positional;
 if (!baseUrl || !outDir || shots.length === 0) {
 	console.error(
-		"usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path] [--height px]",
+		"usage: node scripts/pr-shots.mjs <baseUrl> <outDir> <name=/route[@css selector]>... [--themes day,night] [--widths 1280,390] [--chrome path] [--height px] [--reduced-motion]",
 	);
 	process.exit(1);
 }
@@ -38,6 +45,7 @@ if (!executablePath) {
 fs.mkdirSync(outDir, { recursive: true });
 const browser = await puppeteer.launch({ executablePath, headless: true });
 const page = await browser.newPage();
+if (options.reducedMotion) await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
 const written = [];
 
 for (const shot of shots) {

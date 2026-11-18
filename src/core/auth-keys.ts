@@ -45,6 +45,13 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 		plain: true,
 	},
 	{
+		id: "PHONIC_API_KEY",
+		label: "Phonic",
+		description:
+			"Live talk, on one of its two engines: full-duplex speech with the tutor, where you and the tutor can interrupt each other. Your OpenAI key works as well. During a call your microphone audio goes to that engine; the transcript and the report stay on this computer. Without either key, Rehearse and the turn-by-turn scene still work.",
+		docsUrl: "https://phonic.ai/",
+	},
+	{
 		id: "DEEPL_API_KEY",
 		label: "DeepL",
 		description:
@@ -173,6 +180,8 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 			return nonEmpty(20);
 		case "DEEPGRAM_API_KEY":
 			// No public format — the length floor only catches truncated pastes.
+			return nonEmpty(20);
+		case "PHONIC_API_KEY":
 			return nonEmpty(20);
 		case "AZURE_SPEECH_KEY":
 			// 32 hex characters today; a length floor only.

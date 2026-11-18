@@ -51,6 +51,28 @@ export function ProviderIcon({ provider, className }: { provider: string; classN
 		);
 	}
 
+	// Phonic (speech-to-speech): a sound mark in the text color, since no
+	// published brand asset is licensed here.
+	if (key.includes("phonic")) {
+		return (
+			<svg
+				role="img"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="1.8"
+				strokeLinecap="round"
+				className={cn("size-4 shrink-0", className)}
+			>
+				<path d="M4 9.5v5" />
+				<path d="M8 6.5v11" />
+				<path d="M12 4v16" />
+				<path d="M16 7.5v9" />
+				<path d="M20 10v4" />
+			</svg>
+		);
+	}
+
 	// DeepL (official Simple Icons mark; brand navy #0F2B46 vanishes in Night, so it follows the text color)
 	if (key.includes("deepl")) {
 		return (

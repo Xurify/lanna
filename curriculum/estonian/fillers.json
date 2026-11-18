@@ -1,0 +1,15 @@
+{
+	"language": "estonian",
+	"source": ".agents/skills/eesti-language/references/spoken-estonian-and-particles.md",
+	"entries": [
+		{ "sk": "noh", "en": "well", "job": "time", "level": "A1", "register": "colloquial" },
+		{ "sk": "nagu", "en": "like", "job": "rephrase", "level": "A2", "register": "colloquial" },
+		{ "sk": "vist", "en": "probably", "job": "rephrase", "level": "A2", "register": "colloquial" },
+		{ "sk": "jah", "en": "yes", "job": "agree", "level": "A1", "register": "neutral" },
+		{ "sk": "jaa", "en": "yes, indeed", "job": "agree", "level": "A1", "register": "colloquial" },
+		{ "sk": "muidugi", "en": "of course", "job": "agree", "level": "A2", "register": "neutral" },
+		{ "sk": "ju", "en": "you know / after all", "job": "agree", "level": "B1", "register": "colloquial" },
+		{ "sk": "kuule", "en": "listen", "job": "react", "level": "A2", "register": "colloquial" },
+		{ "sk": "vaata", "en": "look", "job": "react", "level": "A2", "register": "colloquial" }
+	]
+}

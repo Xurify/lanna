@@ -379,6 +379,11 @@ export const PATHS = {
 	get saved() {
 		return path.join(dataRoot(), "saved");
 	},
+	/** Language islands: islands/<id>.json, one topic's vault and its talks
+	 *  (src/store/islands.ts, src/core/islands.ts). */
+	get islands() {
+		return path.join(dataRoot(), "islands");
+	},
 	/** Imported cheatsheets (Words → Cheatsheets): cheatsheets/<id>.json
 	 *  (the parsed sheet), cheatsheets/<id>.md (the text as imported),
 	 *  cheatsheets/trash/ (removed ones) — src/store/cheatsheets.ts. */

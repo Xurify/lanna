@@ -40,6 +40,7 @@ import {
 import { AiCallout } from "@/components/ai-callout";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { ListeningSection } from "@/components/mistakes/listening-section";
+import { SpeakingSection } from "@/components/mistakes/speaking-section";
 import { useActiveLanguage } from "@/components/speech";
 import { useServerValue } from "@/components/use-server-value";
 
@@ -171,6 +172,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 						</>
 					)
 				)}
+				<SpeakingSection />
 				{a?.listening && report && (
 					<ListeningSection
 						l={a.listening}

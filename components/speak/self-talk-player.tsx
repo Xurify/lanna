@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, LoaderCircleIcon, MicIcon, RepeatIcon, SquareIcon } from "lucide-react";
+import { LoaderCircleIcon, MicIcon, RepeatIcon, SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CapLabel } from "@/components/ui/cap-label";
+import { SpeakHeader } from "@/components/speak/speak-header";
 import {
 	COLUMN,
 	Centered,
@@ -27,7 +27,6 @@ import {
 import { KBD } from "@/components/ui/learn-buttons";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { Recorder, micSupported, transcribeClip } from "@/components/speak/recorder";
-import { SpeakModes } from "@/components/speak/speak-modes";
 import { QIcon } from "@/components/quiet/icon";
 import {
 	SELF_TALK_CATEGORIES,
@@ -327,21 +326,10 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 		<TaskFrame>
 			<div className="@container flex flex-1 flex-col overflow-y-auto">
 				<div className="mx-auto w-full max-w-5xl px-5 pt-[5vh] pb-12 @md:px-6">
-					<Link
-						href="/"
-						className="lanna-wco-gutter inline-flex items-center gap-1.5 font-ui text-xs text-muted-foreground hover:text-foreground"
-					>
-						<ArrowLeftIcon className="size-3.5" />
-						<CapLabel>Today</CapLabel>
-					</Link>
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<h1 className="font-ui text-[28px] font-[600] tracking-[-0.028em] text-foreground">Speak</h1>
-						<SpeakModes current="solo" />
-					</div>
-					<p className="mt-1 max-w-2xl font-prose text-[15px] text-ink-3">
-						Nobody answers and nobody grades. Pick a topic, say what comes to mind out loud, and keep going until the
-						clock reaches the goal.
-					</p>
+					<SpeakHeader
+						title="On your own"
+						lead="Pick a topic and talk until the clock reaches the goal. Nobody answers, nobody grades."
+					/>
 
 					{error && (
 						<p
@@ -403,7 +391,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 						<div className="sticky top-6 hidden @3xl:block">{sheet(false)}</div>
 					</div>
 
-					<p className="mt-10 max-w-2xl font-ui text-xs text-muted-foreground">
+					<p className="mt-12 max-w-2xl font-ui text-xs text-ink-3">
 						The time you talk counts toward Speaking. With a speech-to-text key the app also listens for the words on
 						the list; without one, only the time counts.
 					</p>

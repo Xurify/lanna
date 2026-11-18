@@ -1679,3 +1679,5 @@ export function CoverScene({ motif, seed, className }: { motif: CoverMotif; seed
 		</svg>
 	);
 }
+
+export { B, C, Cloud, DETAIL, Dots, fine, Ground, Highlight, L, MAIN, O, Person };

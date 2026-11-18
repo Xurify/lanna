@@ -180,7 +180,7 @@ test("the daily plan: review first, listen (input) before the lesson, strengthen
 		day: { units: {}, reviews: 0, blitz: 0, talks: 0, stories: 0, tutors: 0 },
 	}).tasks.find((t) => t.id === "speak")!;
 	assert.equal(spoken.via, "speak");
-	assert.match(spoken.href ?? "", /^\/speak\?scene=[a-z]+$/);
+	assert.match(spoken.href ?? "", /^\/speak\/tutor\?scene=[a-z]+$/);
 	// Speed: "say it faster" until an episode has been read on an earlier
 	// day; then a timed re-read on alternate days.
 	assert.equal(plan.tasks[7]!.href, "/speed?mode=fast");

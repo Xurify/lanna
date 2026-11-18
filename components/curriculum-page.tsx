@@ -102,7 +102,7 @@ export function CurriculumPage({
 		);
 	};
 	const onScene = (sceneId: string) => {
-		if (speakScene(sceneId)) router.push(`/speak?scene=${sceneId}`);
+		if (speakScene(sceneId)) router.push(`/speak/tutor?scene=${sceneId}`);
 	};
 
 	return (
