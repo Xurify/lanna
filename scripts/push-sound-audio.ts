@@ -1,6 +1,6 @@
 /**
  * npm run audio:sounds:push                       — list the Sound guide clips that would be uploaded; uploads nothing
- * npm run audio:sounds:push -- --yes              — upload them to the public `lanna` R2 bucket and write the manifests
+ * npm run audio:sounds:push -- --yes              — upload them to the public `lanna-public` R2 bucket and write the manifests
  *   --base https://pub-….r2.dev                   the bucket's public address (kept in the manifest after the first run)
  *
  * Reads the real data folder. Only words the Sound guide ships are uploaded,
@@ -16,7 +16,7 @@ import { sharedAudioFile, type SharedAudioManifest } from "../src/server/shared-
 import { keptByElevenLabs } from "../src/server/tts.ts";
 import { audioKey, findAudioClip } from "../src/store/corpus.ts";
 
-const BUCKET = "lanna";
+const BUCKET = "lanna-public";
 const VOICE = "female";
 const PROFILES = ["slovak", "russian", "estonian"];
 
@@ -62,7 +62,8 @@ for (const profile of PROFILES) {
 	if (!lang) continue;
 	const before = readManifest(profile);
 	const base = (baseArg ?? before?.base ?? "").replace(/\/$/, "");
-	const clips: SharedAudioManifest["clips"] = { ...before?.clips };
+	const moved = before !== null && before.base !== base;
+	const clips: SharedAudioManifest["clips"] = moved ? {} : { ...before?.clips };
 	const toUpload: Array<{ text: string; object: string; model: string; file: string }> = [];
 	let notMade = 0;
 	for (const text of soundGuideWords(profile)) {

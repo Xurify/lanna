@@ -1,13 +1,15 @@
 /**
  * Clips ElevenLabs already made for words the app ships (the Sound guide),
- * kept in the public `lanna` R2 bucket and listed in
+ * kept in the public `lanna-public` R2 bucket and listed in
  * curriculum/<profile>/sound-audio.json (written by scripts/push-sound-audio.ts).
  * A word is downloaded once and kept in the audio library where a clip
  * ElevenLabs made here would be, so an install with no key plays the same
  * voice and one with a key does not pay for it again.
  *
- * Only audio of shipped curriculum text is ever uploaded: public access on
- * R2 is for the whole bucket (developers.cloudflare.com/r2/buckets/public-buckets).
+ * Public access on R2 is for a whole bucket
+ * (developers.cloudflare.com/r2/buckets/public-buckets), so `lanna-public`
+ * holds only audio of shipped curriculum text and the private `lanna` bucket
+ * is for everything else.
  */
 
 import * as fs from "node:fs";
