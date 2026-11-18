@@ -9,7 +9,7 @@
 
 import type { ScheduledNudge, NotificationSoundPreset } from "@/src/core";
 import { playReminderSound } from "./reminder-sound.ts";
-import { switchLanguage } from "@/components/switch-language";
+import { openNudge, recordNotification } from "./notification-store.ts";
 
 export type BannerAlertHandler = (nudge: ScheduledNudge) => void;
 
@@ -49,6 +49,8 @@ export interface DispatchAlertOptions {
 export async function dispatchReminderAlert(options: DispatchAlertOptions): Promise<void> {
 	const { nudge, soundPreset = "chime", systemNotification = true, inAppBanner = true, onActionClick } = options;
 
+	recordNotification(nudge);
+
 	// 1. Play audio chime / custom sound
 	try {
 		await playReminderSound(soundPreset);
@@ -82,17 +84,8 @@ export async function dispatchReminderAlert(options: DispatchAlertOptions): Prom
 				notification.close();
 				if (onActionClick) {
 					onActionClick();
-				} else if (nudge.taskKind || nudge.href) {
-					const target =
-						nudge.href ??
-						(nudge.taskKind === "listen" ? "/listen" : `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`);
-					if (nudge.languageId) {
-						switchLanguage(nudge.languageId, nudge.languageName ?? nudge.languageId, target).catch(() =>
-							window.location.assign(target),
-						);
-					} else {
-						window.location.assign(target);
-					}
+				} else {
+					openNudge(nudge);
 				}
 			};
 		} catch {

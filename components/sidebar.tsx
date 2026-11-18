@@ -10,6 +10,7 @@ import { DeleteSessionsDialog } from "@/components/delete-sessions-dialog";
 import {
 	ArchiveIcon,
 	ArchiveRestoreIcon,
+	BellIcon,
 	CheckIcon,
 	ChevronLeftIcon,
 	FileDownIcon,
@@ -54,6 +55,8 @@ import { useServerEvent, useServerResync } from "@/components/server-events";
 import type { ChatListItem } from "@/src/core";
 import { kbdEventForAction } from "@/src/core";
 import { notifySettingsSaved } from "@/components/settings-signal";
+import { NotificationsDialog } from "@/components/notifications/notifications-dialog";
+import { useNotificationLog } from "@/components/notifications/notification-store";
 import { stopSpeaking } from "@/components/speech";
 export { timeAgo };
 
@@ -618,6 +621,8 @@ function SessionsSidebar() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { open: openSettings } = useSettingsDialog();
+	const [notificationsOpen, setNotificationsOpen] = useState(false);
+	const { unread: unreadNotifications } = useNotificationLog();
 
 	/* New session (owner, 2026-09-13): NO POST — the button opens the
 	   sessionless draft view; the session is created only when the first
@@ -1364,6 +1369,24 @@ function SessionsSidebar() {
 					{agentsRunning && <ActivitySection />}
 
 					<div className="border-t border-border/50 px-3 py-2">
+						<button
+							type="button"
+							onClick={() => setNotificationsOpen(true)}
+							data-testid="notifications-entry"
+							className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						>
+							<BellIcon className="size-[18px]" />
+							<CapLabel>Notifications</CapLabel>
+							{unreadNotifications > 0 && (
+								<CapLabel
+									className="ml-auto text-xs tabular-nums text-teal"
+									data-testid="notifications-unread"
+									aria-label={`${unreadNotifications} new`}
+								>
+									{unreadNotifications}
+								</CapLabel>
+							)}
+						</button>
 						<Hint label="Settings" action="open-settings" side="right">
 							<button
 								type="button"
@@ -1384,6 +1407,13 @@ function SessionsSidebar() {
 				    coverage block above, then exactly two management actions
 				    (owner ruling — no more). MenuShell owns placement/focus/arrow
 				    cycling; the dismissal effect above owns the contract. */}
+				{notificationsOpen && (
+					<NotificationsDialog
+						onClose={() => setNotificationsOpen(false)}
+						onOpenSettings={() => openSettings("notifications")}
+					/>
+				)}
+
 				{ctxChatId !== null && (
 					<MenuShell
 						anchorRef={ctxAnchorRef}
