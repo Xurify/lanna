@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, MicIcon, ShuffleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskFrame } from "@/components/task-frame";
@@ -10,7 +10,7 @@ import { SpeakHeader } from "@/components/speak/speak-header";
 import { speak } from "@/components/speech";
 import { SELF_TALK_CATEGORIES, SELF_TALK_PROMPTS, type SelfTalkPrompt } from "@/src/core";
 
-export interface SoloPickProps {
+export interface SelfTalkDeckProps {
 	selected: string;
 	onSelect: (id: string) => void;
 	onStart: () => void;
@@ -71,7 +71,7 @@ function Starters({ prompt, lang }: { prompt: SelfTalkPrompt; lang?: string }) {
 	);
 }
 
-export function SoloDeck({ selected, onSelect, onStart, lang, error }: SoloPickProps) {
+export function SelfTalkDeck({ selected, onSelect, onStart, lang, error }: SelfTalkDeckProps) {
 	const [category, setCategory] = useState<string | null>(null);
 	const pool = category ? SELF_TALK_PROMPTS.filter((p) => p.category === category) : SELF_TALK_PROMPTS;
 	const index = Math.max(
@@ -117,11 +117,11 @@ export function SoloDeck({ selected, onSelect, onStart, lang, error }: SoloPickP
 			<div className="relative mx-auto mt-10 max-w-2xl">
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 translate-x-3 translate-y-3 rotate-[2.2deg] rounded-2xl bg-well/70 shadow-[0_0_0_1px_var(--q-line)]"
+					className="absolute inset-0 translate-x-1 translate-y-3 rotate-[1.2deg] @md:translate-x-3 @md:rotate-[2.2deg] rounded-2xl bg-well/70 shadow-[0_0_0_1px_var(--q-line)]"
 				/>
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 translate-x-1.5 translate-y-1.5 -rotate-[1.4deg] rounded-2xl bg-well shadow-[0_0_0_1px_var(--q-line)]"
+					className="absolute inset-0 translate-x-0.5 translate-y-1.5 -rotate-[0.8deg] @md:translate-x-1.5 @md:-rotate-[1.4deg] rounded-2xl bg-well shadow-[0_0_0_1px_var(--q-line)]"
 				/>
 				<article
 					key={`${prompt.id}-${dealt}`}
@@ -186,81 +186,6 @@ export function SoloDeck({ selected, onSelect, onStart, lang, error }: SoloPickP
 				The time you talk counts toward Speaking. With a speech-to-text key the app also listens for the words on the
 				list.
 			</p>
-		</Frame>
-	);
-}
-
-const TILT = [-0.8, 0.5, -0.3, 0.9, -0.6, 0.2];
-
-export function SoloBoard({ selected, onSelect, onStart, lang, error }: SoloPickProps) {
-	return (
-		<Frame lead="Every topic, pinned up. Pick one and talk until the clock reaches the goal." error={error}>
-			<div className="mt-8 grid gap-8 @3xl:grid-cols-2 @5xl:grid-cols-4">
-				{CATEGORIES.map((c) => (
-					<section key={c.id} aria-labelledby={`solo-${c.id}`}>
-						<h2 id={`solo-${c.id}`} className="font-ui text-[15px] font-[600] text-foreground">
-							{c.label}
-						</h2>
-						<p className="mt-0.5 font-prose text-[13px] text-ink-3">{c.description}</p>
-						<ul className="speak-in mt-4 flex flex-col gap-3">
-							{SELF_TALK_PROMPTS.filter((p) => p.category === c.id).map((p, i) => {
-								const on = p.id === selected;
-								return (
-									<li key={p.id} style={{ "--i": i } as CSSProperties}>
-										<div
-											className={cn(
-												"rounded-xl transition-[transform,background-color,box-shadow] duration-300",
-												on
-													? "bg-well shadow-[0_0_0_1.5px_var(--color-teal-2)]"
-													: "bg-card shadow-[0_0_0_1px_var(--q-line)] hover:-translate-y-0.5",
-											)}
-											style={{ rotate: on ? "0deg" : `${TILT[(i + c.id.length) % TILT.length]}deg` }}
-										>
-											<button
-												type="button"
-												onClick={() => onSelect(p.id)}
-												aria-expanded={on}
-												data-prompt-row={p.id}
-												className="block w-full rounded-xl px-4 pt-3 pb-3 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-											>
-												<span className="flex items-baseline justify-between gap-2">
-													<span className="font-prose text-[17px] font-semibold text-foreground" lang={lang}>
-														{p.title}
-													</span>
-													<span className="shrink-0 font-ui text-xs tabular-nums text-ink-3">
-														{p.level} · {clockOf(p.targetSec)}
-													</span>
-												</span>
-												<span className="block font-prose text-[13px] text-ink-3">{p.titleEn}</span>
-											</button>
-											{on && (
-												<div className="speak-in px-4 pb-4">
-													<p className="font-prose text-[15px] text-foreground" lang={lang}>
-														{p.prompt}
-													</p>
-													<p className="mt-0.5 font-prose text-[13px] text-ink-3">{p.promptEn}</p>
-													<div className="mt-3">
-														<Starters prompt={p} lang={lang} />
-													</div>
-													<button
-														type="button"
-														onClick={onStart}
-														className={cn(PRIMARY, "mt-4")}
-														data-testid="self-talk-start"
-													>
-														<MicIcon className="size-4" />
-														Talk for {clockOf(p.targetSec)}
-													</button>
-												</div>
-											)}
-										</div>
-									</li>
-								);
-							})}
-						</ul>
-					</section>
-				))}
-			</div>
 		</Frame>
 	);
 }

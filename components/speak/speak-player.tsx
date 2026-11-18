@@ -54,8 +54,6 @@ import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/
 import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SceneBoard } from "@/components/speak/scene-board";
-import { TutorFilmstrip } from "@/components/speak/variants/tutor-filmstrip";
-import { TutorLedger } from "@/components/speak/variants/tutor-ledger";
 import { InkThinking, VoiceArcs } from "@/components/speak/speak-motion";
 import { SettingsLink } from "@/components/settings/settings-link";
 import {
@@ -113,9 +111,7 @@ export function SpeakPlayer({
 	sceneId = null,
 	typed = false,
 	sceneLang = { id: "slovak", tag: "sk-SK" },
-	board = "stage",
 }: {
-	board?: string;
 	initialState: SpeakState | null;
 	sceneId?: string | null;
 	typed?: boolean;
@@ -440,9 +436,8 @@ export function SpeakPlayer({
 	}, [phase, listening, session, router, toggleMic]);
 
 	if (phase === "pick") {
-		const Board = board === "filmstrip" ? TutorFilmstrip : board === "ledger" ? TutorLedger : SceneBoard;
 		return (
-			<Board
+			<SceneBoard
 				state={state}
 				lang={sceneLang}
 				error={error}

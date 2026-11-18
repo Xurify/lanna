@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { PhoneIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LivePageData } from "@/src/core";
@@ -101,68 +101,6 @@ export function LiveContacts({ page, busy, onCall, engine, blocked }: LivePickPr
 					</ul>
 				</section>
 			))}
-		</div>
-	);
-}
-
-export function LiveDial({ page, busy, onCall, engine, blocked }: LivePickProps) {
-	const contacts = contactsOf(page);
-	const [pick, setPick] = useState(0);
-	const enabled = page.availability.enabled;
-	const hero = contacts[pick];
-	if (!hero) return <div className="mt-6">{blocked}</div>;
-	return (
-		<div className="@container mt-6">
-			<article
-				key={`${hero.kind}-${hero.id}`}
-				className="speak-deal grid items-center gap-6 rounded-3xl bg-well/50 p-6 shadow-[0_0_0_1px_var(--q-line)] @2xl:grid-cols-[minmax(0,1fr)_auto] @2xl:p-9"
-			>
-				<div className="flex min-w-0 items-center gap-5">
-					<Avatar contact={hero} size="size-24 @2xl:size-32" />
-					<div className="min-w-0">
-						<p className="font-ui text-[13px] font-[550] text-teal-2">{hero.kind === "island" ? "Island" : "Scene"}</p>
-						<h2 className="mt-0.5 font-ui text-[28px] leading-tight font-[600] tracking-[-0.025em] text-foreground @2xl:text-[34px]">
-							{hero.title}
-						</h2>
-						<p className="mt-1 max-w-md font-prose text-[15px] text-ink-2">{hero.line}</p>
-					</div>
-				</div>
-				<div className="flex flex-col items-center gap-2">
-					<button
-						type="button"
-						className={cn(CALL, "size-20", enabled && !busy && "speak-voicing")}
-						disabled={!enabled || busy}
-						onClick={() => onCall(hero.kind, hero.id, hero.title)}
-						aria-label={`Call: ${hero.title}`}
-						data-testid="live-start"
-					>
-						<PhoneIcon className="size-8" />
-					</button>
-					<span className="font-ui text-xs font-[550] text-ink-3">
-						{busy ? "Connecting…" : enabled ? "Call" : "Needs a key"}
-					</span>
-				</div>
-			</article>
-			<div className="mt-4">{enabled ? engine : blocked}</div>
-			<h2 className="mt-8 font-ui text-[14px] font-[600] text-ink-2">Or someone else</h2>
-			<ul className="speak-in mt-3 flex flex-wrap gap-2">
-				{contacts.map((c, i) => (
-					<li key={`${c.kind}-${c.id}`} style={{ "--i": i } as CSSProperties}>
-						<button
-							type="button"
-							aria-pressed={i === pick}
-							onClick={() => setPick(i)}
-							className={cn(
-								"lanna-press flex items-center gap-2 rounded-full py-1 pr-3.5 pl-1 font-ui text-[13px] font-[550] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-								i === pick ? "bg-foreground text-background" : "bg-well text-ink-2 hover:text-foreground",
-							)}
-						>
-							<Avatar contact={c} size="size-7" />
-							{c.title}
-						</button>
-					</li>
-				))}
-			</ul>
 		</div>
 	);
 }

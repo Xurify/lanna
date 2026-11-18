@@ -4,10 +4,8 @@ import type { CSSProperties } from "react";
 import { PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { smoothD, type Point } from "@/components/lesson/ink-paths";
-import { SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import {
 	ISLAND_STEP_LABELS,
-	ISLAND_STEPS,
 	type IslandPageData,
 	type IslandStep,
 	type IslandSummary,
@@ -217,7 +215,7 @@ export function IslandChart({ data, busy, onOpen, onStart }: IslandViewProps) {
 									onClick={() => onStart(item.t)}
 									aria-label={`Start an island: ${item.t.title}`}
 									title={item.t.reason}
-									className="group speak-bob absolute flex flex-col items-center rounded-2xl text-ink-3 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+									className="group absolute flex flex-col items-center rounded-2xl text-ink-3 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
 									style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, "--i": i } as CSSProperties}
 								>
 									<span className="relative block w-full">
@@ -239,7 +237,7 @@ export function IslandChart({ data, busy, onOpen, onStart }: IslandViewProps) {
 								onClick={() => onOpen(s.island.id)}
 								aria-label={`${s.island.topic}: ${ISLAND_STEP_LABELS[s.readiness.step]}, ${s.readiness.stats.chunks} chunks`}
 								data-testid="island-row"
-								className="group speak-bob absolute flex flex-col items-center rounded-2xl text-ink-2 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+								className="group absolute flex flex-col items-center rounded-2xl text-ink-2 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
 								style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, "--i": i } as CSSProperties}
 							>
 								<span className="block w-full transition-transform duration-300 group-hover:-translate-y-1">
@@ -267,85 +265,6 @@ export function IslandChart({ data, busy, onOpen, onStart }: IslandViewProps) {
 				<span>Dashed: faded, or not started.</span>
 				<span>Dashed routes: words two islands share.</span>
 			</p>
-		</div>
-	);
-}
-
-export function IslandLadder({ data, busy, onOpen, onStart }: IslandViewProps) {
-	const columns: Array<{ id: string; label: string; rings: number }> = [
-		{ id: "new", label: "Not started", rings: 0 },
-		...ISLAND_STEPS.map((step) => ({ id: step, label: ISLAND_STEP_LABELS[step], rings: RANK[step] })),
-	];
-	const at = (step: string) =>
-		data.islands.filter((s) => (s.readiness.step === "started" ? "built" : s.readiness.step) === step);
-	return (
-		<div className="-mx-5 mt-8 overflow-x-auto px-5 pb-2 [scrollbar-width:thin] @md:-mx-6 @md:px-6">
-			<ol className="grid min-w-[880px] grid-cols-5 gap-3">
-				{columns.map((column, c) => {
-					const here = column.id === "new" ? [] : at(column.id);
-					return (
-						<li key={column.id} className="flex flex-col rounded-2xl bg-well/50 p-3 shadow-[0_0_0_1px_var(--q-line)]">
-							<div className="flex items-center gap-2 px-1">
-								<span className="w-8 text-ink-3">
-									<IslandGlyph seed={c + 3} r={14} rings={column.rings} dashed={column.id === "new"} />
-								</span>
-								<h2 className="font-ui text-[14px] font-[600] text-foreground">{column.label}</h2>
-								<span className="ml-auto font-ui text-xs tabular-nums text-ink-3">
-									{column.id === "new" ? data.topics.length : here.length}
-								</span>
-							</div>
-							<ul className="speak-in mt-3 flex flex-col gap-2">
-								{column.id === "new"
-									? data.topics.map((t, i) => (
-											<li
-												key={t.title}
-												style={{ "--i": i } as CSSProperties}
-												className="rounded-xl bg-card p-3 shadow-[0_0_0_1px_var(--q-line)]"
-											>
-												<p className="font-ui text-[14px] font-[600] text-foreground">{t.title}</p>
-												<p className="mt-0.5 line-clamp-2 font-prose text-[12px] text-ink-3" title={t.reason}>
-													{t.reason}
-												</p>
-												<button
-													type="button"
-													disabled={busy}
-													onClick={() => onStart(t)}
-													className={cn(SECONDARY, SMALL, "mt-2")}
-												>
-													Start
-												</button>
-											</li>
-										))
-									: here.map((s, i) => (
-											<li key={s.island.id} style={{ "--i": i } as CSSProperties}>
-												<button
-													type="button"
-													onClick={() => onOpen(s.island.id)}
-													data-testid="island-row"
-													className="block w-full rounded-xl bg-card p-3 text-left shadow-[0_0_0_1px_var(--q-line)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_var(--q-line-2)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-												>
-													<span className="block font-ui text-[14px] font-[600] text-foreground">{s.island.topic}</span>
-													<span className="mt-0.5 block font-ui text-[12px] text-ink-3">
-														{s.readiness.stats.chunks} chunks{s.readiness.faded ? " · faded" : ""}
-													</span>
-													{s.readiness.needs[0] && (
-														<span className="mt-1.5 block font-prose text-[12px] leading-snug text-ink-2">
-															Next: {s.readiness.needs[0]}
-														</span>
-													)}
-												</button>
-											</li>
-										))}
-								{column.id !== "new" && here.length === 0 && (
-									<li className="rounded-xl px-3 py-4 text-center font-prose text-[12px] text-ink-4">
-										No island here yet
-									</li>
-								)}
-							</ul>
-						</li>
-					);
-				})}
-			</ol>
 		</div>
 	);
 }

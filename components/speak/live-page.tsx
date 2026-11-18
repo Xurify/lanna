@@ -2,14 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SpeakHeader } from "@/components/speak/speak-header";
-import { LiveContacts, LiveDial } from "@/components/speak/variants/live-picks";
+import { LiveContacts } from "@/components/speak/live-contacts";
 import { LoaderCircleIcon, MicIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { LiveCall, type LivePhase } from "@/components/speak/live-session";
 import { LivePlayer } from "@/components/speak/live-player";
 import { ChoiceMenu } from "@/components/ui/choice-menu";
 import { SessionReport } from "@/components/speak/session-report";
-import { PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
+import { PRIMARY } from "@/components/ui/learn-buttons";
 import {
 	liveProviderLabel,
 	type LiveCallInput,
@@ -23,15 +22,7 @@ import {
 
 type Target = { kind: "scene" | "island"; ref: string; title: string } | null;
 
-export function LivePage({
-	initial,
-	target,
-	layout = "contacts",
-}: {
-	initial: LivePageData;
-	target: Target;
-	layout?: string;
-}) {
+export function LivePage({ initial, target }: { initial: LivePageData; target: Target }) {
 	const page = initial;
 	const [phase, setPhase] = useState<"pick" | "ready" | "call" | "report">(target ? "ready" : "pick");
 	const [start, setStart] = useState<LiveStart | null>(null);
@@ -232,6 +223,31 @@ export function LivePage({
 		);
 	}
 
+	const blocked = (
+		<div className="rounded-xl bg-well p-4" data-testid="live-unavailable">
+			<p className="font-ui text-[13px] font-[600] text-ink-2">
+				{page.availability.missing === "language" ? "Not in this language" : "Needs a key"}
+			</p>
+			<p className="mt-1 max-w-prose font-prose text-[14px] text-ink-2">{page.availability.reason}</p>
+		</div>
+	);
+	const voice =
+		enabled.length > 1 ? (
+			<div className="flex flex-wrap items-center gap-2" data-testid="live-engine-picker">
+				<span className="font-ui text-[12px] text-ink-3">Voice</span>
+				<ChoiceMenu
+					quiet
+					value={engine ?? enabled[0]!.id}
+					options={enabled.map((option) => ({ value: option.id, label: option.label }))}
+					onChange={(next) => setEngine(next as LiveProviderId)}
+					ariaLabel="Voice engine"
+				/>
+			</div>
+		) : (
+			<p className="font-ui text-[12px] text-ink-3" data-testid="live-engine">
+				Voice: {enabled[0]?.label}
+			</p>
+		);
 	return (
 		<div className="mx-auto max-w-3xl px-5 pt-[5vh] pb-24">
 			<SpeakHeader
@@ -239,131 +255,13 @@ export function LivePage({
 				lead="Talk freely; either of you can interrupt. When you hang up, you see what to repair and the fillers to reach for next time."
 			/>
 
-			{layout !== "ledger" &&
-				(() => {
-					const blocked = (
-						<div className="rounded-xl bg-well p-4" data-testid="live-unavailable">
-							<p className="font-ui text-[13px] font-[600] text-ink-2">
-								{page.availability.missing === "language" ? "Not in this language" : "Needs a key"}
-							</p>
-							<p className="mt-1 max-w-prose font-prose text-[14px] text-ink-2">{page.availability.reason}</p>
-						</div>
-					);
-					const voice =
-						enabled.length > 1 ? (
-							<div className="flex flex-wrap items-center gap-2" data-testid="live-engine-picker">
-								<span className="font-ui text-[12px] text-ink-3">Voice</span>
-								<ChoiceMenu
-									quiet
-									value={engine ?? enabled[0]!.id}
-									options={enabled.map((option) => ({ value: option.id, label: option.label }))}
-									onChange={(next) => setEngine(next as LiveProviderId)}
-									ariaLabel="Voice engine"
-								/>
-							</div>
-						) : (
-							<p className="font-ui text-[12px] text-ink-3" data-testid="live-engine">
-								Voice: {enabled[0]?.label}
-							</p>
-						);
-					const Pick = layout === "dial" ? LiveDial : LiveContacts;
-					return (
-						<Pick
-							page={page}
-							busy={busy}
-							onCall={(kind, ref, title) => void beginCall(kind, ref, title)}
-							engine={voice}
-							blocked={blocked}
-						/>
-					);
-				})()}
-			{layout === "ledger" &&
-				(!page.availability.enabled ? (
-					<div className="mt-8 rounded-xl bg-well p-4" data-testid="live-unavailable">
-						<p className="font-ui text-[13px] font-[600] text-ink-2">
-							{page.availability.missing === "language" ? "Not in this language" : "Needs a key"}
-						</p>
-						<p className="mt-1 max-w-prose font-prose text-[14px] text-ink-2">{page.availability.reason}</p>
-					</div>
-				) : (
-					<>
-						{enabled.length > 1 && (
-							<div className="mt-5 flex flex-wrap items-center gap-2" data-testid="live-engine-picker">
-								<span className="font-ui text-[12px] text-ink-3">Voice</span>
-								<ChoiceMenu
-									quiet
-									value={engine ?? enabled[0]!.id}
-									options={enabled.map((option) => ({ value: option.id, label: option.label }))}
-									onChange={(next) => setEngine(next as LiveProviderId)}
-									ariaLabel="Voice engine"
-								/>
-							</div>
-						)}
-						{enabled.length === 1 && (
-							<p className="mt-4 font-ui text-[12px] text-ink-3" data-testid="live-engine">
-								Voice: {enabled[0]!.label}
-							</p>
-						)}
-						{page.islands.length > 0 && (
-							<section className="mt-9" aria-labelledby="live-islands">
-								<h2 id="live-islands" className="q-sh">
-									Your islands
-								</h2>
-								<p className="-mt-1 mb-2 font-prose text-[13px] text-ink-3">
-									The talk that moves an island up its ladder.
-								</p>
-								<ul className="divide-y divide-[var(--q-line)]">
-									{page.islands.map((island) => (
-										<li key={island.id} className="flex items-baseline justify-between gap-3 py-2.5">
-											<span className="min-w-0">
-												<span className="block font-ui text-[15px] font-[600] text-foreground">{island.topic}</span>
-												<span className="mt-0.5 block font-prose text-[13px] text-ink-3">
-													{island.step}
-													{island.needs[0] ? ` · ${island.needs[0]}` : ""}
-												</span>
-											</span>
-											<button
-												type="button"
-												disabled={busy}
-												onClick={() => void beginCall("island", island.id, island.topic)}
-												className={cn(SECONDARY, "shrink-0")}
-											>
-												Talk
-											</button>
-										</li>
-									))}
-								</ul>
-							</section>
-						)}
-
-						<section className="mt-9" aria-labelledby="live-scenes">
-							<h2 id="live-scenes" className="q-sh">
-								Scenes
-							</h2>
-							<p className="-mt-1 mb-2 font-prose text-[13px] text-ink-3">
-								The same situations as Speak, spoken live instead of turn by turn.
-							</p>
-							<ul className="divide-y divide-[var(--q-line)]">
-								{page.scenes.map((scene) => (
-									<li key={scene.id} className="flex items-baseline justify-between gap-3 py-2.5">
-										<span className="min-w-0">
-											<span className="block font-ui text-[15px] font-[600] text-foreground">{scene.title}</span>
-											<span className="mt-0.5 block font-prose text-[13px] text-ink-3">{scene.task}</span>
-										</span>
-										<button
-											type="button"
-											disabled={busy}
-											onClick={() => void beginCall("scene", scene.id, scene.title)}
-											className={cn(SECONDARY, "shrink-0")}
-										>
-											Talk
-										</button>
-									</li>
-								))}
-							</ul>
-						</section>
-					</>
-				))}
+			<LiveContacts
+				page={page}
+				busy={busy}
+				onCall={(kind, ref, title) => void beginCall(kind, ref, title)}
+				engine={voice}
+				blocked={blocked}
+			/>
 
 			{error && (
 				<p role="alert" className="mt-5 max-w-prose font-prose text-[14px] text-destructive">

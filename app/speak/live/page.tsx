@@ -1,5 +1,3 @@
-import { VariantPicker } from "@/components/variant-picker";
-import { LAYOUTS, chosen, harnessGroups } from "@/components/speak/variants/harness";
 import { LivePage } from "@/components/speak/live-page";
 import type { LivePageData } from "@/src/core";
 import { islandPage, livePage } from "@/src/server";
@@ -11,10 +9,9 @@ export const dynamic = "force-dynamic";
 export default async function LiveRoute({
 	searchParams,
 }: {
-	searchParams: Promise<{ scene?: string; island?: string; __variant?: string; __motion?: string }>;
+	searchParams: Promise<{ scene?: string; island?: string }>;
 }) {
-	const { scene, island, __variant, __motion } = await searchParams;
-	const picker = <VariantPicker groups={harnessGroups("live", __variant, __motion)} />;
+	const { scene, island } = await searchParams;
 	let page: LivePageData | null = null;
 	try {
 		page = livePage();
@@ -37,10 +34,5 @@ export default async function LiveRoute({
 		const found = page.scenes.find((s) => s.id === scene);
 		if (found) target = { kind: "scene", ref: found.id, title: found.title };
 	}
-	return (
-		<>
-			<LivePage initial={page} target={target} layout={chosen(LAYOUTS.live, __variant)} />
-			{picker}
-		</>
-	);
+	return <LivePage initial={page} target={target} />;
 }
