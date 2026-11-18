@@ -18,6 +18,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { BackupAuth } from "../core/backup.ts";
+import { authStore } from "../store/auth.ts";
+import { keyValue } from "./keys.ts";
 
 export const BACKUP_BUCKET = "lanna";
 const PREFIX = "data/";
@@ -172,10 +174,21 @@ export const shellRun: ShellRun = async (command, options = {}) => {
 };
 
 async function cloudflareToken(run: ShellRun = shellRun): Promise<string> {
-	const fromEnv = process.env[ENV_TOKEN]?.trim();
-	if (fromEnv) return fromEnv;
+	const saved = keyValue(ENV_TOKEN)?.trim();
+	if (saved) return saved;
 	const { stdout } = await run(`${WRANGLER} auth token --json`);
 	return (JSON.parse(stdout) as { token: string }).token;
+}
+
+/** The token in use, described without keeping it: a saved token, a replaced one and none at all read differently. */
+export function tokenPrint(): string {
+	const token = keyValue(ENV_TOKEN)?.trim();
+	return token ? `token ${token.length} ${token.slice(-4)}` : "wrangler";
+}
+
+/** A token saved under API keys reads as Settings; anything else, a shadowing .env.local included, as the environment. */
+function tokenSource(token: string): "settings" | "env" {
+	return authStore.authVars()[ENV_TOKEN]?.trim() === token ? "settings" : "env";
 }
 
 // `wrangler whoami` names the email it is signed in with, and closes the sentence with a full stop.
@@ -186,7 +199,8 @@ export function whoamiAccount(out: string): string | null {
 }
 
 export async function wranglerAuth(run: ShellRun = shellRun): Promise<BackupAuth | null> {
-	if (process.env[ENV_TOKEN]?.trim()) return { via: "env", account: null };
+	const token = keyValue(ENV_TOKEN)?.trim();
+	if (token) return { via: tokenSource(token), account: null };
 	try {
 		// `wrangler whoami` exits 0 while printing "You are not authenticated", so a missing email is the sign of no login.
 		const account = whoamiAccount((await run(`${WRANGLER} whoami`)).stdout);
@@ -205,23 +219,65 @@ export async function cloudflareSignOut(run: ShellRun = shellRun): Promise<void>
 	await run(`${WRANGLER} logout`);
 }
 
-export async function cloudflareBucket(name = BACKUP_BUCKET): Promise<Bucket> {
-	let token = await cloudflareToken();
-	const call = async (url: string, init: RequestInit = {}): Promise<Response> => {
-		const send = () => fetch(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
+/** Cloudflare's own answer, so a caller can tell a missing bucket from a real refusal. */
+export class CloudflareHttpError extends Error {
+	constructor(
+		readonly status: number,
+		readonly url: string,
+	) {
+		super(`Cloudflare answered ${status} for ${url.slice(API.length)}`);
+	}
+}
+
+/** The bucket is not in the account yet: a check says that instead of reading out a 404. */
+export class BucketMissing extends Error {}
+
+type Fetcher = typeof fetch;
+
+function cloudflareCall(fetcher: Fetcher) {
+	let token = "";
+	return async (url: string, init: RequestInit = {}): Promise<Response> => {
+		token ||= await cloudflareToken();
+		const send = () => fetcher(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
 		let res = await send();
 		if (res.status === 401) {
 			token = await cloudflareToken();
 			res = await send();
 		}
-		if (!res.ok)
-			throw new Error(`Cloudflare answered ${res.status} for ${init.method ?? "GET"} ${url.slice(API.length)}`);
+		if (!res.ok) throw new CloudflareHttpError(res.status, url);
 		return res;
 	};
+}
+
+async function cloudflareAccount(call: (url: string, init?: RequestInit) => Promise<Response>): Promise<string> {
 	const account =
 		process.env.CLOUDFLARE_ACCOUNT_ID ??
 		((await (await call(`${API}/accounts`)).json()) as { result: Array<{ id: string }> }).result[0]?.id;
-	if (!account) throw new Error("No Cloudflare account: run `npx wrangler login`.");
+	if (!account)
+		throw new Error(
+			"That token cannot see a Cloudflare account: give it R2 access to one, or run `npx wrangler login`.",
+		);
+	return account;
+}
+
+/** Create the bucket when the account has none yet, so the first upload needs no terminal. */
+export async function ensureBucket(name = BACKUP_BUCKET, fetcher: Fetcher = fetch): Promise<void> {
+	const call = cloudflareCall(fetcher);
+	const account = await cloudflareAccount(call);
+	const buckets = (await (await call(`${API}/accounts/${account}/r2/buckets`)).json()) as {
+		result: Array<{ name: string }>;
+	};
+	if (buckets.result.some((bucket) => bucket.name === name)) return;
+	await call(`${API}/accounts/${account}/r2/buckets`, {
+		method: "POST",
+		body: JSON.stringify({ name }),
+		headers: { "Content-Type": "application/json" },
+	});
+}
+
+export async function cloudflareBucket(name = BACKUP_BUCKET, fetcher: Fetcher = fetch): Promise<Bucket> {
+	const call = cloudflareCall(fetcher);
+	const account = await cloudflareAccount(call);
 	const objects = `${API}/accounts/${account}/r2/buckets/${name}/objects`;
 	const object = (file: string) => `${objects}/${(PREFIX + file).split("/").map(encodeURIComponent).join("/")}`;
 	return {
@@ -230,13 +286,18 @@ export async function cloudflareBucket(name = BACKUP_BUCKET): Promise<Bucket> {
 			let cursor: string | undefined;
 			do {
 				const query = new URLSearchParams({ prefix: PREFIX, per_page: "1000", ...(cursor ? { cursor } : {}) });
-				const page = (await (await call(`${objects}?${query}`)).json()) as {
-					result: Array<{ key: string; size: number; etag: string }>;
-					result_info?: { cursor?: string; is_truncated?: boolean };
-				};
-				for (const item of page.result)
-					files.push({ path: item.key.slice(PREFIX.length), size: item.size, md5: item.etag });
-				cursor = page.result_info?.is_truncated ? page.result_info.cursor : undefined;
+				try {
+					const page = (await (await call(`${objects}?${query}`)).json()) as {
+						result: Array<{ key: string; size: number; etag: string }>;
+						result_info?: { cursor?: string; is_truncated?: boolean };
+					};
+					for (const item of page.result)
+						files.push({ path: item.key.slice(PREFIX.length), size: item.size, md5: item.etag });
+					cursor = page.result_info?.is_truncated ? page.result_info.cursor : undefined;
+				} catch (err) {
+					if (err instanceof CloudflareHttpError && err.status === 404) throw new BucketMissing();
+					throw err;
+				}
 			} while (cursor);
 			return files;
 		},

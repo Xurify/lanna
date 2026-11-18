@@ -11,6 +11,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import {
+	BucketMissing,
+	cloudflareBucket,
+	ensureBucket,
 	localFiles,
 	pull,
 	pullPlan,
@@ -107,5 +110,57 @@ describe("cloud backup", () => {
 		const failed = await pull(root, bucket, plan.download, () => {});
 		assert.equal(failed.length, 1);
 		assert.equal(fs.readFileSync(path.join(root, "notes.json"), "utf-8"), "written meanwhile");
+	});
+});
+
+const API = "https://api.cloudflare.com/client/v4";
+
+function fakeCloudflare(names: string[]): {
+	calls: Array<{ url: string; method: string; body: string }>;
+	fetcher: typeof fetch;
+} {
+	const calls: Array<{ url: string; method: string; body: string }> = [];
+	const fetcher = async (url: string, init: RequestInit = {}): Promise<Response> => {
+		calls.push({ url, method: init.method ?? "GET", body: String(init.body ?? "") });
+		const result = url.endsWith("/accounts") ? [{ id: "acct" }] : names.map((name) => ({ name }));
+		return new Response(JSON.stringify({ result }), { status: 200 });
+	};
+	return { calls, fetcher: fetcher as unknown as typeof fetch };
+}
+
+describe("the bucket", () => {
+	it("is created on the first upload when the account has none yet, and left alone when it has", async () => {
+		process.env.CLOUDFLARE_API_TOKEN = "cloudflare-test-token";
+		try {
+			const fresh = fakeCloudflare([]);
+			await ensureBucket("lanna", fresh.fetcher);
+			assert.deepEqual(
+				fresh.calls.filter((call) => call.method === "POST"),
+				[{ url: `${API}/accounts/acct/r2/buckets`, method: "POST", body: '{"name":"lanna"}' }],
+			);
+
+			const kept = fakeCloudflare(["lanna"]);
+			await ensureBucket("lanna", kept.fetcher);
+			assert.equal(kept.calls.filter((call) => call.method === "POST").length, 0);
+		} finally {
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
+	});
+
+	it("reads a bucket that is not in the account as missing, not as a 404 line", async () => {
+		process.env.CLOUDFLARE_API_TOKEN = "cloudflare-test-token";
+		try {
+			const fetcher = (async (url: string): Promise<Response> =>
+				url.endsWith("/accounts")
+					? new Response(JSON.stringify({ result: [{ id: "acct" }] }), { status: 200 })
+					: new Response("no such bucket", { status: 404 })) as unknown as typeof fetch;
+			const bucket = await cloudflareBucket("lanna", fetcher);
+			await assert.rejects(
+				() => bucket.list(),
+				(err: unknown) => err instanceof BucketMissing,
+			);
+		} finally {
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
 	});
 });

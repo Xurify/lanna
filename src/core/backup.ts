@@ -82,8 +82,8 @@ export interface BackupState {
 
 /** How Lanna reaches the bucket. */
 export interface BackupAuth {
-	/** The login `wrangler login` made on this computer, or a CLOUDFLARE_API_TOKEN in .env.local. */
-	via: "wrangler" | "env";
+	/** The login `wrangler login` made on this computer, or a CLOUDFLARE_API_TOKEN saved under API keys or in .env.local. */
+	via: "wrangler" | "settings" | "env";
 	/** The email wrangler is signed in with; a token carries no name. */
 	account: string | null;
 }

@@ -300,6 +300,7 @@ export const HOSTS_THAT_ARE_NOT_SOURCES = new Set([
 	"api.x.ai",
 	"api.individual.githubcopilot.com",
 	"api.cloudflare.com",
+	"dash.cloudflare.com",
 	"doi.org",
 	"www.w3.org",
 	"forum.clozemaster.com",

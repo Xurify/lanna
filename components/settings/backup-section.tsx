@@ -108,9 +108,11 @@ export function BackupSection() {
 		? "…"
 		: !auth
 			? "Not signed in"
-			: auth.via === "env"
-				? "Set by CLOUDFLARE_API_TOKEN"
-				: (auth.account ?? "…");
+			: auth.via === "settings"
+				? "Saved in Settings"
+				: auth.via === "env"
+					? "From .env.local"
+					: (auth.account ?? "…");
 
 	const status = (() => {
 		if (job && (running || job.failed > 0 || job.error)) return jobLine(job);
@@ -139,20 +141,20 @@ export function BackupSection() {
 	return (
 		<>
 			<SettingsGroup label="Where the copy goes" testid="backup-where">
-				<SettingsRow label="Cloudflare R2" hint="Your own private bucket." testid="backup-row-bucket">
-					<span className="flex items-center gap-2">
+				<SettingsRow
+					label="Cloudflare R2"
+					hint={
+						auth === null
+							? "Your own private bucket. Sign in the way wrangler does, or save an R2 token under API keys."
+							: "Your own private bucket."
+					}
+					testid="backup-row-bucket"
+					stack={false}
+				>
+					<span className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
 						<ProviderIcon provider="cloudflare" />
 						<CapLabel className="font-mono text-xs text-foreground">{state?.bucket ?? "…"}</CapLabel>
-					</span>
-				</SettingsRow>
-				<SettingsRow
-					label="Cloudflare account"
-					hint={
-						auth?.via === "env" ? "From .env.local; Lanna cannot sign it out." : "Lanna signs in the way wrangler does."
-					}
-					testid="backup-row-account"
-				>
-					<span className="flex items-center gap-2.5">
+						<span className="text-muted-foreground">·</span>
 						<span className="font-ui text-xs text-foreground" data-testid="backup-account">
 							{busy === "connect" ? SIGNING_IN : account}
 						</span>

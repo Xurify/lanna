@@ -79,6 +79,13 @@ export const AUTH_KEYS: readonly AuthKeyInfo[] = [
 			"Web-search engine for the researcher sub-agent — the alternative to Tavily. Setting the key activates it.",
 		docsUrl: "https://brave.com/search/api/",
 	},
+	{
+		id: "CLOUDFLARE_API_TOKEN",
+		label: "Cloudflare R2",
+		description:
+			"Backs up the data folder to a private R2 bucket in your own Cloudflare account (Settings → Backup), instead of signing in with wrangler. A token (not a Global API Key) with R2 read and write access to one account: Lanna lists that account's buckets, creates `lanna` when it is missing, and uploads or brings back files.",
+		docsUrl: "https://dash.cloudflare.com/profile/api-tokens",
+	},
 ] as const;
 
 const AUTH_KEY_IDS: ReadonlySet<string> = new Set(AUTH_KEYS.map((k) => k.id));
@@ -189,6 +196,9 @@ export function validateKeyShape(id: string, rawValue: string): KeyShapeResult {
 		case "DEEPL_API_KEY":
 			// A UUID, plus ":fx" on Free keys.
 			return nonEmpty(30);
+		case "CLOUDFLARE_API_TOKEN":
+			// 40 characters today; a length floor only.
+			return nonEmpty(20);
 		case "AZURE_SPEECH_REGION":
 			return /^[a-z0-9]{4,40}$/.test(value)
 				? { ok: true }

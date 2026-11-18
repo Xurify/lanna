@@ -17,7 +17,7 @@ process.env.LANNA_PROFILE = "slovak";
 
 const { BackupError, backupError, backupState, checkBackup, connectBackup, disconnectBackup, startBackup } =
 	await import("../src/server/backup.ts");
-const { whoamiAccount, wranglerAuth } = await import("../src/server/cloud-backup.ts");
+const { BucketMissing, whoamiAccount, wranglerAuth } = await import("../src/server/cloud-backup.ts");
 const { backupOutcome } = await import("../src/core/backup.ts");
 
 after(() => fs.rmSync(DATA, { recursive: true, force: true }));
@@ -163,6 +163,10 @@ describe("backup status", () => {
 		}
 	});
 
+	it("says the bucket is not in the account yet, rather than reading out a 404", () => {
+		assert.match(backupError(new BucketMissing()), /bucket `lanna` is not in this Cloudflare account yet/);
+	});
+
 	it("keeps an unfamiliar failure as it came, in one line", () => {
 		assert.equal(
 			backupError(new Error("getaddrinfo ENOTFOUND api.cloudflare.com\nmore noise")),
@@ -196,6 +200,31 @@ describe("backup sign-in", () => {
 		} finally {
 			delete process.env.CLOUDFLARE_API_TOKEN;
 		}
+	});
+
+	it("takes a token saved under API keys as its own way in, with no wrangler at all", async () => {
+		const { authStore } = await import("../src/store/auth.ts");
+		authStore.setAuthVar("CLOUDFLARE_API_TOKEN", "token-saved-under-api-keys");
+		try {
+			const shell = fakeShell({});
+			assert.deepEqual(await wranglerAuth(shell.run), { via: "settings", account: null });
+			assert.deepEqual(shell.ran, [], "a saved token asks wrangler nothing");
+		} finally {
+			authStore.deleteAuthVar("CLOUDFLARE_API_TOKEN");
+		}
+	});
+
+	it("shows a token saved while the app is running, without a restart", async () => {
+		const { authStore } = await import("../src/store/auth.ts");
+		const shell = fakeShell({ whoami: WHOAMI });
+		assert.equal((await backupState(shell.run)).auth?.via, "wrangler");
+		authStore.setAuthVar("CLOUDFLARE_API_TOKEN", "token-saved-while-running");
+		try {
+			assert.deepEqual((await backupState(shell.run)).auth, { via: "settings", account: null });
+		} finally {
+			authStore.deleteAuthVar("CLOUDFLARE_API_TOKEN");
+		}
+		assert.equal((await backupState(shell.run)).auth?.via, "wrangler", "clearing it goes back to the login");
 	});
 
 	it("signs in through wrangler and drops the check the old login answered", async () => {

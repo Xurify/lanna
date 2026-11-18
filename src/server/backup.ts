@@ -23,9 +23,11 @@ import {
 } from "../core/backup.ts";
 import {
 	BACKUP_BUCKET,
+	BucketMissing,
 	cloudflareBucket,
 	cloudflareSignIn,
 	cloudflareSignOut,
+	ensureBucket,
 	leftOut,
 	localFiles,
 	pull,
@@ -33,6 +35,7 @@ import {
 	push,
 	pushPlan,
 	shellRun,
+	tokenPrint,
 	totalBytes,
 	wranglerAuth,
 	type BackupFile,
@@ -55,6 +58,8 @@ const SIGN_OUT_FAILED = "Couldn’t sign out. Try again, or run `npx wrangler lo
 
 /** A failure the login would explain reads as that, so nobody looks for a key to a lock they are not holding. */
 export function backupError(err: unknown): string {
+	if (err instanceof BucketMissing)
+		return `The bucket \`${BACKUP_BUCKET}\` is not in this Cloudflare account yet, so there is nothing to compare. Uploading creates it.`;
 	const message = err instanceof Error ? err.message : String(err);
 	if (/login|logged in|authenticat|wrangler|ENOENT|401/i.test(message)) return NOT_SIGNED_IN;
 	return message.split("\n")[0]!.slice(0, 160);
@@ -79,13 +84,27 @@ function areasOf(here: BackupFile[], cloud: BackupFile[]): BackupArea[] {
 
 const state = processWide("backup.state", () => ({
 	auth: undefined as BackupAuth | null | undefined,
+	/** What the answer above was read from, so saving or clearing a token shows up without a restart. */
+	authPrint: undefined as string | undefined,
+	/** The check the answer above was read at, so a login made after a failed check is picked up once. */
+	authAt: undefined as string | undefined,
 	last: null as BackupCheck | null,
 	job: null as BackupJob | null,
 }));
 
+/** Read the login again when the way in changed, or once after a check that failed. */
+async function refreshAuth(run: ShellRun): Promise<void> {
+	const print = tokenPrint();
+	const laterFailed = state.auth === null && state.last !== null && state.authAt !== state.last.at;
+	if (state.auth !== undefined && state.authPrint === print && !laterFailed) return;
+	state.auth = await wranglerAuth(run);
+	state.authPrint = print;
+	state.authAt = state.last?.at;
+}
+
 export async function backupState(run: ShellRun = shellRun): Promise<BackupState> {
-	if (state.auth === undefined) state.auth = await wranglerAuth(run);
-	return { bucket: BACKUP_BUCKET, auth: state.auth, leftOut: leftOut(), last: state.last, job: state.job };
+	await refreshAuth(run);
+	return { bucket: BACKUP_BUCKET, auth: state.auth!, leftOut: leftOut(), last: state.last, job: state.job };
 }
 
 /** Wrangler signs in and out; the last check goes with the old login, so the next look answers for the new one. */
@@ -96,6 +115,8 @@ export async function connectBackup(run: ShellRun = shellRun): Promise<BackupSta
 		throw new BackupError(SIGN_IN_FAILED, 502);
 	}
 	state.auth = await wranglerAuth(run);
+	state.authPrint = tokenPrint();
+	state.authAt = state.last?.at;
 	state.last = null;
 	return backupState(run);
 }
@@ -107,6 +128,8 @@ export async function disconnectBackup(run: ShellRun = shellRun): Promise<Backup
 		throw new BackupError(SIGN_OUT_FAILED, 502);
 	}
 	state.auth = await wranglerAuth(run);
+	state.authPrint = tokenPrint();
+	state.authAt = state.last?.at;
 	state.last = null;
 	return backupState(run);
 }
@@ -140,6 +163,7 @@ export async function checkBackup(options: { bucket?: Bucket } = {}): Promise<Ba
 
 async function run(action: BackupJob["action"], options: { bucket?: Bucket }, running: BackupJob): Promise<void> {
 	try {
+		if (action === "upload" && !options.bucket) await ensureBucket();
 		const bucket = await bucketFor(options);
 		const local = await localFiles(PATHS.base);
 		const remote = await bucket.list();
