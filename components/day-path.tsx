@@ -75,12 +75,12 @@ export function DayPath({
 							)}
 						/>
 						{stop.lang && (
-							<div className="relative flex min-h-11 items-center gap-2.5 pb-2">
+							<div className="relative mb-2 flex min-h-11 items-center gap-2.5">
 								<span className="absolute top-2.5 -left-9 grid size-6 place-items-center rounded-full bg-background shadow-[0_0_0_2px_var(--q-line-2)]">
 									<CountryFlag lang={stop.lang.id} className="size-4 rounded-full" />
 								</span>
-								<h3 className="text-[15px] font-semibold tracking-[-0.01em]">{stop.lang.english}</h3>
-								<span className="q-num min-w-0 truncate text-[12.5px] text-ink-3">
+								<h3 className="cap-center text-[15px] font-semibold tracking-[-0.01em]">{stop.lang.english}</h3>
+								<span className="q-num cap-center min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap text-[12.5px] text-ink-3">
 									{doneCount} of {stop.steps.length} done · {minutesLeft} min left
 								</span>
 								{foldable && (
