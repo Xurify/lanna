@@ -1,42 +1,41 @@
 "use client";
 
 /**
- * The Speak scene board (2026-11-07): the scenes as one list grouped by why
- * they are offered, and beside it the sheet of the scene in hand: who you
- * meet, what you are there to do, how it opens (when a script has the
- * line), the last time you said it, and the ways in. Below the sheet's
- * breakpoint the sheet opens inside the list, under its row.
+ * The tutor's scene board: the scene in hand on a stage (its drawing, who you
+ * meet, your part, how it opens, the ways in) and every scene beneath it as a
+ * postcard. Picking a postcard redraws the stage.
  *
- * Keys: ↑ ↓ pick a scene, Enter starts it, Escape leaves (the player's).
+ * Keys: arrows pick a scene, Enter starts it, Escape leaves (the player's).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { KeyboardIcon, ListChecksIcon, LoaderCircleIcon, MicIcon, RepeatIcon } from "lucide-react";
+import { KeyboardIcon, ListChecksIcon, LoaderCircleIcon, MicIcon, RepeatIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CapLabel } from "@/components/ui/cap-label";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { TaskFrame } from "@/components/task-frame";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { SourcesNote } from "@/components/sources/sources-note";
+import { speak } from "@/components/speech";
 import { sceneCounterpart, scriptFor, tutorLineText, type SpeakSceneEntry } from "@/src/core";
 import type { SpeakState } from "@/components/speak/speak-player";
 import { SpeakHeader } from "@/components/speak/speak-header";
+import { SceneArt } from "@/components/speak/scene-art";
 
-const GROUPS: Array<{ why: SpeakSceneEntry["why"]; label: string }> = [
-	{ why: "chapter", label: "This chapter" },
-	{ why: "goal", label: "For your goals" },
-	{ why: null, label: "More scenes" },
-];
+const WHY_RANK = { chapter: 0, goal: 1 } as const;
 
 function shortDate(iso: string): string {
 	const d = new Date(iso);
 	return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+function whyLabel(why: SpeakSceneEntry["why"]): string | null {
+	return why === "chapter" ? "Your chapter's scene" : why === "goal" ? "One of your goals" : null;
+}
+
 interface SceneBoardProps {
 	state: SpeakState | null;
-	/** The language id (scripts) and its BCP-47 tag (the lang attribute). */
 	lang: { id: string; tag: string };
 	error: string | null;
 	sceneId: string | null;
@@ -47,36 +46,47 @@ interface SceneBoardProps {
 }
 
 export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResume, onRetry }: SceneBoardProps) {
-	const scenes = useMemo(() => state?.scenes ?? [], [state]);
+	const scenes = useMemo(
+		() => [...(state?.scenes ?? [])].sort((a, b) => (a.why ? WHY_RANK[a.why] : 2) - (b.why ? WHY_RANK[b.why] : 2)),
+		[state],
+	);
 	const initial =
 		state?.unfinished?.scene ?? (sceneId && scenes.some((s) => s.id === sceneId) ? sceneId : scenes[0]?.id) ?? null;
 	const [selected, setSelected] = useState<string | null>(initial);
 	const current = scenes.find((s) => s.id === selected) ?? scenes[0] ?? null;
-	const groups = GROUPS.map((g) => ({ ...g, scenes: scenes.filter((s) => s.why === g.why) })).filter(
-		(g) => g.scenes.length > 0,
-	);
-	const grouped = groups.length > 1;
+	const stageRef = useRef<HTMLElement>(null);
 
 	useEffect(() => {
 		if (!selected && scenes[0]) setSelected(scenes[0].id);
 	}, [selected, scenes]);
 
+	const choose = (id: string, reveal: boolean) => {
+		setSelected(id);
+		if (!reveal) return;
+		const stage = stageRef.current;
+		if (stage && stage.getBoundingClientRect().top < 0) {
+			const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+			stage.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+		}
+	};
+
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 			if (e.metaKey || e.ctrlKey || e.altKey || !current) return;
-			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+			const step =
+				e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+			if (step) {
 				e.preventDefault();
 				const i = scenes.findIndex((s) => s.id === current.id);
-				const next = scenes[(i + (e.key === "ArrowDown" ? 1 : scenes.length - 1)) % scenes.length];
+				const next = scenes[(i + step + scenes.length) % scenes.length];
 				if (next) {
 					setSelected(next.id);
-					document.querySelector(`[data-scene-row="${next.id}"]`)?.scrollIntoView({ block: "nearest" });
+					document.querySelector(`[data-scene-card="${next.id}"]`)?.scrollIntoView({ block: "nearest" });
 				}
 			} else if (e.key === "Enter") {
-				// A focused action keeps its own Enter; a focused row starts its scene.
 				const t = e.target instanceof HTMLElement ? e.target : null;
-				if (t && (t instanceof HTMLAnchorElement || (t instanceof HTMLButtonElement && !t.dataset.sceneRow))) return;
+				if (t && (t instanceof HTMLAnchorElement || (t instanceof HTMLButtonElement && !t.dataset.sceneCard))) return;
 				e.preventDefault();
 				if (state?.unfinished?.scene === current.id) onResume(state.unfinished.id);
 				else if (state?.canSpeak) onPick(current.id, typed || !state.stt);
@@ -85,20 +95,6 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
 	}, [current, scenes, state, typed, onPick, onResume]);
-
-	const sheet = (inline: boolean) =>
-		current && (
-			<SceneSheet
-				key={`${current.id}-${inline}`}
-				scene={current}
-				lang={lang}
-				state={state}
-				typed={typed}
-				inline={inline}
-				onPick={onPick}
-				onResume={onResume}
-			/>
-		);
 
 	return (
 		<TaskFrame>
@@ -125,66 +121,44 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 						</p>
 					)}
 
-					{state && (
-						<div className="mt-7 grid grid-cols-[minmax(0,1fr)] items-start gap-x-8 gap-y-6 @3xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] @5xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
-							<div className="flex min-w-0 flex-col gap-6" data-testid="speak-scenes">
-								{groups.map((g) => (
-									<section key={g.label} aria-label={grouped ? g.label : "Scenes"}>
-										{grouped && <h2 className="q-sh !mb-1.5 px-3">{g.label}</h2>}
-										<ul className="flex flex-col gap-1">
-											{g.scenes.map((s) => {
-												const on = s.id === current?.id;
-												const open = state.unfinished?.scene === s.id;
-												return (
-													<li key={s.id}>
-														<button
-															type="button"
-															onClick={() => setSelected(s.id)}
-															aria-current={on ? "true" : undefined}
-															data-scene-row={s.id}
-															data-testid={`scene-${s.id}`}
-															className={cn(
-																"lanna-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors",
-																on ? "bg-well" : "hover:bg-well",
-															)}
-														>
-															<span className="min-w-0 flex-1">
-																<span
-																	className={cn(
-																		"block truncate font-ui text-[15px] font-[600] tracking-[-0.01em]",
-																		on ? "text-foreground" : "text-ink-2",
-																	)}
-																	lang={lang.tag}
-																>
-																	{s.title}
-																</span>
-																<span className="block truncate font-prose text-[13px] text-ink-3">{s.blurb}</span>
-															</span>
-															{open ? (
-																<span className="shrink-0 font-ui text-xs font-[550] text-teal-2">unfinished</span>
-															) : s.done > 0 ? (
-																<span
-																	className="shrink-0 font-ui text-xs tabular-nums text-ink-4"
-																	title={`Said ${s.done === 1 ? "once" : `${s.done} times`}`}
-																>
-																	{s.done}×
-																</span>
-															) : null}
-														</button>
-														{on && <div className="mt-2 mb-4 @3xl:hidden">{sheet(true)}</div>}
-													</li>
-												);
-											})}
-										</ul>
-									</section>
-								))}
-								<p className="hidden px-3 font-ui text-xs text-ink-3 pointer-fine:@3xl:block">
-									<kbd className={KBD}>↑</kbd> <kbd className={KBD}>↓</kbd> pick · <kbd className={KBD}>Enter</kbd>{" "}
-									starts · <kbd className={KBD}>Esc</kbd> leaves
+					{state && current && (
+						<Stage
+							ref={stageRef}
+							key={current.id}
+							scene={current}
+							lang={lang}
+							state={state}
+							typed={typed}
+							onPick={onPick}
+							onResume={onResume}
+						/>
+					)}
+
+					{state && scenes.length > 0 && (
+						<section className="mt-10" aria-labelledby="scene-shelf" data-testid="speak-scenes">
+							<div className="mb-3 flex items-baseline justify-between gap-4">
+								<h2 id="scene-shelf" className="font-ui text-[15px] font-[600] text-foreground">
+									{scenes.length} scenes
+								</h2>
+								<p className="hidden font-ui text-xs text-ink-3 pointer-fine:block">
+									<kbd className={KBD}>←</kbd> <kbd className={KBD}>→</kbd> pick · <kbd className={KBD}>Enter</kbd>{" "}
+									starts
 								</p>
 							</div>
-							<div className="sticky top-6 hidden @3xl:block">{sheet(false)}</div>
-						</div>
+							<ul className="speak-in grid grid-cols-2 gap-3 @2xl:grid-cols-3 @4xl:grid-cols-4">
+								{scenes.map((s, i) => (
+									<li key={s.id} style={{ "--i": i } as React.CSSProperties}>
+										<Postcard
+											scene={s}
+											lang={lang}
+											on={s.id === current?.id}
+											open={state.unfinished?.scene === s.id}
+											onChoose={() => choose(s.id, true)}
+										/>
+									</li>
+								))}
+							</ul>
+						</section>
 					)}
 
 					{state && (
@@ -210,31 +184,101 @@ export function SceneBoard({ state, lang, error, sceneId, typed, onPick, onResum
 	);
 }
 
-function SceneSheet({
+export function Postcard({
+	scene,
+	lang,
+	on,
+	open,
+	onChoose,
+}: {
+	scene: SpeakSceneEntry;
+	lang: { id: string; tag: string };
+	on: boolean;
+	open: boolean;
+	onChoose: () => void;
+}) {
+	const tag = open
+		? "Unfinished"
+		: scene.why === "chapter"
+			? "This chapter"
+			: scene.why === "goal"
+				? "Your goal"
+				: null;
+	return (
+		<button
+			type="button"
+			onClick={onChoose}
+			aria-pressed={on}
+			data-scene-card={scene.id}
+			data-testid={`scene-${scene.id}`}
+			className={cn(
+				"group lanna-press relative flex h-full w-full flex-col rounded-xl p-2 pb-3 text-left transition-[background-color,box-shadow]",
+				"outline-none focus-visible:ring-2 focus-visible:ring-ring",
+				on
+					? "bg-well shadow-[0_0_0_1.5px_var(--color-teal-2)]"
+					: "bg-card shadow-[0_0_0_1px_var(--q-line)] hover:bg-well/60",
+			)}
+		>
+			<span
+				className={cn(
+					"block rounded-lg px-1 pt-1 transition-colors",
+					on ? "text-foreground" : "text-ink-3 group-hover:text-ink-2",
+				)}
+			>
+				<SceneArt id={scene.id} text={`${scene.title} ${scene.blurb}`} />
+			</span>
+			<span className="mt-1.5 flex items-center gap-2 px-1.5">
+				<span
+					className="min-w-0 flex-1 overflow-x-clip font-ui text-[15px] font-[600] tracking-[-0.01em] text-ellipsis whitespace-nowrap text-foreground"
+					lang={lang.tag}
+				>
+					{scene.title}
+				</span>
+				{scene.done > 0 && !open && (
+					<span
+						className="shrink-0 font-ui text-xs tabular-nums text-ink-3"
+						title={`Said ${scene.done === 1 ? "once" : `${scene.done} times`}`}
+					>
+						{scene.done}×
+					</span>
+				)}
+			</span>
+			<span className="mt-0.5 line-clamp-2 px-1.5 font-prose text-[13px] leading-snug text-ink-3">{scene.blurb}</span>
+			{(tag || on) && (
+				<span className="mt-2 flex flex-wrap gap-x-2 px-1.5 font-ui text-[11px] font-[600] tracking-[0.01em]">
+					{on && <span className="text-teal-2">On stage</span>}
+					{tag && <span className="text-ink-3">{tag}</span>}
+				</span>
+			)}
+		</button>
+	);
+}
+
+export function Stage({
+	ref,
 	scene,
 	lang,
 	state,
 	typed,
-	inline,
 	onPick,
 	onResume,
 }: {
+	ref: React.Ref<HTMLElement>;
 	scene: SpeakSceneEntry;
 	lang: { id: string; tag: string };
-	state: SpeakState | null;
+	state: SpeakState;
 	typed: boolean;
-	inline: boolean;
 	onPick: (id: string, typed: boolean) => void;
 	onResume: (id: string) => void;
 }) {
-	const canSpeak = !!state?.canSpeak;
-	// Without speech-to-text a line can only be typed, so the mic is not offered.
-	const byVoice = !!state?.stt;
+	const canSpeak = state.canSpeak;
+	const byVoice = !!state.stt;
 	const keyboardFirst = typed || !byVoice;
-	const unfinished = state?.unfinished?.scene === scene.id ? state.unfinished : null;
+	const unfinished = state.unfinished?.scene === scene.id ? state.unfinished : null;
 	const opening = scene.scripted ? scriptFor(scene.id, lang.id)?.turns[0]?.tutor : undefined;
-	const tid = (id: string) => (inline ? undefined : id);
 	const script = `/speak/tutor?scene=${scene.id}&mode=script`;
+	const why = whyLabel(scene.why);
+
 	const voice = (
 		<>
 			<MicIcon className="size-4" />
@@ -247,20 +291,18 @@ function SceneSheet({
 			Type it
 		</>
 	);
+	const enter = (
+		<kbd className={cn(KBD, "hidden bg-white/15 text-current shadow-none pointer-fine:inline-flex")}>Enter</kbd>
+	);
 
 	let actions: React.ReactNode;
 	if (unfinished) {
 		actions = (
 			<>
-				<button
-					type="button"
-					onClick={() => onResume(unfinished.id)}
-					className={PRIMARY}
-					data-testid={tid("speak-resume")}
-				>
+				<button type="button" onClick={() => onResume(unfinished.id)} className={PRIMARY} data-testid="speak-resume">
 					<RepeatIcon className="size-4" />
 					Carry on
-					<kbd className={cn(KBD, "hidden bg-white/15 text-current shadow-none pointer-fine:inline-flex")}>Enter</kbd>
+					{enter}
 				</button>
 				{canSpeak && (
 					<button type="button" onClick={() => onPick(scene.id, keyboardFirst)} className={SECONDARY}>
@@ -276,23 +318,23 @@ function SceneSheet({
 					type="button"
 					onClick={() => onPick(scene.id, keyboardFirst)}
 					className={PRIMARY}
-					data-testid={tid("speak-start")}
+					data-testid="speak-start"
 				>
 					{keyboardFirst ? keyboard : voice}
-					<kbd className={cn(KBD, "hidden bg-white/15 text-current shadow-none pointer-fine:inline-flex")}>Enter</kbd>
+					{enter}
 				</button>
 				{byVoice && (
 					<button
 						type="button"
 						onClick={() => onPick(scene.id, !keyboardFirst)}
 						className={SECONDARY}
-						data-testid={tid("speak-start-other")}
+						data-testid="speak-start-other"
 					>
 						{keyboardFirst ? voice : keyboard}
 					</button>
 				)}
 				{scene.scripted && (
-					<Link href={script} className={QUIET} data-testid={tid(`scene-script-${scene.id}`)}>
+					<Link href={script} className={QUIET} data-testid={`scene-script-${scene.id}`}>
 						<ListChecksIcon className="size-4" />
 						<CapLabel>Step by step</CapLabel>
 					</Link>
@@ -301,7 +343,7 @@ function SceneSheet({
 		);
 	} else if (scene.scripted) {
 		actions = (
-			<Link href={script} className={PRIMARY} data-testid={tid(`scene-script-${scene.id}`)}>
+			<Link href={script} className={PRIMARY} data-testid={`scene-script-${scene.id}`}>
 				<ListChecksIcon className="size-4" />
 				<CapLabel>Step by step</CapLabel>
 			</Link>
@@ -316,68 +358,39 @@ function SceneSheet({
 
 	return (
 		<article
-			className={cn(
-				inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lanna-rise border-l border-[var(--q-line)] pl-8",
-			)}
-			data-testid={tid("speak-sheet")}
+			ref={ref}
+			className="mt-7 grid scroll-mt-6 grid-cols-1 overflow-hidden rounded-2xl bg-well/50 shadow-[0_0_0_1px_var(--q-line)] @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]"
 			aria-label={scene.title}
+			data-testid="speak-sheet"
 		>
-			<div className={cn(inline ? "py-2" : "pt-1 pb-2")}>
-				{/* Opened under its row, the row already names the scene. */}
-				{!inline && (
-					<>
-						{scene.why && (
-							<p className="font-ui text-[13px] font-[550] text-teal-2">
-								{scene.why === "chapter" ? "Your chapter's scene" : "One of your goals"}
-							</p>
-						)}
-						<h2
-							className={cn(
-								"font-ui text-[30px] font-[600] tracking-[-0.028em] text-foreground @4xl:text-[34px]",
-								scene.why && "mt-1",
-							)}
-							lang={lang.tag}
-						>
-							{scene.title}
-						</h2>
-						<p className="mt-1 font-prose text-base text-ink-2">{scene.blurb}</p>
-					</>
-				)}
-
-				<dl
+			<div className="flex items-center justify-center px-6 pt-6 text-foreground @3xl:m-3 @3xl:mr-0 @3xl:rounded-xl @3xl:bg-card/60 @3xl:p-8 @3xl:shadow-[0_0_0_1px_var(--q-line)]">
+				<SceneArt id={scene.id} text={`${scene.title} ${scene.blurb}`} className="max-w-lg scale-110" />
+			</div>
+			<div className="lanna-rise flex flex-col px-6 pt-4 pb-6 @3xl:px-8 @3xl:pt-9 @3xl:pb-8">
+				{why && <p className="font-ui text-[13px] font-[550] text-teal-2">{why}</p>}
+				<h2
 					className={cn(
-						"grid gap-x-6 gap-y-3 font-prose text-[15px] @md:grid-cols-[7rem_minmax(0,1fr)]",
-						!inline && "mt-5 border-t border-border pt-5",
+						"font-ui text-[32px] leading-tight font-[600] tracking-[-0.028em] text-foreground",
+						why && "mt-1",
 					)}
+					lang={lang.tag}
 				>
-					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">You meet</dt>
-					<dd className="-mt-2 text-foreground @md:mt-0">{sceneCounterpart(scene.brief)}</dd>
-					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">Your part</dt>
-					<dd className="-mt-2 text-foreground @md:mt-0">{scene.task}</dd>
+					{scene.title}
+				</h2>
+				<p className="mt-1 font-prose text-base text-ink-2">{scene.blurb}</p>
+
+				<dl className="mt-5 grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 border-t border-[var(--q-line)] pt-5 font-prose text-[15px]">
+					<dt className="pt-px font-ui text-[13px] font-[550] text-ink-3">You meet</dt>
+					<dd className="text-foreground">{sceneCounterpart(scene.brief)}</dd>
+					<dt className="pt-px font-ui text-[13px] font-[550] text-ink-3">Your part</dt>
+					<dd className="text-foreground">{scene.task}</dd>
 				</dl>
 
-				{opening && (
-					<figure className="mt-6 rounded-xl bg-well p-4" aria-label="How it opens">
-						<figcaption className="font-ui text-xs font-[550] text-ink-3">It opens like this</figcaption>
-						<blockquote className="mt-2 max-w-[85%]">
-							<p className="font-prose text-lg font-[550] text-foreground" lang={lang.tag}>
-								{tutorLineText(opening)}
-							</p>
-							<p className="mt-0.5 font-prose text-[13px] text-ink-3">{opening.en}</p>
-						</blockquote>
-						{/* The learner's line is still empty: the answer line with its cursor (E59). */}
-						<div className="mt-3 flex items-center justify-end gap-2" aria-hidden="true">
-							<span className="font-ui text-xs text-ink-3">{keyboardFirst ? "you write" : "you say"}</span>
-							<span className="relative h-6 w-28 border-b-2 border-ink-4">
-								<span className="absolute bottom-1 left-1 h-4 w-0.5 rounded-full bg-teal" />
-							</span>
-						</div>
-					</figure>
-				)}
+				{opening && <Opening line={tutorLineText(opening)} en={opening.en} lang={lang.tag} typed={keyboardFirst} />}
 
 				<div className="mt-6 flex flex-wrap items-center gap-2">{actions}</div>
 
-				<p className="mt-4 font-ui text-xs text-ink-3" data-testid={tid("speak-history")}>
+				<p className="mt-4 font-ui text-xs text-ink-3" data-testid="speak-history">
 					{unfinished
 						? `Started and not finished: ${unfinished.turns} ${unfinished.turns === 1 ? "line" : "lines"} said so far.`
 						: scene.last
@@ -385,12 +398,61 @@ function SceneSheet({
 							: "Not said yet."}
 				</p>
 			</div>
-			{canSpeak && (
-				<p className="mt-5 border-t border-border pt-4 pb-1 font-prose text-[13px] text-ink-3">
-					{keyboardFirst ? "Type each line and press Enter." : "Press the mic, speak, press again."} A slip in an ending
-					comes back for you to fix; the rest waits for the end.
-				</p>
-			)}
 		</article>
+	);
+}
+
+function Opening({ line, en, lang, typed }: { line: string; en: string; lang: string; typed: boolean }) {
+	const [playing, setPlaying] = useState(false);
+	const [shown, setShown] = useState(false);
+	const listen = async () => {
+		setPlaying(true);
+		try {
+			await speak(line);
+		} finally {
+			setPlaying(false);
+		}
+	};
+	return (
+		<figure className="mt-6 rounded-xl bg-card p-4 shadow-[0_0_0_1px_var(--q-line)]" aria-label="How it opens">
+			<figcaption className="flex items-center justify-between gap-3 font-ui text-xs font-[550] text-ink-3">
+				<span>It opens like this</span>
+				<button
+					type="button"
+					onClick={() => void listen()}
+					className={cn(
+						"lanna-press -my-1 inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-ui text-xs font-[550] transition-colors",
+						"text-teal-2 hover:bg-well focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+					)}
+					aria-label="Listen to the first line"
+					data-testid="speak-listen"
+				>
+					<Volume2Icon className={cn("size-3.5", playing && "animate-pulse")} />
+					<CapLabel>{playing ? "Playing" : "Listen"}</CapLabel>
+				</button>
+			</figcaption>
+			<blockquote className="mt-2">
+				<p className="font-prose text-lg font-[550] text-foreground" lang={lang}>
+					{line}
+				</p>
+				{shown ? (
+					<p className="mt-0.5 font-prose text-[13px] text-ink-3">{en}</p>
+				) : (
+					<button
+						type="button"
+						onClick={() => setShown(true)}
+						className="mt-0.5 font-prose text-[13px] text-ink-3 underline decoration-dotted underline-offset-2 hover:text-ink-2"
+					>
+						Show the English
+					</button>
+				)}
+			</blockquote>
+			<div className="mt-3 flex items-center justify-end gap-2" aria-hidden="true">
+				<span className="font-ui text-xs text-ink-3">{typed ? "you write" : "you say"}</span>
+				<span className="relative h-6 w-28 border-b-2 border-ink-4">
+					<span className="lanna-caret absolute bottom-1 left-1 h-4 w-0.5 rounded-full bg-teal" />
+				</span>
+			</div>
+		</figure>
 	);
 }

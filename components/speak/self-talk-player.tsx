@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LoaderCircleIcon, MicIcon, RepeatIcon, SquareIcon } from "lucide-react";
+import { LoaderCircleIcon, RepeatIcon, SquareIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SpeakHeader } from "@/components/speak/speak-header";
+import { SelfTalkDeck } from "@/components/speak/self-talk-deck";
 import {
 	COLUMN,
 	Centered,
@@ -24,7 +24,6 @@ import {
 	endEnterBlocked,
 	onFocusedControl,
 } from "@/components/task-frame";
-import { KBD } from "@/components/ui/learn-buttons";
 import { speak, useActiveLanguage } from "@/components/speech";
 import { Recorder, micSupported, transcribeClip } from "@/components/speak/recorder";
 import { QIcon } from "@/components/quiet/icon";
@@ -47,11 +46,6 @@ interface Outcome {
 }
 
 const LONGEST_TAKE_MS = 300_000;
-
-const GROUPS = SELF_TALK_CATEGORIES.map((c) => ({
-	...c,
-	prompts: SELF_TALK_PROMPTS.filter((p) => p.category === c.id),
-})).filter((g) => g.prompts.length > 0);
 
 const categoryLabel = (p: SelfTalkPrompt) => SELF_TALK_CATEGORIES.find((c) => c.id === p.category)?.label ?? "";
 
@@ -194,7 +188,6 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 						];
 					if (next) {
 						setSelected(next.id);
-						document.querySelector(`[data-prompt-row="${next.id}"]`)?.scrollIntoView({ block: "nearest" });
 					}
 				} else if (e.key === "Enter") {
 					const t = e.target instanceof HTMLElement ? e.target : null;
@@ -267,25 +260,44 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 				</div>
 				<Dock testId="self-talk-dock">
 					<div className={cn(COLUMN, "flex min-h-24 items-center gap-4 py-4")}>
-						<button
-							type="button"
-							onClick={() => void finish()}
-							aria-label="Done talking"
-							className={cn(
-								"lanna-press relative flex size-16 shrink-0 items-center justify-center rounded-full text-sun-ink",
-								listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
-							)}
-							data-testid="self-talk-stop"
-						>
-							{listening && (
-								<span
-									className="absolute inset-0 rounded-full bg-miss/40"
-									style={{ transform: `scale(${1 + level * 0.6})` }}
-									aria-hidden="true"
+						<span className="relative flex size-[84px] shrink-0 items-center justify-center">
+							<svg viewBox="0 0 84 84" className="absolute inset-0 -rotate-90" aria-hidden="true">
+								<circle cx="42" cy="42" r="39" className="fill-none stroke-well" strokeWidth="3" />
+								<circle
+									cx="42"
+									cy="42"
+									r="39"
+									pathLength={1}
+									strokeDasharray="1 1"
+									strokeDashoffset={1 - Math.min(1, elapsed / prompt.targetSec)}
+									strokeLinecap="round"
+									className={cn(
+										"fill-none transition-[stroke-dashoffset] duration-700 ease-linear",
+										elapsed >= prompt.targetSec ? "stroke-teal-2" : "stroke-teal",
+									)}
+									strokeWidth="3"
 								/>
-							)}
-							<SquareIcon className="relative size-6 fill-current" />
-						</button>
+							</svg>
+							<button
+								type="button"
+								onClick={() => void finish()}
+								aria-label="Done talking"
+								className={cn(
+									"lanna-press relative flex size-16 shrink-0 items-center justify-center rounded-full text-sun-ink",
+									listening ? "bg-miss" : "bg-teal hover:bg-teal-2",
+								)}
+								data-testid="self-talk-stop"
+							>
+								{listening && (
+									<span
+										className="absolute inset-0 rounded-full bg-miss/40"
+										style={{ transform: `scale(${1 + level * 0.6})` }}
+										aria-hidden="true"
+									/>
+								)}
+								<SquareIcon className="relative size-6 fill-current" />
+							</button>
+						</span>
 						<div className="min-w-0 flex-1">
 							{listening ? (
 								<Meter level={level} />
@@ -312,165 +324,19 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 			</TaskFrame>
 		);
 
-	const sheet = (inline: boolean) => (
-		<PromptSheet
-			key={`${prompt.id}-${inline}`}
-			prompt={prompt}
-			lang={lang?.code}
-			inline={inline}
+	return (
+		<SelfTalkDeck
+			selected={prompt.id}
+			onSelect={setSelected}
 			onStart={() => void start()}
+			lang={lang?.code}
+			error={error}
 		/>
-	);
-
-	return (
-		<TaskFrame>
-			<div className="@container flex flex-1 flex-col overflow-y-auto">
-				<div className="mx-auto w-full max-w-5xl px-5 pt-[5vh] pb-12 @md:px-6">
-					<SpeakHeader
-						title="On your own"
-						lead="Pick a topic and talk until the clock reaches the goal. Nobody answers, nobody grades."
-					/>
-
-					{error && (
-						<p
-							className="mt-5 rounded-xl bg-miss-soft px-4 py-2 font-ui text-sm text-miss"
-							role="alert"
-							data-testid="self-talk-error"
-						>
-							{error}
-						</p>
-					)}
-
-					<div className="mt-7 grid grid-cols-[minmax(0,1fr)] items-start gap-x-8 gap-y-6 @3xl:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] @5xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
-						<div className="flex min-w-0 flex-col gap-6" data-testid="self-talk-prompts">
-							{GROUPS.map((g) => (
-								<section key={g.id} aria-label={g.label}>
-									<h2 className="q-sh !mb-1.5 px-3">{g.label}</h2>
-									<ul className="flex flex-col gap-1">
-										{g.prompts.map((p) => {
-											const on = p.id === prompt.id;
-											return (
-												<li key={p.id}>
-													<button
-														type="button"
-														onClick={() => setSelected(p.id)}
-														aria-current={on ? "true" : undefined}
-														data-prompt-row={p.id}
-														data-testid={`prompt-${p.id}`}
-														className={cn(
-															"lanna-press flex w-full min-w-0 items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors",
-															on ? "bg-well" : "hover:bg-well",
-														)}
-													>
-														<span className="min-w-0 flex-1">
-															<span
-																className={cn(
-																	"block truncate font-ui text-[15px] font-[600] tracking-[-0.01em]",
-																	on ? "text-foreground" : "text-ink-2",
-																)}
-																lang={lang?.code}
-															>
-																{p.title}
-															</span>
-															<span className="block truncate font-prose text-[13px] text-ink-3">{p.titleEn}</span>
-														</span>
-														<span className="shrink-0 font-ui text-xs tabular-nums text-ink-3">{p.level}</span>
-													</button>
-													{on && <div className="mt-2 mb-4 @3xl:hidden">{sheet(true)}</div>}
-												</li>
-											);
-										})}
-									</ul>
-								</section>
-							))}
-							<p className="hidden px-3 font-ui text-xs text-ink-3 pointer-fine:@3xl:block">
-								<kbd className={KBD}>↑</kbd> <kbd className={KBD}>↓</kbd> pick · <kbd className={KBD}>Enter</kbd> starts
-								· <kbd className={KBD}>Esc</kbd> leaves
-							</p>
-						</div>
-						<div className="sticky top-6 hidden @3xl:block">{sheet(false)}</div>
-					</div>
-
-					<p className="mt-12 max-w-2xl font-ui text-xs text-ink-3">
-						The time you talk counts toward Speaking. With a speech-to-text key the app also listens for the words on
-						the list; without one, only the time counts.
-					</p>
-				</div>
-			</div>
-		</TaskFrame>
-	);
-}
-
-function PromptSheet({
-	prompt,
-	lang,
-	inline,
-	onStart,
-}: {
-	prompt: SelfTalkPrompt;
-	lang?: string;
-	inline: boolean;
-	onStart: () => void;
-}) {
-	const tid = (id: string) => (inline ? undefined : id);
-	return (
-		<article
-			className={cn(
-				inline ? "ml-3 border-l border-[var(--q-line-2)] pl-3" : "lanna-rise border-l border-[var(--q-line)] pl-8",
-			)}
-			data-testid={tid("self-talk-sheet")}
-			aria-label={prompt.title}
-		>
-			<div className={cn(inline ? "py-2" : "pt-1 pb-2")}>
-				{!inline && (
-					<>
-						<p className="font-ui text-[13px] font-[550] text-teal-2">
-							{categoryLabel(prompt)} · {prompt.level}
-						</p>
-						<h2
-							className="mt-1 font-ui text-[30px] font-[600] tracking-[-0.028em] text-foreground @4xl:text-[34px]"
-							lang={lang}
-						>
-							{prompt.title}
-						</h2>
-						<p className="mt-1 font-prose text-base text-ink-2">{prompt.titleEn}</p>
-					</>
-				)}
-
-				<dl
-					className={cn(
-						"grid gap-x-6 gap-y-3 font-prose text-[15px] @md:grid-cols-[7rem_minmax(0,1fr)]",
-						!inline && "mt-5 border-t border-border pt-5",
-					)}
-				>
-					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">Your part</dt>
-					<dd className="-mt-2 @md:mt-0">
-						<span className="block text-foreground" lang={lang}>
-							{prompt.prompt}
-						</span>
-						<span className="mt-0.5 block text-[13px] text-ink-3">{prompt.promptEn}</span>
-					</dd>
-					<dt className="font-ui text-[13px] font-[550] text-ink-3 @md:pt-px">Goal</dt>
-					<dd className="-mt-2 text-foreground @md:mt-0">
-						{clockOf(prompt.targetSec)} out loud, without stopping to translate
-					</dd>
-				</dl>
-
-				<div className="mt-6 flex flex-wrap items-center gap-2">
-					<button type="button" onClick={onStart} className={PRIMARY} data-testid={tid("self-talk-start")}>
-						<MicIcon className="size-4" />
-						Start talking
-						<kbd className={cn(KBD, "hidden bg-white/15 text-current shadow-none pointer-fine:inline-flex")}>Enter</kbd>
-					</button>
-				</div>
-
-				<Help prompt={prompt} lang={lang} />
-			</div>
-		</article>
 	);
 }
 
 function Help({ prompt, lang, stuck = false }: { prompt: SelfTalkPrompt; lang?: string; stuck?: boolean }) {
+	if (prompt.starters.length === 0 && prompt.suggestedWords.length === 0) return null;
 	return (
 		<>
 			<div className="mt-7">

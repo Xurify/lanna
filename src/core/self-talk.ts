@@ -19,7 +19,7 @@
 import type { Cefr } from "./curriculum.ts";
 import { foldDiacritics } from "./language.ts";
 
-export type SelfTalkCategory = "surroundings" | "routine" | "picture" | "opinion" | "story";
+export type SelfTalkCategory = "surroundings" | "routine" | "picture" | "opinion" | "story" | "own";
 
 export interface UsefulChunk {
 	sk: string;
@@ -260,7 +260,38 @@ export function getSelfTalkPrompts(options?: { level?: Cefr; category?: SelfTalk
 }
 
 /** Retrieve a specific prompt by its unique ID. */
+export const OWN_TOPIC_MAX = 80;
+const OWN_PREFIX = "own:";
+
+export function ownTopicId(topic: string): string {
+	return `${OWN_PREFIX}${encodeURIComponent(topic.trim().slice(0, OWN_TOPIC_MAX))}`;
+}
+
+export function ownTopicPrompt(topic: string): SelfTalkPrompt | undefined {
+	const title = topic.trim().slice(0, OWN_TOPIC_MAX);
+	if (!title) return undefined;
+	return {
+		id: ownTopicId(title),
+		category: "own",
+		level: "A2",
+		title,
+		titleEn: "Your own topic",
+		prompt: title,
+		promptEn: "Say everything you can about it, out loud.",
+		targetSec: 90,
+		starters: [],
+		suggestedWords: [],
+	};
+}
+
 export function getSelfTalkPromptById(id: string): SelfTalkPrompt | undefined {
+	if (id.startsWith(OWN_PREFIX)) {
+		try {
+			return ownTopicPrompt(decodeURIComponent(id.slice(OWN_PREFIX.length)));
+		} catch {
+			return undefined;
+		}
+	}
 	return SELF_TALK_PROMPTS.find((p) => p.id === id);
 }
 

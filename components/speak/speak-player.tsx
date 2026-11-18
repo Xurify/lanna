@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { SpeedToggle, speak, useActiveLanguage } from "@/components/speech";
+import { SpeedToggle, speak, useActiveLanguage, useVoicing } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import {
 	ACTIVE_TIME_HOW,
@@ -54,6 +54,7 @@ import { Recorder, micSupported, scoreClip, transcribeClip } from "@/components/
 import { readOrigin } from "@/components/origin";
 import { PronChip, PronWorkOn } from "@/components/speak/pron";
 import { SceneBoard } from "@/components/speak/scene-board";
+import { InkThinking, VoiceArcs } from "@/components/speak/speak-motion";
 import { SettingsLink } from "@/components/settings/settings-link";
 import {
 	PRON_CLEAR,
@@ -434,7 +435,7 @@ export function SpeakPlayer({
 		return () => window.removeEventListener("keydown", onKey);
 	}, [phase, listening, session, router, toggleMic]);
 
-	if (phase === "pick")
+	if (phase === "pick") {
 		return (
 			<SceneBoard
 				state={state}
@@ -450,6 +451,7 @@ export function SpeakPlayer({
 				onRetry={() => void load()}
 			/>
 		);
+	}
 
 	if (phase === "starting" || !session) {
 		return (
@@ -507,7 +509,10 @@ export function SpeakPlayer({
 
 					<ol className="flex flex-col gap-3" data-testid="speak-turns" aria-live="polite">
 						{session.turns.map((t, i) => (
-							<li key={`${t.at}-${i}`} className={cn("flex", t.role === "learner" ? "justify-end" : "justify-start")}>
+							<li
+								key={`${t.at}-${i}`}
+								className={cn("speak-in flex", t.role === "learner" ? "justify-end" : "justify-start")}
+							>
 								{t.role === "tutor" ? (
 									<TutorBubble
 										turn={t}
@@ -521,9 +526,10 @@ export function SpeakPlayer({
 							</li>
 						))}
 						{sending && (
-							<li className="flex justify-start" data-testid="speak-thinking">
-								<span className="inline-flex items-center gap-2 rounded-lg rounded-bl-md bg-well px-4 py-3 font-ui text-sm text-muted-foreground">
-									<LoaderCircleIcon className="size-4 animate-spin" />…
+							<li className="speak-in flex justify-start" data-testid="speak-thinking">
+								<span className="inline-flex items-center gap-2.5 rounded-lg rounded-bl-md bg-well px-4 py-3 font-ui text-sm text-ink-3">
+									<InkThinking className="text-teal-2" />
+									The tutor is answering
 								</span>
 							</li>
 						)}
@@ -735,6 +741,7 @@ function TutorBubble({
 	onMeaning: () => void;
 }) {
 	const lang = useActiveLanguage();
+	const voicing = useVoicing() === turn.text;
 	return (
 		<div className="max-w-[85%]">
 			{turn.prompt && (
@@ -764,16 +771,18 @@ function TutorBubble({
 				className={cn(
 					"rounded-lg rounded-bl-md bg-well px-4 py-3",
 					last && "lanna-rise shadow-[0_0_0_1.5px_var(--q-teal)]",
+					voicing && "speak-voicing",
 				)}
+				data-voicing={voicing || undefined}
 			>
 				<div className="flex items-start gap-2">
 					<button
 						type="button"
 						onClick={() => void speak(turn.text).catch(() => {})}
-						aria-label="Play"
+						aria-label={voicing ? "Playing" : "Play"}
 						className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-wash text-teal-2 hover:bg-well-2"
 					>
-						<Volume2Icon className="size-4" strokeWidth={1.6} />
+						{voicing ? <VoiceArcs active className="h-4 w-4" /> : <Volume2Icon className="size-4" strokeWidth={1.6} />}
 					</button>
 					<p className={cn("font-prose text-foreground", last ? "text-2xl leading-snug" : "text-lg")} lang={lang?.code}>
 						{turn.text}

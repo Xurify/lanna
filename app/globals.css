@@ -1491,3 +1491,91 @@ html[data-sidebar-resizing] .sidebar-motion {
 .lanna-fade-out {
 	mask-image: linear-gradient(to bottom, #000 calc(100% - 9rem), transparent calc(100% - 2rem));
 }
+
+@keyframes speak-arc {
+	0%,
+	100% {
+		opacity: 0.25;
+		transform: translateX(0) scale(0.94);
+	}
+	45% {
+		opacity: 1;
+		transform: translateX(1.5px) scale(1);
+	}
+}
+@keyframes speak-dot {
+	0%,
+	100% {
+		opacity: 0.35;
+		transform: translateY(0);
+	}
+	40% {
+		opacity: 1;
+		transform: translateY(-2px);
+	}
+}
+@keyframes speak-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+@keyframes speak-glow {
+	0%,
+	100% {
+		box-shadow: 0 0 0 1.5px var(--q-teal);
+	}
+	50% {
+		box-shadow:
+			0 0 0 1.5px var(--q-teal),
+			0 0 0 5px color-mix(in srgb, var(--q-teal) 18%, transparent);
+	}
+}
+@keyframes speak-lit {
+	0% {
+		transform: scale(1);
+	}
+	40% {
+		transform: scale(1.08);
+	}
+}
+.speak-arc {
+	transform-box: fill-box;
+	transform-origin: left center;
+	animation: speak-arc 1100ms var(--ease-in-out) calc(var(--i, 0) * 140ms) infinite;
+}
+.speak-dot {
+	transform-box: fill-box;
+	animation: speak-dot 1000ms var(--ease-in-out) calc(var(--i, 0) * 160ms) infinite;
+}
+.speak-in > * {
+	animation: speak-in 420ms var(--ease-out) calc(min(var(--i, 0), 12) * 45ms) both;
+}
+.speak-voicing {
+	animation: speak-glow 1400ms var(--ease-in-out) infinite;
+}
+.speak-lit {
+	animation: speak-lit 380ms var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+	:is(.speak-arc, .speak-dot, .speak-in > *, .speak-voicing, .speak-lit) {
+		animation: none;
+	}
+	.speak-arc {
+		opacity: 1;
+	}
+}
+@keyframes speak-deal {
+	from {
+		opacity: 0;
+		transform: translateX(24px) rotate(2deg);
+	}
+}
+.speak-deal {
+	animation: speak-deal 380ms var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+	.speak-deal {
+		animation: none;
+	}
+}

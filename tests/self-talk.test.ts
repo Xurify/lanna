@@ -13,6 +13,7 @@ import {
 	SELF_TALK_CATEGORIES,
 	getSelfTalkPrompts,
 	getSelfTalkPromptById,
+	ownTopicId,
 	getRandomSelfTalkPrompt,
 	calculateSelfTalkXp,
 	findUsedSuggestedWords,
@@ -119,4 +120,15 @@ test("self-talk: server completion records active minutes and XP into day ledger
 	const day = progress.days[todayKey];
 	assert.equal(day?.speaks, 1);
 	assert.ok((day?.minutesBy?.speak ?? 0) > 1.0, "Should add over 1 minute of active speaking time");
+});
+
+test("a topic the learner writes is a prompt of its own, and finishing it counts", () => {
+	const id = ownTopicId("  Môj víkend na horách  ");
+	const prompt = getSelfTalkPromptById(id);
+	assert.equal(prompt?.title, "Môj víkend na horách");
+	assert.equal(prompt?.category, "own");
+	assert.equal(getSelfTalkPromptById("own:%E0%A4%A"), undefined);
+	const outcome = completeSelfTalk({ promptId: id, activeSec: 95 });
+	assert.equal(outcome.promptId, id);
+	assert.equal(outcome.metTarget, true);
 });
