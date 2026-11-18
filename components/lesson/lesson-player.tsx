@@ -32,6 +32,7 @@ import {
 	ZapIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CapLabel } from "@/components/ui/cap-label";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
@@ -2449,8 +2450,10 @@ function RepStrip({ reps }: { reps: Rep[] }) {
 				<span className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
 					{keys.map((k) => (
 						<span key={k.kind} className="flex items-center gap-1.5">
-							<Mark kind={k.kind} className="size-2.5 rounded-[2px]" />
-							{k.n} {k.kind}
+							<Mark kind={k.kind} className="size-2.5 shrink-0 rounded-[2px]" />
+							<CapLabel>
+								{k.n} {k.kind}
+							</CapLabel>
 						</span>
 					))}
 				</span>

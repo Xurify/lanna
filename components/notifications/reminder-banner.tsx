@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { BellIcon, SparklesIcon, XIcon, ArrowRightIcon } from "lucide-react";
 import type { ScheduledNudge } from "@/src/core";
 import { CountryFlag } from "@/components/ui/country-flag";
-import { switchLanguage } from "@/components/switch-language";
 import { subscribeToBannerAlerts } from "./notification-dispatcher.ts";
+import { openNudge } from "./notification-store.ts";
 
 export function ReminderBanner() {
 	const [activeNudge, setActiveNudge] = useState<ScheduledNudge | null>(null);
@@ -30,20 +30,9 @@ export function ReminderBanner() {
 	const isSmart = activeNudge.source === "smart_trend";
 	const isUrgent = activeNudge.urgent;
 
-	const handleAction = async () => {
-		const nudge = activeNudge;
+	const handleAction = () => {
 		setActiveNudge(null);
-		const targetPath =
-			nudge.href ?? (nudge.taskKind === "listen" ? "/listen" : `/#task-${encodeURIComponent(nudge.taskKind ?? "")}`);
-		if (nudge.languageId) {
-			try {
-				await switchLanguage(nudge.languageId, nudge.languageName ?? nudge.languageId, targetPath);
-			} catch {
-				window.location.assign(targetPath);
-			}
-		} else {
-			window.location.assign(targetPath);
-		}
+		openNudge(activeNudge);
 	};
 
 	return (
@@ -86,7 +75,7 @@ export function ReminderBanner() {
 					<div className="mt-2.5">
 						<button
 							type="button"
-							onClick={() => void handleAction()}
+							onClick={handleAction}
 							className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
 						>
 							<span>Start {activeNudge.taskTitle}</span>

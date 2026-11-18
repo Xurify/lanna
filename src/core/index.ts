@@ -142,6 +142,7 @@ export * from "./daylog.ts";
 export * from "./rules-map.ts";
 export * from "./line.ts";
 export * from "./reminders.ts";
+export * from "./notification-log.ts";
 export * from "./stage.ts";
 export * from "./self-talk.ts";
 export * from "./islands.ts";
