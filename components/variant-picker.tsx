@@ -56,6 +56,10 @@ export function VariantPicker({ groups }: { groups: VariantGroup[] }) {
 	};
 
 	useEffect(() => {
+		if (window.innerWidth < 900) setOpen(false);
+	}, []);
+
+	useEffect(() => {
 		if (motion) document.documentElement.dataset.speakMotion = motion;
 		return () => {
 			delete document.documentElement.dataset.speakMotion;
