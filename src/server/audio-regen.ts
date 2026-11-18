@@ -10,13 +10,12 @@
  * audio/replaced/<stamp>/ and the new clip takes its index line.
  */
 
-import fs from "node:fs";
-import path from "node:path";
-import { addedLanguageIds, PATHS } from "../../config.ts";
-import { languageByCode, type LanguageInfo } from "../core/language.ts";
+import { addedLanguageIds } from "../../config.ts";
+import { languageByCode, languageById, type LanguageInfo } from "../core/language.ts";
 import { profileLanguage } from "./active-language.ts";
-import { readAudioIndex, storeAudioClip, type AudioClipEntry } from "../store/corpus.ts";
-import { elevenLabs, elevenLabsModelsFor, elevenLabsVoiceFor, latestElevenLabsModel } from "./tts.ts";
+import { getSoundNotes, soundGuideWords } from "../core/sound-notes.ts";
+import { audioKey, findAudioClip, readAudioIndex, setAsideAudioClip, storeAudioClip } from "../store/corpus.ts";
+import { elevenLabs, elevenLabsModelsFor, elevenLabsVoiceFor, keptByElevenLabs, latestElevenLabsModel } from "./tts.ts";
 import { NARRATOR_VOICE } from "./voices.ts";
 
 /** ElevenLabs bills text to speech by the character: one credit a character
@@ -30,7 +29,7 @@ type RegenReason = "older model" | "made without ElevenLabs" | "not made yet";
 
 export interface RegenItem {
 	/** `file` is empty for a clip that was never made. */
-	entry: AudioClipEntry & { text: string };
+	entry: { key: string; lang: string; voice: string; text: string; file: string };
 	lang: LanguageInfo;
 	reason: RegenReason;
 	chars: number;
@@ -89,6 +88,41 @@ export function regenPlan(): RegenPlan {
 	return { model, items, chars: items.reduce((n, i) => n + i.chars, 0), kept };
 }
 
+const SOUND_GUIDE_LANGUAGES = ["slovak", "russian", "estonian"];
+
+/** Every word the Sound guide plays that ElevenLabs has not read yet, in the
+ *  voice the guide asks for (`prefer=elevenlabs`, the language's default voice). */
+export function soundGuidePlan(): RegenPlan {
+	knownLanguages();
+	const items: RegenItem[] = [];
+	const kept: Record<string, number> = {};
+	const keep = (why: string, n = 1) => (kept[why] = (kept[why] ?? 0) + n);
+	for (const id of SOUND_GUIDE_LANGUAGES) {
+		const lang = languageById(id);
+		const words = soundGuideWords(id);
+		if (!lang || !getSoundNotes(id)) continue;
+		if (elevenLabsModelsFor(lang.code).length === 0 || !elevenLabsVoiceFor("female", lang.code)) {
+			keep(`no ElevenLabs voice for ${lang.english} words (Edge)`, words.length);
+			continue;
+		}
+		for (const text of words) {
+			const key = audioKey(lang.code, "female", text);
+			if (keptByElevenLabs(key, lang.code)) {
+				keep("already read by ElevenLabs");
+				continue;
+			}
+			const hit = findAudioClip(key);
+			items.push({
+				entry: { key, lang: lang.code, voice: "female", text, file: hit?.file ?? "" },
+				lang,
+				reason: hit ? "made without ElevenLabs" : "not made yet",
+				chars: [...text].length,
+			});
+		}
+	}
+	return { model: latestElevenLabsModel(), items, chars: items.reduce((n, i) => n + i.chars, 0), kept };
+}
+
 /** The cost of a plan in credits and in dollars at the low and high API rate. */
 export function regenCost(chars: number): { credits: number; usdLow: number; usdHigh: number } {
 	return {
@@ -119,8 +153,7 @@ export async function regenerate(
 	plan: RegenPlan,
 	opts: { maxChars?: number; concurrency?: number; now?: Date; onClip?: (item: RegenItem, ok: boolean) => void } = {},
 ): Promise<RegenResult> {
-	const stamp = (opts.now ?? new Date()).toISOString().replace(/[:.]/g, "-");
-	const replacedDir = path.join(PATHS.audio, "replaced", stamp);
+	const now = opts.now ?? new Date();
 	const result: RegenResult = { done: 0, chars: 0, failed: [] };
 	const queue: RegenItem[] = [];
 	let budget = opts.maxChars ?? Infinity;
@@ -146,12 +179,7 @@ export async function regenerate(
 				lang,
 			);
 			if (!spoken || spoken.data.length === 0) throw new Error("ElevenLabs returned nothing");
-			const old = entry.file ? path.join(PATHS.audio, entry.file) : null;
-			if (old && fs.existsSync(old)) {
-				const moved = path.join(replacedDir, entry.file);
-				fs.mkdirSync(path.dirname(moved), { recursive: true });
-				fs.renameSync(old, moved);
-			}
+			setAsideAudioClip(entry, now);
 			storeAudioClip({
 				key: entry.key,
 				lang: entry.lang,
