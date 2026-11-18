@@ -10,7 +10,7 @@
 
 import { regenCost, USD_PER_1K_CHARS } from "../src/server/audio-regen.ts";
 import { keyValue } from "../src/server/keys.ts";
-import { startStoryAudio, storyAudioPlan } from "../src/server/story-audio.ts";
+import { revoiceStories, startStoryAudio, storyAudioPlan } from "../src/server/story-audio.ts";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => {
@@ -21,6 +21,11 @@ const yes = args.includes("--yes");
 const maxChars = flag("--max-chars") ? Number(flag("--max-chars")) : undefined;
 const concurrency = flag("--concurrency") ? Number(flag("--concurrency")) : 3;
 
+if (yes && keyValue("ELEVENLABS_API_KEY")) {
+	const revoiced = await revoiceStories();
+	if (revoiced)
+		console.log(`New voices for the cast of ${revoiced} stories (their old voices are gone from ElevenLabs)`);
+}
 const plan = storyAudioPlan();
 const money = (n: number) => `$${n.toFixed(2)}`;
 const cost = regenCost(plan.chars);

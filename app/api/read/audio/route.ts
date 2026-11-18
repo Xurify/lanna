@@ -5,7 +5,7 @@
  * (src/server/story-audio.ts); 409 while a batch runs or with no key.
  */
 
-import { startStoryAudio, StoryAudioError, storyAudioStatus } from "@/src/server";
+import { revoiceStories, startStoryAudio, StoryAudioError, storyAudioStatus } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,8 @@ export function GET() {
 	return Response.json(storyAudioStatus());
 }
 
-export function POST() {
+export async function POST() {
+	await revoiceStories();
 	try {
 		void startStoryAudio();
 	} catch (err) {

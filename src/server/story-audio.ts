@@ -16,7 +16,32 @@ import { regenCost, regenerate, type RegenItem, type RegenPlan } from "./audio-r
 import { activeLanguage } from "./active-language.ts";
 import { keyValue } from "./keys.ts";
 import { library } from "./reading.ts";
+import { assignVoices, availableVoiceIds } from "./voices.ts";
 import { elevenLabsModelsFor, elevenLabsVoiceFor, latestElevenLabsModel, ttsCacheKey, ttsVoice } from "./tts.ts";
+
+/** A kept story whose cast speaks in voices the ElevenLabs account no
+ *  longer lists (the retired premade set) gets voices it does list; a cast
+ *  member whose voice still works keeps it, so their clips stay. Returns
+ *  how many stories changed. Does nothing when the voice list cannot be read. */
+export async function revoiceStories(): Promise<number> {
+	const available = await availableVoiceIds();
+	if (!available) return 0;
+	let changed = 0;
+	for (const entry of library()) {
+		const story = storyStore.get(entry.id);
+		if (!story?.cast?.some((c) => c.voice && !available.has(c.voice))) continue;
+		const kept = new Set(story.cast.map((c) => c.voice).filter((v): v is string => !!v && available.has(v)));
+		const free = new Set([...available].filter((id) => !kept.has(id)));
+		const lost = story.cast.filter((c) => !c.voice || !available.has(c.voice));
+		const fresh = new Map(assignVoices(lost, free).map((c) => [c.name, c.voice]));
+		storyStore.replace({
+			...story,
+			cast: story.cast.map((c) => (fresh.has(c.name) ? { ...c, voice: fresh.get(c.name) } : c)),
+		});
+		changed++;
+	}
+	return changed;
+}
 
 export interface StoryAudioPlan extends RegenPlan {
 	stories: number;
