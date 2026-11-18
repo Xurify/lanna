@@ -421,10 +421,7 @@ export function Today({
 								<ChooseVideo
 									current={watchTask?.href ? new URLSearchParams(watchTask.href.split("?")[1]).get("id") : null}
 									onClose={closeChooser}
-									onChosen={() => {
-										closeChooser();
-										load();
-									}}
+									onChosen={(id) => router.push(`/watch?id=${id}`)}
 								/>
 							)}
 
@@ -647,30 +644,31 @@ function UpNext({
 						</p>
 					)}
 					{meta && <p className="q-rv-meta">{meta}</p>}
-				</div>
-				<div className="flex shrink-0 items-center gap-2 @max-xl:mt-3.5 @max-xl:flex-col-reverse @max-xl:items-stretch">
 					{onChooseVideo && (
-						<button
-							type="button"
-							className="q-btn ghost @max-xl:h-11 @max-xl:text-[15px]"
-							onClick={onChooseVideo}
-							data-testid="plan-choose-video"
-						>
-							Change
-						</button>
+						<p className="q-rv-meta">
+							<button
+								type="button"
+								onClick={onChooseVideo}
+								aria-haspopup="dialog"
+								data-testid="plan-choose-video"
+								className="font-[550] text-ink-2 underline decoration-[var(--q-dash)] underline-offset-2 hover:text-foreground"
+							>
+								Pick another video
+							</button>
+						</p>
 					)}
-					<button
-						type="button"
-						className="q-btn primary @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]"
-						onClick={onOpen}
-						disabled={busy}
-					>
-						Start<span className="@xl:hidden"> {taskLabel(task)}</span>
-						<kbd className="q-kbd pointer-coarse:hidden">
-							<QIcon name="enter" />
-						</kbd>
-					</button>
 				</div>
+				<button
+					type="button"
+					className="q-btn primary @max-xl:mt-3.5 @max-xl:h-11 @max-xl:w-full @max-xl:text-[15px]"
+					onClick={onOpen}
+					disabled={busy}
+				>
+					Start<span className="@xl:hidden"> {taskLabel(task)}</span>
+					<kbd className="q-kbd pointer-coarse:hidden">
+						<QIcon name="enter" />
+					</kbd>
+				</button>
 			</div>
 		</article>
 	);

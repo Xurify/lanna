@@ -50,7 +50,7 @@ export function DayPath({
 	busy: boolean;
 	onStart: (x: PlanStep) => void;
 	renderNext: (x: PlanStep) => React.ReactNode;
-	/** Opens the picker for the video a Watch step shows. */
+	/** What a Watch row does instead of starting: lets the learner pick the video first. */
 	onChooseVideo?: () => void;
 }) {
 	const stops: Array<{ lang: DayLanguage | null; steps: PlanStep[] }> = groups ?? [{ lang: null, steps }];
@@ -145,39 +145,26 @@ export function DayPath({
 														x.done ? "bg-teal" : "bg-background shadow-[inset_0_0_0_2px_var(--q-box)]",
 													)}
 												/>
-												<div className="-ml-2 flex w-[calc(100%+8px)] items-center gap-1">
-													<button
-														type="button"
-														disabled={busy}
-														onClick={() => onStart(x)}
-														className="flex min-w-0 flex-1 items-baseline gap-3 rounded-lg px-2 py-2 text-left hover:bg-well pointer-coarse:py-3"
+												<button
+													type="button"
+													disabled={busy}
+													onClick={() => (onChooseVideo && choosable(x) ? onChooseVideo() : onStart(x))}
+													aria-haspopup={onChooseVideo && choosable(x) ? "dialog" : undefined}
+													className="-ml-2 flex w-[calc(100%+8px)] items-baseline gap-3 rounded-lg px-2 py-2 text-left hover:bg-well pointer-coarse:py-3"
+												>
+													<span
+														className={cn(
+															"min-w-0 flex-1 truncate text-[14.5px]",
+															x.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground",
+														)}
+														title={stepTitle(x)}
 													>
-														<span
-															className={cn(
-																"min-w-0 flex-1 truncate text-[14.5px]",
-																x.done ? "text-ink-3 line-through decoration-[var(--q-dash)]" : "text-foreground",
-															)}
-															title={stepTitle(x)}
-														>
-															{stepTitle(x)}
-														</span>
-														<span className="shrink-0 text-[12px] text-ink-3 @max-sm:hidden">{stepLabel(x)}</span>
-														<span className="q-num w-11 shrink-0 text-right text-[12px] text-ink-3">
-															{x.minutes} min
-														</span>
-														<span className="sr-only">{x.done ? "Done" : "To do"}</span>
-													</button>
-													{onChooseVideo && choosable(x) && (
-														<button
-															type="button"
-															onClick={onChooseVideo}
-															data-testid="plan-choose-video"
-															className="lanna-press inline-flex h-7 shrink-0 items-center rounded-md px-2 text-[12.5px] font-[550] text-ink-2 hover:bg-well hover:text-foreground pointer-coarse:h-11"
-														>
-															Change
-														</button>
-													)}
-												</div>
+														{stepTitle(x)}
+													</span>
+													<span className="shrink-0 text-[12px] text-ink-3 @max-sm:hidden">{stepLabel(x)}</span>
+													<span className="q-num w-11 shrink-0 text-right text-[12px] text-ink-3">{x.minutes} min</span>
+													<span className="sr-only">{x.done ? "Done" : "To do"}</span>
+												</button>
 											</li>
 										),
 									)}

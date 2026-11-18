@@ -8,13 +8,17 @@ import { Poster } from "@/components/watch/thumb";
 import { Known } from "@/components/watch/video-card";
 import { coverageKind, formatClock, type VideoLibraryEntry, type WatchState } from "@/src/core";
 
-/** The videos in the library a plan can show: not watched yet first, newest first in each group. */
-function inPickOrder(library: VideoLibraryEntry[]): VideoLibraryEntry[] {
-	const newest = [...library].reverse();
-	return [...newest.filter((v) => v.watches === 0), ...newest.filter((v) => v.watches > 0)];
+/** The plan's video first, then the ones not watched yet, then the rest; newest first in each group. */
+function inPickOrder(library: VideoLibraryEntry[], current: string | null): VideoLibraryEntry[] {
+	const rest = [...library].reverse().filter((v) => v.id !== current);
+	return [
+		...library.filter((v) => v.id === current),
+		...rest.filter((v) => v.watches === 0),
+		...rest.filter((v) => v.watches > 0),
+	];
 }
 
-/** Pick which of your videos today's plan shows. */
+/** Pick which of your videos to watch today: the pick starts and stays in today's plan. */
 export function ChooseVideo({
 	current,
 	onClose,
@@ -23,7 +27,8 @@ export function ChooseVideo({
 	/** The video the plan shows now. */
 	current: string | null;
 	onClose: () => void;
-	onChosen: () => void;
+	/** The video is today's pick now; open it. */
+	onChosen: (id: string) => void;
 }) {
 	const [library, setLibrary] = useState<VideoLibraryEntry[] | null>(null);
 	const [failed, setFailed] = useState(false);
@@ -35,9 +40,9 @@ export function ChooseVideo({
 				if (!r.ok) throw new Error(String(r.status));
 				return r.json() as Promise<WatchState>;
 			})
-			.then((w) => setLibrary(inPickOrder(w.library)))
+			.then((w) => setLibrary(inPickOrder(w.library, current)))
 			.catch(() => setFailed(true));
-	}, []);
+	}, [current]);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -51,7 +56,7 @@ export function ChooseVideo({
 	}, [onClose]);
 
 	const choose = (id: string) => {
-		if (id === current) return onClose();
+		if (id === current) return onChosen(id);
 		setSaving(id);
 		setFailed(false);
 		void fetch("/api/watch", {
@@ -61,7 +66,7 @@ export function ChooseVideo({
 		})
 			.then((r) => {
 				if (!r.ok) throw new Error(String(r.status));
-				onChosen();
+				onChosen(id);
 			})
 			.catch(() => {
 				setSaving(null);
@@ -83,7 +88,7 @@ export function ChooseVideo({
 							<h2 id="choose-video-title" className="text-[17px] font-semibold tracking-[-0.01em]">
 								What to watch today
 							</h2>
-							<p className="mt-0.5 text-[13.5px] text-ink-3">Your videos, the ones you have not watched first.</p>
+							<p className="mt-0.5 text-[13.5px] text-ink-3">Pick one to start it. It stays in today&apos;s plan.</p>
 						</header>
 						<div className="min-h-0 flex-1 overflow-y-auto px-3 pb-2">
 							{failed && (
@@ -114,6 +119,7 @@ export function ChooseVideo({
 													type="button"
 													disabled={saving !== null}
 													aria-current={isCurrent ? "true" : undefined}
+													autoFocus={isCurrent}
 													onClick={() => choose(v.id)}
 													data-testid="choose-video-item"
 													className={cn(
@@ -142,7 +148,7 @@ export function ChooseVideo({
 															{v.watches > 0 ? ` · watched ${v.watches}×` : ""}
 														</span>
 													</span>
-													{saving === v.id && <span className="shrink-0 text-[12px] text-ink-3">Saving…</span>}
+													{saving === v.id && <span className="shrink-0 text-[12px] text-ink-3">Opening…</span>}
 												</button>
 											</li>
 										);
