@@ -78,6 +78,7 @@ Optional speech keys (Settings → API keys → Speech, or `.env.local`):
   - Voice: `ELEVENLABS_VOICE_ID_SK` or `ELEVENLABS_VOICE_ID`. For another language, `ELEVENLABS_VOICE_ID_<CODE>` (for example `ELEVENLABS_VOICE_ID_ET`); without one, single words and the tutor's lines in that language use Edge.
   - Model: `eleven_v4` for every language (`ELEVENLABS_MODEL_ID` for another). An account without it falls back to `eleven_v3`, then `eleven_multilingual_v2` (29 languages).
   - `npm run audio:regen` lists the kept clips the newest model would make better (an older model, or an Edge clip in a voice ElevenLabs has), with characters and cost, and spends nothing. `npm run audio:regen -- --yes` remakes them (`--max-chars` caps the spend). Replaced files move to `data/audio/replaced/<stamp>/`.
+  - Stories: **Read → Make audio for every story** (or `npm run audio:stories`, `-- --yes` to spend) makes the ElevenLabs clip for every story sentence the reader has not played yet, in each speaker's voice, after showing the characters and cost.
 - `DEEPGRAM_API_KEY`: speech-to-text for the Speak task when there is no ElevenLabs key (and the composer's dictation).
 - `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`: Azure Speech pronunciation assessment (Slovak is covered) for Speak and Speed — a phoneme-level score for every spoken line. Without them clarity is judged from the transcript alone.
 - `LANNA_PRON_SCRIPT=1`: dev only — a made-up pronunciation score for working on the screens without a key.

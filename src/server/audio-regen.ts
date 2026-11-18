@@ -26,16 +26,19 @@ import { NARRATOR_VOICE } from "./voices.ts";
 const CREDITS_PER_CHAR = 1;
 export const USD_PER_1K_CHARS = { low: 0.022, high: 0.08 } as const;
 
-type RegenReason = "older model" | "made without ElevenLabs";
+type RegenReason = "older model" | "made without ElevenLabs" | "not made yet";
 
-interface RegenItem {
+export interface RegenItem {
+	/** `file` is empty for a clip that was never made. */
 	entry: AudioClipEntry & { text: string };
 	lang: LanguageInfo;
 	reason: RegenReason;
 	chars: number;
+	/** The reader's own reading style; guessed from the voice when absent. */
+	style?: "narration" | "dialogue";
 }
 
-interface RegenPlan {
+export interface RegenPlan {
 	model: string;
 	items: RegenItem[];
 	chars: number;
@@ -102,7 +105,7 @@ function styleOf(voice: string): "narration" | "dialogue" {
 	return voice === "female" || voice === "male" || voice === NARRATOR_VOICE ? "narration" : "dialogue";
 }
 
-interface RegenResult {
+export interface RegenResult {
 	done: number;
 	chars: number;
 	failed: Array<{ text: string; error: string }>;
@@ -138,13 +141,13 @@ export async function regenerate(
 					lang: lang.code,
 					voice: entry.voice,
 					gender: entry.voice === "male" ? "male" : "female",
-					style: styleOf(entry.voice),
+					style: item.style ?? styleOf(entry.voice),
 				},
 				lang,
 			);
 			if (!spoken || spoken.data.length === 0) throw new Error("ElevenLabs returned nothing");
-			const old = path.join(PATHS.audio, entry.file);
-			if (fs.existsSync(old)) {
+			const old = entry.file ? path.join(PATHS.audio, entry.file) : null;
+			if (old && fs.existsSync(old)) {
 				const moved = path.join(replacedDir, entry.file);
 				fs.mkdirSync(path.dirname(moved), { recursive: true });
 				fs.renameSync(old, moved);

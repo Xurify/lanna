@@ -64,6 +64,7 @@ export * from "./personal.ts";
 export * from "./exam.ts";
 export * from "./why.ts";
 export * from "./reading.ts";
+export * from "./story-audio.ts";
 export * from "./read-import.ts";
 export * from "./catch-mistake.ts";
 export * from "./listen.ts";

@@ -50,6 +50,7 @@ import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, soundOn } from "@/components/lesson/sound";
 import { Check } from "@/components/reading/check";
 import { Word } from "@/components/reading/word";
+import { StoryAudioControl } from "@/components/reading/story-audio";
 import { BookList, NextUp, type BookGroup, type ListBook, type ListSlot } from "@/components/reading/book-list";
 import {
 	AddReadingDialog,
@@ -64,6 +65,7 @@ import {
 	gradeAnswers,
 	MAX_SOURCE_WORDS,
 	readXp,
+	storySpeech,
 	type LibraryEntry,
 	type ReadingState,
 	type SourceEntry,
@@ -76,15 +78,6 @@ import {
 import { fillStyle } from "@/components/ui/fill";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { keepSession, onSessionSaved, RefusedError, sendSession, type PendingSession } from "@/components/session-save";
-
-function voiceFor(
-	story: StoryRecord,
-	s: StorySentence,
-): { voice?: string; gender?: "female" | "male"; style: "narration" | "dialogue" } {
-	const who = s.who && story.cast?.find((c) => c.name === s.who);
-	if (who) return { voice: who.voice, gender: who.gender === "f" ? "female" : "male", style: "dialogue" };
-	return { voice: story.narratorVoice, style: "narration" };
-}
 
 export function kindOf(story: Pick<StoryRecord, "genre" | "episode" | "source">): string {
 	if (story.source) return `Part ${story.source.part} of ${story.source.parts}`;
@@ -684,7 +677,7 @@ function Text({
 			if (stop.current) break;
 			setPlaying(i);
 			sentenceRefs.current[i]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-			await speak(story.sentences[i]!.sk, undefined, voiceFor(story, story.sentences[i]!)).catch(() => {});
+			await speak(story.sentences[i]!.sk, undefined, storySpeech(story, story.sentences[i]!)).catch(() => {});
 		}
 		setAll(false);
 		setPlaying(null);
@@ -1574,6 +1567,7 @@ function Shelf({
 							Stories at your level, and your own articles and newsletters. Tap any word for its meaning.
 						</p>
 					</div>
+					<StoryAudioControl />
 				</div>
 				{nextBook && (
 					<div className="mt-7">
