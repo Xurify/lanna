@@ -181,6 +181,10 @@ describe("backup sign-in", () => {
 			account: "owner@example.com",
 		});
 		assert.equal(await wranglerAuth(fakeShell({}).run), null);
+		assert.equal(
+			await wranglerAuth(fakeShell({ whoami: "You are not authenticated. Run `wrangler login`." }).run),
+			null,
+		);
 	});
 
 	it("takes a token in .env.local and asks wrangler nothing for it", async () => {

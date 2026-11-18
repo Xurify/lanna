@@ -188,7 +188,9 @@ export function whoamiAccount(out: string): string | null {
 export async function wranglerAuth(run: ShellRun = shellRun): Promise<BackupAuth | null> {
 	if (process.env[ENV_TOKEN]?.trim()) return { via: "env", account: null };
 	try {
-		return { via: "wrangler", account: whoamiAccount((await run(`${WRANGLER} whoami`)).stdout) };
+		// `wrangler whoami` exits 0 while printing "You are not authenticated", so a missing email is the sign of no login.
+		const account = whoamiAccount((await run(`${WRANGLER} whoami`)).stdout);
+		return account === null ? null : { via: "wrangler", account };
 	} catch {
 		return null;
 	}

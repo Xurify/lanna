@@ -110,7 +110,7 @@ export function BackupSection() {
 			? "Not signed in"
 			: auth.via === "env"
 				? "Set by CLOUDFLARE_API_TOKEN"
-				: (auth.account ?? "Signed in");
+				: (auth.account ?? "…");
 
 	const status = (() => {
 		if (job && (running || job.failed > 0 || job.error)) return jobLine(job);
