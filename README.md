@@ -43,6 +43,8 @@ Languages: Slovak is built in. Every other language is added from the language m
 
 Everything the app generates or you produce stays on disk in open formats, with a README in every folder: `data/README.md` is the map, and [docs/corpus.md](docs/corpus.md) the rules. `npm run corpus:export` writes a clean, app-independent snapshot to `data/export/<stamp>/` (sentences, lessons, dialogues, explanations, audio catalog, review history, usage summary).
 
+`npm run corpus:push` copies the data folder to your own private Cloudflare R2 bucket named `lanna`, one object per file, and `npm run corpus:pull` brings it to another computer. Both list what they would do and do nothing until you add `-- --yes`; they need `npx wrangler login`. A push only adds and replaces objects, never deletes one; a pull only writes files that are missing and never replaces one that is here. `access.json` (the paired devices) and `export/` are left out. Your recordings, chats and answers are in that copy, so the bucket must stay private.
+
 ## Phone and iPad
 
 A phone or iPad reaches the app over your own Tailscale network. It is off by default.
