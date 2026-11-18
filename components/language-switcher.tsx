@@ -36,6 +36,7 @@ import { sharedJson } from "@/lib/shared-fetch";
 import { useActivity, type FeedTask } from "@/components/activity-dock";
 import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
 import { catalogLanguage } from "@/src/core";
+import { shownLanguages, useHiddenLanguages } from "@/components/hidden-languages";
 
 interface Counts {
 	due: number;
@@ -71,6 +72,7 @@ export function LanguageSwitcher() {
 	const [counts, setCounts] = useState<Counts | null>(null);
 	const [open, setOpen] = useState(false);
 	const { feed } = useActivity();
+	const hidden = useHiddenLanguages();
 	const addsRunning = feed.tasks.filter((t) => t.kind === "language" && t.status === "running");
 
 	const triggerRef = useRef<HTMLButtonElement>(null);
@@ -186,7 +188,7 @@ export function LanguageSwitcher() {
 						<div ref={menuRef} role="listbox" aria-label="Languages" className="flex flex-col gap-0.5">
 							<div className="px-2 py-1 text-xs font-semibold text-ink-3">Target Language</div>
 							<div className="max-h-60 overflow-y-auto flex flex-col gap-0.5">
-								{profile.profiles.map((p) => {
+								{shownLanguages(profile.profiles, profile.active, hidden).map((p) => {
 									const running = p.id === profile.active;
 									return (
 										<button

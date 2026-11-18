@@ -7,11 +7,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Chips, explainChoices, LanguagePicker, NumberPicker, PickSome } from "@/components/onboarding/controls";
 import { keepExplain } from "@/components/onboarding/start";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { useLanguageActions, type ProfileInfo } from "@/components/language-actions";
+import { setLanguageHidden, shownLanguages, useHiddenLanguages } from "@/components/hidden-languages";
 import { useActiveLanguage } from "@/components/speech";
 import { PRIMARY, SECONDARY, SMALL } from "@/components/ui/learn-buttons";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,8 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 	const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error" | "failed">("idle");
 	// A click made before the refresh lands must not be overwritten by the older answer.
 	const edited = useRef(false);
+	const hidden = useHiddenLanguages();
+	const [revealHidden, setRevealHidden] = useState(false);
 
 	useEffect(() => {
 		let gone = false;
@@ -198,12 +201,13 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 			{profile && profile.profiles.length > 0 && (
 				<SettingsGroup
 					label="Languages you are learning"
-					hint="Each keeps its own progress."
+					hint="Each keeps its own progress. A hidden language stays off the language menu on this device, for when you show the app to someone; the one you are studying always shows."
 					testid="learner-target-language"
 				>
 					<ul className="flex flex-col divide-y divide-border/60 rounded-lg bg-well" aria-label="Your languages">
-						{profile.profiles.map((p) => {
+						{(revealHidden ? profile.profiles : shownLanguages(profile.profiles, profile.active, hidden)).map((p) => {
 							const running = p.id === profile.active;
+							const isHidden = hidden.includes(p.id);
 							return (
 								<li
 									key={p.id}
@@ -215,6 +219,11 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 										<span className="font-ui text-sm font-semibold text-foreground">{p.endonym}</span>
 										<span className="text-xs text-muted-foreground">{p.english}</span>
 										{running && <span className="text-xs font-medium text-teal">Studying now</span>}
+										{isHidden && (
+											<span className="text-xs text-muted-foreground" data-testid={`target-language-hidden-${p.id}`}>
+												Hidden
+											</span>
+										)}
 									</span>
 									{!running && (
 										<button
@@ -227,6 +236,19 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 											{languages.switching === p.id ? "Switching…" : "Switch"}
 										</button>
 									)}
+									<button
+										type="button"
+										onClick={() => setLanguageHidden(p.id, !isHidden)}
+										aria-label={
+											isHidden ? `Show ${p.english} in the language menu` : `Hide ${p.english} from the language menu`
+										}
+										title={isHidden ? "Show in the language menu" : "Hide from the language menu"}
+										aria-pressed={isHidden}
+										className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+										data-testid={`target-language-hide-${p.id}`}
+									>
+										{isHidden ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+									</button>
 									{p.removable ? (
 										<button
 											type="button"
@@ -245,6 +267,11 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 							);
 						})}
 					</ul>
+					<HiddenCount
+						count={profile.profiles.filter((p) => p.id !== profile.active && hidden.includes(p.id)).length}
+						revealed={revealHidden}
+						onToggle={() => setRevealHidden((v) => !v)}
+					/>
 					<div className="flex flex-wrap items-center gap-3">
 						<button
 							type="button"
@@ -414,5 +441,24 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 			</p>
 			{children}
 		</div>
+	);
+}
+
+/** Hidden languages stay out of this list too until asked for, so opening Settings in front of someone does not name them. */
+function HiddenCount({ count, revealed, onToggle }: { count: number; revealed: boolean; onToggle: () => void }) {
+	if (count === 0) return null;
+	return (
+		<button
+			type="button"
+			onClick={onToggle}
+			aria-expanded={revealed}
+			className="flex w-fit items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+			data-testid="target-language-reveal"
+		>
+			{revealed ? <EyeOffIcon className="size-3.5" /> : <EyeIcon className="size-3.5" />}
+			<span className="cap-center">
+				{revealed ? "Leave hidden languages out" : `${count} hidden ${count === 1 ? "language" : "languages"}: show`}
+			</span>
+		</button>
 	);
 }
