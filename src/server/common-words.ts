@@ -41,3 +41,12 @@ export function markCommonWordsKnown(count: number, now = new Date(), from = 1) 
 	);
 	return { added, selected: entries.length };
 }
+
+export function unmarkCommonWords(count: number, now = new Date(), from = 1) {
+	const entries = commonEntries(count, from);
+	const removed = knownWordStore.unmarkMany(
+		entries.map((entry) => entry.slug),
+		now,
+	);
+	return { removed, selected: entries.length };
+}

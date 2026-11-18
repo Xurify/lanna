@@ -194,3 +194,34 @@ test("the slider opens at the edge of what is marked", () => {
 	assert.equal(markedReach(stray, stops), 0, "one rare word marked is not a prefix");
 	assert.equal(markedReach(marked(2500, 2600), stops), 2500, "past the last stop: the reach itself");
 });
+
+test("sliding back and un-marking keeps the top and the words marked further down", async () => {
+	markCommonWordsKnown(1000);
+	const far = getCommonWords(3000).items[2999]!;
+	knownWordStore.set(far.slug, far.lemma, true);
+	const response = await commonRoute.POST(
+		new Request("http://localhost/api/words/common", {
+			method: "POST",
+			body: JSON.stringify({ from: 701, count: 1000, known: false }),
+		}),
+	);
+	assert.equal(response.status, 200);
+	assert.deepEqual(await response.json(), { removed: 300, selected: 300 });
+	const after = getCommonWords(1000).items;
+	assert.equal(
+		after.slice(0, 700).every((w) => w.known),
+		true,
+	);
+	assert.equal(
+		after.slice(700).some((w) => w.known),
+		false,
+	);
+	assert.equal(knownWordStore.has(far.slug), true, "a word tapped far down is outside the range");
+	assert.equal(
+		markedReach(
+			after.map((w) => w.known),
+			[],
+		),
+		700,
+	);
+});

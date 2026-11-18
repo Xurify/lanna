@@ -1,4 +1,4 @@
-import { BODY_LIMITS, bodyTooLarge, getCommonWords, markCommonWordsKnown } from "@/src/server";
+import { BODY_LIMITS, bodyTooLarge, getCommonWords, markCommonWordsKnown, unmarkCommonWords } from "@/src/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +16,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { count?: unknown; from?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { count?: unknown; from?: unknown; known?: unknown } | null;
 	if (!validCount(body?.count))
 		return Response.json({ message: "Choose a whole number of words between 1 and 100,000." }, { status: 400 });
 	const from = body.from ?? 1;
 	if (!validCount(from) || from > body.count)
 		return Response.json({ message: "Choose a start between 1 and the count." }, { status: 400 });
+	if (body.known === false) return Response.json(unmarkCommonWords(body.count, new Date(), from));
 	return Response.json(markCommonWordsKnown(body.count, new Date(), from));
 }
