@@ -41,7 +41,7 @@ import {
 	type Span,
 	type WordStrength,
 } from "../core/review.ts";
-import { slippingWords } from "../core/slipping.ts";
+import { hardWords } from "../core/hard-words.ts";
 import { knownWordStore } from "../store/known-words.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
@@ -51,7 +51,7 @@ import { noteReviewMixup } from "./mixups.ts";
 import { aiStatus } from "./ai-status.ts";
 import { cachedMissNote, ensureMissNote } from "./miss-note.ts";
 import { enoughEvidence, missNoteEvidence } from "../core/miss-note.ts";
-import { activeSlippingWords } from "./slipping.ts";
+import { activeHardWords } from "./hard-words.ts";
 
 const DAY_MS = 86_400_000;
 const INFLECTING_CATEGORIES = new Set(["Nouns", "Verbs", "Adjectives"]);
@@ -372,7 +372,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings, cards) : null,
 		answered: answeredToday.lines,
-		leeches: activeSlippingWords({ tz: tzOffset })
+		leeches: activeHardWords({ tz: tzOffset })
 			.slice(0, 10)
 			.map(({ id, slug, lemma, gloss, wrongs }) => ({ id, slug, lemma, gloss, lapses: wrongs, wrongs })),
 	};
@@ -439,7 +439,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	});
 	if (wordVerdict === "wrong" && knownWordStore.has(card.slug)) {
 		const lapsedFromReview = rating === 1 && card.state === "review";
-		if (lapsedFromReview || slippingWords([updated], reviewStore.readLog(), { langTag: tag() }).length > 0) {
+		if (lapsedFromReview || hardWords([updated], reviewStore.readLog(), { langTag: tag() }).length > 0) {
 			knownWordStore.set(card.slug, card.lemma, false, now);
 		}
 	}
@@ -635,7 +635,7 @@ function noteWeakForm(card: ReviewCard, rating: Rating, now: Date, formMissed = 
 		const miss = formMissed;
 		weak = tallyWeak(weak, unit, miss ? 0 : 1, miss ? 1 : 0, now).weak;
 		if (miss && !weak[unit] && card.lapses >= WEAK_REVIEW_LAPSES)
-			weak = flagWeak(weak, unit, "review", `${card.lemma} keeps slipping (${card.answer}, ×${card.lapses})`, now);
+			weak = flagWeak(weak, unit, "review", `${card.lemma} missed repeatedly (${card.answer}, ×${card.lapses})`, now);
 		if (weak !== (p.weak ?? {})) {
 			p.weak = weak;
 			progressStore.write(p);
@@ -681,17 +681,17 @@ export function enqueueWords(slugs: string[], now = new Date()): string[] {
 }
 
 /** A short plain-text digest for the tutor: what is due and which words
- *  keep slipping. */
+ *  keep being missed. */
 export function reviewDigest(now = new Date()): string {
 	const list = Object.values(reviewStore.readCards());
 	if (list.length === 0) return "The learner has not started spaced review yet.";
 	const due = dueCards(list, now).length;
 	const learned = list.filter((c) => c.state === "review" && (c.memory?.stability ?? 0) >= 7).length;
-	const slipping = activeSlippingWords().slice(0, 12);
+	const hardwords = activeHardWords().slice(0, 12);
 	return [
 		`Spaced review: ${list.length} words in the deck, ${learned} stable for a week or more, ${due} due now.`,
-		slipping.length
-			? `Words that keep slipping: ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.wrongs}`).join("; ")}.`
-			: "No words are repeatedly slipping.",
+		hardwords.length
+			? `Words you keep missing: ${hardwords.map((c) => `${c.lemma} "${c.gloss}" ×${c.wrongs}`).join("; ")}.`
+			: "No words are repeatedly missed.",
 	].join("\n");
 }

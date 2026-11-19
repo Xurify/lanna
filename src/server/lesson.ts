@@ -98,7 +98,7 @@ import { LISTEN_MINUTES } from "../core/listen.ts";
 import { mixupList, type MixupSummary } from "../core/mixups.ts";
 import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
 import { personalLessonFor, personalPlanEntry } from "./personal.ts";
-import { slippingLessonFor } from "./slipping.ts";
+import { hardWordsLessonFor } from "./hard-words.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
@@ -185,8 +185,8 @@ export function personalFor(seed = Date.now()): LessonPlan {
 	return withKnown(personalLessonFor(seed));
 }
 
-export function slippingFor(seed = Date.now(), tz?: number): LessonPlan {
-	return withKnown(withOpenMixups(slippingLessonFor(seed, tz)));
+export function hardWordsFor(seed = Date.now(), tz?: number): LessonPlan {
+	return withKnown(withOpenMixups(hardWordsLessonFor(seed, tz)));
 }
 
 /** Blitz runs over the units you have started (at least the first three). */

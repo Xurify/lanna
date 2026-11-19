@@ -12,7 +12,7 @@ export interface PracticeSentenceTarget {
 }
 
 export interface PracticeSentenceEntry {
-	source: "slipping" | "practice";
+	source: "hardwords" | "practice";
 	slug?: string;
 	lemma: string;
 	sentence: string;

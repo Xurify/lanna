@@ -35,7 +35,7 @@ export interface DayRecord {
 	blitz?: number;
 	mixups?: number;
 	personal?: number;
-	slipping?: number;
+	hardwords?: number;
 	talks?: number;
 	stories?: number;
 	/** Tutor-unit sessions started. */

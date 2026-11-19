@@ -85,7 +85,7 @@ import {
 	repXp,
 	sameSentence,
 	rankLabel,
-	slippingSentenceTargets,
+	hardWordsSentenceTargets,
 	unheardWord,
 	unitDone,
 	unitBridges,
@@ -355,8 +355,8 @@ export function LessonPlayer({
 						? "No mix-ups on record yet. When you give one word for another, the pair shows up here."
 						: focus === "personal"
 							? "No plan practice yet. Write your guide on Mistakes, and its practice shows up here."
-							: focus === "slipping"
-								? "No slipping words right now. Words you miss repeatedly in Review show up here."
+							: focus === "hardwords"
+								? "No hard words right now. Words you miss repeatedly in Review show up here."
 								: "There are no sentences for this unit yet.",
 				);
 			setPlan(next);
@@ -824,8 +824,8 @@ export function LessonPlayer({
 										? "Mix-ups"
 										: focus === "personal"
 											? "Your plan"
-											: focus === "slipping"
-												? "Slipping words"
+											: focus === "hardwords"
+												? "Hard words"
 												: plan.gender
 													? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}`
 													: unitInfo(item.unit).title
@@ -2152,10 +2152,10 @@ function EndScreen({
 	);
 	const wordCount = new Set(firstGo.map((r) => r.item.slug)).size;
 	const sentenceTargets = useMemo(() => {
-		if (focus !== "slipping" || !sentenceCheckReady) return [];
+		if (focus !== "hardwords" || !sentenceCheckReady) return [];
 		const initial = reps.filter((r) => !r.item.again);
 		const missedSlugs = initial.filter((r) => firstTry(r) !== "right").map((r) => r.item.slug);
-		return slippingSentenceTargets(
+		return hardWordsSentenceTargets(
 			initial.map((r) => r.item),
 			missedSlugs,
 		);
@@ -2199,10 +2199,10 @@ function EndScreen({
 					? perfect
 						? "Perfect plan practice."
 						: "Plan practice done."
-					: focus === "slipping"
+					: focus === "hardwords"
 						? perfect
-							? "Slipping words held."
-							: "Slipping words done."
+							? "Hard words held."
+							: "Hard words done."
 						: here?.done && !wasDone
 							? "Unit complete."
 							: perfect
@@ -2215,7 +2215,7 @@ function EndScreen({
 				? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words`
 				: focus === "personal"
 					? "Built from your own mistakes"
-					: focus === "slipping"
+					: focus === "hardwords"
 						? `${wordCount} ${wordCount === 1 ? "word" : "words"} from Review`
 						: here
 							? whereLine(here, nextUnit)
@@ -2272,8 +2272,8 @@ function EndScreen({
 								? "Mix-ups"
 								: focus === "personal"
 									? "Your plan"
-									: focus === "slipping"
-										? "Slipping words"
+									: focus === "hardwords"
+										? "Hard words"
 										: unitInfo(unit).title}
 					</p>
 					<h1 className="q-hello">

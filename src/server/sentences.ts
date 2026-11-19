@@ -56,7 +56,7 @@ export async function checkPracticeSentence(
 		slug?: string;
 		gloss?: string;
 		sentence: string;
-		source?: "slipping" | "practice";
+		source?: "hardwords" | "practice";
 		tz?: number;
 	},
 	opts: {
@@ -114,7 +114,7 @@ export async function checkPracticeSentence(
 
 	const now = opts.now ?? new Date();
 	const record: PracticeSentenceEntry = {
-		source: input.source ?? "slipping",
+		source: input.source ?? "hardwords",
 		...((input.slug ?? entry?.slug) ? { slug: input.slug ?? entry?.slug } : {}),
 		lemma,
 		sentence,

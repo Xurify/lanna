@@ -1358,7 +1358,7 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	return item;
 }
 
-export type LessonFocus = "mixups" | "personal" | "slipping";
+export type LessonFocus = "mixups" | "personal" | "hardwords";
 
 export interface LessonPlan {
 	unit: UnitId;

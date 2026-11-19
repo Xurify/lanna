@@ -4,12 +4,12 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, test } from "node:test";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-slipping-"));
+const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-hard-words-"));
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 
-const { buildSlippingLesson, reviewEntryWordVerdict, slippingSentenceTargets, slippingWords } =
-	await import("../src/core/slipping.ts");
+const { buildHardWordsLesson, reviewEntryWordVerdict, hardWordsSentenceTargets, hardWords } =
+	await import("../src/core/hard-words.ts");
 const { answerReview, reviewDigest, reviewStatus } = await import("../src/server/review.ts");
 const { knownWords } = await import("../src/server/reading.ts");
 const { knownWordStore } = await import("../src/store/known-words.ts");
@@ -75,7 +75,7 @@ function makeEntry(
 	};
 }
 
-describe("slippingWords", () => {
+describe("hardWords", () => {
 	test("catches learning-loop words with >= 2 wrongs even when lapses === 0", () => {
 		const card = makeCard({
 			id: "tvrdit#0",
@@ -90,7 +90,7 @@ describe("slippingWords", () => {
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-01T10:00:00Z", given: "", verdict: "wrong", rating: 1 }),
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T10:00:00Z", given: "hovorí", verdict: "wrong", rating: 1 }),
 		];
-		const list = slippingWords([card], log, { langTag: "sk-SK", tz: 0 });
+		const list = hardWords([card], log, { langTag: "sk-SK", tz: 0 });
 		assert.equal(list.length, 1);
 		assert.equal(list[0]!.slug, "tvrdit");
 		assert.equal(list[0]!.wrongs, 2);
@@ -111,7 +111,7 @@ describe("slippingWords", () => {
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-01T10:00:00Z" }),
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T10:00:00Z" }),
 		];
-		assert.deepEqual(slippingWords([card], log, { langTag: "sk-SK", tz: 0 }), []);
+		assert.deepEqual(hardWords([card], log, { langTag: "sk-SK", tz: 0 }), []);
 	});
 
 	test("reconstructs target word verdict for multi-blank entries without blaming neighbor misses", () => {
@@ -140,7 +140,7 @@ describe("slippingWords", () => {
 		assert.equal(reviewEntryWordVerdict(card, neighborMiss, "sk-SK"), "exact");
 
 		const neighborMiss2 = { ...neighborMiss, reviewedAt: "2026-11-02T10:00:00Z" };
-		assert.deepEqual(slippingWords([card], [neighborMiss, neighborMiss2], { langTag: "sk-SK", tz: 0 }), []);
+		assert.deepEqual(hardWords([card], [neighborMiss, neighborMiss2], { langTag: "sk-SK", tz: 0 }), []);
 
 		const targetMiss = { ...neighborMiss, given: "Chodíme na dovolenku" };
 		assert.equal(reviewEntryWordVerdict(card, targetMiss, "sk-SK"), "wrong");
@@ -180,20 +180,20 @@ describe("slippingWords", () => {
 				picked: true,
 			}),
 		];
-		assert.equal(slippingWords([card], notYet, { langTag: "sk-SK", tz: 0 }).length, 1);
+		assert.equal(hardWords([card], notYet, { langTag: "sk-SK", tz: 0 }).length, 1);
 
 		const graduated: ReviewLogEntry[] = [
 			...wrongs,
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-03T10:00:00Z", given: "Oznámil", verdict: "exact", rating: 3 }),
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-05T10:00:00Z", given: "Oznámil", verdict: "exact", rating: 3 }),
 		];
-		assert.equal(slippingWords([card], graduated, { langTag: "sk-SK", tz: 0 }).length, 0);
+		assert.equal(hardWords([card], graduated, { langTag: "sk-SK", tz: 0 }).length, 0);
 
 		const relapsed: ReviewLogEntry[] = [
 			...graduated,
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-06T10:00:00Z", given: "povedal", verdict: "wrong", rating: 1 }),
 		];
-		assert.equal(slippingWords([card], relapsed, { langTag: "sk-SK", tz: 0 }).length, 1);
+		assert.equal(hardWords([card], relapsed, { langTag: "sk-SK", tz: 0 }).length, 1);
 	});
 
 	test("stable review card (stability >= 7) graduates after one clean recall on a later day", () => {
@@ -211,11 +211,11 @@ describe("slippingWords", () => {
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T10:00:00Z" }),
 			makeLog({ cardId: card.id, reviewedAt: "2026-11-04T10:00:00Z", given: "záujem", verdict: "exact", rating: 3 }),
 		];
-		assert.equal(slippingWords([card], log, { langTag: "sk-SK", tz: 0 }).length, 0);
+		assert.equal(hardWords([card], log, { langTag: "sk-SK", tz: 0 }).length, 0);
 	});
 });
 
-describe("buildSlippingLesson and slippingSentenceTargets", () => {
+describe("buildHardWordsLesson and hardWordsSentenceTargets", () => {
 	test("builds meaning -> mix-up contrast -> fresh-sentence typed cloze without leaking lemma", () => {
 		const entries: LexiconEntry[] = [
 			makeEntry(
@@ -269,7 +269,7 @@ describe("buildSlippingLesson and slippingSentenceTargets", () => {
 			answer: "tvrdí",
 			translation: "He claims he is right.",
 		});
-		const slipping = [
+		const hardwords = [
 			{
 				id: tvrditCard.id,
 				slug: tvrditCard.slug,
@@ -298,7 +298,7 @@ describe("buildSlippingLesson and slippingSentenceTargets", () => {
 				hits: 0,
 			},
 		};
-		const plan = buildSlippingLesson(slipping, entries, mixups, { seed: 42 });
+		const plan = buildHardWordsLesson(hardwords, entries, mixups, { seed: 42 });
 		const kinds = plan.items.map((i) => i.kind);
 		assert.ok(kinds.includes("meaning"));
 		assert.ok(plan.items.some((i) => i.pair?.id === "hovorit::tvrdit"));
@@ -315,7 +315,7 @@ describe("buildSlippingLesson and slippingSentenceTargets", () => {
 		assert.notEqual(typeItem.hint, "tvrdiť");
 	});
 
-	test("slippingSentenceTargets puts missed words first, deduplicates, and caps at 3", () => {
+	test("hardWordsSentenceTargets puts missed words first, deduplicates, and caps at 3", () => {
 		const items = [
 			{ slug: "tvrdit", lemma: "tvrdiť", gloss: "claim" },
 			{ slug: "oznamit", lemma: "oznámiť", gloss: "announce" },
@@ -323,7 +323,7 @@ describe("buildSlippingLesson and slippingSentenceTargets", () => {
 			{ slug: "voda", lemma: "voda", gloss: "water" },
 			{ slug: "voda", lemma: "voda", gloss: "water" },
 		] as unknown as import("../src/core/lesson.ts").LessonItem[];
-		const targets = slippingSentenceTargets(items, ["voda", "zaujem"]);
+		const targets = hardWordsSentenceTargets(items, ["voda", "zaujem"]);
 		assert.deepEqual(
 			targets.map((t) => t.slug),
 			["zaujem", "voda", "tvrdit"],
@@ -356,7 +356,7 @@ describe("buildSlippingLesson and slippingSentenceTargets", () => {
 			answer: "Tvrdiť",
 			translation: "Claiming that is easy.",
 		});
-		const slipping = [
+		const hardwords = [
 			{
 				id: card.id,
 				slug: card.slug,
@@ -382,14 +382,14 @@ describe("buildSlippingLesson and slippingSentenceTargets", () => {
 				hits: 0,
 			},
 		};
-		const plan = buildSlippingLesson(slipping, entries, mixups, { seed: 7 });
+		const plan = buildHardWordsLesson(hardwords, entries, mixups, { seed: 7 });
 		const ids = plan.items.map((i) => i.id);
 		assert.equal(new Set(ids).size, ids.length);
 	});
 });
 
 describe("server integration: known unmark and reading exclusion", () => {
-	test("answerReview auto-unmarks known word on lapse and knownWords excludes active slipping slugs", () => {
+	test("answerReview auto-unmarks known word on lapse and knownWords excludes active hardwords slugs", () => {
 		const card = makeCard({
 			id: "tvrdit#0",
 			slug: "tvrdit",
@@ -407,7 +407,7 @@ describe("server integration: known unmark and reading exclusion", () => {
 		answerReview({ cardId: card.id, given: "", rating: 1 }, new Date("2026-11-02T10:00:00Z"));
 		assert.equal(knownWordStore.has("tvrdit"), false);
 
-		// Second wrong puts it into active slipping; even if marked known again, knownWords() excludes it.
+		// Second wrong puts it into active hardwords; even if marked known again, knownWords() excludes it.
 		answerReview({ cardId: card.id, given: "", rating: 1 }, new Date("2026-11-03T10:00:00Z"));
 		knownWordStore.set("tvrdit", "tvrdiť", true, new Date("2026-11-03T11:00:00Z"));
 		const kw = knownWords();

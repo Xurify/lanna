@@ -15,7 +15,7 @@ import { readLessonLog } from "../store/corpus.ts";
 import { analysisStore, type GuideRecord } from "../store/analysis.ts";
 import { progressStore } from "../store/progress.ts";
 import { aiStatus } from "./ai-status.ts";
-import { activeSlippingWords } from "./slipping.ts";
+import { activeHardWords } from "./hard-words.ts";
 
 export type { MistakesReport };
 
@@ -26,14 +26,14 @@ export function mistakesReportOf(
 	guide: GuideRecord | null,
 	listenGuide: ListenGuideRecord | null = null,
 ): MistakesReport {
-	const slipping = activeSlippingWords();
-	const withSlipping: MistakeAnalysis = {
+	const hardwords = activeHardWords();
+	const withHard: MistakeAnalysis = {
 		...analysis,
-		slipping: slipping.length,
-		...(slipping.length ? { slippingSample: slipping.slice(0, 3).map((w) => w.lemma) } : {}),
+		hardwords: hardwords.length,
+		...(hardwords.length ? { hardwordsSample: hardwords.slice(0, 3).map((w) => w.lemma) } : {}),
 	};
 	return {
-		analysis: withSlipping,
+		analysis: withHard,
 		guide,
 		guideCurrent: !!guide && guide.digest === digest(guideFacts(analysis)),
 		listenGuide,
@@ -81,7 +81,7 @@ export function refreshSnapshotIfStale(now = new Date()): void {
 	}
 }
 
-/** The units the saved snapshot says are slipping, worst first. */
+/** The units the saved snapshot says are hardwords, worst first. */
 export function slippingUnits(): UnitId[] {
 	const units = analysisStore.read().analysis?.units ?? [];
 	return units

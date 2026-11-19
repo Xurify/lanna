@@ -23,13 +23,13 @@ import {
 } from "./review.ts";
 import { SENTENCE_TARGETS, type PracticeSentenceTarget } from "./sentences.ts";
 
-export const SLIPPING_MIN_WRONGS = 2;
-export const SLIPPING_GRADUATE_DAYS = 2;
-export const SLIPPING_MIN_GAP_MS = 12 * 3_600_000;
-export const SLIPPING_STABILITY_DAYS = 7;
-export const SLIPPING_DRILL_WORDS = 6;
+export const HARD_WORDS_MIN_WRONGS = 2;
+export const HARD_WORDS_GRADUATE_DAYS = 2;
+export const HARD_WORDS_MIN_GAP_MS = 12 * 3_600_000;
+export const HARD_WORDS_STABILITY_DAYS = 7;
+export const HARD_WORDS_DRILL_WORDS = 6;
 
-export interface SlippingWord {
+export interface HardWord {
 	id: string;
 	slug: string;
 	lemma: string;
@@ -67,13 +67,13 @@ function isBlankAnswer(
 	return false;
 }
 
-export function slippingWords(
+export function hardWords(
 	cards: readonly ReviewCard[],
 	log: readonly ReviewLogEntry[],
 	opts: { langTag?: string; tz?: number; minWrongs?: number } = {},
-): SlippingWord[] {
+): HardWord[] {
 	const langTag = opts.langTag ?? "sk-SK";
-	const minWrongs = opts.minWrongs ?? SLIPPING_MIN_WRONGS;
+	const minWrongs = opts.minWrongs ?? HARD_WORDS_MIN_WRONGS;
 	const byCard = new Map<string, ReviewLogEntry[]>();
 	for (const entry of log) {
 		let list = byCard.get(entry.cardId);
@@ -84,7 +84,7 @@ export function slippingWords(
 		list.push(entry);
 	}
 
-	const out: SlippingWord[] = [];
+	const out: HardWord[] = [];
 	for (const card of cards) {
 		if (card.suspended) continue;
 		const history = [...(byCard.get(card.id) ?? [])].sort(
@@ -117,7 +117,7 @@ export function slippingWords(
 			if (!clean) continue;
 			if (lastWrongMs === -Infinity) {
 				cleanDaysAfterWrong.add(day);
-			} else if (atMs - lastWrongMs >= SLIPPING_MIN_GAP_MS && day !== lastWrongDay) {
+			} else if (atMs - lastWrongMs >= HARD_WORDS_MIN_GAP_MS && day !== lastWrongDay) {
 				cleanDaysAfterWrong.add(day);
 			}
 		}
@@ -126,8 +126,8 @@ export function slippingWords(
 		if (count < minWrongs) continue;
 		const stability = card.memory?.stability ?? 0;
 		const graduated =
-			cleanDaysAfterWrong.size >= SLIPPING_GRADUATE_DAYS ||
-			(card.state === "review" && stability >= SLIPPING_STABILITY_DAYS && cleanDaysAfterWrong.size >= 1);
+			cleanDaysAfterWrong.size >= HARD_WORDS_GRADUATE_DAYS ||
+			(card.state === "review" && stability >= HARD_WORDS_STABILITY_DAYS && cleanDaysAfterWrong.size >= 1);
 		if (graduated) continue;
 
 		out.push({
@@ -167,8 +167,8 @@ function cardFallbackItem(card: ReviewCard, kind: "meaning" | "type"): LessonIte
 	};
 }
 
-export function buildSlippingLesson(
-	slipping: readonly SlippingWord[],
+export function buildHardWordsLesson(
+	hardwords: readonly HardWord[],
 	entries: readonly LexiconEntry[],
 	mixups: MixupRecord | undefined,
 	opts: {
@@ -180,13 +180,13 @@ export function buildSlippingLesson(
 	},
 ): LessonPlan {
 	const rand = rng(opts.seed);
-	const maxWords = opts.maxWords ?? SLIPPING_DRILL_WORDS;
-	if (!slipping.length) return { unit: "words", items: [], focus: "slipping" };
+	const maxWords = opts.maxWords ?? HARD_WORDS_DRILL_WORDS;
+	if (!hardwords.length) return { unit: "words", items: [], focus: "hardwords" };
 
 	const drilled = opts.drilledToday;
 	const prioritized = drilled?.size
-		? [...slipping.filter((w) => !drilled.has(w.slug)), ...slipping.filter((w) => drilled.has(w.slug))]
-		: [...slipping];
+		? [...hardwords.filter((w) => !drilled.has(w.slug)), ...hardwords.filter((w) => drilled.has(w.slug))]
+		: [...hardwords];
 	const chosen = prioritized.slice(0, maxWords);
 
 	const lex = mixupLexicon(entries, opts.frames ?? NO_FRAMES);
@@ -246,7 +246,7 @@ export function buildSlippingLesson(
 			const distractors = entries
 				.filter((e) => e.slug !== w.slug)
 				.flatMap((e) => e.examples.filter((x) => !x.rejected && x.en).map((x) => x.en));
-			for (const other of slipping)
+			for (const other of hardwords)
 				if (other.slug !== w.slug && other.card.translation) distractors.push(other.card.translation);
 			meaningItem.options = meaningChoices(meaningItem.translation, distractors, rand);
 			if (meaningItem.options.length >= 2) wordItems.push(meaningItem);
@@ -286,10 +286,10 @@ export function buildSlippingLesson(
 		}
 	}
 
-	return { unit: "words", items, focus: "slipping" };
+	return { unit: "words", items, focus: "hardwords" };
 }
 
-export function slippingSentenceTargets(
+export function hardWordsSentenceTargets(
 	items: readonly Pick<LessonItem, "slug" | "lemma" | "gloss" | "sentence">[],
 	missedSlugs: readonly string[] = [],
 	max = SENTENCE_TARGETS,

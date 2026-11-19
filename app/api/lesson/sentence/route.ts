@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 	const tz = typeof body.tz === "number" && Math.abs(body.tz) <= 840 ? body.tz : undefined;
 	const slug = typeof body.slug === "string" && body.slug.trim() ? body.slug.trim().slice(0, 120) : undefined;
 	const gloss = typeof body.gloss === "string" && body.gloss.trim() ? body.gloss.trim().slice(0, 200) : undefined;
-	const source = body.source === "practice" ? "practice" : "slipping";
+	const source = body.source === "practice" ? "practice" : "hardwords";
 	try {
 		return Response.json(
 			await checkPracticeSentence({

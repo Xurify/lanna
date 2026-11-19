@@ -126,7 +126,7 @@ function SentenceRow({
 					slug: target.slug,
 					gloss: target.gloss,
 					sentence,
-					source: "slipping",
+					source: "hardwords",
 					tz: new Date().getTimezoneOffset(),
 				}),
 			});

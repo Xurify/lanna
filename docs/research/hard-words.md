@@ -1,8 +1,10 @@
-# Slipping words: detection, focused drills, and writing a sentence of your own
+# Words you keep missing: detection, a focused drill, and a sentence of your own
 
-**Question.** Why do words missed over and over in Review stay invisible to the current "Words that keep slipping" list, and what targeted practice actually helps solidify them without adding habit friction?
+**Question.** Why do words missed over and over in Review stay invisible to the old lapses-only list, and what targeted practice actually helps solidify them without adding habit friction?
 
 **Date.** 2026-11-18
+
+**Naming.** The app already uses _slip_ for one thing only: a wrong ending on the right word (form slips, E18). This feature is named for what the learner does — miss the word — and every learner-facing string says "words you keep missing"; the code calls them `hardWords`. The older form-slip terminology is untouched.
 
 ## What the learner's own log showed
 
@@ -13,7 +15,7 @@ Inspecting the active Slovak profile (`99` cards in `review/cards.json`, `277` R
 - Yet `leeches(cards, min = 3)` in `src/core/review.ts` surfaced only `2` words. FSRS `lapses` increments only when a card fails from `state === "review"`; repeated misses while `state` is `"new"` or `"learning"` leave `lapses` at `0`.
 - `12` cards with recorded lapses were also marked known in `known.json`, so Read and Watch treated actively missed words as known.
 - `12` of the last `22` days had `0` XP, and the median Review answer took ~21 s. Any new flow that adds heavy daily friction will be skipped.
-- The existing "Words that keep slipping" block on `/review` already promised _"A lesson on them, or a sentence of your own, often helps more than another review"_ — but had no button or drill behind it.
+- The caught-up block on `/review` already promised _"A lesson on them, or a sentence of your own, often helps more than another review"_ — but had no button or drill behind it.
 
 ## What published research supports (and what it does not)
 
@@ -33,22 +35,22 @@ Inspecting the active Slovak profile (`99` cards in `review/cards.json`, `277` R
 
 ## Design choices (what is the app's own decision, not a study's)
 
-- **Slipping-word detection (`src/core/slipping.ts`):**
-  - Reconstructs the target word's own verdict on multi-word Review blanks (`words > 1`) so missing a neighboring hidden word does not falsely mark the card's word as slipping.
+- **Hard-word detection (`src/core/hard-words.ts`):**
+  - Reconstructs the target word's own verdict on multi-word Review blanks (`words > 1`) so missing a neighboring hidden word does not falsely mark the card's word as missed.
   - Enters when a non-suspended card has `>= 2` wrong answers on its target word (or `card.lapses >= 2`).
-  - Graduates off the list only after **`>= 2` clean, unassisted (`!hints && !picked`, `rating >= 3`, exact target word) recalls on distinct local days** after the last wrong answer (or `state === "review"` with `stability >= 7` days and at least one clean post-wrong recall on a later day). Same-day relearning does not clear a slipping word; a relapse resets the clean streak to `0`.
+  - Graduates off the list only after **`>= 2` clean, unassisted (`!hints && !picked`, `rating >= 3`, exact target word) recalls on distinct local days** after the last wrong answer (or `state === "review"` with `stability >= 7` days and at least one clean post-wrong recall on a later day). Same-day relearning does not clear a hard word; a relapse resets the clean streak to `0`.
   - Replaces `leeches(...)` in both `reviewStatus` and `reviewDigest`.
 - **Entry points without clutter:**
-  - Upgrades the existing `/review` caught-up "Words that keep slipping" section with a `Practice slipping words` button (`/lesson?mode=slipping`).
-  - Adds one action row in `/mistakes` ("Do this next") when slipping words exist, so learners who leave Review with cards still due can still launch the drill.
+  - The `/review` caught-up section becomes "Words you keep missing" with a `Practice these words` button (`/lesson?mode=hardwords`).
+  - Adds one action row in `/mistakes` ("Do this next") when hard words exist, so learners who leave Review with cards still due can still launch the drill.
   - Keeps Today (`/`) and the active Review miss dock untouched.
-- **Focused slipping drill (`/lesson?mode=slipping`):**
-  - Caps each round at `6` slipping words (`10–14` reps), deprioritizing words already drilled today so another round rotates cleanly.
+- **Focused hard-words drill (`/lesson?mode=hardwords`):**
+  - Caps each round at `6` hard words (`10–14` reps), deprioritizing words already drilled today so another round rotates cleanly.
   - Opens with a meaning check when a word has blank ("I don't know") misses or `>= 3` misses, inserts a mix-up contrast when an open mix-up exists, and ends each word with a typed cloze on a _different_ lexicon sentence from the Review card whenever one exists.
   - Does **not** mutate FSRS card memory or immediately graduate the word; only real delayed Review recall proves retention.
 - **Skippable "Use it" sentence-writing step:**
-  - Shown inline on the slipping drill's end screen for up to `3` words (words missed in the round first, then highest-priority slipping words), hidden when no cheap AI model is configured.
+  - Shown inline on the drill's end screen for up to `3` words (words missed in the round first, then highest-priority hard words), hidden when no cheap AI model is configured.
   - Extracts a language-safe shared sentence checker (`src/core/sentences.ts`, `src/server/sentences.ts`, `src/store/sentences.ts`) from Watch: gates Slovak-specific checks on `langTag.startsWith("sk")`, checks known lexicon `forms` / `declension` alongside stem prefixes so suppletive verbs (_ísť → šiel_) are not falsely rejected, and caches verdicts in `data/profiles/<language>/sentences.jsonl`.
 - **Resolving the known-mark conflict:**
-  - `answerReview` automatically unmarks a slug in `knownWordStore` when the card lapses from `"review"` or enters slipping (`>= 2` target wrongs), invalidating cached coverage.
-  - `knownWords()` in `src/server/reading.ts` also subtracts active slipping slugs from `known` and `expected` after frequency-band additions so stuck high-frequency words still get glossed in Read and pre-taught in Watch.
+  - `answerReview` automatically unmarks a slug in `knownWordStore` when the card lapses from `"review"` or enters the hard-word list (`>= 2` target wrongs), invalidating cached coverage.
+  - `knownWords()` in `src/server/reading.ts` also subtracts active hard-word slugs from `known` and `expected` after frequency-band additions so stuck high-frequency words still get glossed in Read and pre-taught in Watch.

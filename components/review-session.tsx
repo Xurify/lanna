@@ -1247,7 +1247,7 @@ export function ReviewSession() {
 
 							{caughtUp && status && lang && status.leeches.length > 0 && (
 								<section className="mt-12" data-testid="review-leeches">
-									<h2 className="q-sh">Words that keep slipping</h2>
+									<h2 className="q-sh">Words you keep missing</h2>
 									<p className="q-sub" style={{ marginTop: 0 }}>
 										Missed again and again. A lesson on them, or a sentence of your own, often helps more than another
 										review.
@@ -1262,11 +1262,11 @@ export function ReviewSession() {
 										))}
 									</ul>
 									<Link
-										href="/lesson?mode=slipping"
+										href="/lesson?mode=hardwords"
 										className="q-btn sec t mt-4 pointer-coarse:min-h-11"
-										data-testid="review-practice-slipping"
+										data-testid="review-practice-hardwords"
 									>
-										Practice slipping words
+										Practice these words
 										<ArrowRightIcon className="q-ico" />
 									</Link>
 								</section>

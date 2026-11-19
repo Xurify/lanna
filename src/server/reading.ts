@@ -36,7 +36,7 @@ import { COVER_MOTIFS } from "../core/cover.ts";
 import { creditedWords, LEVEL_VOCAB } from "../core/milestones.ts";
 import { countryOf, foldDiacritics, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
-import { activeSlippingSlugs } from "./slipping.ts";
+import { activeHardSlugs } from "./hard-words.ts";
 import { allUnits } from "../core/lesson.ts";
 import { purposeInfo, type Purpose } from "../core/onboarding.ts";
 import {
@@ -275,8 +275,8 @@ export function knownWords(lexicon: Lexicon | null = loadLexicon(), level?: Cefr
 		for (const slug of frequencyOrder(lexicon).slice(0, expectedWords)) expected.add(slug);
 		for (const e of lexicon.entries) if (e.origin === "curated" || e.cat === "Places") expected.add(e.slug);
 	}
-	const slipping = activeSlippingSlugs();
-	for (const slug of slipping) {
+	const hardwords = activeHardSlugs();
+	for (const slug of hardwords) {
 		known.delete(slug);
 		expected.delete(slug);
 	}

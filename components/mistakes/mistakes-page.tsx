@@ -139,7 +139,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 					</p>
 				)}
 
-				{a && a.reps === 0 && !a.chat?.answers && !(a.slipping ?? 0) ? (
+				{a && a.reps === 0 && !a.chat?.answers && !(a.hardwords ?? 0) ? (
 					<EmptyState
 						className="mt-8"
 						testid="mistakes-empty"
@@ -420,12 +420,12 @@ function GuideCard({
 function NextSteps({ a }: { a: MistakeAnalysis }) {
 	const [added, setAdded] = useState<"adding" | "added" | "failed" | null>(null);
 	const pairs = a.mixups.length;
-	const slipping = a.slipping ?? 0;
+	const hardwords = a.hardwords ?? 0;
 	const weak =
 		a.units.find((u) => u.trend === "worse") ??
 		a.units.filter((u) => u.weak).sort((x, y) => (x.high ?? 1) - (y.high ?? 1))[0];
 	const slugs = a.words.map((w) => w.slug);
-	if (!pairs && !slipping && !weak && !slugs.length) return null;
+	if (!pairs && !hardwords && !weak && !slugs.length) return null;
 	const addWords = async () => {
 		setAdded("adding");
 		try {
@@ -439,19 +439,19 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 			setAdded("failed");
 		}
 	};
-	const slippingSample = a.slippingSample?.length ? ` (${a.slippingSample.join(", ")})` : "";
+	const hardwordsSample = a.hardwordsSample?.length ? ` (${a.hardwordsSample.join(", ")})` : "";
 	return (
 		<Section id="mistakes-next" title="Do this next" line="Worked out from the figures below.">
 			<ul className="q-card flex flex-col divide-y divide-border">
-				{slipping > 0 && (
+				{hardwords > 0 && (
 					<Step
-						title="Practice the words that keep slipping"
-						line={`${slipping} ${slipping === 1 ? "word" : "words"} missed repeatedly in Review${slippingSample}`}
+						title="Practice the words you keep missing"
+						line={`${hardwords} ${hardwords === 1 ? "word" : "words"} missed repeatedly in Review${hardwordsSample}`}
 					>
 						<Link
-							href="/lesson?mode=slipping"
+							href="/lesson?mode=hardwords"
 							className={pairs > 0 ? "q-btn sec t pointer-coarse:min-h-11" : "q-btn primary pointer-coarse:min-h-11"}
-							data-testid="step-slipping"
+							data-testid="step-hardwords"
 						>
 							Start
 							<ArrowRightIcon className="q-ico" />
