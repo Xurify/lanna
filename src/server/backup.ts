@@ -1,12 +1,13 @@
 /**
- * Settings → Backup: whether the data folder and the private `lanna` bucket
- * still hold the same files, the one upload or restore that may be running,
- * and the Cloudflare login the bucket is read with.
+ * Settings → Backup: whether the data folder and its copy still hold the same
+ * files, the one upload or restore that may be running, and where the copy goes
+ * — a folder on this computer, or the private `lanna` bucket with the Cloudflare
+ * login it is read with.
  *
- * Reading the bucket needs the login `wrangler login` made, and a check hashes
- * every local file, so the answer is kept for the rest of the run and a fresh
- * check can be asked for. The folder stays the source: an upload only adds and
- * replaces objects, a restore only writes files that are missing here.
+ * Reading the copy costs a hash of every local file, so the answer is kept for
+ * the rest of the run and a fresh check can be asked for. The folder stays the
+ * source: an upload only adds and replaces files, a restore only writes files
+ * that are missing here.
  */
 
 import { PATHS } from "../../config.ts";
@@ -21,6 +22,7 @@ import {
 	type BackupJob,
 	type BackupState,
 } from "../core/backup.ts";
+import { readBackupPlace, writeBackupPlace } from "../store/backup-place.ts";
 import {
 	AccountNotVisible,
 	BACKUP_BUCKET,
@@ -44,6 +46,14 @@ import {
 	type Bucket,
 	type ShellRun,
 } from "./cloud-backup.ts";
+import {
+	FolderGone,
+	FolderUnusable,
+	folderBucket,
+	prepareFolder,
+	resolveFolder,
+	suggestedFolder,
+} from "./folder-backup.ts";
 
 export class BackupError extends Error {
 	constructor(
@@ -61,11 +71,13 @@ const FROM_ENV = "That token comes from .env.local, so remove it there and resta
 const NO_ACCOUNT =
 	"That token cannot see a Cloudflare account, which reading the bucket needs first: give it Workers R2 Storage Edit and Account Settings Read on one account (Get a key fills both in).";
 
-/** A failure the login would explain reads as that, so nobody looks for a key to a lock they are not holding. */
+/** A failure the login would explain reads as that, so nobody looks for a key to a lock they are not holding.
+ *  A folder's own failure is never read as a login: it says what is wrong with the folder. */
 export function backupError(err: unknown): string {
 	if (err instanceof BucketMissing)
 		return `The bucket \`${BACKUP_BUCKET}\` is not in this Cloudflare account yet, so there is nothing to compare. Uploading creates it.`;
 	if (err instanceof AccountNotVisible) return NO_ACCOUNT;
+	if (err instanceof FolderGone || err instanceof FolderUnusable) return err.message;
 	const message = err instanceof Error ? err.message : String(err);
 	if (/login|logged in|authenticat|wrangler|ENOENT|401/i.test(message)) return NOT_SIGNED_IN;
 	return message.split("\n")[0]!.slice(0, 160);
@@ -74,11 +86,11 @@ export function backupError(err: unknown): string {
 const empty = (): BackupCounts => ({ files: 0, bytes: 0 });
 const counts = (files: BackupFile[]): BackupCounts => ({ files: files.length, bytes: totalBytes(files) });
 
-function areasOf(here: BackupFile[], cloud: BackupFile[]): BackupArea[] {
-	const areas = new Map(BACKUP_AREAS.map(({ id }) => [id, { id, here: empty(), cloud: empty() }]));
+function areasOf(here: BackupFile[], copy: BackupFile[]): BackupArea[] {
+	const areas = new Map(BACKUP_AREAS.map(({ id }) => [id, { id, here: empty(), copy: empty() }]));
 	for (const [side, files] of [
 		["here", here],
-		["cloud", cloud],
+		["copy", copy],
 	] as const)
 		for (const file of files) {
 			const area = areas.get(backupAreaOf(file.path))![side];
@@ -98,22 +110,65 @@ const state = processWide("backup.state", () => ({
 	job: null as BackupJob | null,
 }));
 
-/** Read the way in again when it changed, or once after a check that failed with none. Either way the
- *  check on hand was answered by the way in before it, so it goes with it rather than staying on screen. */
+/** Read the way in again when the token print changed, or when the check on hand contradicts it — a login
+ *  made on the command line, or one that went away. A later check is read for the same way, once.
+ *  Only the bucket has a way in: a folder asks wrangler nothing, so no round trip stands in front of it. */
 async function refreshAuth(run: ShellRun): Promise<void> {
+	if (readBackupPlace().destination === "folder") return;
 	const print = tokenPrint();
 	const changed = state.auth !== undefined && state.authPrint !== print;
-	const laterFailed = state.auth === null && state.last !== null && state.authAt !== state.last.at;
-	if (state.auth !== undefined && !changed && !laterFailed) return;
-	if (changed || laterFailed) state.last = null;
+	const check = state.last;
+	const disagrees =
+		state.auth !== undefined &&
+		check !== null &&
+		state.authAt !== check.at &&
+		(state.auth === null ? !check.error : Boolean(check.error));
+	if (state.auth !== undefined && !changed && !disagrees) return;
+	// The check on hand was answered by the way in that just changed, so it goes with it. One that only
+	// disagrees keeps its own answer: it is the check the learner asked for.
+	if (changed) state.last = null;
+	if (disagrees) state.authAt = check.at;
 	state.auth = await wranglerAuth(run);
 	state.authPrint = print;
-	state.authAt = state.last?.at;
 }
 
 export async function backupState(run: ShellRun = shellRun): Promise<BackupState> {
 	await refreshAuth(run);
-	return { bucket: BACKUP_BUCKET, auth: state.auth!, leftOut: leftOut(), last: state.last, job: state.job };
+	const saved = readBackupPlace();
+	return {
+		destination: saved.destination,
+		folder: saved.folder,
+		suggestedFolder: suggestedFolder(),
+		bucket: BACKUP_BUCKET,
+		auth: state.auth ?? null,
+		leftOut: leftOut(),
+		last: state.last,
+		job: state.job,
+	};
+}
+
+const NO_PATH = "Type the folder to copy to.";
+
+/** The copy goes to a folder on this computer: no account, no key, nothing to sign in to.
+ *  Setting the place drops the check the other one answered; the next look asks for a fresh one. */
+export async function chooseFolder(rawFolder: string, run: ShellRun = shellRun): Promise<BackupState> {
+	if (!rawFolder.trim()) throw new BackupError(NO_PATH, 400);
+	const folder = resolveFolder(rawFolder);
+	try {
+		prepareFolder(folder);
+	} catch (err) {
+		throw new BackupError(backupError(err), 400);
+	}
+	writeBackupPlace({ destination: "folder", folder });
+	state.last = null;
+	return backupState(run);
+}
+
+/** Back to the private bucket; the folder stays saved, so switching again is one click. */
+export async function chooseCloudflare(run: ShellRun = shellRun): Promise<BackupState> {
+	writeBackupPlace({ destination: "cloudflare", folder: readBackupPlace().folder });
+	state.last = null;
+	return backupState(run);
 }
 
 /** Wrangler signs in and out; the last check goes with the old login, so the next look answers for the new one. */
@@ -151,7 +206,9 @@ export async function disconnectBackup(run: ShellRun = shellRun): Promise<Backup
 }
 
 async function bucketFor(options: { bucket?: Bucket }): Promise<Bucket> {
-	return options.bucket ?? (await cloudflareBucket());
+	if (options.bucket) return options.bucket;
+	const saved = readBackupPlace();
+	return saved.destination === "folder" ? folderBucket(saved.folder) : cloudflareBucket();
 }
 
 export async function checkBackup(options: { bucket?: Bucket } = {}): Promise<BackupCheck> {
@@ -159,14 +216,14 @@ export async function checkBackup(options: { bucket?: Bucket } = {}): Promise<Ba
 	const check: BackupCheck = {
 		at: new Date().toISOString(),
 		here: counts(local),
-		cloud: empty(),
+		copy: empty(),
 		toUpload: empty(),
 		toRestore: empty(),
 		areas: areasOf(local, []),
 	};
 	try {
 		const remote = await (await bucketFor(options)).list();
-		check.cloud = counts(remote);
+		check.copy = counts(remote);
 		check.toUpload = counts(pushPlan(local, remote).upload);
 		check.toRestore = counts(pullPlan(local, remote).download);
 		check.areas = areasOf(local, remote);
@@ -179,7 +236,7 @@ export async function checkBackup(options: { bucket?: Bucket } = {}): Promise<Ba
 
 async function run(action: BackupJob["action"], options: { bucket?: Bucket }, running: BackupJob): Promise<void> {
 	try {
-		if (action === "upload" && !options.bucket) await ensureBucket();
+		if (action === "upload" && !options.bucket && readBackupPlace().destination === "cloudflare") await ensureBucket();
 		const bucket = await bucketFor(options);
 		const local = await localFiles(PATHS.base);
 		const remote = await bucket.list();

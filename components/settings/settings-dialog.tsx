@@ -453,7 +453,7 @@ function SettingsDialogBody({
 							{active === "backup" && (
 								<SettingsSection
 									title="Backup"
-									hint="A copy of everything the app keeps, in your own Cloudflare R2 bucket. This computer stays the one Lanna reads and writes."
+									hint="A copy of everything the app keeps, in a folder on this computer or in your own Cloudflare R2 bucket. This computer stays the one Lanna reads and writes."
 									testid="section-backup"
 								>
 									<BackupSection />

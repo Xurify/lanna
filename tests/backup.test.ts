@@ -15,9 +15,20 @@ const DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-backup-"));
 process.env.LANNA_DATA_DIR = DATA;
 process.env.LANNA_PROFILE = "slovak";
 
-const { BackupError, backupError, backupState, checkBackup, connectBackup, disconnectBackup, startBackup } =
-	await import("../src/server/backup.ts");
+const {
+	BackupError,
+	backupError,
+	backupState,
+	checkBackup,
+	chooseCloudflare,
+	chooseFolder,
+	connectBackup,
+	disconnectBackup,
+	startBackup,
+} = await import("../src/server/backup.ts");
 const { AccountNotVisible, BucketMissing, whoamiAccount, wranglerAuth } = await import("../src/server/cloud-backup.ts");
+const { folderNotMade, resolveFolder } = await import("../src/server/folder-backup.ts");
+const { readBackupPlace, writeBackupPlace } = await import("../src/store/backup-place.ts");
 const { backupOutcome } = await import("../src/core/backup.ts");
 
 after(() => fs.rmSync(DATA, { recursive: true, force: true }));
@@ -64,10 +75,17 @@ function memoryBucket(): Bucket & { objects: Map<string, Buffer> } {
 	};
 }
 
+/** Nothing signed in and nothing saved, whatever the test before this one left behind. */
+async function signedOutState(shell: { run: ShellRun }): Promise<void> {
+	await disconnectBackup(fakeShell({ logout: "logged out" }).run);
+	assert.equal((await backupState(shell.run)).auth, null);
+}
+
 describe("backup status", () => {
 	it("counts what is here, what is in the bucket, and what each way would copy", async () => {
 		write("settings.json", "{}");
 		write("access.json", '{"devices":[]}');
+		write("backup-place.json", '{"destination":"cloudflare","folder":null}');
 		write("export/2026-10-28/summary.json", "{}");
 		write("profiles/slovak/chats/a.json", "one");
 		write("audio/sk/clip.mp3", "clip");
@@ -80,11 +98,11 @@ describe("backup status", () => {
 		const check = await checkBackup({ bucket });
 		assert.equal(check.error, undefined);
 		assert.deepEqual(check.here, { files: 3, bytes: 9 });
-		assert.deepEqual(check.cloud, { files: 4, bytes: 18 });
+		assert.deepEqual(check.copy, { files: 4, bytes: 18 });
 		assert.deepEqual(check.toUpload, { files: 0, bytes: 0 });
 		assert.deepEqual(check.toRestore, { files: 1, bytes: 9 });
 		assert.deepEqual(
-			check.areas.map((area) => [area.id, area.here.files, area.cloud.files]),
+			check.areas.map((area) => [area.id, area.here.files, area.copy.files]),
 			[
 				["audio", 1, 1],
 				["languages", 0, 0],
@@ -106,12 +124,12 @@ describe("backup status", () => {
 		assert.deepEqual(after.toUpload, { files: 1, bytes: 8 });
 		assert.deepEqual(
 			after.areas.find((area) => area.id === "profiles"),
-			{ id: "profiles", here: { files: 1, bytes: 8 }, cloud: { files: 2, bytes: 12 } },
+			{ id: "profiles", here: { files: 1, bytes: 8 }, copy: { files: 2, bytes: 12 } },
 		);
 		assert.equal(backupOutcome(after), "waiting");
 	});
 
-	it("uploads what changed and never the paired devices' file", async () => {
+	it("uploads what changed, and never the files that belong to this computer", async () => {
 		const bucket = memoryBucket();
 		const job = await startBackup("upload", { bucket });
 		assert.equal(job.action, "upload");
@@ -124,6 +142,7 @@ describe("backup status", () => {
 		assert.equal(bucket.objects.get("profiles/slovak/chats/a.json")?.toString(), "one more");
 		assert.equal(bucket.objects.has("access.json"), false);
 		assert.equal(bucket.objects.has("export/2026-10-28/summary.json"), false);
+		assert.equal(bucket.objects.has("backup-place.json"), false, "the folder this computer copies to stays here");
 		const settled = await checkBackup({ bucket });
 		assert.deepEqual(settled.toUpload, { files: 0, bytes: 0 }, "the check follows the run");
 		assert.deepEqual(settled.toRestore, { files: 0, bytes: 0 }, "and nothing is in the bucket that is not here");
@@ -157,7 +176,7 @@ describe("backup status", () => {
 			assert.match(check.error!, /npx wrangler login/);
 			assert.deepEqual(check.here, before.here, "the local count is still the local count");
 			for (const area of check.areas)
-				assert.deepEqual(area.cloud, { files: 0, bytes: 0 }, "and no bucket side is claimed for any area");
+				assert.deepEqual(area.copy, { files: 0, bytes: 0 }, "and no bucket side is claimed for any area");
 		} finally {
 			unreadable = false;
 		}
@@ -246,6 +265,30 @@ describe("backup sign-in", () => {
 		assert.ok(shell.ran.some((command) => command.includes("wrangler@4 login")));
 	});
 
+	it("keeps the check a signed-out learner asked for, rather than answering with nothing", async () => {
+		const signedOut = fakeShell({});
+		await signedOutState(signedOut);
+		unreadable = true;
+		try {
+			const check = await checkBackup({ bucket: memoryBucket() });
+			assert.equal(backupOutcome(check), "unreachable");
+			const next = await backupState(signedOut.run);
+			assert.equal(next.auth, null);
+			assert.equal(next.last, check, "the answer belongs on screen, which is where the question was asked");
+		} finally {
+			unreadable = false;
+		}
+	});
+
+	it("picks up a login made on the command line once a check succeeds without one", async () => {
+		await signedOutState(fakeShell({}));
+		const check = await checkBackup({ bucket: memoryBucket() });
+		assert.equal(check.error, undefined, "the bucket answers, so something can reach it");
+		const next = await backupState(fakeShell({ whoami: WHOAMI }).run);
+		assert.deepEqual(next.auth, { via: "wrangler", account: "owner@example.com" });
+		assert.equal(next.last, check, "and the check that found the login stays on screen");
+	});
+
 	it("signs out, and keeps a failed sign-in or sign-out out of the state", async () => {
 		const shell = fakeShell({ logout: "logged out" });
 		const next = await disconnectBackup(shell.run);
@@ -296,5 +339,110 @@ describe("backup sign-in", () => {
 		} finally {
 			delete process.env.CLOUDFLARE_API_TOKEN;
 		}
+	});
+});
+
+describe("backup into a folder", () => {
+	const COPIES = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-copies-"));
+	const noWrangler = fakeShell({});
+
+	after(() => {
+		fs.rmSync(COPIES, { recursive: true, force: true });
+		writeBackupPlace({ destination: "cloudflare", folder: null });
+	});
+
+	it("reads a path from the keyboard: Explorer's quotes, and a leading ~", () => {
+		assert.equal(resolveFolder('"C:\\Users\\me\\Lanna backup"'), path.resolve("C:\\Users\\me\\Lanna backup"));
+		assert.equal(resolveFolder("~"), os.homedir());
+		assert.equal(resolveFolder("~/Lanna backup"), path.join(os.homedir(), "Lanna backup"));
+	});
+
+	it("says a folder it could not make in words, not in error codes", () => {
+		const gone = Object.assign(new Error("ENOENT: no such file or directory, mkdir 'E:\\Lanna backup'"), {
+			code: "ENOENT",
+		});
+		assert.match(folderNotMade("E:\\Lanna backup", gone).message, /Plug the drive in, or choose another folder/);
+		assert.doesNotMatch(folderNotMade("E:\\Lanna backup", gone).message, /ENOENT/);
+		const denied = Object.assign(new Error("EACCES: permission denied"), { code: "EACCES" });
+		assert.match(folderNotMade("/media/usb/Lanna", denied).message, /not allowed to write in/);
+		assert.match(folderNotMade("/x", new Error("something odd")).message, /could not make/);
+	});
+
+	it("copies into a folder on this computer, asking wrangler nothing", async () => {
+		const folder = path.join(COPIES, "Lanna backup");
+		const chosen = await chooseFolder(folder, noWrangler.run);
+		assert.equal(chosen.destination, "folder");
+		assert.equal(chosen.folder, folder);
+		assert.equal(chosen.last, null, "the bucket's check goes with the bucket");
+		assert.deepEqual(noWrangler.ran, [], "a folder has no login to read, so nothing is spawned for one");
+
+		const empty = await checkBackup();
+		assert.equal(empty.error, undefined);
+		assert.deepEqual(empty.copy, { files: 0, bytes: 0 }, "a folder just made is empty");
+		assert.ok(empty.toUpload.files > 0, "so everything here is to go");
+		assert.equal(empty.areas.length, 5, "every area is drawn for a folder too");
+
+		const job = await startBackup("upload");
+		assert.equal(job.failed, 0);
+		assert.equal(job.done, job.total);
+		assert.equal(fs.readFileSync(path.join(folder, "settings.json"), "utf-8"), "{}");
+		assert.equal(fs.existsSync(path.join(folder, "access.json")), false, "what stays here stays here");
+		assert.equal(fs.existsSync(path.join(folder, "backup-place.json")), false, "and so does where the copy goes");
+
+		const even = await checkBackup();
+		assert.deepEqual(even.toUpload, { files: 0, bytes: 0 });
+		assert.equal(backupOutcome(even), "even");
+	});
+
+	it("brings back only what is missing here, and keeps this computer's own copy", async () => {
+		const folder = path.join(COPIES, "older");
+		fs.mkdirSync(path.join(folder, "profiles/slovak/chats"), { recursive: true });
+		fs.mkdirSync(path.join(folder, "notes"), { recursive: true });
+		fs.writeFileSync(path.join(folder, "profiles/slovak/chats/a.json"), "made elsewhere");
+		fs.writeFileSync(path.join(folder, "notes/n1.json"), "from the folder");
+		await chooseFolder(folder, noWrangler.run);
+
+		const job = await startBackup("restore");
+		assert.equal(job.total, 1, "the file that differs is not the file that is missing");
+		assert.equal(job.failed, 0);
+		assert.equal(fs.readFileSync(path.join(DATA, "notes/n1.json"), "utf-8"), "from the folder");
+		assert.equal(fs.readFileSync(path.join(DATA, "profiles/slovak/chats/a.json"), "utf-8"), "one more");
+	});
+
+	it("refuses a folder inside the data folder, and one that holds it", async () => {
+		await assert.rejects(
+			() => chooseFolder(path.join(DATA, "copy"), noWrangler.run),
+			(err: unknown) => err instanceof BackupError && /away from the data folder/.test(err.message),
+		);
+		await assert.rejects(
+			() => chooseFolder(path.dirname(DATA), noWrangler.run),
+			(err: unknown) => err instanceof BackupError && /away from the data folder/.test(err.message),
+		);
+		await assert.rejects(
+			() => chooseFolder("   ", noWrangler.run),
+			(err: unknown) => err instanceof BackupError && /Type the folder/.test(err.message),
+		);
+		assert.equal(readBackupPlace().folder, path.join(COPIES, "older"), "a refused folder is not saved");
+	});
+
+	it("says the folder is not there, rather than reading out a missing login", async () => {
+		const gone = path.join(COPIES, "gone");
+		fs.mkdirSync(gone, { recursive: true });
+		writeBackupPlace({ destination: "folder", folder: gone });
+		fs.rmSync(gone, { recursive: true, force: true });
+
+		const check = await checkBackup();
+		assert.equal(backupOutcome(check), "unreachable");
+		assert.match(check.error!, /is not there/);
+		assert.doesNotMatch(check.error!, /[Nn]ot signed in/, "no login is asked for on this path");
+	});
+
+	it("comes back to the bucket, and keeps the folder for the next switch", async () => {
+		const folderInUse = readBackupPlace().folder;
+		assert.ok(folderInUse, "the folder chosen above is the one in use");
+		const next = await chooseCloudflare(fakeShell({ whoami: WHOAMI }).run);
+		assert.equal(next.destination, "cloudflare");
+		assert.equal(next.folder, folderInUse, "the folder is remembered, so going back is one click");
+		assert.deepEqual(readBackupPlace(), { destination: "cloudflare", folder: folderInUse });
 	});
 });

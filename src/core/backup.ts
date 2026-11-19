@@ -1,12 +1,12 @@
 /**
- * The data folder against the private `lanna` bucket (Settings → Backup): the
- * report's shape and the one reading the browser takes from it. Pure: the
- * server measures (src/server/backup.ts), the browser shows (backup-section.tsx).
+ * The data folder against its copy (Settings → Backup): the report's shape and
+ * the one reading the browser takes from it. Pure: the server measures
+ * (src/server/backup.ts), the browser shows (backup-section.tsx).
  *
- * One object per file under `data/`, so the bucket reads like the folder, and a
- * file is known to be the same in both places by its MD5, which is the `etag`
- * Cloudflare returns for an object uploaded in one request
- * (developers.cloudflare.com/r2/objects/upload-objects).
+ * The copy is a folder on this computer or the private `lanna` bucket, and both
+ * read like the data folder: one file each. A file is known to be the same in
+ * both places by its MD5, which is the `etag` a bucket object carries when it
+ * was uploaded in one request (developers.cloudflare.com/r2/objects/upload-objects).
  */
 
 /** A count of files and their total size. */
@@ -15,7 +15,7 @@ export interface BackupCounts {
 	bytes: number;
 }
 
-/** One part of the data folder, counted on this computer and in the bucket. */
+/** One part of the data folder, counted on this computer and in the copy. */
 export type BackupAreaId = "audio" | "languages" | "profiles" | "backups" | "other";
 
 /** The saved areas in the order Settings shows them. Every row is drawn before the measure lands, so nothing shifts. */
@@ -30,7 +30,7 @@ export const BACKUP_AREAS: readonly { id: BackupAreaId; label: string }[] = [
 export interface BackupArea {
 	id: BackupAreaId;
 	here: BackupCounts;
-	cloud: BackupCounts;
+	copy: BackupCounts;
 }
 
 /** The folder a file belongs to: its top folder when that is one of the areas, everything else together. */
@@ -40,20 +40,23 @@ export function backupAreaOf(relative: string): BackupAreaId {
 	return BACKUP_AREAS.some((area) => area.id === top) ? (top as BackupAreaId) : "other";
 }
 
-/** What one check of the folder against the bucket found. */
+/** Where the copy goes: a folder on this computer, or the owner's private bucket. */
+export type BackupDestination = "folder" | "cloudflare";
+
+/** What one check of the folder against the copy found. */
 export interface BackupCheck {
 	/** When it ran, ISO. */
 	at: string;
 	/** Everything the app keeps that belongs in the backup, as it is now. */
 	here: BackupCounts;
-	cloud: BackupCounts;
+	copy: BackupCounts;
 	/** New or changed here, so an upload would send them. */
 	toUpload: BackupCounts;
-	/** In the bucket, not here, so a restore would fetch them. */
+	/** In the copy, not here, so a restore would fetch them. */
 	toRestore: BackupCounts;
 	/** Every area, counted on both sides. */
 	areas: BackupArea[];
-	/** Why the bucket could not be read; the two counts above are the local ones alone then. */
+	/** Why the copy could not be read; the two counts above are the local ones alone then. */
 	error?: string;
 }
 
@@ -71,8 +74,14 @@ export interface BackupJob {
 }
 
 export interface BackupState {
+	/** Where the copy goes now; the other destination keeps its setting for the next switch. */
+	destination: BackupDestination;
+	/** The folder the copy goes to, once one was chosen. */
+	folder: string | null;
+	/** The folder offered before one was chosen. */
+	suggestedFolder: string;
 	bucket: string;
-	/** null = this computer has no Cloudflare login and no token. */
+	/** null = this computer has no Cloudflare login and no token. Only read while the destination is the bucket. */
 	auth: BackupAuth | null;
 	/** What stays on this computer. */
 	leftOut: string[];
