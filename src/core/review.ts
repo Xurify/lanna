@@ -96,6 +96,7 @@ export interface ReviewLogEntry {
 	verdict: "exact" | "accents" | "wrong";
 	elapsedDays: number;
 	reviewedAt: string;
+	knownRemoved?: { slug: string; lemma: string };
 	ms?: number;
 	/** Hints taken before answering (1 = the meaning, 2 = the word too). */
 	hints?: number;

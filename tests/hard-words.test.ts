@@ -114,15 +114,34 @@ test("ranks by misses then latest miss, ignoring invalid timestamps", () => {
 	);
 });
 
-test("review detection and answers leave explicit known marks alone", async () => {
+test("review detection is read-only; the third unassisted target miss corrects the known mark", async () => {
 	const { reviewStore } = await import("../src/store/review.ts");
 	const { knownWordStore } = await import("../src/store/known-words.ts");
 	const { answerReview, reviewStatus } = await import("../src/server/review.ts");
 	reviewStore.writeCards({ [card.id]: card });
-	knownWordStore.set(card.slug, card.lemma, true);
+	knownWordStore.set(card.slug, card.lemma, true, new Date("2026-10-31T10:00:00Z"));
 	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(1).reviewedAt));
 	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(2).reviewedAt));
 	assert.equal(knownWordStore.has(card.slug), true);
 	assert.ok(reviewStatus(new Date(entry(3).reviewedAt), 0).leeches.some((word) => word.slug === card.slug));
 	assert.equal(knownWordStore.has(card.slug), true);
+	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(3).reviewedAt));
+	assert.equal(knownWordStore.has(card.slug), false);
+	assert.equal(knownWordStore.updatedAt(), "2026-11-03T10:00:00.000Z");
+	assert.deepEqual(reviewStore.readLog().at(-1)?.knownRemoved, { slug: card.slug, lemma: card.lemma });
+	assert.deepEqual(reviewStatus(new Date(entry(4).reviewedAt), 0, { mint: false }).knownRemovals, [
+		{ slug: card.slug, lemma: card.lemma, at: "2026-11-03T10:00:00.000Z" },
+	]);
+	const beforeUndo = reviewStore.readCards()[card.id];
+	knownWordStore.set(card.slug, card.lemma, true, new Date("2026-11-04T09:00:00Z"));
+	assert.deepEqual(reviewStore.readCards()[card.id], beforeUndo);
+	assert.deepEqual(reviewStatus(new Date(entry(4).reviewedAt), 0, { mint: false }).knownRemovals, []);
+	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(4).reviewedAt));
+	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(5).reviewedAt));
+	assert.equal(knownWordStore.has(card.slug), true, "Undo starts fresh, ignoring the earlier misses");
+	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(6).reviewedAt));
+	assert.equal(knownWordStore.has(card.slug), false);
+	assert.deepEqual(reviewStatus(new Date(entry(7).reviewedAt), 0, { mint: false }).knownRemovals, [
+		{ slug: card.slug, lemma: card.lemma, at: "2026-11-06T10:00:00.000Z" },
+	]);
 });

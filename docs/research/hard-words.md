@@ -32,4 +32,12 @@ These sources motivate a small optional output task, not a validated learning in
 
 ## Not built or established
 
-No new cloze drill, per-word sentence boxes, mandatory daily task, automatic vocabulary reclassification, Watch changes, or screenshot-tool expansion. No live-model accuracy or long-term retention study has validated this writing task.
+No new cloze drill, per-word sentence boxes, mandatory daily task, Watch changes, or screenshot-tool expansion. No live-model accuracy or long-term retention study has validated this writing task.
+
+## Correcting known marks from Review
+
+The owner clarified that repeatedly failing a word they marked as known should correct that mark. Review now removes the explicit mark after three consecutive unassisted target-word misses since the latest mark. This is a conservative product rule, not a research-validated cutoff or proof that receptive knowledge is absent.
+
+One or two mistakes do not suffice. Exact or accent-only target answers reset the streak, even when a neighboring blank is wrong. Hinted and multiple-choice answers supply no evidence either way. Cards for the same word share evidence; other words, suspended cards, invalid dates, ambiguous multi-word records, and duplicate attempts do not add misses.
+
+Each automatic removal is recorded on the Review answer. Review shows a persistent notice with Undo and Dismiss, including after navigation or reload. Dismiss is remembered on that device; Undo uses the ordinary known-word action, starts a new evidence period, and changes neither the review grade nor its schedule. Writing feedback never changes known marks. Reading coverage still has its separate deck, lesson, and level assumptions; removing an explicit mark is not a blanket reading exclusion.

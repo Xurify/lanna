@@ -50,6 +50,8 @@ import { aiStatus } from "./ai-status.ts";
 import { cachedMissNote, ensureMissNote } from "./miss-note.ts";
 import { enoughEvidence, missNoteEvidence } from "../core/miss-note.ts";
 import { activeHardWords } from "./hard-words.ts";
+import { shouldUnmarkKnownWord } from "../core/known-word-review.ts";
+import { knownWordStore } from "../store/known-words.ts";
 
 const DAY_MS = 86_400_000;
 const INFLECTING_CATEGORIES = new Set(["Nouns", "Verbs", "Adjectives"]);
@@ -146,6 +148,7 @@ interface ReviewStatus {
 	settings: ReviewSettings;
 	next: ReviewPrompt | null;
 	answered: AnsweredLine[];
+	knownRemovals: Array<{ slug: string; lemma: string; at: string }>;
 	leeches: Array<{ id: string; slug: string; lemma: string; gloss: string; lapses: number; wrongs: number }>;
 }
 
@@ -329,6 +332,12 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 	const answeredToday = reviewedOn(today, now, cards, tzOffset);
 	const endOfDay = Date.parse(`${today}T00:00:00Z`) + (tzOffset ?? now.getTimezoneOffset()) * 60_000 + DAY_MS;
 	const reviewedToday = answeredToday.answers;
+	const marked = knownWordStore.slugs();
+	const removals = new Map<string, { slug: string; lemma: string; at: string }>();
+	for (const entry of reviewStore.readLog()) {
+		if (entry.knownRemoved && !marked.has(entry.knownRemoved.slug))
+			removals.set(entry.knownRemoved.slug, { ...entry.knownRemoved, at: entry.reviewedAt });
+	}
 	let next: ReviewCard | undefined = due[0];
 	// Pending new cards first-come: a card minted but not yet answered.
 	if (!next) next = list.find((c) => c.state === "new" && !c.suspended);
@@ -370,6 +379,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings, cards) : null,
 		answered: answeredToday.lines,
+		knownRemovals: [...removals.values()],
 		leeches: activeHardWords({ tz: tzOffset })
 			.slice(0, 10)
 			.map(({ id, slug, lemma, gloss, lapses, wrongs }) => ({ id, slug, lemma, gloss, lapses, wrongs })),
@@ -422,7 +432,7 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 	noteWeakForm(updated, rating, now, wordVerdict === "wrong");
 	noteReviewMixup(card, word, wordVerdict, input.hints, now);
 	const form = noteFirstTry(card, input, word, wordVerdict);
-	reviewStore.appendLog({
+	const entry: ReviewLogEntry = {
 		cardId: card.id,
 		rating,
 		given: input.given,
@@ -434,7 +444,18 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		...(input.picked ? { picked: true } : {}),
 		...(blank.words > 1 ? { words: blank.words, spans: blank.spans } : {}),
 		...form,
-	});
+	};
+	const markedAt = knownWordStore.read().words[card.slug]?.at;
+	if (
+		markedAt &&
+		wordVerdict === "wrong" &&
+		!input.hints &&
+		!input.picked &&
+		shouldUnmarkKnownWord(Object.values(cards), [...reviewStore.readLog(), entry], card.slug, markedAt, now, tag())
+	)
+		entry.knownRemoved = { slug: card.slug, lemma: card.lemma };
+	reviewStore.appendLog(entry);
+	if (entry.knownRemoved) knownWordStore.set(card.slug, card.lemma, false, now);
 	return { verdict, rating, card: updated };
 }
 

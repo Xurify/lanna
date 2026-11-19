@@ -32,6 +32,7 @@ import { useActiveTime } from "@/components/use-active-time";
 import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
+import { ReviewKnownRemoval } from "@/components/review-known-removal";
 import { MissWhy } from "@/components/miss-why";
 import { askAbout, onAskLeaving } from "@/components/lesson/tutor";
 import {
@@ -108,6 +109,7 @@ interface Status {
 	settings: { newPerDay: number; retention: number };
 	next: Prompt | null;
 	answered?: AnsweredLine[];
+	knownRemovals?: Array<{ slug: string; lemma: string; at: string }>;
 	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number; wrongs: number }>;
 }
 
@@ -829,6 +831,15 @@ export function ReviewSession() {
 
 					<div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
 						<div className={cn(COLUMN, "pb-12")}>
+							{status?.knownRemovals?.map((removal) => (
+								<ReviewKnownRemoval
+									key={`${status.profile}:${removal.slug}:${removal.at}`}
+									{...removal}
+									profile={status.profile}
+									language={lang?.code}
+									onDismiss={() => inputRefs.current[0]?.focus()}
+								/>
+							))}
 							{loadError && (
 								<div
 									role="alert"
