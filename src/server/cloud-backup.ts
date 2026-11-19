@@ -20,6 +20,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { BackupAuth } from "../core/backup.ts";
 import { authStore } from "../store/auth.ts";
+import { BACKUP_PLACE_FILE } from "../store/backup-place.ts";
 import { deleteKey, keyValue } from "./keys.ts";
 
 export const BACKUP_BUCKET = "lanna";
@@ -32,6 +33,7 @@ const LOGIN_TIMEOUT = 180_000;
 const LEFT_OUT = [
 	{ path: "access.json", why: "the paired devices' token hashes belong to this computer" },
 	{ path: "export/", why: "snapshots made from the rest" },
+	{ path: path.basename(BACKUP_PLACE_FILE), why: "the folder this computer copies to" },
 ];
 
 export interface BackupFile {
