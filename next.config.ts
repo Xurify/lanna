@@ -1,5 +1,9 @@
 import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_SERVER } from "next/constants.js";
+import { migrateMediaLibraries } from "./src/store/media-directory.ts";
 
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as {
 	version: string;
@@ -179,4 +183,12 @@ const nextConfig: NextConfig = {
 	],
 };
 
-export default nextConfig;
+export default function configure(phase: string): NextConfig {
+	if (phase === PHASE_DEVELOPMENT_SERVER || phase === PHASE_PRODUCTION_SERVER) {
+		const data = process.env.LANNA_DATA_DIR
+			? path.resolve(process.env.LANNA_DATA_DIR)
+			: fileURLToPath(new URL("./data", import.meta.url));
+		migrateMediaLibraries(data);
+	}
+	return nextConfig;
+}

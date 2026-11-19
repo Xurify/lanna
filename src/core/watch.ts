@@ -205,9 +205,6 @@ export interface SegmentStat {
 
 export type WatchMode = "step" | "flow";
 
-/** One watching (videos/watches.jsonl, append-only). The milestone page
- *  reads `stats` for its listening-speed estimate: words per second of
- *  the lines got on the first listen. Keep the shape stable. */
 export interface WatchLogEntry {
 	/** The minutes the day counted for this watching: the measured playing time, capped. */
 	minutes?: number;

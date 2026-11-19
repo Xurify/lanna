@@ -1,18 +1,3 @@
-/**
- * Fragments of a video (2026-11-06): find the stretches of a
- * video worth watching, and prepare only one of them.
- *
- * `analyzeFragments(id)` reads the video's caption lines (kept under
- * videos/discover/lines/ after the first time), glosses them against the
- * learner's words as they stand now, and gives back the facts of every line
- * (so the page can draw the strip and measure a stretch the learner drags)
- * and the best stretches (src/core/fragments.ts). No model call.
- *
- * Preparing a stretch is `prepareVideo(url, { range })` (src/server/watch.ts):
- * only its lines are translated and questioned, so it costs a fraction of
- * the whole video and a video of any length can be used.
- */
-
 import { activeProfile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { TtlMemo } from "../core/ttl-memo.ts";

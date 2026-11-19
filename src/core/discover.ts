@@ -53,8 +53,6 @@ export type PickSource = "creator" | "subscriptions" | "history" | "recommended"
 /** Why a scanned video is not offered. */
 export type SkipReason = "no-captions" | "other-language" | "too-long" | "too-short" | "live" | "unavailable";
 
-/** One video checked for the offer (videos/discover/scans.json). The check
- *  is free: YouTube's player data and the caption track, glossed locally. */
 export interface ScannedVideo {
 	id: string;
 	title: string;

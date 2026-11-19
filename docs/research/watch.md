@@ -15,7 +15,7 @@ The first learner's goal is to follow Slovak YouTube, and the gap is assembling 
 - **Straight through:** both subtitles live, the transcript below, click a line to jump. Every word tappable.
 - End screen: lines got on the first unaided listen, words a minute of that speech (the listening-speed signal the milestones page reads), the check, and the words now in the deck.
 - A video added waits on Today's plan as a Watch task until watched; watching counts toward the input strand (8 minutes).
-- Everything is kept under `data/profiles/<lang>/videos/` (caption track as fetched, lines, questions, `watches.jsonl` with per-line stats; the line shape is promised stable to the milestones page).
+- Everything is kept under `data/profiles/<lang>/media/` (caption track as fetched, lines, questions, `watches.jsonl` with per-line stats; the line shape is promised stable to the milestones page).
 
 ## Status
 

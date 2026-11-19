@@ -1,37 +1,3 @@
-/**
- * The video library (watch, 2026-10-28) — the active
- * profile's data/profiles/<language>/videos/:
- *
- *   <id>.json              one YouTube video as prepared: every line with
- *                          its times, translation and glossed tokens, the
- *                          pre-teach words, the questions, the caption
- *                          source and what the model calls cost
- *                          (src/core/watch.ts VideoRecord). Written once.
- *   captions/<id>.<lang>.<ext>
- *                          the caption track exactly as fetched (json3,
- *                          xml or vtt), so the lines can be cut again
- *                          without going back to YouTube.
- *   index.jsonl            one line per video (VideoIndexEntry).
- *   watches.jsonl          one line per watching (WatchLogEntry): mode,
- *                          lines got on the first listen, replays, the
- *                          check, the words tapped and queued, XP.
- *   sections/<id>.json     the study sections a model found for the video,
- *                          with what the request cost (src/core/watch-sections.ts)
- *   prep/<id>.json         the briefing to study before the video: what it is
- *                          about, its parts, the keys and a short version at
- *                          the learner's level, with what it cost
- *                          (src/core/watch-prep.ts)
- *   chosen.json            the video the learner picked for a day's plan
- *                          ({day, videoId}); only the latest day is kept.
- *   sentences.jsonl        one line per model verdict on a sentence the
- *                          learner wrote for the end of a video
- *                          (SentenceCheckEntry, docs/plans/watch-sentences.md).
- *
- * Nothing of the video itself is stored — it plays in YouTube's player.
- * Same idioms as the other stores: sync fs, small files, atomic renames,
- * torn lines skipped.
- */
-
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
@@ -40,16 +6,16 @@ import type { SentenceCheckEntry } from "../core/watch-sentences.ts";
 import type { SectionsRecord } from "../core/watch-sections.ts";
 import type { PrepRecord } from "../core/watch-prep.ts";
 
-const INDEX = () => path.join(PATHS.videos, "index.jsonl");
-const WATCHES = () => path.join(PATHS.videos, "watches.jsonl");
-const SENTENCES = () => path.join(PATHS.videos, "sentences.jsonl");
-const CHOSEN = () => path.join(PATHS.videos, "chosen.json");
-const SECTIONS = (id: string) => path.join(PATHS.videos, "sections", `${id}.json`);
-const PREP = (id: string) => path.join(PATHS.videos, "prep", `${id}.json`);
+const INDEX = () => path.join(PATHS.media, "index.jsonl");
+const WATCHES = () => path.join(PATHS.media, "watches.jsonl");
+const SENTENCES = () => path.join(PATHS.media, "sentences.jsonl");
+const CHOSEN = () => path.join(PATHS.media, "chosen.json");
+const SECTIONS = (id: string) => path.join(PATHS.media, "sections", `${id}.json`);
+const PREP = (id: string) => path.join(PATHS.media, "prep", `${id}.json`);
 
 function videoFile(id: string): string {
 	if (!isVideoId(id)) throw new Error(`bad video id ${id}`);
-	return path.join(PATHS.videos, `${id}.json`);
+	return path.join(PATHS.media, `${id}.json`);
 }
 
 function readJsonl<T>(file: string): T[] {
@@ -194,7 +160,7 @@ export const videoStore = {
 		} catch {
 			// no index yet: nothing to take the video out of
 		}
-		const dir = path.join(PATHS.videos, "captions");
+		const dir = path.join(PATHS.media, "captions");
 		try {
 			for (const name of fs.readdirSync(dir))
 				if (name.startsWith(`${id}.`)) fs.rmSync(path.join(dir, name), { force: true });
@@ -206,7 +172,7 @@ export const videoStore = {
 	/** Keep the caption track as fetched; returns the file. */
 	putCaptions(id: string, lang: string, ext: "json" | "xml" | "vtt", text: string): string {
 		if (!isVideoId(id)) throw new Error(`bad video id ${id}`);
-		const file = path.join(PATHS.videos, "captions", `${id}.${lang.replace(/[^a-zA-Z-]/g, "")}.${ext}`);
+		const file = path.join(PATHS.media, "captions", `${id}.${lang.replace(/[^a-zA-Z-]/g, "")}.${ext}`);
 		fs.mkdirSync(path.dirname(file), { recursive: true });
 		fs.writeFileSync(file, text, "utf-8");
 		return file;
@@ -215,7 +181,7 @@ export const videoStore = {
 	captions(id: string, lang: string): { ext: "json" | "xml" | "vtt"; text: string } | null {
 		if (!isVideoId(id)) return null;
 		for (const ext of ["json", "xml", "vtt"] as const) {
-			const file = path.join(PATHS.videos, "captions", `${id}.${lang}.${ext}`);
+			const file = path.join(PATHS.media, "captions", `${id}.${lang}.${ext}`);
 			try {
 				return { ext, text: fs.readFileSync(file, "utf-8") };
 			} catch {
@@ -243,7 +209,7 @@ export const videoStore = {
 	},
 	/** Every kept study-sections record. */
 	allSections(): SectionsRecord[] {
-		return idsIn(path.join(PATHS.videos, "sections")).flatMap((id) => this.sections(id) ?? []);
+		return idsIn(path.join(PATHS.media, "sections")).flatMap((id) => this.sections(id) ?? []);
 	},
 	/** The briefing made for a video before watching it (src/core/watch-prep.ts), with its cost. */
 	prep(id: string): PrepRecord | null {
@@ -256,7 +222,7 @@ export const videoStore = {
 	},
 	/** Every kept briefing. */
 	allPreps(): PrepRecord[] {
-		return idsIn(path.join(PATHS.videos, "prep")).flatMap((id) => this.prep(id) ?? []);
+		return idsIn(path.join(PATHS.media, "prep")).flatMap((id) => this.prep(id) ?? []);
 	},
 	appendSentence(entry: SentenceCheckEntry): void {
 		appendJsonl(SENTENCES(), entry);

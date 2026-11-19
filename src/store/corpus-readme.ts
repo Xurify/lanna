@@ -25,7 +25,7 @@ is the corpus for whatever you build next.
 | \`profiles/slovak/lessons/\` | Every finished lesson and blitz: every sentence shown, your answer, the verdict, the hint used | JSON Lines per day |
 | \`profiles/slovak/lessons/why-index.json\` | Which chat answered "Why?" for which sentence, so the question is paid for once | JSON |
 | \`profiles/slovak/stories/\` | Every graded story episode written for the Read task, with every word glossed, the questions and what it cost; \`index.jsonl\` lists them, \`reads.jsonl\` logs every reading | JSON + JSON Lines |
-| \`profiles/slovak/videos/\` | Every YouTube video prepared for the Watch task: the caption track as fetched (\`captions/\`), every line with its times, translation and glossed words, the pre-teach words and the questions; \`index.jsonl\` lists them, \`watches.jsonl\` logs every watching (lines understood on the first listen, replays, the check) | JSON + JSON Lines |
+| \`profiles/slovak/media/\` | YouTube videos and Spotify audio prepared for the Media library (downloaded tracks and covers in \`audio/\`): the caption track as fetched (\`captions/\`), every line with its times, translation and glossed words, the pre-teach words and the questions; \`index.jsonl\` lists them, \`watches.jsonl\` logs every watching (lines understood on the first listen, replays, the check) | JSON + JSON Lines |
 | \`profiles/<language>/watch-reps.json\` | The Watch lines to hear again in Listen: each line not understood on the first listen, its step, and the day it is next due; a line retires after three understood answers | JSON |
 | \`profiles/<language>/notes.json\` + \`notes-trash.jsonl\` + \`notes-images/\` | Your notes (the Notes page): the title, the text as you wrote it (with \`[m:ss]\` time stamps), and each link with the card shown for it (title, site, short description, picture); when made and changed. A deleted note is kept in \`notes-trash.jsonl\` as it was. \`notes-images/\` holds the cards' pictures and the sites' icons, downloaded once and named by a hash of their bytes | JSON + JSON Lines + images |
 | \`profiles/<language>/link-previews.json\` | The card for every link you added or mentioned in a note, by its address (title, site, description, picture, icon) and when it was looked up, so a link is looked up once | JSON |
@@ -89,7 +89,7 @@ where the format is not obvious.
 - \`chats/\`: every tutor session (one JSON per chat). See \`chats/README.md\`.
 - \`lessons/\`: every finished lesson with every answer. See \`lessons/README.md\`.
 - \`stories/\`: every story episode written for the Read task. See \`stories/README.md\`.
-- \`videos/\`: every YouTube video prepared for the Watch task. See \`videos/README.md\`.
+- \`media/\`: YouTube videos and Spotify audio prepared for practice. See \`media/README.md\`.
 - \`speak/\`: every spoken scene from the Speak task, with your recordings. See \`speak/README.md\`.
 - \`fluency/\`: the speed strand's log (timed re-reads, "say it faster"). See \`fluency/README.md\`.
 - \`cheatsheets/\`: the phrase guides you imported under Words. See \`cheatsheets/README.md\`.
@@ -263,13 +263,23 @@ The speed strand: work on what you already know, against the clock.
   \`sentencesMade\`, \`xp\`.
 `;
 
-const VIDEOS = `# videos/
+const MEDIA = `# media/
 
-YouTube videos prepared for the Watch task. The video itself is never
-downloaded or stored (it plays in YouTube's own player); what is kept is
-everything the app made of its captions, paid for once.
+YouTube videos and Spotify audio prepared for the Media library. YouTube
+videos play in YouTube's own player; Spotify tracks keep their downloaded
+audio here for playback and transcription. Captions, translations and
+practice records are kept alongside both kinds of media.
 
-- \`<id>.json\` (the YouTube video id): \`title\`, \`channel\`, \`url\`,
+An existing profile's \`videos/\` folder moves here automatically at
+startup, for every profile, including its audio, captions, discovery data and practice history.
+If both folders exist, distinct files and identical duplicates are combined;
+different files at the same path are left untouched and require resolution.
+
+Backup uploads move the same paths in R2 and folder backups: every new copy
+is verified before any old file is removed. A restore from an older backup
+writes directly to \`media/\` and never replaces a local file.
+
+- \`<id>.json\` (a YouTube video id or \`sp_<Spotify track id>\`): \`title\`, \`channel\`, \`url\`,
   \`durationSec\`, \`source\` (\`captions\` = made by people,
   \`auto-captions\` = YouTube's automatic ones, \`transcription\` = the
   audio transcribed because the video had none; and how it was fetched; \`trackLang\` is the caption language, another language when the video had none in the one being learned),
@@ -284,6 +294,8 @@ everything the app made of its captions, paid for once.
   \`kind\`); \`coverage\` (share of running words you were expected to
   know), \`wordCount\`, \`unknownCount\`, \`usage\` (the model and
   tokens the translation and questions cost).
+- \`audio/<id>.mp3\`: a downloaded Spotify track, kept for playback and transcription.
+- \`audio/<id>.jpg\`: the track's cover art.
 - \`captions/<id>.<lang>.<json|xml|vtt>\`: the caption track exactly as
   YouTube served it, so the lines can be cut again without fetching.
 - \`index.jsonl\`: one line per video (id, title, channel, length, level,
@@ -362,7 +374,7 @@ export const DATA_READMES = {
 	stories: STORIES,
 	speak: SPEAK,
 	fluency: FLUENCY,
-	videos: VIDEOS,
+	media: MEDIA,
 	distractors: DISTRACTORS,
 	cheatsheets: CHEATSHEETS,
 } as const;

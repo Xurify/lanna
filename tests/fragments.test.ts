@@ -320,7 +320,7 @@ describe("a video's fragments", () => {
 		assert.ok(a.lines.every((l) => l.words > 0 && l.fresh <= l.words));
 		assert.ok(a.coverage >= 0 && a.coverage <= 1);
 		assert.ok(
-			fs.existsSync(path.join(TMP_DATA, "profiles", "slovak", "videos", "discover", "lines", "FRAGMENT001.json")),
+			fs.existsSync(path.join(TMP_DATA, "profiles", "slovak", "media", "discover", "lines", "FRAGMENT001.json")),
 		);
 		const again = await server.analyzeFragments("FRAGMENT001", {});
 		assert.deepEqual(again.lines, a.lines, "the second look reads the kept lines");
@@ -332,7 +332,7 @@ describe("a video's fragments", () => {
 		const first = await server.analyzeFragments("FRAGMENTMEM", {});
 		assert.equal(first.prepared, undefined);
 		// The kept lines are gone, so only the memo can answer.
-		fs.rmSync(path.join(TMP_DATA, "profiles", "slovak", "videos", "discover", "lines", "FRAGMENTMEM.json"));
+		fs.rmSync(path.join(TMP_DATA, "profiles", "slovak", "media", "discover", "lines", "FRAGMENTMEM.json"));
 		const second = await server.analyzeFragments("FRAGMENTMEM", {});
 		assert.deepEqual(second.lines, first.lines);
 		await watch.prepareVideo("https://youtu.be/FRAGMENTMEM", {

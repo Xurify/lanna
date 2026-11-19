@@ -11,7 +11,7 @@ export function GET(request: Request) {
 		return NextResponse.json({ message: "Not a Spotify track id" }, { status: 400 });
 	}
 	const isCover = url.searchParams.get("cover") === "1";
-	const audioDir = path.join(PATHS.videos, "audio");
+	const audioDir = path.join(PATHS.media, "audio");
 	if (isCover) {
 		const coverPath = path.join(audioDir, `${id}.jpg`);
 		if (!fs.existsSync(coverPath)) {

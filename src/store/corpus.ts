@@ -468,7 +468,7 @@ export function ensureReadmes(force = false): void {
 		[path.join(PATHS.stories, "README.md"), DATA_READMES.stories],
 		[path.join(PATHS.speak, "README.md"), DATA_READMES.speak],
 		[path.join(PATHS.fluency, "README.md"), DATA_READMES.fluency],
-		[path.join(PATHS.videos, "README.md"), DATA_READMES.videos],
+		[path.join(PATHS.media, "README.md"), DATA_READMES.media],
 		[path.join(PATHS.distractors, "README.md"), DATA_READMES.distractors],
 		[path.join(PATHS.cheatsheets, "README.md"), DATA_READMES.cheatsheets],
 	];

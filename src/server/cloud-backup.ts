@@ -1,23 +1,9 @@
-/**
- * A copy of the data folder in the private `lanna` R2 bucket, one object per
- * file under `data/`, so the bucket reads like the folder. The folder on this
- * computer stays the source: a push only adds and replaces objects, a pull
- * only writes files that are missing here.
- *
- * Objects are read and written through Cloudflare's API with the login
- * `wrangler login` made on this computer, or a CLOUDFLARE_API_TOKEN saved under
- * API keys or in .env.local
- * (developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects).
- * An object's etag is the MD5 of its bytes when it was uploaded in one
- * request (developers.cloudflare.com/r2/objects/upload-objects), which is how
- * a file is known to be the same without downloading it.
- */
-
 import { exec } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
+import { mediaBackupPath } from "../core/media-path.ts";
 import type { BackupAuth } from "../core/backup.ts";
 import { authStore } from "../store/auth.ts";
 import { BACKUP_PLACE_FILE } from "../store/backup-place.ts";
@@ -46,6 +32,7 @@ export interface Bucket {
 	list(): Promise<BackupFile[]>;
 	put(file: string, data: Buffer): Promise<void>;
 	get(file: string): Promise<Buffer>;
+	remove?(file: string): Promise<void>;
 }
 
 export function backedUp(relative: string): boolean {
@@ -99,13 +86,22 @@ export interface PullPlan {
 
 export function pullPlan(local: BackupFile[], remote: BackupFile[]): PullPlan {
 	const here = new Map(local.map((file) => [file.path, file]));
-	const kept = remote.filter((file) => backedUp(file.path));
-	const download = kept.filter((file) => !here.has(file.path));
-	const different = kept.filter((file) => here.has(file.path) && here.get(file.path)!.md5 !== file.md5);
+	const preferred = new Map<string, BackupFile>();
+	for (const file of remote) {
+		if (!backedUp(file.path)) continue;
+		const target = mediaBackupPath(file.path);
+		if (!preferred.has(target) || target === file.path) preferred.set(target, file);
+	}
+	const kept = [...preferred.values()];
+	const download = kept.filter((file) => !here.has(mediaBackupPath(file.path)));
+	const different = kept.filter((file) => {
+		const local = here.get(mediaBackupPath(file.path));
+		return local && local.md5 !== file.md5;
+	});
 	return {
 		download,
 		same: kept.length - download.length - different.length,
-		different: different.map((file) => file.path),
+		different: different.map((file) => mediaBackupPath(file.path)),
 	};
 }
 
@@ -132,7 +128,7 @@ export async function pull(
 	done: (file: BackupFile) => void,
 ): Promise<string[]> {
 	return inParallel(files, async (file) => {
-		const target = path.join(root, file.path);
+		const target = path.join(root, mediaBackupPath(file.path));
 		const data = await bucket.get(file.path);
 		fs.mkdirSync(path.dirname(target), { recursive: true });
 		fs.writeFileSync(target, data, { flag: "wx" });
@@ -249,7 +245,12 @@ function cloudflareCall(fetcher: Fetcher) {
 	let token = "";
 	return async (url: string, init: RequestInit = {}): Promise<Response> => {
 		token ||= await cloudflareToken();
-		const send = () => fetcher(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
+		const send = () =>
+			fetcher(url, {
+				...init,
+				signal: init.signal ?? AbortSignal.timeout(20_000),
+				headers: { ...init.headers, Authorization: `Bearer ${token}` },
+			});
 		let res = await send();
 		if (res.status === 401) {
 			token = await cloudflareToken();
@@ -318,6 +319,9 @@ export async function cloudflareBucket(name = BACKUP_BUCKET, fetcher: Fetcher = 
 		},
 		async get(file) {
 			return Buffer.from(await (await call(object(file))).arrayBuffer());
+		},
+		async remove(file) {
+			await call(object(file), { method: "DELETE" });
 		},
 	};
 }

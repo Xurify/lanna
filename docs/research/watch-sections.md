@@ -18,7 +18,7 @@ A model is **not** trusted to write the language (E27, E44). Every exercise is b
 
 ## What was built
 
-- **Find sections** on a prepared video's preview (captions in the language only). One request on the Cheap slot sees the numbered lines, their English and the words the learner has not met. It returns up to three sections, each with a title, one line on why it is worth studying, and the words to practice. The answer is checked against the lines, kept under `videos/sections/<id>.json` with its cost, and never asked again unless the learner asks to find new ones.
+- **Find sections** on a prepared video's preview (captions in the language only). One request on the Cheap slot sees the numbered lines, their English and the words the learner has not met. It returns up to three sections, each with a title, one line on why it is worth studying, and the words to practice. The answer is checked against the lines, kept under `media/sections/<id>.json` with its cost, and never asked again unless the learner asks to find new ones.
 - **Practice a section:** each word becomes a typed gap in its real line, with the line spoken. The first miss shows the first letter and the line's English. The second miss shows the answer and the word's meaning. "I don't know" is a miss. XP follows the lesson rule for a typed rep (half when accents only or helped).
 - **Misses come back:** missed words go to the Review deck (when the dictionary has them), and their lines join the Watch lines that come back in Listen.
 

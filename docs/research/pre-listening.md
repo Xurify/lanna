@@ -23,7 +23,7 @@ What the model is for: judging what the video is about and which words carry it,
 
 ## What was built
 
-- **Get ready**, on a prepared video's preview (captions in the language only), under the coverage cards: one cheap-slot request (`src/server/watch-prep.ts`, `src/core/watch-prep.ts`) returns `about`, `parts`, `keys` and `summary`. A second request, for the summary only, when the first is under the floor. Kept in `videos/prep/<id>.json` with its cost (E1, counted under Videos at Settings → Spending), made again only with "Get ready again".
+- **Get ready**, on a prepared video's preview (captions in the language only), under the coverage cards: one cheap-slot request (`src/server/watch-prep.ts`, `src/core/watch-prep.ts`) returns `about`, `parts`, `keys` and `summary`. A second request, for the summary only, when the first is under the floor. Kept in `media/prep/<id>.json` with its cost (E1, counted under Videos at Settings → Spending), made again only with "Get ready again".
 - **Three steps on the preview:** What it's about (the English, then the parts with their times), The short version (spoken, tappable, the English behind a switch, the two shares named), Words to listen for (each with its meaning and its line, spoken; "Type them" runs the gap drill). A finished drill earns XP as a lesson's typed reps, counts as Watch minutes, sends misses to Review and their lines to Listen, and marks the briefing done with the score and the day.
 - The hard bands' lines on every video card now say "get ready first".
 - The Watch sources note carries the before-listening studies, what they did not show, and which numbers are the app's own.
