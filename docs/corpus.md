@@ -38,6 +38,8 @@ Backup uploads migrate the same paths in R2 (and folder backups), verify every n
 
 Writing practice keeps checked passages in `data/profiles/<lang>/writing.jsonl`: target words, learner text, raw model reply, parsed feedback (or null for unusable output), usage, and date. The file also serves as the cache by normalized text and sorted target slugs. The corpus export includes `writing.json`, its count, tokens, and cost. Unsubmitted drafts stay in browser storage on the device.
 
+When Review automatically removes an explicit known mark, its answer in `review/log.jsonl` includes `knownRemoved` (slug and dictionary form). That evidence survives reloads and is included in the existing `review.json` export. Undo uses the ordinary known-word action; notice dismissals stay on the device.
+
 - Cache to `data/` before calling an API; a second request for the same thing makes no model or TTS call (Read reuses the newest unread episode, Watch never re-prepares a video, Why? reuses by sentence + answer).
 - Keep the TTS cache key (`audioKey`) stable or old clips become unreachable.
 - Add an index line and a README entry, and extend the export.
