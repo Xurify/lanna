@@ -38,7 +38,11 @@ class FakeNotification {
 	show(): void {}
 }
 
-function mainProcess({ trusted = true, supported = true } = {}) {
+function mainProcess({
+	trusted = true,
+	supported = true,
+	icon,
+}: { trusted?: boolean; supported?: boolean; icon?: unknown } = {}) {
 	FakeNotification.supported = supported;
 	FakeNotification.shown = [];
 	const handlers = new Map<string, Handler>();
@@ -53,20 +57,37 @@ function mainProcess({ trusted = true, supported = true } = {}) {
 	const sender = { send: (channel: string, id: unknown) => sends.push([channel, id]) };
 	registerNotificationsIPC(
 		{ handle: (channel: string, handler: Handler) => handlers.set(channel, handler) },
-		{ trusted: () => trusted, BrowserWindow: { fromWebContents: () => win }, Notification: FakeNotification },
+		{ trusted: () => trusted, BrowserWindow: { fromWebContents: () => win }, Notification: FakeNotification, icon },
 	);
 	return { handlers, sends, windowActions, call: handlers.get("lanna:notify")!, sender };
 }
 
 describe("registerNotificationsIPC", () => {
-	it("raises the OS notification with the alert's title and body, and reports a click back", async () => {
-		const { call, sender, sends, windowActions } = mainProcess();
+	it("raises the OS notification with the alert's title, body and the app's own picture, and reports a click back", async () => {
+		const toastIcon = { isEmpty: () => false };
+		const { call, sender, sends, windowActions } = mainProcess({ icon: toastIcon });
 		assert.equal(await call({ sender }, { id: "n1", title: "Review due", body: "12 cards are due." }), true);
 		const shown = FakeNotification.shown;
-		assert.deepEqual(shown[0]!.options, { title: "Review due", body: "12 cards are due.", silent: true });
+		assert.deepEqual(shown[0]!.options, {
+			title: "Review due",
+			body: "12 cards are due.",
+			silent: true,
+			icon: toastIcon,
+		});
 		shown[0]!.click!();
 		assert.deepEqual(windowActions, ["restore", "show", "focus"]);
 		assert.deepEqual(sends, [["lanna:notification-open", "n1"]]);
+	});
+
+	it("leaves the picture off when the shell has none to hand it", async () => {
+		const { call, sender } = mainProcess();
+		await call({ sender }, { id: "n1", title: "t", body: "b" });
+		assert.equal("icon" in FakeNotification.shown[0]!.options, false);
+	});
+
+	it("ships the PNG the shell loads for the toast (electron/main.cjs TOAST_ICON_FILE)", () => {
+		const icon = readFileSync(new URL("../build/icon.png", import.meta.url));
+		assert.deepEqual([...icon.subarray(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 	});
 
 	it("refuses any sender but the app's own window, and raises nothing", async () => {

@@ -13,12 +13,17 @@
  * click focuses the window and reports the id back, so the renderer opens the
  * reminder the notification was about.
  */
-function registerNotificationsIPC(ipcMain, { trusted, BrowserWindow, Notification }) {
+function registerNotificationsIPC(ipcMain, { trusted, BrowserWindow, Notification, icon }) {
 	ipcMain.handle("lanna:notify", (event, payload) => {
 		if (!trusted(event)) throw new Error("Untrusted desktop request.");
 		if (!Notification.isSupported()) return false;
 		const { id = "", title = "", body = "" } = payload ?? {};
-		const notification = new Notification({ title: String(title), body: String(body), silent: true });
+		const notification = new Notification({
+			title: String(title),
+			body: String(body),
+			silent: true,
+			...(icon ? { icon } : {}),
+		});
 		notification.on("click", () => {
 			const win = BrowserWindow.fromWebContents(event.sender);
 			if (!win) return;

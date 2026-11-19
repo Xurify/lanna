@@ -84,6 +84,10 @@ files:
   # Main-process ID-token signature verification (no bundled OAuth implementation).
   - node_modules/jose/**/*
 extraResources:
+  # The reminder toast's picture: electron/notifications-ipc.cjs hands Windows
+  # this file's path, and build/ never rides inside the asar.
+  - from: build/icon.png
+    to: icon.png
   # Attribution/license for the bounded local Pi cutoff-selector port.
   - from: docs/compaction-accounting.md
     to: licenses/pi-compaction.md
