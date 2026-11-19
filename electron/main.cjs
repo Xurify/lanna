@@ -24,7 +24,7 @@
  *     would shadow every settings-page key change until restart.
  */
 
-const { app, BrowserWindow, clipboard, Menu, ipcMain, session, shell } = require("electron");
+const { app, BrowserWindow, clipboard, Menu, ipcMain, nativeImage, Notification, session, shell } = require("electron");
 
 /** The window frame in the two themes (the page's --q-bg and --q-ink). Day is the default; the page reports its theme through "lanna:theme". */
 /** Whether the last session ended in Night, kept beside the window state so the window is the right color from its first frame. */
@@ -57,6 +57,7 @@ const { desktopAPIHeaders, trustedSender } = require("./desktop-api.cjs");
 const { registerStorageIPC } = require("./storage-ipc.cjs");
 const { registerFontsIPC } = require("./fonts-ipc.cjs");
 const { createYouTube, registerYouTubeIPC } = require("./youtube.cjs");
+const { registerNotificationsIPC } = require("./notifications-ipc.cjs");
 const { attachContextMenu } = require("./context-menu.cjs");
 const { adoptFormerUserData } = require("./former-user-data.cjs");
 const { randomBytes } = require("node:crypto");
@@ -93,6 +94,14 @@ app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 const DEV_ICON = app.isPackaged
 	? undefined
 	: path.join(__dirname, "..", "build", process.platform === "win32" ? "icon.ico" : "icon.png");
+
+// A reminder toast carries a picture of its own: the PNG electron-builder.yml
+// ships into Resources when packaged, build/icon.png in dev. Electron draws it
+// from a loaded image only — the same file handed over as a path draws nothing
+// in a Windows toast (measured with Electron 45 on Windows 11).
+const TOAST_ICON_FILE = app.isPackaged
+	? path.join(process.resourcesPath, "icon.png")
+	: path.join(__dirname, "..", "build", "icon.png");
 
 const AUTH_FILE = () => path.join(app.getPath("userData"), "auth.json");
 const DATA_DIR = () => path.join(app.getPath("userData"), "data");
@@ -730,6 +739,17 @@ async function main() {
 			trustedSender(event, new URL(url).origin, BrowserWindow),
 		youtube: createYouTube({ session, BrowserWindow, userAgent: app.userAgentFallback }),
 		BrowserWindow,
+	});
+
+	// Reminder alerts → the OS notification: raised here, not in the renderer
+	// (electron/notifications-ipc.cjs).
+	registerNotificationsIPC(ipcMain, {
+		trusted: (event) =>
+			trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) &&
+			trustedSender(event, new URL(url).origin, BrowserWindow),
+		BrowserWindow,
+		Notification,
+		icon: nativeImage.createFromPath(TOAST_ICON_FILE),
 	});
 
 	// Sidebar-at-narrow-window (owner, 2026-09-17): the renderer auto-closes

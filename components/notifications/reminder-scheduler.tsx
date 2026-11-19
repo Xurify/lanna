@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { shouldTriggerNudge, type ScheduledNudge, type NotificationSettings } from "@/src/core";
 import { dispatchReminderAlert } from "./notification-dispatcher.ts";
+import { publishReminderSchedule } from "./notification-store.ts";
 import { ReminderBanner } from "./reminder-banner.tsx";
 
 interface ScheduleData {
@@ -54,6 +55,7 @@ export function ReminderScheduler() {
 			});
 			if (res.ok) {
 				const json = (await res.json()) as ScheduleData;
+				publishReminderSchedule(json.schedule);
 				setData(json);
 			}
 		} catch {

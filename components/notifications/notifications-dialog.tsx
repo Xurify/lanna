@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { nudgeTarget, upcomingNudges, type LoggedNotification, type ScheduledNudge } from "@/src/core";
+import { nudgeTarget, type LoggedNotification, type ScheduledNudge } from "@/src/core";
 import { Dialog, DialogContent, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CountryFlag } from "@/components/ui/country-flag";
-import { markNotificationsSeen, openNudge, useNotificationLog } from "./notification-store.ts";
+import { QIcon } from "@/components/quiet/icon";
+import {
+	markNotificationsSeen,
+	openNudge,
+	readNotificationLog,
+	readUpcomingReminders,
+	subscribeToNotifications,
+} from "./notification-store.ts";
+import { nudgeIcon } from "./nudge-icon.ts";
 
 function firedLabel(firedAt: number, now: Date): string {
 	const fired = new Date(firedAt);
@@ -14,26 +22,15 @@ function firedLabel(firedAt: number, now: Date): string {
 	return `${fired.toLocaleDateString(undefined, { day: "numeric", month: "short" })}, ${clock}`;
 }
 
-function useUpcoming(): ScheduledNudge[] {
-	const [upcoming, setUpcoming] = useState<ScheduledNudge[]>([]);
-	useEffect(() => {
-		let live = true;
-		fetch(`/api/reminders/schedule?tz=${new Date().getTimezoneOffset()}`, { cache: "no-store" })
-			.then((res) => (res.ok ? res.json() : null))
-			.then((data: { schedule?: ScheduledNudge[] } | null) => {
-				if (live && data?.schedule) setUpcoming(upcomingNudges(data.schedule, new Date()));
-			})
-			.catch(() => {});
-		return () => {
-			live = false;
-		};
-	}, []);
-	return upcoming;
+function useOpenLog(): LoggedNotification[] {
+	const [log, setLog] = useState<LoggedNotification[]>(readNotificationLog);
+	useEffect(() => subscribeToNotifications(() => setLog(readNotificationLog())), []);
+	return log;
 }
 
 export function NotificationsDialog({ onClose, onOpenSettings }: { onClose: () => void; onOpenSettings: () => void }) {
-	const { log } = useNotificationLog();
-	const upcoming = useUpcoming();
+	const log = useOpenLog();
+	const upcoming = readUpcomingReminders(new Date());
 
 	const newestFiredAt = log[0]?.firedAt;
 	useEffect(() => {
@@ -91,9 +88,10 @@ export function NotificationsBody({
 						<h3 className="text-xs font-semibold text-ink-3">Still to come today</h3>
 						<ul className="mt-2 flex flex-col divide-y divide-border">
 							{upcoming.map((nudge) => (
-								<li key={nudge.id} className="flex items-baseline gap-3 py-2 text-sm">
-									<span className="w-12 shrink-0 tabular-nums text-ink-3">{nudge.time}</span>
-									<span className="min-w-0 text-foreground">{nudge.title}</span>
+								<li key={nudge.id} className="flex items-center gap-3 py-2 text-sm">
+									<span className="cap-center w-12 shrink-0 tabular-nums text-ink-3">{nudge.time}</span>
+									<QIcon name={nudgeIcon(nudge)} className="text-ink-3" />
+									<span className="cap-center min-w-0 text-foreground">{nudge.title}</span>
 								</li>
 							))}
 						</ul>
@@ -140,6 +138,7 @@ function LogRow({ entry, now, onClose }: { entry: LoggedNotification; now: Date;
 		<>
 			<span className="flex items-baseline justify-between gap-3">
 				<span className="flex min-w-0 items-center gap-1.5">
+					<QIcon name={nudgeIcon(nudge)} className="shrink-0 text-ink-3" />
 					{nudge.languageId && <CountryFlag lang={nudge.languageId} className="h-3 w-[18px] shrink-0 rounded-[2px]" />}
 					<span className="cap-center min-w-0 text-sm font-medium text-foreground">{nudge.title}</span>
 				</span>

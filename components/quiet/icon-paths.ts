@@ -1,9 +1,11 @@
-/** The Quiet tool mockup's icon set (r3-3-quiet/_src/icons.svg), path markup by name, 24x24 box. */
+/** The Quiet tool mockup's icon set (r3-3-quiet/_src/icons.svg), path markup by name, 24x24 box.
+ *  `words` is drawn here, not taken from the mockup. */
 export const ICON_PATHS = {
 	review: '<rect x="4" y="8" width="13" height="11" rx="2"/><path d="M8 5h10a2 2 0 0 1 2 2v9"/>',
 	listen: '<path d="M4 11v2M7.5 8v8M11 5v14M14.5 8.5v7M18 10v4M21 11.5v1"/>',
 	grammar: '<path d="M5 19 10.5 5h1L17 19M7.4 13.5h7.8"/><path d="M19 5.5c.8 1 .8 2.4 0 3.5"/>',
-	words: '<path d="M4 12.5 11.5 5H19v7.5L11.5 20z"/><circle cx="15.2" cy="8.8" r="1.2"/>',
+	words:
+		'<rect x="4.5" y="4" width="15" height="16" rx="2"/><path d="M8 4v16"/><path d="M10.75 15.75 12.55 8.25h.6l3.6 7.5M11.95 12.65h4.2"/>',
 	read: '<path d="M3 6.5c3-1.2 6-1 9 1 3-2 6-2.2 9-1v12c-3-1.2-6-1-9 1-3-2-6-2.2-9-1z"/><path d="M12 7.5v12"/>',
 	tutor:
 		'<path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4.5 3.5v-3.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5z"/>',

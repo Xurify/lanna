@@ -6,6 +6,7 @@ import {
 	nudgeTarget,
 	parseNotificationLog,
 	unreadNotifications,
+	upcomingNudges,
 	type LoggedNotification,
 	type ScheduledNudge,
 } from "@/src/core";
@@ -52,6 +53,25 @@ export function markNotificationsSeen(): void {
 		return;
 	}
 	announce();
+}
+
+let reminderSchedule: readonly ScheduledNudge[] = [];
+
+export function publishReminderSchedule(schedule: readonly ScheduledNudge[]): void {
+	reminderSchedule = schedule;
+}
+
+export function readUpcomingReminders(now: Date): ScheduledNudge[] {
+	return upcomingNudges(reminderSchedule, now);
+}
+
+export function readNotificationLog(): LoggedNotification[] {
+	return readLog();
+}
+
+export function subscribeToNotifications(listener: () => void): () => void {
+	listeners.add(listener);
+	return () => listeners.delete(listener);
 }
 
 export function useNotificationLog(): { log: LoggedNotification[]; unread: number } {

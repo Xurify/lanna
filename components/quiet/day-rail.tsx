@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import { QIcon, QPie } from "@/components/quiet/icon";
 import { ProgressPanel } from "@/components/quiet/charts";
 import { chartData } from "@/components/quiet/chart-data";
-import type { QIconName } from "@/components/quiet/icon-paths";
 import { useSettingsDialog } from "@/components/settings/settings-context";
 import type { Goal } from "@/components/daily-plan";
 import type {
@@ -96,25 +95,8 @@ const TASK_LABEL: Record<PlanTask["id"], string> = {
 	fluency: "Speed",
 };
 
-const TASK_ICON: Record<PlanTask["id"], QIconName> = {
-	review: "review",
-	listen: "listen",
-	lesson: "grammar",
-	strengthen: "letter",
-	blitz: "fast",
-	words: "words",
-	read: "read",
-	watch: "play",
-	speak: "speak",
-	fluency: "fast",
-};
-
 export function taskLabel(t: PlanTask): string {
 	return t.via === "tutor" ? "Tutor" : TASK_LABEL[t.id];
-}
-
-export function taskIcon(t: PlanTask): QIconName {
-	return t.via === "tutor" ? "tutor" : TASK_ICON[t.id];
 }
 
 /** How a task reads in the plan: the thing to do first, its kind and unit under it. The plan's
