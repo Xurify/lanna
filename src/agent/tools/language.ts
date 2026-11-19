@@ -26,7 +26,6 @@ import { formatEntry, loadLexicon, lookupWord, slovakLookup } from "../lexicon.t
 export interface ReviewSeam {
 	/** Queue words by lexicon slug; returns the slugs actually added. */
 	enqueue(slugs: string[]): string[];
-	/** Plain-text digest: deck size, due count, words that keep slipping. */
 	digest(): string;
 }
 
@@ -175,7 +174,7 @@ function reviewStatusTool(seam: ReviewSeam): AgentTool<typeof statusInput> {
 		name: "review_status",
 		label: "review_status",
 		description:
-			"The learner's spaced-review deck at a glance: how many words, how many are stable, how many are due, and which words keep slipping (lapses). Read it when choosing vocabulary for checks or practice.",
+			"The learner's spaced-review deck at a glance: how many words, how many are stable, how many are due, and which words keep being missed in Review. Read it when choosing vocabulary for checks or practice.",
 		parameters: statusInput,
 		execute: serverExecute("review_status", statusInput, async () => seam.digest()),
 	};

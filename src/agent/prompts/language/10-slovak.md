@@ -48,4 +48,4 @@ Read the sentence back with the model answer filled in; it must be correct Slova
 
 ## Spaced review
 
-The app keeps a cloze review deck scheduled with FSRS: when `add_to_review` is available, add the words a session actually taught; `review_status` shows which keep slipping.
+The app keeps a cloze review deck scheduled with FSRS: when `add_to_review` is available, add the words a session actually taught; `review_status` shows which keep being missed.

@@ -139,7 +139,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 					</p>
 				)}
 
-				{a && a.reps === 0 && !a.chat?.answers ? (
+				{a && a.reps === 0 && !a.chat?.answers && !(a.hardwords ?? 0) ? (
 					<EmptyState
 						className="mt-8"
 						testid="mistakes-empty"
@@ -349,7 +349,7 @@ function GuideCard({
 					className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-foreground"
 				>
 					<CompassIcon className="size-4 text-teal" strokeWidth={1.6} aria-hidden="true" />
-					Your guide
+					<span className="cap-center">Your guide</span>
 				</h2>
 				{guide && (
 					<p className="text-xs text-ink-3" suppressHydrationWarning>
@@ -420,12 +420,12 @@ function GuideCard({
 function NextSteps({ a }: { a: MistakeAnalysis }) {
 	const [added, setAdded] = useState<"adding" | "added" | "failed" | null>(null);
 	const pairs = a.mixups.length;
-	// A unit is named only when the evidence says so: a real drop, or a range that lies under the bar.
+	const hardwords = a.hardwords ?? 0;
 	const weak =
 		a.units.find((u) => u.trend === "worse") ??
 		a.units.filter((u) => u.weak).sort((x, y) => (x.high ?? 1) - (y.high ?? 1))[0];
 	const slugs = a.words.map((w) => w.slug);
-	if (!pairs && !weak && !slugs.length) return null;
+	if (!pairs && !hardwords && !weak && !slugs.length) return null;
 	const addWords = async () => {
 		setAdded("adding");
 		try {
@@ -439,9 +439,26 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 			setAdded("failed");
 		}
 	};
+	const hardwordsSample = a.hardwordsSample?.length ? ` (${a.hardwordsSample.join(", ")})` : "";
 	return (
 		<Section id="mistakes-next" title="Do this next" line="Worked out from the figures below.">
 			<ul className="q-card flex flex-col divide-y divide-border">
+				{hardwords > 0 && (
+					<Step
+						testid="hardwords-step"
+						title="Write with the words you keep missing"
+						line={`${hardwords} ${hardwords === 1 ? "word" : "words"} missed repeatedly in Review${hardwordsSample}`}
+					>
+						<Link
+							href="/write"
+							className={pairs > 0 ? "q-btn sec t pointer-coarse:min-h-11" : "q-btn primary pointer-coarse:min-h-11"}
+							data-testid="step-hardwords"
+						>
+							Start
+							<ArrowRightIcon className="q-ico" />
+						</Link>
+					</Step>
+				)}
 				{pairs > 0 && (
 					<Step
 						title="Practice the words you mix up"
@@ -504,9 +521,19 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 	);
 }
 
-function Step({ title, line, children }: { title: string; line: string; children: React.ReactNode }) {
+function Step({
+	title,
+	line,
+	children,
+	testid,
+}: {
+	title: string;
+	line: string;
+	children: React.ReactNode;
+	testid?: string;
+}) {
 	return (
-		<li className="flex items-center justify-between gap-4 px-4 py-3">
+		<li className="flex items-center justify-between gap-4 px-4 py-3" data-testid={testid}>
 			<div className="min-w-0">
 				<p className="text-sm font-semibold text-foreground">{title}</p>
 				<p className="text-xs text-ink-3">{line}</p>

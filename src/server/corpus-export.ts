@@ -25,6 +25,7 @@ import { outsideStore } from "../store/outside.ts";
 import { videoStore } from "../store/videos.ts";
 import { knownWordStore } from "../store/known-words.ts";
 import { wordCheckStore } from "../store/word-check.ts";
+import { readWriting } from "../store/writing.ts";
 import { cheatsheetStore } from "../store/cheatsheets.ts";
 import { sheetPracticeStore } from "../store/sheet-practice.ts";
 import type { Cheatsheet } from "../core/cheatsheets.ts";
@@ -119,6 +120,7 @@ interface CorpusSummary {
 		videos: number;
 		watchings: number;
 		cheatsheets: number;
+		writingChecks: number;
 	};
 	usage: {
 		turns: number;
@@ -131,6 +133,7 @@ interface CorpusSummary {
 		/** Story generations (the Read task), USD. */ storiesUsd: number;
 		/** Spoken scenes (the Speak task), USD. */ speakUsd: number;
 		/** Videos prepared for the Watch task (translation + questions), USD. */ videosUsd: number;
+		writingUsd: number;
 	};
 }
 
@@ -272,6 +275,7 @@ source and stay as they are. Every file is a JSON array unless noted.
 | \`dialogues.json\` | tutor session | \`id\`, \`title\`, \`kind\` (learn/practice/chat), \`practiceMode\` (why/talk/story/practice; why or null for a chat), \`deleted\`, dates, \`messages[]\` (\`role\`, \`text\`, \`spoken[]\` = the say: phrases), \`usage\` (tokens, cost, models) |
 | \`explanations.json\` | Why? question | \`sentence\`, \`answer\`, \`lemma\`, \`learnerWrote\`, \`question\`, \`explanation\` (the tutor's reply), \`chatId\`, \`askedAt\`, \`reopened\` |
 | \`review.json\` | an object | \`cards[]\` (every spaced-review card with its memory state) and \`answers[]\` (every review answer: card, given, verdict, rating, when) |
+| \`writing.json\` | checked passage | \`targets[]\` (slug, lemma, gloss), learner \`text\`, \`reply\` (ok, feedback, or null if unusable), \`raw\` model output, \`usage\` (model and token steps), \`at\` |
 | \`known.json\` | an object | \`words\` (the words you marked as known: by slug, the dictionary form and when) and \`updatedAt\` |
 | \`word-check.json\` | an object | \`answers[]\` (every word asked in a word check: the word, its place in the frequency order, the meaning you typed, the verdict, whether the dictionary or a model marked it, when), \`sessions[]\` (every check with the estimate before and after), \`history\` (the estimate of words you know per day, with its parts) and \`judgements\` (every verdict a model gave on a typed meaning, kept so the same answer is never sent twice) |
 | \`stories.json\` | an object | \`stories[]\` (every graded story episode written for the Read task: title, level, theme, sentences with glossed tokens, questions, new words, recap, coverage, usage), \`readings[]\` (every reading: story, when, score, words tapped and queued, XP) and \`sources[]\` (your own texts as added: the text, its sections and the difficulty chosen; a story written from one carries \`source\` and \`original\`) |
@@ -402,6 +406,24 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 		.map((s) => cheatsheetStore.get(s.id))
 		.filter((s): s is Cheatsheet => s !== null);
 
+	const writing = readWriting();
+	const writingUsd = writing.reduce((sum, entry) => {
+		for (const step of entry.usage.steps) {
+			usage.inputTokens += step.inputTokens ?? 0;
+			usage.outputTokens += step.outputTokens ?? 0;
+			usage.cacheReadTokens += step.cacheReadTokens ?? 0;
+			usage.cacheWriteTokens += step.cacheWriteTokens ?? 0;
+		}
+		try {
+			const cost = turnCost(entry.usage as Parameters<typeof turnCost>[0]);
+			if (cost === null) usage.unpricedTurns++;
+			return sum + (cost ?? 0);
+		} catch {
+			usage.unpricedTurns++;
+			return sum;
+		}
+	}, 0);
+	usage.costUsd += writingUsd;
 	const summary: CorpusSummary = {
 		exportedAt: now.toISOString(),
 		profile: activeProfile(),
@@ -422,8 +444,9 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 			videos: videos.length,
 			watchings: watchings.length,
 			cheatsheets: cheatsheets.length,
+			writingChecks: writing.length,
 		},
-		usage,
+		usage: { ...usage, writingUsd },
 	};
 
 	const write = (name: string, value: unknown) =>
@@ -435,6 +458,7 @@ export function exportCorpus(opts: { stamp?: string; now?: Date } = {}): ExportR
 	write("dialogues.json", dialogues);
 	write("explanations.json", explanations);
 	write("review.json", { cards, answers });
+	write("writing.json", writing);
 	write("known.json", knownWordStore.read());
 	write("word-check.json", {
 		answers: wordCheckStore.answers(),

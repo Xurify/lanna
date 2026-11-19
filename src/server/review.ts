@@ -26,7 +26,6 @@ import {
 	dayKey,
 	dueCards,
 	entryLemma,
-	leeches,
 	lexiconOrder,
 	mintCard,
 	pickClozeExample,
@@ -50,6 +49,7 @@ import { noteReviewMixup } from "./mixups.ts";
 import { aiStatus } from "./ai-status.ts";
 import { cachedMissNote, ensureMissNote } from "./miss-note.ts";
 import { enoughEvidence, missNoteEvidence } from "../core/miss-note.ts";
+import { activeHardWords } from "./hard-words.ts";
 
 const DAY_MS = 86_400_000;
 const INFLECTING_CATEGORIES = new Set(["Nouns", "Verbs", "Adjectives"]);
@@ -146,7 +146,7 @@ interface ReviewStatus {
 	settings: ReviewSettings;
 	next: ReviewPrompt | null;
 	answered: AnsweredLine[];
-	leeches: Array<Pick<ReviewCard, "id" | "lemma" | "gloss" | "lapses">>;
+	leeches: Array<{ id: string; slug: string; lemma: string; gloss: string; lapses: number; wrongs: number }>;
 }
 
 function distractors(card: ReviewCard): string[] {
@@ -370,9 +370,9 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings, cards) : null,
 		answered: answeredToday.lines,
-		leeches: leeches(list)
+		leeches: activeHardWords({ tz: tzOffset })
 			.slice(0, 10)
-			.map(({ id, lemma, gloss, lapses }) => ({ id, lemma, gloss, lapses })),
+			.map(({ id, slug, lemma, gloss, lapses, wrongs }) => ({ id, slug, lemma, gloss, lapses, wrongs })),
 	};
 }
 
@@ -380,14 +380,9 @@ interface ReviewAnswer {
 	cardId: string;
 	given: string;
 	ms?: number;
-	/** Override the derived rating (the learner pressed a button); still
-	 *  capped by the help taken, and Again after a wrong answer. */
 	rating?: Rating;
-	/** Hints taken before the answer (1 = meaning, 2 = the word too). */
 	hints?: number;
-	/** Picked from four rather than typed. */
 	picked?: boolean;
-	/** The blank on screen (ReviewPrompt.spans). */
 	spans?: Span[];
 }
 
@@ -632,7 +627,7 @@ function noteWeakForm(card: ReviewCard, rating: Rating, now: Date, formMissed = 
 		const miss = formMissed;
 		weak = tallyWeak(weak, unit, miss ? 0 : 1, miss ? 1 : 0, now).weak;
 		if (miss && !weak[unit] && card.lapses >= WEAK_REVIEW_LAPSES)
-			weak = flagWeak(weak, unit, "review", `${card.lemma} keeps slipping (${card.answer}, ×${card.lapses})`, now);
+			weak = flagWeak(weak, unit, "review", `${card.lemma} missed repeatedly (${card.answer}, ×${card.lapses})`, now);
 		if (weak !== (p.weak ?? {})) {
 			p.weak = weak;
 			progressStore.write(p);
@@ -677,18 +672,16 @@ export function enqueueWords(slugs: string[], now = new Date()): string[] {
 	return added;
 }
 
-/** A short plain-text digest for the tutor: what is due and which words
- *  keep slipping. */
 export function reviewDigest(now = new Date()): string {
 	const list = Object.values(reviewStore.readCards());
 	if (list.length === 0) return "The learner has not started spaced review yet.";
 	const due = dueCards(list, now).length;
 	const learned = list.filter((c) => c.state === "review" && (c.memory?.stability ?? 0) >= 7).length;
-	const slipping = leeches(list, 2).slice(0, 12);
+	const hardwords = activeHardWords().slice(0, 12);
 	return [
 		`Spaced review: ${list.length} words in the deck, ${learned} stable for a week or more, ${due} due now.`,
-		slipping.length
-			? `Words that keep slipping (lapses): ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.lapses}`).join("; ")}.`
-			: "No words are repeatedly slipping.",
+		hardwords.length
+			? `Words you keep missing: ${hardwords.map((c) => `${c.lemma} "${c.gloss}" ×${c.wrongs}`).join("; ")}.`
+			: "No words are repeatedly missed.",
 	].join("\n");
 }

@@ -55,6 +55,16 @@ function report(chatAnswers: ChatAnswer[]): MistakesReport {
 }
 
 describe("From your chats on the Mistakes page", () => {
+	it("offers the writing exercise even when only Review has evidence", () => {
+		const initial = report([]);
+		initial.analysis!.hardwords = 2;
+		initial.analysis!.hardwordsSample = ["one", "two"];
+		const html = renderToStaticMarkup(<MistakesPage initial={initial} />);
+		assert.ok(!html.includes('data-testid="mistakes-empty"'));
+		assert.match(html, /href="\/write"/);
+		assert.match(html, /Write with the words you keep missing/);
+		assert.ok(!html.includes("/lesson?mode=hardwords"));
+	});
 	it("shows the units and topics missed in chats even with no lesson answers yet", () => {
 		const html = renderToStaticMarkup(<MistakesPage initial={report(answers)} />);
 		assert.ok(!html.includes('data-testid="mistakes-empty"'));

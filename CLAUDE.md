@@ -26,15 +26,20 @@ There is no decisions file and no changelog. Why something was built, what was c
 
 - **W1. Take over, do not ask.** Pick the recommended option, build it, verify it in the running app, then send one short report with screenshots. Ask only when a missing user decision would materially change the result.
 - **W2. Descriptive branch names; the owner merges.** Name branches after the work (`feat/desirable-difficulty`), never generated names. Open the PR, assign the owner, and stop, unless the owner says to merge.
+  Never delete a remote ref used by an open PR. After a branch rename, verify the PR is open and points at the intended head SHA; pushing a new name does not retarget an existing PR.
 - **W3. Deploying to the PC.** The dev server hot-reloads, so a deploy is a `git fetch` plus checkout of the PR branch on a clean tree. GitHub Actions never runs on this repo, so red CI there is not a code failure.
 - **W4. Research notes live in the repo**, in `docs/research/` with their sources, and the index in `docs/research/README.md` is updated in the same PR.
 - **W5. A pull request shows the change before it asks for a review.** The description follows `.github/pull_request_template.md`: what changes for the learner, screenshots of every learner-facing change in Day and Night at 1280 and 390 px attached via `gh pr create/edit --attach`, how to try it, commit-pinned links to the changed code, and what was and was not checked. The steps are the `pr-description` skill.
 - **W6. Token & model discipline.** Use the model to invent, and deterministic code (`npm run typecheck`, `npm run lint`, `npm run fmt:check`, `npm test`) to enforce — never burn multi-turn LLM critic swarms on checks a script or test can verify in milliseconds. For delegated coding/mechanical edits and hill-climbing against test suites, use Haiku (High/Extra High effort) or Gemini Flash; **never use Claude Sonnet**. Verify all callers across the repo before deleting exports, routes, or dependencies.
+  Capture the full theme/width/state matrix and check icons in one sandbox. Use readiness selectors, not fixed sleeps or per-character typing delays. Measure speedups; do not promise an unmeasured percentage.
 - **Keys stay out of chat.** A key is entered in Settings or `.env.local`, never pasted into a conversation.
 
 ## Engineering rules
 
 Every task is retrieval-first with graded, priced help; cache every model or TTS output to `data/` before calling an API; custom UI with no native widgets and no layout shift; full grammar words (accusative, not acc.); test with `NODE_ENV=test` and `LANNA_DATA_DIR` set to a scratch folder, never the real profile. Run `npm run typecheck`, `npm run lint` (`oxlint` + `eslint`), `npm run fmt:check` (`oxfmt`), and `npm test` before calling work done. A keydown handler on a typing field that calls `preventDefault()` lets a dead key (`key: "Dead"`) and IME composition through (`belongsToLayoutAccent`, `src/core/accent-keys.ts`): preventing them cancels the accent the learner's own keyboard layout is typing.
+
+- **Typed fields**: never ship an unpadded input. Use `Input` or `Textarea` from `components/ui`, with a visible label. Bare `.q-field` inputs and textareas have safe padding and a 44 px minimum height; overrides must retain readable padding and a touch-sized target. Check computed padding at desktop and phone widths.
+- **Feature scope**: build the smallest complete learner task. Do not add adjacent drills, rewards, automation, or workflow tooling unless the task needs them.
 
 - **Story covers** are the one place with colour besides teal: ink scenes with loose watercolour washes in four low-chroma hues (`--q-wash-ochre`, `-rose`, `-sage`, `-sky`), one teal patch on the thing the story is about. The story writer picks the scene (`cover`); how a scene is drawn and reviewed is the `ink-drawing` skill, "Story covers".
 

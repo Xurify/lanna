@@ -109,6 +109,8 @@ export interface MistakeAnalysis {
 	/** What the Listen task says about hearing (src/core/listen-analysis.ts). Absent in snapshots from before it was kept. */
 	listening?: ListenAnalysis;
 	chat?: ChatAnalysis;
+	hardwords?: number;
+	hardwordsSample?: string[];
 }
 
 /** The guide as saved: the model's reply, its structured read, and what it was written from. */

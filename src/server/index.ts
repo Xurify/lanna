@@ -52,6 +52,8 @@ export * from "./reset.ts";
 export * from "./storage.ts";
 export * from "./tts.ts";
 export * from "./review.ts";
+export * from "./writing.ts";
+export * from "./hard-words.ts";
 export * from "./lesson.ts";
 export * from "./session-acks.ts";
 export { languageDay, setLanguageMinutes } from "./day-plan.ts";
