@@ -1,12 +1,3 @@
-/**
- * Study sections for a prepared video (docs/research/watch-sections.md, E62).
- * The cheap slot picks up to three sections and the words in them, once per
- * video, kept with its cost in videos/sections/<id>.json (E1). The gaps are
- * built from the stored lines (src/core/watch-sections.ts). A finished
- * section earns XP like a lesson's typed reps; missed words go to Review and
- * their lines come back in Listen with the Watch lines (E56).
- */
-
 import type { Usage } from "@earendil-works/pi-ai";
 import type { PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";

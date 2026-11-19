@@ -515,7 +515,7 @@ describe("the service", () => {
 		assert.equal(yt.history?.videos[0]?.title, "Varíme doma");
 		assert.equal(yt.history?.at, "2026-11-05T11:00:00.000Z");
 		const saved = fs.readFileSync(
-			path.join(TMP_DATA, "profiles", "slovak", "videos", "discover", "youtube.json"),
+			path.join(TMP_DATA, "profiles", "slovak", "media", "discover", "youtube.json"),
 			"utf-8",
 		);
 		assert.doesNotMatch(saved, /cookie|SAPISID|password/i);
@@ -608,7 +608,7 @@ describe("the service", () => {
 		});
 		assert.deepEqual(discover.discoverState().youtubeAccount, kept);
 		const saved = fs.readFileSync(
-			path.join(TMP_DATA, "profiles", "slovak", "videos", "discover", "youtube.json"),
+			path.join(TMP_DATA, "profiles", "slovak", "media", "discover", "youtube.json"),
 			"utf-8",
 		);
 		assert.doesNotMatch(saved, /example\.com|email/i, "the email is never kept");
@@ -666,7 +666,7 @@ describe("the service", () => {
 		assert.equal(scans["bbbbbbbbbbb"]?.skip, "unavailable");
 		assert.deepEqual(discoverStore.searches()?.queries, ["varenie doma", "vlog"], "deduped and cleaned");
 		assert.ok(
-			fs.existsSync(path.join(TMP_DATA, "profiles", "slovak", "videos", "discover", "text", "HHJXg-NBrEo.sk.txt")),
+			fs.existsSync(path.join(TMP_DATA, "profiles", "slovak", "media", "discover", "text", "HHJXg-NBrEo.sk.txt")),
 			"the lines are kept to measure again",
 		);
 

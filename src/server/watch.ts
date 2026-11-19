@@ -738,7 +738,7 @@ async function captionsForSpotify(
 	if (!py || !fs.existsSync(helper)) {
 		throw new Error("Python + spotdl are required to download Spotify tracks.");
 	}
-	const audioDir = path.join(PATHS.videos, "audio");
+	const audioDir = path.join(PATHS.media, "audio");
 	fs.mkdirSync(audioDir, { recursive: true });
 	const mp3Path = path.join(audioDir, `${id}.mp3`);
 	const jpgPath = path.join(audioDir, `${id}.jpg`);

@@ -12,6 +12,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { mediaDirectory } from "../src/store/media-directory.ts";
 import { foldDiacritics } from "../src/core/language.ts";
 
 const REPO = path.resolve(import.meta.dirname, "..");
@@ -176,7 +177,7 @@ for (const f of fs.existsSync(lessonsDir)
 }
 const cards = Object.keys(readJson<Record<string, unknown>>(path.join(PROFILE, "review", "cards.json"), {})).length;
 const stories = readJsonl(path.join(PROFILE, "stories", "index.jsonl")).length;
-const videos = readJsonl(path.join(PROFILE, "videos", "index.jsonl")).length;
+const videos = readJsonl(path.join(mediaDirectory(PROFILE), "index.jsonl")).length;
 const scenes = readJsonl(path.join(PROFILE, "speak", "index.jsonl")).length;
 
 const numbers = {

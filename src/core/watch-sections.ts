@@ -47,7 +47,6 @@ export interface StudySection {
 	focus: SectionFocus[];
 }
 
-/** What is kept per video (videos/sections/<id>.json). */
 export interface SectionsRecord {
 	videoId: string;
 	level: string;

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { mediaDirectory, migrateMediaLibraries } from "./src/store/media-directory.ts";
 
 /** Repository root (this file is at <root>/config.ts). */
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -21,6 +22,8 @@ const BASE_DATA_ROOT = process.env.LANNA_DATA_DIR
 	: underTestRunner()
 		? testDataRoot()
 		: path.join(ROOT, "data");
+
+migrateMediaLibraries(BASE_DATA_ROOT);
 
 /**
  * THE TEST FENCE (2026-10-28): a test run that does not set
@@ -357,13 +360,8 @@ export const PATHS = {
 	get line() {
 		return path.join(dataRoot(), "line");
 	},
-	/** YouTube videos prepared for the Watch task (watch,
-	 *  2026-10-28): videos/<id>.json (the segmented transcript with glossed
-	 *  tokens, translations, questions, cost), videos/captions/<id>.<lang>.json
-	 *  (the raw caption track as fetched), videos/index.jsonl and
-	 *  videos/watches.jsonl (one line per watching) — src/store/videos.ts. */
-	get videos() {
-		return path.join(dataRoot(), "videos");
+	get media() {
+		return mediaDirectory(dataRoot());
 	},
 	/** Normalized, app-independent exports (npm run corpus:export). */
 	exports: path.join(BASE_DATA_ROOT, "export"),

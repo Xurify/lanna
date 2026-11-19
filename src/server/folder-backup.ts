@@ -1,13 +1,3 @@
-/**
- * The copy in a folder on this computer (Settings → Backup): an external drive,
- * a network share, or a folder a cloud client already syncs. There is no
- * account, no key and no sign-in on this path, which is the whole point of it.
- *
- * The folder reads like the data folder — one file each — so the plan, the
- * comparison and the copying are the same code as the bucket's
- * (src/server/cloud-backup.ts, Bucket).
- */
-
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -88,6 +78,15 @@ export function folderBucket(folder: string | null): Bucket {
 		},
 		async get(file) {
 			return fs.readFileSync(path.join(folder, file));
+		},
+		async remove(file) {
+			const root = path.resolve(folder);
+			fs.unlinkSync(path.join(root, file));
+			let dir = path.dirname(path.join(root, file));
+			while (dir !== root && fs.readdirSync(dir).length === 0) {
+				fs.rmdirSync(dir);
+				dir = path.dirname(dir);
+			}
 		},
 	};
 }

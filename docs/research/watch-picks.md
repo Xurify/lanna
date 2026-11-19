@@ -19,7 +19,7 @@ The owner: "connect our YouTube account and analyze your YouTube history and/or 
 
 The web API calls are `search` with the subtitles filter, `browse`, and `navigation/resolve_url` for @handles.
 
-The signed-in window uses its own Electron session (`persist:lanna-youtube`), so nothing is shared with the app window and the cookies never leave Electron's storage. The main process fetches three pages through that session with `session.fetch(..., { credentials: "include" })`: `/feed/history`, the home page and `/feed/channels`. Only the page text goes to the renderer, which hands it to the server; the server keeps the lists of videos and channels (`videos/discover/youtube.json`), never a cookie.
+The signed-in window uses its own Electron session (`persist:lanna-youtube`), so nothing is shared with the app window and the cookies never leave Electron's storage. The main process fetches three pages through that session with `session.fetch(..., { credentials: "include" })`: `/feed/history`, the home page and `/feed/channels`. Only the page text goes to the renderer, which hands it to the server; the server keeps the lists of videos and channels (`media/discover/youtube.json`), never a cookie.
 
 ## What the live trial showed (the owner's PC, 2026-11-05)
 
@@ -52,7 +52,7 @@ The owner asked to pick fragments of a video, with a smart analysis that builds 
   3. _Length_: 1 at about 110 seconds, never under 0.7.
   4. _What the new words are worth_, by its square root: each new word that has a dictionary entry counts by how common it is (rank 1,500 or under counts fully, rare words 0.3), by how many times it is said inside the fragment (a second meeting counts 1.35 times, up to four), and the 15th counts about a third of the first. The square root keeps a stretch at 92% with five new words ahead of one at 89% with nine.
      The weights are design choices, not measurements: the comprehension band comes from the sources of the picks above; that a repeated word inside two minutes sticks better than two single ones is an assumption of the design, not something this trial tested.
-- **No model call.** The captions are glossed against the learner's words as they stand now. The first look downloads a video's captions (kept under `videos/discover/lines/`), later looks need no YouTube. 600 to 1,400 lines are measured in under two seconds.
+- **No model call.** The captions are glossed against the learner's words as they stand now. The first look downloads a video's captions (kept under `media/discover/lines/`), later looks need no YouTube. 600 to 1,400 lines are measured in under two seconds.
 - **Cheaper too.** Preparing a stretch translates and questions only its 20 to 60 lines, whatever the video's length (the 90-minute limit applies to whole videos only; fragments are found in videos up to 3 hours). The library keeps one cut per video: a different stretch replaces it, and the learner's watching history stays.
 - **Not tested here:** the YouTube player stopping at the end of a stretch (the `end` player parameter), and a real preparation of a stretch with a model. The stretch is cut from captions only; scenes the captions do not describe (a silent demonstration) are not seen.
 

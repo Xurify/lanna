@@ -7,9 +7,10 @@ async function headersFor(nodeEnv: "production" | "development"): Promise<Map<st
 	const previous = process.env.NODE_ENV;
 	(process.env as Record<string, string>).NODE_ENV = nodeEnv;
 	try {
-		const { default: config } = (await import(`../next.config.ts?env=${nodeEnv}`)) as {
-			default: { headers: () => Promise<{ source: string; headers: Header[] }[]> };
+		const { default: configure } = (await import(`../next.config.ts?env=${nodeEnv}`)) as {
+			default: (phase: string) => { headers: () => Promise<{ source: string; headers: Header[] }[]> };
 		};
+		const config = configure("phase-production-build");
 		const rules = await config.headers();
 		assert.equal(rules.length, 1);
 		assert.equal(rules[0]!.source, "/:path*");

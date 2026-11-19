@@ -1,17 +1,3 @@
-/**
- * Settings → Backup: whether the data folder and each place it is copied to
- * still hold the same files, and the one upload or restore that may be running
- * now. A copy goes to a folder on this computer, to the private `lanna` bucket
- * with the Cloudflare login it is read with, or to both: every place is read and
- * compared on its own, so one being behind never passes for the other being up
- * to date.
- *
- * Reading a place costs a hash of every local file, so each answer is kept for
- * the rest of the run and a fresh check can be asked for. The data folder stays
- * the source: an upload only adds and replaces files, a restore only writes
- * files that are missing here.
- */
-
 import { PATHS } from "../../config.ts";
 import { processWide } from "../core/process-wide.ts";
 import {
@@ -27,6 +13,7 @@ import {
 	type BackupState,
 } from "../core/backup.ts";
 import { readBackupPlace, writeBackupPlace } from "../store/backup-place.ts";
+import { migrateMediaBackup } from "./media-backup.ts";
 import {
 	AccountNotVisible,
 	BACKUP_BUCKET,
@@ -285,6 +272,7 @@ async function run(action: BackupJob["action"], options: { buckets?: Buckets }, 
 	try {
 		const bucket = await bucketFor(running.place, options.buckets);
 		if (action === "upload" && running.place === "cloudflare" && !options.buckets?.cloudflare) await ensureBucket();
+		if (action === "upload") await migrateMediaBackup(bucket);
 		const local = await localFiles(PATHS.base);
 		const remote = await bucket.list();
 		const plan = action === "upload" ? pushPlan(local, remote).upload : pullPlan(local, remote).download;

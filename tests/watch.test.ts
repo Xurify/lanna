@@ -431,9 +431,9 @@ describe("a video on a scripted engine", () => {
 		assert.equal(v.usage.steps.length, 2);
 		assert.equal(v.source.kind, "auto-captions");
 		// On disk: the record, the index line, the raw track, the README.
-		assert.ok(fs.existsSync(path.join(PATHS.videos, "dQw4w9WgXcQ.json")));
-		assert.ok(fs.existsSync(path.join(PATHS.videos, "captions", "dQw4w9WgXcQ.sk.json")));
-		assert.ok(fs.existsSync(path.join(PATHS.videos, "README.md")));
+		assert.ok(fs.existsSync(path.join(PATHS.media, "dQw4w9WgXcQ.json")));
+		assert.ok(fs.existsSync(path.join(PATHS.media, "captions", "dQw4w9WgXcQ.sk.json")));
+		assert.ok(fs.existsSync(path.join(PATHS.media, "README.md")));
 		const index = videoStore.list();
 		assert.equal(index.length, 1);
 		assert.equal(index[0]!.segments, lines.length);
@@ -748,7 +748,7 @@ test("when the Slovak rendering cannot be had, Czech captions keep no share inst
 
 test("an index line written before the caption language was kept gets it from the record, once", () => {
 	const v = videoStore.get("CZCZCZCZCZC")!;
-	const index = path.join(PATHS.videos, "index.jsonl");
+	const index = path.join(PATHS.media, "index.jsonl");
 	const stripped = videoStore.list().map(({ lang: _l, trackLang: _t, ...old }) => old);
 	fs.writeFileSync(index, `${stripped.map((e) => JSON.stringify(e)).join("\n")}\n`);
 	assert.equal(videoStore.list().find((e) => e.id === v.id)!.trackLang, "cs");

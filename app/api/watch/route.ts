@@ -1,31 +1,3 @@
-/**
- * GET /api/watch?tz=<minutes> — the watch state: the library with every
- * video's watchings, whether a model is set (translation, questions),
- * whether audio can be transcribed, and what is being prepared.
- * ?id=<videoId> — one prepared video. ?status=<videoId> — the step a
- * preparation is at.
- * POST /api/watch {action: "add", url, transcribe?} — prepare a video
- * from a YouTube link (src/server/watch.ts): captions fetched, cut into
- * lines, translated on the cheap slot, glossed, questioned, kept under
- * data/profiles/<language>/videos/. A video with no captions in the running
- * language that is spoken in another ready profile answers 422 with
- * elsewhere {profile, english}: the page offers to switch and add it there.
- * Reused when already there, unless
- * force is true (regenerate: captions fetched and lines translated again).
- * With range {startSec, endSec} only that stretch is prepared (see
- * GET /api/watch/fragments); the library keeps one cut of a video.
- * With background: true it answers 202 {background, id} once the captions
- * are in and the lines are being translated; the rest runs as a task
- * (src/server/tasks.ts, listed in GET /api/activity). A video already kept is
- * returned whole, and a captions error answers as without it.
- * POST /api/watch {action: "delete", videoId} — take a video out of the
- * library (its watchings stay). * POST /api/watch {action: "choose", videoId, tz?} — the video today's
- * plan shows, in place of the newest one not watched yet.
- * POST /api/watch {action: "finish", videoId, mode, stats, answers,
- * tapped, ms?, tz?} — a finished watching: XP, the check, the words sent
- * to the review deck, a fresh summary.
- */
-
 import { dayKey, isVideoId, type SegmentStat, type WatchMode } from "@/src/core";
 import {
 	BODY_LIMITS,

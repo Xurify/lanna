@@ -23,7 +23,7 @@ When a Slovak video ends, a step "Use the words" appears above the end-screen bu
 
 ## Data
 
-- Every model verdict is appended to `data/profiles/<lang>/videos/sentences.jsonl`: `videoId`, `lemma`, `sentence`, `ok`, `corrected`, `why`, `model`, `at`.
+- Every model verdict is appended to `data/profiles/<lang>/media/sentences.jsonl`: `videoId`, `lemma`, `sentence`, `ok`, `corrected`, `why`, `model`, `at`.
 - The same sentence for the same word on the same video is answered from that file. No second model call.
 - Program-rejected sentences are not stored. They cost nothing.
 

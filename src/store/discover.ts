@@ -1,27 +1,3 @@
-/**
- * The picks for Watch on disk (2026-11-05) — the active
- * profile's data/profiles/<language>/videos/discover/:
- *
- *   creators.json    the saved channels and the settings (keepReady).
- *   scans.json       every video checked for a pick (src/core/discover.ts
- *                    ScannedVideo), by id.
- *   text/<id>.<lang>.txt
- *                    a checked video's caption lines, one a line, so its
- *                    known-word share can be measured again without YouTube.
- *   youtube.json     what was read from the learner's YouTube account or a
- *                    Takeout export: history, recommendations, subscriptions.
- *                    Never a password, cookie or token.
- *   searches.json    the searches written from the learner's interests.
- *   lines/<id>.json  a video's caption lines with their times, for its fragments
- *                    (src/server/fragments.ts).
- *   avatars.json     channel pictures (Google image links), by channel id.
- *   dismissed-channels.json
- *                    suggested channels the learner said are not for them.
- *   dismissed.json   video ids the learner said are not for them.
- *
- * Same idioms as the other stores: sync fs, atomic renames.
- */
-
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
@@ -35,7 +11,7 @@ import {
 } from "../core/discover.ts";
 import type { StoryUsage } from "../core/reading.ts";
 
-const dir = () => path.join(PATHS.videos, "discover");
+const dir = () => path.join(PATHS.media, "discover");
 const file = (name: string) => path.join(dir(), name);
 
 function readJson<T>(name: string, fallback: T): T {
@@ -71,7 +47,6 @@ export interface YouTubeSignals {
 	account?: { at: string } & YouTubeAccount;
 }
 
-/** videos/discover/lines/<id>.json */
 export interface CaptionLines {
 	title: string;
 	channel?: string;

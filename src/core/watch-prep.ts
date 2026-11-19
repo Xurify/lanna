@@ -83,7 +83,6 @@ export interface PrepSentence {
 	tokens: StoryToken[];
 }
 
-/** What is kept per video (videos/prep/<id>.json). */
 export interface PrepRecord {
 	videoId: string;
 	level: string;

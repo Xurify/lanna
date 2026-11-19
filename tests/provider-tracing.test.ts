@@ -4,8 +4,9 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { describe, it } from "node:test";
-import nextConfig from "../next.config.ts";
+import configure from "../next.config.ts";
 
+const nextConfig = configure("phase-production-build");
 const require = createRequire(import.meta.url);
 // Use Next's actual bundled matcher, not a different glob implementation.
 const picomatch = require("next/dist/compiled/picomatch");

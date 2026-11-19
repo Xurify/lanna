@@ -1,15 +1,3 @@
-/**
- * Get ready for a video (docs/research/pre-listening.md, E70). One cheap-slot
- * request writes the briefing (src/core/watch-prep.ts): what the video is
- * about, its parts, the keys to hear for, and a short version in the
- * language at the learner's level. The summary is glossed against the
- * lexicon with the same known-words estimate as the video's lines and,
- * when under the floor, written again once with the hard words named, like
- * a Read episode. Kept with its cost in videos/prep/<id>.json (E1).
- * Typing the keys into their real lines earns XP like a lesson's typed reps;
- * misses go to Review and their lines come back in Listen (E56).
- */
-
 import type { Usage } from "@earendil-works/pi-ai";
 import { loadLexicon, type Lexicon } from "../agent/lexicon.ts";
 import type { PiEngine } from "../agent/models.ts";

@@ -1,13 +1,5 @@
-/**
- * npm run corpus:push             — list what would be copied to the private `lanna` R2 bucket; uploads nothing
- * npm run corpus:push -- --yes    — upload the files that are new or changed
- * npm run corpus:pull             — list what the bucket has that this data folder does not; writes nothing
- * npm run corpus:pull -- --yes    — download the missing files; a file that exists here is never replaced
- *
- * Reads and writes the real data folder (or LANNA_DATA_DIR). Needs `npx wrangler login`.
- */
-
 import { PATHS } from "../config.ts";
+import { migrateMediaBackup } from "../src/server/media-backup.ts";
 import {
 	BACKUP_BUCKET,
 	cloudflareBucket,
@@ -32,6 +24,7 @@ if (mode !== "push" && mode !== "pull") {
 
 const root = PATHS.base;
 const bucket = await cloudflareBucket();
+if (mode === "push" && yes) await migrateMediaBackup(bucket);
 const local = await localFiles(root);
 const remote = await bucket.list();
 console.log(`${root}: ${local.length} files, ${megabytes(local)}`);

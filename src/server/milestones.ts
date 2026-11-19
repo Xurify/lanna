@@ -1,29 +1,3 @@
-/**
- * Milestones service (2026-10-28) — behind /milestones and
- * /api/milestones. Gathers what the app knows about the learner into
- * LearnerFacts (src/core/milestones.ts) and estimates each milestone:
- *
- *   words  — the deck (src/store/review.ts) and the word units with
- *            lessons behind them are the words MET; the level (placement
- *            when there was one, else the map) credits the commonest
- *            words up to Milton's figure for that level as ASSUMED; the
- *            working vocabulary is the union. "Commonest" is by how often
- *            each dictionary word's forms occur in the dictionary's own
- *            30,000 example sentences, a unified frequency order the
- *            per-part-of-speech ranks cannot give.
- *   speed  — every Listen rep since the player started timing them
- *            (lesson log, mode "listen": ms, heardMs, replays, peeked,
- *            words) and every Watch record (videos/watches.jsonl, when the
- *            Watch task exists), read into words a minute of understanding.
- *   pace   — the goal's minutes and days, the last 14 days' minutes, new
- *            words a day planned (deck setting + input tasks) and real
- *            (cards minted in the last 14 days).
- *
- * A milestone in the learner's own words is mapped once by the cheap model
- * slot to a genre, a coverage target, a speaker rate and the support the
- * situation gives; the mapping is kept on disk (src/store/milestones.ts).
- */
-
 import { outsideSummaryNow } from "./outside.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import fs from "node:fs";
@@ -153,11 +127,10 @@ interface WatchLine {
 	stats?: Array<{ words?: number; sec?: number; replays?: number; got?: string }>;
 }
 
-/** The Watch task's records (another thread's store); absent until it exists. */
 function readWatches(): WatchLine[] {
 	try {
 		return fs
-			.readFileSync(path.join(PATHS.data, "videos", "watches.jsonl"), "utf-8")
+			.readFileSync(path.join(PATHS.media, "watches.jsonl"), "utf-8")
 			.split("\n")
 			.filter(Boolean)
 			.flatMap((l) => {
