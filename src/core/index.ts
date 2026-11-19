@@ -125,6 +125,8 @@ export * from "./phonology.ts";
 export * from "./sound-notes.ts";
 export * from "./rhythm.ts";
 export * from "./watch.ts";
+export * from "./sentences.ts";
+export * from "./slipping.ts";
 export * from "./watch-sentences.ts";
 export * from "./discover.ts";
 export * from "./fragments.ts";

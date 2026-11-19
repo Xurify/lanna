@@ -98,6 +98,7 @@ import { LISTEN_MINUTES } from "../core/listen.ts";
 import { mixupList, type MixupSummary } from "../core/mixups.ts";
 import { refreshSnapshotIfStale, slippingUnits } from "./mistakes-snapshot.ts";
 import { personalLessonFor, personalPlanEntry } from "./personal.ts";
+import { slippingLessonFor } from "./slipping.ts";
 import { lessonMixupEvent, mixupLessonFor, noteMixups, withOpenMixups } from "./mixups.ts";
 import { enqueueWords, reviewStatus } from "./review.ts";
 
@@ -180,9 +181,12 @@ export function mixupsFor(seed = Date.now()): LessonPlan {
 	return withKnown(mixupLessonFor(seed));
 }
 
-/** The personal lesson (src/core/personal.ts), with what the deck knows of each word. */
 export function personalFor(seed = Date.now()): LessonPlan {
 	return withKnown(personalLessonFor(seed));
+}
+
+export function slippingFor(seed = Date.now(), tz?: number): LessonPlan {
+	return withKnown(withOpenMixups(slippingLessonFor(seed, tz)));
 }
 
 /** Blitz runs over the units you have started (at least the first three). */

@@ -10,6 +10,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+	ArrowRightIcon,
 	BookmarkIcon,
 	ChevronDownIcon,
 	EyeOffIcon,
@@ -1260,6 +1261,14 @@ export function ReviewSession() {
 											</li>
 										))}
 									</ul>
+									<Link
+										href="/lesson?mode=slipping"
+										className="q-btn sec t mt-4 pointer-coarse:min-h-11"
+										data-testid="review-practice-slipping"
+									>
+										Practice slipping words
+										<ArrowRightIcon className="q-ico" />
+									</Link>
 								</section>
 							)}
 						</div>

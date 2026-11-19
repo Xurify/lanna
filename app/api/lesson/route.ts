@@ -22,6 +22,7 @@ import {
 	mixupsFor,
 	personalFor,
 	recordLesson,
+	slippingFor,
 	unitLesson,
 	type RepResult,
 } from "@/src/server";
@@ -33,6 +34,7 @@ export async function GET(req: Request) {
 	if (url.searchParams.get("mode") === "blitz") return Response.json(blitzFor());
 	if (url.searchParams.get("mode") === "mixups") return Response.json(mixupsFor());
 	if (url.searchParams.get("mode") === "personal") return Response.json(personalFor());
+	if (url.searchParams.get("mode") === "slipping") return Response.json(slippingFor());
 	const unit = url.searchParams.get("unit");
 	if (!isUnitId(unit)) return Response.json({ message: "unknown unit" }, { status: 400 });
 	const rawGender = url.searchParams.get("gender");
@@ -130,7 +132,9 @@ export async function POST(req: Request) {
 		recordLesson({
 			unit: body.unit,
 			mode: body.mode === "blitz" ? "blitz" : "lesson",
-			...((body.focus === "mixups" || body.focus === "personal") && body.mode !== "blitz" ? { focus: body.focus } : {}),
+			...((body.focus === "mixups" || body.focus === "personal" || body.focus === "slipping") && body.mode !== "blitz"
+				? { focus: body.focus }
+				: {}),
 			reps,
 			ms: typeof body.ms === "number" ? body.ms : undefined,
 			activeMs: typeof body.activeMs === "number" ? body.activeMs : undefined,

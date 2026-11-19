@@ -26,7 +26,6 @@ import {
 	dayKey,
 	dueCards,
 	entryLemma,
-	leeches,
 	lexiconOrder,
 	mintCard,
 	pickClozeExample,
@@ -42,6 +41,8 @@ import {
 	type Span,
 	type WordStrength,
 } from "../core/review.ts";
+import { slippingWords } from "../core/slipping.ts";
+import { knownWordStore } from "../store/known-words.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
@@ -50,6 +51,7 @@ import { noteReviewMixup } from "./mixups.ts";
 import { aiStatus } from "./ai-status.ts";
 import { cachedMissNote, ensureMissNote } from "./miss-note.ts";
 import { enoughEvidence, missNoteEvidence } from "../core/miss-note.ts";
+import { activeSlippingWords } from "./slipping.ts";
 
 const DAY_MS = 86_400_000;
 const INFLECTING_CATEGORIES = new Set(["Nouns", "Verbs", "Adjectives"]);
@@ -146,7 +148,7 @@ interface ReviewStatus {
 	settings: ReviewSettings;
 	next: ReviewPrompt | null;
 	answered: AnsweredLine[];
-	leeches: Array<Pick<ReviewCard, "id" | "lemma" | "gloss" | "lapses">>;
+	leeches: Array<{ id: string; slug: string; lemma: string; gloss: string; lapses: number; wrongs: number }>;
 }
 
 function distractors(card: ReviewCard): string[] {
@@ -370,9 +372,9 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		settings: meta.settings,
 		next: next ? prompt(next, now, meta.settings, cards) : null,
 		answered: answeredToday.lines,
-		leeches: leeches(list)
+		leeches: activeSlippingWords({ tz: tzOffset })
 			.slice(0, 10)
-			.map(({ id, lemma, gloss, lapses }) => ({ id, lemma, gloss, lapses })),
+			.map(({ id, slug, lemma, gloss, wrongs }) => ({ id, slug, lemma, gloss, lapses: wrongs, wrongs })),
 	};
 }
 
@@ -380,14 +382,9 @@ interface ReviewAnswer {
 	cardId: string;
 	given: string;
 	ms?: number;
-	/** Override the derived rating (the learner pressed a button); still
-	 *  capped by the help taken, and Again after a wrong answer. */
 	rating?: Rating;
-	/** Hints taken before the answer (1 = meaning, 2 = the word too). */
 	hints?: number;
-	/** Picked from four rather than typed. */
 	picked?: boolean;
-	/** The blank on screen (ReviewPrompt.spans). */
 	spans?: Span[];
 }
 
@@ -440,6 +437,12 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		...(blank.words > 1 ? { words: blank.words, spans: blank.spans } : {}),
 		...form,
 	});
+	if (wordVerdict === "wrong" && knownWordStore.has(card.slug)) {
+		const lapsedFromReview = rating === 1 && card.state === "review";
+		if (lapsedFromReview || slippingWords([updated], reviewStore.readLog(), { langTag: tag() }).length > 0) {
+			knownWordStore.set(card.slug, card.lemma, false, now);
+		}
+	}
 	return { verdict, rating, card: updated };
 }
 
@@ -684,11 +687,11 @@ export function reviewDigest(now = new Date()): string {
 	if (list.length === 0) return "The learner has not started spaced review yet.";
 	const due = dueCards(list, now).length;
 	const learned = list.filter((c) => c.state === "review" && (c.memory?.stability ?? 0) >= 7).length;
-	const slipping = leeches(list, 2).slice(0, 12);
+	const slipping = activeSlippingWords().slice(0, 12);
 	return [
 		`Spaced review: ${list.length} words in the deck, ${learned} stable for a week or more, ${due} due now.`,
 		slipping.length
-			? `Words that keep slipping (lapses): ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.lapses}`).join("; ")}.`
+			? `Words that keep slipping: ${slipping.map((c) => `${c.lemma} "${c.gloss}" ×${c.wrongs}`).join("; ")}.`
 			: "No words are repeatedly slipping.",
 	].join("\n");
 }

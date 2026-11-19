@@ -375,6 +375,9 @@ export const PATHS = {
 	get review() {
 		return path.join(dataRoot(), "review");
 	},
+	get sentences() {
+		return path.join(dataRoot(), "sentences.jsonl");
+	},
 	/** Saved phrases, bookmarks, and starred items (src/store/saved-phrases.ts). */
 	get saved() {
 		return path.join(dataRoot(), "saved");

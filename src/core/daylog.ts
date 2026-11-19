@@ -97,6 +97,7 @@ const TASK_NAME: Record<string, string> = {
 	blitz: "Blitz",
 	mixups: "Mix-ups",
 	personal: "Your plan",
+	slipping: "Slipping words",
 	listen: "Listen",
 	speak: "Speak",
 	fluency: "Speed",

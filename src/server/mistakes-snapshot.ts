@@ -15,10 +15,10 @@ import { readLessonLog } from "../store/corpus.ts";
 import { analysisStore, type GuideRecord } from "../store/analysis.ts";
 import { progressStore } from "../store/progress.ts";
 import { aiStatus } from "./ai-status.ts";
+import { activeSlippingWords } from "./slipping.ts";
 
 export type { MistakesReport };
 
-/** The snapshot is read again after a lesson once it is this old. */
 const SNAPSHOT_MAX_AGE_MS = 6 * 3_600_000;
 
 export function mistakesReportOf(
@@ -26,8 +26,14 @@ export function mistakesReportOf(
 	guide: GuideRecord | null,
 	listenGuide: ListenGuideRecord | null = null,
 ): MistakesReport {
+	const slipping = activeSlippingWords();
+	const withSlipping: MistakeAnalysis = {
+		...analysis,
+		slipping: slipping.length,
+		...(slipping.length ? { slippingSample: slipping.slice(0, 3).map((w) => w.lemma) } : {}),
+	};
 	return {
-		analysis,
+		analysis: withSlipping,
 		guide,
 		guideCurrent: !!guide && guide.digest === digest(guideFacts(analysis)),
 		listenGuide,

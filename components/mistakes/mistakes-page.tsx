@@ -139,7 +139,7 @@ export function MistakesPage({ initial }: { initial: MistakesReport | null }) {
 					</p>
 				)}
 
-				{a && a.reps === 0 && !a.chat?.answers ? (
+				{a && a.reps === 0 && !a.chat?.answers && !(a.slipping ?? 0) ? (
 					<EmptyState
 						className="mt-8"
 						testid="mistakes-empty"
@@ -420,12 +420,12 @@ function GuideCard({
 function NextSteps({ a }: { a: MistakeAnalysis }) {
 	const [added, setAdded] = useState<"adding" | "added" | "failed" | null>(null);
 	const pairs = a.mixups.length;
-	// A unit is named only when the evidence says so: a real drop, or a range that lies under the bar.
+	const slipping = a.slipping ?? 0;
 	const weak =
 		a.units.find((u) => u.trend === "worse") ??
 		a.units.filter((u) => u.weak).sort((x, y) => (x.high ?? 1) - (y.high ?? 1))[0];
 	const slugs = a.words.map((w) => w.slug);
-	if (!pairs && !weak && !slugs.length) return null;
+	if (!pairs && !slipping && !weak && !slugs.length) return null;
 	const addWords = async () => {
 		setAdded("adding");
 		try {
@@ -439,9 +439,25 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 			setAdded("failed");
 		}
 	};
+	const slippingSample = a.slippingSample?.length ? ` (${a.slippingSample.join(", ")})` : "";
 	return (
 		<Section id="mistakes-next" title="Do this next" line="Worked out from the figures below.">
 			<ul className="q-card flex flex-col divide-y divide-border">
+				{slipping > 0 && (
+					<Step
+						title="Practice the words that keep slipping"
+						line={`${slipping} ${slipping === 1 ? "word" : "words"} missed repeatedly in Review${slippingSample}`}
+					>
+						<Link
+							href="/lesson?mode=slipping"
+							className={pairs > 0 ? "q-btn sec t pointer-coarse:min-h-11" : "q-btn primary pointer-coarse:min-h-11"}
+							data-testid="step-slipping"
+						>
+							Start
+							<ArrowRightIcon className="q-ico" />
+						</Link>
+					</Step>
+				)}
 				{pairs > 0 && (
 					<Step
 						title="Practice the words you mix up"

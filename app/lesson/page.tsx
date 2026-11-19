@@ -1,16 +1,11 @@
 import { LessonPlayer } from "@/components/lesson/lesson-player";
 import { isAtlasGender, isUnitId, type LessonPlan } from "@/src/core";
-import { blitzFor, mixupsFor, personalFor, unitLesson } from "@/src/server";
+import { aiStatus, blitzFor, mixupsFor, personalFor, slippingFor, unitLesson } from "@/src/server";
 
 export const metadata = { title: "Lesson" };
 
 export const dynamic = "force-dynamic";
 
-/** A lesson (?unit=<id>), a blitz (?mode=blitz), the Mix-ups lesson
- *  (?mode=mixups) or the personal lesson (?mode=personal): the fast local
- *  drill loop. The plan is built here, with the page, so the first question
- *  is in the first HTML and never swaps after load. A unit lesson opens on
- *  the learn-first case sketch when the unit has one, before rep 1. */
 export default async function LessonPage({
 	searchParams,
 }: {
@@ -28,13 +23,23 @@ export default async function LessonPage({
 					? mixupsFor()
 					: mode === "personal"
 						? personalFor()
-						: await unitLesson(id, { gender: gen });
+						: mode === "slipping"
+							? slippingFor()
+							: await unitLesson(id, { gender: gen });
 		if (plan.items.length === 0) plan = null;
 	} catch {
 		plan = null;
 	}
 	if (mode === "blitz") return <LessonPlayer mode="blitz" initialPlan={plan} />;
-	if (mode === "mixups" || mode === "personal")
-		return <LessonPlayer key={mode} mode="lesson" focus={mode} initialPlan={plan} />;
+	if (mode === "mixups" || mode === "personal" || mode === "slipping")
+		return (
+			<LessonPlayer
+				key={mode}
+				mode="lesson"
+				focus={mode}
+				initialPlan={plan}
+				sentenceCheckReady={mode === "slipping" ? aiStatus("cheap").ready : false}
+			/>
+		);
 	return <LessonPlayer key={`${id}-${gen ?? "all"}`} mode="lesson" unit={id} gender={gen} initialPlan={plan} />;
 }
