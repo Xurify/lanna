@@ -1,12 +1,14 @@
 /**
- * The data folder against its copy (Settings → Backup): the report's shape and
+ * The data folder against its copies (Settings → Backup): the report's shape and
  * the one reading the browser takes from it. Pure: the server measures
  * (src/server/backup.ts), the browser shows (backup-section.tsx).
  *
- * The copy is a folder on this computer or the private `lanna` bucket, and both
- * read like the data folder: one file each. A file is known to be the same in
- * both places by its MD5, which is the `etag` a bucket object carries when it
+ * A copy is a folder on this computer and/or the private `lanna` bucket, and
+ * each reads like the data folder: one file each. A file is known to be the same
+ * in two places by its MD5, which is the `etag` a bucket object carries when it
  * was uploaded in one request (developers.cloudflare.com/r2/objects/upload-objects).
+ * Every place is compared on its own, so one place being behind never reads as
+ * the other being up to date.
  */
 
 /** A count of files and their total size. */
@@ -15,7 +17,7 @@ export interface BackupCounts {
 	bytes: number;
 }
 
-/** One part of the data folder, counted on this computer and in the copy. */
+/** One part of the data folder. */
 export type BackupAreaId = "audio" | "languages" | "profiles" | "backups" | "other";
 
 /** The saved areas in the order Settings shows them. Every row is drawn before the measure lands, so nothing shifts. */
@@ -29,8 +31,8 @@ export const BACKUP_AREAS: readonly { id: BackupAreaId; label: string }[] = [
 
 export interface BackupArea {
 	id: BackupAreaId;
+	/** What this part holds on this computer. */
 	here: BackupCounts;
-	copy: BackupCounts;
 }
 
 /** The folder a file belongs to: its top folder when that is one of the areas, everything else together. */
@@ -40,29 +42,36 @@ export function backupAreaOf(relative: string): BackupAreaId {
 	return BACKUP_AREAS.some((area) => area.id === top) ? (top as BackupAreaId) : "other";
 }
 
-/** Where the copy goes: a folder on this computer, or the owner's private bucket. */
-export type BackupDestination = "folder" | "cloudflare";
+/** One place a copy can go. */
+export type BackupPlaceId = "folder" | "cloudflare";
 
-/** What one check of the folder against the copy found. */
+/** What one look at one place found. A place that is off has no check at all. */
 export interface BackupCheck {
 	/** When it ran, ISO. */
 	at: string;
-	/** Everything the app keeps that belongs in the backup, as it is now. */
-	here: BackupCounts;
+	/** Everything the app keeps that belongs in the backup, in that place. */
 	copy: BackupCounts;
-	/** New or changed here, so an upload would send them. */
+	/** New or changed here, so an upload there would send them. */
 	toUpload: BackupCounts;
-	/** In the copy, not here, so a restore would fetch them. */
+	/** In that place, not here, so a restore would fetch them. */
 	toRestore: BackupCounts;
-	/** Every area, counted on both sides. */
-	areas: BackupArea[];
-	/** Why the copy could not be read; the two counts above are the local ones alone then. */
+	/** Why that place could not be read; the three counts are empty then. */
 	error?: string;
+}
+
+/** This computer, as the last look counted it. */
+export interface BackupHere {
+	at: string;
+	counts: BackupCounts;
+	/** Every area, in the order Settings shows them. */
+	areas: BackupArea[];
 }
 
 /** One upload or restore run. */
 export interface BackupJob {
 	action: "upload" | "restore";
+	/** The place the run is filling. */
+	place: BackupPlaceId;
 	/** Files to copy; 0 while the plan is still being worked out. */
 	total: number;
 	done: number;
@@ -74,18 +83,23 @@ export interface BackupJob {
 }
 
 export interface BackupState {
-	/** Where the copy goes now; the other destination keeps its setting for the next switch. */
-	destination: BackupDestination;
-	/** The folder the copy goes to, once one was chosen. */
+	/** The folder this computer copies to as well; null = it does not copy to a folder. */
 	folder: string | null;
 	/** The folder offered before one was chosen. */
 	suggestedFolder: string;
+	/** The private bucket's name. */
 	bucket: string;
-	/** null = this computer has no Cloudflare login and no token. Only read while the destination is the bucket. */
+	/** Whether this computer copies to the bucket too. */
+	bucketOn: boolean;
+	/** null = no Cloudflare login and no token, so the bucket cannot be read. */
 	auth: BackupAuth | null;
 	/** What stays on this computer. */
 	leftOut: string[];
-	last: BackupCheck | null;
+	/** This computer, from the last look; null before the first one. */
+	here: BackupHere | null;
+	/** The last look at each place that is on. */
+	checks: { folder: BackupCheck | null; cloudflare: BackupCheck | null };
+	/** The one run going now, upload or restore, and where it is going. */
 	job: BackupJob | null;
 }
 

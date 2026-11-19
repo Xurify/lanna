@@ -1,11 +1,12 @@
 /**
- * GET /api/backup — the data folder against its copy (server/backup.ts): where
- * the copy goes, the last check, any upload or restore running now, and the
- * Cloudflare login or R2 token the bucket is read with.
+ * GET /api/backup — the data folder against each place it is copied to
+ * (server/backup.ts): what is here, the last look at each place, any upload or
+ * restore running now, and the Cloudflare login or R2 token the bucket is read
+ * with.
  * POST {action: "check" | "upload" | "restore" | "connect" | "disconnect" |
- * "use-folder" | "use-cloudflare"} — a fresh check, the job, or where the copy
- * goes changing: a folder on this computer, back to the bucket, wrangler
- * signing in or out, or the token saved under API keys being dropped.
+ * "use-folder" | "drop-folder" | "use-bucket" | "drop-bucket"} — a fresh look,
+ * the job into one place, or the copies changing: a folder joining them, the
+ * bucket joining or leaving them, or the way in being made and dropped.
  */
 
 import {
@@ -14,17 +15,17 @@ import {
 	backupState,
 	bodyTooLarge,
 	checkBackup,
-	chooseCloudflare,
-	chooseFolder,
 	connectBackup,
 	disconnectBackup,
+	dropFolder,
 	startBackup,
+	useBucket,
+	useFolder,
 } from "@/src/server";
 import type { BackupJob } from "@/src/core";
 
 export const dynamic = "force-dynamic";
 
-type Action = BackupJob["action"] | "check" | "connect" | "disconnect" | "use-folder" | "use-cloudflare";
 const ACTIONS: ReadonlySet<string> = new Set([
 	"check",
 	"upload",
@@ -32,10 +33,12 @@ const ACTIONS: ReadonlySet<string> = new Set([
 	"connect",
 	"disconnect",
 	"use-folder",
-	"use-cloudflare",
+	"drop-folder",
+	"use-bucket",
+	"drop-bucket",
 ]);
 const ACTIONS_HELP =
-	'body must be {action: "check" | "upload" | "restore" | "connect" | "disconnect" | "use-folder" | "use-cloudflare"}';
+	'body must be {action: "check" | "upload" | "restore" | "connect" | "disconnect" | "use-folder" | "drop-folder" | "use-bucket" | "drop-bucket"}';
 
 export async function GET() {
 	return Response.json(await backupState());
@@ -44,7 +47,7 @@ export async function GET() {
 export async function POST(req: Request) {
 	const oversized = bodyTooLarge(req, BODY_LIMITS.json);
 	if (oversized) return oversized;
-	const body = (await req.json().catch(() => null)) as { action?: unknown; folder?: unknown } | null;
+	const body = (await req.json().catch(() => null)) as { action?: unknown; folder?: unknown; place?: unknown } | null;
 	const action = body?.action;
 	if (typeof action !== "string" || !ACTIONS.has(action))
 		return Response.json({ message: ACTIONS_HELP }, { status: 400 });
@@ -56,12 +59,17 @@ export async function POST(req: Request) {
 		if (action === "use-folder") {
 			if (typeof body?.folder !== "string")
 				return Response.json({ message: "use-folder needs {folder}" }, { status: 400 });
-			return Response.json(await chooseFolder(body.folder));
+			return Response.json(await useFolder(body.folder));
 		}
-		if (action === "use-cloudflare") return Response.json(await chooseCloudflare());
+		if (action === "drop-folder") return Response.json(await dropFolder());
+		if (action === "use-bucket") return Response.json(await useBucket(true));
+		if (action === "drop-bucket") return Response.json(await useBucket(false));
 		if (action === "connect") return Response.json(await connectBackup());
 		if (action === "disconnect") return Response.json(await disconnectBackup());
-		void startBackup(action as Action & BackupJob["action"]);
+		const place = body?.place;
+		if (place !== "folder" && place !== "cloudflare")
+			return Response.json({ message: "upload and restore need {place}" }, { status: 400 });
+		void startBackup(action as BackupJob["action"], place);
 	} catch (err) {
 		if (err instanceof BackupError) return Response.json({ message: err.message }, { status: err.status });
 		throw err;

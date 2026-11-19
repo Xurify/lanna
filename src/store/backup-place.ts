@@ -1,33 +1,44 @@
 /**
- * Where the copy goes, remembered across restarts (Settings → Backup): the
- * chosen destination and the folder it goes to. A record of its own at the
- * data-dir seam, on the same discipline as src/store/auth.ts: re-read at every
- * access so a hand-edit works, an absent or corrupt file is the documented
- * first-boot state (the private bucket), and the write is atomic so a half file
- * never reads as a choice.
+ * Where the copies go, remembered across restarts (Settings → Backup): the
+ * folder this computer copies to, and whether the private bucket is one of the
+ * places as well. A record of its own at the data-dir seam, on the same
+ * discipline as src/store/auth.ts: re-read at every access so a hand-edit works,
+ * an absent or corrupt file is the documented first-boot state (the bucket, no
+ * folder), and the write is atomic so a half file never reads as a choice.
+ *
+ * The key it used to hold, `destination`, chose between the two. An older file
+ * is read as that choice: a folder destination keeps its folder and turns the
+ * bucket off, a bucket destination forgets the folder it was only remembering.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config.ts";
-import type { BackupDestination } from "../core/backup.ts";
 
 export const BACKUP_PLACE_FILE = path.join(PATHS.base, "backup-place.json");
 
 export interface BackupPlace {
-	destination: BackupDestination;
+	/** The folder this computer copies to as well; null = it does not copy to a folder. */
 	folder: string | null;
+	/** Whether this computer copies to the private bucket as well. */
+	bucket: boolean;
 }
+
+const FIRST_BOOT: BackupPlace = { folder: null, bucket: true };
 
 export function readBackupPlace(): BackupPlace {
 	try {
-		const raw = JSON.parse(fs.readFileSync(BACKUP_PLACE_FILE, "utf-8")) as { destination?: unknown; folder?: unknown };
-		return {
-			destination: raw.destination === "folder" ? "folder" : "cloudflare",
-			folder: typeof raw.folder === "string" && raw.folder ? raw.folder : null,
+		const raw = JSON.parse(fs.readFileSync(BACKUP_PLACE_FILE, "utf-8")) as {
+			folder?: unknown;
+			bucket?: unknown;
+			destination?: unknown;
 		};
+		const folder = typeof raw.folder === "string" && raw.folder ? raw.folder : null;
+		if (typeof raw.bucket === "boolean") return { folder, bucket: raw.bucket };
+		if (raw.destination === "folder") return { folder, bucket: false };
+		return { folder: null, bucket: true };
 	} catch {
-		return { destination: "cloudflare", folder: null };
+		return { ...FIRST_BOOT };
 	}
 }
 
