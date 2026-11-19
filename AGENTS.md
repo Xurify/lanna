@@ -38,6 +38,7 @@ Code you add or change follows this rule. An older comment goes when the code ar
 # Execution & efficiency
 
 - **Act decisively (W1 in `CLAUDE.md`)**: Make reasonable assumptions and carry out the task end to end instead of stalling for confirmation on clear choices. Ask a concise question only when a missing user decision would materially change the result or an ambiguity is genuinely unsafe to guess.
+- **Fast inner-loop checks**: Run `bun run typecheck:fast` (`tsgo --noEmit`, ~2s vs ~22s for `tsc`) during edit loops, and run full `bun run typecheck` once before commit/PR. For DOM/CLS/console verification, run `node C:/Users/Stream/.claude/scripts/pw-check.mjs <url> [--mobile] [--dark] [--shot out.jpg]` (zero-install).
 - **Deterministic gates over LLM swarms**: Use the model to invent and deterministic code (`npm run typecheck`, `npm run lint`, `npm run fmt:check`, `tsx --test`) to enforce. Never run expensive multi-turn critic loops to verify things a compiler, linter, formatter, or unit test checks in milliseconds.
 - **Model routing**: Never use Claude Sonnet. For subagents and delegated implementation or hill-climbing against deterministic assertions, use Haiku (High / Extra High effort) or Gemini Flash; keep tasks narrowly scoped with disjoint file lists when running workers in parallel.
 - **Verify callers before deleting**: Search the whole repo (including `scripts/`, `electron/`, `.github/`, `tests/`) before removing exports, routes, or dependencies.
@@ -58,3 +59,5 @@ Run the skill's diff checks before you call a UI change done, and write any new 
 Before you write or change any grammar rule, example form, table row or grammar claim (in the app, on slovak.wiki or in chat), read `.claude/skills/grammar-explanations/SKILL.md` (the `grammar-explanations` skill): every form is sourced, the whole paradigm is covered, a rule is stated with its exceptions, every example names its case, and no word is used that the learner was not given.
 
 Before you draw or change a picture that explains something (a case sketch, a lesson figure, a story cover in Read), read `.claude/skills/ink-drawing/SKILL.md` (the `ink-drawing` skill): the pen look, the kit, the checks that a picture means one thing, and how to look at it.
+
+> **AGENTS.md size budget:** Keep this file under 16 KB. Move any new multi-paragraph reference guide into `docs/agents/<topic>.md` with a one-line trigger link here.

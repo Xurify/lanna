@@ -28,6 +28,7 @@
 		"fmt": "oxfmt .",
 		"fmt:check": "oxfmt --check .",
 		"typecheck": "tsc --noEmit",
+		"typecheck:fast": "tsgo --noEmit",
 		"lexicon:export": "node scripts/export-slovakwiki-lexicon.mjs ../slovak.wiki",
 		"sources:check": "bun scripts/check-sources.ts",
 		"miss:coverage": "bun scripts/miss-contrast-coverage.ts",
