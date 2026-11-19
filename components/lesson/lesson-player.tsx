@@ -63,7 +63,6 @@ import { GrammarExplain } from "@/components/lesson/grammar-explain";
 import { TaskGrid } from "@/components/lesson/task-grid";
 import { Bridges, BridgesContext } from "@/components/lesson/bridges";
 import { LessonIntro } from "@/components/lesson/lesson-intro";
-import { SentenceStep } from "@/components/lesson/sentence-step";
 import { sketchStages } from "@/components/lesson/case-sketch";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { readOrigin } from "@/components/origin";
@@ -85,7 +84,6 @@ import {
 	repXp,
 	sameSentence,
 	rankLabel,
-	hardWordsSentenceTargets,
 	unheardWord,
 	unitDone,
 	unitBridges,
@@ -175,14 +173,12 @@ export function LessonPlayer({
 	gender,
 	focus,
 	initialPlan = null,
-	sentenceCheckReady = false,
 }: {
 	unit?: UnitId;
 	mode: Mode;
 	gender?: AtlasGender;
 	focus?: LessonFocus;
 	initialPlan?: LessonPlan | null;
-	sentenceCheckReady?: boolean;
 }) {
 	const router = useRouter();
 	const lang = useActiveLanguage();
@@ -355,9 +351,7 @@ export function LessonPlayer({
 						? "No mix-ups on record yet. When you give one word for another, the pair shows up here."
 						: focus === "personal"
 							? "No plan practice yet. Write your guide on Mistakes, and its practice shows up here."
-							: focus === "hardwords"
-								? "No hard words right now. Words you miss repeatedly in Review show up here."
-								: "There are no sentences for this unit yet.",
+							: "There are no sentences for this unit yet.",
 				);
 			setPlan(next);
 			startedAt.current = Date.now();
@@ -705,7 +699,6 @@ export function LessonPlayer({
 					practiceMs={practiceMs}
 					recorded={recorded}
 					failed={saveFailed}
-					sentenceCheckReady={sentenceCheckReady}
 					onAgain={() => void load()}
 					onNext={(u) =>
 						u === plan.unit ? void load() : router.push(`/lesson?unit=${u}${gender ? `&gender=${gender}` : ""}`)
@@ -824,11 +817,9 @@ export function LessonPlayer({
 										? "Mix-ups"
 										: focus === "personal"
 											? "Your plan"
-											: focus === "hardwords"
-												? "Hard words"
-												: plan.gender
-													? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}`
-													: unitInfo(item.unit).title
+											: plan.gender
+												? `${unitInfo(item.unit).title} · ${genderLabel(plan.gender)}`
+												: unitInfo(item.unit).title
 							}
 						/>
 					</div>
@@ -1046,7 +1037,7 @@ function hidesMeaning(stage: LessonPlan["stage"], item: LessonItem): boolean {
 function hintFor(item: LessonItem): string {
 	// A vocabulary rep blanks the word itself, so its hint is the meaning;
 	// a grammar rep shows the dictionary form (core/lesson.ts decides).
-	return item.kind === "meaning" ? item.lemma : (item.hint ?? item.lemma);
+	return item.hint ?? item.lemma;
 }
 
 /** The cue under the sentence, labeled so it never reads as a stray word:
@@ -1055,7 +1046,7 @@ function hintFor(item: LessonItem): string {
 function HintChip({ item }: { item: LessonItem }) {
 	const lang = useActiveLanguage();
 	const pairs = unitInfo(item.unit).kind === "pairs";
-	const meaning = item.kind !== "meaning" && (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
+	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
 	return (
 		<>
 			<span className="q-pair mr-2" data-testid="lesson-hint-chip">
@@ -2122,7 +2113,6 @@ function EndScreen({
 	practiceMs,
 	recorded,
 	failed,
-	sentenceCheckReady = false,
 	onAgain,
 	onNext,
 	retrying,
@@ -2136,31 +2126,24 @@ function EndScreen({
 	practiceMs: number | null;
 	recorded: Recorded | null;
 	failed: boolean;
-	sentenceCheckReady?: boolean;
 	onAgain: () => void;
 	onNext: (unit: UnitId) => void;
 	retrying: boolean;
 	onRetrySave: () => void;
 }) {
 	const { correct, xp, perfect } = score;
-	const [sentenceBusy, setSentenceBusy] = useState(false);
 	const firstGo = reps.filter((r) => !r.item.again);
 	const rightFirst = firstGo.filter((r) => firstTry(r) === "right").length;
 	const accuracy = firstGo.length ? Math.round((rightFirst / firstGo.length) * 100) : 0;
+	// One line per sentence: a miss and its "once more" rep are the same item.
 	const missed = firstGo.filter(
 		(r, i) => firstTry(r) !== "right" && firstGo.findIndex((o) => o.item.sentence === r.item.sentence) === i,
 	);
-	const wordCount = new Set(firstGo.map((r) => r.item.slug)).size;
-	const sentenceTargets = useMemo(() => {
-		if (focus !== "hardwords" || !sentenceCheckReady) return [];
-		const initial = reps.filter((r) => !r.item.again);
-		const missedSlugs = initial.filter((r) => firstTry(r) !== "right").map((r) => r.item.slug);
-		return hardWordsSentenceTargets(
-			initial.map((r) => r.item),
-			missedSlugs,
-		);
-	}, [focus, sentenceCheckReady, reps]);
+	// The score is the lesson's own and shows at once. What the server keeps
+	// (streak, goal, unit progress) fills its slot when it lands; each slot
+	// keeps its size until then, so nothing moves.
 	const goalMet = recorded ? recorded.summary.todayXp >= recorded.summary.dailyGoal : false;
+	// A Mix-ups lesson moves no unit, so it has no place on the path to show.
 	const here = focus ? null : (recorded?.summary.units.find((u) => u.id === unit) ?? null);
 	const pairs = new Set(reps.map((r) => r.item.pair?.id).filter(Boolean)).size;
 	const wasDone = here ? unitDone(here.lessons - 1, here.accuracy) : false;
@@ -2171,9 +2154,7 @@ function EndScreen({
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Enter" || endEnterBlocked(e) || sentenceBusy) return;
-			const active = document.activeElement as HTMLElement | null;
-			if (active?.closest('[data-testid="lesson-sentences"]')) return;
+			if (e.key !== "Enter" || endEnterBlocked(e)) return;
 			if (mode === "blitz" || focus) {
 				e.preventDefault();
 				onAgain();
@@ -2199,15 +2180,11 @@ function EndScreen({
 					? perfect
 						? "Perfect plan practice."
 						: "Plan practice done."
-					: focus === "hardwords"
-						? perfect
-							? "Hard words held."
-							: "Hard words done."
-						: here?.done && !wasDone
-							? "Unit complete."
-							: perfect
-								? "Perfect lesson."
-								: "Lesson complete.";
+					: here?.done && !wasDone
+						? "Unit complete."
+						: perfect
+							? "Perfect lesson."
+							: "Lesson complete.";
 	const where =
 		mode === "blitz"
 			? `${reps.length} answered in 60 seconds`
@@ -2215,13 +2192,11 @@ function EndScreen({
 				? `${pairs} ${pairs === 1 ? "pair" : "pairs"} of look-alike words`
 				: focus === "personal"
 					? "Built from your own mistakes"
-					: focus === "hardwords"
-						? `${wordCount} ${wordCount === 1 ? "word" : "words"} from Review`
-						: here
-							? whereLine(here, nextUnit)
-							: recorded
-								? unitInfo(unit).title
-								: "";
+					: here
+						? whereLine(here, nextUnit)
+						: recorded
+							? unitInfo(unit).title
+							: "";
 	const unitComplete = !!here?.done && !wasDone;
 	const cheers = mode === "blitz" || (!focus && !unitComplete) ? cheersFor(lessonLanguage()) : null;
 	const cheer: CheerKey = mode === "blitz" ? (recorded?.newBest ? "newBest" : "timeUp") : perfect ? "perfect" : "done";
@@ -2272,9 +2247,7 @@ function EndScreen({
 								? "Mix-ups"
 								: focus === "personal"
 									? "Your plan"
-									: focus === "hardwords"
-										? "Hard words"
-										: unitInfo(unit).title}
+									: unitInfo(unit).title}
 					</p>
 					<h1 className="q-hello">
 						{cheers ? (
@@ -2397,7 +2370,6 @@ function EndScreen({
 					</section>
 				)}
 			</div>
-			{sentenceTargets.length > 0 && <SentenceStep targets={sentenceTargets} onBusyChange={setSentenceBusy} />}
 			<SourcesNote feature="lesson" className="mt-14" />
 		</TaskEnd>
 	);

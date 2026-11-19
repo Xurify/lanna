@@ -81,7 +81,6 @@ export function refreshSnapshotIfStale(now = new Date()): void {
 	}
 }
 
-/** The units the saved snapshot says are hardwords, worst first. */
 export function slippingUnits(): UnitId[] {
 	const units = analysisStore.read().analysis?.units ?? [];
 	return units

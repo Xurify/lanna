@@ -41,8 +41,6 @@ import {
 	type Span,
 	type WordStrength,
 } from "../core/review.ts";
-import { hardWords } from "../core/hard-words.ts";
-import { knownWordStore } from "../store/known-words.ts";
 import { reviewStore } from "../store/review.ts";
 import { progressStore } from "../store/progress.ts";
 import { flagWeak, tallyWeak, WEAK_REVIEW_LAPSES } from "../core/weak-spots.ts";
@@ -374,7 +372,7 @@ export function reviewStatus(now = new Date(), tzOffset?: number, opts: { mint?:
 		answered: answeredToday.lines,
 		leeches: activeHardWords({ tz: tzOffset })
 			.slice(0, 10)
-			.map(({ id, slug, lemma, gloss, wrongs }) => ({ id, slug, lemma, gloss, lapses: wrongs, wrongs })),
+			.map(({ id, slug, lemma, gloss, lapses, wrongs }) => ({ id, slug, lemma, gloss, lapses, wrongs })),
 	};
 }
 
@@ -437,12 +435,6 @@ export function answerReview(input: ReviewAnswer, now = new Date()): ReviewOutco
 		...(blank.words > 1 ? { words: blank.words, spans: blank.spans } : {}),
 		...form,
 	});
-	if (wordVerdict === "wrong" && knownWordStore.has(card.slug)) {
-		const lapsedFromReview = rating === 1 && card.state === "review";
-		if (lapsedFromReview || hardWords([updated], reviewStore.readLog(), { langTag: tag() }).length > 0) {
-			knownWordStore.set(card.slug, card.lemma, false, now);
-		}
-	}
 	return { verdict, rating, card: updated };
 }
 
@@ -680,8 +672,6 @@ export function enqueueWords(slugs: string[], now = new Date()): string[] {
 	return added;
 }
 
-/** A short plain-text digest for the tutor: what is due and which words
- *  keep being missed. */
 export function reviewDigest(now = new Date()): string {
 	const list = Object.values(reviewStore.readCards());
 	if (list.length === 0) return "The learner has not started spaced review yet.";

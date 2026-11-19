@@ -25,6 +25,7 @@ export type TimedActivity =
 	| "read"
 	| "watch"
 	| "speak"
+	| "writing"
 	| "reread"
 	| "fast";
 
@@ -38,6 +39,7 @@ export const TIMED_ACTIVITIES: readonly TimedActivity[] = [
 	"read",
 	"watch",
 	"speak",
+	"writing",
 	"reread",
 	"fast",
 ];
@@ -60,6 +62,7 @@ export const ACTIVITY_CAP_MIN: Record<TimedActivity, number> = {
 	read: 20,
 	watch: 90,
 	speak: 20,
+	writing: 20,
 	reread: 10,
 	fast: 10,
 };

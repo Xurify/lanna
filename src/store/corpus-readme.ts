@@ -98,6 +98,10 @@ where the format is not obvious.
   typed, verdict, rating, when; on a form card also the drill its sentence
   practices, the word's gender and the slip); \`meta.json\` holds settings
   and how many new cards each day introduced.
+- \`writing.jsonl\`: checked passages using repeatedly missed words: target
+  words, learner text, feedback, raw model reply, model and token usage, date.
+  Identical passages and target sets reuse this record. Exported as \`writing.json\`.
+  Unchecked drafts stay in browser storage on the device.
 - \`known.json\`: the words you marked as known (I know this): each word's
   slug, dictionary form and when, and \`updatedAt\`. They count as known
   wherever the app measures what you know.

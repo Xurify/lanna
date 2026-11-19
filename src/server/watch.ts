@@ -90,7 +90,6 @@ import { knownWordStore } from "../store/known-words.ts";
 import { watchRepStore } from "../store/watch-reps.ts";
 import { keyValue, redactSecrets } from "./keys.ts";
 import { progressSummary, type ProgressSummary } from "./lesson.ts";
-import { knownFormsOf, sentenceSystem } from "./sentences.ts";
 import {
 	commonness,
 	glossSentence,
@@ -1840,14 +1839,31 @@ export function importVideoToRead(videoId: string, now = new Date()): StoryRecor
 
 // ─── The sentence step ──────────────────────────────────────────────────────
 
+function sentenceSystem(name: string = activeLanguage().english): string {
+	return `You check one ${name} sentence that a beginner wrote to use a given ${name} word. You answer with ONE JSON object and nothing else: {"ok": true, "corrected": "...", "why": "..."}.
+
+Rules:
+- ok is true when the sentence is correct, standard ${name} and uses the word in any form.
+- Answer ok false only when you are sure the sentence is wrong or does not use the word. When you are unsure, answer ok true and say in "why" what to check.
+- "corrected": the sentence with the smallest fix when ok is false; otherwise the sentence as written.
+- "why": one plain English sentence for the learner, at most 25 words.
+- Nothing outside the JSON.`;
+}
+
 interface SentenceAnswer {
 	ok: boolean;
 	corrected: string;
 	why: string;
+	/** Answered from a verdict kept before: no model call. */
 	cached: boolean;
 	xp: number;
 }
 
+/** A learner's sentence for one word of a video's sentence step. The
+ *  program checks what it can see for certain first; the cheap slot judges
+ *  the rest and every verdict is kept. The same sentence for the same word
+ *  is answered from the kept verdict. XP the first time a word is accepted
+ *  for a video. */
 export async function checkSentence(
 	input: { videoId: string; lemma: string; sentence: string; tz?: number },
 	opts: { engine?: PiEngine; model?: string; now?: Date } = {},
@@ -1864,14 +1880,7 @@ export async function checkSentence(
 	if (!isWord) throw new Error(`"${lemma}" is not a word of this video`);
 	if (!sentence || sentence.length > SENTENCE_MAX_CHARS)
 		throw new Error(`Write one sentence, up to ${SENTENCE_MAX_CHARS} characters.`);
-	const lang = activeLanguage();
-	const lexicon = loadLexicon();
-	const slug =
-		video.preTeach.find((w) => w.lemma === lemma)?.slug ??
-		video.segments.flatMap((s) => s.tokens).find((t) => t.lemma === lemma)?.slug;
-	const lexEntry =
-		(slug ? lexicon?.bySlug.get(slug) : undefined) ?? lexicon?.byForm.get(lemma.toLocaleLowerCase(lang.tag))?.[0];
-	const problems = sentenceProblems(sentence, lemma, { langTag: lang.tag, forms: knownFormsOf(lexEntry) });
+	const problems = sentenceProblems(sentence, lemma);
 	if (problems.length) return { ok: false, corrected: sentence, why: problems[0]!, cached: false, xp: 0 };
 	const earlier = videoStore.sentences().filter((s) => s.videoId === video.id && s.lemma === lemma);
 	const same = earlier.find((s) => s.sentence === sentence);
@@ -1885,7 +1894,7 @@ export async function checkSentence(
 	const usage: StoryUsage = { model: resolved.model, steps: [] };
 	const text = await ask(
 		resolved.engine,
-		sentenceSystem(lang.english),
+		sentenceSystem(),
 		`The word: "${lemma}" (dictionary form; meaning: ${gloss || "not given"}).\nThe sentence: ${JSON.stringify(sentence)}`,
 		usage,
 	);

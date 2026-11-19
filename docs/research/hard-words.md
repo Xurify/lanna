@@ -1,56 +1,35 @@
-# Words you keep missing: detection, a focused drill, and a sentence of your own
+# Writing with words you keep missing
 
-**Question.** Why do words missed over and over in Review stay invisible to the old lapses-only list, and what targeted practice actually helps solidify them without adding habit friction?
+**Question.** How can repeatedly missed Review words become useful in original writing, without another drill or more daily friction?
 
 **Date.** 2026-11-18
 
-**Naming.** The app already uses _slip_ for one thing only: a wrong ending on the right word (form slips, E18). This feature is named for what the learner does — miss the word — and every learner-facing string says "words you keep missing"; the code calls them `hardWords`. The older form-slip terminology is untouched.
+## Learner evidence
 
-## What the learner's own log showed
+A read-only inspection of the Slovak profile found 99 cards and 277 answers across 22 days. Of those answers, 99 were wrong (36%). Repeated misses included _tvrdiť_ (8), _oznámiť_ (7), and _záujem_ (5). The old lapses-only list surfaced two words: FSRS does not increment lapses for every failure while a card is new or learning.
 
-Inspecting the active Slovak profile (`99` cards in `review/cards.json`, `277` Review answers across `22` days):
+The owner wanted a writing exercise containing those words, not a separate sentence box for each word. The Review log already supplies the targets; a second cloze sequence would duplicate Review.
 
-- `99` of `277` Review answers were wrong (`36%`), `18` had diacritic slips, and `160` were exact. `0` hints and `0` multiple-choice picks were used.
-- `52` of `99` cards had at least one wrong answer. The worst offenders were missed repeatedly (_tvrdiť_ `8×`, _oznámiť_ `7×`, _záujem_ `5×`, _kšeft_ `4×`, _kšeftovať_ `3×`).
-- Yet `leeches(cards, min = 3)` in `src/core/review.ts` surfaced only `2` words. FSRS `lapses` increments only when a card fails from `state === "review"`; repeated misses while `state` is `"new"` or `"learning"` leave `lapses` at `0`.
-- `12` cards with recorded lapses were also marked known in `known.json`, so Read and Watch treated actively missed words as known.
-- `12` of the last `22` days had `0` XP, and the median Review answer took ~21 s. Any new flow that adds heavy daily friction will be skipped.
-- The caught-up block on `/review` already promised _"A lesson on them, or a sentence of your own, often helps more than another review"_ — but had no button or drill behind it.
+## Evidence and limits
 
-## What published research supports (and what it does not)
+- Rawson & Dunlosky (2011), “Optimizing schedules of retrieval practice for durable and efficient learning”: delayed, repeated retrieval supports retention. Finishing one writing task is not evidence of durable recall.
+- Laufer & Hulstijn (2001), “Incidental vocabulary acquisition in a second language: The construct of task-induced involvement,” _Applied Linguistics_: evaluating how words fit an original context motivates productive use.
+- Yanagisawa & Webb (2021), a meta-analysis of the Involvement Load Hypothesis: evaluation predicts vocabulary retention, but composition takes longer. This does not establish that writing is more efficient than retrieval when time is held equal.
+- Metcalfe (2017), “Learning from errors,” _Annual Review of Psychology_: corrective feedback can support learning. Our [Slovak accuracy evaluation](slovak-accuracy-eval.md) also shows the risk of false model corrections.
 
-1. **Successive relearning beats passive restudy, and retrieval in varied contexts beats memorizing one card's surface cue.**
-   - Roediger & Karpicke (2006) and Dunlosky et al. (2013) establish retrieval practice and distributed practice as high-utility strategies.
-   - Rawson & Dunlosky (2011, _Journal of Experimental Psychology: General_, 140(3), 283–302) show that successive relearning — re-retrieving missed items to criterion across separate sessions rather than one-shot cramming — produces durable long-term retention.
-   - Repeating the exact same cloze sentence teaches sentence-cue matching rather than word retrieval; pulling other verified sentences for the same lemma from the lexicon forces transfer to a fresh context.
+These sources motivate a small optional output task, not a validated learning intervention. The target count and graduation thresholds below are product choices, not research-derived constants.
 
-2. **Output and sentence composition deepen lexical encoding, with real caveats.**
-   - Swain (1985) argues that producing output forces learners to notice gaps in vocabulary and grammar that comprehension lets them bypass.
-   - Laufer & Hulstijn (2001, _Applied Linguistics_, 22(1), 1–26) proposed the Involvement Load Hypothesis (Need, Search, Evaluation), predicting that tasks requiring learners to evaluate how a target word fits an original sentence outperform receptive or fill-in-the-blank tasks alone.
-   - Yanagisawa & Webb (2021, _Studies in Second Language Acquisition_, 43(3), 487–520) meta-analyzed 42 studies of the Involvement Load Hypothesis: involvement load predicted retention, and **evaluation** (especially strong evaluation, such as original sentence writing) was the strongest predictor — _when time on task was not held constant_. Original sentence writing takes more time per word than cloze retrieval, so it pays off most on a small handful of stuck words rather than as a mandatory step for every word.
-   - Metcalfe (2017) shows corrective feedback after an error helps repair memory, provided the feedback is accurate. Our own Slovak accuracy evaluation (`slovak-accuracy-eval.md`) shows small models can falsely reject valid Slovak sentences; therefore deterministic checks run first, the model is instructed to accept (`ok: true`) when unsure, and verdicts are cached locally.
+## The implemented task
 
-3. **Self-declared "known" marks diverge from tested recall.**
-   - Stubbe (2015) and our own `common-words.md` / `vocabulary-size.md` notes keep self-reported marks separate from tested recall. Once tested Review recall repeatedly fails on a word, keeping its manual `known` mark active contradicts direct evidence and hides the word from reading glosses and watch pre-teach.
+- Detect repeatedly missed words from existing Review answers, including new/learning failures. Group cards by word and reconstruct the target's verdict for multi-word blanks.
+- Include non-suspended words with at least two target misses or two recorded lapses. Remove them after two exact, unassisted recalls rated at least 3 on distinct local days, each at least 12 hours after the latest miss. Another miss resets those clean days.
+- Review's caught-up section and Mistakes link to `/write`. Today and the active Review exercise stay unchanged.
+- Ask for one short connected passage using up to three targets in any inflected form. There is one generously padded textarea and one feedback action, with no preceding drill.
+- Keep the draft on the device. Send it and its target words to the Cheap model only on request. No model is needed to write; model setup remains available when feedback is off.
+- Cache the passage, raw model response, parsed feedback, and usage per language in `writing.jsonl`. Identical text and target sets reuse the record; simultaneous requests share one call. Export it as `writing.json` and include the cost in Spending.
+- Give concise AI-labeled feedback, explicitly allowing valid inflections and uncertainty. The learner can revise. No score, bonus XP, mastery verdict, known-mark changes, or FSRS changes follow from AI feedback.
+- Count measured active writing time toward the output strand. Do not invent completed-task minutes.
 
-## Design choices (what is the app's own decision, not a study's)
+## Not built or established
 
-- **Hard-word detection (`src/core/hard-words.ts`):**
-  - Reconstructs the target word's own verdict on multi-word Review blanks (`words > 1`) so missing a neighboring hidden word does not falsely mark the card's word as missed.
-  - Enters when a non-suspended card has `>= 2` wrong answers on its target word (or `card.lapses >= 2`).
-  - Graduates off the list only after **`>= 2` clean, unassisted (`!hints && !picked`, `rating >= 3`, exact target word) recalls on distinct local days** after the last wrong answer (or `state === "review"` with `stability >= 7` days and at least one clean post-wrong recall on a later day). Same-day relearning does not clear a hard word; a relapse resets the clean streak to `0`.
-  - Replaces `leeches(...)` in both `reviewStatus` and `reviewDigest`.
-- **Entry points without clutter:**
-  - The `/review` caught-up section becomes "Words you keep missing" with a `Practice these words` button (`/lesson?mode=hardwords`).
-  - Adds one action row in `/mistakes` ("Do this next") when hard words exist, so learners who leave Review with cards still due can still launch the drill.
-  - Keeps Today (`/`) and the active Review miss dock untouched.
-- **Focused hard-words drill (`/lesson?mode=hardwords`):**
-  - Caps each round at `6` hard words (`10–14` reps), deprioritizing words already drilled today so another round rotates cleanly.
-  - Opens with a meaning check when a word has blank ("I don't know") misses or `>= 3` misses, inserts a mix-up contrast when an open mix-up exists, and ends each word with a typed cloze on a _different_ lexicon sentence from the Review card whenever one exists.
-  - Does **not** mutate FSRS card memory or immediately graduate the word; only real delayed Review recall proves retention.
-- **Skippable "Use it" sentence-writing step:**
-  - Shown inline on the drill's end screen for up to `3` words (words missed in the round first, then highest-priority hard words), hidden when no cheap AI model is configured.
-  - Extracts a language-safe shared sentence checker (`src/core/sentences.ts`, `src/server/sentences.ts`, `src/store/sentences.ts`) from Watch: gates Slovak-specific checks on `langTag.startsWith("sk")`, checks known lexicon `forms` / `declension` alongside stem prefixes so suppletive verbs (_ísť → šiel_) are not falsely rejected, and caches verdicts in `data/profiles/<language>/sentences.jsonl`.
-- **Resolving the known-mark conflict:**
-  - `answerReview` automatically unmarks a slug in `knownWordStore` when the card lapses from `"review"` or enters the hard-word list (`>= 2` target wrongs), invalidating cached coverage.
-  - `knownWords()` in `src/server/reading.ts` also subtracts active hard-word slugs from `known` and `expected` after frequency-band additions so stuck high-frequency words still get glossed in Read and pre-taught in Watch.
+No new cloze drill, per-word sentence boxes, mandatory daily task, automatic vocabulary reclassification, Watch changes, or screenshot-tool expansion. No live-model accuracy or long-term retention study has validated this writing task.

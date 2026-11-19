@@ -109,7 +109,10 @@ export function strandParts(day: StrandDay): { minutes: Record<Strand, number>; 
 				timed("read", day.reads, STRAND_MINUTES.read) +
 				timed("watch", day.watches, STRAND_MINUTES.watch) +
 				untimed(day.stories, STRAND_MINUTES.story),
-			output: untimed(day.talks, STRAND_MINUTES.talk) + timed("speak", day.speaks, STRAND_MINUTES.speak),
+			output:
+				untimed(day.talks, STRAND_MINUTES.talk) +
+				timed("speak", day.speaks, STRAND_MINUTES.speak) +
+				timed("writing", undefined, 0),
 			form:
 				timed("lesson", day.lessons, STRAND_MINUTES.lesson) +
 				timed("review", day.reviews, STRAND_MINUTES.review) +

@@ -22,6 +22,7 @@ import { storyStore } from "../store/stories.ts";
 import { speakStore } from "../store/speak.ts";
 import { placementStore } from "../store/placement.ts";
 import { wordCheckStore } from "../store/word-check.ts";
+import { readWriting } from "../store/writing.ts";
 import { videoStore } from "../store/videos.ts";
 import { jobCost, turnCost } from "./pricing.ts";
 
@@ -253,11 +254,28 @@ export function usageReport(now = new Date()): UsageReport {
 		bytes += c.bytes;
 		if (c.tier === "elevenlabs" && c.text) elevenLabsCharacters += c.text.length;
 	}
+	const writing = readWriting();
+	let writingUsd = 0;
+	let writingUnpriced = 0;
+	for (const entry of writing) {
+		const usd = safeTurnCost(entry.usage);
+		if (usd === null) writingUnpriced++;
+		else {
+			writingUsd += usd;
+			addMonth(entry.at, usd);
+		}
+		for (const step of entry.usage.steps) {
+			tokens.input += step.inputTokens ?? 0;
+			tokens.output += step.outputTokens ?? 0;
+			tokens.cacheRead += step.cacheReadTokens ?? 0;
+			tokens.cacheWrite += step.cacheWriteTokens ?? 0;
+		}
+	}
 	const round = (n: number) => Math.round(n * 10000) / 10000;
 	return {
 		generatedAt: now.toISOString(),
 		totalUsd: round(
-			turnsUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd + wordChecksUsd + languagesUsd,
+			turnsUsd + jobsUsd + storiesUsd + speakUsd + videosUsd + placementUsd + wordChecksUsd + languagesUsd + writingUsd,
 		),
 		turnsUsd: round(turnsUsd),
 		jobsUsd: round(jobsUsd),
@@ -271,6 +289,8 @@ export function usageReport(now = new Date()): UsageReport {
 		placement: { count: placementIndex.length, unpriced: placementUnpriced },
 		wordChecksUsd: round(wordChecksUsd),
 		wordChecks: { count: markedWordChecks.length, unpriced: wordChecksUnpriced },
+		writingUsd: round(writingUsd),
+		writing: { count: writing.length, unpriced: writingUnpriced },
 		languagesUsd: round(languagesUsd),
 		languages: { count: languagesCount, unpriced: languagesUnpriced },
 		unpricedTurns,

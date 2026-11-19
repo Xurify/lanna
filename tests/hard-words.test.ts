@@ -1,421 +1,128 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import * as os from "node:os";
-import * as path from "node:path";
-import { after, describe, test } from "node:test";
+import os from "node:os";
+import path from "node:path";
+import { after, test } from "node:test";
+import type { ReviewCard, ReviewLogEntry } from "../src/core/review.ts";
+import { hardWords, reviewEntryWordVerdict } from "../src/core/hard-words.ts";
 
-const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-hard-words-"));
-process.env.LANNA_DATA_DIR = TMP_DATA;
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-hard-words-"));
+process.env.LANNA_DATA_DIR = dir;
 process.env.LANNA_PROFILE = "slovak";
+after(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-const { buildHardWordsLesson, reviewEntryWordVerdict, hardWordsSentenceTargets, hardWords } =
-	await import("../src/core/hard-words.ts");
-const { answerReview, reviewDigest, reviewStatus } = await import("../src/server/review.ts");
-const { knownWords } = await import("../src/server/reading.ts");
-const { knownWordStore } = await import("../src/store/known-words.ts");
-const { reviewStore } = await import("../src/store/review.ts");
-
-type LexiconEntry = import("../src/core/review.ts").LexiconEntry;
-type ReviewCard = import("../src/core/review.ts").ReviewCard;
-type ReviewLogEntry = import("../src/core/review.ts").ReviewLogEntry;
-type Span = import("../src/core/review.ts").Span;
-
-after(() => fs.rmSync(TMP_DATA, { recursive: true, force: true }));
-
-const BASE = "2026-11-01T10:00:00Z";
-
-function makeCard(
-	over: Partial<ReviewCard> & Pick<ReviewCard, "id" | "slug" | "lemma" | "sentence" | "answer">,
-): ReviewCard {
-	return {
-		gloss: "meaning",
-		translation: "English translation",
-		at: over.sentence.indexOf(over.answer),
-		state: "learning",
-		due: BASE,
-		reps: 2,
-		lapses: 0,
-		createdAt: BASE,
-		...over,
-	};
-}
-
-function makeLog(over: Partial<ReviewLogEntry> & Pick<ReviewLogEntry, "cardId" | "reviewedAt">): ReviewLogEntry {
-	return {
-		rating: 1,
-		given: "",
-		verdict: "wrong",
-		elapsedDays: 0,
-		...over,
-	};
-}
-
-function makeEntry(
-	slug: string,
-	lemma: string,
-	en: string,
-	examples: Array<{ sk: string; en: string; answer?: string }>,
-	forms: string[] = [],
-): LexiconEntry {
-	return {
-		slug,
-		sk: lemma,
-		en,
-		pos: "verb",
-		cat: "general",
-		rank: 100,
-		related: [],
-		forms: [lemma, ...forms],
-		examples: examples.map((e) => ({
-			sk: e.sk,
-			en: e.en,
-			src: "test",
-			...(e.answer ? { cloze: { answer: e.answer, at: e.sk.indexOf(e.answer) } } : {}),
-		})),
-	};
-}
-
-describe("hardWords", () => {
-	test("catches learning-loop words with >= 2 wrongs even when lapses === 0", () => {
-		const card = makeCard({
-			id: "tvrdit#0",
-			slug: "tvrdit",
-			lemma: "tvrdiť",
-			gloss: "claim",
-			sentence: "On tvrdí, že má pravdu.",
-			answer: "tvrdí",
-			lapses: 0,
-		});
-		const log: ReviewLogEntry[] = [
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-01T10:00:00Z", given: "", verdict: "wrong", rating: 1 }),
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T10:00:00Z", given: "hovorí", verdict: "wrong", rating: 1 }),
-		];
-		const list = hardWords([card], log, { langTag: "sk-SK", tz: 0 });
-		assert.equal(list.length, 1);
-		assert.equal(list[0]!.slug, "tvrdit");
-		assert.equal(list[0]!.wrongs, 2);
-		assert.equal(list[0]!.hasBlankMiss, true);
+const card: ReviewCard = {
+	id: "claim#0",
+	slug: "claim",
+	lemma: "claim",
+	gloss: "assert",
+	sentence: "They claim it works.",
+	answer: "claim",
+	at: 5,
+	translation: "They assert it works.",
+	state: "learning",
+	due: "2026-11-01T10:00:00Z",
+	reps: 2,
+	lapses: 0,
+	createdAt: "2026-11-01T10:00:00Z",
+};
+const entry = (day: number, extra: Partial<ReviewLogEntry> = {}): ReviewLogEntry => ({
+	cardId: card.id,
+	reviewedAt: `2026-11-${String(day).padStart(2, "0")}T10:00:00Z`,
+	rating: 1,
+	given: "",
+	verdict: "wrong",
+	elapsedDays: 1,
+	...extra,
+});
+const misses = [entry(1), entry(2)];
+const clean = (day: number, extra: Partial<ReviewLogEntry> = {}) =>
+	entry(day, {
+		given: "claim",
+		verdict: "exact",
+		rating: 3,
+		...extra,
 	});
+const detect = (cards: ReviewCard[], log: ReviewLogEntry[]) => hardWords(cards, log, { langTag: "en-US", tz: 0 });
 
-	test("ignores suspended cards", () => {
-		const card = makeCard({
-			id: "tvrdit#0",
-			slug: "tvrdit",
-			lemma: "tvrdiť",
-			sentence: "On tvrdí, že má pravdu.",
-			answer: "tvrdí",
-			suspended: true,
-			lapses: 4,
-		});
-		const log: ReviewLogEntry[] = [
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-01T10:00:00Z" }),
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T10:00:00Z" }),
-		];
-		assert.deepEqual(hardWords([card], log, { langTag: "sk-SK", tz: 0 }), []);
-	});
-
-	test("reconstructs target word verdict for multi-blank entries without blaming neighbor misses", () => {
-		const sentence = "Ideme na dovolenku.";
-		const card = makeCard({
-			id: "ist#0",
-			slug: "ist",
-			lemma: "ísť",
-			sentence,
-			answer: "Ideme",
-		});
-		const spans: Span[] = [
-			[sentence.indexOf("Ideme"), sentence.indexOf("Ideme") + "Ideme".length],
-			[sentence.indexOf("na"), sentence.indexOf("na") + "na".length],
-			[sentence.indexOf("dovolenku"), sentence.indexOf("dovolenku") + "dovolenku".length],
-		];
-		const neighborMiss = makeLog({
-			cardId: card.id,
-			reviewedAt: "2026-11-01T10:00:00Z",
-			given: "Ideme na dovolenka",
-			verdict: "wrong",
-			rating: 1,
-			words: 3,
-			spans,
-		});
-		assert.equal(reviewEntryWordVerdict(card, neighborMiss, "sk-SK"), "exact");
-
-		const neighborMiss2 = { ...neighborMiss, reviewedAt: "2026-11-02T10:00:00Z" };
-		assert.deepEqual(hardWords([card], [neighborMiss, neighborMiss2], { langTag: "sk-SK", tz: 0 }), []);
-
-		const targetMiss = { ...neighborMiss, given: "Chodíme na dovolenku" };
-		assert.equal(reviewEntryWordVerdict(card, targetMiss, "sk-SK"), "wrong");
-	});
-
-	test("requires two clean unassisted recalls on distinct days (>= 12h after last wrong) to graduate", () => {
-		const card = makeCard({
-			id: "oznamit#0",
-			slug: "oznamit",
-			lemma: "oznámiť",
-			sentence: "Oznámil to všetkým.",
-			answer: "Oznámil",
-		});
-		const wrongs: ReviewLogEntry[] = [
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-01T20:00:00Z", given: "" }),
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T20:00:00Z", given: "" }),
-		];
-
-		const notYet: ReviewLogEntry[] = [
-			...wrongs,
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T21:00:00Z", given: "Oznámil", verdict: "exact", rating: 3 }),
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-03T06:00:00Z", given: "Oznámil", verdict: "exact", rating: 3 }),
-			makeLog({
-				cardId: card.id,
-				reviewedAt: "2026-11-03T10:00:00Z",
-				given: "Oznámil",
-				verdict: "exact",
-				rating: 3,
-				hints: 1,
-			}),
-			makeLog({
-				cardId: card.id,
-				reviewedAt: "2026-11-04T10:00:00Z",
-				given: "Oznámil",
-				verdict: "exact",
-				rating: 3,
-				picked: true,
-			}),
-		];
-		assert.equal(hardWords([card], notYet, { langTag: "sk-SK", tz: 0 }).length, 1);
-
-		const graduated: ReviewLogEntry[] = [
-			...wrongs,
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-03T10:00:00Z", given: "Oznámil", verdict: "exact", rating: 3 }),
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-05T10:00:00Z", given: "Oznámil", verdict: "exact", rating: 3 }),
-		];
-		assert.equal(hardWords([card], graduated, { langTag: "sk-SK", tz: 0 }).length, 0);
-
-		const relapsed: ReviewLogEntry[] = [
-			...graduated,
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-06T10:00:00Z", given: "povedal", verdict: "wrong", rating: 1 }),
-		];
-		assert.equal(hardWords([card], relapsed, { langTag: "sk-SK", tz: 0 }).length, 1);
-	});
-
-	test("stable review card (stability >= 7) graduates after one clean recall on a later day", () => {
-		const card = makeCard({
-			id: "zaujem#0",
-			slug: "zaujem",
-			lemma: "záujem",
-			sentence: "Mám o to záujem.",
-			answer: "záujem",
-			state: "review",
-			memory: { stability: 9.5, difficulty: 5 },
-		});
-		const log: ReviewLogEntry[] = [
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-01T10:00:00Z" }),
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-02T10:00:00Z" }),
-			makeLog({ cardId: card.id, reviewedAt: "2026-11-04T10:00:00Z", given: "záujem", verdict: "exact", rating: 3 }),
-		];
-		assert.equal(hardWords([card], log, { langTag: "sk-SK", tz: 0 }).length, 0);
-	});
+test("finds repeated new/learning misses without FSRS lapses, ignoring one miss and suspended cards", () => {
+	assert.equal(detect([card], misses).length, 1);
+	assert.equal(detect([card], [entry(1)]).length, 0);
+	assert.equal(detect([{ ...card, suspended: true }], misses).length, 0);
+	assert.equal(detect([{ ...card, lapses: 3 }], [])[0]!.wrongs, 3);
 });
 
-describe("buildHardWordsLesson and hardWordsSentenceTargets", () => {
-	test("builds meaning -> mix-up contrast -> fresh-sentence typed cloze without leaking lemma", () => {
-		const entries: LexiconEntry[] = [
-			makeEntry(
-				"tvrdit",
-				"tvrdiť",
-				"to claim, assert",
-				[
-					{ sk: "On tvrdí, že má pravdu.", en: "He claims he is right.", answer: "tvrdí" },
-					{ sk: "Nemôžem to tvrdiť s istotou.", en: "I cannot claim that for sure.", answer: "tvrdiť" },
-					{ sk: "Lekár tvrdil, že to prejde.", en: "The doctor claimed it would pass.", answer: "tvrdil" },
-				],
-				["tvrdí", "tvrdil"],
-			),
-			makeEntry(
-				"hovorit",
-				"hovoriť",
-				"to speak, say",
-				[
-					{ sk: "Hovorí pomaly po slovensky.", en: "He speaks slowly in Slovak.", answer: "Hovorí" },
-					{ sk: "Chcem hovoriť s tebou.", en: "I want to speak with you.", answer: "hovoriť" },
-				],
-				["hovorí", "hovorila"],
-			),
-			makeEntry(
-				"oznamit",
-				"oznámiť",
-				"to announce",
-				[
-					{ sk: "Oznámil to všetkým.", en: "He announced it to everyone.", answer: "Oznámil" },
-					{ sk: "Škola oznámila nový termín.", en: "The school announced a new date.", answer: "oznámila" },
-				],
-				["oznámil", "oznámila"],
-			),
-			makeEntry("zaujem", "záujem", "interest", [
-				{ sk: "Mám o to záujem.", en: "I am interested in that.", answer: "záujem" },
-			]),
-			makeEntry(
-				"voda",
-				"voda",
-				"water",
-				[{ sk: "Pijem čistú vodu.", en: "I drink clean water.", answer: "vodu" }],
-				["vodu"],
-			),
-		];
-		const tvrditCard = makeCard({
-			id: "tvrdit#0",
-			slug: "tvrdit",
-			lemma: "tvrdiť",
-			gloss: "to claim, assert",
-			sentence: "On tvrdí, že má pravdu.",
-			answer: "tvrdí",
-			translation: "He claims he is right.",
-		});
-		const hardwords = [
-			{
-				id: tvrditCard.id,
-				slug: tvrditCard.slug,
-				lemma: tvrditCard.lemma,
-				gloss: tvrditCard.gloss,
-				sentence: tvrditCard.sentence,
-				wrongs: 4,
-				lapses: 1,
-				missDays: 2,
-				stability: 0.4,
-				hasBlankMiss: true,
-				cleanAfterLastWrong: 0,
-				lastWrongAt: "2026-11-05T10:00:00Z",
-				due: "2026-11-06T10:00:00Z",
-				card: tvrditCard,
-			},
-		];
-		const mixups = {
-			"hovorit::tvrdit": {
-				a: "hovorit",
-				b: "tvrdit",
-				words: ["hovoriť", "tvrdiť"] as [string, string],
-				since: "2026-11-01T10:00:00Z",
-				lastAt: "2026-11-05T10:00:00Z",
-				misses: 2,
-				hits: 0,
-			},
-		};
-		const plan = buildHardWordsLesson(hardwords, entries, mixups, { seed: 42 });
-		const kinds = plan.items.map((i) => i.kind);
-		assert.ok(kinds.includes("meaning"));
-		assert.ok(plan.items.some((i) => i.pair?.id === "hovorit::tvrdit"));
-		assert.ok(kinds.includes("type"));
-
-		const meaningItem = plan.items.find((i) => i.kind === "meaning")!;
-		assert.equal(meaningItem.hint, "tvrdiť");
-		assert.ok((meaningItem.options?.length ?? 0) >= 2);
-		assert.ok(meaningItem.options!.includes(meaningItem.translation));
-
-		const typeItem = plan.items.find((i) => i.kind === "type" && !i.pair)!;
-		assert.notEqual(typeItem.sentence, "On tvrdí, že má pravdu.");
-		assert.equal(typeItem.unit, "words");
-		assert.notEqual(typeItem.hint, "tvrdiť");
-	});
-
-	test("hardWordsSentenceTargets puts missed words first, deduplicates, and caps at 3", () => {
-		const items = [
-			{ slug: "tvrdit", lemma: "tvrdiť", gloss: "claim" },
-			{ slug: "oznamit", lemma: "oznámiť", gloss: "announce" },
-			{ slug: "zaujem", lemma: "záujem", gloss: "interest" },
-			{ slug: "voda", lemma: "voda", gloss: "water" },
-			{ slug: "voda", lemma: "voda", gloss: "water" },
-		] as unknown as import("../src/core/lesson.ts").LessonItem[];
-		const targets = hardWordsSentenceTargets(items, ["voda", "zaujem"]);
-		assert.deepEqual(
-			targets.map((t) => t.slug),
-			["zaujem", "voda", "tvrdit"],
-		);
-	});
-
-	test("keeps item ids unique even when meaning, mix-up, and type share one example", () => {
-		const entries: LexiconEntry[] = [
-			makeEntry(
-				"tvrdit",
-				"tvrdiť",
-				"to claim",
-				[{ sk: "Tvrdiť to je ľahké.", en: "Claiming that is easy.", answer: "Tvrdiť" }],
-				["tvrdim"],
-			),
-			makeEntry(
-				"hovorit",
-				"hovoriť",
-				"to speak",
-				[{ sk: "Hovoriť pravdu je dobré.", en: "Speaking the truth is good.", answer: "Hovoriť" }],
-				["hovorim"],
-			),
-		];
-		const card = makeCard({
-			id: "tvrdit#0",
-			slug: "tvrdit",
-			lemma: "tvrdiť",
-			gloss: "to claim",
-			sentence: "Tvrdiť to je ľahké.",
-			answer: "Tvrdiť",
-			translation: "Claiming that is easy.",
-		});
-		const hardwords = [
-			{
-				id: card.id,
-				slug: card.slug,
-				lemma: card.lemma,
-				gloss: card.gloss,
-				wrongs: 4,
-				lapses: 1,
-				missDays: 2,
-				stability: 0.4,
-				hasBlankMiss: true,
-				lastWrongAt: "2026-11-05T10:00:00Z",
-				card,
-			},
-		];
-		const mixups = {
-			"hovorit::tvrdit": {
-				a: "hovorit",
-				b: "tvrdit",
-				words: ["hovoriť", "tvrdiť"] as [string, string],
-				since: "2026-11-01T10:00:00Z",
-				lastAt: "2026-11-05T10:00:00Z",
-				misses: 2,
-				hits: 0,
-			},
-		};
-		const plan = buildHardWordsLesson(hardwords, entries, mixups, { seed: 7 });
-		const ids = plan.items.map((i) => i.id);
-		assert.equal(new Set(ids).size, ids.length);
-	});
+test("collates cards by word and sorts history without changing caller inputs", () => {
+	const other = { ...card, id: "claim#1" };
+	const log = [entry(2, { cardId: other.id }), entry(1)];
+	const before = JSON.stringify(log);
+	const found = detect([card, other], log);
+	assert.equal(found.length, 1);
+	assert.equal(found[0]!.wrongs, 2);
+	assert.equal(JSON.stringify(log), before);
 });
 
-describe("server integration: known unmark and reading exclusion", () => {
-	test("answerReview auto-unmarks known word on lapse and knownWords excludes active hardwords slugs", () => {
-		const card = makeCard({
-			id: "tvrdit#0",
-			slug: "tvrdit",
-			lemma: "tvrdiť",
-			gloss: "claim",
-			sentence: "On tvrdí, že má pravdu.",
-			answer: "tvrdí",
-			state: "review",
-			memory: { stability: 4, difficulty: 5 },
-		});
-		reviewStore.writeCards({ [card.id]: card });
-		knownWordStore.set("tvrdit", "tvrdiť", true, new Date("2026-11-01T10:00:00Z"));
-		assert.equal(knownWordStore.has("tvrdit"), true);
+test("requires two delayed, distinct-day, unassisted exact recalls even for a stable card", () => {
+	const stable = { ...card, state: "review" as const, memory: { stability: 9.5, difficulty: 5 } };
+	assert.equal(detect([stable], [...misses, clean(3)]).length, 1);
+	assert.equal(detect([stable], [...misses, clean(3), clean(3)]).length, 1);
+	assert.equal(detect([stable], [...misses, clean(3, { hints: 1 }), clean(4, { picked: true })]).length, 1);
+	assert.equal(detect([stable], [...misses, clean(3, { verdict: "accents" }), clean(4, { rating: 2 })]).length, 1);
+	assert.equal(detect([stable], [...misses, clean(3), clean(4)]).length, 0);
+	assert.equal(detect([stable], [...misses, clean(3), clean(4), entry(5)]).length, 1);
+});
 
-		answerReview({ cardId: card.id, given: "", rating: 1 }, new Date("2026-11-02T10:00:00Z"));
-		assert.equal(knownWordStore.has("tvrdit"), false);
+test("a new local day alone is not enough, and the 12-hour boundary is inclusive", () => {
+	const lateMiss = entry(2, { reviewedAt: "2026-11-02T23:00:00Z" });
+	const early = clean(3, { reviewedAt: "2026-11-03T10:59:59Z" });
+	assert.equal(detect([card], [entry(1), lateMiss, early, clean(4)]).length, 1);
+	const boundary = { ...early, reviewedAt: "2026-11-03T11:00:00Z" };
+	assert.equal(detect([card], [entry(1), lateMiss, boundary, clean(4)]).length, 0);
+	const sameLocalDay = clean(3, { reviewedAt: "2026-11-03T23:00:00Z" });
+	assert.equal(hardWords([card], [...misses, clean(3), sameLocalDay], { tz: 0 }).length, 1);
+});
 
-		// Second wrong puts it into active hardwords; even if marked known again, knownWords() excludes it.
-		answerReview({ cardId: card.id, given: "", rating: 1 }, new Date("2026-11-03T10:00:00Z"));
-		knownWordStore.set("tvrdit", "tvrdiť", true, new Date("2026-11-03T11:00:00Z"));
-		const kw = knownWords();
-		assert.equal(kw.known.has("tvrdit"), false);
-		assert.equal(kw.expected.has("tvrdit"), false);
+test("does not blame the target word for a neighboring blank", () => {
+	const multiple = {
+		words: 2,
+		spans: [
+			[5, 10],
+			[14, 19],
+		] as [number, number][],
+	};
+	const neighbor = entry(1, { ...multiple, given: "claim fails" });
+	assert.equal(reviewEntryWordVerdict(card, neighbor, "en-US"), "exact");
+	assert.equal(detect([card], [neighbor, { ...neighbor, reviewedAt: entry(2).reviewedAt }]).length, 0);
+	assert.equal(
+		detect([{ ...card, lapses: 2 }], [neighbor, { ...neighbor, reviewedAt: entry(2).reviewedAt }]).length,
+		0,
+	);
+	assert.equal(reviewEntryWordVerdict(card, { ...neighbor, given: "think works" }, "en-US"), "wrong");
+});
 
-		const status = reviewStatus(new Date("2026-11-03T12:00:00Z"), 0);
-		assert.ok(status.leeches.some((l) => l.slug === "tvrdit" && l.wrongs >= 2));
-		assert.match(reviewDigest(new Date("2026-11-03T12:00:00Z")), /tvrdiť/);
-	});
+test("ranks by misses then latest miss, ignoring invalid timestamps", () => {
+	const other = { ...card, id: "other#0", slug: "other" };
+	const log = [
+		...misses,
+		entry(4, { cardId: other.id }),
+		entry(5, { cardId: other.id }),
+		entry(6, { reviewedAt: "bad" }),
+	];
+	assert.deepEqual(
+		detect([card, other], log).map((word) => word.slug),
+		["other", "claim"],
+	);
+});
+
+test("review detection and answers leave explicit known marks alone", async () => {
+	const { reviewStore } = await import("../src/store/review.ts");
+	const { knownWordStore } = await import("../src/store/known-words.ts");
+	const { answerReview, reviewStatus } = await import("../src/server/review.ts");
+	reviewStore.writeCards({ [card.id]: card });
+	knownWordStore.set(card.slug, card.lemma, true);
+	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(1).reviewedAt));
+	answerReview({ cardId: card.id, given: "", rating: 1 }, new Date(entry(2).reviewedAt));
+	assert.equal(knownWordStore.has(card.slug), true);
+	assert.ok(reviewStatus(new Date(entry(3).reviewedAt), 0).leeches.some((word) => word.slug === card.slug));
+	assert.equal(knownWordStore.has(card.slug), true);
 });

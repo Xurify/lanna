@@ -108,7 +108,7 @@ interface Status {
 	settings: { newPerDay: number; retention: number };
 	next: Prompt | null;
 	answered?: AnsweredLine[];
-	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number }>;
+	leeches: Array<{ id: string; lemma: string; gloss: string; lapses: number; wrongs: number }>;
 }
 
 type Mode = "type" | "choice";
@@ -1249,24 +1249,23 @@ export function ReviewSession() {
 								<section className="mt-12" data-testid="review-leeches">
 									<h2 className="q-sh">Words you keep missing</h2>
 									<p className="q-sub" style={{ marginTop: 0 }}>
-										Missed again and again. A lesson on them, or a sentence of your own, often helps more than another
-										review.
+										Try using a few of these words together in a short passage of your own.
 									</p>
 									<ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
 										{status.leeches.map((l) => (
-											<li key={l.id} className="q-ex" title={`Missed ${l.lapses} times`}>
+											<li key={l.id} className="q-ex" title={`Missed ${l.wrongs} times`}>
 												<span lang={lang?.code}>{l.lemma}</span>
 												<span className="ml-1.5 font-[450] text-ink-3">{l.gloss}</span>
-												<span className="ml-1.5 text-[12px] text-ink-3">×{l.lapses}</span>
+												<span className="ml-1.5 text-[12px] text-ink-3">×{l.wrongs}</span>
 											</li>
 										))}
 									</ul>
 									<Link
-										href="/lesson?mode=hardwords"
+										href="/write"
 										className="q-btn sec t mt-4 pointer-coarse:min-h-11"
 										data-testid="review-practice-hardwords"
 									>
-										Practice these words
+										Write with these words
 										<ArrowRightIcon className="q-ico" />
 									</Link>
 								</section>

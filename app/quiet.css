@@ -37,7 +37,13 @@
 	stroke-width: 1.8;
 }
 
-/* text fields: one style for every typed field outside an exercise; layout (height, padding, radius, font) stays on the element. The outline is the checkbox grey, not the hairline: --q-line-2 is 1.5:1 on a Night card and the field disappeared. */
+@layer components {
+	:where(input, textarea).q-field {
+		min-height: 2.75rem;
+		padding: 0.625rem 0.875rem;
+	}
+}
+
 .q-field {
 	background: var(--q-field);
 	color: var(--q-ink);

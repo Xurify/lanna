@@ -349,7 +349,7 @@ function GuideCard({
 					className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-foreground"
 				>
 					<CompassIcon className="size-4 text-teal" strokeWidth={1.6} aria-hidden="true" />
-					Your guide
+					<span className="cap-center">Your guide</span>
 				</h2>
 				{guide && (
 					<p className="text-xs text-ink-3" suppressHydrationWarning>
@@ -445,11 +445,12 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 			<ul className="q-card flex flex-col divide-y divide-border">
 				{hardwords > 0 && (
 					<Step
-						title="Practice the words you keep missing"
+						testid="hardwords-step"
+						title="Write with the words you keep missing"
 						line={`${hardwords} ${hardwords === 1 ? "word" : "words"} missed repeatedly in Review${hardwordsSample}`}
 					>
 						<Link
-							href="/lesson?mode=hardwords"
+							href="/write"
 							className={pairs > 0 ? "q-btn sec t pointer-coarse:min-h-11" : "q-btn primary pointer-coarse:min-h-11"}
 							data-testid="step-hardwords"
 						>
@@ -520,9 +521,19 @@ function NextSteps({ a }: { a: MistakeAnalysis }) {
 	);
 }
 
-function Step({ title, line, children }: { title: string; line: string; children: React.ReactNode }) {
+function Step({
+	title,
+	line,
+	children,
+	testid,
+}: {
+	title: string;
+	line: string;
+	children: React.ReactNode;
+	testid?: string;
+}) {
 	return (
-		<li className="flex items-center justify-between gap-4 px-4 py-3">
+		<li className="flex items-center justify-between gap-4 px-4 py-3" data-testid={testid}>
 			<div className="min-w-0">
 				<p className="text-sm font-semibold text-foreground">{title}</p>
 				<p className="text-xs text-ink-3">{line}</p>

@@ -1296,7 +1296,7 @@ function wordOptions(answer: string, lemma: string, pool: readonly string[], ran
 /** Three meanings for a meaning rep: the sentence's own translation and
  *  two others of similar length from the unit, so length gives nothing
  *  away. (The Listen task's version, with a wider pool: core/listen.ts.) */
-export function meaningChoices(translation: string, pool: readonly string[], rand: () => number): string[] {
+function meaningChoices(translation: string, pool: readonly string[], rand: () => number): string[] {
 	const own = translation.trim();
 	const others = [...new Set(pool.map((p) => p.trim()).filter((p) => p && p.toLowerCase() !== own.toLowerCase()))];
 	const near = shuffle(others, rand)
@@ -1358,7 +1358,7 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 	return item;
 }
 
-export type LessonFocus = "mixups" | "personal" | "hardwords";
+export type LessonFocus = "mixups" | "personal";
 
 export interface LessonPlan {
 	unit: UnitId;

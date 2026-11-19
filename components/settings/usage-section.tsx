@@ -108,6 +108,14 @@ export function UsageSection() {
 							{formatUsd(report.wordChecksUsd ?? 0)}
 						</>
 					)}
+					{(report.writing?.count ?? 0) > 0 && (
+						<>
+							{" "}
+							· {report.writing!.count} writing {report.writing!.count === 1 ? "check" : "checks"}{" "}
+							{formatUsd(report.writingUsd ?? 0)}
+							{report.writing!.unpriced > 0 && ` (${report.writing!.unpriced} unpriced)`}
+						</>
+					)}
 					{(report.languages?.count ?? 0) > 0 && (
 						<>
 							{" "}

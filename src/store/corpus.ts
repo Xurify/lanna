@@ -338,7 +338,7 @@ export interface LessonLogEntry {
 	 *  "say it faster" round, one rep per sentence (unit "fast"); mixups:
 	 *  a Mix-ups lesson (unit "mixups", src/core/mixups.ts); personal: the
 	 *  lesson built from the guide's targets (unit "personal", src/core/personal.ts). */
-	mode: "lesson" | "blitz" | "mixups" | "personal" | "hardwords" | "placement" | "listen" | "speak" | "fluency";
+	mode: "lesson" | "blitz" | "mixups" | "personal" | "placement" | "listen" | "speak" | "fluency";
 	ms?: number;
 	xp: number;
 	correct: number;
