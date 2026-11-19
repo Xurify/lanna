@@ -191,9 +191,9 @@ export function NotificationsSection({
 					label="Desktop notifications"
 					hint={
 						permission === "granted" ? (
-							<span className="inline-flex items-center gap-1 text-emerald-500">
+							<span className="inline-flex items-center gap-1 text-teal">
 								<CheckCircle2Icon className="h-3.5 w-3.5" />
-								<span>System notifications enabled</span>
+								<span className="cap-center">System notifications enabled</span>
 							</span>
 						) : permission === "denied" ? (
 							<span className="inline-flex items-center gap-1 text-destructive">
@@ -453,7 +453,7 @@ export function NotificationsSection({
 					disabled={!current.enabled}
 					className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-xs font-medium text-foreground hover:bg-well shadow-sm transition-colors disabled:opacity-50"
 				>
-					{testSent ? <CheckCircle2Icon className="h-4 w-4 text-emerald-500" /> : <SendIcon className="h-4 w-4" />}
+					{testSent ? <CheckCircle2Icon className="h-4 w-4 text-teal" /> : <SendIcon className="h-4 w-4" />}
 					<span>{testSent ? "Test Alert Sent!" : "Send Test Reminder Alert"}</span>
 				</button>
 			</div>
