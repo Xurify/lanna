@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { nudgeTarget, upcomingNudges, type LoggedNotification, type ScheduledNudge } from "@/src/core";
+import { nudgeTarget, type LoggedNotification, type ScheduledNudge } from "@/src/core";
 import { Dialog, DialogContent, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CountryFlag } from "@/components/ui/country-flag";
-import { markNotificationsSeen, openNudge, useNotificationLog } from "./notification-store.ts";
+import {
+	markNotificationsSeen,
+	openNudge,
+	readNotificationLog,
+	readUpcomingReminders,
+	subscribeToNotifications,
+} from "./notification-store.ts";
 
 function firedLabel(firedAt: number, now: Date): string {
 	const fired = new Date(firedAt);
@@ -14,26 +20,15 @@ function firedLabel(firedAt: number, now: Date): string {
 	return `${fired.toLocaleDateString(undefined, { day: "numeric", month: "short" })}, ${clock}`;
 }
 
-function useUpcoming(): ScheduledNudge[] {
-	const [upcoming, setUpcoming] = useState<ScheduledNudge[]>([]);
-	useEffect(() => {
-		let live = true;
-		fetch(`/api/reminders/schedule?tz=${new Date().getTimezoneOffset()}`, { cache: "no-store" })
-			.then((res) => (res.ok ? res.json() : null))
-			.then((data: { schedule?: ScheduledNudge[] } | null) => {
-				if (live && data?.schedule) setUpcoming(upcomingNudges(data.schedule, new Date()));
-			})
-			.catch(() => {});
-		return () => {
-			live = false;
-		};
-	}, []);
-	return upcoming;
+function useOpenLog(): LoggedNotification[] {
+	const [log, setLog] = useState<LoggedNotification[]>(readNotificationLog);
+	useEffect(() => subscribeToNotifications(() => setLog(readNotificationLog())), []);
+	return log;
 }
 
 export function NotificationsDialog({ onClose, onOpenSettings }: { onClose: () => void; onOpenSettings: () => void }) {
-	const { log } = useNotificationLog();
-	const upcoming = useUpcoming();
+	const log = useOpenLog();
+	const upcoming = readUpcomingReminders(new Date());
 
 	const newestFiredAt = log[0]?.firedAt;
 	useEffect(() => {

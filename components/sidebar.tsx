@@ -132,6 +132,11 @@ declare global {
 			};
 			/** Settings → Appearance: the installed font families, read by the main process. */
 			fonts?: { list: () => Promise<string[]> };
+			/** Reminder alerts: the shell raises the OS notification and reports a click back with the nudge id. */
+			notifications?: {
+				notify: (payload: { id: string; title: string; body: string }) => Promise<boolean>;
+				onOpen?: (cb: (id: string) => void) => () => void;
+			};
 			/** Watch → picks: YouTube signed in through the app's own session (electron/youtube.cjs). */
 			youtube?: {
 				status: () => Promise<{ available: boolean; connected: boolean }>;

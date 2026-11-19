@@ -24,7 +24,7 @@
  *     would shadow every settings-page key change until restart.
  */
 
-const { app, BrowserWindow, clipboard, Menu, ipcMain, session, shell } = require("electron");
+const { app, BrowserWindow, clipboard, Menu, ipcMain, Notification, session, shell } = require("electron");
 
 /** The window frame in the two themes (the page's --q-bg and --q-ink). Day is the default; the page reports its theme through "lanna:theme". */
 /** Whether the last session ended in Night, kept beside the window state so the window is the right color from its first frame. */
@@ -57,6 +57,7 @@ const { desktopAPIHeaders, trustedSender } = require("./desktop-api.cjs");
 const { registerStorageIPC } = require("./storage-ipc.cjs");
 const { registerFontsIPC } = require("./fonts-ipc.cjs");
 const { createYouTube, registerYouTubeIPC } = require("./youtube.cjs");
+const { registerNotificationsIPC } = require("./notifications-ipc.cjs");
 const { attachContextMenu } = require("./context-menu.cjs");
 const { adoptFormerUserData } = require("./former-user-data.cjs");
 const { randomBytes } = require("node:crypto");
@@ -730,6 +731,16 @@ async function main() {
 			trustedSender(event, new URL(url).origin, BrowserWindow),
 		youtube: createYouTube({ session, BrowserWindow, userAgent: app.userAgentFallback }),
 		BrowserWindow,
+	});
+
+	// Reminder alerts → the OS notification: raised here, not in the renderer
+	// (electron/notifications-ipc.cjs).
+	registerNotificationsIPC(ipcMain, {
+		trusted: (event) =>
+			trustedAppWindows.has(BrowserWindow.fromWebContents(event.sender)) &&
+			trustedSender(event, new URL(url).origin, BrowserWindow),
+		BrowserWindow,
+		Notification,
 	});
 
 	// Sidebar-at-narrow-window (owner, 2026-09-17): the renderer auto-closes

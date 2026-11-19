@@ -37,6 +37,10 @@
  *   own session, read the history, home and channels pages, sign out
  *   (electron/youtube.cjs). Only page text comes back; never a cookie.
  *
+ *   window.lanna.notifications — reminder alerts: raise the OS notification in
+ *   the shell (Chromium refuses the renderer's own Notification API here), and
+ *   hear back when the learner clicks it (electron/notifications-ipc.cjs).
+ *
  * Channel names are mirrored in electron/main.cjs — keep them in sync.
  */
 const { contextBridge, ipcRenderer } = require("electron");
@@ -76,6 +80,15 @@ contextBridge.exposeInMainWorld("lanna", {
 	/** Settings → Appearance: the installed font families, A to Z; [] when the OS would not say. */
 	fonts: {
 		list: () => ipcRenderer.invoke("lanna:fonts:list"),
+	},
+	/** Reminder alerts → the OS notification. `notify` resolves false when the OS cannot show one. */
+	notifications: {
+		notify: (payload) => ipcRenderer.invoke("lanna:notify", payload),
+		onOpen: (cb) => {
+			const listener = (_event, id) => cb(id);
+			ipcRenderer.on("lanna:notification-open", listener);
+			return () => ipcRenderer.removeListener("lanna:notification-open", listener);
+		},
 	},
 	/** Watch → picks: sign in to YouTube in a window of its own, read one list's
 	 *  page (history, recommended, subscriptions) and who is signed in through
