@@ -181,6 +181,13 @@ for (let tab = 0; ; tab += 1) {
 		await pause(500);
 	});
 }
+await page.goto(new URL("/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
+await pause(1200);
+await tryState("notifications", 1280, async () => {
+	await page.click('[data-testid="notifications-entry"]');
+	await page.waitForSelector('[data-testid="notifications-dialog"]', { timeout: 8000 });
+	await pause(600);
+});
 if (await page.$('[data-testid="session-row"]')) {
 	await page.goto(new URL("/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
 	await pause(1200);
