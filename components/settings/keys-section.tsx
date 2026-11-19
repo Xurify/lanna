@@ -154,7 +154,9 @@ function KeyTableRow({
 					data-testid={`${testid}-editor`}
 				>
 					<span className="flex shrink-0 items-center gap-2 font-ui text-xs font-semibold text-foreground">
-						<ProviderIcon provider={providerId ?? (status.id.replace(/_API_KEY|_KEY/g, "").toLowerCase() || label)} />
+						<ProviderIcon
+							provider={providerId ?? (status.id.replace(/_API_KEY|_API_TOKEN|_KEY/g, "").toLowerCase() || label)}
+						/>
 						{label}
 					</span>
 					<input
@@ -268,11 +270,13 @@ function KeyTableRow({
 					} ${envOwned || status.disabled ? "opacity-40" : ""}`}
 				>
 					<span className="flex shrink-0 items-center gap-2.5 font-ui text-xs font-semibold text-foreground">
-						<ProviderIcon provider={providerId ?? (status.id.replace(/_API_KEY|_KEY/g, "").toLowerCase() || label)} />
+						<ProviderIcon
+							provider={providerId ?? (status.id.replace(/_API_KEY|_API_TOKEN|_KEY/g, "").toLowerCase() || label)}
+						/>
 						{label}
 					</span>
 					<span className="flex min-w-0 items-center gap-2">
-						{docsUrl && !status.present && (
+						{docsUrl && (
 							<a
 								href={docsUrl}
 								target="_blank"
@@ -280,7 +284,7 @@ function KeyTableRow({
 								onClick={(e) => e.stopPropagation()}
 								className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
 							>
-								Get a key ↗
+								{status.present ? "Get another key ↗" : "Get a key ↗"}
 							</a>
 						)}
 						<span

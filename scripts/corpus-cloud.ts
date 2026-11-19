@@ -32,7 +32,7 @@ if (mode !== "push" && mode !== "pull") {
 
 const root = PATHS.base;
 const bucket = await cloudflareBucket();
-const local = localFiles(root);
+const local = await localFiles(root);
 const remote = await bucket.list();
 console.log(`${root}: ${local.length} files, ${megabytes(local)}`);
 console.log(`${BACKUP_BUCKET} bucket: ${remote.length} files, ${megabytes(remote)}`);

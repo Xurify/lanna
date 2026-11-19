@@ -138,6 +138,7 @@ export * from "./dated-scene.ts";
 export * from "./stamps.ts";
 export * from "./plan.ts";
 export * from "./storage.ts";
+export * from "./backup.ts";
 export * from "./daylog.ts";
 export * from "./rules-map.ts";
 export * from "./line.ts";

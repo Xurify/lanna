@@ -18,12 +18,13 @@ import {
 } from "../src/core/auth-keys.ts";
 
 describe("the catalog", () => {
-	it("is exactly the nine CURATED app-service keys (provider keys live in the provider table)", () => {
+	it("is exactly the ten CURATED app-service keys (provider keys live in the provider table)", () => {
 		assert.deepEqual(
 			AUTH_KEYS.map((k) => k.id),
 			// Lanna adds ElevenLabs (the first TTS tier), the Azure
 			// Speech pair (pronunciation assessment, 2026-10-28), Phonic (live talk,
-			// 2026-11-17), Context (2026-11-09) and DeepL (2026-11-17).
+			// 2026-11-17), Context (2026-11-09), DeepL (2026-11-17) and Cloudflare R2
+			// (the backup without wrangler, 2026-11-18).
 			[
 				"ELEVENLABS_API_KEY",
 				"DEEPGRAM_API_KEY",
@@ -34,6 +35,7 @@ describe("the catalog", () => {
 				"CONTEXT_API_KEY",
 				"TAVILY_API_KEY",
 				"BRAVE_API_KEY",
+				"CLOUDFLARE_API_TOKEN",
 			],
 		);
 		for (const k of AUTH_KEYS) {
@@ -47,6 +49,18 @@ describe("the catalog", () => {
 		assert.ok(!isKnownAuthKey("OPENROUTER_API_KEY"));
 		assert.ok(!isKnownAuthKey("GOOGLE_SEARCH_API_KEY"), "the CSE pair is retired");
 		assert.ok(!isKnownAuthKey("GOOGLE_CSE_ID"));
+	});
+
+	it("hands Cloudflare's token page the R2 rights, already chosen", () => {
+		const url = new URL(AUTH_KEYS.find((k) => k.id === "CLOUDFLARE_API_TOKEN")!.docsUrl);
+		assert.equal(`${url.origin}${url.pathname}`, "https://dash.cloudflare.com/profile/api-tokens");
+		assert.deepEqual(JSON.parse(url.searchParams.get("permissionGroupKeys")!), [
+			{ key: "workers_r2", type: "edit" },
+			{ key: "account_settings", type: "read" },
+		]);
+		assert.equal(url.searchParams.get("accountId"), "*");
+		assert.equal(url.searchParams.get("zoneId"), "all");
+		assert.equal(url.searchParams.get("name"), "Lanna backup");
 	});
 
 	it("isKnownAuthKey: catalog yes, everything else no", () => {

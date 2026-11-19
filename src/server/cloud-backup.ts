@@ -5,20 +5,29 @@
  * only writes files that are missing here.
  *
  * Objects are read and written through Cloudflare's API with the login
- * `wrangler login` made (developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects).
+ * `wrangler login` made on this computer, or a CLOUDFLARE_API_TOKEN saved under
+ * API keys or in .env.local
+ * (developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects).
  * An object's etag is the MD5 of its bytes when it was uploaded in one
  * request (developers.cloudflare.com/r2/objects/upload-objects), which is how
  * a file is known to be the same without downloading it.
  */
 
-import { execSync } from "node:child_process";
+import { exec } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { promisify } from "node:util";
+import type { BackupAuth } from "../core/backup.ts";
+import { authStore } from "../store/auth.ts";
+import { deleteKey, keyValue } from "./keys.ts";
 
 export const BACKUP_BUCKET = "lanna";
 const PREFIX = "data/";
 const API = "https://api.cloudflare.com/client/v4";
+const WRANGLER = "npx -y wrangler@4";
+const ENV_TOKEN = "CLOUDFLARE_API_TOKEN";
+const LOGIN_TIMEOUT = 180_000;
 
 const LEFT_OUT = [
 	{ path: "access.json", why: "the paired devices' token hashes belong to this computer" },
@@ -45,21 +54,21 @@ export function leftOut(): string[] {
 	return LEFT_OUT.map((rule) => `${rule.path} (${rule.why})`);
 }
 
-export function localFiles(root: string): BackupFile[] {
+export async function localFiles(root: string): Promise<BackupFile[]> {
 	const files: BackupFile[] = [];
-	const walk = (dir: string) => {
-		for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+	const walk = async (dir: string): Promise<void> => {
+		for (const entry of await fs.promises.readdir(dir, { withFileTypes: true })) {
 			const absolute = path.join(dir, entry.name);
 			const relative = path.relative(root, absolute).split(path.sep).join("/");
 			if (entry.isDirectory()) {
-				if (backedUp(`${relative}/`)) walk(absolute);
+				if (backedUp(`${relative}/`)) await walk(absolute);
 			} else if (entry.isFile() && backedUp(relative)) {
-				const data = fs.readFileSync(absolute);
+				const data = await fs.promises.readFile(absolute);
 				files.push({ path: relative, size: data.length, md5: createHash("md5").update(data).digest("hex") });
 			}
 		}
 	};
-	if (fs.existsSync(root)) walk(root);
+	if (fs.existsSync(root)) await walk(root);
 	return files.sort((a, b) => a.path.localeCompare(b.path));
 }
 
@@ -156,28 +165,125 @@ const CONTENT_TYPES: Record<string, string> = {
 	".webp": "image/webp",
 };
 
-function wranglerToken(): string {
-	const out = execSync("npx -y wrangler@4 auth token --json", { encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] });
-	return (JSON.parse(out) as { token: string }).token;
+export type ShellRun = (command: string, options?: { timeout?: number }) => Promise<{ stdout: string; stderr: string }>;
+
+const execAsync = promisify(exec);
+
+export const shellRun: ShellRun = async (command, options = {}) => {
+	const { stdout, stderr } = await execAsync(command, { ...options, encoding: "utf-8" });
+	return { stdout, stderr };
+};
+
+async function cloudflareToken(run: ShellRun = shellRun): Promise<string> {
+	const saved = keyValue(ENV_TOKEN)?.trim();
+	if (saved) return saved;
+	const { stdout } = await run(`${WRANGLER} auth token --json`);
+	return (JSON.parse(stdout) as { token: string }).token;
 }
 
-export async function cloudflareBucket(name = BACKUP_BUCKET): Promise<Bucket> {
-	let token = wranglerToken();
-	const call = async (url: string, init: RequestInit = {}): Promise<Response> => {
-		const send = () => fetch(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
+/** The token in use, described without keeping it: a saved token, a replaced one and none at all read differently. */
+export function tokenPrint(): string {
+	const token = keyValue(ENV_TOKEN)?.trim();
+	return token ? `token ${token.length} ${token.slice(-4)}` : "wrangler";
+}
+
+/** A token saved under API keys reads as Settings; anything else, a shadowing .env.local included, as the environment. */
+function tokenSource(token: string): "settings" | "env" {
+	return authStore.authVars()[ENV_TOKEN]?.trim() === token ? "settings" : "env";
+}
+
+// `wrangler whoami` names the email it is signed in with, and closes the sentence with a full stop.
+const WHOAMI_EMAIL = /associated with the email\s+([\w.+-]+@[\w-]+(?:\.[\w-]+)+)/;
+
+export function whoamiAccount(out: string): string | null {
+	return WHOAMI_EMAIL.exec(out)?.[1] ?? null;
+}
+
+export async function wranglerAuth(run: ShellRun = shellRun): Promise<BackupAuth | null> {
+	const token = keyValue(ENV_TOKEN)?.trim();
+	if (token) return { via: tokenSource(token), account: null };
+	try {
+		// `wrangler whoami` exits 0 while printing "You are not authenticated", so a missing email is the sign of no login.
+		const account = whoamiAccount((await run(`${WRANGLER} whoami`)).stdout);
+		return account === null ? null : { via: "wrangler", account };
+	} catch {
+		return null;
+	}
+}
+
+/** Wrangler's own sign-in: it opens the browser and waits for the callback. */
+export async function cloudflareSignIn(run: ShellRun = shellRun): Promise<void> {
+	await run(`${WRANGLER} login`, { timeout: LOGIN_TIMEOUT });
+}
+
+export async function cloudflareSignOut(run: ShellRun = shellRun): Promise<void> {
+	await run(`${WRANGLER} logout`);
+}
+
+/** Cloudflare's own answer, so a caller can tell a missing bucket from a real refusal. */
+export class CloudflareHttpError extends Error {
+	constructor(
+		readonly status: number,
+		readonly url: string,
+	) {
+		super(`Cloudflare answered ${status} for ${url.slice(API.length)}`);
+	}
+}
+
+/** The bucket is not in the account yet: a check says that instead of reading out a 404. */
+export class BucketMissing extends Error {}
+
+/** The token is real but cannot list an account, which reading the bucket needs before anything else. */
+export class AccountNotVisible extends Error {}
+
+/** Drop the token saved under API keys, so Settings → Backup can sign this computer out of it. */
+export function forgetStoredToken(): void {
+	deleteKey(ENV_TOKEN);
+}
+
+type Fetcher = typeof fetch;
+
+function cloudflareCall(fetcher: Fetcher) {
+	let token = "";
+	return async (url: string, init: RequestInit = {}): Promise<Response> => {
+		token ||= await cloudflareToken();
+		const send = () => fetcher(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
 		let res = await send();
 		if (res.status === 401) {
-			token = wranglerToken();
+			token = await cloudflareToken();
 			res = await send();
 		}
-		if (!res.ok)
-			throw new Error(`Cloudflare answered ${res.status} for ${init.method ?? "GET"} ${url.slice(API.length)}`);
+		if (!res.ok) throw new CloudflareHttpError(res.status, url);
 		return res;
 	};
+}
+
+async function cloudflareAccount(call: (url: string, init?: RequestInit) => Promise<Response>): Promise<string> {
 	const account =
 		process.env.CLOUDFLARE_ACCOUNT_ID ??
 		((await (await call(`${API}/accounts`)).json()) as { result: Array<{ id: string }> }).result[0]?.id;
-	if (!account) throw new Error("No Cloudflare account: run `npx wrangler login`.");
+	if (!account) throw new AccountNotVisible();
+	return account;
+}
+
+/** Create the bucket when the account has none yet, so the first upload needs no terminal. */
+export async function ensureBucket(name = BACKUP_BUCKET, fetcher: Fetcher = fetch): Promise<void> {
+	const call = cloudflareCall(fetcher);
+	const account = await cloudflareAccount(call);
+	const buckets = (await (await call(`${API}/accounts/${account}/r2/buckets`)).json()) as {
+		result: Array<{ name: string }>;
+	};
+	if (buckets.result.some((bucket) => bucket.name === name)) return;
+	await call(`${API}/accounts/${account}/r2/buckets`, {
+		method: "POST",
+		body: JSON.stringify({ name }),
+		headers: { "Content-Type": "application/json" },
+	});
+}
+
+export async function cloudflareBucket(name = BACKUP_BUCKET, fetcher: Fetcher = fetch): Promise<Bucket> {
+	const call = cloudflareCall(fetcher);
+	const account = await cloudflareAccount(call);
 	const objects = `${API}/accounts/${account}/r2/buckets/${name}/objects`;
 	const object = (file: string) => `${objects}/${(PREFIX + file).split("/").map(encodeURIComponent).join("/")}`;
 	return {
@@ -186,13 +292,18 @@ export async function cloudflareBucket(name = BACKUP_BUCKET): Promise<Bucket> {
 			let cursor: string | undefined;
 			do {
 				const query = new URLSearchParams({ prefix: PREFIX, per_page: "1000", ...(cursor ? { cursor } : {}) });
-				const page = (await (await call(`${objects}?${query}`)).json()) as {
-					result: Array<{ key: string; size: number; etag: string }>;
-					result_info?: { cursor?: string; is_truncated?: boolean };
-				};
-				for (const item of page.result)
-					files.push({ path: item.key.slice(PREFIX.length), size: item.size, md5: item.etag });
-				cursor = page.result_info?.is_truncated ? page.result_info.cursor : undefined;
+				try {
+					const page = (await (await call(`${objects}?${query}`)).json()) as {
+						result: Array<{ key: string; size: number; etag: string }>;
+						result_info?: { cursor?: string; is_truncated?: boolean };
+					};
+					for (const item of page.result)
+						files.push({ path: item.key.slice(PREFIX.length), size: item.size, md5: item.etag });
+					cursor = page.result_info?.is_truncated ? page.result_info.cursor : undefined;
+				} catch (err) {
+					if (err instanceof CloudflareHttpError && err.status === 404) throw new BucketMissing();
+					throw err;
+				}
 			} while (cursor);
 			return files;
 		},

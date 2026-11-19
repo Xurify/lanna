@@ -11,6 +11,10 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
 import {
+	AccountNotVisible,
+	BucketMissing,
+	cloudflareBucket,
+	ensureBucket,
 	localFiles,
 	pull,
 	pullPlan,
@@ -58,7 +62,7 @@ describe("cloud backup", () => {
 		});
 		const bucket = memoryBucket();
 
-		const first = pushPlan(localFiles(root), await bucket.list());
+		const first = pushPlan(await localFiles(root), await bucket.list());
 		assert.deepEqual(
 			first.upload.map((file) => file.path),
 			["audio/sk/female/ťava-0123456789ab.mp3", "profiles/slovak/chats/a.json", "settings.json"],
@@ -67,7 +71,7 @@ describe("cloud backup", () => {
 
 		fs.writeFileSync(path.join(root, "profiles/slovak/chats/a.json"), "two");
 		fs.rmSync(path.join(root, "settings.json"));
-		const second = pushPlan(localFiles(root), await bucket.list());
+		const second = pushPlan(await localFiles(root), await bucket.list());
 		assert.deepEqual(
 			second.upload.map((file) => file.path),
 			["profiles/slovak/chats/a.json"],
@@ -83,7 +87,7 @@ describe("cloud backup", () => {
 		bucket.objects.set("access.json", Buffer.from("never restored"));
 		const root = folder("laptop", { "profiles/slovak/progress.json": "made here" });
 
-		const plan = pullPlan(localFiles(root), await bucket.list());
+		const plan = pullPlan(await localFiles(root), await bucket.list());
 		assert.deepEqual(
 			plan.download.map((file) => file.path),
 			["profiles/slovak/speak/s1/01.wav"],
@@ -100,12 +104,78 @@ describe("cloud backup", () => {
 		const bucket = memoryBucket();
 		bucket.objects.set("notes.json", Buffer.from("from the cloud"));
 		const root = folder("race", {});
-		const plan = pullPlan(localFiles(root), await bucket.list());
+		const plan = pullPlan(await localFiles(root), await bucket.list());
 		fs.mkdirSync(root, { recursive: true });
 		fs.writeFileSync(path.join(root, "notes.json"), "written meanwhile");
 
 		const failed = await pull(root, bucket, plan.download, () => {});
 		assert.equal(failed.length, 1);
 		assert.equal(fs.readFileSync(path.join(root, "notes.json"), "utf-8"), "written meanwhile");
+	});
+});
+
+const API = "https://api.cloudflare.com/client/v4";
+
+function fakeCloudflare(names: string[]): {
+	calls: Array<{ url: string; method: string; body: string }>;
+	fetcher: typeof fetch;
+} {
+	const calls: Array<{ url: string; method: string; body: string }> = [];
+	const fetcher = async (url: string, init: RequestInit = {}): Promise<Response> => {
+		calls.push({ url, method: init.method ?? "GET", body: String(init.body ?? "") });
+		const result = url.endsWith("/accounts") ? [{ id: "acct" }] : names.map((name) => ({ name }));
+		return new Response(JSON.stringify({ result }), { status: 200 });
+	};
+	return { calls, fetcher: fetcher as unknown as typeof fetch };
+}
+
+describe("the bucket", () => {
+	it("is created on the first upload when the account has none yet, and left alone when it has", async () => {
+		process.env.CLOUDFLARE_API_TOKEN = "cloudflare-test-token";
+		try {
+			const fresh = fakeCloudflare([]);
+			await ensureBucket("lanna", fresh.fetcher);
+			assert.deepEqual(
+				fresh.calls.filter((call) => call.method === "POST"),
+				[{ url: `${API}/accounts/acct/r2/buckets`, method: "POST", body: '{"name":"lanna"}' }],
+			);
+
+			const kept = fakeCloudflare(["lanna"]);
+			await ensureBucket("lanna", kept.fetcher);
+			assert.equal(kept.calls.filter((call) => call.method === "POST").length, 0);
+		} finally {
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
+	});
+
+	it("reads a bucket that is not in the account as missing, not as a 404 line", async () => {
+		process.env.CLOUDFLARE_API_TOKEN = "cloudflare-test-token";
+		try {
+			const fetcher = (async (url: string): Promise<Response> =>
+				url.endsWith("/accounts")
+					? new Response(JSON.stringify({ result: [{ id: "acct" }] }), { status: 200 })
+					: new Response("no such bucket", { status: 404 })) as unknown as typeof fetch;
+			const bucket = await cloudflareBucket("lanna", fetcher);
+			await assert.rejects(
+				() => bucket.list(),
+				(err: unknown) => err instanceof BucketMissing,
+			);
+		} finally {
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
+	});
+
+	it("reads a token that cannot list an account as that, not as a missing login", async () => {
+		process.env.CLOUDFLARE_API_TOKEN = "cloudflare-test-token";
+		try {
+			const fetcher = (async () =>
+				new Response(JSON.stringify({ result: [] }), { status: 200 })) as unknown as typeof fetch;
+			await assert.rejects(
+				() => cloudflareBucket("lanna", fetcher),
+				(err: unknown) => err instanceof AccountNotVisible,
+			);
+		} finally {
+			delete process.env.CLOUDFLARE_API_TOKEN;
+		}
 	});
 });

@@ -86,6 +86,7 @@ export * from "./placement.ts";
 export { storyStore } from "../store/stories.ts";
 export { readingSourceStore, type ReadingSource } from "../store/reading-sources.ts";
 export * from "./corpus-export.ts";
+export * from "./backup.ts";
 export * from "./usage-report.ts";
 export { loadLexicon } from "../agent/lexicon.ts";
 export { weakestTopics } from "../agent/learner-profile.ts";
