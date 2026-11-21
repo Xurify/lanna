@@ -26,10 +26,12 @@ type Status = {
 	pairing: { expiresAt: string } | null;
 };
 type Code = { code: string; expiresAt: string };
+type ServeStatus = { installed: boolean; serving: boolean; url: string | null };
 type Notice = { tone: "ok" | "error"; text: string };
 
 const LOAD_FAILED = "Couldn’t read the remote access settings. Refresh to try again.";
 const COPY_FAILED = "Couldn’t copy. Select the command and copy it by hand.";
+const SERVE_FAILED = "Couldn’t start Tailscale Serve. Try again, or run the command below in a terminal.";
 
 function when(iso: string): string {
 	return new Date(iso).toLocaleString(undefined, {
@@ -60,6 +62,8 @@ export function DevicesSection() {
 	const [status, setStatus] = useState<Status | null>(null);
 	const [loadFailed, setLoadFailed] = useState(false);
 	const [busy, setBusy] = useState(false);
+	const [serveStatus, setServeStatus] = useState<ServeStatus | null>(null);
+	const [serveStarting, setServeStarting] = useState(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	const [code, setCode] = useState<Code | null>(null);
 	const [now, setNow] = useState(() => Date.now());
@@ -78,6 +82,23 @@ export function DevicesSection() {
 		window.addEventListener("focus", refresh);
 		return () => window.removeEventListener("focus", refresh);
 	}, []);
+
+	useEffect(() => {
+		if (!status?.enabled) {
+			setServeStatus(null);
+			return;
+		}
+		let live = true;
+		fetch("/api/access/serve", { cache: "no-store" })
+			.then((res) => (res.ok ? (res.json() as Promise<ServeStatus>) : null))
+			.then((next) => {
+				if (live && next) setServeStatus(next);
+			})
+			.catch(() => {});
+		return () => {
+			live = false;
+		};
+	}, [status?.enabled]);
 
 	const knownDevices = useRef<Set<string>>(new Set());
 	useEffect(() => {
@@ -175,6 +196,28 @@ export function DevicesSection() {
 		}
 	}
 
+	async function setUpServe() {
+		setServeStarting(true);
+		setNotice(null);
+		try {
+			const res = await fetch("/api/access/serve", { method: "POST", cache: "no-store" });
+			const next = (await res.json().catch(() => null)) as (ServeStatus & { error?: string }) | null;
+			if (!res.ok || !next || typeof next.serving !== "boolean") {
+				setNotice({ tone: "error", text: next?.error ?? SERVE_FAILED });
+				return;
+			}
+			setServeStatus(next);
+			setNotice({
+				tone: "ok",
+				text: next.url ? `Tailscale Serve is on. Open ${next.url} on the phone.` : "Tailscale Serve is on.",
+			});
+		} catch {
+			setNotice({ tone: "error", text: SERVE_FAILED });
+		} finally {
+			setServeStarting(false);
+		}
+	}
+
 	async function copyCommand(text: string) {
 		try {
 			await navigator.clipboard.writeText(text);
@@ -196,6 +239,14 @@ export function DevicesSection() {
 			</p>
 		);
 	}
+
+	const serveLine = !serveStatus
+		? "Checking whether Serve is on…"
+		: !serveStatus.installed
+			? "Tailscale is not installed on this computer. Install it from tailscale.com/download, sign in, then try again."
+			: serveStatus.serving
+				? "On. This address answers on your tailnet."
+				: "Off. Lanna can start it for you.";
 
 	const left = code ? Date.parse(code.expiresAt) - now : 0;
 	const codeLine =
@@ -260,10 +311,34 @@ export function DevicesSection() {
 			{status.enabled && (
 				<>
 					<SettingsGroup
-						label="Set up Tailscale Serve"
-						hint="Run this once in a terminal on this computer, with Tailscale signed in and HTTPS certificates turned on. It serves Lanna over HTTPS on your tailnet only."
+						label="Tailscale Serve"
+						hint={`Publishes Lanna over HTTPS on your tailnet only, for port ${status.port}, the port this window uses. Tailscale must be signed in on this computer, with HTTPS certificates turned on.`}
 						testid="devices-serve"
 					>
+						<div className="flex flex-wrap items-center justify-between gap-3">
+							<span
+								className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground"
+								data-testid="devices-serve-state"
+							>
+								{serveLine}
+							</span>
+							<Button
+								type="button"
+								size="sm"
+								className="min-w-28 cursor-pointer"
+								disabled={serveStarting || serveStatus?.installed === false}
+								onClick={() => void setUpServe()}
+								data-testid="devices-serve-start"
+							>
+								{serveStatus?.serving ? "Set up again" : "Set up now"}
+							</Button>
+						</div>
+						{serveStatus?.serving && serveStatus.url && (
+							<p className="text-xs text-muted-foreground" data-testid="devices-serve-url">
+								Open <code className="font-mono break-all">{serveStatus.url}</code> on the phone or tablet, then pair it
+								below.
+							</p>
+						)}
 						<div className="flex flex-wrap items-center gap-2">
 							<code
 								className="min-w-0 flex-1 break-all rounded-lg border border-border/50 bg-accent/15 px-3 py-2 font-mono text-xs text-foreground"
@@ -283,7 +358,7 @@ export function DevicesSection() {
 							</Button>
 						</div>
 						<p className="text-xs text-muted-foreground">
-							It serves port {status.port}, the port this window uses. Check it with{" "}
+							Or run that command in a terminal on this computer. Check it with{" "}
 							<code className="font-mono">tailscale serve status</code>. The full steps are in docs/remote-access.md.
 						</p>
 					</SettingsGroup>

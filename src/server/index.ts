@@ -116,15 +116,18 @@ export {
 	listeningPort,
 	normalizeCode,
 	clientAddress,
+	fromThisComputer,
 	readCookie,
 	safeNext,
 	secureRequest,
 } from "./remote-access.ts";
+export { serveState, startServe, type ServeState } from "./tailscale-serve.ts";
 export {
 	accessStatus,
 	createPairingCode,
 	disableRemoteAccess,
 	enableRemoteAccess,
+	readAccess,
 	isPairedToken,
 	redeemPairingCode,
 	revokeDevice,

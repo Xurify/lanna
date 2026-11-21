@@ -52,7 +52,7 @@ Settings → Backup does all of it without a terminal: how many files are here, 
 A phone or iPad reaches the app over your own Tailscale network. It is off by default.
 
 1. In Settings → Devices, turn on **Remote access**.
-2. On this computer, run `tailscale serve --bg 3010` once (Tailscale signed in, HTTPS certificates on).
+2. Choose **Set up now** beside **Tailscale Serve** (Tailscale signed in, HTTPS certificates on). The command it runs, `tailscale serve --bg 3010`, stays on the screen if you would rather run it yourself.
 3. Choose **Make a code** and type the six digits on the phone within five minutes.
 4. On the phone, Share → Add to Home Screen opens it full screen.
 

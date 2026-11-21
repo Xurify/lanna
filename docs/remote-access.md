@@ -18,13 +18,13 @@ To serve the app at a public address of its own, behind a password, with no Tail
 
 1. Name this computer's address for the phone. In the project folder, create a file named `.env.local` with one line: `LANNA_TAILNET_HOST=` followed by the name in your phone's address, without `https://` and without a path. The file is never committed. Then start Lanna on this PC with `bun run desktop:dev`. It listens on port 3010. Restart it after you change `.env.local`.
 2. In Lanna, open **Settings → Devices** and turn on **Remote access**. This window is signed in automatically, as "This computer".
-3. In a terminal on this PC (PowerShell on Windows), run the command Settings shows:
+3. Beside **Tailscale Serve**, choose **Set up now**. Lanna runs this command for you on this PC:
 
    ```
    tailscale serve --bg 3010
    ```
 
-   `--bg` keeps it running after the terminal closes. Without it, Serve stays in the foreground. Check it with `tailscale serve status`, which prints your `https://` address. If your Tailscale version rejects `--bg`, run `tailscale serve --help` and use the form it lists.
+   The command stays on the screen, with **Copy**, if you would rather run it in a terminal. `--bg` keeps Serve running after the terminal closes and across a restart, so this is once. The screen then shows your `https://` address. Check it yourself with `tailscale serve status`. If your Tailscale version rejects `--bg`, run `tailscale serve --help` and use the form it lists; if Serve is not enabled on the tailnet, the screen shows the link that turns it on.
 
 4. On the phone, open that `https://` address in Safari. The app sends you to **Pair this device**.
 5. On the PC, in **Settings → Devices**, choose **Make a code**. Type the six digits on the phone within five minutes, and give the device a name such as "iPhone".
@@ -32,7 +32,7 @@ To serve the app at a public address of its own, behind a password, with no Tail
 
 ## Day to day
 
-Nothing to do. The app works while this PC is awake, Lanna is running, and Serve is set up. After a restart, start Lanna again; Serve keeps its setting.
+Nothing to do. The app works while this PC is awake, Lanna is running, and Serve is set up. After a restart, start Lanna again; Serve keeps its setting. If Lanna came up on a different port (the packaged app picks a new one each start), set up Serve again in Settings → Devices: the screen says when Serve is publishing some other port.
 
 ## Sign a device out, or turn everything off
 
@@ -56,14 +56,14 @@ It turns remote access off and signs every paired device out. It does not touch 
 - **"This address is not allowed."** The phone used an address other than your tailnet name. Use the `https://` address from `tailscale serve status`.
 - **"That code has expired."** A code lasts five minutes and works once. Make a new one.
 - **The Home Screen icon asks for a code again.** iOS may keep a Home Screen app's cookies apart from Safari's. This is not verified. Pair from the Home Screen icon if it asks.
-- **The installed (packaged) desktop app does not work here.** Its port changes on every start, and Serve needs a fixed one. Use `bun run desktop:dev` for now. A fixed port for the installed app is a later step.
+- **The installed (packaged) desktop app does not work here.** Its port changes on every start, and Serve keeps the port it was set up with. Use `bun run desktop:dev` (a fixed 3010) for now, or set up Serve again in Settings → Devices after each start; the screen shows when Serve still points at the old port. A fixed port for the installed app is a later step.
 - **The PC terminal says "Blocked cross-origin request to Next.js dev resource", and Pair does nothing on the phone.** The page never started, because Next refused its scripts from your tailnet name. Check that `.env.local` has `LANNA_TAILNET_HOST` set to that name (step 1), then restart `bun run desktop:dev`.
 
 ## What is checked, and what is not
 
 Checked in the cloud sandbox with a throwaway data folder: the switch, this computer's own browser at `localhost` opening the app with no code (switch on and off), pairing with a code and its tries and expiry, sign-out, turning off, the refusals for other host names and for proxy headers, and the recovery command.
 
-Not checked: Tailscale itself, Serve on your PC, the iPhone and iPad, Safari's handling of the cookie, the Home Screen app, and the phone's page after the `LANNA_TAILNET_HOST` fix. The owner has to check those on the devices.
+Not checked: Tailscale itself, Serve on your PC, **Set up now** against a real Tailscale CLI, the iPhone and iPad, Safari's handling of the cookie, the Home Screen app, and the phone's page after the `LANNA_TAILNET_HOST` fix. The owner has to check those on the devices.
 
 ## At a public address (a server with a domain)
 

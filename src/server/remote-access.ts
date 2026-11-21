@@ -109,6 +109,10 @@ function addressedBy(input: Pick<AccessInput, "host" | "headers">): (string | nu
 	return original ? [input.host, original] : [input.host];
 }
 
+export function fromThisComputer(headers: Headers, host: string | null): boolean {
+	return !proxied(headers) && addressedBy({ host, headers }).every((name) => loopbackHost(name));
+}
+
 /** A MagicDNS name of a tailnet: `<machine>.<tailnet>.ts.net`, with or without a port. */
 export function tailnetHost(host: string | null): boolean {
 	if (!host) return false;
@@ -215,7 +219,7 @@ export function decideAccess(input: AccessInput): AccessDecision {
 	const names = addressedBy(input);
 	if (input.publicMode && !names.some((name) => tailnetHost(name))) return decidePublic(input, input.publicMode);
 	const viaProxy = proxied(input.headers);
-	if (!viaProxy && names.every((name) => loopbackHost(name))) {
+	if (fromThisComputer(input.headers, input.host)) {
 		if (api && !input.desktopApiOk) return { action: "refuse", message: DESKTOP_ONLY_API };
 		return { action: "allow" };
 	}
