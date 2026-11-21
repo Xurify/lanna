@@ -1,10 +1,3 @@
-/**
- * Tailscale Serve from Settings → Devices (E21): Lanna runs the command the
- * screen shows, so the owner does not paste it into a terminal.
- *
- * Serve publishes HTTPS on the tailnet only (never Funnel), and `--bg` stores
- * the configuration, so it survives a restart of Lanna.
- */
 import { execFile } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -76,7 +69,6 @@ export function serveUrl(text: string): string | null {
 	return match ? match[0] : null;
 }
 
-/** Whether Serve's status points at a local server on this port. */
 export function servesPort(text: string, port: number): boolean {
 	return new RegExp(`(?:127\\.0\\.0\\.1|localhost|\\[::1\\]|0\\.0\\.0\\.0):${port}(?!\\d)`).test(text);
 }

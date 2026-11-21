@@ -1,8 +1,3 @@
-/**
- * TAILSCALE SERVE FROM SETTINGS (E21): reading the address and port out of
- * Serve's output, the messages for failures an owner can fix, and the rule that
- * only this computer may ask for Serve to start.
- */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { fromThisComputer } from "../src/server/remote-access.ts";

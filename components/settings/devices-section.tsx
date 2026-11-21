@@ -83,8 +83,6 @@ export function DevicesSection() {
 		return () => window.removeEventListener("focus", refresh);
 	}, []);
 
-	// Whether Serve is already on is a process call on this computer, so it is read
-	// once per visit, not on the pairing poll.
 	useEffect(() => {
 		if (!status?.enabled) {
 			setServeStatus(null);

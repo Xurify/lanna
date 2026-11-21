@@ -109,7 +109,6 @@ function addressedBy(input: Pick<AccessInput, "host" | "headers">): (string | nu
 	return original ? [input.host, original] : [input.host];
 }
 
-/** The request came from this computer's own window, not through Serve or another proxy. */
 export function fromThisComputer(headers: Headers, host: string | null): boolean {
 	return !proxied(headers) && addressedBy({ host, headers }).every((name) => loopbackHost(name));
 }

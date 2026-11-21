@@ -1,10 +1,3 @@
-/**
- * GET /api/access/serve: whether Serve publishes this window's port. POST
- * starts it with the command the screen shows (E21).
- *
- * Both answer only this computer's own window: Serve runs a program here, so a
- * paired phone may not ask for it.
- */
 import { fromThisComputer, listeningPort, readAccess, serveState, startServe } from "@/src/server";
 
 export const dynamic = "force-dynamic";
