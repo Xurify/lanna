@@ -155,6 +155,8 @@ process.on("uncaughtException", (err) => {
 	}
 });
 
+const { choosePort } = require("./server-port.cjs");
+
 /** A free TCP port (listen(0) → the kernel assigns one). The close→spawn
  *  race is theoretical; localhost ports are rarely contended, and a failed
  *  spawn surfaces in the health check with the child's stderr in the log. */
@@ -166,6 +168,43 @@ function freePort() {
 			srv.close(() => resolve(port));
 		});
 		srv.on("error", reject);
+	});
+}
+
+const SERVER_PORT_FILE = () => path.join(app.getPath("userData"), "server-port.json");
+
+function canBind(port) {
+	return new Promise((resolve) => {
+		const srv = net.createServer();
+		srv.once("error", () => resolve(false));
+		srv.listen(port, "127.0.0.1", () => srv.close(() => resolve(true)));
+	});
+}
+
+function rememberedServerPort() {
+	try {
+		const saved = JSON.parse(fs.readFileSync(SERVER_PORT_FILE(), "utf8"));
+		return Number.isInteger(saved.port) ? saved.port : null;
+	} catch {
+		return null;
+	}
+}
+
+function rememberServerPort(port) {
+	try {
+		fs.mkdirSync(path.dirname(SERVER_PORT_FILE()), { recursive: true });
+		fs.writeFileSync(SERVER_PORT_FILE(), `${JSON.stringify({ port })}\n`);
+	} catch {
+		/* the app still runs on the chosen port without this file */
+	}
+}
+
+function serverPort() {
+	return choosePort({
+		canBind,
+		remember: rememberServerPort,
+		remembered: rememberedServerPort(),
+		fallback: freePort,
 	});
 }
 
@@ -670,7 +709,7 @@ async function main() {
 	// spawn, no packaging, full HMR. The rest of this shell still applies
 	// (guards, menu, single instance).
 	const devUrl = process.env.LANNA_DEV_URL;
-	const url = devUrl ?? `http://127.0.0.1:${await freePort()}`;
+	const url = devUrl ?? `http://127.0.0.1:${await serverPort()}`;
 	if (!devUrl) {
 		desktopAPISecret = randomBytes(32).toString("hex");
 		const ownedOrigin = new URL(url).origin;

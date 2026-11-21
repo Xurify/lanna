@@ -14,7 +14,8 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PORT = process.env.PORT || "3010";
+const PROD = process.argv.includes("--prod");
+const PORT = process.env.PORT || (PROD ? "31551" : "3010");
 const URL_ = `http://localhost:${PORT}`;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -48,7 +49,6 @@ const nextBin = require.resolve("next/dist/bin/next");
 // `--prod`: build once and serve the build. `next dev` compiles every route the
 // first time it is opened and ships unminified React, so each new tab is slow;
 // a build is what the app feels like (docs/research/slow-tabs.md).
-const PROD = process.argv.includes("--prod");
 if (PROD) {
 	const built = spawnSync(process.execPath, [nextBin, "build"], { cwd: root, stdio: "inherit" });
 	if (built.status !== 0) process.exit(built.status ?? 1);
@@ -57,6 +57,7 @@ function startNext() {
 	const next = spawn(process.execPath, [nextBin, PROD ? "start" : "dev", "-H", "127.0.0.1", "-p", PORT], {
 		cwd: root,
 		stdio: "inherit",
+		env: { ...process.env, PORT },
 	});
 	children.add(next);
 	next.on("exit", (code) => {

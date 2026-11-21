@@ -26,7 +26,7 @@ type Status = {
 	pairing: { expiresAt: string } | null;
 };
 type Code = { code: string; expiresAt: string };
-type ServeStatus = { installed: boolean; serving: boolean; url: string | null };
+type ServeStatus = { installed: boolean; serving: boolean; url: string | null; port: number | null };
 type Notice = { tone: "ok" | "error"; text: string };
 
 const LOAD_FAILED = "Couldn’t read the remote access settings. Refresh to try again.";
@@ -246,7 +246,9 @@ export function DevicesSection() {
 			? "Tailscale is not installed on this computer. Install it from tailscale.com/download, sign in, then try again."
 			: serveStatus.serving
 				? "On. This address answers on your tailnet."
-				: "Off. Lanna can start it for you.";
+				: serveStatus.port !== null
+					? `Off. Serve is set up for port ${serveStatus.port}; Lanna points it here on its next start.`
+					: "Off. Lanna can start it for you.";
 
 	const left = code ? Date.parse(code.expiresAt) - now : 0;
 	const codeLine =

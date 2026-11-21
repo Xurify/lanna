@@ -1,11 +1,13 @@
 import { execFile } from "node:child_process";
 import fs from "node:fs";
+import net from "node:net";
 import path from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
 const CLI_TIMEOUT_MS = 30_000;
+const TARGET_CHECK_MS = 800;
 
 const NOT_INSTALLED =
 	"Tailscale is not installed on this computer. Install it from tailscale.com/download, sign it in, then try again.";
@@ -16,7 +18,7 @@ const OLD_VERSION =
 	"This Tailscale version does not take --bg. Update Tailscale, or run `tailscale serve --help` and use the form it lists.";
 const UNKNOWN_FLAG = /unknown flag|flag provided but not defined|unrecognized flag|invalid flag/i;
 
-export type ServeState = { installed: boolean; serving: boolean; url: string | null };
+export type ServeState = { installed: boolean; serving: boolean; url: string | null; port: number | null };
 export type ServeStart = { ok: true; state: ServeState } | { ok: false; message: string };
 
 type CliResult = { found: true; ok: boolean; output: string } | { found: false };
@@ -69,8 +71,31 @@ export function serveUrl(text: string): string | null {
 	return match ? match[0] : null;
 }
 
+export function serveMappedPort(text: string): number | null {
+	const match = text.match(/(?:127\.0\.0\.1|localhost|\[::1\]|0\.0\.0\.0):(\d+)(?!\d)/);
+	return match ? Number(match[1]) : null;
+}
+
 export function servesPort(text: string, port: number): boolean {
-	return new RegExp(`(?:127\\.0\\.0\\.1|localhost|\\[::1\\]|0\\.0\\.0\\.0):${port}(?!\\d)`).test(text);
+	return serveMappedPort(text) === port;
+}
+
+export function servePointsElsewhere(state: ServeState, port: number): boolean {
+	return state.port !== null && state.port !== port;
+}
+
+export function portAnswers(port: number, timeoutMs = TARGET_CHECK_MS): Promise<boolean> {
+	return new Promise((resolve) => {
+		const socket = net.connect({ host: "127.0.0.1", port });
+		const finish = (answer: boolean) => {
+			socket.removeAllListeners();
+			socket.destroy();
+			resolve(answer);
+		};
+		socket.setTimeout(timeoutMs, () => finish(false));
+		socket.once("connect", () => finish(true));
+		socket.once("error", () => finish(false));
+	});
 }
 
 function loginUrl(text: string): string | null {
@@ -90,11 +115,12 @@ export function serveFailureMessage(output: string): string {
 
 export async function serveState(port: number): Promise<ServeState> {
 	const status = await runTailscale(["serve", "status"]);
-	if (!status.found) return { installed: false, serving: false, url: null };
-	if (!status.ok) return { installed: true, serving: false, url: null };
+	if (!status.found) return { installed: false, serving: false, url: null, port: null };
+	if (!status.ok) return { installed: true, serving: false, url: null, port: null };
 	const url = serveUrl(status.output);
-	const serving = url !== null && servesPort(status.output, port);
-	return { installed: true, serving, url: serving ? url : null };
+	const mappedPort = serveMappedPort(status.output);
+	const serving = url !== null && mappedPort === port;
+	return { installed: true, serving, url: serving ? url : null, port: url ? mappedPort : null };
 }
 
 async function startTailscaleServe(port: number): Promise<CliResult> {
@@ -109,4 +135,13 @@ export async function startServe(port: number): Promise<ServeStart> {
 	if (!started.ok) return { ok: false, message: serveFailureMessage(started.output) };
 	const state = await serveState(port);
 	return { ok: true, state: { ...state, installed: true, serving: true, url: serveUrl(started.output) ?? state.url } };
+}
+
+export async function reconcileServe(port: number, answers = portAnswers): Promise<ServeState> {
+	const state = await serveState(port);
+	if (!state.installed || state.serving || !servePointsElsewhere(state, port)) return state;
+	if (state.port !== null && (await answers(state.port))) return state;
+	const started = await startTailscaleServe(port);
+	if (!started.found || !started.ok) return state;
+	return serveState(port);
 }
