@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CommitInput, SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
+import { CommitInput, SettingsDisclosure, SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
 
 type Device = {
 	id: string;
@@ -362,28 +362,34 @@ export function DevicesSection() {
 				)}
 			</SettingsGroup>
 
-			<SettingsGroup
-				label="Port"
-				hint="Lanna tries this port whenever it starts, so a Tailscale Serve address keeps working across restarts. Empty means 31551."
-				testid="devices-port"
+			<SettingsDisclosure
+				label="Advanced"
+				hint="Only change the port if you know what you are doing. Serve, bookmarks and the desktop shell all have to agree on it."
+				testid="devices-advanced"
 			>
-				<SettingsRow
-					label="Preferred port"
-					hint={`This window runs on ${status.port}. A change applies the next time Lanna starts.`}
-					testid="devices-port-row"
+				<SettingsGroup
+					label="Port"
+					hint="Lanna tries this port whenever it starts, so a Tailscale Serve address keeps working across restarts. Empty means 31551."
+					testid="devices-port"
 				>
-					{port !== null && (
-						<CommitInput
-							value={port}
-							placeholder="31551"
-							type="number"
-							ariaLabel="Preferred port"
-							testid="devices-port-input"
-							onCommit={(next) => void savePort(next)}
-						/>
-					)}
-				</SettingsRow>
-			</SettingsGroup>
+					<SettingsRow
+						label="Preferred port"
+						hint={`This window runs on ${status.port}. A change applies the next time Lanna starts.`}
+						testid="devices-port-row"
+					>
+						{port !== null && (
+							<CommitInput
+								value={port}
+								placeholder="31551"
+								type="number"
+								ariaLabel="Preferred port"
+								testid="devices-port-input"
+								onCommit={(next) => void savePort(next)}
+							/>
+						)}
+					</SettingsRow>
+				</SettingsGroup>
+			</SettingsDisclosure>
 
 			{status.enabled && (
 				<>
