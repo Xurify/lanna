@@ -49,7 +49,7 @@ Settings → Backup does all of it without a terminal: how many files are here, 
 
 ## Phone and iPad
 
-A phone or iPad reaches the app over your own Tailscale network. It is off by default.
+A phone or iPad reaches the app over your own [Tailscale](https://tailscale.com/download) network. It is off by default.
 
 1. In Settings → Devices, turn on **Remote access**.
 2. Choose **Set up now** beside **Tailscale Serve** (Tailscale signed in, HTTPS certificates on). The command it runs names the port the window is on — 31551 in the packaged app and `bun run desktop:prod`, 3010 in `bun run desktop:dev` — and stays on the screen if you would rather run it yourself.

@@ -10,7 +10,7 @@ To serve the app at a public address of its own, behind a password, with no Tail
 
 ## Before you start (once)
 
-1. Install Tailscale on this PC, on the iPhone and on the iPad. Sign in to the same Tailscale account on all three.
+1. Install [Tailscale](https://tailscale.com/download) on this PC, on the iPhone and on the iPad. Sign in to the same Tailscale account on all three.
 2. In the Tailscale admin console, turn on **MagicDNS** and **HTTPS certificates** (the DNS page). Serve needs both.
 3. Leave **Funnel** off. Funnel publishes a service to the whole internet. Lanna is built for your own tailnet only.
 

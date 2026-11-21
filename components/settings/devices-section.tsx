@@ -292,15 +292,29 @@ export function DevicesSection() {
 		);
 	}
 
-	const serveLine = !serveStatus
-		? "Checking whether Serve is on…"
-		: !serveStatus.installed
-			? "Tailscale is not installed on this computer. Install it from tailscale.com/download, sign in, then try again."
-			: serveStatus.serving
-				? "On. This address answers on your tailnet."
-				: serveStatus.port !== null
-					? `Off. Serve is set up for port ${serveStatus.port}; Lanna points it here on its next start.`
-					: "Off. Lanna can start it for you.";
+	const serveLine = !serveStatus ? (
+		"Checking whether Serve is on…"
+	) : !serveStatus.installed ? (
+		<>
+			Tailscale is not installed on this computer.{" "}
+			<a
+				href="https://tailscale.com/download"
+				target="_blank"
+				rel="noopener noreferrer"
+				className="underline underline-offset-2 hover:text-foreground"
+				data-testid="devices-serve-download"
+			>
+				Install Tailscale
+			</a>
+			, sign in, then try again.
+		</>
+	) : serveStatus.serving ? (
+		"On. This address answers on your tailnet."
+	) : serveStatus.port !== null ? (
+		`Off. Serve is set up for port ${serveStatus.port}; Lanna points it here on its next start.`
+	) : (
+		"Off. Lanna can start it for you."
+	);
 
 	const left = code ? Date.parse(code.expiresAt) - now : 0;
 	const codeLine =
