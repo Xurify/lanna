@@ -24,7 +24,7 @@ To serve the app at a public address of its own, behind a password, with no Tail
    tailscale serve --bg 3010
    ```
 
-   The command stays on the screen, with **Copy**, if you would rather run it in a terminal. `--bg` keeps Serve running after the terminal closes and across a restart, so this is once. The screen then shows your `https://` address. Check it yourself with `tailscale serve status`. If your Tailscale version rejects `--bg`, run `tailscale serve --help` and use the form it lists; if Serve is not enabled on the tailnet, the screen shows the link that turns it on.
+   The command stays on the screen, with **Copy**, if you would rather run it in a terminal. `--bg` keeps Serve running after the terminal closes and across a restart, so this is once. The packaged app and `bun run desktop:prod` serve port 31551 instead, and the command on that screen names that port. The screen then shows your `https://` address. Check it yourself with `tailscale serve status`. If your Tailscale version rejects `--bg`, run `tailscale serve --help` and use the form it lists; if Serve is not enabled on the tailnet, the screen shows the link that turns it on.
 
 4. On the phone, open that `https://` address in Safari. The app sends you to **Pair this device**.
 5. On the PC, in **Settings → Devices**, choose **Make a code**. Type the six digits on the phone within five minutes, and give the device a name such as "iPhone".
@@ -32,7 +32,9 @@ To serve the app at a public address of its own, behind a password, with no Tail
 
 ## Day to day
 
-Nothing to do. The app works while this PC is awake, Lanna is running, and Serve is set up. After a restart, start Lanna again; Serve keeps its setting. If Lanna came up on a different port (the packaged app picks a new one each start), set up Serve again in Settings → Devices: the screen says when Serve is publishing some other port.
+Nothing to do. The app works while this PC is awake, Lanna is running, and Serve is set up. After a restart, start Lanna again; the packaged app and `bun run desktop:prod` try port 31551 first, so Serve keeps its setting. If another program is holding 31551, Lanna uses the port it used last time and points Serve at that port itself on the next start; Settings → Devices says which port Serve is set up for.
+
+To move off 31551, open Settings → Devices → **Advanced** and set **Preferred port**. Most people never need this: the port has to match the Serve address already saved on your devices. Lanna tries that port first from the next start, with the same remembered-port and kernel fallbacks, and points Serve at wherever it landed. Ports below 1024 and 1455 (used by the ChatGPT sign-in) are refused.
 
 ## Sign a device out, or turn everything off
 

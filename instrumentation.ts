@@ -13,6 +13,8 @@ export async function register() {
 			.then((s) => {
 				s.warmDictionary();
 				s.warmTranscriptionCheck();
+				const port = Number(process.env.PORT);
+				if (Number.isInteger(port) && port > 0 && s.readAccess().enabled) void s.reconcileServe(port);
 			})
 			.catch(() => {});
 	}, 200);

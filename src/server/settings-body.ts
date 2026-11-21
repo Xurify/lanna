@@ -26,6 +26,7 @@ import type {
 	AppearanceSettings,
 	BackgroundModelRole,
 	CompactionSettings,
+	DevicesSettings,
 	GeneralSettings,
 	ModelsSettings,
 	RoleModelOverride,
@@ -33,7 +34,11 @@ import type {
 import {
 	BACKGROUND_MODEL_ROLES,
 	COMPACTION_THRESHOLD_FLOOR,
+	isUsableServerPort,
+	MAX_SERVER_PORT,
+	MIN_SERVER_PORT,
 	MODEL_SLOTS,
+	RESERVED_SERVER_PORTS,
 	RETIRED_MODEL_ROLES,
 } from "../core/settings.ts";
 import { RETIRED_TOOL_KEYS, WRITABLE_TOOL_KEYS } from "../core/pending.ts";
@@ -390,6 +395,25 @@ export function parseNotificationSettingsBody(body: unknown): SettingsBodyResult
 	return { ok: true, settings };
 }
 
+/** devices: { preferredPort?: number } — the desktop shell reads this section
+ *  from settings.json before the server starts, so a save lands on the next
+ *  launch. An absent or null port clears back to the factory 31551. */
+export function parseDevicesSettingsBody(body: unknown): SettingsBodyResult<DevicesSettings> {
+	const raw = asRecord(body);
+	if (!raw) return { ok: false, error: "Invalid JSON body" };
+	const settings: DevicesSettings = {};
+	if (raw.preferredPort !== undefined && raw.preferredPort !== null) {
+		if (!isUsableServerPort(raw.preferredPort)) {
+			return {
+				ok: false,
+				error: `preferredPort must be a whole number between ${MIN_SERVER_PORT} and ${MAX_SERVER_PORT}, other than ${RESERVED_SERVER_PORTS.join(", ")} (sign-in listens there)`,
+			};
+		}
+		settings.preferredPort = raw.preferredPort;
+	}
+	return { ok: true, settings };
+}
+
 /** The section→parser map for PUT /api/settings/[section] (the route also
  *  carries the special prompts sub-resource). */
 export const SETTINGS_SECTIONS = {
@@ -400,4 +424,5 @@ export const SETTINGS_SECTIONS = {
 	compaction: parseCompactionSettingsBody,
 	models: parseModelsSettingsBody,
 	notifications: parseNotificationSettingsBody,
+	devices: parseDevicesSettingsBody,
 } as const;

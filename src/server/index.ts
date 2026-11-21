@@ -121,7 +121,14 @@ export {
 	safeNext,
 	secureRequest,
 } from "./remote-access.ts";
-export { serveState, startServe, type ServeState } from "./tailscale-serve.ts";
+export {
+	reconcileServe,
+	serveMappedPort,
+	servePointsElsewhere,
+	serveState,
+	startServe,
+	type ServeState,
+} from "./tailscale-serve.ts";
 export {
 	accessStatus,
 	createPairingCode,
