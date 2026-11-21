@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
+import { CommitInput, SettingsDisclosure, SettingsGroup, SettingsRow, Toggle } from "./controls.tsx";
 
 type Device = {
 	id: string;
@@ -32,6 +32,7 @@ type Notice = { tone: "ok" | "error"; text: string };
 const LOAD_FAILED = "Couldn’t read the remote access settings. Refresh to try again.";
 const COPY_FAILED = "Couldn’t copy. Select the command and copy it by hand.";
 const SERVE_FAILED = "Couldn’t start Tailscale Serve. Try again, or run the command below in a terminal.";
+const PORT_FAILED = "Couldn’t save the port. Try again.";
 
 function when(iso: string): string {
 	return new Date(iso).toLocaleString(undefined, {
@@ -70,6 +71,8 @@ export function DevicesSection() {
 	/** "off" while the turn-off confirmation is open, a device id while its sign-out is. */
 	const [confirming, setConfirming] = useState<string | null>(null);
 	const [copied, setCopied] = useState(false);
+	/** The saved preferred port as text ("" = factory 31551); null until read. */
+	const [port, setPort] = useState<string | null>(null);
 
 	// Read on open, and again whenever the window regains focus: a phone may have
 	// paired (or been signed out) while this screen was in the background.
@@ -99,6 +102,23 @@ export function DevicesSection() {
 			live = false;
 		};
 	}, [status?.enabled]);
+
+	// The port lives in settings.json, which the desktop shell reads before it
+	// starts the server — so this screen shows the saved value, not the running one.
+	useEffect(() => {
+		let live = true;
+		fetch("/api/settings", { cache: "no-store" })
+			.then((res) => (res.ok ? res.json() : null))
+			.then((body: { settings?: { devices?: { preferredPort?: number } } | null } | null) => {
+				if (!live) return;
+				const saved = body?.settings?.devices?.preferredPort;
+				setPort(typeof saved === "number" ? String(saved) : "");
+			})
+			.catch(() => {});
+		return () => {
+			live = false;
+		};
+	}, []);
 
 	const knownDevices = useRef<Set<string>>(new Set());
 	useEffect(() => {
@@ -218,6 +238,38 @@ export function DevicesSection() {
 		}
 	}
 
+	async function savePort(next: string) {
+		setNotice(null);
+		const trimmed = next.trim();
+		try {
+			const res = await fetch("/api/settings/devices", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ preferredPort: trimmed === "" ? null : Number(trimmed) }),
+				cache: "no-store",
+			});
+			const body = (await res.json().catch(() => null)) as {
+				settings?: { devices?: { preferredPort?: number } };
+				error?: string;
+			} | null;
+			if (!res.ok) {
+				setNotice({ tone: "error", text: body?.error ?? PORT_FAILED });
+				return;
+			}
+			const saved = body?.settings?.devices?.preferredPort;
+			setPort(typeof saved === "number" ? String(saved) : "");
+			setNotice({
+				tone: "ok",
+				text:
+					typeof saved === "number"
+						? `Saved. Lanna will try port ${saved} the next time it starts.`
+						: "Saved. Lanna tries 31551 first again.",
+			});
+		} catch {
+			setNotice({ tone: "error", text: PORT_FAILED });
+		}
+	}
+
 	async function copyCommand(text: string) {
 		try {
 			await navigator.clipboard.writeText(text);
@@ -309,6 +361,35 @@ export function DevicesSection() {
 					</div>
 				)}
 			</SettingsGroup>
+
+			<SettingsDisclosure
+				label="Advanced"
+				hint="Only change the port if you know what you are doing. Serve, bookmarks and the desktop shell all have to agree on it."
+				testid="devices-advanced"
+			>
+				<SettingsGroup
+					label="Port"
+					hint="Lanna tries this port whenever it starts, so a Tailscale Serve address keeps working across restarts. Empty means 31551."
+					testid="devices-port"
+				>
+					<SettingsRow
+						label="Preferred port"
+						hint={`This window runs on ${status.port}. A change applies the next time Lanna starts.`}
+						testid="devices-port-row"
+					>
+						{port !== null && (
+							<CommitInput
+								value={port}
+								placeholder="31551"
+								type="number"
+								ariaLabel="Preferred port"
+								testid="devices-port-input"
+								onCommit={(next) => void savePort(next)}
+							/>
+						)}
+					</SettingsRow>
+				</SettingsGroup>
+			</SettingsDisclosure>
 
 			{status.enabled && (
 				<>

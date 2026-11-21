@@ -155,7 +155,7 @@ process.on("uncaughtException", (err) => {
 	}
 });
 
-const { choosePort } = require("./server-port.cjs");
+const { choosePort, readPreferredPort } = require("./server-port.cjs");
 
 /** A free TCP port (listen(0) → the kernel assigns one). The close→spawn
  *  race is theoretical; localhost ports are rarely contended, and a failed
@@ -172,6 +172,7 @@ function freePort() {
 }
 
 const SERVER_PORT_FILE = () => path.join(app.getPath("userData"), "server-port.json");
+const SETTINGS_FILE = () => path.join(DATA_DIR(), "settings.json");
 
 function canBind(port) {
 	return new Promise((resolve) => {
@@ -204,6 +205,7 @@ function serverPort() {
 		canBind,
 		remember: rememberServerPort,
 		remembered: rememberedServerPort(),
+		preferred: readPreferredPort(SETTINGS_FILE()) ?? undefined,
 		fallback: freePort,
 	});
 }

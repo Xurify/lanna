@@ -210,6 +210,30 @@ export interface GeneralSettings {
 	autoUpdate?: boolean;
 }
 
+/** The port policy behind Settings → Devices: the desktop shell reads the
+ *  saved port from settings.json before it starts the server, so a save takes
+ *  effect on the next launch. Reserved ports belong to something that must
+ *  keep them — 1455 is ChatGPT's sign-in callback (docs/development.md). */
+export const MIN_SERVER_PORT = 1024;
+export const MAX_SERVER_PORT = 65535;
+export const RESERVED_SERVER_PORTS: readonly number[] = [1455];
+
+export function isUsableServerPort(value: unknown): value is number {
+	return (
+		typeof value === "number" &&
+		Number.isInteger(value) &&
+		value >= MIN_SERVER_PORT &&
+		value <= MAX_SERVER_PORT &&
+		!RESERVED_SERVER_PORTS.includes(value)
+	);
+}
+
+/** Where Lanna listens — the one section the desktop shell reads by itself. */
+export interface DevicesSettings {
+	/** Tried first on the next start; absent means the factory 31551. */
+	preferredPort?: number;
+}
+
 export const TRANSCRIPTION_ENGINES = ["whisper", "elevenlabs"] as const;
 export type TranscriptionEngineId = (typeof TRANSCRIPTION_ENGINES)[number];
 
@@ -279,6 +303,7 @@ export interface UserSettings {
 	appearance?: AppearanceSettings;
 	compaction?: CompactionSettings;
 	notifications?: NotificationSettings;
+	devices?: DevicesSettings;
 	[key: string]: unknown;
 }
 
@@ -347,6 +372,12 @@ function sanitizeGeneral(raw: Record<string, unknown>): GeneralSettings {
 	const out: GeneralSettings = {};
 	const autoUpdate = boolOrDrop(raw.autoUpdate);
 	if (autoUpdate !== undefined) out.autoUpdate = autoUpdate;
+	return out;
+}
+
+function sanitizeDevices(raw: Record<string, unknown>): DevicesSettings {
+	const out: DevicesSettings = {};
+	if (isUsableServerPort(raw.preferredPort)) out.preferredPort = raw.preferredPort;
 	return out;
 }
 
@@ -539,6 +570,9 @@ export function sanitizeUserSettings(raw: unknown): UserSettings | null {
 		!Array.isArray(r.notifications)
 	) {
 		out.notifications = sanitizeNotifications(r.notifications as Record<string, unknown>);
+	}
+	if (r.devices !== undefined && r.devices !== null && typeof r.devices === "object" && !Array.isArray(r.devices)) {
+		out.devices = sanitizeDevices(r.devices as Record<string, unknown>);
 	}
 	// Unknown top-level keys ride along untouched (forward-compat). One
 	// known-DEAD key is stripped instead of riding: `chat` (the old
