@@ -34,6 +34,8 @@ To serve the app at a public address of its own, behind a password, with no Tail
 
 Nothing to do. The app works while this PC is awake, Lanna is running, and Serve is set up. After a restart, start Lanna again; the packaged app and `bun run desktop:prod` try port 31551 first, so Serve keeps its setting. If another program is holding 31551, Lanna uses the port it used last time and points Serve at that port itself on the next start; Settings → Devices says which port Serve is set up for.
 
+To move off 31551, set **Preferred port** in Settings → Devices. Lanna tries that port first from the next start, with the same remembered-port and kernel fallbacks, and points Serve at wherever it landed. Ports below 1024 and 1455 (used by the ChatGPT sign-in) are refused.
+
 ## Sign a device out, or turn everything off
 
 - **One device:** Settings → Devices, then **Sign out** beside it.

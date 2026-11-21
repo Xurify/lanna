@@ -56,6 +56,8 @@ A phone or iPad reaches the app over your own Tailscale network. It is off by de
 3. Choose **Make a code** and type the six digits on the phone within five minutes.
 4. On the phone, Share → Add to Home Screen opens it full screen.
 
+To use a different port, set **Preferred port** in Settings → Devices; Lanna tries it first from the next start, and falls back the same way.
+
 The server still listens on this computer only, and Funnel stays off. Full steps: [docs/remote-access.md](docs/remote-access.md). An always-on server: [docs/server.md](docs/server.md).
 
 ## Where the thinking lives
