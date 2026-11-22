@@ -29,6 +29,7 @@ type Code = { code: string; expiresAt: string };
 type ServeStatus = {
 	installed: boolean;
 	running?: boolean;
+	canOpen?: boolean;
 	serving: boolean;
 	url: string | null;
 	port: number | null;
@@ -72,6 +73,7 @@ export function DevicesSection() {
 	const [busy, setBusy] = useState(false);
 	const [serveStatus, setServeStatus] = useState<ServeStatus | null>(null);
 	const [serveStarting, setServeStarting] = useState(false);
+	const [openingTailscale, setOpeningTailscale] = useState(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	const [code, setCode] = useState<Code | null>(null);
 	const [now, setNow] = useState(() => Date.now());
@@ -270,6 +272,24 @@ export function DevicesSection() {
 		}
 	}
 
+	async function openTailscaleApp() {
+		setOpeningTailscale(true);
+		setNotice(null);
+		try {
+			const response = await fetch("/api/access/serve/open", { method: "POST", cache: "no-store" });
+			const body = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+			if (!response.ok || !body?.ok) {
+				setNotice({ tone: "error", text: body?.error ?? "Couldn’t open Tailscale. Open it from your applications." });
+				return;
+			}
+			setNotice({ tone: "ok", text: "Opened Tailscale. When it connects, this screen updates." });
+		} catch {
+			setNotice({ tone: "error", text: "Couldn’t open Tailscale. Open it from your applications." });
+		} finally {
+			setOpeningTailscale(false);
+		}
+	}
+
 	async function savePort(next: string) {
 		setNotice(null);
 		const trimmed = next.trim();
@@ -457,22 +477,37 @@ export function DevicesSection() {
 							>
 								{serveLine}
 							</span>
-							<Button
-								type="button"
-								size="sm"
-								className="min-w-28 cursor-pointer"
-								disabled={serveStarting || serveStatus?.installed === false}
-								onClick={() => void setUpServe()}
-								data-testid="devices-serve-start"
-							>
-								{serveStarting
-									? "Starting…"
-									: isServeError
-										? "Try again"
-										: serveStatus?.serving
-											? "Set up again"
-											: "Set up now"}
-							</Button>
+							<span className="flex items-center gap-2">
+								{serveStatus?.running === false && serveStatus.canOpen && (
+									<Button
+										type="button"
+										size="sm"
+										className="min-w-28 cursor-pointer"
+										disabled={openingTailscale}
+										onClick={() => void openTailscaleApp()}
+										data-testid="devices-serve-open"
+									>
+										{openingTailscale ? "Opening…" : "Open Tailscale"}
+									</Button>
+								)}
+								<Button
+									type="button"
+									size="sm"
+									variant={serveStatus?.running === false && serveStatus.canOpen ? "outline" : "default"}
+									className="min-w-28 cursor-pointer"
+									disabled={serveStarting || serveStatus?.installed === false}
+									onClick={() => void setUpServe()}
+									data-testid="devices-serve-start"
+								>
+									{serveStarting
+										? "Starting…"
+										: isServeError
+											? "Try again"
+											: serveStatus?.serving
+												? "Set up again"
+												: "Set up now"}
+								</Button>
+							</span>
 						</div>
 						{serveStatus?.serving && serveStatus.url && (
 							<p className="text-xs text-muted-foreground" data-testid="devices-serve-url">

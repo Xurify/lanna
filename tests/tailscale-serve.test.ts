@@ -3,6 +3,7 @@ import net from "node:net";
 import { describe, it } from "node:test";
 import { fromThisComputer } from "../src/server/remote-access.ts";
 import {
+	canOpenTailscale,
 	portAnswers,
 	serveFailureMessage,
 	serveMappedPort,
@@ -52,7 +53,14 @@ describe("the target Serve points at", () => {
 });
 
 describe("a Serve that answers on another port", () => {
-	const mapping = (port: number) => ({ installed: true, running: true, serving: false, url: null, port });
+	const mapping = (port: number) => ({
+		installed: true,
+		running: true,
+		canOpen: true,
+		serving: false,
+		url: null,
+		port,
+	});
 
 	it("is the one Lanna points here", () => {
 		assert.equal(servePointsElsewhere(mapping(3010), 31551), true);
@@ -64,7 +72,10 @@ describe("a Serve that answers on another port", () => {
 
 	it("is left alone when Serve has no mapping to change", () => {
 		assert.equal(
-			servePointsElsewhere({ installed: true, running: true, serving: false, url: null, port: null }, 31551),
+			servePointsElsewhere(
+				{ installed: true, running: true, canOpen: true, serving: false, url: null, port: null },
+				31551,
+			),
 			false,
 		);
 	});
@@ -131,5 +142,11 @@ describe("only this computer sets up Serve", () => {
 	it("refuses a loopback name that came through a proxy", () => {
 		assert.equal(fromThisComputer(new Headers({ forwarded: "for=100.64.0.1" }), "localhost:3010"), false);
 		assert.equal(fromThisComputer(new Headers(), "learn.example.com"), false);
+	});
+});
+
+describe("opening Tailscale", () => {
+	it("checks if the desktop GUI binary is available", () => {
+		assert.equal(typeof canOpenTailscale(), "boolean");
 	});
 });

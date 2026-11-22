@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -24,6 +24,7 @@ const NOT_RUNNING_PATTERN =
 export type ServeState = {
 	installed: boolean;
 	running: boolean;
+	canOpen: boolean;
 	serving: boolean;
 	url: string | null;
 	port: number | null;
@@ -32,6 +33,54 @@ export type ServeState = {
 export type ServeStart = { ok: true; state: ServeState } | { ok: false; message: string };
 
 type CliResult = { found: true; ok: boolean; output: string } | { found: false };
+
+function candidateGuiBinaries(): string[] {
+	const programFiles = process.env.ProgramFiles ?? "C:\\Program Files";
+	const programFilesX86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
+	if (process.platform === "win32") {
+		return [
+			path.join(programFiles, "Tailscale", "tailscale-ipn.exe"),
+			path.join(programFilesX86, "Tailscale", "tailscale-ipn.exe"),
+		];
+	}
+	if (process.platform === "darwin") {
+		return ["/Applications/Tailscale.app"];
+	}
+	return [];
+}
+
+export function canOpenTailscale(): boolean {
+	return candidateGuiBinaries().some((candidate) => fs.existsSync(candidate));
+}
+
+export async function openTailscale(): Promise<{ ok: boolean; message?: string }> {
+	if (process.platform === "win32") {
+		const binary = candidateGuiBinaries().find((candidate) => fs.existsSync(candidate));
+		if (binary) {
+			try {
+				const child = spawn(binary, [], { detached: true, stdio: "ignore" });
+				child.unref();
+				return { ok: true };
+			} catch (error) {
+				const failure = error as Error;
+				return { ok: false, message: failure.message || "Couldn’t start Tailscale." };
+			}
+		}
+		const started = await runTailscale(["up"]);
+		return { ok: started.found && started.ok, message: started.found ? started.output : "Tailscale CLI not found." };
+	}
+	if (process.platform === "darwin") {
+		try {
+			await execFileAsync("open", ["-a", "Tailscale"]);
+			return { ok: true };
+		} catch (error) {
+			const failure = error as Error;
+			return { ok: false, message: failure.message || "Couldn’t open Tailscale." };
+		}
+	}
+	const started = await runTailscale(["up"]);
+	return { ok: started.found && started.ok, message: started.found ? started.output : "Tailscale CLI not found." };
+}
 
 function candidateBinaries(): string[] {
 	const programFiles = process.env.ProgramFiles ?? "C:\\Program Files";
@@ -125,12 +174,14 @@ export function serveFailureMessage(output: string): string {
 }
 
 export async function serveState(port: number): Promise<ServeState> {
+	const canOpen = canOpenTailscale();
 	const status = await runTailscale(["serve", "status"]);
-	if (!status.found) return { installed: false, running: false, serving: false, url: null, port: null, error: null };
+	if (!status.found)
+		return { installed: false, running: false, canOpen, serving: false, url: null, port: null, error: null };
 	if (!status.ok) {
 		const message = serveFailureMessage(status.output);
 		const notRunning = NOT_RUNNING_PATTERN.test(status.output);
-		return { installed: true, running: !notRunning, serving: false, url: null, port: null, error: message };
+		return { installed: true, running: !notRunning, canOpen, serving: false, url: null, port: null, error: message };
 	}
 	const url = serveUrl(status.output);
 	const mappedPort = serveMappedPort(status.output);
@@ -138,6 +189,7 @@ export async function serveState(port: number): Promise<ServeState> {
 	return {
 		installed: true,
 		running: true,
+		canOpen,
 		serving,
 		url: serving ? url : null,
 		port: url ? mappedPort : null,
