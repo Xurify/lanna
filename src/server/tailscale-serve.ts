@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -11,17 +11,76 @@ const TARGET_CHECK_MS = 800;
 
 const NOT_INSTALLED =
 	"Tailscale is not installed on this computer. Install it from tailscale.com/download, sign it in, then try again.";
+const NOT_RUNNING = "Tailscale is not running on this computer. Start Tailscale, then try again.";
 const NOT_ENABLED =
 	"Tailscale Serve is not enabled for your tailnet. Run the command below in a terminal once, open the link it prints, then try again.";
 const NOT_SIGNED_IN = "Tailscale is not signed in on this computer. Sign in to Tailscale, then try again.";
 const OLD_VERSION =
 	"This Tailscale version does not take --bg. Update Tailscale, or run `tailscale serve --help` and use the form it lists.";
 const UNKNOWN_FLAG = /unknown flag|flag provided but not defined|unrecognized flag|invalid flag/i;
+const NOT_RUNNING_PATTERN =
+	/not running|doesn't appear to be running|failed to connect to local tailscaled|tailscale is stopped|tailscaled not running|daemon not running|no backend|cannot connect to tailscale/i;
 
-export type ServeState = { installed: boolean; serving: boolean; url: string | null; port: number | null };
+export type ServeState = {
+	installed: boolean;
+	running: boolean;
+	canOpen: boolean;
+	serving: boolean;
+	url: string | null;
+	port: number | null;
+	error?: string | null;
+};
 export type ServeStart = { ok: true; state: ServeState } | { ok: false; message: string };
 
 type CliResult = { found: true; ok: boolean; output: string } | { found: false };
+
+function candidateGuiBinaries(): string[] {
+	const programFiles = process.env.ProgramFiles ?? "C:\\Program Files";
+	const programFilesX86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
+	if (process.platform === "win32") {
+		return [
+			path.join(programFiles, "Tailscale", "tailscale-ipn.exe"),
+			path.join(programFilesX86, "Tailscale", "tailscale-ipn.exe"),
+		];
+	}
+	if (process.platform === "darwin") {
+		return ["/Applications/Tailscale.app"];
+	}
+	return [];
+}
+
+export function canOpenTailscale(): boolean {
+	return candidateGuiBinaries().some((candidate) => fs.existsSync(candidate));
+}
+
+export async function openTailscale(): Promise<{ ok: boolean; message?: string }> {
+	if (process.platform === "win32") {
+		const binary = candidateGuiBinaries().find((candidate) => fs.existsSync(candidate));
+		if (binary) {
+			try {
+				const child = spawn(binary, [], { detached: true, stdio: "ignore" });
+				child.unref();
+				return { ok: true };
+			} catch (error) {
+				const failure = error as Error;
+				return { ok: false, message: failure.message || "Couldn’t start Tailscale." };
+			}
+		}
+		const started = await runTailscale(["up"]);
+		return { ok: started.found && started.ok, message: started.found ? started.output : "Tailscale CLI not found." };
+	}
+	if (process.platform === "darwin") {
+		try {
+			await execFileAsync("open", ["-a", "Tailscale"]);
+			return { ok: true };
+		} catch (error) {
+			const failure = error as Error;
+			return { ok: false, message: failure.message || "Couldn’t open Tailscale." };
+		}
+	}
+	const started = await runTailscale(["up"]);
+	return { ok: started.found && started.ok, message: started.found ? started.output : "Tailscale CLI not found." };
+}
 
 function candidateBinaries(): string[] {
 	const programFiles = process.env.ProgramFiles ?? "C:\\Program Files";
@@ -45,12 +104,12 @@ function installedBinaries(): string[] {
 }
 
 async function runTailscale(args: string[]): Promise<CliResult> {
-	for (const bin of installedBinaries()) {
+	for (const binary of installedBinaries()) {
 		try {
-			const { stdout, stderr } = await execFileAsync(bin, args, { timeout: CLI_TIMEOUT_MS, windowsHide: true });
+			const { stdout, stderr } = await execFileAsync(binary, args, { timeout: CLI_TIMEOUT_MS, windowsHide: true });
 			return { found: true, ok: true, output: `${stdout}${stderr}`.trim() };
-		} catch (err) {
-			const failure = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string; killed?: boolean };
+		} catch (error) {
+			const failure = error as NodeJS.ErrnoException & { stdout?: string; stderr?: string; killed?: boolean };
 			if (failure.code === "ENOENT") continue;
 			if (failure.killed) {
 				return {
@@ -109,18 +168,33 @@ export function serveFailureMessage(output: string): string {
 	const enable = loginUrl(text);
 	if (enable) return `Tailscale Serve is not enabled for your tailnet. Open ${enable}, turn it on, then try again.`;
 	if (/not enabled|serve is off/i.test(text)) return NOT_ENABLED;
+	if (NOT_RUNNING_PATTERN.test(text)) return NOT_RUNNING;
 	if (/not logged in|logged out|needs login|login required|no node key/i.test(text)) return NOT_SIGNED_IN;
 	return text.slice(0, 400) || "Tailscale did not start Serve.";
 }
 
 export async function serveState(port: number): Promise<ServeState> {
+	const canOpen = canOpenTailscale();
 	const status = await runTailscale(["serve", "status"]);
-	if (!status.found) return { installed: false, serving: false, url: null, port: null };
-	if (!status.ok) return { installed: true, serving: false, url: null, port: null };
+	if (!status.found)
+		return { installed: false, running: false, canOpen, serving: false, url: null, port: null, error: null };
+	if (!status.ok) {
+		const message = serveFailureMessage(status.output);
+		const notRunning = NOT_RUNNING_PATTERN.test(status.output);
+		return { installed: true, running: !notRunning, canOpen, serving: false, url: null, port: null, error: message };
+	}
 	const url = serveUrl(status.output);
 	const mappedPort = serveMappedPort(status.output);
 	const serving = url !== null && mappedPort === port;
-	return { installed: true, serving, url: serving ? url : null, port: url ? mappedPort : null };
+	return {
+		installed: true,
+		running: true,
+		canOpen,
+		serving,
+		url: serving ? url : null,
+		port: url ? mappedPort : null,
+		error: null,
+	};
 }
 
 async function startTailscaleServe(port: number): Promise<CliResult> {
@@ -134,7 +208,17 @@ export async function startServe(port: number): Promise<ServeStart> {
 	if (!started.found) return { ok: false, message: NOT_INSTALLED };
 	if (!started.ok) return { ok: false, message: serveFailureMessage(started.output) };
 	const state = await serveState(port);
-	return { ok: true, state: { ...state, installed: true, serving: true, url: serveUrl(started.output) ?? state.url } };
+	return {
+		ok: true,
+		state: {
+			...state,
+			installed: true,
+			running: true,
+			serving: true,
+			url: serveUrl(started.output) ?? state.url,
+			error: null,
+		},
+	};
 }
 
 export async function reconcileServe(port: number, answers = portAnswers): Promise<ServeState> {

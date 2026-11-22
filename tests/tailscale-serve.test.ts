@@ -3,6 +3,7 @@ import net from "node:net";
 import { describe, it } from "node:test";
 import { fromThisComputer } from "../src/server/remote-access.ts";
 import {
+	canOpenTailscale,
 	portAnswers,
 	serveFailureMessage,
 	serveMappedPort,
@@ -52,7 +53,14 @@ describe("the target Serve points at", () => {
 });
 
 describe("a Serve that answers on another port", () => {
-	const mapping = (port: number) => ({ installed: true, serving: false, url: null, port });
+	const mapping = (port: number) => ({
+		installed: true,
+		running: true,
+		canOpen: true,
+		serving: false,
+		url: null,
+		port,
+	});
 
 	it("is the one Lanna points here", () => {
 		assert.equal(servePointsElsewhere(mapping(3010), 31551), true);
@@ -63,7 +71,13 @@ describe("a Serve that answers on another port", () => {
 	});
 
 	it("is left alone when Serve has no mapping to change", () => {
-		assert.equal(servePointsElsewhere({ installed: true, serving: false, url: null, port: null }, 31551), false);
+		assert.equal(
+			servePointsElsewhere(
+				{ installed: true, running: true, canOpen: true, serving: false, url: null, port: null },
+				31551,
+			),
+			false,
+		);
 	});
 
 	it("is left alone while something still answers on that port", async () => {
@@ -89,8 +103,25 @@ describe("what a failed start tells the owner", () => {
 		assert.match(serveFailureMessage("flag provided but not defined: -bg\nUsage: tailscale serve"), /--bg/);
 	});
 
+	it("tells the owner when Tailscale is not running", () => {
+		assert.match(
+			serveFailureMessage("failed to connect to local tailscaled; it doesn't appear to be running"),
+			/Tailscale is not running on this computer/,
+		);
+		assert.match(serveFailureMessage("Tailscale is stopped."), /Tailscale is not running on this computer/);
+		assert.match(
+			serveFailureMessage("503 Service Unavailable: no backend"),
+			/Tailscale is not running on this computer/,
+		);
+	});
+
+	it("tells the owner when Tailscale is not signed in", () => {
+		assert.match(serveFailureMessage("Tailscale is logged out."), /Tailscale is not signed in on this computer/);
+		assert.match(serveFailureMessage("needs login"), /Tailscale is not signed in on this computer/);
+	});
+
 	it("keeps the CLI's own words when it is something else", () => {
-		assert.match(serveFailureMessage("Tailscale is not running."), /Tailscale is not running/);
+		assert.match(serveFailureMessage("something unexpected happened"), /something unexpected happened/);
 	});
 });
 
@@ -111,5 +142,11 @@ describe("only this computer sets up Serve", () => {
 	it("refuses a loopback name that came through a proxy", () => {
 		assert.equal(fromThisComputer(new Headers({ forwarded: "for=100.64.0.1" }), "localhost:3010"), false);
 		assert.equal(fromThisComputer(new Headers(), "learn.example.com"), false);
+	});
+});
+
+describe("opening Tailscale", () => {
+	it("checks if the desktop GUI binary is available", () => {
+		assert.equal(typeof canOpenTailscale(), "boolean");
 	});
 });

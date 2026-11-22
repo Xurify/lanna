@@ -26,7 +26,15 @@ type Status = {
 	pairing: { expiresAt: string } | null;
 };
 type Code = { code: string; expiresAt: string };
-type ServeStatus = { installed: boolean; serving: boolean; url: string | null; port: number | null };
+type ServeStatus = {
+	installed: boolean;
+	running?: boolean;
+	canOpen?: boolean;
+	serving: boolean;
+	url: string | null;
+	port: number | null;
+	error?: string | null;
+};
 type Notice = { tone: "ok" | "error"; text: string };
 
 const LOAD_FAILED = "Couldn’t read the remote access settings. Refresh to try again.";
@@ -48,9 +56,9 @@ function clock(ms: number): string {
 	return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-async function readStatus(res: Response): Promise<Status> {
-	if (!res.ok) throw new Error(`access ${res.status}`);
-	return (await res.json()) as Status;
+async function readStatus(response: Response): Promise<Status> {
+	if (!response.ok) throw new Error(`access ${response.status}`);
+	return (await response.json()) as Status;
 }
 
 const PAIRING_POLL_MS = 2000;
@@ -65,6 +73,7 @@ export function DevicesSection() {
 	const [busy, setBusy] = useState(false);
 	const [serveStatus, setServeStatus] = useState<ServeStatus | null>(null);
 	const [serveStarting, setServeStarting] = useState(false);
+	const [openingTailscale, setOpeningTailscale] = useState(false);
 	const [notice, setNotice] = useState<Notice | null>(null);
 	const [code, setCode] = useState<Code | null>(null);
 	const [now, setNow] = useState(() => Date.now());
@@ -92,14 +101,19 @@ export function DevicesSection() {
 			return;
 		}
 		let live = true;
-		fetch("/api/access/serve", { cache: "no-store" })
-			.then((res) => (res.ok ? (res.json() as Promise<ServeStatus>) : null))
-			.then((next) => {
-				if (live && next) setServeStatus(next);
-			})
-			.catch(() => {});
+		const refreshServe = () => {
+			fetch("/api/access/serve", { cache: "no-store" })
+				.then((response) => (response.ok ? (response.json() as Promise<ServeStatus>) : null))
+				.then((next) => {
+					if (live && next) setServeStatus(next);
+				})
+				.catch(() => {});
+		};
+		refreshServe();
+		window.addEventListener("focus", refreshServe);
 		return () => {
 			live = false;
+			window.removeEventListener("focus", refreshServe);
 		};
 	}, [status?.enabled]);
 
@@ -108,7 +122,7 @@ export function DevicesSection() {
 	useEffect(() => {
 		let live = true;
 		fetch("/api/settings", { cache: "no-store" })
-			.then((res) => (res.ok ? res.json() : null))
+			.then((response) => (response.ok ? response.json() : null))
 			.then((body: { settings?: { devices?: { preferredPort?: number } } | null } | null) => {
 				if (!live) return;
 				const saved = body?.settings?.devices?.preferredPort;
@@ -154,13 +168,13 @@ export function DevicesSection() {
 		setBusy(true);
 		setNotice(null);
 		try {
-			const res = await fetch("/api/access", {
+			const response = await fetch("/api/access", {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ enabled: next }),
 				cache: "no-store",
 			});
-			setStatus(await readStatus(res));
+			setStatus(await readStatus(response));
 			setConfirming(null);
 			if (!next) setCode(null);
 			setNotice({
@@ -180,9 +194,9 @@ export function DevicesSection() {
 		setBusy(true);
 		setNotice(null);
 		try {
-			const res = await fetch("/api/access/pairing", { method: "POST", cache: "no-store" });
-			const body = (await res.json().catch(() => null)) as (Partial<Code> & { error?: string }) | null;
-			if (!res.ok || !body?.code || !body.expiresAt) {
+			const response = await fetch("/api/access/pairing", { method: "POST", cache: "no-store" });
+			const body = (await response.json().catch(() => null)) as (Partial<Code> & { error?: string }) | null;
+			if (!response.ok || !body?.code || !body.expiresAt) {
 				setNotice({ tone: "error", text: body?.error ?? "Couldn’t make a code. Try again." });
 				return;
 			}
@@ -200,8 +214,11 @@ export function DevicesSection() {
 		setBusy(true);
 		setNotice(null);
 		try {
-			const res = await fetch(`/api/access/devices/${encodeURIComponent(id)}`, { method: "DELETE", cache: "no-store" });
-			const next = await readStatus(res);
+			const response = await fetch(`/api/access/devices/${encodeURIComponent(id)}`, {
+				method: "DELETE",
+				cache: "no-store",
+			});
+			const next = await readStatus(response);
 			if (status?.devices.some((device) => device.id === id && device.current && device.via === "password")) {
 				window.location.assign("/login");
 				return;
@@ -220,10 +237,19 @@ export function DevicesSection() {
 		setServeStarting(true);
 		setNotice(null);
 		try {
-			const res = await fetch("/api/access/serve", { method: "POST", cache: "no-store" });
-			const next = (await res.json().catch(() => null)) as (ServeStatus & { error?: string }) | null;
-			if (!res.ok || !next || typeof next.serving !== "boolean") {
-				setNotice({ tone: "error", text: next?.error ?? SERVE_FAILED });
+			const response = await fetch("/api/access/serve", { method: "POST", cache: "no-store" });
+			const next = (await response.json().catch(() => null)) as (ServeStatus & { error?: string }) | null;
+			if (!response.ok || !next || typeof next.serving !== "boolean") {
+				const errorMessage = next?.error ?? SERVE_FAILED;
+				setServeStatus((previous) => ({
+					installed: previous?.installed ?? true,
+					running: errorMessage.includes("not running") ? false : (previous?.running ?? true),
+					serving: false,
+					url: null,
+					port: null,
+					error: errorMessage,
+				}));
+				setNotice({ tone: "error", text: errorMessage });
 				return;
 			}
 			setServeStatus(next);
@@ -232,9 +258,35 @@ export function DevicesSection() {
 				text: next.url ? `Tailscale Serve is on. Open ${next.url} on the phone.` : "Tailscale Serve is on.",
 			});
 		} catch {
+			setServeStatus((previous) => ({
+				installed: previous?.installed ?? true,
+				running: previous?.running ?? false,
+				serving: false,
+				url: null,
+				port: null,
+				error: SERVE_FAILED,
+			}));
 			setNotice({ tone: "error", text: SERVE_FAILED });
 		} finally {
 			setServeStarting(false);
+		}
+	}
+
+	async function openTailscaleApp() {
+		setOpeningTailscale(true);
+		setNotice(null);
+		try {
+			const response = await fetch("/api/access/serve/open", { method: "POST", cache: "no-store" });
+			const body = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+			if (!response.ok || !body?.ok) {
+				setNotice({ tone: "error", text: body?.error ?? "Couldn’t open Tailscale. Open it from your applications." });
+				return;
+			}
+			setNotice({ tone: "ok", text: "Opened Tailscale. When it connects, this screen updates." });
+		} catch {
+			setNotice({ tone: "error", text: "Couldn’t open Tailscale. Open it from your applications." });
+		} finally {
+			setOpeningTailscale(false);
 		}
 	}
 
@@ -242,17 +294,17 @@ export function DevicesSection() {
 		setNotice(null);
 		const trimmed = next.trim();
 		try {
-			const res = await fetch("/api/settings/devices", {
+			const response = await fetch("/api/settings/devices", {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ preferredPort: trimmed === "" ? null : Number(trimmed) }),
 				cache: "no-store",
 			});
-			const body = (await res.json().catch(() => null)) as {
+			const body = (await response.json().catch(() => null)) as {
 				settings?: { devices?: { preferredPort?: number } };
 				error?: string;
 			} | null;
-			if (!res.ok) {
+			if (!response.ok) {
 				setNotice({ tone: "error", text: body?.error ?? PORT_FAILED });
 				return;
 			}
@@ -292,6 +344,7 @@ export function DevicesSection() {
 		);
 	}
 
+	const isServeError = Boolean(serveStatus?.error || (serveStatus?.installed && serveStatus?.running === false));
 	const serveLine = !serveStatus ? (
 		"Checking whether Serve is on…"
 	) : !serveStatus.installed ? (
@@ -308,6 +361,10 @@ export function DevicesSection() {
 			</a>
 			, sign in, then try again.
 		</>
+	) : serveStatus.error ? (
+		serveStatus.error
+	) : !serveStatus.running ? (
+		"Tailscale is not running on this computer. Start Tailscale, then try again."
 	) : serveStatus.serving ? (
 		"On. This address answers on your tailnet."
 	) : serveStatus.port !== null ? (
@@ -412,23 +469,45 @@ export function DevicesSection() {
 						hint={`Publishes Lanna over HTTPS on your tailnet only, for port ${status.port}, the port this window uses. Tailscale must be signed in on this computer, with HTTPS certificates turned on.`}
 						testid="devices-serve"
 					>
-						<div className="flex flex-wrap items-center justify-between gap-3">
+						<div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
 							<span
-								className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground"
+								className={`min-w-0 sm:flex-1 text-xs leading-relaxed ${isServeError ? "text-destructive" : "text-muted-foreground"}`}
+								role={isServeError ? "alert" : undefined}
 								data-testid="devices-serve-state"
 							>
 								{serveLine}
 							</span>
-							<Button
-								type="button"
-								size="sm"
-								className="min-w-28 cursor-pointer"
-								disabled={serveStarting || serveStatus?.installed === false}
-								onClick={() => void setUpServe()}
-								data-testid="devices-serve-start"
-							>
-								{serveStatus?.serving ? "Set up again" : "Set up now"}
-							</Button>
+							<div className="flex flex-wrap items-center gap-2 shrink-0">
+								{serveStatus?.running === false && serveStatus.canOpen && (
+									<Button
+										type="button"
+										size="sm"
+										className="min-w-28 cursor-pointer"
+										disabled={openingTailscale}
+										onClick={() => void openTailscaleApp()}
+										data-testid="devices-serve-open"
+									>
+										{openingTailscale ? "Opening…" : "Open Tailscale"}
+									</Button>
+								)}
+								<Button
+									type="button"
+									size="sm"
+									variant={serveStatus?.running === false && serveStatus.canOpen ? "outline" : "default"}
+									className="min-w-28 cursor-pointer"
+									disabled={serveStarting || serveStatus?.installed === false}
+									onClick={() => void setUpServe()}
+									data-testid="devices-serve-start"
+								>
+									{serveStarting
+										? "Starting…"
+										: isServeError
+											? "Try again"
+											: serveStatus?.serving
+												? "Set up again"
+												: "Set up now"}
+								</Button>
+							</div>
 						</div>
 						{serveStatus?.serving && serveStatus.url && (
 							<p className="text-xs text-muted-foreground" data-testid="devices-serve-url">
@@ -544,7 +623,7 @@ export function DevicesSection() {
 			{/* At the end, where its reserved line is not a gap under the title. */}
 			<p
 				role={notice?.tone === "error" ? "alert" : "status"}
-				className="min-h-5 text-xs text-muted-foreground"
+				className={`min-h-5 text-xs ${notice?.tone === "error" ? "text-destructive" : "text-muted-foreground"}`}
 				data-testid="devices-notice"
 			>
 				{notice?.text ?? ""}

@@ -122,6 +122,8 @@ export {
 	secureRequest,
 } from "./remote-access.ts";
 export {
+	canOpenTailscale,
+	openTailscale,
 	reconcileServe,
 	serveMappedPort,
 	servePointsElsewhere,
