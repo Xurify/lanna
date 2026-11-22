@@ -1,5 +1,7 @@
 # Desktop builds and releases
 
+The Windows installer, its manual release and how to test an update are in [windows-app/README.md](windows-app/README.md).
+
 ## Platforms
 
 | Platform             | Build runner       | Packages                         | In-app update                                                     |
