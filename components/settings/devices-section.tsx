@@ -469,15 +469,15 @@ export function DevicesSection() {
 						hint={`Publishes Lanna over HTTPS on your tailnet only, for port ${status.port}, the port this window uses. Tailscale must be signed in on this computer, with HTTPS certificates turned on.`}
 						testid="devices-serve"
 					>
-						<div className="flex flex-wrap items-center justify-between gap-3">
+						<div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
 							<span
-								className={`min-w-0 flex-1 text-xs leading-relaxed ${isServeError ? "text-destructive" : "text-muted-foreground"}`}
+								className={`min-w-0 sm:flex-1 text-xs leading-relaxed ${isServeError ? "text-destructive" : "text-muted-foreground"}`}
 								role={isServeError ? "alert" : undefined}
 								data-testid="devices-serve-state"
 							>
 								{serveLine}
 							</span>
-							<span className="flex items-center gap-2">
+							<div className="flex flex-wrap items-center gap-2 shrink-0">
 								{serveStatus?.running === false && serveStatus.canOpen && (
 									<Button
 										type="button"
@@ -507,7 +507,7 @@ export function DevicesSection() {
 												? "Set up again"
 												: "Set up now"}
 								</Button>
-							</span>
+							</div>
 						</div>
 						{serveStatus?.serving && serveStatus.url && (
 							<p className="text-xs text-muted-foreground" data-testid="devices-serve-url">
