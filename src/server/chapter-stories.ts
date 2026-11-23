@@ -85,7 +85,6 @@ async function writeChapterStory(id: string, now: Date): Promise<StoryRecord | n
 		...(chapter ? { chapter: chapter.id } : {}),
 		shippedHash: hash,
 	};
-	if (kept) storyStore.reindex(story);
-	else storyStore.put(story);
+	storyStore.put(story);
 	return storyStore.get(id);
 }

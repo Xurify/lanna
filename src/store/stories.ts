@@ -127,10 +127,6 @@ export const storyStore = {
 	replace(story: StoryRecord): void {
 		writeStoryFile(story);
 	},
-	reindex(story: StoryRecord): void {
-		writeStoryFile(story);
-		appendJsonl(INDEX(), indexEntryOf(story));
-	},
 	appendRead(entry: ReadLogEntry): void {
 		appendJsonl(READS(), entry);
 	},

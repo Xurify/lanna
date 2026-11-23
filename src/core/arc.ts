@@ -40,7 +40,7 @@ interface ChapterArcStep {
 
 /** A chapter's seven steps. Words: its word units. Forms: its first grammar
  *  drill. Pairs: its Dvojičky units. Scene: its goal unit, whose scene it
- *  opens. Story, sound and exam have no unit yet. Undefined for an unknown
+ *  opens. Story: its chapter stories. Sound and exam have no unit yet. Undefined for an unknown
  *  chapter. */
 export function chapterArc(chapterId: string): ChapterArcStep[] | undefined {
 	const chapter = allChapters().find((c) => c.id === chapterId);
