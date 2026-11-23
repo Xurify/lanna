@@ -58,15 +58,34 @@ describe("chapter stories on the Slovak path", () => {
 		assert.equal(unitStatus().accuracy, 1);
 	});
 
-	it("rebuilds a kept copy whose shipped file changed: one index line, reads untouched", async () => {
+	it("a chapter finishes without its story, and the story is done once read", () => {
+		const plans = chapterOf("story-rainbow")!;
+		const finished: Record<string, { lessons: number; reps: number; correct: number }> = {};
+		for (const id of plans.units) if (id !== "story-rainbow") finished[id] = { lessons: 5, reps: 50, correct: 50 };
+		const plansWith = (evidence: typeof finished) =>
+			curriculumState(evidence, "B2", { startChapter: "plans" }).chapters.find((c) => c.id === "plans")!;
+		const unread = plansWith(finished);
+		assert.equal(unread.done, true);
+		assert.equal(unread.units.find((u) => u.kind === "goal")!.status, "done");
+		assert.equal(unread.units.find((u) => u.id === "story-rainbow")!.status, "open");
+		const read = plansWith({ ...finished, "story-rainbow": { lessons: 1, reps: 1, correct: 1 } });
+		assert.equal(read.units.find((u) => u.id === "story-rainbow")!.status, "done");
+	});
+
+	it("rebuilds a kept copy whose shipped file changed: list() shows one entry with the rebuilt title, reads untouched", async () => {
 		const reads = storyStore.reads().length;
-		storyStore.replace({ ...storyStore.get("story-rainbow")!, shippedHash: "an older text" });
+		const kept = storyStore.get("story-rainbow")!;
+		storyStore.put({ ...kept, title: "Story: an older title", shippedHash: "an older text" });
+		const rebuilt = (await keepChapterStory("story-rainbow"))!;
 		const shipped = createHash("sha256")
 			.update(fs.readFileSync("curriculum/slovak/stories/story-rainbow.json", "utf-8"))
 			.digest("hex");
-		assert.equal((await keepChapterStory("story-rainbow"))!.shippedHash, shipped);
+		assert.equal(rebuilt.shippedHash, shipped);
 		assert.equal(storyStore.get("story-rainbow")!.shippedHash, shipped);
-		assert.equal(storyStore.list().filter((s) => s.id === "story-rainbow").length, 1);
+		const entries = storyStore.list().filter((s) => s.id === "story-rainbow");
+		assert.equal(entries.length, 1);
+		assert.equal(entries[0]!.title, rebuilt.title);
+		assert.notEqual(rebuilt.title, "Story: an older title");
 		assert.equal(storyStore.reads().length, reads);
 	});
 

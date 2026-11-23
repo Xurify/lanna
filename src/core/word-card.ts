@@ -147,12 +147,28 @@ function sentenceKey(text: string): string {
 		.trim();
 }
 
-export function cardsWithoutOtherSentences<T extends { sentence: string; card?: WordCard }>(items: readonly T[]): T[] {
+function wholeWordPattern(answer: string): RegExp {
+	const word = answer
+		.normalize("NFC")
+		.trim()
+		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return new RegExp(`(?<!\\p{L})${word}(?!\\p{L})`, "iu");
+}
+
+export function cardsWithoutOtherSentences<T extends { sentence: string; answer: string; card?: WordCard }>(
+	items: readonly T[],
+): T[] {
 	const keys = items.map((item) => sentenceKey(item.sentence));
 	return items.map((item, i) => {
 		if (!item.card) return item;
 		const elsewhere = new Set(keys.filter((_, j) => j !== i));
-		const examples = item.card.examples.filter((ex) => !elsewhere.has(sentenceKey(ex.before + ex.word + ex.after)));
+		const otherAnswers = items
+			.filter((other, j) => j !== i && other.answer.trim() !== "")
+			.map((other) => wholeWordPattern(other.answer));
+		const examples = item.card.examples.filter((ex) => {
+			const text = ex.before + ex.word + ex.after;
+			return !elsewhere.has(sentenceKey(text)) && !otherAnswers.some((pattern) => pattern.test(text.normalize("NFC")));
+		});
 		return { ...item, card: { ...item.card, examples } };
 	});
 }

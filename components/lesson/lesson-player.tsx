@@ -1033,7 +1033,14 @@ const REP_FORM = "lesson-rep";
 function statusLine(current: Rep | null, miss: string | null): string {
 	if (current) {
 		const { item, verdict } = current;
-		const expected = item.kind === "meaning" ? item.translation : item.kind === "build" ? item.sentence : item.answer;
+		const expected =
+			item.kind === "meaning"
+				? item.translation
+				: item.kind === "build"
+					? item.sentence
+					: item.pair
+						? (item.form ?? item.answer)
+						: item.answer;
 		if (verdict === "exact") return current.assisted ? "Right, with help." : "Right.";
 		return `${verdict === "accents" ? "Almost: check the accents." : "Not quite."} Correct answer: ${expected}`;
 	}

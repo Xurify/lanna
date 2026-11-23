@@ -142,9 +142,10 @@ test("a card never shows a sentence another item in the same plan asks about", (
 	const items = [
 		{
 			sentence: "Počúvam dážď.",
+			answer: "dážď",
 			card: { examples: [example("Bez ", "dažďa", " niet úrody."), example("Dážď mi zabránil ", "ísť", " von.")] },
 		},
-		{ sentence: "bez dažďa niet úrody", card: { examples: [] } },
+		{ sentence: "bez dažďa niet úrody", answer: "dažďa", card: { examples: [] } },
 	];
 	const [first, second] = cardsWithoutOtherSentences(items);
 	assert.deepEqual(
@@ -152,4 +153,27 @@ test("a card never shows a sentence another item in the same plan asks about", (
 		["Dážď mi zabránil ísť von."],
 	);
 	assert.deepEqual(second!.card.examples, []);
+});
+
+test("a card drops another item's answer only as a whole word", () => {
+	const example = (before: string, word: string, after: string) => ({ before, word, after, en: "(en)" });
+	const items = [
+		{
+			sentence: "Sneh na poli je biely.",
+			answer: "biely",
+			card: {
+				examples: [example("Mačka je čierna a pes je ", "biely", "."), example("Sneh na poli je ", "biely", ".")],
+			},
+		},
+		{ sentence: "Mačka je čierna.", answer: "čierna", card: { examples: [example("Pes je ", "čiernobiely", ".")] } },
+	];
+	const [biely, cierna] = cardsWithoutOtherSentences(items);
+	assert.deepEqual(
+		biely!.card.examples.map((ex) => ex.before + ex.word + ex.after),
+		["Sneh na poli je biely."],
+	);
+	assert.deepEqual(
+		cierna!.card.examples.map((ex) => ex.before + ex.word + ex.after),
+		["Pes je čiernobiely."],
+	);
 });

@@ -33,7 +33,3 @@ export const CHAPTER_STORIES: readonly ChapterStory[] = [
 export function chapterStoriesFor(language: string): ChapterStory[] {
 	return CHAPTER_STORIES.filter((s) => s.language === language);
 }
-
-export function isChapterStoryId(id: string): boolean {
-	return CHAPTER_STORIES.some((s) => s.id === id);
-}
