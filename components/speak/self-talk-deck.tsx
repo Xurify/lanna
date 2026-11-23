@@ -191,6 +191,7 @@ export function SelfTalkDeck({ selected, onSelect, onStart, lang, error }: SelfT
 					className="speak-deal relative rounded-2xl bg-card p-6 shadow-[0_0_0_1px_var(--q-line-2),0_10px_30px_-18px_rgb(var(--q-shadow-rgb)/0.35)] @md:p-9"
 					aria-label={prompt.title}
 					data-testid="self-talk-sheet"
+					data-word-lookup-enabled="true"
 				>
 					<p className="flex items-center justify-between font-ui text-[13px] font-[550] text-teal-2">
 						<span>{categoryOf(prompt)}</span>
