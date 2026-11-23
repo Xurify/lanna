@@ -1,0 +1,279 @@
+{
+	"title": "Сегодня плачу я",
+	"topic": "two friends order in a café, get each other's drinks and one of them forgets his wallet",
+	"cover": "cup",
+	"cast": [
+		{
+			"name": "Лена",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Миша",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Олег",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Сегодня Лена и Миша в кафе.",
+			"en": "Today Lena and Misha are at a café."
+		},
+		{
+			"who": "narrator",
+			"sk": "Они сидят и разговаривают.",
+			"en": "They are sitting and talking."
+		},
+		{
+			"who": "Олег",
+			"sk": "Здравствуйте! Что вы будете?",
+			"en": "Hello! What will you have?"
+		},
+		{
+			"who": "Лена",
+			"sk": "Я хочу чай с молоком, пожалуйста.",
+			"en": "I want tea with milk, please."
+		},
+		{
+			"who": "Миша",
+			"sk": "А я хочу кофе и воду.",
+			"en": "And I want coffee and water."
+		},
+		{
+			"who": "Олег",
+			"sk": "А ещё у нас суп и очень вкусный торт.",
+			"en": "We also have soup and a very tasty cake."
+		},
+		{
+			"who": "Миша",
+			"sk": "Какой торт?",
+			"en": "What kind of cake?"
+		},
+		{
+			"who": "Олег",
+			"sk": "Шоколадный. Он сегодня очень свежий.",
+			"en": "Chocolate. It is very fresh today."
+		},
+		{
+			"who": "Миша",
+			"sk": "Тогда суп и торт, пожалуйста.",
+			"en": "Then the soup and the cake, please."
+		},
+		{
+			"who": "Лена",
+			"sk": "А я ничего не хочу есть.",
+			"en": "And I don't want to eat anything."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Олег приносит чай, кофе и воду.",
+			"en": "Oleg brings the tea, the coffee and the water."
+		},
+		{
+			"who": "narrator",
+			"sk": "Но кофе получает Лена, а чай — Миша.",
+			"en": "But Lena gets the coffee, and Misha the tea."
+		},
+		{
+			"who": "Лена",
+			"sk": "Миша, это твой кофе, а не мой!",
+			"en": "Misha, this is your coffee, not mine!"
+		},
+		{
+			"who": "Миша",
+			"sk": "А это твой чай!",
+			"en": "And this is your tea!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Лена и Миша смеются.",
+			"en": "Lena and Misha laugh."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Суп горячий, а торт сладкий.",
+			"en": "The soup is hot and the cake is sweet."
+		},
+		{
+			"who": "Миша",
+			"sk": "Лена, торт очень вкусный. Хочешь?",
+			"en": "Lena, the cake is very tasty. Do you want some?"
+		},
+		{
+			"who": "Лена",
+			"sk": "Да, спасибо. Ты прав, он правда вкусный.",
+			"en": "Yes, thanks. You're right, it really is tasty."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Потом Миша зовёт официанта.",
+			"en": "Then Misha calls the waiter."
+		},
+		{
+			"who": "Миша",
+			"sk": "Счёт, пожалуйста.",
+			"en": "The bill, please."
+		},
+		{
+			"who": "Олег",
+			"sk": "Суп, торт, кофе, чай и вода. Вот ваш счёт.",
+			"en": "Soup, cake, coffee, tea and water. Here is your bill."
+		},
+		{
+			"who": "narrator",
+			"sk": "Миша ищет кошелёк, но не может его найти.",
+			"en": "Misha looks for his wallet, but he can't find it."
+		},
+		{
+			"who": "Миша",
+			"sk": "Лена, мой кошелёк дома!",
+			"en": "Lena, my wallet is at home!"
+		},
+		{
+			"who": "Лена",
+			"sk": "Ничего! Сегодня плачу я.",
+			"en": "Never mind! Today I am paying."
+		},
+		{
+			"who": "Миша",
+			"sk": "Спасибо! Завтра плачу я, и мы снова возьмём торт.",
+			"en": "Thank you! Tomorrow I'm paying, and we'll have cake again."
+		},
+		{
+			"who": "Лена",
+			"sk": "Хорошо. Но завтра не забудь кошелёк!",
+			"en": "All right. But tomorrow don't forget your wallet!"
+		}
+	],
+	"newWords": [
+		{
+			"sk": "кошелёк",
+			"en": "wallet"
+		},
+		{
+			"sk": "вкусный",
+			"en": "tasty"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Что хочет Лена?",
+			"options": [
+				"Чай с молоком",
+				"Пиво",
+				"Суп"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Какой торт в кафе?",
+			"options": [
+				"Яблочный",
+				"Шоколадный",
+				"Медовый"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Кто сегодня платит?",
+			"options": [
+				"Миша",
+				"Олег",
+				"Лена"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Lena and Misha order tea, coffee, soup and cake in a café. The waiter mixes up their drinks, and when the bill comes Misha's wallet is at home, so Lena pays.",
+	"glosses": {
+		"лена": {
+			"lemma": "Лена",
+			"gloss": "Lena (a name)"
+		},
+		"миша": {
+			"lemma": "Миша",
+			"gloss": "Misha (a name)"
+		},
+		"олег": {
+			"lemma": "Олег",
+			"gloss": "Oleg (a name)"
+		},
+		"вы": {
+			"lemma": "вы",
+			"gloss": "you (polite or plural)"
+		},
+		"нас": {
+			"lemma": "мы",
+			"gloss": "us (у нас: we have)"
+		},
+		"мы": {
+			"lemma": "мы",
+			"gloss": "we"
+		},
+		"он": {
+			"lemma": "он",
+			"gloss": "he; it"
+		},
+		"ты": {
+			"lemma": "ты",
+			"gloss": "you"
+		},
+		"его": {
+			"lemma": "он",
+			"gloss": "him; it"
+		},
+		"у": {
+			"lemma": "у",
+			"gloss": "at, by (у нас: we have)"
+		},
+		"есть": {
+			"lemma": "есть",
+			"gloss": "to eat"
+		},
+		"чай": {
+			"lemma": "чай",
+			"gloss": "tea"
+		},
+		"а": {
+			"lemma": "а",
+			"gloss": "and, but"
+		},
+		"прав": {
+			"lemma": "правый",
+			"gloss": "right (ты прав: you are right)"
+		},
+		"ничего": {
+			"lemma": "ничего",
+			"gloss": "nothing; never mind"
+		},
+		"вкусный": {
+			"lemma": "вкусный",
+			"gloss": "tasty"
+		},
+		"шоколадный": {
+			"lemma": "шоколадный",
+			"gloss": "chocolate"
+		},
+		"официанта": {
+			"lemma": "официант",
+			"gloss": "waiter"
+		},
+		"они": {
+			"lemma": "они",
+			"gloss": "they"
+		}
+	}
+}

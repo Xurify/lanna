@@ -1,0 +1,287 @@
+{
+	"title": "Täna maksan mina",
+	"topic": "two friends order in a café, get each other's drinks and one of them forgets his wallet",
+	"cover": "cup",
+	"cast": [
+		{
+			"name": "Kati",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Toomas",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Andres",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Täna on esmaspäev.",
+			"en": "Today is Monday."
+		},
+		{
+			"who": "narrator",
+			"sk": "Kati ja Toomas istuvad kohvikus akna all.",
+			"en": "Kati and Toomas are sitting in a café by the window."
+		},
+		{
+			"who": "Andres",
+			"sk": "Tere! Mida te soovite?",
+			"en": "Hello! What would you like?"
+		},
+		{
+			"who": "Kati",
+			"sk": "Mina tahan teed piimaga, palun.",
+			"en": "I want tea with milk, please."
+		},
+		{
+			"who": "Toomas",
+			"sk": "Ja mina tahan kohvi ja vett.",
+			"en": "And I want coffee and water."
+		},
+		{
+			"who": "Andres",
+			"sk": "Meil on ka suppi ja väga head kooki.",
+			"en": "We also have soup and very good cake."
+		},
+		{
+			"who": "Toomas",
+			"sk": "Mis kook see on?",
+			"en": "What kind of cake is it?"
+		},
+		{
+			"who": "Andres",
+			"sk": "Õunakook. See on täna väga värske.",
+			"en": "Apple cake. It is very fresh today."
+		},
+		{
+			"who": "Toomas",
+			"sk": "Siis võtan supi ja koogi, palun.",
+			"en": "Then I'll take the soup and the cake, please."
+		},
+		{
+			"who": "Kati",
+			"sk": "Mina ei taha midagi süüa.",
+			"en": "I don't want to eat anything."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Andres toob tee, kohvi ja vee.",
+			"en": "Andres brings the tea, the coffee and the water."
+		},
+		{
+			"who": "narrator",
+			"sk": "Aga kohvi saab Kati ja tee saab Toomas.",
+			"en": "But Kati gets the coffee and Toomas gets the tea."
+		},
+		{
+			"who": "Kati",
+			"sk": "Toomas, see on sinu kohv, mitte minu!",
+			"en": "Toomas, this is your coffee, not mine!"
+		},
+		{
+			"who": "Toomas",
+			"sk": "Ja see on sinu tee!",
+			"en": "And this is your tea!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Kati ja Toomas naeravad.",
+			"en": "Kati and Toomas laugh."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Supp on kuum ja kook on magus.",
+			"en": "The soup is hot and the cake is sweet."
+		},
+		{
+			"who": "Toomas",
+			"sk": "Kati, see kook on väga hea. Kas sa tahad tükki?",
+			"en": "Kati, this cake is very good. Do you want a piece?"
+		},
+		{
+			"who": "Kati",
+			"sk": "Jah, aitäh. Sul on õigus, see on tõesti hea.",
+			"en": "Yes, thanks. You're right, it really is good."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Siis kutsub Toomas ettekandja.",
+			"en": "Then Toomas calls the waiter."
+		},
+		{
+			"who": "Toomas",
+			"sk": "Arve, palun.",
+			"en": "The bill, please."
+		},
+		{
+			"who": "Andres",
+			"sk": "Supp, kook, kohv, tee ja vesi. See teeb kokku kaksteist eurot.",
+			"en": "Soup, cake, coffee, tea and water. That comes to twelve euros altogether."
+		},
+		{
+			"who": "narrator",
+			"sk": "Toomas otsib rahakotti, aga ei leia seda.",
+			"en": "Toomas looks for his wallet, but he can't find it."
+		},
+		{
+			"who": "Toomas",
+			"sk": "Kati, mu rahakott on kodus!",
+			"en": "Kati, my wallet is at home!"
+		},
+		{
+			"who": "Kati",
+			"sk": "Pole hullu. Täna maksan mina.",
+			"en": "Never mind. Today I'm paying."
+		},
+		{
+			"who": "Toomas",
+			"sk": "Aitäh! Homme maksan mina ja võtame jälle kooki.",
+			"en": "Thank you! Tomorrow I'm paying, and we'll have cake again."
+		},
+		{
+			"who": "Kati",
+			"sk": "Hea küll. Aga homme võta rahakott kaasa!",
+			"en": "All right. But bring your wallet tomorrow!"
+		}
+	],
+	"newWords": [
+		{
+			"sk": "kook",
+			"en": "cake"
+		},
+		{
+			"sk": "rahakott",
+			"en": "wallet"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Mida Kati tahab?",
+			"options": [
+				"Teed piimaga",
+				"Õlut",
+				"Suppi"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Mis kook neil on?",
+			"options": [
+				"Juustukook",
+				"Õunakook",
+				"Šokolaadikook"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Kes täna maksab?",
+			"options": [
+				"Toomas",
+				"Andres",
+				"Kati"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Kati and Toomas order tea, coffee, soup and cake in a café. The waiter mixes up their drinks, and when the bill comes Toomas's wallet is at home, so Kati pays.",
+	"glosses": {
+		"kati": {
+			"lemma": "Kati",
+			"gloss": "Kati (a name)"
+		},
+		"toomas": {
+			"lemma": "Toomas",
+			"gloss": "Toomas (a name)"
+		},
+		"andres": {
+			"lemma": "Andres",
+			"gloss": "Andres (a name)"
+		},
+		"te": {
+			"lemma": "teie",
+			"gloss": "you (plural or polite)"
+		},
+		"meil": {
+			"lemma": "meie",
+			"gloss": "we (meil on: we have)"
+		},
+		"sa": {
+			"lemma": "sina",
+			"gloss": "you"
+		},
+		"sul": {
+			"lemma": "sina",
+			"gloss": "you (sul on õigus: you are right)"
+		},
+		"sinu": {
+			"lemma": "sina",
+			"gloss": "you (sinu: your)"
+		},
+		"minu": {
+			"lemma": "mina",
+			"gloss": "I (minu: mine, my)"
+		},
+		"mu": {
+			"lemma": "mina",
+			"gloss": "I (mu: my)"
+		},
+		"teed": {
+			"lemma": "tee",
+			"gloss": "tea"
+		},
+		"tee": {
+			"lemma": "tee",
+			"gloss": "tea"
+		},
+		"magus": {
+			"lemma": "magus",
+			"gloss": "sweet"
+		},
+		"kokku": {
+			"lemma": "kokku",
+			"gloss": "together, in total"
+		},
+		"teeb": {
+			"lemma": "tegema",
+			"gloss": "to make (teeb kokku: comes to)"
+		},
+		"pole": {
+			"lemma": "olema",
+			"gloss": "is not (pole hullu: never mind)"
+		},
+		"hullu": {
+			"lemma": "hull",
+			"gloss": "bad, crazy (pole hullu: never mind)"
+		},
+		"küll": {
+			"lemma": "küll",
+			"gloss": "indeed (hea küll: all right)"
+		},
+		"midagi": {
+			"lemma": "miski",
+			"gloss": "something; anything (after ei)"
+		},
+		"ettekandja": {
+			"lemma": "ettekandja",
+			"gloss": "waiter, server"
+		},
+		"õunakook": {
+			"lemma": "õunakook",
+			"gloss": "apple cake"
+		}
+	}
+}
