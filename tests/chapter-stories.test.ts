@@ -4,6 +4,7 @@ import fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, describe, it } from "node:test";
+import { isCoverMotif } from "../src/core/cover.ts";
 import type { StoryDraft } from "../src/core/reading.ts";
 
 const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chapter-stories-"));
@@ -29,6 +30,29 @@ describe("chapter stories on the Slovak path", () => {
 		assert.equal(plans.units[plans.units.indexOf("lx-weather") + 1], "story-rainbow");
 		assert.equal(curriculumUnit("story-rainbow")?.kind, "story");
 		assert.deepEqual(chapterArc("plans")![0]!.units, ["story-rainbow"]);
+	});
+
+	it("puts the café story right after the food words in At the café, before the chapter's goal", () => {
+		const cafe = chapterOf("story-cafe")!;
+		assert.equal(cafe.id, "cafe");
+		assert.equal(cafe.units[cafe.units.indexOf("lx-food") + 1], "story-cafe");
+		assert.ok(cafe.units.indexOf("story-cafe") < cafe.units.indexOf("can-order"));
+		assert.equal(curriculumUnit("story-cafe")?.kind, "story");
+	});
+
+	it("the café story is glossed in full and kept in At the café at A1", async () => {
+		const story = (await keepChapterStory("story-cafe"))!;
+		assert.equal(story.chapter, "cafe");
+		assert.equal(story.level, "A1");
+		assert.equal(story.cover, "cup");
+		const words = story.sentences.flatMap((s) => s.tokens.filter((t) => t.word));
+		assert.deepEqual(
+			words.filter((t) => !t.gloss).map((t) => t.text),
+			[],
+		);
+		const name = words.find((t) => t.text === "Lucia")!;
+		assert.equal(name.gloss, "Lucia (a name)");
+		assert.equal(name.cat, undefined, "a name the dictionary took for a verb keeps none of the verb's labels");
 	});
 
 	it("two opens at once write one copy", async () => {
@@ -115,6 +139,25 @@ describe("chapter stories in the written courses", () => {
 			}
 		});
 	}
+
+	const cafes = [
+		{ language: "russian", chapter: "what-i-want", goal: "can-order-simply" },
+		{ language: "estonian", chapter: "counting", goal: "can-buy-things" },
+	];
+	for (const c of cafes) {
+		it(`${c.language}: the café story right after the food words, before ${c.goal}`, () => {
+			const g = globalThis as Record<string, unknown>;
+			g.__lhCourse = JSON.parse(fs.readFileSync(`curriculum/${c.language}/course.json`, "utf-8"));
+			try {
+				const ch = chapterOf("story-cafe")!;
+				assert.equal(ch.id, c.chapter);
+				assert.equal(ch.units[ch.units.indexOf("lx-words-food") + 1], "story-cafe");
+				assert.ok(ch.units.indexOf("story-cafe") < ch.units.indexOf(c.goal));
+			} finally {
+				g.__lhCourse = undefined;
+			}
+		});
+	}
 });
 
 describe("the shipped story files", () => {
@@ -127,6 +170,13 @@ describe("the shipped story files", () => {
 			assert.ok(d.sentences.every((x) => x.sk.trim() && x.en.trim()));
 			assert.equal(d.questions.length, 3);
 			for (const q of d.questions) assert.ok(q.answer >= 0 && q.answer < q.options.length);
+			assert.ok(isCoverMotif(d.cover));
+			const text = d.sentences.map((x) => x.sk.toLocaleLowerCase()).join(" ");
+			const glosses = (d as StoryDraft & { glosses?: Record<string, unknown> }).glosses ?? {};
+			for (const form of Object.keys(glosses)) {
+				assert.equal(form, form.toLocaleLowerCase());
+				assert.ok(text.includes(form), `${form} is glossed but not in the story`);
+			}
 		});
 	}
 });

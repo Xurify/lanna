@@ -28,6 +28,27 @@ export const CHAPTER_STORIES: readonly ChapterStory[] = [
 		tagline: "Weather and colours in a rainy Saturday",
 		after: ["lx-words-colors", "lx-words-weather", "lx-words-time"],
 	},
+	{
+		id: "story-cafe",
+		language: "slovak",
+		title: "Story: Coffee for two",
+		tagline: "Ordering, a mixed-up order and the bill",
+		after: ["lx-food", "lx-cafe", "lx-drinks"],
+	},
+	{
+		id: "story-cafe",
+		language: "russian",
+		title: "Story: Coffee for two",
+		tagline: "Ordering, a mixed-up order and the bill",
+		after: ["lx-words-food", "accusative-singular"],
+	},
+	{
+		id: "story-cafe",
+		language: "estonian",
+		title: "Story: Coffee for two",
+		tagline: "Ordering, a mixed-up order and the bill",
+		after: ["lx-words-food", "partitive-singular", "lx-words-shopping"],
+	},
 ];
 
 export function chapterStoriesFor(language: string): ChapterStory[] {

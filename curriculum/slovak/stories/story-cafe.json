@@ -1,0 +1,243 @@
+{
+	"title": "Dnes platím ja",
+	"topic": "two friends order in a café, get each other's drinks and one of them forgets his wallet",
+	"cover": "cup",
+	"cast": [
+		{
+			"name": "Lucia",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Peter",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Marek",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Je pondelok popoludní.",
+			"en": "It is Monday afternoon."
+		},
+		{
+			"who": "narrator",
+			"sk": "Lucia a Peter sedia v kaviarni pri okne.",
+			"en": "Lucia and Peter are sitting in a café by the window."
+		},
+		{
+			"who": "Marek",
+			"sk": "Dobrý deň! Čo si dáte?",
+			"en": "Hello! What will you have?"
+		},
+		{
+			"who": "Lucia",
+			"sk": "Ja si dám čaj s mliekom, prosím.",
+			"en": "I'll have tea with milk, please."
+		},
+		{
+			"who": "Peter",
+			"sk": "A ja chcem kávu a vodu, prosím.",
+			"en": "And I want coffee and water, please."
+		},
+		{
+			"who": "Marek",
+			"sk": "Máme aj dobrú polievku a čerstvý koláč.",
+			"en": "We also have good soup and fresh cake."
+		},
+		{
+			"who": "Peter",
+			"sk": "Aký je to koláč?",
+			"en": "What kind of cake is it?"
+		},
+		{
+			"who": "Marek",
+			"sk": "Jablkový. Je veľmi dobrý.",
+			"en": "Apple. It is very good."
+		},
+		{
+			"who": "Peter",
+			"sk": "Tak si dám polievku a koláč.",
+			"en": "Then I'll have the soup and the cake."
+		},
+		{
+			"who": "Lucia",
+			"sk": "Ja nechcem nič jesť.",
+			"en": "I don't want to eat anything."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Marek prinesie čaj, kávu a vodu.",
+			"en": "Marek brings the tea, the coffee and the water."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ale Lucia dostane kávu a Peter dostane čaj.",
+			"en": "But Lucia gets the coffee and Peter gets the tea."
+		},
+		{
+			"who": "Lucia",
+			"sk": "Peter, to je tvoja káva, nie moja!",
+			"en": "Peter, that is your coffee, not mine!"
+		},
+		{
+			"who": "Peter",
+			"sk": "A toto je tvoj čaj!",
+			"en": "And this is your tea!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Lucia a Peter sa smejú.",
+			"en": "Lucia and Peter laugh."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Polievka je horúca a koláč je sladký.",
+			"en": "The soup is hot and the cake is sweet."
+		},
+		{
+			"who": "Peter",
+			"sk": "Lucia, ten koláč je výborný. Chceš aj ty?",
+			"en": "Lucia, this cake is excellent. Do you want some too?"
+		},
+		{
+			"who": "Lucia",
+			"sk": "Áno, prosím. Máš pravdu, je veľmi dobrý.",
+			"en": "Yes, please. You're right, it is very good."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Potom Peter zavolá čašníka.",
+			"en": "Then Peter calls the waiter."
+		},
+		{
+			"who": "Peter",
+			"sk": "Účet, prosím.",
+			"en": "The bill, please."
+		},
+		{
+			"who": "Marek",
+			"sk": "Polievka, koláč, káva, čaj a voda. Tu je účet.",
+			"en": "Soup, cake, coffee, tea and water. Here is the bill."
+		},
+		{
+			"who": "narrator",
+			"sk": "Peter hľadá peňaženku, ale nemôže ju nájsť.",
+			"en": "Peter looks for his wallet, but he can't find it."
+		},
+		{
+			"who": "Peter",
+			"sk": "Lucia, moja peňaženka je doma!",
+			"en": "Lucia, my wallet is at home!"
+		},
+		{
+			"who": "Lucia",
+			"sk": "To nič. Dnes platím ja.",
+			"en": "Never mind. Today I'm paying."
+		},
+		{
+			"who": "Peter",
+			"sk": "Ďakujem! Zajtra platím ja a dáme si zase koláč.",
+			"en": "Thank you! Tomorrow I'm paying, and we'll have cake again."
+		},
+		{
+			"who": "Lucia",
+			"sk": "Dobre. Ale zajtra nezabudni na peňaženku!",
+			"en": "All right. But tomorrow don't forget your wallet!"
+		}
+	],
+	"newWords": [
+		{
+			"sk": "koláč",
+			"en": "cake"
+		},
+		{
+			"sk": "peňaženka",
+			"en": "wallet"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Čo si dá Lucia?",
+			"options": [
+				"Čaj s mliekom",
+				"Pivo",
+				"Polievku"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Aký koláč majú v kaviarni?",
+			"options": [
+				"Syrový",
+				"Jablkový",
+				"Čokoládový"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Kto dnes platí účet?",
+			"options": [
+				"Peter",
+				"Marek",
+				"Lucia"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Lucia and Peter order tea, coffee, soup and cake in a café. The waiter mixes up their drinks, and when the bill comes Peter's wallet is at home, so Lucia pays.",
+	"glosses": {
+		"lucia": {
+			"lemma": "Lucia",
+			"gloss": "Lucia (a name)"
+		},
+		"peter": {
+			"lemma": "Peter",
+			"gloss": "Peter (a name)"
+		},
+		"marek": {
+			"lemma": "Marek",
+			"gloss": "Marek (a name)"
+		},
+		"si": {
+			"lemma": "si",
+			"gloss": "for oneself (dať si: to have, to order)"
+		},
+		"dáte": {
+			"lemma": "dať si",
+			"gloss": "you will have (dať si: to have, to order)"
+		},
+		"dám": {
+			"lemma": "dať si",
+			"gloss": "I will have (dať si: to have, to order)"
+		},
+		"dáme": {
+			"lemma": "dať si",
+			"gloss": "we will have (dať si: to have, to order)"
+		},
+		"prosím": {
+			"lemma": "prosím",
+			"gloss": "please"
+		},
+		"jablkový": {
+			"lemma": "jablkový",
+			"gloss": "apple (made with apples)"
+		},
+		"nezabudni": {
+			"lemma": "zabudnúť",
+			"gloss": "do not forget (zabudnúť na: to forget)"
+		}
+	}
+}

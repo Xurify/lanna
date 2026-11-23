@@ -22,8 +22,14 @@ function withGlosses(sentences: readonly StorySentence[], glosses: ShippedStory[
 		tokens: s.tokens.map((t) => {
 			const fixed = t.word ? glosses[t.text.toLocaleLowerCase()] : undefined;
 			if (!fixed) return t;
-			const { slug, ...rest } = t;
-			return { ...rest, lemma: fixed.lemma, gloss: fixed.gloss, ...(slug && t.lemma === fixed.lemma ? { slug } : {}) };
+			const { slug, cat, gender, ...rest } = t;
+			const sameWord = t.lemma === fixed.lemma;
+			return {
+				...rest,
+				lemma: fixed.lemma,
+				gloss: fixed.gloss,
+				...(sameWord ? { ...(slug ? { slug } : {}), ...(cat ? { cat } : {}), ...(gender ? { gender } : {}) } : {}),
+			};
 		}),
 	}));
 }
