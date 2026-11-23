@@ -154,7 +154,10 @@ export function LanguagePicker({
 	onChange,
 	exclude,
 	testid = "languages",
+	collapseToChosen = false,
 }: {
+	/** Show only the chosen languages until the learner asks for the full list. */
+	collapseToChosen?: boolean;
 	value: readonly Lang[];
 	/** The language being learned (ISO 639-1): not one the learner "knows". */
 	exclude?: string;
@@ -165,6 +168,7 @@ export function LanguagePicker({
 	// The panel edits a copy, so the chip row and level rows stay put until it closes.
 	const [pending, setPending] = useState<Lang[] | null>(null);
 	const [query, setQuery] = useState("");
+	const [showAll, setShowAll] = useState(false);
 	const [align, setAlign] = useState<MenuAlign>("right");
 	const more = pending !== null;
 	const anchor = useRef<HTMLSpanElement>(null);
@@ -231,7 +235,8 @@ export function LanguagePicker({
 		};
 	});
 	const offered = KNOWN_LANGUAGES.filter((l) => l.id !== exclude);
-	const shown = offered.filter((l) => l.primary || value.includes(l.id));
+	const collapsed = collapseToChosen && !showAll && pickable.length > 0;
+	const shown = offered.filter((l) => (collapsed ? value.includes(l.id) : l.primary || value.includes(l.id)));
 	const q = query.trim().toLowerCase();
 	const found = offered.filter((l) => (q ? l.title.toLowerCase().includes(q) : !l.primary));
 	const added = pending ? pending.filter((l) => !value.includes(l)).length : 0;
@@ -255,7 +260,18 @@ export function LanguagePicker({
 						</button>
 					);
 				})}
-				<span ref={anchor}>
+				{collapseToChosen && pickable.length > 0 && (
+					<button
+						type="button"
+						aria-expanded={!collapsed}
+						onClick={() => setShowAll((v) => !v)}
+						className={cn(CHIP, OFF, "min-w-0 px-3.5 py-1.5 text-sm")}
+						data-testid={`${testid}-show-all`}
+					>
+						{collapsed ? "Change languages" : "Show only mine"}
+					</button>
+				)}
+				<span ref={anchor} className={collapsed ? "hidden" : undefined}>
 					<button
 						type="button"
 						aria-expanded={more}

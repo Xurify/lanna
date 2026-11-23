@@ -293,6 +293,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 			)}
 			<SettingsGroup label="Languages you know" testid="learner-languages">
 				<LanguagePicker
+					collapseToChosen
 					exclude={target?.code}
 					value={state.languages}
 					levels={state.languageLevels}

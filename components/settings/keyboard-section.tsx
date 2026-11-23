@@ -89,7 +89,7 @@ export function KeyboardSection() {
 	return (
 		<>
 			<div data-testid="kbd-scope-typing">
-				<p className="mb-1 text-xs text-muted-foreground">Typing</p>
+				<p className="mb-3 font-ui text-sm font-semibold text-ink-2">Typing</p>
 				<div className="flex flex-col gap-2">
 					<SettingsRow
 						label="Hold a letter for its accents"
@@ -111,7 +111,7 @@ export function KeyboardSection() {
 				if (!actions.length) return null;
 				return (
 					<div key={scope} data-testid={`kbd-scope-${scope}`}>
-						<p className="mb-1 text-xs text-muted-foreground">{label}</p>
+						<p className="mb-3 font-ui text-sm font-semibold text-ink-2">{label}</p>
 						<div className="flex flex-col gap-2">
 							{actions.map((def) => {
 								const effective = overrides[def.id] ?? def.binding;
