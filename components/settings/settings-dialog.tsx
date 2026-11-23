@@ -46,6 +46,7 @@ import {
 	KeyboardIcon,
 	KeyRoundIcon,
 	PaletteIcon,
+	SearchIcon,
 	SmartphoneIcon,
 	SlidersHorizontalIcon,
 	SlidersIcon,
@@ -201,8 +202,18 @@ function SettingsDialogBody({
 	useEffect(() => {
 		if (window.matchMedia("(min-width: 768px)").matches) searchRef.current?.focus();
 		const focusSearch = () => searchRef.current?.focus();
+		const slashToSearch = (e: KeyboardEvent) => {
+			const typing = (e.target as HTMLElement | null)?.closest('input, textarea, [contenteditable="true"]');
+			if (e.key !== "/" || typing || e.metaKey || e.ctrlKey || e.altKey) return;
+			e.preventDefault();
+			focusSearch();
+		};
+		document.addEventListener("keydown", slashToSearch);
 		window.addEventListener("lanna:kbd-cycle-fields", focusSearch);
-		return () => window.removeEventListener("lanna:kbd-cycle-fields", focusSearch);
+		return () => {
+			window.removeEventListener("lanna:kbd-cycle-fields", focusSearch);
+			document.removeEventListener("keydown", slashToSearch);
+		};
 	}, []);
 	const visibleSections = SETTINGS_SECTIONS.filter((s) => sectionMatches(s, query));
 	// A deep link while the dialog is already open changes initialSection; follow it.
@@ -312,16 +323,19 @@ function SettingsDialogBody({
 						phoneShowsSection && "max-md:hidden",
 					)}
 				>
-					<div className="mb-2 flex flex-col gap-1.5 px-1 max-md:px-2 max-md:pt-2">
-						<label htmlFor="settings-search" className="px-2 font-ui text-xs font-medium text-ink-2">
-							Find a setting
-						</label>
+					<div className="relative mb-2 max-md:px-1 max-md:pt-1">
+						<SearchIcon
+							aria-hidden
+							className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3 max-md:left-4"
+						/>
 						<Input
+							aria-label="Search settings"
+							className="h-10 bg-card pl-9 pr-10 [&::-webkit-search-cancel-button]:appearance-none"
 							id="settings-search"
 							ref={searchRef}
 							type="search"
 							value={query}
-							placeholder="Voice, theme, key…"
+							placeholder="Search"
 							data-testid="settings-search"
 							onChange={(e) => setQuery(e.target.value)}
 							onKeyDown={(e) => {
@@ -336,6 +350,14 @@ function SettingsDialogBody({
 								setPhoneShowsSection(true);
 							}}
 						/>
+						{!query && (
+							<kbd
+								aria-hidden
+								className="q-kbd pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 max-md:hidden"
+							>
+								/
+							</kbd>
+						)}
 					</div>
 					{visibleSections.length === 0 && (
 						<p className="px-3 py-2 text-xs text-ink-2" data-testid="settings-search-empty">
