@@ -617,14 +617,14 @@ body {
  * W3 — presentation fixes (appended 2026-08-22)
  * ============================================================ */
 
-/* Streamdown's internal UI chrome (code blocks, tables, mermaid containers,
-   copy/download buttons) is styled with Tailwind utilities living in its dist
+/* Streamdown's internal UI chrome (code blocks, tables, copy/download buttons)
+   is styled with Tailwind utilities living in its dist
  * bundle. Tailwind v4 never scans node_modules, so without this line those
- * classes are dead — code blocks and mermaid containers rendered unstyled.
+ * classes are dead — code blocks and tables rendered unstyled.
  * (Streamdown README, "Tailwind CSS setup".) */
 @source "../node_modules/streamdown/dist/*.js";
 
-/* Token the streamdown utilities reference (code-block/mermaid chrome uses
+/* Token the streamdown utilities reference (code-block chrome uses
  * bg-sidebar / border-sidebar): map it onto the app's card surface. */
 @theme inline {
 	--color-sidebar: var(--card);

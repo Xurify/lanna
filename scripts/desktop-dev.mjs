@@ -48,7 +48,7 @@ process.on("SIGTERM", () => stop(0));
 const nextBin = require.resolve("next/dist/bin/next");
 // `--prod`: build once and serve the build. `next dev` compiles every route the
 // first time it is opened and ships unminified React, so each new tab is slow;
-// a build is what the app feels like (docs/research/slow-tabs.md).
+// a build is what the app feels like.
 if (PROD) {
 	const built = spawnSync(process.execPath, [nextBin, "build"], { cwd: root, stdio: "inherit" });
 	if (built.status !== 0) process.exit(built.status ?? 1);

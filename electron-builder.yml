@@ -81,8 +81,6 @@ files:
   - node_modules/universalify/**/*
   - node_modules/ms/**/*
   - node_modules/argparse/**/*
-  # Main-process ID-token signature verification (no bundled OAuth implementation).
-  - node_modules/jose/**/*
 extraResources:
   # The reminder toast's picture: electron/notifications-ipc.cjs hands Windows
   # this file's path, and build/ never rides inside the asar.
