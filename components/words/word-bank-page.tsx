@@ -10,6 +10,7 @@ import {
 	BookmarkCheckIcon,
 	CheckIcon,
 	ListOrderedIcon,
+	UndoIcon,
 	FileTextIcon,
 	BookmarkIcon,
 	PlusIcon,
@@ -549,7 +550,7 @@ export function WordBankPage({
 													<div className="flex items-center justify-between gap-2 whitespace-nowrap font-ui text-[11px] font-semibold">
 														<span
 															className={cn(
-																item.retention >= 80
+																item.known || item.retention >= 80
 																	? "text-go"
 																	: item.retention >= 40
 																		? "text-sun"
@@ -558,28 +559,21 @@ export function WordBankPage({
 																			: "text-muted-foreground",
 															)}
 														>
-															{item.retention >= 80
-																? "Can recall"
-																: item.retention > 0
-																	? "In progress"
-																	: item.known
-																		? "Marked known"
-																		: item.inDeck
-																			? "New"
-																			: "Not in Review"}
+															{item.known
+																? "Known"
+																: item.retention >= 80
+																	? "Can recall"
+																	: item.retention > 0
+																		? "In progress"
+																		: "New"}
 														</span>
-														{item.inDeck && <span className="text-foreground">{item.retention}%</span>}
+														<span className="text-foreground">{item.known ? 100 : item.retention}%</span>
 													</div>
-													<div
-														className={cn(
-															"mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent",
-															!item.inDeck && "invisible",
-														)}
-													>
+													<div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
 														<div
 															className={cn(
 																"lanna-fill rounded-full",
-																item.retention >= 80
+																item.known || item.retention >= 80
 																	? "bg-go"
 																	: item.retention >= 40
 																		? "bg-sun"
@@ -587,7 +581,7 @@ export function WordBankPage({
 																			? "bg-sky"
 																			: "bg-transparent",
 															)}
-															style={fillStyle(item.retention / 100)}
+															style={fillStyle(item.known ? 1 : item.retention / 100)}
 														/>
 													</div>
 												</div>
@@ -597,19 +591,19 @@ export function WordBankPage({
 														type="button"
 														onClick={() => void handleToggleKnown(item)}
 														aria-disabled={pending.has(`known:${item.slug}`)}
-														aria-pressed={item.known}
 														title={
-															item.known ? "Counted as known. Press to undo." : "Count this word as known from now on"
+															item.known ? "Stop counting this word as known" : "Count this word as known from now on"
 														}
 														data-testid="word-known"
-														className={cn(
-															"flex h-8 items-center gap-1.5 rounded-xl px-2.5 transition-colors pointer-coarse:h-11",
-															item.known ? "bg-teal-wash text-teal-2" : "bg-well text-foreground hover:bg-well-2",
-														)}
+														className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground pointer-coarse:h-11"
 													>
-														<CheckIcon aria-hidden className="size-4" />
+														{item.known ? (
+															<UndoIcon aria-hidden className="size-4" />
+														) : (
+															<CheckIcon aria-hidden className="size-4" />
+														)}
 														<span className="cap-center text-xs font-semibold">
-															{item.known ? "Known" : "I know this"}
+															{item.known ? "Unmark" : "I know this"}
 														</span>
 													</button>
 
