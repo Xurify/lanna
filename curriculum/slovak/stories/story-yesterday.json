@@ -1,0 +1,223 @@
+{
+	"title": "Dva rovnaké darčeky",
+	"topic": "Anna and her brother Pavol both bought their father the same book for his birthday, so the second copy went to grandpa",
+	"cover": "books",
+	"cast": [
+		{
+			"name": "Anna",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Otec",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Pavol",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Dedko",
+			"gender": "m",
+			"age": "old"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V piatok bola Anna v meste.",
+			"en": "On Friday Anna was in town."
+		},
+		{
+			"who": "narrator",
+			"sk": "Chcela kúpiť darček otcovi, lebo v sobotu mal narodeniny.",
+			"en": "She wanted to buy a present for her father, because on Saturday it was his birthday."
+		},
+		{
+			"who": "narrator",
+			"sk": "Otec rád číta, a tak mu kúpila knihu o Tatrách.",
+			"en": "Her father likes reading, so she bought him a book about the Tatras."
+		},
+		{
+			"who": "narrator",
+			"sk": "Kniha bola drahá, ale pekná.",
+			"en": "The book was expensive, but nice."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V sobotu prišla Anna k rodičom na obed.",
+			"en": "On Saturday Anna came to her parents' for lunch."
+		},
+		{
+			"who": "narrator",
+			"sk": "Prišiel aj jej brat Pavol.",
+			"en": "Her brother Pavol came too."
+		},
+		{
+			"who": "Anna",
+			"sk": "Oci, všetko najlepšie! Toto je darček pre teba.",
+			"en": "Dad, happy birthday! This present is for you."
+		},
+		{
+			"who": "Otec",
+			"sk": "Ďakujem, Anna! Kniha o Tatrách, super!",
+			"en": "Thank you, Anna! A book about the Tatras, great!"
+		},
+		{
+			"who": "Pavol",
+			"sk": "Oci, aj ja mám pre teba darček.",
+			"en": "Dad, I have a present for you too."
+		},
+		{
+			"who": "narrator",
+			"sk": "Otec otvoril aj druhý darček.",
+			"en": "Their father opened the second present too."
+		},
+		{
+			"who": "narrator",
+			"sk": "Bola to tá istá kniha!",
+			"en": "It was the same book!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Všetci sa smiali.",
+			"en": "Everyone laughed."
+		},
+		{
+			"who": "Pavol",
+			"sk": "Anna, kde si ju kúpila?",
+			"en": "Anna, where did you buy it?"
+		},
+		{
+			"who": "Anna",
+			"sk": "V obchode na námestí. A ty?",
+			"en": "In the shop on the square. And you?"
+		},
+		{
+			"who": "Pavol",
+			"sk": "Ja tiež! Pani v obchode mi povedala, že je to dobrá kniha.",
+			"en": "Me too! The woman in the shop told me it was a good book."
+		},
+		{
+			"who": "Anna",
+			"sk": "Aj mne to povedala!",
+			"en": "She told me that too!"
+		},
+		{
+			"who": "Otec",
+			"sk": "Nevadí. Jednu knihu dám dedkovi. Aj on má rád Tatry.",
+			"en": "Never mind. I'll give one book to Grandpa. He likes the Tatras too."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V nedeľu išli všetci k dedkovi.",
+			"en": "On Sunday they all went to their grandpa's."
+		},
+		{
+			"who": "narrator",
+			"sk": "Otec mu dal druhú knihu o Tatrách.",
+			"en": "Their father gave him the second book about the Tatras."
+		},
+		{
+			"who": "Dedko",
+			"sk": "Ďakujem! Keď som bol mladý, chodil som do Tatier každé leto.",
+			"en": "Thank you! When I was young, I went to the Tatras every summer."
+		},
+		{
+			"who": "Dedko",
+			"sk": "Teraz ich budem vidieť v knihe.",
+			"en": "Now I'll see them in a book."
+		},
+		{
+			"who": "narrator",
+			"sk": "Dedko čítal knihu celý večer.",
+			"en": "Grandpa read the book all evening."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "darček",
+			"en": "present, gift"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Čo kúpila Anna otcovi?",
+			"options": [
+				"Mapu",
+				"Knihu o Tatrách",
+				"Kávu"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Kto kúpil otcovi tú istú knihu?",
+			"options": [
+				"Dedko",
+				"Mama",
+				"Pavol"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Komu dal otec druhú knihu?",
+			"options": [
+				"Dedkovi",
+				"Anne",
+				"Pavlovi"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Anna bought her father a book about the Tatras for his birthday, and her brother Pavol bought the same book in the same shop. Their father gave the second copy to grandpa, who loved the Tatras when he was young.",
+	"glosses": {
+		"anna": {
+			"lemma": "Anna",
+			"gloss": "Anna (a name)"
+		},
+		"pavol": {
+			"lemma": "Pavol",
+			"gloss": "Pavol (a name)"
+		},
+		"tatrách": {
+			"lemma": "Tatry",
+			"gloss": "the Tatras (mountains)"
+		},
+		"tatier": {
+			"lemma": "Tatry",
+			"gloss": "the Tatras (mountains)"
+		},
+		"oci": {
+			"lemma": "oco",
+			"gloss": "Dad (talking to him)"
+		},
+		"najlepšie": {
+			"lemma": "najlepší",
+			"gloss": "best (všetko najlepšie: happy birthday)"
+		},
+		"druhý": {
+			"lemma": "druhý",
+			"gloss": "second; the other"
+		},
+		"druhú": {
+			"lemma": "druhý",
+			"gloss": "second; the other"
+		},
+		"istá": {
+			"lemma": "istý",
+			"gloss": "same (tá istá: the same one)"
+		},
+		"budem": {
+			"lemma": "byť",
+			"gloss": "I will (budem + infinitive: future)"
+		}
+	}
+}

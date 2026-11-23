@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { splitFormNote, wordTypeLabel } from "../components/reading/word.tsx";
+import { describesToken, splitFormNote, wordTypeLabel } from "../components/reading/word.tsx";
 
 describe("splitFormNote", () => {
 	it("cuts a case note around the dictionary form", () => {
@@ -32,4 +32,27 @@ describe("wordTypeLabel", () => {
 		assert.equal(wordTypeLabel("noun"), "noun");
 		assert.equal(wordTypeLabel("Places"), "places");
 	});
+});
+
+describe("describesToken", () => {
+	it("keeps the lookup's form note and word type when it found the token's own word", () => {
+		assert.equal(describesToken({ lemma: "tešiť" }, { lemma: "tešiť" }), true);
+		assert.equal(describesToken({ lemma: "Tatry" }, { lemma: "tatry" }), true);
+	});
+
+	it("drops them when the story glossed the form as another word than the lookup found", () => {
+		assert.equal(describesToken({ lemma: "ja" }, { lemma: "mať" }), false);
+		assert.equal(describesToken({ lemma: "oco" }, { lemma: "oko" }), false);
+	});
+
+	it("trusts the lookup when either side names no word", () => {
+		assert.equal(describesToken({}, { lemma: "mať" }), true);
+		assert.equal(describesToken({ lemma: "ja" }, null), true);
+	});
+});
+
+it("a reflexive override still describes the same dictionary word", () => {
+	assert.equal(describesToken({ lemma: "dať si" }, { lemma: "dať" }), true);
+	assert.equal(describesToken({ lemma: "sadnúť si" }, { lemma: "sadnúť" }), true);
+	assert.equal(describesToken({ lemma: "oco" }, { lemma: "oko" }), false);
 });

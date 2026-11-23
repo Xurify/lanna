@@ -11,7 +11,7 @@ const TMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), "lanna-chapter-stories-")
 process.env.LANNA_DATA_DIR = TMP_DATA;
 process.env.LANNA_PROFILE = "slovak";
 
-const { CHAPTER_STORIES } = await import("../src/core/chapter-stories.ts");
+const { CHAPTER_STORIES, chapterStoriesFor } = await import("../src/core/chapter-stories.ts");
 const { allChapters, curriculumState, curriculumUnit } = await import("../src/core/curriculum.ts");
 const { chapterArc } = await import("../src/core/arc.ts");
 const { keepChapterStory, SHIPPED_STORY_MODEL } = await import("../src/server/chapter-stories.ts");
@@ -40,20 +40,48 @@ describe("chapter stories on the Slovak path", () => {
 		assert.equal(curriculumUnit("story-cafe")?.kind, "story");
 	});
 
-	it("the café story is glossed in full and kept in At the café at A1", async () => {
+	const a1Stories = [
+		{ id: "story-hello", chapter: "hello", after: "present", goal: "can-introduce" },
+		{ id: "story-town", chapter: "town", after: "lx-transport", goal: "can-directions" },
+		{ id: "story-family", chapter: "family", after: "lx-home", goal: "can-family" },
+		{ id: "story-everyday", chapter: "everyday", after: "lx-colours", goal: "can-describe-day" },
+		{ id: "story-yesterday", chapter: "yesterday", after: "byt-past", goal: "can-tell-day" },
+	];
+	for (const s of a1Stories) {
+		it(`puts ${s.id} right after ${s.after} in ${s.chapter}, before ${s.goal}`, () => {
+			const ch = chapterOf(s.id)!;
+			assert.equal(ch.id, s.chapter);
+			assert.equal(ch.units[ch.units.indexOf(s.after) + 1], s.id);
+			assert.ok(ch.units.indexOf(s.id) < ch.units.indexOf(s.goal));
+			assert.equal(curriculumUnit(s.id)?.kind, "story");
+		});
+	}
+
+	it("the café story is kept in At the café at A1, and a name the dictionary took for a verb is glossed as a name", async () => {
 		const story = (await keepChapterStory("story-cafe"))!;
 		assert.equal(story.chapter, "cafe");
 		assert.equal(story.level, "A1");
 		assert.equal(story.cover, "cup");
-		const words = story.sentences.flatMap((s) => s.tokens.filter((t) => t.word));
-		assert.deepEqual(
-			words.filter((t) => !t.gloss).map((t) => t.text),
-			[],
-		);
-		const name = words.find((t) => t.text === "Lucia")!;
+		const name = story.sentences.flatMap((s) => s.tokens).find((t) => t.text === "Lucia")!;
 		assert.equal(name.gloss, "Lucia (a name)");
 		assert.equal(name.cat, undefined, "a name the dictionary took for a verb keeps none of the verb's labels");
 	});
+
+	for (const s of chapterStoriesFor("slovak")) {
+		it(`${s.id} is glossed in full and kept in its chapter`, async () => {
+			const story = (await keepChapterStory(s.id))!;
+			assert.equal(story.chapter, chapterOf(s.id)!.id);
+			const words = story.sentences.flatMap((x) => x.tokens.filter((t) => t.word));
+			assert.deepEqual(
+				words.filter((t) => !t.gloss).map((t) => t.text),
+				[],
+			);
+			assert.deepEqual(
+				words.filter((t) => t.gloss?.endsWith("(a name)") && t.cat).map((t) => `${t.text}: ${t.cat}`),
+				[],
+			);
+		});
+	}
 
 	it("two opens at once write one copy", async () => {
 		await Promise.all([keepChapterStory("story-rainbow"), keepChapterStory("story-rainbow")]);
