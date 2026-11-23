@@ -86,7 +86,7 @@ export function calculateRetention(card?: {
 	return score;
 }
 
-/** "mastered" means a card that has been answered at least once and scores 80 or more. The UI calls it "can recall", never "known words". */
+/** "mastered" means a card that has been answered at least once and scores 80 or more. The Words list counts it as Known, next to the words the learner marked. */
 export function classifyWordState(card?: {
 	state: "new" | "learning" | "review";
 	reps?: number;

@@ -963,7 +963,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 			state = classifyWordState(card);
 
 			if (state === "mastered") wordsMastered++;
-			else if (state === "learning") wordsLearning++;
+			else if (state === "learning" && !known) wordsLearning++;
 
 			if (card.due && new Date(card.due).getTime() <= now.getTime()) {
 				wordsDue++;
@@ -980,7 +980,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 		if (query.status === "favorite" && !favorite) continue;
 		if (query.status === "known" && !known && state !== "mastered") continue;
 		if (query.status === "mastered" && state !== "mastered") continue;
-		if (query.status === "learning" && state !== "learning") continue;
+		if (query.status === "learning" && (state !== "learning" || known)) continue;
 		if (query.status === "new" && state !== "new") continue;
 		if (query.status === "unseen" && state !== "unseen") continue;
 		if (query.status === "due" && (!due || new Date(due).getTime() > now.getTime())) continue;

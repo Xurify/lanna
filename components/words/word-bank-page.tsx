@@ -160,7 +160,7 @@ export function WordBankPage({
 	// Toggle word favorite
 	const patchWord = (slug: string, patch: Partial<WordBankItem>) =>
 		setWords((prev) => prev.map((w) => (w.slug === slug ? { ...w, ...patch } : w)));
-	const shiftSummary = (key: "wordsFavorited" | "wordsKnown", delta: number) =>
+	const shiftSummary = (key: "wordsFavorited" | "wordsKnown" | "wordsLearning", delta: number) =>
 		setSummary((current) => current && { ...current, [key]: Math.max(0, current[key] + delta) });
 	const setBusy = (key: string, busy: boolean) =>
 		setPending((current) => {
@@ -200,8 +200,12 @@ export function WordBankPage({
 		const known = !item.known;
 		setWordError("");
 		setBusy(key, true);
+		const shiftCounts = (sign: 1 | -1) => {
+			if (item.state !== "mastered") shiftSummary("wordsKnown", sign);
+			if (item.state === "learning") shiftSummary("wordsLearning", -sign);
+		};
 		patchWord(item.slug, { known });
-		if (item.state !== "mastered") shiftSummary("wordsKnown", known ? 1 : -1);
+		shiftCounts(known ? 1 : -1);
 		const saved = await saveKnown(item.slug, known);
 		setBusy(key, false);
 		if (saved) {
@@ -209,11 +213,14 @@ export function WordBankPage({
 			return;
 		}
 		patchWord(item.slug, { known: item.known });
-		if (item.state !== "mastered") shiftSummary("wordsKnown", known ? -1 : 1);
+		shiftCounts(known ? -1 : 1);
 		setWordError(`Could not save ${item.lemma}. Try again.`);
 	};
 
-	const handleEnqueueReview = async (item: WordBankItem) => {
+	const handleEnqueueReview = async (item: WordBankItem): Promise<void> => {
+		const key = `review:${item.slug}`;
+		if (pending.has(key)) return;
+		setBusy(key, true);
 		setWordError("");
 		try {
 			const res = await fetch("/api/review/enqueue", {
@@ -225,6 +232,8 @@ export function WordBankPage({
 			patchWord(item.slug, { inDeck: true });
 		} catch {
 			setWordError(`Could not add ${item.lemma} to Review. Try again.`);
+		} finally {
+			setBusy(key, false);
 		}
 	};
 
@@ -459,8 +468,8 @@ export function WordBankPage({
 											item={item}
 											knownPending={pending.has(`known:${item.slug}`)}
 											favoritePending={pending.has(`favorite:${item.slug}`)}
-											onToggleKnown={() => void handleToggleKnown(item)}
-											onEnqueue={() => void handleEnqueueReview(item)}
+											onToggleKnown={() => handleToggleKnown(item)}
+											onEnqueue={() => handleEnqueueReview(item)}
 											onToggleFavorite={() => void handleToggleFavorite(item)}
 										/>
 									))}
@@ -682,26 +691,40 @@ function WordRow({
 	item: WordBankItem;
 	knownPending: boolean;
 	favoritePending: boolean;
-	onToggleKnown: () => void;
-	onEnqueue: () => void;
+	onToggleKnown: () => Promise<void>;
+	onEnqueue: () => Promise<void>;
 	onToggleFavorite: () => void;
 }) {
 	const measured = item.inDeck && item.reps > 0;
-	const status = item.known || (measured && item.retention >= 80) ? "Known" : measured ? "In progress" : "New";
+	const status =
+		item.known || (measured && item.retention >= 80)
+			? "Known"
+			: measured
+				? "In progress"
+				: item.inDeck
+					? "In Review"
+					: "New";
 	const share = item.known ? 1 : measured ? item.retention / 100 : 0;
 	const evidence = item.known
 		? "You marked it known"
 		: measured
-			? `Review: ${item.retention}% recall`
+			? `Review score: ${item.retention}%`
 			: item.inDeck
 				? "In Review, not practised yet"
 				: "Not in Review";
-	const showBar = item.known || item.inDeck;
+	const showBar = item.known || measured;
 	const facts = [item.pos, item.gender?.replace("-", " "), item.rank && item.rank <= 1000 ? `#${item.rank}` : null]
 		.filter(Boolean)
 		.join(" · ");
 	const partialMatch =
 		item.match?.span && (item.match.span[0] > 0 || item.match.span[1] < item.lemma.length) ? item.match.span : null;
+	const starRef = useRef<HTMLButtonElement>(null);
+	const keepFocus = async (run: () => Promise<void>) => {
+		await run();
+		requestAnimationFrame(() => {
+			if (document.activeElement === document.body) starRef.current?.focus();
+		});
+	};
 	const action =
 		"flex h-8 items-center gap-1.5 rounded-lg px-2 text-muted-foreground transition-colors hover:bg-well hover:text-foreground pointer-coarse:h-11";
 	return (
@@ -780,40 +803,32 @@ function WordRow({
 					</div>
 				</div>
 				<div className="-mx-2 flex items-center gap-0.5">
-					{item.known ? (
+					{(item.known || !item.inDeck) && (
 						<button
 							type="button"
-							onClick={onToggleKnown}
+							onClick={() => void keepFocus(onToggleKnown)}
 							aria-disabled={knownPending}
-							title="Stop counting this word as known"
+							title={item.known ? "Stop counting this word as known" : "Count this word as known from now on"}
 							data-testid="word-known"
 							className={action}
 						>
-							<UndoIcon aria-hidden className="size-4" />
-							<span className="cap-center text-xs font-semibold">Unmark</span>
+							{item.known ? <UndoIcon aria-hidden className="size-4" /> : <CheckIcon aria-hidden className="size-4" />}
+							<span className="cap-center text-xs font-semibold">{item.known ? "Unmark" : "I know this"}</span>
 						</button>
-					) : (
-						!item.inDeck && (
-							<>
-								<button
-									type="button"
-									onClick={onToggleKnown}
-									aria-disabled={knownPending}
-									title="Count this word as known from now on"
-									data-testid="word-known"
-									className={action}
-								>
-									<CheckIcon aria-hidden className="size-4" />
-									<span className="cap-center text-xs font-semibold">I know this</span>
-								</button>
-								<button type="button" onClick={onEnqueue} title="Practise this word in Review" className={action}>
-									<BookmarkIcon aria-hidden className="size-4" />
-									<span className="cap-center text-xs font-semibold">Review</span>
-								</button>
-							</>
-						)
+					)}
+					{!item.known && !item.inDeck && (
+						<button
+							type="button"
+							onClick={() => void keepFocus(onEnqueue)}
+							title="Practise this word in Review"
+							className={action}
+						>
+							<BookmarkIcon aria-hidden className="size-4" />
+							<span className="cap-center text-xs font-semibold">Review</span>
+						</button>
 					)}
 					<button
+						ref={starRef}
 						type="button"
 						onClick={onToggleFavorite}
 						aria-disabled={favoritePending}

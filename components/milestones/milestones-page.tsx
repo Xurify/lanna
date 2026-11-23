@@ -143,6 +143,10 @@ export function MilestonesPage({
 	const [sourcesOpen, setSourcesOpen] = useState(true);
 	const [hiddenOpen, setHiddenOpen] = useState(false);
 	const [queued, setQueued] = useState<Set<string>>(new Set());
+	const [nextWords, setNextWords] = useState<NextWord[] | null>(null);
+	useEffect(() => {
+		if (!nextWords && report?.nextWords.length) setNextWords(report.nextWords);
+	}, [report, nextWords]);
 
 	const reload = useCallback(async () => {
 		try {
@@ -327,8 +331,8 @@ export function MilestonesPage({
 						if (id) setOpen(id);
 					}}
 				/>
-				{report && report.nextWords.length > 0 && (
-					<NextWords words={report.nextWords} queued={queued} onQueue={queue} onKnownChange={() => void reload()} />
+				{nextWords && (
+					<NextWords words={nextWords} queued={queued} onQueue={queue} onKnownChange={() => void reload()} />
 				)}
 
 				{/* The assumptions and the studies. */}

@@ -258,6 +258,40 @@ describe("words marked known", () => {
 		assert.equal(getWordBank({ status: "known" }).total, 0);
 	});
 
+	it("puts a word that is marked and still in Review under Known only", async () => {
+		const { knownWordStore } = await import("../src/store/known-words.ts");
+		const { reviewStore } = await import("../src/store/review.ts");
+		const cards = reviewStore.readCards();
+		reviewStore.writeCards({
+			...cards,
+			"leto#0": {
+				id: "leto#0",
+				slug: "leto",
+				lemma: "leto",
+				gloss: "summer",
+				sentence: "",
+				translation: "",
+				answer: "leto",
+				at: 0,
+				state: "learning",
+				due: "2999-01-01T00:00:00.000Z",
+				reps: 1,
+				lapses: 0,
+				createdAt: "2026-11-01T00:00:00.000Z",
+			},
+		});
+		assert.ok(getWordBank({ status: "learning", limit: 100 }).items.some((w) => w.slug === "leto"));
+		knownWordStore.set("leto", "leto", true);
+		const learning = getWordBank({ status: "learning", limit: 100 });
+		assert.equal(
+			learning.items.some((w) => w.slug === "leto"),
+			false,
+		);
+		assert.ok(getWordBank({ status: "known", limit: 100 }).items.some((w) => w.slug === "leto"));
+		knownWordStore.set("leto", "leto", false);
+		reviewStore.writeCards(cards);
+	});
+
 	it("shows a homograph's own sense in its example, never a flagged sentence", () => {
 		const items = getWordBank({ search: "zima", limit: 10 }).items;
 		assert.equal(items.find((w) => w.slug === "zima-adv")?.example?.sk, "Nie je ti zima?");
