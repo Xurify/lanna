@@ -1102,7 +1102,7 @@ function NextWords({
 				<p className="font-ui text-xs text-muted-foreground">commonest in the dictionary's sentences, not yet yours</p>
 			</div>
 			<p className="mt-1 font-prose text-xs text-muted-foreground">
-				Tap a word you already know to count it as known. Tap again to undo.
+				Tap a word you already know to count it. Tap again to undo. Counted words leave this list next time.
 			</p>
 			<ul className="mt-3 flex flex-wrap gap-2">
 				{wordsAsFirstShown.map((w) => {
@@ -1126,12 +1126,12 @@ function NextWords({
 								)}
 							>
 								<span className="cap-center">
-									<b>{w.lemma}</b> <span className="text-muted-foreground">{w.gloss}</span>
+									<b>{w.lemma}</b> <span className="text-muted-foreground">{w.gloss.split(";")[0]}</span>
 								</span>
 								<CheckIcon
 									aria-hidden
 									strokeWidth={2.5}
-									className={cn("size-3.5 shrink-0", isKnown ? "text-teal" : "text-ink-3 opacity-40")}
+									className={cn("size-3.5 shrink-0", isKnown ? "text-teal" : "invisible")}
 								/>
 							</button>
 						</li>

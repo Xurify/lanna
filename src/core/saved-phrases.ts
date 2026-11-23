@@ -52,7 +52,7 @@ export interface WordBankSummary {
 	wordsDue: number;
 	wordsFavorited: number;
 	savedPhrasesCount: number;
-	wordsMarkedKnown: number;
+	wordsKnown: number;
 	averageRetention: number;
 }
 

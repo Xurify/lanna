@@ -932,6 +932,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 	let wordsMastered = 0;
 	let wordsLearning = 0;
 	let wordsDue = 0;
+	let wordsKnown = 0;
 	let totalRetentionSum = 0;
 	let cardsReviewedCount = 0;
 
@@ -975,8 +976,9 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 		}
 
 		// Apply filters
+		if (known || state === "mastered") wordsKnown++;
 		if (query.status === "favorite" && !favorite) continue;
-		if (query.status === "known" && !known) continue;
+		if (query.status === "known" && !known && state !== "mastered") continue;
 		if (query.status === "mastered" && state !== "mastered") continue;
 		if (query.status === "learning" && state !== "learning") continue;
 		if (query.status === "new" && state !== "new") continue;
@@ -1052,7 +1054,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 		wordsLearning,
 		wordsDue,
 		wordsFavorited: favoritesSet.size,
-		wordsMarkedKnown: entries.reduce((n, e) => n + (knownSet.has(e.slug) ? 1 : 0), 0),
+		wordsKnown,
 		savedPhrasesCount: savedPhrases.length,
 		averageRetention: cardsReviewedCount > 0 ? Math.round(totalRetentionSum / cardsReviewedCount) : 0,
 	};

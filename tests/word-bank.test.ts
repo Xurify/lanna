@@ -253,7 +253,7 @@ describe("words marked known", () => {
 			marked.items.map((w) => w.slug),
 			["zima-adv"],
 		);
-		assert.equal(marked.summary.wordsMarkedKnown, 1);
+		assert.equal(marked.summary.wordsKnown, 1);
 		knownWordStore.set("zima-adv", "zima", false);
 		assert.equal(getWordBank({ status: "known" }).total, 0);
 	});

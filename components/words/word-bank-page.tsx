@@ -7,7 +7,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
 	BookOpenIcon,
-	BookmarkCheckIcon,
 	CheckIcon,
 	ListOrderedIcon,
 	UndoIcon,
@@ -161,7 +160,7 @@ export function WordBankPage({
 	// Toggle word favorite
 	const patchWord = (slug: string, patch: Partial<WordBankItem>) =>
 		setWords((prev) => prev.map((w) => (w.slug === slug ? { ...w, ...patch } : w)));
-	const shiftSummary = (key: "wordsFavorited" | "wordsMarkedKnown", delta: number) =>
+	const shiftSummary = (key: "wordsFavorited" | "wordsKnown", delta: number) =>
 		setSummary((current) => current && { ...current, [key]: Math.max(0, current[key] + delta) });
 	const setBusy = (key: string, busy: boolean) =>
 		setPending((current) => {
@@ -202,7 +201,7 @@ export function WordBankPage({
 		setWordError("");
 		setBusy(key, true);
 		patchWord(item.slug, { known });
-		shiftSummary("wordsMarkedKnown", known ? 1 : -1);
+		if (item.state !== "mastered") shiftSummary("wordsKnown", known ? 1 : -1);
 		const saved = await saveKnown(item.slug, known);
 		setBusy(key, false);
 		if (saved) {
@@ -210,7 +209,7 @@ export function WordBankPage({
 			return;
 		}
 		patchWord(item.slug, { known: item.known });
-		shiftSummary("wordsMarkedKnown", known ? -1 : 1);
+		if (item.state !== "mastered") shiftSummary("wordsKnown", known ? -1 : 1);
 		setWordError(`Could not save ${item.lemma}. Try again.`);
 	};
 
@@ -420,12 +419,10 @@ export function WordBankPage({
 						>
 							{[
 								{ id: "all", label: "All", count: undefined },
-								{ id: "favorite", label: "Favorites", count: summary?.wordsFavorited },
-								{ id: "mastered", label: "Can recall (≥80%)", count: summary?.wordsMastered },
+								{ id: "known", label: "Known", count: summary?.wordsKnown },
 								{ id: "learning", label: "In progress", count: summary?.wordsLearning },
 								{ id: "due", label: "Due for review", count: summary?.wordsDue },
-								{ id: "new", label: "New in the deck", count: undefined },
-								{ id: "known", label: "Marked known", count: summary?.wordsMarkedKnown },
+								{ id: "favorite", label: "Favorites", count: summary?.wordsFavorited },
 							].map((tab) => (
 								<button
 									key={tab.id}
@@ -454,201 +451,21 @@ export function WordBankPage({
 						))}
 
 						<div className="space-y-3">
-							{words.map((item) => {
-								return (
-									<div
-										key={item.slug}
-										className="group rounded-2xl border border-border/80 bg-card p-4 transition-colors hover:border-border hover:bg-card"
-									>
-										<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-											{/* Word Left side */}
-											<div className="flex-1">
-												<div className="flex flex-wrap items-center gap-2">
-													{/* Audio button */}
-													<button
-														type="button"
-														onClick={() => void speak(item.lemma).catch(() => {})}
-														title="Say the word"
-														aria-label={`Say ${item.lemma}`}
-														className="grid size-8 shrink-0 place-items-center rounded-full bg-accent/80 text-foreground transition-transform hover:scale-105 active:scale-95"
-													>
-														<Volume2Icon className="size-4" />
-													</button>
-
-													<span className="font-prose text-xl font-semibold text-foreground">
-														{item.match?.span ? (
-															<>
-																{item.lemma.slice(0, item.match.span[0])}
-																<mark className="bg-transparent font-bold text-teal-2 underline decoration-teal decoration-2 underline-offset-4">
-																	{item.lemma.slice(item.match.span[0], item.match.span[1])}
-																</mark>
-																{item.lemma.slice(item.match.span[1])}
-															</>
-														) : (
-															item.lemma
-														)}
-													</span>
-
-													{/* Badges */}
-													{item.pos && (
-														<span className="rounded-lg bg-accent px-2 py-0.5 font-ui text-[11px] font-semibold text-muted-foreground">
-															{item.pos}
-														</span>
-													)}
-
-													{item.gender && (
-														<span className="rounded-lg bg-accent/60 px-1.5 py-0.5 font-ui text-[11px] text-muted-foreground">
-															{item.gender.replace("-", " ")}
-														</span>
-													)}
-
-													{item.rank && item.rank <= 1000 && (
-														<span className="rounded-lg bg-gold/15 px-2 py-0.5 font-ui text-[11px] font-semibold text-gold">
-															#{item.rank}
-														</span>
-													)}
-												</div>
-
-												{/* English Gloss */}
-												<p className="mt-1.5 pl-10 font-prose text-sm font-medium text-muted-foreground">
-													{item.gloss}
-												</p>
-												{item.match?.via && (
-													<p className="mt-0.5 pl-10 font-ui text-xs text-ink-3" data-testid="word-match-kind">
-														{item.match.kind === "meaning"
-															? `Matches meaning: ${item.match.via}`
-															: item.match.kind === "form"
-																? `Matches the form: ${item.match.via}`
-																: `Matches an example: ${item.match.via}`}
-													</p>
-												)}
-
-												{/* Example Sentence */}
-												{item.example && (
-													<div className="mt-3 rounded-xl border border-border/40 bg-accent/25 p-3 pl-3.5 sm:ml-10">
-														<div className="flex items-center gap-2">
-															<button
-																type="button"
-																onClick={() => void speak(item.example!.sk).catch(() => {})}
-																className="text-muted-foreground hover:text-foreground"
-																title="Play the sentence"
-																aria-label="Play the sentence"
-															>
-																<Volume2Icon className="size-3.5" />
-															</button>
-															<p className="cap-center font-prose text-sm text-foreground">{item.example.sk}</p>
-														</div>
-														<p className="mt-1 pl-5.5 font-prose text-xs text-muted-foreground">{item.example.en}</p>
-													</div>
-												)}
-											</div>
-
-											{/* Right side: Retention Gauge & Actions */}
-											<div className="flex flex-col gap-3 sm:items-end">
-												{/* Lingvist-style Memory Retention Gauge */}
-												<div className="w-full sm:w-36">
-													<div className="flex items-center justify-between gap-2 whitespace-nowrap font-ui text-[11px] font-semibold">
-														<span
-															className={cn(
-																item.known || item.retention >= 80
-																	? "text-go"
-																	: item.retention >= 40
-																		? "text-sun"
-																		: item.retention > 0
-																			? "text-sky"
-																			: "text-muted-foreground",
-															)}
-														>
-															{item.known
-																? "Known"
-																: item.retention >= 80
-																	? "Can recall"
-																	: item.retention > 0
-																		? "In progress"
-																		: "New"}
-														</span>
-														<span className="text-foreground">{item.known ? 100 : item.retention}%</span>
-													</div>
-													<div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
-														<div
-															className={cn(
-																"lanna-fill rounded-full",
-																item.known || item.retention >= 80
-																	? "bg-go"
-																	: item.retention >= 40
-																		? "bg-sun"
-																		: item.retention > 0
-																			? "bg-sky"
-																			: "bg-transparent",
-															)}
-															style={fillStyle(item.known ? 1 : item.retention / 100)}
-														/>
-													</div>
-												</div>
-
-												<div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
-													<button
-														type="button"
-														onClick={() => void handleToggleKnown(item)}
-														aria-disabled={pending.has(`known:${item.slug}`)}
-														title={
-															item.known ? "Stop counting this word as known" : "Count this word as known from now on"
-														}
-														data-testid="word-known"
-														className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground pointer-coarse:h-11"
-													>
-														{item.known ? (
-															<UndoIcon aria-hidden className="size-4" />
-														) : (
-															<CheckIcon aria-hidden className="size-4" />
-														)}
-														<span className="cap-center text-xs font-semibold">
-															{item.known ? "Unmark" : "I know this"}
-														</span>
-													</button>
-
-													{item.inDeck ? (
-														<span
-															title="The word is in your Review deck"
-															className="flex h-8 items-center gap-1.5 px-2 text-teal-2"
-														>
-															<BookmarkCheckIcon aria-hidden className="size-4" />
-															<span className="cap-center text-xs font-semibold">In Review</span>
-														</span>
-													) : (
-														<button
-															type="button"
-															onClick={() => void handleEnqueueReview(item)}
-															title="Practise this word in Review"
-															className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground pointer-coarse:h-11"
-														>
-															<BookmarkIcon aria-hidden className="size-4" />
-															<span className="cap-center text-xs font-semibold">Add to Review</span>
-														</button>
-													)}
-
-													<button
-														type="button"
-														onClick={() => void handleToggleFavorite(item)}
-														aria-disabled={pending.has(`favorite:${item.slug}`)}
-														aria-pressed={item.favorite}
-														aria-label={`Favorite ${item.lemma}`}
-														title={item.favorite ? "Remove from favorites" : "Add to favorites"}
-														className={cn(
-															"grid size-8 place-items-center rounded-xl transition-colors pointer-coarse:size-11",
-															item.favorite
-																? "bg-gold/20 text-gold"
-																: "text-muted-foreground hover:bg-accent hover:text-foreground",
-														)}
-													>
-														<StarIcon aria-hidden className={cn("size-4", item.favorite && "fill-gold")} />
-													</button>
-												</div>
-											</div>
-										</div>
-									</div>
-								);
-							})}
+							{words.length > 0 && (
+								<ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+									{words.map((item) => (
+										<WordRow
+											key={item.slug}
+											item={item}
+											knownPending={pending.has(`known:${item.slug}`)}
+											favoritePending={pending.has(`favorite:${item.slug}`)}
+											onToggleKnown={() => void handleToggleKnown(item)}
+											onEnqueue={() => void handleEnqueueReview(item)}
+											onToggleFavorite={() => void handleToggleFavorite(item)}
+										/>
+									))}
+								</ul>
+							)}
 
 							{words.length === 0 && !loadingWords && (
 								<EmptyState
@@ -851,5 +668,167 @@ function WordsTabButton({
 				</span>
 			)}
 		</button>
+	);
+}
+
+function WordRow({
+	item,
+	knownPending,
+	favoritePending,
+	onToggleKnown,
+	onEnqueue,
+	onToggleFavorite,
+}: {
+	item: WordBankItem;
+	knownPending: boolean;
+	favoritePending: boolean;
+	onToggleKnown: () => void;
+	onEnqueue: () => void;
+	onToggleFavorite: () => void;
+}) {
+	const measured = item.inDeck && item.reps > 0;
+	const status = item.known || (measured && item.retention >= 80) ? "Known" : measured ? "In progress" : "New";
+	const share = item.known ? 1 : measured ? item.retention / 100 : 0;
+	const evidence = item.known
+		? "You marked it known"
+		: measured
+			? `Review: ${item.retention}% recall`
+			: item.inDeck
+				? "In Review, not practised yet"
+				: "Not in Review";
+	const showBar = item.known || item.inDeck;
+	const facts = [item.pos, item.gender?.replace("-", " "), item.rank && item.rank <= 1000 ? `#${item.rank}` : null]
+		.filter(Boolean)
+		.join(" · ");
+	const partialMatch =
+		item.match?.span && (item.match.span[0] > 0 || item.match.span[1] < item.lemma.length) ? item.match.span : null;
+	const action =
+		"flex h-8 items-center gap-1.5 rounded-lg px-2 text-muted-foreground transition-colors hover:bg-well hover:text-foreground pointer-coarse:h-11";
+	return (
+		<li className="grid gap-x-8 gap-y-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_13rem] sm:px-5">
+			<div className="min-w-0">
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+					<button
+						type="button"
+						onClick={() => void speak(item.lemma).catch(() => {})}
+						title="Say the word"
+						aria-label={`Say ${item.lemma}`}
+						className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-well hover:text-foreground"
+					>
+						<Volume2Icon aria-hidden className="size-4" />
+					</button>
+					<span className="cap-center font-prose text-lg font-semibold text-foreground">
+						{partialMatch ? (
+							<>
+								{item.lemma.slice(0, partialMatch[0])}
+								<mark className="bg-transparent text-teal-2">{item.lemma.slice(partialMatch[0], partialMatch[1])}</mark>
+								{item.lemma.slice(partialMatch[1])}
+							</>
+						) : (
+							item.lemma
+						)}
+					</span>
+					{facts && (
+						<span
+							className="cap-center font-ui text-xs text-muted-foreground"
+							title={item.rank ? `#${item.rank} by frequency` : undefined}
+						>
+							{facts}
+						</span>
+					)}
+				</div>
+				<p className="font-prose text-[15px] text-ink-2">{item.gloss}</p>
+				{item.match?.via && (
+					<p className="mt-0.5 font-ui text-xs text-ink-3" data-testid="word-match-kind">
+						{item.match.kind === "meaning"
+							? `Matches meaning: ${item.match.via}`
+							: item.match.kind === "form"
+								? `Matches the form: ${item.match.via}`
+								: `Matches an example: ${item.match.via}`}
+					</p>
+				)}
+				{item.example && (
+					<div className="mt-2.5 border-l border-line-2 pl-3">
+						<p className="font-prose text-sm text-foreground">
+							{item.example.sk}{" "}
+							<button
+								type="button"
+								onClick={() => void speak(item.example!.sk).catch(() => {})}
+								title="Play the sentence"
+								aria-label="Play the sentence"
+								className="inline-grid size-6 translate-y-[3px] place-items-center rounded-full text-muted-foreground hover:bg-well hover:text-foreground"
+							>
+								<Volume2Icon aria-hidden className="size-3.5" />
+							</button>
+						</p>
+						<p className="font-prose text-[13px] text-muted-foreground">{item.example.en}</p>
+					</div>
+				)}
+			</div>
+
+			<div className="flex flex-col gap-2">
+				<div title={evidence} data-testid="word-status">
+					<div className="flex items-baseline justify-between gap-2 whitespace-nowrap font-ui text-xs">
+						<span className={status === "New" ? "text-muted-foreground" : "text-foreground"}>{status}</span>
+						{showBar && <span className="tabular-nums text-muted-foreground">{Math.round(share * 100)}%</span>}
+					</div>
+					<div
+						aria-hidden
+						className={cn("mt-1.5 h-1 w-full overflow-hidden rounded-full bg-well-2", !showBar && "invisible")}
+					>
+						<div className="lanna-fill rounded-full bg-teal" style={fillStyle(share)} />
+					</div>
+				</div>
+				<div className="-mx-2 flex items-center gap-0.5">
+					{item.known ? (
+						<button
+							type="button"
+							onClick={onToggleKnown}
+							aria-disabled={knownPending}
+							title="Stop counting this word as known"
+							data-testid="word-known"
+							className={action}
+						>
+							<UndoIcon aria-hidden className="size-4" />
+							<span className="cap-center text-xs font-semibold">Unmark</span>
+						</button>
+					) : (
+						!item.inDeck && (
+							<>
+								<button
+									type="button"
+									onClick={onToggleKnown}
+									aria-disabled={knownPending}
+									title="Count this word as known from now on"
+									data-testid="word-known"
+									className={action}
+								>
+									<CheckIcon aria-hidden className="size-4" />
+									<span className="cap-center text-xs font-semibold">I know this</span>
+								</button>
+								<button type="button" onClick={onEnqueue} title="Practise this word in Review" className={action}>
+									<BookmarkIcon aria-hidden className="size-4" />
+									<span className="cap-center text-xs font-semibold">Review</span>
+								</button>
+							</>
+						)
+					)}
+					<button
+						type="button"
+						onClick={onToggleFavorite}
+						aria-disabled={favoritePending}
+						aria-pressed={item.favorite}
+						aria-label={`Favorite ${item.lemma}`}
+						title={item.favorite ? "Remove from favorites" : "Add to favorites"}
+						className={cn(
+							"ml-auto grid size-8 place-items-center rounded-lg transition-colors hover:bg-well pointer-coarse:size-11",
+							item.favorite ? "text-gold" : "text-muted-foreground hover:text-foreground",
+						)}
+					>
+						<StarIcon aria-hidden className={cn("size-4", item.favorite && "fill-gold")} />
+					</button>
+				</div>
+			</div>
+		</li>
 	);
 }
