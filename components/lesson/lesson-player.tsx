@@ -22,7 +22,6 @@ import {
 	ChartColumnIcon,
 	ChevronDownIcon,
 	FlagIcon,
-	LanguagesIcon,
 	LoaderCircleIcon,
 	SnailIcon,
 	TimerIcon,
@@ -64,7 +63,7 @@ import { TaskGrid } from "@/components/lesson/task-grid";
 import { Bridges, BridgesContext } from "@/components/lesson/bridges";
 import { LessonIntro } from "@/components/lesson/lesson-intro";
 import { sketchStages } from "@/components/lesson/case-sketch";
-import { PaintSwatch } from "@/components/lesson/paint-swatch";
+import { HelpLadder, PictureBox, WordCard } from "@/components/lesson/rep-panel";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { readOrigin } from "@/components/origin";
 import { StampDisc } from "@/components/stamp";
@@ -103,7 +102,10 @@ import {
 	cheersFor,
 	praiseFor,
 	type CheerKey,
-	paintFor,
+	helpSteps,
+	pictureFor,
+	type HelpStep,
+	type WordPicture,
 } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { shake as shakeEl } from "@/components/motion";
@@ -136,6 +138,7 @@ interface SavedLesson {
 	/** The first answer to the rep whose cue is showing (see Rep.first). */
 	first?: FirstAnswer | null;
 	peeked?: boolean;
+	help?: HelpStep[];
 	relearned: number;
 	startedAt: number;
 	from?: string;
@@ -214,9 +217,8 @@ export function LessonPlayer({
 	// comes back right on the second try, and the first try is what counts
 	// for the grammar atlas (src/core/first-try.ts).
 	const [firstTry, setFirstTry] = useState<FirstAnswer | null>(null);
-	// The translation asked for before the answer (hidden from the
-	// practiced stage on): a priced hint, the rep earns half.
-	const [peeked, setPeeked] = useState(false);
+	const [help, setHelp] = useState<HelpStep[]>([]);
+	const peeked = help.length > 0;
 	// Whether the rep has an answer to check (drives the footer's Check).
 	const [ready, setReady] = useState(false);
 	const relearned = useRef(0);
@@ -268,7 +270,7 @@ export function LessonPlayer({
 			setXp(saved.xp);
 			setMiss(saved.miss);
 			setFirstTry(saved.first ?? null);
-			setPeeked(saved.peeked === true);
+			setHelp(saved.help ?? (saved.peeked ? ["translation"] : []));
 			relearned.current = saved.relearned;
 			startedAt.current = saved.startedAt;
 		} catch {
@@ -287,6 +289,7 @@ export function LessonPlayer({
 			miss,
 			first: firstTry,
 			peeked,
+			help,
 			relearned: relearned.current,
 			startedAt: startedAt.current,
 			from: leaveTarget.current,
@@ -296,7 +299,7 @@ export function LessonPlayer({
 		} catch {
 			// storage blocked: the lesson is not kept
 		}
-	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, score]);
+	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, help, score]);
 	const forget = useCallback(() => {
 		if (!saveKey) return;
 		try {
@@ -334,7 +337,7 @@ export function LessonPlayer({
 		relearned.current = 0;
 		setLeft(BLITZ_SECONDS);
 		setFirstTry(null);
-		setPeeked(false);
+		setHelp([]);
 		finishing.current = false;
 		try {
 			const res = await fetch(
@@ -547,7 +550,7 @@ export function LessonPlayer({
 		setCurrent(null);
 		setMiss(null);
 		setFirstTry(null);
-		setPeeked(false);
+		setHelp([]);
 		// A miss comes back once at the end, typed (successive relearning:
 		// a retrieval that succeeds after a failure is what fixes the form).
 		let nextTotal = total;
@@ -724,6 +727,7 @@ export function LessonPlayer({
 		!current.item.task &&
 		relearned.current < RELEARN_MAX;
 	const examples = patternExamples(plan.items, current?.item);
+	const status = statusLine(current, miss);
 
 	return (
 		<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
@@ -731,7 +735,7 @@ export function LessonPlayer({
 				{/* Top bar: exit · progress · combo · sound. The whole band drags the
 			    window (its buttons carve themselves out, app/globals.css). */}
 				<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
-					<div className={cn(COLUMN, "flex h-16 items-center gap-4 pt-2")}>
+					<div className={cn(LESSON_COLUMN, "flex h-16 items-center gap-4 pt-2")}>
 						<button
 							type="button"
 							aria-label="Leave the lesson"
@@ -787,6 +791,7 @@ export function LessonPlayer({
 							{floater && (
 								<span
 									key={floater.key}
+									aria-hidden="true"
 									className="lanna-float-up pointer-events-none absolute left-7 top-5 font-ui text-xs font-[550] text-teal-2"
 								>
 									{floater.text}
@@ -799,7 +804,7 @@ export function LessonPlayer({
 
 				{/* The rep */}
 				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-					<div key={`${item.id}-${index}`} ref={repBox} className={cn(COLUMN, "lanna-rise")}>
+					<div key={`${item.id}-${index}`} ref={repBox} className={cn(LESSON_COLUMN, "lanna-rise")}>
 						<RepView
 							key={`${item.id}-${index}`}
 							item={item}
@@ -807,8 +812,10 @@ export function LessonPlayer({
 							locked={!!current}
 							result={current}
 							miss={miss}
-							hideMeaning={mode === "lesson" && hidesMeaning(plan.stage, item) && !peeked}
-							onPeek={() => setPeeked(true)}
+							hidesMeaning={mode === "lesson" && hidesMeaning(plan.stage, item)}
+							help={help}
+							helps={mode === "lesson"}
+							onHelp={(step) => setHelp((h) => (h.includes(step) ? h : [...h, step]))}
 							onGrade={grade}
 							onReady={setReady}
 							place={mode === "blitz" ? undefined : `${index + 1} of ${total}`}
@@ -849,6 +856,9 @@ export function LessonPlayer({
 						onDontKnow={giveUp}
 					/>
 				)}
+				<p role="status" className="sr-only" data-testid="lesson-status">
+					{status}
+				</p>
 				{leaving && <LeaveDialog answered={answered} total={total} onStay={() => setLeaving(false)} onLeave={leave} />}
 			</Frame>
 		</BridgesContext.Provider>
@@ -952,7 +962,7 @@ function ActionBar({
 }) {
 	return (
 		<Dock>
-			<div className={cn(COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
+			<div className={cn(LESSON_COLUMN, "flex min-h-20 items-center justify-between gap-4 py-4")}>
 				<ActionHint kind={kind} options={options} />
 				<div className="ml-auto flex items-center gap-2">
 					{/* Always there, even before anything is typed: a learner who does
@@ -962,7 +972,7 @@ function ActionBar({
 							I don&apos;t know
 						</button>
 					)}
-					{kind !== "choose" && !blitz && (
+					{kind !== "choose" && kind !== "meaning" && !blitz && (
 						<button type="submit" form={REP_FORM} disabled={!ready} className={PRIMARY} data-testid="lesson-check">
 							Check
 						</button>
@@ -1025,6 +1035,17 @@ function LeaveDialog({
 /** The rep's form: the footer's Check submits it from outside. */
 const REP_FORM = "lesson-rep";
 
+function statusLine(current: Rep | null, miss: string | null): string {
+	if (current) {
+		const { item, verdict } = current;
+		const expected = item.kind === "meaning" ? item.translation : item.kind === "build" ? item.sentence : item.answer;
+		if (verdict === "exact") return current.assisted ? "Right, with help." : "Right.";
+		return `${verdict === "accents" ? "Almost: check the accents." : "Not quite."} Correct answer: ${expected}`;
+	}
+	return miss !== null ? `Not “${miss}”. One more try.` : "";
+}
+const LESSON_COLUMN = cn(COLUMN, "lg:max-w-6xl");
+
 /** From the practiced stage on, a type or choose rep hides the English
  *  until the answer: the Slovak sentence has to be parsed to know the
  *  form (parsing at speed is the gap the lessons found), and the
@@ -1045,21 +1066,18 @@ function hintFor(item: LessonItem): string {
 /** The cue under the sentence, labeled so it never reads as a stray word:
  *  "means" for a vocabulary rep (the English), "base form" for a grammar
  *  rep (the dictionary form to inflect). */
-function HintChip({ item }: { item: LessonItem }) {
+function HintChip({ item, pictured }: { item: LessonItem; pictured: boolean }) {
 	const lang = useActiveLanguage();
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
-	const paint = meaning && !pairs ? paintFor(item.unit, item.lemma) : undefined;
 	return (
 		<>
-			<span className="q-pair mr-2" data-testid="lesson-hint-chip">
-				<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
-				{paint ? (
-					<PaintSwatch paint={paint} label={hintFor(item)} className="inline-block h-[1.9em] w-[3.8em] align-middle" />
-				) : (
+			{!pictured && (
+				<span className="q-pair mr-2" data-testid="lesson-hint-chip">
+					<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
 					<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
-				)}
-			</span>
+				</span>
+			)}
 			{item.person && item.kind !== "meaning" && (
 				<span className="q-pair mr-2" data-testid="lesson-person-chip">
 					<s>for</s>
@@ -1093,8 +1111,10 @@ function RepView({
 	locked,
 	result,
 	miss,
-	hideMeaning,
-	onPeek,
+	hidesMeaning,
+	help,
+	helps,
+	onHelp,
 	onGrade,
 	onReady,
 	eyebrow,
@@ -1105,41 +1125,92 @@ function RepView({
 	locked: boolean;
 	result: Rep | null;
 	miss: string | null;
-	hideMeaning: boolean;
-	onPeek: () => void;
+	hidesMeaning: boolean;
+	help: readonly HelpStep[];
+	helps: boolean;
+	onHelp: (step: HelpStep) => void;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
 	eyebrow: string;
 	place?: string;
 }) {
+	const info = unitInfo(item.unit);
+	const picture = shownPicture(item);
+	const stepsFor = (retyped: boolean) =>
+		helps
+			? helpSteps({
+					kind: item.kind,
+					vocabulary: info.kind === "words",
+					pairs: info.kind === "pairs",
+					hidesMeaning,
+					hasForm: !!item.form,
+					retyped,
+					task: !!item.task,
+				})
+			: [];
+	const steps = stepsFor(item.kind === "choose" && miss !== null);
+	const side = !!picture || stepsFor(false).length > 0;
+	const card = locked && helps && item.card && !item.task ? <WordCard item={item} tag={tag} /> : null;
+	const task = (
+		<PracticeCard
+			icon={repIcon(item)}
+			title={item.again ? `${eyebrow} · Once more` : eyebrow}
+			sub={miss !== null && item.kind === "choose" ? kindLabel({ ...item, kind: "type" }) : kindLabel(item)}
+			right={place}
+		>
+			{item.task ? (
+				<TaskRep item={item} locked={locked} result={result} onGrade={onGrade} />
+			) : item.kind === "build" ? (
+				<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
+			) : (
+				<ClozeRep
+					item={item}
+					tag={tag}
+					locked={locked}
+					result={result}
+					miss={miss}
+					hideMeaning={hidesMeaning && !help.includes("translation")}
+					pictured={!!picture}
+					onGrade={onGrade}
+					onReady={onReady}
+				/>
+			)}
+		</PracticeCard>
+	);
+	if (!side) {
+		return (
+			<div data-word-lookup-enabled={locked ? "true" : "false"} className="max-w-3xl" data-testid="rep-single">
+				{task}
+				{card && <div className="lanna-rise mt-8 max-w-xl">{card}</div>}
+			</div>
+		);
+	}
 	return (
-		<div data-word-lookup-enabled={locked ? "true" : "false"}>
-			<PracticeCard
-				icon={repIcon(item)}
-				title={item.again ? `${eyebrow} · Once more` : eyebrow}
-				sub={miss !== null && item.kind === "choose" ? kindLabel({ ...item, kind: "type" }) : kindLabel(item)}
-				right={place}
-			>
-				{item.task ? (
-					<TaskRep item={item} locked={locked} result={result} onGrade={onGrade} />
-				) : item.kind === "build" ? (
-					<BuildRep item={item} locked={locked} onGrade={onGrade} onReady={onReady} />
+		<div
+			data-word-lookup-enabled={locked ? "true" : "false"}
+			className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,23rem)] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-5"
+			data-testid="rep-split"
+		>
+			{picture && (
+				<PictureBox picture={picture} label={hintFor(item)} className="h-32 lg:col-start-2 lg:row-start-1 lg:h-56" />
+			)}
+			<div className="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">{task}</div>
+			<div className={cn("min-w-0 lg:col-start-2", picture ? "lg:row-start-2" : "lg:row-start-1 lg:row-span-2")}>
+				{card ? (
+					<div className="lanna-rise">{card}</div>
 				) : (
-					<ClozeRep
-						item={item}
-						tag={tag}
-						locked={locked}
-						result={result}
-						miss={miss}
-						hideMeaning={hideMeaning}
-						onPeek={onPeek}
-						onGrade={onGrade}
-						onReady={onReady}
-					/>
+					!locked &&
+					steps.length > 0 && <HelpLadder steps={steps} used={help} missed={miss !== null} item={item} onUse={onHelp} />
 				)}
-			</PracticeCard>
+			</div>
 		</div>
 	);
+}
+
+function shownPicture(item: LessonItem): WordPicture | undefined {
+	if (item.task || item.kind === "meaning" || item.kind === "listen" || item.kind === "build") return undefined;
+	if (unitInfo(item.unit).kind === "pairs") return undefined;
+	return pictureFor(item.unit, item.lemma);
 }
 
 /** After a first miss: the smallest cue and one more try. The trigger word
@@ -1178,12 +1249,7 @@ function HintPanel({
 				).mismatch
 			: undefined;
 	return (
-		<div
-			className="lanna-rise mt-6 rounded-[14px] bg-well px-5 py-4"
-			role="status"
-			aria-live="polite"
-			data-testid="lesson-hint"
-		>
+		<div className="lanna-rise mt-6 rounded-[14px] bg-well px-5 py-4" data-testid="lesson-hint">
 			<p className="font-ui text-[15px] font-semibold tracking-[-0.01em] text-foreground">
 				Not “<span lang={lessonLanguage()}>{miss}</span>”.{" "}
 				{item.kind === "listen" ? "Listen again and try once more." : wasChoice ? "Now type it." : "One more try."}
@@ -1282,7 +1348,7 @@ function ClozeRep({
 	result,
 	miss,
 	hideMeaning,
-	onPeek,
+	pictured,
 	onGrade,
 	onReady,
 }: {
@@ -1292,7 +1358,7 @@ function ClozeRep({
 	result: Rep | null;
 	miss: string | null;
 	hideMeaning: boolean;
-	onPeek: () => void;
+	pictured: boolean;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
 }) {
@@ -1495,24 +1561,10 @@ function ClozeRep({
 						<span>{item.after}</span>
 					</p>
 					<p className="mt-3 font-prose text-base text-ink-2">
-						<HintChip item={item} />
-						{/* The meaning is the question, so it shows only once answered;
-						    from the practiced stage on it hides until the answer, and
-						    asking for it early halves the rep. */}
+						<HintChip item={item} pictured={pictured} />
 						{meaning && !locked ? (
 							<span className="text-ink-3">Hear it, then pick what it means.</span>
-						) : hideMeaning && !locked ? (
-							<button
-								type="button"
-								onClick={onPeek}
-								className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-ui text-[13px] font-[550] text-ink-3 hover:bg-well hover:text-ink-2"
-								data-testid="lesson-peek"
-								title="Show the English sentence. This answer then earns half XP."
-							>
-								<LanguagesIcon className="size-4" strokeWidth={1.6} aria-hidden="true" />
-								Show translation · half XP
-							</button>
-						) : (
+						) : hideMeaning && !locked ? null : (
 							item.translation
 						)}
 						{locked && !meaning && (
@@ -1838,10 +1890,8 @@ function FeedbackSheet({
 			data-testid="lesson-feedback"
 			data-verdict={verdict}
 			data-word-lookup-enabled="true"
-			role="status"
-			aria-live="polite"
 		>
-			<div className={cn(COLUMN, "py-4")}>
+			<div className={cn(LESSON_COLUMN, "max-h-[45dvh] overflow-y-auto overscroll-contain py-4")}>
 				{/* Header row: verdict on the left, actions on the right, on one line. */}
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
 					<div className="flex items-center gap-3">
@@ -1863,7 +1913,7 @@ function FeedbackSheet({
 						</p>
 						{comesBack && <span className="font-ui text-[13px] text-ink-3">Comes back at the end of the lesson</span>}
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex flex-wrap items-center gap-2 [&>button]:whitespace-nowrap">
 						{verdict === "exact" && (
 							<button
 								type="button"
@@ -1941,39 +1991,15 @@ function FeedbackSheet({
 							.
 						</div>
 					)}
-					{verdict === "exact" && item.kind !== "build" && (
-						<div className="flex items-start gap-3" data-testid="right-sentence">
-							<button
-								type="button"
-								onClick={() => void speak(item.sentence)}
-								className={cn("mt-0.5", PLAY_SMALL)}
-								aria-label="Play the sentence again"
-								title="Play again"
-							>
-								<Volume2Icon className="size-4" strokeWidth={1.6} />
-							</button>
-							<div className="min-w-0">
-								<p
-									className="font-prose text-[17px] font-medium leading-snug tracking-[-0.008em] text-foreground"
-									lang={lessonLanguage()}
-								>
-									{item.before}
-									<b className={tone.ink}>{item.pair ? (item.form ?? item.answer) : item.answer}</b>
-									{item.after}
-								</p>
-								<p data-no-word-lookup="true" className="font-prose text-[15px] text-ink-3">
-									{item.translation}
-								</p>
-							</div>
-						</div>
-					)}
 					{verdict === "exact" && (
 						<dl className="flex flex-wrap gap-2" data-testid="right-meta">
-							<Fact
-								icon={<WholeWordIcon className="size-4" strokeWidth={1.6} />}
-								label={item.form ? "Form" : "Word"}
-								value={item.form ?? `${item.lemma} · ${item.gloss.split(/[;,(]/)[0]!.trim()}`}
-							/>
+							{(item.form || !item.card) && (
+								<Fact
+									icon={<WholeWordIcon className="size-4" strokeWidth={1.6} />}
+									label={item.form ? "Form" : "Word"}
+									value={item.form ?? `${item.lemma} · ${item.gloss.split(/[;,(]/)[0]!.trim()}`}
+								/>
+							)}
 							{rankLabel(item.rank, item.cat) && (
 								<Fact
 									icon={<ChartColumnIcon className="size-4" strokeWidth={1.6} />}

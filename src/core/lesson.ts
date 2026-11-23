@@ -21,6 +21,7 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { cellsOf, numberByEnding, numberIn, type CaseName, type Declension } from "./form-cells.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
+import { wordCardOf, type WordCard } from "./word-card.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
 import {
 	activeCourse,
@@ -868,6 +869,7 @@ export interface LessonItem {
 	pair?: { id: string; rule: string; bridge: string; cue?: string; explain?: LessonExplain };
 	/** The review deck's memory of this word, attached by the server. */
 	known?: WordKnown | null;
+	card?: WordCard;
 }
 
 /** What the review deck knows about a word (the client's "how well you
@@ -1323,6 +1325,7 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 		before: exampleText(ex).slice(0, at),
 		after: exampleText(ex).slice(at + answer.length),
 		hint: vocabulary ? shortGloss(c.entry.en) : entryLemma(c.entry),
+		card: wordCardOf(c.entry, c.index),
 	};
 	if (c.entry.rank !== undefined) item.rank = c.entry.rank;
 	if (c.entry.cat) item.cat = c.entry.cat;

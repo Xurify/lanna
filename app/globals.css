@@ -1259,6 +1259,15 @@ body {
 		opacity: 0;
 	}
 }
+@keyframes lanna-fade-away {
+	0%,
+	60% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
 @keyframes lanna-flicker {
 	0%,
 	100% {
@@ -1320,7 +1329,7 @@ body {
 	pointer-events: none;
 }
 .lanna-flicker {
-	animation: lanna-flicker 1.6s ease-in-out infinite;
+	animation: lanna-flicker 1.6s ease-in-out 3;
 }
 .lanna-confetti-bit {
 	animation: lanna-confetti 1100ms var(--ease-out) forwards;
@@ -1330,12 +1339,14 @@ body {
 	.lanna-pop,
 	.lanna-shake,
 	.lanna-rise,
-	.lanna-float-up,
 	.lanna-fade,
 	.lanna-menu-in,
 	.lanna-flicker,
 	.lanna-confetti-bit {
 		animation: none;
+	}
+	.lanna-float-up {
+		animation: lanna-fade-away 1200ms linear forwards;
 	}
 }
 
