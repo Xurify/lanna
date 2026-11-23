@@ -3,7 +3,6 @@ import type { LexiconEntry } from "./review.ts";
 export interface PatternForm {
 	stem: string;
 	ending: string;
-	/** The auxiliary after the form: "som" in "robil som". */
 	tail?: string;
 }
 
@@ -19,7 +18,6 @@ export interface VerbPattern {
 	rows: PatternRow[];
 }
 
-/** The model verbs a verb unit's opening card shows, commonest of their class. */
 export const PATTERN_VERBS: Readonly<Record<string, readonly string[]>> = {
 	present: ["čítať", "hovoriť"],
 	"present-ujem": ["pracovať"],
@@ -48,8 +46,6 @@ const split = (form: string, stem: string, tail?: string): PatternForm => ({
 	...(tail ? { tail } : {}),
 });
 
-/** The present forms in the dictionary's order (I … they), when they have
- *  the shape of a Slovak present: -m, -š, -me, -te. */
 function presentForms(forms: readonly string[]): string[] | undefined {
 	const six = forms.slice(0, 6);
 	if (six.length < 6) return undefined;
@@ -58,7 +54,6 @@ function presentForms(forms: readonly string[]): string[] | undefined {
 	return six;
 }
 
-/** The past -l forms (he, she, it, they): the dictionary lists them last. */
 function pastForms(forms: readonly string[]): string[] | undefined {
 	const four = forms.slice(-4);
 	if (four.length < 4) return undefined;
@@ -92,9 +87,6 @@ function pastPattern(forms: readonly string[]): PatternRow[] | undefined {
 	];
 }
 
-/** The tables a verb unit opens on: each model verb's forms from the
- *  dictionary, stem and ending apart. Empty when a model verb is missing or
- *  its forms do not have the expected shape (never a generated form). */
 export function verbPatterns(entries: readonly LexiconEntry[], unit: string): VerbPattern[] {
 	const verbs = PATTERN_VERBS[unit];
 	if (!verbs) return [];

@@ -1006,9 +1006,6 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 			} else if (classifyAll(entry, ex).includes(unit)) out.push({ entry, index, unit });
 		});
 	}
-	// Sentences with the fewest words a beginner is unlikely to know first
-	// (the drilled word included), then commoner words in bands of 300 ranks,
-	// then shorter sentences — a common word in a long legal sentence is not easy.
 	const unknown = beginnerOrder(entries);
 	// A cluster unit puts the dictionary form first: that is the word to learn.
 	const band = (e: LexiconEntry) => (e.origin === "curated" ? -1 : Math.floor((e.rank ?? 1e9) / 300));
@@ -1026,26 +1023,21 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	);
 }
 
-/** Past this rank a word is not yet beginner
- *  vocabulary: the app's own line, 500 within each part of speech (the
- *  dictionary ranks nouns, verbs and adjectives separately). */
+// The source dictionary ranks each part of speech separately.
 export const COMMON_RANK = 500;
 
 const rankOfForm = new WeakMap<readonly LexiconEntry[], Map<string, number>>();
 
-/** How many words besides the drilled one a learner at A1–A2 is unlikely to
- *  know: dictionary words past COMMON_RANK, and long lowercase words the
- *  dictionary lacks (function words are short or listed; names are
- *  capitalized). A grammar rep should test the ending, not the vocabulary. */
 export function rareWordsIn(entries: readonly LexiconEntry[]): (c: Candidate) => number {
+	const tag = activeCourse()?.tag ?? "sk-SK";
 	let ranks = rankOfForm.get(entries);
 	if (!ranks) {
 		ranks = new Map();
 		const taught = taughtWords();
 		for (const e of entries) {
-			const rank = e.origin === "curated" || taught.has(entryLemma(e).toLowerCase()) ? 0 : (e.rank ?? COMMON_RANK + 1);
+			const rank = taught.has(entryLemma(e).toLowerCase()) || isFunctionWord(e) ? 0 : (e.rank ?? COMMON_RANK + 1);
 			for (const form of [entryLemma(e), ...(e.forms ?? [])]) {
-				const key = form.toLocaleLowerCase("sk-SK");
+				const key = form.toLocaleLowerCase(tag);
 				if (!ranks.has(key) || ranks.get(key)! > rank) ranks.set(key, rank);
 			}
 		}
@@ -1058,12 +1050,12 @@ export function rareWordsIn(entries: readonly LexiconEntry[]): (c: Candidate) =>
 		const hit = memo.get(id);
 		if (hit !== undefined) return hit;
 		const ex = c.entry.examples[c.index]!;
-		const answer = ex.cloze?.answer.toLocaleLowerCase("sk-SK");
+		const answer = ex.cloze?.answer.toLocaleLowerCase(tag);
 		let count = 0;
 		for (const raw of exampleText(ex).split(/\s+/)) {
 			const word = raw.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "");
 			if (!word) continue;
-			const lower = word.toLocaleLowerCase("sk-SK");
+			const lower = word.toLocaleLowerCase(tag);
 			if (lower === answer) continue;
 			const rank = known.get(lower);
 			if (rank !== undefined ? rank > COMMON_RANK : word.length >= 7 && word === lower) count++;
@@ -1073,20 +1065,26 @@ export function rareWordsIn(entries: readonly LexiconEntry[]): (c: Candidate) =>
 	};
 }
 
-/** How hard a sentence is for a beginner: its rare words, plus one when the
- *  drilled word is not one of the course's own vocabulary words (its word
- *  units). Lower is easier. */
 export function beginnerOrder(entries: readonly LexiconEntry[]): (c: Candidate) => number {
 	const rare = rareWordsIn(entries);
 	const taught = taughtWords();
 	return (c) => (taught.has(entryLemma(c.entry).toLowerCase()) ? 0 : 1) + rare(c);
 }
 
-/** The course's own vocabulary: every lemma its word units teach. */
+const isFunctionWord = (e: LexiconEntry) => e.origin === "curated" && e.cat === "Phrases" && e.rank === undefined;
+
+const taughtOf = new WeakMap<readonly UnitInfo[], Set<string>>();
+
 function taughtWords(): Set<string> {
-	return new Set(
-		allUnits().flatMap((u) => (u.kind === "words" && u.lemmas ? u.lemmas.map((l) => l.toLowerCase()) : [])),
-	);
+	const units = allUnits();
+	let taught = taughtOf.get(units);
+	if (!taught) {
+		taught = new Set(
+			units.flatMap((u) => (u.kind === "words" && u.lemmas ? u.lemmas.map((l) => l.toLowerCase()) : [])),
+		);
+		taughtOf.set(units, taught);
+	}
+	return taught;
 }
 
 /** Small deterministic PRNG (mulberry32) — lessons vary per seed, tests pin a seed. */
@@ -1443,7 +1441,6 @@ export interface LessonPlan {
 	/** The languages the hints show a bridge in (from the learner's profile;
 	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
 	bridges?: Array<"et" | "fi" | "ru" | "de">;
-	/** A new verb lesson: the model verbs' tables its opening card shows. */
 	patterns?: VerbPattern[];
 	/** A new word lesson: the words it teaches that the learner has not met
 	 *  yet (slugs), the ones its intro cards show. */
@@ -1506,8 +1503,8 @@ export function buildLesson(
 			const otherItems = baseList.filter((c) => genderColumn(c.entry.gender) !== weakGender);
 			if (weakItems.length >= 2) {
 				const mixed: Candidate[] = [];
-				const shufWeak = shuffle(weakItems, rand);
-				const shufOther = shuffle(otherItems, rand);
+				const shufWeak = shuffle(weakItems, rand).sort((a, b) => cost(a) - cost(b));
+				const shufOther = shuffle(otherItems, rand).sort((a, b) => cost(a) - cost(b));
 				let w = 0;
 				let o = 0;
 				while (w < shufWeak.length || o < shufOther.length) {
@@ -1518,8 +1515,6 @@ export function buildLesson(
 				return { top, list: mixed };
 			}
 		}
-		// A small unit uses every sentence it has: the ones a beginner can read
-		// still come first.
 		const shuffled = shuffle(baseList, rand);
 		return { top, list: shuffled.sort((a, b) => cost(a) - cost(b)) };
 	};

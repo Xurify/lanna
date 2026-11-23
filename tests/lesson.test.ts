@@ -366,3 +366,18 @@ test("grammar reps use sentences whose other words a beginner knows", () => {
 			assert.equal(hard.length, 0, `${unit} ${seed}: ${hard.map((i) => i.sentence).join(" | ")}`);
 		}
 });
+
+test("a lesson weighted to a weak gender also asks the easy sentences first", () => {
+	const cost = rareWordsIn(entries);
+	const bySlug = new Map(entries.map((e) => [e.slug, e]));
+	for (const seed of [1, 2, 3]) {
+		const items = buildLesson(entries, "loc", { seed, stage: "practiced", weakGender: "fem" }).items.filter(
+			(i) => !i.mixed,
+		);
+		const hard = items.filter((i) => {
+			const [slug, index] = i.id.split("#");
+			return cost({ entry: bySlug.get(slug!)!, index: Number(index), unit: "loc" }) > 0;
+		});
+		assert.equal(hard.length, 0, `${seed}: ${hard.map((i) => i.sentence).join(" | ")}`);
+	}
+});

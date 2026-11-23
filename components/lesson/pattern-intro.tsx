@@ -7,11 +7,6 @@ import { speak, useActiveLanguage } from "@/components/speech";
 import { IntroDock } from "@/components/lesson/lesson-intro";
 import { unitInfo, type LessonPlan, type PatternForm, type VerbPattern } from "@/src/core";
 
-/**
- * The pattern first: a new verb lesson opens on its rule and the full table
- * of one or two model verbs from the dictionary, the endings marked. Nothing
- * is graded; tapping a row plays it.
- */
 export function PatternIntro({
 	plan,
 	patterns,
@@ -39,7 +34,10 @@ export function PatternIntro({
 					<p className="max-w-xl font-prose text-[16px] leading-relaxed text-ink-2" data-testid="pattern-rule">
 						{info.rule}
 					</p>
-					<div className="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2" data-testid="pattern-tables">
+					<div
+						className={cn("mt-6 grid gap-x-10 gap-y-8", patterns.length > 1 ? "sm:grid-cols-2" : "max-w-md")}
+						data-testid="pattern-tables"
+					>
 						{patterns.map((p) => (
 							<PatternTable key={p.verb} pattern={p} />
 						))}
@@ -77,7 +75,7 @@ function PatternTable({ pattern }: { pattern: VerbPattern }) {
 							</span>
 							<span className="font-prose text-[19px] text-foreground" lang={lang?.code}>
 								{row.forms.map((f, i) => (
-									<span key={i}>
+									<span key={i} className="whitespace-nowrap">
 										{i > 0 && <span className="text-ink-4"> · </span>}
 										{f.stem}
 										<span className="font-semibold text-teal-2">{f.ending}</span>
