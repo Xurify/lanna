@@ -64,6 +64,7 @@ import { TaskGrid } from "@/components/lesson/task-grid";
 import { Bridges, BridgesContext } from "@/components/lesson/bridges";
 import { LessonIntro } from "@/components/lesson/lesson-intro";
 import { sketchStages } from "@/components/lesson/case-sketch";
+import { PaintSwatch } from "@/components/lesson/paint-swatch";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { readOrigin } from "@/components/origin";
 import { StampDisc } from "@/components/stamp";
@@ -102,6 +103,7 @@ import {
 	cheersFor,
 	praiseFor,
 	type CheerKey,
+	paintFor,
 } from "@/src/core";
 import { fillStyle } from "@/components/ui/fill";
 import { shake as shakeEl } from "@/components/motion";
@@ -1047,11 +1049,16 @@ function HintChip({ item }: { item: LessonItem }) {
 	const lang = useActiveLanguage();
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
+	const paint = meaning && !pairs ? paintFor(item.unit, item.lemma) : undefined;
 	return (
 		<>
 			<span className="q-pair mr-2" data-testid="lesson-hint-chip">
 				<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
-				<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
+				{paint ? (
+					<PaintSwatch paint={paint} label={hintFor(item)} className="inline-block h-[1.9em] w-[3.8em] align-middle" />
+				) : (
+					<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
+				)}
 			</span>
 			{item.person && item.kind !== "meaning" && (
 				<span className="q-pair mr-2" data-testid="lesson-person-chip">
