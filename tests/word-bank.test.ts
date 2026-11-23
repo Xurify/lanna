@@ -261,6 +261,6 @@ describe("words marked known", () => {
 	it("shows a homograph's own sense in its example, never a flagged sentence", () => {
 		const items = getWordBank({ search: "zima", limit: 10 }).items;
 		assert.equal(items.find((w) => w.slug === "zima-adv")?.example?.sk, "Nie je ti zima?");
-		assert.equal(items.find((w) => w.slug === "zima")?.example?.sk, "Bola to veľmi studená zima.");
+		assert.equal(items.find((w) => w.slug === "zima")?.example?.sk, "V Ankare sú všetky ročné obdobia ako zima.");
 	});
 });

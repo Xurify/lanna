@@ -75,6 +75,7 @@ export function WordBankPage({
 	const [loadingWords, setLoadingWords] = useState(false);
 	const [page, setPage] = useState(0);
 	const [wordError, setWordError] = useState("");
+	const [loadError, setLoadError] = useState("");
 	const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
 	const latestWordsRequest = useRef(0);
 	const PAGE_SIZE = WORDS_PAGE_SIZE;
@@ -104,13 +105,13 @@ export function WordBankPage({
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const data = (await res.json()) as { items: WordBankItem[]; total: number; summary: WordBankSummary };
 				if (request !== latestWordsRequest.current) return;
-				setWordError("");
+				setLoadError("");
 				setWords((prev) => (nextPage === 0 ? data.items : [...prev, ...data.items]));
 				setPage(nextPage);
 				setTotalWords(data.total);
 				setSummary(data.summary);
 			} catch {
-				if (request === latestWordsRequest.current) setWordError("Could not load words. Try again.");
+				if (request === latestWordsRequest.current) setLoadError("Could not load words. Try again.");
 			} finally {
 				if (request === latestWordsRequest.current) setLoadingWords(false);
 			}
@@ -295,11 +296,20 @@ export function WordBankPage({
 							role="tablist"
 							aria-label="Words"
 							onKeyDown={(e) => {
-								const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-								if (!step) return;
+								const at = WORDS_TABS.indexOf(activeTab);
+								const to =
+									e.key === "ArrowRight"
+										? at + 1
+										: e.key === "ArrowLeft"
+											? at - 1
+											: e.key === "Home"
+												? 0
+												: e.key === "End"
+													? WORDS_TABS.length - 1
+													: null;
+								if (to === null) return;
 								e.preventDefault();
-								const next =
-									WORDS_TABS[(WORDS_TABS.indexOf(activeTab) + step + WORDS_TABS.length) % WORDS_TABS.length]!;
+								const next = WORDS_TABS[(to + WORDS_TABS.length) % WORDS_TABS.length]!;
 								setActiveTab(next);
 								e.currentTarget.querySelector<HTMLElement>(`[data-tab="${next}"]`)?.focus();
 							}}
@@ -436,11 +446,11 @@ export function WordBankPage({
 							))}
 						</div>
 
-						{wordError && (
-							<p role="alert" className="font-prose text-sm text-foreground">
-								{wordError}
+						{[loadError, wordError].filter(Boolean).map((message) => (
+							<p key={message} role="alert" className="font-prose text-sm text-foreground">
+								{message}
 							</p>
-						)}
+						))}
 
 						<div className="space-y-3">
 							{words.map((item) => {
