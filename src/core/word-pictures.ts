@@ -197,8 +197,10 @@ export function pictureFor(unit: string, lemma: string, translation?: string): W
 		if (!entry.units.includes(unit)) continue;
 		const scene = entry.of[key];
 		if (!scene) continue;
-		if (translation !== undefined && !SCENE_WORDS[scene].test(translation)) return undefined;
-		return { kind: "scene", set: entry.set, scene } as ScenePicture;
+		const picture = { kind: "scene", set: entry.set, scene } as ScenePicture;
+		// Shown only when the sentence names the drawn thing in a form the English blank can hide.
+		if (translation !== undefined && translationAroundPicture(translation, picture).length < 3) return undefined;
+		return picture;
 	}
 	return undefined;
 }

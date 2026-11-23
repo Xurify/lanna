@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { lessonWords, type LessonItem, type LessonPlan } from "../src/core/index.ts";
-import { translationAroundPicture } from "../src/core/word-pictures.ts";
+import { pictureFor, translationAroundPicture } from "../src/core/word-pictures.ts";
 
 const item = (lemma: string, extra: Partial<LessonItem> = {}): LessonItem =>
 	({
@@ -71,4 +71,9 @@ test("the English sentence loses the word its picture shows, with its ending", (
 		"blue",
 		".",
 	]);
+});
+
+test("no picture when the English word it stands for could not be hidden", () => {
+	assert.equal(pictureFor("lx-weather", "slnko", "We sat in the sunshine."), undefined);
+	assert.equal(pictureFor("lx-weather", "slnko", "The sun is out.")?.kind, "scene");
 });
