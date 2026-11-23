@@ -39,7 +39,7 @@
 		{
 			"who": "Martin",
 			"sk": "Dobrý deň!",
-			"en": "Hello!"
+			"en": "Good morning!"
 		},
 		{
 			"who": "Eva",
@@ -201,7 +201,7 @@
 			"answer": 1
 		}
 	],
-	"recap": "Martin meets his new neighbor Eva in front of the house. He says ahoj to her grandmother by mistake, apologises and says dobrý deň, and she invites them both for tea in the evening.",
+	"recap": "Martin meets his new neighbor Eva in front of the house. He says ahoj to her grandmother by mistake, apologizes and says dobrý deň, and she invites them both for tea in the evening.",
 	"glosses": {
 		"martin": {
 			"lemma": "Martin",

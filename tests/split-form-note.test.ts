@@ -50,3 +50,9 @@ describe("describesToken", () => {
 		assert.equal(describesToken({ lemma: "ja" }, null), true);
 	});
 });
+
+it("a reflexive override still describes the same dictionary word", () => {
+	assert.equal(describesToken({ lemma: "dať si" }, { lemma: "dať" }), true);
+	assert.equal(describesToken({ lemma: "sadnúť si" }, { lemma: "sadnúť" }), true);
+	assert.equal(describesToken({ lemma: "oco" }, { lemma: "oko" }), false);
+});

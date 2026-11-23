@@ -63,7 +63,7 @@
 		},
 		{
 			"who": "Martin",
-			"sk": "Tvoj otec a tvoj brat sú veľmi podobní.",
+			"sk": "Tvoj otec a tvoj brat sa veľmi podobajú.",
 			"en": "Your father and your brother look very alike."
 		},
 		{
@@ -75,7 +75,7 @@
 		{
 			"who": "Martin",
 			"sk": "Dobrý deň, pán Novák! Teší ma.",
-			"en": "Good afternoon, Mr Novák! Nice to meet you."
+			"en": "Good afternoon, Mr. Novák! Nice to meet you."
 		},
 		{
 			"who": "Michal",
@@ -116,7 +116,7 @@
 		{
 			"who": "narrator",
 			"p": true,
-			"sk": "Po obede berie malý Miško Martina do svojej izby.",
+			"sk": "Po obede zoberie malý Miško Martina do svojej izby.",
 			"en": "After lunch little Miško takes Martin to his room."
 		},
 		{
@@ -176,9 +176,9 @@
 			"kind": "recall",
 			"q": "Čí syn je Miško?",
 			"options": [
-				"Michala",
-				"Lenky",
-				"Martina"
+				"Michalov",
+				"Lenkin",
+				"Martinov"
 			],
 			"answer": 0
 		}
