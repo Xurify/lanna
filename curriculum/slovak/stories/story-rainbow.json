@@ -1,0 +1,245 @@
+{
+	"title": "Dúha nad riekou",
+	"topic": "a rainy Saturday, colours and a rainbow",
+	"cover": "tree",
+	"cast": [
+		{
+			"name": "Katka",
+			"gender": "f",
+			"age": "child"
+		},
+		{
+			"name": "Juraj",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Je sobota ráno a v Bratislave prší.",
+			"en": "It is Saturday morning and it is raining in Bratislava."
+		},
+		{
+			"who": "narrator",
+			"sk": "Obloha je sivá a na ulici nikto nie je.",
+			"en": "The sky is grey and there is nobody in the street."
+		},
+		{
+			"who": "Katka",
+			"sk": "Oci, aké je dnes počasie?",
+			"en": "Dad, what is the weather like today?"
+		},
+		{
+			"who": "Juraj",
+			"sk": "Škaredé. Fúka studený vietor a padá dážď.",
+			"en": "Nasty. A cold wind is blowing and rain is falling."
+		},
+		{
+			"who": "Katka",
+			"sk": "Ale ja chcem ísť do parku!",
+			"en": "But I want to go to the park!"
+		},
+		{
+			"who": "Juraj",
+			"sk": "Dobre, ale oblečieš si červenú bundu a žlté čižmy.",
+			"en": "All right, but you will put on your red jacket and your yellow boots."
+		},
+		{
+			"who": "narrator",
+			"sk": "Katka si zoberie aj modrý dáždnik.",
+			"en": "Katka takes the blue umbrella too."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V parku je tráva mokrá a zelená.",
+			"en": "In the park the grass is wet and green."
+		},
+		{
+			"who": "Katka",
+			"sk": "Pozri, oci, tá kaluž je veľká ako more!",
+			"en": "Look, Dad, that puddle is as big as the sea!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Katka skáče do kaluže a smeje sa.",
+			"en": "Katka jumps into the puddle and laughs."
+		},
+		{
+			"who": "narrator",
+			"sk": "Potom dážď prestane a spoza mraku vyjde slnko.",
+			"en": "Then the rain stops and the sun comes out from behind a cloud."
+		},
+		{
+			"who": "narrator",
+			"sk": "Zrazu je obloha zase modrá.",
+			"en": "Suddenly the sky is blue again."
+		},
+		{
+			"who": "Juraj",
+			"sk": "Katka, pozri hore! Nad riekou je dúha.",
+			"en": "Katka, look up! There is a rainbow over the river."
+		},
+		{
+			"who": "Katka",
+			"sk": "Aké farby má dúha?",
+			"en": "What colours does a rainbow have?"
+		},
+		{
+			"who": "Juraj",
+			"sk": "Červenú, oranžovú, žltú, zelenú, modrú a fialovú.",
+			"en": "Red, orange, yellow, green, blue and purple."
+		},
+		{
+			"who": "Katka",
+			"sk": "Moja bunda je červená ako dúha!",
+			"en": "My jacket is red like the rainbow!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Na lavičke sedí starý pán s čiernym psom.",
+			"en": "An old man with a black dog is sitting on a bench."
+		},
+		{
+			"who": "narrator",
+			"sk": "Hovorí, že po daždi vždy príde slnko.",
+			"en": "He says that after rain the sun always comes."
+		},
+		{
+			"who": "narrator",
+			"sk": "Večer je teplo a obloha je ružová.",
+			"en": "In the evening it is warm and the sky is pink."
+		},
+		{
+			"who": "Katka",
+			"sk": "Oci, bude zajtra zase pršať?",
+			"en": "Dad, will it rain again tomorrow?"
+		},
+		{
+			"who": "Juraj",
+			"sk": "Neviem. Ale máš žlté čižmy, tak sa nemusíš báť.",
+			"en": "I don't know. But you have yellow boots, so you don't need to be afraid."
+		},
+		{
+			"who": "Katka",
+			"sk": "Ja sa nebojím. Chcem ďalšiu dúhu!",
+			"en": "I'm not afraid. I want another rainbow!"
+		}
+	],
+	"newWords": [
+		{
+			"sk": "dúha",
+			"en": "rainbow"
+		},
+		{
+			"sk": "kaluž",
+			"en": "puddle"
+		},
+		{
+			"sk": "dáždnik",
+			"en": "umbrella"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Aké je ráno počasie?",
+			"options": [
+				"Prší a fúka studený vietor.",
+				"Svieti slnko a je teplo.",
+				"Sneží a je mráz."
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Akú farbu má Katkina bunda?",
+			"options": [
+				"Modrú",
+				"Červenú",
+				"Žltú"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Čo vidia Katka a otec nad riekou?",
+			"options": [
+				"Dúhu",
+				"Lietadlo",
+				"Vtáka"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "On a rainy Saturday Katka goes to the park with her dad in a red jacket and yellow boots. The rain stops, a rainbow appears over the river, and Katka wants another one.",
+	"glosses": {
+		"prší": {
+			"lemma": "pršať",
+			"gloss": "it rains"
+		},
+		"oci": {
+			"lemma": "oco",
+			"gloss": "Dad (talking to him)"
+		},
+		"aké": {
+			"lemma": "aký",
+			"gloss": "what, what kind of"
+		},
+		"škaredé": {
+			"lemma": "škaredý",
+			"gloss": "ugly; nasty"
+		},
+		"oblečieš": {
+			"lemma": "obliecť si",
+			"gloss": "you will put on"
+		},
+		"si": {
+			"lemma": "si",
+			"gloss": "for oneself (reflexive)"
+		},
+		"bundu": {
+			"lemma": "bunda",
+			"gloss": "jacket"
+		},
+		"bunda": {
+			"lemma": "bunda",
+			"gloss": "jacket"
+		},
+		"čižmy": {
+			"lemma": "čižma",
+			"gloss": "boot"
+		},
+		"katka": {
+			"lemma": "Katka",
+			"gloss": "Katka (a name)"
+		},
+		"kaluže": {
+			"lemma": "kaluž",
+			"gloss": "puddle"
+		},
+		"spoza": {
+			"lemma": "spoza",
+			"gloss": "from behind"
+		},
+		"mraku": {
+			"lemma": "mrak",
+			"gloss": "cloud"
+		},
+		"oranžovú": {
+			"lemma": "oranžový",
+			"gloss": "orange"
+		},
+		"fialovú": {
+			"lemma": "fialový",
+			"gloss": "purple"
+		},
+		"dúhu": {
+			"lemma": "dúha",
+			"gloss": "rainbow"
+		}
+	}
+}

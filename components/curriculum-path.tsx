@@ -43,6 +43,8 @@ function unitLine(u: UnitState, active: boolean): string {
 			? "Passed in placement · open any time"
 			: `Passed in placement${pct ? ` · ${pct}` : ""} · open any time`;
 	if (u.status === "locked") return u.needs ?? u.tagline;
+	if (u.kind === "story")
+		return u.status === "done" ? `Read${pct ? ` · ${pct}` : ""}` : active ? `Up next · ${u.tagline}` : u.tagline;
 	if (u.kind === "tutor")
 		return u.status === "done"
 			? `Done · ${u.lessons} sessions`
@@ -409,9 +411,11 @@ function UnitBadgeHover({
 			? "Tutor session"
 			: unit.kind === "goal"
 				? "Can-do goal"
-				: unit.kind === "words"
-					? "Words lesson"
-					: "Grammar lesson";
+				: unit.kind === "story"
+					? "Story to read"
+					: unit.kind === "words"
+						? "Words lesson"
+						: "Grammar lesson";
 
 	const detail = done
 		? "Done or tested out. Open it to practice any time."
@@ -540,6 +544,13 @@ export function UnitRow({
 			<div className={cls} data-testid={`unit-${u.id}`} aria-disabled="true">
 				{body}
 			</div>
+		);
+	}
+	if (u.kind === "story") {
+		return (
+			<Link href={`/read?id=${u.id}`} className={cls} data-testid={`unit-${u.id}`}>
+				{body}
+			</Link>
 		);
 	}
 	if (u.kind === "drill" || u.kind === "words") {

@@ -29,6 +29,7 @@ import {
 	generating,
 	importLinks,
 	importReading,
+	keepChapterStory,
 	nextStory,
 	ReadImportError,
 	readingState,
@@ -37,7 +38,6 @@ import {
 	removeSource,
 	sessionClientId,
 	sourcePart,
-	storyStore,
 	UNKNOWN_TEXT,
 	writeNewStory,
 } from "@/src/server";
@@ -54,7 +54,7 @@ export async function GET(req: Request) {
 	if (url.searchParams.get("progress") !== null) return Response.json({ generating: generating() });
 	const id = url.searchParams.get("id");
 	if (id) {
-		const story = storyStore.get(id);
+		const story = await keepChapterStory(id);
 		return story ? Response.json(story) : Response.json({ message: "no such story" }, { status: 404 });
 	}
 	return Response.json(readingState(tzOf(url.searchParams.get("tz"))));

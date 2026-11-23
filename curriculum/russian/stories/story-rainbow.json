@@ -1,0 +1,317 @@
+{
+	"title": "Радуга над рекой",
+	"topic": "a rainy Saturday, colours and a rainbow",
+	"cover": "tree",
+	"cast": [
+		{
+			"name": "Аня",
+			"gender": "f",
+			"age": "child"
+		},
+		{
+			"name": "Игорь",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "В субботу утром в Москве идёт дождь.",
+			"en": "On Saturday morning it is raining in Moscow."
+		},
+		{
+			"who": "narrator",
+			"sk": "Небо серое, и на улице никого нет.",
+			"en": "The sky is grey and there is nobody in the street."
+		},
+		{
+			"who": "Аня",
+			"sk": "Папа, какая сегодня погода?",
+			"en": "Dad, what is the weather like today?"
+		},
+		{
+			"who": "Игорь",
+			"sk": "Плохая. Холодно, и дует сильный ветер.",
+			"en": "Bad. It is cold and a strong wind is blowing."
+		},
+		{
+			"who": "Аня",
+			"sk": "Но я хочу гулять в парке!",
+			"en": "But I want to go for a walk in the park!"
+		},
+		{
+			"who": "Игорь",
+			"sk": "Хорошо, но надень красную куртку и жёлтые сапоги.",
+			"en": "All right, but put on your red jacket and your yellow boots."
+		},
+		{
+			"who": "narrator",
+			"sk": "Аня берёт с собой синий зонт.",
+			"en": "Anya takes a blue umbrella with her."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "В парке трава мокрая и зелёная.",
+			"en": "In the park the grass is wet and green."
+		},
+		{
+			"who": "Аня",
+			"sk": "Смотри, папа, эта лужа большая, как море!",
+			"en": "Look, Dad, this puddle is as big as the sea!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Аня прыгает в лужу и смеётся.",
+			"en": "Anya jumps into the puddle and laughs."
+		},
+		{
+			"who": "narrator",
+			"sk": "Потом дождь кончается, и из-за облака выходит солнце.",
+			"en": "Then the rain stops and the sun comes out from behind a cloud."
+		},
+		{
+			"who": "narrator",
+			"sk": "Небо снова голубое.",
+			"en": "The sky is light blue again."
+		},
+		{
+			"who": "Игорь",
+			"sk": "Аня, посмотри наверх! Над рекой радуга.",
+			"en": "Anya, look up! There is a rainbow over the river."
+		},
+		{
+			"who": "Аня",
+			"sk": "А какие цвета у радуги?",
+			"en": "And what colours does a rainbow have?"
+		},
+		{
+			"who": "Игорь",
+			"sk": "Красный, оранжевый, жёлтый, зелёный, голубой, синий и фиолетовый.",
+			"en": "Red, orange, yellow, green, light blue, dark blue and purple."
+		},
+		{
+			"who": "Аня",
+			"sk": "Моя куртка красная, как радуга!",
+			"en": "My jacket is red like the rainbow!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "На скамейке сидит старик с чёрной собакой.",
+			"en": "An old man with a black dog is sitting on a bench."
+		},
+		{
+			"who": "narrator",
+			"sk": "Он говорит, что после дождя всегда выходит солнце.",
+			"en": "He says that after rain the sun always comes out."
+		},
+		{
+			"who": "narrator",
+			"sk": "Вечером тепло, а небо розовое.",
+			"en": "In the evening it is warm and the sky is pink."
+		},
+		{
+			"who": "Аня",
+			"sk": "Папа, а завтра опять будет дождь?",
+			"en": "Dad, will it rain again tomorrow?"
+		},
+		{
+			"who": "Игорь",
+			"sk": "Не знаю. Но у тебя есть жёлтые сапоги, так что бояться нечего.",
+			"en": "I don't know. But you have yellow boots, so there is nothing to be afraid of."
+		},
+		{
+			"who": "Аня",
+			"sk": "Я не боюсь. Я хочу ещё одну радугу!",
+			"en": "I'm not afraid. I want one more rainbow!"
+		}
+	],
+	"newWords": [
+		{
+			"sk": "радуга",
+			"en": "rainbow"
+		},
+		{
+			"sk": "лужа",
+			"en": "puddle"
+		},
+		{
+			"sk": "зонт",
+			"en": "umbrella"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Какая погода утром?",
+			"options": [
+				"Идёт дождь, и дует ветер.",
+				"Светит солнце, и тепло.",
+				"Идёт снег."
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Какого цвета куртка у Ани?",
+			"options": [
+				"Синяя",
+				"Красная",
+				"Жёлтая"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Что Аня и папа видят над рекой?",
+			"options": [
+				"Радугу",
+				"Самолёт",
+				"Птицу"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "On a rainy Saturday Anya goes to the park with her dad in a red jacket and yellow boots. The rain stops, a rainbow appears over the river, and Anya wants one more.",
+	"glosses": {
+		"москве": {
+			"lemma": "Москва",
+			"gloss": "Moscow"
+		},
+		"серое": {
+			"lemma": "серый",
+			"gloss": "grey"
+		},
+		"дует": {
+			"lemma": "дуть",
+			"gloss": "to blow"
+		},
+		"красную": {
+			"lemma": "красный",
+			"gloss": "red"
+		},
+		"красная": {
+			"lemma": "красный",
+			"gloss": "red"
+		},
+		"красный": {
+			"lemma": "красный",
+			"gloss": "red"
+		},
+		"жёлтые": {
+			"lemma": "жёлтый",
+			"gloss": "yellow"
+		},
+		"жёлтый": {
+			"lemma": "жёлтый",
+			"gloss": "yellow"
+		},
+		"сапоги": {
+			"lemma": "сапог",
+			"gloss": "boot"
+		},
+		"аня": {
+			"lemma": "Аня",
+			"gloss": "Anya (a name)"
+		},
+		"собой": {
+			"lemma": "собой",
+			"gloss": "oneself (с собой: with you)"
+		},
+		"трава": {
+			"lemma": "трава",
+			"gloss": "grass"
+		},
+		"мокрая": {
+			"lemma": "мокрый",
+			"gloss": "wet"
+		},
+		"зелёная": {
+			"lemma": "зелёный",
+			"gloss": "green"
+		},
+		"зелёный": {
+			"lemma": "зелёный",
+			"gloss": "green"
+		},
+		"лужу": {
+			"lemma": "лужа",
+			"gloss": "puddle"
+		},
+		"кончается": {
+			"lemma": "кончаться",
+			"gloss": "to end, to stop"
+		},
+		"из-за": {
+			"lemma": "из-за",
+			"gloss": "from behind"
+		},
+		"облака": {
+			"lemma": "облако",
+			"gloss": "cloud"
+		},
+		"голубое": {
+			"lemma": "голубой",
+			"gloss": "light blue, sky blue"
+		},
+		"голубой": {
+			"lemma": "голубой",
+			"gloss": "light blue, sky blue"
+		},
+		"синий": {
+			"lemma": "синий",
+			"gloss": "dark blue"
+		},
+		"радуги": {
+			"lemma": "радуга",
+			"gloss": "rainbow"
+		},
+		"радугу": {
+			"lemma": "радуга",
+			"gloss": "rainbow"
+		},
+		"оранжевый": {
+			"lemma": "оранжевый",
+			"gloss": "orange"
+		},
+		"фиолетовый": {
+			"lemma": "фиолетовый",
+			"gloss": "purple"
+		},
+		"скамейке": {
+			"lemma": "скамейка",
+			"gloss": "bench"
+		},
+		"чёрной": {
+			"lemma": "чёрный",
+			"gloss": "black"
+		},
+		"он": {
+			"lemma": "он",
+			"gloss": "he"
+		},
+		"розовое": {
+			"lemma": "розовый",
+			"gloss": "pink"
+		},
+		"тебя": {
+			"lemma": "ты",
+			"gloss": "you (у тебя есть: you have)"
+		},
+		"у": {
+			"lemma": "у",
+			"gloss": "at, by (у тебя есть: you have)"
+		},
+		"есть": {
+			"lemma": "есть",
+			"gloss": "there is (у тебя есть: you have)"
+		},
+		"а": {
+			"lemma": "а",
+			"gloss": "and, but"
+		}
+	}
+}

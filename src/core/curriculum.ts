@@ -28,6 +28,7 @@
 import { allUnits, unitDone, isUnitId, unitInfo, type UnitId } from "./lesson.ts";
 import { LISTEN_MINUTES } from "./listen.ts";
 import { perCourse, type Course } from "./course.ts";
+import { chapterStoriesFor } from "./chapter-stories.ts";
 
 // ─── Levels and stages ─────────────────────────────────────────────────────
 
@@ -79,7 +80,7 @@ export const STAGES: Stage[] = [
 
 // ─── Units ──────────────────────────────────────────────────────────────────
 
-export type CurriculumKind = "drill" | "words" | "tutor" | "goal";
+export type CurriculumKind = "drill" | "words" | "tutor" | "goal" | "story";
 
 interface CurriculumUnit {
 	id: string;
@@ -103,7 +104,7 @@ interface CurriculumUnit {
 }
 
 export function bareUnitTitle(title: string): string {
-	return title.replace(/^(Grammar|Words|Tutor|Goal):\s*/, "");
+	return title.replace(/^(Grammar|Words|Tutor|Goal|Story):\s*/, "");
 }
 
 const drill = (id: UnitId, extra: Partial<CurriculumUnit> = {}): CurriculumUnit => {
@@ -730,6 +731,21 @@ const slovakChapters = (map: readonly CurriculumUnit[]): Chapter[] => [
 	chapter(map, "media", "b2", "Media", "Reading, listening, writing at length", "reading", "can-follow-media"),
 ];
 
+/** Each of the language's chapter stories, right after the first unit of its `after` list the map has. */
+function withStories<T>(ids: readonly T[], idOf: (x: T) => string, language: string, make: (id: string) => T): T[] {
+	const out = [...ids];
+	for (const story of chapterStoriesFor(language)) {
+		const anchor = story.after.map((a) => out.findIndex((x) => idOf(x) === a)).find((i) => i >= 0);
+		if (anchor !== undefined) out.splice(anchor + 1, 0, make(story.id));
+	}
+	return out;
+}
+
+function storyUnit(language: string, id: string): CurriculumUnit {
+	const story = chapterStoriesFor(language).find((s) => s.id === id)!;
+	return { id, kind: "story", title: story.title, tagline: story.tagline, glyph: "book-open" };
+}
+
 /** A generated course's map: First words opens it, then each chapter's
  *  units, tutor sessions and goal in the course's order. */
 function courseCurriculum(course: Course): CurriculumUnit[] {
@@ -746,25 +762,48 @@ function courseCurriculum(course: Course): CurriculumUnit[] {
 			else if (g) out.push(goal(g.id, g.title, g.tagline, undefined, g.scene));
 		}
 	}
-	return out;
+	return withStories(
+		out,
+		(u) => u.id,
+		course.language,
+		(id) => storyUnit(course.language, id),
+	);
+}
+
+function courseChapters(course: Course): Chapter[] {
+	const chapters = course.chapters.map((c, i) => ({
+		id: c.id,
+		stage: c.stage,
+		title: c.title,
+		tagline: c.tagline,
+		units: i === 0 ? ["words", ...c.units] : [...c.units],
+	}));
+	for (const story of chapterStoriesFor(course.language)) {
+		for (const anchor of story.after) {
+			const ch = chapters.find((c) => c.units.includes(anchor));
+			if (!ch) continue;
+			ch.units.splice(ch.units.indexOf(anchor) + 1, 0, story.id);
+			break;
+		}
+	}
+	return chapters;
 }
 
 /** Every unit on the map, in teaching order: the running language's course (src/core/course.ts), else Slovak's. */
 export const curriculumUnits = perCourse((course): CurriculumUnit[] =>
-	course ? courseCurriculum(course) : slovakCurriculum(),
+	course
+		? courseCurriculum(course)
+		: withStories(
+				slovakCurriculum(),
+				(u) => u.id,
+				"slovak",
+				(id) => storyUnit("slovak", id),
+			),
 );
 
 /** The map's chapters, in order. Each closes with a can-do goal. */
 export const allChapters = perCourse((course): Chapter[] =>
-	course
-		? course.chapters.map((c, i) => ({
-				id: c.id,
-				stage: c.stage,
-				title: c.title,
-				tagline: c.tagline,
-				units: i === 0 ? ["words", ...c.units] : [...c.units],
-			}))
-		: slovakChapters(curriculumUnits()),
+	course ? courseChapters(course) : slovakChapters(curriculumUnits()),
 );
 
 export function curriculumUnit(id: string): CurriculumUnit | undefined {
@@ -846,6 +885,7 @@ function unitProgressOf(
 ): { done: boolean; progress: number } {
 	const lessons = e?.lessons ?? 0;
 	const accuracy = e && e.reps > 0 ? e.correct / e.reps : null;
+	if (u.kind === "story") return { done: lessons >= 1, progress: Math.min(1, lessons) };
 	if (u.kind === "tutor") return { done: lessons >= TUTOR_SESSIONS, progress: Math.min(1, lessons / TUTOR_SESSIONS) };
 	if (u.lessonsToComplete)
 		return { done: lessons >= lessonsToComplete, progress: Math.min(1, lessons / lessonsToComplete) };

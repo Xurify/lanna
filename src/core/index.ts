@@ -87,6 +87,7 @@ export * from "./word-clusters.ts";
 export * from "./pairs.ts";
 export * from "./sounds.ts";
 export * from "./curriculum.ts";
+export * from "./chapter-stories.ts";
 export * from "./after-plan.ts";
 export * from "./notes.ts";
 export * from "./outside.ts";
