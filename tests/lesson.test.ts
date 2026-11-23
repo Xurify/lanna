@@ -8,6 +8,7 @@ import fs from "node:fs";
 import { test } from "node:test";
 import {
 	NEW_WORDS_PER_LESSON,
+	rareWordsIn,
 	buildBlitz,
 	buildLesson,
 	classifyAll,
@@ -350,4 +351,18 @@ test("the next new lesson teaches the words the last one left out", () => {
 	assert.ok(fresh.length >= 3, JSON.stringify({ taught: [...taught], next: [...unit] }));
 	assert.equal(first.unmet?.length, taught.size);
 	assert.deepEqual(new Set(next.unmet), new Set(fresh));
+});
+
+test("grammar reps use sentences whose other words a beginner knows", () => {
+	const cost = rareWordsIn(entries);
+	const bySlug = new Map(entries.map((e) => [e.slug, e]));
+	for (const unit of ["present", "loc", "gen", "past", "kam-kde", "adj"] as const)
+		for (const seed of [1, 2, 3]) {
+			const items = buildLesson(entries, unit, { seed }).items.filter((i) => !i.mixed);
+			const hard = items.filter((i) => {
+				const [slug, index] = i.id.split("#");
+				return cost({ entry: bySlug.get(slug!)!, index: Number(index), unit }) > 0;
+			});
+			assert.equal(hard.length, 0, `${unit} ${seed}: ${hard.map((i) => i.sentence).join(" | ")}`);
+		}
 });

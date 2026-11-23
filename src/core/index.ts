@@ -76,6 +76,7 @@ export * from "./review.ts";
 export * from "./accent-keys.ts";
 export * from "./lesson.ts";
 export * from "./lesson-words.ts";
+export * from "./verb-pattern.ts";
 export * from "./reference-pages.ts";
 export * from "./grammar.ts";
 export * from "./course-grammar.ts";
