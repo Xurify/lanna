@@ -39,18 +39,36 @@ npx electron-builder --win --x64 --publish never
 npx electron-builder --linux --x64 --publish never
 ```
 
+## Make a release
+
+```sh
+bun run release:publish            # next patch above the published release
+bun run release:publish minor      # or major, or an exact version such as 0.2.0
+bun run release:publish --resume   # pick up a release whose tag is already pushed
+```
+
+Run it on an up-to-date, clean `main`. It:
+
+1. picks the version: one patch above the latest published release (or above `main`, if `main` is already ahead), unless you name one;
+2. runs typecheck, lint, format check and the test suite locally, so a broken gate fails before anything is pushed;
+3. bumps `package.json`, `package-lock.json` and the README's `Version` line, commits `Release <version>`, tags `v<version>` and pushes both to `main` in one atomic push;
+4. waits for the **Desktop release** workflow to package every platform into the draft;
+5. checks the draft's files and update feeds with `scripts/verify-release.ts`, then publishes it.
+
+Windows and Linux must build. A failed macOS build (for example, missing signing secrets) only produces a warning, and the release ships without macOS files; Mac installs keep their version until a release includes them. If the script stops while waiting, run it again with `--resume`.
+
 ## Version numbers
 
 Installed copies update only to a published GitHub Release with a **higher** version, and electron-updater never downgrades. So:
 
 - `main` always carries the version of the latest published release or the next one. A version bump is merged to `main` before its release; a release is never built or tagged from a branch that has not reached `main`.
 - Every build checks itself: the `beforePack` hook (`scripts/before-pack.cjs`) stops `electron-builder` when `package.json` is older than the latest published release, and says which version to bump to. Offline builds only get a warning. For a deliberately older build, such as a baseline to test updating from, set `LANNA_ALLOW_OLD_VERSION=1`.
-- Before publishing, `npm run release:check` must pass. It fails unless the version is newer than the published release, `package-lock.json` matches, and `HEAD` is on `origin/main`. The tag workflow runs the same check.
+- Before publishing, `bun run release:check` must pass (`bun run release:publish` runs it for you). It fails unless the version is newer than the published release, `package-lock.json` matches, and `HEAD` is on `origin/main`. The tag workflow runs the same check.
 - Never restart numbering at a lower version. Every copy already installed would ignore it.
 
 ## Install your build on this PC (Windows)
 
-`npm run desktop:install` runs the build steps above, closes Lanna, installs `dist/Lanna-<version>-x64-setup.exe` silently over the installed copy, checks the installed version and starts Lanna again. `-- --skip-build` reuses the installer already in `dist/`; `-- --no-launch` leaves Lanna closed. Your data in `%APPDATA%\Lanna` is untouched.
+`bun run desktop:install` runs the build steps above, closes Lanna, installs `dist/Lanna-<version>-x64-setup.exe` silently over the installed copy, checks the installed version and starts Lanna again. `-- --skip-build` reuses the installer already in `dist/`; `-- --no-launch` leaves Lanna closed. Your data in `%APPDATA%\Lanna` is untouched.
 
 This does not publish anything. Building the same version as the published release is fine: the installed copy treats it as current and updates normally once a higher version is published. `LANNA_UPDATE_FEED` is only for testing the updater itself.
 

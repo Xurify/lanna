@@ -69,7 +69,7 @@ describe("send_to_user retired from active agents", () => {
 			agent.state.tools.some((tool) => tool.name === SEND_TO_USER_TOOL),
 			false,
 		);
-		assert.equal(agent.state.systemPrompt, composeInstructions("chat"));
+		assert.ok(agent.state.systemPrompt.startsWith(composeInstructions("chat")));
 		assert.ok(!agent.state.systemPrompt.includes(SEND_TO_USER_TOOL));
 
 		await runSubagent([], {

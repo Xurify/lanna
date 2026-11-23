@@ -13,12 +13,12 @@ If an installed app logs `No published versions on GitHub` (in `%APPDATA%\Lanna\
 
 ## Where things live on Windows
 
-| What                  | Path                                                               |
-| --------------------- | ------------------------------------------------------------------ |
-| Installed program     | `%LOCALAPPDATA%\Programs\lanna\Lanna.exe`                          |
-| Your data and logs    | `%APPDATA%\Lanna\` (`data\`, `logs\main.log`)                       |
-| Staged update         | `%LOCALAPPDATA%\lanna-updater\pending\`                            |
-| Installer from a build | `dist\Lanna-<version>-x64-setup.exe` in the repo                  |
+| What                   | Path                                             |
+| ---------------------- | ------------------------------------------------ |
+| Installed program      | `%LOCALAPPDATA%\Programs\lanna\Lanna.exe`        |
+| Your data and logs     | `%APPDATA%\Lanna\` (`data\`, `logs\main.log`)    |
+| Staged update          | `%LOCALAPPDATA%\lanna-updater\pending\`          |
+| Installer from a build | `dist\Lanna-<version>-x64-setup.exe` in the repo |
 
 The installer is per-user and needs no administrator rights. It is unsigned, so Windows SmartScreen may warn on first install: **More info → Run anyway**.
 
@@ -28,7 +28,7 @@ GitHub Actions does not run on this repository, so the Windows installer is buil
 
 ```sh
 npm ci
-npm run build
+bun run build
 node scripts/build-server.mjs
 node scripts/smoke-server.mjs --electron
 npx electron-builder --win --x64 --publish never
@@ -40,25 +40,17 @@ Output in `dist\`:
 - `Lanna-<version>-x64-setup.exe.blockmap`
 - `latest.yml` (the update feed; its `version` must match the installer)
 
-The `npm run build` step takes a few minutes. The last electron-builder step takes about 5 minutes, and it sits on `building block map` for a while before it finishes. Wait for `dist\latest.yml` to appear before you move on.
+The `bun run build` step takes a few minutes. The last electron-builder step takes about 5 minutes, and it sits on `building block map` for a while before it finishes. Wait for `dist\latest.yml` to appear before you move on.
 
-Before publishing, also run the project gates: `npm run typecheck`, `npm run lint`, `npm run fmt:check`, and `npm test` (with `NODE_ENV=test` and `LANNA_DATA_DIR` set to a scratch folder).
+Before publishing, also run the project gates: `bun run typecheck`, `bun run lint`, `bun run fmt:check`, and `bun run test` (with `NODE_ENV=test` and `LANNA_DATA_DIR` set to a scratch folder).
 
 ## Publish a release
 
 Each release needs a new version number. Installed copies compare versions, so the same number never updates.
 
-1. Bump the version in three places: `package.json`, `package-lock.json` (the top-level `version` and the `""` package entry), and the `Version x.y.z` line in `README.md`. Commit and merge it to `main`.
-2. Build the installer from that commit (above).
-3. Publish, from the repo root:
+Run `bun run release:publish` on a clean, up-to-date `main`. It picks the version, runs the gates, tags, waits for GitHub Actions to build the installers and publishes the release. `docs/desktop-release.md` → **Make a release** has the details.
 
-   ```sh
-   gh release create v<version> dist/Lanna-<version>-x64-setup.exe dist/Lanna-<version>-x64-setup.exe.blockmap dist/latest.yml --target <commit you built from, pushed to origin> --title "Lanna <version>" --notes "<what changed for the learner>"
-   ```
-
-   Use `--draft` if you want to look at it on GitHub before anyone can update. A draft is invisible to installed apps until you publish it.
-
-A Windows-only release does not include `latest-mac.yml` or `latest-linux.yml`. Mac and Linux installs will log an update error until they get releases of their own. `docs/desktop-release.md` describes the full three-platform flow, which is run by the release workflow.
+To put a build on this PC without publishing, run `bun run desktop:install`.
 
 ## Test an update
 
