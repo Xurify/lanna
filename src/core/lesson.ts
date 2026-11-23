@@ -1227,6 +1227,10 @@ const BUILD_PATTERN: ItemKind[] = [
 	"build",
 ];
 
+/** How many words a new vocabulary lesson teaches: each is met before rep
+ *  1 and asked twice in the 12 reps. The app's own choice. */
+export const NEW_WORDS_PER_LESSON = 6;
+
 /** Slots (by position) that take an item from another unit: 2 in a new unit,
  *  4 in a practiced one, 6 in a complete one. The counts are the app's own
  *  policy; the mix rises with mastery by design, not from a measured optimum. */
@@ -1444,6 +1448,25 @@ export function buildLesson(
 		return { top, list: shuffle(baseList, rand) };
 	};
 	const main = sourceFor(unit, opts.gender, opts.weakGender);
+	if (info.kind === "words" && info.repeat && stage === "new") {
+		// A first lesson teaches a few words twice rather than every word
+		// once; the words met least recently go first, so the next lesson
+		// brings the rest.
+		const seen = new Map<string, number>();
+		for (const id of opts.recent ?? []) {
+			const slug = id.slice(0, id.indexOf("#"));
+			seen.set(slug, (seen.get(slug) ?? 0) + 1);
+		}
+		const slugs = [...new Set(main.top.map((c) => c.entry.slug))];
+		const chosen = new Set(
+			slugs
+				.map((slug, order) => ({ slug, order, seen: seen.get(slug) ?? 0 }))
+				.sort((a, b) => a.seen - b.seen || a.order - b.order)
+				.slice(0, NEW_WORDS_PER_LESSON)
+				.map((w) => w.slug),
+		);
+		main.list = main.list.filter((c) => chosen.has(c.entry.slug));
+	}
 	const mixes = (opts.mix ?? [])
 		.filter((u) => u !== unit)
 		.map((u) => sourceFor(u))
@@ -1458,6 +1481,8 @@ export function buildLesson(
 	const used = new Set<string>();
 	const keyOf = (c: Candidate) => (info.repeat ? `${c.entry.slug}#${c.index}` : c.entry.slug);
 	const items: LessonItem[] = [];
+	const spreads = info.kind === "words" && info.repeat === true;
+	const asked = new Map<string, number>();
 	pattern.forEach((kind, slot) => {
 		// A word bank needs a short sentence; listening needs one worth hearing.
 		const fits = (c: Candidate) => {
@@ -1469,13 +1494,21 @@ export function buildLesson(
 			if (kind === "choose" && info.kind === "words") return fold(ex.cloze!.answer) === fold(entryLemma(c.entry));
 			return true;
 		};
-		const take = (list: Candidate[]) =>
-			list.find((c) => !used.has(keyOf(c)) && fits(c)) ?? list.find((c) => !used.has(keyOf(c)));
+		const take = (list: Candidate[]) => {
+			const open = list.filter((c) => !used.has(keyOf(c)));
+			if (!spreads) return open.find(fits) ?? open[0];
+			// A word with many sentences would otherwise take most of the
+			// lesson: the least-asked word goes next.
+			const fewest = Math.min(...open.map((c) => asked.get(c.entry.slug) ?? 0));
+			const least = open.filter((c) => (asked.get(c.entry.slug) ?? 0) === fewest);
+			return least.find(fits) ?? open.find(fits) ?? least[0];
+		};
 		const mix = MIX_SLOTS[stage].includes(slot) && mixes.length > 0 ? mixes[Math.floor(rand() * mixes.length)]! : null;
 		const fromMix = mix ? take(mix.list) : undefined;
 		const pick = fromMix ?? take(main.list);
 		if (!pick) return;
 		used.add(keyOf(pick));
+		asked.set(pick.entry.slug, (asked.get(pick.entry.slug) ?? 0) + 1);
 		const item = buildItem(pick, kind, fromMix ? poolOf(mix!.top, pick.unit) : pool, rand);
 		if (kind === "meaning")
 			item.options = meaningChoices(

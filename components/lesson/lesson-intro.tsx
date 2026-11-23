@@ -129,7 +129,7 @@ function introCard(plan: LessonPlan, progress: string, body: React.ReactNode) {
 	);
 }
 
-function IntroDock({
+export function IntroDock({
 	step,
 	finished,
 	onBack,
@@ -249,7 +249,7 @@ function MarkedEnding({
 	);
 }
 
-function StageDots({ step, count, onPick }: { step: number; count: number; onPick: (i: number) => void }) {
+export function StageDots({ step, count, onPick }: { step: number; count: number; onPick: (i: number) => void }) {
 	return (
 		<div className="flex items-center gap-1.5" data-testid="intro-dots">
 			{Array.from({ length: count }, (_, i) => (

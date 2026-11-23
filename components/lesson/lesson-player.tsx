@@ -63,6 +63,8 @@ import { TaskGrid } from "@/components/lesson/task-grid";
 import { Bridges, BridgesContext } from "@/components/lesson/bridges";
 import { LessonIntro } from "@/components/lesson/lesson-intro";
 import { sketchStages } from "@/components/lesson/case-sketch";
+import { MatchRound } from "@/components/lesson/match-round";
+import { WordIntro } from "@/components/lesson/word-intro";
 import { HelpLadder, PictureBox, WordCard } from "@/components/lesson/rep-panel";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
 import { readOrigin } from "@/components/origin";
@@ -103,7 +105,9 @@ import {
 	praiseFor,
 	type CheerKey,
 	helpSteps,
+	lessonWords,
 	pictureFor,
+	translationAroundPicture,
 	type HelpStep,
 	type WordPicture,
 } from "@/src/core";
@@ -154,6 +158,14 @@ const RELEARN_MAX = 4;
 const NO_RETRY = new Set<ItemKind>(["build", "meaning"]);
 
 const BLITZ_SECONDS = 60;
+/** A word-cluster unit: a small set of words, each asked in several sentences. */
+function teachesWords(unit: UnitId): boolean {
+	const info = unitInfo(unit);
+	return info.kind === "words" && info.repeat === true;
+}
+
+/** Fewer words than this make no match round and no word intro. */
+const MATCH_MIN = 3;
 
 const KIND_LABEL: Record<ItemKind, string> = {
 	meaning: "What does it mean?",
@@ -236,8 +248,18 @@ export function LessonPlayer({
 	// lesson log keeps): the gaps between answers, each capped.
 	const activeTime = useActiveTime(mode === "blitz" ? "blitz" : "lesson", "interactive");
 	const finishing = useRef(false);
-	const opensOnIntro = Boolean(unit && mode === "lesson" && !focus && sketchStages(unit).length > 0);
+	const opensOnIntro = Boolean(
+		unit && mode === "lesson" && !focus && (sketchStages(unit).length > 0 || teachesWords(unit)),
+	);
 	const [introUp, setIntroUp] = useState(opensOnIntro);
+	// The words a vocabulary lesson teaches: met before rep 1 on a new unit,
+	// matched after the last rep.
+	const words = useMemo(
+		() => (plan && mode === "lesson" && !focus && teachesWords(plan.unit) ? lessonWords(plan) : []),
+		[plan, mode, focus],
+	);
+	const meetsWords = plan?.stage === "new" && words.length >= MATCH_MIN;
+	const [matching, setMatching] = useState<Rep[] | null>(null);
 
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
 	// its state is kept in this tab's sessionStorage until it is finished
@@ -279,7 +301,7 @@ export function LessonPlayer({
 		}
 	}, [saveKey]);
 	useEffect(() => {
-		if (!saveKey || !plan || score || restoring.current) return;
+		if (!saveKey || !plan || score || matching || restoring.current) return;
 		const saved: SavedLesson = {
 			plan,
 			index,
@@ -300,7 +322,7 @@ export function LessonPlayer({
 		} catch {
 			// storage blocked: the lesson is not kept
 		}
-	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, help, score]);
+	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, help, score, matching]);
 	const forget = useCallback(() => {
 		if (!saveKey) return;
 		try {
@@ -330,6 +352,7 @@ export function LessonPlayer({
 		setCombo(0);
 		setXp(0);
 		setScore(null);
+		setMatching(null);
 		setPracticeMs(null);
 		setRecorded(null);
 		setSaveFailed(false);
@@ -568,8 +591,11 @@ export function LessonPlayer({
 			setPlan({ ...plan, items: [...plan.items, again] });
 			nextTotal++;
 		}
-		if (index + 1 >= nextTotal) void finish(all);
-		else setIndex((i) => i + 1);
+		if (index + 1 < nextTotal) setIndex((i) => i + 1);
+		else if (words.length >= MATCH_MIN) {
+			forget();
+			setMatching(all);
+		} else void finish(all);
 	};
 
 	const why = async () => {
@@ -664,7 +690,7 @@ export function LessonPlayer({
 
 	// The learn-first intro: the teach step before rep 1. It owns the frame
 	// until Start practicing; leaving from here drops nothing, so no ask.
-	if (introUp && plan) {
+	if (introUp && plan && (meetsWords || sketchStages(plan.unit).length > 0)) {
 		return (
 			<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
 				<Frame strip={false}>
@@ -681,10 +707,29 @@ export function LessonPlayer({
 						</div>
 					</div>
 					<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[2vh]" data-testid="lesson-intro">
-						<LessonIntro plan={plan} onStart={() => setIntroUp(false)} />
+						{meetsWords ? (
+							<WordIntro plan={plan} words={words} onStart={() => setIntroUp(false)} />
+						) : (
+							<LessonIntro plan={plan} onStart={() => setIntroUp(false)} />
+						)}
 					</div>
 				</Frame>
 			</BridgesContext.Provider>
+		);
+	}
+
+	if (matching && !score) {
+		return (
+			<Frame strip={false}>
+				<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
+					<div className={cn(LESSON_COLUMN, "flex h-16 items-center gap-4 pt-2")}>
+						<LessonTrail reps={matching} index={matching.length} total={matching.length} answered={false} />
+					</div>
+				</div>
+				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
+					<MatchRound unit={plan.unit} words={words} seed={matching.length} onDone={() => void finish(matching)} />
+				</div>
+			</Frame>
 		);
 	}
 
@@ -1072,9 +1117,11 @@ function HintChip({ item, pictured }: { item: LessonItem; pictured: boolean }) {
 	const lang = useActiveLanguage();
 	const pairs = unitInfo(item.unit).kind === "pairs";
 	const meaning = (unitInfo(item.unit).kind === "words" || pairs) && !!item.hint;
+	// On a meaning rep the word's meaning would answer the question.
+	const answers = meaning && !pairs && item.kind === "meaning";
 	return (
 		<>
-			{!pictured && (
+			{!pictured && !answers && (
 				<span className="q-pair mr-2" data-testid="lesson-hint-chip">
 					<s>{pairs ? "twins" : meaning ? "means" : "base form"}</s>
 					<span lang={meaning && !pairs ? undefined : lang?.code}>{hintFor(item)}</span>
@@ -1174,7 +1221,7 @@ function RepView({
 					result={result}
 					miss={miss}
 					hideMeaning={hidesMeaning}
-					pictured={!!picture}
+					picture={picture}
 					onGrade={onGrade}
 					onReady={onReady}
 				/>
@@ -1372,7 +1419,7 @@ function ClozeRep({
 	result,
 	miss,
 	hideMeaning,
-	pictured,
+	picture,
 	onGrade,
 	onReady,
 }: {
@@ -1382,10 +1429,11 @@ function ClozeRep({
 	result: Rep | null;
 	miss: string | null;
 	hideMeaning: boolean;
-	pictured: boolean;
+	picture: WordPicture | undefined;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
 }) {
+	const pictured = !!picture;
 	const lang = useActiveLanguage();
 	const [given, setGiven] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -1588,7 +1636,13 @@ function ClozeRep({
 						<HintChip item={item} pictured={pictured} />
 						{meaning && !locked ? (
 							<span className="text-ink-3">Hear it, then pick what it means.</span>
-						) : hideMeaning && !locked ? null : (
+						) : hideMeaning && !locked ? null : picture && !locked ? (
+							<span data-testid="lesson-translation">
+								{translationAroundPicture(item.translation, picture).map((part, i) =>
+									i % 2 ? <span key={i} className="q-blank mx-0.5 w-[4ch]" aria-label="the pictured word" /> : part,
+								)}
+							</span>
+						) : (
 							item.translation
 						)}
 						{locked && !meaning && (
