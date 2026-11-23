@@ -21,14 +21,14 @@ Hovoríte po slovensky? Trochu. Ešte sa učím.
 
 Gender is not decoration; it drives the rest of the clause. Start with forms learners can reuse:
 
-| Noun            | Pattern                            | Use                          |
-| --------------- | ---------------------------------- | ---------------------------- |
-| `stôl` m. inan. | `nový stôl – na stole – so stolom` | object/location/with         |
-| `muž` m. anim.  | `dobrý muž – vidím dobrého muža`   | animate accusative           |
-| `žena` f.       | `dobrá žena – so ženou`            | feminine `-a`                |
-| `ulica` f.      | `dlhá ulica – na ulici`            | feminine soft-ish pattern    |
-| `mesto` n.      | `veľké mesto – do mesta – v meste` | destination/location         |
-| `dievča` n.     | `malé dievča – s dievčaťom`        | special neuter child pattern |
+| Noun | Pattern | Use |
+| --- | --- | --- |
+| `stôl` m. inan. | `nový stôl – na stole – so stolom` | object/location/with |
+| `muž` m. anim. | `dobrý muž – vidím dobrého muža` | animate accusative |
+| `žena` f. | `dobrá žena – so ženou` | feminine `-a` |
+| `ulica` f. | `dlhá ulica – na ulici` | feminine soft-ish pattern |
+| `mesto` n. | `veľké mesto – do mesta – v meste` | destination/location |
+| `dievča` n. | `malé dievča – s dievčaťom` | special neuter child pattern |
 
 Adjective order is normally before the noun: `nový byt`, `nová izba`, `nové auto`. Predicate adjective agrees: `Byt je nový. Izba je nová. Auto je nové.` Past tense agrees too: `Peter bol doma. Jana bola doma. Deti boli doma.`
 
@@ -51,15 +51,15 @@ Subjects usually disappear: `Pracujem v meste.` not necessarily `Ja pracujem...`
 
 These patterns drive A1-A2 production:
 
-| Meaning              | Form                           | Example                       |
-| -------------------- | ------------------------------ | ----------------------------- |
-| want to              | `chcieť + infinitive`          | `Chcem ísť domov.`            |
-| can / permitted      | `môcť + infinitive`            | `Môžem tu sedieť?`            |
+| Meaning | Form | Example |
+| --- | --- | --- |
+| want to | `chcieť + infinitive` | `Chcem ísť domov.` |
+| can / permitted | `môcť + infinitive` | `Môžem tu sedieť?` |
 | know how / know fact | `vedieť + infinitive / clause` | `Viem variť. Viem, že príde.` |
-| must                 | `musieť + infinitive`          | `Musíme odísť.`               |
-| like                 | `mať rád/rada + acc.`          | `Mám rada kávu.`              |
-| be pleasing          | `páčiť sa + dat.`              | `Páči sa mi tá kniha.`        |
-| would like           | `chcieť` conditional           | `Chcel by som čaj.`           |
+| must | `musieť + infinitive` | `Musíme odísť.` |
+| like | `mať rád/rada + acc.` | `Mám rada kávu.` |
+| be pleasing | `páčiť sa + dat.` | `Páči sa mi tá kniha.` |
+| would like | `chcieť` conditional | `Chcel by som čaj.` |
 
 `Mám rád` agrees with the liker, not thing liked: male `mám rád`, female `mám rada`, plural masculine animate `máme radi`, other plural `máme rady`.
 

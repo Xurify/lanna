@@ -17,12 +17,12 @@ In Estonian, attributive adjectives agree with their head noun in **case and num
 
 In the last four cases (Terminative, Essive, Abessive, Comitative), adjectives **remain in the Genitive singular or plural** instead of taking the case suffix:
 
-| Case            | Ending | Noun with Adjective (Singular) | Noun with Adjective (Plural) | Rule                                                 |
-| --------------- | ------ | ------------------------------ | ---------------------------- | ---------------------------------------------------- |
-| **Terminative** | _-ni_  | _suure majani_                 | _suurte majadeni_            | Adjective takes Genitive (_suure_), noun takes _-ni_ |
-| **Essive**      | _-na_  | _hea õpetajana_                | _heade õpetajatena_          | Adjective takes Genitive (_hea_), noun takes _-na_   |
-| **Abessive**    | _-ta_  | _külma veeta_                  | _külmade veteta_             | Adjective takes Genitive (_külma_), noun takes _-ta_ |
-| **Comitative**  | _-ga_  | _uue autoga_                   | _uute autodega_              | Adjective takes Genitive (_uue_), noun takes _-ga_   |
+| Case | Ending | Noun with Adjective (Singular) | Noun with Adjective (Plural) | Rule |
+| --- | --- | --- | --- | --- |
+| **Terminative** | _-ni_ | _suure majani_ | _suurte majadeni_ | Adjective takes Genitive (_suure_), noun takes _-ni_ |
+| **Essive** | _-na_ | _hea õpetajana_ | _heade õpetajatena_ | Adjective takes Genitive (_hea_), noun takes _-na_ |
+| **Abessive** | _-ta_ | _külma veeta_ | _külmade veteta_ | Adjective takes Genitive (_külma_), noun takes _-ta_ |
+| **Comitative** | _-ga_ | _uue autoga_ | _uute autodega_ | Adjective takes Genitive (_uue_), noun takes _-ga_ |
 
 _Warning: Never say `*külmata veeta` or `*uuega autoga` — this is a serious grammatical error._
 
@@ -30,12 +30,12 @@ _Warning: Never say `*külmata veeta` or `*uuega autoga` — this is a serious g
 
 ## 2. Comparison of Adjectives (Võrdlusastmed)
 
-| Degree                        | Form                          | Suffix / Marker                 | Examples                                       |
-| ----------------------------- | ----------------------------- | ------------------------------- | ---------------------------------------------- |
-| **Positive** (_algvõrre_)     | Base adjective                | —                               | _ilus_ (beautiful), _suur_ (big), _hea_ (good) |
-| **Comparative** (_keskvõrre_) | Genitive stem + _-m_          | _-m_ (Gen: _-ma_, Part: _-mat_) | _ilusam, suurem, parem, pikem, vanem_          |
-| **Superlative** (_ülivõrre_)  | 1. Analytic (_kõige_ + comp.) | _kõige_ + _-m_                  | _kõige ilusam, kõige suurem, kõige parem_      |
-|                               | 2. Synthetic (short form)     | _-im_                           | _suurim, vanim, parim, pikim, uusim_           |
+| Degree | Form | Suffix / Marker | Examples |
+| --- | --- | --- | --- |
+| **Positive** (_algvõrre_) | Base adjective | — | _ilus_ (beautiful), _suur_ (big), _hea_ (good) |
+| **Comparative** (_keskvõrre_) | Genitive stem + _-m_ | _-m_ (Gen: _-ma_, Part: _-mat_) | _ilusam, suurem, parem, pikem, vanem_ |
+| **Superlative** (_ülivõrre_) | 1. Analytic (_kõige_ + comp.) | _kõige_ + _-m_ | _kõige ilusam, kõige suurem, kõige parem_ |
+|  | 2. Synthetic (short form) | _-im_ | _suurim, vanim, parim, pikim, uusim_ |
 
 Comparative clauses use the particle **kui** ("than") or the elative/partitive:
 
@@ -50,14 +50,14 @@ Comparative clauses use the particle **kui** ("than") or the elative/partitive:
 
 Estonian personal pronouns have full (emphatic) and short (clitic) forms. There is no gender distinction in the 3rd person (_tema / ta_ = he/she/it).
 
-| Person | Nom. (Full / Short) | Genitive    | Partitive | Allative ("to") | Adessive ("at / have") |
-| ------ | ------------------- | ----------- | --------- | --------------- | ---------------------- |
-| 1sg    | _mina / ma_         | _minu / mu_ | _mind_    | _mulle_         | _mul_                  |
-| 2sg    | _sina / sa_         | _sinu / su_ | _sind_    | _sulle_         | _sul_                  |
-| 3sg    | _tema / ta_         | _tema / ta_ | _teda_    | _talle_         | _tal_                  |
-| 1pl    | _meie / me_         | _meie / me_ | _meid_    | _meile_         | _meil_                 |
-| 2pl    | _teie / te_         | _teie / te_ | _teid_    | _teile_         | _teil_                 |
-| 3pl    | _nemad / nad_       | _nende_     | _neid_    | _neile_         | _neil_                 |
+| Person | Nom. (Full / Short) | Genitive | Partitive | Allative ("to") | Adessive ("at / have") |
+| --- | --- | --- | --- | --- | --- |
+| 1sg | _mina / ma_ | _minu / mu_ | _mind_ | _mulle_ | _mul_ |
+| 2sg | _sina / sa_ | _sinu / su_ | _sind_ | _sulle_ | _sul_ |
+| 3sg | _tema / ta_ | _tema / ta_ | _teda_ | _talle_ | _tal_ |
+| 1pl | _meie / me_ | _meie / me_ | _meid_ | _meile_ | _meil_ |
+| 2pl | _teie / te_ | _teie / te_ | _teid_ | _teile_ | _teil_ |
+| 3pl | _nemad / nad_ | _nende_ | _neid_ | _neile_ | _neil_ |
 
 - **Short forms** cannot be used after prepositions or when stressed:
   - _Vaata mind!_ (not `*mu`), _minu juures_ (not `*mu juures` in formal standard).

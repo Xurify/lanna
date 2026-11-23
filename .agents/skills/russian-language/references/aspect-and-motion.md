@@ -6,13 +6,13 @@ Verbal aspect and motion verbs form the grammatical core of Russian action predi
 
 Every Russian verb action is viewed as either Imperfective (_несовершенный вид_, НСВ) or Perfective (_совершенный вид_, СВ).
 
-| Feature                     | Imperfective (НСВ)                                                                                                          | Perfective (СВ)                                                           |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Focus**                   | Process, duration, habit, state, fact of action (_констатация факта_).                                                      | Completed result, total event, reaching a boundary/limit (_целостность_). |
-| **Tenses**                  | Past, Present, Compound Future (_буду делать_).                                                                             | Past, Simple Future (_сделаю_). **No Present.**                           |
-| **Repetition**              | Default for repeated actions: _каждый день, часто, всегда, обычно_.                                                         | Single event or sequence of single completed events.                      |
-| **Negation**                | Denotes total absence of action or prohibition.                                                                             | Denotes failure to achieve result despite attempt.                        |
-| **Infinitive after modals** | After verbs of beginning, continuing, ceasing (_начать, продолжать, перестать_) and verbs of liking (_любить, ненавидеть_). | After verbs denoting achievement of intent (_удалось, успел, забыл_).     |
+| Feature | Imperfective (НСВ) | Perfective (СВ) |
+| --- | --- | --- |
+| **Focus** | Process, duration, habit, state, fact of action (_констатация факта_). | Completed result, total event, reaching a boundary/limit (_целостность_). |
+| **Tenses** | Past, Present, Compound Future (_буду делать_). | Past, Simple Future (_сделаю_). **No Present.** |
+| **Repetition** | Default for repeated actions: _каждый день, часто, всегда, обычно_. | Single event or sequence of single completed events. |
+| **Negation** | Denotes total absence of action or prohibition. | Denotes failure to achieve result despite attempt. |
+| **Infinitive after modals** | After verbs of beginning, continuing, ceasing (_начать, продолжать, перестать_) and verbs of liking (_любить, ненавидеть_). | After verbs denoting achievement of intent (_удалось, успел, забыл_). |
 
 ### Aspect in Negative Imperatives
 
@@ -50,16 +50,16 @@ Every Russian verb action is viewed as either Imperfective (_несоверше�
 
 Unprefixed motion verbs are **all imperfective**, but split into two distinct classes: Unidirectional (_однонаправленные_) and Multidirectional (_неоднонаправленные_).
 
-| On Foot              | By Vehicle   | Other Motion | Unidirectional (НСВ)             | Multidirectional (НСВ)         |
-| -------------------- | ------------ | ------------ | -------------------------------- | ------------------------------ |
-| walk / go            | —            | —            | **идти́** (иду́, идёшь; шёл, шла)  | **ходи́ть** (хожу́, хо́дишь)      |
-| —                    | drive / ride | —            | **е́хать** (е́ду, е́дешь; е́хал)     | **е́здить** (е́зжу, е́здишь)      |
-| run                  | —            | —            | **бежа́ть** (бегу́, бежи́шь, бегу́т) | **бе́гать** (бе́гаю, бе́гаешь)    |
-| fly                  | fly          | —            | **лете́ть** (лечу́, лети́шь)        | **лета́ть** (лета́ю, лета́ешь)    |
-| swim                 | sail         | —            | **плыть** (плыву́, плывёшь)       | **пла́вать** (пла́ваю, пла́ваешь) |
-| carry by hand        | —            | —            | **нести́** (несу́, несёшь; нёс)    | **носи́ть** (ношу́, но́сишь)      |
-| lead on foot         | —            | —            | **вести́** (веду́, ведёшь; вёл)    | **води́ть** (вожу́, во́дишь)      |
-| transport in vehicle | —            | —            | **везти́** (везу́, везёшь; вёз)    | **вози́ть** (вожу́, во́зишь)      |
+| On Foot | By Vehicle | Other Motion | Unidirectional (НСВ) | Multidirectional (НСВ) |
+| --- | --- | --- | --- | --- |
+| walk / go | — | — | **идти́** (иду́, идёшь; шёл, шла) | **ходи́ть** (хожу́, хо́дишь) |
+| — | drive / ride | — | **е́хать** (е́ду, е́дешь; е́хал) | **е́здить** (е́зжу, е́здишь) |
+| run | — | — | **бежа́ть** (бегу́, бежи́шь, бегу́т) | **бе́гать** (бе́гаю, бе́гаешь) |
+| fly | fly | — | **лете́ть** (лечу́, лети́шь) | **лета́ть** (лета́ю, лета́ешь) |
+| swim | sail | — | **плыть** (плыву́, плывёшь) | **пла́вать** (пла́ваю, пла́ваешь) |
+| carry by hand | — | — | **нести́** (несу́, несёшь; нёс) | **носи́ть** (ношу́, но́сишь) |
+| lead on foot | — | — | **вести́** (веду́, ведёшь; вёл) | **води́ть** (вожу́, во́дишь) |
+| transport in vehicle | — | — | **везти́** (везу́, везёшь; вёз) | **вози́ть** (вожу́, во́зишь) |
 
 ### Semantic Opposition:
 
@@ -79,18 +79,18 @@ When a directional prefix attaches to a motion verb:
 - Attaching to **unidirectional** stem (_-йти, -ехать_) produces **Perfective (СВ)** verbs of completed motion.
 - Attaching to **multidirectional** stem (_-ходить, -езжать_) produces **Imperfective (НСВ)** verbs of regular/ongoing motion.
 
-| Prefix       | Primary Meaning          | Governed Preposition                     | Perfective Pair (СВ)   | Imperfective Pair (НСВ)      | Example                       |
-| ------------ | ------------------------ | ---------------------------------------- | ---------------------- | ---------------------------- | ----------------------------- |
-| **при-**     | Arrival                  | `в, на + accusative` / `к + dative`      | **прийти́, прие́хать**   | **приходи́ть, приезжа́ть**     | _Поезд приехал в Москву._     |
-| **у-**       | Departure / leaving away | `из, с + genitive` / `от + genitive`     | **уйти́, уе́хать**       | **уходи́ть, уезжа́ть**         | _Он уехал из города._         |
-| **по-**      | Setting out / beginning  | `в, на + accusative`                     | **пойти́, пое́хать**     | — (_по- makes delimitative_) | _Завтра мы поедем в лес._     |
-| **в- (во-)** | Entering (into)          | `в + accusative`                         | **войти́, въе́хать**     | **входи́ть, въезжа́ть**        | _Она вошла в комнату._        |
-| **вы-**      | Exiting (out of)         | `из + genitive`                          | **вы́йти, вы́ехать**     | **выходи́ть, выезжа́ть**       | _Мы вышли из музея._          |
-| **под-**     | Approaching near         | `к + dative`                             | **подойти́, подъе́хать** | **подходи́ть, подъезжа́ть**    | _Машина подъехала к дому._    |
-| **от-**      | Moving away slightly     | `от + genitive`                          | **отойти́, отъе́хать**   | **отходи́ть, отъезжа́ть**      | _Отойдите от края платформы!_ |
-| **до-**      | Reaching a destination   | `до + genitive`                          | **дойти́, дое́хать**     | **доходи́ть, доезжа́ть**       | _Как доехать до вокзала?_     |
-| **пере-**    | Crossing across          | `через + accusative`                     | **перейти́, перее́хать** | **переходи́ть, переезжа́ть**   | _Они перешли через улицу._    |
-| **про-**     | Passing by / through     | `мимо + genitive` / `через + accusative` | **пройти́, прое́хать**   | **проходи́ть, проезжа́ть**     | _Мы прошли мимо собора._      |
-| **за-**      | Dropping in on the way   | `к + dative` / `в + accusative`          | **зайти́, зае́хать**     | **заходи́ть, заезжа́ть**       | _Зайди ко мне вечером._       |
+| Prefix | Primary Meaning | Governed Preposition | Perfective Pair (СВ) | Imperfective Pair (НСВ) | Example |
+| --- | --- | --- | --- | --- | --- |
+| **при-** | Arrival | `в, на + accusative` / `к + dative` | **прийти́, прие́хать** | **приходи́ть, приезжа́ть** | _Поезд приехал в Москву._ |
+| **у-** | Departure / leaving away | `из, с + genitive` / `от + genitive` | **уйти́, уе́хать** | **уходи́ть, уезжа́ть** | _Он уехал из города._ |
+| **по-** | Setting out / beginning | `в, на + accusative` | **пойти́, пое́хать** | — (_по- makes delimitative_) | _Завтра мы поедем в лес._ |
+| **в- (во-)** | Entering (into) | `в + accusative` | **войти́, въе́хать** | **входи́ть, въезжа́ть** | _Она вошла в комнату._ |
+| **вы-** | Exiting (out of) | `из + genitive` | **вы́йти, вы́ехать** | **выходи́ть, выезжа́ть** | _Мы вышли из музея._ |
+| **под-** | Approaching near | `к + dative` | **подойти́, подъе́хать** | **подходи́ть, подъезжа́ть** | _Машина подъехала к дому._ |
+| **от-** | Moving away slightly | `от + genitive` | **отойти́, отъе́хать** | **отходи́ть, отъезжа́ть** | _Отойдите от края платформы!_ |
+| **до-** | Reaching a destination | `до + genitive` | **дойти́, дое́хать** | **доходи́ть, доезжа́ть** | _Как доехать до вокзала?_ |
+| **пере-** | Crossing across | `через + accusative` | **перейти́, перее́хать** | **переходи́ть, переезжа́ть** | _Они перешли через улицу._ |
+| **про-** | Passing by / through | `мимо + genitive` / `через + accusative` | **пройти́, прое́хать** | **проходи́ть, проезжа́ть** | _Мы прошли мимо собора._ |
+| **за-** | Dropping in on the way | `к + dative` / `в + accusative` | **зайти́, зае́хать** | **заходи́ть, заезжа́ть** | _Зайди ко мне вечером._ |
 
 _Critical Spelling Rule:_ Before root vowels, prefixes ending in a consonant insert a hard sign `ъ`: _въехать, подъехать, отъехать, объехать_.

@@ -16,13 +16,13 @@ The owner can study on the iPhone and the iPad from anywhere, with the PC switch
 
 ## Routes
 
-| Route                               | In one line                                                                                                          | Watch: new videos                                                     | Monthly cost                            | Status                                               |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------- |
+| Route | In one line | Watch: new videos | Monthly cost | Status |
+| --- | --- | --- | --- | --- |
 | **W. A web app at its own address** | `https://learn.<your domain>` on the flags.games VPS, with a sign-in page; open it in any browser, with no Tailscale | works if YouTube accepts the VPS (check 2); otherwise through the NAS | $0, plus a domain if you want a new one | the owner's pick (2026-11-08); steps under "Route W" |
-| N. The Synology NAS                 | Run the server in Container Manager, reached over the Tailscale package                                              | works (home connection)                                               | $0                                      | needs the model and its memory (check 1)             |
-| **V. The flags.games VPS**          | Run the server beside flags.games, reached over Tailscale or at a public address                                     | works only if YouTube accepts the VPS address (check 2)               | $0 if it has spare memory               | needs checks 2 and 3                                 |
-| B. The PC, woken from the phone     | The PC sleeps; the router's app wakes it (Wake-on-LAN) before a session                                              | works                                                                 | $0                                      | fallback                                             |
-| D. A store app                      | Wrap the web app for the App Store                                                                                   | as the server behind it                                               | Apple $99 a year                        | not recommended (E20)                                |
+| N. The Synology NAS | Run the server in Container Manager, reached over the Tailscale package | works (home connection) | $0 | needs the model and its memory (check 1) |
+| **V. The flags.games VPS** | Run the server beside flags.games, reached over Tailscale or at a public address | works only if YouTube accepts the VPS address (check 2) | $0 if it has spare memory | needs checks 2 and 3 |
+| B. The PC, woken from the phone | The PC sleeps; the router's app wakes it (Wake-on-LAN) before a session | works | $0 | fallback |
+| D. A store app | Wrap the web app for the App Store | as the server behind it | Apple $99 a year | not recommended (E20) |
 
 A web app at a public address (open `https://lanna.<your domain>` in any browser, with no Tailscale app on the phone) is a choice of how to reach the server, not a separate route. It works with V, and with N through the router; see decision 2.
 
@@ -62,16 +62,16 @@ This tries the real phone experience before anything moves. The checks below app
 2. Follow [../remote-access.md](../remote-access.md): install Tailscale on the PC, iPhone and iPad, turn on MagicDNS and HTTPS certificates, then turn on Settings → Devices → Remote access, run `tailscale serve --bg 3010`, and pair the **iPhone and the iPad**. Pairing both means either one can make a code for the other later.
 3. Add Lanna to the Home Screen from Safari on both devices.
 
-| Check                                                       | Where        | Pass if                                                             |
-| ----------------------------------------------------------- | ------------ | ------------------------------------------------------------------- |
-| Pairing, then opening from the Home Screen icon             | iPhone, iPad | no second pairing is asked for                                      |
-| A lesson with typing, Slovak letters and Enter              | iPhone       | the keyboard does not cover the answer, and the page does not jump  |
-| Sound when a card opens (Today's line, Listen, Review)      | iPhone       | it plays without an extra tap, or the tap it needs is obvious       |
-| Speak: press and hold the microphone, then release          | iPhone       | the line is heard and scored                                        |
-| Watch: play a prepared video                                | iPad         | it plays, and the lines follow                                      |
-| Read: tap a word                                            | iPhone       | the card stays on screen                                            |
-| Leave the phone unused for 8 days, then open the icon       | iPhone       | still signed in (WebKit bug 237350)                                 |
-| Switch language on the phone while the PC has a lesson open | both         | each device keeps its own language and neither lesson is lost (E75) |
+| Check | Where | Pass if |
+| --- | --- | --- |
+| Pairing, then opening from the Home Screen icon | iPhone, iPad | no second pairing is asked for |
+| A lesson with typing, Slovak letters and Enter | iPhone | the keyboard does not cover the answer, and the page does not jump |
+| Sound when a card opens (Today's line, Listen, Review) | iPhone | it plays without an extra tap, or the tap it needs is obvious |
+| Speak: press and hold the microphone, then release | iPhone | the line is heard and scored |
+| Watch: play a prepared video | iPad | it plays, and the lines follow |
+| Read: tap a word | iPhone | the card stays on screen |
+| Leave the phone unused for 8 days, then open the icon | iPhone | still signed in (WebKit bug 237350) |
+| Switch language on the phone while the PC has a lesson open | both | each device keeps its own language and neither lesson is lost (E75) |
 
 **Phase 0 is done when** every check has a result, even a failing one.
 
@@ -79,17 +79,17 @@ This tries the real phone experience before anything moves. The checks below app
 
 Each item is its own branch and pull request, tested on a scratch data folder (E6) and its reasons are written in its description.
 
-| #   | Work                                                                                                                                                                                                                                                                                       | Why                                                                                            | Size            |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | --------------- |
-| 1a  | **Already on `main`:** each device runs its own language, and a page writes into the language it shows (E75). Nothing to build.                                                                                                                                                            | –                                                                                              | –               |
-| 1b  | **`npm run remote:code`** prints a pairing code in the terminal                                                                                                                                                                                                                            | a NAS or a VPS has no "this computer" window to make the first code                            | small           |
-| 1c  | **A container image** (`Dockerfile`, `compose.yaml`): Node 26, Chromium and yt-dlp; `data/` and the key files on a mounted volume, never in the image; serves 127.0.0.1:3010 inside the box; a boot check like `scripts/smoke-server.mjs`; builds for x86-64 and, if the NAS needs it, ARM | the same image runs on the NAS and the VPS, and one image is what gets updated and rolled back | medium          |
-| 1d  | **The guide (`docs/server.md`):** Synology steps (Container Manager, the Tailscale package, the share for the data, Hyper Backup) and VPS steps (a separate user, Tailscale, no new public ports, staying clear of flags.games's ports)                                                    | setup from one page                                                                            | small           |
-| 1e  | **The update script:** check `main`, build the image, run the boot check, switch only when it passes, keep three images, push repo-cheatsheet edits (decision 4)                                                                                                                           | an update never takes the app down                                                             | medium          |
-| 1f  | **Backups:** on the NAS, a share with snapshots plus Hyper Backup; on the VPS, a nightly copy to the NAS over the tailnet. Either way, a check that every JSON file parses, and one restore drill                                                                                          | the server becomes the only copy of the learner's work                                         | small           |
-| 1g  | **Fixes from phase 0,** such as unlocking iOS sound on the first tap if autoplay fails                                                                                                                                                                                                     | only what the device checks find                                                               | depends         |
-| 1h  | **Only if decision 2 picks a public address:** `LANNA_PUBLIC_HOST` lets the gate accept one named host over HTTPS, always behind pairing; pairing is limited per address as well as per code; the guide covers the reverse proxy                                                           | the public option                                                                              | small to medium |
-| 1i  | **Settings → Devices shows the server's address and the exact Serve command**                                                                                                                                                                                                              | setup without reading                                                                          | small           |
+| # | Work | Why | Size |
+| --- | --- | --- | --- |
+| 1a | **Already on `main`:** each device runs its own language, and a page writes into the language it shows (E75). Nothing to build. | – | – |
+| 1b | **`npm run remote:code`** prints a pairing code in the terminal | a NAS or a VPS has no "this computer" window to make the first code | small |
+| 1c | **A container image** (`Dockerfile`, `compose.yaml`): Node 26, Chromium and yt-dlp; `data/` and the key files on a mounted volume, never in the image; serves 127.0.0.1:3010 inside the box; a boot check like `scripts/smoke-server.mjs`; builds for x86-64 and, if the NAS needs it, ARM | the same image runs on the NAS and the VPS, and one image is what gets updated and rolled back | medium |
+| 1d | **The guide (`docs/server.md`):** Synology steps (Container Manager, the Tailscale package, the share for the data, Hyper Backup) and VPS steps (a separate user, Tailscale, no new public ports, staying clear of flags.games's ports) | setup from one page | small |
+| 1e | **The update script:** check `main`, build the image, run the boot check, switch only when it passes, keep three images, push repo-cheatsheet edits (decision 4) | an update never takes the app down | medium |
+| 1f | **Backups:** on the NAS, a share with snapshots plus Hyper Backup; on the VPS, a nightly copy to the NAS over the tailnet. Either way, a check that every JSON file parses, and one restore drill | the server becomes the only copy of the learner's work | small |
+| 1g | **Fixes from phase 0,** such as unlocking iOS sound on the first tap if autoplay fails | only what the device checks find | depends |
+| 1h | **Only if decision 2 picks a public address:** `LANNA_PUBLIC_HOST` lets the gate accept one named host over HTTPS, always behind pairing; pairing is limited per address as well as per code; the guide covers the reverse proxy | the public option | small to medium |
+| 1i | **Settings → Devices shows the server's address and the exact Serve command** | setup without reading | small |
 
 **Phase 1 is done when** 1b to 1f are merged, and the image boots in the cloud sandbox on a scratch data folder with fake keys.
 
@@ -129,24 +129,24 @@ Study as normal for seven days, mostly on the phone and the iPad. Agents read th
 
 ## Costs
 
-| Item                                | NAS                                                        | VPS                                         |
-| ----------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
-| Machine                             | $0 (already on)                                            | $0 (already paid for), if it has the memory |
-| Memory upgrade, if the NAS has 2 GB | about $30–60 for a module (estimate; depends on the model) | –                                           |
-| Tailscale Personal                  | $0                                                         | $0                                          |
-| Backups                             | $0 (snapshots, Hyper Backup)                               | $0 (a nightly copy to the NAS)              |
-| AI and voice                        | unchanged (Settings → Spending)                            | unchanged                                   |
+| Item | NAS | VPS |
+| --- | --- | --- |
+| Machine | $0 (already on) | $0 (already paid for), if it has the memory |
+| Memory upgrade, if the NAS has 2 GB | about $30–60 for a module (estimate; depends on the model) | – |
+| Tailscale Personal | $0 | $0 |
+| Backups | $0 (snapshots, Hyper Backup) | $0 (a nightly copy to the NAS) |
+| AI and voice | unchanged (Settings → Spending) | unchanged |
 
 ## Risks
 
-| Risk                                                             | Cover                                                                                                                |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Home power or internet goes down while away (NAS)                | nothing; the VPS route covers this, if YouTube accepts it                                                            |
-| YouTube starts refusing the VPS later                            | prepared videos keep working; send YouTube requests through the NAS over the tailnet                                 |
-| The VPS app is reachable from the internet (public address only) | the pairing gate, HTTPS and per-address limits (1h); keys never in the image; the default stays Tailscale only       |
-| A slow NAS makes pages slow                                      | measure with `node scripts/perf-check.mjs --cpu 4` (E36) before moving the data; if it is too slow, use the VPS or B |
-| An update breaks the app                                         | the boot check before switching, and three images to roll back to (1e)                                               |
-| The server's disk fails                                          | snapshots and Hyper Backup, or the nightly copy; at most one day is lost                                             |
+| Risk | Cover |
+| --- | --- |
+| Home power or internet goes down while away (NAS) | nothing; the VPS route covers this, if YouTube accepts it |
+| YouTube starts refusing the VPS later | prepared videos keep working; send YouTube requests through the NAS over the tailnet |
+| The VPS app is reachable from the internet (public address only) | the pairing gate, HTTPS and per-address limits (1h); keys never in the image; the default stays Tailscale only |
+| A slow NAS makes pages slow | measure with `node scripts/perf-check.mjs --cpu 4` (E36) before moving the data; if it is too slow, use the VPS or B |
+| An update breaks the app | the boot check before switching, and three images to roll back to (1e) |
+| The server's disk fails | snapshots and Hyper Backup, or the nightly copy; at most one day is lost |
 
 ## Route W: a web app at its own address
 
@@ -162,15 +162,15 @@ The pieces already in place carry most of the weight. The device session from E2
 
 ### W, phase 1: the app work (agents in the cloud; one pull request each)
 
-| #   | Work                                                                                                                                                                                                                                                                                                                                                                                                | Size    |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| W1  | **Sign-in page and password.** `/login` with one owner password, hashed with scrypt and set from the terminal with `npm run web:password`. A correct password creates an E21 device session, which Settings → Devices lists and can sign out. Wrong tries are limited per address (5 a minute, then a 15-minute wait). Turning web access off signs every device out.                               | medium  |
-| W2  | **The gate for a public address.** `LANNA_PUBLIC_HOST` names the one host the app answers. Requests must arrive from the local reverse proxy with HTTPS; any other host is refused. Everything except `/login`, its POST and the static assets needs a session. A POST must come from the app's own page (an Origin check, on top of SameSite=Lax). The E21 Tailscale path keeps working beside it. | medium  |
-| W3  | **A security pass before the address goes live:** response headers (HSTS, CSP, frame-ancestors none), size limits on every upload route, a check that the URLs Watch and the tutor's web tools fetch cannot reach the VPS's own services (localhost, the metadata address, the private ranges), and a check that no API route returns a secret. Each finding is fixed or recorded with its reason.  | medium  |
-| W4  | **Already on `main`:** each device runs its own language (E75). Nothing to build.                                                                                                                                                                                                                                                                                                                   | –       |
-| W5  | **Container image and compose file** (1c), **update script** (1e), and **a nightly backup** from the VPS to the NAS or the PC over the tailnet, or to off-site storage (1f)                                                                                                                                                                                                                         | medium  |
-| W6  | **Watch if YouTube refuses the VPS:** an optional `LANNA_YOUTUBE_PROXY` that sends only YouTube requests, including yt-dlp, through a small proxy on the NAS over the tailnet. Off by default, and built only if check 2 fails.                                                                                                                                                                     | small   |
-| W7  | **Fixes from the phone checks** (phase 0, run against the web address instead of the PC)                                                                                                                                                                                                                                                                                                            | depends |
+| # | Work | Size |
+| --- | --- | --- |
+| W1 | **Sign-in page and password.** `/login` with one owner password, hashed with scrypt and set from the terminal with `npm run web:password`. A correct password creates an E21 device session, which Settings → Devices lists and can sign out. Wrong tries are limited per address (5 a minute, then a 15-minute wait). Turning web access off signs every device out. | medium |
+| W2 | **The gate for a public address.** `LANNA_PUBLIC_HOST` names the one host the app answers. Requests must arrive from the local reverse proxy with HTTPS; any other host is refused. Everything except `/login`, its POST and the static assets needs a session. A POST must come from the app's own page (an Origin check, on top of SameSite=Lax). The E21 Tailscale path keeps working beside it. | medium |
+| W3 | **A security pass before the address goes live:** response headers (HSTS, CSP, frame-ancestors none), size limits on every upload route, a check that the URLs Watch and the tutor's web tools fetch cannot reach the VPS's own services (localhost, the metadata address, the private ranges), and a check that no API route returns a secret. Each finding is fixed or recorded with its reason. | medium |
+| W4 | **Already on `main`:** each device runs its own language (E75). Nothing to build. | – |
+| W5 | **Container image and compose file** (1c), **update script** (1e), and **a nightly backup** from the VPS to the NAS or the PC over the tailnet, or to off-site storage (1f) | medium |
+| W6 | **Watch if YouTube refuses the VPS:** an optional `LANNA_YOUTUBE_PROXY` that sends only YouTube requests, including yt-dlp, through a small proxy on the NAS over the tailnet. Off by default, and built only if check 2 fails. | small |
+| W7 | **Fixes from the phone checks** (phase 0, run against the web address instead of the PC) | depends |
 
 ### W, phase 2: going live (owner, about an hour, with `docs/server.md`)
 
@@ -190,14 +190,14 @@ The pieces already in place carry most of the weight. The device session from E2
 
 ### W, what it costs
 
-| Item               | Cost                                                                     |
-| ------------------ | ------------------------------------------------------------------------ |
-| Hosting            | $0 on the existing VPS, if `free -h` shows about 1–2 GB spare            |
-| Address            | $0 as a subdomain of a domain you own; about $10–15 a year for a new one |
-| HTTPS              | $0 (Let's Encrypt)                                                       |
-| AI and voice       | unchanged (Settings → Spending)                                          |
-| YouTube relay (W6) | $0 through the NAS, if it is needed                                      |
-| Owner's time       | about an hour, plus the phone checks                                     |
+| Item | Cost |
+| --- | --- |
+| Hosting | $0 on the existing VPS, if `free -h` shows about 1–2 GB spare |
+| Address | $0 as a subdomain of a domain you own; about $10–15 a year for a new one |
+| HTTPS | $0 (Let's Encrypt) |
+| AI and voice | unchanged (Settings → Spending) |
+| YouTube relay (W6) | $0 through the NAS, if it is needed |
+| Owner's time | about an hour, plus the phone checks |
 
 ### W, what changes in the rules
 

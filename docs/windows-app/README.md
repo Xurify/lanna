@@ -13,11 +13,11 @@ If an installed app logs `No published versions on GitHub` (in `%APPDATA%\Lanna\
 
 ## Where things live on Windows
 
-| What                   | Path                                             |
-| ---------------------- | ------------------------------------------------ |
-| Installed program      | `%LOCALAPPDATA%\Programs\lanna\Lanna.exe`        |
-| Your data and logs     | `%APPDATA%\Lanna\` (`data\`, `logs\main.log`)    |
-| Staged update          | `%LOCALAPPDATA%\lanna-updater\pending\`          |
+| What | Path |
+| --- | --- |
+| Installed program | `%LOCALAPPDATA%\Programs\lanna\Lanna.exe` |
+| Your data and logs | `%APPDATA%\Lanna\` (`data\`, `logs\main.log`) |
+| Staged update | `%LOCALAPPDATA%\lanna-updater\pending\` |
 | Installer from a build | `dist\Lanna-<version>-x64-setup.exe` in the repo |
 
 The installer is per-user and needs no administrator rights. It is unsigned, so Windows SmartScreen may warn on first install: **More info → Run anyway**.

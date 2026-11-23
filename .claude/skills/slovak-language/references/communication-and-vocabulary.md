@@ -10,39 +10,39 @@ Time: `Je jedna hodina.` but `Sú dve/tri/štyri hodiny` and `Je päť hodín.` 
 
 Teach and use these as indivisible chunks.
 
-| Frame                           | Example                     |
-| ------------------------------- | --------------------------- |
-| `mať + acc.`                    | `Mám čas.`                  |
-| `vidieť, čítať, kupovať + acc.` | `Čítam knihu.`              |
-| `čakať na + acc.`               | `Čakám na autobus.`         |
-| `hľadať + acc.`                 | `Hľadám kľúče.`             |
-| `pomáhať + dat.`                | `Pomáham sestre.`           |
-| `veriť + dat.`                  | `Verím ti.`                 |
-| `páčiť sa + dat.`               | `Páči sa mi film.`          |
-| `hovoriť o + loc.`              | `Hovoríme o práci.`         |
-| `zaujímať sa o + acc.`          | `Zaujímam sa o históriu.`   |
-| `báť sa + gen.`                 | `Bojím sa psa.`             |
-| `potrebovať + acc.`             | `Potrebujem pomoc.`         |
-| `závisieť od + gen.`            | `Závisí to od počasia.`     |
-| `patriť k + dat.`               | `Patrí to k domu.`          |
-| `stretnúť sa s + instr.`        | `Stretnem sa s kolegom.`    |
-| `ísť/chodiť do + gen.`          | `Chodím do práce.`          |
-| `byť v/na + loc.`               | `Som v škole / na stanici.` |
+| Frame | Example |
+| --- | --- |
+| `mať + acc.` | `Mám čas.` |
+| `vidieť, čítať, kupovať + acc.` | `Čítam knihu.` |
+| `čakať na + acc.` | `Čakám na autobus.` |
+| `hľadať + acc.` | `Hľadám kľúče.` |
+| `pomáhať + dat.` | `Pomáham sestre.` |
+| `veriť + dat.` | `Verím ti.` |
+| `páčiť sa + dat.` | `Páči sa mi film.` |
+| `hovoriť o + loc.` | `Hovoríme o práci.` |
+| `zaujímať sa o + acc.` | `Zaujímam sa o históriu.` |
+| `báť sa + gen.` | `Bojím sa psa.` |
+| `potrebovať + acc.` | `Potrebujem pomoc.` |
+| `závisieť od + gen.` | `Závisí to od počasia.` |
+| `patriť k + dat.` | `Patrí to k domu.` |
+| `stretnúť sa s + instr.` | `Stretnem sa s kolegom.` |
+| `ísť/chodiť do + gen.` | `Chodím do práce.` |
+| `byť v/na + loc.` | `Som v škole / na stanici.` |
 
 ## Everyday lexical fields
 
 Always attach nouns to a frame and gender. These are core topic domains, not exhaustive dictionary entries.
 
-| Domain        | Essential production                                                                               |
-| ------------- | -------------------------------------------------------------------------------------------------- |
-| people        | `človek, muž, žena, dieťa, rodina, priateľ, kolega`; `Mám brata/sestru.`                           |
-| home          | `dom, byt, izba, kuchyňa, kúpeľňa, stôl, kľúč`; `Bývam v byte.`                                    |
-| food          | `voda, káva, čaj, chlieb, mäso, zelenina, účet`; `Prosím si ...`                                   |
-| town/travel   | `mesto, ulica, stanica, lístok, vlak, autobus, letisko`; `Ako sa dostanem do ...?`                 |
-| work/study    | `práca, firma, škola, univerzita, učiteľ, študent, stretnutie`; `Pracujem ako ...`                 |
-| health        | `lekár, nemocnica, liek, bolesť, zdravie`; `Bolí ma hlava.`                                        |
-| services      | `obchod, pošta, banka, polícia, úrad, reklamácia`; `Potreboval/a by som ...`                       |
-| culture/media | `kniha, film, hudba, divadlo, noviny, správy`; `Myslím si, že ...`                                 |
+| Domain | Essential production |
+| --- | --- |
+| people | `človek, muž, žena, dieťa, rodina, priateľ, kolega`; `Mám brata/sestru.` |
+| home | `dom, byt, izba, kuchyňa, kúpeľňa, stôl, kľúč`; `Bývam v byte.` |
+| food | `voda, káva, čaj, chlieb, mäso, zelenina, účet`; `Prosím si ...` |
+| town/travel | `mesto, ulica, stanica, lístok, vlak, autobus, letisko`; `Ako sa dostanem do ...?` |
+| work/study | `práca, firma, škola, univerzita, učiteľ, študent, stretnutie`; `Pracujem ako ...` |
+| health | `lekár, nemocnica, liek, bolesť, zdravie`; `Bolí ma hlava.` |
+| services | `obchod, pošta, banka, polícia, úrad, reklamácia`; `Potreboval/a by som ...` |
+| culture/media | `kniha, film, hudba, divadlo, noviny, správy`; `Myslím si, že ...` |
 | public topics | `životné prostredie, história, spoločnosť, voľby, právo`; use neutral, sourced language for claims |
 
 Useful connectors: `a, ale, alebo, pretože, takže, preto, hoci, ak, keby, keď, kým, najprv, potom, nakoniec, napríklad, podľa mňa, na jednej strane ... na druhej strane`. Move from `a/ale` to causal and concessive links at A2-B1.

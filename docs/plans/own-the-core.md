@@ -17,17 +17,17 @@ On 2026-11-16, before this plan: **26.4%** (61.2k of 231.4k lines).
 
 ## Where the upstream lines are
 
-| Area                                                                                                     | Upstream lines | of which tests |
-| -------------------------------------------------------------------------------------------------------- | -------------: | -------------: |
-| Tutor chat UI and session state (`chat.tsx`, `session-core`, `question-dock`, `view`, `native-messages`) |          14.4k |           5.1k |
-| Agent runtime (tools, jobs, compaction, sub-agents)                                                      |          12.9k |           5.9k |
-| Smaller chat pieces (find, keyboard, composer, stats bar, plan tree, search)                             |          11.4k |           3.6k |
-| Subscription logins (ChatGPT, Copilot, Grok)                                                             |           9.1k |           4.4k |
-| Settings, models, keys                                                                                   |           5.2k |           0.4k |
-| PDF reader, SVG, headless browser                                                                        |           3.4k |           1.0k |
-| App frame (sidebar, CSS, setup)                                                                          |           2.2k |              — |
-| Desktop shell and release                                                                                |           1.9k |           0.2k |
-| Dictation                                                                                                |           0.8k |           0.1k |
+| Area | Upstream lines | of which tests |
+| --- | ---: | ---: |
+| Tutor chat UI and session state (`chat.tsx`, `session-core`, `question-dock`, `view`, `native-messages`) | 14.4k | 5.1k |
+| Agent runtime (tools, jobs, compaction, sub-agents) | 12.9k | 5.9k |
+| Smaller chat pieces (find, keyboard, composer, stats bar, plan tree, search) | 11.4k | 3.6k |
+| Subscription logins (ChatGPT, Copilot, Grok) | 9.1k | 4.4k |
+| Settings, models, keys | 5.2k | 0.4k |
+| PDF reader, SVG, headless browser | 3.4k | 1.0k |
+| App frame (sidebar, CSS, setup) | 2.2k | — |
+| Desktop shell and release | 1.9k | 0.2k |
+| Dictation | 0.8k | 0.1k |
 
 ## Steps
 

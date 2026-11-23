@@ -32,13 +32,13 @@ Experiencer constructions use dative: `Je mi zima.`, `Je mi ľúto.`, `Chýba mi
 
 ## Editing for register
 
-| Register              | Prefer                                                                                     |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| conversation          | short clauses, frequent words, `Ahoj`, contractions/ellipsis only where natural            |
-| neutral professional  | `Dobrý deň`, direct request and clear deadline, respectful `vykanie`                       |
+| Register | Prefer |
+| --- | --- |
+| conversation | short clauses, frequent words, `Ahoj`, contractions/ellipsis only where natural |
+| neutral professional | `Dobrý deň`, direct request and clear deadline, respectful `vykanie` |
 | formal administrative | complete sentences, explicit referents, standard terms, `Vážený...`, `S pozdravom/S úctou` |
-| academic/public       | defined terms, qualified claims, connective logic, source attribution                      |
-| literary/creative     | preserve voice; explain nonstandard choice only when asked                                 |
+| academic/public | defined terms, qualified claims, connective logic, source attribution |
+| literary/creative | preserve voice; explain nonstandard choice only when asked |
 
 Avoid false formality: an inflated calque can sound less professional than concise standard Slovak. Avoid overusing `byť`, passive, and abstract nouns when a direct verb is clearer.
 

@@ -4,15 +4,15 @@ Russian verbs inflect for person, number, tense, aspect, mood, and voice. Finite
 
 ## 1. Present and Simple Future Conjugation
 
-| Form                   | 1st Conjugation (_читать, жить_) | 2nd Conjugation (_говорить, учить_)       |
-| ---------------------- | -------------------------------- | ----------------------------------------- |
-| **Infinitive**         | чита́ть / жить                    | говори́ть / учи́ть                          |
-| **1sg (_я_)**          | чита́-**ю** / жив-**у́**           | говор-**ю́** / уч-**у́** (after sibilant)   |
-| **2sg (_ты_)**         | чита́-**ешь** / жив-**ёшь**       | говор-**и́шь** / у́ч-**ишь**                |
-| **3sg (_он/она/оно_)** | чита́-**ет** / жив-**ёт**         | говор-**и́т** / у́ч-**ит**                  |
-| **1pl (_мы_)**         | чита́-**ем** / жив-**ём**         | говор-**и́м** / у́ч-**им**                  |
-| **2pl (_вы_)**         | чита́-**ете** / жив-**ёте**       | говор-**и́те** / у́ч-**ите**                |
-| **3pl (_они_)**        | чита́-**ют** / жив-**у́т**         | говор-**я́т** / у́ч-**ат** (after sibilant) |
+| Form | 1st Conjugation (_читать, жить_) | 2nd Conjugation (_говорить, учить_) |
+| --- | --- | --- |
+| **Infinitive** | чита́ть / жить | говори́ть / учи́ть |
+| **1sg (_я_)** | чита́-**ю** / жив-**у́** | говор-**ю́** / уч-**у́** (after sibilant) |
+| **2sg (_ты_)** | чита́-**ешь** / жив-**ёшь** | говор-**и́шь** / у́ч-**ишь** |
+| **3sg (_он/она/оно_)** | чита́-**ет** / жив-**ёт** | говор-**и́т** / у́ч-**ит** |
+| **1pl (_мы_)** | чита́-**ем** / жив-**ём** | говор-**и́м** / у́ч-**им** |
+| **2pl (_вы_)** | чита́-**ете** / жив-**ёте** | говор-**и́те** / у́ч-**ите** |
+| **3pl (_они_)** | чита́-**ют** / жив-**у́т** | говор-**я́т** / у́ч-**ат** (after sibilant) |
 
 ### Conjugation Identification Rules
 
@@ -40,12 +40,12 @@ Russian verbs inflect for person, number, tense, aspect, mood, and voice. Finite
 
 The past tense is formed from the infinitive stem by dropping `-ть` and adding gender/number suffixes. It inflects for gender in the singular, not for person:
 
-| Gender / Number            | Suffix | Example (_читать_) | Example (_быть_) | Example (_жить_) |
-| -------------------------- | ------ | ------------------ | ---------------- | ---------------- |
-| **Masculine (_он_)**       | `-л`   | чита́л              | был              | жил              |
-| **Feminine (_она_)**       | `-ла`  | чита́ла             | была́             | жила́             |
-| **Neuter (_оно_)**         | `-ло`  | чита́ло             | бы́ло             | жи́ло             |
-| **Plural (_они, мы, вы_)** | `-ли`  | чита́ли             | бы́ли             | жи́ли             |
+| Gender / Number | Suffix | Example (_читать_) | Example (_быть_) | Example (_жить_) |
+| --- | --- | --- | --- | --- |
+| **Masculine (_он_)** | `-л` | чита́л | был | жил |
+| **Feminine (_она_)** | `-ла` | чита́ла | была́ | жила́ |
+| **Neuter (_оно_)** | `-ло` | чита́ло | бы́ло | жи́ло |
+| **Plural (_они, мы, вы_)** | `-ли` | чита́ли | бы́ли | жи́ли |
 
 ### Irregular Past Tense Stems
 
@@ -68,11 +68,11 @@ The past tense is formed from the infinitive stem by dropping `-ть` and adding
 
 Formed from the 3pl present/future stem by dropping the 3pl ending (`чита-ют → чита-`, `говор-ят → говор-`):
 
-| Condition                                 | Suffix (2sg) | Suffix (2pl / Formal) | Examples                                                   |
-| ----------------------------------------- | ------------ | --------------------- | ---------------------------------------------------------- |
-| **After vowel stem**                      | `-й`         | `-йте`                | _чита́й, чита́йте_; _де́лай, де́лайте_; _пей, пе́йте_           |
-| **After consonant with stress on ending** | `-и`         | `-ите`                | _говори́, говори́те_; _пиши́, пиши́те_; _иди́, иди́те_           |
-| **After consonant with stress on root**   | `-ь`         | `-ьте`                | _режь, ре́жьте_; _поста́вь, поста́вьте_; _испра́вь, испра́вьте_ |
+| Condition | Suffix (2sg) | Suffix (2pl / Formal) | Examples |
+| --- | --- | --- | --- |
+| **After vowel stem** | `-й` | `-йте` | _чита́й, чита́йте_; _де́лай, де́лайте_; _пей, пе́йте_ |
+| **After consonant with stress on ending** | `-и` | `-ите` | _говори́, говори́те_; _пиши́, пиши́те_; _иди́, иди́те_ |
+| **After consonant with stress on root** | `-ь` | `-ьте` | _режь, ре́жьте_; _поста́вь, поста́вьте_; _испра́вь, испра́вьте_ |
 
 _Irregular Imperatives:_
 

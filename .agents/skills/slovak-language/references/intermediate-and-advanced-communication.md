@@ -31,13 +31,13 @@ Contrast `Petrov dom` (Peter's house, possessive adjective), `dom Petra` (the ho
 
 Prefixes must be learned as meaning networks, not just “completion.”
 
-| Base            | Examples                                    | Useful meaning contrast                                     |
-| --------------- | ------------------------------------------- | ----------------------------------------------------------- |
-| `ísť/chodiť`    | `prísť, odísť, vojsť, vyjsť, prejsť, zájsť` | arrival, departure, entering, exiting, crossing, calling in |
-| `písať`         | `napísať, prepísať, podpísať, zapísať`      | complete, rewrite, sign, note down                          |
-| `dať/dávať`     | `odovzdať, predať, vydať, podať`            | hand over, sell, publish/issue, submit/serve                |
-| `niesť`         | `priniesť, odniesť, vyniesť, preniesť`      | bring, carry away, take out, transfer                       |
-| `klásť/položiť` | `položiť, uložiť, založiť, preložiť`        | place, store, establish, translate/move across              |
+| Base | Examples | Useful meaning contrast |
+| --- | --- | --- |
+| `ísť/chodiť` | `prísť, odísť, vojsť, vyjsť, prejsť, zájsť` | arrival, departure, entering, exiting, crossing, calling in |
+| `písať` | `napísať, prepísať, podpísať, zapísať` | complete, rewrite, sign, note down |
+| `dať/dávať` | `odovzdať, predať, vydať, podať` | hand over, sell, publish/issue, submit/serve |
+| `niesť` | `priniesť, odniesť, vyniesť, preniesť` | bring, carry away, take out, transfer |
+| `klásť/položiť` | `položiť, uložiť, založiť, preložiť` | place, store, establish, translate/move across |
 
 Teach a prefix with source/destination/result context: `Priniesol som dokument do kancelárie. Odniesol som ho na poštu.`
 
@@ -96,14 +96,14 @@ Real condition: `Ak bude pršať, zostaneme doma.` Hypothetical: `Keby som mal v
 
 ### Style across B2 domains
 
-| Domain           | Productive vocabulary and move                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------------------------------ |
-| media            | `zdroj, správa, reklama, vplyv, verejnosť, overiť` — distinguish fact, opinion, attribution                  |
-| money/economy    | `rozpočet, príjem, výdavok, dlh, investícia, cena` — explain cause/effect, avoid false precision             |
-| environment      | `životné prostredie, odpad, emisie, ochrana, udržateľný` — propose measure and consequence                   |
+| Domain | Productive vocabulary and move |
+| --- | --- |
+| media | `zdroj, správa, reklama, vplyv, verejnosť, overiť` — distinguish fact, opinion, attribution |
+| money/economy | `rozpočet, príjem, výdavok, dlh, investícia, cena` — explain cause/effect, avoid false precision |
+| environment | `životné prostredie, odpad, emisie, ochrana, udržateľný` — propose measure and consequence |
 | history/politics | `obdobie, udalosť, zmena, voľby, štát, občan` — date/attribute claims; distinguish narration from evaluation |
-| migration/home   | `sťahovanie, pobyt, integrácia, komunita, príležitosť` — handle human subjects respectfully                  |
-| arts/culture     | `dielo, autor, predstavenie, výstava, tradícia` — describe, interpret, recommend                             |
+| migration/home | `sťahovanie, pobyt, integrácia, komunita, príležitosť` — handle human subjects respectfully |
+| arts/culture | `dielo, autor, predstavenie, výstava, tradícia` — describe, interpret, recommend |
 
 ## Advanced error checks
 

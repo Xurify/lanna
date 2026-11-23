@@ -10,55 +10,55 @@ Forms: [verb-forms.md](verb-forms.md). Frequentatives (`chodievať`, `behávať`
 
 The prefix only adds completion here; the meaning stays the same. Each verb has its own conventional prefix; do not guess it.
 
-| ipf.          | pf.             | ipf.       | pf.          |
-| ------------- | --------------- | ---------- | ------------ |
-| `písať`       | `napísať`       | `učiť sa`  | `naučiť sa`  |
-| `čítať`       | `prečítať`      | `pýtať sa` | `opýtať sa`  |
-| `robiť`       | `urobiť`        | `ďakovať`  | `poďakovať`  |
-| `variť`       | `uvariť`        | `čakať`    | `počkať`     |
-| `piecť`       | `upiecť`        | `kresliť`  | `nakresliť`  |
-| `jesť`        | `zjesť`         | `fotiť`    | `odfotiť`    |
-| `piť`         | `vypiť`         | `baliť`    | `zbaliť`     |
-| `platiť`      | `zaplatiť`      | `meniť`    | `zmeniť`     |
-| `volať`       | `zavolať`       | `končiť`   | `skončiť`    |
-| `telefonovať` | `zatelefonovať` | `liečiť`   | `vyliečiť`   |
-| `obedovať`    | `naobedovať sa` | `ničiť`    | `zničiť`     |
-| `večerať`     | `navečerať sa`  | `šetriť`   | `ušetriť`    |
-| `hrať`        | `zahrať`        | `smiať sa` | `zasmiať sa` |
-| `spievať`     | `zaspievať`     | `rásť`     | `vyrásť`     |
-| `chudnúť`     | `schudnúť`      | `starnúť`  | `zostarnúť`  |
-| `budovať`     | `vybudovať`     | `vidieť`   | `uvidieť`    |
+| ipf. | pf. | ipf. | pf. |
+| --- | --- | --- | --- |
+| `písať` | `napísať` | `učiť sa` | `naučiť sa` |
+| `čítať` | `prečítať` | `pýtať sa` | `opýtať sa` |
+| `robiť` | `urobiť` | `ďakovať` | `poďakovať` |
+| `variť` | `uvariť` | `čakať` | `počkať` |
+| `piecť` | `upiecť` | `kresliť` | `nakresliť` |
+| `jesť` | `zjesť` | `fotiť` | `odfotiť` |
+| `piť` | `vypiť` | `baliť` | `zbaliť` |
+| `platiť` | `zaplatiť` | `meniť` | `zmeniť` |
+| `volať` | `zavolať` | `končiť` | `skončiť` |
+| `telefonovať` | `zatelefonovať` | `liečiť` | `vyliečiť` |
+| `obedovať` | `naobedovať sa` | `ničiť` | `zničiť` |
+| `večerať` | `navečerať sa` | `šetriť` | `ušetriť` |
+| `hrať` | `zahrať` | `smiať sa` | `zasmiať sa` |
+| `spievať` | `zaspievať` | `rásť` | `vyrásť` |
+| `chudnúť` | `schudnúť` | `starnúť` | `zostarnúť` |
+| `budovať` | `vybudovať` | `vidieť` | `uvidieť` |
 
 ### Suffix change (the perfective is the base)
 
-| pf.            | ipf.            | pf.           | ipf.          |
-| -------------- | --------------- | ------------- | ------------- |
-| `kúpiť`        | `kupovať`       | `vrátiť sa`   | `vracať sa`   |
-| `dať`          | `dávať`         | `pustiť`      | `púšťať`      |
-| `vstať`        | `vstávať`       | `zapnúť`      | `zapínať`     |
-| `poslať`       | `posielať`      | `vypnúť`      | `vypínať`     |
-| `otvoriť`      | `otvárať`       | `začať`       | `začínať`     |
-| `zatvoriť`     | `zatvárať`      | `skočiť`      | `skákať`      |
-| `pomôcť`       | `pomáhať`       | `chytiť`      | `chytať`      |
-| `zabudnúť`     | `zabúdať`       | `hodiť`       | `hádzať`      |
-| `stretnúť`     | `stretávať`     | `pochopiť`    | `chápať`      |
-| `ukázať`       | `ukazovať`      | `prijať`      | `prijímať`    |
-| `dostať`       | `dostávať`      | `vybrať`      | `vyberať`     |
-| `predať`       | `predávať`      | `objednať`    | `objednávať`  |
-| `nechať`       | `nechávať`      | `vyhrať`      | `vyhrávať`    |
-| `prestať`      | `prestávať`     | `zarobiť`     | `zarábať`     |
-| `zostať`       | `zostávať`      | `minúť`       | `míňať`       |
-| `zistiť`       | `zisťovať`      | `stratiť`     | `strácať`     |
-| `rozhodnúť sa` | `rozhodovať sa` | `nájsť`       | `nachádzať`   |
-| `navštíviť`    | `navštevovať`   | `zomrieť`     | `zomierať`    |
-| `vysvetliť`    | `vysvetľovať`   | `narodiť sa`  | `rodiť sa`    |
-| `pripraviť`    | `pripravovať`   | `zaspať`      | `zaspávať`    |
-| `opraviť`      | `opravovať`     | `zobudiť sa`  | `zobúdzať sa` |
-| `umyť`         | `umývať`        | `obliecť sa`  | `obliekať sa` |
-| `požičať`      | `požičiavať`    | `sadnúť si`   | `sadať si`    |
-| `ponúknuť`     | `ponúkať`       | `ľahnúť si`   | `líhať si`    |
-| `odporučiť`    | `odporúčať`     | `spomenúť si` | `spomínať si` |
-| `dovoliť`      | `dovoľovať`     | `zakázať`     | `zakazovať`   |
+| pf. | ipf. | pf. | ipf. |
+| --- | --- | --- | --- |
+| `kúpiť` | `kupovať` | `vrátiť sa` | `vracať sa` |
+| `dať` | `dávať` | `pustiť` | `púšťať` |
+| `vstať` | `vstávať` | `zapnúť` | `zapínať` |
+| `poslať` | `posielať` | `vypnúť` | `vypínať` |
+| `otvoriť` | `otvárať` | `začať` | `začínať` |
+| `zatvoriť` | `zatvárať` | `skočiť` | `skákať` |
+| `pomôcť` | `pomáhať` | `chytiť` | `chytať` |
+| `zabudnúť` | `zabúdať` | `hodiť` | `hádzať` |
+| `stretnúť` | `stretávať` | `pochopiť` | `chápať` |
+| `ukázať` | `ukazovať` | `prijať` | `prijímať` |
+| `dostať` | `dostávať` | `vybrať` | `vyberať` |
+| `predať` | `predávať` | `objednať` | `objednávať` |
+| `nechať` | `nechávať` | `vyhrať` | `vyhrávať` |
+| `prestať` | `prestávať` | `zarobiť` | `zarábať` |
+| `zostať` | `zostávať` | `minúť` | `míňať` |
+| `zistiť` | `zisťovať` | `stratiť` | `strácať` |
+| `rozhodnúť sa` | `rozhodovať sa` | `nájsť` | `nachádzať` |
+| `navštíviť` | `navštevovať` | `zomrieť` | `zomierať` |
+| `vysvetliť` | `vysvetľovať` | `narodiť sa` | `rodiť sa` |
+| `pripraviť` | `pripravovať` | `zaspať` | `zaspávať` |
+| `opraviť` | `opravovať` | `zobudiť sa` | `zobúdzať sa` |
+| `umyť` | `umývať` | `obliecť sa` | `obliekať sa` |
+| `požičať` | `požičiavať` | `sadnúť si` | `sadať si` |
+| `ponúknuť` | `ponúkať` | `ľahnúť si` | `líhať si` |
+| `odporučiť` | `odporúčať` | `spomenúť si` | `spomínať si` |
+| `dovoliť` | `dovoľovať` | `zakázať` | `zakazovať` |
 
 ### Different stems
 
@@ -68,14 +68,14 @@ The prefix only adds completion here; the meaning stays the same. Each verb has 
 
 A prefix often creates a new verb, which then needs its own imperfective:
 
-| Base        | New pf. (meaning)            | Its ipf.         |
-| ----------- | ---------------------------- | ---------------- |
-| `písať`     | `podpísať` (sign)            | `podpisovať`     |
-| `písať`     | `prepísať` (rewrite, copy)   | `prepisovať`     |
-| `písať`     | `zapísať (si)` (note down)   | `zapisovať (si)` |
-| (`položiť`) | `preložiť` (translate; move) | `prekladať`      |
-| `myslieť`   | `vymyslieť` (invent)         | `vymýšľať`       |
-| `hlásiť`    | `prihlásiť sa` (sign up)     | `prihlasovať sa` |
+| Base | New pf. (meaning) | Its ipf. |
+| --- | --- | --- |
+| `písať` | `podpísať` (sign) | `podpisovať` |
+| `písať` | `prepísať` (rewrite, copy) | `prepisovať` |
+| `písať` | `zapísať (si)` (note down) | `zapisovať (si)` |
+| (`položiť`) | `preložiť` (translate; move) | `prekladať` |
+| `myslieť` | `vymyslieť` (invent) | `vymýšľať` |
+| `hlásiť` | `prihlásiť sa` (sign up) | `prihlasovať sa` |
 
 So `prekladať / preložiť` is "translate", and `prepisovať` is not the imperfective of `písať`.
 
@@ -85,34 +85,34 @@ Some verbs, many of them international `-ovať` verbs, work as both aspects; con
 
 ## 2. Choosing the aspect
 
-| Situation                                        | Aspect          | Example                                                   |
-| ------------------------------------------------ | --------------- | --------------------------------------------------------- |
-| happening now, in progress                       | ipf.            | `Práve píšem e-mail.`                                     |
-| habit, repetition (`každý deň`, `často`, `vždy`) | ipf.            | `Každé ráno pijem kávu.`                                  |
-| duration (`celý deň`, `dve hodiny`)              | ipf.            | `Dve hodiny som čítal.`                                   |
-| result achieved, one event                       | pf.             | `Prečítal som to za dve hodiny.` (`za` + time = "within") |
-| sequence of events in a story                    | pf.             | `Prišiel, sadol si a otvoril list.`                       |
-| background vs. event                             | ipf. + pf.      | `Keď som varil, zazvonil telefón.`                        |
-| future single event                              | pf. present     | `Zajtra ti zavolám.`                                      |
-| future process or repeated action                | `budem` + ipf.  | `Zajtra budem celý deň upratovať.`                        |
-| `keď` / `ak` + future single event               | pf.             | `Keď prídeš, zavolaj mi.` (not `*keď budeš prísť`)        |
-| after `začať`, `prestať`, `skončiť`              | ipf. infinitive | `Začal som sa učiť.` `Prestal fajčiť.`                    |
-| "have you ever / did you" (experience)           | ipf.            | `Čítal si tú knihu?` (have you read it at all?)           |
-| "did you finish / manage"                        | pf.             | `Prečítal si ju?` (did you get through it?)               |
-| negated past, general                            | ipf.            | `Nečítal som to.` (I haven't read it)                     |
-| negated past, failed result                      | pf.             | `Neprečítal som to celé.` (I didn't get through it)       |
+| Situation | Aspect | Example |
+| --- | --- | --- |
+| happening now, in progress | ipf. | `Práve píšem e-mail.` |
+| habit, repetition (`každý deň`, `často`, `vždy`) | ipf. | `Každé ráno pijem kávu.` |
+| duration (`celý deň`, `dve hodiny`) | ipf. | `Dve hodiny som čítal.` |
+| result achieved, one event | pf. | `Prečítal som to za dve hodiny.` (`za` + time = "within") |
+| sequence of events in a story | pf. | `Prišiel, sadol si a otvoril list.` |
+| background vs. event | ipf. + pf. | `Keď som varil, zazvonil telefón.` |
+| future single event | pf. present | `Zajtra ti zavolám.` |
+| future process or repeated action | `budem` + ipf. | `Zajtra budem celý deň upratovať.` |
+| `keď` / `ak` + future single event | pf. | `Keď prídeš, zavolaj mi.` (not `*keď budeš prísť`) |
+| after `začať`, `prestať`, `skončiť` | ipf. infinitive | `Začal som sa učiť.` `Prestal fajčiť.` |
+| "have you ever / did you" (experience) | ipf. | `Čítal si tú knihu?` (have you read it at all?) |
+| "did you finish / manage" | pf. | `Prečítal si ju?` (did you get through it?) |
+| negated past, general | ipf. | `Nečítal som to.` (I haven't read it) |
+| negated past, failed result | pf. | `Neprečítal som to celé.` (I didn't get through it) |
 
 Perfective verbs have no present tense meaning. `Napíšem` is always future; to say "I am writing" you need `píšem`.
 
 ## 3. Aspect in the imperative
 
-| Situation                             | Aspect | Example                                         |
-| ------------------------------------- | ------ | ----------------------------------------------- |
-| one specific request                  | pf.    | `Zatvor dvere, prosím.` `Zavolajte mi zajtra.`  |
-| invitation, encouragement, "go ahead" | ipf.   | `Sadajte si.` `Berte si.` `Hovorte.`            |
-| general instruction, habit            | ipf.   | `Pite veľa vody.`                               |
-| prohibition, "don't"                  | ipf.   | `Nezatváraj okno.` `Nevolaj mi po desiatej.`    |
-| warning against an accident           | pf.    | `Nezabudni si kľúče!` `Nespadni!` `Nestrať to!` |
+| Situation | Aspect | Example |
+| --- | --- | --- |
+| one specific request | pf. | `Zatvor dvere, prosím.` `Zavolajte mi zajtra.` |
+| invitation, encouragement, "go ahead" | ipf. | `Sadajte si.` `Berte si.` `Hovorte.` |
+| general instruction, habit | ipf. | `Pite veľa vody.` |
+| prohibition, "don't" | ipf. | `Nezatváraj okno.` `Nevolaj mi po desiatej.` |
+| warning against an accident | pf. | `Nezabudni si kľúče!` `Nespadni!` `Nestrať to!` |
 
 The most common error is a negative perfective used as a prohibition: `*Nezavri okno` → `Nezatváraj okno.`
 
@@ -133,15 +133,15 @@ Nemusíš to robiť.                general: you don't have to do it
 
 ### Determinate vs. indeterminate
 
-| Determinate (one trip, one direction, now or at a point) | Indeterminate (habit, round trips, ability, aimless) | Meaning                         |
-| -------------------------------------------------------- | ---------------------------------------------------- | ------------------------------- |
-| `ísť`                                                    | `chodiť`                                             | go (on foot or generally)       |
-| `bežať`                                                  | `behať`                                              | run                             |
-| `letieť`                                                 | `lietať`                                             | fly                             |
-| `niesť`                                                  | `nosiť`                                              | carry; `nosiť` also wear        |
-| `viezť`                                                  | `voziť`                                              | carry by vehicle, drive someone |
-| `viesť`                                                  | `vodiť`                                              | lead                            |
-| `hnať`                                                   | `naháňať`                                            | drive, chase                    |
+| Determinate (one trip, one direction, now or at a point) | Indeterminate (habit, round trips, ability, aimless) | Meaning |
+| --- | --- | --- |
+| `ísť` | `chodiť` | go (on foot or generally) |
+| `bežať` | `behať` | run |
+| `letieť` | `lietať` | fly |
+| `niesť` | `nosiť` | carry; `nosiť` also wear |
+| `viezť` | `voziť` | carry by vehicle, drive someone |
+| `viesť` | `vodiť` | lead |
+| `hnať` | `naháňať` | drive, chase |
 
 Both members are imperfective. The determinate verb forms its future with `po-` (`pôjdem`, `pobežím`, `poletím`, `ponesiem`, `poveziem`); except for `ísť`, `budem` + infinitive is also correct (`budem niesť`).
 
@@ -160,19 +160,19 @@ For a completed round trip in the past, Slovak usually says where you were: `Vč
 
 A prefix on the determinate verb gives a **perfective**; the matching imperfective uses a separate stem (`-chádzať`, `-nášať`, `-vážať`, `-vádzať`, `-biehať`, `-lietať`).
 
-| Prefix    | Meaning               | Go                                                | Carry                                    | Other                                                                  |
-| --------- | --------------------- | ------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
-| `pri-`    | arrive                | `prísť / prichádzať`                              | `priniesť / prinášať`                    | `priviezť / privážať`, `priviesť / privádzať`, `priletieť / prilietať` |
-| `od-`     | leave                 | `odísť / odchádzať`                               | `odniesť / odnášať`                      | `odviezť / odvážať`, `odletieť / odlietať`, `odbehnúť / odbiehať`      |
-| `v-`      | in                    | `vojsť / vchádzať`                                | `vniesť / vnášať`                        | `vstúpiť / vstupovať` (enter, formal)                                  |
-| `vy-`     | out, up               | `vyjsť / vychádzať`                               | `vyniesť / vynášať`                      | `vybehnúť / vybiehať`                                                  |
-| `pre-`    | across, through       | `prejsť / prechádzať`                             | `preniesť / prenášať`                    | `preletieť / prelietať`                                                |
-| `do-`     | reach, as far as      | `dôjsť / dochádzať`                               | `doniesť / donášať`                      |                                                                        |
-| `za-`     | drop in; go behind    | `zájsť / zachádzať`                               | `zaniesť / zanášať`                      | `zabehnúť / zabiehať`                                                  |
-| `ob-`     | around                | `obísť / obchádzať`                               |                                          |                                                                        |
-| `roz- sa` | disperse, split up    | `rozísť sa / rozchádzať sa`                       |                                          |                                                                        |
-| `z-`      | down; together (`sa`) | `zísť / schádzať`, `zísť sa / schádzať sa` (meet) | `zniesť / znášať` (carry down; tolerate) |                                                                        |
-| `pod-`    | approach, under       | `podísť / podchádzať`                             |                                          |                                                                        |
+| Prefix | Meaning | Go | Carry | Other |
+| --- | --- | --- | --- | --- |
+| `pri-` | arrive | `prísť / prichádzať` | `priniesť / prinášať` | `priviezť / privážať`, `priviesť / privádzať`, `priletieť / prilietať` |
+| `od-` | leave | `odísť / odchádzať` | `odniesť / odnášať` | `odviezť / odvážať`, `odletieť / odlietať`, `odbehnúť / odbiehať` |
+| `v-` | in | `vojsť / vchádzať` | `vniesť / vnášať` | `vstúpiť / vstupovať` (enter, formal) |
+| `vy-` | out, up | `vyjsť / vychádzať` | `vyniesť / vynášať` | `vybehnúť / vybiehať` |
+| `pre-` | across, through | `prejsť / prechádzať` | `preniesť / prenášať` | `preletieť / prelietať` |
+| `do-` | reach, as far as | `dôjsť / dochádzať` | `doniesť / donášať` |  |
+| `za-` | drop in; go behind | `zájsť / zachádzať` | `zaniesť / zanášať` | `zabehnúť / zabiehať` |
+| `ob-` | around | `obísť / obchádzať` |  |  |
+| `roz- sa` | disperse, split up | `rozísť sa / rozchádzať sa` |  |  |
+| `z-` | down; together (`sa`) | `zísť / schádzať`, `zísť sa / schádzať sa` (meet) | `zniesť / znášať` (carry down; tolerate) |  |
+| `pod-` | approach, under | `podísť / podchádzať` |  |  |
 
 Lexicalized members: `nájsť / nachádzať` (find), `zniesť` (tolerate), `prejsť` (also: pass an exam colloquially, pass time), `vyjsť` (also: come out, be published; work out: `Vyšlo to.`).
 
@@ -180,18 +180,18 @@ Spelling of `ísť` compounds: after a vowel-final prefix `-jsť` (`vojsť, vyjs
 
 ### Where, where to, where from
 
-| Kde? (location)     | Kam? (destination)    | Odkiaľ? (origin)     |
-| ------------------- | --------------------- | -------------------- |
-| `v obchode` (v + L) | `do obchodu` (do + G) | `z obchodu` (z + G)  |
-| `na pošte` (na + L) | `na poštu` (na + A)   | `z pošty` (z + G)    |
-| `u lekára` (u + G)  | `k lekárovi` (k + D)  | `od lekára` (od + G) |
-| `doma`              | `domov`               | `z domu`             |
-| `vonku`             | `von`                 | `zvonku`             |
-| `vnútri`            | `dnu` / `dovnútra`    | `zvnútra`            |
-| `tu`                | `sem`                 | `odtiaľto`           |
-| `tam`               | `tam`                 | `odtiaľ`             |
-| `hore`              | `hore`                | `zhora`              |
-| `dole`              | `dole`                | `zdola`              |
+| Kde? (location) | Kam? (destination) | Odkiaľ? (origin) |
+| --- | --- | --- |
+| `v obchode` (v + L) | `do obchodu` (do + G) | `z obchodu` (z + G) |
+| `na pošte` (na + L) | `na poštu` (na + A) | `z pošty` (z + G) |
+| `u lekára` (u + G) | `k lekárovi` (k + D) | `od lekára` (od + G) |
+| `doma` | `domov` | `z domu` |
+| `vonku` | `von` | `zvonku` |
+| `vnútri` | `dnu` / `dovnútra` | `zvnútra` |
+| `tu` | `sem` | `odtiaľto` |
+| `tam` | `tam` | `odtiaľ` |
+| `hore` | `hore` | `zhora` |
+| `dole` | `dole` | `zdola` |
 
 `tam` serves both location and destination; `tu` and `sem` do not: `Poď sem.` (not `*Poď tu.`)
 

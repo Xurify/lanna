@@ -18,12 +18,12 @@ The post gives no timings in its text; the result it states is which routes went
 
 ## What fits this app, and what does not
 
-| v0                                                   | Here                                                                                                                                                                                                 |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Define instant, test it with the server held         | Taken: `scripts/instant-check.mjs`                                                                                                                                                                   |
-| Failing test first, then the fix                     | Taken: the check was written and run against the old build first (table below)                                                                                                                       |
+| v0 | Here |
+| --- | --- |
+| Define instant, test it with the server held | Taken: `scripts/instant-check.mjs` |
+| Failing test first, then the fix | Taken: the check was written and run against the old build first (table below) |
 | A prerendered shell per route, cached in the browser | Not taken. Every page here is the learner's own files, so the shell would be the skeleton `app/loading.tsx` already gives, and turning Cache Components on means auditing 72 `force-dynamic` exports |
-| Do not prefetch whole pages, it strains the server   | Reversed. The server is the learner's own computer and a page renders in 10 to 50 ms, so the whole page can be rendered before the click, once its render starts no paid work                        |
+| Do not prefetch whole pages, it strains the server | Reversed. The server is the learner's own computer and a page renders in 10 to 50 ms, so the whole page can be rendered before the click, once its render starts no paid work |
 
 So the idea kept is the definition and the test. The mechanism is the older one Next.js still has without Cache Components: a full prefetch, asked for when the learner shows where they are going.
 
@@ -44,11 +44,11 @@ Measured on a production build with `scripts/perf-check.mjs` (1x CPU, this PC, s
 - **shell**: the URL changed and `loading.tsx` shows.
 - **blocked**: nothing changed.
 
-| Build  | Rows   | On screen with the server held | ms                                                  |
-| ------ | ------ | ------------------------------ | --------------------------------------------------- |
-| Before | all 16 | shell                          | 100 to 123                                          |
-| After  | 15     | page                           | 18 to 47                                            |
-| After  | Review | page                           | 145 in the last full run; 53 to 145 across ten runs |
+| Build | Rows | On screen with the server held | ms |
+| --- | --- | --- | --- |
+| Before | all 16 | shell | 100 to 123 |
+| After | 15 | page | 18 to 47 |
+| After | Review | page | 145 in the last full run; 53 to 145 across ten runs |
 
 At 4x CPU after the change: the page in 140 to 402 ms (no run of the old build at 4x CPU was kept). With the pointer resting only 40 ms before the click (measured when twelve pages were rendered ahead), eleven were still up and Progress, the slowest to render, showed the shell first.
 

@@ -8,17 +8,17 @@ Token-minimized reference for verb principal forms, tenses, moods, voice, and no
 
 Estonian verb conjugations are derived from four principal stems:
 
-| Verb      | _ma_-Infinitive | _da_-Infinitive | 1sg Present (_mina_) | 3sg Past (_tema_) | Meaning    |
-| --------- | --------------- | --------------- | -------------------- | ----------------- | ---------- |
-| _elama_   | _elama_         | _elada_         | _elan_               | _elas_            | to live    |
-| _lugema_  | _lugema_        | _lugeda_        | _loen_               | _luges_           | to read    |
-| _õppima_  | _õppima_        | _õppida_        | _õpin_               | _õppis_           | to learn   |
-| _hakkama_ | _hakkama_       | _hakata_        | _hakkan_             | _hakkas_          | to begin   |
-| _minema_  | _minema_        | _minna_         | _lähen_              | _läks_            | to go      |
-| _tulema_  | _tulema_        | _tulla_         | _tulen_              | _tuli_            | to come    |
-| _olema_   | _olema_         | _olla_          | _olen_               | _oli_             | to be      |
-| _tegema_  | _tegema_        | _teha_          | _teen_               | _tegi_            | to do/make |
-| _nägema_  | _nägema_        | _näha_          | _näen_               | _nägi_            | to see     |
+| Verb | _ma_-Infinitive | _da_-Infinitive | 1sg Present (_mina_) | 3sg Past (_tema_) | Meaning |
+| --- | --- | --- | --- | --- | --- |
+| _elama_ | _elama_ | _elada_ | _elan_ | _elas_ | to live |
+| _lugema_ | _lugema_ | _lugeda_ | _loen_ | _luges_ | to read |
+| _õppima_ | _õppima_ | _õppida_ | _õpin_ | _õppis_ | to learn |
+| _hakkama_ | _hakkama_ | _hakata_ | _hakkan_ | _hakkas_ | to begin |
+| _minema_ | _minema_ | _minna_ | _lähen_ | _läks_ | to go |
+| _tulema_ | _tulema_ | _tulla_ | _tulen_ | _tuli_ | to come |
+| _olema_ | _olema_ | _olla_ | _olen_ | _oli_ | to be |
+| _tegema_ | _tegema_ | _teha_ | _teen_ | _tegi_ | to do/make |
+| _nägema_ | _nägema_ | _näha_ | _näen_ | _nägi_ | to see |
 
 ---
 
@@ -60,14 +60,14 @@ The division between _ma_ and _da_ infinitives is strict and grammaticalized:
 
 Formed on the 1sg present stem (_loen_ -> stem _loe-_):
 
-| Person        | Ending | Positive | Negative (_ei_ + connegative) |
-| ------------- | ------ | -------- | ----------------------------- |
-| 1sg (_mina_)  | _-n_   | _loen_   | _ei loe_                      |
-| 2sg (_sina_)  | _-d_   | _loed_   | _ei loe_                      |
-| 3sg (_tema_)  | _-b_   | _loeb_   | _ei loe_                      |
-| 1pl (_meie_)  | _-me_  | _loeme_  | _ei loe_                      |
-| 2pl (_teie_)  | _-te_  | _loete_  | _ei loe_                      |
-| 3pl (_nemad_) | _-vad_ | _loevad_ | _ei loe_                      |
+| Person | Ending | Positive | Negative (_ei_ + connegative) |
+| --- | --- | --- | --- |
+| 1sg (_mina_) | _-n_ | _loen_ | _ei loe_ |
+| 2sg (_sina_) | _-d_ | _loed_ | _ei loe_ |
+| 3sg (_tema_) | _-b_ | _loeb_ | _ei loe_ |
+| 1pl (_meie_) | _-me_ | _loeme_ | _ei loe_ |
+| 2pl (_teie_) | _-te_ | _loete_ | _ei loe_ |
+| 3pl (_nemad_) | _-vad_ | _loevad_ | _ei loe_ |
 
 ### Simple Past Tense (Lihtminevik)
 

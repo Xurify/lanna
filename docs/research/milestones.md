@@ -10,13 +10,13 @@ That sentence names two different gaps, and the research treats them separately.
 
 Comprehension rises roughly in a straight line with the share of running words a reader or listener knows (Schmitt, Jiang & Grabe 2011). The thresholds that matter:
 
-| Material                  | 95% of running words       | 98%         | Source                                        |
-| ------------------------- | -------------------------- | ----------- | --------------------------------------------- |
-| Everyday conversation     | ~2,000–2,500 word families | ~6,500      | Adolphs & Schmitt 2003 (CANCODE); Nation 2006 |
-| TV programs (incl. vlogs) | 3,000 (+ proper nouns)     | 7,000       | Webb & Rodgers 2009a, 88 programs             |
-| Films                     | 3,000                      | 6,000       | Webb & Rodgers 2009b, 318 films               |
-| Newspapers                | 4,000                      | 8,000       | Nation 2006                                   |
-| Novels                    | 4,000                      | 8,000–9,000 | Nation 2006                                   |
+| Material | 95% of running words | 98% | Source |
+| --- | --- | --- | --- |
+| Everyday conversation | ~2,000–2,500 word families | ~6,500 | Adolphs & Schmitt 2003 (CANCODE); Nation 2006 |
+| TV programs (incl. vlogs) | 3,000 (+ proper nouns) | 7,000 | Webb & Rodgers 2009a, 88 programs |
+| Films | 3,000 | 6,000 | Webb & Rodgers 2009b, 318 films |
+| Newspapers | 4,000 | 8,000 | Nation 2006 |
+| Novels | 4,000 | 8,000–9,000 | Nation 2006 |
 
 How much coverage is "enough": van Zeeland & Schmitt (2013) found listeners followed informal narratives adequately at 95% and many at 90%; listening tolerates a little less than reading because intonation and context carry meaning. For unassisted reading the figure is 98% (Hu & Nation 2000; Laufer & Ravenhorst-Kalovski 2010), 95% with help such as a dictionary tap.
 

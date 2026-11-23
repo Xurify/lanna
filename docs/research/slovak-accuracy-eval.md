@@ -19,44 +19,44 @@ Raw answers, grades and costs for every run are in [slovak-accuracy-eval/](slova
 
 Errors are counts out of 56 auto-graded items. "Rejected correct" is the subset where a correct sentence was marked wrong, the error that misleads most, because the learner unlearns something right. Explanations are out of 3, graded by hand. A hedge is a refusal that does not mislead but does not teach either.
 
-| Config                | Errors /56  | Rejected correct | Explanations wrong    | Cost (56 items)                 |
-| --------------------- | ----------- | ---------------- | --------------------- | ------------------------------- |
-| Haiku medium          | 1           | 0                | **3 of 3**            | $0.008                          |
-| Haiku medium + skill  | 2           | 1                | 0                     | $0.024                          |
-| Haiku high            | 0           | 0                | 0 (1 hedge)           | $0.009                          |
-| Haiku high + skill    | 1           | 0                | 0                     | $0.014                          |
-| Haiku xhigh           | 0           | 0                | 1 vague (and a hedge) | $0.012                          |
-| Haiku xhigh + skill   | **0**       | 0                | **0**                 | $0.018                          |
-| Sonnet low            | 2           | 2                | 0                     | $0.081                          |
-| Sonnet low + skill    | 1 (muddled) | 0                | 0                     | $0.360 (first run, cache write) |
-| Sonnet medium         | 3           | 2                | 0                     | $0.084                          |
-| Sonnet medium + skill | 3           | 3                | 0                     | $0.119                          |
-| Sonnet high           | 1           | 1                | 0 (1 doubtful line)   | $0.133                          |
-| Sonnet high + skill   | **0**       | 0                | **0**                 | $0.139                          |
+| Config | Errors /56 | Rejected correct | Explanations wrong | Cost (56 items) |
+| --- | --- | --- | --- | --- |
+| Haiku medium | 1 | 0 | **3 of 3** | $0.008 |
+| Haiku medium + skill | 2 | 1 | 0 | $0.024 |
+| Haiku high | 0 | 0 | 0 (1 hedge) | $0.009 |
+| Haiku high + skill | 1 | 0 | 0 | $0.014 |
+| Haiku xhigh | 0 | 0 | 1 vague (and a hedge) | $0.012 |
+| Haiku xhigh + skill | **0** | 0 | **0** | $0.018 |
+| Sonnet low | 2 | 2 | 0 | $0.081 |
+| Sonnet low + skill | 1 (muddled) | 0 | 0 | $0.360 (first run, cache write) |
+| Sonnet medium | 3 | 2 | 0 | $0.084 |
+| Sonnet medium + skill | 3 | 3 | 0 | $0.119 |
+| Sonnet high | 1 | 1 | 0 (1 doubtful line) | $0.133 |
+| Sonnet high + skill | **0** | 0 | **0** | $0.139 |
 
 **The first round hit the key's limit.** The `max` runs were in flight when the key reached its spending limit ("You have reached your specified API usage limits"), and the script then recorded cost only at the end of a config, so their partial cost is unknown. After the owner raised the limit, a second round ran with the script recording cost per call and stopping at `EVAL_BUDGET_USD=2`. It stopped at $2.30: calls already in flight carried it past the cap.
 
-| Config (second round) | Errors /56                            | Rejected correct | Cost (56 items) | Seconds per answer |
-| --------------------- | ------------------------------------- | ---------------- | --------------- | ------------------ |
-| Haiku max             | 0                                     | 0                | $0.077          | 12.6               |
-| Haiku max + skill     | 0                                     | 0                | $0.093          | 12.1               |
-| Sonnet max            | 0                                     | 0                | $0.669          | 9.4                |
-| Sonnet max + skill    | 0 of 43 asked (stopped at the budget) | 0                | $0.845          | 9.4                |
+| Config (second round) | Errors /56 | Rejected correct | Cost (56 items) | Seconds per answer |
+| --- | --- | --- | --- | --- |
+| Haiku max | 0 | 0 | $0.077 | 12.6 |
+| Haiku max + skill | 0 | 0 | $0.093 | 12.1 |
+| Sonnet max | 0 | 0 | $0.669 | 9.4 |
+| Sonnet max + skill | 0 of 43 asked (stopped at the budget) | 0 | $0.845 | 9.4 |
 
 ## Results: hard set (3 runs each)
 
-| Config                  | Errors /51 | What                                                                            |
-| ----------------------- | ---------- | ------------------------------------------------------------------------------- |
-| Haiku medium            | 1          | accepted _Išiel som s sestrou_                                                  |
-| Haiku medium + skill    | 3          | accepted _s sestrou_ all three times, with the rule `so sestrou` in its context |
-| Haiku high              | 1          | accepted _s sestrou_ once                                                       |
-| Haiku high + skill      | 3          | accepted _s sestrou_ all three times                                            |
-| Haiku xhigh             | 2          | accepted _Páči mi sa ten film_; "three dogs" as _traja psi_                     |
-| Haiku xhigh + skill     | 3          | accepted _s sestrou_ twice; _tri psi_                                           |
-| Haiku max               | 3          | accepted _s sestrou_ twice and _Páči mi sa_                                     |
-| Haiku max + skill       | 1          | _tri psi_                                                                       |
-| Sonnet high             | 1          | _traja psi_                                                                     |
-| **Sonnet high + skill** | **0**      | —                                                                               |
+| Config | Errors /51 | What |
+| --- | --- | --- |
+| Haiku medium | 1 | accepted _Išiel som s sestrou_ |
+| Haiku medium + skill | 3 | accepted _s sestrou_ all three times, with the rule `so sestrou` in its context |
+| Haiku high | 1 | accepted _s sestrou_ once |
+| Haiku high + skill | 3 | accepted _s sestrou_ all three times |
+| Haiku xhigh | 2 | accepted _Páči mi sa ten film_; "three dogs" as _traja psi_ |
+| Haiku xhigh + skill | 3 | accepted _s sestrou_ twice; _tri psi_ |
+| Haiku max | 3 | accepted _s sestrou_ twice and _Páči mi sa_ |
+| Haiku max + skill | 1 | _tri psi_ |
+| Sonnet high | 1 | _traja psi_ |
+| **Sonnet high + skill** | **0** | — |
 
 Seconds per answer on the hard set: Haiku xhigh about 3.5, Haiku max about 13, Sonnet high about 2.5–2.9.
 

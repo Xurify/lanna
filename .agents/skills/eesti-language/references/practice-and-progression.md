@@ -6,12 +6,12 @@ Token-minimized reference for curriculum progression, diagnostic benchmarks, and
 
 ## 1. CEFR Level Expectations (Harno Benchmarks)
 
-| Level  | Morphosyntax Focus                                                                                                                                                                                                                                                               | Vocabulary Scope                  | Communicative Tasks & Exams                                                                                                                               |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A1** | Present indicative; basic personal pronouns; basic numbers; spatial question words (_kus, kuhu, kust_); basic nominative, genitive, and partitive singular.                                                                                                                      | ~750 words (basic everyday items) | Self-introduction, asking for prices, ordering in a cafe, telling the time, simple greetings.                                                             |
-| **A2** | **All 14 cases** in singular and plural; short illatives (_koju, linna, kooli_); simple past (_lihtminevik_); perfect (_täisminevik_); **impersonal present and past** (_räägitakse, tehti_); _ma_- vs. _da_-infinitive; **total vs. partial object**; _et_- and _sest_-clauses. | ~1,500–2,000 words                | Describing daily routine, shopping, asking directions, filling out forms, writing short messages (>=30 words), speaking in pairs from prompt cards.       |
-| **B1** | Full mastery of object case rules; **quotative mood** (_-vat_); conditional in polite requests and reported speech; passive participles (_-tud_); relative clauses; compound past tenses.                                                                                        | ~4,500 words                      | Telephone inquiries, handling institutional appointments, writing personal and semi-formal letters (~100 words), reaching mutual agreement in discussion. |
-| **B2** | Non-finite converb clauses (_des_- and _mata_-forms); full nuance of particle verbs (_ära, läbi, välja, üle_); formal register shifts; complex journalistic and academic styles.                                                                                                 | ~7,500+ words                     | Explaining nuanced viewpoints, writing argumentative essays (~180 words), participating in spontaneous debates, summarizing technical audio.              |
+| Level | Morphosyntax Focus | Vocabulary Scope | Communicative Tasks & Exams |
+| --- | --- | --- | --- |
+| **A1** | Present indicative; basic personal pronouns; basic numbers; spatial question words (_kus, kuhu, kust_); basic nominative, genitive, and partitive singular. | ~750 words (basic everyday items) | Self-introduction, asking for prices, ordering in a cafe, telling the time, simple greetings. |
+| **A2** | **All 14 cases** in singular and plural; short illatives (_koju, linna, kooli_); simple past (_lihtminevik_); perfect (_täisminevik_); **impersonal present and past** (_räägitakse, tehti_); _ma_- vs. _da_-infinitive; **total vs. partial object**; _et_- and _sest_-clauses. | ~1,500–2,000 words | Describing daily routine, shopping, asking directions, filling out forms, writing short messages (>=30 words), speaking in pairs from prompt cards. |
+| **B1** | Full mastery of object case rules; **quotative mood** (_-vat_); conditional in polite requests and reported speech; passive participles (_-tud_); relative clauses; compound past tenses. | ~4,500 words | Telephone inquiries, handling institutional appointments, writing personal and semi-formal letters (~100 words), reaching mutual agreement in discussion. |
+| **B2** | Non-finite converb clauses (_des_- and _mata_-forms); full nuance of particle verbs (_ära, läbi, välja, üle_); formal register shifts; complex journalistic and academic styles. | ~7,500+ words | Explaining nuanced viewpoints, writing argumentative essays (~180 words), participating in spontaneous debates, summarizing technical audio. |
 
 ---
 
@@ -59,14 +59,14 @@ Token-minimized reference for curriculum progression, diagnostic benchmarks, and
 
 Learners with Finnish background often confuse crucial lexical pairs:
 
-| Estonian Word  | Estonian Meaning | Finnish False Friend | Finnish Meaning        |
-| -------------- | ---------------- | -------------------- | ---------------------- |
-| _pulmad_ (pl.) | wedding          | _pulma_ (sg.)        | problem                |
-| _hallitus_     | mold / mildew    | _hallitus_           | government             |
-| _raamat_       | book             | _raamattu_           | Bible                  |
-| _piim_         | milk             | _piimä_              | sour milk / buttermilk |
-| _linn_         | city / town      | _linna_              | castle / fortress      |
-| _viiner_       | hot dog sausage  | _viineri_            | Danish pastry          |
+| Estonian Word | Estonian Meaning | Finnish False Friend | Finnish Meaning |
+| --- | --- | --- | --- |
+| _pulmad_ (pl.) | wedding | _pulma_ (sg.) | problem |
+| _hallitus_ | mold / mildew | _hallitus_ | government |
+| _raamat_ | book | _raamattu_ | Bible |
+| _piim_ | milk | _piimä_ | sour milk / buttermilk |
+| _linn_ | city / town | _linna_ | castle / fortress |
+| _viiner_ | hot dog sausage | _viineri_ | Danish pastry |
 
 ---
 

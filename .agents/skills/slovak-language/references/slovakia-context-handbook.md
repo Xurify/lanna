@@ -38,14 +38,14 @@ Tourism structure: place → route/location → practical advice → respectful 
 
 Historical texts about Slovak constitutional development are useful for advanced reading, not as current law guides. Use their reusable language patterns without claiming current legal facts:
 
-| Function             | Slovak frames                                                            |
-| -------------------- | ------------------------------------------------------------------------ |
-| periodize            | `v období ...`, `po roku ...`, `v priebehu rokov ...`                    |
-| describe development | `došlo k zmene`, `postupne sa vyvinulo`, `nadobudlo význam`              |
-| attribute            | `autor uvádza, že ...`, `podľa článku ...`, `výskum sa zameriava na ...` |
-| qualify              | `možno konštatovať`, `zdá sa, že`, `v určitej miere`                     |
-| contrast             | `na rozdiel od`, `zatiaľ čo`, `napriek tomu`                             |
-| conclude             | `z toho vyplýva`, `hlavným zistením je`, `otázka zostáva otvorená`       |
+| Function | Slovak frames |
+| --- | --- |
+| periodize | `v období ...`, `po roku ...`, `v priebehu rokov ...` |
+| describe development | `došlo k zmene`, `postupne sa vyvinulo`, `nadobudlo význam` |
+| attribute | `autor uvádza, že ...`, `podľa článku ...`, `výskum sa zameriava na ...` |
+| qualify | `možno konštatovať`, `zdá sa, že`, `v určitej miere` |
+| contrast | `na rozdiel od`, `zatiaľ čo`, `napriek tomu` |
+| conclude | `z toho vyplýva`, `hlavným zistením je`, `otázka zostáva otvorená` |
 
 Core terms: `ústava`, `ústavné právo`, `zákon`, `súd`, `rozhodnutie`, `právny poriadok`, `štát`, `republika`, `voľby`, `právomoc`, `zmena`, `vývoj`, `výskum`, `publikácia`, `monografia`, `odborný článok`.
 
@@ -65,13 +65,13 @@ Use careful reporting: `Článok tvrdí, že ...` does not mean the skill indepe
 
 Cover fundamentals, interaction, reading/writing, public topics, specialist language, dialect/media/culture, and linguistic analysis:
 
-| Area             | Can do                                                                                                           |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
-| foundations      | pronounce/read standard Slovak; form basic statements/questions; control gender, present, core vocabulary        |
-| interaction      | introduce self, buy, order, direct, narrate, request, negotiate, present                                         |
-| literacy         | understand notices/stories/articles; find main idea/context; write messages, letters, summaries, opinions        |
-| public culture   | discuss history, geography, holidays, food, art, media, current events with source-aware language                |
-| specialist       | recognize business, medical, legal, and technical vocabulary; ask for clarification instead of fabricating terms |
-| linguistic depth | explain phonology, morphology, syntax, semantics, pragmatics, dialect variation, translation choices             |
+| Area | Can do |
+| --- | --- |
+| foundations | pronounce/read standard Slovak; form basic statements/questions; control gender, present, core vocabulary |
+| interaction | introduce self, buy, order, direct, narrate, request, negotiate, present |
+| literacy | understand notices/stories/articles; find main idea/context; write messages, letters, summaries, opinions |
+| public culture | discuss history, geography, holidays, food, art, media, current events with source-aware language |
+| specialist | recognize business, medical, legal, and technical vocabulary; ask for clarification instead of fabricating terms |
+| linguistic depth | explain phonology, morphology, syntax, semantics, pragmatics, dialect variation, translation choices |
 
 Use this as coverage audit: a broad Slovak skill should answer across every row, but verify specialist/current facts before final answer.

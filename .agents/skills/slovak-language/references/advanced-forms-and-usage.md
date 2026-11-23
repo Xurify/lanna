@@ -8,35 +8,35 @@ Use this reference for forms that often decide whether Slovak sounds genuinely c
 
 `všetok` declines like an adjective. In ordinary speech, its plural and neuter singular forms do most of the work.
 
-| Meaning                        | Slovak                 | Example                                      |
-| ------------------------------ | ---------------------- | -------------------------------------------- |
-| all people / m. animate plural | `všetci`               | `Všetci hostia už prišli.`                   |
-| all people, object             | `všetkých`             | `Pozvali všetkých hostí.`                    |
-| all non-masc.-animate plural   | `všetky`               | `Všetky izby sú obsadené.`                   |
-| everything                     | `všetko`               | `Všetko som pochopil/a.`                     |
-| all of one mass/whole noun     | `všetok/všetka/všetko` | `Zjedol všetok šalát.` `Vypila všetku vodu.` |
+| Meaning | Slovak | Example |
+| --- | --- | --- |
+| all people / m. animate plural | `všetci` | `Všetci hostia už prišli.` |
+| all people, object | `všetkých` | `Pozvali všetkých hostí.` |
+| all non-masc.-animate plural | `všetky` | `Všetky izby sú obsadené.` |
+| everything | `všetko` | `Všetko som pochopil/a.` |
+| all of one mass/whole noun | `všetok/všetka/všetko` | `Zjedol všetok šalát.` `Vypila všetku vodu.` |
 
 Do not use `všetko` before a count plural noun: say `všetky knihy`, not _`všetko knihy`_. It can itself decline: `o všetkom`, `so všetkými`, `vo všetkých prípadoch`.
 
 ### Three meanings of “the same”
 
-| Form                           | Meaning                                         | Example                                          |
-| ------------------------------ | ----------------------------------------------- | ------------------------------------------------ |
-| `ten istý / tá istá / to isté` | the identical person or thing                   | `Bol to ten istý človek.`                        |
-| `taký istý`                    | the same kind; “just as …”                      | `Má rovnaký názor? — Áno, je taký istý ako môj.` |
-| `rovnaký`                      | same/equal/comparable; often general comparison | `Máme rovnaké podmienky.`                        |
+| Form | Meaning | Example |
+| --- | --- | --- |
+| `ten istý / tá istá / to isté` | the identical person or thing | `Bol to ten istý človek.` |
+| `taký istý` | the same kind; “just as …” | `Má rovnaký názor? — Áno, je taký istý ako môj.` |
+| `rovnaký` | same/equal/comparable; often general comparison | `Máme rovnaké podmienky.` |
 
 `ten istý` needs the demonstrative. `taký istý` normally invites an `ako` comparison. Do not use English-style _`same as me`_ without agreement: `rovnaký ako ja`, `rovnaké ako moje`.
 
 ### Useful non-exact quantities
 
-| Form                       | Typical government             | Example                                 |
-| -------------------------- | ------------------------------ | --------------------------------------- |
-| `veľa`, `málo`, `trochu`   | usually genitive               | `veľa ľudí`, `málo času`, `trochu vody` |
-| `niekoľko`                 | genitive plural                | `niekoľko otázok`                       |
-| `pár`, `zopár`             | genitive plural in neutral use | `pár dní`, `zopár nápadov`              |
-| `každý`, `celý`            | agree as adjectives            | `každý deň`, `celú noc`                 |
-| `oba/obidva`, `obe/obidve` | “both”, agreement matters      | `obaja kolegovia`, `obe možnosti`       |
+| Form | Typical government | Example |
+| --- | --- | --- |
+| `veľa`, `málo`, `trochu` | usually genitive | `veľa ľudí`, `málo času`, `trochu vody` |
+| `niekoľko` | genitive plural | `niekoľko otázok` |
+| `pár`, `zopár` | genitive plural in neutral use | `pár dní`, `zopár nápadov` |
+| `každý`, `celý` | agree as adjectives | `každý deň`, `celú noc` |
+| `oba/obidva`, `obe/obidve` | “both”, agreement matters | `obaja kolegovia`, `obe možnosti` |
 
 `obaja/obidvaja` is for two male people; `obe/obidve` for feminine or neuter groups; `oba/obidva` commonly for masculine inanimate. Prefer one family consistently in a short text (`oba` or `obidva`).
 
@@ -44,12 +44,12 @@ Do not use `všetko` before a count plural noun: say `všetky knihy`, not _`vše
 
 English passive is not a default Slovak template. First decide what the sentence should foreground.
 
-| Focus                                        | Preferred pattern                | Example                           |
-| -------------------------------------------- | -------------------------------- | --------------------------------- |
-| known agent                                  | active, flexible order           | `List napísala Viera.`            |
-| result/state/history                         | `byť + passive participle`       | `Most bol postavený v roku 1930.` |
-| general process, seller/operator unimportant | `sa` construction                | `Lístky sa predávajú online.`     |
-| unnamed people in a one-off event            | active plural / indefinite agent | `Včera mi volali z banky.`        |
+| Focus | Preferred pattern | Example |
+| --- | --- | --- |
+| known agent | active, flexible order | `List napísala Viera.` |
+| result/state/history | `byť + passive participle` | `Most bol postavený v roku 1930.` |
+| general process, seller/operator unimportant | `sa` construction | `Lístky sa predávajú online.` |
+| unnamed people in a one-off event | active plural / indefinite agent | `Včera mi volali z banky.` |
 
 Passive participles typically use `-ný/-ený/-ovaný/-tý`:
 
@@ -93,13 +93,13 @@ The aspect source matters. A perfective base usually suits a completed result (`
 
 Common endings are `-nie/-tie`.
 
-| Verb               | Noun                   | Typical sense                |
-| ------------------ | ---------------------- | ---------------------------- |
+| Verb | Noun | Typical sense |
+| --- | --- | --- |
 | `čítať / prečítať` | `čítanie / prečítanie` | activity / completed reading |
-| `otvoriť`          | `otvorenie`            | opening                      |
-| `organizovať`      | `organizovanie`        | organising                   |
-| `stretnúť sa`      | `stretnutie`           | meeting                      |
-| `rozhodnúť`        | `rozhodnutie`          | decision                     |
+| `otvoriť` | `otvorenie` | opening |
+| `organizovať` | `organizovanie` | organising |
+| `stretnúť sa` | `stretnutie` | meeting |
+| `rozhodnúť` | `rozhodnutie` | decision |
 
 Keep aspect when it changes the event boundary: `čítanie knihy` is the activity; `prečítanie knihy` is completing it. A verbal noun declines and often keeps the source verb’s complement: `počas čítania knihy`, `po rozhodnutí vlády`.
 
@@ -198,19 +198,19 @@ After `báť sa, aby`, the following verb is normally negative. This is a high-v
 
 Diminutives can signal small size, affection, informality, mitigation, or a lexicalized different meaning. They are pervasive, but not automatically “cute”; context decides.
 
-| Base     | Diminutive       | Notes                                    |
-| -------- | ---------------- | ---------------------------------------- |
-| `pohár`  | `pohárik`        | small glass; often a shot/glass of drink |
-| `dom`    | `domček`         | little house                             |
-| `pes`    | `psík`, `psíček` | little dog; affectionate                 |
-| `kniha`  | `knižka`         | booklet/little book                      |
-| `ruka`   | `ručička`        | little hand; also clock hand             |
-| `okno`   | `okienko`        | little window/service window             |
-| `mesto`  | `mestečko`       | small town                               |
-| `slovo`  | `slovíčko`       | little word; often a vocabulary item     |
-| `pivo`   | `pivko/pivečko`  | friendly/affectionate beer order         |
-| `lístok` | from `list`      | leaf; ticket; menu in `jedálny lístok`   |
-| `rožok`  | from `roh`       | bread roll, not simply “small corner”    |
+| Base | Diminutive | Notes |
+| --- | --- | --- |
+| `pohár` | `pohárik` | small glass; often a shot/glass of drink |
+| `dom` | `domček` | little house |
+| `pes` | `psík`, `psíček` | little dog; affectionate |
+| `kniha` | `knižka` | booklet/little book |
+| `ruka` | `ručička` | little hand; also clock hand |
+| `okno` | `okienko` | little window/service window |
+| `mesto` | `mestečko` | small town |
+| `slovo` | `slovíčko` | little word; often a vocabulary item |
+| `pivo` | `pivko/pivečko` | friendly/affectionate beer order |
+| `lístok` | from `list` | leaf; ticket; menu in `jedálny lístok` |
+| `rožok` | from `roh` | bread roll, not simply “small corner” |
 
 Common families are masculine `-ík/-ok/-ček`, feminine `-ka/-(i)čka`, neuter `-ko/-(e)čko`. Treat each frequent form as a word with its own register and meaning. Avoid making a novel diminutive in official or technical prose unless it is established.
 
@@ -245,11 +245,11 @@ Use them only where idiomatic. `pane` is established in service language (`Čo s
 
 Outside simple subject/object positions, put the numeral into the required case; the following noun changes too.
 
-| Case/frame      | 2                  | 3                  | 4                   | 5                    |
-| --------------- | ------------------ | ------------------ | ------------------- | -------------------- |
-| `do + gen.`     | `dvoch rokov`      | `troch rokov`      | `štyroch rokov`     | `piatich rokov`      |
-| `k + dat.`      | `dvom rokom`       | `trom rokom`       | `štyrom rokom`      | `piatim rokom`       |
-| `po + loc.`     | `po dvoch rokoch`  | `po troch rokoch`  | `po štyroch rokoch` | `po piatich rokoch`  |
+| Case/frame | 2 | 3 | 4 | 5 |
+| --- | --- | --- | --- | --- |
+| `do + gen.` | `dvoch rokov` | `troch rokov` | `štyroch rokov` | `piatich rokov` |
+| `k + dat.` | `dvom rokom` | `trom rokom` | `štyrom rokom` | `piatim rokom` |
+| `po + loc.` | `po dvoch rokoch` | `po troch rokoch` | `po štyroch rokoch` | `po piatich rokoch` |
 | `pred + instr.` | `pred dvoma rokmi` | `pred troma rokmi` | `pred štyrmi rokmi` | `pred piatimi rokmi` |
 
 With higher numbers, colloquial usage may leave some forms uninflected, but the declined forms are important for careful writing. Learn `pred niekoľkými dňami` and `pred mnohými rokmi` as fixed usable patterns.
@@ -287,11 +287,11 @@ Use `v januári`, `v marci`, `v máji`, `v auguste`, etc. For complex ordinals: 
 
 ## 11. Correspondence: register is grammatical
 
-| Relationship         | Opening                                       | Closing                   |
-| -------------------- | --------------------------------------------- | ------------------------- |
-| formal               | `Vážený pán Novák!` / `Vážená pani Nováková!` | `S pozdravom` / `S úctou` |
-| neutral professional | `Dobrý deň,`                                  | `S pozdravom`             |
-| friend/family        | `Milá Eva!` / `Milý Peter!` / `Ahoj, Eva!`    | `Maj sa`, `Pozdravujem`   |
+| Relationship | Opening | Closing |
+| --- | --- | --- |
+| formal | `Vážený pán Novák!` / `Vážená pani Nováková!` | `S pozdravom` / `S úctou` |
+| neutral professional | `Dobrý deň,` | `S pozdravom` |
+| friend/family | `Milá Eva!` / `Milý Peter!` / `Ahoj, Eva!` | `Maj sa`, `Pozdravujem` |
 
 Capitalize `Vy`, `Vám`, `Váš` for one formal addressee in a letter. Use lower case for plural/general audience unless house style requires otherwise.
 

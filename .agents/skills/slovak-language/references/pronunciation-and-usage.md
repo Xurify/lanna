@@ -14,19 +14,19 @@ Do not shift to `ty` without an invitation. Common offer: `Môžeme si tykať?` 
 
 ## High-yield chunks
 
-| Need                  | Slovak                                               |
-| --------------------- | ---------------------------------------------------- |
-| introduce self        | `Volám sa ...` / `Som ...`                           |
-| origin/residence      | `Som z ...` / `Bývam v ...`                          |
-| ask identity          | `Ako sa voláš/voláte?`                               |
-| understand            | `Rozumiem.` / `Nerozumiem.`                          |
-| ask repetition        | `Môžete to, prosím, zopakovať?`                      |
-| request               | `Prosím si ...` / `Chcel by som / Chcela by som ...` |
-| ability vs. knowledge | `Môžem ...` / `Viem ...`                             |
-| like                  | `Mám rád ...` / `Mám rada ...`                       |
-| need                  | `Potrebujem ...` / `Musím ...`                       |
-| time                  | `Koľko je hodín?` / `Je ... hodín.`                  |
-| directions            | `Kde je ...?` / `Ako sa dostanem do ...?`            |
+| Need | Slovak |
+| --- | --- |
+| introduce self | `Volám sa ...` / `Som ...` |
+| origin/residence | `Som z ...` / `Bývam v ...` |
+| ask identity | `Ako sa voláš/voláte?` |
+| understand | `Rozumiem.` / `Nerozumiem.` |
+| ask repetition | `Môžete to, prosím, zopakovať?` |
+| request | `Prosím si ...` / `Chcel by som / Chcela by som ...` |
+| ability vs. knowledge | `Môžem ...` / `Viem ...` |
+| like | `Mám rád ...` / `Mám rada ...` |
+| need | `Potrebujem ...` / `Musím ...` |
+| time | `Koľko je hodín?` / `Je ... hodín.` |
+| directions | `Kde je ...?` / `Ako sa dostanem do ...?` |
 
 For a male speaker use `rád, chcel by som, bol som`; for a female speaker use `rada, chcela by som, bola som`. For mixed/plural groups, masculine animate governs agreement.
 
