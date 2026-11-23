@@ -771,20 +771,20 @@ function WordRow({
 					</p>
 				)}
 				{item.example && (
-					<div className="mt-2.5 border-l border-line-2 pl-3">
-						<p className="font-prose text-sm text-foreground">
-							{item.example.sk}{" "}
-							<button
-								type="button"
-								onClick={() => void speak(item.example!.sk).catch(() => {})}
-								title="Play the sentence"
-								aria-label="Play the sentence"
-								className="inline-grid size-6 translate-y-[3px] place-items-center rounded-full text-muted-foreground hover:bg-well hover:text-foreground"
-							>
-								<Volume2Icon aria-hidden className="size-3.5" />
-							</button>
-						</p>
-						<p className="font-prose text-[13px] text-muted-foreground">{item.example.en}</p>
+					<div className="mt-2.5 flex items-start gap-1.5 rounded-xl bg-well py-2 pr-3 pl-1.5">
+						<button
+							type="button"
+							onClick={() => void speak(item.example!.sk).catch(() => {})}
+							title="Play the sentence"
+							aria-label="Play the sentence"
+							className="grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-well-2 hover:text-foreground"
+						>
+							<Volume2Icon aria-hidden className="size-3.5" />
+						</button>
+						<div className="min-w-0 pt-1">
+							<p className="font-prose text-sm text-foreground">{item.example.sk}</p>
+							<p className="font-prose text-[13px] text-muted-foreground">{item.example.en}</p>
+						</div>
 					</div>
 				)}
 			</div>
