@@ -35,3 +35,6 @@ _handoff/
 
 # Spotify downloads and their transcripts (copyrighted audio: never commit)
 transcripts/
+
+# Next.js dev server leftovers (not part of the app)
+next-env.d.ts
