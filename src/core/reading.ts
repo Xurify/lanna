@@ -356,6 +356,7 @@ export interface StoryRecord {
 	source?: StorySource;
 	original?: string;
 	ruleIssues?: number;
+	shippedHash?: string;
 }
 
 /** How the reader speaks a sentence: a cast member's line in their own

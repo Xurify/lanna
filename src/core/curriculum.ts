@@ -731,7 +731,6 @@ const slovakChapters = (map: readonly CurriculumUnit[]): Chapter[] => [
 	chapter(map, "media", "b2", "Media", "Reading, listening, writing at length", "reading", "can-follow-media"),
 ];
 
-/** Each of the language's chapter stories, right after the first unit of its `after` list the map has. */
 function withStories<T>(ids: readonly T[], idOf: (x: T) => string, language: string, make: (id: string) => T): T[] {
 	const out = [...ids];
 	for (const story of chapterStoriesFor(language)) {
@@ -853,7 +852,6 @@ export interface ChapterState {
 	open: boolean;
 	done: boolean;
 	doneCount: number;
-	/** Units that count toward opening the next chapter (everything but the goal). */
 	total: number;
 	units: UnitState[];
 }
@@ -898,6 +896,10 @@ function unitProgressOf(
 	return { done, progress };
 }
 
+function countsTowardChapter(u: CurriculumUnit): boolean {
+	return u.kind !== "goal" && u.kind !== "story";
+}
+
 /** The whole map's state from the progress ledger. Pure. `startChapter`
  *  (from placement) skips every chapter before it: their undone units
  *  count as passed and stay open to revisit. */
@@ -924,7 +926,7 @@ export function curriculumState(
 		const open: boolean = prevOpenSlack || skippedChapter;
 		const units: UnitState[] = [];
 		let doneCount = 0;
-		const countable = ch.units.filter((id) => curriculumUnit(id)!.kind !== "goal").length;
+		const countable = ch.units.filter((id) => countsTowardChapter(curriculumUnit(id)!)).length;
 		for (const id of ch.units) {
 			const u = curriculumUnit(id)!;
 			const e = evidence[id];
@@ -958,7 +960,7 @@ export function curriculumState(
 			}
 			if (status === "done" || status === "skipped") {
 				doneSet.add(id);
-				if (u.kind !== "goal") doneCount++;
+				if (countsTowardChapter(u)) doneCount++;
 			}
 			const slovakTerm = u.slovakTerm ?? (isUnitId(id) ? unitInfo(id as UnitId)?.slovakTerm : undefined);
 			const grammarTerm = u.grammarTerm ?? (isUnitId(id) ? unitInfo(id as UnitId)?.grammarTerm : undefined);

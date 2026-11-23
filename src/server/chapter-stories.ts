@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { activeProfile, curriculumFile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
@@ -10,7 +11,6 @@ import { availableVoiceIds } from "./voices.ts";
 
 export const SHIPPED_STORY_MODEL = "shipped";
 
-/** A shipped story checks its own glosses: the dictionary's guess for a form can be another word (prší → prsia). */
 interface ShippedStory extends StoryDraft {
 	glosses?: Record<string, { lemma: string; gloss: string }>;
 }
@@ -28,21 +28,38 @@ function withGlosses(sentences: readonly StorySentence[], glosses: ShippedStory[
 	}));
 }
 
-function readDraft(id: string): ShippedStory | null {
+interface ShippedFile {
+	draft: ShippedStory;
+	hash: string;
+}
+
+function readShipped(id: string): ShippedFile | null {
 	try {
-		return JSON.parse(fs.readFileSync(curriculumFile(activeProfile(), `stories/${id}.json`), "utf-8")) as ShippedStory;
+		const text = fs.readFileSync(curriculumFile(activeProfile(), `stories/${id}.json`), "utf-8");
+		return { draft: JSON.parse(text) as ShippedStory, hash: createHash("sha256").update(text).digest("hex") };
 	} catch {
 		return null;
 	}
 }
 
-/** The chapter story in the library, glossed from the dictionary and kept there the first time it is opened. */
-export async function keepChapterStory(id: string, now = new Date()): Promise<StoryRecord | null> {
+const inFlight = new Map<string, Promise<StoryRecord | null>>();
+
+export function keepChapterStory(id: string, now = new Date()): Promise<StoryRecord | null> {
+	const key = `${activeProfile()}/${id}`;
+	let job = inFlight.get(key);
+	if (!job) {
+		job = writeChapterStory(id, now).finally(() => inFlight.delete(key));
+		inFlight.set(key, job);
+	}
+	return job;
+}
+
+async function writeChapterStory(id: string, now: Date): Promise<StoryRecord | null> {
 	const kept = storyStore.get(id);
-	if (kept) return kept;
-	if (!chapterStoriesFor(activeProfile()).some((s) => s.id === id)) return null;
-	const draft = readDraft(id);
-	if (!draft) return null;
+	const shipped = chapterStoriesFor(activeProfile()).some((s) => s.id === id) ? readShipped(id) : null;
+	if (kept && (!shipped || kept.shippedHash === shipped.hash)) return kept;
+	if (!shipped) return null;
+	const { draft, hash } = shipped;
 	const chapter = allChapters().find((c) => c.units.includes(id));
 	const level = STAGES.find((s) => s.id === chapter?.stage)?.level;
 	const lexicon = loadLexicon();
@@ -66,6 +83,7 @@ export async function keepChapterStory(id: string, now = new Date()): Promise<St
 		newWords: assembled.newWords.filter((w) => !w.slug || slugs.has(w.slug)),
 		...(level ? { level } : {}),
 		...(chapter ? { chapter: chapter.id } : {}),
+		shippedHash: hash,
 	};
 	storyStore.put(story);
 	return storyStore.get(id);

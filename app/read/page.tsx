@@ -14,8 +14,8 @@ export default async function ReadPage({ searchParams }: { searchParams: Promise
 	let state = null;
 	let story = null;
 	try {
-		state = readingState(new Date().getTimezoneOffset(), undefined, { topUpShelf: false });
 		if (id) story = await keepChapterStory(id);
+		state = readingState(new Date().getTimezoneOffset(), undefined, { topUpShelf: false });
 	} catch {
 		state = null;
 	}

@@ -6,8 +6,9 @@
  *                  glossed tokens, the questions, the new words, the
  *                  model and tokens it cost (src/core/reading.ts
  *                  StoryRecord). Written once, never changed.
- *   index.jsonl    one line per story (StoryIndexEntry), appended when
- *                  the story is written, so the library lists without
+ *   index.jsonl    one line per written story (StoryIndexEntry), appended
+ *                  when the story is written or rebuilt; list() keeps the
+ *                  last line for each id, so the library lists without
  *                  opening every file.
  *   reads.jsonl    one line per reading (ReadLogEntry): when, how long,
  *                  the comprehension score, the words tapped and queued.
@@ -99,11 +100,9 @@ function writeStoryFile(story: StoryRecord): void {
 }
 
 export const storyStore = {
-	/** Every story's index line, oldest first. */
 	list(): StoryIndexEntry[] {
-		return readJsonl<StoryIndexEntry>(INDEX()).sort(
-			(a, b) => a.episode - b.episode || a.createdAt.localeCompare(b.createdAt),
-		);
+		const latest = new Map(readJsonl<StoryIndexEntry>(INDEX()).map((entry) => [entry.id, entry] as const));
+		return [...latest.values()].sort((a, b) => a.episode - b.episode || a.createdAt.localeCompare(b.createdAt));
 	},
 	/** The story as saved. Parsed once per change on disk and shared, so it is frozen. */
 	get(id: string): StoryRecord | null {
