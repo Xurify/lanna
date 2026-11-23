@@ -28,13 +28,13 @@
 		},
 		{
 			"who": "narrator",
-			"sk": "Они сидят и говорят.",
+			"sk": "Они сидят и разговаривают.",
 			"en": "They are sitting and talking."
 		},
 		{
 			"who": "Олег",
-			"sk": "Здравствуйте! Что вы хотите?",
-			"en": "Hello! What would you like?"
+			"sk": "Здравствуйте! Что вы будете?",
+			"en": "Hello! What will you have?"
 		},
 		{
 			"who": "Лена",
@@ -48,8 +48,8 @@
 		},
 		{
 			"who": "Олег",
-			"sk": "У нас есть суп и очень вкусный торт.",
-			"en": "We have soup and a very tasty cake."
+			"sk": "А ещё у нас суп и очень вкусный торт.",
+			"en": "We also have soup and a very tasty cake."
 		},
 		{
 			"who": "Миша",
@@ -182,7 +182,7 @@
 			"options": [
 				"Яблочный",
 				"Шоколадный",
-				"Сырный"
+				"Медовый"
 			],
 			"answer": 1
 		},
@@ -217,7 +217,7 @@
 		},
 		"нас": {
 			"lemma": "мы",
-			"gloss": "us (у нас есть: we have)"
+			"gloss": "us (у нас: we have)"
 		},
 		"мы": {
 			"lemma": "мы",
@@ -237,11 +237,11 @@
 		},
 		"у": {
 			"lemma": "у",
-			"gloss": "at, by (у нас есть: we have)"
+			"gloss": "at, by (у нас: we have)"
 		},
 		"есть": {
 			"lemma": "есть",
-			"gloss": "there is (у нас есть: we have)"
+			"gloss": "to eat"
 		},
 		"чай": {
 			"lemma": "чай",
