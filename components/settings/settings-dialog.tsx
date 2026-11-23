@@ -61,21 +61,21 @@ import { BackupSection } from "./backup-section.tsx";
 import { sharedJson } from "@/lib/shared-fetch";
 
 /** The nav label is the section's heading. Ids are internal: deep links and tests use them.
- *  Everyday settings come first; the AI setup and the app's data sit below a divider. */
+ *  Listed in the order a learner reaches for them: lesson settings first, the app's own settings last. */
 const SECTIONS = [
-	{ id: "general", label: "General" },
-	{ id: "learner", label: "Learning" },
-	{ id: "notifications", label: "Notifications" },
-	{ id: "sound", label: "Sound" },
-	{ id: "appearance", label: "Appearance" },
-	{ id: "keyboard", label: "Keyboard" },
-	{ id: "devices", label: "Devices" },
-	{ id: "ai", label: "AI models", divider: true },
-	{ id: "keys", label: "API keys" },
-	{ id: "usage", label: "Spending" },
-	{ id: "data", label: "Data" },
-	{ id: "backup", label: "Backup" },
-	{ id: "sources", label: "Sources" },
+	{ id: "learner", label: "Learning", group: "Lessons" },
+	{ id: "sound", label: "Sound", group: "Lessons" },
+	{ id: "notifications", label: "Notifications", group: "Lessons" },
+	{ id: "appearance", label: "Appearance", group: "Look and controls" },
+	{ id: "keyboard", label: "Keyboard", group: "Look and controls" },
+	{ id: "ai", label: "AI models", group: "AI" },
+	{ id: "keys", label: "API keys", group: "AI" },
+	{ id: "usage", label: "Spending", group: "AI" },
+	{ id: "general", label: "General", group: "App and data" },
+	{ id: "devices", label: "Devices", group: "App and data" },
+	{ id: "data", label: "Data", group: "App and data" },
+	{ id: "backup", label: "Backup", group: "App and data" },
+	{ id: "sources", label: "Sources", group: "App and data" },
 ] as const;
 export type SectionId = (typeof SECTIONS)[number]["id"];
 
@@ -279,11 +279,15 @@ function SettingsDialogBody({
 						phoneShowsSection && "max-md:hidden",
 					)}
 				>
-					{SECTIONS.map((s) => {
+					{SECTIONS.map((s, index) => {
 						const Icon = SECTION_ICONS[s.id];
 						return (
 							<Fragment key={s.id}>
-								{"divider" in s && <div role="separator" className="mx-3 my-2 h-px shrink-0 bg-border" />}
+								{(index === 0 || SECTIONS[index - 1]?.group !== s.group) && (
+									<p className="px-3 pb-1 pt-4 font-ui text-xs font-medium text-ink-3 first:pt-0 max-md:pt-5">
+										{s.group}
+									</p>
+								)}
 								<button
 									type="button"
 									data-testid={`settings-nav-${s.id}`}

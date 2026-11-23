@@ -3,13 +3,17 @@
  * Settings primitives: sections, groups, rows and controls. Everything SSRs
  * clean (render tests pin the markup). A dependency-grayed row dims as a whole
  * and locks its control; the row owns the dim.
+ *
+ * Spacing runs on one scale: 32 px between groups, 12 px from a group's title to
+ * its rows, 8 px between rows, 12-16 px inside a row. A group never sits closer
+ * to its neighbour than to its own rows.
  */
 
 import { useId, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { CapLabel } from "@/components/ui/cap-label";
 
-/** A section block: pronounced mono heading + content. */
+/** A section block: a heading with a quiet hint, then its groups. */
 export function SettingsSection({
 	title,
 	hint,
@@ -23,12 +27,12 @@ export function SettingsSection({
 	testid?: string;
 }) {
 	return (
-		<section data-testid={testid} className="p-6 max-md:px-4 max-md:py-5">
-			<div className="mb-5 flex flex-col gap-1 border-b border-border pb-4">
+		<section data-testid={testid} className="px-8 py-7 max-md:px-4 max-md:py-5">
+			<div className="mb-7 flex flex-col gap-1.5 border-b border-border pb-5">
 				<h2 className="font-ui text-xl font-semibold tracking-[-0.02em] text-foreground">{title}</h2>
-				{hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
+				{hint && <p className="text-sm leading-relaxed text-muted-foreground">{hint}</p>}
 			</div>
-			<div className="flex flex-col gap-2">{children}</div>
+			<div className="flex flex-col gap-8">{children}</div>
 		</section>
 	);
 }
@@ -46,9 +50,11 @@ export function SettingsGroup({
 	testid?: string;
 }) {
 	return (
-		<div data-testid={testid} className="flex flex-col gap-2.5">
-			<p className="font-ui text-[13px] font-semibold tracking-[-0.003em] text-ink-2">{label}</p>
-			{hint && <span className="-mt-1 font-ui text-xs text-muted-foreground">{hint}</span>}
+		<div data-testid={testid} className="flex flex-col gap-3">
+			<div className="flex flex-col gap-0.5">
+				<p className="font-ui text-sm font-semibold text-ink-2">{label}</p>
+				{hint && <div className="text-xs leading-relaxed text-muted-foreground">{hint}</div>}
+			</div>
 			<div className="flex flex-col gap-2">{children}</div>
 		</div>
 	);
@@ -110,27 +116,27 @@ export function SettingsDisclosure({
 	const [open, setOpen] = useState(defaultOpen);
 	const panelId = useId();
 	return (
-		<div data-testid={testid} className="rounded-lg bg-card p-4 shadow-raise">
+		<div data-testid={testid} className="rounded-lg bg-well px-4 py-3">
 			<button
 				type="button"
 				aria-expanded={open}
 				aria-controls={open ? panelId : undefined}
 				data-testid={testid ? `${testid}-toggle` : undefined}
 				onClick={() => setOpen((v) => !v)}
-				className="group flex w-full cursor-pointer items-center justify-between gap-3 text-left"
+				className="group flex w-full cursor-pointer items-center justify-between gap-4 text-left"
 			>
-				<div className="flex flex-col">
-					<span className="font-ui text-[13px] font-semibold text-ink-2 transition-colors group-hover:text-foreground">
+				<span className="flex min-w-0 flex-col gap-0.5">
+					<span className="font-ui text-sm font-medium text-foreground transition-colors group-hover:text-teal-2">
 						{label}
 					</span>
-					<p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
-				</div>
-				<span className="rounded-md bg-card px-2.5 py-1 text-xs font-medium text-ink-2 ring-1 ring-line-2 transition-colors group-hover:bg-well">
+					<span className="text-xs leading-relaxed text-muted-foreground">{hint}</span>
+				</span>
+				<span className="shrink-0 rounded-md bg-card px-3 py-1.5 text-xs font-medium text-ink-2 ring-1 ring-line-2 transition-colors group-hover:bg-card-2">
 					{open ? "Hide" : "Show"}
 				</span>
 			</button>
 			{open && (
-				<div id={panelId} className="mt-4 flex flex-col gap-2.5 border-t border-border pt-3">
+				<div id={panelId} className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
 					{children}
 				</div>
 			)}

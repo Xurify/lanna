@@ -197,7 +197,7 @@ export function LearnerSection({ onClose, children }: { onClose: () => void; chi
 	const dayXp = xpForPlan(shown.minutesPerDay, shown.xpPerHour);
 
 	return (
-		<div className="lanna-rise flex flex-col gap-2">
+		<div className="lanna-rise flex flex-col gap-8">
 			{profile && profile.profiles.length > 0 && (
 				<SettingsGroup
 					label="Languages you are learning"
