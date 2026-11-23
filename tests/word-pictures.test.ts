@@ -277,3 +277,9 @@ test("a home scene shows only when the English names the drawn thing", () => {
 	assert.ok(shows("lx-words-home", "шкаф", "It's in the closet."));
 	assert.ok(shows("lx-words-home", "шкаф", "Open the wardrobe."));
 });
+
+test("the wardrobe scene is a clothes wardrobe, not a cupboard", () => {
+	assert.equal(pictureFor("lx-words-home", "шкаф", "The cups are in the cupboard."), undefined);
+	assert.equal(pictureFor("lx-words-home", "шкаф", "My coat is in the wardrobe.")?.kind, "scene");
+	assert.equal(pictureFor("lx-words-home", "ключ", "Where's the key?")?.kind, "scene");
+});

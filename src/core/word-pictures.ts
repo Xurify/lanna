@@ -162,7 +162,7 @@ const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
 	sofa: /(?<!\p{L})(?:sofas?|couch(?:es)?)(?!\p{L})/iu,
 	bed: /(?<!\p{L})beds?(?!\p{L})/iu,
 	key: /(?<!\p{L})keys?(?!\p{L})/iu,
-	wardrobe: /(?<!\p{L})(?:wardrobes?|closets?|cupboards?|cabinets?|lockers?)(?!\p{L})/iu,
+	wardrobe: /(?<!\p{L})(?:wardrobes?|closets?)(?!\p{L})/iu,
 };
 
 export function pictureFor(unit: string, lemma: string, translation?: string): WordPicture | undefined {
