@@ -898,7 +898,7 @@ export function addWordToBank(slugOrWord: string, markFavorite = false, customGl
 export interface WordBankQuery {
 	search?: string;
 	pos?: string;
-	status?: "all" | "mastered" | "learning" | "new" | "unseen" | "favorite" | "due";
+	status?: "all" | "mastered" | "learning" | "new" | "unseen" | "favorite" | "due" | "known";
 	limit?: number;
 	offset?: number;
 }
@@ -916,6 +916,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 	const cards = reviewStore.readCards();
 	const favoritesSet = new Set(savedPhraseStore.readFavorites());
 	const savedPhrases = savedPhraseStore.readPhrases();
+	const knownSet = knownWordStore.slugs();
 
 	// Map cards by lemma/slug for instant lookup
 	const cardBySlug = new Map<string, ReviewCard>();
@@ -940,6 +941,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 	for (const entry of entries) {
 		const card = cardBySlug.get(entry.slug);
 		const favorite = favoritesSet.has(entry.slug);
+		const known = knownSet.has(entry.slug);
 		const inDeck = !!card;
 
 		let state: WordLearningState = "unseen";
@@ -974,6 +976,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 
 		// Apply filters
 		if (query.status === "favorite" && !favorite) continue;
+		if (query.status === "known" && !known) continue;
 		if (query.status === "mastered" && state !== "mastered") continue;
 		if (query.status === "learning" && state !== "learning") continue;
 		if (query.status === "new" && state !== "new") continue;
@@ -996,7 +999,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 			if (!match) continue;
 		}
 
-		const firstExample = entry.examples?.[0];
+		const firstExample = entry.examples?.find((e) => !e.rejected);
 		const example = firstExample ? { sk: exampleText(firstExample), en: firstExample.en } : undefined;
 
 		items.push({
@@ -1016,6 +1019,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 			due,
 			example,
 			favorite,
+			known,
 			inDeck,
 			...(match ? { match: { kind: match.kind, span: match.span, via: match.via } } : {}),
 		});
@@ -1048,6 +1052,7 @@ export function getWordBank(query: WordBankQuery = {}, now = new Date()): WordBa
 		wordsLearning,
 		wordsDue,
 		wordsFavorited: favoritesSet.size,
+		wordsMarkedKnown: entries.reduce((n, e) => n + (knownSet.has(e.slug) ? 1 : 0), 0),
 		savedPhrasesCount: savedPhrases.length,
 		averageRetention: cardsReviewedCount > 0 ? Math.round(totalRetentionSum / cardsReviewedCount) : 0,
 	};

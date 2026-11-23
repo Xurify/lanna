@@ -3,11 +3,13 @@
 import { EmptyState } from "@/components/quiet/empty-state";
 import { Button } from "@/components/ui/button";
 import { AddPhraseDialog, type PhraseDraft } from "@/components/words/add-phrase-dialog";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
 	BookOpenIcon,
 	BookmarkCheckIcon,
+	CheckIcon,
+	ListOrderedIcon,
 	FileTextIcon,
 	BookmarkIcon,
 	PlusIcon,
@@ -27,6 +29,7 @@ import { fillStyle } from "@/components/ui/fill";
 import { CheatsheetsTab } from "@/components/words/cheatsheets";
 import { WordEstimatePanel } from "@/components/words/word-estimate-panel";
 import { CommonWords } from "@/components/words/common-words";
+import { saveKnown } from "@/components/words/save-known";
 
 const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
@@ -69,6 +72,9 @@ export function WordBankPage({
 	const [posFilter, setPosFilter] = useState<string>("all");
 	const [loadingWords, setLoadingWords] = useState(false);
 	const [page, setPage] = useState(0);
+	const [wordError, setWordError] = useState("");
+	const [pendingKnown, setPendingKnown] = useState<ReadonlySet<string>>(new Set());
+	const latestWordsRequest = useRef(0);
 	const PAGE_SIZE = WORDS_PAGE_SIZE;
 
 	// Saved Phrases state
@@ -80,11 +86,11 @@ export function WordBankPage({
 
 	// Load Word Bank
 	const fetchWords = useCallback(
-		async (reset = false) => {
+		async (nextPage: number) => {
+			const request = ++latestWordsRequest.current;
 			setLoadingWords(true);
-			const curPage = reset ? 0 : page;
 			const params = new URLSearchParams({
-				offset: String(curPage * PAGE_SIZE),
+				offset: String(nextPage * PAGE_SIZE),
 				limit: String(PAGE_SIZE),
 			});
 			if (searchQuery.trim()) params.set("search", searchQuery.trim());
@@ -93,24 +99,20 @@ export function WordBankPage({
 
 			try {
 				const res = await fetch(`/api/words?${params.toString()}`);
-				if (res.ok) {
-					const data = (await res.json()) as { items: WordBankItem[]; total: number; summary: WordBankSummary };
-					if (reset) {
-						setWords(data.items);
-						setPage(0);
-					} else {
-						setWords((prev) => (curPage === 0 ? data.items : [...prev, ...data.items]));
-					}
-					setTotalWords(data.total);
-					setSummary(data.summary);
-				}
-			} catch (err) {
-				console.error("Failed to load words", err);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const data = (await res.json()) as { items: WordBankItem[]; total: number; summary: WordBankSummary };
+				if (request !== latestWordsRequest.current) return;
+				setWords((prev) => (nextPage === 0 ? data.items : [...prev, ...data.items]));
+				setPage(nextPage);
+				setTotalWords(data.total);
+				setSummary(data.summary);
+			} catch {
+				if (request === latestWordsRequest.current) setWordError("Could not load words. Try again.");
 			} finally {
-				setLoadingWords(false);
+				if (request === latestWordsRequest.current) setLoadingWords(false);
 			}
 		},
-		[page, searchQuery, statusFilter, posFilter],
+		[searchQuery, statusFilter, posFilter],
 	);
 
 	// Load Saved Phrases
@@ -131,8 +133,8 @@ export function WordBankPage({
 
 	// Initial load and filter effect
 	useEffect(() => {
-		void fetchWords(true);
-	}, [searchQuery, statusFilter, posFilter]);
+		void fetchWords(0);
+	}, [fetchWords]);
 
 	useEffect(() => {
 		void fetchPhrases();
@@ -146,44 +148,64 @@ export function WordBankPage({
 	}, []);
 
 	// Toggle word favorite
-	const handleToggleFavorite = async (slug: string) => {
-		// Optimistic UI update
-		setWords((prev) =>
-			prev.map((w) => {
-				if (w.slug === slug) {
-					return { ...w, favorite: !w.favorite };
-				}
-				return w;
-			}),
-		);
-		if (summary) {
-			const item = words.find((w) => w.slug === slug);
-			const delta = item?.favorite ? -1 : 1;
-			setSummary({ ...summary, wordsFavorited: Math.max(0, summary.wordsFavorited + delta) });
-		}
+	const patchWord = (slug: string, patch: Partial<WordBankItem>) =>
+		setWords((prev) => prev.map((w) => (w.slug === slug ? { ...w, ...patch } : w)));
+	const shiftSummary = (key: "wordsFavorited" | "wordsMarkedKnown", delta: number) =>
+		setSummary((current) => current && { ...current, [key]: Math.max(0, current[key] + delta) });
 
+	const handleToggleFavorite = async (item: WordBankItem) => {
+		const favorite = !item.favorite;
+		setWordError("");
+		patchWord(item.slug, { favorite });
+		shiftSummary("wordsFavorited", favorite ? 1 : -1);
 		try {
-			await fetch("/api/words/favorite", {
+			const res = await fetch("/api/words/favorite", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ slug }),
+				body: JSON.stringify({ slug: item.slug }),
 			});
-		} catch (err) {
-			console.error("Failed to toggle favorite", err);
+			if (!res.ok) throw new Error();
+		} catch {
+			patchWord(item.slug, { favorite: item.favorite });
+			shiftSummary("wordsFavorited", favorite ? -1 : 1);
+			setWordError(`Could not save ${item.lemma} as a favorite. Try again.`);
 		}
 	};
 
-	// Add word to review deck
-	const handleEnqueueReview = async (slug: string) => {
+	const handleToggleKnown = async (item: WordBankItem) => {
+		if (pendingKnown.has(item.slug)) return;
+		const known = !item.known;
+		setWordError("");
+		setPendingKnown((current) => new Set(current).add(item.slug));
+		patchWord(item.slug, { known });
+		shiftSummary("wordsMarkedKnown", known ? 1 : -1);
+		const saved = await saveKnown(item.slug, known);
+		setPendingKnown((current) => {
+			const next = new Set(current);
+			next.delete(item.slug);
+			return next;
+		});
+		if (saved) {
+			setKnownRevision((v) => v + 1);
+			return;
+		}
+		patchWord(item.slug, { known: item.known });
+		shiftSummary("wordsMarkedKnown", known ? -1 : 1);
+		setWordError(`Could not save ${item.lemma}. Try again.`);
+	};
+
+	const handleEnqueueReview = async (item: WordBankItem) => {
+		setWordError("");
 		try {
-			await fetch("/api/review/enqueue", {
+			const res = await fetch("/api/review/enqueue", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ slugs: [slug] }),
+				body: JSON.stringify({ slugs: [item.slug] }),
 			});
-			setWords((prev) => prev.map((w) => (w.slug === slug ? { ...w, inDeck: true } : w)));
-		} catch (err) {
-			console.error("Failed to add to review", err);
+			if (!res.ok) throw new Error();
+			patchWord(item.slug, { inDeck: true });
+		} catch {
+			setWordError(`Could not add ${item.lemma} to Review. Try again.`);
 		}
 	};
 
@@ -251,75 +273,35 @@ export function WordBankPage({
 
 						<WordEstimatePanel initial={initialEstimate} revision={knownRevision} />
 
-						{/* Primary Tab Selector */}
-						<div className="mb-6 flex overflow-x-auto border-b border-border/80">
-							<button
-								type="button"
-								onClick={() => setActiveTab("words")}
-								className={cn(
-									"flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
-									activeTab === "words"
-										? "text-foreground shadow-[inset_0_-2px_0_var(--q-teal)]"
-										: "text-muted-foreground hover:text-foreground",
-								)}
-							>
-								<BookOpenIcon className="hidden size-4 sm:block" />
-								<span className="cap-center">Words</span>
-								<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
-									{totalWords}
-								</span>
-							</button>
-
-							<button
-								type="button"
-								onClick={() => setActiveTab("common")}
-								aria-pressed={activeTab === "common"}
-								className={cn(
-									"min-h-11 shrink-0 whitespace-nowrap border-b-2 px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
-									activeTab === "common"
-										? "border-teal text-foreground"
-										: "border-transparent text-muted-foreground hover:text-foreground",
-								)}
-							>
-								Common words
-							</button>
-
-							<button
-								type="button"
-								onClick={() => setActiveTab("phrases")}
-								className={cn(
-									"flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
-									activeTab === "phrases"
-										? "text-foreground shadow-[inset_0_-2px_0_var(--q-teal)]"
-										: "text-muted-foreground hover:text-foreground",
-								)}
-							>
-								<BookmarkIcon className="hidden size-4 sm:block" />
-								<span className="cap-center">Saved phrases</span>
-								<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
-									{phrases.length}
-								</span>
-							</button>
-
-							<button
-								type="button"
-								onClick={() => setActiveTab("cheatsheets")}
-								data-testid="tab-cheatsheets"
-								className={cn(
-									"flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
-									activeTab === "cheatsheets"
-										? "text-foreground shadow-[inset_0_-2px_0_var(--q-teal)]"
-										: "text-muted-foreground hover:text-foreground",
-								)}
-							>
-								<FileTextIcon className="hidden size-4 sm:block" />
-								<span className="cap-center">Cheatsheets</span>
-								{sheetCount !== null && (
-									<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground sm:inline">
-										{sheetCount}
-									</span>
-								)}
-							</button>
+						<div role="tablist" aria-label="Words" className="mb-6 flex overflow-x-auto border-b border-border/80">
+							<WordsTabButton
+								active={activeTab === "words"}
+								onSelect={() => setActiveTab("words")}
+								icon={<BookOpenIcon aria-hidden className="hidden size-4 sm:block" />}
+								label="Words"
+								count={totalWords}
+							/>
+							<WordsTabButton
+								active={activeTab === "common"}
+								onSelect={() => setActiveTab("common")}
+								icon={<ListOrderedIcon aria-hidden className="hidden size-4 sm:block" />}
+								label="Common words"
+							/>
+							<WordsTabButton
+								active={activeTab === "phrases"}
+								onSelect={() => setActiveTab("phrases")}
+								icon={<BookmarkIcon aria-hidden className="hidden size-4 sm:block" />}
+								label="Saved phrases"
+								count={phrases.length}
+							/>
+							<WordsTabButton
+								active={activeTab === "cheatsheets"}
+								onSelect={() => setActiveTab("cheatsheets")}
+								icon={<FileTextIcon aria-hidden className="hidden size-4 sm:block" />}
+								label="Cheatsheets"
+								count={sheetCount ?? undefined}
+								testid="tab-cheatsheets"
+							/>
 						</div>
 					</>
 				)}
@@ -337,21 +319,26 @@ export function WordBankPage({
 						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 							{/* Search input */}
 							<div className="relative flex-1">
-								<SearchIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+								<SearchIcon
+									aria-hidden
+									className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+								/>
 								<input
-									type="text"
+									type="search"
+									aria-label="Search the dictionary"
 									placeholder="Search a word or its meaning"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
-									className="q-field w-full rounded-2xl py-2.5 pl-10 pr-4 font-prose text-sm"
+									className="q-field w-full rounded-2xl py-2.5 pl-10 pr-11 font-prose text-sm [&::-webkit-search-cancel-button]:hidden"
 								/>
 								{searchQuery && (
 									<button
 										type="button"
+										aria-label="Clear the search"
 										onClick={() => setSearchQuery("")}
-										className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+										className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-xl text-muted-foreground hover:text-foreground"
 									>
-										<XIcon className="size-4" />
+										<XIcon aria-hidden className="size-4" />
 									</button>
 								)}
 							</div>
@@ -373,8 +360,11 @@ export function WordBankPage({
 							/>
 						</div>
 
-						{/* Status Filters Bar */}
-						<div className="flex flex-wrap items-center gap-1.5 font-ui text-xs font-semibold">
+						<div
+							role="group"
+							aria-label="Show"
+							className="flex flex-wrap items-center gap-1.5 font-ui text-xs font-semibold"
+						>
 							{[
 								{ id: "all", label: "All", count: undefined },
 								{ id: "favorite", label: "Favorites", count: summary?.wordsFavorited },
@@ -382,10 +372,12 @@ export function WordBankPage({
 								{ id: "learning", label: "In progress", count: summary?.wordsLearning },
 								{ id: "due", label: "Due for review", count: summary?.wordsDue },
 								{ id: "new", label: "New in the deck", count: undefined },
+								{ id: "known", label: "Marked known", count: summary?.wordsMarkedKnown },
 							].map((tab) => (
 								<button
 									key={tab.id}
 									type="button"
+									aria-pressed={statusFilter === tab.id}
 									onClick={() => setStatusFilter(tab.id)}
 									className={cn(
 										"rounded-xl px-3 py-1.5 transition-colors",
@@ -402,7 +394,12 @@ export function WordBankPage({
 							))}
 						</div>
 
-						{/* Words List */}
+						{wordError && (
+							<p role="alert" className="font-prose text-sm text-foreground">
+								{wordError}
+							</p>
+						)}
+
 						<div className="space-y-3">
 							{words.map((item) => {
 								return (
@@ -419,6 +416,7 @@ export function WordBankPage({
 														type="button"
 														onClick={() => void speak(item.lemma).catch(() => {})}
 														title="Say the word"
+														aria-label={`Say ${item.lemma}`}
 														className="grid size-8 shrink-0 place-items-center rounded-full bg-accent/80 text-foreground transition-transform hover:scale-105 active:scale-95"
 													>
 														<Volume2Icon className="size-4" />
@@ -481,6 +479,7 @@ export function WordBankPage({
 																onClick={() => void speak(item.example!.sk).catch(() => {})}
 																className="text-muted-foreground hover:text-foreground"
 																title="Play the sentence"
+																aria-label="Play the sentence"
 															>
 																<Volume2Icon className="size-3.5" />
 															</button>
@@ -492,10 +491,10 @@ export function WordBankPage({
 											</div>
 
 											{/* Right side: Retention Gauge & Actions */}
-											<div className="flex flex-row items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-start">
+											<div className="flex flex-col gap-3 sm:items-end">
 												{/* Lingvist-style Memory Retention Gauge */}
-												<div className="w-28 text-right sm:w-32">
-													<div className="flex items-center justify-between font-ui text-[11px] font-semibold">
+												<div className="w-full sm:w-36">
+													<div className="flex items-center justify-between gap-2 whitespace-nowrap font-ui text-[11px] font-semibold">
 														<span
 															className={cn(
 																item.retention >= 80
@@ -507,12 +506,24 @@ export function WordBankPage({
 																			: "text-muted-foreground",
 															)}
 														>
-															{item.retention >= 80 ? "Can recall" : item.retention > 0 ? "In progress" : "New"}
+															{item.retention >= 80
+																? "Can recall"
+																: item.retention > 0
+																	? "In progress"
+																	: item.known
+																		? "Marked known"
+																		: item.inDeck
+																			? "New"
+																			: "Not in Review"}
 														</span>
-														<span className="text-foreground">{item.retention}%</span>
+														{(item.inDeck || !item.known) && <span className="text-foreground">{item.retention}%</span>}
 													</div>
-													{/* Progress bar */}
-													<div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
+													<div
+														className={cn(
+															"mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent",
+															item.known && !item.inDeck && "invisible",
+														)}
+													>
 														<div
 															className={cn(
 																"lanna-fill rounded-full",
@@ -529,46 +540,62 @@ export function WordBankPage({
 													</div>
 												</div>
 
-												{/* Action Buttons */}
-												<div className="flex items-center gap-1.5">
-													{/* Favorite button */}
+												<div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
 													<button
 														type="button"
-														onClick={() => void handleToggleFavorite(item.slug)}
-														title={item.favorite ? "Remove from favorites" : "Add to favorites"}
+														onClick={() => void handleToggleKnown(item)}
+														disabled={pendingKnown.has(item.slug)}
+														aria-pressed={item.known}
+														title={
+															item.known ? "Counted as known. Press to undo." : "Count this word as known from now on"
+														}
+														data-testid="word-known"
 														className={cn(
-															"flex h-8 items-center gap-1.5 rounded-xl px-2 transition-colors",
-															item.favorite
-																? "bg-gold/20 text-gold"
-																: "text-muted-foreground hover:bg-accent hover:text-foreground",
+															"flex h-8 items-center gap-1.5 rounded-xl px-2.5 transition-colors pointer-coarse:h-11",
+															item.known ? "bg-teal-wash text-teal-2" : "bg-well text-foreground hover:bg-well-2",
 														)}
 													>
-														<StarIcon className={cn("size-4", item.favorite && "fill-gold")} />
+														<CheckIcon aria-hidden className="size-4" />
 														<span className="cap-center text-xs font-semibold">
-															{item.favorite ? "Favorite" : "Add to favorites"}
+															{item.known ? "Known" : "I know this"}
 														</span>
 													</button>
 
-													{/* In review deck button */}
 													{item.inDeck ? (
 														<span
 															title="The word is in your Review deck"
 															className="flex h-8 items-center gap-1.5 px-2 text-teal-2"
 														>
-															<BookmarkCheckIcon className="size-4" />
+															<BookmarkCheckIcon aria-hidden className="size-4" />
 															<span className="cap-center text-xs font-semibold">In Review</span>
 														</span>
 													) : (
 														<button
 															type="button"
-															onClick={() => void handleEnqueueReview(item.slug)}
-															title="Add to Review"
-															className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+															onClick={() => void handleEnqueueReview(item)}
+															title="Practise this word in Review"
+															className="flex h-8 items-center gap-1.5 rounded-xl px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground pointer-coarse:h-11"
 														>
-															<BookmarkIcon className="size-4" />
+															<BookmarkIcon aria-hidden className="size-4" />
 															<span className="cap-center text-xs font-semibold">Add to Review</span>
 														</button>
 													)}
+
+													<button
+														type="button"
+														onClick={() => void handleToggleFavorite(item)}
+														aria-pressed={item.favorite}
+														aria-label={`Favorite ${item.lemma}`}
+														title={item.favorite ? "Remove from favorites" : "Add to favorites"}
+														className={cn(
+															"grid size-8 place-items-center rounded-xl transition-colors pointer-coarse:size-11",
+															item.favorite
+																? "bg-gold/20 text-gold"
+																: "text-muted-foreground hover:bg-accent hover:text-foreground",
+														)}
+													>
+														<StarIcon aria-hidden className={cn("size-4", item.favorite && "fill-gold")} />
+													</button>
 												</div>
 											</div>
 										</div>
@@ -607,10 +634,7 @@ export function WordBankPage({
 								<div className="pt-4 text-center">
 									<button
 										type="button"
-										onClick={() => {
-											setPage((p) => p + 1);
-											void fetchWords(false);
-										}}
+										onClick={() => void fetchWords(page + 1)}
 										disabled={loadingWords}
 										className="rounded-2xl bg-accent px-6 py-2.5 font-ui text-xs font-semibold text-foreground transition-colors hover:bg-well-2 disabled:opacity-50"
 									>
@@ -631,6 +655,7 @@ export function WordBankPage({
 								<SearchIcon className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 								<input
 									type="text"
+									aria-label="Search your saved phrases"
 									placeholder="Search your saved phrases"
 									value={phraseSearch}
 									onChange={(e) => setPhraseSearch(e.target.value)}
@@ -683,6 +708,7 @@ export function WordBankPage({
 												type="button"
 												onClick={() => void speak(phrase.text).catch(() => {})}
 												title="Play the pronunciation"
+												aria-label="Play the pronunciation"
 												className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-accent/80 text-foreground transition-transform hover:scale-105 active:scale-95"
 											>
 												<Volume2Icon className="size-4" />
@@ -710,6 +736,7 @@ export function WordBankPage({
 											type="button"
 											onClick={() => void handleDeletePhrase(phrase.id)}
 											title="Remove the phrase"
+											aria-label={`Remove ${phrase.text}`}
 											className="grid size-8 place-items-center rounded-xl text-muted-foreground opacity-60 transition-[color,background-color,opacity] hover:bg-miss/10 hover:text-miss group-hover:opacity-100"
 										>
 											<Trash2Icon className="size-4" />
@@ -733,5 +760,45 @@ export function WordBankPage({
 				{showAddModal && <AddPhraseDialog onClose={() => setShowAddModal(false)} onSave={savePhrase} />}
 			</div>
 		</div>
+	);
+}
+
+function WordsTabButton({
+	active,
+	onSelect,
+	icon,
+	label,
+	count,
+	testid,
+}: {
+	active: boolean;
+	onSelect: () => void;
+	icon: React.ReactNode;
+	label: string;
+	count?: number;
+	testid?: string;
+}) {
+	return (
+		<button
+			type="button"
+			role="tab"
+			aria-selected={active}
+			onClick={onSelect}
+			data-testid={testid}
+			className={cn(
+				"flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 font-ui text-sm font-semibold transition-colors sm:px-5",
+				active
+					? "text-foreground shadow-[inset_0_-2px_0_var(--q-teal)]"
+					: "text-muted-foreground hover:text-foreground",
+			)}
+		>
+			{icon}
+			<span className="cap-center">{label}</span>
+			{count !== undefined && (
+				<span className="hidden rounded-full bg-accent px-2 py-0.5 text-xs text-muted-foreground tabular-nums sm:inline">
+					{count}
+				</span>
+			)}
+		</button>
 	);
 }
