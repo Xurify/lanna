@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { PaintSwatch } from "@/components/lesson/paint-swatch";
+import { FoodScene } from "@/components/lesson/food-scene";
 import { WeatherScene } from "@/components/lesson/weather-scene";
 import {
 	firstLetterOf,
@@ -22,7 +23,11 @@ export function PictureBox({ picture, label, className }: { picture: WordPicture
 				<PaintSwatch paint={picture.paint} label={label} className="block h-[62%] w-[min(62%,14rem)]" />
 			) : (
 				<span role="img" aria-label={label} className="block h-full w-full max-w-[22rem] p-2">
-					<WeatherScene scene={picture.scene} className="block h-full w-full" />
+					{picture.set === "food" ? (
+						<FoodScene scene={picture.scene} className="block h-full w-full" />
+					) : (
+						<WeatherScene scene={picture.scene} className="block h-full w-full" />
+					)}
 				</span>
 			)}
 		</figure>
