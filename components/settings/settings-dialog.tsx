@@ -202,18 +202,8 @@ function SettingsDialogBody({
 	useEffect(() => {
 		if (window.matchMedia("(min-width: 768px)").matches) searchRef.current?.focus();
 		const focusSearch = () => searchRef.current?.focus();
-		const slashToSearch = (e: KeyboardEvent) => {
-			const typing = (e.target as HTMLElement | null)?.closest('input, textarea, [contenteditable="true"]');
-			if (e.key !== "/" || typing || e.metaKey || e.ctrlKey || e.altKey) return;
-			e.preventDefault();
-			focusSearch();
-		};
-		document.addEventListener("keydown", slashToSearch);
 		window.addEventListener("lanna:kbd-cycle-fields", focusSearch);
-		return () => {
-			window.removeEventListener("lanna:kbd-cycle-fields", focusSearch);
-			document.removeEventListener("keydown", slashToSearch);
-		};
+		return () => window.removeEventListener("lanna:kbd-cycle-fields", focusSearch);
 	}, []);
 	const visibleSections = SETTINGS_SECTIONS.filter((s) => sectionMatches(s, query));
 	// A deep link while the dialog is already open changes initialSection; follow it.
@@ -330,7 +320,7 @@ function SettingsDialogBody({
 						/>
 						<Input
 							aria-label="Search settings"
-							className="h-10 bg-card pl-9 pr-10 [&::-webkit-search-cancel-button]:appearance-none"
+							className="bg-card pl-9 [&::-webkit-search-cancel-button]:appearance-none"
 							id="settings-search"
 							ref={searchRef}
 							type="search"
@@ -350,14 +340,6 @@ function SettingsDialogBody({
 								setPhoneShowsSection(true);
 							}}
 						/>
-						{!query && (
-							<kbd
-								aria-hidden
-								className="q-kbd pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 max-md:hidden"
-							>
-								/
-							</kbd>
-						)}
 					</div>
 					{visibleSections.length === 0 && (
 						<p className="px-3 py-2 text-xs text-ink-2" data-testid="settings-search-empty">
