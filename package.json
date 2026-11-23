@@ -1,6 +1,6 @@
 {
 	"name": "lanna",
-	"version": "0.1.0",
+	"version": "0.1.2",
 	"private": true,
 	"description": "An agent harness for learning languages: adaptive teaching, drills, reading, and speaking.",
 	"homepage": "https://github.com/Xurify/lanna",

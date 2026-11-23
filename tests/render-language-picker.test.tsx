@@ -175,3 +175,25 @@ describe("Languages you know: a language you add has no level until you press on
 		assert.deepEqual(calls.at(-1), [["et"], { et: "native" }]);
 	});
 });
+
+describe("LanguagePicker in Settings (collapseToChosen)", () => {
+	it("shows only the chosen languages until Change languages opens the full list", async () => {
+		const host = await mount(<LanguagePicker collapseToChosen value={["et", "en"]} levels={{}} onChange={() => {}} />);
+		assert.ok(q(host, "languages-et"));
+		assert.ok(q(host, "languages-en"));
+		assert.equal(q(host, "languages-fi"), null);
+		const toggle = q(host, "languages-show-all");
+		assert.equal(toggle?.textContent, "Change languages");
+		assert.equal(toggle?.getAttribute("aria-expanded"), "false");
+		await click(toggle);
+		assert.ok(q(host, "languages-fi"));
+		assert.equal(q(host, "languages-show-all")?.textContent, "Show only mine");
+		assert.equal(q(host, "languages-show-all")?.getAttribute("aria-expanded"), "true");
+	});
+
+	it("shows the full list when no language is chosen yet", async () => {
+		const host = await mount(<LanguagePicker collapseToChosen value={[]} levels={{}} onChange={() => {}} />);
+		assert.ok(q(host, "languages-fi"));
+		assert.equal(q(host, "languages-show-all"), null);
+	});
+});

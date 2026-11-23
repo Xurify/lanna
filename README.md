@@ -1,6 +1,6 @@
 # Lanna
 
-Version 0.1.0 — a local-first, agent-assisted language learning harness (Slovak built in, plus any language added from the app), with bridges from the languages you already know.
+Version 0.1.2 — a local-first, agent-assisted language learning harness (Slovak built in, plus any language added from the app), with bridges from the languages you already know.
 
 What each page does is on the page, and the research behind each task is on **Sources** (`/sources`). This file holds what the app cannot show you: how to run it, keys, commands and limits. The rules for working on it are in [CLAUDE.md](CLAUDE.md).
 

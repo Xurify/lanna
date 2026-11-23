@@ -57,7 +57,7 @@ export function UsageSection() {
 	const sessionTotal = (s: UsageReport["sessions"][number]) => (s.costUsd ?? 0) + s.jobsUsd;
 
 	return (
-		<div data-testid="usage-section" className="flex flex-col">
+		<div data-testid="usage-section" className="flex flex-col gap-8">
 			<SettingsGroup label="So far">
 				<div className="flex flex-wrap gap-6">
 					<Stat label="All time" value={formatUsd(report.totalUsd)} testid="usage-total" />
