@@ -75,11 +75,13 @@ function PatternTable({ pattern }: { pattern: VerbPattern }) {
 							</span>
 							<span className="font-prose text-[19px] text-foreground" lang={lang?.code}>
 								{row.forms.map((f, i) => (
-									<span key={i} className="whitespace-nowrap">
+									<span key={i}>
 										{i > 0 && <span className="text-ink-4"> · </span>}
-										{f.stem}
-										<span className="font-semibold text-teal-2">{f.ending}</span>
-										{f.tail && <span className="text-ink-2"> {f.tail}</span>}
+										<span className="whitespace-nowrap">
+											{f.stem}
+											<span className="font-semibold text-teal-2">{f.ending}</span>
+											{f.tail && <span className="text-ink-2"> {f.tail}</span>}
+										</span>
 									</span>
 								))}
 							</span>
