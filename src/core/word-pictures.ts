@@ -165,6 +165,30 @@ const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
 	wardrobe: /(?<!\p{L})(?:wardrobes?|closets?)(?!\p{L})/iu,
 };
 
+const PAINT_WORDS: Readonly<Record<Paint, RegExp>> = {
+	red: /(?<!\p{L})red(?!\p{L})/iu,
+	yellow: /(?<!\p{L})yellow/iu,
+	green: /(?<!\p{L})green/iu,
+	blue: /(?<!\p{L})blue/iu,
+	darkblue: /(?<!\p{L})(?:(?:dark|navy) )?blue/iu,
+	lightblue: /(?<!\p{L})(?:(?:light|sky|pale) )?blue/iu,
+	black: /(?<!\p{L})black/iu,
+	white: /(?<!\p{L})white/iu,
+	grey: /(?<!\p{L})gr[ae]y/iu,
+	brown: /(?<!\p{L})brown/iu,
+	pink: /(?<!\p{L})pink/iu,
+	orange: /(?<!\p{L})orange/iu,
+	purple: /(?<!\p{L})(?:purple|violet)/iu,
+};
+
+/** The English sentence split around the words the picture stands for:
+ *  odd indices are the pictured word (with its ending), so the sentence
+ *  does not answer the rep the picture asks. */
+export function translationAroundPicture(translation: string, picture: WordPicture): string[] {
+	const word = picture.kind === "paint" ? PAINT_WORDS[picture.paint] : SCENE_WORDS[picture.scene];
+	return translation.split(new RegExp(`((?:${word.source})(?:e|es|s|n?y|ing|ed)?(?!\\p{L}))`, "giu"));
+}
+
 export function pictureFor(unit: string, lemma: string, translation?: string): WordPicture | undefined {
 	const paint = paintFor(unit, lemma);
 	if (paint) return { kind: "paint", paint };
@@ -173,8 +197,10 @@ export function pictureFor(unit: string, lemma: string, translation?: string): W
 		if (!entry.units.includes(unit)) continue;
 		const scene = entry.of[key];
 		if (!scene) continue;
-		if (translation !== undefined && !SCENE_WORDS[scene].test(translation)) return undefined;
-		return { kind: "scene", set: entry.set, scene } as ScenePicture;
+		const picture = { kind: "scene", set: entry.set, scene } as ScenePicture;
+		// Shown only when the sentence names the drawn thing in a form the English blank can hide.
+		if (translation !== undefined && translationAroundPicture(translation, picture).length < 3) return undefined;
+		return picture;
 	}
 	return undefined;
 }

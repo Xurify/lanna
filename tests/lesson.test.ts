@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
 import {
+	NEW_WORDS_PER_LESSON,
 	buildBlitz,
 	buildLesson,
 	classifyAll,
@@ -327,4 +328,26 @@ test("a present-tense blank names its person unless a subject pronoun does", () 
 	assert.equal(unstatedPerson("Komu patrí tá zbraň?", "he / she / it form of patriť"), "he / she / it");
 	assert.equal(unstatedPerson("Bývala v Košiciach.", "she (past) form of bývať"), undefined);
 	assert.equal(unstatedPerson("Vidím mamu.", "accusative of mama (feminine)"), undefined);
+});
+
+test("a vocabulary lesson spreads its reps over the unit's words instead of repeating the word with most sentences", () => {
+	for (const seed of [1, 2, 3, 4, 5]) {
+		const plan = buildLesson(entries, "lx-food", { seed });
+		const asked = new Map<string, number>();
+		for (const item of plan.items) if (!item.mixed) asked.set(item.lemma, (asked.get(item.lemma) ?? 0) + 1);
+		const counts = [...asked.values()];
+		assert.ok(Math.max(...counts) - Math.min(...counts) <= 1, `seed ${seed}: ${JSON.stringify([...asked])}`);
+		assert.ok(asked.size <= NEW_WORDS_PER_LESSON, `seed ${seed}: ${asked.size} words`);
+	}
+});
+
+test("the next new lesson teaches the words the last one left out", () => {
+	const first = buildLesson(entries, "lx-food", { seed: 1 });
+	const taught = new Set(first.items.filter((i) => !i.mixed).map((i) => i.slug));
+	const next = buildLesson(entries, "lx-food", { seed: 2, recent: new Set(first.items.map((i) => i.id)) });
+	const unit = new Set(next.items.filter((i) => !i.mixed).map((i) => i.slug));
+	const fresh = [...unit].filter((slug) => !taught.has(slug));
+	assert.ok(fresh.length >= 3, JSON.stringify({ taught: [...taught], next: [...unit] }));
+	assert.equal(first.unmet?.length, taught.size);
+	assert.deepEqual(new Set(next.unmet), new Set(fresh));
 });
