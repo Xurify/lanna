@@ -179,7 +179,12 @@ function MermaidInline({ chart }: { chart: string }) {
 	return (
 		// data-streamdown="mermaid" keeps the house CSS hook (the svg
 		// max-width rule in globals.css) alive for this app-owned block.
-		<div data-testid="md-mermaid" data-streamdown="mermaid" className="group/md relative my-4">
+		<div
+			data-testid="md-mermaid"
+			data-streamdown="mermaid"
+			data-no-word-lookup="true"
+			className="group/md relative my-4 select-none"
+		>
 			<div
 				ref={holderRef}
 				className="mx-auto flex w-full justify-center"

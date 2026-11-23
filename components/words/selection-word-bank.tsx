@@ -29,7 +29,7 @@ import { askAbout } from "@/components/lesson/tutor";
  * 1. Word/phrase selection lookup is DISABLED by default everywhere.
  * 2. It is ONLY enabled inside explicitly designated learning containers:
  *    [data-word-lookup-enabled="true"], [data-selectable-words="true"],
- *    article[data-word-lookup-enabled="true"], [data-word-column], .lanna-source-passage.
+ *    [data-word-column], .lanna-source-passage. A bare <article> is not a container.
  * 3. In exercises & drills (lessons, reviews, exams, fluency, listen):
  *    Lookup is strictly disabled before the learner answers ([data-word-lookup-enabled="false"])
  *    to prevent cheating / giving away hints (Clozemaster rule).
@@ -59,7 +59,7 @@ export function isEligibleLearningTarget(node: Node | null | undefined, activeLa
 
 	// 3. Opt-in only: Must be inside an explicitly enabled learning container
 	const lookupContainer = el.closest(
-		"[data-word-lookup-enabled='true'], [data-selectable-words='true'], [data-learning-content='true'], article, [data-word-column], .lanna-source-passage",
+		"[data-word-lookup-enabled='true'], [data-selectable-words='true'], [data-learning-content='true'], [data-word-column], .lanna-source-passage",
 	);
 
 	if (!lookupContainer) {

@@ -362,6 +362,7 @@ export function Stage({
 			className="mt-7 grid scroll-mt-6 grid-cols-1 overflow-hidden rounded-2xl bg-well/50 shadow-[0_0_0_1px_var(--q-line)] @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]"
 			aria-label={scene.title}
 			data-testid="speak-sheet"
+			data-word-lookup-enabled="true"
 		>
 			<div className="flex items-center justify-center px-6 pt-6 text-foreground @3xl:m-3 @3xl:mr-0 @3xl:rounded-xl @3xl:bg-card/60 @3xl:p-8 @3xl:shadow-[0_0_0_1px_var(--q-line)]">
 				<SceneArt id={scene.id} text={`${scene.title} ${scene.blurb}`} className="max-w-lg scale-110" />

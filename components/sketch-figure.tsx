@@ -54,7 +54,13 @@ export function SketchFigure({ source, incomplete }: { source: string; incomplet
 	].join("");
 
 	return (
-		<figure data-testid="md-sketch" data-sketch={id} className="my-4 flex flex-col items-center" style={SKETCH_TOKENS}>
+		<figure
+			data-testid="md-sketch"
+			data-sketch={id}
+			data-no-word-lookup="true"
+			className="my-4 flex flex-col items-center select-none"
+			style={SKETCH_TOKENS}
+		>
 			{steps.length > 0 && <style>{stepRules}</style>}
 			<svg
 				viewBox={sketch.viewBox}
