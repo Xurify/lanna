@@ -18,7 +18,6 @@ export type Paint = (typeof PAINTS)[number];
 
 const COLOR_UNITS: ReadonlySet<string> = new Set(["lx-colours", "lx-words-colors"]);
 
-/** Russian splits blue in two (синий dark, голубой light), so it gets two paints; Slovak modrý and Estonian sinine are one blue. */
 const PAINT_OF: Readonly<Record<string, Paint>> = {
 	červený: "red",
 	žltý: "yellow",
@@ -59,7 +58,6 @@ const PAINT_OF: Readonly<Record<string, Paint>> = {
 	lilla: "purple",
 };
 
-/** The paint a Colors unit shows for its word instead of the English, or undefined for any other unit or word. */
 export function paintFor(unit: string, lemma: string): Paint | undefined {
 	if (!COLOR_UNITS.has(unit)) return undefined;
 	return PAINT_OF[lemma.toLocaleLowerCase()];

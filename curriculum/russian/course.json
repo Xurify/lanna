@@ -1186,7 +1186,7 @@
 			"kind": "words",
 			"title": "Words: Weather",
 			"tagline": "rain, snow, sun",
-			"rule": "Russian says the weather without a subject: холодно, идёт дождь.",
+			"rule": "Weather states need no subject: холодно, тепло, жарко.",
 			"glyph": "cloud-sun",
 			"lemmas": [
 				"погода",

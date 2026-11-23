@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -30,6 +31,11 @@ describe("chapter stories on the Slovak path", () => {
 		assert.deepEqual(chapterArc("plans")![0]!.units, ["story-rainbow"]);
 	});
 
+	it("two opens at once write one copy", async () => {
+		await Promise.all([keepChapterStory("story-rainbow"), keepChapterStory("story-rainbow")]);
+		assert.equal(storyStore.list().filter((s) => s.id === "story-rainbow").length, 1);
+	});
+
 	it("is glossed and kept on first open without a model call, and done after one reading", async () => {
 		const story = (await keepChapterStory("story-rainbow"))!;
 		assert.equal(story.id, "story-rainbow");
@@ -50,6 +56,18 @@ describe("chapter stories on the Slovak path", () => {
 		recordRead({ storyId: "story-rainbow", answers: story.questions.map((q) => q.answer), tapped: [] });
 		assert.equal(unitStatus().status, "done");
 		assert.equal(unitStatus().accuracy, 1);
+	});
+
+	it("rebuilds a kept copy whose shipped file changed: one index line, reads untouched", async () => {
+		const reads = storyStore.reads().length;
+		storyStore.replace({ ...storyStore.get("story-rainbow")!, shippedHash: "an older text" });
+		const shipped = createHash("sha256")
+			.update(fs.readFileSync("curriculum/slovak/stories/story-rainbow.json", "utf-8"))
+			.digest("hex");
+		assert.equal((await keepChapterStory("story-rainbow"))!.shippedHash, shipped);
+		assert.equal(storyStore.get("story-rainbow")!.shippedHash, shipped);
+		assert.equal(storyStore.list().filter((s) => s.id === "story-rainbow").length, 1);
+		assert.equal(storyStore.reads().length, reads);
 	});
 
 	it("opens nothing for an id that is not a chapter story", async () => {

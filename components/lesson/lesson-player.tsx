@@ -222,6 +222,7 @@ export function LessonPlayer({
 	// Whether the rep has an answer to check (drives the footer's Check).
 	const [ready, setReady] = useState(false);
 	const relearned = useRef(0);
+	const returnsAtEnd = (it: LessonItem) => !it.again && !NO_RETRY.has(it.kind) && relearned.current < RELEARN_MAX;
 	const repBox = useRef<HTMLDivElement>(null);
 	// A miss shakes the rep without remounting it (the typed text stays).
 	useEffect(() => {
@@ -555,12 +556,7 @@ export function LessonPlayer({
 		// a retrieval that succeeds after a failure is what fixes the form).
 		let nextTotal = total;
 		const it = current.item;
-		if (
-			(current.verdict === "wrong" || current.assisted) &&
-			!it.again &&
-			!NO_RETRY.has(it.kind) &&
-			relearned.current < RELEARN_MAX
-		) {
+		if ((current.verdict === "wrong" || current.assisted) && returnsAtEnd(it)) {
 			relearned.current++;
 			const again: LessonItem = {
 				...it,
@@ -722,10 +718,8 @@ export function LessonPlayer({
 	const comesBack =
 		!!current &&
 		(current.verdict === "wrong" || !!current.assisted) &&
-		!current.item.again &&
-		!NO_RETRY.has(current.item.kind) &&
-		!current.item.task &&
-		relearned.current < RELEARN_MAX;
+		returnsAtEnd(current.item) &&
+		!current.item.task;
 	const examples = patternExamples(plan.items, current?.item);
 	const status = statusLine(current, miss);
 
@@ -815,6 +809,7 @@ export function LessonPlayer({
 							hidesMeaning={mode === "lesson" && hidesMeaning(plan.stage, item)}
 							help={help}
 							helps={mode === "lesson"}
+							canReturn={returnsAtEnd(item)}
 							onHelp={(step) => setHelp((h) => (h.includes(step) ? h : [...h, step]))}
 							onGrade={grade}
 							onReady={setReady}
@@ -1114,6 +1109,7 @@ function RepView({
 	hidesMeaning,
 	help,
 	helps,
+	canReturn,
 	onHelp,
 	onGrade,
 	onReady,
@@ -1128,6 +1124,7 @@ function RepView({
 	hidesMeaning: boolean;
 	help: readonly HelpStep[];
 	helps: boolean;
+	canReturn: boolean;
 	onHelp: (step: HelpStep) => void;
 	onGrade: (given: string, verdict: RepVerdict) => void;
 	onReady: (ready: boolean) => void;
@@ -1169,7 +1166,7 @@ function RepView({
 					locked={locked}
 					result={result}
 					miss={miss}
-					hideMeaning={hidesMeaning && !help.includes("translation")}
+					hideMeaning={hidesMeaning}
 					pictured={!!picture}
 					onGrade={onGrade}
 					onReady={onReady}
@@ -1182,6 +1179,17 @@ function RepView({
 			<div data-word-lookup-enabled={locked ? "true" : "false"} className="max-w-3xl" data-testid="rep-single">
 				{task}
 				{card && <div className="lanna-rise mt-8 max-w-xl">{card}</div>}
+				{!locked && steps.length > 0 && (
+					<HelpLadder
+						steps={steps}
+						used={help}
+						missed={miss !== null}
+						canReturn={canReturn}
+						item={item}
+						onUse={onHelp}
+						className="mt-8 max-w-xl"
+					/>
+				)}
 			</div>
 		);
 	}
@@ -1200,7 +1208,16 @@ function RepView({
 					<div className="lanna-rise">{card}</div>
 				) : (
 					!locked &&
-					steps.length > 0 && <HelpLadder steps={steps} used={help} missed={miss !== null} item={item} onUse={onHelp} />
+					steps.length > 0 && (
+						<HelpLadder
+							steps={steps}
+							used={help}
+							missed={miss !== null}
+							canReturn={canReturn}
+							item={item}
+							onUse={onHelp}
+						/>
+					)
 				)}
 			</div>
 		</div>
@@ -2589,7 +2606,7 @@ function WorkedRow({ rep, back }: { rep: Rep; back: Rep | undefined }) {
 		) : verdict === "accents" ? (
 			<>Accents off: {quoted(given, "text-ink-2")}</>
 		) : rep.first?.peeked ? (
-			"Right after you looked at the meaning"
+			"Right with help"
 		) : firstAnswer ? (
 			<>Right on the second try, after {quoted(firstAnswer, "text-miss")}</>
 		) : (

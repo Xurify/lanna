@@ -139,6 +139,24 @@ export function wordCardOf(entry: CardEntry, index: number): WordCard {
 	return card;
 }
 
+function sentenceKey(text: string): string {
+	return text
+		.normalize("NFC")
+		.toLowerCase()
+		.replace(/[^\p{L}\p{N}]+/gu, " ")
+		.trim();
+}
+
+export function cardsWithoutOtherSentences<T extends { sentence: string; card?: WordCard }>(items: readonly T[]): T[] {
+	const keys = items.map((item) => sentenceKey(item.sentence));
+	return items.map((item, i) => {
+		if (!item.card) return item;
+		const elsewhere = new Set(keys.filter((_, j) => j !== i));
+		const examples = item.card.examples.filter((ex) => !elsewhere.has(sentenceKey(ex.before + ex.word + ex.after)));
+		return { ...item, card: { ...item.card, examples } };
+	});
+}
+
 export function isAnsweredForm(cell: string | null, answer: string, tag: string): boolean {
 	if (!cell) return false;
 	const want = normalizeAnswer(answer, tag);

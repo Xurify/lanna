@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isAnsweredForm, wordCardOf } from "../src/core/word-card.ts";
+import { cardsWithoutOtherSentences, isAnsweredForm, wordCardOf } from "../src/core/word-card.ts";
 import { firstLetterOf, helpPrice, helpSteps, type HelpRep } from "../src/core/help-ladder.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
@@ -122,6 +122,12 @@ test("the help ladder runs from the meaning to the word's first letter", () => {
 	assert.deepEqual(helpSteps(rep({ task: true })), []);
 });
 
+test("a missed choice in a new-stage words unit gets the first letter, though it had no ladder before", () => {
+	const choice = rep({ kind: "choose", vocabulary: true, hidesMeaning: false });
+	assert.deepEqual(helpSteps(choice), []);
+	assert.deepEqual(helpSteps({ ...choice, retyped: true }), ["first-letter"]);
+});
+
 test("the first step costs half the XP, the rest nothing more", () => {
 	assert.equal(helpPrice("form", [], false), "half XP");
 	assert.equal(helpPrice("form", ["translation"], false), "no extra cost");
@@ -129,4 +135,21 @@ test("the first step costs half the XP, the rest nothing more", () => {
 	assert.equal(helpPrice("form", ["form"], false), "used");
 	assert.equal(firstLetterOf(" dážď"), "d");
 	assert.equal(firstLetterOf("Ёлка"), "Ё");
+});
+
+test("a card never shows a sentence another item in the same plan asks about", () => {
+	const example = (before: string, word: string, after: string) => ({ before, word, after, en: "(en)" });
+	const items = [
+		{
+			sentence: "Počúvam dážď.",
+			card: { examples: [example("Bez ", "dažďa", " niet úrody."), example("Dážď mi zabránil ", "ísť", " von.")] },
+		},
+		{ sentence: "bez dažďa niet úrody", card: { examples: [] } },
+	];
+	const [first, second] = cardsWithoutOtherSentences(items);
+	assert.deepEqual(
+		first!.card.examples.map((ex) => ex.before + ex.word + ex.after),
+		["Dážď mi zabránil ísť von."],
+	);
+	assert.deepEqual(second!.card.examples, []);
 });

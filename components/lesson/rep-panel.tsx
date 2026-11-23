@@ -21,7 +21,7 @@ export function PictureBox({ picture, label, className }: { picture: WordPicture
 			{picture.kind === "paint" ? (
 				<PaintSwatch paint={picture.paint} label={label} className="block h-[62%] w-[min(62%,14rem)]" />
 			) : (
-				<span role="img" aria-label={label} title={label} className="block h-full w-full max-w-[22rem] p-2">
+				<span role="img" aria-label={label} className="block h-full w-full max-w-[22rem] p-2">
 					<WeatherScene scene={picture.scene} className="block h-full w-full" />
 				</span>
 			)}
@@ -39,6 +39,7 @@ export function HelpLadder({
 	steps,
 	used,
 	missed,
+	canReturn,
 	item,
 	onUse,
 	className,
@@ -46,6 +47,7 @@ export function HelpLadder({
 	steps: readonly HelpStep[];
 	used: readonly HelpStep[];
 	missed: boolean;
+	canReturn: boolean;
 	item: LessonItem;
 	onUse: (step: HelpStep) => void;
 	className?: string;
@@ -93,7 +95,9 @@ export function HelpLadder({
 				})}
 			</ol>
 			<p className="mt-2 font-ui text-[12.5px] text-ink-3">
-				{used.length > 0 || missed ? "This word comes back at the end." : "Help halves this answer's XP."}
+				{canReturn && (used.length > 0 || missed)
+					? "This word comes back at the end."
+					: "Help halves this answer's XP."}
 			</p>
 		</div>
 	);

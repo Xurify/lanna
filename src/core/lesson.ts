@@ -21,7 +21,7 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { cellsOf, numberByEnding, numberIn, type CaseName, type Declension } from "./form-cells.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
-import { wordCardOf, type WordCard } from "./word-card.ts";
+import { cardsWithoutOtherSentences, wordCardOf, type WordCard } from "./word-card.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
 import {
 	activeCourse,
@@ -1488,7 +1488,7 @@ export function buildLesson(
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
-	return { unit, items, stage, ...(opts.gender ? { gender: opts.gender } : {}) };
+	return { unit, items: cardsWithoutOtherSentences(items), stage, ...(opts.gender ? { gender: opts.gender } : {}) };
 }
 
 /** A Dvojičky lesson: twelve choose reps, each a verified sentence that
@@ -1623,7 +1623,7 @@ export function buildBlitz(
 	return {
 		unit: units[0] ?? (allUnits().find((u) => !u.kind || u.kind === "grammar")?.id as UnitId),
 		units: [...units],
-		items,
+		items: cardsWithoutOtherSentences(items),
 	};
 }
 
