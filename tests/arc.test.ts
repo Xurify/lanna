@@ -62,7 +62,7 @@ test("the mapping, pinned on one chapter: words are its word units, forms its fi
 	assert.deepEqual(
 		chapterArc("hello")!.map((a) => [a.step.id, a.units]),
 		[
-			["story", []],
+			["story", ["story-hello"]],
 			["words", ["words", "lx-greetings", "lx-questions"]],
 			["forms", ["present"]],
 			["pairs", []],

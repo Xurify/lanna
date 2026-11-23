@@ -1,0 +1,219 @@
+{
+	"title": "Rýchle ráno",
+	"topic": "Tomáš oversleeps, rushes to get ready for work and finds out at breakfast that it is Saturday",
+	"cover": "clock",
+	"cast": [
+		{
+			"name": "Tomáš",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Ivana",
+			"gender": "f",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Tomáš každý deň vstáva o šiestej.",
+			"en": "Tomáš gets up at six every day."
+		},
+		{
+			"who": "narrator",
+			"sk": "Najprv sa umýva, potom sa oblieka a robí raňajky.",
+			"en": "First he washes, then he gets dressed and makes breakfast."
+		},
+		{
+			"who": "narrator",
+			"sk": "Na raňajky má vždy chlieb so syrom a kávu s mliekom.",
+			"en": "For breakfast he always has bread with cheese and coffee with milk."
+		},
+		{
+			"who": "narrator",
+			"sk": "O siedmej ide autobusom do práce.",
+			"en": "At seven he goes to work by bus."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Ale dnes Tomáš spí dlho.",
+			"en": "But today Tomáš sleeps late."
+		},
+		{
+			"who": "narrator",
+			"sk": "Keď otvorí oči, je osem hodín!",
+			"en": "When he opens his eyes, it is eight o'clock!"
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Ivana, už je osem! Prídem neskoro do práce!",
+			"en": "Ivana, it's eight already! I'll be late for work!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Tomáš sa rýchlo umýva a oblieka.",
+			"en": "Tomáš quickly washes and gets dressed."
+		},
+		{
+			"who": "narrator",
+			"sk": "Nemá čas na raňajky.",
+			"en": "He has no time for breakfast."
+		},
+		{
+			"who": "narrator",
+			"sk": "Berie si iba jablko a beží k dverám.",
+			"en": "He just takes an apple and runs to the door."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V kuchyni sedí Ivana pri stole s kávou.",
+			"en": "In the kitchen Ivana is sitting at the table with a coffee."
+		},
+		{
+			"who": "Ivana",
+			"sk": "Tomáš, kam ideš tak rýchlo?",
+			"en": "Tomáš, where are you going so fast?"
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Predsa do práce! Je pondelok!",
+			"en": "To work, of course! It's Monday!"
+		},
+		{
+			"who": "Ivana",
+			"sk": "Nie je pondelok. Dnes je sobota!",
+			"en": "It isn't Monday. Today is Saturday!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Tomáš sa pozerá na telefón.",
+			"en": "Tomáš looks at his phone."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ivana má pravdu. Je sobota a nemusí ísť do práce.",
+			"en": "Ivana is right. It is Saturday and he doesn't have to go to work."
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Tak to je dobrý deň!",
+			"en": "Well, that's a good day!"
+		},
+		{
+			"who": "Ivana",
+			"sk": "Sadni si. Dáme si raňajky spolu.",
+			"en": "Sit down. Let's have breakfast together."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Tomáš si sadne k stolu.",
+			"en": "Tomáš sits down at the table."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ivana robí vajcia a Tomáš varí kávu.",
+			"en": "Ivana makes eggs and Tomáš makes coffee."
+		},
+		{
+			"who": "narrator",
+			"sk": "Jedia pomaly a hovoria o víkende.",
+			"en": "They eat slowly and talk about the weekend."
+		},
+		{
+			"who": "Ivana",
+			"sk": "Čo budeme robiť poobede?",
+			"en": "What shall we do in the afternoon?"
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Najprv budem spať. Potom pôjdeme do parku.",
+			"en": "First I'll sleep. Then we'll go to the park."
+		},
+		{
+			"who": "Ivana",
+			"sk": "Dobre. Ale v pondelok vstávaš o šiestej!",
+			"en": "All right. But on Monday you get up at six!"
+		}
+	],
+	"newWords": [],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kedy vstáva Tomáš každý deň?",
+			"options": [
+				"O ôsmej",
+				"O šiestej",
+				"O siedmej"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Aký deň je dnes?",
+			"options": [
+				"Pondelok",
+				"Nedeľa",
+				"Sobota"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Čo robia Tomáš a Ivana potom?",
+			"options": [
+				"Jedia spolu raňajky",
+				"Idú do práce",
+				"Idú do obchodu"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Tomáš usually gets up at six. Today he wakes at eight, rushes to get ready for work and skips breakfast, until Ivana tells him it is Saturday, so they have breakfast together.",
+	"glosses": {
+		"tomáš": {
+			"lemma": "Tomáš",
+			"gloss": "Tomáš (a name)"
+		},
+		"ivana": {
+			"lemma": "Ivana",
+			"gloss": "Ivana (a name)"
+		},
+		"šiestej": {
+			"lemma": "šiesta",
+			"gloss": "six o'clock (o šiestej: at six)"
+		},
+		"siedmej": {
+			"lemma": "siedma",
+			"gloss": "seven o'clock (o siedmej: at seven)"
+		},
+		"si": {
+			"lemma": "si",
+			"gloss": "for oneself (reflexive)"
+		},
+		"sadni": {
+			"lemma": "sadnúť si",
+			"gloss": "sit down! (sadnúť si: to sit down)"
+		},
+		"dáme": {
+			"lemma": "dať si",
+			"gloss": "we will have (dať si: to have, to order)"
+		},
+		"predsa": {
+			"lemma": "predsa",
+			"gloss": "of course, after all"
+		},
+		"budem": {
+			"lemma": "byť",
+			"gloss": "I will (budem + infinitive: future)"
+		},
+		"budeme": {
+			"lemma": "byť",
+			"gloss": "we will (budeme + infinitive: future)"
+		}
+	}
+}

@@ -1,0 +1,247 @@
+{
+	"title": "Nový sused",
+	"topic": "Martin meets his new neighbour Eva in front of the house, says ahoj to her grandmother by mistake and is invited for tea",
+	"cover": "friends",
+	"cast": [
+		{
+			"name": "Martin",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Eva",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Babka",
+			"gender": "f",
+			"age": "old"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Je sobota ráno.",
+			"en": "It is Saturday morning."
+		},
+		{
+			"who": "narrator",
+			"sk": "Martin býva v Bratislave iba týždeň.",
+			"en": "Martin has lived in Bratislava for only a week."
+		},
+		{
+			"who": "narrator",
+			"sk": "Pred domom stojí mladá žena.",
+			"en": "A young woman is standing in front of the house."
+		},
+		{
+			"who": "Martin",
+			"sk": "Dobrý deň!",
+			"en": "Hello!"
+		},
+		{
+			"who": "Eva",
+			"sk": "Ahoj! Ty si nový sused?",
+			"en": "Hi! Are you the new neighbour?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Áno. Ja som Martin. A ako sa voláš ty?",
+			"en": "Yes. I'm Martin. And what's your name?"
+		},
+		{
+			"who": "Eva",
+			"sk": "Ja som Eva. Bývam tu vedľa.",
+			"en": "I'm Eva. I live right next door."
+		},
+		{
+			"who": "Eva",
+			"sk": "Odkiaľ si, Martin?",
+			"en": "Where are you from, Martin?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Som z Košíc. Tu v Bratislave mám novú prácu.",
+			"en": "I'm from Košice. Here in Bratislava I have a new job."
+		},
+		{
+			"who": "Eva",
+			"sk": "Ako sa ti tu páči?",
+			"en": "How do you like it here?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Páči sa mi tu. Ale ešte tu nikoho nepoznám.",
+			"en": "I like it here. But I don't know anyone here yet."
+		},
+		{
+			"who": "Eva",
+			"sk": "Teraz už poznáš mňa!",
+			"en": "Now you know me!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Potom z domu vychádza stará pani.",
+			"en": "Then an old lady comes out of the house."
+		},
+		{
+			"who": "Martin",
+			"sk": "Ahoj!",
+			"en": "Hi!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Eva sa smeje.",
+			"en": "Eva laughs."
+		},
+		{
+			"who": "Eva",
+			"sk": "Martin, to je moja babka. Povedz jej „dobrý deň“!",
+			"en": "Martin, that is my grandma. Say \"dobrý deň\" to her!"
+		},
+		{
+			"who": "Martin",
+			"sk": "Prepáčte! Dobrý deň. Ja som Martin, nový sused.",
+			"en": "Sorry! Good morning. I'm Martin, the new neighbour."
+		},
+		{
+			"who": "Babka",
+			"sk": "Dobrý deň, Martin. Teší ma. Ako sa máte, pán sused?",
+			"en": "Good morning, Martin. Nice to meet you. How are you, neighbour?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Ďakujem, dobre. A vy?",
+			"en": "Fine, thank you. And you?"
+		},
+		{
+			"who": "Babka",
+			"sk": "Aj ja dobre. A kam idete?",
+			"en": "I'm fine too. And where are you going?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Idem do mesta, ale neviem, kde je hrad.",
+			"en": "I'm going into town, but I don't know where the castle is."
+		},
+		{
+			"who": "Eva",
+			"sk": "Aj ja idem do mesta. Môžeme ísť spolu.",
+			"en": "I'm going into town too. We can go together."
+		},
+		{
+			"who": "Babka",
+			"sk": "A kedy prídete domov?",
+			"en": "And when will you come home?"
+		},
+		{
+			"who": "Eva",
+			"sk": "Večer, babka.",
+			"en": "In the evening, Grandma."
+		},
+		{
+			"who": "Babka",
+			"sk": "Tak večer príďte obaja ku mne na čaj.",
+			"en": "Then come to my place for tea this evening, both of you."
+		},
+		{
+			"who": "Martin",
+			"sk": "Ďakujem, rád prídem! Dovidenia!",
+			"en": "Thank you, I'll be glad to come! Goodbye!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Martin a Eva idú spolu do mesta.",
+			"en": "Martin and Eva walk into town together."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "sused",
+			"en": "neighbour"
+		},
+		{
+			"sk": "babka",
+			"en": "grandmother"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Odkiaľ je Martin?",
+			"options": [
+				"Z Prahy",
+				"Z Bratislavy",
+				"Z Košíc"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Čo povie Martin babke najprv?",
+			"options": [
+				"Ahoj!",
+				"Dobrý deň!",
+				"Dovidenia!"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Kedy idú Martin a Eva k babke na čaj?",
+			"options": [
+				"Ráno",
+				"Večer",
+				"V nedeľu"
+			],
+			"answer": 1
+		}
+	],
+	"recap": "Martin meets his new neighbour Eva in front of the house. He says ahoj to her grandmother by mistake, apologises and says dobrý deň, and she invites them both for tea in the evening.",
+	"glosses": {
+		"martin": {
+			"lemma": "Martin",
+			"gloss": "Martin (a name)"
+		},
+		"eva": {
+			"lemma": "Eva",
+			"gloss": "Eva (a name)"
+		},
+		"košíc": {
+			"lemma": "Košice",
+			"gloss": "Košice (a city)"
+		},
+		"nikoho": {
+			"lemma": "nikto",
+			"gloss": "nobody, no one (nepoznám nikoho: I don't know anyone)"
+		},
+		"povedz": {
+			"lemma": "povedať",
+			"gloss": "say!, tell! (povedať: to say)"
+		},
+		"teší": {
+			"lemma": "tešiť",
+			"gloss": "pleases (teší ma: nice to meet you)"
+		},
+		"ma": {
+			"lemma": "ja",
+			"gloss": "me"
+		},
+		"domov": {
+			"lemma": "domov",
+			"gloss": "home (where to)"
+		},
+		"príďte": {
+			"lemma": "prísť",
+			"gloss": "come! (to two or more people, or politely)"
+		},
+		"obaja": {
+			"lemma": "obaja",
+			"gloss": "both (of two men, or a man and a woman)"
+		}
+	}
+}

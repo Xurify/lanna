@@ -1,0 +1,261 @@
+{
+	"title": "Kto je kto?",
+	"topic": "Martin goes to Sunday lunch with his girlfriend Lenka's family, takes her brother for her father and makes friends with her little nephew",
+	"cover": "family",
+	"cast": [
+		{
+			"name": "Martin",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Lenka",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Michal",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Mama",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Miško",
+			"gender": "m",
+			"age": "child"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Je nedeľa. Martin a Lenka idú na obed k jej rodičom.",
+			"en": "It is Sunday. Martin and Lenka are going to her parents' for lunch."
+		},
+		{
+			"who": "Martin",
+			"sk": "Lenka, kto tam bude?",
+			"en": "Lenka, who will be there?"
+		},
+		{
+			"who": "narrator",
+			"sk": "Lenka mu ukazuje fotku.",
+			"en": "Lenka shows him a photo."
+		},
+		{
+			"who": "Lenka",
+			"sk": "Pozri. Toto je môj otec a toto je moja mama.",
+			"en": "Look. This is my father and this is my mother."
+		},
+		{
+			"who": "Lenka",
+			"sk": "Tento muž je môj brat Michal a toto je jeho manželka.",
+			"en": "This man is my brother Michal and this is his wife."
+		},
+		{
+			"who": "Lenka",
+			"sk": "A toto malé dieťa je ich syn Miško.",
+			"en": "And this small child is their son Miško."
+		},
+		{
+			"who": "Martin",
+			"sk": "Tvoj otec a tvoj brat sú veľmi podobní.",
+			"en": "Your father and your brother look very alike."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Lenka zazvoní pri dverách a dvere otvorí muž.",
+			"en": "Lenka rings at the door, and a man opens it."
+		},
+		{
+			"who": "Martin",
+			"sk": "Dobrý deň, pán Novák! Teší ma.",
+			"en": "Good afternoon, Mr Novák! Nice to meet you."
+		},
+		{
+			"who": "Michal",
+			"sk": "Ja nie som otec. Ja som Michal, Lenkin brat!",
+			"en": "I'm not her father. I'm Michal, Lenka's brother!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Všetci sa smejú.",
+			"en": "Everyone laughs."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V kuchyni varí Lenkina mama a otec sedí pri stole.",
+			"en": "In the kitchen Lenka's mother is cooking and her father is sitting at the table."
+		},
+		{
+			"who": "Mama",
+			"sk": "Vitajte u nás, Martin! Máte brata alebo sestru?",
+			"en": "Welcome to our home, Martin! Do you have a brother or a sister?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Mám jednu sestru. Brata nemám.",
+			"en": "I have one sister. I don't have a brother."
+		},
+		{
+			"who": "Mama",
+			"sk": "A kde býva vaša rodina?",
+			"en": "And where does your family live?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Moji rodičia a moja sestra bývajú v Košiciach.",
+			"en": "My parents and my sister live in Košice."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Po obede berie malý Miško Martina do svojej izby.",
+			"en": "After lunch little Miško takes Martin to his room."
+		},
+		{
+			"who": "Miško",
+			"sk": "Toto je moja izba. Tu spím.",
+			"en": "This is my room. I sleep here."
+		},
+		{
+			"who": "Miško",
+			"sk": "Martin, ty máš rád Lenku?",
+			"en": "Martin, do you like Lenka?"
+		},
+		{
+			"who": "Martin",
+			"sk": "Áno, mám ju veľmi rád.",
+			"en": "Yes, I like her very much."
+		},
+		{
+			"who": "Miško",
+			"sk": "Ja tiež. Lenka je moja teta!",
+			"en": "Me too. Lenka is my aunt!"
+		},
+		{
+			"who": "Martin",
+			"sk": "Tak teraz si aj ty môj kamarát.",
+			"en": "Then now you're my friend too."
+		},
+		{
+			"who": "narrator",
+			"sk": "Miško sa smeje a ukazuje Martinovi všetky svoje autíčka.",
+			"en": "Miško laughs and shows Martin all his toy cars."
+		}
+	],
+	"newWords": [],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kto otvorí dvere?",
+			"options": [
+				"Otec",
+				"Michal",
+				"Babka"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Kde bývajú Martinovi rodičia?",
+			"options": [
+				"V Bratislave",
+				"V Žiline",
+				"V Košiciach"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Čí syn je Miško?",
+			"options": [
+				"Michala",
+				"Lenky",
+				"Martina"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Before Sunday lunch Lenka shows Martin a photo of her family. At the door he greets her brother Michal as her father, which makes everyone laugh, and after lunch he makes friends with Michal's little son Miško.",
+	"glosses": {
+		"martin": {
+			"lemma": "Martin",
+			"gloss": "Martin (a name)"
+		},
+		"martina": {
+			"lemma": "Martin",
+			"gloss": "Martin (a name)"
+		},
+		"martinovi": {
+			"lemma": "Martin",
+			"gloss": "Martin (a name)"
+		},
+		"lenka": {
+			"lemma": "Lenka",
+			"gloss": "Lenka (a name)"
+		},
+		"lenku": {
+			"lemma": "Lenka",
+			"gloss": "Lenka (a name)"
+		},
+		"michal": {
+			"lemma": "Michal",
+			"gloss": "Michal (a name)"
+		},
+		"miško": {
+			"lemma": "Miško",
+			"gloss": "Miško (a name)"
+		},
+		"novák": {
+			"lemma": "Novák",
+			"gloss": "Novák (a name)"
+		},
+		"lenkina": {
+			"lemma": "Lenkin",
+			"gloss": "Lenka's"
+		},
+		"košiciach": {
+			"lemma": "Košice",
+			"gloss": "Košice (a city)"
+		},
+		"teší": {
+			"lemma": "tešiť",
+			"gloss": "pleases (teší ma: nice to meet you)"
+		},
+		"ma": {
+			"lemma": "ja",
+			"gloss": "me"
+		},
+		"vitajte": {
+			"lemma": "vitajte",
+			"gloss": "welcome!"
+		},
+		"všetky": {
+			"lemma": "všetok",
+			"gloss": "all"
+		},
+		"lenkin": {
+			"lemma": "Lenkin",
+			"gloss": "Lenka's"
+		},
+		"pozri": {
+			"lemma": "pozrieť",
+			"gloss": "look! (pozrieť sa: to look)"
+		},
+		"vaša": {
+			"lemma": "váš",
+			"gloss": "your (to two or more people, or politely)"
+		},
+		"autíčka": {
+			"lemma": "autíčko",
+			"gloss": "toy car, little car"
+		}
+	}
+}

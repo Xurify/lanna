@@ -1,0 +1,217 @@
+{
+	"title": "Kde je stanica?",
+	"topic": "Zuzana is in Bratislava for the first time, asks the way to the station and catches a bus to her train in time",
+	"cover": "city",
+	"cast": [
+		{
+			"name": "Zuzana",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Jozef",
+			"gender": "m",
+			"age": "old"
+		},
+		{
+			"name": "Samo",
+			"gender": "m",
+			"age": "child"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Zuzana nie je z Bratislavy a mesto nepozná.",
+			"en": "Zuzana is not from Bratislava and does not know the town."
+		},
+		{
+			"who": "narrator",
+			"sk": "Teraz stojí na námestí a pozerá do mapy.",
+			"en": "Now she is standing on the square and looking at a map."
+		},
+		{
+			"who": "narrator",
+			"sk": "Jej vlak ide o hodinu.",
+			"en": "Her train leaves in an hour."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ale kde je stanica? Na mape ju nevidí.",
+			"en": "But where is the station? She can't see it on the map."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Prepáčte, kde je stanica?",
+			"en": "Excuse me, where is the station?"
+		},
+		{
+			"who": "Jozef",
+			"sk": "Hlavná stanica? To je ďaleko.",
+			"en": "The main station? That's far."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Môžem ísť pešo?",
+			"en": "Can I walk?"
+		},
+		{
+			"who": "Jozef",
+			"sk": "Môžete, ale pešo je to pol hodiny.",
+			"en": "You can, but on foot it's half an hour."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "To je veľa. Môj vlak ide o hodinu.",
+			"en": "That's a lot. My train leaves in an hour."
+		},
+		{
+			"who": "Jozef",
+			"sk": "Tak choďte autobusom. Zastávka je blízko.",
+			"en": "Then go by bus. The stop is close."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "A kde je zastávka?",
+			"en": "And where is the stop?"
+		},
+		{
+			"who": "Jozef",
+			"sk": "Choďte rovno a potom vpravo. Zastávka je pri kostole.",
+			"en": "Go straight on and then right. The stop is by the church."
+		},
+		{
+			"who": "Jozef",
+			"sk": "Ten autobus ide rovno na stanicu.",
+			"en": "That bus goes straight to the station."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Ďakujem! A kde kúpim lístok?",
+			"en": "Thank you! And where do I buy a ticket?"
+		},
+		{
+			"who": "Jozef",
+			"sk": "Lístok kúpite na zastávke.",
+			"en": "You buy a ticket at the stop."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Zuzana ide rovno a potom vpravo.",
+			"en": "Zuzana goes straight on and then right."
+		},
+		{
+			"who": "narrator",
+			"sk": "Pri kostole je zastávka, ale autobus tam nie je.",
+			"en": "By the church there is the stop, but the bus isn't there."
+		},
+		{
+			"who": "narrator",
+			"sk": "Na zastávke čaká malý chlapec.",
+			"en": "A little boy is waiting at the stop."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Ahoj, kedy ide autobus na stanicu?",
+			"en": "Hi, when does the bus to the station leave?"
+		},
+		{
+			"who": "Samo",
+			"sk": "Teraz. Pozri, už ide!",
+			"en": "Now. Look, here it comes!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Zuzana rýchlo kúpi lístok a nastúpi do autobusu.",
+			"en": "Zuzana quickly buys a ticket and gets on the bus."
+		},
+		{
+			"who": "narrator",
+			"sk": "Autobus ide cez most a potom cez mesto.",
+			"en": "The bus goes over the bridge and then through the town."
+		},
+		{
+			"who": "narrator",
+			"sk": "O dvadsať minút je Zuzana na stanici.",
+			"en": "Twenty minutes later Zuzana is at the station."
+		},
+		{
+			"who": "narrator",
+			"sk": "Jej vlak tam už stojí.",
+			"en": "Her train is already there."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Super! Ešte mám čas na kávu.",
+			"en": "Great! I still have time for a coffee."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "zastávka",
+			"en": "stop (bus or tram stop)"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kam ide Zuzana?",
+			"options": [
+				"Na stanicu",
+				"Na poštu",
+				"Do hotela"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Kde je zastávka?",
+			"options": [
+				"Pri banke",
+				"Pri kostole",
+				"Na moste"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Prečo nejde Zuzana na stanicu pešo?",
+			"options": [
+				"Nemá lístok",
+				"Nemá mapu",
+				"Stanica je ďaleko"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Zuzana cannot find the station on her map. A man tells her it is far and sends her to the bus stop by the church, and she reaches her train with time left for a coffee.",
+	"glosses": {
+		"zuzana": {
+			"lemma": "Zuzana",
+			"gloss": "Zuzana (a name)"
+		},
+		"pol": {
+			"lemma": "pol",
+			"gloss": "half (pol hodiny: half an hour)"
+		},
+		"o": {
+			"lemma": "o",
+			"gloss": "in (o hodinu: in an hour)"
+		},
+		"choďte": {
+			"lemma": "ísť",
+			"gloss": "go! (to two or more people, or politely)"
+		},
+		"pozri": {
+			"lemma": "pozrieť",
+			"gloss": "look! (pozrieť sa: to look)"
+		},
+		"dvadsať": {
+			"lemma": "dvadsať",
+			"gloss": "twenty"
+		}
+	}
+}

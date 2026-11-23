@@ -104,9 +104,10 @@ export function Word({
 		!dictGloss.toLocaleLowerCase("en").includes(lookupData.googleTranslation.toLocaleLowerCase("en"))
 			? `${translationEngineLabel(lookupData.translatedBy)}: "${lookupData.googleTranslation}"`
 			: undefined;
-	const resolvedCat = token.cat ?? lookupData?.pos;
-	const resolvedGender = token.gender ?? lookupData?.gender;
-	const resolvedFormNote = lookupData?.formNote;
+	const sameWord = describesToken(token, lookupData);
+	const resolvedCat = token.cat ?? (sameWord ? lookupData?.pos : undefined);
+	const resolvedGender = token.gender ?? (sameWord ? lookupData?.gender : undefined);
+	const resolvedFormNote = sameWord ? lookupData?.formNote : undefined;
 	const noteParts = splitFormNote(resolvedFormNote, resolvedLemma);
 
 	const toggleFav = async () => {
@@ -439,6 +440,11 @@ export function Tag({ children, className }: { children: React.ReactNode; classN
 			{children}
 		</span>
 	);
+}
+
+export function describesToken(token: Pick<StoryToken, "lemma">, lookup: { lemma?: string } | null): boolean {
+	if (!token.lemma || !lookup?.lemma) return true;
+	return token.lemma.toLocaleLowerCase() === lookup.lemma.toLocaleLowerCase();
 }
 
 export function splitFormNote(formNote: string | undefined, lemma: string): { before: string; after: string } {
