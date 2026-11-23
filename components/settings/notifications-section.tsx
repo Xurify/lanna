@@ -166,14 +166,14 @@ export function NotificationsSection({
 
 	return (
 		<SettingsSection
-			title="Activity Reminders"
+			title="Notifications"
 			hint="Nudge your daily practice, analyze focus patterns, and stay on track with your goals."
 			testid="notifications-section"
 		>
-			{/* Master Switch */}
 			<SettingsGroup label="General">
 				<SettingsRow
 					label="Daily goal reminders"
+					stack={false}
 					hint="Alert you throughout the day so you never fall behind on your learning goal."
 				>
 					<Toggle
@@ -185,10 +185,10 @@ export function NotificationsSection({
 				</SettingsRow>
 			</SettingsGroup>
 
-			{/* Delivery Channels */}
-			<SettingsGroup label="Delivery Channels">
+			<SettingsGroup label="Where reminders appear">
 				<SettingsRow
 					label="Desktop notifications"
+					stack={false}
 					hint={
 						permission === "granted" ? (
 							<span className="inline-flex items-center gap-1 text-teal">
@@ -237,6 +237,7 @@ export function NotificationsSection({
 
 				<SettingsRow
 					label="In-app banner alerts"
+					stack={false}
 					hint="Show floating notifications inside the app with quick activity shortcuts."
 					dimmed={!current.enabled}
 				>
@@ -250,10 +251,10 @@ export function NotificationsSection({
 				</SettingsRow>
 			</SettingsGroup>
 
-			{/* Smart Timing & Trend Analytics */}
-			<SettingsGroup label="Smart Scheduling & Trends">
+			<SettingsGroup label="Smart scheduling">
 				<SettingsRow
 					label="Smart auto-nudges"
+					stack={false}
 					hint="Analyze your past session history to automatically alert you at your habitual study hours."
 					dimmed={!current.enabled}
 				>
@@ -268,6 +269,7 @@ export function NotificationsSection({
 
 				<SettingsRow
 					label="Auto-schedule daily tasks"
+					stack={false}
 					hint="Intelligently pairs pending plan tasks to your focus windows (morning words, afternoon lessons, evening review)."
 					dimmed={!current.enabled}
 				>
@@ -305,6 +307,7 @@ export function NotificationsSection({
 
 				<SettingsRow
 					label="AI personalized coaching"
+					stack={false}
 					hint="Generate context-rich motivational nudges tailored to your current streak and pending practice items."
 					dimmed={!current.enabled}
 				>
@@ -318,9 +321,8 @@ export function NotificationsSection({
 				</SettingsRow>
 			</SettingsGroup>
 
-			{/* Scheduled Times */}
 			<SettingsGroup
-				label="Scheduled Reminder Times"
+				label="Reminder times"
 				hint="Specific times of day to alert you if your daily practice goal is incomplete."
 			>
 				<div className="flex flex-col gap-3 rounded-lg bg-well p-4">
@@ -371,10 +373,9 @@ export function NotificationsSection({
 				</div>
 			</SettingsGroup>
 
-			{/* Notification Sound */}
-			<SettingsGroup label="Notification Sound">
+			<SettingsGroup label="Sound">
 				<SettingsRow
-					label="Alert Tone"
+					label="Alert tone"
 					hint="Select a built-in synthesized tone or upload your own audio."
 					dimmed={!current.enabled}
 				>
@@ -445,7 +446,6 @@ export function NotificationsSection({
 				)}
 			</SettingsGroup>
 
-			{/* Test Alert */}
 			<div className="pt-2">
 				<button
 					type="button"

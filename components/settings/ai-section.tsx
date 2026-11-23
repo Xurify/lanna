@@ -230,6 +230,7 @@ export function AiSection({
 	onSectionChange,
 	onModelsChange,
 	onCompactionChange,
+	onOpenKeys,
 }: {
 	agent: AgentSettings | undefined;
 	/** Slot pins. Engine-level, written to /api/settings/models. */
@@ -239,6 +240,8 @@ export function AiSection({
 	onSectionChange: (next: AgentSettings) => void;
 	onModelsChange: (next: ModelsSettings) => void;
 	onCompactionChange: (next: CompactionSettings) => void;
+	/** Moves the dialog to API keys, where a key makes models available. */
+	onOpenKeys?: () => void;
 }) {
 	const [catalog, setCatalog] = useState<ModelCatalogEntry[] | null>(null);
 	const [slots, setSlots] = useState<ModelsBody["slots"] | null>(null);
@@ -539,6 +542,22 @@ export function AiSection({
 	return (
 		<>
 			<SettingsGroup label="Models" testid="group-models">
+				{catalog?.length === 0 && onOpenKeys && (
+					<div
+						data-testid="models-need-key"
+						className="flex items-center justify-between gap-4 rounded-lg border border-dashed border-line-2 px-4 py-3 max-md:flex-col max-md:items-start"
+					>
+						<span className="text-sm text-ink-2">No model is available yet. Add an API key to choose one.</span>
+						<button
+							type="button"
+							onClick={onOpenKeys}
+							className="shrink-0 rounded-md bg-card px-3 py-1.5 text-xs font-medium text-ink-2 ring-1 ring-line-2 transition-colors hover:bg-well"
+							data-testid="models-need-key-open"
+						>
+							Open API keys
+						</button>
+					</div>
+				)}
 				{MODEL_SLOTS.map((slot) => {
 					const override = models?.[slot];
 					const modelId = override?.model?.id ?? "";

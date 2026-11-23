@@ -19,6 +19,7 @@ import {
 } from "@/src/core";
 import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import { useAppearance } from "./appearance.tsx";
 import { SettingsGroup, SettingsSection } from "./controls.tsx";
 import { LessonSoundsRow, PlaybackSpeedRow, VolumeRow, WordLookupModeRow } from "./device-prefs.tsx";
@@ -45,6 +46,7 @@ import {
 	KeyboardIcon,
 	KeyRoundIcon,
 	PaletteIcon,
+	SearchIcon,
 	SmartphoneIcon,
 	SlidersHorizontalIcon,
 	SlidersIcon,
@@ -61,23 +63,46 @@ import { BackupSection } from "./backup-section.tsx";
 import { sharedJson } from "@/lib/shared-fetch";
 
 /** The nav label is the section's heading. Ids are internal: deep links and tests use them.
- *  Everyday settings come first; the AI setup and the app's data sit below a divider. */
-const SECTIONS = [
-	{ id: "general", label: "General" },
-	{ id: "learner", label: "Learning" },
-	{ id: "notifications", label: "Notifications" },
-	{ id: "sound", label: "Sound" },
-	{ id: "appearance", label: "Appearance" },
-	{ id: "keyboard", label: "Keyboard" },
-	{ id: "devices", label: "Devices" },
-	{ id: "ai", label: "AI models", divider: true },
-	{ id: "keys", label: "API keys" },
-	{ id: "usage", label: "Spending" },
-	{ id: "data", label: "Data" },
-	{ id: "backup", label: "Backup" },
-	{ id: "sources", label: "Sources" },
+ *  Listed in the order a learner reaches for them: lesson settings first, the app's own settings last. */
+export const SETTINGS_SECTIONS = [
+	{ id: "learner", label: "Learning", group: "Lessons" },
+	{ id: "sound", label: "Sound", group: "Lessons" },
+	{ id: "notifications", label: "Notifications", group: "Lessons" },
+	{ id: "appearance", label: "Appearance", group: "Look and controls" },
+	{ id: "keyboard", label: "Keyboard", group: "Look and controls" },
+	{ id: "ai", label: "AI models", group: "AI" },
+	{ id: "keys", label: "API keys", group: "AI" },
+	{ id: "usage", label: "Spending", group: "AI" },
+	{ id: "general", label: "General", group: "App and data" },
+	{ id: "devices", label: "Devices", group: "App and data" },
+	{ id: "data", label: "Data", group: "App and data" },
+	{ id: "backup", label: "Backup", group: "App and data" },
+	{ id: "sources", label: "Sources", group: "App and data" },
 ] as const;
-export type SectionId = (typeof SECTIONS)[number]["id"];
+export type SectionId = (typeof SETTINGS_SECTIONS)[number]["id"];
+
+/** Words a learner might type for a section, beyond its own label. */
+const SECTION_KEYWORDS: Record<SectionId, string> = {
+	learner: "languages goals level explain parallels purpose minutes days",
+	sound: "volume speed voice voices playback lesson sounds audio",
+	notifications: "reminders alerts notify",
+	appearance: "theme day night dark light font colors text",
+	keyboard: "shortcuts keys rebind hotkeys",
+	ai: "models strong cheap vision tools web research pdf prompts instructions long chats",
+	keys: "api key subscription provider",
+	usage: "spending cost money usage tokens",
+	general: "updates version dictionary word lookup",
+	devices: "phone ipad tailscale remote access pair",
+	data: "storage cache reset start over delete",
+	backup: "backup cloudflare r2 folder copy",
+	sources: "credits licenses attribution",
+};
+
+export function sectionMatches(section: { id: SectionId; label: string; group: string }, query: string): boolean {
+	const words = query.trim().toLowerCase().split(/s+/).filter(Boolean);
+	const haystack = `${section.label} ${section.group} ${SECTION_KEYWORDS[section.id]}`.toLowerCase();
+	return words.every((word) => haystack.includes(word));
+}
 
 const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string }>> = {
 	keys: KeyRoundIcon,
@@ -128,11 +153,11 @@ function SettingsDialog({
 	);
 }
 
-/** The dialog without the portal/backdrop — the SSR-testable frame
+/** The dialog without the portal/backdrop â the SSR-testable frame
  *  (portals render nothing under renderToStaticMarkup). */
 function SettingsDialogBody({
 	onClose,
-	initialSection = "general",
+	initialSection = "learner",
 	initialRow = null,
 }: {
 	onClose: () => void;
@@ -143,7 +168,7 @@ function SettingsDialogBody({
 	const { onAppearanceChange } = useAppearance();
 	const [record, setRecord] = useState<UserSettings | null | undefined>(undefined);
 	const [error, setError] = useState<string | null>(null);
-	// MenuShell open-count — drives the content column's scroll lock.
+	// MenuShell open-count â drives the content column's scroll lock.
 	const [openMenus, setOpenMenus] = useState(0);
 	const contentRef = useRef<HTMLDivElement | null>(null);
 	// While a MenuShell is open, wheel and touchmove on the content column are blocked.
@@ -170,11 +195,20 @@ function SettingsDialogBody({
 			window.removeEventListener(MENU_CLOSE_EVENT, onClose);
 		};
 	}, []);
-	const [active, setActive] = useState<SectionId>(initialSection ?? "general");
+	const [active, setActive] = useState<SectionId>(initialSection ?? "learner");
 	const [phoneShowsSection, setPhoneShowsSection] = useState(initialSection !== null);
+	const [query, setQuery] = useState("");
+	const searchRef = useRef<HTMLInputElement | null>(null);
+	useEffect(() => {
+		if (window.matchMedia("(min-width: 768px)").matches) searchRef.current?.focus();
+		const focusSearch = () => searchRef.current?.focus();
+		window.addEventListener("lanna:kbd-cycle-fields", focusSearch);
+		return () => window.removeEventListener("lanna:kbd-cycle-fields", focusSearch);
+	}, []);
+	const visibleSections = SETTINGS_SECTIONS.filter((s) => sectionMatches(s, query));
 	// A deep link while the dialog is already open changes initialSection; follow it.
 	useEffect(() => {
-		setActive(initialSection ?? "general");
+		setActive(initialSection ?? "learner");
 		setPhoneShowsSection(initialSection !== null);
 	}, [initialSection]);
 
@@ -275,15 +309,57 @@ function SettingsDialogBody({
 					aria-label="Settings sections"
 					data-testid="settings-nav"
 					className={cn(
-						"flex w-48 shrink-0 flex-col gap-1 bg-side p-3 shadow-[inset_-1px_0_0_var(--q-line)] max-md:w-full max-md:gap-0.5 max-md:overflow-y-auto max-md:bg-card max-md:p-2 max-md:shadow-none",
+						"flex w-52 shrink-0 flex-col gap-1 overflow-y-auto bg-side p-3 shadow-[inset_-1px_0_0_var(--q-line)] max-md:w-full max-md:gap-0.5 max-md:bg-card max-md:p-2 max-md:shadow-none",
 						phoneShowsSection && "max-md:hidden",
 					)}
 				>
-					{SECTIONS.map((s) => {
+					<div className="relative mb-2 max-md:px-1 max-md:pt-1">
+						<SearchIcon
+							aria-hidden
+							className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3 max-md:left-4"
+						/>
+						<Input
+							aria-label="Search settings"
+							className="bg-card pl-9 [&::-webkit-search-cancel-button]:appearance-none"
+							id="settings-search"
+							ref={searchRef}
+							type="search"
+							value={query}
+							placeholder="Search"
+							data-testid="settings-search"
+							onChange={(e) => setQuery(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Escape" && query) {
+									e.stopPropagation();
+									setQuery("");
+									return;
+								}
+								const first = visibleSections[0];
+								if (e.key !== "Enter" || !first) return;
+								setActive(first.id);
+								setPhoneShowsSection(true);
+							}}
+						/>
+					</div>
+					{visibleSections.length === 0 && (
+						<p className="px-3 py-2 text-xs text-ink-2" data-testid="settings-search-empty">
+							No setting matches &ldquo;{query.trim()}&rdquo;.
+						</p>
+					)}
+					{visibleSections.map((s, index) => {
 						const Icon = SECTION_ICONS[s.id];
 						return (
 							<Fragment key={s.id}>
-								{"divider" in s && <div role="separator" className="mx-3 my-2 h-px shrink-0 bg-border" />}
+								{(index === 0 || visibleSections[index - 1]?.group !== s.group) && (
+									<p
+										className={cn(
+											"px-3 pb-1 font-ui text-xs font-medium text-ink-2",
+											index === 0 ? "pt-1" : "pt-4 max-md:pt-5",
+										)}
+									>
+										{s.group}
+									</p>
+								)}
 								<button
 									type="button"
 									data-testid={`settings-nav-${s.id}`}
@@ -332,9 +408,11 @@ function SettingsDialogBody({
 						</p>
 					)}
 					{record === undefined ? (
-						<p className="px-6 py-5 text-xs text-muted-foreground">Loading settings…</p>
+						<p className="px-6 py-5 text-xs text-muted-foreground">Loading settingsâ¦</p>
 					) : record === null ? (
-						<p className="px-6 py-5 text-xs text-muted-foreground">Settings could not be loaded — refresh to retry.</p>
+						<p className="px-6 py-5 text-xs text-muted-foreground">
+							Settings could not be loaded â refresh to retry.
+						</p>
 					) : (
 						<div>
 							{active === "general" && (
@@ -394,6 +472,10 @@ function SettingsDialogBody({
 										onModelsChange={(next: ModelsSettings) => void write("models", next)}
 										onSectionChange={(next: AgentSettings) => void write("agent", next)}
 										onCompactionChange={(next: CompactionSettings) => void write("compaction", next)}
+										onOpenKeys={() => {
+											setActive("keys");
+											setPhoneShowsSection(true);
+										}}
 									/>
 								</SettingsSection>
 							)}
