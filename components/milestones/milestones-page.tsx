@@ -19,11 +19,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { TodayLink } from "@/components/today-link";
+import { saveKnown } from "@/components/words/save-known";
 import {
 	BabyIcon,
 	BookOpenIcon,
 	BriefcaseIcon,
 	CaptionsIcon,
+	CheckIcon,
 	ChevronDownIcon,
 	ClapperboardIcon,
 	CoffeeIcon,
@@ -141,6 +143,12 @@ export function MilestonesPage({
 	const [sourcesOpen, setSourcesOpen] = useState(true);
 	const [hiddenOpen, setHiddenOpen] = useState(false);
 	const [queued, setQueued] = useState<Set<string>>(new Set());
+	const [nextWords, setNextWords] = useState<NextWord[] | null>(() =>
+		initialReport?.nextWords.length ? initialReport.nextWords : null,
+	);
+	useEffect(() => {
+		if (!nextWords && report?.nextWords.length) setNextWords(report.nextWords);
+	}, [report, nextWords]);
 
 	const reload = useCallback(async () => {
 		try {
@@ -187,14 +195,20 @@ export function MilestonesPage({
 		setReport(body.report);
 		return null;
 	};
-	const queue = async (slugs: string[]) => {
-		const res = await fetch("/api/review/enqueue", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ slugs }),
-		});
-		const body = (await res.json().catch(() => null)) as { added?: string[] } | null;
-		setQueued((q) => new Set([...q, ...(body?.added ?? slugs)]));
+	const queue = async (slugs: string[]): Promise<boolean> => {
+		try {
+			const res = await fetch("/api/review/enqueue", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ slugs }),
+			});
+			if (!res.ok) return false;
+			const body = (await res.json().catch(() => null)) as { added?: string[] } | null;
+			setQueued((q) => new Set([...q, ...(body?.added ?? slugs)]));
+			return true;
+		} catch {
+			return false;
+		}
 	};
 
 	const facts = report?.facts ?? null;
@@ -319,8 +333,8 @@ export function MilestonesPage({
 						if (id) setOpen(id);
 					}}
 				/>
-				{report && report.nextWords.length > 0 && (
-					<NextWords words={report.nextWords} queued={queued} onQueue={queue} />
+				{nextWords && (
+					<NextWords words={nextWords} queued={queued} onQueue={queue} onKnownChange={() => void reload()} />
 				)}
 
 				{/* The assumptions and the studies. */}
@@ -1048,42 +1062,107 @@ function NextWords({
 	words,
 	queued,
 	onQueue,
+	onKnownChange,
 }: {
 	words: NextWord[];
 	queued: Set<string>;
-	onQueue: (slugs: string[]) => void;
+	onQueue: (slugs: string[]) => Promise<boolean>;
+	onKnownChange: () => void;
 }) {
-	const left = words.filter((w) => !queued.has(w.slug));
+	const [wordsAsFirstShown] = useState(words);
+	const [known, setKnown] = useState<ReadonlySet<string>>(new Set());
+	const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
+	const [error, setError] = useState("");
+	const left = wordsAsFirstShown.filter((w) => !queued.has(w.slug) && !known.has(w.slug));
+
+	const toggle = async (word: NextWord) => {
+		if (pending.has(word.slug)) return;
+		const next = !known.has(word.slug);
+		const flip = (on: boolean) =>
+			setKnown((current) => {
+				const set = new Set(current);
+				if (on) set.add(word.slug);
+				else set.delete(word.slug);
+				return set;
+			});
+		setError("");
+		setPending((current) => new Set(current).add(word.slug));
+		flip(next);
+		const saved = await saveKnown(word.slug, next);
+		setPending((current) => {
+			const set = new Set(current);
+			set.delete(word.slug);
+			return set;
+		});
+		if (saved) onKnownChange();
+		else {
+			flip(!next);
+			setError(`Could not save ${word.lemma}. Try again.`);
+		}
+	};
+
 	return (
 		<section className="mt-6 q-card p-4" data-testid="milestone-next-words">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
 				<h2 className="font-ui text-sm font-semibold text-foreground">The next words that pay most</h2>
 				<p className="font-ui text-xs text-muted-foreground">commonest in the dictionary's sentences, not yet yours</p>
 			</div>
+			<p className="mt-1 font-prose text-xs text-muted-foreground">
+				Tap a word you already know to count it. Tap again to undo. Counted words leave this list next time.
+			</p>
 			<ul className="mt-3 flex flex-wrap gap-2">
-				{words.map((w) => (
-					<li
-						key={w.slug}
-						className={cn(
-							"rounded-lg px-3 py-1.5 text-sm text-foreground",
-							queued.has(w.slug) ? "bg-teal-wash shadow-[inset_0_0_0_1px_var(--q-teal-line)]" : "bg-well",
-						)}
-						title={`${w.cat} · #${w.rank} by frequency`}
-					>
-						<b>{w.lemma}</b> <span className="text-muted-foreground">{w.gloss}</span>
-					</li>
-				))}
+				{wordsAsFirstShown.map((w) => {
+					const isKnown = known.has(w.slug);
+					return (
+						<li key={w.slug}>
+							<button
+								type="button"
+								aria-pressed={isKnown}
+								aria-disabled={pending.has(w.slug)}
+								onClick={() => void toggle(w)}
+								title={`${w.cat} · #${w.rank} by frequency. ${isKnown ? "Counted as known. Tap to undo." : "Tap if you already know it."}`}
+								data-testid="milestone-next-word"
+								className={cn(
+									"flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-left text-sm transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-teal/40 pointer-coarse:min-h-11",
+									isKnown
+										? "text-ink-2 shadow-[inset_0_0_0_1px_var(--q-line-2)] hover:bg-well"
+										: queued.has(w.slug)
+											? "bg-teal-wash text-foreground shadow-[inset_0_0_0_1px_var(--q-teal-line)]"
+											: "bg-well text-foreground hover:bg-well-2",
+								)}
+							>
+								<span className="cap-center">
+									<b>{w.lemma}</b> <span className="text-muted-foreground">{w.gloss.split(";")[0]}</span>
+								</span>
+								<CheckIcon
+									aria-hidden
+									strokeWidth={2.5}
+									className={cn("size-3.5 shrink-0", isKnown ? "text-teal" : "invisible")}
+								/>
+							</button>
+						</li>
+					);
+				})}
 			</ul>
+			{error && (
+				<p role="alert" className="mt-2 font-prose text-sm text-foreground">
+					{error}
+				</p>
+			)}
 			<div className="mt-3 flex flex-wrap items-center gap-3">
 				<button
 					type="button"
-					onClick={() => onQueue(left.slice(0, 10).map((w) => w.slug))}
+					onClick={() =>
+						void onQueue(left.slice(0, 10).map((w) => w.slug)).then((ok) => {
+							if (!ok) setError("Could not add the words to Review. Try again.");
+						})
+					}
 					disabled={left.length === 0}
 					className="q-btn sec t"
 					data-testid="milestone-queue"
 				>
 					<PlusIcon className="size-4" />
-					{left.length === 0 ? "All in the deck" : `Put the next ${Math.min(10, left.length)} in Review`}
+					{left.length === 0 ? "None left to add" : `Put the next ${Math.min(10, left.length)} I don't know in Review`}
 				</button>
 				<span className="font-prose text-xs text-muted-foreground">
 					They come up in the deck ahead of frequency order, a few a day.

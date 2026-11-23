@@ -39,6 +39,7 @@ export interface WordBankItem {
 	due?: string;
 	example?: { sk: string; en: string };
 	favorite: boolean;
+	known: boolean;
 	inDeck: boolean;
 	/** Set only while searching: how the word matched (see word-search.ts). */
 	match?: { kind: "start" | "contains" | "form" | "meaning" | "example"; span?: [number, number]; via?: string };
@@ -51,6 +52,7 @@ export interface WordBankSummary {
 	wordsDue: number;
 	wordsFavorited: number;
 	savedPhrasesCount: number;
+	wordsKnown: number;
 	averageRetention: number;
 }
 
@@ -84,7 +86,7 @@ export function calculateRetention(card?: {
 	return score;
 }
 
-/** "mastered" means a card that has been answered at least once and scores 80 or more. The UI calls it "can recall", never "known words". */
+/** "mastered" means a card that has been answered at least once and scores 80 or more. The Words list counts it as Known, next to the words the learner marked. */
 export function classifyWordState(card?: {
 	state: "new" | "learning" | "review";
 	reps?: number;
