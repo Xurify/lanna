@@ -1,5 +1,7 @@
 // bun run release:publish [patch|minor|major|<x.y.z>]   bump, check, tag, wait for the build, publish
 // bun run release:publish --resume                     wait for and publish the tag of the current version
+// bun run release:publish --notes                      print the notes the next release would get, change nothing
+// --yes                                                use the generated release notes without opening an editor
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -35,6 +37,8 @@ const REQUIRED_PLATFORMS: Platform[] = ["win", "linux"];
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 type BumpKind = "patch" | "minor" | "major";
+type MergeCommit = { number: number; sha: string; base: string; head: string };
+export type ReleasedPr = { number: number; title: string; change: string | null };
 type Job = { name: string; status: string; conclusion: string; url: string };
 
 function fail(message: string): never {
@@ -116,6 +120,91 @@ function writeVersion(from: string, to: string) {
 	if (packageVersion() !== to) fail("package.json did not take the new version.");
 }
 
+export function mergedPrs(log: string): MergeCommit[] {
+	const merges: MergeCommit[] = [];
+	for (const line of log.split("\n")) {
+		const [sha, parentList = "", subject = ""] = line.split("\t");
+		if (!sha) continue;
+		const number = Number(/^Merge pull request #(\d+)/.exec(subject)?.[1] ?? /\(#(\d+)\)$/.exec(subject)?.[1]);
+		if (!number) continue;
+		const [base = "", head = sha] = parentList.split(" ");
+		merges.push({ number, sha, base, head });
+	}
+	return merges;
+}
+
+export function learnerChange(body: string): string | null {
+	const section = /^##\s+What changes for the learner\s*$([\s\S]*?)(?=^##\s|$(?![\s\S]))/m.exec(body)?.[1] ?? "";
+	const text = section.replace(/<!--[\s\S]*?-->/g, "").trim();
+	if (!text || /^nothing\b/i.test(text)) return null;
+	const [first = "", second] = text.split(/\n\s*\n/).map((block) => block.trim());
+	return first.endsWith(":") && second ? `${first}\n${second}` : first;
+}
+
+export function composeNotes(prs: ReleasedPr[]): string {
+	const indent = (text: string) => text.replace(/\n/g, "\n  ");
+	const learner = prs.filter((pr) => pr.change);
+	const internal = prs.filter((pr) => !pr.change);
+	const sections: string[] = [];
+	if (learner.length > 0) {
+		const items = learner.map((pr) => `- **${pr.title}.** ${indent(pr.change!)} (#${pr.number})`);
+		sections.push(["## What's new", "", ...items].join("\n"));
+	}
+	if (internal.length > 0) {
+		const items = internal.map((pr) => `- ${pr.title} (#${pr.number})`);
+		sections.push(["## Under the hood", "", ...items].join("\n"));
+	}
+	return `${sections.join("\n\n") || "Maintenance release."}\n`;
+}
+
+function pullRequest(merge: MergeCommit): { title: string; body: string } {
+	const result = spawnSync("gh", ["pr", "view", String(merge.number), "--json", "title,body"], {
+		cwd: ROOT,
+		encoding: "utf8",
+	});
+	if (result.status === 0) return JSON.parse(result.stdout) as { title: string; body: string };
+	const mergeTitle = git("log", "-1", "--format=%b", merge.sha).split("\n")[0];
+	return { title: mergeTitle || `Pull request #${merge.number}`, body: "" };
+}
+
+function releasedPrs(previousTag: string): ReleasedPr[] {
+	const log = git("log", "--format=%H%x09%P%x09%s", `${previousTag}..HEAD`);
+	const claimed = new Set<string>();
+	const prs: ReleasedPr[] = [];
+	for (const merge of mergedPrs(log).reverse()) {
+		const exclude = merge.base ? [`^${merge.base}`] : [];
+		const commits = git("rev-list", "--no-merges", merge.head, ...exclude, `^${previousTag}`)
+			.split("\n")
+			.filter((commit) => commit && !claimed.has(commit));
+		if (commits.length === 0) continue;
+		for (const commit of commits) claimed.add(commit);
+		const { title, body } = pullRequest(merge);
+		prs.push({ number: merge.number, title: title.replace(/\.$/, ""), change: learnerChange(body ?? "") });
+	}
+	return prs;
+}
+
+function writeNotes(version: string, latest: string | null, edit: boolean): string {
+	step(latest ? `Writing release notes from the pull requests merged since v${latest}` : "Writing release notes");
+	const file = path.join(os.tmpdir(), `lanna-release-notes-${version}.md`);
+	fs.writeFileSync(file, latest ? composeNotes(releasedPrs(`v${latest}`)) : "First release.\n");
+	if (edit) {
+		console.log(`  Opening ${file} in your editor. Save and close to continue; an empty file cancels the release.`);
+		const editor = git("var", "GIT_EDITOR");
+		const result = spawnSync(`${editor} "${file}"`, { cwd: ROOT, stdio: "inherit", shell: true });
+		if (result.status !== 0) fail("The editor exited with an error. Nothing was pushed.");
+	}
+	if (fs.readFileSync(file, "utf8").trim() === "") fail("The release notes are empty. Nothing was pushed.");
+	console.log(`\n${fs.readFileSync(file, "utf8")}`);
+	return file;
+}
+
+function notesFromTag(tag: string): string {
+	const file = path.join(os.tmpdir(), `lanna-release-notes-${tag}.md`);
+	fs.writeFileSync(file, git("tag", "--list", "--format=%(contents)", tag));
+	return file;
+}
+
 function preflight() {
 	step("Checking the checkout");
 	if (git("branch", "--show-current") !== "main") fail("Run this on main.");
@@ -138,7 +227,7 @@ function runGates() {
 	fs.rmSync(dataDir, { recursive: true, force: true });
 }
 
-function tagAndPush(version: string, current: string) {
+function tagAndPush(version: string, current: string, notesFile: string) {
 	const tag = `v${version}`;
 	if (git("tag", "--list", tag) !== "") fail(`Tag ${tag} already exists.`);
 	if (version !== current) {
@@ -147,7 +236,7 @@ function tagAndPush(version: string, current: string) {
 		git("add", "package.json", "package-lock.json", "README.md");
 		git("commit", "--quiet", "-m", `Release ${version}`);
 	}
-	git("tag", "-a", tag, "-m", `Lanna ${version}`);
+	git("tag", "-a", "--cleanup=verbatim", "-F", notesFile, tag);
 	step(`Pushing main and ${tag}`);
 	git("push", "--atomic", "origin", "HEAD:main", tag);
 }
@@ -234,8 +323,16 @@ function verifyDraft(owner: string, repo: string, version: string, platforms: Pl
 async function main() {
 	const args = process.argv.slice(2);
 	const resume = args.includes("--resume");
+	const edit = !args.includes("--yes");
 	const request = args.find((arg) => !arg.startsWith("--"));
 	const { owner, repo } = updateFeedRepo();
+
+	if (args.includes("--notes")) {
+		const latest = await latestPublishedVersion();
+		git("fetch", "--quiet", "origin", "--tags");
+		console.log(latest ? composeNotes(releasedPrs(`v${latest}`)) : "First release.");
+		return;
+	}
 
 	preflight();
 	const current = packageVersion();
@@ -252,10 +349,11 @@ async function main() {
 		}
 		console.log(`  Published: ${latest ?? "none"} · main: ${current} · releasing: ${version}`);
 		runGates();
-		tagAndPush(version, current);
+		tagAndPush(version, current, writeNotes(version, latest, edit));
 	}
 
 	const tag = `v${version}`;
+	const notesFile = notesFromTag(tag);
 	step(`Waiting for the "Desktop release" workflow on ${tag}`);
 	const run = await findRun(owner, repo, tag);
 	console.log(`  ${run.url}`);
@@ -272,7 +370,19 @@ async function main() {
 
 	verifyDraft(owner, repo, version, built);
 	step(`Publishing ${tag}`);
-	gh("release", "edit", tag, "-R", `${owner}/${repo}`, "--draft=false", "--latest");
+	gh(
+		"release",
+		"edit",
+		tag,
+		"-R",
+		`${owner}/${repo}`,
+		"--title",
+		`Lanna ${version}`,
+		"--notes-file",
+		notesFile,
+		"--draft=false",
+		"--latest",
+	);
 	console.log(`\n✓ Lanna ${version} is published: https://github.com/${owner}/${repo}/releases/tag/${tag}`);
 	console.log(
 		"  Installed copies download it at their next check (startup, every 24 hours, or Check for Updates…) and install it on quit.",

@@ -45,17 +45,28 @@ npx electron-builder --linux --x64 --publish never
 bun run release:publish            # next patch above the published release
 bun run release:publish minor      # or major, or an exact version such as 0.2.0
 bun run release:publish --resume   # pick up a release whose tag is already pushed
+bun run release:publish --notes    # preview the next release's notes; changes nothing
 ```
 
 Run it on an up-to-date, clean `main`. It:
 
 1. picks the version: one patch above the latest published release (or above `main`, if `main` is already ahead), unless you name one;
 2. runs typecheck, lint, format check and the test suite locally, so a broken gate fails before anything is pushed;
-3. bumps `package.json`, `package-lock.json` and the README's `Version` line, commits `Release <version>`, tags `v<version>` and pushes both to `main` in one atomic push;
-4. waits for the **Desktop release** workflow to package every platform into the draft;
-5. checks the draft's files and update feeds with `scripts/verify-release.ts`, then publishes it.
+3. writes the release notes (below) and opens them in your git editor; an empty file cancels, `--yes` skips the editor;
+4. bumps `package.json`, `package-lock.json` and the README's `Version` line, commits `Release <version>`, tags `v<version>` and pushes both to `main` in one atomic push;
+5. waits for the **Desktop release** workflow to package every platform into the draft;
+6. checks the draft's files and update feeds with `scripts/verify-release.ts`, then publishes it with the notes.
 
 Windows and Linux must build. A failed macOS build (for example, missing signing secrets) only produces a warning, and the release ships without macOS files; Mac installs keep their version until a release includes them. If the script stops while waiting, run it again with `--resume`.
+
+### Release notes
+
+The GitHub Releases page is the changelog. Each release lists the pull requests merged to `main` since the previous release that bring commits not already shipped; a PR that only moves already-released or already-listed work (such as merging a stacked branch) is left out.
+
+- **What's new**: each PR's **What changes for the learner** paragraph, under its title. A paragraph that ends with a colon brings the list after it.
+- **Under the hood**: PRs whose section starts with "Nothing" (or that have none), as one line each.
+
+So the notes are only as good as that section of the PR description: write it for the learner. The notes are stored in the annotated `v<version>` tag, so `--resume` publishes the same text.
 
 ## Version numbers
 
