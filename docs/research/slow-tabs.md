@@ -4,6 +4,8 @@
 
 **Date:** 2026-11-03. **Branch:** `feat/motion-pass`. **Decision:** E36.
 
+**Since then:** KaTeX was removed in `e35f699b` (2026-11-08), so the KaTeX items below describe code that no longer exists. The other findings still hold.
+
 ## Method
 
 `node scripts/perf-check.mjs --cpu 4` against a production build (headless Chromium, 4x slower CPU, a seeded profile), before and after; JS coverage of `/milestones` with Playwright; a static import trace from `components/sidebar.tsx` to find what the shell pulls in.

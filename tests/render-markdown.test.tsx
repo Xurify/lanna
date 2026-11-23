@@ -106,12 +106,3 @@ describe("render — bold is the real <strong> (the dead Bold-color fix)", () =>
 		assert.ok(html.includes("<em>"), "italic renders a native em element");
 	});
 });
-
-// ─── escaped dollars inside math (owner, 2026-10-12) ────────────────────────
-//
-// micromark's mathText closer is code-span logic — ANY size-matched `$` run
-// closes, `\$` included — so `$x = \$5$` closed at the escape and errored.
-// KaTeX itself renders `\$` fine (and its own auto-render scanner skips
-// escaped dollars). The fix normalizes at the render seam: inside balanced
-// inline spans, `\$` becomes the dollar-free `\text{\textdollar}` BEFORE
-// tokenization, so the scanner's closer is the one the author meant.
