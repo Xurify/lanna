@@ -10,7 +10,7 @@ export const CHAPTER_STORIES: readonly ChapterStory[] = [
 	{
 		id: "story-hello",
 		language: "slovak",
-		title: "Story: The new neighbour",
+		title: "Story: The new neighbor",
 		tagline: "Greetings on the doorstep, and ahoj to the wrong person",
 		after: ["present", "lx-questions", "lx-greetings"],
 	},
@@ -46,21 +46,21 @@ export const CHAPTER_STORIES: readonly ChapterStory[] = [
 		id: "story-rainbow",
 		language: "slovak",
 		title: "Story: A rainbow over the river",
-		tagline: "Weather and colours in a rainy Saturday",
+		tagline: "Weather and colors on a rainy Saturday",
 		after: ["lx-weather", "lx-colours"],
 	},
 	{
 		id: "story-rainbow",
 		language: "russian",
 		title: "Story: A rainbow over the river",
-		tagline: "Weather and colours in a rainy Saturday",
+		tagline: "Weather and colors on a rainy Saturday",
 		after: ["lx-words-colors", "lx-words-weather", "lx-words-time"],
 	},
 	{
 		id: "story-rainbow",
 		language: "estonian",
 		title: "Story: A rainbow over the river",
-		tagline: "Weather and colours in a rainy Saturday",
+		tagline: "Weather and colors on a rainy Saturday",
 		after: ["lx-words-colors", "lx-words-weather", "lx-words-time"],
 	},
 	{

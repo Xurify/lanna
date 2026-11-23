@@ -1,6 +1,6 @@
 {
 	"title": "Nový sused",
-	"topic": "Martin meets his new neighbour Eva in front of the house, says ahoj to her grandmother by mistake and is invited for tea",
+	"topic": "Martin meets his new neighbor Eva in front of the house, says ahoj to her grandmother by mistake and is invited for tea",
 	"cover": "friends",
 	"cast": [
 		{
@@ -44,7 +44,7 @@
 		{
 			"who": "Eva",
 			"sk": "Ahoj! Ty si nový sused?",
-			"en": "Hi! Are you the new neighbour?"
+			"en": "Hi! Are you the new neighbor?"
 		},
 		{
 			"who": "Martin",
@@ -105,12 +105,12 @@
 		{
 			"who": "Martin",
 			"sk": "Prepáčte! Dobrý deň. Ja som Martin, nový sused.",
-			"en": "Sorry! Good morning. I'm Martin, the new neighbour."
+			"en": "Sorry! Good morning. I'm Martin, the new neighbor."
 		},
 		{
 			"who": "Babka",
 			"sk": "Dobrý deň, Martin. Teší ma. Ako sa máte, pán sused?",
-			"en": "Good morning, Martin. Nice to meet you. How are you, neighbour?"
+			"en": "Good morning, Martin. Nice to meet you. How are you, neighbor?"
 		},
 		{
 			"who": "Martin",
@@ -162,7 +162,7 @@
 	"newWords": [
 		{
 			"sk": "sused",
-			"en": "neighbour"
+			"en": "neighbor"
 		},
 		{
 			"sk": "babka",
@@ -201,7 +201,7 @@
 			"answer": 1
 		}
 	],
-	"recap": "Martin meets his new neighbour Eva in front of the house. He says ahoj to her grandmother by mistake, apologises and says dobrý deň, and she invites them both for tea in the evening.",
+	"recap": "Martin meets his new neighbor Eva in front of the house. He says ahoj to her grandmother by mistake, apologises and says dobrý deň, and she invites them both for tea in the evening.",
 	"glosses": {
 		"martin": {
 			"lemma": "Martin",
