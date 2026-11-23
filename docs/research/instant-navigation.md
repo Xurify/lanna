@@ -2,7 +2,7 @@
 
 **Question:** the owner asked for tab and section switches that feel instant, "any and every interaction", and pointed at how Vercel made v0's navigations instant. What in that approach fits this app, and what is left that is slow?
 
-**Date:** 2026-11-09. **Branch:** `feat/instant-navigation`. **Decision:** E86. It follows [slow-tabs.md](slow-tabs.md) (E36).
+**Date:** 2026-11-09. **Branch:** `feat/instant-navigation`. **Decision:** E86. It follows E36.
 
 ## What v0 did
 
@@ -18,12 +18,12 @@ The post gives no timings in its text; the result it states is which routes went
 
 ## What fits this app, and what does not
 
-| v0                                                   | Here                                                                                                                                                                                                                                            |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Define instant, test it with the server held         | Taken: `scripts/instant-check.mjs`                                                                                                                                                                                                              |
-| Failing test first, then the fix                     | Taken: the check was written and run against the old build first (table below)                                                                                                                                                                  |
-| A prerendered shell per route, cached in the browser | Not taken. Every page here is the learner's own files, so the shell would be the skeleton `app/loading.tsx` already gives, and turning Cache Components on means auditing 72 `force-dynamic` exports ([slow-tabs.md](slow-tabs.md), still true) |
-| Do not prefetch whole pages, it strains the server   | Reversed. The server is the learner's own computer and a page renders in 10 to 50 ms, so the whole page can be rendered before the click, once its render starts no paid work                                                                   |
+| v0                                                   | Here                                                                                                                                                                                                 |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Define instant, test it with the server held         | Taken: `scripts/instant-check.mjs`                                                                                                                                                                   |
+| Failing test first, then the fix                     | Taken: the check was written and run against the old build first (table below)                                                                                                                       |
+| A prerendered shell per route, cached in the browser | Not taken. Every page here is the learner's own files, so the shell would be the skeleton `app/loading.tsx` already gives, and turning Cache Components on means auditing 72 `force-dynamic` exports |
+| Do not prefetch whole pages, it strains the server   | Reversed. The server is the learner's own computer and a page renders in 10 to 50 ms, so the whole page can be rendered before the click, once its render starts no paid work                        |
 
 So the idea kept is the definition and the test. The mechanism is the older one Next.js still has without Cache Components: a full prefetch, asked for when the learner shows where they are going.
 
@@ -75,6 +75,6 @@ At 4x CPU after the change: the page in 140 to 402 ms (no run of the old build a
 - **A lesson opened from the Curriculum or a link** still goes through `loading.tsx`, and still waits up to 6 s the first time its sentences need close meanings.
 - **A chat page** reads a whole record and holds live state (a running turn), so it is not rendered ahead.
 - **Review's first deck** is fetched after the page mounts, because asking for it mints the day's new card.
-- **Saving waits for the server** before the screen changes: adding or removing a milestone, logging outside listening, deleting a chat, changing the goal, switching language. On this PC the calls a page makes take 12 to 45 ms ([slow-tabs.md](slow-tabs.md)); none was changed to show its result first.
+- **Saving waits for the server** before the screen changes: adding or removing a milestone, logging outside listening, deleting a chat, changing the goal, switching language. On this PC the calls a page makes take 12 to 45 ms; none was changed to show its result first.
 - **The guard test reads page files only.** A page that reaches a model through a helper with another name passes it.
 - **The PC and the packaged window** were not measured here.

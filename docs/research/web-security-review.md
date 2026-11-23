@@ -83,7 +83,7 @@ One thing seen on the way, not caused by this change as far as I can tell: React
 | `puppeteer-core`, `chromium-bidi`, `zod` < 4.6.6 | high     | the headless browser                        | Validates messages from the local browser, not from a user                                                                                                |
 | `undici` 7.x                                     | high     | provider clients (`openai`)                 | A denial of service by a malicious server; the providers are fixed hosts                                                                                  |
 | `source-map-js`                                  | high     | the stylesheet build                        | Build time only                                                                                                                                           |
-| `streamdown`                                     | low      | as above                                    | Not reached. `katex` left in `e35f699b` (2026-11-08) and `mermaid` in `884cd298`, so neither is in the tree                                               |
+| `streamdown`                                     | low      | as above                                    | Not reached                                                                                                                                               |
 
 ## Not verified
 
