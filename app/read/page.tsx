@@ -1,5 +1,5 @@
 import { Reader } from "@/components/reading/reader";
-import { readingState, storyStore } from "@/src/server";
+import { keepChapterStory, readingState } from "@/src/server";
 
 export const metadata = { title: "Read" };
 
@@ -15,7 +15,7 @@ export default async function ReadPage({ searchParams }: { searchParams: Promise
 	let story = null;
 	try {
 		state = readingState(new Date().getTimezoneOffset(), undefined, { topUpShelf: false });
-		if (id) story = storyStore.get(id);
+		if (id) story = await keepChapterStory(id);
 	} catch {
 		state = null;
 	}

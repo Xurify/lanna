@@ -31,7 +31,7 @@ import { piEngineForSpec, type PiEngine } from "../agent/models.ts";
 import { runSubagent } from "../agent/subagents/pi-run.ts";
 import type { Usage } from "@earendil-works/pi-ai";
 import { addMinutes, sessionMs } from "../core/active-time.ts";
-import { curriculumState, allChapters, STAGES, type Cefr } from "../core/curriculum.ts";
+import { curriculumState, curriculumUnit, allChapters, STAGES, type Cefr } from "../core/curriculum.ts";
 import { COVER_MOTIFS } from "../core/cover.ts";
 import { creditedWords, LEVEL_VOCAB } from "../core/milestones.ts";
 import { countryOf, foldDiacritics, type LanguageInfo } from "../core/language.ts";
@@ -1424,6 +1424,13 @@ export function recordRead(input: ReadResultInput, now = new Date()): ReadOutcom
 	d.xp += xp;
 	addMinutes(d, "read", sessionMs(input));
 	p.xp += xp;
+	if (curriculumUnit(story.id)?.kind === "story") {
+		const unit = (p.units[story.id] ??= { lessons: 0, reps: 0, correct: 0 });
+		unit.lessons += 1;
+		unit.reps += total;
+		unit.correct += correct;
+		unit.lastAt = now.toISOString();
+	}
 	progressStore.write(p);
 	const entry: ReadLogEntry = {
 		storyId: story.id,

@@ -512,7 +512,7 @@
 			"kind": "grammar",
 			"title": "Of many: the genitive plural",
 			"tagline": "столов, книг, дней",
-				"rule": "Genitive plural: masc -ов/-ев (столов), -ей after ж, ш, ч, щ, -ь (врачей, дней); neuter -о loses ending (слов, мест; окон); fem -а loses ending (книг; девушек, сестёр); -я → -ь (недель), but -ья → -ей (семей, статей); -ия/-ие → -ий (серий, зданий); -е → -ей (морей), -мя → -мён (времён).",
+			"rule": "Genitive plural: masc -ов/-ев (столов), -ей after ж, ш, ч, щ, -ь (врачей, дней); neuter -о loses ending (слов, мест; окон); fem -а loses ending (книг; девушек, сестёр); -я → -ь (недель), but -ья → -ей (семей, статей); -ия/-ие → -ий (серий, зданий); -е → -ей (морей), -мя → -мён (времён).",
 			"glyph": "layers",
 			"grammarTerm": "genitive plural",
 			"nativeTerm": "родительный падеж, множественное число",
@@ -1182,11 +1182,11 @@
 			]
 		},
 		{
-			"id": "lx-words-nature",
+			"id": "lx-words-weather",
 			"kind": "words",
-			"title": "Words: Weather and nature",
-			"tagline": "rain, snow, forest",
-			"rule": "Learn the word with its sentence.",
+			"title": "Words: Weather",
+			"tagline": "rain, snow, sun",
+			"rule": "Russian says the weather without a subject: холодно, идёт дождь.",
 			"glyph": "cloud-sun",
 			"lemmas": [
 				"погода",
@@ -1194,14 +1194,28 @@
 				"снег",
 				"солнце",
 				"ветер",
+				"небо",
+				"облако",
+				"холодно",
+				"тепло",
+				"жарко"
+			]
+		},
+		{
+			"id": "lx-words-nature",
+			"kind": "words",
+			"title": "Words: Nature",
+			"tagline": "sea, forest, river",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "tree-pine",
+			"lemmas": [
 				"море",
 				"лес",
 				"озеро",
 				"река",
 				"дерево",
 				"цветок",
-				"гора",
-				"небо"
+				"гора"
 			]
 		},
 		{
@@ -2036,6 +2050,7 @@
 				"tutor-aspect",
 				"future",
 				"lx-words-adverbs-time",
+				"lx-words-weather",
 				"can-make-plans"
 			]
 		},

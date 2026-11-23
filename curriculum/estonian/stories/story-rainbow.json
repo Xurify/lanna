@@ -1,0 +1,254 @@
+{
+	"title": "Vikerkaar jõe kohal",
+	"topic": "a rainy Saturday, colours and a rainbow",
+	"cover": "tree",
+	"cast": [
+		{
+			"name": "Mari",
+			"gender": "f",
+			"age": "child"
+		},
+		{
+			"name": "Jaan",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "On laupäeva hommik ja Tallinnas sajab vihma.",
+			"en": "It is Saturday morning and it is raining in Tallinn."
+		},
+		{
+			"who": "narrator",
+			"sk": "Taevas on hall ja tänaval ei ole kedagi.",
+			"en": "The sky is grey and there is nobody in the street."
+		},
+		{
+			"who": "Mari",
+			"sk": "Issi, milline ilm täna on?",
+			"en": "Daddy, what is the weather like today?"
+		},
+		{
+			"who": "Jaan",
+			"sk": "Halb. On külm ja puhub tugev tuul.",
+			"en": "Bad. It is cold and a strong wind is blowing."
+		},
+		{
+			"who": "Mari",
+			"sk": "Aga ma tahan parki minna!",
+			"en": "But I want to go to the park!"
+		},
+		{
+			"who": "Jaan",
+			"sk": "Hästi, aga pane selga punane jope.",
+			"en": "All right, but put on your red jacket."
+		},
+		{
+			"who": "narrator",
+			"sk": "Mari paneb jalga kollased kummikud.",
+			"en": "Mari puts on her yellow rubber boots."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ta võtab kaasa ka sinise vihmavarju.",
+			"en": "She takes the blue umbrella along too."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Pargis on muru märg ja roheline.",
+			"en": "In the park the grass is wet and green."
+		},
+		{
+			"who": "Mari",
+			"sk": "Vaata, issi, see loik on suur nagu meri!",
+			"en": "Look, Daddy, this puddle is as big as the sea!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Mari hüppab loiku ja naerab.",
+			"en": "Mari jumps into the puddle and laughs."
+		},
+		{
+			"who": "narrator",
+			"sk": "Siis vihm lõpeb ja pilve tagant tuleb päike.",
+			"en": "Then the rain stops and the sun comes out from behind a cloud."
+		},
+		{
+			"who": "narrator",
+			"sk": "Taevas on jälle sinine.",
+			"en": "The sky is blue again."
+		},
+		{
+			"who": "Jaan",
+			"sk": "Mari, vaata üles! Jõe kohal on vikerkaar.",
+			"en": "Mari, look up! There is a rainbow over the river."
+		},
+		{
+			"who": "Mari",
+			"sk": "Mis värvid vikerkaarel on?",
+			"en": "What colours does a rainbow have?"
+		},
+		{
+			"who": "Jaan",
+			"sk": "Punane, oranž, kollane, roheline, sinine ja lilla.",
+			"en": "Red, orange, yellow, green, blue and purple."
+		},
+		{
+			"who": "Mari",
+			"sk": "Minu jope on punane nagu vikerkaar!",
+			"en": "My jacket is red like the rainbow!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Pingil istub vanamees musta koeraga.",
+			"en": "An old man with a black dog is sitting on a bench."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ta ütleb, et pärast vihma tuleb alati päike.",
+			"en": "He says that after rain the sun always comes."
+		},
+		{
+			"who": "narrator",
+			"sk": "Õhtul on soe ja taevas on roosa.",
+			"en": "In the evening it is warm and the sky is pink."
+		},
+		{
+			"who": "Mari",
+			"sk": "Issi, kas homme sajab jälle vihma?",
+			"en": "Daddy, will it rain again tomorrow?"
+		},
+		{
+			"who": "Jaan",
+			"sk": "Ma ei tea. Aga sul on kollased kummikud.",
+			"en": "I don't know. But you have yellow rubber boots."
+		},
+		{
+			"who": "Mari",
+			"sk": "Ma tahan veel ühte vikerkaart!",
+			"en": "I want one more rainbow!"
+		}
+	],
+	"newWords": [
+		{
+			"sk": "vikerkaar",
+			"en": "rainbow"
+		},
+		{
+			"sk": "loik",
+			"en": "puddle"
+		},
+		{
+			"sk": "vihmavari",
+			"en": "umbrella"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Milline ilm on hommikul?",
+			"options": [
+				"Sajab vihma ja on külm.",
+				"Paistab päike ja on soe.",
+				"Sajab lund."
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Mis värvi on Mari jope?",
+			"options": [
+				"Sinine",
+				"Punane",
+				"Kollane"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Mida Mari ja issi jõe kohal näevad?",
+			"options": [
+				"Vikerkaart",
+				"Lennukit",
+				"Lindu"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "On a rainy Saturday Mari goes to the park with her dad in a red jacket and yellow boots. The rain stops, a rainbow appears over the river, and Mari wants one more.",
+	"glosses": {
+		"tallinnas": {
+			"lemma": "Tallinn",
+			"gloss": "Tallinn"
+		},
+		"hall": {
+			"lemma": "hall",
+			"gloss": "grey"
+		},
+		"issi": {
+			"lemma": "issi",
+			"gloss": "daddy"
+		},
+		"mari": {
+			"lemma": "Mari",
+			"gloss": "Mari (a name)"
+		},
+		"kummikud": {
+			"lemma": "kummik",
+			"gloss": "rubber boot"
+		},
+		"ta": {
+			"lemma": "tema",
+			"gloss": "he, she"
+		},
+		"sinise": {
+			"lemma": "sinine",
+			"gloss": "blue"
+		},
+		"sinine": {
+			"lemma": "sinine",
+			"gloss": "blue"
+		},
+		"loiku": {
+			"lemma": "loik",
+			"gloss": "puddle"
+		},
+		"kohal": {
+			"lemma": "kohal",
+			"gloss": "above (jõe kohal: over the river)"
+		},
+		"oranž": {
+			"lemma": "oranž",
+			"gloss": "orange"
+		},
+		"lilla": {
+			"lemma": "lilla",
+			"gloss": "purple"
+		},
+		"minu": {
+			"lemma": "mina",
+			"gloss": "I (minu: my)"
+		},
+		"vanamees": {
+			"lemma": "vanamees",
+			"gloss": "old man"
+		},
+		"musta": {
+			"lemma": "must",
+			"gloss": "black"
+		},
+		"roosa": {
+			"lemma": "roosa",
+			"gloss": "pink"
+		},
+		"sul": {
+			"lemma": "sina",
+			"gloss": "you (sul on: you have)"
+		}
+	}
+}

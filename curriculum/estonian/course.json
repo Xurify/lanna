@@ -1658,11 +1658,11 @@
 			]
 		},
 		{
-			"id": "lx-words-nature",
+			"id": "lx-words-weather",
 			"kind": "words",
-			"title": "Words: Weather and nature",
-			"tagline": "rain, snow, forest",
-			"rule": "Learn the word with its sentence.",
+			"title": "Words: Weather",
+			"tagline": "rain, snow, sun",
+			"rule": "Rain and snow fall with the partitive: sajab vihma, sajab lund.",
 			"glyph": "cloud-sun",
 			"lemmas": [
 				"ilm",
@@ -1670,15 +1670,29 @@
 				"lumi",
 				"päike",
 				"tuul",
+				"taevas",
+				"pilv",
+				"külm",
+				"soe",
+				"kuum",
+				"vihmavari"
+			]
+		},
+		{
+			"id": "lx-words-nature",
+			"kind": "words",
+			"title": "Words: Nature",
+			"tagline": "sea, forest, river",
+			"rule": "Learn the word with its sentence.",
+			"glyph": "tree-pine",
+			"lemmas": [
 				"meri",
 				"mets",
 				"järv",
 				"jõgi",
 				"puu",
 				"lill",
-				"mägi",
-				"taevas",
-				"kuum"
+				"mägi"
 			]
 		},
 		{
@@ -2400,6 +2414,7 @@
 			"units": [
 				"ma-or-da",
 				"lx-words-adverbs-time",
+				"lx-words-weather",
 				"tutor-modals",
 				"lx-words-free-time",
 				"can-make-plans"

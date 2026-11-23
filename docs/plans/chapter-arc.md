@@ -51,6 +51,8 @@ Settings links open the dialog. Talk and Story run on one screen each (E8).
 - Tests in `tests/reading.test.ts`: the pick order, and the `chapter` field surviving a round trip.
 - Acceptance: the Read shelf shows the current chapter's episode first. A second visit makes no model call.
 
+**Status (2026-11-23):** the story step has its first units: hand-written chapter stories (`src/core/chapter-stories.ts`, `curriculum/<language>/stories/`), one per language so far (weather and colors), read on the Read page and done after one reading.
+
 ### Phase 3: Dvojičky (contrast pairs)
 
 - `curriculum/slovak/pairs.json`: 12 to 20 pairs to start (ísť/chodiť, aký/ktorý, svoj/môj, radi/rady, kam/kde, and perfective/imperfective pairs). Each has a one-line rule and an Estonian bridge (P6).
