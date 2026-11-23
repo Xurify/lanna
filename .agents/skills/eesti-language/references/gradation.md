@@ -44,34 +44,34 @@ Alternation operates in two opposite directions across vocabulary classes:
 
 The dictionary form (Nominative Sg or _ma_-infinitive) is in the **strong grade**, and the Genitive Sg or Present stem is in the **weak grade**.
 
-| Word Class          | Strong Grade        | Weak Grade               | Strong Grade          |
-| ------------------- | ------------------- | ------------------------ | --------------------- |
-| **Nouns**           | **Nominative Sg**   | **Genitive Sg**          | **Partitive Sg**      |
-| _tuba_ (room)       | _tuba_ (strong)     | _toa_ (weak)             | _tuba_ (strong)       |
-| _leib_ (bread)      | _leib_ (strong)     | _leiva_ (weak)           | _leiba_ (strong)      |
-| _sepp_ (smith)      | _sepp_ (strong)     | _sepa_ (weak)            | _seppa_ (strong)      |
-| _jõgi_ (river)      | _jõgi_ (strong)     | _jõe_ (weak)             | _jõge_ (strong)       |
-| **Verbs**           | **_ma_-infinitive** | **1sg Present (_mina_)** | **3sg Past (_tema_)** |
-| _lugema_ (to read)  | _lugema_ (strong)   | _loen_ (weak)            | _luges_ (strong)      |
-| _teadma_ (to know)  | _teadma_ (strong)   | _tean_ (weak)            | _teadis_ (strong)     |
-| _õppima_ (to learn) | _õppima_ (strong)   | _õpin_ (weak)            | _õppis_ (strong)      |
+| Word Class | Strong Grade | Weak Grade | Strong Grade |
+| --- | --- | --- | --- |
+| **Nouns** | **Nominative Sg** | **Genitive Sg** | **Partitive Sg** |
+| _tuba_ (room) | _tuba_ (strong) | _toa_ (weak) | _tuba_ (strong) |
+| _leib_ (bread) | _leib_ (strong) | _leiva_ (weak) | _leiba_ (strong) |
+| _sepp_ (smith) | _sepp_ (strong) | _sepa_ (weak) | _seppa_ (strong) |
+| _jõgi_ (river) | _jõgi_ (strong) | _jõe_ (weak) | _jõge_ (strong) |
+| **Verbs** | **_ma_-infinitive** | **1sg Present (_mina_)** | **3sg Past (_tema_)** |
+| _lugema_ (to read) | _lugema_ (strong) | _loen_ (weak) | _luges_ (strong) |
+| _teadma_ (to know) | _teadma_ (strong) | _tean_ (weak) | _teadis_ (strong) |
+| _õppima_ (to learn) | _õppima_ (strong) | _õpin_ (weak) | _õppis_ (strong) |
 
 ### Direction B: Strengthening Alternation (Tugevnev astmevaheldus)
 
 The dictionary form is in the **weak grade**, while the Genitive Sg or Present stem is in the **strong grade**. Common in words ending in a consonant or _-e_.
 
-| Word Class                     | Weak Grade          | Strong Grade             | Weak Grade          |
-| ------------------------------ | ------------------- | ------------------------ | ------------------- |
-| **Nouns**                      | **Nominative Sg**   | **Genitive Sg**          | **Partitive Sg**    |
-| _mõte_ (thought)               | _mõte_ (weak)       | _mõtte_ (strong)         | _mõtet_ (weak)      |
-| _hammas_ (tooth)               | _hammas_ (weak)     | _hamba_ (strong)         | _hammast_ (weak)    |
-| _kallis_ (expensive/dear)      | _kallis_ (weak)     | _kalli_ (strong)         | _kallist_ (weak)    |
-| _kallas_ (shore/bank)          | _kallas_ (weak)     | _kalda_ (strong)         | _kallast_ (weak)    |
-| _tütar_ (daughter)             | _tütar_ (weak)      | _tütre_ (strong)         | _tütart_ (weak)     |
-| **Verbs**                      | **_ma_-infinitive** | **3sg Present (_tema_)** | **_da_-infinitive** |
-| _katkema_ (to break)           | _katkema_ (weak)    | _katkeb_ (strong)        | _katkeda_ (weak)    |
-| _pettuma_ (to be disappointed) | _pettuma_ (weak)    | _pettub_ (strong)        | _pettuda_ (weak)    |
-| _hõljuma_ (to hover)           | _hõljuma_ (weak)    | _hõljub_ (strong)        | _hõljuda_ (weak)    |
+| Word Class | Weak Grade | Strong Grade | Weak Grade |
+| --- | --- | --- | --- |
+| **Nouns** | **Nominative Sg** | **Genitive Sg** | **Partitive Sg** |
+| _mõte_ (thought) | _mõte_ (weak) | _mõtte_ (strong) | _mõtet_ (weak) |
+| _hammas_ (tooth) | _hammas_ (weak) | _hamba_ (strong) | _hammast_ (weak) |
+| _kallis_ (expensive/dear) | _kallis_ (weak) | _kalli_ (strong) | _kallist_ (weak) |
+| _kallas_ (shore/bank) | _kallas_ (weak) | _kalda_ (strong) | _kallast_ (weak) |
+| _tütar_ (daughter) | _tütar_ (weak) | _tütre_ (strong) | _tütart_ (weak) |
+| **Verbs** | **_ma_-infinitive** | **3sg Present (_tema_)** | **_da_-infinitive** |
+| _katkema_ (to break) | _katkema_ (weak) | _katkeb_ (strong) | _katkeda_ (weak) |
+| _pettuma_ (to be disappointed) | _pettuma_ (weak) | _pettub_ (strong) | _pettuda_ (weak) |
+| _hõljuma_ (to hover) | _hõljuma_ (weak) | _hõljub_ (strong) | _hõljuda_ (weak) |
 
 ---
 

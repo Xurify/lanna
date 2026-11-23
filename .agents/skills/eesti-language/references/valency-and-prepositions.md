@@ -12,17 +12,17 @@ Estonian is predominantly **postpositional** (_tagasõnad_), placing the adposit
 
 Most spatial postpositions form their own 3-way directional triad:
 
-| Base Concept             | Motion Towards (_Kuhu?_) | Static Location (_Kus?_) | Motion Away (_Kust?_) | Example with Genitive _laua_ ("table")        |
-| ------------------------ | ------------------------ | ------------------------ | --------------------- | --------------------------------------------- |
-| **On top / Surface**     | _peale_                  | _peal_                   | _pealt_               | _laua peale / laua peal / laua pealt_         |
-| **Underneath**           | _alla_                   | _all_                    | _alt_                 | _laua alla / laua all / laua alt_             |
-| **In front**             | _ette_                   | _ees_                    | _eest_                | _maja ette / maja ees / maja eest_            |
-| **Behind**               | _taha_                   | _taga_                   | _tagant_              | _maja taha / maja taga / maja tagant_         |
-| **At / Beside (person)** | _juurde_                 | _juures_                 | _juurest_             | _arsti juurde / arsti juures / arsti juurest_ |
-| **Beside / Side**        | _kõrvale_                | _kõrval_                 | _kõrvalt_             | _tee kõrvale / tee kõrval / tee kõrvalt_      |
-| **Inside**               | _sisse_                  | _sees_                   | _seest_               | _kasti sisse / kasti sees / kasti seest_      |
-| **Between**              | _vahele_                 | _vahel_                  | _vahelt_              | _kahe maja vahele / vahel / vahelt_           |
-| **Around**               | _ümber_                  | _ümber_                  | _ümbert_              | _linna ümber_ (around the city)               |
+| Base Concept | Motion Towards (_Kuhu?_) | Static Location (_Kus?_) | Motion Away (_Kust?_) | Example with Genitive _laua_ ("table") |
+| --- | --- | --- | --- | --- |
+| **On top / Surface** | _peale_ | _peal_ | _pealt_ | _laua peale / laua peal / laua pealt_ |
+| **Underneath** | _alla_ | _all_ | _alt_ | _laua alla / laua all / laua alt_ |
+| **In front** | _ette_ | _ees_ | _eest_ | _maja ette / maja ees / maja eest_ |
+| **Behind** | _taha_ | _taga_ | _tagant_ | _maja taha / maja taga / maja tagant_ |
+| **At / Beside (person)** | _juurde_ | _juures_ | _juurest_ | _arsti juurde / arsti juures / arsti juurest_ |
+| **Beside / Side** | _kõrvale_ | _kõrval_ | _kõrvalt_ | _tee kõrvale / tee kõrval / tee kõrvalt_ |
+| **Inside** | _sisse_ | _sees_ | _seest_ | _kasti sisse / kasti sees / kasti seest_ |
+| **Between** | _vahele_ | _vahel_ | _vahelt_ | _kahe maja vahele / vahel / vahelt_ |
+| **Around** | _ümber_ | _ümber_ | _ümbert_ | _linna ümber_ (around the city) |
 
 Non-spatial postpositions governing Genitive:
 

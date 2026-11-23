@@ -6,22 +6,22 @@ A token-minimized reference for the foundational architecture of the Estonian la
 
 Estonian has 14 productive cases. There is no accusative or dative case; accusative functions are divided between nominative, genitive, and partitive, while dative functions are served by the allative (_alaleütlev_) or adpositional phrases.
 
-| Case            | Estonian Name | Question          | Sg. Ending                              | Pl. Ending                  | Primary Function                                                | Example (_maja_ "house") | Example (_tuba_ "room") |
-| --------------- | ------------- | ----------------- | --------------------------------------- | --------------------------- | --------------------------------------------------------------- | ------------------------ | ----------------------- |
-| 1. Nominative   | Nimetav       | Kes? Mis?         | —                                       | _-d_                        | Subject, dictionary form, total object in plurals & imperatives | _maja / majad_           | _tuba / toad_           |
-| 2. Genitive     | Omastav       | Kelle? Mille?     | vowel                                   | _-de / -te_                 | Possession, total object in singular, pre-adposition stem       | _maja / majade_          | _toa / tubade_          |
-| 3. Partitive    | Osastav       | Keda? Mida?       | _-d / -t / -d / vowel_                  | _-sid / -id / -e / -i / -u_ | Partial object, negative object, numbers > 1, open quantity     | _maja / maju_            | _tuba / tube_           |
-| 4. Illative     | Sisseütlev    | Kellesse? Kuhu?   | _-sse_ (short form: _-de, -he, -vowel_) | _-desse / -tesse / -isse_   | Movement into (interior destination)                            | _majasse_                | _tuppa_ (short)         |
-| 5. Inessive     | Seesütlev     | Kelles? Kus?      | _-s_                                    | _-des / -tes / -is_         | State inside (interior location)                                | _majas / majades_        | _toas / tubades_        |
-| 6. Elative      | Seestütlev    | Kellest? Kust?    | _-st_                                   | _-dest / -test / -ist_      | Movement out of, topic ("about")                                | _majast / majadest_      | _toast / tubadest_      |
-| 7. Allative     | Alaleütlev    | Kellele? Kuhu?    | _-le_                                   | _-dele / -tele / -ile_      | Movement onto, recipient (indirect object)                      | _majale / majadele_      | _toale / tubadele_      |
-| 8. Adessive     | Alalütlev     | Kellel? Kus?      | _-l_                                    | _-del / -tel / -il_         | State on top of, possession (_mul on_)                          | _majal / majadel_        | _toal / tubadel_        |
-| 9. Ablative     | Alaltütlev    | Kellelt? Kust?    | _-lt_                                   | _-delt / -telt / -ilt_      | Movement off of, source of information                          | _majalt / majadelt_      | _toalt / tubadelt_      |
-| 10. Translative | Saav          | Kelleks? Milleks? | _-ks_                                   | _-deks / -teks / -iks_      | Change of state, purpose, deadline ("by Monday")                | _majaks / majadeks_      | _toaks / tubadeks_      |
-| 11. Terminative | Rajav         | Kelleni? Milleni? | _-ni_                                   | _-deni / -teni / -ini_      | Limit in space or time ("up to, until")                         | _majani / majadeni_      | _toani / tubadeni_      |
-| 12. Essive      | Olev          | Kellena? Millena? | _-na_                                   | _-dena / -tena / -ina_      | State/role as ("as a teacher")                                  | _majana / majadena_      | _toana / tubadena_      |
-| 13. Abessive    | Ilmaütlev     | Kelleta? Milleta? | _-ta_                                   | _-deta / -teta / -ita_      | Absence ("without")                                             | _majata / majadeta_      | _toata / tubadeta_      |
-| 14. Comitative  | Kaasaütlev    | Kellega? Millega? | _-ga_                                   | _-dega / -tega / -iga_      | Accompaniment, instrument/tool                                  | _majaga / majadega_      | _toaga / tubadega_      |
+| Case | Estonian Name | Question | Sg. Ending | Pl. Ending | Primary Function | Example (_maja_ "house") | Example (_tuba_ "room") |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1. Nominative | Nimetav | Kes? Mis? | — | _-d_ | Subject, dictionary form, total object in plurals & imperatives | _maja / majad_ | _tuba / toad_ |
+| 2. Genitive | Omastav | Kelle? Mille? | vowel | _-de / -te_ | Possession, total object in singular, pre-adposition stem | _maja / majade_ | _toa / tubade_ |
+| 3. Partitive | Osastav | Keda? Mida? | _-d / -t / -d / vowel_ | _-sid / -id / -e / -i / -u_ | Partial object, negative object, numbers > 1, open quantity | _maja / maju_ | _tuba / tube_ |
+| 4. Illative | Sisseütlev | Kellesse? Kuhu? | _-sse_ (short form: _-de, -he, -vowel_) | _-desse / -tesse / -isse_ | Movement into (interior destination) | _majasse_ | _tuppa_ (short) |
+| 5. Inessive | Seesütlev | Kelles? Kus? | _-s_ | _-des / -tes / -is_ | State inside (interior location) | _majas / majades_ | _toas / tubades_ |
+| 6. Elative | Seestütlev | Kellest? Kust? | _-st_ | _-dest / -test / -ist_ | Movement out of, topic ("about") | _majast / majadest_ | _toast / tubadest_ |
+| 7. Allative | Alaleütlev | Kellele? Kuhu? | _-le_ | _-dele / -tele / -ile_ | Movement onto, recipient (indirect object) | _majale / majadele_ | _toale / tubadele_ |
+| 8. Adessive | Alalütlev | Kellel? Kus? | _-l_ | _-del / -tel / -il_ | State on top of, possession (_mul on_) | _majal / majadel_ | _toal / tubadel_ |
+| 9. Ablative | Alaltütlev | Kellelt? Kust? | _-lt_ | _-delt / -telt / -ilt_ | Movement off of, source of information | _majalt / majadelt_ | _toalt / tubadelt_ |
+| 10. Translative | Saav | Kelleks? Milleks? | _-ks_ | _-deks / -teks / -iks_ | Change of state, purpose, deadline ("by Monday") | _majaks / majadeks_ | _toaks / tubadeks_ |
+| 11. Terminative | Rajav | Kelleni? Milleni? | _-ni_ | _-deni / -teni / -ini_ | Limit in space or time ("up to, until") | _majani / majadeni_ | _toani / tubadeni_ |
+| 12. Essive | Olev | Kellena? Millena? | _-na_ | _-dena / -tena / -ina_ | State/role as ("as a teacher") | _majana / majadena_ | _toana / tubadena_ |
+| 13. Abessive | Ilmaütlev | Kelleta? Milleta? | _-ta_ | _-deta / -teta / -ita_ | Absence ("without") | _majata / majadeta_ | _toata / tubadeta_ |
+| 14. Comitative | Kaasaütlev | Kellega? Millega? | _-ga_ | _-dega / -tega / -iga_ | Accompaniment, instrument/tool | _majaga / majadega_ | _toaga / tubadega_ |
 
 ---
 
@@ -44,11 +44,11 @@ Almost all 14 cases are derived deterministically from three principal nominal f
 
 Estonian organizes 6 spatial cases into two parallel 3-way triads:
 
-| Direction / State            | Question | Internal (_Sisekohakäänded_)                         | External (_Väliskohakäänded_)              |
-| ---------------------------- | -------- | ---------------------------------------------------- | ------------------------------------------ |
-| **Destination** ("Whither?") | _Kuhu?_  | **Illative** (_-sse_ / short form): _linna_, _kooli_ | **Allative** (_-le_): _tänavale_, _lauale_ |
-| **Location** ("Where?")      | _Kus?_   | **Inessive** (_-s_): _linnas_, _koolis_              | **Adessive** (_-l_): _tänaval_, _laual_    |
-| **Source** ("Where from?")   | _Kust?_  | **Elative** (_-st_): _linnast_, _koolist_            | **Ablative** (_-lt_): _tänavalt_, _laualt_ |
+| Direction / State | Question | Internal (_Sisekohakäänded_) | External (_Väliskohakäänded_) |
+| --- | --- | --- | --- |
+| **Destination** ("Whither?") | _Kuhu?_ | **Illative** (_-sse_ / short form): _linna_, _kooli_ | **Allative** (_-le_): _tänavale_, _lauale_ |
+| **Location** ("Where?") | _Kus?_ | **Inessive** (_-s_): _linnas_, _koolis_ | **Adessive** (_-l_): _tänaval_, _laual_ |
+| **Source** ("Where from?") | _Kust?_ | **Elative** (_-st_): _linnast_, _koolist_ | **Ablative** (_-lt_): _tänavalt_, _laualt_ |
 
 - **Settlements**: Most Estonian towns use internal cases (_Tallinnas, Tartus, Pärnus, Narvas, Viljandis_), but some use external cases by historical convention (_Tapal, Elvas, Otepääl, Sauel, Keilas, Sillamäel_). Foreign countries usually take internal (_Soomes, Rootsis_; _Inglismaal_ takes external because of _-maa_).
 

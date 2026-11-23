@@ -8,12 +8,12 @@ Ship Lanna as a responsive, installable web app served from the owner's PC. Do n
 
 ## Routes considered
 
-| Route                                       | What it is                                                                      | For                                                                                                                                          | Against                                                                                                                                                                                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Responsive installable web app (chosen)** | The current Next app, laid out for phones and tablets, added to the home screen | One UI for desktop and tablet; the data (E7) and the keys (E5) stay on the PC; no Apple account needed to try it; each change ships in hours | Not in the App Store; the iOS limits below; the PC must be reachable from the device, securely                                                                                                                            |
-| Capacitor or Ionic shell                    | The same web UI inside a native app, sent to the App Store                      | Store listing; native plugins if needed later                                                                                                | App Store guideline 4.2 (Minimum Functionality) rejects thin wrappers; this app would be a thin client to a server on the owner's PC, the weakest case; needs an Apple developer account, which only the owner can create |
-| React Native or Expo rewrite                | Native screens rebuilt in React Native                                          | Best native feel                                                                                                                             | A second UI for every screen; the UX changes almost daily, so every pass would be done twice                                                                                                                              |
-| Swift or SwiftUI                            | A separate iOS app                                                              | Best platform fit                                                                                                                            | A third codebase next to the desktop app and the web UI; the same account and store questions                                                                                                                             |
+| Route | What it is | For | Against |
+| --- | --- | --- | --- |
+| **Responsive installable web app (chosen)** | The current Next app, laid out for phones and tablets, added to the home screen | One UI for desktop and tablet; the data (E7) and the keys (E5) stay on the PC; no Apple account needed to try it; each change ships in hours | Not in the App Store; the iOS limits below; the PC must be reachable from the device, securely |
+| Capacitor or Ionic shell | The same web UI inside a native app, sent to the App Store | Store listing; native plugins if needed later | App Store guideline 4.2 (Minimum Functionality) rejects thin wrappers; this app would be a thin client to a server on the owner's PC, the weakest case; needs an Apple developer account, which only the owner can create |
+| React Native or Expo rewrite | Native screens rebuilt in React Native | Best native feel | A second UI for every screen; the UX changes almost daily, so every pass would be done twice |
+| Swift or SwiftUI | A separate iOS app | Best platform fit | A third codebase next to the desktop app and the web UI; the same account and store questions |
 
 Revisit a native shell when a feature needs something the browser cannot give (background audio that survives the screen locking, for example), or when the owner wants a store listing and has the account.
 
@@ -54,17 +54,17 @@ Options for the next slice, with a recommendation:
 
 Method: the sandbox (`npm run dev:sandbox -- --seed`): a throwaway data folder outside the repo, fake keys, a free port. Playwright with a 390 × 844 and an 820 × 1180 viewport at 2× device pixels, touch emulation on. Screenshots are in the project audit folder, `audit/mobile/` (see its README).
 
-| Check                                                           | Result                                                                   |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Horizontal overflow, Today, lesson, review, Read at 390 and 820 | none                                                                     |
-| Bottom navigation, phone                                        | 57 px                                                                    |
-| Keycap hints visible on touch                                   | 0                                                                        |
-| Reader word card inside the screen, 390 px                      | yes (was 15 px over)                                                     |
-| Sidebar controls under 44 px, drawer open                       | 0                                                                        |
-| Reader controls under 44 px, excluding words in running text    | 0                                                                        |
-| ESLint on the changed files                                     | clean                                                                    |
-| Typecheck                                                       | 89 errors, all in files this slice did not touch, the same count as main |
-| Test suite                                                      | 2,759 of 2,772 pass; the 13 failures predate this change (below)         |
+| Check | Result |
+| --- | --- |
+| Horizontal overflow, Today, lesson, review, Read at 390 and 820 | none |
+| Bottom navigation, phone | 57 px |
+| Keycap hints visible on touch | 0 |
+| Reader word card inside the screen, 390 px | yes (was 15 px over) |
+| Sidebar controls under 44 px, drawer open | 0 |
+| Reader controls under 44 px, excluding words in running text | 0 |
+| ESLint on the changed files | clean |
+| Typecheck | 89 errors, all in files this slice did not touch, the same count as main |
+| Test suite | 2,759 of 2,772 pass; the 13 failures predate this change (below) |
 
 The 13 failing tests are in 6 files (automatic updates, desktop payload and platform, say-it-faster round, rejected examples, server title guard, subscription auth). The same 18 failing lines occur on a clean worktree of main, so they predate this change.
 

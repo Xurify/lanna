@@ -4,25 +4,25 @@
 
 Slovak has no articles. Learn every noun with its gender and a frame, not as an isolated English gloss. Main genders: masculine animate (`muž`), masculine inanimate (`stôl`), feminine (`žena`), neuter (`mesto`). Masculine animate singular accusative normally equals genitive; masculine inanimate singular accusative normally equals nominative.
 
-| Case         | Main question/function                                | Core frames                              |
-| ------------ | ----------------------------------------------------- | ---------------------------------------- |
-| Nominative   | kto? čo? subject/name                                 | `To je nový stôl.`                       |
-| Accusative   | koho? čo? direct object; destination after many preps | `Vidím nového suseda.` `Idem na poštu.`  |
-| Genitive     | koho? čoho? possession, absence, origin, quantity     | `bez cukru`, `z Bratislavy`, `niet času` |
-| Dative       | komu? čomu? recipient/beneficiary                     | `Pomáham bratovi.`                       |
-| Locative     | o kom? o čom? location/topic; only with prepositions  | `v meste`, `o práci`, `na stole`         |
-| Instrumental | s kým? s čím? accompaniment/means                     | `s kamarátom`, `autobusom`               |
+| Case | Main question/function | Core frames |
+| --- | --- | --- |
+| Nominative | kto? čo? subject/name | `To je nový stôl.` |
+| Accusative | koho? čo? direct object; destination after many preps | `Vidím nového suseda.` `Idem na poštu.` |
+| Genitive | koho? čoho? possession, absence, origin, quantity | `bez cukru`, `z Bratislavy`, `niet času` |
+| Dative | komu? čomu? recipient/beneficiary | `Pomáham bratovi.` |
+| Locative | o kom? o čom? location/topic; only with prepositions | `v meste`, `o práci`, `na stole` |
+| Instrumental | s kým? s čím? accompaniment/means | `s kamarátom`, `autobusom` |
 
 High-frequency singular models:
 
-| Type         | nom.  | acc.  | gen.  | dat.   | loc.   | instr. |
-| ------------ | ----- | ----- | ----- | ------ | ------ | ------ |
-| m. inanimate | stôl  | stôl  | stola | stolu  | stole  | stolom |
-| m. animate   | muž   | muža  | muža  | mužovi | mužovi | mužom  |
-| f. `žena`    | žena  | ženu  | ženy  | žene   | žene   | ženou  |
-| f. `ulica`   | ulica | ulicu | ulice | ulici  | ulici  | ulicou |
-| n. `mesto`   | mesto | mesto | mesta | mestu  | meste  | mestom |
-| n. `pole`    | pole  | pole  | poľa  | poľu   | poli   | poľom  |
+| Type | nom. | acc. | gen. | dat. | loc. | instr. |
+| --- | --- | --- | --- | --- | --- | --- |
+| m. inanimate | stôl | stôl | stola | stolu | stole | stolom |
+| m. animate | muž | muža | muža | mužovi | mužovi | mužom |
+| f. `žena` | žena | ženu | ženy | žene | žene | ženou |
+| f. `ulica` | ulica | ulicu | ulice | ulici | ulici | ulicou |
+| n. `mesto` | mesto | mesto | mesta | mestu | meste | mestom |
+| n. `pole` | pole | pole | poľa | poľu | poli | poľom |
 
 Plural is less predictable. Teach a noun's plural separately, especially masculine animate (`muži`, `ľudia`, `priatelia`), neuter (`mestá`, `polia`, `dievčatá`), and genitive plural (`bez mužov, miest, žien`). Numerals require special attention: `jeden muž`, `dva muži`, `dve ženy/mestá`, but `päť mužov/žien/miest`.
 
@@ -40,18 +40,18 @@ Formal `Vy` takes plural verb forms: `Ako sa máte? Ste pripravený?` Address an
 
 The infinitive usually ends in `-ť`. Present endings vary by class; introduce frequent verbs as full patterns:
 
-| Infinitive | 1sg     | 2sg     | 3sg    | 1pl      | 2pl      | 3pl    |
-| ---------- | ------- | ------- | ------ | -------- | -------- | ------ |
-| robiť      | robím   | robíš   | robí   | robíme   | robíte   | robia  |
-| čítať      | čítam   | čítaš   | číta   | čítame   | čítate   | čítajú |
-| bývať      | bývam   | bývaš   | býva   | bývame   | bývate   | bývajú |
-| kupovať    | kupujem | kupuješ | kupuje | kupujeme | kupujete | kupujú |
-| ísť        | idem    | ideš    | ide    | ideme    | idete    | idú    |
-| chcieť     | chcem   | chceš   | chce   | chceme   | chcete   | chcú   |
-| môcť       | môžem   | môžeš   | môže   | môžeme   | môžete   | môžu   |
-| vedieť     | viem    | vieš    | vie    | vieme    | viete    | vedia  |
-| byť        | som     | si      | je     | sme      | ste      | sú     |
-| mať        | mám     | máš     | má     | máme     | máte     | majú   |
+| Infinitive | 1sg | 2sg | 3sg | 1pl | 2pl | 3pl |
+| --- | --- | --- | --- | --- | --- | --- |
+| robiť | robím | robíš | robí | robíme | robíte | robia |
+| čítať | čítam | čítaš | číta | čítame | čítate | čítajú |
+| bývať | bývam | bývaš | býva | bývame | bývate | bývajú |
+| kupovať | kupujem | kupuješ | kupuje | kupujeme | kupujete | kupujú |
+| ísť | idem | ideš | ide | ideme | idete | idú |
+| chcieť | chcem | chceš | chce | chceme | chcete | chcú |
+| môcť | môžem | môžeš | môže | môžeme | môžete | môžu |
+| vedieť | viem | vieš | vie | vieme | viete | vedia |
+| byť | som | si | je | sme | ste | sú |
+| mať | mám | máš | má | máme | máte | majú |
 
 Past tense = `-l` participle agreeing with the subject + present `byť` clitic where needed: `bol som`, `bola som`, `boli sme`; `urobil som to`. In third person, `byť` is omitted: `Včera prišiel.`
 
@@ -71,19 +71,19 @@ Motion needs distinction: `ísť` (one directed trip, on foot or by vehicle: `id
 
 Memorize the case with the preposition. Central contrast: location = locative/instrumental; destination/motion toward = accusative for changing prepositions.
 
-| Pattern         | Meaning                  | Example                           |
-| --------------- | ------------------------ | --------------------------------- |
-| `v/vo + loc.`   | in                       | `v škole`, `v januári`            |
-| `do + gen.`     | into/to                  | `do školy`, `do Bratislavy`       |
-| `na + loc.`     | on/at                    | `na stole`, `na Slovensku`        |
-| `na + acc.`     | onto; for a purpose/time | `na stôl`, `na obed`, `na týždeň` |
-| `z/zo + gen.`   | out of/from              | `z domu`, `zo školy`              |
-| `k/ku + dat.`   | to/toward                | `k lekárovi`, `ku mne`            |
-| `s/so + instr.` | with                     | `s priateľmi`                     |
-| `o + loc.`      | about; at a clock time   | `o filme`, `o tretej`             |
-| `pre + acc.`    | for/because of           | `pre teba`, `pre dážď`            |
-| `bez + gen.`    | without                  | `bez problémov`                   |
-| `u + gen.`      | at someone's place       | `u lekára`, `u mamy`              |
+| Pattern | Meaning | Example |
+| --- | --- | --- |
+| `v/vo + loc.` | in | `v škole`, `v januári` |
+| `do + gen.` | into/to | `do školy`, `do Bratislavy` |
+| `na + loc.` | on/at | `na stole`, `na Slovensku` |
+| `na + acc.` | onto; for a purpose/time | `na stôl`, `na obed`, `na týždeň` |
+| `z/zo + gen.` | out of/from | `z domu`, `zo školy` |
+| `k/ku + dat.` | to/toward | `k lekárovi`, `ku mne` |
+| `s/so + instr.` | with | `s priateľmi` |
+| `o + loc.` | about; at a clock time | `o filme`, `o tretej` |
+| `pre + acc.` | for/because of | `pre teba`, `pre dážď` |
+| `bez + gen.` | without | `bez problémov` |
+| `u + gen.` | at someone's place | `u lekára`, `u mamy` |
 
 `pred, za, nad, pod, medzi` take instrumental for static location (`pred domom`) and accusative for movement toward/into it (`pred dom`). `po + loc.` commonly means after/around/along; `po + acc.` in `ísť po chlieb` means go to fetch.
 

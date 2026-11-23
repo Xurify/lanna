@@ -9,15 +9,15 @@ Produce idiomatic standard Russian, explain choices at the learner's level, and 
 
 ## Select the task mode
 
-| Request           | Do                                                                                                                                                                                                                                                  |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Translate         | Establish audience, `ты`/`вы`, and register. Translate meaning and natural collocation, not words one by one. Distinguish motion verbs and aspect accurately in context.                                                                            |
-| Write or rewrite  | State the register, use natural Russian discourse particles (`же, ведь, вот, ну`), and proofread case government, aspect pairs, animacy, and preposition variants (`в/во, с/со, к/ко, о/об/обо`).                                                   |
-| Correct           | Return a corrected version first. Then give high-value explanations, labelled by error type (case government, aspect, motion verbs, agreement, vowel reduction/spelling). Preserve natural colloquial phrasing unless formal standard is requested. |
-| Teach             | Diagnose the learner's level with a short production task. Teach one controlled pattern (e.g. spatial triad `где / куда / откуда` or unidirectional vs multidirectional motion), contrast with near misses, then elicit new sentences.              |
-| Plan study        | Map the learner's goal to an A1–B2/C1 progression aligned with official ТРКИ (TORFL) standards. Combine retrieval, spaced review, listening, speaking, reading, and writing.                                                                        |
-| Explain grammar   | Give the functional meaning first, then the minimal paradigm (nominative, genitive, and accusative/prepositional anchors, or infinitive + 1sg/2sg verb stems) and 3–5 contextual examples.                                                          |
-| Author curriculum | Validate sentences against authentic usage, ensure valid cloze tokens, correct case government, and check all standard variant answers.                                                                                                             |
+| Request | Do |
+| --- | --- |
+| Translate | Establish audience, `ты`/`вы`, and register. Translate meaning and natural collocation, not words one by one. Distinguish motion verbs and aspect accurately in context. |
+| Write or rewrite | State the register, use natural Russian discourse particles (`же, ведь, вот, ну`), and proofread case government, aspect pairs, animacy, and preposition variants (`в/во, с/со, к/ко, о/об/обо`). |
+| Correct | Return a corrected version first. Then give high-value explanations, labelled by error type (case government, aspect, motion verbs, agreement, vowel reduction/spelling). Preserve natural colloquial phrasing unless formal standard is requested. |
+| Teach | Diagnose the learner's level with a short production task. Teach one controlled pattern (e.g. spatial triad `где / куда / откуда` or unidirectional vs multidirectional motion), contrast with near misses, then elicit new sentences. |
+| Plan study | Map the learner's goal to an A1–B2/C1 progression aligned with official ТРКИ (TORFL) standards. Combine retrieval, spaced review, listening, speaking, reading, and writing. |
+| Explain grammar | Give the functional meaning first, then the minimal paradigm (nominative, genitive, and accusative/prepositional anchors, or infinitive + 1sg/2sg verb stems) and 3–5 contextual examples. |
+| Author curriculum | Validate sentences against authentic usage, ensure valid cloze tokens, correct case government, and check all standard variant answers. |
 
 Always write Russian in Cyrillic. In pedagogical contexts or teaching explanations, mark stress with the combining acute accent (U+0301) on words of two or more syllables (e.g. `за́мок / замо́к`), and always write `ё` (`всё, её, ещё`).
 
@@ -52,17 +52,17 @@ If you cannot verify, indicate uncertainty explicitly and offer the safest stand
 
 Read only the reference required by the task:
 
-| Need                                                                                                                   | Read                                                                          |
-| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Quick overview of 6 cases, Cyrillic, 3 genders, basic syntax                                                           | [grammar-core.md](references/grammar-core.md)                                 |
-| Noun declensions (1st, 2nd, 3rd), 6 cases, plurals, animacy, fleeting vowels, locative/partitive in -у                 | [nouns.md](references/nouns.md)                                               |
-| Adjectives (hard/soft, short forms), pronouns (personal, possessive, demonstrative, relative), numerals & time         | [adjectives-pronouns-numerals.md](references/adjectives-pronouns-numerals.md) |
-| Conjugation (1st/2nd), tenses (present, past, future), imperative, conditional, reflexive verbs                        | [verb-forms.md](references/verb-forms.md)                                     |
-| Verbal aspect (imperfective/perfective pairs), verbs of motion (unidirectional/multidirectional, prefixes)             | [aspect-and-motion.md](references/aspect-and-motion.md)                       |
-| Participles (active/passive, present/past, short passive), gerunds/verbal adverbs (деепричастия)                       | [participles-and-gerunds.md](references/participles-and-gerunds.md)           |
-| Case government catalogue (verbs, adjectives, nouns), spatial triads, mobile prepositions (в/во, с/со, к/ко, о/об/обо) | [valency-and-prepositions.md](references/valency-and-prepositions.md)         |
-| Word order (topic-comment, existential `у меня есть/нет`), impersonal sentences, complex clauses                       | [syntax-and-style.md](references/syntax-and-style.md)                         |
-| Phonology (vowel reduction: akan'ye/ikan'ye, consonant voicing/devoicing), orthography & 7/5-letter rules              | [phonology-and-orthography.md](references/phonology-and-orthography.md)       |
-| Discourse particles (`же, ведь, вот, ну, то, ли`), colloquial speech, intonation constructions (ИК-1 – ИК-7)           | [spoken-russian-and-particles.md](references/spoken-russian-and-particles.md) |
-| Situational formulas, naming customs (patronymics, diminutives), T-V distinction (`ты/вы`), false friends              | [communication-and-vocabulary.md](references/communication-and-vocabulary.md) |
-| TORFL/ТРКИ levels (A1–B2), vocabulary progression, error diagnostics, curriculum & drill authoring                     | [practice-and-progression.md](references/practice-and-progression.md)         |
+| Need | Read |
+| --- | --- |
+| Quick overview of 6 cases, Cyrillic, 3 genders, basic syntax | [grammar-core.md](references/grammar-core.md) |
+| Noun declensions (1st, 2nd, 3rd), 6 cases, plurals, animacy, fleeting vowels, locative/partitive in -у | [nouns.md](references/nouns.md) |
+| Adjectives (hard/soft, short forms), pronouns (personal, possessive, demonstrative, relative), numerals & time | [adjectives-pronouns-numerals.md](references/adjectives-pronouns-numerals.md) |
+| Conjugation (1st/2nd), tenses (present, past, future), imperative, conditional, reflexive verbs | [verb-forms.md](references/verb-forms.md) |
+| Verbal aspect (imperfective/perfective pairs), verbs of motion (unidirectional/multidirectional, prefixes) | [aspect-and-motion.md](references/aspect-and-motion.md) |
+| Participles (active/passive, present/past, short passive), gerunds/verbal adverbs (деепричастия) | [participles-and-gerunds.md](references/participles-and-gerunds.md) |
+| Case government catalogue (verbs, adjectives, nouns), spatial triads, mobile prepositions (в/во, с/со, к/ко, о/об/обо) | [valency-and-prepositions.md](references/valency-and-prepositions.md) |
+| Word order (topic-comment, existential `у меня есть/нет`), impersonal sentences, complex clauses | [syntax-and-style.md](references/syntax-and-style.md) |
+| Phonology (vowel reduction: akan'ye/ikan'ye, consonant voicing/devoicing), orthography & 7/5-letter rules | [phonology-and-orthography.md](references/phonology-and-orthography.md) |
+| Discourse particles (`же, ведь, вот, ну, то, ли`), colloquial speech, intonation constructions (ИК-1 – ИК-7) | [spoken-russian-and-particles.md](references/spoken-russian-and-particles.md) |
+| Situational formulas, naming customs (patronymics, diminutives), T-V distinction (`ты/вы`), false friends | [communication-and-vocabulary.md](references/communication-and-vocabulary.md) |
+| TORFL/ТРКИ levels (A1–B2), vocabulary progression, error diagnostics, curriculum & drill authoring | [practice-and-progression.md](references/practice-and-progression.md) |

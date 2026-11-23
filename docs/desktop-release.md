@@ -4,11 +4,11 @@ The Windows installer, its manual release and how to test an update are in [wind
 
 ## Platforms
 
-| Platform             | Build runner       | Packages                         | In-app update                                                     |
-| -------------------- | ------------------ | -------------------------------- | ----------------------------------------------------------------- |
-| macOS, Apple Silicon | `macos-26` (arm64) | signed/notarized DMG + ZIP       | ZIP via Squirrel.Mac                                              |
-| Windows, x64         | `windows-2025`     | unsigned per-user NSIS installer | NSIS                                                              |
-| Linux, x64           | `ubuntu-24.04`     | AppImage + `.deb`                | AppImage: replaced in place; `.deb`: dpkg/apt, elevated if needed |
+| Platform | Build runner | Packages | In-app update |
+| --- | --- | --- | --- |
+| macOS, Apple Silicon | `macos-26` (arm64) | signed/notarized DMG + ZIP | ZIP via Squirrel.Mac |
+| Windows, x64 | `windows-2025` | unsigned per-user NSIS installer | NSIS |
+| Linux, x64 | `ubuntu-24.04` | AppImage + `.deb` | AppImage: replaced in place; `.deb`: dpkg/apt, elevated if needed |
 
 Windows signing is deliberately disabled for this first release. SmartScreen may warn about an unknown publisher on initial installation. AppImage is the primary Linux download because it is self-contained and updates without administrator permission. The installed `electron-updater` 6.8.9 also supports `.deb` updates; an update may request an administrator password. Both use the same download/restart banner.
 
@@ -104,14 +104,14 @@ The three jobs upload distinct updater feeds: `latest-mac.yml`, `latest.yml`, `l
 - finds the draft using the same tag matching as the draft job and electron-builder's publisher — `tag_name` equals `v<version>` **or** the bare `<version>`; zero matches, two matches, or an already-published match fail the run, and a draft matched only via the unprefixed form is flagged with a warning (a later run could create a second draft under the `v`-tag and split the assets — rename before publishing);
 - fails unless the release holds **exactly** these 11 assets — nothing missing, nothing extra (a stale name from an older run is an error), nothing zero-size, nothing still in a non-`uploaded` state:
 
-| Asset                                                | Role                                                       |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| `Lanna-<v>-arm64.dmg` + `.blockmap`                  | macOS installer                                            |
-| `Lanna-<v>-arm64-mac.zip` + `.blockmap`              | macOS updater payload (Squirrel.Mac installs from the ZIP) |
-| `Lanna-<v>-x64-setup.exe` + `.blockmap`              | Windows NSIS installer                                     |
-| `Lanna-<v>-x86_64.AppImage`                          | Linux AppImage (no sidecar blockmap)                       |
-| `Lanna-<v>-amd64.deb`                                | Linux deb (no sidecar blockmap)                            |
-| `latest-mac.yml` / `latest.yml` / `latest-linux.yml` | updater feeds                                              |
+| Asset | Role |
+| --- | --- |
+| `Lanna-<v>-arm64.dmg` + `.blockmap` | macOS installer |
+| `Lanna-<v>-arm64-mac.zip` + `.blockmap` | macOS updater payload (Squirrel.Mac installs from the ZIP) |
+| `Lanna-<v>-x64-setup.exe` + `.blockmap` | Windows NSIS installer |
+| `Lanna-<v>-x86_64.AppImage` | Linux AppImage (no sidecar blockmap) |
+| `Lanna-<v>-amd64.deb` | Linux deb (no sidecar blockmap) |
+| `latest-mac.yml` / `latest.yml` / `latest-linux.yml` | updater feeds |
 
 (The Linux names are deliberate: the user-set `linux.artifactName` applies to both Linux targets, and `${arch}` expands per target — `x86_64` inside the AppImage, `amd64` in the deb — exactly what the installed app-builder-lib 26.15.3 emits. The script's expectations fail closed if `electron-builder.yml` drifts from these shapes.);
 
@@ -123,13 +123,13 @@ The job only reads (release list + asset downloads); it never creates, edits, pu
 
 Add these under repository **Settings → Secrets and variables → Actions**:
 
-| Secret                        | Value                                                                            |
-| ----------------------------- | -------------------------------------------------------------------------------- |
-| `MAC_CSC_LINK`                | Base64-encoded Developer ID Application `.p12` backup, including its private key |
-| `MAC_CSC_KEY_PASSWORD`        | Password protecting that `.p12`                                                  |
-| `APPLE_ID`                    | Apple ID used for notarization                                                   |
-| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for that Apple ID                                          |
-| `APPLE_TEAM_ID`               | Your Apple Developer Team ID                                                     |
+| Secret | Value |
+| --- | --- |
+| `MAC_CSC_LINK` | Base64-encoded Developer ID Application `.p12` backup, including its private key |
+| `MAC_CSC_KEY_PASSWORD` | Password protecting that `.p12` |
+| `APPLE_ID` | Apple ID used for notarization |
+| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for that Apple ID |
+| `APPLE_TEAM_ID` | Your Apple Developer Team ID |
 
 The workflow maps the certificate secrets to electron-builder's `CSC_LINK` / `CSC_KEY_PASSWORD`. GitHub's built-in `GITHUB_TOKEN` supplies `GH_TOKEN` with job-scoped `contents: write`; no separate GitHub token secret is required. Signing credentials are present only for the packaging step, not the Next build. Never commit certificates, passwords, or `.env.local`.
 

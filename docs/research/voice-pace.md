@@ -12,10 +12,10 @@ The pace varies from clip to clip, and that is how the voice is made, so it is l
 
 49 slovak.wiki clips (the default Slovak voice for any dictionary word or example, `wiki-audio.ts`) from the perf sandboxes, 40 of them distinct sentences of 3 or more syllables. Length by `ffprobe`, syllables by `countSyllables` (`src/core/pace.ts`, a Slovak rule set: vowels, ia/ie/iu as one, syllabic r and l). Reproduce on any profile with `LANNA_DATA_DIR=… npx tsx scripts/audio-pace.ts`.
 
-|         | syllables a second                                       |
-| ------- | -------------------------------------------------------- |
-| median  | 3.9 (about 128 words a minute)                           |
-| slowest | 2.3 ("Ahoj, maj sa!", "Február má len 28 dní.")          |
+|  | syllables a second |
+| --- | --- |
+| median | 3.9 (about 128 words a minute) |
+| slowest | 2.3 ("Ahoj, maj sa!", "Február má len 28 dní.") |
 | fastest | 5.4 ("Peter varil večeru a pritom telefonoval s mamou.") |
 
 Short sentences are the slowest, long ones the fastest: each clip is a separate recording, so the pace is not constant.

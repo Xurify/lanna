@@ -28,11 +28,11 @@ The change is two model ids per file plus documentation. No typecheck, lint or t
 
 All three boards are English. This is the part that matters before using any of them for Slovak.
 
-| Board            | What ran                                                                                             | Language                                                                                                 |
-| ---------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Speech to speech | 82 simulated calls (59 booking, 23 Medicare), 14 realtime models, 3 runs each, same Pipecat agent    | English callers, English agent; the cascade reference is `flux-general-en → gpt-4.1 → eleven_flash_v2_5` |
-| Speech to text   | 1,000 Pipecat clips + 300 licensed Ocular calls, WER against reference transcripts                   | English                                                                                                  |
-| Text to speech   | 104 sentences a phone agent says, one stock voice per model, "reads it right" scored by transcribers | English sentences, English voices                                                                        |
+| Board | What ran | Language |
+| --- | --- | --- |
+| Speech to speech | 82 simulated calls (59 booking, 23 Medicare), 14 realtime models, 3 runs each, same Pipecat agent | English callers, English agent; the cascade reference is `flux-general-en → gpt-4.1 → eleven_flash_v2_5` |
+| Speech to text | 1,000 Pipecat clips + 300 licensed Ocular calls, WER against reference transcripts | English |
+| Text to speech | 104 sentences a phone agent says, one stock voice per model, "reads it right" scored by transcribers | English sentences, English voices |
 
 So Cekura answers "which realtime model handles a booking call without going quiet", which is a real question with real numbers (Phonic v1 90.2% pass³, Grok Voice 3.0 81.7%, GPT Realtime 2.1 79.3%; cascade 82.9% unranked). It answers nothing about Slovak. Its own cascade row is the useful part for us: the three-step setup ranked second on that board, ahead of twelve native speech-to-speech models, so a cascade is not a handicap for turn-based use. That is the architecture Lanna already has.
 
@@ -40,16 +40,16 @@ So Cekura answers "which realtime model handles a booking call without going qui
 
 The Slovak Language AI Hub (SLAIH, KInIT and partners) publishes the first Slovak-only ASR benchmark: 39 hours of Slovak audio in eight domains, 31 models, published 2026-06-26 and updated 2026-11-11. It is the only published head-to-head Slovak speech data found.
 
-| Model                         | Kind           | WER       | CER    | Notes for us                                        |
-| ----------------------------- | -------------- | --------- | ------ | --------------------------------------------------- |
-| Microsoft MAI-Transcribe-2    | commercial API | **6.54%** | 3.29%  | Public preview, $0.10/hr, 60 languages, `sk` listed |
-| Google Chirp 3                | commercial API | 8.14%     | 4.28%  | `sk-SK` is Preview in the Speech-to-Text V2 API     |
-| ElevenLabs Scribe v2          | commercial API | 9.15%     | 5.07%  | What the app used before this change                |
-| OpenAI GPT Realtime Whisper   | commercial API | 10.94%    | 5.33%  | —                                                   |
-| Microsoft Azure Speech        | commercial API | 13.29%    | 6.04%  | —                                                   |
-| OpenAI Whisper Large v3       | open weights   | 16.22%    | 7.90%  | —                                                   |
-| OpenAI Whisper Large v3 Turbo | open weights   | 18.35%    | 9.11%  | What the Groq fallback runs                         |
-| OpenAI GPT-4o Transcribe      | commercial API | 21.76%    | 15.11% | Deletes a lot (13.27%)                              |
+| Model | Kind | WER | CER | Notes for us |
+| --- | --- | --- | --- | --- |
+| Microsoft MAI-Transcribe-2 | commercial API | **6.54%** | 3.29% | Public preview, $0.10/hr, 60 languages, `sk` listed |
+| Google Chirp 3 | commercial API | 8.14% | 4.28% | `sk-SK` is Preview in the Speech-to-Text V2 API |
+| ElevenLabs Scribe v2 | commercial API | 9.15% | 5.07% | What the app used before this change |
+| OpenAI GPT Realtime Whisper | commercial API | 10.94% | 5.33% | — |
+| Microsoft Azure Speech | commercial API | 13.29% | 6.04% | — |
+| OpenAI Whisper Large v3 | open weights | 16.22% | 7.90% | — |
+| OpenAI Whisper Large v3 Turbo | open weights | 18.35% | 9.11% | What the Groq fallback runs |
+| OpenAI GPT-4o Transcribe | commercial API | 21.76% | 15.11% | Deletes a lot (13.27%) |
 
 The audio is 11.9 h parliament, 11.7 h municipal hearings, 3.8 h telco customer service, 4.5 h read literature, 2.1 h Common Voice, 2.1 h TEDx and Jump lectures, 1.5 h read speech, 1.5 h FLEURS.
 

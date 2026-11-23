@@ -6,27 +6,27 @@ Use this for agreement tables, comparison, pronoun choice (short vs. long forms)
 
 ### Hard type: `pekný`
 
-| Case | m. sg.                  | f. sg. | n. sg.  | pl.                                 |
-| ---- | ----------------------- | ------ | ------- | ----------------------------------- |
-| N    | pekný                   | pekná  | pekné   | pekní (m. anim.) / pekné (others)   |
-| G    | pekného                 | peknej | pekného | pekných                             |
-| D    | peknému                 | peknej | peknému | pekným                              |
-| A    | pekného (anim.) / pekný | peknú  | pekné   | pekných (m. anim.) / pekné (others) |
-| L    | peknom                  | peknej | peknom  | pekných                             |
-| I    | pekným                  | peknou | pekným  | peknými                             |
+| Case | m. sg. | f. sg. | n. sg. | pl. |
+| --- | --- | --- | --- | --- |
+| N | pekný | pekná | pekné | pekní (m. anim.) / pekné (others) |
+| G | pekného | peknej | pekného | pekných |
+| D | peknému | peknej | peknému | pekným |
+| A | pekného (anim.) / pekný | peknú | pekné | pekných (m. anim.) / pekné (others) |
+| L | peknom | peknej | peknom | pekných |
+| I | pekným | peknou | pekným | peknými |
 
 Rhythmic law: after a long syllable the ending shortens. `krásny, krásna, krásne; krásneho, krásnemu, krásnom, krásnym`; pl. `krásni/krásne, krásnych, krásnym, krásnymi`. The instrumental `krásnou` keeps `ou`. Never `*krásný`, `*krásného`.
 
 ### Soft type: `cudzí`
 
-| Case | m. sg.                   | f. sg. | n. sg.   | pl.                                  |
-| ---- | ------------------------ | ------ | -------- | ------------------------------------ |
-| N    | cudzí                    | cudzia | cudzie   | cudzí (m. anim.) / cudzie (others)   |
-| G    | cudzieho                 | cudzej | cudzieho | cudzích                              |
-| D    | cudziemu                 | cudzej | cudziemu | cudzím                               |
-| A    | cudzieho (anim.) / cudzí | cudziu | cudzie   | cudzích (m. anim.) / cudzie (others) |
-| L    | cudzom                   | cudzej | cudzom   | cudzích                              |
-| I    | cudzím                   | cudzou | cudzím   | cudzími                              |
+| Case | m. sg. | f. sg. | n. sg. | pl. |
+| --- | --- | --- | --- | --- |
+| N | cudzí | cudzia | cudzie | cudzí (m. anim.) / cudzie (others) |
+| G | cudzieho | cudzej | cudzieho | cudzích |
+| D | cudziemu | cudzej | cudziemu | cudzím |
+| A | cudzieho (anim.) / cudzí | cudziu | cudzie | cudzích (m. anim.) / cudzie (others) |
+| L | cudzom | cudzej | cudzom | cudzích |
+| I | cudzím | cudzou | cudzím | cudzími |
 
 Decide by the nominative ending: `-ý/-y` follows `pekný` (`posledný`, `ranný`); `-í/-i` follows `cudzí` (`tretí → tretieho`, `domáci → domáceho`, `včerajší → včerajšieho`). All comparatives (`lepší`, `väčší`, `krajší`) are soft.
 
@@ -34,25 +34,25 @@ Decide by the nominative ending: `-ý/-y` follows `pekný` (`posledný`, `ranný
 
 Formed from one animate owner: masculine `-ov` (`Peter → Petrov`, `brat → bratov`), feminine `-in` (`mama → mamin`, `Jana → Janin`, `sestra → sestrin`).
 
-| Case | m. sg.                  | f. sg.  | n. sg.  | pl.                                   |
-| ---- | ----------------------- | ------- | ------- | ------------------------------------- |
-| N    | otcov                   | otcova  | otcovo  | otcovi (m. anim.) / otcove (others)   |
-| G    | otcovho                 | otcovej | otcovho | otcových                              |
-| D    | otcovmu                 | otcovej | otcovmu | otcovým                               |
-| A    | otcovho (anim.) / otcov | otcovu  | otcovo  | otcových (m. anim.) / otcove (others) |
-| L    | otcovom                 | otcovej | otcovom | otcových                              |
-| I    | otcovým                 | otcovou | otcovým | otcovými                              |
+| Case | m. sg. | f. sg. | n. sg. | pl. |
+| --- | --- | --- | --- | --- |
+| N | otcov | otcova | otcovo | otcovi (m. anim.) / otcove (others) |
+| G | otcovho | otcovej | otcovho | otcových |
+| D | otcovmu | otcovej | otcovmu | otcovým |
+| A | otcovho (anim.) / otcov | otcovu | otcovo | otcových (m. anim.) / otcove (others) |
+| L | otcovom | otcovej | otcovom | otcových |
+| I | otcovým | otcovou | otcovým | otcovými |
 
 `matkin` takes the same endings: `matkina kniha`, `s matkiným autom`, `v Janinom byte`. When to use a possessive adjective instead of a genitive: see [discourse-and-verb-precision.md](discourse-and-verb-precision.md) §5.
 
 ### Comparison
 
-| Formation      | Examples                                                                                                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `-ší`          | `nový → novší`, `starý → starší`, `mladý → mladší`, `dlhý → dlhší`, `krátky → kratší`, `drahý → drahší`, `slabý → slabší`, `tichý → tichší`                                    |
-| `-ší` + change | `vysoký → vyšší`, `nízky → nižší`, `úzky → užší`, `široký → širší`, `blízky → bližší`, `hlboký → hlbší`, `ťažký → ťažší`, `ľahký → ľahší`, `sladký → sladší`                   |
-| `-ejší`        | `rýchly → rýchlejší`, `lacný → lacnejší`, `silný → silnejší`, `čistý → čistejší`, `múdry → múdrejší`, `teplý → teplejší`, `zaujímavý → zaujímavejší`, `dôležitý → dôležitejší` |
-| suppletive     | `dobrý → lepší`, `zlý → horší`, `veľký → väčší`, `malý → menší`, `pekný → krajší`                                                                                              |
+| Formation | Examples |
+| --- | --- |
+| `-ší` | `nový → novší`, `starý → starší`, `mladý → mladší`, `dlhý → dlhší`, `krátky → kratší`, `drahý → drahší`, `slabý → slabší`, `tichý → tichší` |
+| `-ší` + change | `vysoký → vyšší`, `nízky → nižší`, `úzky → užší`, `široký → širší`, `blízky → bližší`, `hlboký → hlbší`, `ťažký → ťažší`, `ľahký → ľahší`, `sladký → sladší` |
+| `-ejší` | `rýchly → rýchlejší`, `lacný → lacnejší`, `silný → silnejší`, `čistý → čistejší`, `múdry → múdrejší`, `teplý → teplejší`, `zaujímavý → zaujímavejší`, `dôležitý → dôležitejší` |
+| suppletive | `dobrý → lepší`, `zlý → horší`, `veľký → väčší`, `malý → menší`, `pekný → krajší` |
 
 Superlative: `naj-` + comparative (`najlepší`, `najväčší`, `najkrajší`). Comparatives and superlatives decline like `cudzí`.
 
@@ -67,12 +67,12 @@ Je to dvakrát väčšie.                         multiples
 
 ### Adverbs
 
-| From               | Ending | Examples                                                   |
-| ------------------ | ------ | ---------------------------------------------------------- |
-| most adjectives    | `-o`   | `rýchlo`, `ticho`, `vysoko`, `ďaleko`, `blízko`, `neskoro` |
-| many `-ný`, others | `-e`   | `dobre`, `zle`, `pekne`, `krásne`, `presne`, `správne`     |
-| `-ský`, `-cký`     | `-y`   | `(po) slovensky`, `anglicky`, `prakticky`, `logicky`       |
-| irregular          | —      | `pomalý → pomaly`                                          |
+| From | Ending | Examples |
+| --- | --- | --- |
+| most adjectives | `-o` | `rýchlo`, `ticho`, `vysoko`, `ďaleko`, `blízko`, `neskoro` |
+| many `-ný`, others | `-e` | `dobre`, `zle`, `pekne`, `krásne`, `presne`, `správne` |
+| `-ský`, `-cký` | `-y` | `(po) slovensky`, `anglicky`, `prakticky`, `logicky` |
+| irregular | — | `pomalý → pomaly` |
 
 The `-o`/`-e` choice is lexical; some adjectives allow both. Verify uncommon ones.
 
@@ -80,14 +80,14 @@ Comparative adverbs end in `-šie`/`-ejšie`: `rýchlejšie`, `pomalšie`, `kraj
 
 ## 2. Personal and reflexive pronouns
 
-| Case | ja      | ty       | on / ono             | ona      | my   | vy   | oni / ony                  | reflexive |
-| ---- | ------- | -------- | -------------------- | -------- | ---- | ---- | -------------------------- | --------- |
-| N    | ja      | ty       | on / ono             | ona      | my   | vy   | oni / ony                  | —         |
-| G    | mňa, ma | teba, ťa | jeho, ho, neho       | jej, nej | nás  | vás  | ich, nich                  | seba, sa  |
-| D    | mne, mi | tebe, ti | jemu, mu, nemu       | jej, nej | nám  | vám  | im, nim                    | sebe, si  |
-| A    | mňa, ma | teba, ťa | jeho, ho, neho, -ňho | ju, ňu   | nás  | vás  | ich; after prep. nich / ne | seba, sa  |
-| L    | mne     | tebe     | ňom                  | nej      | nás  | vás  | nich                       | sebe      |
-| I    | mnou    | tebou    | ním                  | ňou      | nami | vami | nimi                       | sebou     |
+| Case | ja | ty | on / ono | ona | my | vy | oni / ony | reflexive |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| N | ja | ty | on / ono | ona | my | vy | oni / ony | — |
+| G | mňa, ma | teba, ťa | jeho, ho, neho | jej, nej | nás | vás | ich, nich | seba, sa |
+| D | mne, mi | tebe, ti | jemu, mu, nemu | jej, nej | nám | vám | im, nim | sebe, si |
+| A | mňa, ma | teba, ťa | jeho, ho, neho, -ňho | ju, ňu | nás | vás | ich; after prep. nich / ne | seba, sa |
+| L | mne | tebe | ňom | nej | nás | vás | nich | sebe |
+| I | mnou | tebou | ním | ňou | nami | vami | nimi | sebou |
 
 How to choose the form:
 
@@ -101,14 +101,14 @@ How to choose the form:
 
 ## 3. Possessive pronouns
 
-| Case | m. sg.              | f. sg. | n. sg. | pl.                               |
-| ---- | ------------------- | ------ | ------ | --------------------------------- |
-| N    | môj                 | moja   | moje   | moji (m. anim.) / moje (others)   |
-| G    | môjho               | mojej  | môjho  | mojich                            |
-| D    | môjmu               | mojej  | môjmu  | mojim                             |
-| A    | môjho (anim.) / môj | moju   | moje   | mojich (m. anim.) / moje (others) |
-| L    | mojom               | mojej  | mojom  | mojich                            |
-| I    | mojím               | mojou  | mojím  | mojimi                            |
+| Case | m. sg. | f. sg. | n. sg. | pl. |
+| --- | --- | --- | --- | --- |
+| N | môj | moja | moje | moji (m. anim.) / moje (others) |
+| G | môjho | mojej | môjho | mojich |
+| D | môjmu | mojej | môjmu | mojim |
+| A | môjho (anim.) / môj | moju | moje | mojich (m. anim.) / moje (others) |
+| L | mojom | mojej | mojom | mojich |
+| I | mojím | mojou | mojím | mojimi |
 
 `tvoj` and `svoj` follow `môj` (`tvojho`, `svojím`). `náš`/`váš`: `náš, nášho, nášmu, nášho/náš, našom, naším`; f. `naša, našej, našej, našu, našej, našou`; n. `naše`; pl. `naši/naše, našich, našim, našich/naše, našich, našimi`. Mind the length contrast: instrumental singular `mojím`, `naším` vs. dative plural `mojim`, `našim`.
 
@@ -122,14 +122,14 @@ Drop possessives where Slovak finds them obvious: `Umyl som si ruky.` (not `*moj
 
 `ten`:
 
-| Case | m. sg.             | f. sg. | n. sg. | pl.                          |
-| ---- | ------------------ | ------ | ------ | ---------------------------- |
-| N    | ten                | tá     | to     | tí (m. anim.) / tie (others) |
-| G    | toho               | tej    | toho   | tých                         |
-| D    | tomu               | tej    | tomu   | tým                          |
-| A    | toho (anim.) / ten | tú     | to     | tých (m. anim.) / tie        |
-| L    | tom                | tej    | tom    | tých                         |
-| I    | tým                | tou    | tým    | tými                         |
+| Case | m. sg. | f. sg. | n. sg. | pl. |
+| --- | --- | --- | --- | --- |
+| N | ten | tá | to | tí (m. anim.) / tie (others) |
+| G | toho | tej | toho | tých |
+| D | tomu | tej | tomu | tým |
+| A | toho (anim.) / ten | tú | to | tých (m. anim.) / tie |
+| L | tom | tej | tom | tých |
+| I | tým | tou | tým | tými |
 
 `tento` adds `-to` to every form (`tohto`, `tomuto`, `túto`, `týmto`, pl. `títo/tieto`); `tamten` adds `tam-`. Presentational `to` does not agree: `To je môj brat.` `To sú moji rodičia.`
 
@@ -148,16 +148,16 @@ To je muž, ktorého auto stojí vonku.     (whose = genitive of ktorý)
 
 ### Indefinite and negative series
 
-| Base    | some-      | no-                | any-at-all                 |
-| ------- | ---------- | ------------------ | -------------------------- |
-| `kto`   | `niekto`   | `nikto`            | `hocikto`, `ktokoľvek`     |
-| `čo`    | `niečo`    | `nič`              | `hocičo`, `čokoľvek`       |
-| `kde`   | `niekde`   | `nikde`            | `hocikde`, `kdekoľvek`     |
-| `kam`   | `niekam`   | `nikam`            | `hocikam`, `kamkoľvek`     |
-| `kedy`  | `niekedy`  | `nikdy`            | `hocikedy`, `kedykoľvek`   |
-| `ako`   | `nejako`   | `nijako`           | `hocijako`, `akokoľvek`    |
-| `aký`   | `nejaký`   | `nijaký`, `žiadny` | `hocijaký`, `akýkoľvek`    |
-| `ktorý` | `niektorý` | `žiadny`           | `hociktorý`, `ktorýkoľvek` |
+| Base | some- | no- | any-at-all |
+| --- | --- | --- | --- |
+| `kto` | `niekto` | `nikto` | `hocikto`, `ktokoľvek` |
+| `čo` | `niečo` | `nič` | `hocičo`, `čokoľvek` |
+| `kde` | `niekde` | `nikde` | `hocikde`, `kdekoľvek` |
+| `kam` | `niekam` | `nikam` | `hocikam`, `kamkoľvek` |
+| `kedy` | `niekedy` | `nikdy` | `hocikedy`, `kedykoľvek` |
+| `ako` | `nejako` | `nijako` | `hocijako`, `akokoľvek` |
+| `aký` | `nejaký` | `nijaký`, `žiadny` | `hocijaký`, `akýkoľvek` |
+| `ktorý` | `niektorý` | `žiadny` | `hociktorý`, `ktorýkoľvek` |
 
 Negative words require a negated verb, and several can stack: `Nikto nič nevedel.` `Nikdy nikam nechodím.` `Dakto`, `dačo`, `dakde` are standard synonyms of `niekto`, `niečo`, `niekde` (KSSJ lists them without a label); the `nie-` forms are more common.
 
@@ -190,14 +190,14 @@ In the basic form, compound cardinals are written as one word: `dvadsaťjeden`, 
 
 ### Gender and case of 1–4
 
-| Case | 1 (m. / f. / n.)               | 2                                                           | 3                         | 4                            |
-| ---- | ------------------------------ | ----------------------------------------------------------- | ------------------------- | ---------------------------- |
-| N    | jeden / jedna / jedno          | dva (m., incl. animals), dve (f., n.), dvaja (male persons) | tri, traja (male persons) | štyri, štyria (male persons) |
-| G    | jedného / jednej / jedného     | dvoch                                                       | troch                     | štyroch                      |
-| D    | jednému / jednej / jednému     | dvom                                                        | trom                      | štyrom                       |
-| A    | jedného, jeden / jednu / jedno | dva, dve; dvoch (m. anim.)                                  | tri; troch (m. anim.)     | štyri; štyroch (m. anim.)    |
-| L    | jednom / jednej / jednom       | dvoch                                                       | troch                     | štyroch                      |
-| I    | jedným / jednou / jedným       | dvoma                                                       | troma, tromi              | štyrmi                       |
+| Case | 1 (m. / f. / n.) | 2 | 3 | 4 |
+| --- | --- | --- | --- | --- |
+| N | jeden / jedna / jedno | dva (m., incl. animals), dve (f., n.), dvaja (male persons) | tri, traja (male persons) | štyri, štyria (male persons) |
+| G | jedného / jednej / jedného | dvoch | troch | štyroch |
+| D | jednému / jednej / jednému | dvom | trom | štyrom |
+| A | jedného, jeden / jednu / jedno | dva, dve; dvoch (m. anim.) | tri; troch (m. anim.) | štyri; štyroch (m. anim.) |
+| L | jednom / jednej / jednom | dvoch | troch | štyroch |
+| I | jedným / jednou / jedným | dvoma | troma, tromi | štyrmi |
 
 `päť` and up: `päť, piatich, piatim, päť (m. anim. piatich), piatich, piatimi`; likewise `šiestich`, `siedmich`, `ôsmich`, `deviatich`, `desiatich`. `sto` and `tisíc` usually stay unchanged: `pred sto rokmi`.
 
@@ -205,14 +205,14 @@ In the basic form, compound cardinals are written as one word: `dvadsaťjeden`, 
 
 ### Which noun form follows
 
-| Number                         | Noun                | Verb in the past     | Example                                       |
-| ------------------------------ | ------------------- | -------------------- | --------------------------------------------- |
-| 1                              | nominative singular | agrees with the noun | `Prišiel jeden študent.`                      |
-| 2–4                            | nominative plural   | plural               | `Prišli dve študentky.` `Stoja tam tri autá.` |
-| `dvaja, traja, štyria` (men)   | nominative plural   | plural               | `Prišli dvaja bratia.`                        |
-| 5+, `veľa`, `niekoľko`, `pár`  | genitive plural     | neuter singular      | `Prišlo päť študentov.` `Bolo tam veľa ľudí.` |
-| `piati, šiesti…` (men, marked) | nominative plural   | plural               | `Prišli piati študenti.`                      |
-| compounds ending 1–4 (21, 32…) | genitive plural     | neuter singular      | `dvadsaťjeden rokov`, `tridsaťdva eur`        |
+| Number | Noun | Verb in the past | Example |
+| --- | --- | --- | --- |
+| 1 | nominative singular | agrees with the noun | `Prišiel jeden študent.` |
+| 2–4 | nominative plural | plural | `Prišli dve študentky.` `Stoja tam tri autá.` |
+| `dvaja, traja, štyria` (men) | nominative plural | plural | `Prišli dvaja bratia.` |
+| 5+, `veľa`, `niekoľko`, `pár` | genitive plural | neuter singular | `Prišlo päť študentov.` `Bolo tam veľa ľudí.` |
+| `piati, šiesti…` (men, marked) | nominative plural | plural | `Prišli piati študenti.` |
+| compounds ending 1–4 (21, 32…) | genitive plural | neuter singular | `dvadsaťjeden rokov`, `tridsaťdva eur` |
 
 The last row is a common error: `Mám dvadsaťdva rokov.`, not `*dvadsaťdva roky`.
 

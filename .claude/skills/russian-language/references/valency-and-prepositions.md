@@ -4,11 +4,11 @@ Russian predicates govern strict nominal cases. Prepositions determine the gramm
 
 ## 1. Verbal Case Government Catalogue
 
-| Governed Case                   | Verb Examples                                                                                                                                                                                                  | Government Frame & Context                                                                                     |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Direct Accusative**           | _читать, видеть, любить, знать, покупать, строить_                                                                                                                                                             | Direct inanimate or feminine object (`+ acc`): _Я читаю книгу._                                                |
-| **Genitive (without prep)**     | _бояться_ (to fear), _стесняться_ (to be shy of), _достигать_ (to achieve), _желать_ (to wish), _ждать_ (to wait for abstract), _лишаться_ (to lose)                                                           | Object of fear, desire, or expectation: _Он боится темноты._ _Желаю удачи!_                                    |
-| **Dative (without prep)**       | _помогать_ (to help), _звонить_ (to call), _советовать_ (to advise), _мешать_ (to hinder), _улыбаться_ (to smile at), _учиться_ (to learn + dat of subject), _радоваться_ (to rejoice at)                      | Recipient, benefactor, or target of advice/help: _Я помогаю брату._ _Она учится музыке._                       |
+| Governed Case | Verb Examples | Government Frame & Context |
+| --- | --- | --- |
+| **Direct Accusative** | _читать, видеть, любить, знать, покупать, строить_ | Direct inanimate or feminine object (`+ acc`): _Я читаю книгу._ |
+| **Genitive (without prep)** | _бояться_ (to fear), _стесняться_ (to be shy of), _достигать_ (to achieve), _желать_ (to wish), _ждать_ (to wait for abstract), _лишаться_ (to lose) | Object of fear, desire, or expectation: _Он боится темноты._ _Желаю удачи!_ |
+| **Dative (without prep)** | _помогать_ (to help), _звонить_ (to call), _советовать_ (to advise), _мешать_ (to hinder), _улыбаться_ (to smile at), _учиться_ (to learn + dat of subject), _радоваться_ (to rejoice at) | Recipient, benefactor, or target of advice/help: _Я помогаю брату._ _Она учится музыке._ |
 | **Instrumental (without prep)** | _руководить_ (to manage), _управлять_ (to govern/drive), _владеть_ (to possess/command), _гордиться_ (to be proud of), _интересоваться_ (to be interested in), _заниматься_ (to engage in), _являться_ (to be) | Sphere of mastery, control, or pride: _Он руководит компанией._ _Мы гордимся сыном._ _Она занимается спортом._ |
 
 ---
@@ -58,10 +58,10 @@ Russian predicates govern strict nominal cases. Prepositions determine the gramm
 
 To avoid difficult consonant clusters, certain prepositions expand with a final vowel:
 
-| Base Preposition | Expanded Form | When Triggered                                                                                                                                | Examples                         |
-| ---------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| **в**            | **во**        | Before words starting with `в` or `ф` followed by a consonant, and before certain clusters (`во мне`, `во вторник`, `во сне`, `во дворе`).    | _во вторник, во Франции, во мне_ |
-| **с**            | **со**        | Before words starting with `с`, `з`, `ш`, `ж` followed by a consonant, and before `мной` (`со мной`, `со студентом`, `со школы`, `со всеми`). | _со мной, со всеми, со стола_    |
-| **к**            | **ко**        | Before `мне` and clusters like `вт-, вс-` (`ко мне`, `ко вторнику`, `ко всем`).                                                               | _ко мне, ко двору_               |
-| **о**            | **об**        | Before vowels `а, о, у, э, и`.                                                                                                                | _об этом, об окне, об искусстве_ |
-| **о**            | **обо**       | Before `мне`, `всём`, `всех`.                                                                                                                 | _обо мне, обо всём, обо всех_    |
+| Base Preposition | Expanded Form | When Triggered | Examples |
+| --- | --- | --- | --- |
+| **в** | **во** | Before words starting with `в` or `ф` followed by a consonant, and before certain clusters (`во мне`, `во вторник`, `во сне`, `во дворе`). | _во вторник, во Франции, во мне_ |
+| **с** | **со** | Before words starting with `с`, `з`, `ш`, `ж` followed by a consonant, and before `мной` (`со мной`, `со студентом`, `со школы`, `со всеми`). | _со мной, со всеми, со стола_ |
+| **к** | **ко** | Before `мне` and clusters like `вт-, вс-` (`ко мне`, `ко вторнику`, `ко всем`). | _ко мне, ко двору_ |
+| **о** | **об** | Before vowels `а, о, у, э, и`. | _об этом, об окне, об искусстве_ |
+| **о** | **обо** | Before `мне`, `всём`, `всех`. | _обо мне, обо всём, обо всех_ |

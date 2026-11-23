@@ -28,10 +28,10 @@ Estonian sharply distinguishes between **normal predicative clauses** and **exis
 
 ### Normal Predicative vs. Existential Clauses
 
-| Clause Type            | Constituent Order                             | Focus / Meaning                           | Example                                            |
-| ---------------------- | --------------------------------------------- | ----------------------------------------- | -------------------------------------------------- |
-| **Normal Predicative** | Subject (known) + Verb + Location             | Location of a definite entity             | _Raamat on laual._ (The book is on the table.)     |
-| **Existential**        | Location + Verb (_on_) + Subject (indefinite) | Existence or introduction of a new entity | _Laual on raamat._ (There is a book on the table.) |
+| Clause Type | Constituent Order | Focus / Meaning | Example |
+| --- | --- | --- | --- |
+| **Normal Predicative** | Subject (known) + Verb + Location | Location of a definite entity | _Raamat on laual._ (The book is on the table.) |
+| **Existential** | Location + Verb (_on_) + Subject (indefinite) | Existence or introduction of a new entity | _Laual on raamat._ (There is a book on the table.) |
 
 ### The Critical Case Shift in Negative Existential & Possession Clauses
 

@@ -19,14 +19,14 @@ Use this when writing or reviewing Slovak that ships on slovak.wiki: lessons, pr
 
 Before saving a typed or cloze item, enumerate the variants a fluent speaker would produce. Add each one that the prompt does not rule out:
 
-| Variant type                | Example                                                                                                           |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| optional subject pronoun    | `Čítam noviny.` / `Ja čítam noviny.`                                                                              |
-| neutral word-order variants | `Trochu hovorím po slovensky.` / `Hovorím trochu po slovensky.`                                                   |
-| speaker gender              | `Bol som unavený.` / `Bola som unavená.`; `Mám rád kávu.` / `Mám rada kávu.`                                      |
-| `ty` / `vy`                 | `Ako sa máš?` / `Ako sa máte?` (only if the scene leaves register open)                                           |
-| synonyms of equal register  | `Dám si kávu.` / `Prosím si kávu.`                                                                                |
-| optional internal comma     | add the comma-less version when the item is not about punctuation and the comma is optional (`prosím` insertions) |
+| Variant type | Example |
+| --- | --- |
+| optional subject pronoun | `Čítam noviny.` / `Ja čítam noviny.` |
+| neutral word-order variants | `Trochu hovorím po slovensky.` / `Hovorím trochu po slovensky.` |
+| speaker gender | `Bol som unavený.` / `Bola som unavená.`; `Mám rád kávu.` / `Mám rada kávu.` |
+| `ty` / `vy` | `Ako sa máš?` / `Ako sa máte?` (only if the scene leaves register open) |
+| synonyms of equal register | `Dám si kávu.` / `Prosím si kávu.` |
+| optional internal comma | add the comma-less version when the item is not about punctuation and the comma is optional (`prosím` insertions) |
 
 Do not accept forms that are wrong in standard Slovak just because learners produce them. If the item is not testing a variable (gender, register), **fix it in the prompt or scene instead**: a named speaker, `(to a friend)`, `(formal)`. English prompts hide distinctions Slovak forces; see §4.
 
@@ -43,13 +43,13 @@ Clitic order limits word-order variants: `Včera som mu to povedal.` / `Povedal 
 
 English underspecifies things Slovak must encode. When the target answer depends on one of these, the prompt or scene has to settle it:
 
-| Slovak needs                             | English prompt fix                                                                     |
-| ---------------------------------------- | -------------------------------------------------------------------------------------- |
-| speaker gender (past, `rád`, adjectives) | a named speaker in `context`, or a scene line                                          |
-| `ty` vs. `vy`                            | who is being addressed (`Anna` = friend; `Receptionist` = formal)                      |
-| aspect                                   | completion or repetition in the English: "I finished writing it" / "I write every day" |
-| destination vs. location                 | "to the shop" vs. "in the shop"                                                        |
-| plural `you`                             | "you (both)", "you all"                                                                |
+| Slovak needs | English prompt fix |
+| --- | --- |
+| speaker gender (past, `rád`, adjectives) | a named speaker in `context`, or a scene line |
+| `ty` vs. `vy` | who is being addressed (`Anna` = friend; `Receptionist` = formal) |
+| aspect | completion or repetition in the English: "I finished writing it" / "I write every day" |
+| destination vs. location | "to the shop" vs. "in the shop" |
+| plural `you` | "you (both)", "you all" |
 
 ## 5. `why` lines
 
@@ -72,17 +72,17 @@ Avoid: `Wrong ending.`, `Remember the case.`, long paradigms.
 
 Tatoeba Slovak is often translated from English by learners. Reject or replace a sentence (do not silently edit a line still marked `Tatoeba`) when it shows:
 
-| Problem                                                       | Example                           | Natural Slovak               |
-| ------------------------------------------------------------- | --------------------------------- | ---------------------------- |
-| subject pronoun without contrast                              | `On je unavený.`                  | `Je unavený.`                |
-| instrumental predicate with `byť` where nominative is natural | `On nemôže byť mladým.`           | `Nemôže byť mladý.`          |
-| calqued passive                                               | `Je jasné, čo musí byť vykonané.` | `Je jasné, čo treba urobiť.` |
-| possessive overuse                                            | `Zatvoril svoje oči.`             | `Zavrel oči.`                |
-| English word order with clitics misplaced                     | `Ja som to mu povedal.`           | `Povedal som mu to.`         |
-| Czech forms or words                                          | `Jedná sa o problém.`             | `Ide o problém.`             |
-| missing diacritics, wrong quotes                              | `Dakujem.`, `"ahoj"`              | `Ďakujem.`, `„ahoj“`         |
-| bookish or archaic style for a basic word                     | transgressives, `onen`            | plain modern sentence        |
-| meaning drift from the English                                | Slovak adds or drops information  | rewrite both sides           |
+| Problem | Example | Natural Slovak |
+| --- | --- | --- |
+| subject pronoun without contrast | `On je unavený.` | `Je unavený.` |
+| instrumental predicate with `byť` where nominative is natural | `On nemôže byť mladým.` | `Nemôže byť mladý.` |
+| calqued passive | `Je jasné, čo musí byť vykonané.` | `Je jasné, čo treba urobiť.` |
+| possessive overuse | `Zatvoril svoje oči.` | `Zavrel oči.` |
+| English word order with clitics misplaced | `Ja som to mu povedal.` | `Povedal som mu to.` |
+| Czech forms or words | `Jedná sa o problém.` | `Ide o problém.` |
+| missing diacritics, wrong quotes | `Dakujem.`, `"ahoj"` | `Ďakujem.`, `„ahoj“` |
+| bookish or archaic style for a basic word | transgressives, `onen` | plain modern sentence |
+| meaning drift from the English | Slovak adds or drops information | rewrite both sides |
 
 Also check: the sentence uses the headword in a typical sense, not an obscure one; it is self-contained; it is safe for learners (`src/lib/catalog/dictionary/example-quality.ts` filters obvious problems but not style).
 
@@ -107,20 +107,20 @@ Also check: the sentence uses the headword in a typical sense, not an obscure on
 
 Each of these was taught wrongly on the site. `src/lib/catalog/content-rules.test.ts` fails if the old wording returns. When you fix a new false rule, add a pattern for its wrong wording there too, with that wording in `shipped` so the test proves the pattern still catches it.
 
-| Topic        | Right                                                                                                                                                          | Wrong wording that shipped                  |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Negation     | The prefix `ne-` joins the verb: `nemám`, `nerozumiem`. Present `byť` keeps `nie` apart: `nie som`, `nie si`, `nie je`, `nie sme`, `nie ste`, `nie sú`.        | "Nie attaches to the verb"                  |
-| Two          | `dva` for masculine things and animals (`dva psy`), `dvaja` for men (`dvaja bratia`), `dve` for feminine and neuter (`dve autá`).                              | "dva is masculine and neuter"               |
-| Animacy      | Accusative singular: people and animals both change (`toho psa`, `môjho psa`). Only the plural splits people (`tí`, `tých`, `moji`) from the rest (`tie psy`). | "people take môjho / toho"                  |
-| `ten` cases  | `tým` is the masculine and neuter instrumental singular and the dative plural; the feminine instrumental is `tou`.                                             | "Instrumental, with one person: tým"        |
-| `to`         | Only presentational `to` (`To je …`, `To sú …`) stays `to`; otherwise it declines: `o tom`, `s tým`.                                                           | "to never changes"                          |
-| Motion       | `ísť` and `chodiť` are both imperfective: one trip versus habit.                                                                                               | "same destination, different aspect"        |
-| Age          | `jeden rok`, `dva roky`, `päť rokov`; compounds take `rokov`: `dvadsaťdva rokov`.                                                                              | "Use rokov after the number"                |
-| Prices       | `jedno euro`, `dve eurá`, `päť eur`.                                                                                                                           | "Stojí to + number + eur"                   |
-| Days         | `v pondelok`, `v stredu`, but `vo štvrtok`.                                                                                                                    | generated `v štvrtok`                       |
-| Word order   | New or stressed information comes last.                                                                                                                        | "what moves to the front receives emphasis" |
-| Instrumental | `s`/`so` for company; a tool or means takes the bare instrumental: `píšem perom`, `idem autobusom`.                                                            | "tools and means, especially after s or so" |
-| Register     | `dačo`, `dakto`, `dakde` are standard (KSSJ, SSSJ list them without a label).                                                                                  | `dačo` marked as eastern dialect            |
+| Topic | Right | Wrong wording that shipped |
+| --- | --- | --- |
+| Negation | The prefix `ne-` joins the verb: `nemám`, `nerozumiem`. Present `byť` keeps `nie` apart: `nie som`, `nie si`, `nie je`, `nie sme`, `nie ste`, `nie sú`. | "Nie attaches to the verb" |
+| Two | `dva` for masculine things and animals (`dva psy`), `dvaja` for men (`dvaja bratia`), `dve` for feminine and neuter (`dve autá`). | "dva is masculine and neuter" |
+| Animacy | Accusative singular: people and animals both change (`toho psa`, `môjho psa`). Only the plural splits people (`tí`, `tých`, `moji`) from the rest (`tie psy`). | "people take môjho / toho" |
+| `ten` cases | `tým` is the masculine and neuter instrumental singular and the dative plural; the feminine instrumental is `tou`. | "Instrumental, with one person: tým" |
+| `to` | Only presentational `to` (`To je …`, `To sú …`) stays `to`; otherwise it declines: `o tom`, `s tým`. | "to never changes" |
+| Motion | `ísť` and `chodiť` are both imperfective: one trip versus habit. | "same destination, different aspect" |
+| Age | `jeden rok`, `dva roky`, `päť rokov`; compounds take `rokov`: `dvadsaťdva rokov`. | "Use rokov after the number" |
+| Prices | `jedno euro`, `dve eurá`, `päť eur`. | "Stojí to + number + eur" |
+| Days | `v pondelok`, `v stredu`, but `vo štvrtok`. | generated `v štvrtok` |
+| Word order | New or stressed information comes last. | "what moves to the front receives emphasis" |
+| Instrumental | `s`/`so` for company; a tool or means takes the bare instrumental: `píšem perom`, `idem autobusom`. | "tools and means, especially after s or so" |
+| Register | `dačo`, `dakto`, `dakde` are standard (KSSJ, SSSJ list them without a label). | `dačo` marked as eastern dialect |
 
 ## 11. What the tests check, and what they cannot
 

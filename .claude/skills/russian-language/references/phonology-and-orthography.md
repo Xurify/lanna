@@ -10,11 +10,11 @@ The Cyrillic alphabet for Russian consists of 33 letters:
 - 21 consonants.
 - 2 signs: `ь` (soft sign — indicates palatalization or syllable boundary) and `ъ` (hard sign — indicates syllable separation before iotated vowels).
 
-| Category              | Letters                               | Phonetic Behavior                                                                                   |
-| --------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| **Always Hard**       | `ж, ш, ц`                             | Never palatalized phonetically, even when spelled with `е, и` (_жить_ = [жыт'], _центр_ = [цэнтр]). |
-| **Always Soft**       | `ч, щ, й`                             | Inherently palatalized: `ч` = [tɕ], `щ` = [ɕː], `й` = [j].                                          |
-| **Paired Consonants** | `б/п, в/ф, д/т, з/с, г/к, л, м, н, р` | Each has a hard and soft phonemic counterpart (_был_ [bɨl] vs _бил_ [bʲil]).                        |
+| Category | Letters | Phonetic Behavior |
+| --- | --- | --- |
+| **Always Hard** | `ж, ш, ц` | Never palatalized phonetically, even when spelled with `е, и` (_жить_ = [жыт'], _центр_ = [цэнтр]). |
+| **Always Soft** | `ч, щ, й` | Inherently palatalized: `ч` = [tɕ], `щ` = [ɕː], `й` = [j]. |
+| **Paired Consonants** | `б/п, в/ф, д/т, з/с, г/к, л, м, н, р` | Each has a hard and soft phonemic counterpart (_был_ [bɨl] vs _бил_ [bʲil]). |
 
 ---
 
