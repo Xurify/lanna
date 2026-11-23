@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { COLUMN, Dock, PracticeCard } from "@/components/task-frame";
 import { KBD, PRIMARY, QUIET } from "@/components/ui/learn-buttons";
@@ -38,6 +38,8 @@ export function MatchRound({
 	const [wrong, setWrong] = useState<string | null>(null);
 	const [status, setStatus] = useState("");
 	const done = matched.size === words.length;
+	const wordButtons = useRef(new Map<string, HTMLButtonElement>());
+	const finishButton = useRef<HTMLButtonElement>(null);
 
 	useEffect(() => {
 		if (!done) return;
@@ -62,13 +64,21 @@ export function MatchRound({
 		const word = words.find((w) => w.slug === picked)!;
 		if (slug === picked) {
 			sfx.right(matched.size + 1);
-			setMatched(new Set([...matched, slug]));
+			const now = new Set([...matched, slug]);
+			setMatched(now);
+			// The matched button is disabled now, which would drop keyboard focus to the page.
+			const next = left.find((w) => !now.has(w.slug));
+			requestAnimationFrame(() =>
+				(next ? wordButtons.current.get(next.slug) : finishButton.current)?.focus({ preventScroll: true }),
+			);
 			setPicked(null);
+			setWrong(null);
 			setStatus(`${word.lemma}: ${word.gloss}. Matched.`);
 		} else {
 			sfx.wrong();
 			setWrong(slug);
-			setStatus(`Not ${word.lemma}. Try another.`);
+			const clicked = words.find((w) => w.slug === slug)!;
+			setStatus(`${clicked.gloss} is not ${word.lemma}. Try another.`);
 		}
 	};
 
@@ -87,6 +97,9 @@ export function MatchRound({
 								<li key={w.slug}>
 									<button
 										type="button"
+										ref={(el) => {
+											if (el) wordButtons.current.set(w.slug, el);
+										}}
 										onClick={() => pickWord(w.slug)}
 										disabled={matched.has(w.slug)}
 										aria-pressed={picked === w.slug}
@@ -156,7 +169,13 @@ export function MatchRound({
 						)}
 					</p>
 					<div className="flex flex-1 justify-end gap-3">
-						<button type="button" onClick={onDone} className={done ? PRIMARY : QUIET} data-testid="match-done">
+						<button
+							ref={finishButton}
+							type="button"
+							onClick={onDone}
+							className={done ? PRIMARY : QUIET}
+							data-testid="match-done"
+						>
 							{done ? "Finish" : "Skip"}
 						</button>
 					</div>

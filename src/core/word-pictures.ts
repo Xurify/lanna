@@ -186,7 +186,7 @@ const PAINT_WORDS: Readonly<Record<Paint, RegExp>> = {
  *  does not answer the rep the picture asks. */
 export function translationAroundPicture(translation: string, picture: WordPicture): string[] {
 	const word = picture.kind === "paint" ? PAINT_WORDS[picture.paint] : SCENE_WORDS[picture.scene];
-	return translation.split(new RegExp(`((?:${word.source})\\p{L}*)`, "giu"));
+	return translation.split(new RegExp(`((?:${word.source})(?:e|es|s|n?y|ing|ed)?(?!\\p{L}))`, "giu"));
 }
 
 export function pictureFor(unit: string, lemma: string, translation?: string): WordPicture | undefined {

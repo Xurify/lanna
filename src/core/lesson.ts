@@ -1376,6 +1376,9 @@ export interface LessonPlan {
 	/** The languages the hints show a bridge in (from the learner's profile;
 	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
 	bridges?: Array<"et" | "fi" | "ru" | "de">;
+	/** A new word lesson: the words it teaches that the learner has not met
+	 *  yet (slugs), the ones its intro cards show. */
+	unmet?: string[];
 	/** If set, the lesson specifically drills candidates of this gender column. */
 	gender?: AtlasGender;
 	/** A Mix-ups lesson (src/core/mixups.ts) or the personal lesson
@@ -1448,13 +1451,14 @@ export function buildLesson(
 		return { top, list: shuffle(baseList, rand) };
 	};
 	const main = sourceFor(unit, opts.gender, opts.weakGender);
+	let unmet: string[] | undefined;
 	if (info.kind === "words" && info.repeat && stage === "new") {
 		// A first lesson teaches a few words twice rather than every word
 		// once; the words met least recently go first, so the next lesson
 		// brings the rest.
 		const seen = new Map<string, number>();
 		for (const id of opts.recent ?? []) {
-			const slug = id.slice(0, id.indexOf("#"));
+			const slug = id.split("#")[0]!;
 			seen.set(slug, (seen.get(slug) ?? 0) + 1);
 		}
 		const slugs = [...new Set(main.top.map((c) => c.entry.slug))];
@@ -1466,6 +1470,7 @@ export function buildLesson(
 				.map((w) => w.slug),
 		);
 		main.list = main.list.filter((c) => chosen.has(c.entry.slug));
+		unmet = [...chosen].filter((slug) => !seen.has(slug));
 	}
 	const mixes = (opts.mix ?? [])
 		.filter((u) => u !== unit)
@@ -1521,7 +1526,13 @@ export function buildLesson(
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
-	return { unit, items: cardsWithoutOtherSentences(items), stage, ...(opts.gender ? { gender: opts.gender } : {}) };
+	return {
+		unit,
+		items: cardsWithoutOtherSentences(items),
+		stage,
+		...(unmet ? { unmet } : {}),
+		...(opts.gender ? { gender: opts.gender } : {}),
+	};
 }
 
 /** A Dvojičky lesson: twelve choose reps, each a verified sentence that

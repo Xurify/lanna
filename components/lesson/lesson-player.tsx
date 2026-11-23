@@ -258,7 +258,11 @@ export function LessonPlayer({
 		() => (plan && mode === "lesson" && !focus && teachesWords(plan.unit) ? lessonWords(plan) : []),
 		[plan, mode, focus],
 	);
-	const meetsWords = plan?.stage === "new" && words.length >= MATCH_MIN;
+	const unmetWords = useMemo(
+		() => (plan?.unmet ? words.filter((w) => plan.unmet!.includes(w.slug)) : []),
+		[plan, words],
+	);
+	const meetsWords = plan?.stage === "new" && unmetWords.length > 0;
 	const [matching, setMatching] = useState<Rep[] | null>(null);
 
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
@@ -301,7 +305,7 @@ export function LessonPlayer({
 		}
 	}, [saveKey]);
 	useEffect(() => {
-		if (!saveKey || !plan || score || matching || restoring.current) return;
+		if (!saveKey || !plan || score || restoring.current) return;
 		const saved: SavedLesson = {
 			plan,
 			index,
@@ -322,7 +326,7 @@ export function LessonPlayer({
 		} catch {
 			// storage blocked: the lesson is not kept
 		}
-	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, help, score, matching]);
+	}, [saveKey, plan, index, reps, current, combo, xp, miss, firstTry, peeked, help, score]);
 	const forget = useCallback(() => {
 		if (!saveKey) return;
 		try {
@@ -353,6 +357,7 @@ export function LessonPlayer({
 		setXp(0);
 		setScore(null);
 		setMatching(null);
+		setIntroUp(opensOnIntro);
 		setPracticeMs(null);
 		setRecorded(null);
 		setSaveFailed(false);
@@ -592,10 +597,10 @@ export function LessonPlayer({
 			nextTotal++;
 		}
 		if (index + 1 < nextTotal) setIndex((i) => i + 1);
-		else if (words.length >= MATCH_MIN) {
-			forget();
-			setMatching(all);
-		} else void finish(all);
+		else {
+			void finish(all);
+			if (words.length >= MATCH_MIN) setMatching(all);
+		}
 	};
 
 	const why = async () => {
@@ -708,7 +713,7 @@ export function LessonPlayer({
 					</div>
 					<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[2vh]" data-testid="lesson-intro">
 						{meetsWords ? (
-							<WordIntro plan={plan} words={words} onStart={() => setIntroUp(false)} />
+							<WordIntro plan={plan} words={unmetWords} onStart={() => setIntroUp(false)} />
 						) : (
 							<LessonIntro plan={plan} onStart={() => setIntroUp(false)} />
 						)}
@@ -718,7 +723,8 @@ export function LessonPlayer({
 		);
 	}
 
-	if (matching && !score) {
+	// The lesson is recorded before the match round, so leaving it loses nothing.
+	if (matching) {
 		return (
 			<Frame strip={false}>
 				<div className="lanna-drag lanna-wco-gutter shrink-0 select-none">
@@ -727,7 +733,7 @@ export function LessonPlayer({
 					</div>
 				</div>
 				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-					<MatchRound unit={plan.unit} words={words} seed={matching.length} onDone={() => void finish(matching)} />
+					<MatchRound unit={plan.unit} words={words} seed={matching.length} onDone={() => setMatching(null)} />
 				</div>
 			</Frame>
 		);

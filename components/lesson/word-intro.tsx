@@ -39,6 +39,7 @@ export function WordIntro({
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Enter") {
+				if (e.target instanceof HTMLButtonElement) return;
 				e.preventDefault();
 				if (finished) onStart();
 				else setStep(step + 1);

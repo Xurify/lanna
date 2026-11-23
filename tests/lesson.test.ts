@@ -348,4 +348,6 @@ test("the next new lesson teaches the words the last one left out", () => {
 	const unit = new Set(next.items.filter((i) => !i.mixed).map((i) => i.slug));
 	const fresh = [...unit].filter((slug) => !taught.has(slug));
 	assert.ok(fresh.length >= 3, JSON.stringify({ taught: [...taught], next: [...unit] }));
+	assert.equal(first.unmet?.length, taught.size);
+	assert.deepEqual(new Set(next.unmet), new Set(fresh));
 });

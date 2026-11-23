@@ -51,4 +51,24 @@ test("the English sentence loses the word its picture shows, with its ending", (
 		".",
 	]);
 	assert.deepEqual(translationAroundPicture("Fred is tired.", { kind: "paint", paint: "red" }), ["Fred is tired."]);
+	const sun = { kind: "scene", set: "weather", scene: "sun" } as const;
+	assert.deepEqual(translationAroundPicture("It is sunny on Sunday.", sun), ["It is ", "sunny", " on Sunday."]);
+	assert.deepEqual(translationAroundPicture("Cheese, please.", { kind: "scene", set: "food", scene: "cheese" }), [
+		"",
+		"Cheese",
+		", please.",
+	]);
+	assert.deepEqual(translationAroundPicture("I love blueberries.", { kind: "paint", paint: "blue" }), [
+		"I love blueberries.",
+	]);
+	assert.deepEqual(translationAroundPicture("Greenland is green.", { kind: "paint", paint: "green" }), [
+		"Greenland is ",
+		"green",
+		".",
+	]);
+	assert.deepEqual(translationAroundPicture("The bluebird is blue.", { kind: "paint", paint: "blue" }), [
+		"The bluebird is ",
+		"blue",
+		".",
+	]);
 });
