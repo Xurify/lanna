@@ -596,7 +596,7 @@ export function WordBankPage({
 													<button
 														type="button"
 														onClick={() => void handleToggleKnown(item)}
-														disabled={pending.has(`known:${item.slug}`)}
+														aria-disabled={pending.has(`known:${item.slug}`)}
 														aria-pressed={item.known}
 														title={
 															item.known ? "Counted as known. Press to undo." : "Count this word as known from now on"
@@ -636,7 +636,7 @@ export function WordBankPage({
 													<button
 														type="button"
 														onClick={() => void handleToggleFavorite(item)}
-														disabled={pending.has(`favorite:${item.slug}`)}
+														aria-disabled={pending.has(`favorite:${item.slug}`)}
 														aria-pressed={item.favorite}
 														aria-label={`Favorite ${item.lemma}`}
 														title={item.favorite ? "Remove from favorites" : "Add to favorites"}

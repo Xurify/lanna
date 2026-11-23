@@ -1112,7 +1112,7 @@ function NextWords({
 							<button
 								type="button"
 								aria-pressed={isKnown}
-								disabled={pending.has(w.slug)}
+								aria-disabled={pending.has(w.slug)}
 								onClick={() => void toggle(w)}
 								title={`${w.cat} · #${w.rank} by frequency. ${isKnown ? "Counted as known. Tap to undo." : "Tap if you already know it."}`}
 								data-testid="milestone-next-word"
