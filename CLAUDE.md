@@ -42,6 +42,7 @@ Every task is retrieval-first with graded, priced help; cache every model or TTS
 - **Feature scope**: build the smallest complete learner task. Do not add adjacent drills, rewards, automation, or workflow tooling unless the task needs them.
 
 - **Story covers** are the one place with colour besides teal: ink scenes with loose watercolour washes in four low-chroma hues (`--q-wash-ochre`, `-rose`, `-sage`, `-sky`), one teal patch on the thing the story is about. The story writer picks the scene (`cover`); how a scene is drawn and reviewed is the `ink-drawing` skill, "Story covers".
+- **Color words** are the second place: in a Colors unit the cue shows the color as a dab of paint (`PaintSwatch`, `--q-paint-*`, `src/core/color-words.ts`) in place of the English. Owner rule, 2026-11-23.
 
 - **Icon beside text**: in a centered row, the text next to an icon sits in a `cap-center` label (`CapLabel` in `components/ui/cap-label.tsx`, or the class on an existing span), so the icon centers on the letters, not the line box. `Button` and the sidebar rows do this for you. A `cap-center` label never gets `truncate`; use `overflow-x-clip text-ellipsis whitespace-nowrap`. Run `node scripts/icon-align-check.mjs <sandbox url>` after any UI change with icons; it fails above 0.5 px. Owner rule, 2026-11-17.
 
