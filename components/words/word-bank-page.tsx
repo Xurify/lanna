@@ -803,7 +803,7 @@ function WordRow({
 					</div>
 				</div>
 				<div className="-mx-2 flex items-center gap-0.5">
-					{(item.known || !item.inDeck) && (
+					{(item.known || !measured) && (
 						<button
 							type="button"
 							onClick={() => void keepFocus(onToggleKnown)}

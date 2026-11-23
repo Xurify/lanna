@@ -143,7 +143,9 @@ export function MilestonesPage({
 	const [sourcesOpen, setSourcesOpen] = useState(true);
 	const [hiddenOpen, setHiddenOpen] = useState(false);
 	const [queued, setQueued] = useState<Set<string>>(new Set());
-	const [nextWords, setNextWords] = useState<NextWord[] | null>(null);
+	const [nextWords, setNextWords] = useState<NextWord[] | null>(() =>
+		initialReport?.nextWords.length ? initialReport.nextWords : null,
+	);
 	useEffect(() => {
 		if (!nextWords && report?.nextWords.length) setNextWords(report.nextWords);
 	}, [report, nextWords]);
