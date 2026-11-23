@@ -101,18 +101,38 @@ export const SCENE_SETS: readonly SceneSet[] = [
 	},
 ];
 
-export function pictureFor(unit: string, lemma: string): WordPicture | undefined {
+const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
+	sun: /(?<!\p{L})sun/iu,
+	rain: /(?<!\p{L})rain/iu,
+	snow: /(?<!\p{L})snow/iu,
+	wind: /(?<!\p{L})wind/iu,
+	cloud: /(?<!\p{L})cloud/iu,
+	bread: /(?<!\p{L})bread/iu,
+	cheese: /(?<!\p{L})chees/iu,
+	egg: /(?<!\p{L})egg/iu,
+	rice: /(?<!\p{L})rice(?!\p{L})/iu,
+	apple: /(?<!\p{L})apple/iu,
+	soup: /(?<!\p{L})soup/iu,
+	fish: /(?<!\p{L})fish/iu,
+	cake: /(?<!\p{L})cake/iu,
+	water: /(?<!\p{L})water/iu,
+	coffee: /(?<!\p{L})coffee/iu,
+	tea: /(?<!\p{L})teas?(?!\p{L})/iu,
+	milk: /(?<!\p{L})milk/iu,
+	beer: /(?<!\p{L})beers?(?!\p{L})/iu,
+	wine: /(?<!\p{L})wines?(?!\p{L})/iu,
+};
+
+export function pictureFor(unit: string, lemma: string, translation?: string): WordPicture | undefined {
 	const paint = paintFor(unit, lemma);
 	if (paint) return { kind: "paint", paint };
 	const key = lemma.toLocaleLowerCase();
 	for (const entry of SCENE_SETS) {
 		if (!entry.units.includes(unit)) continue;
-		if (entry.set === "weather") {
-			const scene = entry.of[key];
-			return scene ? { kind: "scene", set: "weather", scene } : undefined;
-		}
 		const scene = entry.of[key];
-		return scene ? { kind: "scene", set: "food", scene } : undefined;
+		if (!scene) continue;
+		if (translation !== undefined && !SCENE_WORDS[scene].test(translation)) return undefined;
+		return { kind: "scene", set: entry.set, scene } as ScenePicture;
 	}
 	return undefined;
 }

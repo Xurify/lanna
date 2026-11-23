@@ -1234,7 +1234,7 @@ function RepView({
 function shownPicture(item: LessonItem): WordPicture | undefined {
 	if (item.task || item.kind === "meaning" || item.kind === "listen" || item.kind === "build") return undefined;
 	if (unitInfo(item.unit).kind === "pairs") return undefined;
-	return pictureFor(item.unit, item.lemma);
+	return pictureFor(item.unit, item.lemma, item.translation);
 }
 
 /** After a first miss: the smallest cue and one more try. The trigger word

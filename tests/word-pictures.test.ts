@@ -153,3 +153,36 @@ test("a picture word outside its own units keeps the English", () => {
 	assert.equal(pictureFor("lx-words-travel", "tee"), undefined);
 	assert.equal(pictureFor("lx-cafe", "káva"), undefined);
 });
+
+test("a scene shows only when the sentence means the pictured thing", () => {
+	assert.equal(pictureFor("lx-words-food", "muna", "Mary kicked Tom in the nuts.")?.kind, undefined);
+	assert.deepEqual(pictureFor("lx-words-food", "muna", "I had two eggs for breakfast."), {
+		kind: "scene",
+		set: "food",
+		scene: "egg",
+	});
+	assert.equal(pictureFor("lx-drinks", "čaj", "The team ate a steak."), undefined);
+	assert.equal(pictureFor("lx-drinks", "čaj", "Would you like some tea?")?.kind, "scene");
+	assert.equal(pictureFor("lx-weather", "dážď", "It is raining again.")?.kind, "scene");
+	assert.equal(pictureFor("lx-colours", "červený", "Anything at all.")?.kind, "paint");
+});
+
+test("no unit belongs to two picture sets", () => {
+	const units = SCENE_SETS.flatMap((s) => s.units);
+	assert.equal(new Set(units).size, units.length);
+});
+
+test("every mapped Slovak word has dictionary sentences that keep its picture", () => {
+	const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as {
+		words: Array<{ sk?: string; lemma?: string; examples: Array<{ en?: string; rejected?: boolean }> }>;
+	};
+	for (const { language, unit, lemmas } of UNITS) {
+		if (language !== "slovak") continue;
+		for (const lemma of lemmas) {
+			if (!sceneOf(unit, lemma)) continue;
+			const entry = lexicon.words.find((w) => (w.lemma ?? w.sk) === lemma);
+			const kept = (entry?.examples ?? []).filter((e) => !e.rejected && pictureFor(unit, lemma, e.en ?? ""));
+			assert.ok(kept.length > 0, `${unit} ${lemma}: no sentence keeps the picture`);
+		}
+	}
+});
