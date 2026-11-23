@@ -39,7 +39,6 @@ export interface WordBankItem {
 	due?: string;
 	example?: { sk: string; en: string };
 	favorite: boolean;
-	/** Marked known by the learner (src/store/known-words.ts). */
 	known: boolean;
 	inDeck: boolean;
 	/** Set only while searching: how the word matched (see word-search.ts). */

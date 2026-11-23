@@ -1063,12 +1063,11 @@ function NextWords({
 	onQueue: (slugs: string[]) => Promise<boolean>;
 	onKnownChange: () => void;
 }) {
-	// The list stays as first shown while the learner marks words, so chips never move under the pointer.
-	const [shown] = useState(words);
+	const [wordsAsFirstShown] = useState(words);
 	const [known, setKnown] = useState<ReadonlySet<string>>(new Set());
 	const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
 	const [error, setError] = useState("");
-	const left = shown.filter((w) => !queued.has(w.slug) && !known.has(w.slug));
+	const left = wordsAsFirstShown.filter((w) => !queued.has(w.slug) && !known.has(w.slug));
 
 	const toggle = async (word: NextWord) => {
 		if (pending.has(word.slug)) return;
@@ -1106,7 +1105,7 @@ function NextWords({
 				Tap a word you already know to count it as known. Tap again to undo.
 			</p>
 			<ul className="mt-3 flex flex-wrap gap-2">
-				{shown.map((w) => {
+				{wordsAsFirstShown.map((w) => {
 					const isKnown = known.has(w.slug);
 					return (
 						<li key={w.slug}>

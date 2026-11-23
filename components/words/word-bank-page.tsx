@@ -34,6 +34,7 @@ import { saveKnown } from "@/components/words/save-known";
 const COLUMN = "mx-auto w-full max-w-4xl px-4 sm:px-6";
 
 export type WordsTab = "words" | "common" | "phrases" | "cheatsheets";
+const WORDS_TABS: WordsTab[] = ["words", "common", "phrases", "cheatsheets"];
 
 export function WordBankPage({
 	initialTab = "words",
@@ -51,6 +52,7 @@ export function WordBankPage({
 	const lang = useActiveLanguage();
 	const [activeTab, setActiveTabState] = useState<WordsTab>(initialTab);
 	const [knownRevision, setKnownRevision] = useState(0);
+	const [wordsStale, setWordsStale] = useState(false);
 	const [sheetCount, setSheetCount] = useState<number | null>(null);
 	const [sheetOpen, setSheetOpen] = useState(initialTab === "cheatsheets" && !!initialSheet);
 	const setActiveTab = (tab: WordsTab) => {
@@ -73,7 +75,7 @@ export function WordBankPage({
 	const [loadingWords, setLoadingWords] = useState(false);
 	const [page, setPage] = useState(0);
 	const [wordError, setWordError] = useState("");
-	const [pendingKnown, setPendingKnown] = useState<ReadonlySet<string>>(new Set());
+	const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
 	const latestWordsRequest = useRef(0);
 	const PAGE_SIZE = WORDS_PAGE_SIZE;
 
@@ -102,6 +104,7 @@ export function WordBankPage({
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const data = (await res.json()) as { items: WordBankItem[]; total: number; summary: WordBankSummary };
 				if (request !== latestWordsRequest.current) return;
+				setWordError("");
 				setWords((prev) => (nextPage === 0 ? data.items : [...prev, ...data.items]));
 				setPage(nextPage);
 				setTotalWords(data.total);
@@ -137,6 +140,12 @@ export function WordBankPage({
 	}, [fetchWords]);
 
 	useEffect(() => {
+		if (activeTab !== "words" || !wordsStale) return;
+		setWordsStale(false);
+		void fetchWords(0);
+	}, [activeTab, wordsStale, fetchWords]);
+
+	useEffect(() => {
 		void fetchPhrases();
 	}, [fetchPhrases]);
 
@@ -152,10 +161,20 @@ export function WordBankPage({
 		setWords((prev) => prev.map((w) => (w.slug === slug ? { ...w, ...patch } : w)));
 	const shiftSummary = (key: "wordsFavorited" | "wordsMarkedKnown", delta: number) =>
 		setSummary((current) => current && { ...current, [key]: Math.max(0, current[key] + delta) });
+	const setBusy = (key: string, busy: boolean) =>
+		setPending((current) => {
+			const next = new Set(current);
+			if (busy) next.add(key);
+			else next.delete(key);
+			return next;
+		});
 
 	const handleToggleFavorite = async (item: WordBankItem) => {
+		const key = `favorite:${item.slug}`;
+		if (pending.has(key)) return;
 		const favorite = !item.favorite;
 		setWordError("");
+		setBusy(key, true);
 		patchWord(item.slug, { favorite });
 		shiftSummary("wordsFavorited", favorite ? 1 : -1);
 		try {
@@ -169,22 +188,21 @@ export function WordBankPage({
 			patchWord(item.slug, { favorite: item.favorite });
 			shiftSummary("wordsFavorited", favorite ? -1 : 1);
 			setWordError(`Could not save ${item.lemma} as a favorite. Try again.`);
+		} finally {
+			setBusy(key, false);
 		}
 	};
 
 	const handleToggleKnown = async (item: WordBankItem) => {
-		if (pendingKnown.has(item.slug)) return;
+		const key = `known:${item.slug}`;
+		if (pending.has(key)) return;
 		const known = !item.known;
 		setWordError("");
-		setPendingKnown((current) => new Set(current).add(item.slug));
+		setBusy(key, true);
 		patchWord(item.slug, { known });
 		shiftSummary("wordsMarkedKnown", known ? 1 : -1);
 		const saved = await saveKnown(item.slug, known);
-		setPendingKnown((current) => {
-			const next = new Set(current);
-			next.delete(item.slug);
-			return next;
-		});
+		setBusy(key, false);
 		if (saved) {
 			setKnownRevision((v) => v + 1);
 			return;
@@ -273,8 +291,22 @@ export function WordBankPage({
 
 						<WordEstimatePanel initial={initialEstimate} revision={knownRevision} />
 
-						<div role="tablist" aria-label="Words" className="mb-6 flex overflow-x-auto border-b border-border/80">
+						<div
+							role="tablist"
+							aria-label="Words"
+							onKeyDown={(e) => {
+								const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+								if (!step) return;
+								e.preventDefault();
+								const next =
+									WORDS_TABS[(WORDS_TABS.indexOf(activeTab) + step + WORDS_TABS.length) % WORDS_TABS.length]!;
+								setActiveTab(next);
+								e.currentTarget.querySelector<HTMLElement>(`[data-tab="${next}"]`)?.focus();
+							}}
+							className="mb-6 flex overflow-x-auto border-b border-border/80"
+						>
 							<WordsTabButton
+								tab="words"
 								active={activeTab === "words"}
 								onSelect={() => setActiveTab("words")}
 								icon={<BookOpenIcon aria-hidden className="hidden size-4 sm:block" />}
@@ -282,12 +314,14 @@ export function WordBankPage({
 								count={totalWords}
 							/>
 							<WordsTabButton
+								tab="common"
 								active={activeTab === "common"}
 								onSelect={() => setActiveTab("common")}
 								icon={<ListOrderedIcon aria-hidden className="hidden size-4 sm:block" />}
 								label="Common words"
 							/>
 							<WordsTabButton
+								tab="phrases"
 								active={activeTab === "phrases"}
 								onSelect={() => setActiveTab("phrases")}
 								icon={<BookmarkIcon aria-hidden className="hidden size-4 sm:block" />}
@@ -295,6 +329,7 @@ export function WordBankPage({
 								count={phrases.length}
 							/>
 							<WordsTabButton
+								tab="cheatsheets"
 								active={activeTab === "cheatsheets"}
 								onSelect={() => setActiveTab("cheatsheets")}
 								icon={<FileTextIcon aria-hidden className="hidden size-4 sm:block" />}
@@ -310,7 +345,14 @@ export function WordBankPage({
 					<CheatsheetsTab initialSheet={initialSheet} onCount={setSheetCount} onOpenChange={setSheetOpen} />
 				)}
 
-				{activeTab === "common" && <CommonWords onKnownChange={() => setKnownRevision((v) => v + 1)} />}
+				{activeTab === "common" && (
+					<CommonWords
+						onKnownChange={() => {
+							setKnownRevision((v) => v + 1);
+							setWordsStale(true);
+						}}
+					/>
+				)}
 
 				{/* ──────────────── TAB 1: WORD BANK ──────────────── */}
 				{activeTab === "words" && (
@@ -516,12 +558,12 @@ export function WordBankPage({
 																			? "New"
 																			: "Not in Review"}
 														</span>
-														{(item.inDeck || !item.known) && <span className="text-foreground">{item.retention}%</span>}
+														{item.inDeck && <span className="text-foreground">{item.retention}%</span>}
 													</div>
 													<div
 														className={cn(
 															"mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent",
-															item.known && !item.inDeck && "invisible",
+															!item.inDeck && "invisible",
 														)}
 													>
 														<div
@@ -544,7 +586,7 @@ export function WordBankPage({
 													<button
 														type="button"
 														onClick={() => void handleToggleKnown(item)}
-														disabled={pendingKnown.has(item.slug)}
+														disabled={pending.has(`known:${item.slug}`)}
 														aria-pressed={item.known}
 														title={
 															item.known ? "Counted as known. Press to undo." : "Count this word as known from now on"
@@ -584,6 +626,7 @@ export function WordBankPage({
 													<button
 														type="button"
 														onClick={() => void handleToggleFavorite(item)}
+														disabled={pending.has(`favorite:${item.slug}`)}
 														aria-pressed={item.favorite}
 														aria-label={`Favorite ${item.lemma}`}
 														title={item.favorite ? "Remove from favorites" : "Add to favorites"}
@@ -764,6 +807,7 @@ export function WordBankPage({
 }
 
 function WordsTabButton({
+	tab,
 	active,
 	onSelect,
 	icon,
@@ -771,6 +815,7 @@ function WordsTabButton({
 	count,
 	testid,
 }: {
+	tab: WordsTab;
 	active: boolean;
 	onSelect: () => void;
 	icon: React.ReactNode;
@@ -783,6 +828,8 @@ function WordsTabButton({
 			type="button"
 			role="tab"
 			aria-selected={active}
+			tabIndex={active ? 0 : -1}
+			data-tab={tab}
 			onClick={onSelect}
 			data-testid={testid}
 			className={cn(
