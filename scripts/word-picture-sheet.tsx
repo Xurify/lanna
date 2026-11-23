@@ -4,22 +4,26 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { FoodScene } from "../components/lesson/food-scene.tsx";
+import { HomeScene } from "../components/lesson/home-scene.tsx";
 import { WeatherScene } from "../components/lesson/weather-scene.tsx";
 import {
 	FOOD_SCENES,
+	HOME_SCENES,
 	WEATHER_SCENES,
 	type FoodScene as Food,
+	type HomeScene as Home,
 	type WeatherScene as Weather,
 } from "../src/core/word-pictures.ts";
 
-const usage = "Usage: npx tsx scripts/word-picture-sheet.tsx <dir> <weather|food> [scene,...]";
+const usage = "Usage: npx tsx scripts/word-picture-sheet.tsx <dir> <weather|food|home> [scene,...]";
 const outDir = process.argv[2];
 const set = process.argv[3];
-if (!outDir || (set !== "weather" && set !== "food")) {
+const SETS: Record<string, readonly string[]> = { weather: WEATHER_SCENES, food: FOOD_SCENES, home: HOME_SCENES };
+if (!outDir || !set || !SETS[set]) {
 	console.error(usage);
 	process.exit(1);
 }
-const all: readonly string[] = set === "food" ? FOOD_SCENES : WEATHER_SCENES;
+const all = SETS[set]!;
 const order = process.argv[4]?.split(",") ?? [...all];
 const unknown = order.filter((s) => !all.includes(s));
 if (unknown.length) {
@@ -28,7 +32,13 @@ if (unknown.length) {
 }
 const draw = (scene: string) =>
 	renderToStaticMarkup(
-		set === "food" ? <FoodScene scene={scene as Food} /> : <WeatherScene scene={scene as Weather} />,
+		set === "food" ? (
+			<FoodScene scene={scene as Food} />
+		) : set === "home" ? (
+			<HomeScene scene={scene as Home} />
+		) : (
+			<WeatherScene scene={scene as Weather} />
+		),
 	);
 
 mkdirSync(outDir, { recursive: true });

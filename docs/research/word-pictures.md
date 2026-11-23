@@ -1,16 +1,17 @@
 # Word pictures
 
-**Question.** In the Colors, Weather and Food and drink units, should the cue under a sentence be a picture of the word's meaning instead of its English word, and which words can a drawing show without a second meaning?
+**Question.** In the Colors, Weather, Food and drink and Home units, should the cue under a sentence be a picture of the word's meaning instead of its English word, and which words can a drawing show without a second meaning?
 
 **Date.** 2026-11-23
 
 ## What it decides
 
-- In the Colors, Weather and Food and drink word units, the cue under the sentence is a picture of the meaning instead of the English word.
+- In the Colors, Weather, Food and drink and Home word units, the cue under the sentence is a picture of the meaning instead of the English word.
 - Only words a drawing shows unambiguously get a picture. Every other word keeps the English.
 - Colors show the color itself as paint, one swatch for each of the 13 paints.
 - Weather shows one of five drawn scenes: sun, rain, snow, wind and cloud.
 - Food and drink shows one of 14 drawn scenes in Slovak Food and Drinks and the Russian and Estonian Food units: 12 of 15 Slovak words, 12 of 18 Russian and 11 of 18 Estonian.
+- Home shows one of 9 drawn scenes in Slovak Home (and stôl in Meals & eating) and the Russian and Estonian At home units: 5 of the 8 Slovak words planned, 9 of 14 Russian and 8 of 12 Estonian.
 - Within one unit a scene stands for one word only, because a choose rep offers that unit’s other words as options.
 
 ## Evidence and limits
@@ -55,6 +56,29 @@ What the rounds changed: a drop on the milk carton read as water and an empty gl
 
 - Dropped, so they keep the English: meat (mäso, мясо, liha).
 - Not drawn: zelenina and ovocie (categories), сахар and suhkur (sugar cubes read as dice or ice), еда and toit (food in general), the meal words завтрак, обед, ужин, hommikusöök and õhtusöök, sai (looks the same as leib), and Estonian tee. Only one of tee’s six lexicon sentences means tea; the others are the verb (Tee lahti, Palun tee nii) or a way (interneti teel). Slovak ryba is in Animals, not Food, and keeps the English there.
+
+The 12 home scenes were reviewed the same way, 7 rounds, a new Claude (Haiku) and a new Gemini 3.8 Flash reviewer each round, tiles shuffled every round. Final round, Claude / Gemini:
+
+| Scene | Words | Final | Result |
+| --- | --- | --- | --- |
+| house (gabled, chimney) | dom, дом, maja | 5/5 | shipped |
+| door (panelled, in a frame) | dvere, дверь, uks | 5/5 | shipped |
+| window (four panes, sill) | okno, окно, aken | 5/5 | shipped |
+| key (round bow, bit) | ключ, võti | 5/5 | shipped |
+| bed (headboard, pillow, blanket) | posteľ, кровать, voodi | 5/5 | shipped |
+| chair (three-quarter side view) | стул, tool | 4/5 | shipped |
+| table (dining height, four legs) | stôl, стол, laud | 4/4 | shipped |
+| sofa (front, rolled arms) | диван, diivan | 4/4 | shipped |
+| wardrobe (one door open, clothes) | шкаф | 4/4 | shipped |
+| kitchen | kuchyňa, кухня, köök | 3/3 | dropped |
+| bathroom | kúpeľňa | 3/3 | dropped |
+| plate | tanier | 3/2 | dropped |
+
+What the rounds changed: a ladder-back chair read as a ladder or stool, so it got a lower back with one panel. A long low table read as a bench, so it became dining height with block legs. Lines of the mattress showed through the blanket, so the bed lost them. The wardrobe's coloured garments read as curtains, so they became plain outlines on hangers. The two rooms never passed: every reviewer named kitchen and bathroom, but scored them 2 to 4 because a counter, sink and stove, or a bath and toilet, also name a fixture. Seven forms were tried (counter run, fridge, a room seen into with corners and a tiled floor, the pot taken out, tiles, shower). The plate failed in six forms: alone it read as a rug, tray or wheel; with cutlery as a place setting, dinner or cutlery; stacked as dishes; upright on a stand as a mirror.
+
+- Dropped, so they keep the English: kitchen (kuchyňa, кухня, köök), bathroom (kúpeľňa) and plate (tanier).
+- Not drawn: flat and room (byt, izba, квартира, комната, korter, tuba), home (kodu), wall (стена) and floor (пол). A house drawing reads as home, so only words that mean house are mapped to it; kodu keeps the English.
+- A sentence keeps the picture only when its English names the drawn thing. In the lexicon sentences this drops 2 of 45 Russian (дом in "Where's home?", стол in "This is a desk.") and none of the 32 Slovak or 34 Estonian.
 
 ## Not verified
 

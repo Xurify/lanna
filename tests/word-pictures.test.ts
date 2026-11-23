@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { FOOD_SCENES, SCENE_SETS, WEATHER_SCENES, pictureFor } from "../src/core/word-pictures.ts";
+import { FOOD_SCENES, HOME_SCENES, SCENE_SETS, WEATHER_SCENES, pictureFor } from "../src/core/word-pictures.ts";
 import { WORD_CLUSTERS } from "../src/core/word-clusters.ts";
 
 const courseUnit = (language: string, unit: string): string[] =>
@@ -17,8 +17,14 @@ const UNITS: ReadonlyArray<{ language: string; unit: string; lemmas: readonly st
 	{ language: "slovak", unit: "lx-weather", lemmas: WORD_CLUSTERS["lx-weather"]!.lemmas },
 	{ language: "slovak", unit: "lx-food", lemmas: WORD_CLUSTERS["lx-food"]!.lemmas },
 	{ language: "slovak", unit: "lx-drinks", lemmas: WORD_CLUSTERS["lx-drinks"]!.lemmas },
+	{ language: "slovak", unit: "lx-home", lemmas: WORD_CLUSTERS["lx-home"]!.lemmas },
+	{ language: "slovak", unit: "lx-meals", lemmas: WORD_CLUSTERS["lx-meals"]!.lemmas },
 	...["russian", "estonian"].flatMap((language) =>
-		["lx-words-weather", "lx-words-food"].map((unit) => ({ language, unit, lemmas: courseUnit(language, unit) })),
+		["lx-words-weather", "lx-words-food", "lx-words-home"].map((unit) => ({
+			language,
+			unit,
+			lemmas: courseUnit(language, unit),
+		})),
 	),
 ];
 
@@ -115,10 +121,16 @@ test("every drawn scene is used, and each food scene in every language that has 
 	const used = new Set(UNITS.flatMap((u) => u.lemmas.map((l) => sceneOf(u.unit, l))).filter(Boolean));
 	assert.deepEqual(
 		[...used].sort(),
-		[...WEATHER_SCENES.map((s) => `weather:${s}`), ...FOOD_SCENES.map((s) => `food:${s}`)].sort(),
+		[
+			...WEATHER_SCENES.map((s) => `weather:${s}`),
+			...FOOD_SCENES.map((s) => `food:${s}`),
+			...HOME_SCENES.map((s) => `home:${s}`),
+		].sort(),
 	);
 	for (const language of ["slovak", "russian", "estonian"]) {
-		const foodUnits = UNITS.filter((u) => u.language === language && !u.unit.includes("weather"));
+		const foodUnits = UNITS.filter(
+			(u) => u.language === language && ["lx-food", "lx-drinks", "lx-words-food"].includes(u.unit),
+		);
 		const scenes = new Set(foodUnits.flatMap((u) => u.lemmas.map((l) => sceneOf(u.unit, l))).filter(Boolean));
 		assert.ok(scenes.size >= 8, `${language} pictures only ${scenes.size} food words`);
 	}
@@ -185,4 +197,83 @@ test("every mapped Slovak word has dictionary sentences that keep its picture", 
 			assert.ok(kept.length > 0, `${unit} ${lemma}: no sentence keeps the picture`);
 		}
 	}
+});
+
+test("home words show the same scene in all three languages", () => {
+	const concepts: ReadonlyArray<[string, string, string, string]> = [
+		["dom", "дом", "maja", "house"],
+		["dvere", "дверь", "uks", "door"],
+		["okno", "окно", "aken", "window"],
+		["posteľ", "кровать", "voodi", "bed"],
+	];
+	for (const [sk, ru, et, scene] of concepts) {
+		assert.equal(sceneOf("lx-home", sk), `home:${scene}`, sk);
+		assert.equal(sceneOf("lx-words-home", ru), `home:${scene}`, ru);
+		assert.equal(sceneOf("lx-words-home", et), `home:${scene}`, et);
+	}
+	assert.equal(sceneOf("lx-meals", "stôl"), "home:table");
+	assert.equal(sceneOf("lx-words-home", "стол"), "home:table");
+	assert.equal(sceneOf("lx-words-home", "laud"), "home:table");
+	for (const [ru, et, scene] of [
+		["стул", "tool", "chair"],
+		["ключ", "võti", "key"],
+		["диван", "diivan", "sofa"],
+	] as const) {
+		assert.equal(sceneOf("lx-words-home", ru), `home:${scene}`, ru);
+		assert.equal(sceneOf("lx-words-home", et), `home:${scene}`, et);
+	}
+	assert.equal(sceneOf("lx-words-home", "шкаф"), "home:wardrobe");
+});
+
+test("flat, room, home, wall, floor, kitchen, bathroom, plate and the meals keep the English", () => {
+	const notDrawn: ReadonlyArray<[string, string]> = [
+		["lx-home", "byt"],
+		["lx-home", "izba"],
+		["lx-words-home", "квартира"],
+		["lx-words-home", "комната"],
+		["lx-words-home", "стена"],
+		["lx-words-home", "пол"],
+		["lx-words-home", "kodu"],
+		["lx-words-home", "tuba"],
+		["lx-words-home", "korter"],
+		["lx-home", "kuchyňa"],
+		["lx-words-home", "кухня"],
+		["lx-words-home", "köök"],
+		["lx-home", "kúpeľňa"],
+		["lx-meals", "tanier"],
+		["lx-meals", "raňajky"],
+		["lx-meals", "obed"],
+		["lx-meals", "večera"],
+		["lx-meals", "jesť"],
+		["lx-meals", "piť"],
+		["lx-meals", "variť"],
+	];
+	for (const [unit, lemma] of notDrawn) assert.equal(pictureFor(unit, lemma), undefined, lemma);
+	assert.equal(pictureFor("lx-city", "dom"), undefined);
+	assert.equal(pictureFor("lx-words-food", "стол"), undefined);
+});
+
+test("a home scene shows only when the English names the drawn thing", () => {
+	const shows = (unit: string, lemma: string, en: string) => pictureFor(unit, lemma, en)?.kind === "scene";
+	assert.ok(shows("lx-home", "dom", "Our house is small."));
+	assert.ok(!shows("lx-words-home", "дом", "Where's home?"));
+	assert.ok(!shows("lx-words-home", "дом", "The lighthouse is far."));
+	assert.ok(shows("lx-home", "dvere", "Please shut the doors."));
+	assert.ok(!shows("lx-home", "dvere", "We played outdoors."));
+	assert.ok(!shows("lx-home", "dvere", "The doorbell rang."));
+	assert.ok(shows("lx-home", "okno", "Someone opened the window."));
+	assert.ok(shows("lx-meals", "stôl", "This table is heavy."));
+	assert.ok(!shows("lx-words-home", "стол", "This is a desk."));
+	assert.ok(!shows("lx-meals", "stôl", "Check the timetable."));
+	assert.ok(shows("lx-words-home", "стул", "That's my chair."));
+	assert.ok(!shows("lx-words-home", "стул", "She is the chairman."));
+	assert.ok(shows("lx-home", "posteľ", "The bed's not made."));
+	assert.ok(!shows("lx-home", "posteľ", "The bedroom is upstairs."));
+	assert.ok(shows("lx-words-home", "ключ", "Where are the keys?"));
+	assert.ok(!shows("lx-words-home", "võti", "A monkey took it."));
+	assert.ok(!shows("lx-words-home", "võti", "Type it on the keyboard."));
+	assert.ok(shows("lx-words-home", "диван", "Lie down on the couch."));
+	assert.ok(shows("lx-words-home", "diivan", "It's on the sofa."));
+	assert.ok(shows("lx-words-home", "шкаф", "It's in the closet."));
+	assert.ok(shows("lx-words-home", "шкаф", "Open the wardrobe."));
 });

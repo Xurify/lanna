@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { PaintSwatch } from "@/components/lesson/paint-swatch";
 import { FoodScene } from "@/components/lesson/food-scene";
+import { HomeScene } from "@/components/lesson/home-scene";
 import { WeatherScene } from "@/components/lesson/weather-scene";
 import {
 	firstLetterOf,
@@ -23,15 +24,23 @@ export function PictureBox({ picture, label, className }: { picture: WordPicture
 				<PaintSwatch paint={picture.paint} label={label} className="block h-[62%] w-[min(62%,14rem)]" />
 			) : (
 				<span role="img" aria-label={label} className="block h-full w-full max-w-[22rem] p-2">
-					{picture.set === "food" ? (
-						<FoodScene scene={picture.scene} className="block h-full w-full" />
-					) : (
-						<WeatherScene scene={picture.scene} className="block h-full w-full" />
-					)}
+					<ScenePicture picture={picture} />
 				</span>
 			)}
 		</figure>
 	);
+}
+
+function ScenePicture({ picture }: { picture: Exclude<WordPicture, { kind: "paint" }> }) {
+	const className = "block h-full w-full";
+	switch (picture.set) {
+		case "food":
+			return <FoodScene scene={picture.scene} className={className} />;
+		case "home":
+			return <HomeScene scene={picture.scene} className={className} />;
+		case "weather":
+			return <WeatherScene scene={picture.scene} className={className} />;
+	}
 }
 
 const STEP_LABEL: Record<HelpStep, string> = {

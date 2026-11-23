@@ -1,64 +1,8 @@
 import type { CSSProperties } from "react";
 import { Sheet, Stroke } from "@/components/lesson/ink";
 import { curveD, inkRandom, loopD, smoothD, type Point } from "@/components/lesson/ink-paths";
-import { ACCENT, DETAIL, Ground, GROUND, L, MAIN, Wash, type Hue } from "@/components/lesson/scene-kit";
+import { ACCENT, DETAIL, Ground, GROUND, L, MAIN, Oval, Outline, Wash } from "@/components/lesson/scene-kit";
 import type { FoodScene as Scene } from "@/src/core";
-
-function Outline({
-	points,
-	hue,
-	seed,
-	closed = true,
-	delay = 0.1,
-}: {
-	points: readonly Point[];
-	hue?: Hue;
-	seed: number;
-	closed?: boolean;
-	delay?: number;
-}) {
-	const random = inkRandom(seed);
-	const d = smoothD(
-		points.map(([x, y]): Point => [x + (random() - 0.5) * 1.2, y + (random() - 0.5) * 1.2]),
-		closed,
-	);
-	return (
-		<>
-			{hue && <Wash d={d} hue={hue} />}
-			<Stroke d={d} width={MAIN} delay={delay} />
-		</>
-	);
-}
-
-function Oval({
-	cx,
-	cy,
-	rx,
-	ry,
-	seed,
-	hue,
-	tone = "ink",
-	width = MAIN,
-	delay = 0.1,
-}: {
-	cx: number;
-	cy: number;
-	rx: number;
-	ry: number;
-	seed: number;
-	hue?: Hue;
-	tone?: "ink" | "graphite" | "soft" | "mark";
-	width?: number;
-	delay?: number;
-}) {
-	const d = loopD(cx, cy, rx, ry, seed);
-	return (
-		<>
-			{hue && <Wash d={d} hue={hue} />}
-			<Stroke d={d} tone={tone} width={width} delay={delay} />
-		</>
-	);
-}
 
 function Bread() {
 	const loaf: Point[] = [

@@ -23,9 +23,14 @@ export const FOOD_SCENES = [
 
 export type FoodScene = (typeof FOOD_SCENES)[number];
 
+export const HOME_SCENES = ["house", "door", "window", "table", "chair", "sofa", "bed", "key", "wardrobe"] as const;
+
+export type HomeScene = (typeof HOME_SCENES)[number];
+
 export type ScenePicture =
 	| { kind: "scene"; set: "weather"; scene: WeatherScene }
-	| { kind: "scene"; set: "food"; scene: FoodScene };
+	| { kind: "scene"; set: "food"; scene: FoodScene }
+	| { kind: "scene"; set: "home"; scene: HomeScene };
 
 export type WordPicture = { kind: "paint"; paint: Paint } | ScenePicture;
 
@@ -99,6 +104,34 @@ export const SCENE_SETS: readonly SceneSet[] = [
 			vein: "wine",
 		},
 	},
+	{
+		set: "home",
+		units: ["lx-home", "lx-meals", "lx-words-home"],
+		of: {
+			dom: "house",
+			dvere: "door",
+			okno: "window",
+			posteľ: "bed",
+			stôl: "table",
+			дом: "house",
+			дверь: "door",
+			окно: "window",
+			стол: "table",
+			стул: "chair",
+			кровать: "bed",
+			ключ: "key",
+			диван: "sofa",
+			шкаф: "wardrobe",
+			maja: "house",
+			uks: "door",
+			aken: "window",
+			laud: "table",
+			tool: "chair",
+			voodi: "bed",
+			võti: "key",
+			diivan: "sofa",
+		},
+	},
 ];
 
 const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
@@ -121,6 +154,15 @@ const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
 	milk: /(?<!\p{L})milk/iu,
 	beer: /(?<!\p{L})beers?(?!\p{L})/iu,
 	wine: /(?<!\p{L})wines?(?!\p{L})/iu,
+	house: /(?<!\p{L})houses?(?!\p{L})/iu,
+	door: /(?<!\p{L})doors?(?!\p{L})/iu,
+	window: /(?<!\p{L})windows?(?!\p{L})/iu,
+	table: /(?<!\p{L})tables?(?!\p{L})/iu,
+	chair: /(?<!\p{L})chairs?(?!\p{L})/iu,
+	sofa: /(?<!\p{L})(?:sofas?|couch(?:es)?)(?!\p{L})/iu,
+	bed: /(?<!\p{L})beds?(?!\p{L})/iu,
+	key: /(?<!\p{L})keys?(?!\p{L})/iu,
+	wardrobe: /(?<!\p{L})(?:wardrobes?|closets?|cupboards?|cabinets?|lockers?)(?!\p{L})/iu,
 };
 
 export function pictureFor(unit: string, lemma: string, translation?: string): WordPicture | undefined {
