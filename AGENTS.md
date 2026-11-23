@@ -41,6 +41,7 @@ Code you add or change follows this rule. An older comment goes when the code ar
 - **Fast inner-loop checks**: Run `bun run typecheck:fast` (`tsgo --noEmit`, ~2s vs ~22s for `tsc`) during edit loops, and run full `bun run typecheck` once before commit/PR. For DOM/CLS/console verification, run `node C:/Users/Stream/.claude/scripts/pw-check.mjs <url> [--mobile] [--dark] [--shot out.jpg]` (zero-install).
 - **Deterministic gates over LLM swarms**: Use the model to invent and deterministic code (`npm run typecheck`, `npm run lint`, `npm run fmt:check`, `tsx --test`) to enforce. Never run expensive multi-turn critic loops to verify things a compiler, linter, formatter, or unit test checks in milliseconds.
 - **Model routing**: Never use Claude Sonnet. For subagents and delegated implementation or hill-climbing against deterministic assertions, use Haiku (High / Extra High effort) or Gemini Flash; keep tasks narrowly scoped with disjoint file lists when running workers in parallel.
+- **App versions**: never bump `package.json`'s version except in a release commit that goes to `main`. The next version is above the latest published GitHub Release (`gh release view --json tagName`), not above what `main` says. Rules and checks: `docs/desktop-release.md` → **Version numbers**. To put a build on this PC, use `npm run desktop:install`.
 - **Verify callers before deleting**: Search the whole repo (including `scripts/`, `electron/`, `.github/`, `tests/`) before removing exports, routes, or dependencies.
 
 # Design: no AI slop

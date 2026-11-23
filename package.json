@@ -41,6 +41,8 @@
 		"audio:stories": "bun scripts/story-audio.ts",
 		"desktop:dev": "node scripts/desktop-dev.mjs",
 		"desktop:prod": "node scripts/desktop-dev.mjs --prod",
+		"desktop:install": "node scripts/install-local.mjs",
+		"release:check": "node scripts/release-version.mjs --release",
 		"dev:fresh": "bash scripts/dev-fresh.sh",
 		"dev:sandbox": "bun scripts/dev-sandbox.ts",
 		"skill:sync": "bun scripts/sync-slovak-skill.ts",
