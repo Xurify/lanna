@@ -64,6 +64,7 @@ import { Bridges, BridgesContext } from "@/components/lesson/bridges";
 import { LessonIntro } from "@/components/lesson/lesson-intro";
 import { sketchStages } from "@/components/lesson/case-sketch";
 import { MatchRound } from "@/components/lesson/match-round";
+import { PatternIntro } from "@/components/lesson/pattern-intro";
 import { WordIntro } from "@/components/lesson/word-intro";
 import { HelpLadder, PictureBox, WordCard } from "@/components/lesson/rep-panel";
 import { enqueueLesson, flushOutbox, onSettled, type Recorded } from "@/components/lesson/outbox";
@@ -106,6 +107,7 @@ import {
 	type CheerKey,
 	helpSteps,
 	lessonWords,
+	PATTERN_VERBS,
 	pictureFor,
 	translationAroundPicture,
 	type HelpStep,
@@ -249,7 +251,10 @@ export function LessonPlayer({
 	const activeTime = useActiveTime(mode === "blitz" ? "blitz" : "lesson", "interactive");
 	const finishing = useRef(false);
 	const opensOnIntro = Boolean(
-		unit && mode === "lesson" && !focus && (sketchStages(unit).length > 0 || teachesWords(unit)),
+		unit &&
+		mode === "lesson" &&
+		!focus &&
+		(sketchStages(unit).length > 0 || teachesWords(unit) || unit in PATTERN_VERBS),
 	);
 	const [introUp, setIntroUp] = useState(opensOnIntro);
 	// The words a vocabulary lesson teaches: met before rep 1 on a new unit,
@@ -263,6 +268,7 @@ export function LessonPlayer({
 		[plan, words],
 	);
 	const meetsWords = plan?.stage === "new" && unmetWords.length > 0;
+	const showsPattern = plan?.stage === "new" && !!plan.patterns?.length;
 	const [matching, setMatching] = useState<Rep[] | null>(null);
 
 	// A lesson survives leaving the page (the tutor chat, Today, a reload):
@@ -695,7 +701,7 @@ export function LessonPlayer({
 
 	// The learn-first intro: the teach step before rep 1. It owns the frame
 	// until Start practicing; leaving from here drops nothing, so no ask.
-	if (introUp && plan && (meetsWords || sketchStages(plan.unit).length > 0)) {
+	if (introUp && plan && (meetsWords || showsPattern || sketchStages(plan.unit).length > 0)) {
 		return (
 			<BridgesContext.Provider value={plan.bridges ?? ["et"]}>
 				<Frame strip={false}>
@@ -712,7 +718,9 @@ export function LessonPlayer({
 						</div>
 					</div>
 					<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[2vh]" data-testid="lesson-intro">
-						{meetsWords ? (
+						{showsPattern ? (
+							<PatternIntro plan={plan} patterns={plan.patterns!} onStart={() => setIntroUp(false)} />
+						) : meetsWords ? (
 							<WordIntro plan={plan} words={unmetWords} onStart={() => setIntroUp(false)} />
 						) : (
 							<LessonIntro plan={plan} onStart={() => setIntroUp(false)} />

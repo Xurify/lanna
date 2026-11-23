@@ -135,9 +135,11 @@ export function IntroDock({
 	onBack,
 	onNext,
 	onStart,
+	single = false,
 }: {
 	step: number;
 	finished: boolean;
+	single?: boolean;
 	onBack: () => void;
 	onNext: () => void;
 	onStart: () => void;
@@ -159,7 +161,7 @@ export function IntroDock({
 					</button>
 				</div>
 				<p className="hidden items-center gap-4 font-ui text-[13px] text-ink-3 pointer-fine:flex">
-					<span className="inline-flex items-center gap-1.5">
+					<span className={cn("inline-flex items-center gap-1.5", single && "hidden")}>
 						<kbd className={KBD}>
 							<ArrowLeftIcon className="size-3" strokeWidth={2} aria-hidden />
 						</kbd>

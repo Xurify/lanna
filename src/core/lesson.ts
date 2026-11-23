@@ -22,6 +22,7 @@ import { cellsOf, numberByEnding, numberIn, type CaseName, type Declension } fro
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { cardsWithoutOtherSentences, wordCardOf, type WordCard } from "./word-card.ts";
+import { verbPatterns, type VerbPattern } from "./verb-pattern.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
 import {
 	activeCourse,
@@ -1005,8 +1006,7 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 			} else if (classifyAll(entry, ex).includes(unit)) out.push({ entry, index, unit });
 		});
 	}
-	// Commoner words first, in bands of 300 ranks; inside a band, shorter
-	// sentences first — a common word in a long legal sentence is not easy.
+	const unknown = beginnerOrder(entries);
 	// A cluster unit puts the dictionary form first: that is the word to learn.
 	const band = (e: LexiconEntry) => (e.origin === "curated" ? -1 : Math.floor((e.rank ?? 1e9) / 300));
 	const words = (c: Candidate) => exampleText(c.entry.examples[c.index]!).split(/\s+/).length;
@@ -1015,11 +1015,76 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 	return out.sort(
 		(a, b) =>
 			inflected(a) - inflected(b) ||
+			unknown(a) - unknown(b) ||
 			band(a.entry) - band(b.entry) ||
 			words(a) - words(b) ||
 			(a.entry.rank ?? 1e9) - (b.entry.rank ?? 1e9) ||
 			a.entry.slug.localeCompare(b.entry.slug),
 	);
+}
+
+// The source dictionary ranks each part of speech separately.
+export const COMMON_RANK = 500;
+
+const rankOfForm = new WeakMap<readonly LexiconEntry[], Map<string, number>>();
+
+export function rareWordsIn(entries: readonly LexiconEntry[]): (c: Candidate) => number {
+	const tag = activeCourse()?.tag ?? "sk-SK";
+	let ranks = rankOfForm.get(entries);
+	if (!ranks) {
+		ranks = new Map();
+		const taught = taughtWords();
+		for (const e of entries) {
+			const rank = taught.has(entryLemma(e).toLowerCase()) || isFunctionWord(e) ? 0 : (e.rank ?? COMMON_RANK + 1);
+			for (const form of [entryLemma(e), ...(e.forms ?? [])]) {
+				const key = form.toLocaleLowerCase(tag);
+				if (!ranks.has(key) || ranks.get(key)! > rank) ranks.set(key, rank);
+			}
+		}
+		rankOfForm.set(entries, ranks);
+	}
+	const known = ranks;
+	const memo = new Map<string, number>();
+	return (c) => {
+		const id = `${c.entry.slug}#${c.index}`;
+		const hit = memo.get(id);
+		if (hit !== undefined) return hit;
+		const ex = c.entry.examples[c.index]!;
+		const answer = ex.cloze?.answer.toLocaleLowerCase(tag);
+		let count = 0;
+		for (const raw of exampleText(ex).split(/\s+/)) {
+			const word = raw.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "");
+			if (!word) continue;
+			const lower = word.toLocaleLowerCase(tag);
+			if (lower === answer) continue;
+			const rank = known.get(lower);
+			if (rank !== undefined ? rank > COMMON_RANK : word.length >= 7 && word === lower) count++;
+		}
+		memo.set(id, count);
+		return count;
+	};
+}
+
+export function beginnerOrder(entries: readonly LexiconEntry[]): (c: Candidate) => number {
+	const rare = rareWordsIn(entries);
+	const taught = taughtWords();
+	return (c) => (taught.has(entryLemma(c.entry).toLowerCase()) ? 0 : 1) + rare(c);
+}
+
+const isFunctionWord = (e: LexiconEntry) => e.origin === "curated" && e.cat === "Phrases" && e.rank === undefined;
+
+const taughtOf = new WeakMap<readonly UnitInfo[], Set<string>>();
+
+function taughtWords(): Set<string> {
+	const units = allUnits();
+	let taught = taughtOf.get(units);
+	if (!taught) {
+		taught = new Set(
+			units.flatMap((u) => (u.kind === "words" && u.lemmas ? u.lemmas.map((l) => l.toLowerCase()) : [])),
+		);
+		taughtOf.set(units, taught);
+	}
+	return taught;
 }
 
 /** Small deterministic PRNG (mulberry32) — lessons vary per seed, tests pin a seed. */
@@ -1376,6 +1441,7 @@ export interface LessonPlan {
 	/** The languages the hints show a bridge in (from the learner's profile;
 	 *  src/core/unit-bridges.ts). Absent on a plan built without a profile. */
 	bridges?: Array<"et" | "fi" | "ru" | "de">;
+	patterns?: VerbPattern[];
 	/** A new word lesson: the words it teaches that the learner has not met
 	 *  yet (slugs), the ones its intro cards show. */
 	unmet?: string[];
@@ -1424,6 +1490,7 @@ export function buildLesson(
 						? LESSON_PATTERN
 						: GRAMMAR_FIRST_PATTERN);
 	const pattern = base.slice(0, length);
+	const cost = beginnerOrder(entries);
 	const sourceFor = (u: UnitId, filterGender?: AtlasGender, weakGender?: AtlasGender) => {
 		const raw = candidatesFor(entries, u);
 		const filtered = filterGender ? raw.filter((c) => genderColumn(c.entry.gender) === filterGender) : raw;
@@ -1436,8 +1503,8 @@ export function buildLesson(
 			const otherItems = baseList.filter((c) => genderColumn(c.entry.gender) !== weakGender);
 			if (weakItems.length >= 2) {
 				const mixed: Candidate[] = [];
-				const shufWeak = shuffle(weakItems, rand);
-				const shufOther = shuffle(otherItems, rand);
+				const shufWeak = shuffle(weakItems, rand).sort((a, b) => cost(a) - cost(b));
+				const shufOther = shuffle(otherItems, rand).sort((a, b) => cost(a) - cost(b));
 				let w = 0;
 				let o = 0;
 				while (w < shufWeak.length || o < shufOther.length) {
@@ -1448,7 +1515,8 @@ export function buildLesson(
 				return { top, list: mixed };
 			}
 		}
-		return { top, list: shuffle(baseList, rand) };
+		const shuffled = shuffle(baseList, rand);
+		return { top, list: shuffled.sort((a, b) => cost(a) - cost(b)) };
 	};
 	const main = sourceFor(unit, opts.gender, opts.weakGender);
 	let unmet: string[] | undefined;
@@ -1485,6 +1553,7 @@ export function buildLesson(
 	const pool = poolOf(main.top, unit);
 	const used = new Set<string>();
 	const keyOf = (c: Candidate) => (info.repeat ? `${c.entry.slug}#${c.index}` : c.entry.slug);
+	const patterns = stage === "new" ? verbPatterns(entries, unit) : [];
 	const items: LessonItem[] = [];
 	const spreads = info.kind === "words" && info.repeat === true;
 	const asked = new Map<string, number>();
@@ -1531,6 +1600,7 @@ export function buildLesson(
 		items: cardsWithoutOtherSentences(items),
 		stage,
 		...(unmet ? { unmet } : {}),
+		...(patterns.length ? { patterns } : {}),
 		...(opts.gender ? { gender: opts.gender } : {}),
 	};
 }

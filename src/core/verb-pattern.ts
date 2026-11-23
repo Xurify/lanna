@@ -1,0 +1,109 @@
+import type { LexiconEntry } from "./review.ts";
+
+export interface PatternForm {
+	stem: string;
+	ending: string;
+	tail?: string;
+}
+
+export interface PatternRow {
+	who: string;
+	en: string;
+	forms: PatternForm[];
+}
+
+export interface VerbPattern {
+	verb: string;
+	gloss: string;
+	rows: PatternRow[];
+}
+
+export const PATTERN_VERBS: Readonly<Record<string, readonly string[]>> = {
+	present: ["čítať", "hovoriť"],
+	"present-ujem": ["pracovať"],
+	"present-em": ["písať"],
+	past: ["robiť"],
+};
+
+const PERSONS: ReadonlyArray<[string, string]> = [
+	["ja", "I"],
+	["ty", "you"],
+	["on, ona, ono", "he, she, it"],
+	["my", "we"],
+	["vy", "you all"],
+	["oni, ony", "they"],
+];
+
+function commonPrefix(forms: readonly string[]): string {
+	let prefix = forms[0] ?? "";
+	for (const form of forms) while (!form.startsWith(prefix)) prefix = prefix.slice(0, -1);
+	return prefix;
+}
+
+const split = (form: string, stem: string, tail?: string): PatternForm => ({
+	stem,
+	ending: form.slice(stem.length),
+	...(tail ? { tail } : {}),
+});
+
+function presentForms(forms: readonly string[]): string[] | undefined {
+	const six = forms.slice(0, 6);
+	if (six.length < 6) return undefined;
+	const [ja, ty, , my, vy] = six;
+	if (!ja!.endsWith("m") || !ty!.endsWith("š") || !my!.endsWith("me") || !vy!.endsWith("te")) return undefined;
+	return six;
+}
+
+function pastForms(forms: readonly string[]): string[] | undefined {
+	const four = forms.slice(-4);
+	if (four.length < 4) return undefined;
+	const [m, f, n, pl] = four;
+	if (!/l$/.test(m!) || !f!.endsWith("la") || !n!.endsWith("lo") || !pl!.endsWith("li")) return undefined;
+	return four;
+}
+
+function presentPattern(forms: readonly string[]): PatternRow[] | undefined {
+	const six = presentForms(forms);
+	if (!six) return undefined;
+	const stem = commonPrefix(six);
+	return six.map((form, i) => ({ who: PERSONS[i]![0], en: PERSONS[i]![1], forms: [split(form, stem)] }));
+}
+
+function pastPattern(forms: readonly string[]): PatternRow[] | undefined {
+	const four = pastForms(forms);
+	if (!four) return undefined;
+	const [m, f, n, pl] = four as [string, string, string, string];
+	const stem = commonPrefix(four).replace(/l$/, "");
+	const of = (form: string, tail?: string) => split(form, stem, tail);
+	return [
+		{ who: "ja", en: "I (man, woman)", forms: [of(m, "som"), of(f, "som")] },
+		{ who: "ty", en: "you (man, woman)", forms: [of(m, "si"), of(f, "si")] },
+		{ who: "on", en: "he", forms: [of(m)] },
+		{ who: "ona", en: "she", forms: [of(f)] },
+		{ who: "ono", en: "it", forms: [of(n)] },
+		{ who: "my", en: "we", forms: [of(pl, "sme")] },
+		{ who: "vy", en: "you all", forms: [of(pl, "ste")] },
+		{ who: "oni, ony", en: "they", forms: [of(pl)] },
+	];
+}
+
+export function verbPatterns(entries: readonly LexiconEntry[], unit: string): VerbPattern[] {
+	const verbs = PATTERN_VERBS[unit];
+	if (!verbs) return [];
+	const out: VerbPattern[] = [];
+	for (const verb of verbs) {
+		const entry = entries.find((e) => (e.sk ?? e.lemma) === verb && e.forms?.length);
+		if (!entry) continue;
+		const rows = unit === "past" ? pastPattern(entry.forms!) : presentPattern(entry.forms!);
+		if (rows)
+			out.push({
+				verb,
+				gloss: (entry.en ?? "")
+					.split(";")[0]!
+					.replace(/\s*\(.*\)\s*$/, "")
+					.trim(),
+				rows,
+			});
+	}
+	return out;
+}
