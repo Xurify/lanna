@@ -48,14 +48,14 @@ Score separately: gender, case ending, adjective agreement, preposition. Correct
 
 Give `hotel` or `kaviareň`; require:
 
-| Meaning                | Expected frame                           |
-| ---------------------- | ---------------------------------------- |
-| I see it               | `vidím + acc.`                           |
-| I go there             | `do + gen.` / `na + acc.` as appropriate |
-| I am there             | `v + loc.` / `na + loc.`                 |
-| I am with it/person    | `s/so + instr.`                          |
-| I talk about it/person | `o + loc.`                               |
-| I need/help/wait       | verb-governed case                       |
+| Meaning | Expected frame |
+| --- | --- |
+| I see it | `vidím + acc.` |
+| I go there | `do + gen.` / `na + acc.` as appropriate |
+| I am there | `v + loc.` / `na + loc.` |
+| I am with it/person | `s/so + instr.` |
+| I talk about it/person | `o + loc.` |
+| I need/help/wait | verb-governed case |
 
 Use map, shopping, health, and work contexts so endings do not become a detached table.
 
@@ -120,12 +120,12 @@ Success: past/future distinction, appropriate politeness, connected sentences, c
 
 ## Four-skill assessment rubric
 
-| Skill     | What to test                          | What counts as pass                                                           |
-| --------- | ------------------------------------- | ----------------------------------------------------------------------------- |
-| listening | slow learner audio → natural speech   | identify gist, key facts, speaker stance, then infer one unstated relation    |
-| speaking  | role-play + 1-3 minute monologue      | understandable flow; repairs; grammar adequate for task; register fits        |
-| reading   | message, notice, article, formal text | locate fact, infer purpose, distinguish opinion/fact, summarize               |
-| writing   | message → email → argument            | task met, coherent structure, correct high-frequency forms, revision evidence |
+| Skill | What to test | What counts as pass |
+| --- | --- | --- |
+| listening | slow learner audio → natural speech | identify gist, key facts, speaker stance, then infer one unstated relation |
+| speaking | role-play + 1-3 minute monologue | understandable flow; repairs; grammar adequate for task; register fits |
+| reading | message, notice, article, formal text | locate fact, infer purpose, distinguish opinion/fact, summarize |
+| writing | message → email → argument | task met, coherent structure, correct high-frequency forms, revision evidence |
 
 Track errors by category: `case frame`, `agreement`, `aspect`, `verb form`, `word order/clitic`, `orthography`, `register`, `lexis`. For each recurring error, store one corrected personal sentence and one future retrieval prompt.
 

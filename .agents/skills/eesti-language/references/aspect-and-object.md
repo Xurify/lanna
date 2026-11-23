@@ -60,10 +60,10 @@ The total object signifies that the action is **bounded, completed, or intended 
 
 The total object takes one of three case forms depending on clause syntax:
 
-| Total Object Case       | Clause Condition                                                                                                                                              | Example                                                                                                                                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Genitive Singular**   | Standard personal active indicative clause (singular object)                                                                                                  | _Mees ostis uue **auto**._ (The man bought a new car.)<br>_Kirjutasin **kirja** valmis._ (I finished writing the letter.)                                                                      |
-| **Nominative Plural**   | Any plural total object                                                                                                                                       | _Ostsin need **raamatud**._ (I bought those books.)<br>_Loe need **leheküljed** läbi!_ (Read these pages through!)                                                                             |
+| Total Object Case | Clause Condition | Example |
+| --- | --- | --- |
+| **Genitive Singular** | Standard personal active indicative clause (singular object) | _Mees ostis uue **auto**._ (The man bought a new car.)<br>_Kirjutasin **kirja** valmis._ (I finished writing the letter.) |
+| **Nominative Plural** | Any plural total object | _Ostsin need **raamatud**._ (I bought those books.)<br>_Loe need **leheküljed** läbi!_ (Read these pages through!) |
 | **Nominative Singular** | 1. **Imperative clauses** (2sg & 2pl commands)<br>2. **Impersonal clauses** (_umbisikuline_)<br>3. **Necessive / modal infinitives** (_tuleb, peab, on vaja_) | 1. _Osta see **leib**!_ (Buy this bread!)<br>2. _Linnas avati uus **kool**._ (A new school was opened in town.)<br>3. _Mul tuleb see **raamat** läbi lugeda._ (I must read this book through.) |
 
 _Note: In the imperative `Osta see leib!`, the object is in the Nominative (`leib`), NOT Genitive (`leiva`). Using Genitive in imperative is a hallmark learner error._
@@ -74,14 +74,14 @@ _Note: In the imperative `Osta see leib!`, the object is in the Nominative (`lei
 
 Compare the exact same verb with Partitive vs. Total object:
 
-| Verb & Object                                 | Meaning                  | Aspectual Nuance                            |
-| --------------------------------------------- | ------------------------ | ------------------------------------------- |
-| _Ta ehitas maja._ (Genitive)                  | He built a/the house.    | Finished completely (perfective result).    |
-| _Ta ehitas maja._ (Partitive: _maja_)         | He was building a house. | Unfinished, was in the process of building. |
-| _Lugesin raamatu läbi._ (Genitive + particle) | I read the book through. | Fully completed from cover to cover.        |
-| _Lugesin raamatut._ (Partitive)               | I read (in) the book.    | Ongoing reading, partial content.           |
-| _Võtsin rohu ära._ (Genitive + particle)      | I took the medicine.     | Swallowed the prescribed dose.              |
-| _Võtsin rohtu._ (Partitive)                   | I took some medicine.    | Indefinite quantity.                        |
+| Verb & Object | Meaning | Aspectual Nuance |
+| --- | --- | --- |
+| _Ta ehitas maja._ (Genitive) | He built a/the house. | Finished completely (perfective result). |
+| _Ta ehitas maja._ (Partitive: _maja_) | He was building a house. | Unfinished, was in the process of building. |
+| _Lugesin raamatu läbi._ (Genitive + particle) | I read the book through. | Fully completed from cover to cover. |
+| _Lugesin raamatut._ (Partitive) | I read (in) the book. | Ongoing reading, partial content. |
+| _Võtsin rohu ära._ (Genitive + particle) | I took the medicine. | Swallowed the prescribed dose. |
+| _Võtsin rohtu._ (Partitive) | I took some medicine. | Indefinite quantity. |
 
 ---
 
@@ -89,10 +89,10 @@ Compare the exact same verb with Partitive vs. Total object:
 
 Estonian uses specific verbal adverbs/particles to seal the telic boundary of an action:
 
-| Particle   | Core Telic Function                           | Example                                                                                    |
-| ---------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **ära**    | Complete consumption, disappearance, finality | _ära sööma_ (to eat up), _ära jooma_ (to drink up), _ära parandama_ (to repair completely) |
-| **läbi**   | Thorough penetration from start to end        | _läbi lugema_ (to read through), _läbi vaatama_ (to review thoroughly)                     |
-| **valmis** | Reaching the state of readiness               | _valmis tegema_ (to complete/make ready), _valmis kirjutama_ (to finish writing)           |
-| **välja**  | Extraction, complete emergence                | _välja mõtlema_ (to devise/think up), _välja uurima_ (to investigate thoroughly)           |
-| **üles**   | Recording, upward completion                  | _üles kirjutama_ (to write down/note), _üles ärkama_ (to wake up)                          |
+| Particle | Core Telic Function | Example |
+| --- | --- | --- |
+| **ära** | Complete consumption, disappearance, finality | _ära sööma_ (to eat up), _ära jooma_ (to drink up), _ära parandama_ (to repair completely) |
+| **läbi** | Thorough penetration from start to end | _läbi lugema_ (to read through), _läbi vaatama_ (to review thoroughly) |
+| **valmis** | Reaching the state of readiness | _valmis tegema_ (to complete/make ready), _valmis kirjutama_ (to finish writing) |
+| **välja** | Extraction, complete emergence | _välja mõtlema_ (to devise/think up), _välja uurima_ (to investigate thoroughly) |
+| **üles** | Recording, upward completion | _üles kirjutama_ (to write down/note), _üles ärkama_ (to wake up) |

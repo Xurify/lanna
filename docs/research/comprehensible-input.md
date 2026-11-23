@@ -29,11 +29,11 @@ Lichtman and VanPatten's review "Was Krashen right? Forty years later" (2021) fi
 Nobody has found a way to test whether a text is exactly one step beyond a learner. What has been measured is the share of running words a reader knows. Hu and Nation (2000) put comfortable unassisted reading at about 98% known words. Schmitt, Jiang and Grabe (2011) found no cliff, just a straight line: each extra percent of words known buys about 2.3 points of comprehension.
 
 | Words known | Comprehension (Schmitt, Jiang & Grabe 2011) |
-| ----------- | ------------------------------------------- |
-| 90%         | 50%                                         |
-| 95%         | 60%                                         |
-| 98%         | 68%                                         |
-| 100%        | 75%                                         |
+| --- | --- |
+| 90% | 50% |
+| 95% | 60% |
+| 98% | 68% |
+| 100% | 75% |
 
 661 readers of two academic texts. The relationship is linear in the measured range; even knowing every word gave only 75%, because background knowledge does the rest. Lanna aims its input at 95 to 98% known words: hard enough to carry something new, easy enough to read instead of decode.
 
@@ -69,26 +69,26 @@ TPRS has a handful of small classroom studies, mostly positive for vocabulary an
 
 Every activity in the app sorted into Nation's strands, with the minutes a full day's plan gives each one. The minutes are the plan's own estimates; the share is what matters.
 
-| Activity                                   | Strand           | Minutes in a day's plan | Comprehensible input?                                                                |
-| ------------------------------------------ | ---------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| Review deck (FSRS cloze cards)             | Language-focused | 2 to 10                 | No: one blank per sentence, graded.                                                  |
-| Lesson (choose, type, build, listen)       | Language-focused | 3                       | Partly: real sentences with audio, but the first contact with a new form was a test. |
-| Strengthen (typed lesson, mixed units)     | Language-focused | 3                       | No.                                                                                  |
-| Words (a cluster or frequency band)        | Language-focused | 3                       | Partly: words in sentences, but tested, not read.                                    |
-| Blitz (60 s of choose)                     | Fluency          | 1                       | No, and it only appears when nothing needs strengthening.                            |
-| Talk (role-play, corrections at the end)   | Output           | 6, every other day      | No: it is output, which is right.                                                    |
-| Story (tutor chat, ~98% known words)       | Input            | 6, every other day      | Yes. The one CI activity before today.                                               |
-| Read (graded episode, tap-to-gloss, audio) | Input            | 4                       | Yes. Added today in the reading thread.                                              |
-| Why? and tutor units                       | Language-focused | on demand               | No: explanation, which is what they are for.                                         |
+| Activity | Strand | Minutes in a day's plan | Comprehensible input? |
+| --- | --- | --- | --- |
+| Review deck (FSRS cloze cards) | Language-focused | 2 to 10 | No: one blank per sentence, graded. |
+| Lesson (choose, type, build, listen) | Language-focused | 3 | Partly: real sentences with audio, but the first contact with a new form was a test. |
+| Strengthen (typed lesson, mixed units) | Language-focused | 3 | No. |
+| Words (a cluster or frequency band) | Language-focused | 3 | Partly: words in sentences, but tested, not read. |
+| Blitz (60 s of choose) | Fluency | 1 | No, and it only appears when nothing needs strengthening. |
+| Talk (role-play, corrections at the end) | Output | 6, every other day | No: it is output, which is right. |
+| Story (tutor chat, ~98% known words) | Input | 6, every other day | Yes. The one CI activity before today. |
+| Read (graded episode, tap-to-gloss, audio) | Input | 4 | Yes. Added today in the reading thread. |
+| Why? and tutor units | Language-focused | on demand | No: explanation, which is what they are for. |
 
 Share of a full day's planned minutes, averaged over a Talk day and a Story day:
 
-|                 | Input | Output | Language-focused | Fluency |
-| --------------- | ----- | ------ | ---------------- | ------- |
-| Yesterday       | 12%   | 12%    | 76%              | 0%      |
-| With Read       | 24%   | 10%    | 66%              | 0%      |
-| Now             | 40%   | 11%    | 46%              | 3%      |
-| Nation's target | 25%   | 25%    | 25%              | 25%     |
+|  | Input | Output | Language-focused | Fluency |
+| --- | --- | --- | --- | --- |
+| Yesterday | 12% | 12% | 76% | 0% |
+| With Read | 24% | 10% | 66% | 0% |
+| Now | 40% | 11% | 46% | 3% |
+| Nation's target | 25% | 25% | 25% | 25% |
 
 "Now" counts the Listen step (4 min), the two input reps that open every new unit's lesson, and Read. Deliberate study still runs over Nation's quarter; the next moves are a real fluency strand and more output, not less grammar. The app now draws these bars itself, from the week's real ledger, under the daily plan.
 

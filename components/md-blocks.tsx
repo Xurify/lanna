@@ -19,7 +19,7 @@
  *
  * THE ONE AFFORDANCE (user-decided): a small muted COPY icon at each block's
  * top-right corner, revealed on hover — copying the SOURCE (table →
- * Markdown, code → text, mermaid → chart source, math → the raw TeX). It
+ * Markdown, code → text, mermaid → chart source). It
  * never fakes a table column or shifts layout, and hover-reveal keeps the
  * reading surface clean — the whole point of the melt. Text selection stays
  * free: the icon lives in dead corner space. Mermaid additionally gets an
@@ -179,7 +179,12 @@ function MermaidInline({ chart }: { chart: string }) {
 	return (
 		// data-streamdown="mermaid" keeps the house CSS hook (the svg
 		// max-width rule in globals.css) alive for this app-owned block.
-		<div data-testid="md-mermaid" data-streamdown="mermaid" className="group/md relative my-4">
+		<div
+			data-testid="md-mermaid"
+			data-streamdown="mermaid"
+			data-no-word-lookup="true"
+			className="group/md relative my-4 select-none"
+		>
 			<div
 				ref={holderRef}
 				className="mx-auto flex w-full justify-center"

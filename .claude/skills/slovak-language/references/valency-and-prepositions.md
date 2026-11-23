@@ -66,29 +66,29 @@ Use `s/so` for people and instruments, but not automatically for every English �
 
 ## 2. Verbs with a preposition
 
-| Frame                     | Meaning and example                                 |
-| ------------------------- | --------------------------------------------------- |
-| `starať sa o + acc.`      | take care of: `Stará sa o deti.`                    |
-| `uchádzať sa o + acc.`    | apply/compete for: `Uchádza sa o prácu.`            |
-| `zaujímať sa o + acc.`    | be interested in: `Zaujíma sa o históriu.`          |
-| `rozhodnúť sa pre + acc.` | decide in favour of: `Rozhodli sa pre vlak.`        |
-| `sťažovať sa na + acc.`   | complain about: `Sťažoval sa na hluk.`              |
-| `spomenúť si na + acc.`   | remember: `Spomenul si na meno.`                    |
-| `tešiť sa na + acc.`      | look forward to: `Teším sa na dovolenku.`           |
-| `naraziť na + acc.`       | come across / encounter: `Narazili sme na problém.` |
-| `patriť k + dat.`         | belong to: `Patrí to k tradícii.`                   |
-| `prispieť k + dat.`       | contribute to: `Prispelo to k zmene.`               |
-| `podobať sa na + acc.`    | resemble: `Podobá sa na otca.`                      |
-| `záležať na + loc.`       | depend on / matter to: `Záleží na okolnostiach.`    |
-| `hovoriť o + loc.`        | speak about: `Hovoríme o práci.`                    |
-| `rozhodovať o + loc.`     | decide about: `Rozhodujú o rozpočte.`               |
-| `premýšľať o + loc.`      | think about: `Premýšľam o tom.`                     |
-| `snívať o + loc.`         | dream about: `Sníva o mori.`                        |
-| `spoliehať sa na + acc.`  | rely on: `Spolieham sa na teba.`                    |
-| `závisieť od + gen.`      | depend on: `Závisí to od počasia.`                  |
-| `pochádzať z/zo + gen.`   | come from: `Pochádza zo Slovenska.`                 |
-| `vyplývať z/zo + gen.`    | follow from: `Vyplýva to z údajov.`                 |
-| `porovnať s + instr.`     | compare with: `Porovnajte to s pôvodným textom.`    |
+| Frame | Meaning and example |
+| --- | --- |
+| `starať sa o + acc.` | take care of: `Stará sa o deti.` |
+| `uchádzať sa o + acc.` | apply/compete for: `Uchádza sa o prácu.` |
+| `zaujímať sa o + acc.` | be interested in: `Zaujíma sa o históriu.` |
+| `rozhodnúť sa pre + acc.` | decide in favour of: `Rozhodli sa pre vlak.` |
+| `sťažovať sa na + acc.` | complain about: `Sťažoval sa na hluk.` |
+| `spomenúť si na + acc.` | remember: `Spomenul si na meno.` |
+| `tešiť sa na + acc.` | look forward to: `Teším sa na dovolenku.` |
+| `naraziť na + acc.` | come across / encounter: `Narazili sme na problém.` |
+| `patriť k + dat.` | belong to: `Patrí to k tradícii.` |
+| `prispieť k + dat.` | contribute to: `Prispelo to k zmene.` |
+| `podobať sa na + acc.` | resemble: `Podobá sa na otca.` |
+| `záležať na + loc.` | depend on / matter to: `Záleží na okolnostiach.` |
+| `hovoriť o + loc.` | speak about: `Hovoríme o práci.` |
+| `rozhodovať o + loc.` | decide about: `Rozhodujú o rozpočte.` |
+| `premýšľať o + loc.` | think about: `Premýšľam o tom.` |
+| `snívať o + loc.` | dream about: `Sníva o mori.` |
+| `spoliehať sa na + acc.` | rely on: `Spolieham sa na teba.` |
+| `závisieť od + gen.` | depend on: `Závisí to od počasia.` |
+| `pochádzať z/zo + gen.` | come from: `Pochádza zo Slovenska.` |
+| `vyplývať z/zo + gen.` | follow from: `Vyplýva to z údajov.` |
+| `porovnať s + instr.` | compare with: `Porovnajte to s pôvodným textom.` |
 
 For formal style, `vyplynulo z analýzy` and `záleží na podmienkach` are more natural than literal English noun-heavy phrases.
 
@@ -128,15 +128,15 @@ Odporučili nám, aby sme počkali.
 
 ### Core direction pairs
 
-| Situation                         | Frame         | Example               |
-| --------------------------------- | ------------- | --------------------- |
-| enter/go to an interior/place     | `do + gen.`   | `Idem do školy.`      |
-| be inside/at a place              | `v/vo + loc.` | `Som v škole.`        |
-| move onto/to an event/institution | `na + acc.`   | `Idem na stanicu.`    |
-| be on/at an event/institution     | `na + loc.`   | `Som na stanici.`     |
-| move toward a person/point        | `k/ku + dat.` | `Idem k lekárovi.`    |
-| be at a person’s place/service    | `u + gen.`    | `Som u lekára.`       |
-| leave/from inside                 | `z/zo + gen.` | `Vrátim sa zo školy.` |
+| Situation | Frame | Example |
+| --- | --- | --- |
+| enter/go to an interior/place | `do + gen.` | `Idem do školy.` |
+| be inside/at a place | `v/vo + loc.` | `Som v škole.` |
+| move onto/to an event/institution | `na + acc.` | `Idem na stanicu.` |
+| be on/at an event/institution | `na + loc.` | `Som na stanici.` |
+| move toward a person/point | `k/ku + dat.` | `Idem k lekárovi.` |
+| be at a person’s place/service | `u + gen.` | `Som u lekára.` |
+| leave/from inside | `z/zo + gen.` | `Vrátim sa zo školy.` |
 
 `na Slovensku`, `v Bratislave`, `do Bratislavy`, `zo Slovenska` must be learned as geographic frames. Do not infer `do` vs. `na` from English “to.”
 
@@ -153,19 +153,19 @@ Sadol si medzi priateľov.    movement: accusative
 
 ### Other spatial and temporal frames
 
-| Frame                 | Main use                           | Example                      |
-| --------------------- | ---------------------------------- | ---------------------------- |
-| `pri + loc.`          | near/by; during someone’s presence | `Sedím pri okne.`            |
-| `vedľa + gen.`        | next to                            | `Vedľa školy je pošta.`      |
-| `naproti + dat.`      | opposite                           | `Banka je naproti stanici.`  |
-| `oproti + dat.`       | opposite; compared with            | `Oproti minulému roku...`    |
-| `medzi + instr./acc.` | among/between; into between        | see above                    |
-| `cez + acc.`          | across; through; during            | `cez ulicu`, `cez víkend`    |
-| `po + loc.`           | after; around/along                | `po obede`, `po meste`       |
-| `po + acc.`           | go to fetch                        | `Idem po chlieb.`            |
-| `počas + gen.`        | during                             | `počas stretnutia`           |
-| `okolo + gen.`        | around/about                       | `okolo domu`, `okolo tretej` |
-| `pozdĺž + gen.`       | along                              | `pozdĺž rieky`               |
+| Frame | Main use | Example |
+| --- | --- | --- |
+| `pri + loc.` | near/by; during someone’s presence | `Sedím pri okne.` |
+| `vedľa + gen.` | next to | `Vedľa školy je pošta.` |
+| `naproti + dat.` | opposite | `Banka je naproti stanici.` |
+| `oproti + dat.` | opposite; compared with | `Oproti minulému roku...` |
+| `medzi + instr./acc.` | among/between; into between | see above |
+| `cez + acc.` | across; through; during | `cez ulicu`, `cez víkend` |
+| `po + loc.` | after; around/along | `po obede`, `po meste` |
+| `po + acc.` | go to fetch | `Idem po chlieb.` |
+| `počas + gen.` | during | `počas stretnutia` |
+| `okolo + gen.` | around/about | `okolo domu`, `okolo tretej` |
+| `pozdĺž + gen.` | along | `pozdĺž rieky` |
 
 ## 5. Cause, purpose, standard, and exception
 
@@ -213,16 +213,16 @@ For less forceful professional requests, prefer `Prosím Vás o...`, `Mohli by s
 
 ## 7. Common contrastive traps
 
-| Do not collapse                        | Keep the difference                                                       |
-| -------------------------------------- | ------------------------------------------------------------------------- |
-| `čakať na` vs. `očakávať`              | `Čakám na autobus.` / `Očakávam odpoveď.`                                 |
-| `pýtať sa na` vs. `požiadať o`         | ask a question about / request something                                  |
-| `hovoriť o` vs. `povedať niekomu`      | talk about a topic / tell someone something                               |
-| `ísť do` vs. `ísť na`                  | interior/destination convention / event or surface/institution convention |
-| `doma` vs. `domov`                     | at home / homeward                                                        |
-| `u lekára` vs. `k lekárovi`            | at the doctor’s / going to the doctor                                     |
-| `zaujímať sa o` vs. `zaujímať niekoho` | be interested in / interest someone                                       |
-| `páčiť sa mi` vs. `mám rád/rada`       | something appeals to me / I like it                                       |
+| Do not collapse | Keep the difference |
+| --- | --- |
+| `čakať na` vs. `očakávať` | `Čakám na autobus.` / `Očakávam odpoveď.` |
+| `pýtať sa na` vs. `požiadať o` | ask a question about / request something |
+| `hovoriť o` vs. `povedať niekomu` | talk about a topic / tell someone something |
+| `ísť do` vs. `ísť na` | interior/destination convention / event or surface/institution convention |
+| `doma` vs. `domov` | at home / homeward |
+| `u lekára` vs. `k lekárovi` | at the doctor’s / going to the doctor |
+| `zaujímať sa o` vs. `zaujímať niekoho` | be interested in / interest someone |
+| `páčiť sa mi` vs. `mám rád/rada` | something appeals to me / I like it |
 
 ## Production check
 

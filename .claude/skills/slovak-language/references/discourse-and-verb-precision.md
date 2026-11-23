@@ -6,19 +6,19 @@ Use this reference when Slovak needs to move beyond correct individual sentences
 
 Particles do not normally carry a sentence role such as subject or object. They qualify the speaker’s stance, scope, emphasis, or expectation. Choose them for a concrete communicative purpose, not as fillers.
 
-| Purpose                 | Particle(s)          | Meaning in use     | Example                                     |
-| ----------------------- | -------------------- | ------------------ | ------------------------------------------- |
-| restriction             | `iba`, `len`         | only               | `Dnes prišla iba Zuzana.`                   |
-| minimum / concession    | `aspoň`              | at least           | `Príď aspoň na chvíľu.`                     |
-| addition / emphasis     | `aj`, `tiež`         | also, too          | `Prišli aj rodičia.` `Rodičia prišli tiež.` |
-| total negation          | `vôbec`              | at all             | `Vôbec tomu nerozumiem.`                    |
-| confirmation            | `naozaj`, `skutočne` | really, indeed     | `Naozaj nepríde.`                           |
-| certainty               | `určite`             | certainly          | `Určite sa ozvem.`                          |
-| probability             | `možno`, `asi`       | perhaps / probably | `Možno bude meškať.` `Asi už spí.`          |
-| near limit              | `takmer`, `skoro`    | almost             | `Takmer som zmeškal vlak.`                  |
-| completion / impatience | `konečne`            | finally            | `Konečne si tu!`                            |
-| side remark             | `mimochodom`         | by the way         | `Mimochodom, už si jej písal/a?`            |
-| shared expectation      | `však`               | right?, after all  | `Bolo to pekné, však?`                      |
+| Purpose | Particle(s) | Meaning in use | Example |
+| --- | --- | --- | --- |
+| restriction | `iba`, `len` | only | `Dnes prišla iba Zuzana.` |
+| minimum / concession | `aspoň` | at least | `Príď aspoň na chvíľu.` |
+| addition / emphasis | `aj`, `tiež` | also, too | `Prišli aj rodičia.` `Rodičia prišli tiež.` |
+| total negation | `vôbec` | at all | `Vôbec tomu nerozumiem.` |
+| confirmation | `naozaj`, `skutočne` | really, indeed | `Naozaj nepríde.` |
+| certainty | `určite` | certainly | `Určite sa ozvem.` |
+| probability | `možno`, `asi` | perhaps / probably | `Možno bude meškať.` `Asi už spí.` |
+| near limit | `takmer`, `skoro` | almost | `Takmer som zmeškal vlak.` |
+| completion / impatience | `konečne` | finally | `Konečne si tu!` |
+| side remark | `mimochodom` | by the way | `Mimochodom, už si jej písal/a?` |
+| shared expectation | `však` | right?, after all | `Bolo to pekné, však?` |
 
 Position changes focus:
 
@@ -47,13 +47,13 @@ Use `a` for neutral addition. Use `aj` when the second element is noteworthy. Us
 
 ### Contrast and correction
 
-| Connector                     | Typical force                      | Example                                    |
-| ----------------------------- | ---------------------------------- | ------------------------------------------ |
-| `ale`, `no`                   | basic contrast                     | `Chcel prísť, ale nemal čas.`              |
-| `lenže`, `ibaže`              | “except that / but the problem is” | `Sľúbil to, lenže neprišiel.`              |
-| `avšak`                       | formal written contrast            | `Návrh je zaujímavý, avšak drahý.`         |
-| `predsa však`, `napriek tomu` | contrast despite previous fact     | `Bolo chladno; napriek tomu sme išli von.` |
-| `síce ... ale`                | concessive balance                 | `Síce prší, ale pôjdeme.`                  |
+| Connector | Typical force | Example |
+| --- | --- | --- |
+| `ale`, `no` | basic contrast | `Chcel prísť, ale nemal čas.` |
+| `lenže`, `ibaže` | “except that / but the problem is” | `Sľúbil to, lenže neprišiel.` |
+| `avšak` | formal written contrast | `Návrh je zaujímavý, avšak drahý.` |
+| `predsa však`, `napriek tomu` | contrast despite previous fact | `Bolo chladno; napriek tomu sme išli von.` |
+| `síce ... ale` | concessive balance | `Síce prší, ale pôjdeme.` |
 
 `avšak` and `napriek tomu` suit formal prose more than casual conversation. `síce` normally anticipates an `ale/lenže` clause.
 
@@ -75,11 +75,11 @@ Bol chorý, preto zostal doma.                result
 
 ### Cause and consequence
 
-| Pattern                           | Use                                       | Example                                |
-| --------------------------------- | ----------------------------------------- | -------------------------------------- |
-| `lebo`, `pretože`, `keďže`        | subordinate cause                         | `Nešiel, pretože bol chorý.`           |
-| `preto, lebo`                     | emphatic reason after result              | `Odišiel preto, lebo nemal čas.`       |
-| `preto`, `takže`                  | result                                    | `Bol chorý, preto zostal doma.`        |
+| Pattern | Use | Example |
+| --- | --- | --- |
+| `lebo`, `pretože`, `keďže` | subordinate cause | `Nešiel, pretože bol chorý.` |
+| `preto, lebo` | emphatic reason after result | `Odišiel preto, lebo nemal čas.` |
+| `preto`, `takže` | result | `Bol chorý, preto zostal doma.` |
 | `totiž`, `čiže`, `to jest`, `veď` | explanation/clarification between clauses | `Nemohol prísť, mal totiž veľa práce.` |
 
 `totiž` usually stands after the first word or phrase of its clause (`mal totiž`). `lebo` is conversational-neutral; `pretože` and `keďže` are comfortable in formal writing. `čiže` means “that is / therefore” and should clarify a conclusion, not introduce a random new point.
@@ -98,14 +98,14 @@ Useful formal anchors: `preto`, `na to`, `s tým cieľom`, `len preto`, `iba pre
 
 ### Time
 
-| Link                          | Meaning                  | Example                                    |
-| ----------------------------- | ------------------------ | ------------------------------------------ |
-| `keď`                         | when                     | `Keď prišiel, začali sme.`                 |
-| `kým`                         | while / until            | `Počkám, kým prídeš.`                      |
-| `hneď ako`, `len čo`, `sotva` | as soon as / hardly when | `Hneď ako prídem, zavolám.`                |
-| `skôr než`, `predtým než`     | before                   | `Odišiel skôr, než sme začali.`            |
-| `odvtedy, čo`                 | since                    | `Odvtedy, čo sa presťahoval, sa nevidíme.` |
-| `až keď`, `iba keď`           | only when                | `Pochopil to, až keď to skúsil.`           |
+| Link | Meaning | Example |
+| --- | --- | --- |
+| `keď` | when | `Keď prišiel, začali sme.` |
+| `kým` | while / until | `Počkám, kým prídeš.` |
+| `hneď ako`, `len čo`, `sotva` | as soon as / hardly when | `Hneď ako prídem, zavolám.` |
+| `skôr než`, `predtým než` | before | `Odišiel skôr, než sme začali.` |
+| `odvtedy, čo` | since | `Odvtedy, čo sa presťahoval, sa nevidíme.` |
+| `až keď`, `iba keď` | only when | `Pochopil to, až keď to skúsil.` |
 
 Pair time expressions deliberately: `odvtedy, čo ...`, `dovtedy, kým ...`, `vtedy, keď ...`, `teraz, keď ...`. The comma goes between the pointer word and the conjunction.
 
@@ -188,10 +188,10 @@ Treat the added particle and complement as part of the new dictionary entry.
 
 Choose the construction by how specific, short, and human the owner is.
 
-| Form                 | Best use                                                | Example                                                              |
-| -------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
-| possessive adjective | one named animate owner; compact label                  | `manželova dovolenka`, `Kukučínova ulica`                            |
-| possessive genitive  | owner needs detail, plural, non-human, or general class | `dovolenka môjho manžela`, `kancelária prezidenta`, `názory občanov` |
+| Form | Best use | Example |
+| --- | --- | --- |
+| possessive adjective | one named animate owner; compact label | `manželova dovolenka`, `Kukučínova ulica` |
+| possessive genitive | owner needs detail, plural, non-human, or general class | `dovolenka môjho manžela`, `kancelária prezidenta`, `názory občanov` |
 
 The contrast can change meaning:
 
@@ -206,13 +206,13 @@ Use a possessive adjective only when the owner can be expressed as one animate n
 
 Deverbal nouns turn events into things, concepts, headings, or administrative objects. Their aspect often preserves the source verb’s viewpoint.
 
-| Imperfective process                        | Perfective result/event                       |
-| ------------------------------------------- | --------------------------------------------- |
+| Imperfective process | Perfective result/event |
+| --- | --- |
 | `poskytovanie služieb` (providing services) | `poskytnutie služby` (provision of a service) |
-| `objednávanie` (ordering process)           | `objednanie` (placing/completing an order)    |
-| `liečenie` (treatment)                      | `vyliečenie` (cure)                           |
-| `nosenie` (carrying)                        | `prinesenie` (bringing)                       |
-| `myslenie` (thinking)                       | `rozhodnutie` (decision)                      |
+| `objednávanie` (ordering process) | `objednanie` (placing/completing an order) |
+| `liečenie` (treatment) | `vyliečenie` (cure) |
+| `nosenie` (carrying) | `prinesenie` (bringing) |
+| `myslenie` (thinking) | `rozhodnutie` (decision) |
 
 High-frequency endings include `-anie`, `-enie`, `-tie`, and `-nutie`. Use a process noun for duration/repetition; use the perfective-derived noun for a bounded result. Avoid nominalizing every plain verb: `Rozhodli sme sa` is often clearer than `Uskutočnili sme rozhodnutie`.
 
@@ -226,14 +226,14 @@ Deti behajú celý deň po záhrade.   repeated/back-and-forth activity in a per
 Keď bol mladý, behával v parku.    regular old habit
 ```
 
-| Verb       | Core use                                                  | Common extended use                     |
-| ---------- | --------------------------------------------------------- | --------------------------------------- |
-| `bežať`    | run once / be running                                     | `bežať na autobus`; `čas beží`          |
-| `behať`    | repeated/various-direction movement, intentional exercise | `behať po úradoch`; `behať pre zdravie` |
-| `behávať`  | customary recurring activity                              | `behávať každé ráno`                    |
-| `niesť`    | carry one item/event                                      | `niesť kufor`                           |
-| `nosiť`    | carry repeatedly / wear                                   | `nosiť noviny`; `nosiť kabát`           |
-| `nosievať` | habitual repeated carrying/wearing                        | `nosievať to do práce`                  |
+| Verb | Core use | Common extended use |
+| --- | --- | --- |
+| `bežať` | run once / be running | `bežať na autobus`; `čas beží` |
+| `behať` | repeated/various-direction movement, intentional exercise | `behať po úradoch`; `behať pre zdravie` |
+| `behávať` | customary recurring activity | `behávať každé ráno` |
+| `niesť` | carry one item/event | `niesť kufor` |
+| `nosiť` | carry repeatedly / wear | `nosiť noviny`; `nosiť kabát` |
+| `nosievať` | habitual repeated carrying/wearing | `nosievať to do práce` |
 
 The pattern recurs across motion verbs, but it is lexical rather than fully mechanical. Teach a whole contrast with time adverbs: `teraz`, `celý deň`, `zvyčajne`, `kedysi`.
 
@@ -241,13 +241,13 @@ The pattern recurs across motion verbs, but it is lexical rather than fully mech
 
 Prefixes are not a generic “perfective marker.” They add a spatial, resultative, distributive, or lexical meaning. Learn them through a scene and check the new verb’s case frame.
 
-| Family        | Productive scene                   | Examples                                                                                                          |
-| ------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `bežať/behať` | direction/extent of running        | `pribežať` arrive running; `odbehnúť` run away; `zabehnúť` run in/call in; `prebehnúť` run across                 |
-| `niesť/nosiť` | source and destination of carrying | `priniesť` bring; `odniesť` take away; `vyniesť` carry out/up; `preniesť` transfer/carry across                   |
-| `platiť`      | payment relationship               | `zaplatiť` pay; `preplatiť` overpay/reimburse depending context; `doplatiť` pay the remainder; `vyplatiť` pay out |
-| `tvoriť`      | creation/change of composition     | `vytvoriť` create; `dotvoriť` finish shaping; `pretvoriť` transform; `stvoriť` create (often elevated)            |
-| `myslieť`     | directed thought/result            | `pomyslieť si` think of; `premyslieť` think through; `vymyslieť` invent/think up; `zamyslieť sa` reflect          |
+| Family | Productive scene | Examples |
+| --- | --- | --- |
+| `bežať/behať` | direction/extent of running | `pribežať` arrive running; `odbehnúť` run away; `zabehnúť` run in/call in; `prebehnúť` run across |
+| `niesť/nosiť` | source and destination of carrying | `priniesť` bring; `odniesť` take away; `vyniesť` carry out/up; `preniesť` transfer/carry across |
+| `platiť` | payment relationship | `zaplatiť` pay; `preplatiť` overpay/reimburse depending context; `doplatiť` pay the remainder; `vyplatiť` pay out |
+| `tvoriť` | creation/change of composition | `vytvoriť` create; `dotvoriť` finish shaping; `pretvoriť` transform; `stvoriť` create (often elevated) |
+| `myslieť` | directed thought/result | `pomyslieť si` think of; `premyslieť` think through; `vymyslieť` invent/think up; `zamyslieť sa` reflect |
 
 Do not promise an aspect partner merely from a prefix. `preplatiť`, for example, has more than one real-world sense. Verify its object and context before translating.
 

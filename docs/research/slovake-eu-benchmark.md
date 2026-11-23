@@ -23,12 +23,12 @@ Counts come from the course pages above. Each step shows a counter such as "0 / 
 
 ## What it contains
 
-| Level | Chapters | Steps | Chapter titles (examples)                                                           |
-| ----- | -------- | ----- | ----------------------------------------------------------------------------------- |
-| A1    | 17       | 209   | Alphabet and pronunciation; Family; Traveling; Clothing and colors                  |
-| A2    | 15       | 157   | Communication; Children, come play!; We are going on a trip; Customs and traditions |
-| B1    | 5        | 53    | Family; Traveling; At the doctor's, health care                                     |
-| B2    | 7        | 71    | Škola a práca; Ľudské práva; Ekológia naša každodenná                               |
+| Level | Chapters | Steps | Chapter titles (examples) |
+| --- | --- | --- | --- |
+| A1 | 17 | 209 | Alphabet and pronunciation; Family; Traveling; Clothing and colors |
+| A2 | 15 | 157 | Communication; Children, come play!; We are going on a trip; Customs and traditions |
+| B1 | 5 | 53 | Family; Traveling; At the doctor's, health care |
+| B2 | 7 | 71 | Škola a práca; Ľudské práva; Ekológia naša každodenná |
 
 Total: 44 chapters and 490 steps. Steps per chapter: A1 6 to 16, A2 9 to 13, B1 10 to 11, B2 8 to 12. The grammar index links 33 pages, and the introduction 12.
 
@@ -55,18 +55,18 @@ Our engine is stronger on everything the course lacks: FSRS review, the adaptive
 
 ## Mapping
 
-| slovake.eu                        | Lanna today                                                                       | Gap                                     | Idea (plan phase)           |
-| --------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------- | --------------------------- |
-| A fixed arc in every chapter      | 19 chapters over 120 units (`src/core/curriculum.ts`)                             | no shared shape per chapter             | A. Chapter arc              |
-| A story with named characters     | Read episodes of Robo in Bratislava (`src/core/reading.ts`), not tied to chapters | no cast shared across tasks             | B. Story bible              |
-| Contrast pairs as steps           | none                                                                              | pairs are not drilled                   | C. Dvojičky                 |
-| A situational exercise            | six Speak scenes (`src/core/speak.ts`), one per goal                              | no scripted version before the live one | D. Scripted scenes          |
-| A pronunciation step per chapter  | Speak and Say it faster score clarity (Azure, or transcript matching; README.md)  | no sound-focused item                   | E. Zvuk                     |
-| A final test                      | unit completion, E3                                                               | no mixed chapter test                   | F. Skúška and "I can" lines |
-| A grammar reference               | none; `/map` is a concept graph                                                   | no reference page                       | G. Grammar atlas            |
-| Culture texts                     | none                                                                              | no calendar or culture content          | H. Calendar                 |
-| Slovak interface at higher levels | English interface with bridges (P6)                                               | not used as input                       | H. Calendar (quick win)     |
-| A size counter per step           | unit progress on the path, not per step                                           | counters are per unit                   | Quick win                   |
+| slovake.eu | Lanna today | Gap | Idea (plan phase) |
+| --- | --- | --- | --- |
+| A fixed arc in every chapter | 19 chapters over 120 units (`src/core/curriculum.ts`) | no shared shape per chapter | A. Chapter arc |
+| A story with named characters | Read episodes of Robo in Bratislava (`src/core/reading.ts`), not tied to chapters | no cast shared across tasks | B. Story bible |
+| Contrast pairs as steps | none | pairs are not drilled | C. Dvojičky |
+| A situational exercise | six Speak scenes (`src/core/speak.ts`), one per goal | no scripted version before the live one | D. Scripted scenes |
+| A pronunciation step per chapter | Speak and Say it faster score clarity (Azure, or transcript matching; README.md) | no sound-focused item | E. Zvuk |
+| A final test | unit completion, E3 | no mixed chapter test | F. Skúška and "I can" lines |
+| A grammar reference | none; `/map` is a concept graph | no reference page | G. Grammar atlas |
+| Culture texts | none | no calendar or culture content | H. Calendar |
+| Slovak interface at higher levels | English interface with bridges (P6) | not used as input | H. Calendar (quick win) |
+| A size counter per step | unit progress on the path, not per step | counters are per unit | Quick win |
 
 ## Ideas
 

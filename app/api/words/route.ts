@@ -33,7 +33,8 @@ export async function GET(req: Request) {
 		statusParam === "new" ||
 		statusParam === "unseen" ||
 		statusParam === "favorite" ||
-		statusParam === "due"
+		statusParam === "due" ||
+		statusParam === "known"
 			? statusParam
 			: undefined;
 

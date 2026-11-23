@@ -10,15 +10,15 @@ The **arc** is the fixed run of seven steps that every chapter goes through, in 
 
 ## The arc
 
-| #   | Step             | Strand  | Built from                                | Model calls                |
-| --- | ---------------- | ------- | ----------------------------------------- | -------------------------- |
-| 1   | Príbeh (story)   | input   | a Read episode for the chapter (phase 2)  | one per chapter, cached    |
-| 2   | Slová (words)    | form    | existing word lessons and Review          | none                       |
-| 3   | Tvary (forms)    | form    | the chapter's existing drill unit         | none                       |
-| 4   | Dvojičky (pairs) | form    | new pair drill (phase 3)                  | none                       |
-| 5   | Scéna (scene)    | output  | scripted scene, then live Speak (phase 5) | one per scene, cached      |
-| 6   | Zvuk (sound)     | fluency | minimal pairs and shadowing (phase 7)     | none, TTS cached           |
-| 7   | Skúška (exam)    | all     | mixed items from the chapter (phase 6)    | one judge for free writing |
+| # | Step | Strand | Built from | Model calls |
+| --- | --- | --- | --- | --- |
+| 1 | Príbeh (story) | input | a Read episode for the chapter (phase 2) | one per chapter, cached |
+| 2 | Slová (words) | form | existing word lessons and Review | none |
+| 3 | Tvary (forms) | form | the chapter's existing drill unit | none |
+| 4 | Dvojičky (pairs) | form | new pair drill (phase 3) | none |
+| 5 | Scéna (scene) | output | scripted scene, then live Speak (phase 5) | one per scene, cached |
+| 6 | Zvuk (sound) | fluency | minimal pairs and shadowing (phase 7) | none, TTS cached |
+| 7 | Skúška (exam) | all | mixed items from the chapter (phase 6) | one judge for free writing |
 
 ## Decisions
 

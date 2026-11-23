@@ -10,16 +10,16 @@ Masculines split into animate and inanimate. In the singular, animate accusative
 
 Feminine common patterns include `žena`, `ulica`, `dlaň`, `kosť`; neuter patterns include `mesto`, `srdce/pole`, `dievča`, `vysvedčenie`. Do not derive a rare noun only from its ending: record its nominative singular, genitive singular, nominative plural, and key irregular form.
 
-| Pattern             | Key singular contrast           | Key plural contrast               |
-| ------------------- | ------------------------------- | --------------------------------- |
-| m. inanimate `stôl` | `stôl – stola – stolom`         | `stoly – stolov – stolmi`         |
-| m. animate `pán`    | `pán – pána – pánom`            | `páni – pánov – pánmi`            |
-| f. `žena`           | `žena – ženy – ženou`           | `ženy – žien – ženami`            |
-| f. `ulica`          | `ulica – ulice – ulicou`        | `ulice – ulíc – ulicami`          |
-| f. `kosť`           | `kosť – kosti – kosťou`         | `kosti – kostí – kosťami`         |
-| n. `mesto`          | `mesto – mesta – mestom`        | `mestá – miest – mestami`         |
-| n. `pole`           | `pole – poľa – poľom`           | `polia – polí – poľami`           |
-| n. `dievča`         | `dievča – dievčaťa – dievčaťom` | `dievčatá – dievčat – dievčatami` |
+| Pattern | Key singular contrast | Key plural contrast |
+| --- | --- | --- |
+| m. inanimate `stôl` | `stôl – stola – stolom` | `stoly – stolov – stolmi` |
+| m. animate `pán` | `pán – pána – pánom` | `páni – pánov – pánmi` |
+| f. `žena` | `žena – ženy – ženou` | `ženy – žien – ženami` |
+| f. `ulica` | `ulica – ulice – ulicou` | `ulice – ulíc – ulicami` |
+| f. `kosť` | `kosť – kosti – kosťou` | `kosti – kostí – kosťami` |
+| n. `mesto` | `mesto – mesta – mestom` | `mestá – miest – mestami` |
+| n. `pole` | `pole – poľa – poľom` | `polia – polí – poľami` |
+| n. `dievča` | `dievča – dievčaťa – dievčaťom` | `dievčatá – dievčat – dievčatami` |
 
 ## Adjective and participle agreement
 

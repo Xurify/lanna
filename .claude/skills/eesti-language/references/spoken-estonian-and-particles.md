@@ -8,16 +8,16 @@ Token-minimized reference for dialogue markers, spoken contractions, and convers
 
 Estonian dialogue relies heavily on pragmatic particles to express speaker attitude, evidentiality, and expectation:
 
-| Particle          | Meaning / Function                                                       | Contextual Example                                                                                                                               |
-| ----------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **ju**            | "You know", "after all", appeals to shared knowledge                     | _Sa tead seda ju küll._ (You know that after all.)<br>_Ma ütlesin ju sulle._ (I told you so, didn't I?)                                          |
-| **küll**          | 1. Reassurance ("surely, definitely")<br>2. Concession ("indeed... but") | 1. _Küll me hakkama saame._ (We'll manage just fine.)<br>2. _Ta tahtis küll tulla, aga ei jõudnud._ (He did want to come, but couldn't make it.) |
-| **ometi**         | "Finally", "at last", or insistence/impatience                           | _Tule ometi siia!_ (Do come here at last!)<br>_Ometi kord on reede._ (Finally it's Friday.)                                                      |
-| **vist**          | "Probably", "I suppose"                                                  | _Ta on vist kodus._ (He is probably at home.)                                                                                                    |
-| **ehk**           | "Perhaps", "maybe" (polite softeners)                                    | _Ehk saame kokku leppida?_ (Perhaps we can agree?)                                                                                               |
-| **vaata / kuule** | Attention-getters ("Look", "Listen")                                     | _Kuule, kas sul on hetk aega?_ (Listen, do you have a second?)                                                                                   |
-| **noh**           | Conversational pause, turn-taking filler                                 | _Noh, hakkame siis minema._ (Well, let's get going then.)                                                                                        |
-| **nagu**          | "Like", approximate hedging / word-search marker                         | _See oli nagu natuke imelik._ (It was, like, a bit strange.)                                                                                     |
+| Particle | Meaning / Function | Contextual Example |
+| --- | --- | --- |
+| **ju** | "You know", "after all", appeals to shared knowledge | _Sa tead seda ju küll._ (You know that after all.)<br>_Ma ütlesin ju sulle._ (I told you so, didn't I?) |
+| **küll** | 1. Reassurance ("surely, definitely")<br>2. Concession ("indeed... but") | 1. _Küll me hakkama saame._ (We'll manage just fine.)<br>2. _Ta tahtis küll tulla, aga ei jõudnud._ (He did want to come, but couldn't make it.) |
+| **ometi** | "Finally", "at last", or insistence/impatience | _Tule ometi siia!_ (Do come here at last!)<br>_Ometi kord on reede._ (Finally it's Friday.) |
+| **vist** | "Probably", "I suppose" | _Ta on vist kodus._ (He is probably at home.) |
+| **ehk** | "Perhaps", "maybe" (polite softeners) | _Ehk saame kokku leppida?_ (Perhaps we can agree?) |
+| **vaata / kuule** | Attention-getters ("Look", "Listen") | _Kuule, kas sul on hetk aega?_ (Listen, do you have a second?) |
+| **noh** | Conversational pause, turn-taking filler | _Noh, hakkame siis minema._ (Well, let's get going then.) |
+| **nagu** | "Like", approximate hedging / word-search marker | _See oli nagu natuke imelik._ (It was, like, a bit strange.) |
 
 ---
 
@@ -45,16 +45,16 @@ In colloquial speech, yes/no questions are often formed by dropping _kas_ and ap
 
 In authentic spontaneous speech, several morphological clusters contract regularly:
 
-| Standard Written Form | Spoken / Casual Form                             | Meaning                |
-| --------------------- | ------------------------------------------------ | ---------------------- |
-| _ei ole_              | _pole_ (standard spoken) / _ple_ (rapid text)    | is not / are not       |
-| _ei tea_              | _ma'i tea_ / _eitea_                             | I don't know           |
-| _olnud_               | _olnd_                                           | been (past participle) |
-| _läinud_              | _läind_                                          | gone                   |
-| _tulnud_              | _tulnd_                                          | come                   |
-| _võinud_              | _võind_                                          | could have             |
-| _hakkama_             | _akkama_ (initial _h-_ dropped in casual speech) | to begin               |
-| _hommikul_            | _ommikul_                                        | in the morning         |
+| Standard Written Form | Spoken / Casual Form | Meaning |
+| --- | --- | --- |
+| _ei ole_ | _pole_ (standard spoken) / _ple_ (rapid text) | is not / are not |
+| _ei tea_ | _ma'i tea_ / _eitea_ | I don't know |
+| _olnud_ | _olnd_ | been (past participle) |
+| _läinud_ | _läind_ | gone |
+| _tulnud_ | _tulnd_ | come |
+| _võinud_ | _võind_ | could have |
+| _hakkama_ | _akkama_ (initial _h-_ dropped in casual speech) | to begin |
+| _hommikul_ | _ommikul_ | in the morning |
 
 ---
 

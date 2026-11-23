@@ -6,12 +6,12 @@ Participles (_причастия_) and verbal adverbs / gerunds (_дееприч
 
 Participles function as verbal adjectives, agreeing with their head noun in gender, number, and case. There are four full participles plus short-form passive participles:
 
-| Participle Type     | Aspect            | Time Reference                | Suffixes                                                                                        | Formation Base                                 | Example                                                     |
-| ------------------- | ----------------- | ----------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------- |
-| **Active Present**  | Imperfective      | Contemporary with main clause | `-ущ- / -ющ-` (1st conj)<br>`-ащ- / -ящ-` (2nd conj)                                            | 3pl present stem (`чита-ют`, `говор-ят`)       | _чита́ющий, говоря́щий_ (reading, speaking)                   |
-| **Active Past**     | Both (usually СВ) | Preceding main clause         | `-вш-` (vowel stems)<br>`-ш-` (consonant stems)                                                 | Past stem (`прочита-л`, `нёс`)                 | _прочита́вший, нёсший_ (having read, having carried)         |
-| **Passive Present** | Imperfective      | Contemporary with main clause | `-ем- / -ом-` (1st conj)<br>`-им-` (2nd conj)                                                   | 1pl present stem (`чита-ем`, `люб-им`)         | _чита́емый, люби́мый_ (being read, beloved)                   |
-| **Passive Past**    | Perfective        | Preceding main clause         | `-нн-` (stems in `-ать/-ять`)<br>`-енн- / -ённ-` (others)<br>`-т-` (monosyllabic / `-оть/-уть`) | Infinitive / Past stem (`написа-л`, `откры-л`) | _напи́санный, ку́пленный, откры́тый_ (written, bought, opened) |
+| Participle Type | Aspect | Time Reference | Suffixes | Formation Base | Example |
+| --- | --- | --- | --- | --- | --- |
+| **Active Present** | Imperfective | Contemporary with main clause | `-ущ- / -ющ-` (1st conj)<br>`-ащ- / -ящ-` (2nd conj) | 3pl present stem (`чита-ют`, `говор-ят`) | _чита́ющий, говоря́щий_ (reading, speaking) |
+| **Active Past** | Both (usually СВ) | Preceding main clause | `-вш-` (vowel stems)<br>`-ш-` (consonant stems) | Past stem (`прочита-л`, `нёс`) | _прочита́вший, нёсший_ (having read, having carried) |
+| **Passive Present** | Imperfective | Contemporary with main clause | `-ем- / -ом-` (1st conj)<br>`-им-` (2nd conj) | 1pl present stem (`чита-ем`, `люб-им`) | _чита́емый, люби́мый_ (being read, beloved) |
+| **Passive Past** | Perfective | Preceding main clause | `-нн-` (stems in `-ать/-ять`)<br>`-енн- / -ённ-` (others)<br>`-т-` (monosyllabic / `-оть/-уть`) | Infinitive / Past stem (`написа-л`, `откры-л`) | _напи́санный, ку́пленный, откры́тый_ (written, bought, opened) |
 
 ### Participle Agreement and Clauses
 
@@ -42,10 +42,10 @@ _Agent in Passive Construction:_ The agent performing the action appears in the 
 
 Verbal adverbs modify verbs, expressing an accompanying action performed by the **same subject**. They are indeclinable (never change endings).
 
-| Type                    | Aspect       | Temporal Meaning                           | Formation Rule                             | Example                                                                                   |
-| ----------------------- | ------------ | ------------------------------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| **Imperfective Gerund** | Imperfective | Simultaneous action (_while doing_)        | Present stem + `-а / -я`                   | _чита́я_ (reading, while reading)<br>_говоря́_ (speaking)<br>_бу́дучи_ (being — from _быть_) |
-| **Perfective Gerund**   | Perfective   | Preceding completed action (_having done_) | Infinitive / Past stem + `-в / -вши / -ши` | _прочита́в_ (having read)<br>_уви́дев_ (having seen)<br>_принеся́_ (having brought)          |
+| Type | Aspect | Temporal Meaning | Formation Rule | Example |
+| --- | --- | --- | --- | --- |
+| **Imperfective Gerund** | Imperfective | Simultaneous action (_while doing_) | Present stem + `-а / -я` | _чита́я_ (reading, while reading)<br>_говоря́_ (speaking)<br>_бу́дучи_ (being — from _быть_) |
+| **Perfective Gerund** | Perfective | Preceding completed action (_having done_) | Infinitive / Past stem + `-в / -вши / -ши` | _прочита́в_ (having read)<br>_уви́дев_ (having seen)<br>_принеся́_ (having brought) |
 
 ### Reflexive Gerunds
 

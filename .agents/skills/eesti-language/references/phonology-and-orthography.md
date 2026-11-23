@@ -8,17 +8,17 @@ Token-minimized reference for pronunciation, sound quantity, palatalization, and
 
 Standard Estonian has 9 distinctive vowel phonemes:
 
-| Vowel | IPA | Articulation              | Approximate Sound / Guidance                                                                   | Example                            |
-| ----- | --- | ------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------- |
-| **a** | [ɑ] | Back open unrounded       | Like British English _f**a**ther_                                                              | _kala_ (fish)                      |
-| **e** | [e] | Front close-mid unrounded | Like German _B**e**tt_ or Spanish _m**e**_                                                     | _ema_ (mother)                     |
-| **i** | [i] | Front close unrounded     | Like English _mach**i**ne_                                                                     | _kiri_ (letter)                    |
-| **o** | [o] | Back close-mid rounded    | Like German _R**o**se_                                                                         | _kodu_ (home)                      |
-| **u** | [u] | Back close rounded        | Like English _b**oo**t_                                                                        | _kukk_ (rooster)                   |
-| **õ** | [ɤ] | Back close-mid unrounded  | High-mid back unrounded. Like Russian _ы_ or Romanian _î_, but produced without rounding lips. | _sõna_ (word), _õpetaja_ (teacher) |
-| **ä** | [æ] | Front open unrounded      | Open front, identical to English _c**a**t_                                                     | _päev_ (day), _käsi_ (hand)        |
-| **ö** | [ø] | Front close-mid rounded   | Like German _K**ö**nig_ or French _p**eu**_                                                    | _töö_ (work), _öelda_ (to say)     |
-| **ü** | [y] | Front close rounded       | Like German _T**ü**r_ or French _l**u**ne_                                                     | _süsi_ (coal), _üks_ (one)         |
+| Vowel | IPA | Articulation | Approximate Sound / Guidance | Example |
+| --- | --- | --- | --- | --- |
+| **a** | [ɑ] | Back open unrounded | Like British English _f**a**ther_ | _kala_ (fish) |
+| **e** | [e] | Front close-mid unrounded | Like German _B**e**tt_ or Spanish _m**e**_ | _ema_ (mother) |
+| **i** | [i] | Front close unrounded | Like English _mach**i**ne_ | _kiri_ (letter) |
+| **o** | [o] | Back close-mid rounded | Like German _R**o**se_ | _kodu_ (home) |
+| **u** | [u] | Back close rounded | Like English _b**oo**t_ | _kukk_ (rooster) |
+| **õ** | [ɤ] | Back close-mid unrounded | High-mid back unrounded. Like Russian _ы_ or Romanian _î_, but produced without rounding lips. | _sõna_ (word), _õpetaja_ (teacher) |
+| **ä** | [æ] | Front open unrounded | Open front, identical to English _c**a**t_ | _päev_ (day), _käsi_ (hand) |
+| **ö** | [ø] | Front close-mid rounded | Like German _K**ö**nig_ or French _p**eu**_ | _töö_ (work), _öelda_ (to say) |
+| **ü** | [y] | Front close rounded | Like German _T**ü**r_ or French _l**u**ne_ | _süsi_ (coal), _üks_ (one) |
 
 _Critical contrast: Never confuse `õ` (back unrounded), `ö` (front rounded), and `o` (back rounded). They create distinct words: `sõda` (war) vs. `söeda` (to coals) vs. `soda` (soda)._
 
@@ -28,11 +28,11 @@ _Critical contrast: Never confuse `õ` (back unrounded), `ö` (front rounded), a
 
 A distinguishing feature of Estonian phonology is its three-way phonological contrast in segment and syllable duration:
 
-| Degree             | Name                 | Duration                                 | Orthography                                                              | Semantic Minimal Triad (_kabi / kapi / kappi_) |
-| ------------------ | -------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------- |
-| **I välde (Q1)**   | Short (_lühike_)     | 1 mora (~100–150 ms)                     | Single letter (_b, d, g_ or single vowel)                                | _kabi_ (hoof)                                  |
-| **II välde (Q2)**  | Long (_pikk_)        | 2 morae (~200–250 ms)                    | Single stop _p, t, k_ or double vowel/consonant                          | _kapi_ (cupboard's — Gen. Sg.)                 |
-| **III välde (Q3)** | Overlong (_ülipikk_) | 3 morae (~350–450 ms) + steep pitch drop | Double stops _pp, tt, kk_ or double vowel/consonant in overlong syllable | _kappi_ (into the cupboard — Ill. Sg.)         |
+| Degree | Name | Duration | Orthography | Semantic Minimal Triad (_kabi / kapi / kappi_) |
+| --- | --- | --- | --- | --- |
+| **I välde (Q1)** | Short (_lühike_) | 1 mora (~100–150 ms) | Single letter (_b, d, g_ or single vowel) | _kabi_ (hoof) |
+| **II välde (Q2)** | Long (_pikk_) | 2 morae (~200–250 ms) | Single stop _p, t, k_ or double vowel/consonant | _kapi_ (cupboard's — Gen. Sg.) |
+| **III välde (Q3)** | Overlong (_ülipikk_) | 3 morae (~350–450 ms) + steep pitch drop | Double stops _pp, tt, kk_ or double vowel/consonant in overlong syllable | _kappi_ (into the cupboard — Ill. Sg.) |
 
 ### The Orthographic Overlap (Q2 vs. Q3)
 

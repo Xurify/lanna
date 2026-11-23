@@ -6,11 +6,11 @@ Estonian noun inflection operates on 14 cases across singular and plural. There 
 
 Every noun has three indispensable base forms from which the rest of the paradigm is formed:
 
-| Form   | Estonian            | Example 1 (_auto_) | Example 2 (_leib_) | Example 3 (_linn_) | Function                                        |
-| ------ | ------------------- | ------------------ | ------------------ | ------------------ | ----------------------------------------------- |
-| Base 1 | Nimetav (Nom. Sg.)  | _auto_             | _leib_             | _linn_             | Subject, dictionary form                        |
-| Base 2 | Omastav (Gen. Sg.)  | _auto_             | _leiva_            | _linna_            | Singular cases 4–14, Nom. Pl., Gen. Pl. stem    |
-| Base 3 | Osastav (Part. Sg.) | _autot_            | _leiba_            | _linna_            | Direct object, counting with 2+, Part. Pl. base |
+| Form | Estonian | Example 1 (_auto_) | Example 2 (_leib_) | Example 3 (_linn_) | Function |
+| --- | --- | --- | --- | --- | --- |
+| Base 1 | Nimetav (Nom. Sg.) | _auto_ | _leib_ | _linn_ | Subject, dictionary form |
+| Base 2 | Omastav (Gen. Sg.) | _auto_ | _leiva_ | _linna_ | Singular cases 4–14, Nom. Pl., Gen. Pl. stem |
+| Base 3 | Osastav (Part. Sg.) | _autot_ | _leiba_ | _linna_ | Direct object, counting with 2+, Part. Pl. base |
 
 ---
 
@@ -39,17 +39,17 @@ Genitive Singular: toa (from tuba "room")
 
 In addition to the regular _-sse_ ending, many common nouns have a synthetic short illative. In speech and natural writing, the short illative is preferred whenever available.
 
-| Formation Type                  | Rule                                                                | Nominative     | Genitive | Short Illative    | Regular Illative |
-| ------------------------------- | ------------------------------------------------------------------- | -------------- | -------- | ----------------- | ---------------- |
-| **Vowel lengthening / Q3**      | Final vowel remains, syllable is pronounced in overlong (Q3) length | _kool_         | _kooli_  | _kooli_ (Q3)      | _koolisse_       |
-| **Consonant strengthening**     | Strong grade with geminate consonant                                | _tuba_         | _toa_    | _tuppa_           | _toasse_         |
-| **Stem vowel / synthetic form** | Monosyllabic diphthong/long vowel stem                              | _maa_          | _maa_    | _maha_ / _maasse_ | _maasse_         |
-| **-he ending**                  | Historical _h_-stems take _-he_                                     | _pähe_ (_pea_) | _pea_    | _pähe_            | _peasse_         |
-| **Stem change**                 | Irregular historical roots                                          | _vesi_         | _vee_    | _vette_           | _veesse_         |
-|                                 |                                                                     | _käsi_         | _käe_    | _kätte_           | _käesse_         |
-|                                 |                                                                     | _kodu_         | _kodu_   | _koju_            | _kodusse_        |
-|                                 |                                                                     | _jõgi_         | _jõe_    | _jõkke_           | _jõesse_         |
-|                                 |                                                                     | _linn_         | _linna_  | _linna_ (Q3)      | _linnasse_       |
+| Formation Type | Rule | Nominative | Genitive | Short Illative | Regular Illative |
+| --- | --- | --- | --- | --- | --- |
+| **Vowel lengthening / Q3** | Final vowel remains, syllable is pronounced in overlong (Q3) length | _kool_ | _kooli_ | _kooli_ (Q3) | _koolisse_ |
+| **Consonant strengthening** | Strong grade with geminate consonant | _tuba_ | _toa_ | _tuppa_ | _toasse_ |
+| **Stem vowel / synthetic form** | Monosyllabic diphthong/long vowel stem | _maa_ | _maa_ | _maha_ / _maasse_ | _maasse_ |
+| **-he ending** | Historical _h_-stems take _-he_ | _pähe_ (_pea_) | _pea_ | _pähe_ | _peasse_ |
+| **Stem change** | Irregular historical roots | _vesi_ | _vee_ | _vette_ | _veesse_ |
+|  |  | _käsi_ | _käe_ | _kätte_ | _käesse_ |
+|  |  | _kodu_ | _kodu_ | _koju_ | _kodusse_ |
+|  |  | _jõgi_ | _jõe_ | _jõkke_ | _jõesse_ |
+|  |  | _linn_ | _linna_ | _linna_ (Q3) | _linnasse_ |
 
 ---
 
@@ -102,21 +102,21 @@ Regularly formed from the **Genitive Plural stem** + case ending:
 
 Estonian place names diverge on whether they take internal (_-sse, -s, -st_) or external (_-le, -l, -lt_) cases.
 
-| Settlement / Country | In / At (_Kus?_) | To (_Kuhu?_)             | From (_Kust?_) | Rule / Notes                     |
-| -------------------- | ---------------- | ------------------------ | -------------- | -------------------------------- |
-| **Tallinn**          | _Tallinnas_      | _Tallinnasse / Tallinna_ | _Tallinnast_   | Internal (most cities)           |
-| **Tartu**            | _Tartus_         | _Tartusse / Tartu_       | _Tartust_      | Internal                         |
-| **Pärnu**            | _Pärnus_         | _Pärnusse / Pärnu_       | _Pärnust_      | Internal                         |
-| **Narva**            | _Narvas_         | _Narvasse / Narva_       | _Narvast_      | Internal                         |
-| **Viljandi**         | _Viljandis_      | _Viljandisse / Viljandi_ | _Viljandist_   | Internal                         |
-| **Haapsalu**         | _Haapsalus_      | _Haapsallu_              | _Haapsalust_   | Internal (_-llu_ short illative) |
-| **Võru**             | _Võrus_          | _Võrru_                  | _Võrust_       | Internal (_-rru_ short illative) |
-| **Saaremaa**         | _Saaremaal_      | _Saaremaale_             | _Saaremaalt_   | External (all _-maa_ names)      |
-| **Hiiumaa**          | _Hiiumaal_       | _Hiiumaale_              | _Hiiumaalt_    | External                         |
-| **Eesti**            | _Eestis_         | _Eestisse_               | _Eestist_      | Internal                         |
-| **Soome**            | _Soomes_         | _Soomesse_               | _Soomest_      | Internal                         |
-| **Venemaa**          | _Venemaal_       | _Venemaale_              | _Venemaalt_    | External (_-maa_)                |
-| **Ameerika**         | _Ameerikas_      | _Ameerikasse_            | _Ameerikast_   | Internal                         |
+| Settlement / Country | In / At (_Kus?_) | To (_Kuhu?_) | From (_Kust?_) | Rule / Notes |
+| --- | --- | --- | --- | --- |
+| **Tallinn** | _Tallinnas_ | _Tallinnasse / Tallinna_ | _Tallinnast_ | Internal (most cities) |
+| **Tartu** | _Tartus_ | _Tartusse / Tartu_ | _Tartust_ | Internal |
+| **Pärnu** | _Pärnus_ | _Pärnusse / Pärnu_ | _Pärnust_ | Internal |
+| **Narva** | _Narvas_ | _Narvasse / Narva_ | _Narvast_ | Internal |
+| **Viljandi** | _Viljandis_ | _Viljandisse / Viljandi_ | _Viljandist_ | Internal |
+| **Haapsalu** | _Haapsalus_ | _Haapsallu_ | _Haapsalust_ | Internal (_-llu_ short illative) |
+| **Võru** | _Võrus_ | _Võrru_ | _Võrust_ | Internal (_-rru_ short illative) |
+| **Saaremaa** | _Saaremaal_ | _Saaremaale_ | _Saaremaalt_ | External (all _-maa_ names) |
+| **Hiiumaa** | _Hiiumaal_ | _Hiiumaale_ | _Hiiumaalt_ | External |
+| **Eesti** | _Eestis_ | _Eestisse_ | _Eestist_ | Internal |
+| **Soome** | _Soomes_ | _Soomesse_ | _Soomest_ | Internal |
+| **Venemaa** | _Venemaal_ | _Venemaale_ | _Venemaalt_ | External (_-maa_) |
+| **Ameerika** | _Ameerikas_ | _Ameerikasse_ | _Ameerikast_ | Internal |
 
 ### Compound Nouns (Liitsõnad)
 

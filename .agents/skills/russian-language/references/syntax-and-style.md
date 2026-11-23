@@ -33,14 +33,14 @@ Russian frequently expresses personal experiences, sensations, moral obligations
 Dative Subject + Predicate (Adverb / Modal) + (Infinitive / Clause)
 ```
 
-| Type                       | Structure                  | Russian Example                     | English Equivalent                  |
-| -------------------------- | -------------------------- | ----------------------------------- | ----------------------------------- |
-| **Physical sensation**     | `Dat + Adverb`             | _Мне холодно / жарко / душно._      | I am cold / hot / stifled.          |
-| **Psychological state**    | `Dat + Adverb`             | _Ей скучно / весело / грустно._     | She is bored / cheerful / sad.      |
-| **Necessity / Obligation** | `Dat + надо / нужно + Inf` | _Нам надо уходить._                 | We must leave.                      |
-| **Permission**             | `Dat + можно + Inf`        | _Вам можно войти._                  | You may come in.                    |
-| **Prohibition**            | `Dat + нельзя + Inf`       | _Детям нельзя смотреть этот фильм._ | Children must not watch this movie. |
-| **Age**                    | `Dat + Number + года/лет`  | _Моему брату двадцать пять лет._    | My brother is 25 years old.         |
+| Type | Structure | Russian Example | English Equivalent |
+| --- | --- | --- | --- |
+| **Physical sensation** | `Dat + Adverb` | _Мне холодно / жарко / душно._ | I am cold / hot / stifled. |
+| **Psychological state** | `Dat + Adverb` | _Ей скучно / весело / грустно._ | She is bored / cheerful / sad. |
+| **Necessity / Obligation** | `Dat + надо / нужно + Inf` | _Нам надо уходить._ | We must leave. |
+| **Permission** | `Dat + можно + Inf` | _Вам можно войти._ | You may come in. |
+| **Prohibition** | `Dat + нельзя + Inf` | _Детям нельзя смотреть этот фильм._ | Children must not watch this movie. |
+| **Age** | `Dat + Number + года/лет` | _Моему брату двадцать пять лет._ | My brother is 25 years old. |
 
 _Tense in Impersonal Predicates:_
 

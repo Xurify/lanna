@@ -97,6 +97,14 @@ describe("SelectionWordBankBar: isEligibleLearningTarget scoping (LingQ & Clozem
 				<div id="speak-options" data-word-lookup-enabled="false">
 					<button id="speak-choice-1"><span lang="sk">Mám sa dobre, ďakujem!</span></button>
 				</div>
+
+				<!-- A card without an explicit opt-in, and a tutor drawing inside a chat reply -->
+				<article id="plain-card"><p id="plain-card-text">Dnes máme krásny deň.</p></article>
+				<div id="assistant-reply" data-word-lookup-enabled="true">
+					<figure data-testid="md-sketch" data-no-word-lookup="true">
+						<svg><text id="sketch-label">tag question added at the end</text></svg>
+					</figure>
+				</div>
 			</body>
 		</html>
 	`);
@@ -201,5 +209,15 @@ describe("SelectionWordBankBar: isEligibleLearningTarget scoping (LingQ & Clozem
 
 		const activeChoice = document.querySelector("#speak-choice-1 span")?.firstChild;
 		assert.equal(isEligibleLearningTarget(activeChoice, "sk"), false);
+	});
+
+	it("treats a bare <article> as not opted in", () => {
+		const text = document.getElementById("plain-card-text")?.firstChild;
+		assert.equal(isEligibleLearningTarget(text, "sk"), false);
+	});
+
+	it("rejects labels inside a tutor drawing in an opted-in chat reply", () => {
+		const label = document.getElementById("sketch-label")?.firstChild;
+		assert.equal(isEligibleLearningTarget(label, "sk"), false);
 	});
 });

@@ -65,13 +65,13 @@ In natural first and second language acquisition, learners undergo an initial st
 
 Instead of acting like a red-pen schoolmaster who lectures for three paragraphs or burying corrections in a hidden drawer, the AI tutor uses an **Immediate Visual Diff (High Noticing)** model:
 
-| Dimension               | Legacy Schoolmaster Approach                        | Immediate Visual Diff (High Noticing)                                   |
-| :---------------------- | :-------------------------------------------------- | :---------------------------------------------------------------------- |
-| **Primary Goal**        | Grammatical taxonomy & overt rule memorization      | Rapid gap noticing (Schmidt 1990) + unbroken communication              |
-| **Response to Error**   | Interruption, red text, lengthy declension lectures | Instant strike-through diff (`~~slip~~ → correct (rule cue)`)           |
-| **Affective Impact**    | High anxiety, freezes spontaneous output            | High clarity, zero shame, immediate visual comprehension                |
-| **Conversational Flow** | Freezes conversation, forces manual re-typing       | Unbroken: tutor answers the idea in natural target language right below |
-| **Retention Action**    | Lost when chat scrolls away                         | One-tap button to save the exact sentence slip to FSRS Review deck      |
+| Dimension | Legacy Schoolmaster Approach | Immediate Visual Diff (High Noticing) |
+| :--- | :--- | :--- |
+| **Primary Goal** | Grammatical taxonomy & overt rule memorization | Rapid gap noticing (Schmidt 1990) + unbroken communication |
+| **Response to Error** | Interruption, red text, lengthy declension lectures | Instant strike-through diff (`~~slip~~ → correct (rule cue)`) |
+| **Affective Impact** | High anxiety, freezes spontaneous output | High clarity, zero shame, immediate visual comprehension |
+| **Conversational Flow** | Freezes conversation, forces manual re-typing | Unbroken: tutor answers the idea in natural target language right below |
+| **Retention Action** | Lost when chat scrolls away | One-tap button to save the exact sentence slip to FSRS Review deck |
 
 ### C.2. The High-Noticing Card Format
 

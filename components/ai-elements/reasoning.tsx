@@ -168,8 +168,8 @@ type ReasoningContentProps = ComponentProps<typeof CollapsibleContent> & {
 	children: string;
 };
 
-// Shares message.tsx's Streamdown config (math delimiters, dark mermaid,
-// remark-breaks) — reasoning renders the same contract as message text.
+// Shares message.tsx's Streamdown config (line breaks, code blocks) — reasoning
+// renders the same contract as message text.
 
 export const ReasoningContent = memo(({ className, children, ...props }: ReasoningContentProps) => (
 	<CollapsibleContent

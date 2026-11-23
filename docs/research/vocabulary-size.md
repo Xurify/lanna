@@ -8,12 +8,12 @@ The first version showed a word and four meanings to pick from. The owner asked 
 
 ## What the app had
 
-| Number                           | What it counts                                                   | Why it is not the answer                                                                       |
-| -------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| "Can recall at 80%+" on Words    | Review cards whose score is 80 or more                           | Counts cards, not words: a learner who knew 2,000 words before the first card still reads "18" |
-| Words marked as known            | The reader's "Known" button                                      | Only the words the learner happened to tap                                                     |
-| The level check's word stage     | Forty ticked words and eight made-up ones (Meara & Buxton 1987)  | Taken once, in setup; self-report; never updated                                               |
-| The words credited on Milestones | The level's band from Milton (2009), or the level check's figure | A figure for a level, not for this learner                                                     |
+| Number | What it counts | Why it is not the answer |
+| --- | --- | --- |
+| "Can recall at 80%+" on Words | Review cards whose score is 80 or more | Counts cards, not words: a learner who knew 2,000 words before the first card still reads "18" |
+| Words marked as known | The reader's "Known" button | Only the words the learner happened to tap |
+| The level check's word stage | Forty ticked words and eight made-up ones (Meara & Buxton 1987) | Taken once, in setup; self-report; never updated |
+| The words credited on Milestones | The level's band from Milton (2009), or the level check's figure | A figure for a level, not for this learner |
 
 None of them grows as the learner reads and reviews, and none says how sure it is.
 
@@ -23,13 +23,13 @@ How each source was read is in the list at the end. "Read" there means the full 
 
 ### 1. The way the question is asked decides the number
 
-| Format                                                          | What the studies found                                                                                                                                                                                                                                                             | Source                                                                   |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **Type the meaning** (meaning recall)                           | The format that tracks reading best: on 100-word tests, recall correlated 0.78 with a reading score, recognition 0.70, "yes, I know it" 0.66 (103 learners). Of four kinds of knowing a word, recalling the meaning was the best predictor of classroom performance (435 learners) | McLean, Stewart & Batty 2020 and its reanalysis; Laufer & Goldstein 2004 |
-| **Pick the meaning from options in the learner's own language** | Learners answered 41.9% to 62.7% of the words they could **not** recall. For learners who recalled about 31 of 80 words, four options gave 51 to 54. Size estimates from the two formats differ "often exceeding a thousand words"                                                 | Stoeckel, McLean & Nation 2021, table 1                                  |
-| Pick from options in the language being learned                 | 28.3% of the words not recalled                                                                                                                                                                                                                                                    | the same table                                                           |
-| Options shown one at a time                                     | 13.9% of the words not recalled                                                                                                                                                                                                                                                    | the same table (Stoeckel & Sukigara 2018, not read)                      |
-| **"Yes, I know it"**                                            | Learners said yes to 48.8 of 96 words and could translate 27.1. Made-up words do not catch it: false alarms were about 4% while the overstatement was about a quarter of all answers                                                                                               | Stubbe 2015                                                              |
+| Format | What the studies found | Source |
+| --- | --- | --- |
+| **Type the meaning** (meaning recall) | The format that tracks reading best: on 100-word tests, recall correlated 0.78 with a reading score, recognition 0.70, "yes, I know it" 0.66 (103 learners). Of four kinds of knowing a word, recalling the meaning was the best predictor of classroom performance (435 learners) | McLean, Stewart & Batty 2020 and its reanalysis; Laufer & Goldstein 2004 |
+| **Pick the meaning from options in the learner's own language** | Learners answered 41.9% to 62.7% of the words they could **not** recall. For learners who recalled about 31 of 80 words, four options gave 51 to 54. Size estimates from the two formats differ "often exceeding a thousand words" | Stoeckel, McLean & Nation 2021, table 1 |
+| Pick from options in the language being learned | 28.3% of the words not recalled | the same table |
+| Options shown one at a time | 13.9% of the words not recalled | the same table (Stoeckel & Sukigara 2018, not read) |
+| **"Yes, I know it"** | Learners said yes to 48.8 of 96 words and could translate 27.1. Made-up words do not catch it: false alarms were about 4% while the overstatement was about a quarter of all answers | Stubbe 2015 |
 
 Why options overstate: not blind guessing, which was "both uncommon and unsuccessful" in interviews (correct 1 time in 7), but ruling meanings out and loose association, which gave 14 right answers of 53 with no knowledge of the word (Gyllstad, Vilkaitė & Schmitt 2015). A learner of very low ability still expects a quarter of a four-option test right (McLean, Kramer & Stewart 2015, 3,373 learners). The authors of the 2015 interview study argue against a correction formula for blind guessing, because that is not what learners do.
 
@@ -57,13 +57,13 @@ Learners who knew a base word knew its derived forms about half of the time, so 
 
 Read from Speakly's own pages and interface text, and from users' reviews. Speakly publishes no method, corpus or study behind any of it.
 
-|                             | Speakly                                                                                                                                                                                                                                                           | Taken into Lanna?                                                                                                                                        |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Starting test               | About 3 minutes and 20 questions: pick the right sentence in the new language for a phrase in your own, or type what you heard; "I don't know" is offered. The server chooses each next question. The result is one of nine levels, a word count and a percentage | No. Picking among sentences is recognition; a reviewer was placed too high and was told to answer "I don't know" more                                    |
-| A word becomes "learned"    | +1 the first time a card is answered right: typing the missing word into a sentence, a writing card, or a speaking card the learner marks "I've learned it"                                                                                                       | Partly there already: a Review card answered in a sentence counts. A right first answer in a lesson does not count yet (see "What is not built")         |
-| What "learned" means        | "the number of words you've studied and know passively"                                                                                                                                                                                                           | The same honesty about passive knowledge; the app says the number leans on meaning recall                                                                |
-| A second number             | "The percentage describes the average amount of each daily conversation you'd understand with your learned words", with no source                                                                                                                                 | **Yes.** Words and the result now say what share of the dictionary's example sentences the known words make up, each word counted as often as it is used |
-| Words known outside the app | Not counted, a reviewer notes                                                                                                                                                                                                                                     | Lanna asks about them: that is what the check is for                                                                                                     |
+|  | Speakly | Taken into Lanna? |
+| --- | --- | --- |
+| Starting test | About 3 minutes and 20 questions: pick the right sentence in the new language for a phrase in your own, or type what you heard; "I don't know" is offered. The server chooses each next question. The result is one of nine levels, a word count and a percentage | No. Picking among sentences is recognition; a reviewer was placed too high and was told to answer "I don't know" more |
+| A word becomes "learned" | +1 the first time a card is answered right: typing the missing word into a sentence, a writing card, or a speaking card the learner marks "I've learned it" | Partly there already: a Review card answered in a sentence counts. A right first answer in a lesson does not count yet (see "What is not built") |
+| What "learned" means | "the number of words you've studied and know passively" | The same honesty about passive knowledge; the app says the number leans on meaning recall |
+| A second number | "The percentage describes the average amount of each daily conversation you'd understand with your learned words", with no source | **Yes.** Words and the result now say what share of the dictionary's example sentences the known words make up, each word counted as often as it is used |
+| Words known outside the app | Not counted, a reviewer notes | Lanna asks about them: that is what the check is for |
 
 ## What was built, and why this way
 
@@ -75,12 +75,12 @@ Read from Speakly's own pages and interface text, and from users' reviews. Speak
 
 **One number from every kind of evidence.** For each dictionary word the app takes the strongest evidence it has:
 
-| Evidence                             | Counts as                                                                                                 | Label on Words |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------- | -------------- |
-| A Review card answered at least once | The scheduler's chance of recalling it today (FSRS retrievability, 0 to 1)                                | from Review    |
-| Marked as known in the reader        | 1                                                                                                         | marked known   |
-| Asked in a word check                | 1 if the meaning typed was right, 0 if not; the answer fades toward the curve with a half-life of 60 days | checked        |
-| Nothing                              | The curve's chance for a word that common                                                                 | estimated      |
+| Evidence | Counts as | Label on Words |
+| --- | --- | --- |
+| A Review card answered at least once | The scheduler's chance of recalling it today (FSRS retrievability, 0 to 1) | from Review |
+| Marked as known in the reader | 1 | marked known |
+| Asked in a word check | 1 if the meaning typed was right, 0 if not; the answer fades toward the curve with a half-life of 60 days | checked |
+| Nothing | The curve's chance for a word that common | estimated |
 
 **The curve.** The chance of knowing an untested word falls with the logarithm of its frequency rank: `chance = 1 / (1 + e^-(shift - slope × (ln rank - center)))`, the shape part 3 supports and the Polish test uses. Two numbers are fitted (where the edge is, and how sharp it is). Before any answer the edge sits where the learner's level puts it, with a wide range.
 
@@ -100,12 +100,12 @@ Read from Speakly's own pages and interface text, and from users' reviews. Speak
 
 `scripts/word-check-judge-eval.ts` sends typed meanings through the check's own marking: 36 answers a marker should accept (synonyms, paraphrases, other grammatical forms, spelling slips) and 36 it should reject (a different meaning, an opposite, the meaning of a look-alike word such as "to be" for _byt_, an answer too broad, several guesses, not a meaning). Results: [word-check-judge-eval/results.json](word-check-judge-eval/results.json).
 
-|                             | Marked | Outcome                                                                                                      |
-| --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| By the dictionary           | 4      | all accepted (they were the dictionary's own wording)                                                        |
-| By the model, should accept | 31     | 29 accepted, 2 rejected: "improvement" for the verb _zlepšiť_, and "bred" for _chlieb_ (a real English word) |
-| By the model, should reject | 36     | 36 rejected                                                                                                  |
-| Not in the dictionary       | 1      | not asked                                                                                                    |
+|  | Marked | Outcome |
+| --- | --- | --- |
+| By the dictionary | 4 | all accepted (they were the dictionary's own wording) |
+| By the model, should accept | 31 | 29 accepted, 2 rejected: "improvement" for the verb _zlepšiť_, and "bred" for _chlieb_ (a real English word) |
+| By the model, should reject | 36 | 36 rejected |
+| Not in the dictionary | 1 | not asked |
 
 `claude-sonnet-5-5`, thinking off, 67 calls, $0.09. The prompt tells the model to reject when unsure, since a wrong accept makes the number too large. **The answers and the expected verdicts were written by the agent that built the check, not by a learner and not graded by a person.** It shows the marker is strict on clear cases; it does not show how it does on what a real learner types.
 
@@ -113,11 +113,11 @@ Read from Speakly's own pages and interface text, and from users' reviews. Speak
 
 `npx tsx scripts/word-estimate-sim.ts` makes learners whose knowledge follows such a curve (four sizes, four slopes from gradual to nearly a step, three wrong starting guesses, twelve runs each), lets them take the check, and compares the estimate with their real size:
 
-| Answers        | About 300 words                | About 900 | About 2,100 | About 4,200 |
-| -------------- | ------------------------------ | --------- | ----------- | ----------- |
-| 40 (one check) | median error 28%, in range 81% | 22%, 86%  | 12%, 92%    | 8%, 77%     |
-| 80             | 16%, 75%                       | 16%, 78%  | 10%, 76%    | 8%, 74%     |
-| 160            | 10%, 78%                       | 9%, 85%   | 6%, 90%     | 5%, 77%     |
+| Answers | About 300 words | About 900 | About 2,100 | About 4,200 |
+| --- | --- | --- | --- | --- |
+| 40 (one check) | median error 28%, in range 81% | 22%, 86% | 12%, 92% | 8%, 77% |
+| 80 | 16%, 75% | 16%, 78% | 10%, 76% | 8%, 74% |
+| 160 | 10%, 78% | 9%, 85% | 6%, 90% | 5%, 77% |
 
 "In range" is how often the real size was inside the 80% range. This is the best case: the simulated learners follow exactly the kind of curve the app fits, every answer is marked right, and part 3 says real word knowledge scatters far more. The same run with other random draws moved the errors by up to 4 points.
 

@@ -36,12 +36,12 @@ For Windows/Linux packages and the three-OS CI/release flow, see [`desktop-relea
 
 Secrets and machine-specific paths only. Model choice and thinking budgets are the user's, not the environment's — BYOK model slots live in **settings** (`models` section: strong/cheap/vision, provider + model id + optional thinking level; per-role and per-chat overrides ride on top). The extraction batch threshold is a settings knob too (`graph.extractionChunkTokens`, default 4096, floor 500).
 
-| Variable                                  | Purpose                                                                                                                |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `OPENROUTER_API_KEY`                      | required — all LLM calls go through OpenRouter                                                                         |
-| `GOOGLE_SEARCH_API_KEY` + `GOOGLE_CSE_ID` | researcher's `web_search` (Google Custom Search)                                                                       |
-| `DEEPGRAM_API_KEY`                        | optional — dictation (STT token minting; audio streams browser→Deepgram, never through the server)                     |
-| `CHROME_PATH`                             | optional system Chrome fallback for demo verification; the app's own browser helper is primary (nothing is downloaded) |
+| Variable | Purpose |
+| --- | --- |
+| `OPENROUTER_API_KEY` | required — all LLM calls go through OpenRouter |
+| `GOOGLE_SEARCH_API_KEY` + `GOOGLE_CSE_ID` | researcher's `web_search` (Google Custom Search) |
+| `DEEPGRAM_API_KEY` | optional — dictation (STT token minting; audio streams browser→Deepgram, never through the server) |
+| `CHROME_PATH` | optional system Chrome fallback for demo verification; the app's own browser helper is primary (nothing is downloaded) |
 
 The packaged desktop app takes keys from `userData/auth.json` (BYOK, mode 0600, read/written directly by the server via `LANNA_AUTH_FILE`). PDFs render natively with pdfjs/Skia.
 

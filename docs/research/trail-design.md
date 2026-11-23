@@ -28,18 +28,18 @@ The sun (gold) is the one action color: Start, Check, Continue. It is also the s
 
 Flat tonal layers, no gradients, no shadows except on menus. The accents are desaturated and lifted for a dark ground, as dark-theme guidance recommends.
 
-| Token                                      | Value                      | Used for                                                                      |
-| ------------------------------------------ | -------------------------- | ----------------------------------------------------------------------------- |
-| ground `--background`                      | `#0f1519` night slate      | the page                                                                      |
-| card `--card`                              | `#161e24`                  | cards                                                                         |
-| raised `--accent`                          | `#1f2a31`                  | tiles, hover, the slope behind the trail                                      |
-| edge `--border`                            | `#2b3842`                  | hairlines                                                                     |
-| text `--foreground` / `--muted-foreground` | `#eef2f3` snow / `#93a2aa` | text                                                                          |
-| sun `--lanna-sun`                          | `#f2b84b`                  | the action button, streak, XP, done stops, the walked trail, the Review badge |
-| trail red                                  | `#ea5f4f`                  | input strand; a wrong answer                                                  |
-| trail blue                                 | `#4fa3e3`                  | speaking strand; the tutor                                                    |
-| trail green                                | `#4cc47c`                  | words & rules strand; a right answer                                          |
-| trail yellow                               | = sun                      | speed strand                                                                  |
+| Token | Value | Used for |
+| --- | --- | --- |
+| ground `--background` | `#0f1519` night slate | the page |
+| card `--card` | `#161e24` | cards |
+| raised `--accent` | `#1f2a31` | tiles, hover, the slope behind the trail |
+| edge `--border` | `#2b3842` | hairlines |
+| text `--foreground` / `--muted-foreground` | `#eef2f3` snow / `#93a2aa` | text |
+| sun `--lanna-sun` | `#f2b84b` | the action button, streak, XP, done stops, the walked trail, the Review badge |
+| trail red | `#ea5f4f` | input strand; a wrong answer |
+| trail blue | `#4fa3e3` | speaking strand; the tutor |
+| trail green | `#4cc47c` | words & rules strand; a right answer |
+| trail yellow | = sun | speed strand |
 
 Older token names (`go`, `miss`, `warn`, `gold`, `flame`, `xp`, `sky`) are aliases of these, so every screen keeps its meaning without edits. The window frame, the title bar and the web app manifest use the ground.
 

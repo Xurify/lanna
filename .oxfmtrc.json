@@ -16,6 +16,7 @@
 		"bun.lock",
 		"curriculum/**",
 		"tests/fixtures/**",
-		"*.jsonl"
+		"*.jsonl",
+		"**/*.md"
 	]
 }

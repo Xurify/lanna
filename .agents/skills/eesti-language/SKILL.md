@@ -9,15 +9,15 @@ Produce idiomatic standard Estonian, explain choices at the learner's level, and
 
 ## Select the task mode
 
-| Request           | Do                                                                                                                                                                                                                            |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Translate         | Establish audience, `sina`/`teie`, and register. Translate meaning and natural collocation, not words one by one. Handle gender-neutral pronouns (`tema`/`ta`) accurately in context.                                         |
-| Write or rewrite  | State the register, use natural Estonian discourse markers, and proofread case government, grade alternation, object case (total vs. partial), and verb rections.                                                             |
-| Correct           | Return a corrected version first. Then give high-value explanations, labelled by error type (case government, gradation, aspect/object, verb form). Preserve natural colloquial phrasing unless formal standard is requested. |
-| Teach             | Diagnose the learner's level with a short production task. Teach one controlled pattern (e.g. spatial case triad or _ma_/_da_ contrast), contrast with near misses, then elicit new sentences.                                |
-| Plan study        | Map the learner's goal to an A1–B2/C1 progression aligned with official Harno criteria. Combine retrieval, spaced review, listening, speaking, reading, and writing.                                                          |
-| Explain grammar   | Give the functional meaning first, then the minimal paradigm (the 3 principal nominal forms or 4 verb principal parts) and 3–5 contextual examples.                                                                           |
-| Author curriculum | Validate sentences against authentic usage, ensure valid cloze tokens, correct case government, and check all standard variant answers.                                                                                       |
+| Request | Do |
+| --- | --- |
+| Translate | Establish audience, `sina`/`teie`, and register. Translate meaning and natural collocation, not words one by one. Handle gender-neutral pronouns (`tema`/`ta`) accurately in context. |
+| Write or rewrite | State the register, use natural Estonian discourse markers, and proofread case government, grade alternation, object case (total vs. partial), and verb rections. |
+| Correct | Return a corrected version first. Then give high-value explanations, labelled by error type (case government, gradation, aspect/object, verb form). Preserve natural colloquial phrasing unless formal standard is requested. |
+| Teach | Diagnose the learner's level with a short production task. Teach one controlled pattern (e.g. spatial case triad or _ma_/_da_ contrast), contrast with near misses, then elicit new sentences. |
+| Plan study | Map the learner's goal to an A1–B2/C1 progression aligned with official Harno criteria. Combine retrieval, spaced review, listening, speaking, reading, and writing. |
+| Explain grammar | Give the functional meaning first, then the minimal paradigm (the 3 principal nominal forms or 4 verb principal parts) and 3–5 contextual examples. |
+| Author curriculum | Validate sentences against authentic usage, ensure valid cloze tokens, correct case government, and check all standard variant answers. |
 
 Never omit Estonian diacritics in final text (`ä, ö, ü, õ, š, ž`). Use `eesti keel` for the language and `Eesti` for Estonia.
 
@@ -49,20 +49,20 @@ If you cannot verify, indicate uncertainty explicitly and offer the safest stand
 
 Read only the reference required by the task:
 
-| Need                                                                                          | Read                                                                            |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Quick overview of 14 cases, principal forms, basic syntax                                     | [grammar-core.md](references/grammar-core.md)                                   |
-| Noun declensions, 14 cases, plurals, short illative, proper & place names                     | [nouns.md](references/nouns.md)                                                 |
-| Grade alternation rules: quantitative & qualitative gradation, stem classes                   | [gradation.md](references/gradation.md)                                         |
-| Adjectives, comparison, pronouns (personal, demonstrative, relative), numerals, dates & time  | [adjectives-pronouns-numerals.md](references/adjectives-pronouns-numerals.md)   |
-| Conjugation, _ma_/_da_ infinitives, tenses, conditional, imperative, quotative, impersonal    | [verb-forms.md](references/verb-forms.md)                                       |
-| Total vs. partial object rules, aspectual boundedness, particle verbs                         | [aspect-and-object.md](references/aspect-and-object.md)                         |
-| Locative triads, postpositions & prepositions, verb rection catalogue                         | [valency-and-prepositions.md](references/valency-and-prepositions.md)           |
-| Word order (V2, existential), negation, questions, coordination & subordination               | [syntax-and-style.md](references/syntax-and-style.md)                           |
-| Vowels, 3 degrees of length (Q1, Q2, Q3), stops (b/d/g vs p/t/k), palatalization, orthography | [phonology-and-orthography.md](references/phonology-and-orthography.md)         |
-| Dialogue particles (_ju, küll, ometi, vä_), spoken reductions, address etiquette              | [spoken-estonian-and-particles.md](references/spoken-estonian-and-particles.md) |
-| Keeleklikk/Keeletee vocabulary domains, practical situational frames (A1–B2)                  | [communication-and-vocabulary.md](references/communication-and-vocabulary.md)   |
-| CEFR A1–B2 progression, Harno exam tasks, common learner pitfalls & diagnostics               | [practice-and-progression.md](references/practice-and-progression.md)           |
+| Need | Read |
+| --- | --- |
+| Quick overview of 14 cases, principal forms, basic syntax | [grammar-core.md](references/grammar-core.md) |
+| Noun declensions, 14 cases, plurals, short illative, proper & place names | [nouns.md](references/nouns.md) |
+| Grade alternation rules: quantitative & qualitative gradation, stem classes | [gradation.md](references/gradation.md) |
+| Adjectives, comparison, pronouns (personal, demonstrative, relative), numerals, dates & time | [adjectives-pronouns-numerals.md](references/adjectives-pronouns-numerals.md) |
+| Conjugation, _ma_/_da_ infinitives, tenses, conditional, imperative, quotative, impersonal | [verb-forms.md](references/verb-forms.md) |
+| Total vs. partial object rules, aspectual boundedness, particle verbs | [aspect-and-object.md](references/aspect-and-object.md) |
+| Locative triads, postpositions & prepositions, verb rection catalogue | [valency-and-prepositions.md](references/valency-and-prepositions.md) |
+| Word order (V2, existential), negation, questions, coordination & subordination | [syntax-and-style.md](references/syntax-and-style.md) |
+| Vowels, 3 degrees of length (Q1, Q2, Q3), stops (b/d/g vs p/t/k), palatalization, orthography | [phonology-and-orthography.md](references/phonology-and-orthography.md) |
+| Dialogue particles (_ju, küll, ometi, vä_), spoken reductions, address etiquette | [spoken-estonian-and-particles.md](references/spoken-estonian-and-particles.md) |
+| Keeleklikk/Keeletee vocabulary domains, practical situational frames (A1–B2) | [communication-and-vocabulary.md](references/communication-and-vocabulary.md) |
+| CEFR A1–B2 progression, Harno exam tasks, common learner pitfalls & diagnostics | [practice-and-progression.md](references/practice-and-progression.md) |
 
 ## Teaching defaults
 

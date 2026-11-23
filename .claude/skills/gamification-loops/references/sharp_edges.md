@@ -30,13 +30,13 @@ Long-term backlash.
 
 ### Addiction vs Engagement
 
-| Addiction           | Healthy Engagement     |
-| ------------------- | ---------------------- |
-| Feel trapped        | Feel empowered         |
+| Addiction | Healthy Engagement |
+| --- | --- |
+| Feel trapped | Feel empowered |
 | Guilt when stopping | Satisfaction when done |
-| Compulsive          | Intentional            |
-| Escape reality      | Enhance reality        |
-| Regret after        | Pride after            |
+| Compulsive | Intentional |
+| Escape reality | Enhance reality |
+| Regret after | Pride after |
 
 ### Design Checks
 
@@ -52,13 +52,13 @@ For each mechanic, ask:
 
 ### Healthy Design Patterns
 
-| Pattern           | Implementation           |
-| ----------------- | ------------------------ |
-| Session limits    | "Take a break?"          |
-| Completion points | Natural stopping points  |
+| Pattern | Implementation |
+| --- | --- |
+| Session limits | "Take a break?" |
+| Completion points | Natural stopping points |
 | Time transparency | "You've been here X min" |
-| Goal completion   | Finite daily goals       |
-| Off-ramps         | Easy to disengage        |
+| Goal completion | Finite daily goals |
+| Off-ramps | Easy to disengage |
 
 ### Red Line Mechanics
 
@@ -112,12 +112,12 @@ Intended behavior ignored.
 
 ### Common Gaming Patterns
 
-| Mechanic           | Gaming Behavior        |
-| ------------------ | ---------------------- |
-| Points for posts   | Spam posts             |
-| Badge for comments | Low-effort comments    |
-| Streak for login   | Login without engaging |
-| Leaderboard        | Bot/alt accounts       |
+| Mechanic | Gaming Behavior |
+| --- | --- |
+| Points for posts | Spam posts |
+| Badge for comments | Low-effort comments |
+| Streak for login | Login without engaging |
+| Leaderboard | Bot/alt accounts |
 
 ### Prevention Strategies
 
@@ -140,10 +140,10 @@ Intended behavior ignored.
 
 ### Reward Design Principles
 
-| Instead of            | Try                              |
-| --------------------- | -------------------------------- |
-| Points per action     | Points for value created         |
-| Badge for doing       | Badge for achieving              |
+| Instead of | Try |
+| --- | --- |
+| Points per action | Points for value created |
+| Badge for doing | Badge for achieving |
 | Streak for showing up | Streak for meaningful engagement |
 
 ### Detection and Response
@@ -214,13 +214,13 @@ reduce intrinsic motivation.
 
 ### When Rewards Help vs Hurt
 
-| Situation       | Reward Impact   |
-| --------------- | --------------- |
-| Boring task     | Helps           |
-| Already enjoyed | Hurts           |
-| Building habit  | Helps initially |
-| Creative work   | Usually hurts   |
-| Social good     | Mixed           |
+| Situation | Reward Impact |
+| --- | --- |
+| Boring task | Helps |
+| Already enjoyed | Hurts |
+| Building habit | Helps initially |
+| Creative work | Usually hurts |
+| Social good | Mixed |
 
 ### Safe Reward Patterns
 
@@ -245,11 +245,11 @@ SOCIAL
 
 ### Recovery Strategies
 
-| If motivation crowded | Response                |
-| --------------------- | ----------------------- |
-| Early detection       | Reduce reward salience  |
-| Moderate              | Shift to informational  |
-| Severe                | Remove rewards entirely |
+| If motivation crowded | Response |
+| --- | --- |
+| Early detection | Reduce reward salience |
+| Moderate | Shift to informational |
+| Severe | Remove rewards entirely |
 
 ### **Symptoms**
 
@@ -304,13 +304,13 @@ Net effect often NEGATIVE.
 
 ### Alternative Competition Models
 
-| Model         | How It Works               |
-| ------------- | -------------------------- |
-| Personal best | Compete with yourself      |
-| Cohort        | Compete with similar skill |
-| Team          | Compete as groups          |
-| Time-limited  | Fresh starts regularly     |
-| Opt-in        | Only those who want        |
+| Model | How It Works |
+| --- | --- |
+| Personal best | Compete with yourself |
+| Cohort | Compete with similar skill |
+| Team | Compete as groups |
+| Time-limited | Fresh starts regularly |
+| Opt-in | Only those who want |
 
 ### Healthy Competition Patterns
 
@@ -333,12 +333,12 @@ Net effect often NEGATIVE.
 
 ### Implementation
 
-| Feature            | Purpose            |
-| ------------------ | ------------------ |
-| Hide full rankings | Reduce comparison  |
-| Show nearby        | Achievable goals   |
-| Regular resets     | Fresh chances      |
-| Opt-out option     | Respect preference |
+| Feature | Purpose |
+| --- | --- |
+| Hide full rankings | Reduce comparison |
+| Show nearby | Achievable goals |
+| Regular resets | Fresh chances |
+| Opt-out option | Respect preference |
 
 ### **Symptoms**
 

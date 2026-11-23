@@ -241,3 +241,60 @@ describe("getWordBank", () => {
 		assert.ok(precoPlaceAsync.gloss && precoPlaceAsync.gloss.length > 0);
 	});
 });
+
+describe("words marked known", () => {
+	it("carries the mark, filters by it and counts it", async () => {
+		const { knownWordStore } = await import("../src/store/known-words.ts");
+		knownWordStore.set("zima-adv", "zima", true);
+		const found = getWordBank({ search: "zima" }).items.find((w) => w.slug === "zima-adv");
+		assert.equal(found?.known, true);
+		const marked = getWordBank({ status: "known", limit: 100 });
+		assert.deepEqual(
+			marked.items.map((w) => w.slug),
+			["zima-adv"],
+		);
+		assert.equal(marked.summary.wordsKnown, 1);
+		knownWordStore.set("zima-adv", "zima", false);
+		assert.equal(getWordBank({ status: "known" }).total, 0);
+	});
+
+	it("puts a word that is marked and still in Review under Known only", async () => {
+		const { knownWordStore } = await import("../src/store/known-words.ts");
+		const { reviewStore } = await import("../src/store/review.ts");
+		const cards = reviewStore.readCards();
+		reviewStore.writeCards({
+			...cards,
+			"leto#0": {
+				id: "leto#0",
+				slug: "leto",
+				lemma: "leto",
+				gloss: "summer",
+				sentence: "",
+				translation: "",
+				answer: "leto",
+				at: 0,
+				state: "learning",
+				due: "2999-01-01T00:00:00.000Z",
+				reps: 1,
+				lapses: 0,
+				createdAt: "2026-11-01T00:00:00.000Z",
+			},
+		});
+		assert.ok(getWordBank({ status: "learning", limit: 100 }).items.some((w) => w.slug === "leto"));
+		knownWordStore.set("leto", "leto", true);
+		const learning = getWordBank({ status: "learning", limit: 100 });
+		assert.equal(
+			learning.items.some((w) => w.slug === "leto"),
+			false,
+		);
+		assert.ok(getWordBank({ status: "known", limit: 100 }).items.some((w) => w.slug === "leto"));
+		knownWordStore.set("leto", "leto", false);
+		reviewStore.writeCards(cards);
+	});
+
+	it("shows a homograph's own sense in its example, never a flagged sentence", () => {
+		const items = getWordBank({ search: "zima", limit: 10 }).items;
+		assert.equal(items.find((w) => w.slug === "zima-adv")?.example?.sk, "Nie je ti zima?");
+		assert.equal(items.find((w) => w.slug === "zima")?.example?.sk, "V Ankare sú všetky ročné obdobia ako zima.");
+	});
+});
