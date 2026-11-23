@@ -85,9 +85,13 @@ export type ReleaseRecord = { id: number; tag_name: string; draft: boolean; asse
 export type Failures = { ok: false; errors: string[] };
 export type DraftSelection = { ok: true; release: ReleaseRecord; warnings: string[] } | Failures;
 
-/** The full expected asset inventory for one version (11 files). */
+/** The expected asset inventory for one version (11 files when every platform ships). */
+export type Platform = "mac" | "win" | "linux";
+export const ALL_PLATFORMS: readonly Platform[] = ["mac", "win", "linux"];
+
 export type ExpectedAssets = {
 	version: string;
+	platforms: readonly Platform[];
 	mac: { dmg: string; zip: string; feed: string };
 	win: { exe: string; feed: string };
 	linux: { appImage: string; deb: string; feed: string };
@@ -118,7 +122,7 @@ export function checkVersion(version: unknown): { ok: true; version: string } | 
 }
 
 /** The exact asset set the installed builder emits for this repo's config. */
-export function expectedAssets(version: string): ExpectedAssets {
+export function expectedAssets(version: string, platforms: readonly Platform[] = ALL_PLATFORMS): ExpectedAssets {
 	const mac = {
 		dmg: `${PRODUCT_NAME}-${version}-arm64.dmg`,
 		zip: `${PRODUCT_NAME}-${version}-arm64-mac.zip`,
@@ -135,13 +139,18 @@ export function expectedAssets(version: string): ExpectedAssets {
 	};
 	// Sidecar differential-update blockmaps: emitted for dmg, mac zip and
 	// NSIS exe (createBlockmap); AppImage/deb have none in app-builder-lib 26.15.3.
-	const blockmaps = [mac.dmg, mac.zip, win.exe].map((name) => `${name}.blockmap`);
+	const filesByPlatform: Record<Platform, string[]> = {
+		mac: [mac.dmg, mac.zip, `${mac.dmg}.blockmap`, `${mac.zip}.blockmap`, mac.feed],
+		win: [win.exe, `${win.exe}.blockmap`, win.feed],
+		linux: [linux.appImage, linux.deb, linux.feed],
+	};
 	return {
 		version,
+		platforms,
 		mac,
 		win,
 		linux,
-		files: [mac.dmg, mac.zip, win.exe, linux.appImage, linux.deb, ...blockmaps, mac.feed, win.feed, linux.feed],
+		files: platforms.flatMap((platform) => filesByPlatform[platform]),
 	};
 }
 
@@ -375,11 +384,12 @@ type FeedExpectation = {
 };
 
 export function feedExpectations(expected: ExpectedAssets): FeedExpectation[] {
-	return [
-		{ file: expected.mac.feed, urls: [expected.mac.zip, expected.mac.dmg], first: expected.mac.zip },
-		{ file: expected.win.feed, urls: [expected.win.exe] },
-		{ file: expected.linux.feed, urls: [expected.linux.appImage, expected.linux.deb] },
-	];
+	const byPlatform: Record<Platform, FeedExpectation> = {
+		mac: { file: expected.mac.feed, urls: [expected.mac.zip, expected.mac.dmg], first: expected.mac.zip },
+		win: { file: expected.win.feed, urls: [expected.win.exe] },
+		linux: { file: expected.linux.feed, urls: [expected.linux.appImage, expected.linux.deb] },
+	};
+	return expected.platforms.map((platform) => byPlatform[platform]);
 }
 
 /** An updater reference must be a bare file name: no directories, no
