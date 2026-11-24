@@ -35,7 +35,7 @@ import { CapLabel } from "@/components/ui/cap-label";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { KBD, PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import { useActiveTime } from "@/components/use-active-time";
-import { prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
+import { prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { QIcon, QPie } from "@/components/quiet/icon";
@@ -672,6 +672,8 @@ export function LessonPlayer({
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
 	});
+
+	useEffect(() => () => stopSpeaking(), []);
 
 	// While the leave question is up, it owns the keyboard: the rep's own
 	// keys (1–4, Backspace, Enter) must not answer behind it. Capture on
@@ -1541,7 +1543,7 @@ function ClozeRep({
 		item.before
 			.trimEnd()
 			.slice(triggerAt)
-			.toLocaleLowerCase("sk-SK")
+			.toLocaleLowerCase(tag)
 			.replace(/^[„“"'(]+/, "") === item.trigger ? (
 			<span>
 				{item.before.slice(0, triggerAt)}

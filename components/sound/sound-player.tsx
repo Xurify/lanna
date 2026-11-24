@@ -12,13 +12,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { speak, stopSpeaking } from "@/components/speech";
+import { readOrigin } from "@/components/origin";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { micSupported, Recorder, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { PronChip } from "@/components/speak/pron";
 import { useActiveTime } from "@/components/use-active-time";
 import { SettingsLink } from "@/components/settings/settings-link";
-import { COLUMN, Dock, OptionTile, PracticeCard, TaskFrame, TaskTop } from "@/components/task-frame";
+import {
+	COLUMN,
+	Dock,
+	endEnterBlocked,
+	onFocusedControl,
+	OptionTile,
+	PracticeCard,
+	TaskFrame,
+	TaskTop,
+} from "@/components/task-frame";
 import { PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
 import {
 	LISTEN_ITEMS,
@@ -38,6 +49,9 @@ type LineResult = "clear" | "not-yet" | "unscored";
 const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 
 export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterTitle: string }) {
+	const router = useRouter();
+	const lang = useActiveLanguage();
+	const langCode = lang?.code ?? "sk";
 	const [phase, setPhase] = useState<Phase>("listen");
 	const [order, setOrder] = useState<string[] | null>(null);
 	const [item, setItem] = useState(0);
@@ -93,6 +107,69 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 
 	const word = order?.[item] ?? "";
 	const shadowLine = sound.lines[line] ?? "";
+
+	useEffect(() => {
+		if (phase !== "listen" || !word) return;
+		void speak(word).catch(() => undefined);
+		return () => stopSpeaking();
+	}, [phase, word, item]);
+
+	useEffect(() => {
+		const onKey = (event: KeyboardEvent) => {
+			if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+			if (event.key === "Escape") {
+				event.preventDefault();
+				run.current++;
+				stopSpeaking();
+				recorder.current?.cancel();
+				router.push(readOrigin());
+				return;
+			}
+			if (phase === "listen" && order) {
+				if ((event.key === "1" || event.key === "2") && !chosen) {
+					const twin = sound.twins[Number(event.key) - 1];
+					if (twin) {
+						event.preventDefault();
+						pick(twin.sk);
+					}
+					return;
+				}
+				if (event.key === " " && !onFocusedControl(event)) {
+					event.preventDefault();
+					void speak(word).catch(() => undefined);
+					return;
+				}
+				if (event.key === "Enter" && chosen !== null) {
+					const onTile = event.target instanceof Element && !!event.target.closest("[data-testid^='sound-option-']");
+					if (onTile || !onFocusedControl(event)) {
+						event.preventDefault();
+						nextItem();
+					}
+				}
+				return;
+			}
+			if (phase === "shadow") {
+				if ((event.key === " " || event.key === "Enter") && !onFocusedControl(event)) {
+					event.preventDefault();
+					if (stage === "ready") {
+						if (aloudOnly) nextLine();
+						else void listenLine(line);
+					} else if (stage === "saying") {
+						void finishSaying();
+					} else if (stage === "scored") {
+						nextLine();
+					}
+				}
+				return;
+			}
+			if (phase === "done" && event.key === "Enter" && !endEnterBlocked(event)) {
+				event.preventDefault();
+				router.push("/curriculum");
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	});
 
 	// ── Listening check ────────────────────────────────────────────────
 
@@ -290,7 +367,7 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 										disabled={chosen !== null}
 										onClick={() => pick(t.sk)}
 										testId={`sound-option-${n + 1}`}
-										lang="sk"
+										lang={langCode}
 									>
 										<span className="font-prose text-[19px]">{t.sk}</span>
 									</OptionTile>
@@ -312,7 +389,11 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 
 					{phase === "shadow" && (
 						<div className="flex flex-col gap-4">
-							<p className="font-prose text-[22px] leading-snug text-foreground" lang="sk" data-testid="shadow-line">
+							<p
+								className="font-prose text-[22px] leading-snug text-foreground"
+								lang={langCode}
+								data-testid="shadow-line"
+							>
 								{shadowLine}
 							</p>
 							<p className="text-sm text-ink-3">
@@ -348,7 +429,7 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 							</p>
 							<ul className="flex flex-col gap-1 text-sm text-ink-2">
 								{sound.lines.map((l, i) => (
-									<li key={l} className="font-prose" lang="sk">
+									<li key={l} className="font-prose" lang={langCode}>
 										{l}{" "}
 										<span className="text-ink-3">
 											· {results[i] === "clear" ? "clear" : results[i] === "not-yet" ? "not yet" : "not scored"}

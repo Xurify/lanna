@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { readOrigin } from "@/components/origin";
 import { MicIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { speak, useActiveLanguage } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import {
 	COLUMN,
@@ -98,13 +98,13 @@ export function ScriptPlayer({ sceneId, langId }: { sceneId: string; langId: str
 		[script, turnIndex, miss, advance],
 	);
 
-	// The first tutor line is read out.
 	const greeted = useRef(false);
 	useEffect(() => {
 		if (!greeted.current) {
 			greeted.current = true;
 			void speak(script.turns[0]?.tutor.sk ?? "").catch(() => {});
 		}
+		return () => stopSpeaking();
 	}, [script]);
 
 	useEffect(() => {

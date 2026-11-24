@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
 import { setSoundOn, setVolume, volume } from "../components/lesson/sound.ts";
-import { setSpeed, slowRate, speak, stopSpeaking } from "../components/speech.tsx";
+import { prefetchSpeech, setSpeed, slowRate, speak, stopSpeaking } from "../components/speech.tsx";
 
 // The sound switch is one switch for every page: when it is off, nothing
 // plays, a clip still loading is dropped, and a clip already playing stops.
@@ -24,6 +24,7 @@ const store = new Map<string, string>();
 const made: FakeAudio[] = [];
 const loads: string[] = [];
 const revoked: string[] = [];
+const fetchedUrls: string[] = [];
 let voiceCalls = 0;
 let holdVoice = false;
 let releases: Array<() => void> = [];
@@ -69,6 +70,7 @@ URL.revokeObjectURL = (url: string) => void revoked.push(`${url} while the eleme
 globalThis.fetch = (async (input: string | URL | Request) => {
 	const url = String(input);
 	if (url.startsWith("/api/profile")) return new Response(JSON.stringify({ active: "slovak" }));
+	fetchedUrls.push(url);
 	voiceCalls++;
 	if (holdVoice) await new Promise<void>((resolve) => releases.push(resolve));
 	return new Response(new Blob(["mp3"]), { status: 200 });
@@ -84,6 +86,7 @@ beforeEach(() => {
 	made.length = 0;
 	loads.length = 0;
 	revoked.length = 0;
+	fetchedUrls.length = 0;
 	voiceCalls = 0;
 	holdVoice = false;
 	releases = [];
@@ -185,4 +188,15 @@ test("volume stays between 0 and 1, and a broken value reads as full", () => {
 	assert.equal(volume(), 0);
 	store.set("lanna-volume", "loud");
 	assert.equal(volume(), 1);
+});
+
+test("prefetchSpeech forwards voice, gender, style, and prefer options", async () => {
+	setSoundOn(true);
+	prefetchSpeech("Ahoj", "sk", { gender: "male", prefer: "elevenlabs" });
+	await waitFor(() => fetchedUrls.length === 1);
+	const params = new URL(fetchedUrls[0]!, "http://localhost").searchParams;
+	assert.equal(params.get("lang"), "sk");
+	assert.equal(params.get("text"), "Ahoj");
+	assert.equal(params.get("gender"), "male");
+	assert.equal(params.get("prefer"), "elevenlabs");
 });

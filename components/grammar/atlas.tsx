@@ -191,8 +191,14 @@ function Cell({ cell, selected, onSelect }: { cell: AtlasCell; selected: boolean
 				data-testid={`cell-${cell.row}${cell.col}`}
 				onMouseEnter={() => onSelect(cell)}
 				onFocus={() => onSelect(cell)}
-				onTouchStart={() => onSelect(cell)}
-				onClick={() => onSelect(cell)}
+				onClick={(event) => {
+					if (!selected && typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
+						event.preventDefault();
+						onSelect(cell);
+						return;
+					}
+					onSelect(cell);
+				}}
 				title={cell.reps > 0 ? `${cell.right} of ${cell.reps} right on the first try` : "No first tries yet"}
 			>
 				{inner}

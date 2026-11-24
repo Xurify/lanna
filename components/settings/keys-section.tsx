@@ -163,8 +163,13 @@ function KeyTableRow({
 						type={reveal ? "text" : "password"}
 						value={value}
 						onChange={(e) => setValue(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") void save();
+						onKeyDown={(event) => {
+							if (event.key === "Enter") void save();
+							if (event.key === "Escape") {
+								event.stopPropagation();
+								setConfirmDelete(false);
+								onCancel();
+							}
 						}}
 						placeholder="Paste key…"
 						aria-label={`${label} key`}
@@ -373,13 +378,14 @@ function PlainSettingRow({
 						}
 						void commit();
 					}}
-					onKeyDown={(e) => {
-						if (e.key === "Enter") e.currentTarget.blur();
-						if (e.key === "Escape") {
+					onKeyDown={(event) => {
+						if (event.key === "Enter") event.currentTarget.blur();
+						if (event.key === "Escape") {
+							event.stopPropagation();
 							cancelling.current = true;
 							setDraft(null);
 							setError(null);
-							e.currentTarget.blur();
+							event.currentTarget.blur();
 						}
 					}}
 					disabled={envOwned}

@@ -29,6 +29,7 @@ import {
 import { sfx } from "@/components/lesson/sound";
 import { SourcesNote } from "@/components/sources/sources-note";
 import { speak, stopSpeaking } from "@/components/speech";
+import { useActiveTime } from "@/components/use-active-time";
 import {
 	contrastSpans,
 	earGymRound,
@@ -92,6 +93,7 @@ export function EarGym({
 	initialSound?: string;
 }) {
 	const router = useRouter();
+	useActiveTime("listen", "interactive");
 	const hasRhythm = hasRhythmPage(languageId);
 	const hasSounds = (getSoundNotes(languageId)?.sounds.length ?? 0) > 0;
 	const dataset = getPhonologyData(languageId);

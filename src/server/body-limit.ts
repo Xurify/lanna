@@ -4,7 +4,7 @@ export const BODY_LIMITS = {
 	prompt: 512 * 1024,
 	cheatsheet: 1024 * 1024,
 	import: 4 * 1024 * 1024,
-	recording: 8 * 1024 * 1024 + 256 * 1024,
+	recording: 12 * 1024 * 1024 + 256 * 1024,
 } as const;
 
 /**

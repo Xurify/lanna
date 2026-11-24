@@ -6,6 +6,7 @@ import { useSettingsDialog } from "@/components/settings/settings-context";
 import { CapLabel } from "@/components/ui/cap-label";
 import { Hint } from "@/components/ui/hint";
 import { setDictationActive } from "@/components/dictation-active";
+import { useActiveLanguage } from "@/components/speech";
 
 /**
  * Voice dictation — the cloud engine (STT wave 1, 2026-09-17).
@@ -97,6 +98,10 @@ const DG_URL =
 	"&smart_format=true" +
 	"&punctuate=true" +
 	"&endpointing=300";
+
+export function deepgramUrl(languageCode: string): string {
+	return `${DG_URL}&language=${encodeURIComponent(languageCode)}`;
+}
 
 /** Meter tuning — the owner's tested values, see the file header. */
 const METER_FLOOR_DB = -50;
@@ -281,10 +286,10 @@ type Dictation = {
 export function useDictation({ append }: { append: (text: string) => void }): Dictation {
 	const [phase, setPhase] = useState<DictationPhase>("idle");
 	const [error, setError] = useState<string | null>(null);
-	/** Latest RMS from the worklet — the meter samples this (dictate pattern). */
 	const levelRef = useRef(0);
-	/** The page's fallback append — kept fresh per render so a mid-recording
-	 *  retarget (composer↔question) is honored on the very next final. */
+	const activeLang = useActiveLanguage();
+	const langCodeRef = useRef(activeLang?.code ?? "sk");
+	langCodeRef.current = activeLang?.code ?? "sk";
 	const appendRef = useRef(append);
 	appendRef.current = append;
 
@@ -320,11 +325,11 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 		(questionTarget ?? appendRef.current)(text);
 	}, []);
 
-	/** Full teardown of one run's machinery. Idempotent; generation-guarded by callers. */
 	const cleanup = useCallback(() => {
 		genRef.current++;
+		levelRef.current = 0;
 		setDictationActive(false);
-		flush(); // the deferred transcript appears when the run ends (owner round 2)
+		flush();
 		if (safetyRef.current) {
 			clearTimeout(safetyRef.current);
 			safetyRef.current = null;
@@ -336,7 +341,6 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 		sourceRef.current = null;
 		workletRef.current?.disconnect();
 		workletRef.current = null;
-		// The AudioContext is app-lifetime (mitigation C) — nodes die, it stays.
 		const ws = wsRef.current;
 		wsRef.current = null;
 		if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
@@ -345,22 +349,16 @@ export function useDictation({ append }: { append: (text: string) => void }): Di
 			} catch {}
 		}
 		setPhase("idle");
-		// The finish() waiters ride until NOW — post-flush, post-teardown:
-		// a submit path resuming after `await finishDictation()` reads the
-		// target field with the dictated tail already in it.
-		for (const w of waitersRef.current.splice(0)) w();
-		// Pre-mint for the next run (mitigation D) — best-effort; a keyless
-		// page just doesn't warm.
+		for (const waiter of waitersRef.current.splice(0)) waiter();
 		warmTokens.refresh();
-	}, []);
+	}, [flush]);
 
-	/** Open the Deepgram socket and wire its messages. `gen` guards staleness. */
 	const openSocket = useCallback(
 		(gen: number, token: string) => {
 			// Minted JWTs authenticate via the "bearer" subprotocol — ["token",
 			// jwt] is rejected at the handshake (verified live; "token" is for
 			// raw API keys only, as in the owner's pi dictate extension).
-			const ws = new WebSocket(DG_URL, ["bearer", token]);
+			const ws = new WebSocket(deepgramUrl(langCodeRef.current), ["bearer", token]);
 			wsRef.current = ws;
 
 			ws.addEventListener("open", () => {

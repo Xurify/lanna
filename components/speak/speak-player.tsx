@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { SpeedToggle, speak, useActiveLanguage, useVoicing } from "@/components/speech";
+import { SpeedToggle, speak, stopSpeaking, useActiveLanguage, useVoicing } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import {
 	ACTIVE_TIME_HOW,
@@ -283,10 +283,11 @@ export function SpeakPlayer({
 				setSession(out.session);
 				if (out.reply.repaired) sfx.right(2);
 				else if (out.reply.prompt) sfx.wrong();
-				void speak(out.reply.text).catch(() => {});
+				const spoken = speak(out.reply.text).catch(() => {});
 				if (out.end) {
-					// Let the goodbye play, then the summary.
-					setTimeout(() => void finishRef.current(), 1200);
+					void Promise.race([spoken, new Promise<void>((resolve) => setTimeout(resolve, 8000))]).then(() => {
+						setTimeout(() => void finishRef.current(), 400);
+					});
 				}
 			} catch (err) {
 				setError(err instanceof Error ? err.message : String(err));
@@ -321,9 +322,6 @@ export function SpeakPlayer({
 					return;
 				}
 				setHeard(true);
-				// Sound by sound, when Azure is set: what was said, against the
-				// words speech-to-text made of it. The transcript engine alone
-				// cannot score free speech (nothing to compare with).
 				let pron: PronScore | null = null;
 				if (state?.pron === "azure") pron = await scoreClip(clip.wav, text, text).catch(() => null);
 				await send(text, "voice", { wav: clip.wav, ms: clip.ms, pron });
@@ -336,6 +334,7 @@ export function SpeakPlayer({
 			}
 			return;
 		}
+		stopSpeaking();
 		setError(null);
 		const rec = new Recorder();
 		recorder.current = rec;
@@ -349,10 +348,6 @@ export function SpeakPlayer({
 	}, [state, sending, hearing, phase, listening, send]);
 	const toggleRef = useRef(toggleMic);
 	toggleRef.current = toggleMic;
-	// Press-and-hold on touch (2026-11-01): the mic records while a finger holds it,
-	// and the release sends the line. A mouse keeps press-to-start, press-to-send,
-	// as the keyboard's Space does. The click a touch press leaves behind is the
-	// same press, so it is ignored.
 	const onMicDown = (e: React.PointerEvent<HTMLButtonElement>) => {
 		touchPressRef.current = e.pointerType !== "mouse";
 		if (e.pointerType === "mouse") return;
@@ -360,9 +355,7 @@ export function SpeakPlayer({
 		holdRef.current = "down";
 		try {
 			e.currentTarget.setPointerCapture(e.pointerId);
-		} catch {
-			// Capture is a nicety: the release still reaches the button on most devices.
-		}
+		} catch {}
 		if (!listening) void toggleMic();
 	};
 	const onMicUp = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -371,7 +364,7 @@ export function SpeakPlayer({
 			holdRef.current = "idle";
 			void toggleMic();
 		} else {
-			holdRef.current = "up"; // still starting: stop as soon as the mic is live
+			holdRef.current = "up";
 		}
 	};
 	const onMicClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -381,7 +374,6 @@ export function SpeakPlayer({
 		}
 		void toggleMic();
 	};
-	// A release that came before the mic was live stops it the moment it is.
 	useEffect(() => {
 		if (listening && holdRef.current === "up") {
 			holdRef.current = "idle";
@@ -389,12 +381,17 @@ export function SpeakPlayer({
 		}
 	}, [listening]);
 
-	// The newest line scrolls into view.
 	useEffect(() => {
 		listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
 	}, [session?.turns.length, sending]);
 
-	useEffect(() => () => recorder.current?.cancel(), []);
+	useEffect(
+		() => () => {
+			stopSpeaking();
+			recorder.current?.cancel();
+		},
+		[],
+	);
 
 	// Keys.
 	useEffect(() => {

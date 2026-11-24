@@ -29,7 +29,7 @@ import { DayRail, useDaySummary } from "@/components/quiet/day-rail";
 import { DiacriticBar } from "@/components/diacritic-bar";
 import { OptionTile } from "@/components/task-frame";
 import { useActiveTime } from "@/components/use-active-time";
-import { PlayButton, prefetchSpeech, speak, useActiveLanguage } from "@/components/speech";
+import { PlayButton, prefetchSpeech, speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx, warmSound } from "@/components/lesson/sound";
 import { SoundControl } from "@/components/sound-control";
 import { ReviewKnownRemoval } from "@/components/review-known-removal";
@@ -589,6 +589,7 @@ export function ReviewSession() {
 		}
 	};
 
+	useEffect(() => () => stopSpeaking(), []);
 	useEffect(() => onAskLeaving(() => (verdict ? rate(Math.min(suggested, cap) as Rating) : Promise.resolve())));
 
 	const askSentence = async () => {

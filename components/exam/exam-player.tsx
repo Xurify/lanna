@@ -38,7 +38,8 @@ import {
 import { KBD, PRIMARY, SECONDARY } from "@/components/ui/learn-buttons";
 import { QIcon } from "@/components/quiet/icon";
 import { EXAM_PASS_MARK, scoreExam, type ExamDraw, type ExamScore } from "@/src/core";
-import { speak, useActiveLanguage } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
+import { useActiveTime } from "@/components/use-active-time";
 
 type Phase =
 	| { state: "playing" }
@@ -59,11 +60,13 @@ export function ExamPlayer({
 	const [draw, setDraw] = useState<ExamDraw | null>(initial);
 	const [index, setIndex] = useState(0);
 	const [picked, setPicked] = useState<number | null>(null);
-	// The chosen option's index per item, sent to the server at the end.
 	const [answers, setAnswers] = useState<number[]>([]);
 	const [phase, setPhase] = useState<Phase>({ state: "playing" });
 	const [drawing, setDrawing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	useActiveTime("lesson", "interactive", { active: phase.state === "playing" });
+
+	useEffect(() => () => stopSpeaking(), []);
 
 	const items = draw?.items ?? [];
 	const item = items[Math.min(index, items.length - 1)];
@@ -81,6 +84,7 @@ export function ExamPlayer({
 			});
 			if (item.options?.[choice] === item.answer) sfx.right(2);
 			else sfx.wrong();
+			void speak(item.sentence).catch(() => {});
 		},
 		[phase, picked, item, index],
 	);
@@ -125,25 +129,24 @@ export function ExamPlayer({
 			.finally(() => setDrawing(false));
 	}, [chapterId]);
 
-	// Keys 1–4 pick; Enter or Space moves on once the band is up.
 	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => {
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				router.push(readOrigin());
+				return;
+			}
 			if (phase.state !== "playing") {
-				if (e.key === "Escape") {
-					e.preventDefault();
-					router.push(readOrigin());
-					return;
-				}
-				if (e.key !== "Enter" || endEnterBlocked(e)) return;
-				e.preventDefault();
+				if (event.key !== "Enter" || endEnterBlocked(event)) return;
+				event.preventDefault();
 				if (phase.score.passed) router.push("/curriculum");
 				else retry();
 				return;
 			}
-			const n = Number(e.key);
-			if (n >= 1 && n <= (item?.options?.length ?? 0)) pick(n - 1);
-			if ((e.key === "Enter" || e.key === " ") && picked !== null) {
-				e.preventDefault();
+			const choiceNumber = Number(event.key);
+			if (choiceNumber >= 1 && choiceNumber <= (item?.options?.length ?? 0)) pick(choiceNumber - 1);
+			if ((event.key === "Enter" || event.key === " ") && picked !== null) {
+				event.preventDefault();
 				next();
 			}
 		};

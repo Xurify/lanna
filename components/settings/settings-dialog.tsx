@@ -99,7 +99,7 @@ const SECTION_KEYWORDS: Record<SectionId, string> = {
 };
 
 export function sectionMatches(section: { id: SectionId; label: string; group: string }, query: string): boolean {
-	const words = query.trim().toLowerCase().split(/s+/).filter(Boolean);
+	const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 	const haystack = `${section.label} ${section.group} ${SECTION_KEYWORDS[section.id]}`.toLowerCase();
 	return words.every((word) => haystack.includes(word));
 }

@@ -55,7 +55,7 @@ import { QIcon } from "@/components/quiet/icon";
 import { useActiveTime } from "@/components/use-active-time";
 import { switchLanguage } from "@/components/switch-language";
 import { speak, useActiveLanguage } from "@/components/speech";
-import { sfx } from "@/components/lesson/sound";
+import { sfx, soundOn, subscribeSound, volume } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
 import { Check } from "@/components/reading/check";
 import { Tag, Word } from "@/components/reading/word";
@@ -1074,6 +1074,12 @@ function mountAudioPlayer(holder: HTMLElement, id: string, events: PlayerEvents)
 	audio.preload = "auto";
 	audio.controls = true;
 	audio.className = "absolute inset-x-0 bottom-0 w-full";
+	const syncSound = () => {
+		audio.muted = !soundOn();
+		audio.volume = volume();
+	};
+	syncSound();
+	const unsubscribeSound = subscribeSound(syncSound);
 	holder.replaceChildren(cover, audio);
 	audio.addEventListener("loadedmetadata", () => events.onReady());
 	audio.addEventListener("play", () => events.onStateChange({ data: PLAYER_STATE.PLAYING }));
@@ -1091,6 +1097,7 @@ function mountAudioPlayer(holder: HTMLElement, id: string, events: PlayerEvents)
 			audio.playbackRate = rate;
 		},
 		destroy: () => {
+			unsubscribeSound();
 			audio.pause();
 			audio.removeAttribute("src");
 			audio.load();
@@ -1615,11 +1622,11 @@ function Screen({
 											<Word
 												key={j}
 												token={t}
-												looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase("sk-SK"))}
+												looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase(lang?.tag ?? "sk-SK"))}
 												open={popover === j}
 												onOpen={() => {
 													setPopover(j);
-													onTap(t.slug ?? t.text.toLocaleLowerCase("sk-SK"));
+													onTap(t.slug ?? t.text.toLocaleLowerCase(lang?.tag ?? "sk-SK"));
 													sfx.tap();
 												}}
 												onClose={() => setPopover(null)}

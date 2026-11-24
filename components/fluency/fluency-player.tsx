@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveTime } from "@/components/use-active-time";
-import { speak, useActiveLanguage } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
 import { readOrigin } from "@/components/origin";
 import {
@@ -719,6 +719,7 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 
 	const startPass = useCallback(async () => {
 		if (!item || (phase !== "ready" && phase !== "between")) return;
+		stopSpeaking();
 		setError(null);
 		if (useMic) {
 			const rec = new Recorder();
@@ -746,7 +747,6 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		setPhase("running");
 	}, [item, phase, useMic, win]);
 
-	/** Pause or resume the running pass (mic off only: the recorder runs on its own clock). */
 	const togglePause = useCallback(() => {
 		if (phase !== "running" || useMic) return;
 		if (pausedAt.current) {
@@ -760,7 +760,6 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		}
 	}, [phase, useMic]);
 
-	/** After a pass: the next pass, the next sentence, or the end. */
 	const advance = useCallback(() => {
 		if (!item || phase !== "between" || passes[passes.length - 1]?.pending) return;
 		if (pass + 1 < FAST_PASSES) {
@@ -768,7 +767,6 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 			void startPass();
 			return;
 		}
-		// The sentence is done: keep its reps (what was heard may still arrive; the log takes what it has).
 		const rep: FastRep = {
 			itemId: item.id,
 			slug: item.slug,
@@ -787,7 +785,13 @@ function Fast({ initial, stt, pron }: { initial: FastPlan | null; stt: boolean; 
 		}
 	}, [item, phase, pass, passes, reps, index, total, startPass, finish]);
 
-	useEffect(() => () => recorder.current?.cancel(), []);
+	useEffect(
+		() => () => {
+			stopSpeaking();
+			recorder.current?.cancel();
+		},
+		[],
+	);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
