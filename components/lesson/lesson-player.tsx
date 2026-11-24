@@ -64,6 +64,7 @@ import { Bridges, BridgesContext } from "@/components/lesson/bridges";
 import { LessonIntro } from "@/components/lesson/lesson-intro";
 import { sketchStages } from "@/components/lesson/case-sketch";
 import { MatchRound } from "@/components/lesson/match-round";
+import { TableRound } from "@/components/lesson/table-round";
 import { PatternIntro } from "@/components/lesson/pattern-intro";
 import { WordIntro } from "@/components/lesson/word-intro";
 import { HelpLadder, PictureBox, WordCard } from "@/components/lesson/rep-panel";
@@ -606,7 +607,7 @@ export function LessonPlayer({
 		}
 		if (index + 1 < nextTotal) setIndex((i) => i + 1);
 		else {
-			const matchFollows = words.length >= MATCH_MIN;
+			const matchFollows = words.length >= MATCH_MIN || !!plan.patterns?.length;
 			void finish(all, matchFollows);
 			if (matchFollows) setMatching(all);
 		}
@@ -747,7 +748,7 @@ export function LessonPlayer({
 		);
 	}
 
-	// The lesson is recorded before the match round, so leaving it loses nothing.
+	// The lesson is recorded before its closing round, so leaving it loses nothing.
 	if (matching) {
 		return (
 			<Frame strip={false}>
@@ -757,7 +758,11 @@ export function LessonPlayer({
 					</div>
 				</div>
 				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-					<MatchRound unit={plan.unit} words={words} seed={matching.length} onDone={endMatch} />
+					{plan.patterns?.[0] ? (
+						<TableRound unit={plan.unit} pattern={plan.patterns[0]} onDone={endMatch} />
+					) : (
+						<MatchRound unit={plan.unit} words={words} seed={matching.length} onDone={endMatch} />
+					)}
 				</div>
 			</Frame>
 		);
