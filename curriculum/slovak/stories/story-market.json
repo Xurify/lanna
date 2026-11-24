@@ -53,8 +53,8 @@
 		},
 		{
 			"who": "narrator",
-			"sk": "Prvý je krátky, druhý je príliš veľký a tretí stojí dvesto eur.",
-			"en": "The first one is short, the second is too big, and the third costs two hundred euros."
+			"sk": "Prvý je príliš krátky, druhý je príliš veľký a tretí stojí dvesto eur.",
+			"en": "The first one is too short, the second is too big, and the third costs two hundred euros."
 		},
 		{
 			"who": "Zuzana",
@@ -115,7 +115,7 @@
 		},
 		{
 			"who": "Zuzana",
-			"sk": "Prišli sme kúpiť kabát mne, nie oblečenie tebe!",
+			"sk": "Prišli sme kúpiť kabát pre mňa, nie oblečenie pre teba!",
 			"en": "We came to buy a coat for me, not clothes for you!"
 		},
 		{

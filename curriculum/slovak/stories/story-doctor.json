@@ -105,7 +105,7 @@
 		},
 		{
 			"who": "Jozef",
-			"sk": "Ja som Jozef Horváth. Som tu prvý!",
+			"sk": "Ja som Jozef Horváth. Bol som tu prvý!",
 			"en": "I'm Jozef Horváth. I was here first!"
 		},
 		{
@@ -267,6 +267,14 @@
 		"kartu": {
 			"lemma": "karta",
 			"gloss": "card; patient's file"
+		},
+		"vaše": {
+			"lemma": "váš",
+			"gloss": "your (formal or plural)"
+		},
+		"ticho": {
+			"lemma": "ticho",
+			"gloss": "quiet; quietly"
 		}
 	}
 }

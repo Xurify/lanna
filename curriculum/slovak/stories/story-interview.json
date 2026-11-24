@@ -114,7 +114,7 @@
 		},
 		{
 			"who": "Jana",
-			"sk": "Nie, nič. Teda áno. Kedy ráno začína práca?",
+			"sk": "Nie, nič. Teda áno. Kedy sa ráno začína práca?",
 			"en": "No, nothing. Well, yes. What time does work start in the morning?"
 		},
 		{
@@ -130,8 +130,8 @@
 		},
 		{
 			"who": "Riaditeľ",
-			"sk": "Dobrý deň. Máte tú prácu! Môžete začať v pondelok?",
-			"en": "Hello. You've got the job! Can you start on Monday?"
+			"sk": "Dobrý deň. Prácu ste dostali! Môžete začať v pondelok?",
+			"en": "Hello. You got the job! Can you start on Monday?"
 		},
 		{
 			"who": "Jana",
@@ -192,8 +192,8 @@
 			"gloss": "Jana (a name)"
 		},
 		"deviatej": {
-			"lemma": "deväť",
-			"gloss": "nine (o deviatej: at nine)"
+			"lemma": "deviaty",
+			"gloss": "ninth (o deviatej: at nine; o pol deviatej: at half past eight)"
 		},
 		"pol": {
 			"lemma": "pol",
@@ -228,8 +228,8 @@
 			"gloss": "I'm not late"
 		},
 		"ôsmej": {
-			"lemma": "osem",
-			"gloss": "eight (o ôsmej: at eight)"
+			"lemma": "ôsmy",
+			"gloss": "eighth (o ôsmej: at eight)"
 		},
 		"nebude": {
 			"lemma": "byť",

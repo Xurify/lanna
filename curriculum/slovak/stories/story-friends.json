@@ -115,8 +115,8 @@
 		},
 		{
 			"who": "Martin",
-			"sk": "Myslel som si, že je to ty.",
-			"en": "I thought it was you."
+			"sk": "Myslel som, že ona je tá nová.",
+			"en": "I thought she was the new girl."
 		},
 		{
 			"who": "Simona",
@@ -262,6 +262,10 @@
 		"budeš": {
 			"lemma": "byť",
 			"gloss": "you will be (ty budeš Martin: you must be Martin)"
+		},
+		"vášho": {
+			"lemma": "váš",
+			"gloss": "your (formal or plural)"
 		}
 	}
 }

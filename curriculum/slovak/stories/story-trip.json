@@ -1,5 +1,5 @@
 {
-	"title": "Zlý vlak",
+	"title": "Nesprávny vlak",
 	"topic": "Lucia and Tomáš take the wrong train on a weekend trip, it doesn't stop in their village, and they walk back from Trenčín",
 	"cover": "train",
 	"cast": [
@@ -207,8 +207,8 @@
 			"gloss": "Tomáš (a name)"
 		},
 		"ôsmej": {
-			"lemma": "osem",
-			"gloss": "eight (o ôsmej: at eight)"
+			"lemma": "ôsmy",
+			"gloss": "eighth (o ôsmej: at eight)"
 		},
 		"treťom": {
 			"lemma": "tretí",
@@ -265,6 +265,10 @@
 		"budeme": {
 			"lemma": "byť",
 			"gloss": "we will (budeme + infinitive: future)"
+		},
+		"nestojí": {
+			"lemma": "stáť",
+			"gloss": "doesn't stop (of a train)"
 		}
 	}
 }
