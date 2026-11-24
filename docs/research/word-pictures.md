@@ -80,9 +80,30 @@ What the rounds changed: a ladder-back chair read as a ladder or stool, so it go
 - Not drawn: flat and room (byt, izba, квартира, комната, korter, tuba), home (kodu), wall (стена) and floor (пол). A house drawing reads as home, so only words that mean house are mapped to it; kodu keeps the English.
 - A sentence keeps the picture only when its English names the drawn thing. In the lexicon sentences this drops 2 of 45 Russian (дом in "Where's home?", стол in "This is a desk.") and none of the 32 Slovak or 34 Estonian.
 
+The 12 nature and animal scenes (2026-11-23) were reviewed once, by a new Claude (Opus) and a new Gemini Hydrogen reviewer, on unlabeled numbered sheets (small, large, and Night for the animals). Every scene passed in the first round, Claude / Gemini:
+
+| Scene | Words | Round 1 | Result |
+| --- | --- | --- | --- |
+| tree (one broad tree) | strom, дерево, puu | 5/5 | shipped |
+| forest (two rows of spruces) | les, лес, mets | 4/5 | shipped |
+| mountain (snow-capped peak) | hora, гора, mägi | 5/5 | shipped |
+| river (a band of water through fields) | rieka, река, jõgi | 4/4 | shipped |
+| sea (horizon, waves, a far sail) | more, море, meri | 4/4 | shipped |
+| lake (water closed by shore, reeds) | jazero, озеро, järv | 4/4 | shipped |
+| flower | kvet, цветок, lill | 5/5 | shipped |
+| dog (with a collar) | pes | 4/5 | shipped |
+| cat (sitting, whiskers) | mačka | 5/5 | shipped |
+| horse (mane, long tail) | kôň | 4/4 | shipped |
+| cow (patches, udder) | krava | 5/5 | shipped |
+| bird (on a branch) | vták | 5/5 | shipped |
+
+Both reviewers noted what could still be misread: river as a stream or path, lake as a pond, sea as ocean, horse as a pony or donkey, and the dog's shape close to the horse's at card size. Slovak ryba in Animals shows the food set's fish. Not drawn: príroda (nature in general).
+
+- A sentence keeps the picture only when its English names the drawn thing. In the lexicon sentences this keeps 52 of 56 Slovak nature sentences (les in "You can't see the wood for the trees", hora in Montenegro), 34 of 35 Russian (дерево in "Wood burns.") and 29 of 31 Estonian (mägi as a hill, and in "Mt. Fuji"), and all 46 Slovak animal sentences.
+
 ## Not verified
 
 - No learning outcome has been measured in Lanna. Whether word pictures help these learners is open.
 - The review checks whether a drawing reads as one word. It does not check whether the picture teaches the word.
 - Scores for an unchanged drawing moved between rounds (Gemini gave coffee 5 in round 5 and 3 in round 6; Claude gave egg 5 in round 2 and 3 in Night in round 3), so one round’s score is an estimate, not a measurement.
-- A choose or type rep still shows the sentence’s English translation under the blank, and a missed choose asks for “the word for ‘tea’”. The picture replaces the English word cue, not every English on the screen.
+- Since PR #18 the English sentence under a choose or type rep shows a blank where the pictured word was. A missed choose still asks for “the word for ‘tea’”.

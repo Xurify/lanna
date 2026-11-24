@@ -27,10 +27,20 @@ export const HOME_SCENES = ["house", "door", "window", "table", "chair", "sofa",
 
 export type HomeScene = (typeof HOME_SCENES)[number];
 
+export const NATURE_SCENES = ["tree", "forest", "mountain", "river", "sea", "lake", "flower"] as const;
+
+export type NatureScene = (typeof NATURE_SCENES)[number];
+
+export const ANIMAL_SCENES = ["dog", "cat", "horse", "cow", "bird"] as const;
+
+export type AnimalScene = (typeof ANIMAL_SCENES)[number];
+
 export type ScenePicture =
 	| { kind: "scene"; set: "weather"; scene: WeatherScene }
 	| { kind: "scene"; set: "food"; scene: FoodScene }
-	| { kind: "scene"; set: "home"; scene: HomeScene };
+	| { kind: "scene"; set: "home"; scene: HomeScene }
+	| { kind: "scene"; set: "nature"; scene: NatureScene }
+	| { kind: "scene"; set: "animal"; scene: AnimalScene };
 
 export type WordPicture = { kind: "paint"; paint: Paint } | ScenePicture;
 
@@ -132,6 +142,49 @@ export const SCENE_SETS: readonly SceneSet[] = [
 			diivan: "sofa",
 		},
 	},
+	{
+		set: "nature",
+		units: ["lx-nature", "lx-words-nature"],
+		of: {
+			strom: "tree",
+			les: "forest",
+			hora: "mountain",
+			rieka: "river",
+			more: "sea",
+			jazero: "lake",
+			kvet: "flower",
+			дерево: "tree",
+			лес: "forest",
+			гора: "mountain",
+			река: "river",
+			море: "sea",
+			озеро: "lake",
+			цветок: "flower",
+			puu: "tree",
+			mets: "forest",
+			mägi: "mountain",
+			jõgi: "river",
+			meri: "sea",
+			järv: "lake",
+			lill: "flower",
+		},
+	},
+	{
+		set: "animal",
+		units: ["lx-animals"],
+		of: {
+			pes: "dog",
+			mačka: "cat",
+			kôň: "horse",
+			krava: "cow",
+			vták: "bird",
+		},
+	},
+	{
+		set: "food",
+		units: ["lx-animals"],
+		of: { ryba: "fish" },
+	},
 ];
 
 const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
@@ -163,6 +216,18 @@ const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
 	bed: /(?<!\p{L})beds?(?!\p{L})/iu,
 	key: /(?<!\p{L})keys?(?!\p{L})/iu,
 	wardrobe: /(?<!\p{L})(?:wardrobes?|closets?)(?!\p{L})/iu,
+	tree: /(?<!\p{L})trees?(?!\p{L})/iu,
+	forest: /(?<!\p{L})(?:forests?|woods)(?!\p{L})/iu,
+	mountain: /(?<!\p{L})mountains?(?!\p{L})/iu,
+	river: /(?<!\p{L})rivers?(?!\p{L})/iu,
+	sea: /(?<!\p{L})seas?(?!\p{L})/iu,
+	lake: /(?<!\p{L})lakes?(?!\p{L})/iu,
+	flower: /(?<!\p{L})flowers?(?!\p{L})/iu,
+	dog: /(?<!\p{L})dogs?(?!\p{L})/iu,
+	cat: /(?<!\p{L})cats?(?!\p{L})/iu,
+	horse: /(?<!\p{L})horses?(?!\p{L})/iu,
+	cow: /(?<!\p{L})cows?(?!\p{L})/iu,
+	bird: /(?<!\p{L})birds?(?!\p{L})/iu,
 };
 
 const PAINT_WORDS: Readonly<Record<Paint, RegExp>> = {
