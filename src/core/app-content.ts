@@ -11,6 +11,7 @@ export interface AppContentInput {
 export function unitHref(u: Pick<UnitState, "id" | "kind" | "scene">): string | null {
 	if (u.kind === "goal") return u.scene ? `/speak/tutor?scene=${u.scene}` : null;
 	if (u.kind === "story") return `/read?id=${u.id}`;
+	if (u.kind === "sound") return `/sound?id=${u.id}`;
 	return `/lesson?unit=${u.id}`;
 }
 

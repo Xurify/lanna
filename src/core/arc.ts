@@ -40,7 +40,7 @@ interface ChapterArcStep {
 
 /** A chapter's seven steps. Words: its word units. Forms: its first grammar
  *  drill. Pairs: its Dvojičky units. Scene: its goal unit, whose scene it
- *  opens. Story: its chapter stories. Sound and exam have no unit yet. Undefined for an unknown
+ *  opens. Story: its chapter stories. Sound: its sound units. Exam has no unit yet. Undefined for an unknown
  *  chapter. */
 export function chapterArc(chapterId: string): ChapterArcStep[] | undefined {
 	const chapter = allChapters().find((c) => c.id === chapterId);
@@ -54,7 +54,7 @@ export function chapterArc(chapterId: string): ChapterArcStep[] | undefined {
 		forms: form ? [form.id] : [],
 		pairs: units.filter((u) => u.id.startsWith("pairs-")).map((u) => u.id),
 		scene: goal?.scene ? [goal.id] : [],
-		sound: [],
+		sound: units.filter((u) => u.kind === "sound").map((u) => u.id),
 		exam: [],
 	};
 	return ARC_STEPS.map((step) => ({ step, units: provided[step.id] }));

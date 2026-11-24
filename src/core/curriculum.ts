@@ -29,6 +29,7 @@ import { allUnits, unitDone, isUnitId, unitInfo, type UnitId } from "./lesson.ts
 import { LISTEN_MINUTES } from "./listen.ts";
 import { perCourse, type Course } from "./course.ts";
 import { chapterStoriesFor } from "./chapter-stories.ts";
+import { getSoundsForLanguage } from "./sounds.ts";
 
 // ─── Levels and stages ─────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ export const STAGES: Stage[] = [
 
 // ─── Units ──────────────────────────────────────────────────────────────────
 
-export type CurriculumKind = "drill" | "words" | "tutor" | "goal" | "story";
+export type CurriculumKind = "drill" | "words" | "tutor" | "goal" | "story" | "sound";
 
 interface CurriculumUnit {
 	id: string;
@@ -740,6 +741,24 @@ function withStories<T>(ids: readonly T[], idOf: (x: T) => string, language: str
 	return out;
 }
 
+function withSounds(units: CurriculumUnit[]): CurriculumUnit[] {
+	const out = [...units];
+	for (const sound of getSoundsForLanguage("slovak")) {
+		const chapter = slovakChapters(out).find((c) => c.id === sound.chapter);
+		const goal = chapter?.units.at(-1);
+		const at = goal ? out.findIndex((u) => u.id === goal) : -1;
+		if (at >= 0)
+			out.splice(at, 0, {
+				id: sound.id,
+				kind: "sound",
+				title: `Sound: ${sound.title}`,
+				tagline: "Hear the difference, then say it",
+				glyph: "ear",
+			});
+	}
+	return out;
+}
+
 function storyUnit(language: string, id: string): CurriculumUnit {
 	const story = chapterStoriesFor(language).find((s) => s.id === id)!;
 	return { id, kind: "story", title: story.title, tagline: story.tagline, glyph: "book-open" };
@@ -792,11 +811,13 @@ function courseChapters(course: Course): Chapter[] {
 export const curriculumUnits = perCourse((course): CurriculumUnit[] =>
 	course
 		? courseCurriculum(course)
-		: withStories(
-				slovakCurriculum(),
-				(u) => u.id,
-				"slovak",
-				(id) => storyUnit("slovak", id),
+		: withSounds(
+				withStories(
+					slovakCurriculum(),
+					(u) => u.id,
+					"slovak",
+					(id) => storyUnit("slovak", id),
+				),
 			),
 );
 
@@ -883,7 +904,7 @@ function unitProgressOf(
 ): { done: boolean; progress: number } {
 	const lessons = e?.lessons ?? 0;
 	const accuracy = e && e.reps > 0 ? e.correct / e.reps : null;
-	if (u.kind === "story") return { done: lessons >= 1, progress: Math.min(1, lessons) };
+	if (u.kind === "story" || u.kind === "sound") return { done: lessons >= 1, progress: Math.min(1, lessons) };
 	if (u.kind === "tutor") return { done: lessons >= TUTOR_SESSIONS, progress: Math.min(1, lessons / TUTOR_SESSIONS) };
 	if (u.lessonsToComplete)
 		return { done: lessons >= lessonsToComplete, progress: Math.min(1, lessons / lessonsToComplete) };
@@ -897,7 +918,7 @@ function unitProgressOf(
 }
 
 function countsTowardChapter(u: CurriculumUnit): boolean {
-	return u.kind !== "goal" && u.kind !== "story";
+	return u.kind !== "goal" && u.kind !== "story" && u.kind !== "sound";
 }
 
 /** The whole map's state from the progress ledger. Pure. `startChapter`

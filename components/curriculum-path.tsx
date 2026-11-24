@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
 	examLine,
 	TUTOR_SESSIONS,
+	unitHref,
 	weakFamily,
 	WEAK_MEND_ACCURACY,
 	WEAK_MEND_REPS,
@@ -45,6 +46,12 @@ function unitLine(u: UnitState, active: boolean): string {
 	if (u.status === "locked") return u.needs ?? u.tagline;
 	if (u.kind === "story")
 		return u.status === "done" ? `Read${pct ? ` · ${pct}` : ""}` : active ? `Up next · ${u.tagline}` : u.tagline;
+	if (u.kind === "sound")
+		return u.status === "done"
+			? `Practiced${u.accuracy !== null && u.reps > 0 ? ` · ${Math.round(u.accuracy * 100)}% said clearly` : ""}`
+			: active
+				? `Up next · ${u.tagline}`
+				: u.tagline;
 	if (u.kind === "tutor")
 		return u.status === "done"
 			? `Done · ${u.lessons} sessions`
@@ -413,9 +420,11 @@ function UnitBadgeHover({
 				? "Can-do goal"
 				: unit.kind === "story"
 					? "Story to read"
-					: unit.kind === "words"
-						? "Words lesson"
-						: "Grammar lesson";
+					: unit.kind === "sound"
+						? "Sound to hear and say"
+						: unit.kind === "words"
+							? "Words lesson"
+							: "Grammar lesson";
 
 	const detail = done
 		? "Done or tested out. Open it to practice any time."
@@ -546,9 +555,9 @@ export function UnitRow({
 			</div>
 		);
 	}
-	if (u.kind === "story") {
+	if (u.kind === "story" || u.kind === "sound") {
 		return (
-			<Link href={`/read?id=${u.id}`} className={cls} data-testid={`unit-${u.id}`}>
+			<Link href={unitHref(u)!} className={cls} data-testid={`unit-${u.id}`}>
 				{body}
 			</Link>
 		);

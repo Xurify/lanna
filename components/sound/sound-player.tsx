@@ -6,8 +6,8 @@
  * the tutorial asks for (SHADOW_GAP_MS), then speaks the line; the recording
  * goes through the same speech-to-text and clarity score a Speak line uses,
  * so nothing here needs an Azure key. A line is clear at the Speak bar
- * (PRON_CLEAR); three tries, then it is left as not yet. Nothing is saved
- * yet: the result is on screen only.
+ * (PRON_CLEAR); three tries, then it is left as not yet. A finished round
+ * is saved to its path unit (POST /api/sound).
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { speak, stopSpeaking } from "@/components/speech";
 import { micSupported, Recorder, scoreClip, transcribeClip } from "@/components/speak/recorder";
 import { PronChip } from "@/components/speak/pron";
+import { useActiveTime } from "@/components/use-active-time";
 import { SettingsLink } from "@/components/settings/settings-link";
 import { COLUMN, Dock, OptionTile, PracticeCard, TaskFrame, TaskTop } from "@/components/task-frame";
 import { PRIMARY, QUIET, SECONDARY } from "@/components/ui/learn-buttons";
@@ -53,6 +54,24 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 	const [sttMissing, setSttMissing] = useState(false);
 	const [aloudOnly, setAloudOnly] = useState(false);
 	const [results, setResults] = useState<LineResult[]>([]);
+
+	const activeTime = useActiveTime("speak", "interactive");
+	const saved = useRef(false);
+	useEffect(() => {
+		if (phase !== "done" || saved.current) return;
+		saved.current = true;
+		void fetch("/api/sound", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				id: sound.id,
+				clear: results.filter((r) => r === "clear").length,
+				scored: results.filter((r) => r !== "unscored").length,
+				ms: activeTime.finish(),
+				tz: new Date().getTimezoneOffset(),
+			}),
+		}).catch(() => {});
+	}, [phase, results, sound, activeTime]);
 
 	const recorder = useRef<Recorder | null>(null);
 	/** Bumped on every step, so a late timer or recording never writes into a later one. */
@@ -210,6 +229,8 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 
 	function restart() {
 		run.current++;
+		saved.current = false;
+		activeTime.restart();
 		setPhase("listen");
 		setOrder(listenOrder(sound));
 		setItem(0);
