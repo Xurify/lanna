@@ -4,24 +4,34 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AnimalScene } from "../components/lesson/animal-scene.tsx";
+import { BodyScene } from "../components/lesson/body-scene.tsx";
+import { ClothesScene } from "../components/lesson/clothes-scene.tsx";
 import { FoodScene } from "../components/lesson/food-scene.tsx";
 import { HomeScene } from "../components/lesson/home-scene.tsx";
 import { NatureScene } from "../components/lesson/nature-scene.tsx";
+import { TransportScene } from "../components/lesson/transport-scene.tsx";
 import { WeatherScene } from "../components/lesson/weather-scene.tsx";
 import {
 	ANIMAL_SCENES,
+	BODY_SCENES,
+	CLOTHES_SCENES,
 	FOOD_SCENES,
 	HOME_SCENES,
 	NATURE_SCENES,
+	TRANSPORT_SCENES,
 	WEATHER_SCENES,
 	type AnimalScene as Animal,
+	type BodyScene as Body,
+	type ClothesScene as Clothes,
 	type FoodScene as Food,
 	type HomeScene as Home,
 	type NatureScene as Nature,
+	type TransportScene as Transport,
 	type WeatherScene as Weather,
 } from "../src/core/word-pictures.ts";
 
-const usage = "Usage: npx tsx scripts/word-picture-sheet.tsx <dir> <weather|food|home|nature|animal> [scene,...]";
+const usage =
+	"Usage: npx tsx scripts/word-picture-sheet.tsx <dir> <weather|food|home|nature|animal|body|transport|clothes> [scene,...]";
 const outDir = process.argv[2];
 const set = process.argv[3];
 const SETS: Record<string, readonly string[]> = {
@@ -30,6 +40,9 @@ const SETS: Record<string, readonly string[]> = {
 	home: HOME_SCENES,
 	nature: NATURE_SCENES,
 	animal: ANIMAL_SCENES,
+	body: BODY_SCENES,
+	transport: TRANSPORT_SCENES,
+	clothes: CLOTHES_SCENES,
 };
 if (!outDir || !set || !SETS[set]) {
 	console.error(usage);
@@ -48,6 +61,9 @@ const DRAW: Record<string, (scene: string) => React.JSX.Element> = {
 	home: (scene) => <HomeScene scene={scene as Home} />,
 	nature: (scene) => <NatureScene scene={scene as Nature} />,
 	animal: (scene) => <AnimalScene scene={scene as Animal} />,
+	body: (scene) => <BodyScene scene={scene as Body} />,
+	transport: (scene) => <TransportScene scene={scene as Transport} />,
+	clothes: (scene) => <ClothesScene scene={scene as Clothes} />,
 };
 const draw = (scene: string) => renderToStaticMarkup(DRAW[set]!(scene));
 
@@ -67,6 +83,7 @@ figure{margin:0}.art{aspect-ratio:200/130;padding:6px;border-radius:12px;backgro
 svg{display:block;width:100%;height:100%}
 .ink-draw,.ink-fade{opacity:1}
 .text-foreground{color:${ink}}.text-ink-2{color:${ink2}}.text-ink-3{color:${ink3}}.text-teal-2{color:${teal2}}
+.text-background{color:${night ? "#1a1c1f" : "#f4f3ef"}}.fill-teal\\/20{fill:${night ? "rgb(76 189 183 / 0.2)" : "rgb(13 103 100 / 0.2)"}}.fill-teal\\/40{fill:${night ? "rgb(76 189 183 / 0.4)" : "rgb(13 103 100 / 0.4)"}}
 .stroke-current{stroke:currentColor}.fill-none{fill:none}.fill-current{fill:currentColor}.fill-teal-2{fill:${teal2}}
 .q-wash-ochre{fill:${night ? "rgb(236 200 128 / 0.15)" : "rgb(214 170 90 / 0.34)"}}.q-wash-rose{fill:${night ? "rgb(240 160 146 / 0.15)" : "rgb(206 128 112 / 0.28)"}}.q-wash-sage{fill:${night ? "rgb(160 210 150 / 0.14)" : "rgb(122 160 110 / 0.3)"}}.q-wash-sky{fill:${night ? "rgb(150 195 240 / 0.15)" : "rgb(108 150 190 / 0.28)"}}
 </style><div class="grid">${cells.join("")}</div>`;

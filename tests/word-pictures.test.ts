@@ -3,10 +3,13 @@ import fs from "node:fs";
 import { test } from "node:test";
 import {
 	ANIMAL_SCENES,
+	BODY_SCENES,
+	CLOTHES_SCENES,
 	FOOD_SCENES,
 	HOME_SCENES,
 	NATURE_SCENES,
 	SCENE_SETS,
+	TRANSPORT_SCENES,
 	WEATHER_SCENES,
 	pictureFor,
 } from "../src/core/word-pictures.ts";
@@ -29,8 +32,20 @@ const UNITS: ReadonlyArray<{ language: string; unit: string; lemmas: readonly st
 	{ language: "slovak", unit: "lx-meals", lemmas: WORD_CLUSTERS["lx-meals"]!.lemmas },
 	{ language: "slovak", unit: "lx-nature", lemmas: WORD_CLUSTERS["lx-nature"]!.lemmas },
 	{ language: "slovak", unit: "lx-animals", lemmas: WORD_CLUSTERS["lx-animals"]!.lemmas },
+	{ language: "slovak", unit: "lx-body", lemmas: WORD_CLUSTERS["lx-body"]!.lemmas },
+	{ language: "slovak", unit: "lx-transport", lemmas: WORD_CLUSTERS["lx-transport"]!.lemmas },
+	{ language: "slovak", unit: "lx-clothes", lemmas: WORD_CLUSTERS["lx-clothes"]!.lemmas },
 	...["russian", "estonian"].flatMap((language) =>
-		["lx-words-weather", "lx-words-food", "lx-words-home", "lx-words-nature"].map((unit) => ({
+		[
+			"lx-words-weather",
+			"lx-words-food",
+			"lx-words-home",
+			"lx-words-nature",
+			"lx-words-health",
+			"lx-words-places",
+			"lx-words-travel",
+			"lx-words-clothes",
+		].map((unit) => ({
 			language,
 			unit,
 			lemmas: courseUnit(language, unit),
@@ -137,6 +152,9 @@ test("every drawn scene is used, and each food scene in every language that has 
 			...HOME_SCENES.map((s) => `home:${s}`),
 			...NATURE_SCENES.map((s) => `nature:${s}`),
 			...ANIMAL_SCENES.map((s) => `animal:${s}`),
+			...BODY_SCENES.map((s) => `body:${s}`),
+			...TRANSPORT_SCENES.map((s) => `transport:${s}`),
+			...CLOTHES_SCENES.map((s) => `clothes:${s}`),
 		].sort(),
 	);
 	for (const language of ["slovak", "russian", "estonian"]) {
@@ -366,4 +384,168 @@ test("a picture never stands for a verb or a material that only looks like its w
 	assert.equal(pictureFor("lx-animals", "ryba", "Fish swim.")?.kind, "scene");
 	assert.equal(pictureFor("lx-nature", "les", "We took a walk in the wood."), undefined);
 	assert.equal(pictureFor("lx-nature", "les", "We took a walk in the woods.")?.kind, "scene");
+});
+
+test("body words show the same part in all three languages; head, leg, body, throat and illness keep the English", () => {
+	const concepts: ReadonlyArray<[string | undefined, string, string, string]> = [
+		["ruka", "рука", "käsi", "hand"],
+		["oko", "глаз", "silm", "eye"],
+		["zub", "зуб", "hammas", "tooth"],
+		["srdce", "сердце", "süda", "heart"],
+		[undefined, "лицо", "nägu", "face"],
+		[undefined, "спина", "selg", "back"],
+		[undefined, "живот", "kõht", "belly"],
+	];
+	for (const [sk, ru, et, scene] of concepts) {
+		if (sk) assert.equal(sceneOf("lx-body", sk), `body:${scene}`, sk);
+		assert.equal(sceneOf("lx-words-health", ru), `body:${scene}`, ru);
+		assert.equal(sceneOf("lx-words-health", et), `body:${scene}`, et);
+	}
+	assert.equal(sceneOf("lx-body", "ucho"), "body:ear");
+	assert.equal(sceneOf("lx-body", "ústa"), "body:mouth");
+	for (const [unit, lemma] of [
+		["lx-body", "telo"],
+		["lx-body", "hlava"],
+		["lx-body", "noha"],
+		["lx-words-health", "голова"],
+		["lx-words-health", "нога"],
+		["lx-words-health", "pea"],
+		["lx-words-health", "jalg"],
+		["lx-words-health", "горло"],
+		["lx-words-health", "kurk"],
+		["lx-words-health", "больной"],
+		["lx-words-health", "боль"],
+		["lx-words-health", "haige"],
+		["lx-words-health", "valu"],
+	] as const)
+		assert.equal(pictureFor(unit, lemma), undefined, lemma);
+});
+
+test("transport words show their vehicle in every unit that has them; stations and airports keep the English", () => {
+	for (const [sk, scene] of [
+		["auto", "car"],
+		["autobus", "bus"],
+		["vlak", "train"],
+		["lietadlo", "plane"],
+		["električka", "tram"],
+		["bicykel", "bicycle"],
+	] as const)
+		assert.equal(sceneOf("lx-transport", sk), `transport:${scene}`, sk);
+	for (const unit of ["lx-words-places", "lx-words-travel"]) {
+		assert.equal(sceneOf(unit, "автобус"), "transport:bus", unit);
+		assert.equal(sceneOf(unit, "поезд"), "transport:train", unit);
+		assert.equal(sceneOf(unit, "buss"), "transport:bus", unit);
+		assert.equal(sceneOf(unit, "rong"), "transport:train", unit);
+		assert.equal(sceneOf(unit, "lennuk"), "transport:plane", unit);
+		assert.equal(sceneOf(unit, "auto"), "transport:car", unit);
+	}
+	assert.equal(sceneOf("lx-words-places", "машина"), "transport:car");
+	assert.equal(sceneOf("lx-words-places", "самолёт"), "transport:plane");
+	for (const [unit, lemma] of [
+		["lx-transport", "stanica"],
+		["lx-transport", "letisko"],
+		["lx-words-places", "вокзал"],
+		["lx-words-places", "метро"],
+		["lx-words-travel", "jaam"],
+		["lx-words-travel", "tee"],
+	] as const)
+		assert.equal(pictureFor(unit, lemma), undefined, lemma);
+});
+
+test("clothes words show the same garment in all three languages; clothes in general keep the English", () => {
+	const concepts: ReadonlyArray<[string | undefined, string, string | undefined, string]> = [
+		["košeľa", "рубашка", "särk", "shirt"],
+		["nohavice", "брюки", undefined, "trousers"],
+		["šaty", "платье", "kleit", "dress"],
+		["kabát", "пальто", "mantel", "coat"],
+		["čiapka", "шапка", "müts", "cap"],
+		[undefined, "куртка", "jope", "jacket"],
+		[undefined, "сумка", "kott", "bag"],
+	];
+	for (const [sk, ru, et, scene] of concepts) {
+		if (sk) assert.equal(sceneOf("lx-clothes", sk), `clothes:${scene}`, sk);
+		assert.equal(sceneOf("lx-words-clothes", ru), `clothes:${scene}`, ru);
+		if (et) assert.equal(sceneOf("lx-words-clothes", et), `clothes:${scene}`, et);
+	}
+	assert.equal(pictureFor("lx-clothes", "oblečenie"), undefined);
+	assert.equal(pictureFor("lx-words-clothes", "одежда"), undefined);
+});
+
+test("a body picture shows only for the part it draws", () => {
+	const shows = (unit: string, lemma: string, en: string) => pictureFor(unit, lemma, en)?.kind === "scene";
+	assert.ok(shows("lx-body", "ruka", "Your hand is as cold as ice."));
+	assert.ok(shows("lx-words-health", "рука", "Did you wash your hands?"));
+	assert.ok(!shows("lx-body", "ruka", "Tom's arm hurts."));
+	assert.ok(!shows("lx-words-health", "käsi", "Tom held Mary in his arms."));
+	assert.ok(!shows("lx-words-health", "рука", "Use what is at hand."));
+	assert.ok(!shows("lx-words-health", "рука", "He is very handsome."));
+	assert.ok(shows("lx-words-health", "спина", "My back hurts."));
+	assert.ok(shows("lx-words-health", "спина", "He slept on his back."));
+	assert.ok(shows("lx-words-health", "selg", "She turned her back on Tom."));
+	assert.ok(!shows("lx-words-health", "спина", "Come back soon."));
+	assert.ok(!shows("lx-words-health", "спина", "I'll call you back."));
+	assert.ok(!shows("lx-words-health", "selg", "He pushed his hat back on his head."));
+	assert.ok(!shows("lx-words-health", "спина", "Sit in the back seat."));
+	assert.ok(!shows("lx-words-health", "спина", "He went back and forth."));
+	assert.ok(shows("lx-body", "srdce", "Here is my heart."));
+	assert.ok(!shows("lx-words-health", "сердце", "She learned the poem by heart."));
+	assert.ok(!shows("lx-words-health", "сердце", "Tom is young at heart."));
+	assert.ok(!shows("lx-words-health", "сердце", "I wholeheartedly agree."));
+	assert.ok(shows("lx-words-health", "лицо", "Go wash your face."));
+	assert.ok(shows("lx-words-health", "nägu", "I'm happy to see so many friendly faces."));
+	assert.ok(!shows("lx-words-health", "лицо", "We must face the facts."));
+	assert.ok(!shows("lx-words-health", "лицо", "I can't face him today."));
+	assert.ok(shows("lx-body", "zub", "Does your tooth hurt?"));
+	assert.ok(shows("lx-words-health", "зуб", "I brush my teeth."));
+	assert.ok(!shows("lx-body", "zub", "I've got a toothache."));
+	assert.ok(shows("lx-body", "oko", "I have something in my eye."));
+	assert.ok(!shows("lx-words-health", "глаз", "It's an eyesore."));
+	assert.ok(shows("lx-body", "ucho", "I'm all ears."));
+	assert.ok(!shows("lx-body", "ucho", "We got up early."));
+	assert.ok(shows("lx-body", "ústa", "Open your mouth!"));
+	assert.ok(shows("lx-words-health", "живот", "My stomach hurts."));
+	assert.ok(shows("lx-words-health", "живот", "She's a belly dancer."));
+	assert.ok(!shows("lx-words-health", "kõht", "Right now, I'm not hungry."));
+});
+
+test("a transport or clothes picture shows only for the vehicle or garment it draws", () => {
+	const shows = (unit: string, lemma: string, en: string) => pictureFor(unit, lemma, en)?.kind === "scene";
+	assert.ok(shows("lx-transport", "auto", "This car is black."));
+	assert.ok(shows("lx-words-places", "машина", "There were a lot of cars."));
+	assert.ok(!shows("lx-transport", "auto", "Send me a card."));
+	assert.ok(!shows("lx-transport", "auto", "Can you carry this?"));
+	assert.ok(shows("lx-transport", "autobus", "The bus was full."));
+	assert.ok(shows("lx-words-travel", "buss", "How often do the buses run?"));
+	assert.ok(!shows("lx-transport", "autobus", "That's none of your business."));
+	assert.ok(shows("lx-transport", "vlak", "Our train stopped suddenly."));
+	assert.ok(shows("lx-words-travel", "поезд", "There aren't as many trains at night."));
+	assert.ok(!shows("lx-transport", "vlak", "I train every morning."));
+	assert.ok(!shows("lx-transport", "vlak", "You need to train harder."));
+	assert.ok(!shows("lx-transport", "vlak", "The training was long."));
+	assert.ok(shows("lx-transport", "lietadlo", "The airplane was flown by two monkeys."));
+	assert.ok(shows("lx-words-places", "самолёт", "I can't sleep on planes."));
+	assert.ok(!shows("lx-transport", "lietadlo", "Mars is a planet."));
+	assert.ok(!shows("lx-words-places", "самолёт", "He hates air travel."));
+	assert.ok(shows("lx-transport", "električka", "The last tram leaves at midnight."));
+	assert.ok(shows("lx-transport", "bicykel", "I've got a brand new bike."));
+	assert.ok(shows("lx-clothes", "košeľa", "The shirt must be ironed."));
+	assert.ok(!shows("lx-words-clothes", "рубашка", "Tom is shirtless."));
+	assert.ok(shows("lx-clothes", "nohavice", "I bought myself new jeans."));
+	assert.ok(shows("lx-words-clothes", "брюки", "Put your pants on."));
+	assert.ok(shows("lx-clothes", "šaty", "Where did you buy that dress?"));
+	assert.ok(!shows("lx-clothes", "šaty", "The emperor doesn't have any clothes on."));
+	assert.ok(!shows("lx-clothes", "šaty", "She got dressed quickly."));
+	assert.ok(!shows("lx-clothes", "šaty", "We have to dress up tonight."));
+	assert.ok(shows("lx-clothes", "kabát", "In winter I wear an overcoat."));
+	assert.ok(shows("lx-words-clothes", "пальто", "Take off your coat."));
+	assert.ok(!shows("lx-clothes", "kabát", "The coating is thin."));
+	assert.ok(!shows("lx-clothes", "kabát", "Take your raincoat."));
+	assert.ok(shows("lx-words-clothes", "куртка", "Take off your jacket."));
+	assert.ok(shows("lx-clothes", "čiapka", "Put your cap on, it's windy outside."));
+	assert.ok(shows("lx-words-clothes", "müts", "Paulina has a pink hat."));
+	assert.ok(!shows("lx-words-clothes", "шапка", "Paris is the capital of France."));
+	assert.ok(!shows("lx-words-clothes", "шапка", "That's what I hate."));
+	assert.ok(shows("lx-words-clothes", "сумка", "Are those your bags?"));
+	assert.ok(!shows("lx-words-clothes", "сумка", "Where is the baggage claim?"));
+	assert.ok(!shows("lx-words-clothes", "kott", "She lost her handbag."));
 });
