@@ -269,6 +269,10 @@
 		"вот": {
 			"lemma": "вот",
 			"gloss": "here (вот он: here it is)"
+		},
+		"площади": {
+			"lemma": "площадь",
+			"gloss": "square (town square)"
 		}
 	}
 }

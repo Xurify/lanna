@@ -6,38 +6,9 @@
 //   node scripts/icon-align-check.mjs <baseUrl> [--limit 0.5] [--routes /,/review] [--chrome path]
 
 import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import puppeteer from "puppeteer-core";
-
-const args = process.argv.slice(2);
-const option = (name, fallback) => {
-	const i = args.indexOf(`--${name}`);
-	return i >= 0 ? args[i + 1] : fallback;
-};
-const baseUrl = args.find((arg) => /^https?:/.test(arg));
-if (!baseUrl) {
-	console.error(
-		"usage: node scripts/icon-align-check.mjs <baseUrl> [--limit 0.5] [--routes /,/review] [--chrome path]",
-	);
-	process.exit(1);
-}
-const limit = Number(option("limit", "0.5"));
-const routes = option(
-	"routes",
-	"/,/review,/listen,/read,/speak,/watch,/speed?mode=fast,/mistakes,/grammar,/curriculum,/milestones,/progress,/words,/map,/chat/new,/log,/lesson,/start,/nowhere",
-).split(",");
-const executablePath = [
-	option("chrome", process.env.CHROME_PATH),
-	"C:/Program Files/Google/Chrome/Application/chrome.exe",
-	"C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-	"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-	"/usr/bin/google-chrome",
-]
-	.filter(Boolean)
-	.find((candidate) => fs.existsSync(candidate));
-if (!executablePath) {
-	console.error("no Chrome found: pass --chrome <path> or set CHROME_PATH");
-	process.exit(1);
-}
 
 export function measureIconRows() {
 	const canvas = document.createElement("canvas").getContext("2d");
@@ -126,88 +97,128 @@ export function measureIconRows() {
 	return rows;
 }
 
-const browser = await puppeteer.launch({ executablePath, headless: true });
-const page = await browser.newPage();
-const misses = new Map();
-let measured = 0;
-const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const record = async (where, width) => {
-	for (const { row, offset } of await page.evaluate(measureIconRows)) {
-		measured += 1;
-		if (Math.abs(offset) <= limit) continue;
-		const key = `${where} ${row}`;
-		if (!misses.has(key) || Math.abs(offset) > Math.abs(misses.get(key).offset))
-			misses.set(key, { where, width, row, offset });
+async function main() {
+	const args = process.argv.slice(2);
+	const option = (name, fallback) => {
+		const index = args.indexOf(`--${name}`);
+		return index >= 0 ? args[index + 1] : fallback;
+	};
+	const baseUrl = args.find((arg) => /^https?:/.test(arg));
+	if (!baseUrl) {
+		console.error(
+			"usage: node scripts/icon-align-check.mjs <baseUrl> [--limit 0.5] [--routes /,/review] [--chrome path]",
+		);
+		process.exit(1);
 	}
-};
-const tryState = async (where, width, steps) => {
-	try {
-		await steps();
-		await record(where, width);
-	} catch (error) {
-		misses.set(`${where} failed`, {
-			where,
-			width,
-			row: `could not open: ${String(error.message).slice(0, 80)}`,
-			offset: NaN,
-		});
+	const limit = Number(option("limit", "0.5"));
+	const routes = option(
+		"routes",
+		"/,/review,/listen,/read,/speak,/watch,/speed?mode=fast,/mistakes,/grammar,/curriculum,/milestones,/progress,/words,/map,/chat/new,/log,/lesson,/start,/nowhere",
+	).split(",");
+	const executablePath = [
+		option("chrome", process.env.CHROME_PATH),
+		"C:/Program Files/Google/Chrome/Application/chrome.exe",
+		"C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+		"/usr/bin/google-chrome",
+	]
+		.filter(Boolean)
+		.find((candidate) => fs.existsSync(candidate));
+	if (!executablePath) {
+		console.error("no Chrome found: pass --chrome <path> or set CHROME_PATH");
+		process.exit(1);
 	}
-};
 
-for (const width of [1280, 390]) {
-	const isMobile = width < 600;
-	await page.setViewport({ width, height: isMobile ? 844 : 860, isMobile, hasTouch: isMobile });
-	for (const route of routes)
-		await tryState(route, width, async () => {
-			await page.goto(new URL(route, baseUrl).href, { waitUntil: "load", timeout: 90000 });
-			await pause(1200);
-		});
-}
+	const browser = await puppeteer.launch({ executablePath, headless: true });
+	const page = await browser.newPage();
+	const misses = new Map();
+	let measured = 0;
+	const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+	const record = async (where, width) => {
+		for (const { row, offset } of await page.evaluate(measureIconRows)) {
+			measured += 1;
+			if (Math.abs(offset) <= limit) continue;
+			const key = `${where} ${row}`;
+			if (!misses.has(key) || Math.abs(offset) > Math.abs(misses.get(key).offset))
+				misses.set(key, { where, width, row, offset });
+		}
+	};
+	const tryState = async (where, width, steps) => {
+		try {
+			await steps();
+			await record(where, width);
+		} catch (error) {
+			misses.set(`${where} failed`, {
+				where,
+				width,
+				row: `could not open: ${String(error.message).slice(0, 80)}`,
+				offset: NaN,
+			});
+		}
+	};
 
-await page.setViewport({ width: 1280, height: 860 });
-await page.goto(new URL("/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
-await pause(1200);
-await tryState("settings", 1280, async () => {
-	await page.click('[data-testid="settings-entry"]');
-	await page.waitForSelector('[role="dialog"]', { timeout: 8000 });
-	await pause(600);
-});
-for (let tab = 0; ; tab += 1) {
-	const tabs = await page.$$('[role="dialog"] [role="tab"]');
-	if (tab >= tabs.length) break;
-	const label = await tabs[tab].evaluate((el) => el.textContent.trim());
-	await tryState(`settings: ${label}`, 1280, async () => {
-		await tabs[tab].click();
-		await pause(500);
-	});
-}
-await page.goto(new URL("/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
-await pause(1200);
-await tryState("notifications", 1280, async () => {
-	await page.click('[data-testid="notifications-entry"]');
-	await page.waitForSelector('[data-testid="notifications-dialog"]', { timeout: 8000 });
-	await pause(600);
-});
-if (await page.$('[data-testid="session-row"]')) {
+	for (const width of [1280, 390]) {
+		const isMobile = width < 600;
+		await page.setViewport({ width, height: isMobile ? 844 : 860, isMobile, hasTouch: isMobile });
+		for (const route of routes)
+			await tryState(route, width, async () => {
+				await page.goto(new URL(route, baseUrl).href, { waitUntil: "load", timeout: 90000 });
+				await pause(1200);
+			});
+	}
+
+	await page.setViewport({ width: 1280, height: 860 });
 	await page.goto(new URL("/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
 	await pause(1200);
-	await tryState("chat menu", 1280, async () => {
-		await page.click('[data-testid="session-row"]', { button: "right" });
-		await page.waitForSelector('[data-testid="ctx-delete"]', { timeout: 8000 });
+	await tryState("settings", 1280, async () => {
+		await page.click('[data-testid="settings-entry"]');
+		await page.waitForSelector('[role="dialog"]', { timeout: 8000 });
+		await pause(600);
 	});
-	await tryState("delete-chat dialog", 1280, async () => {
-		await page.click('[data-testid="ctx-delete"]');
-		await page.waitForSelector('[data-testid="delete-session-dialog"]', { timeout: 8000 });
-		await pause(400);
+	for (let tab = 0; ; tab += 1) {
+		const tabs = await page.$$('[role="dialog"] [role="tab"]');
+		if (tab >= tabs.length) break;
+		const label = await tabs[tab].evaluate((element) => element.textContent.trim());
+		await tryState(`settings: ${label}`, 1280, async () => {
+			await tabs[tab].click();
+			await pause(500);
+		});
+	}
+	await page.goto(new URL("/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
+	await pause(1200);
+	await tryState("notifications", 1280, async () => {
+		await page.click('[data-testid="notifications-entry"]');
+		await page.waitForSelector('[data-testid="notifications-dialog"]', { timeout: 8000 });
+		await pause(600);
+	});
+	if (await page.$('[data-testid="session-row"]')) {
+		await page.goto(new URL("/", baseUrl).href, { waitUntil: "load", timeout: 90000 });
+		await pause(1200);
+		await tryState("chat menu", 1280, async () => {
+			await page.click('[data-testid="session-row"]', { button: "right" });
+			await page.waitForSelector('[data-testid="ctx-delete"]', { timeout: 8000 });
+		});
+		await tryState("delete-chat dialog", 1280, async () => {
+			await page.click('[data-testid="ctx-delete"]');
+			await page.waitForSelector('[data-testid="delete-session-dialog"]', { timeout: 8000 });
+			await pause(400);
+		});
+	}
+	await browser.close();
+
+	for (const { where, width, row, offset } of misses.values())
+		console.log(`${String(offset).padStart(6)}px  ${where.padEnd(18)} ${width}  ${row}`);
+	console.log(
+		misses.size
+			? `\n${misses.size} icon rows off by more than ${limit}px (positive: icon below the text) of ${measured} measured`
+			: `\nAll ${measured} icon rows within ${limit}px`,
+	);
+	process.exit(misses.size ? 1 : 0);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+	main().catch((error) => {
+		console.error(error instanceof Error ? error.message : error);
+		process.exit(1);
 	});
 }
-await browser.close();
-
-for (const { where, width, row, offset } of misses.values())
-	console.log(`${String(offset).padStart(6)}px  ${where.padEnd(18)} ${width}  ${row}`);
-console.log(
-	misses.size
-		? `\n${misses.size} icon rows off by more than ${limit}px (positive: icon below the text) of ${measured} measured`
-		: `\nAll ${measured} icon rows within ${limit}px`,
-);
-process.exit(misses.size ? 1 : 0);

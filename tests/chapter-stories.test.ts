@@ -14,7 +14,8 @@ process.env.LANNA_PROFILE = "slovak";
 const { CHAPTER_STORIES, chapterStoriesFor } = await import("../src/core/chapter-stories.ts");
 const { allChapters, curriculumState, curriculumUnit } = await import("../src/core/curriculum.ts");
 const { chapterArc } = await import("../src/core/arc.ts");
-const { authoredNewWords, keepChapterStory, SHIPPED_STORY_MODEL } = await import("../src/server/chapter-stories.ts");
+const { applyStoryGlosses, authoredNewWords, keepChapterStory, SHIPPED_STORY_MODEL } =
+	await import("../src/server/chapter-stories.ts");
 const { recordRead } = await import("../src/server/reading.ts");
 const { storyStore } = await import("../src/store/stories.ts");
 const { progressStore } = await import("../src/store/progress.ts");
@@ -236,6 +237,54 @@ describe("the A1 chapter stories of the written courses", () => {
 			{ lemma: "naaber", gloss: "neighbor", slug: "naaber" },
 			{ lemma: "peatus", gloss: "stop (bus or tram stop)" },
 		]);
+	});
+
+	it("occurrence overrides disambiguate homographs per sentence and per token occurrence without breaking word-wide glosses", () => {
+		const sentences = [
+			{
+				sk: "Здесь есть кофе, я хочу есть.",
+				en: "There is coffee here, I want to eat.",
+				tokens: [
+					{ text: "Здесь", word: true, lemma: "здесь", gloss: "here", slug: "zdes", cat: "Adverbs" },
+					{ text: " ", word: false },
+					{ text: "есть", word: true, lemma: "есть", gloss: "to eat", slug: "est-eat", cat: "Verbs" },
+					{ text: " ", word: false },
+					{ text: "кофе", word: true, lemma: "кофе", gloss: "coffee", slug: "kofe", cat: "Nouns" },
+					{ text: ", ", word: false },
+					{ text: "я", word: true, lemma: "я", gloss: "I", slug: "ya", cat: "Pronouns" },
+					{ text: " ", word: false },
+					{ text: "хочу", word: true, lemma: "хотеть", gloss: "to want", slug: "khotet", cat: "Verbs" },
+					{ text: " ", word: false },
+					{ text: "есть", word: true, lemma: "есть", gloss: "to eat", slug: "est-eat", cat: "Verbs" },
+				],
+			},
+			{
+				sk: "У нас есть чай.",
+				en: "We have tea.",
+				tokens: [
+					{ text: "У", word: true, lemma: "у", gloss: "by", slug: "u", cat: "Prepositions" },
+					{ text: " ", word: false },
+					{ text: "нас", word: true, lemma: "мы", gloss: "we", slug: "my", cat: "Pronouns" },
+					{ text: " ", word: false },
+					{ text: "есть", word: true, lemma: "есть", gloss: "to eat", slug: "est-eat", cat: "Verbs" },
+					{ text: " ", word: false },
+					{ text: "чай", word: true, lemma: "чай", gloss: "tea", slug: "chay", cat: "Nouns" },
+				],
+			},
+		];
+		const applied = applyStoryGlosses(sentences, { есть: { lemma: "есть", gloss: "to eat" } }, [
+			{ sentence: 0, token: "есть", occurrence: 0, lemma: "быть", gloss: "there is" },
+			{ sentence: 1, token: "есть", lemma: "быть", gloss: "there is / have" },
+		]);
+		const firstSentenceMatches = applied[0]!.tokens.filter((token) => token.text === "есть");
+		assert.equal(firstSentenceMatches[0]!.gloss, "there is");
+		assert.equal(firstSentenceMatches[0]!.lemma, "быть");
+		assert.equal(firstSentenceMatches[0]!.slug, undefined);
+		assert.equal(firstSentenceMatches[1]!.gloss, "to eat");
+		assert.equal(firstSentenceMatches[1]!.slug, "est-eat");
+		const secondSentenceMatch = applied[1]!.tokens.find((token) => token.text === "есть")!;
+		assert.equal(secondSentenceMatch.gloss, "there is / have");
+		assert.equal(secondSentenceMatch.lemma, "быть");
 	});
 });
 

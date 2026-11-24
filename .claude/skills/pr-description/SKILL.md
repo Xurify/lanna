@@ -12,8 +12,11 @@ The rule is **W5**; the shape is `.github/pull_request_template.md`. This repo's
 1. **Write the diff first, the description second.** `git diff origin/main --stat`, then name only what is in it. A PR that was redrawn or reworked after its first description gets the description rewritten after the last push: a body that lists a picture, a rule or a control the diff no longer has is wrong.
 2. **What changes for the learner**: what they see or do now, and why, in plain words, with full grammar words (E23) and American spelling.
 3. **Screenshots** for any learner-facing change:
-   - Start a sandbox: `npm run dev:sandbox -- --seed` (never the real profile, E6). It prints the URL.
-   - `MSYS_NO_PATHCONV=1 node scripts/pr-shots.mjs <url> <dir> "name=/route" "name=/route@.css-selector"` writes `<name>-<theme>-<width>.png` for Day and Night at 1280 and 390 px (`--themes`, `--widths` change that). Use the selector to crop a long page to the part the PR changed. Get to the state the PR is about (after an answer, after a miss, an empty list) through the route or a seeded profile; if a state needs clicks, take it in the browser tool and name the file the same way.
+   - Preferred one-command flow (auto-starts sandbox, captures Day and Night at 1280 and 390 px, checks runtime errors and icon alignment, and tears down the sandbox in `finally`):
+     ```bash
+     MSYS_NO_PATHCONV=1 bun run sandbox:run -- --seed -- node scripts/verify-ui.mjs {URL} ./shots "page=/route" "part=/route@.css-selector" --expand-chapters --check-icons
+     ```
+     Add `--copy-languages` to `sandbox:run` and `--languages slovak,russian,estonian` to `verify-ui.mjs` when changing lessons, stories, or curriculum data. `scripts/pr-shots.mjs` still works against an already-running `npm run dev:sandbox -- --seed`.
    - **Open every image** before it goes in. A screenshot nobody looked at is not a check.
    - Reference the local screenshot paths directly in the Day | Night table of the PR body:
      ```markdown
@@ -22,20 +25,17 @@ The rule is **W5**; the shape is `.github/pull_request_template.md`. This repo's
      | ![Day Desktop](./shots/page-day-1280.png) | ![Night Desktop](./shots/page-night-1280.png) |
      | ![Day Mobile](./shots/page-day-390.png)   | ![Night Mobile](./shots/page-night-390.png)   |
      ```
-   - Pass each screenshot via `--attach` when running `gh pr create` (or `gh pr edit`):
+   - Create or edit the PR through `scripts/pr-attach.mjs`, which verifies every local image exists, attaches them via `gh --attach`, and checks the live PR body so no unresolved `./` link survives an edit:
      ```bash
-     gh pr create --title "..." --body-file pr-body.md \
-       --attach ./shots/page-day-1280.png \
-       --attach ./shots/page-night-1280.png \
-       --attach ./shots/page-day-390.png \
-       --attach ./shots/page-night-390.png
+     bun run pr:attach -- create --title "..." --body-file pr-body.md
+     bun run pr:attach -- edit <number> --body-file pr-body.md
      ```
-     `gh` automatically uploads each file to GitHub user-attachments and rewrites the local Markdown image paths in the PR description to `https://github.com/user-attachments/assets/<uuid>`.
+     `gh` uploads each file to GitHub user-attachments and rewrites the local Markdown image paths in the PR description to `https://github.com/user-attachments/assets/<uuid>`. Never run `gh pr edit --body-file` on a file containing `./` image links without passing `--attach` (or using `pr:attach`); doing so leaves broken links in the PR body.
    - **Always include images and screenshots of the changed thing**: A PR is not ready for review until the screenshots are attached and rendered in the PR body. Never hand back a PR to the user without embedded screenshots.
 4. **Try it**: one checkbox per thing to check: the route in the sandbox, what to do, what to see.
 5. **Where**: one link per part of the diff, `https://github.com/Xurify/lanna/blob/<head SHA>/<path>#L<from>-L<to>`, the part the learner sees first, then the logic, the tests, the docs and skills. Re-pin the SHA and the lines after the last push (`git rev-parse HEAD`).
 6. **Removed**: anything a learner has now that the PR takes away. The owner signs that off.
-7. **Checked**: the real counts (`npm test`, `npm run typecheck`, `npm run lint`), then what was looked at (page, theme, width) and **Not looked at:**. Never "should work".
+7. **Checked**: the real counts taken straight from command output (`npm test`, `npm run typecheck`, `npm run lint`, `bun run audit:content --json`), never typed from memory, then what was looked at (page, language, theme, width) and **Not looked at:**. Never "should work".
 8. A PR that adds or changes a drawn explanation says how it was reviewed: the blind review in the `ink-drawing` skill, and the limits that remain.
 
 ## Uploading screenshots via `gh --attach`
