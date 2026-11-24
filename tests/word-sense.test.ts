@@ -100,3 +100,40 @@ test("two words of a lesson never show the same meaning", () => {
 		["you (informal, singular)", "you (plural or polite)", "I (first person)"],
 	);
 });
+
+test("the meaning shown is the sense the sentence uses, scored by the word it matches", () => {
+	const cases: Array<[string, string, string]> = [
+		["second-person singular, nominative case: you, thou", "Where are you?", "you, thou"],
+		["third-person masculine singular pronoun: he, it.", "Where is he?", "he, it"],
+		["short form of nemad: they", "They came.", "they"],
+		[
+			"very, really, much, very much; not very good, not very well",
+			"I am very pleased.",
+			"very, really, much, very much",
+		],
+		["to get, to receive; to become; can, to be able to", "I can run.", "can, to be able to"],
+		["healthy; whole, entire", "We waited the whole day.", "whole, entire"],
+		["son; sons", "He's her son.", "son"],
+		["to look; to watch", "I'm watching a film.", "to watch"],
+		["please; you’re welcome", "Could you say that again?", "please"],
+		[
+			"you're welcome, not at all, don't mention it, it's a pleasure; please",
+			"Thanks! — You're welcome.",
+			"you're welcome, not at all",
+		],
+	];
+	for (const [en, said, shown] of cases) assert.equal(senseIn(en, said), shown, said);
+});
+
+test("possessives, -ing and -ly forms count as naming the gloss", () => {
+	assert.equal(translationNamesGloss("you (plural or polite)", "Your house is big."), true);
+	assert.equal(translationNamesGloss("to happen, to occur", "What is happening?"), true);
+	assert.equal(translationNamesGloss("usually", "Same as usual."), true);
+	assert.equal(
+		translationNamesGloss(
+			'Generic demonstrative pronoun. Translated as "this" (or their plural forms, "…; Translated as "it".',
+			"It's me.",
+		),
+		true,
+	);
+});

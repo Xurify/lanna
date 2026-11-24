@@ -1417,37 +1417,51 @@ const GLOSS_FILLER = new Set([
 	"informal",
 	"formal",
 	"polite",
+	"case",
 ]);
 
-const OBJECT_FORMS: Readonly<Record<string, string>> = { he: "him", she: "her", they: "them", we: "us" };
-
-const glossWordMatches = (w: string, said: string) =>
-	new RegExp(
-		w.length <= 4 ? `(?<!\\p{L})${w}(?:s|es|ed|ing)?(?!\\p{L})` : `(?<!\\p{L})${w.slice(0, -1)}\\p{L}{0,3}(?!\\p{L})`,
-		"u",
-	).test(said);
-
-const mostSpecificWord = (sense: string) =>
-	glossWords(sense).reduce<string | undefined>((best, w) => (!best || w.length > best.length ? w : best), undefined);
-
-const namesSenseItself = (sense: string, translation: string) => {
-	const w = mostSpecificWord(sense);
-	return w !== undefined && glossWordMatches(w, translation.toLowerCase());
+const PRONOUN_FORMS: Readonly<Record<string, readonly string[]>> = {
+	he: ["him", "his"],
+	she: ["her", "hers"],
+	it: ["its"],
+	they: ["them", "their", "theirs"],
+	we: ["us", "our", "ours"],
+	you: ["your", "yours"],
 };
 
-const namesSense = (sense: string, translation: string) => {
-	const said = translation.toLowerCase();
-	return glossWords(sense).some(
-		(w) => glossWordMatches(w, said) || (OBJECT_FORMS[w] !== undefined && glossWordMatches(OBJECT_FORMS[w], said)),
+const matchedStem = (w: string, said: string): number => {
+	const stems = [
+		w,
+		...(w.length >= 4 ? [w.slice(0, -1)] : []),
+		...(w.length >= 6 && w.endsWith("ly") ? [w.slice(0, -2)] : []),
+	].join("|");
+	const hit = new RegExp(`(?<!\\p{L})(${stems})(?:s|es|d|ed|ing|ies)?(?!\\p{L})`, "u").exec(said);
+	return hit ? hit[1]!.length : 0;
+};
+
+const PRONOUNS = new Set(["i", "you", "he", "she", "it", "we", "they", "thou", "me", "him", "her", "us", "them"]);
+
+const telling = (sense: string) => {
+	const words = glossWords(sense);
+	const content = words.filter((w) => !PRONOUNS.has(w));
+	return content.length ? content : words;
+};
+
+const matchedLength = (words: readonly string[], said: string) =>
+	Math.max(
+		0,
+		...words.map((w) => Math.max(matchedStem(w, said), ...(PRONOUN_FORMS[w] ?? []).map((f) => matchedStem(f, said)))),
 	);
-};
+
+const namesSense = (sense: string, translation: string) =>
+	matchedLength(glossWords(sense), translation.toLowerCase()) > 0;
 
 function withoutNotes(sense: string): string {
 	let depth = 0;
 	let out = "";
 	for (const ch of sense) {
-		if (ch === "(") depth++;
-		else if (ch === ")") depth = Math.max(0, depth - 1);
+		if (ch === "(" || ch === "[") depth++;
+		else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
 		else if (depth === 0) out += ch;
 	}
 	return out
@@ -1470,15 +1484,42 @@ function sensesOf(en: string): string[] {
 		}
 	}
 	senses.push(en.slice(start));
-	return senses.map((s) => s.trim()).filter(Boolean);
+	const split = depth === 0 ? senses : en.split(";");
+	return split.map((s) => s.trim()).filter(Boolean);
+}
+
+const LONG_SENSE = 40;
+
+function shownSense(sense: string): string {
+	const [before, ...rest] = sense.split(":");
+	const after = rest.join(":").trim();
+	const label = after && (glossWords(before!).length === 0 || /\bform of\b/i.test(before!));
+	const shown = withoutNotes(label ? after : before!).replace(/[.]$/, "");
+	if (shown.length <= LONG_SENSE) return shown;
+	const quoted = [...shown.matchAll(/"([^"]+)"/g)].map((m) => m[1]!);
+	if (quoted.length) return quoted.join(", ");
+	const items = shown.split(/,\s*/);
+	let kept = items[0]!;
+	for (const item of items.slice(1)) {
+		if (kept.length + 2 + item.length > LONG_SENSE) break;
+		kept += `, ${item}`;
+	}
+	return kept;
 }
 
 export function senseIn(en: string, translation: string): string {
-	const senses = sensesOf(en)
-		.map((s) => s.trim())
-		.filter(Boolean);
-	const sense = senses.find((s) => namesSenseItself(s, translation)) ?? senses[0] ?? en;
-	return withoutNotes(sense.split(":")[0]!);
+	const senses = sensesOf(en);
+	const said = translation.toLowerCase();
+	let best = senses[0] ?? en;
+	let bestScore = 0;
+	for (const sense of senses) {
+		const score = matchedLength(telling(sense), said);
+		if (score > bestScore) {
+			best = sense;
+			bestScore = score;
+		}
+	}
+	return shownSense(best);
 }
 
 export function translationNamesGloss(en: string, translation: string): boolean {
