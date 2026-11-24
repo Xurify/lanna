@@ -14,7 +14,7 @@ process.env.LANNA_PROFILE = "slovak";
 const { CHAPTER_STORIES, chapterStoriesFor } = await import("../src/core/chapter-stories.ts");
 const { allChapters, curriculumState, curriculumUnit } = await import("../src/core/curriculum.ts");
 const { chapterArc } = await import("../src/core/arc.ts");
-const { keepChapterStory, SHIPPED_STORY_MODEL } = await import("../src/server/chapter-stories.ts");
+const { authoredNewWords, keepChapterStory, SHIPPED_STORY_MODEL } = await import("../src/server/chapter-stories.ts");
 const { recordRead } = await import("../src/server/reading.ts");
 const { storyStore } = await import("../src/store/stories.ts");
 const { progressStore } = await import("../src/store/progress.ts");
@@ -186,6 +186,58 @@ describe("chapter stories in the written courses", () => {
 			}
 		});
 	}
+});
+
+describe("the A1 chapter stories of the written courses", () => {
+	const placements: Record<string, Record<string, string>> = {
+		russian: {
+			"story-hello": "who-i-am",
+			"story-town": "where-is-it",
+			"story-family": "my-family",
+			"story-everyday": "with-friends",
+			"story-yesterday": "yesterday",
+		},
+		estonian: {
+			"story-hello": "who-i-am",
+			"story-town": "where-things-are",
+			"story-family": "whose-is-it",
+			"story-everyday": "with-friends",
+			"story-yesterday": "yesterday",
+		},
+	};
+	for (const [language, stories] of Object.entries(placements))
+		it(`${language}: each story sits in the chapter whose grammar it uses`, () => {
+			const g = globalThis as Record<string, unknown>;
+			g.__lhCourse = JSON.parse(fs.readFileSync(`curriculum/${language}/course.json`, "utf-8"));
+			try {
+				for (const [id, chapter] of Object.entries(stories)) assert.equal(chapterOf(id)?.id, chapter, id);
+			} finally {
+				g.__lhCourse = undefined;
+			}
+		});
+
+	it("a story's new words keep the author's meaning, and the dictionary's only when it is the same word", () => {
+		const words = authoredNewWords(
+			[
+				{ lemma: "naaber", gloss: "neighbour", slug: "naaber" },
+				{ lemma: "peatuma", gloss: "to stop", slug: "peatuma" },
+				{
+					lemma: "площадь",
+					gloss: "square (open area in a town or city); space, living space; area",
+					slug: "ploshchad",
+				},
+			],
+			[
+				{ sk: "naaber", en: "neighbor" },
+				{ sk: "peatus", en: "stop (bus or tram stop)" },
+			],
+		);
+		assert.deepEqual(words, [
+			{ lemma: "naaber", gloss: "neighbor", slug: "naaber" },
+			{ lemma: "peatus", gloss: "stop (bus or tram stop)" },
+			{ lemma: "площадь", gloss: "square", slug: "ploshchad" },
+		]);
+	});
 });
 
 describe("the shipped story files", () => {

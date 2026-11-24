@@ -1,0 +1,274 @@
+{
+	"title": "Kuidas ma saan jaama?",
+	"topic": "Liina is in Tallinn for the first time, asks the way to the station and catches a bus to her train in time",
+	"cover": "city",
+	"cast": [
+		{
+			"name": "Liina",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Ants",
+			"gender": "m",
+			"age": "old"
+		},
+		{
+			"name": "Karl",
+			"gender": "m",
+			"age": "child"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Liina on pärit Tartust ja ta ei tunne Tallinna.",
+			"en": "Liina is from Tartu and does not know Tallinn."
+		},
+		{
+			"who": "narrator",
+			"sk": "Nüüd seisab ta pargis ja vaatab kaarti.",
+			"en": "Now she is standing in a park and looking at a map."
+		},
+		{
+			"who": "narrator",
+			"sk": "Tema rong läheb tunni aja pärast.",
+			"en": "Her train leaves in an hour."
+		},
+		{
+			"who": "narrator",
+			"sk": "Aga kus on jaam? Kaardil ta seda ei näe.",
+			"en": "But where is the station? She can't see it on the map."
+		},
+		{
+			"who": "Liina",
+			"sk": "Vabandage, kuidas ma saan jaama?",
+			"en": "Excuse me, how do I get to the station?"
+		},
+		{
+			"who": "Ants",
+			"sk": "Balti jaama? See on kaugel.",
+			"en": "The Baltic Station? That's far."
+		},
+		{
+			"who": "Liina",
+			"sk": "Kas ma saan jalgsi minna?",
+			"en": "Can I walk?"
+		},
+		{
+			"who": "Ants",
+			"sk": "Saad küll, aga jalgsi on see pool tundi.",
+			"en": "You can, but on foot it's half an hour."
+		},
+		{
+			"who": "Liina",
+			"sk": "See on liiga kaua. Minu rong läheb tunni aja pärast.",
+			"en": "That's too long. My train leaves in an hour."
+		},
+		{
+			"who": "Ants",
+			"sk": "Siis mine bussiga. Peatus on lähedal.",
+			"en": "Then take the bus. The stop is close."
+		},
+		{
+			"who": "Liina",
+			"sk": "Ja kus peatus on?",
+			"en": "And where is the stop?"
+		},
+		{
+			"who": "Ants",
+			"sk": "Mine otse ja siis paremale. Peatus on kiriku juures.",
+			"en": "Go straight on and then right. The stop is by the church."
+		},
+		{
+			"who": "Ants",
+			"sk": "See buss läheb otse jaama.",
+			"en": "That bus goes straight to the station."
+		},
+		{
+			"who": "Liina",
+			"sk": "Aitäh! Ja kust ma pileti ostan?",
+			"en": "Thank you! And where do I buy a ticket?"
+		},
+		{
+			"who": "Ants",
+			"sk": "Pileti saad osta bussis.",
+			"en": "You can buy a ticket on the bus."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Liina läheb otse ja siis paremale.",
+			"en": "Liina goes straight on and then right."
+		},
+		{
+			"who": "narrator",
+			"sk": "Kiriku juures on peatus, aga bussi seal ei ole.",
+			"en": "By the church there is the stop, but there's no bus there."
+		},
+		{
+			"who": "narrator",
+			"sk": "Peatuses ootab väike poiss.",
+			"en": "A little boy is waiting at the stop."
+		},
+		{
+			"who": "Liina",
+			"sk": "Tere! Millal buss jaama läheb?",
+			"en": "Hi! When does the bus go to the station?"
+		},
+		{
+			"who": "Karl",
+			"sk": "Kohe. Vaata, seal ta tuleb!",
+			"en": "Right now. Look, there it comes!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Liina läheb kiiresti bussi ja ostab pileti.",
+			"en": "Liina quickly gets on the bus and buys a ticket."
+		},
+		{
+			"who": "narrator",
+			"sk": "Buss sõidab üle silla ja siis läbi linna.",
+			"en": "The bus goes over the bridge and then through the town."
+		},
+		{
+			"who": "narrator",
+			"sk": "Kahekümne minuti pärast on Liina jaamas.",
+			"en": "Twenty minutes later Liina is at the station."
+		},
+		{
+			"who": "narrator",
+			"sk": "Tema rong on juba seal.",
+			"en": "Her train is already there."
+		},
+		{
+			"who": "narrator",
+			"sk": "Liina tuleb bussist välja ja naerab.",
+			"en": "Liina gets off the bus and laughs."
+		},
+		{
+			"who": "Liina",
+			"sk": "Väga hea! Mul on veel aega kohvi juua.",
+			"en": "Great! I still have time for a coffee."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "peatus",
+			"en": "stop (bus or tram stop)"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kuhu Liina läheb?",
+			"options": [
+				"Jaama",
+				"Poodi",
+				"Hotelli"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Kus on peatus?",
+			"options": [
+				"Panga juures",
+				"Kiriku juures",
+				"Silla peal"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Miks Liina jalgsi jaama ei lähe?",
+			"options": [
+				"Tal ei ole piletit",
+				"Tal ei ole kaarti",
+				"Jaam on kaugel"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Liina cannot find the station on her map. A man tells her it is far and sends her to the bus stop by the church, and she reaches her train with time left for a coffee.",
+	"glosses": {
+		"ta": {
+			"lemma": "tema",
+			"gloss": "he, she, it"
+		},
+		"tema": {
+			"lemma": "tema",
+			"gloss": "he, she (tema: his, her)"
+		},
+		"mul": {
+			"lemma": "mina",
+			"gloss": "I (mul on: I have)"
+		},
+		"liina": {
+			"lemma": "Liina",
+			"gloss": "Liina (a name)"
+		},
+		"pärit": {
+			"lemma": "pärit",
+			"gloss": "from (on pärit Tartust: is from Tartu)"
+		},
+		"tartust": {
+			"lemma": "Tartu",
+			"gloss": "Tartu (a city; Tartust: from Tartu)"
+		},
+		"tallinna": {
+			"lemma": "Tallinn",
+			"gloss": "Tallinn"
+		},
+		"tunne": {
+			"lemma": "tundma",
+			"gloss": "to know (a place, a person)"
+		},
+		"aja": {
+			"lemma": "aeg",
+			"gloss": "time (tunni aja pärast: in an hour)"
+		},
+		"tunni": {
+			"lemma": "tund",
+			"gloss": "hour"
+		},
+		"tundi": {
+			"lemma": "tund",
+			"gloss": "hour (pool tundi: half an hour)"
+		},
+		"balti": {
+			"lemma": "Balti",
+			"gloss": "Baltic (Balti jaam: the main station in Tallinn)"
+		},
+		"jalgsi": {
+			"lemma": "jalgsi",
+			"gloss": "on foot"
+		},
+		"pool": {
+			"lemma": "pool",
+			"gloss": "half"
+		},
+		"küll": {
+			"lemma": "küll",
+			"gloss": "indeed (saad küll: yes, you can)"
+		},
+		"peatus": {
+			"lemma": "peatus",
+			"gloss": "stop (bus or tram stop)"
+		},
+		"kahekümne": {
+			"lemma": "kakskümmend",
+			"gloss": "twenty"
+		},
+		"aega": {
+			"lemma": "aeg",
+			"gloss": "time"
+		},
+		"minu": {
+			"lemma": "mina",
+			"gloss": "I (minu: my)"
+		}
+	}
+}

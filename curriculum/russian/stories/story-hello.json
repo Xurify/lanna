@@ -1,0 +1,339 @@
+{
+	"title": "Новый сосед",
+	"topic": "Tom, an American in Moscow, meets his new neighbor Katya outside the house, says привет to her grandmother by mistake and is invited for tea",
+	"cover": "friends",
+	"cast": [
+		{
+			"name": "Том",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Катя",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Бабушка",
+			"gender": "f",
+			"age": "old"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Сегодня суббота.",
+			"en": "Today is Saturday."
+		},
+		{
+			"who": "narrator",
+			"sk": "Том живёт в Москве только неделю.",
+			"en": "Tom has lived in Moscow for only a week."
+		},
+		{
+			"who": "narrator",
+			"sk": "На улице стоит молодая девушка.",
+			"en": "A young woman is standing outside."
+		},
+		{
+			"who": "Том",
+			"sk": "Здравствуйте!",
+			"en": "Hello!"
+		},
+		{
+			"who": "Катя",
+			"sk": "Привет! Ты новый сосед?",
+			"en": "Hi! Are you the new neighbor?"
+		},
+		{
+			"who": "Том",
+			"sk": "Да. Меня зовут Том. А как тебя зовут?",
+			"en": "Yes. My name is Tom. And what's your name?"
+		},
+		{
+			"who": "Катя",
+			"sk": "Я Катя. Я живу здесь, рядом.",
+			"en": "I'm Katya. I live right here, next door."
+		},
+		{
+			"who": "Катя",
+			"sk": "Ты не русский, да? Откуда ты?",
+			"en": "You're not Russian, are you? Where are you from?"
+		},
+		{
+			"who": "Том",
+			"sk": "Я американец, из Бостона.",
+			"en": "I'm American, from Boston."
+		},
+		{
+			"who": "Катя",
+			"sk": "Но ты хорошо говоришь по-русски!",
+			"en": "But you speak Russian well!"
+		},
+		{
+			"who": "Том",
+			"sk": "Спасибо! Я здесь работаю и каждый день говорю по-русски.",
+			"en": "Thanks! I work here, and I speak Russian every day."
+		},
+		{
+			"who": "Катя",
+			"sk": "А Москва тебе нравится?",
+			"en": "And do you like Moscow?"
+		},
+		{
+			"who": "Том",
+			"sk": "Да, очень. Но я ещё никого здесь не знаю.",
+			"en": "Yes, a lot. But I don't know anyone here yet."
+		},
+		{
+			"who": "Катя",
+			"sk": "Теперь ты знаешь меня!",
+			"en": "Now you know me!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Потом из дома выходит старая женщина.",
+			"en": "Then an old woman comes out of the house."
+		},
+		{
+			"who": "Том",
+			"sk": "Привет!",
+			"en": "Hi!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Катя и женщина смеются.",
+			"en": "Katya and the woman laugh."
+		},
+		{
+			"who": "Катя",
+			"sk": "Том, это моя бабушка. Ей нужно говорить «здравствуйте»!",
+			"en": "Tom, this is my grandmother. You should say \"zdravstvuyte\" to her!"
+		},
+		{
+			"who": "Том",
+			"sk": "Ой, извините! Здравствуйте. Я Том, ваш новый сосед.",
+			"en": "Oh, sorry! Hello. I'm Tom, your new neighbor."
+		},
+		{
+			"who": "Бабушка",
+			"sk": "Здравствуйте, Том. Очень приятно. Как дела?",
+			"en": "Hello, Tom. Nice to meet you. How are you?"
+		},
+		{
+			"who": "Том",
+			"sk": "Спасибо, хорошо. А у вас?",
+			"en": "Fine, thanks. And you?"
+		},
+		{
+			"who": "Бабушка",
+			"sk": "Тоже хорошо. А куда вы идёте?",
+			"en": "Fine too. And where are you going?"
+		},
+		{
+			"who": "Том",
+			"sk": "Я иду в центр, но не знаю, где метро.",
+			"en": "I'm going downtown, but I don't know where the subway is."
+		},
+		{
+			"who": "Катя",
+			"sk": "Я тоже иду в центр. Мы можем пойти вместе.",
+			"en": "I'm going downtown too. We can go together."
+		},
+		{
+			"who": "Бабушка",
+			"sk": "Хорошо. А вечером приходите ко мне на чай, вы оба!",
+			"en": "Good. And come over to my place for tea this evening, both of you!"
+		},
+		{
+			"who": "Том",
+			"sk": "Спасибо, с удовольствием! До свидания!",
+			"en": "Thank you, I'd love to! Goodbye!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Том и Катя вместе идут в центр.",
+			"en": "Tom and Katya walk downtown together."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "сосед",
+			"en": "neighbor"
+		},
+		{
+			"sk": "рядом",
+			"en": "next door, nearby"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Откуда Том?",
+			"options": [
+				"Из Англии",
+				"Из Бостона",
+				"Из Москвы"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Что Том сначала говорит бабушке?",
+			"options": [
+				"«Привет!»",
+				"«Здравствуйте!»",
+				"«До свидания!»"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Когда Том и Катя идут к бабушке на чай?",
+			"options": [
+				"Утром",
+				"Вечером",
+				"В воскресенье"
+			],
+			"answer": 1
+		}
+	],
+	"recap": "Tom, an American who has just moved to Moscow, meets his new neighbor Katya outside the house. He says привет to her grandmother by mistake, apologizes and says здравствуйте, and she invites them both for tea in the evening.",
+	"glosses": {
+		"том": {
+			"lemma": "Том",
+			"gloss": "Tom (a name)"
+		},
+		"катя": {
+			"lemma": "Катя",
+			"gloss": "Katya (a name)"
+		},
+		"а": {
+			"lemma": "а",
+			"gloss": "and, but"
+		},
+		"я": {
+			"lemma": "я",
+			"gloss": "I"
+		},
+		"ты": {
+			"lemma": "ты",
+			"gloss": "you"
+		},
+		"вы": {
+			"lemma": "вы",
+			"gloss": "you (polite or plural)"
+		},
+		"мы": {
+			"lemma": "мы",
+			"gloss": "we"
+		},
+		"меня": {
+			"lemma": "я",
+			"gloss": "me"
+		},
+		"мне": {
+			"lemma": "я",
+			"gloss": "me, to me"
+		},
+		"тебя": {
+			"lemma": "ты",
+			"gloss": "you"
+		},
+		"тебе": {
+			"lemma": "ты",
+			"gloss": "you, to you"
+		},
+		"вас": {
+			"lemma": "вы",
+			"gloss": "you (polite or plural)"
+		},
+		"ей": {
+			"lemma": "она",
+			"gloss": "her, to her"
+		},
+		"чай": {
+			"lemma": "чай",
+			"gloss": "tea"
+		},
+		"стоит": {
+			"lemma": "стоять",
+			"gloss": "to stand"
+		},
+		"вечером": {
+			"lemma": "вечером",
+			"gloss": "in the evening"
+		},
+		"москве": {
+			"lemma": "Москва",
+			"gloss": "Moscow"
+		},
+		"москва": {
+			"lemma": "Москва",
+			"gloss": "Moscow"
+		},
+		"у": {
+			"lemma": "у",
+			"gloss": "at, by (а у вас?: and you?)"
+		},
+		"сосед": {
+			"lemma": "сосед",
+			"gloss": "neighbor"
+		},
+		"рядом": {
+			"lemma": "рядом",
+			"gloss": "next door, nearby"
+		},
+		"бостона": {
+			"lemma": "Бостон",
+			"gloss": "Boston (a city)"
+		},
+		"русский": {
+			"lemma": "русский",
+			"gloss": "Russian"
+		},
+		"по-русски": {
+			"lemma": "по-русски",
+			"gloss": "in Russian"
+		},
+		"ко": {
+			"lemma": "к",
+			"gloss": "to (ко мне: to my place)"
+		},
+		"до": {
+			"lemma": "до",
+			"gloss": "until (до свидания: goodbye)"
+		},
+		"свидания": {
+			"lemma": "свидание",
+			"gloss": "meeting (до свидания: goodbye)"
+		},
+		"дела": {
+			"lemma": "дело",
+			"gloss": "things, matters (как дела?: how are you?)"
+		},
+		"приятно": {
+			"lemma": "приятно",
+			"gloss": "pleasant (очень приятно: nice to meet you)"
+		},
+		"удовольствием": {
+			"lemma": "удовольствие",
+			"gloss": "pleasure (с удовольствием: I'd love to)"
+		},
+		"зовут": {
+			"lemma": "звать",
+			"gloss": "to call (меня зовут: my name is)"
+		},
+		"центр": {
+			"lemma": "центр",
+			"gloss": "center, downtown"
+		},
+		"девушка": {
+			"lemma": "девушка",
+			"gloss": "girl, young woman"
+		}
+	}
+}

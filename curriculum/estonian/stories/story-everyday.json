@@ -1,0 +1,287 @@
+{
+	"title": "Kiire hommik",
+	"topic": "Tõnu oversleeps, rushes to get ready for work and finds out at breakfast that it is Saturday",
+	"cover": "clock",
+	"cast": [
+		{
+			"name": "Tõnu",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Maarja",
+			"gender": "f",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Tõnu tõuseb iga päev kell kuus.",
+			"en": "Tõnu gets up at six every day."
+		},
+		{
+			"who": "narrator",
+			"sk": "Kõigepealt peseb ta end, siis paneb riidesse ja teeb hommikusöögi.",
+			"en": "First he washes, then he gets dressed and makes breakfast."
+		},
+		{
+			"who": "narrator",
+			"sk": "Hommikul sööb ta alati leiba juustuga ja joob kohvi piimaga.",
+			"en": "In the morning he always eats bread with cheese and drinks coffee with milk."
+		},
+		{
+			"who": "narrator",
+			"sk": "Kell seitse sõidab ta bussiga tööle.",
+			"en": "At seven he goes to work by bus."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Aga täna magab Tõnu kaua.",
+			"en": "But today Tõnu sleeps late."
+		},
+		{
+			"who": "narrator",
+			"sk": "Kui ta silmad lahti teeb, on kell juba kaheksa!",
+			"en": "When he opens his eyes, it is already eight o'clock!"
+		},
+		{
+			"who": "Tõnu",
+			"sk": "Maarja, kell on juba kaheksa! Ma jään tööle hiljaks!",
+			"en": "Maarja, it's eight already! I'll be late for work!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Tõnu peseb end kiiresti ja paneb riidesse.",
+			"en": "Tõnu quickly washes and gets dressed."
+		},
+		{
+			"who": "narrator",
+			"sk": "Tal ei ole aega hommikusöögiks.",
+			"en": "He has no time for breakfast."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ta võtab ainult ühe väikese õuna ja jookseb ukse juurde.",
+			"en": "He takes just one small apple and runs to the door."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Köögis istub Maarja laua taga suure tassi kohviga.",
+			"en": "In the kitchen Maarja is sitting at the table with a big cup of coffee."
+		},
+		{
+			"who": "Maarja",
+			"sk": "Tõnu, kuhu sa nii kiiresti lähed?",
+			"en": "Tõnu, where are you going so fast?"
+		},
+		{
+			"who": "Tõnu",
+			"sk": "Tööle muidugi! Täna on esmaspäev!",
+			"en": "To work, of course! It's Monday!"
+		},
+		{
+			"who": "Maarja",
+			"sk": "Täna ei ole esmaspäev. Täna on laupäev!",
+			"en": "It isn't Monday today. Today is Saturday!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Tõnu vaatab oma telefoni.",
+			"en": "Tõnu looks at his phone."
+		},
+		{
+			"who": "narrator",
+			"sk": "Maarjal on õigus. On laupäev ja ta ei pea tööle minema.",
+			"en": "Maarja is right. It is Saturday and he doesn't have to go to work."
+		},
+		{
+			"who": "Tõnu",
+			"sk": "Oi, see on tore päev!",
+			"en": "Oh, that's a great day!"
+		},
+		{
+			"who": "Maarja",
+			"sk": "Istu maha. Sööme koos hommikusööki.",
+			"en": "Sit down. Let's have breakfast together."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Tõnu istub Maarjaga laua taha.",
+			"en": "Tõnu sits down at the table with Maarja."
+		},
+		{
+			"who": "narrator",
+			"sk": "Maarja keedab mune ja Tõnu teeb kohvi.",
+			"en": "Maarja boils eggs and Tõnu makes coffee."
+		},
+		{
+			"who": "narrator",
+			"sk": "Nad söövad aeglaselt ja räägivad nädalavahetusest.",
+			"en": "They eat slowly and talk about the weekend."
+		},
+		{
+			"who": "Maarja",
+			"sk": "Mida me pärastlõunal teeme?",
+			"en": "What shall we do in the afternoon?"
+		},
+		{
+			"who": "Tõnu",
+			"sk": "Kõigepealt ma magan. Siis läheme koos parki.",
+			"en": "First I'll sleep. Then we'll go to the park together."
+		},
+		{
+			"who": "Maarja",
+			"sk": "Hea küll. Aga esmaspäeval tõused sa kell kuus!",
+			"en": "All right. But on Monday you get up at six!"
+		}
+	],
+	"newWords": [],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Mis kell Tõnu iga päev tõuseb?",
+			"options": [
+				"Kell kaheksa",
+				"Kell kuus",
+				"Kell seitse"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Mis päev täna on?",
+			"options": [
+				"Esmaspäev",
+				"Pühapäev",
+				"Laupäev"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Mida Tõnu ja Maarja siis teevad?",
+			"options": [
+				"Söövad koos hommikusööki",
+				"Lähevad tööle",
+				"Lähevad poodi"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Tõnu usually gets up at six. Today he wakes at eight, rushes to get ready for work and skips breakfast, until Maarja tells him it is Saturday, so they have breakfast together.",
+	"glosses": {
+		"ta": {
+			"lemma": "tema",
+			"gloss": "he, she, it"
+		},
+		"tal": {
+			"lemma": "tema",
+			"gloss": "he, she (tal on: he has)"
+		},
+		"nad": {
+			"lemma": "nemad",
+			"gloss": "they"
+		},
+		"me": {
+			"lemma": "meie",
+			"gloss": "we"
+		},
+		"sa": {
+			"lemma": "sina",
+			"gloss": "you"
+		},
+		"tõnu": {
+			"lemma": "Tõnu",
+			"gloss": "Tõnu (a name)"
+		},
+		"maarja": {
+			"lemma": "Maarja",
+			"gloss": "Maarja (a name)"
+		},
+		"maarjal": {
+			"lemma": "Maarja",
+			"gloss": "Maarja (a name; Maarjal on õigus: Maarja is right)"
+		},
+		"maarjaga": {
+			"lemma": "Maarja",
+			"gloss": "Maarja (a name; Maarjaga: with Maarja)"
+		},
+		"kõigepealt": {
+			"lemma": "kõigepealt",
+			"gloss": "first, first of all"
+		},
+		"end": {
+			"lemma": "ise",
+			"gloss": "oneself (end: himself)"
+		},
+		"riidesse": {
+			"lemma": "riie",
+			"gloss": "clothes (paneb riidesse: gets dressed)"
+		},
+		"paneb": {
+			"lemma": "panema",
+			"gloss": "to put (paneb riidesse: gets dressed)"
+		},
+		"kell": {
+			"lemma": "kell",
+			"gloss": "clock; o'clock (kell kuus: at six)"
+		},
+		"hiljaks": {
+			"lemma": "hilja",
+			"gloss": "late (jään hiljaks: I'll be late)"
+		},
+		"taga": {
+			"lemma": "taga",
+			"gloss": "behind (laua taga: at the table)"
+		},
+		"taha": {
+			"lemma": "taha",
+			"gloss": "behind (laua taha: down at the table)"
+		},
+		"keedab": {
+			"lemma": "keetma",
+			"gloss": "to boil, to cook"
+		},
+		"mune": {
+			"lemma": "muna",
+			"gloss": "egg"
+		},
+		"oi": {
+			"lemma": "oi",
+			"gloss": "oh"
+		},
+		"õigus": {
+			"lemma": "õigus",
+			"gloss": "right (on õigus: is right)"
+		},
+		"pea": {
+			"lemma": "pidama",
+			"gloss": "must, to have to (ei pea: doesn't have to)"
+		},
+		"kui": {
+			"lemma": "kui",
+			"gloss": "when; if"
+		},
+		"küll": {
+			"lemma": "küll",
+			"gloss": "indeed (hea küll: all right)"
+		},
+		"teeb": {
+			"lemma": "tegema",
+			"gloss": "to do, to make"
+		},
+		"aega": {
+			"lemma": "aeg",
+			"gloss": "time"
+		},
+		"oma": {
+			"lemma": "oma",
+			"gloss": "own (his own)"
+		}
+	}
+}

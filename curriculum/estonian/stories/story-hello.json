@@ -1,0 +1,324 @@
+{
+	"title": "Uus naaber",
+	"topic": "Mark meets his new neighbor Liis in front of the house, says a casual tšau to her grandmother by mistake and is invited for tea",
+	"cover": "friends",
+	"cast": [
+		{
+			"name": "Mark",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Liis",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Vanaema",
+			"gender": "f",
+			"age": "old"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "On laupäeva hommik.",
+			"en": "It is Saturday morning."
+		},
+		{
+			"who": "narrator",
+			"sk": "Mark elab Tallinnas alles nädal aega.",
+			"en": "Mark has lived in Tallinn for only a week."
+		},
+		{
+			"who": "narrator",
+			"sk": "Maja ees seisab noor naine.",
+			"en": "A young woman is standing in front of the house."
+		},
+		{
+			"who": "Mark",
+			"sk": "Tere!",
+			"en": "Hello!"
+		},
+		{
+			"who": "Liis",
+			"sk": "Tšau! Kas sina oled uus naaber?",
+			"en": "Hi! Are you the new neighbor?"
+		},
+		{
+			"who": "Mark",
+			"sk": "Jah. Mina olen Mark. Ja mis sinu nimi on?",
+			"en": "Yes. I'm Mark. And what's your name?"
+		},
+		{
+			"who": "Liis",
+			"sk": "Mina olen Liis. Ma elan siin kõrval.",
+			"en": "I'm Liis. I live right next door."
+		},
+		{
+			"who": "Liis",
+			"sk": "Kust sa pärit oled, Mark?",
+			"en": "Where are you from, Mark?"
+		},
+		{
+			"who": "Mark",
+			"sk": "Ma olen inglane, Londonist. Siin Tallinnas on mul uus töö.",
+			"en": "I'm English, from London. Here in Tallinn I have a new job."
+		},
+		{
+			"who": "Liis",
+			"sk": "Sa räägid väga hästi eesti keelt!",
+			"en": "You speak Estonian very well!"
+		},
+		{
+			"who": "Mark",
+			"sk": "Aitäh! Ma õpin eesti keelt iga päev.",
+			"en": "Thanks! I study Estonian every day."
+		},
+		{
+			"who": "Mark",
+			"sk": "Aga ma ei tunne siin veel kedagi.",
+			"en": "But I don't know anyone here yet."
+		},
+		{
+			"who": "Liis",
+			"sk": "Nüüd sa tunned mind!",
+			"en": "Now you know me!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Siis tuleb majast välja vana naine.",
+			"en": "Then an old woman comes out of the house."
+		},
+		{
+			"who": "Mark",
+			"sk": "Tšau!",
+			"en": "Hi!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Liis naerab.",
+			"en": "Liis laughs."
+		},
+		{
+			"who": "Liis",
+			"sk": "Mark, see on minu vanaema. Ütle talle „tere“!",
+			"en": "Mark, this is my grandma. Say \"tere\" to her!"
+		},
+		{
+			"who": "Mark",
+			"sk": "Vabandust! Tere! Mina olen Mark, uus naaber.",
+			"en": "Sorry! Hello! I'm Mark, the new neighbor."
+		},
+		{
+			"who": "Vanaema",
+			"sk": "Tere, Mark. Väga meeldiv. Kuidas teil läheb?",
+			"en": "Hello, Mark. Very nice to meet you. How are you?"
+		},
+		{
+			"who": "Mark",
+			"sk": "Aitäh, hästi. Ja teil?",
+			"en": "Fine, thank you. And you?"
+		},
+		{
+			"who": "Vanaema",
+			"sk": "Ka hästi. Ja kuhu te nüüd lähete?",
+			"en": "Fine too. And where are you going now?"
+		},
+		{
+			"who": "Mark",
+			"sk": "Ma lähen linna, aga ma ei tea, kus vanalinn on.",
+			"en": "I'm going into town, but I don't know where the Old Town is."
+		},
+		{
+			"who": "Liis",
+			"sk": "Mina lähen ka linna. Me võime koos minna.",
+			"en": "I'm going into town too. We can go together."
+		},
+		{
+			"who": "Vanaema",
+			"sk": "Ja millal te koju tulete?",
+			"en": "And when are you coming home?"
+		},
+		{
+			"who": "Liis",
+			"sk": "Õhtul, vanaema.",
+			"en": "In the evening, Grandma."
+		},
+		{
+			"who": "Vanaema",
+			"sk": "Siis tulge õhtul mõlemad minu juurde teed jooma.",
+			"en": "Then come to my place for tea this evening, both of you."
+		},
+		{
+			"who": "Mark",
+			"sk": "Aitäh, ma tulen hea meelega! Nägemist!",
+			"en": "Thank you, I'll be glad to come! Goodbye!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Mark ja Liis lähevad koos linna.",
+			"en": "Mark and Liis walk into town together."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "naaber",
+			"en": "neighbor"
+		},
+		{
+			"sk": "vanaema",
+			"en": "grandmother"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kust Mark pärit on?",
+			"options": [
+				"Soomest",
+				"Londonist",
+				"Tartust"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Mida Mark vanaemale kõigepealt ütleb?",
+			"options": [
+				"Tšau!",
+				"Tere!",
+				"Nägemist!"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Millal lähevad Mark ja Liis vanaema juurde teed jooma?",
+			"options": [
+				"Hommikul",
+				"Õhtul",
+				"Pühapäeval"
+			],
+			"answer": 1
+		}
+	],
+	"recap": "Mark meets his new neighbor Liis in front of the house. He copies her casual tšau and says it to her grandmother, apologizes and says tere, and she invites them both for tea in the evening.",
+	"glosses": {
+		"sina": {
+			"lemma": "sina",
+			"gloss": "you"
+		},
+		"sa": {
+			"lemma": "sina",
+			"gloss": "you"
+		},
+		"sinu": {
+			"lemma": "sina",
+			"gloss": "you (sinu: your)"
+		},
+		"mul": {
+			"lemma": "mina",
+			"gloss": "I (mul on: I have)"
+		},
+		"mind": {
+			"lemma": "mina",
+			"gloss": "me"
+		},
+		"minu": {
+			"lemma": "mina",
+			"gloss": "I (minu: my)"
+		},
+		"talle": {
+			"lemma": "tema",
+			"gloss": "he, she (talle: to him, to her)"
+		},
+		"teil": {
+			"lemma": "teie",
+			"gloss": "you (plural or polite; kuidas teil läheb: how are you)"
+		},
+		"te": {
+			"lemma": "teie",
+			"gloss": "you (plural or polite)"
+		},
+		"me": {
+			"lemma": "meie",
+			"gloss": "we"
+		},
+		"mark": {
+			"lemma": "Mark",
+			"gloss": "Mark (a name)"
+		},
+		"liis": {
+			"lemma": "Liis",
+			"gloss": "Liis (a name)"
+		},
+		"tallinnas": {
+			"lemma": "Tallinn",
+			"gloss": "Tallinn"
+		},
+		"pärit": {
+			"lemma": "pärit",
+			"gloss": "from (kust sa pärit oled: where are you from)"
+		},
+		"londonist": {
+			"lemma": "London",
+			"gloss": "London (Londonist: from London)"
+		},
+		"vanalinn": {
+			"lemma": "vanalinn",
+			"gloss": "old town"
+		},
+		"kõrval": {
+			"lemma": "kõrval",
+			"gloss": "next to (siin kõrval: next door)"
+		},
+		"tunne": {
+			"lemma": "tundma",
+			"gloss": "to know (a person)"
+		},
+		"tunned": {
+			"lemma": "tundma",
+			"gloss": "to know (a person)"
+		},
+		"vana": {
+			"lemma": "vana",
+			"gloss": "old"
+		},
+		"meeldiv": {
+			"lemma": "meeldiv",
+			"gloss": "pleasant (väga meeldiv: nice to meet you)"
+		},
+		"mõlemad": {
+			"lemma": "mõlemad",
+			"gloss": "both"
+		},
+		"teed": {
+			"lemma": "tee",
+			"gloss": "tea"
+		},
+		"meelega": {
+			"lemma": "meel",
+			"gloss": "mind (hea meelega: gladly)"
+		},
+		"nägemist": {
+			"lemma": "nägemist",
+			"gloss": "goodbye"
+		},
+		"aega": {
+			"lemma": "aeg",
+			"gloss": "time (nädal aega: for a week)"
+		},
+		"kedagi": {
+			"lemma": "keegi",
+			"gloss": "someone; anyone (after ei)"
+		},
+		"juurde": {
+			"lemma": "juurde",
+			"gloss": "to (minu juurde: to my place)"
+		}
+	}
+}

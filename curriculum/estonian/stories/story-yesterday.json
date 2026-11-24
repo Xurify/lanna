@@ -1,0 +1,267 @@
+{
+	"title": "Kaks ühesugust kingitust",
+	"topic": "Anu and her brother Mart both bought their father the same book for his birthday, so the second copy went to grandpa",
+	"cover": "books",
+	"cast": [
+		{
+			"name": "Anu",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Isa",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Mart",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Vanaisa",
+			"gender": "m",
+			"age": "old"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Reedel oli Anu linnas.",
+			"en": "On Friday Anu was in town."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ta tahtis isale kingitust osta, sest laupäeval oli isa sünnipäev.",
+			"en": "She wanted to buy a present for her father, because on Saturday it was his birthday."
+		},
+		{
+			"who": "narrator",
+			"sk": "Isa loeb hea meelega, nii et Anu ostis talle raamatu Saaremaast.",
+			"en": "Her father likes reading, so Anu bought him a book about Saaremaa."
+		},
+		{
+			"who": "narrator",
+			"sk": "Raamat oli kallis, aga ilus.",
+			"en": "The book was expensive, but beautiful."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Laupäeval tuli Anu vanemate juurde lõunale.",
+			"en": "On Saturday Anu came to her parents' for lunch."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ka tema vend Mart tuli.",
+			"en": "Her brother Mart came too."
+		},
+		{
+			"who": "Anu",
+			"sk": "Isa, palju õnne sünnipäevaks! See kingitus on sulle.",
+			"en": "Dad, happy birthday! This present is for you."
+		},
+		{
+			"who": "Isa",
+			"sk": "Aitäh, Anu! Raamat Saaremaast, väga tore!",
+			"en": "Thank you, Anu! A book about Saaremaa, great!"
+		},
+		{
+			"who": "Mart",
+			"sk": "Isa, mul on ka sulle kingitus.",
+			"en": "Dad, I have a present for you too."
+		},
+		{
+			"who": "narrator",
+			"sk": "Isa tegi lahti ka teise kingituse.",
+			"en": "Their father opened the second present too."
+		},
+		{
+			"who": "narrator",
+			"sk": "See oli sama raamat!",
+			"en": "It was the same book!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Kõik naersid.",
+			"en": "Everyone laughed."
+		},
+		{
+			"who": "Mart",
+			"sk": "Anu, kust sa selle ostsid?",
+			"en": "Anu, where did you buy it?"
+		},
+		{
+			"who": "Anu",
+			"sk": "Väikesest poest kiriku juures. Ja sina?",
+			"en": "At the little shop by the church. And you?"
+		},
+		{
+			"who": "Mart",
+			"sk": "Mina ka! Müüja ütles mulle, et see on hea raamat.",
+			"en": "Me too! The salesperson told me it was a good book."
+		},
+		{
+			"who": "Anu",
+			"sk": "Mulle ütles ta ka nii!",
+			"en": "She told me that too!"
+		},
+		{
+			"who": "Isa",
+			"sk": "Pole hullu. Ühe raamatu annan ma vanaisale. Tema armastab ka Saaremaad.",
+			"en": "Never mind. I'll give one book to Grandpa. He loves Saaremaa too."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Pühapäeval läksid kõik vanaisa juurde.",
+			"en": "On Sunday they all went to Grandpa's."
+		},
+		{
+			"who": "narrator",
+			"sk": "Isa andis talle teise raamatu Saaremaast.",
+			"en": "Their father gave him the second book about Saaremaa."
+		},
+		{
+			"who": "Vanaisa",
+			"sk": "Aitäh! Kui ma noor olin, sõitsin ma igal suvel Saaremaale.",
+			"en": "Thank you! When I was young, I went to Saaremaa every summer."
+		},
+		{
+			"who": "Vanaisa",
+			"sk": "Nüüd näen ma seda jälle raamatus.",
+			"en": "Now I'll see it again in a book."
+		},
+		{
+			"who": "narrator",
+			"sk": "Vanaisa luges raamatut terve õhtu.",
+			"en": "Grandpa read the book all evening."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "kingitus",
+			"en": "present, gift"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Mida Anu isale ostis?",
+			"options": [
+				"Kaardi",
+				"Raamatu Saaremaast",
+				"Kohvi"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Kes ostis isale sama raamatu?",
+			"options": [
+				"Vanaisa",
+				"Ema",
+				"Mart"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Kellele andis isa teise raamatu?",
+			"options": [
+				"Vanaisale",
+				"Anule",
+				"Mardile"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Anu bought her father a book about Saaremaa for his birthday, and her brother Mart bought the same book in the same shop. Their father gave the second copy to grandpa, who went to Saaremaa every summer when he was young.",
+	"glosses": {
+		"ta": {
+			"lemma": "tema",
+			"gloss": "he, she, it"
+		},
+		"tema": {
+			"lemma": "tema",
+			"gloss": "he, she (tema: his, her)"
+		},
+		"talle": {
+			"lemma": "tema",
+			"gloss": "he, she (talle: to him, to her)"
+		},
+		"sa": {
+			"lemma": "sina",
+			"gloss": "you"
+		},
+		"sina": {
+			"lemma": "sina",
+			"gloss": "you"
+		},
+		"mul": {
+			"lemma": "mina",
+			"gloss": "I (mul on: I have)"
+		},
+		"sulle": {
+			"lemma": "sina",
+			"gloss": "you (sulle: to you)"
+		},
+		"mulle": {
+			"lemma": "mina",
+			"gloss": "I (mulle: to me)"
+		},
+		"anu": {
+			"lemma": "Anu",
+			"gloss": "Anu (a name)"
+		},
+		"mart": {
+			"lemma": "Mart",
+			"gloss": "Mart (a name)"
+		},
+		"sest": {
+			"lemma": "sest",
+			"gloss": "because"
+		},
+		"meelega": {
+			"lemma": "meel",
+			"gloss": "mind (hea meelega: gladly; loeb hea meelega: likes reading)"
+		},
+		"saaremaast": {
+			"lemma": "Saaremaa",
+			"gloss": "Saaremaa (an island; raamat Saaremaast: a book about Saaremaa)"
+		},
+		"saaremaad": {
+			"lemma": "Saaremaa",
+			"gloss": "Saaremaa (an island)"
+		},
+		"saaremaale": {
+			"lemma": "Saaremaa",
+			"gloss": "Saaremaa (an island; Saaremaale: to Saaremaa)"
+		},
+		"kallis": {
+			"lemma": "kallis",
+			"gloss": "expensive"
+		},
+		"pole": {
+			"lemma": "olema",
+			"gloss": "is not (pole hullu: never mind)"
+		},
+		"hullu": {
+			"lemma": "hull",
+			"gloss": "bad, crazy (pole hullu: never mind)"
+		},
+		"õnne": {
+			"lemma": "õnn",
+			"gloss": "luck, happiness (palju õnne: happy birthday)"
+		},
+		"kui": {
+			"lemma": "kui",
+			"gloss": "when; if"
+		},
+		"lõunale": {
+			"lemma": "lõuna",
+			"gloss": "lunch"
+		}
+	}
+}
