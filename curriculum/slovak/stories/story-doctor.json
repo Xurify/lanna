@@ -275,6 +275,10 @@
 		"ticho": {
 			"lemma": "ticho",
 			"gloss": "quiet; quietly"
+		},
+		"vašu": {
+			"lemma": "váš",
+			"gloss": "your (formal or plural)"
 		}
 	}
 }

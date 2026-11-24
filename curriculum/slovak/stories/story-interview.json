@@ -238,6 +238,10 @@
 		"rada": {
 			"lemma": "rád",
 			"gloss": "glad; (rada čítam) I like to"
+		},
+		"vaša": {
+			"lemma": "váš",
+			"gloss": "your (formal or plural)"
 		}
 	}
 }
