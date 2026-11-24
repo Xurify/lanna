@@ -466,6 +466,26 @@ export function recordActiveTime(activity: TimedActivity, ms: number, tz?: numbe
 	return added;
 }
 
+export function recordSound(
+	id: string,
+	clear: number,
+	lines: number,
+	ms: number,
+	tz?: number,
+	now = new Date(),
+): boolean {
+	if (curriculumUnit(id)?.kind !== "sound") return false;
+	const p = progressStore.read();
+	const unit = (p.units[id] ??= { lessons: 0, reps: 0, correct: 0 });
+	unit.lessons += 1;
+	unit.reps += lines;
+	unit.correct += Math.min(clear, lines);
+	unit.lastAt = now.toISOString();
+	addMinutes(dayOf(p, today(tz, now)), "speak", ms);
+	progressStore.write(p);
+	return true;
+}
+
 type Activity = "talk" | "story" | "tutor";
 
 /** A Talk, a Story or a tutor unit's session was started: the day's plan
