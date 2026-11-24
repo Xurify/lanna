@@ -1,0 +1,316 @@
+{
+	"title": "Два одинаковых подарка",
+	"topic": "Masha and her brother Sasha both bought their father the same book for his birthday, so the second copy went to grandpa",
+	"cover": "books",
+	"cast": [
+		{
+			"name": "Маша",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Папа",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Саша",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Дедушка",
+			"gender": "m",
+			"age": "old"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "В пятницу Маша была в городе.",
+			"en": "On Friday Masha was in town."
+		},
+		{
+			"who": "narrator",
+			"sk": "Она хотела купить подарок для папы, потому что в субботу у него был день рождения.",
+			"en": "She wanted to buy a present for her dad, because Saturday was his birthday."
+		},
+		{
+			"who": "narrator",
+			"sk": "Папа любит читать, и Маша купила ему книгу о Байкале.",
+			"en": "Her dad loves reading, so Masha bought him a book about Lake Baikal."
+		},
+		{
+			"who": "narrator",
+			"sk": "Книга была дорогая, но очень красивая.",
+			"en": "The book was expensive, but very beautiful."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "В субботу Маша приехала к родителям на обед.",
+			"en": "On Saturday Masha came to her parents' for lunch."
+		},
+		{
+			"who": "narrator",
+			"sk": "Её брат Саша тоже приехал.",
+			"en": "Her brother Sasha came too."
+		},
+		{
+			"who": "Маша",
+			"sk": "Папа, с днём рождения! Это подарок для тебя.",
+			"en": "Dad, happy birthday! This present is for you."
+		},
+		{
+			"who": "Папа",
+			"sk": "Спасибо, Маша! Книга о Байкале, как здорово!",
+			"en": "Thank you, Masha! A book about Baikal, how great!"
+		},
+		{
+			"who": "Саша",
+			"sk": "Папа, у меня тоже есть для тебя подарок.",
+			"en": "Dad, I have a present for you too."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Папа открыл второй подарок.",
+			"en": "Dad opened the second present."
+		},
+		{
+			"who": "narrator",
+			"sk": "Там была та же книга!",
+			"en": "Inside was the same book!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Все засмеялись.",
+			"en": "Everyone laughed."
+		},
+		{
+			"who": "Саша",
+			"sk": "Маша, где ты её купила?",
+			"en": "Masha, where did you buy it?"
+		},
+		{
+			"who": "Маша",
+			"sk": "В магазине на площади. А ты?",
+			"en": "In the shop on the square. And you?"
+		},
+		{
+			"who": "Саша",
+			"sk": "Я тоже! Женщина в магазине сказала, что это очень хорошая книга.",
+			"en": "Me too! The woman in the shop said it was a very good book."
+		},
+		{
+			"who": "Маша",
+			"sk": "Мне она тоже так сказала!",
+			"en": "She told me that too!"
+		},
+		{
+			"who": "Папа",
+			"sk": "Ничего. Одну книгу я подарю дедушке. Он тоже любит Байкал.",
+			"en": "Never mind. I'll give one book to Grandpa. He loves Baikal too."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "В воскресенье все поехали к дедушке.",
+			"en": "On Sunday they all went to Grandpa's."
+		},
+		{
+			"who": "narrator",
+			"sk": "Папа подарил ему вторую книгу о Байкале.",
+			"en": "Dad gave him the second book about Baikal."
+		},
+		{
+			"who": "Дедушка",
+			"sk": "Спасибо! Когда я был молодым, я каждое лето ездил на Байкал.",
+			"en": "Thank you! When I was young, I went to Baikal every summer."
+		},
+		{
+			"who": "Дедушка",
+			"sk": "А теперь Байкал будет у меня дома!",
+			"en": "And now I'll have Baikal right here at home!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Вечером дедушка долго читал книгу.",
+			"en": "In the evening Grandpa read the book for a long time."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "подарок",
+			"en": "present, gift"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Что Маша купила папе?",
+			"options": [
+				"Карту",
+				"Книгу о Байкале",
+				"Кофе"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Кто тоже купил папе эту книгу?",
+			"options": [
+				"Дедушка",
+				"Мама",
+				"Саша"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Кому папа подарил вторую книгу?",
+			"options": [
+				"Дедушке",
+				"Маше",
+				"Саше"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Masha bought her dad a book about Lake Baikal for his birthday, and her brother Sasha bought the same book in the same shop. Their dad gave the second copy to Grandpa, who went to Baikal every summer when he was young.",
+	"glosses": {
+		"маша": {
+			"lemma": "Маша",
+			"gloss": "Masha (a name)"
+		},
+		"саша": {
+			"lemma": "Саша",
+			"gloss": "Sasha (a name)"
+		},
+		"байкале": {
+			"lemma": "Байкал",
+			"gloss": "Lake Baikal"
+		},
+		"байкал": {
+			"lemma": "Байкал",
+			"gloss": "Lake Baikal"
+		},
+		"а": {
+			"lemma": "а",
+			"gloss": "and, but"
+		},
+		"я": {
+			"lemma": "я",
+			"gloss": "I"
+		},
+		"ты": {
+			"lemma": "ты",
+			"gloss": "you"
+		},
+		"он": {
+			"lemma": "он",
+			"gloss": "he; it"
+		},
+		"она": {
+			"lemma": "она",
+			"gloss": "she; it"
+		},
+		"меня": {
+			"lemma": "я",
+			"gloss": "me"
+		},
+		"мне": {
+			"lemma": "я",
+			"gloss": "me, to me"
+		},
+		"тебя": {
+			"lemma": "ты",
+			"gloss": "you"
+		},
+		"её": {
+			"lemma": "она",
+			"gloss": "her; it"
+		},
+		"ему": {
+			"lemma": "он",
+			"gloss": "him, to him"
+		},
+		"папа": {
+			"lemma": "папа",
+			"gloss": "dad"
+		},
+		"папы": {
+			"lemma": "папа",
+			"gloss": "dad"
+		},
+		"дедушка": {
+			"lemma": "дедушка",
+			"gloss": "grandpa, grandfather"
+		},
+		"дедушке": {
+			"lemma": "дедушка",
+			"gloss": "grandpa, grandfather"
+		},
+		"ничего": {
+			"lemma": "ничего",
+			"gloss": "never mind"
+		},
+		"о": {
+			"lemma": "о",
+			"gloss": "about"
+		},
+		"вечером": {
+			"lemma": "вечером",
+			"gloss": "in the evening"
+		},
+		"родителям": {
+			"lemma": "родители",
+			"gloss": "parents"
+		},
+		"у": {
+			"lemma": "у",
+			"gloss": "at, by (у меня есть: I have)"
+		},
+		"есть": {
+			"lemma": "есть",
+			"gloss": "there is (у меня есть: I have)"
+		},
+		"засмеялись": {
+			"lemma": "засмеяться",
+			"gloss": "to start laughing"
+		},
+		"поехали": {
+			"lemma": "поехать",
+			"gloss": "to go (by vehicle)"
+		},
+		"та": {
+			"lemma": "тот",
+			"gloss": "that (та же: the same)"
+		},
+		"же": {
+			"lemma": "же",
+			"gloss": "(та же: the same)"
+		},
+		"здорово": {
+			"lemma": "здорово",
+			"gloss": "great (как здорово: how great)"
+		},
+		"потому": {
+			"lemma": "потому",
+			"gloss": "because (потому что: because)"
+		},
+		"рождения": {
+			"lemma": "рождение",
+			"gloss": "birth (день рождения: birthday)"
+		},
+		"все": {
+			"lemma": "весь",
+			"gloss": "all; everyone"
+		},
+		"него": {
+			"lemma": "он",
+			"gloss": "him (у него: he has)"
+		}
+	}
+}

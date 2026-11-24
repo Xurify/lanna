@@ -1,0 +1,352 @@
+{
+	"title": "Кто есть кто?",
+	"topic": "Artyom goes to Sunday lunch with his girlfriend Olya's family, takes her brother for her father and makes friends with her little nephew",
+	"cover": "family",
+	"cast": [
+		{
+			"name": "Артём",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Оля",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Дима",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Мама",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Петя",
+			"gender": "m",
+			"age": "child"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Сегодня воскресенье. Артём и Оля идут на обед к её родителям.",
+			"en": "It's Sunday. Artyom and Olya are going to her parents' for lunch."
+		},
+		{
+			"who": "Артём",
+			"sk": "Оля, а кто там будет?",
+			"en": "Olya, who will be there?"
+		},
+		{
+			"who": "narrator",
+			"sk": "Оля показывает ему фото.",
+			"en": "Olya shows him a photo."
+		},
+		{
+			"who": "Оля",
+			"sk": "Смотри. Это мой папа, а это моя мама.",
+			"en": "Look. This is my dad, and this is my mom."
+		},
+		{
+			"who": "Оля",
+			"sk": "Этот высокий мужчина — мой брат Дима, а это его жена.",
+			"en": "This tall man is my brother Dima, and this is his wife."
+		},
+		{
+			"who": "Оля",
+			"sk": "А этот маленький мальчик — их сын Петя.",
+			"en": "And this little boy is their son Petya."
+		},
+		{
+			"who": "Артём",
+			"sk": "Твой папа и твой брат очень похожи.",
+			"en": "Your dad and your brother look very alike."
+		},
+		{
+			"who": "Оля",
+			"sk": "Да. Они оба высокие и весёлые.",
+			"en": "Yes. They're both tall and cheerful."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Оля звонит в дверь.",
+			"en": "Olya rings the doorbell."
+		},
+		{
+			"who": "narrator",
+			"sk": "Дверь открывает высокий мужчина.",
+			"en": "A tall man opens the door."
+		},
+		{
+			"who": "Артём",
+			"sk": "Здравствуйте! Вы Олин папа? Очень приятно!",
+			"en": "Hello! Are you Olya's dad? Nice to meet you!"
+		},
+		{
+			"who": "Дима",
+			"sk": "Нет, я не папа. Я Дима, Олин брат!",
+			"en": "No, I'm not her dad. I'm Dima, Olya's brother!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Все смеются.",
+			"en": "Everyone laughs."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "На кухне Олина мама готовит обед, а папа сидит за столом.",
+			"en": "In the kitchen Olya's mom is cooking lunch, and her dad is sitting at the table."
+		},
+		{
+			"who": "Мама",
+			"sk": "Добро пожаловать, Артём! У вас есть брат или сестра?",
+			"en": "Welcome, Artyom! Do you have a brother or a sister?"
+		},
+		{
+			"who": "Артём",
+			"sk": "У меня есть сестра. А брата нет.",
+			"en": "I have a sister. But I don't have a brother."
+		},
+		{
+			"who": "Мама",
+			"sk": "А где живёт ваша семья?",
+			"en": "And where does your family live?"
+		},
+		{
+			"who": "Артём",
+			"sk": "Мои родители и сестра живут в Самаре.",
+			"en": "My parents and my sister live in Samara."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "После обеда маленький Петя ведёт Артёма в свою комнату.",
+			"en": "After lunch little Petya takes Artyom to his room."
+		},
+		{
+			"who": "Петя",
+			"sk": "Это моя комната. Она маленькая, но красивая.",
+			"en": "This is my room. It's small, but pretty."
+		},
+		{
+			"who": "Петя",
+			"sk": "Артём, а ты любишь Олю?",
+			"en": "Artyom, do you love Olya?"
+		},
+		{
+			"who": "Артём",
+			"sk": "Да, очень люблю.",
+			"en": "Yes, I love her very much."
+		},
+		{
+			"who": "Петя",
+			"sk": "Я тоже. Оля — моя тётя!",
+			"en": "Me too. Olya is my aunt!"
+		},
+		{
+			"who": "Артём",
+			"sk": "Тогда ты теперь тоже мой друг.",
+			"en": "Then now you're my friend too."
+		},
+		{
+			"who": "narrator",
+			"sk": "Петя смеётся и показывает Артёму все свои машинки.",
+			"en": "Petya laughs and shows Artyom all his toy cars."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "похожий",
+			"en": "alike, similar"
+		},
+		{
+			"sk": "машинка",
+			"en": "toy car"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Кто открывает дверь?",
+			"options": [
+				"Папа",
+				"Дима",
+				"Петя"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Где живёт семья Артёма?",
+			"options": [
+				"В Москве",
+				"В Казани",
+				"В Самаре"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Чей сын Петя?",
+			"options": [
+				"Сын Димы",
+				"Сын Оли",
+				"Сын Артёма"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Before Sunday lunch Olya shows Artyom a photo of her family. At the door he greets her brother Dima as her father, which makes everyone laugh, and after lunch he makes friends with Dima's little son Petya.",
+	"glosses": {
+		"артём": {
+			"lemma": "Артём",
+			"gloss": "Artyom (a name)"
+		},
+		"артёма": {
+			"lemma": "Артём",
+			"gloss": "Artyom (a name)"
+		},
+		"артёму": {
+			"lemma": "Артём",
+			"gloss": "Artyom (a name)"
+		},
+		"оля": {
+			"lemma": "Оля",
+			"gloss": "Olya (a name)"
+		},
+		"олю": {
+			"lemma": "Оля",
+			"gloss": "Olya (a name)"
+		},
+		"олин": {
+			"lemma": "Олин",
+			"gloss": "Olya's"
+		},
+		"олина": {
+			"lemma": "Олин",
+			"gloss": "Olya's"
+		},
+		"дима": {
+			"lemma": "Дима",
+			"gloss": "Dima (a name)"
+		},
+		"петя": {
+			"lemma": "Петя",
+			"gloss": "Petya (a name)"
+		},
+		"самаре": {
+			"lemma": "Самара",
+			"gloss": "Samara (a city)"
+		},
+		"а": {
+			"lemma": "а",
+			"gloss": "and, but"
+		},
+		"я": {
+			"lemma": "я",
+			"gloss": "I"
+		},
+		"ты": {
+			"lemma": "ты",
+			"gloss": "you"
+		},
+		"вы": {
+			"lemma": "вы",
+			"gloss": "you (polite or plural)"
+		},
+		"она": {
+			"lemma": "она",
+			"gloss": "she; it"
+		},
+		"они": {
+			"lemma": "они",
+			"gloss": "they"
+		},
+		"меня": {
+			"lemma": "я",
+			"gloss": "me"
+		},
+		"вас": {
+			"lemma": "вы",
+			"gloss": "you (polite or plural)"
+		},
+		"её": {
+			"lemma": "она",
+			"gloss": "her; it"
+		},
+		"его": {
+			"lemma": "он",
+			"gloss": "his; him"
+		},
+		"ему": {
+			"lemma": "он",
+			"gloss": "him, to him"
+		},
+		"их": {
+			"lemma": "они",
+			"gloss": "their; them"
+		},
+		"папа": {
+			"lemma": "папа",
+			"gloss": "dad"
+		},
+		"мама": {
+			"lemma": "мама",
+			"gloss": "mom"
+		},
+		"за": {
+			"lemma": "за",
+			"gloss": "at (за столом: at the table)"
+		},
+		"родители": {
+			"lemma": "родители",
+			"gloss": "parents"
+		},
+		"родителям": {
+			"lemma": "родители",
+			"gloss": "parents"
+		},
+		"у": {
+			"lemma": "у",
+			"gloss": "at, by (у меня есть: I have)"
+		},
+		"есть": {
+			"lemma": "есть",
+			"gloss": "there is (у меня есть: I have)"
+		},
+		"весёлые": {
+			"lemma": "весёлый",
+			"gloss": "cheerful"
+		},
+		"машинки": {
+			"lemma": "машинка",
+			"gloss": "toy car"
+		},
+		"добро": {
+			"lemma": "добро пожаловать",
+			"gloss": "welcome"
+		},
+		"пожаловать": {
+			"lemma": "добро пожаловать",
+			"gloss": "welcome"
+		},
+		"приятно": {
+			"lemma": "приятно",
+			"gloss": "pleasant (очень приятно: nice to meet you)"
+		},
+		"звонит": {
+			"lemma": "звонить",
+			"gloss": "to ring (звонить в дверь: to ring the doorbell)"
+		},
+		"все": {
+			"lemma": "весь",
+			"gloss": "all; everyone"
+		}
+	}
+}

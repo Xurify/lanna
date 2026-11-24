@@ -4,7 +4,7 @@ import { activeProfile, curriculumFile } from "../../config.ts";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { chapterStoriesFor } from "../core/chapter-stories.ts";
 import { allChapters, STAGES } from "../core/curriculum.ts";
-import type { StoryDraft, StoryRecord, StorySentence } from "../core/reading.ts";
+import type { StoryDraft, StoryRecord, StorySentence, StoryWord } from "../core/reading.ts";
 import { storyStore } from "../store/stories.ts";
 import { assembleStory, knownWords } from "./reading.ts";
 import { availableVoiceIds } from "./voices.ts";
@@ -32,6 +32,13 @@ function withGlosses(sentences: readonly StorySentence[], glosses: ShippedStory[
 			};
 		}),
 	}));
+}
+
+export function authoredNewWords(found: readonly StoryWord[], authored: ShippedStory["newWords"]): StoryWord[] {
+	return authored.map((own) => {
+		const same = found.find((w) => w.lemma.toLocaleLowerCase() === own.sk.toLocaleLowerCase());
+		return { lemma: own.sk, gloss: own.en, ...(same?.slug ? { slug: same.slug } : {}) };
+	});
 }
 
 interface ShippedFile {
@@ -86,7 +93,9 @@ async function writeChapterStory(id: string, now: Date): Promise<StoryRecord | n
 		...assembled,
 		id,
 		sentences,
-		newWords: assembled.newWords.filter((w) => !w.slug || slugs.has(w.slug)),
+		newWords: authoredNewWords(assembled.newWords, draft.newWords).map(({ slug, ...w }) =>
+			slug && slugs.has(slug) ? { ...w, slug } : w,
+		),
 		...(level ? { level } : {}),
 		...(chapter ? { chapter: chapter.id } : {}),
 		shippedHash: hash,

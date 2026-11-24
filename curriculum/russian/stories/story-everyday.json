@@ -1,0 +1,289 @@
+{
+	"title": "Быстрое утро",
+	"topic": "Andrei oversleeps, rushes to get ready for work and finds out at breakfast that it is Saturday",
+	"cover": "clock",
+	"cast": [
+		{
+			"name": "Андрей",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Ира",
+			"gender": "f",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Каждый день Андрей встаёт в шесть часов.",
+			"en": "Andrei gets up at six o'clock every day."
+		},
+		{
+			"who": "narrator",
+			"sk": "Сначала он умывается, потом одевается и готовит завтрак.",
+			"en": "First he washes, then he gets dressed and makes breakfast."
+		},
+		{
+			"who": "narrator",
+			"sk": "На завтрак он всегда ест хлеб с сыром и пьёт кофе с молоком.",
+			"en": "For breakfast he always eats bread with cheese and drinks coffee with milk."
+		},
+		{
+			"who": "narrator",
+			"sk": "Андрей работает врачом в больнице.",
+			"en": "Andrei works as a doctor at a hospital."
+		},
+		{
+			"who": "narrator",
+			"sk": "В семь часов он едет на работу на автобусе.",
+			"en": "At seven o'clock he goes to work by bus."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Но сегодня Андрей долго спит.",
+			"en": "But today Andrei sleeps late."
+		},
+		{
+			"who": "narrator",
+			"sk": "Он открывает глаза, а на часах уже восемь!",
+			"en": "He opens his eyes, and the clock already says eight!"
+		},
+		{
+			"who": "Андрей",
+			"sk": "Ира, уже восемь часов! Я опаздываю на работу!",
+			"en": "Ira, it's already eight o'clock! I'm late for work!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Андрей быстро умывается и одевается.",
+			"en": "Andrei quickly washes and gets dressed."
+		},
+		{
+			"who": "narrator",
+			"sk": "На завтрак у него нет времени.",
+			"en": "He has no time for breakfast."
+		},
+		{
+			"who": "narrator",
+			"sk": "Он берёт только яблоко и бежит к двери.",
+			"en": "He just grabs an apple and runs to the door."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "На кухне за столом сидит Ира с чашкой кофе.",
+			"en": "In the kitchen Ira is sitting at the table with a cup of coffee."
+		},
+		{
+			"who": "Ира",
+			"sk": "Андрей, куда ты так спешишь?",
+			"en": "Andrei, where are you rushing off to?"
+		},
+		{
+			"who": "Андрей",
+			"sk": "Как куда? На работу! Сегодня понедельник!",
+			"en": "What do you mean, where? To work! Today is Monday!"
+		},
+		{
+			"who": "Ира",
+			"sk": "Нет, сегодня не понедельник. Сегодня суббота!",
+			"en": "No, it isn't Monday. Today is Saturday!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Андрей смотрит на телефон.",
+			"en": "Andrei looks at his phone."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ира права. Сегодня суббота, и на работу идти не надо.",
+			"en": "Ira is right. It's Saturday, and he doesn't have to go to work."
+		},
+		{
+			"who": "Андрей",
+			"sk": "Какой хороший день!",
+			"en": "What a good day!"
+		},
+		{
+			"who": "Ира",
+			"sk": "Садись. Давай позавтракаем вместе.",
+			"en": "Sit down. Let's have breakfast together."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Андрей садится за стол.",
+			"en": "Andrei sits down at the table."
+		},
+		{
+			"who": "narrator",
+			"sk": "Ира готовит омлет с сыром, а Андрей варит кофе.",
+			"en": "Ira makes a cheese omelet, and Andrei makes coffee."
+		},
+		{
+			"who": "narrator",
+			"sk": "Они медленно завтракают и разговаривают о выходных.",
+			"en": "They eat breakfast slowly and talk about the weekend."
+		},
+		{
+			"who": "Ира",
+			"sk": "Что будем делать днём?",
+			"en": "What shall we do this afternoon?"
+		},
+		{
+			"who": "Андрей",
+			"sk": "Сначала я буду спать. А потом пойдём в парк с друзьями.",
+			"en": "First I'll sleep. And then we'll go to the park with our friends."
+		},
+		{
+			"who": "Ира",
+			"sk": "Хорошо. Но в понедельник ты встаёшь в шесть!",
+			"en": "All right. But on Monday you get up at six!"
+		}
+	],
+	"newWords": [
+		{
+			"sk": "чашка",
+			"en": "cup"
+		},
+		{
+			"sk": "опаздывать",
+			"en": "to be late"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Кем работает Андрей?",
+			"options": [
+				"Учителем",
+				"Врачом",
+				"Начальником"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Какой сегодня день?",
+			"options": [
+				"Понедельник",
+				"Воскресенье",
+				"Суббота"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Что Андрей и Ира делают потом?",
+			"options": [
+				"Завтракают вместе",
+				"Едут на работу",
+				"Идут в магазин"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Andrei usually gets up at six. Today he wakes at eight, rushes to get ready for work and skips breakfast, until Ira tells him it is Saturday, so they have breakfast together.",
+	"glosses": {
+		"андрей": {
+			"lemma": "Андрей",
+			"gloss": "Andrei (a name)"
+		},
+		"ира": {
+			"lemma": "Ира",
+			"gloss": "Ira (a name)"
+		},
+		"а": {
+			"lemma": "а",
+			"gloss": "and, but"
+		},
+		"я": {
+			"lemma": "я",
+			"gloss": "I"
+		},
+		"ты": {
+			"lemma": "ты",
+			"gloss": "you"
+		},
+		"он": {
+			"lemma": "он",
+			"gloss": "he; it"
+		},
+		"они": {
+			"lemma": "они",
+			"gloss": "they"
+		},
+		"о": {
+			"lemma": "о",
+			"gloss": "about"
+		},
+		"за": {
+			"lemma": "за",
+			"gloss": "at (за столом: at the table)"
+		},
+		"у": {
+			"lemma": "у",
+			"gloss": "at, by (у него нет: he has no)"
+		},
+		"ест": {
+			"lemma": "есть",
+			"gloss": "to eat"
+		},
+		"умывается": {
+			"lemma": "умываться",
+			"gloss": "to wash (one's face and hands)"
+		},
+		"одевается": {
+			"lemma": "одеваться",
+			"gloss": "to get dressed"
+		},
+		"яблоко": {
+			"lemma": "яблоко",
+			"gloss": "apple"
+		},
+		"позавтракаем": {
+			"lemma": "позавтракать",
+			"gloss": "to have breakfast"
+		},
+		"завтракают": {
+			"lemma": "завтракать",
+			"gloss": "to have breakfast"
+		},
+		"омлет": {
+			"lemma": "омлет",
+			"gloss": "omelet"
+		},
+		"варит": {
+			"lemma": "варить",
+			"gloss": "to cook, to boil (варить кофе: to make coffee)"
+		},
+		"часах": {
+			"lemma": "часы",
+			"gloss": "clock, watch"
+		},
+		"права": {
+			"lemma": "правый",
+			"gloss": "right (Ира права: Ira is right)"
+		},
+		"врачом": {
+			"lemma": "врач",
+			"gloss": "doctor"
+		},
+		"чашкой": {
+			"lemma": "чашка",
+			"gloss": "cup"
+		},
+		"днём": {
+			"lemma": "днём",
+			"gloss": "in the afternoon, during the day"
+		},
+		"него": {
+			"lemma": "он",
+			"gloss": "him (у него нет: he has no)"
+		}
+	}
+}

@@ -1,0 +1,274 @@
+{
+	"title": "Где вокзал?",
+	"topic": "Sveta is in Kazan for the first time, asks the way to the station and catches a bus to her train in time",
+	"cover": "city",
+	"cast": [
+		{
+			"name": "Света",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Николай",
+			"gender": "m",
+			"age": "old"
+		},
+		{
+			"name": "Ваня",
+			"gender": "m",
+			"age": "child"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Света первый раз в Казани и не знает город.",
+			"en": "Sveta is in Kazan for the first time and doesn't know the city."
+		},
+		{
+			"who": "narrator",
+			"sk": "Сейчас она стоит на площади и смотрит на карту.",
+			"en": "Now she is standing in the square and looking at a map."
+		},
+		{
+			"who": "narrator",
+			"sk": "Её поезд уходит через час.",
+			"en": "Her train leaves in an hour."
+		},
+		{
+			"who": "narrator",
+			"sk": "Но где вокзал? На карте она его не видит.",
+			"en": "But where is the station? She can't see it on the map."
+		},
+		{
+			"who": "Света",
+			"p": true,
+			"sk": "Извините, где вокзал?",
+			"en": "Excuse me, where is the station?"
+		},
+		{
+			"who": "Николай",
+			"sk": "Вокзал? Это далеко.",
+			"en": "The station? That's far."
+		},
+		{
+			"who": "Света",
+			"sk": "А пешком можно?",
+			"en": "And can I walk there?"
+		},
+		{
+			"who": "Николай",
+			"sk": "Можно, но пешком это полчаса.",
+			"en": "You can, but on foot it's half an hour."
+		},
+		{
+			"who": "Света",
+			"sk": "Это долго. Мой поезд уходит через час.",
+			"en": "That's too long. My train leaves in an hour."
+		},
+		{
+			"who": "Николай",
+			"sk": "Тогда поезжайте на автобусе. Остановка недалеко.",
+			"en": "Then go by bus. The stop isn't far."
+		},
+		{
+			"who": "Света",
+			"sk": "А где остановка?",
+			"en": "And where is the stop?"
+		},
+		{
+			"who": "Николай",
+			"sk": "Идите прямо, а потом направо. Остановка в парке.",
+			"en": "Go straight and then right. The stop is in the park."
+		},
+		{
+			"who": "Николай",
+			"sk": "Оттуда автобус идёт прямо на вокзал.",
+			"en": "From there a bus goes straight to the station."
+		},
+		{
+			"who": "Света",
+			"sk": "Спасибо! А где купить билет?",
+			"en": "Thank you! And where do I buy a ticket?"
+		},
+		{
+			"who": "Николай",
+			"sk": "Билет можно купить в автобусе.",
+			"en": "You can buy a ticket on the bus."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Света идёт прямо, а потом направо.",
+			"en": "Sveta goes straight and then right."
+		},
+		{
+			"who": "narrator",
+			"sk": "Света в парке, на остановке. Но автобуса там нет.",
+			"en": "Sveta is in the park, at the stop. But there's no bus there."
+		},
+		{
+			"who": "narrator",
+			"sk": "Там стоит только маленький мальчик.",
+			"en": "Only a little boy is standing there."
+		},
+		{
+			"who": "Света",
+			"sk": "Привет! Когда будет автобус на вокзал?",
+			"en": "Hi! When is the bus to the station?"
+		},
+		{
+			"who": "Ваня",
+			"sk": "Сейчас. Смотрите, вот он!",
+			"en": "Now. Look, here it comes!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Света садится в автобус и покупает билет.",
+			"en": "Sveta gets on the bus and buys a ticket."
+		},
+		{
+			"who": "narrator",
+			"sk": "Автобус едет по мосту, а потом через центр.",
+			"en": "The bus goes over the bridge and then through downtown."
+		},
+		{
+			"who": "narrator",
+			"sk": "Через двадцать минут Света на вокзале.",
+			"en": "Twenty minutes later Sveta is at the station."
+		},
+		{
+			"who": "narrator",
+			"sk": "Её поезд уже там.",
+			"en": "Her train is already there."
+		},
+		{
+			"who": "Света",
+			"sk": "Отлично! У меня ещё есть время на кофе.",
+			"en": "Great! I still have time for a coffee."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "остановка",
+			"en": "stop (bus or tram stop)"
+		},
+		{
+			"sk": "пешком",
+			"en": "on foot"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Что ищет Света?",
+			"options": [
+				"Вокзал",
+				"Больницу",
+				"Гостиницу"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Где остановка?",
+			"options": [
+				"На вокзале",
+				"В парке",
+				"На мосту"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Почему Света не идёт на вокзал пешком?",
+			"options": [
+				"У неё нет билета",
+				"У неё нет карты",
+				"Вокзал далеко"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Sveta cannot find the station on her map. A man tells her it is far and sends her to the bus stop in the park, and she reaches her train with time left for a coffee.",
+	"glosses": {
+		"света": {
+			"lemma": "Света",
+			"gloss": "Sveta (a name)"
+		},
+		"казани": {
+			"lemma": "Казань",
+			"gloss": "Kazan (a city)"
+		},
+		"а": {
+			"lemma": "а",
+			"gloss": "and, but"
+		},
+		"он": {
+			"lemma": "он",
+			"gloss": "he; it"
+		},
+		"она": {
+			"lemma": "она",
+			"gloss": "she; it"
+		},
+		"меня": {
+			"lemma": "я",
+			"gloss": "me"
+		},
+		"её": {
+			"lemma": "она",
+			"gloss": "her; it"
+		},
+		"его": {
+			"lemma": "он",
+			"gloss": "him; it"
+		},
+		"стоит": {
+			"lemma": "стоять",
+			"gloss": "to stand"
+		},
+		"у": {
+			"lemma": "у",
+			"gloss": "at, by (у меня есть: I have)"
+		},
+		"есть": {
+			"lemma": "есть",
+			"gloss": "there is (у меня есть: I have)"
+		},
+		"вокзал": {
+			"lemma": "вокзал",
+			"gloss": "train station"
+		},
+		"вокзале": {
+			"lemma": "вокзал",
+			"gloss": "train station"
+		},
+		"отлично": {
+			"lemma": "отлично",
+			"gloss": "great, excellent"
+		},
+		"раз": {
+			"lemma": "раз",
+			"gloss": "time (первый раз: for the first time)"
+		},
+		"по": {
+			"lemma": "по",
+			"gloss": "along, over (по мосту: over the bridge)"
+		},
+		"покупает": {
+			"lemma": "покупать",
+			"gloss": "to buy"
+		},
+		"центр": {
+			"lemma": "центр",
+			"gloss": "center, downtown"
+		},
+		"вот": {
+			"lemma": "вот",
+			"gloss": "here (вот он: here it is)"
+		}
+	}
+}

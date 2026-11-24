@@ -1,0 +1,309 @@
+{
+	"title": "Kes on kes?",
+	"topic": "Rasmus goes to Sunday lunch with his girlfriend Kadri's family, takes her brother for her father and makes friends with her little nephew",
+	"cover": "family",
+	"cast": [
+		{
+			"name": "Rasmus",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Kadri",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Peeter",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Ema",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Oskar",
+			"gender": "m",
+			"age": "child"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "On pühapäev. Rasmus ja Kadri lähevad Kadri vanemate juurde lõunale.",
+			"en": "It is Sunday. Rasmus and Kadri are going to Kadri's parents' for lunch."
+		},
+		{
+			"who": "Rasmus",
+			"sk": "Kadri, kes seal on?",
+			"en": "Kadri, who will be there?"
+		},
+		{
+			"who": "narrator",
+			"sk": "Kadri näitab talle pilti.",
+			"en": "Kadri shows him a photo."
+		},
+		{
+			"who": "Kadri",
+			"sk": "Vaata. See on minu isa ja see on minu ema.",
+			"en": "Look. This is my father and this is my mother."
+		},
+		{
+			"who": "Kadri",
+			"sk": "See mees on minu vend Peeter ja see on Peetri naine.",
+			"en": "This man is my brother Peeter and this is Peeter's wife."
+		},
+		{
+			"who": "Kadri",
+			"sk": "Ja see väike poiss on nende poeg Oskar.",
+			"en": "And this little boy is their son Oskar."
+		},
+		{
+			"who": "Rasmus",
+			"sk": "Sinu isa ja sinu vend on väga sarnased.",
+			"en": "Your father and your brother look very alike."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Kadri helistab uksekella ja üks mees teeb ukse lahti.",
+			"en": "Kadri rings the doorbell, and a man opens the door."
+		},
+		{
+			"who": "Rasmus",
+			"sk": "Tere päevast, härra Tamm! Väga meeldiv.",
+			"en": "Good afternoon, Mr. Tamm! Very nice to meet you."
+		},
+		{
+			"who": "Peeter",
+			"sk": "Ma ei ole Kadri isa. Ma olen Peeter, Kadri vend!",
+			"en": "I'm not Kadri's father. I'm Peeter, Kadri's brother!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Kõik naeravad.",
+			"en": "Everyone laughs."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Köögis teeb Kadri ema süüa ja Kadri isa istub laua taga.",
+			"en": "In the kitchen Kadri's mother is cooking and Kadri's father is sitting at the table."
+		},
+		{
+			"who": "Ema",
+			"sk": "Tere tulemast meie koju, Rasmus! Kas sul on vend või õde?",
+			"en": "Welcome to our home, Rasmus! Do you have a brother or a sister?"
+		},
+		{
+			"who": "Rasmus",
+			"sk": "Mul on üks õde. Venda mul ei ole.",
+			"en": "I have one sister. I don't have a brother."
+		},
+		{
+			"who": "Ema",
+			"sk": "Ja kus sinu pere elab?",
+			"en": "And where does your family live?"
+		},
+		{
+			"who": "Rasmus",
+			"sk": "Minu ema, isa ja õde elavad Tartus.",
+			"en": "My mother, father and sister live in Tartu."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Pärast lõunat viib väike Oskar Rasmuse oma tuppa.",
+			"en": "After lunch little Oskar takes Rasmus to his room."
+		},
+		{
+			"who": "Oskar",
+			"sk": "See on minu tuba. Siin ma magan.",
+			"en": "This is my room. I sleep here."
+		},
+		{
+			"who": "Oskar",
+			"sk": "Rasmus, kas Kadri meeldib sulle?",
+			"en": "Rasmus, do you like Kadri?"
+		},
+		{
+			"who": "Rasmus",
+			"sk": "Jah, ta meeldib mulle väga.",
+			"en": "Yes, I like her very much."
+		},
+		{
+			"who": "Oskar",
+			"sk": "Mulle ka. Kadri on minu tädi!",
+			"en": "Me too. Kadri is my aunt!"
+		},
+		{
+			"who": "Rasmus",
+			"sk": "Siis oled sa nüüd ka minu sõber.",
+			"en": "Then now you're my friend too."
+		},
+		{
+			"who": "narrator",
+			"sk": "Oskar naerab ja näitab Rasmusele kõiki oma mänguautosid.",
+			"en": "Oskar laughs and shows Rasmus all his toy cars."
+		}
+	],
+	"newWords": [],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kes teeb ukse lahti?",
+			"options": [
+				"Kadri isa",
+				"Peeter",
+				"Vanaema"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Kus elavad Rasmuse ema ja isa?",
+			"options": [
+				"Tallinnas",
+				"Pärnus",
+				"Tartus"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Kelle poeg on Oskar?",
+			"options": [
+				"Peetri",
+				"Kadri",
+				"Rasmuse"
+			],
+			"answer": 0
+		}
+	],
+	"recap": "Before Sunday lunch Kadri shows Rasmus a photo of her family. At the door he greets her brother Peeter as her father, which makes everyone laugh, and after lunch he makes friends with Peeter's little son Oskar.",
+	"glosses": {
+		"talle": {
+			"lemma": "tema",
+			"gloss": "he, she (talle: to him, to her)"
+		},
+		"minu": {
+			"lemma": "mina",
+			"gloss": "I (minu: my)"
+		},
+		"nende": {
+			"lemma": "nemad",
+			"gloss": "they (nende: their)"
+		},
+		"sinu": {
+			"lemma": "sina",
+			"gloss": "you (sinu: your)"
+		},
+		"meie": {
+			"lemma": "meie",
+			"gloss": "we (meie: our)"
+		},
+		"sul": {
+			"lemma": "sina",
+			"gloss": "you (sul on: you have)"
+		},
+		"mul": {
+			"lemma": "mina",
+			"gloss": "I (mul on: I have)"
+		},
+		"sulle": {
+			"lemma": "sina",
+			"gloss": "you (sulle: to you)"
+		},
+		"mulle": {
+			"lemma": "mina",
+			"gloss": "I (mulle: to me)"
+		},
+		"ta": {
+			"lemma": "tema",
+			"gloss": "he, she, it"
+		},
+		"sa": {
+			"lemma": "sina",
+			"gloss": "you"
+		},
+		"rasmus": {
+			"lemma": "Rasmus",
+			"gloss": "Rasmus (a name)"
+		},
+		"rasmuse": {
+			"lemma": "Rasmus",
+			"gloss": "Rasmus (a name)"
+		},
+		"rasmusele": {
+			"lemma": "Rasmus",
+			"gloss": "Rasmus (a name; Rasmusele: to Rasmus)"
+		},
+		"kadri": {
+			"lemma": "Kadri",
+			"gloss": "Kadri (a name)"
+		},
+		"peeter": {
+			"lemma": "Peeter",
+			"gloss": "Peeter (a name)"
+		},
+		"peetri": {
+			"lemma": "Peeter",
+			"gloss": "Peeter (a name; Peetri: Peeter's)"
+		},
+		"oskar": {
+			"lemma": "Oskar",
+			"gloss": "Oskar (a name)"
+		},
+		"sarnased": {
+			"lemma": "sarnane",
+			"gloss": "alike, similar"
+		},
+		"tamm": {
+			"lemma": "Tamm",
+			"gloss": "Tamm (a family name)"
+		},
+		"meeldiv": {
+			"lemma": "meeldiv",
+			"gloss": "pleasant (väga meeldiv: nice to meet you)"
+		},
+		"taga": {
+			"lemma": "taga",
+			"gloss": "behind (laua taga: at the table)"
+		},
+		"tartus": {
+			"lemma": "Tartu",
+			"gloss": "Tartu (a city)"
+		},
+		"mänguautosid": {
+			"lemma": "mänguauto",
+			"gloss": "toy car"
+		},
+		"teeb": {
+			"lemma": "tegema",
+			"gloss": "to do, to make (teeb lahti: opens; teeb süüa: cooks)"
+		},
+		"tulemast": {
+			"lemma": "tulema",
+			"gloss": "to come (tere tulemast: welcome)"
+		},
+		"päevast": {
+			"lemma": "päev",
+			"gloss": "day (tere päevast: good afternoon)"
+		},
+		"lõunale": {
+			"lemma": "lõuna",
+			"gloss": "lunch"
+		},
+		"lõunat": {
+			"lemma": "lõuna",
+			"gloss": "lunch"
+		},
+		"oma": {
+			"lemma": "oma",
+			"gloss": "own (his, her own)"
+		}
+	}
+}
