@@ -31,10 +31,14 @@ export function WordIntro({
 	const picture = pictureFor(plan.unit, word.lemma);
 	const meta = word.gender?.replace(/-/g, " ") ?? "";
 
-	useEffect(() => {
+	const sentence = word.example ? `${word.example.before}${word.example.word}${word.example.after}` : "";
+	const say = () => {
 		if (!lang) return;
-		void speak(word.lemma, lang).catch(() => {});
-	}, [lang, word.lemma]);
+		void speak(word.lemma, lang)
+			.then(() => (sentence ? speak(sentence, lang) : undefined))
+			.catch(() => {});
+	};
+	useEffect(say, [lang, word.lemma, sentence]);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -81,7 +85,7 @@ export function WordIntro({
 							</p>
 							<button
 								type="button"
-								onClick={() => lang && void speak(word.lemma, lang).catch(() => {})}
+								onClick={say}
 								aria-label={`Play ${word.lemma}`}
 								className="lanna-press inline-flex size-10 items-center justify-center rounded-full bg-well text-ink-2 hover:bg-well-2"
 							>
@@ -93,6 +97,18 @@ export function WordIntro({
 							{picture && meta ? " · " : ""}
 							{meta}
 						</p>
+						{word.example && (
+							<div className="mt-5 max-w-md text-center" data-testid="meet-sentence">
+								<p className="font-prose text-[19px] leading-snug text-foreground" lang={lang?.code}>
+									{word.example.before}
+									<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2">
+										{word.example.word}
+									</b>
+									{word.example.after}
+								</p>
+								<p className="mt-1 font-prose text-[15px] text-ink-3">{word.example.en}</p>
+							</div>
+						)}
 					</figure>
 					<div className="mt-6 flex justify-center">
 						<StageDots step={step} count={words.length} onPick={setStep} />

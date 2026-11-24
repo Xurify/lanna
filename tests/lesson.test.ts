@@ -381,3 +381,17 @@ test("a lesson weighted to a weak gender also asks the easy sentences first", ()
 		assert.equal(hard.length, 0, `${seed}: ${hard.map((i) => i.sentence).join(" | ")}`);
 	}
 });
+
+test("each new word gets an intro sentence the lesson does not ask", () => {
+	for (const seed of [1, 2, 3]) {
+		const plan = buildLesson(entries, "lx-food", { seed });
+		const asked = new Set(plan.items.map((i) => i.sentence));
+		const intro = plan.introductions ?? {};
+		assert.ok(Object.keys(intro).length >= (plan.unmet?.length ?? 0) - 1, JSON.stringify(Object.keys(intro)));
+		for (const [slug, ex] of Object.entries(intro)) {
+			assert.ok(plan.unmet!.includes(slug), slug);
+			assert.ok(!asked.has(`${ex.before}${ex.word}${ex.after}`), `${slug}: ${ex.before}${ex.word}${ex.after}`);
+			assert.ok(ex.word.trim() && ex.en.trim());
+		}
+	}
+});

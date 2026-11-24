@@ -111,8 +111,8 @@ The 24 body, transport and clothes scenes (2026-11-23) were reviewed in up to th
 | mouth (lips) | ústa | 4/4 | shipped |
 | heart | srdce, сердце, süda | 4/5 | shipped |
 | tooth | zub, зуб, hammas | 5/5 | shipped |
-| face (front-on, round 3) | лицо, nägu | 5/5 | shipped |
-| back (from behind, round 3) | спина, selg | 4/5 | shipped |
+| face (front-on, round 2) | лицо, nägu | 5/5 | shipped |
+| back (from behind, round 2) | спина, selg | 4/5 | shipped |
 | belly (front, round 3) | живот, kõht | 4/5 | shipped |
 | car, bicycle, plane, train | auto/машина, bicykel, lietadlo/самолёт/lennuk, vlak/поезд/rong | 5/5 | shipped |
 | tram (wire and pantograph) | električka | 4/5 | shipped |
@@ -127,11 +127,11 @@ The 24 body, transport and clothes scenes (2026-11-23) were reviewed in up to th
 | head | hlava, голова | 3/5 | dropped |
 | leg | noha, нога, jalg | 2/5 | dropped |
 
-What the rounds changed: the face became a front-on face filling the frame (it read as a head or a person); the back became a figure seen from behind with the patch between shoulders and waist (it read as bottom or hip); the jacket became an open, hip-length zip jacket (it read as a sweater, close to the coat). The teal patch on a part of the body was too faint at card size, so it became twice as strong. The leg failed in three forms (a figure with one leg marked read as foot or person; two legs as trousers; one leg from hip to foot as a sock, boot or scarf), and the head kept reading as face, person or hair.
+What the rounds changed: the face became a front-on face filling the frame (it read as a head or a person); the back became a figure seen from behind with the patch between shoulders and waist (it read as bottom or hip); the jacket became an open, hip-length zip jacket (it read as a sweater, close to the coat). The teal patch on a part of the body was too faint at card size, so on the back and belly it became twice as strong. The leg failed in three forms (a figure with one leg marked read as foot or person; two legs as trousers; one leg from hip to foot as a sock, boot or scarf), and the head kept reading as face, person or hair.
 
 - Dropped, so they keep the English: head (hlava, голова; Estonian pea has no sentence meaning head) and leg (noha, нога, jalg).
 - Not drawn: telo (body), горло and kurk (throat), the illness words, stanica and letisko (station, airport), oblečenie and одежда (clothes in general).
-- A hand picture shows only when the sentence says hand(s), never arm; back only after a possessive or article (never "come back"); heart never in "by heart" or "at heart"; face never as a verb. In the lexicon sentences this keeps 40 of 47 Slovak body sentences, 31 of 35 Russian and 25 of 32 Estonian (käsi in "Ask Tom." is the verb käskima), all transport sentences but one Russian idiom, and all clothes sentences but two where šaty means clothes.
+- A hand picture shows only when the sentence says hand(s), never arm; back only after a possessive or article (never "come back" or "he's back"); heart never in "by heart" or "at heart"; face never as a verb. In the lexicon sentences this keeps 40 of 47 Slovak body sentences, 31 of 35 Russian and 25 of 32 Estonian (käsi in "Ask Tom." is the verb käskima), all transport sentences but one Russian idiom, and all clothes sentences but two where šaty means clothes.
 
 ## Not verified
 
