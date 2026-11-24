@@ -29,6 +29,7 @@ import {
 	xpLevel,
 } from "../src/core/lesson.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
+import { pictureFor } from "../src/core/word-pictures.ts";
 
 const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] };
 const entries = lexicon.words;
@@ -394,4 +395,16 @@ test("each new word gets an intro sentence the lesson does not ask", () => {
 			assert.ok(ex.word.trim() && ex.en.trim());
 		}
 	}
+});
+
+test("a pictured word's intro sentence names the thing its picture draws", () => {
+	for (const unit of ["lx-home", "lx-food", "lx-weather"] as const)
+		for (const seed of [1, 2]) {
+			const plan = buildLesson(entries, unit, { seed });
+			for (const [slug, ex] of Object.entries(plan.introductions ?? {})) {
+				const lemma = entries.find((e) => e.slug === slug)!;
+				const word = lemma.lemma ?? lemma.sk ?? "";
+				if (pictureFor(unit, word)) assert.ok(pictureFor(unit, word, ex.en), `${unit} ${slug}: ${ex.en}`);
+			}
+		}
 });

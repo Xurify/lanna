@@ -22,6 +22,7 @@ import { cellsOf, numberByEnding, numberIn, type CaseName, type Declension } fro
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
 import { cardsWithoutOtherSentences, wordCardOf, type WordCard, type WordCardExample } from "./word-card.ts";
+import { pictureFor } from "./word-pictures.ts";
 import { verbPatterns, type VerbPattern } from "./verb-pattern.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
 import {
@@ -1775,7 +1776,7 @@ export function buildLesson(
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
-	const introductions = unmet ? introSentences(main.top, unmet, new Set(items.map((i) => i.id)), cost) : {};
+	const introductions = unmet ? introSentences(unit, main.top, unmet, new Set(items.map((i) => i.id)), cost) : {};
 	return {
 		unit,
 		items: cardsWithoutOtherSentences(items),
@@ -1788,16 +1789,24 @@ export function buildLesson(
 }
 
 function introSentences(
+	unit: UnitId,
 	candidates: readonly Candidate[],
 	slugs: readonly string[],
 	asked: ReadonlySet<string>,
 	cost: (c: Candidate) => number,
 ): Record<string, WordCardExample> {
+	const fits = (c: Candidate) => {
+		const en = c.entry.examples[c.index]!.en;
+		const lemma = entryLemma(c.entry);
+		if (pictureFor(unit, lemma) && !pictureFor(unit, lemma, en)) return false;
+		return translationNamesGloss(c.entry.en, en);
+	};
 	const out: Record<string, WordCardExample> = {};
 	for (const slug of slugs) {
 		const own = candidates
 			.filter((c) => c.entry.slug === slug && !asked.has(`${c.entry.slug}#${c.index}`))
 			.filter((c) => exampleText(c.entry.examples[c.index]!).split(/\s+/).length <= 8)
+			.filter(fits)
 			.sort((a, b) => cost(a) - cost(b));
 		const pick = own[0];
 		if (!pick) continue;
