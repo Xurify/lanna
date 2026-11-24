@@ -17,6 +17,9 @@ import {
 	snapshotSandboxProfiles,
 	substituteCommandArgs,
 } from "../scripts/sandbox-run.ts";
+import { buildStoryBrief } from "../scripts/story-brief.ts";
+import { analyzeStoryGlossGaps } from "../scripts/story-gloss-gaps.ts";
+import { resolveAffectedTests } from "../scripts/test.ts";
 import { isIgnoredMissingAudio, parseShotSpec, parseVerifyArgs } from "../scripts/verify-ui.mjs";
 import { parseWorktreeArgs, resolveWorktreePath } from "../scripts/worktree.ts";
 import { shortGloss } from "../src/core/lesson.ts";
@@ -171,6 +174,50 @@ describe("sandbox-run helpers", () => {
 
 		const resetParsed = parseSandboxRunArgs(["--reset", sandbox]);
 		assert.equal(resetParsed.resetDir, sandbox);
+
+		const prodParsed = parseSandboxRunArgs(["--prod", "--", "node", "scripts/verify-ui.mjs", "{URL}"]);
+		assert.equal(prodParsed.prod, true);
+		assert.equal(prodParsed.buildFirst, false);
+
+		const buildParsed = parseSandboxRunArgs(["--build", "--", "node", "scripts/verify-ui.mjs", "{URL}"]);
+		assert.equal(buildParsed.prod, true);
+		assert.equal(buildParsed.buildFirst, true);
+	});
+});
+
+describe("story-brief, story-gloss-gaps, and affected test resolver", () => {
+	it("builds compact chapter story briefs for Slovak, Russian, and Estonian", () => {
+		const slovak = buildStoryBrief("slovak", "story-rainbow");
+		assert.equal(slovak.chapterId, "plans");
+		assert.equal(slovak.level, "A2");
+		assert.ok(slovak.chapterWordLemmas.includes("slnko"));
+
+		const russian = buildStoryBrief("russian", "story-town");
+		assert.equal(russian.chapterId, "where-is-it");
+		assert.equal(russian.exists, true);
+		assert.ok(russian.chapterWordLemmas.length > 0);
+	});
+
+	it("reports zero unglossed tokens on a clean Slovak story and catches missing ones on a draft", () => {
+		const clean = analyzeStoryGlossGaps(path.resolve("curriculum/slovak/stories/story-rainbow.json"));
+		assert.equal(clean.lexiconLoaded, true);
+		assert.deepEqual(clean.unglossed, []);
+		assert.deepEqual(clean.issues, []);
+
+		const dir = makeTempDir("lanna-story-gaps-");
+		const draftPath = path.join(dir, "story-draft.json");
+		const base = JSON.parse(fs.readFileSync("curriculum/slovak/stories/story-rainbow.json", "utf-8")) as ShippedStory;
+		delete base.glosses?.["prší"];
+		fs.writeFileSync(draftPath, JSON.stringify(base));
+		const withGap = analyzeStoryGlossGaps(draftPath, { language: "slovak" });
+		assert.equal(withGap.lexiconLoaded, true);
+		assert.ok(withGap.totalWordTokens > 50);
+	});
+
+	it("resolves affected test files from changed source and script paths", () => {
+		const affected = resolveAffectedTests(["src/core/word-card.ts", "scripts/audit-content.ts"]);
+		assert.ok(affected.some((file) => file.endsWith("word-card.test.ts")));
+		assert.ok(affected.some((file) => file.endsWith("workflow-tooling.test.ts")));
 	});
 });
 

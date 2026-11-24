@@ -14,6 +14,8 @@ export interface SandboxRunOptions {
 	copyLanguagesFrom?: string;
 	timeoutSeconds: number;
 	keepDir: boolean;
+	prod: boolean;
+	buildFirst: boolean;
 	resetDir?: string;
 	command: string[];
 }
@@ -27,6 +29,8 @@ export function parseSandboxRunArgs(args: readonly string[], root: string = ROOT
 	let copyLanguagesFrom: string | undefined;
 	let timeoutSeconds = 90;
 	let keepDir = false;
+	let prod = false;
+	let buildFirst = false;
 	let resetDir: string | undefined;
 
 	for (let index = 0; index < flagArgs.length; index += 1) {
@@ -35,6 +39,11 @@ export function parseSandboxRunArgs(args: readonly string[], root: string = ROOT
 			seed = true;
 		} else if (arg === "--keep-dir") {
 			keepDir = true;
+		} else if (arg === "--prod") {
+			prod = true;
+		} else if (arg === "--build") {
+			prod = true;
+			buildFirst = true;
 		} else if (arg === "--reset") {
 			const next = flagArgs[index + 1];
 			if (!next || next.startsWith("--")) throw new Error("--reset requires a sandbox data directory path");
@@ -58,7 +67,7 @@ export function parseSandboxRunArgs(args: readonly string[], root: string = ROOT
 		}
 	}
 
-	return { seed, copyLanguagesFrom, timeoutSeconds, keepDir, resetDir, command };
+	return { seed, copyLanguagesFrom, timeoutSeconds, keepDir, prod, buildFirst, resetDir, command };
 }
 
 export function snapshotSandboxProfiles(sandboxDir: string, root: string = ROOT): void {
@@ -194,10 +203,19 @@ async function main(): Promise<void> {
 
 		const nextBin = createRequire(import.meta.url).resolve("next/dist/bin/next");
 		const nodeRuntime = process.versions.bun ? "node" : process.execPath;
+		if (options.buildFirst) {
+			const buildResult = spawnSync(nodeRuntime, [nextBin, "build"], {
+				cwd: ROOT,
+				env: plan.env as NodeJS.ProcessEnv,
+				stdio: "inherit",
+			});
+			if (buildResult.status !== 0) process.exit(buildResult.status ?? 1);
+		}
+		const nextSubcommand = options.prod ? "start" : "dev";
 		let exited = false;
 		let outputTail = "";
 
-		const server = spawn(nodeRuntime, [nextBin, "dev", "-H", "127.0.0.1", "-p", String(plan.port)], {
+		const server = spawn(nodeRuntime, [nextBin, nextSubcommand, "-H", "127.0.0.1", "-p", String(plan.port)], {
 			cwd: ROOT,
 			env: plan.env as NodeJS.ProcessEnv,
 			stdio: ["ignore", "pipe", "pipe"],
