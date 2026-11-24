@@ -7,12 +7,20 @@ import { KBD, PRIMARY, QUIET } from "@/components/ui/learn-buttons";
 import { Input } from "@/components/ui/input";
 import { useActiveLanguage } from "@/components/speech";
 import { sfx } from "@/components/lesson/sound";
-import { compareAnswer, tableBlanks, unitInfo, type AnswerVerdict, type UnitId, type VerbPattern } from "@/src/core";
+import {
+	compareAnswer,
+	givesAway,
+	tableBlanks,
+	unitInfo,
+	type AnswerVerdict,
+	type UnitId,
+	type VerbPattern,
+} from "@/src/core";
 
 export function TableRound({ unit, pattern, onDone }: { unit: UnitId; pattern: VerbPattern; onDone: () => void }) {
 	const lang = useActiveLanguage();
 	const tag = lang?.tag ?? "sk-SK";
-	const blanks = tableBlanks(pattern, unit === "past");
+	const blanks = tableBlanks(pattern);
 	const [given, setGiven] = useState<string[]>(() => blanks.map(() => ""));
 	const [verdicts, setVerdicts] = useState<AnswerVerdict[] | null>(null);
 	const first = useRef<HTMLInputElement>(null);
@@ -24,7 +32,10 @@ export function TableRound({ unit, pattern, onDone }: { unit: UnitId; pattern: V
 
 	const check = () => {
 		if (verdicts) return onDone();
-		const out = blanks.map((b, i) => compareAnswer(b.answer, given[i] ?? "", tag));
+		const out = blanks.map((b, i) => {
+			const tail = pattern.rows[b.row]?.forms[b.form]?.tail;
+			return compareAnswer(b.answer, given[i] ?? "", tag, tail ? [`${b.answer} ${tail}`] : []);
+		});
 		setVerdicts(out);
 		if (out.every((v) => v === "exact")) sfx.right(3);
 		else if (out.some((v) => v === "wrong")) sfx.wrong();
@@ -71,46 +82,49 @@ export function TableRound({ unit, pattern, onDone }: { unit: UnitId; pattern: V
 								>
 									{row.forms.map((f, i) => {
 										const at = blankAt(r, i);
-										const sep = i < row.forms.length - 1 && <span className="text-ink-4">·</span>;
-										if (at < 0)
-											return (
-												<span key={i} className="inline-flex items-center gap-1.5">
-													<span className="whitespace-nowrap">
-														{f.stem}
-														<span className="font-semibold text-teal-2">{f.ending}</span>
-														{f.tail && <span className="text-ink-2"> {f.tail}</span>}
-													</span>
-													{sep}
-												</span>
-											);
-										const verdict = verdicts?.[at];
+										const verdict = at >= 0 ? verdicts?.[at] : undefined;
+										const tail = f.tail && <span className="text-ink-2"> {f.tail}</span>;
+										const shown = (ending: string, testId?: string) => (
+											<span className="whitespace-nowrap" data-testid={testId}>
+												{f.stem}
+												<span className="font-semibold text-teal-2">{ending}</span>
+												{tail}
+											</span>
+										);
 										return (
 											<span key={i} className="inline-flex items-center gap-1.5">
-												{verdict && verdict !== "exact" ? (
+												{i > 0 && <span className="text-ink-4">·</span>}
+												{at < 0 ? (
+													!verdicts && givesAway(pattern, blanks, r, i) ? (
+														shown("…", "table-hidden")
+													) : (
+														shown(f.ending)
+													)
+												) : verdict === "exact" ? (
+													shown(f.ending, "table-right")
+												) : verdict ? (
 													<span className="whitespace-nowrap" data-testid="table-correction">
 														<s className={verdict === "wrong" ? "text-miss" : "text-ink-3"}>{given[at] || "–"}</s>{" "}
 														<b className="font-semibold text-teal-2">{blanks[at]!.answer}</b>
+														{tail}
 													</span>
 												) : (
-													<Input
-														ref={at === 0 ? first : undefined}
-														value={given[at]}
-														readOnly={!!verdicts}
-														aria-label={`${pattern.verb}, ${row.en}`}
-														autoComplete="off"
-														autoCapitalize="off"
-														spellCheck={false}
-														lang={lang?.code}
-														data-testid="table-input"
-														onChange={(e) => setGiven((g) => g.map((v, j) => (j === at ? e.target.value : v)))}
-														className={cn(
-															"h-11 w-28 px-3 font-prose text-[18px] sm:w-36 md:text-[18px]",
-															verdict === "exact" && "bg-teal-wash text-teal-2 ring-teal",
-														)}
-													/>
+													<>
+														<Input
+															ref={at === 0 ? first : undefined}
+															value={given[at]}
+															aria-label={`${pattern.verb}, ${f.en ?? row.en}`}
+															autoComplete="off"
+															autoCapitalize="off"
+															spellCheck={false}
+															lang={lang?.code}
+															data-testid="table-input"
+															onChange={(e) => setGiven((g) => g.map((v, j) => (j === at ? e.target.value : v)))}
+															className="h-11 w-28 px-3 font-prose text-[18px] sm:w-36 md:text-[18px]"
+														/>
+														{f.tail && <span className="text-ink-2">{f.tail}</span>}
+													</>
 												)}
-												{f.tail && <span className="text-ink-2">{f.tail}</span>}
-												{sep}
 											</span>
 										);
 									})}
