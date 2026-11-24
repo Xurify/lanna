@@ -107,6 +107,7 @@ import {
 	type CheerKey,
 	helpSteps,
 	lessonWords,
+	MIN_SEND_MS,
 	PATTERN_VERBS,
 	pictureFor,
 	translationAroundPicture,
@@ -426,11 +427,12 @@ export function LessonPlayer({
 	const done = !!score;
 
 	const finish = useCallback(
-		(all: Rep[]) => {
+		(all: Rep[], matchFollows = false) => {
 			if (finishing.current || !plan) return;
 			finishing.current = true;
-			sfx.done();
+			if (!matchFollows) sfx.done();
 			const spentMs = activeTime.finish();
+			if (matchFollows) activeTime.restart();
 			setPracticeMs(spentMs);
 			setScore(
 				lessonScore(
@@ -604,9 +606,23 @@ export function LessonPlayer({
 		}
 		if (index + 1 < nextTotal) setIndex((i) => i + 1);
 		else {
-			void finish(all);
-			if (words.length >= MATCH_MIN) setMatching(all);
+			const matchFollows = words.length >= MATCH_MIN;
+			void finish(all, matchFollows);
+			if (matchFollows) setMatching(all);
 		}
+	};
+
+	const endMatch = () => {
+		sfx.done();
+		const ms = activeTime.finish();
+		setPracticeMs((before) => (before ?? 0) + ms);
+		if (ms >= MIN_SEND_MS)
+			void fetch("/api/progress/time", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ activity: "lesson", ms, tz: new Date().getTimezoneOffset() }),
+			}).catch(() => {});
+		setMatching(null);
 	};
 
 	const why = async () => {
@@ -741,7 +757,7 @@ export function LessonPlayer({
 					</div>
 				</div>
 				<div className="flex flex-1 flex-col overflow-y-auto pb-8 pt-[4vh]">
-					<MatchRound unit={plan.unit} words={words} seed={matching.length} onDone={() => setMatching(null)} />
+					<MatchRound unit={plan.unit} words={words} seed={matching.length} onDone={endMatch} />
 				</div>
 			</Frame>
 		);

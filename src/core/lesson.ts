@@ -763,6 +763,21 @@ function inCluster(
 	return exampleText(example).split(/\s+/).length <= 9;
 }
 
+const ownersOfForm = new WeakMap<readonly LexiconEntry[], Map<string, number>>();
+
+function otherWordsSense(entries: readonly LexiconEntry[], entry: LexiconEntry, ex: LexiconExample): boolean {
+	let owners = ownersOfForm.get(entries);
+	if (!owners) {
+		owners = new Map();
+		for (const e of entries)
+			for (const form of new Set([entryLemma(e), ...(e.forms ?? [])].map((f) => f.toLowerCase())))
+				owners.set(form, (owners.get(form) ?? 0) + 1);
+		ownersOfForm.set(entries, owners);
+	}
+	const answer = ex.cloze!.answer.toLowerCase();
+	return (owners.get(answer) ?? 0) > 1 && !translationNamesGloss(entry.en, ex.en);
+}
+
 // ─── Items ──────────────────────────────────────────────────────────────────
 
 /** meaning: the whole sentence, spoken, with the target form marked; the
@@ -995,7 +1010,7 @@ export function candidatesFor(entries: readonly LexiconEntry[], unit: UnitId): C
 			if (unit === "words") {
 				if (isFirstWord(entry, ex)) out.push({ entry, index, unit });
 			} else if (lemmas) {
-				if (inCluster(lemmas, entry, ex)) out.push({ entry, index, unit });
+				if (inCluster(lemmas, entry, ex) && !otherWordsSense(entries, entry, ex)) out.push({ entry, index, unit });
 			} else if (info.band) {
 				if (inBand(entry, info.band, ex)) out.push({ entry, index, unit });
 			} else if (matcher) {
@@ -1348,6 +1363,170 @@ export function shortGloss(en: string): string {
 	return (en.split(";")[0] ?? en).replace(/\s*\((im)?perfective\)\s*$/, "").trim();
 }
 
+const glossWords = (sense: string) =>
+	withoutNotes(sense)
+		.toLowerCase()
+		.split(/[^\p{L}]+/u)
+		.filter((w) => w.length >= 2 && !GLOSS_FILLER.has(w));
+
+const GLOSS_FILLER = new Set([
+	"to",
+	"of",
+	"in",
+	"on",
+	"at",
+	"an",
+	"be",
+	"or",
+	"is",
+	"as",
+	"by",
+	"the",
+	"and",
+	"for",
+	"with",
+	"something",
+	"someone",
+	"re",
+	"first",
+	"second",
+	"third",
+	"person",
+	"singular",
+	"plural",
+	"masculine",
+	"feminine",
+	"neuter",
+	"nominative",
+	"accusative",
+	"genitive",
+	"dative",
+	"instrumental",
+	"locative",
+	"prepositional",
+	"pronoun",
+	"personal",
+	"subject",
+	"object",
+	"form",
+	"short",
+	"used",
+	"unstressed",
+	"stressed",
+	"position",
+	"informal",
+	"formal",
+	"polite",
+	"case",
+]);
+
+const PRONOUN_FORMS: Readonly<Record<string, readonly string[]>> = {
+	he: ["him", "his"],
+	she: ["her", "hers"],
+	it: ["its"],
+	they: ["them", "their", "theirs"],
+	we: ["us", "our", "ours"],
+	you: ["your", "yours"],
+};
+
+const matchedStem = (w: string, said: string): number => {
+	const stems = [
+		w,
+		...(w.length >= 4 ? [w.slice(0, -1)] : []),
+		...(w.length >= 6 && w.endsWith("ly") ? [w.slice(0, -2)] : []),
+	].join("|");
+	const hit = new RegExp(`(?<!\\p{L})(${stems})(?:s|es|d|ed|ing|ies)?(?!\\p{L})`, "u").exec(said);
+	return hit ? hit[1]!.length : 0;
+};
+
+const PRONOUNS = new Set(["i", "you", "he", "she", "it", "we", "they", "thou", "me", "him", "her", "us", "them"]);
+
+const telling = (sense: string) => {
+	const words = glossWords(sense);
+	const content = words.filter((w) => !PRONOUNS.has(w));
+	return content.length ? content : words;
+};
+
+const matchedLength = (words: readonly string[], said: string) =>
+	Math.max(
+		0,
+		...words.map((w) => Math.max(matchedStem(w, said), ...(PRONOUN_FORMS[w] ?? []).map((f) => matchedStem(f, said)))),
+	);
+
+const namesSense = (sense: string, translation: string) =>
+	matchedLength(glossWords(sense), translation.toLowerCase()) > 0;
+
+function withoutNotes(sense: string): string {
+	let depth = 0;
+	let out = "";
+	for (const ch of sense) {
+		if (ch === "(" || ch === "[") depth++;
+		else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
+		else if (depth === 0) out += ch;
+	}
+	return out
+		.replace(/\s+/g, " ")
+		.replace(/\s+([,.])/g, "$1")
+		.trim();
+}
+
+function sensesOf(en: string): string[] {
+	const senses: string[] = [];
+	let depth = 0;
+	let start = 0;
+	for (let i = 0; i < en.length; i++) {
+		const ch = en[i];
+		if (ch === "(") depth++;
+		else if (ch === ")") depth = Math.max(0, depth - 1);
+		else if (ch === ";" && depth === 0) {
+			senses.push(en.slice(start, i));
+			start = i + 1;
+		}
+	}
+	senses.push(en.slice(start));
+	const split = depth === 0 ? senses : en.split(";");
+	return split.map((s) => s.trim()).filter(Boolean);
+}
+
+const LONG_SENSE = 40;
+
+function shownSense(sense: string): string {
+	const [before, ...rest] = sense.split(":");
+	const after = rest.join(":").trim();
+	const label = after && (glossWords(before!).length === 0 || /\bform of\b/i.test(before!));
+	const shown = withoutNotes(label ? after : before!).replace(/[.]$/, "");
+	if (shown.length <= LONG_SENSE) return shown;
+	const quoted = [...shown.matchAll(/"([^"]+)"/g)].map((m) => m[1]!);
+	if (quoted.length) return quoted.join(", ");
+	const items = shown.split(/,\s*/);
+	let kept = items[0]!;
+	for (const item of items.slice(1)) {
+		if (kept.length + 2 + item.length > LONG_SENSE) break;
+		kept += `, ${item}`;
+	}
+	return kept;
+}
+
+export function senseIn(en: string, translation: string): string {
+	const senses = sensesOf(en);
+	const said = translation.toLowerCase();
+	let best = senses[0] ?? en;
+	let bestScore = 0;
+	for (const sense of senses) {
+		const score = matchedLength(telling(sense), said);
+		if (score > bestScore) {
+			best = sense;
+			bestScore = score;
+		}
+	}
+	return shownSense(best);
+}
+
+export function translationNamesGloss(en: string, translation: string): boolean {
+	const senses = sensesOf(en).filter((s) => glossWords(s).length > 0);
+	return senses.length === 0 || senses.some((s) => namesSense(s, translation));
+}
+
 /** For a vocabulary rep: three other words of the unit (meaning distractors),
  *  so the choice is about the word, not its ending. `pool` holds the unit's
  *  dictionary forms; the word's own forms never appear. */
@@ -1393,7 +1572,7 @@ export function buildItem(c: Candidate, kind: ItemKind, pool: readonly string[],
 		answer,
 		before: exampleText(ex).slice(0, at),
 		after: exampleText(ex).slice(at + answer.length),
-		hint: vocabulary ? shortGloss(c.entry.en) : entryLemma(c.entry),
+		hint: vocabulary ? senseIn(c.entry.en, ex.en) : entryLemma(c.entry),
 		card: wordCardOf(c.entry, c.index),
 	};
 	if (c.entry.rank !== undefined) item.rank = c.entry.rank;
