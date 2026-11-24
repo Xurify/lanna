@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { buildLesson, PATTERN_VERBS, verbPatterns } from "../src/core/index.ts";
+import { buildLesson, PATTERN_VERBS, tableBlanks, verbPatterns } from "../src/core/index.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
 const entries = (JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] })
@@ -58,4 +58,14 @@ test("only a new verb lesson carries the tables", () => {
 	assert.equal(buildLesson(entries, "past", { seed: 1 }).patterns?.length, 1);
 	assert.equal(buildLesson(entries, "past", { seed: 1, stage: "practiced" }).patterns, undefined);
 	assert.equal(buildLesson(entries, "loc", { seed: 1 }).patterns, undefined);
+});
+
+test("the closing table blanks three forms the lesson drilled", () => {
+	const blanks = (unit: string) =>
+		verbPatterns(entries, unit)[0]
+			? tableBlanks(verbPatterns(entries, unit)[0]!, unit === "past").map((b) => b.answer)
+			: [];
+	assert.deepEqual(blanks("present"), ["čítaš", "čítame", "čítajú"]);
+	assert.deepEqual(blanks("present-em"), ["píšeš", "píšeme", "píšu"]);
+	assert.deepEqual(blanks("past"), ["robila", "robila", "robili"]);
 });

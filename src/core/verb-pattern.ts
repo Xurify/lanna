@@ -107,3 +107,27 @@ export function verbPatterns(entries: readonly LexiconEntry[], unit: string): Ve
 	}
 	return out;
 }
+
+export interface TableBlank {
+	row: number;
+	form: number;
+	answer: string;
+}
+
+const PRESENT_BLANKS: ReadonlyArray<[number, number]> = [
+	[1, 0],
+	[3, 0],
+	[5, 0],
+];
+const PAST_BLANKS: ReadonlyArray<[number, number]> = [
+	[0, 1],
+	[3, 0],
+	[5, 0],
+];
+
+export function tableBlanks(pattern: VerbPattern, past: boolean): TableBlank[] {
+	return (past ? PAST_BLANKS : PRESENT_BLANKS).flatMap(([row, form]) => {
+		const cell = pattern.rows[row]?.forms[form];
+		return cell ? [{ row, form, answer: cell.stem + cell.ending }] : [];
+	});
+}
