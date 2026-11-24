@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COLUMN, PracticeCard } from "@/components/task-frame";
-import { speak, useActiveLanguage } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { IntroDock, StageDots } from "@/components/lesson/lesson-intro";
 import { PictureBox } from "@/components/lesson/rep-panel";
 import { pictureFor, unitInfo, type LessonPlan, type LessonWord } from "@/src/core";
@@ -45,6 +45,7 @@ export function WordIntro({
 		say();
 		return () => {
 			playing.current++;
+			stopSpeaking();
 		};
 	}, [lang, word.lemma, sentence]);
 

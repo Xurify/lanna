@@ -78,9 +78,9 @@ export function MatchRound({
 			);
 			setPicked(null);
 			setWrong(null);
-			const ex = word.example;
-			setStatus(`${word.lemma}: ${word.gloss}. Matched.${ex ? ` ${ex.before}${ex.word}${ex.after} ${ex.en}` : ""}`);
+			setStatus(`${word.lemma}: ${word.gloss}. Matched.`);
 			setLastMatched(word);
+			const ex = word.example;
 			if (lang && ex) void speak(`${ex.before}${ex.word}${ex.after}`, lang).catch(() => {});
 		} else {
 			sfx.wrong();
@@ -166,7 +166,8 @@ export function MatchRound({
 						{done ? "All matched." : picked ? "Now its meaning." : "Pick a word, then its meaning."}
 					</p>
 					<p
-						className="mt-2 min-h-[4.75rem] font-prose text-[16px] leading-snug text-foreground"
+						aria-live="polite"
+						className="mt-2 min-h-[6rem] font-prose text-[16px] leading-snug text-foreground"
 						data-testid="match-sentence"
 					>
 						{lastMatched?.example && (
