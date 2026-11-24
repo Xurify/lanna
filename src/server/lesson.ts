@@ -469,7 +469,7 @@ export function recordActiveTime(activity: TimedActivity, ms: number, tz?: numbe
 export function recordSound(
 	id: string,
 	clear: number,
-	lines: number,
+	scored: number,
 	ms: number,
 	tz?: number,
 	now = new Date(),
@@ -478,8 +478,8 @@ export function recordSound(
 	const p = progressStore.read();
 	const unit = (p.units[id] ??= { lessons: 0, reps: 0, correct: 0 });
 	unit.lessons += 1;
-	unit.reps += lines;
-	unit.correct += Math.min(clear, lines);
+	unit.reps += scored;
+	unit.correct += Math.min(clear, scored);
 	unit.lastAt = now.toISOString();
 	addMinutes(dayOf(p, today(tz, now)), "speak", ms);
 	progressStore.write(p);

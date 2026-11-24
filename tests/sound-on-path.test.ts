@@ -41,3 +41,13 @@ it("a played sound is done after one round, and only sound units are recorded", 
 	assert.equal(stateOf().status, "done");
 	assert.equal(recordSound("present", 1, 1, 0), false, "only sound units are recorded");
 });
+
+it("a round with nothing scored is practiced without a share, and a second round adds to the first", () => {
+	const sound = getSoundsForLanguage("slovak")[1]!;
+	assert.equal(recordSound(sound.id, 0, 0, 30_000), true);
+	let unit = progressStore.read().units[sound.id]!;
+	assert.deepEqual([unit.lessons, unit.reps, unit.correct], [1, 0, 0]);
+	assert.equal(recordSound(sound.id, 2, 4, 30_000), true);
+	unit = progressStore.read().units[sound.id]!;
+	assert.deepEqual([unit.lessons, unit.reps, unit.correct], [2, 4, 2]);
+});

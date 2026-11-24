@@ -6,8 +6,8 @@
  * the tutorial asks for (SHADOW_GAP_MS), then speaks the line; the recording
  * goes through the same speech-to-text and clarity score a Speak line uses,
  * so nothing here needs an Azure key. A line is clear at the Speak bar
- * (PRON_CLEAR); three tries, then it is left as not yet. Nothing is saved
- * yet: the result is on screen only.
+ * (PRON_CLEAR); three tries, then it is left as not yet. A finished round
+ * is saved to its path unit (POST /api/sound).
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -66,7 +66,7 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 			body: JSON.stringify({
 				id: sound.id,
 				clear: results.filter((r) => r === "clear").length,
-				lines: sound.lines.length,
+				scored: results.filter((r) => r !== "unscored").length,
 				ms: activeTime.finish(),
 				tz: new Date().getTimezoneOffset(),
 			}),
@@ -229,6 +229,8 @@ export function SoundPlayer({ sound, chapterTitle }: { sound: SoundDef; chapterT
 
 	function restart() {
 		run.current++;
+		saved.current = false;
+		activeTime.restart();
 		setPhase("listen");
 		setOrder(listenOrder(sound));
 		setItem(0);
