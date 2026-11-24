@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { candidatesFor, deedsIn, senseIn, translationNamesGloss } from "../src/core/index.ts";
+import {
+	candidatesFor,
+	deedsIn,
+	lessonWords,
+	senseIn,
+	translationNamesGloss,
+	type LessonItem,
+	type LessonPlan,
+} from "../src/core/index.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 
 test("a card shows the sense the sentence uses, without notes", () => {
@@ -11,6 +19,8 @@ test("a card shows the sense the sentence uses, without notes", () => {
 		"lunch, dinner",
 	);
 	assert.equal(senseIn("egg; ovum; testicle, ball, nut", "This is an egg."), "egg");
+	assert.equal(senseIn("road, way; tea", "The teacher is here."), "road, way");
+	assert.equal(senseIn("don't, doesn't, not: used in negative forms; no", "We don't drink."), "don't, doesn't, not");
 	assert.equal(senseIn("beer (alcoholic drink; a glass of it); ale", "Tom is drinking a beer."), "beer");
 	assert.equal(senseIn("beer (verbal noun of пить (pitʹ) (nomen obiecti)); a beer", "Beer, please."), "beer");
 });
@@ -19,6 +29,10 @@ test("a gloss with no word to look for never rules a sentence out", () => {
 	assert.equal(translationNamesGloss("I (first-person singular subject pronoun)", "He came."), true);
 	assert.equal(translationNamesGloss("white bread", "How did it get there?"), false);
 	assert.equal(translationNamesGloss("road, way; tea", "Please do it."), false);
+	assert.equal(translationNamesGloss("tea", "The teacher came."), false);
+	assert.equal(translationNamesGloss("tea", "Two teas, please."), true);
+	assert.equal(translationNamesGloss("apple", "I like apples."), true);
+	assert.equal(translationNamesGloss("he; she", "What about him?"), true);
 });
 
 test("a word-unit sentence whose form is another word's, in another sense, is left out", () => {
@@ -58,4 +72,31 @@ test("stamps are named in the course language", () => {
 		);
 		assert.equal(new Set(names).size, names.length, `${lang}: names are unique`);
 	}
+});
+
+test("two words of a lesson never show the same meaning", () => {
+	const item = (lemma: string, gloss: string, hint: string) =>
+		({
+			id: `${lemma}#0`,
+			kind: "type",
+			unit: "lx-words-pronouns",
+			slug: lemma,
+			lemma,
+			gloss,
+			hint,
+		}) as unknown as LessonItem;
+	const plan = {
+		unit: "lx-words-pronouns",
+		items: [
+			item("sina", "you (informal, singular)", "you"),
+			item("teie", "you (plural or polite)", "you"),
+			item("mina", "I (first person)", "I"),
+			item("ma", "I (first person)", "I"),
+		],
+	} as unknown as LessonPlan;
+	const words = lessonWords(plan);
+	assert.deepEqual(
+		words.map((w) => w.gloss),
+		["you (informal, singular)", "you (plural or polite)", "I (first person)"],
+	);
 });

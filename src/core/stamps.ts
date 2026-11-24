@@ -144,8 +144,6 @@ const DEEDS: StampDef[] = [
 /** The fixed stamps: the deeds, in book order. */
 export const DEED_STAMPS: readonly StampDef[] = DEEDS;
 
-/** Every stamp there is for this learner: the deeds, a stamp per chapter
- *  and a summit stamp per level on the map. */
 const DEED_NAMES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 	ru: {
 		"first-step": "Первый шаг",
@@ -219,10 +217,10 @@ const DEED_NAMES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 		"stories-1": "Esimene lugu",
 		"stories-10": "Lugeja",
 		"stories-50": "Raamatukoi",
-		"scenes-1": "Esimesed sõnad valjusti",
+		"scenes-1": "Esimesed sõnad häälega",
 		"scenes-10": "Kõneleja",
 		"listens-10": "Kuulaja",
-		"listens-50": "Teravad kõrvad",
+		"listens-50": "Terav kõrv",
 		"blitz-20": "Välk",
 		"blitz-30": "Torm",
 		"hours-10": "Kümme tundi",
@@ -242,6 +240,8 @@ export function deedsIn(language: string | undefined): StampDef[] {
 	return names ? DEEDS.map((d) => ({ ...d, name: names[d.id] ?? d.name })) : DEEDS;
 }
 
+/** Every stamp there is for this learner: the deeds, a stamp per chapter
+ *  and a summit stamp per level on the map. */
 export function stampCatalog(
 	curriculum: Pick<CurriculumState, "chapters"> | null,
 	language: string | undefined = activeCourse()?.code,

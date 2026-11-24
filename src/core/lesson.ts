@@ -1387,11 +1387,59 @@ const GLOSS_FILLER = new Set([
 	"with",
 	"something",
 	"someone",
+	"re",
+	"first",
+	"second",
+	"third",
+	"person",
+	"singular",
+	"plural",
+	"masculine",
+	"feminine",
+	"neuter",
+	"nominative",
+	"accusative",
+	"genitive",
+	"dative",
+	"instrumental",
+	"locative",
+	"prepositional",
+	"pronoun",
+	"personal",
+	"subject",
+	"object",
+	"form",
+	"short",
+	"used",
+	"unstressed",
+	"stressed",
+	"position",
+	"informal",
+	"formal",
+	"polite",
 ]);
+
+const OBJECT_FORMS: Readonly<Record<string, string>> = { he: "him", she: "her", they: "them", we: "us" };
+
+const glossWordMatches = (w: string, said: string) =>
+	new RegExp(
+		w.length <= 4 ? `(?<!\\p{L})${w}(?:s|es|ed|ing)?(?!\\p{L})` : `(?<!\\p{L})${w.slice(0, -1)}\\p{L}{0,3}(?!\\p{L})`,
+		"u",
+	).test(said);
+
+const mostSpecificWord = (sense: string) =>
+	glossWords(sense).reduce<string | undefined>((best, w) => (!best || w.length > best.length ? w : best), undefined);
+
+const namesSenseItself = (sense: string, translation: string) => {
+	const w = mostSpecificWord(sense);
+	return w !== undefined && glossWordMatches(w, translation.toLowerCase());
+};
 
 const namesSense = (sense: string, translation: string) => {
 	const said = translation.toLowerCase();
-	return glossWords(sense).some((w) => new RegExp(`(?<!\\p{L})${w.length <= 4 ? w : w.slice(0, -1)}`, "u").test(said));
+	return glossWords(sense).some(
+		(w) => glossWordMatches(w, said) || (OBJECT_FORMS[w] !== undefined && glossWordMatches(OBJECT_FORMS[w], said)),
+	);
 };
 
 function withoutNotes(sense: string): string {
@@ -1429,8 +1477,8 @@ export function senseIn(en: string, translation: string): string {
 	const senses = sensesOf(en)
 		.map((s) => s.trim())
 		.filter(Boolean);
-	const sense = senses.find((s) => namesSense(s, translation)) ?? senses[0] ?? en;
-	return withoutNotes(sense);
+	const sense = senses.find((s) => namesSenseItself(s, translation)) ?? senses[0] ?? en;
+	return withoutNotes(sense.split(":")[0]!);
 }
 
 export function translationNamesGloss(en: string, translation: string): boolean {

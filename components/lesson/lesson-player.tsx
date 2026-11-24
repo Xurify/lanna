@@ -107,6 +107,7 @@ import {
 	type CheerKey,
 	helpSteps,
 	lessonWords,
+	MIN_SEND_MS,
 	PATTERN_VERBS,
 	pictureFor,
 	translationAroundPicture,
@@ -615,7 +616,7 @@ export function LessonPlayer({
 		sfx.done();
 		const ms = activeTime.finish();
 		setPracticeMs((before) => (before ?? 0) + ms);
-		if (ms > 0)
+		if (ms >= MIN_SEND_MS)
 			void fetch("/api/progress/time", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
