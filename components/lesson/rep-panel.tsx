@@ -1,7 +1,9 @@
 import { cn } from "@/lib/utils";
 import { PaintSwatch } from "@/components/lesson/paint-swatch";
+import { AnimalScene } from "@/components/lesson/animal-scene";
 import { FoodScene } from "@/components/lesson/food-scene";
 import { HomeScene } from "@/components/lesson/home-scene";
+import { NatureScene } from "@/components/lesson/nature-scene";
 import { WeatherScene } from "@/components/lesson/weather-scene";
 import {
 	firstLetterOf,
@@ -40,6 +42,10 @@ function ScenePicture({ picture }: { picture: Exclude<WordPicture, { kind: "pain
 			return <HomeScene scene={picture.scene} className={className} />;
 		case "weather":
 			return <WeatherScene scene={picture.scene} className={className} />;
+		case "nature":
+			return <NatureScene scene={picture.scene} className={className} />;
+		case "animal":
+			return <AnimalScene scene={picture.scene} className={className} />;
 	}
 }
 

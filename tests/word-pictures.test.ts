@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "node:test";
-import { FOOD_SCENES, HOME_SCENES, SCENE_SETS, WEATHER_SCENES, pictureFor } from "../src/core/word-pictures.ts";
+import {
+	ANIMAL_SCENES,
+	FOOD_SCENES,
+	HOME_SCENES,
+	NATURE_SCENES,
+	SCENE_SETS,
+	WEATHER_SCENES,
+	pictureFor,
+} from "../src/core/word-pictures.ts";
 import { WORD_CLUSTERS } from "../src/core/word-clusters.ts";
 
 const courseUnit = (language: string, unit: string): string[] =>
@@ -19,8 +27,10 @@ const UNITS: ReadonlyArray<{ language: string; unit: string; lemmas: readonly st
 	{ language: "slovak", unit: "lx-drinks", lemmas: WORD_CLUSTERS["lx-drinks"]!.lemmas },
 	{ language: "slovak", unit: "lx-home", lemmas: WORD_CLUSTERS["lx-home"]!.lemmas },
 	{ language: "slovak", unit: "lx-meals", lemmas: WORD_CLUSTERS["lx-meals"]!.lemmas },
+	{ language: "slovak", unit: "lx-nature", lemmas: WORD_CLUSTERS["lx-nature"]!.lemmas },
+	{ language: "slovak", unit: "lx-animals", lemmas: WORD_CLUSTERS["lx-animals"]!.lemmas },
 	...["russian", "estonian"].flatMap((language) =>
-		["lx-words-weather", "lx-words-food", "lx-words-home"].map((unit) => ({
+		["lx-words-weather", "lx-words-food", "lx-words-home", "lx-words-nature"].map((unit) => ({
 			language,
 			unit,
 			lemmas: courseUnit(language, unit),
@@ -125,6 +135,8 @@ test("every drawn scene is used, and each food scene in every language that has 
 			...WEATHER_SCENES.map((s) => `weather:${s}`),
 			...FOOD_SCENES.map((s) => `food:${s}`),
 			...HOME_SCENES.map((s) => `home:${s}`),
+			...NATURE_SCENES.map((s) => `nature:${s}`),
+			...ANIMAL_SCENES.map((s) => `animal:${s}`),
 		].sort(),
 	);
 	for (const language of ["slovak", "russian", "estonian"]) {
@@ -161,7 +173,10 @@ test("meat, categories, meals, sugar, sai and the road-or-tea tee keep the Engli
 test("a picture word outside its own units keeps the English", () => {
 	assert.equal(pictureFor("lx-nature", "slnko"), undefined);
 	assert.equal(pictureFor("lx-meals", "chlieb"), undefined);
-	assert.equal(pictureFor("lx-animals", "ryba"), undefined);
+	assert.equal(pictureFor("lx-food", "ryba"), undefined);
+	assert.equal(pictureFor("lx-weather", "strom"), undefined);
+	assert.equal(pictureFor("lx-words-food", "лес"), undefined);
+	assert.equal(pictureFor("lx-words-travel", "meri"), undefined);
 	assert.equal(pictureFor("lx-words-travel", "tee"), undefined);
 	assert.equal(pictureFor("lx-cafe", "káva"), undefined);
 });
@@ -179,9 +194,11 @@ test("a scene shows only when the sentence means the pictured thing", () => {
 	assert.equal(pictureFor("lx-colours", "červený", "Anything at all.")?.kind, "paint");
 });
 
-test("no unit belongs to two picture sets", () => {
-	const units = SCENE_SETS.flatMap((s) => s.units);
-	assert.equal(new Set(units).size, units.length);
+test("no word of a unit is mapped by two picture sets", () => {
+	for (const unit of new Set(SCENE_SETS.flatMap((s) => s.units))) {
+		const words = SCENE_SETS.filter((s) => s.units.includes(unit)).flatMap((s) => Object.keys(s.of));
+		assert.equal(new Set(words).size, words.length, unit);
+	}
 });
 
 test("every mapped Slovak word has dictionary sentences that keep its picture", () => {
@@ -282,4 +299,71 @@ test("the wardrobe scene is a clothes wardrobe, not a cupboard", () => {
 	assert.equal(pictureFor("lx-words-home", "шкаф", "The cups are in the cupboard."), undefined);
 	assert.equal(pictureFor("lx-words-home", "шкаф", "My coat is in the wardrobe.")?.kind, "scene");
 	assert.equal(pictureFor("lx-words-home", "ключ", "Where's the key?")?.kind, "scene");
+});
+
+test("nature words show the same scene in all three languages, and nature itself keeps the English", () => {
+	const concepts: ReadonlyArray<[string, string, string, string]> = [
+		["strom", "дерево", "puu", "tree"],
+		["les", "лес", "mets", "forest"],
+		["hora", "гора", "mägi", "mountain"],
+		["rieka", "река", "jõgi", "river"],
+		["more", "море", "meri", "sea"],
+		["jazero", "озеро", "järv", "lake"],
+		["kvet", "цветок", "lill", "flower"],
+	];
+	for (const [sk, ru, et, scene] of concepts) {
+		assert.equal(sceneOf("lx-nature", sk), `nature:${scene}`, sk);
+		assert.equal(sceneOf("lx-words-nature", ru), `nature:${scene}`, ru);
+		assert.equal(sceneOf("lx-words-nature", et), `nature:${scene}`, et);
+	}
+	assert.equal(pictureFor("lx-nature", "príroda"), undefined);
+});
+
+test("animal words show their animal, and the animals' fish is the food fish", () => {
+	for (const [sk, scene] of [
+		["pes", "dog"],
+		["mačka", "cat"],
+		["kôň", "horse"],
+		["krava", "cow"],
+		["vták", "bird"],
+	] as const)
+		assert.equal(sceneOf("lx-animals", sk), `animal:${scene}`, sk);
+	assert.equal(sceneOf("lx-animals", "ryba"), "food:fish");
+	assert.equal(sceneOf("lx-animals", "ryba"), sceneOf("lx-words-food", "рыба"));
+});
+
+test("a nature or animal scene shows only when the English names the drawn thing", () => {
+	const shows = (unit: string, lemma: string, en: string) => pictureFor(unit, lemma, en)?.kind === "scene";
+	assert.ok(shows("lx-nature", "strom", "Plant a tree."));
+	assert.ok(!shows("lx-nature", "strom", "We sat in the treehouse."));
+	assert.ok(shows("lx-nature", "les", "He walked through the forest."));
+	assert.ok(shows("lx-words-nature", "mets", "We got lost in the woods."));
+	assert.ok(!shows("lx-nature", "les", "You can't see the wood for the trees."));
+	assert.ok(shows("lx-nature", "hora", "Look at the mountains covered with snow."));
+	assert.ok(!shows("lx-nature", "hora", "Podgorica is the capital of Montenegro."));
+	assert.ok(shows("lx-nature", "rieka", "This river flows rapidly."));
+	assert.ok(!shows("lx-nature", "rieka", "We walked along the riverside."));
+	assert.ok(shows("lx-nature", "more", "You can see the sea on your right."));
+	assert.ok(!shows("lx-nature", "more", "We collected seashells."));
+	assert.ok(!shows("lx-words-nature", "meri", "Seattle is far."));
+	assert.ok(shows("lx-nature", "jazero", "The lake was frozen."));
+	assert.ok(shows("lx-nature", "kvet", "A rose is a beautiful flower."));
+	assert.ok(!shows("lx-nature", "kvet", "Water the flowerpot."));
+	assert.ok(shows("lx-animals", "pes", "The dog is white."));
+	assert.ok(!shows("lx-animals", "pes", "I ate a hotdog."));
+	assert.ok(shows("lx-animals", "mačka", "My cat looks sad."));
+	assert.ok(!shows("lx-animals", "mačka", "Look in the catalog."));
+	assert.ok(shows("lx-animals", "kôň", "The horse is black."));
+	assert.ok(!shows("lx-animals", "kôň", "The car has 90 horsepower."));
+	assert.ok(shows("lx-animals", "krava", "How do you milk a cow?"));
+	assert.ok(!shows("lx-animals", "krava", "He is a cowboy."));
+	assert.ok(shows("lx-animals", "vták", "The bird flew high."));
+	assert.ok(shows("lx-animals", "ryba", "The fish is fresh."));
+});
+
+test("a picture never stands for a verb or a material that only looks like its word", () => {
+	assert.equal(pictureFor("lx-animals", "ryba", "The weather was fine, so we went fishing."), undefined);
+	assert.equal(pictureFor("lx-animals", "ryba", "Fish swim.")?.kind, "scene");
+	assert.equal(pictureFor("lx-nature", "les", "We took a walk in the wood."), undefined);
+	assert.equal(pictureFor("lx-nature", "les", "We took a walk in the woods.")?.kind, "scene");
 });

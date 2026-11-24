@@ -3,22 +3,34 @@ import React from "react";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
+import { AnimalScene } from "../components/lesson/animal-scene.tsx";
 import { FoodScene } from "../components/lesson/food-scene.tsx";
 import { HomeScene } from "../components/lesson/home-scene.tsx";
+import { NatureScene } from "../components/lesson/nature-scene.tsx";
 import { WeatherScene } from "../components/lesson/weather-scene.tsx";
 import {
+	ANIMAL_SCENES,
 	FOOD_SCENES,
 	HOME_SCENES,
+	NATURE_SCENES,
 	WEATHER_SCENES,
+	type AnimalScene as Animal,
 	type FoodScene as Food,
 	type HomeScene as Home,
+	type NatureScene as Nature,
 	type WeatherScene as Weather,
 } from "../src/core/word-pictures.ts";
 
-const usage = "Usage: npx tsx scripts/word-picture-sheet.tsx <dir> <weather|food|home> [scene,...]";
+const usage = "Usage: npx tsx scripts/word-picture-sheet.tsx <dir> <weather|food|home|nature|animal> [scene,...]";
 const outDir = process.argv[2];
 const set = process.argv[3];
-const SETS: Record<string, readonly string[]> = { weather: WEATHER_SCENES, food: FOOD_SCENES, home: HOME_SCENES };
+const SETS: Record<string, readonly string[]> = {
+	weather: WEATHER_SCENES,
+	food: FOOD_SCENES,
+	home: HOME_SCENES,
+	nature: NATURE_SCENES,
+	animal: ANIMAL_SCENES,
+};
 if (!outDir || !set || !SETS[set]) {
 	console.error(usage);
 	process.exit(1);
@@ -30,16 +42,14 @@ if (unknown.length) {
 	console.error(`Not a ${set} scene: ${unknown.join(", ")}\n${usage}`);
 	process.exit(1);
 }
-const draw = (scene: string) =>
-	renderToStaticMarkup(
-		set === "food" ? (
-			<FoodScene scene={scene as Food} />
-		) : set === "home" ? (
-			<HomeScene scene={scene as Home} />
-		) : (
-			<WeatherScene scene={scene as Weather} />
-		),
-	);
+const DRAW: Record<string, (scene: string) => React.JSX.Element> = {
+	weather: (scene) => <WeatherScene scene={scene as Weather} />,
+	food: (scene) => <FoodScene scene={scene as Food} />,
+	home: (scene) => <HomeScene scene={scene as Home} />,
+	nature: (scene) => <NatureScene scene={scene as Nature} />,
+	animal: (scene) => <AnimalScene scene={scene as Animal} />,
+};
+const draw = (scene: string) => renderToStaticMarkup(DRAW[set]!(scene));
 
 mkdirSync(outDir, { recursive: true });
 function sheet(night: boolean, labels: boolean, tile: number): string {
