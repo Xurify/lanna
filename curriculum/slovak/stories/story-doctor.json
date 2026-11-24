@@ -1,0 +1,272 @@
+{
+	"title": "U lekára",
+	"topic": "Peter goes to the doctor with a sore back, waits a long time, and an old man with the same surname is called in first",
+	"cover": "clinic",
+	"cast": [
+		{
+			"name": "Peter",
+			"gender": "m",
+			"age": "adult"
+		},
+		{
+			"name": "Sestra",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Jozef",
+			"gender": "m",
+			"age": "old"
+		},
+		{
+			"name": "Lekár",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V pondelok ráno sa Peter necíti dobre.",
+			"en": "On Monday morning Peter doesn't feel well."
+		},
+		{
+			"who": "narrator",
+			"sk": "Bolí ho chrbát a nemôže dlho sedieť ani stáť.",
+			"en": "His back hurts and he can't sit or stand for long."
+		},
+		{
+			"who": "narrator",
+			"sk": "Preto ide k lekárovi.",
+			"en": "So he goes to the doctor."
+		},
+		{
+			"who": "Sestra",
+			"sk": "Dobrý deň. Ako sa voláte a čo vás bolí?",
+			"en": "Hello. What's your name, and what hurts?"
+		},
+		{
+			"who": "Peter",
+			"sk": "Volám sa Peter Horváth. Bolí ma chrbát.",
+			"en": "My name is Peter Horváth. My back hurts."
+		},
+		{
+			"who": "Sestra",
+			"sk": "Sadnite si, prosím. Pred vami sú ešte štyria pacienti.",
+			"en": "Please have a seat. There are still four patients ahead of you."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V čakárni je teplo a ticho.",
+			"en": "It is warm and quiet in the waiting room."
+		},
+		{
+			"who": "narrator",
+			"sk": "Vedľa Petra sedí starý pán a sťažuje sa.",
+			"en": "An old man is sitting next to Peter, complaining."
+		},
+		{
+			"who": "Jozef",
+			"sk": "Čakám tu už dve hodiny! Cítim sa stále horšie.",
+			"en": "I've been waiting here for two hours already! I feel worse and worse."
+		},
+		{
+			"who": "Peter",
+			"sk": "Aj ja potrebujem rýchlo lekára. Čo vás bolí?",
+			"en": "I need a doctor fast too. What hurts?"
+		},
+		{
+			"who": "Jozef",
+			"sk": "Ucho. Zle počujem. A vás?",
+			"en": "My ear. I can't hear well. And you?"
+		},
+		{
+			"who": "Peter",
+			"sk": "Chrbát. Pracujem na stavbe a celý deň nosím ťažké veci.",
+			"en": "My back. I work on a construction site and carry heavy things all day."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Zrazu sestra otvorí dvere.",
+			"en": "Suddenly the nurse opens the door."
+		},
+		{
+			"who": "Sestra",
+			"sk": "Pán Horváth, poďte ďalej!",
+			"en": "Mr. Horváth, come in!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Peter aj starý pán vstanú naraz.",
+			"en": "Peter and the old man both stand up at the same time."
+		},
+		{
+			"who": "Jozef",
+			"sk": "Ja som Jozef Horváth. Som tu prvý!",
+			"en": "I'm Jozef Horváth. I was here first!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Sestra sa usmeje a pustí dnu starého pána.",
+			"en": "The nurse smiles and lets the old man in."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "O desať minút starý pán vyjde von a smeje sa.",
+			"en": "Ten minutes later the old man comes out, laughing."
+		},
+		{
+			"who": "Jozef",
+			"sk": "Lekár mi celý čas kontroloval chrbát!",
+			"en": "The doctor was checking my back the whole time!"
+		},
+		{
+			"who": "Jozef",
+			"sk": "Povedal, že musím cvičiť a menej sedieť.",
+			"en": "He said I have to exercise and sit less."
+		},
+		{
+			"who": "Peter",
+			"sk": "A čo vaše ucho?",
+			"en": "And what about your ear?"
+		},
+		{
+			"who": "Jozef",
+			"sk": "Na ucho sa ani nepozrel. Asi mal v ruke vašu kartu.",
+			"en": "He didn't even look at my ear. He probably had your file in his hand."
+		},
+		{
+			"who": "Sestra",
+			"sk": "Pán Peter Horváth, teraz vy, prosím!",
+			"en": "Mr. Peter Horváth, you're next, please!"
+		},
+		{
+			"who": "Lekár",
+			"sk": "Tak, čo vás bolí? Ucho?",
+			"en": "So, what hurts? Your ear?"
+		},
+		{
+			"who": "Peter",
+			"sk": "Nie, pán doktor. Ucho má pán Horváth. Ja mám chrbát.",
+			"en": "No, doctor. Mr. Horváth has the ear. I have the back."
+		},
+		{
+			"who": "narrator",
+			"sk": "Lekár sa zasmeje a dá Petrovi liek proti bolesti.",
+			"en": "The doctor laughs and gives Peter a painkiller."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "čakáreň",
+			"en": "waiting room"
+		},
+		{
+			"sk": "pacient",
+			"en": "patient"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Čo bolí Petra?",
+			"options": [
+				"Chrbát",
+				"Ucho",
+				"Zub"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Ako sa volá starý pán?",
+			"options": [
+				"Ján Kováč",
+				"Jozef Horváth",
+				"Peter Novák"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Čo kontroloval lekár starému pánovi?",
+			"options": [
+				"Ucho",
+				"Oči",
+				"Chrbát"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Peter goes to the doctor with a sore back and waits next to an old man with a sore ear. Both men are called Horváth, so the doctor checks the old man's back, and then asks Peter about his ear.",
+	"glosses": {
+		"peter": {
+			"lemma": "Peter",
+			"gloss": "Peter (a name)"
+		},
+		"petra": {
+			"lemma": "Peter",
+			"gloss": "Peter (a name)"
+		},
+		"petrovi": {
+			"lemma": "Peter",
+			"gloss": "Peter (a name)"
+		},
+		"jozef": {
+			"lemma": "Jozef",
+			"gloss": "Jozef (a name)"
+		},
+		"horváth": {
+			"lemma": "Horváth",
+			"gloss": "Horváth (a surname)"
+		},
+		"sadnite": {
+			"lemma": "sadnúť si",
+			"gloss": "sit down (command)"
+		},
+		"si": {
+			"lemma": "si",
+			"gloss": "for oneself (reflexive)"
+		},
+		"ma": {
+			"lemma": "ja",
+			"gloss": "me"
+		},
+		"štyria": {
+			"lemma": "štyri",
+			"gloss": "four (for men)"
+		},
+		"čakárni": {
+			"lemma": "čakáreň",
+			"gloss": "waiting room"
+		},
+		"horšie": {
+			"lemma": "zle",
+			"gloss": "worse"
+		},
+		"poďte": {
+			"lemma": "ísť",
+			"gloss": "come (command)"
+		},
+		"prvý": {
+			"lemma": "prvý",
+			"gloss": "first"
+		},
+		"menej": {
+			"lemma": "málo",
+			"gloss": "less"
+		},
+		"nepozrel": {
+			"lemma": "pozrieť sa",
+			"gloss": "didn't look"
+		},
+		"kartu": {
+			"lemma": "karta",
+			"gloss": "card; patient's file"
+		}
+	}
+}

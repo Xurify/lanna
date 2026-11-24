@@ -154,6 +154,41 @@ export const CHAPTER_STORIES: readonly ChapterStory[] = [
 		tagline: "A birthday, two books and a happy grandpa",
 		after: ["past", "lx-words-day", "lx-words-time"],
 	},
+	{
+		id: "story-doctor",
+		language: "slovak",
+		title: "Story: At the doctor's",
+		tagline: "A sore back, a long wait and the wrong patient",
+		after: ["lx-health", "lx-body", "present-ujem"],
+	},
+	{
+		id: "story-market",
+		language: "slovak",
+		title: "Story: The blue coat",
+		tagline: "Trying things on, sizes, prices and a change of mind",
+		after: ["lx-clothes", "plural", "numbers"],
+	},
+	{
+		id: "story-trip",
+		language: "slovak",
+		title: "Story: The wrong train",
+		tagline: "A weekend trip, a missed stop and a long walk back",
+		after: ["lx-where", "lx-motion", "motion"],
+	},
+	{
+		id: "story-friends",
+		language: "slovak",
+		title: "Story: Who is the new girl?",
+		tagline: "Describing people, guessing wrong and laughing about it",
+		after: ["lx-describe-people", "lx-feelings", "adj-cases"],
+	},
+	{
+		id: "story-interview",
+		language: "slovak",
+		title: "Story: The job interview",
+		tagline: "Questions about work, school and free time, and a nervous answer",
+		after: ["lx-hobbies", "lx-school", "lx-work"],
+	},
 ];
 
 export function chapterStoriesFor(language: string): ChapterStory[] {

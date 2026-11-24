@@ -1,0 +1,270 @@
+{
+	"title": "Zlý vlak",
+	"topic": "Lucia and Tomáš take the wrong train on a weekend trip, it doesn't stop in their village, and they walk back from Trenčín",
+	"cover": "train",
+	"cast": [
+		{
+			"name": "Tomáš",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Lucia",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Sprievodca",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Lucia a Tomáš chodia každý víkend na výlet.",
+			"en": "Lucia and Tomáš go on a trip every weekend."
+		},
+		{
+			"who": "narrator",
+			"sk": "Túto sobotu chcú ísť vlakom do malej dediny pri Trenčíne.",
+			"en": "This Saturday they want to go by train to a small village near Trenčín."
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Lucia, kde je náš vlak? Odchádza o ôsmej.",
+			"en": "Lucia, where is our train? It leaves at eight."
+		},
+		{
+			"who": "Lucia",
+			"sk": "Tam, na treťom nástupišti. Poď rýchlo!",
+			"en": "Over there, on platform three. Come on, quick!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Bežia na nástupište a nastúpia do prvého vlaku, ktorý tam stojí.",
+			"en": "They run to the platform and get on the first train standing there."
+		},
+		{
+			"who": "narrator",
+			"sk": "Vlak hneď odíde.",
+			"en": "The train leaves right away."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Lucia a Tomáš sedia pri okne a rozprávajú sa.",
+			"en": "Lucia and Tomáš sit by the window and talk."
+		},
+		{
+			"who": "Lucia",
+			"sk": "Keď prídeme, pôjdeme najprv k jazeru.",
+			"en": "When we get there, we'll go to the lake first."
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Dobre, ale potom chcem ísť na obed.",
+			"en": "Okay, but after that I want to go for lunch."
+		},
+		{
+			"who": "narrator",
+			"sk": "Po hodine vlak prechádza cez ich dedinu, ale nezastaví.",
+			"en": "After an hour the train goes through their village, but it doesn't stop."
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Počkaj, to bola naša stanica! Prečo nezastavil?",
+			"en": "Wait, that was our station! Why didn't it stop?"
+		},
+		{
+			"who": "narrator",
+			"sk": "Príde sprievodca a pozrie sa na ich lístky.",
+			"en": "The conductor comes and looks at their tickets."
+		},
+		{
+			"who": "Sprievodca",
+			"sk": "Toto je rýchlik do Žiliny. V malých dedinách nestojí.",
+			"en": "This is the express to Žilina. It doesn't stop in small villages."
+		},
+		{
+			"who": "Lucia",
+			"sk": "A kde môžeme vystúpiť?",
+			"en": "And where can we get off?"
+		},
+		{
+			"who": "Sprievodca",
+			"sk": "Až v Trenčíne. Odtiaľ choďte späť osobným vlakom.",
+			"en": "Not until Trenčín. From there, go back on the local train."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V Trenčíne sprievodca otvorí dvere.",
+			"en": "In Trenčín the conductor opens the doors."
+		},
+		{
+			"who": "Sprievodca",
+			"sk": "Trenčín! Vystúpte, prosím!",
+			"en": "Trenčín! Please get off!"
+		},
+		{
+			"who": "narrator",
+			"sk": "Osobný vlak späť ide až o dve hodiny.",
+			"en": "The local train back doesn't leave for two hours."
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Dve hodiny? Tak pôjdeme pešo. Je to len desať kilometrov.",
+			"en": "Two hours? Then we'll walk. It's only ten kilometers."
+		},
+		{
+			"who": "Lucia",
+			"sk": "Desať kilometrov? Ty si blázon!",
+			"en": "Ten kilometers? You're crazy!"
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Veď chodíme na výlety. Toto je výlet! Poďme!",
+			"en": "Come on, we go on trips. This is a trip! Let's go!"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Tri hodiny idú pešo cez polia a lesy.",
+			"en": "For three hours they walk through fields and woods."
+		},
+		{
+			"who": "narrator",
+			"sk": "Keď konečne prídu do dediny, je už večer.",
+			"en": "When they finally reach the village, it is already evening."
+		},
+		{
+			"who": "Lucia",
+			"sk": "K jazeru už nepôjdeme. Kam teraz?",
+			"en": "We're not going to the lake now. Where to now?"
+		},
+		{
+			"who": "Tomáš",
+			"sk": "Do reštaurácie. Budeme mať obed aj večeru naraz.",
+			"en": "To a restaurant. We'll have lunch and dinner at the same time."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "nástupište",
+			"en": "platform (at a station)"
+		},
+		{
+			"sk": "rýchlik",
+			"en": "express train"
+		},
+		{
+			"sk": "sprievodca",
+			"en": "conductor (on a train)"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kam chcú Lucia a Tomáš ísť?",
+			"options": [
+				"Do Žiliny",
+				"Do malej dediny pri Trenčíne",
+				"K moru"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Prečo vlak nezastavil v ich dedine?",
+			"options": [
+				"Bol to rýchlik.",
+				"Vlak meškal.",
+				"Stanica bola zatvorená."
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Ako idú z Trenčína späť do dediny?",
+			"options": [
+				"Osobným vlakom",
+				"Autobusom",
+				"Pešo"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Lucia and Tomáš get on the wrong train, an express that doesn't stop in their village. They get off in Trenčín, walk ten kilometers back and arrive in the evening, just in time for lunch and dinner at once.",
+	"glosses": {
+		"lucia": {
+			"lemma": "Lucia",
+			"gloss": "Lucia (a name)"
+		},
+		"tomáš": {
+			"lemma": "Tomáš",
+			"gloss": "Tomáš (a name)"
+		},
+		"ôsmej": {
+			"lemma": "osem",
+			"gloss": "eight (o ôsmej: at eight)"
+		},
+		"treťom": {
+			"lemma": "tretí",
+			"gloss": "third"
+		},
+		"nástupišti": {
+			"lemma": "nástupište",
+			"gloss": "platform (at a station)"
+		},
+		"poď": {
+			"lemma": "ísť",
+			"gloss": "come (command)"
+		},
+		"počkaj": {
+			"lemma": "počkať",
+			"gloss": "wait (command)"
+		},
+		"vystúpte": {
+			"lemma": "vystúpiť",
+			"gloss": "get off (command)"
+		},
+		"poďme": {
+			"lemma": "ísť",
+			"gloss": "let's go"
+		},
+		"nepôjdeme": {
+			"lemma": "ísť",
+			"gloss": "we won't go"
+		},
+		"prvého": {
+			"lemma": "prvý",
+			"gloss": "first"
+		},
+		"sprievodca": {
+			"lemma": "sprievodca",
+			"gloss": "conductor (on a train); guide"
+		},
+		"osobný": {
+			"lemma": "osobný",
+			"gloss": "osobný vlak: local train"
+		},
+		"osobným": {
+			"lemma": "osobný",
+			"gloss": "osobný vlak: local train"
+		},
+		"choďte": {
+			"lemma": "ísť",
+			"gloss": "go (command)"
+		},
+		"veď": {
+			"lemma": "veď",
+			"gloss": "but, after all"
+		},
+		"budeme": {
+			"lemma": "byť",
+			"gloss": "we will (budeme + infinitive: future)"
+		}
+	}
+}
