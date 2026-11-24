@@ -21,7 +21,13 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { cellsOf, numberByEnding, numberIn, type CaseName, type Declension } from "./form-cells.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
-import { cardsWithoutOtherSentences, wordCardOf, type WordCard, type WordCardExample } from "./word-card.ts";
+import {
+	cardsWithoutOtherSentences,
+	sentenceKey,
+	wordCardOf,
+	type WordCard,
+	type WordCardExample,
+} from "./word-card.ts";
 import { pictureFor } from "./word-pictures.ts";
 import { verbPatterns, type VerbPattern } from "./verb-pattern.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
@@ -1776,7 +1782,9 @@ export function buildLesson(
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
-	const introductions = unmet ? introSentences(unit, main.top, unmet, new Set(items.map((i) => i.id)), cost) : {};
+	const introductions = unmet
+		? introSentences(unit, main.top, unmet, new Set(items.map((i) => sentenceKey(i.sentence))), cost)
+		: {};
 	return {
 		unit,
 		items: cardsWithoutOtherSentences(items),
@@ -1804,7 +1812,7 @@ function introSentences(
 	const out: Record<string, WordCardExample> = {};
 	for (const slug of slugs) {
 		const own = candidates
-			.filter((c) => c.entry.slug === slug && !asked.has(`${c.entry.slug}#${c.index}`))
+			.filter((c) => c.entry.slug === slug && !asked.has(sentenceKey(exampleText(c.entry.examples[c.index]!))))
 			.filter((c) => exampleText(c.entry.examples[c.index]!).split(/\s+/).length <= 8)
 			.filter(fits)
 			.sort((a, b) => cost(a) - cost(b));

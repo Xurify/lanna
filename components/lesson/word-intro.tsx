@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COLUMN, PracticeCard } from "@/components/task-frame";
@@ -31,14 +31,22 @@ export function WordIntro({
 	const picture = pictureFor(plan.unit, word.lemma);
 	const meta = word.gender?.replace(/-/g, " ") ?? "";
 
-	const sentence = word.example ? `${word.example.before}${word.example.word}${word.example.after}` : "";
+	const intro = word.intro;
+	const sentence = intro ? `${intro.before}${intro.word}${intro.after}` : "";
+	const playing = useRef(0);
 	const say = () => {
 		if (!lang) return;
+		const id = ++playing.current;
 		void speak(word.lemma, lang)
-			.then(() => (sentence ? speak(sentence, lang) : undefined))
+			.then(() => (sentence && playing.current === id ? speak(sentence, lang) : undefined))
 			.catch(() => {});
 	};
-	useEffect(say, [lang, word.lemma, sentence]);
+	useEffect(() => {
+		say();
+		return () => {
+			playing.current++;
+		};
+	}, [lang, word.lemma, sentence]);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -97,16 +105,14 @@ export function WordIntro({
 							{picture && meta ? " · " : ""}
 							{meta}
 						</p>
-						{word.example && (
+						{intro && (
 							<div className="mt-5 max-w-md text-center" data-testid="meet-sentence">
 								<p className="font-prose text-[19px] leading-snug text-foreground" lang={lang?.code}>
-									{word.example.before}
-									<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2">
-										{word.example.word}
-									</b>
-									{word.example.after}
+									{intro.before}
+									<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2">{intro.word}</b>
+									{intro.after}
 								</p>
-								<p className="mt-1 font-prose text-[15px] text-ink-3">{word.example.en}</p>
+								<p className="mt-1 font-prose text-[15px] text-ink-3">{intro.en}</p>
 							</div>
 						)}
 					</figure>

@@ -6,6 +6,7 @@ export interface LessonWord {
 	lemma: string;
 	gloss: string;
 	gender?: string;
+	intro?: WordCardExample;
 	example?: WordCardExample;
 }
 
@@ -55,6 +56,7 @@ export function lessonWords(
 			lemma: item.lemma,
 			gloss,
 			...(item.gender ? { gender: item.gender } : {}),
+			...(plan.introductions?.[item.slug] ? { intro: plan.introductions[item.slug] } : {}),
 			...(example ? { example } : {}),
 		});
 		if (words.length >= max) break;

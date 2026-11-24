@@ -408,3 +408,14 @@ test("a pictured word's intro sentence names the thing its picture draws", () =>
 			}
 		}
 });
+
+test("no intro sentence is one the lesson asks, in any word unit", () => {
+	const key = (t: string) => t.normalize("NFC").toLocaleLowerCase().replace(/\s+/g, " ").trim();
+	for (const unit of allUnits().filter((u) => u.kind === "words" && u.repeat))
+		for (const seed of [1, 4, 7, 11]) {
+			const plan = buildLesson(entries, unit.id, { seed });
+			const asked = new Set(plan.items.map((i) => key(i.sentence)));
+			for (const [slug, ex] of Object.entries(plan.introductions ?? {}))
+				assert.ok(!asked.has(key(`${ex.before}${ex.word}${ex.after}`)), `${unit.id} ${seed} ${slug}`);
+		}
+});

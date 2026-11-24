@@ -78,9 +78,9 @@ export function MatchRound({
 			);
 			setPicked(null);
 			setWrong(null);
-			setStatus(`${word.lemma}: ${word.gloss}. Matched.`);
-			setLastMatched(word);
 			const ex = word.example;
+			setStatus(`${word.lemma}: ${word.gloss}. Matched.${ex ? ` ${ex.before}${ex.word}${ex.after} ${ex.en}` : ""}`);
+			setLastMatched(word);
 			if (lang && ex) void speak(`${ex.before}${ex.word}${ex.after}`, lang).catch(() => {});
 		} else {
 			sfx.wrong();
@@ -165,18 +165,23 @@ export function MatchRound({
 					<p className="mt-5 min-h-5 font-ui text-[13px] text-ink-3">
 						{done ? "All matched." : picked ? "Now its meaning." : "Pick a word, then its meaning."}
 					</p>
-					{lastMatched?.example && (
-						<p className="mt-2 font-prose text-[16px] leading-snug text-foreground" data-testid="match-sentence">
-							<span lang={lang?.code}>
-								{lastMatched.example.before}
-								<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2">
-									{lastMatched.example.word}
-								</b>
-								{lastMatched.example.after}
-							</span>{" "}
-							<span className="text-ink-3">{lastMatched.example.en}</span>
-						</p>
-					)}
+					<p
+						className="mt-2 min-h-[4.75rem] font-prose text-[16px] leading-snug text-foreground"
+						data-testid="match-sentence"
+					>
+						{lastMatched?.example && (
+							<>
+								<span lang={lang?.code}>
+									{lastMatched.example.before}
+									<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2">
+										{lastMatched.example.word}
+									</b>
+									{lastMatched.example.after}
+								</span>{" "}
+								<span className="text-ink-3">{lastMatched.example.en}</span>
+							</>
+						)}
+					</p>
 					<p role="status" className="sr-only">
 						{status}
 					</p>
