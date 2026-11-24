@@ -26,6 +26,8 @@ describe("settings nav", () => {
 		assert.deepEqual(ids("theme"), ["appearance"]);
 		assert.deepEqual(ids("Tailscale"), ["devices"]);
 		assert.ok(ids("api key").includes("keys"));
+		assert.deepEqual(ids("dark theme"), ["appearance"]);
+		assert.deepEqual(ids("word lookup"), ["general"]);
 		assert.deepEqual(ids("volume night"), []);
 	});
 });

@@ -64,6 +64,7 @@ import {
 	cheersFor,
 	genreInfo,
 	gradeAnswers,
+	languageByCode,
 	MAX_SOURCE_WORDS,
 	readXp,
 	storySpeech,
@@ -654,6 +655,8 @@ function Text({
 	onLibrary: () => void;
 }) {
 	const lang = useActiveLanguage();
+	const storyLang = languageByCode(story.lang) ?? lang ?? undefined;
+	const storyTag = storyLang?.tag ?? "sk-SK";
 	const [playing, setPlaying] = useState<number | null>(null);
 	const [all, setAll] = useState(false);
 	const [showTranslation, setShowTranslation] = useState(false);
@@ -662,7 +665,6 @@ function Text({
 	const stop = useRef(false);
 	const sentenceRefs = useRef<(HTMLElement | null)[]>([]);
 
-	// Play all: sentence after sentence, the one being read in the accent color.
 	const playAll = async () => {
 		if (all) {
 			stop.current = true;
@@ -678,7 +680,7 @@ function Text({
 			if (stop.current) break;
 			setPlaying(i);
 			sentenceRefs.current[i]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-			await speak(story.sentences[i]!.sk, undefined, storySpeech(story, story.sentences[i]!)).catch(() => {});
+			await speak(story.sentences[i]!.sk, storyLang, storySpeech(story, story.sentences[i]!)).catch(() => {});
 		}
 		setAll(false);
 		setPlaying(null);
@@ -834,11 +836,11 @@ function Text({
 																<Word
 																	key={j}
 																	token={t}
-																	looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase("sk-SK"))}
+																	looked={tapped.includes(t.slug ?? t.text.toLocaleLowerCase(storyTag))}
 																	open={popover?.sentence === i && popover.token === j}
 																	onOpen={() => {
 																		setPopover({ sentence: i, token: j });
-																		onTap(t.slug ?? t.text.toLocaleLowerCase("sk-SK"));
+																		onTap(t.slug ?? t.text.toLocaleLowerCase(storyTag));
 																		sfx.tap();
 																	}}
 																	onClose={() => setPopover(null)}
@@ -951,6 +953,8 @@ function End({
 	unreadLeft: boolean;
 }) {
 	const lang = useActiveLanguage();
+	const storyLang = languageByCode(story.lang) ?? lang ?? undefined;
+	const storyTag = storyLang?.tag ?? "sk-SK";
 	const language = lang?.english ?? "the language";
 	const source = story.source;
 	const hasNextPart = !!source && source.part < source.parts;
@@ -959,13 +963,13 @@ function End({
 		const seen = new Set<string>();
 		const out: StoryToken[] = [];
 		for (const t of story.sentences.flatMap((s) => s.tokens)) {
-			const key = t.slug ?? t.text.toLocaleLowerCase("sk-SK");
+			const key = t.slug ?? t.text.toLocaleLowerCase(storyTag);
 			if (!t.word || !tapped.includes(key) || seen.has(key)) continue;
 			seen.add(key);
 			out.push(t);
 		}
 		return out;
-	}, [story, tapped]);
+	}, [story, tapped, storyTag]);
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === "Enter" && outcome && !endEnterBlocked(e)) {

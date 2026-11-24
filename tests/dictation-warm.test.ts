@@ -10,7 +10,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createWarmMinter } from "../components/dictation.tsx";
+import { createWarmMinter, deepgramUrl } from "../components/dictation.tsx";
 
 describe("warm-token cache (mitigation D, owner 2026-09-27)", () => {
 	it("caches: concurrent and repeat mints share ONE promise and mint once", async () => {
@@ -99,5 +99,11 @@ describe("warm-token cache (mitigation D, owner 2026-09-27)", () => {
 		m.refresh(); // must not reject (unhandled rejection would be a bug)
 		await new Promise((r) => setTimeout(r, 0)); // let the background mint settle
 		assert.equal(mints, 1);
+	});
+
+	it("deepgramUrl carries the requested language code", () => {
+		const url = new URL(deepgramUrl("et"));
+		assert.equal(url.searchParams.get("language"), "et");
+		assert.equal(url.searchParams.get("model"), "nova-3");
 	});
 });

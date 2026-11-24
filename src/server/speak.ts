@@ -223,10 +223,42 @@ export function sttEngine(): SttEngine | null {
 	return null;
 }
 
-export const STT_MAX_BYTES = 8 * 1024 * 1024;
+export const STT_MAX_BYTES = 12 * 1024 * 1024;
 
-/** ElevenLabs's language codes are ISO 639-3. */
-const ISO3: Record<string, string> = { sk: "slk", ru: "rus" };
+// ElevenLabs Scribe takes ISO 639-3 language_code values.
+const ISO3: Record<string, string> = {
+	sk: "slk",
+	ru: "rus",
+	et: "est",
+	cs: "ces",
+	pl: "pol",
+	uk: "ukr",
+	de: "deu",
+	fr: "fra",
+	es: "spa",
+	it: "ita",
+	pt: "por",
+	nl: "nld",
+	sv: "swe",
+	no: "nor",
+	da: "dan",
+	fi: "fin",
+	hu: "hun",
+	ro: "ron",
+	bg: "bul",
+	hr: "hrv",
+	sr: "srp",
+	sl: "slv",
+	lt: "lit",
+	lv: "lav",
+	el: "ell",
+	tr: "tur",
+	ja: "jpn",
+	ko: "kor",
+	zh: "zho",
+	ar: "ara",
+	hi: "hin",
+};
 
 /** Transcribe one recording (16 kHz mono WAV) in the active language.
  *  Throws when the engine refuses; returns "" for silence. */

@@ -1,6 +1,8 @@
 "use client";
 
 import type { LiveStart } from "@/src/core";
+import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
+import { stopSpeaking } from "@/components/speech";
 
 export interface TransportCallbacks {
 	onLearnerStart(): void;
@@ -59,6 +61,8 @@ class PhonicTransport implements Transport {
 	readonly sendsPcm = true;
 	private ws: WebSocket | null = null;
 	private out: AudioContext | null = null;
+	private gainNode: GainNode | null = null;
+	private unsubscribeSound: (() => void) | null = null;
 	private playing = new Set<AudioBufferSourceNode>();
 	private playAt = 0;
 	private ready = false;
@@ -70,6 +74,7 @@ class PhonicTransport implements Transport {
 	) {}
 
 	start(): Promise<void> {
+		stopSpeaking();
 		return new Promise<void>((resolve, reject) => {
 			const ws = new WebSocket(this.call.url);
 			this.ws = ws;
@@ -169,18 +174,29 @@ class PhonicTransport implements Transport {
 
 	private play(raw: string | undefined): void {
 		if (!raw) return;
-		this.out ??= new AudioContext();
-		const ctx = this.out;
-		if (ctx.state === "suspended") void ctx.resume();
+		if (!this.out) {
+			const context = new AudioContext();
+			const gain = context.createGain();
+			const syncGain = () => {
+				gain.gain.value = soundOn() ? volume() : 0;
+			};
+			syncGain();
+			this.unsubscribeSound = subscribeSound(syncGain);
+			gain.connect(context.destination);
+			this.out = context;
+			this.gainNode = gain;
+		}
+		const context = this.out;
+		if (context.state === "suspended") void context.resume();
 		const samples = toInt16(raw);
 		if (!samples.length) return;
-		const buffer = ctx.createBuffer(1, samples.length, 24_000);
+		const buffer = context.createBuffer(1, samples.length, 24_000);
 		const channel = buffer.getChannelData(0);
 		for (let i = 0; i < samples.length; i++) channel[i] = samples[i]! / 32_768;
-		const source = ctx.createBufferSource();
+		const source = context.createBufferSource();
 		source.buffer = buffer;
-		source.connect(ctx.destination);
-		const when = Math.max(ctx.currentTime + 0.02, this.playAt);
+		source.connect(this.gainNode ?? context.destination);
+		const when = Math.max(context.currentTime + 0.02, this.playAt);
 		source.start(when);
 		this.playAt = when + buffer.duration;
 		this.playing.add(source);
@@ -191,9 +207,7 @@ class PhonicTransport implements Transport {
 		for (const source of this.playing) {
 			try {
 				source.stop();
-			} catch {
-				// already stopped
-			}
+			} catch {}
 		}
 		this.playing.clear();
 		this.playAt = 0;
@@ -201,6 +215,9 @@ class PhonicTransport implements Transport {
 
 	close(): void {
 		this.stopPlayback();
+		this.unsubscribeSound?.();
+		this.unsubscribeSound = null;
+		this.gainNode = null;
 		void this.out?.close().catch(() => undefined);
 		this.out = null;
 		if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.close();
@@ -230,6 +247,8 @@ class OpenAITransport implements Transport {
 	private pc: RTCPeerConnection | null = null;
 	private dc: RTCDataChannel | null = null;
 	private audio: HTMLAudioElement | null = null;
+	private unsubscribeSound: (() => void) | null = null;
+	private interrupted = false;
 	private muteTimer: number | undefined;
 
 	constructor(
@@ -239,11 +258,18 @@ class OpenAITransport implements Transport {
 	) {}
 
 	async start(): Promise<void> {
+		stopSpeaking();
 		const pc = new RTCPeerConnection();
 		this.pc = pc;
 		const audio = new Audio();
 		audio.autoplay = true;
 		this.audio = audio;
+		const syncSound = () => {
+			audio.volume = volume();
+			audio.muted = this.interrupted || !soundOn();
+		};
+		syncSound();
+		this.unsubscribeSound = subscribeSound(syncSound);
 		pc.ontrack = (event) => {
 			audio.srcObject = event.streams[0] ?? new MediaStream([event.track]);
 			void audio.play().catch(() => this.cb.onNotice("The browser blocked the call's audio."));
@@ -346,6 +372,7 @@ class OpenAITransport implements Transport {
 	}
 
 	private mute(): void {
+		this.interrupted = true;
 		if (!this.audio) return;
 		this.audio.muted = true;
 		window.clearTimeout(this.muteTimer);
@@ -353,8 +380,9 @@ class OpenAITransport implements Transport {
 	}
 
 	private unmute(): void {
+		this.interrupted = false;
 		window.clearTimeout(this.muteTimer);
-		if (this.audio) this.audio.muted = false;
+		if (this.audio) this.audio.muted = !soundOn();
 	}
 
 	stopPlayback(): void {
@@ -363,6 +391,8 @@ class OpenAITransport implements Transport {
 
 	close(): void {
 		window.clearTimeout(this.muteTimer);
+		this.unsubscribeSound?.();
+		this.unsubscribeSound = null;
 		this.dc?.close();
 		this.dc = null;
 		this.pc?.close();

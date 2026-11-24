@@ -40,6 +40,8 @@ describe("bodyTooLarge", () => {
 
 	it("keeps the audio limit above the recording cap the engines accept", async () => {
 		const { STT_MAX_BYTES } = await import("../src/server/speak.ts");
+		const fiveMinutesPcmWav = 300 * 16_000 * 2 + 44;
+		assert.ok(STT_MAX_BYTES >= fiveMinutesPcmWav);
 		assert.ok(BODY_LIMITS.recording > STT_MAX_BYTES);
 		assert.ok(BODY_LIMITS.cheatsheet > 200_000);
 	});

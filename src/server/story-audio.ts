@@ -17,7 +17,14 @@ import { activeLanguage } from "./active-language.ts";
 import { keyValue } from "./keys.ts";
 import { library } from "./reading.ts";
 import { assignVoices, availableVoiceIds } from "./voices.ts";
-import { elevenLabsModelsFor, elevenLabsVoiceFor, latestElevenLabsModel, ttsCacheKey, ttsVoice } from "./tts.ts";
+import {
+	elevenLabsModelsFor,
+	elevenLabsVoiceFor,
+	keptByElevenLabs,
+	latestElevenLabsModel,
+	ttsCacheKey,
+	ttsVoice,
+} from "./tts.ts";
 
 /** A kept story whose cast speaks in voices the ElevenLabs account no
  *  longer lists (the retired premade set) gets voices it does list; a cast
@@ -77,7 +84,7 @@ export function storyAudioPlan(): StoryAudioPlan {
 			}
 			const key = ttsCacheKey({ text, lang: lang.code, voice });
 			const hit = findAudioClip(key);
-			if (hit?.tier === "elevenlabs") continue;
+			if (keptByElevenLabs(key, lang.code)) continue;
 			missing++;
 			if (planned.has(key)) continue;
 			planned.add(key);

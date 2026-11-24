@@ -321,6 +321,7 @@ function span(lines: readonly { i: number; start: number; end: number }[], from:
  *  English behind one switch, and the honest shares of its words. */
 function Summary({ video, rec, intro }: { video: VideoRecord; rec: PrepRecord; intro: string }) {
 	const lang = useActiveLanguage();
+	const langTag = lang?.tag ?? "sk-SK";
 	const [english, setEnglish] = useState(false);
 	const [popover, setPopover] = useState<{ sentence: number; token: number } | null>(null);
 	const [looked, setLooked] = useState<string[]>([]);
@@ -389,7 +390,7 @@ function Summary({ video, rec, intro }: { video: VideoRecord; rec: PrepRecord; i
 										<span key={gi} className="whitespace-nowrap">
 											{g.indexes.map((j) => {
 												const t = s.tokens[j]!;
-												const key = t.slug ?? t.text.toLocaleLowerCase("sk-SK");
+												const key = t.slug ?? t.text.toLocaleLowerCase(langTag);
 												return t.word ? (
 													<Word
 														key={j}

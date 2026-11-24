@@ -24,7 +24,7 @@ import {
 	endEnterBlocked,
 	onFocusedControl,
 } from "@/components/task-frame";
-import { speak, useActiveLanguage } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { Recorder, micSupported, transcribeClip } from "@/components/speak/recorder";
 import { QIcon } from "@/components/quiet/icon";
 import {
@@ -43,6 +43,7 @@ interface Outcome {
 	activeSec: number;
 	usedWords: UsefulChunk[];
 	transcript: string;
+	transcribeError?: string;
 }
 
 const LONGEST_TAKE_MS = 300_000;
@@ -83,12 +84,14 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 	useEffect(
 		() => () => {
 			stopTimer(timer);
+			stopSpeaking();
 			recorder.current?.cancel();
 		},
 		[],
 	);
 
 	const start = useCallback(async () => {
+		stopSpeaking();
 		setError(null);
 		setOutcome(null);
 		elapsedRef.current = 0;
@@ -133,11 +136,13 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 		setLevel(0);
 		setPhase("saving");
 		let transcript = "";
+		let transcribeError: string | undefined;
 		if (rec) {
 			try {
 				transcript = await transcribeClip((await rec.stop()).wav);
-			} catch {
+			} catch (err) {
 				transcript = "";
+				transcribeError = err instanceof Error ? err.message : String(err);
 			}
 		}
 		try {
@@ -165,6 +170,7 @@ export function SelfTalkPlayer({ initialPromptId }: { initialPromptId?: string |
 				activeSec: data.activeSec ?? seconds,
 				usedWords: data.usedWords ?? [],
 				transcript,
+				...(transcribeError ? { transcribeError } : {}),
 			});
 			setPhase("done");
 		} catch (err) {
@@ -445,8 +451,9 @@ function EndScreen({ prompt, outcome, onAgain }: { prompt: SelfTalkPrompt; outco
 				</Stats>
 				{!heard && (
 					<p className="mt-2 font-prose text-sm text-ink-3">
-						Nothing was transcribed, so only the time counts. A speech-to-text key in Settings lets the app listen for
-						the words.
+						{outcome.transcribeError && !/No speech-to-text key/.test(outcome.transcribeError)
+							? `Nothing was transcribed (${outcome.transcribeError}), so only the time counts.`
+							: "Nothing was transcribed, so only the time counts. A speech-to-text key in Settings lets the app listen for the words."}
 					</p>
 				)}
 				{heard && (

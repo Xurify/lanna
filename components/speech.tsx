@@ -232,40 +232,44 @@ async function measureGain(blob: Blob): Promise<number> {
 		const data = buffer.getChannelData(0);
 		const size = Math.round(buffer.sampleRate * 0.05);
 		const powers: number[] = [];
+		let peak = 0;
 		for (let i = 0; i + size <= data.length; i += size) {
-			let p = 0;
-			for (let j = i; j < i + size; j++) p += data[j]! * data[j]!;
-			powers.push(p / size);
+			let sum = 0;
+			for (let j = i; j < i + size; j++) sum += data[j]! * data[j]!;
+			const power = sum / size;
+			powers.push(power);
+			if (power > peak) peak = power;
 		}
-		const floor = Math.max(...powers) / 1000;
-		const speech = powers.filter((p) => p >= floor);
+		if (peak <= 0) return 1;
+		const floor = peak / 1000;
+		const speech = powers.filter((power) => power >= floor);
 		if (speech.length === 0) return 1;
-		const db = 10 * Math.log10(speech.reduce((a, b) => a + b, 0) / speech.length);
+		const db = 10 * Math.log10(speech.reduce((total, power) => total + power, 0) / speech.length);
 		return Math.min(1, 10 ** ((TARGET_DB - db) / 20));
 	} catch {
 		return 1;
 	}
 }
 
-/** Speaks `text` in the active language (or `lang`). Resolves when playback ends; a new call stops whatever was playing. */
+function ttsUrl(code: string, text: string, options: SpeakOptions = {}): string {
+	const query = new URLSearchParams({ lang: code, text });
+	if (options.voice) query.set("voice", options.voice);
+	if (options.gender) query.set("gender", options.gender);
+	if (options.style) query.set("style", options.style);
+	if (options.prefer) query.set("prefer", options.prefer);
+	return `/api/tts?${query.toString()}`;
+}
+
 export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOptions = {}): Promise<void> {
 	stopSpeaking();
-	// Muted: nothing plays, and no paid voice is fetched.
 	if (!soundOn()) return;
 	const mine = generation;
 	const language = lang ?? (await activeLanguage());
 	const rate = opts.slow ? slowRate(currentSpeed()) : currentSpeed();
-	const q = new URLSearchParams({ lang: language.code, text });
-	if (opts.voice) q.set("voice", opts.voice);
-	if (opts.gender) q.set("gender", opts.gender);
-	if (opts.style) q.set("style", opts.style);
-	if (opts.prefer) q.set("prefer", opts.prefer);
-	const url = `/api/tts?${q.toString()}`;
+	const url = ttsUrl(language.code, text, opts);
 	const res = await fetch(url).catch(() => null);
-	// A newer call or a mute arrived while this one was loading: drop it.
 	if (mine !== generation || !soundOn()) return;
 	if (!res || res.status === 204 || !res.ok) {
-		// The app's own voices failed; the system's voice is the fallback. The desktop app often has none for the language, so say why it may be silent.
 		console.warn(
 			`[Speech] no server voice (${res ? `HTTP ${res.status}` : "no answer"}${res?.headers.get("x-tts-fallback") ? ", every voice service failed" : ""}); trying the system voice for ${language.tag}`,
 		);
@@ -302,63 +306,72 @@ export async function speak(text: string, lang?: LanguageInfo, opts: SpeakOption
 		playing = { audio, gain };
 		setVoicing(text);
 		audio.onended = finish;
-		audio.onerror = (err) => {
-			console.warn("[Speech] audio element error:", err);
+		audio.onerror = (error) => {
+			console.warn("[Speech] audio element error:", error);
 			finish();
 		};
-		audio.play().catch((err) => {
-			if (!stopped) console.warn("[Speech] audio play rejected:", err);
+		audio.play().catch((error) => {
+			if (!stopped) console.warn("[Speech] audio play rejected:", error);
 			finish();
 		});
 	});
 }
 
-/** Warms the browser cache with a sentence's audio, using the same request speak() makes. */
-export function prefetchSpeech(text: string, code: string): void {
+export function prefetchSpeech(text: string, code: string, options: SpeakOptions = {}): void {
 	if (!soundOn()) return;
-	const url = `/api/tts?${new URLSearchParams({ lang: code, text }).toString()}`;
-	// The loudness measure decodes the whole clip; doing it now keeps it off the answer's path.
+	const url = ttsUrl(code, text, options);
 	void fetch(url)
-		.then(async (r) => {
-			const blob = await r.blob();
-			if (r.ok && r.status !== 204) void clipGain(url, blob);
+		.then(async (response) => {
+			const blob = await response.blob();
+			if (response.ok && response.status !== 204) void clipGain(url, blob);
 		})
 		.catch(() => {});
 }
 
-/** A speaker button for a phrase. */
 export function PlayButton({ text, className, label }: { text: string; className?: string; label?: string }) {
-	const [busy, setBusy] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const active = useVoicing() === text;
 	const play = () => {
-		if (busy) return;
-		setBusy(true);
-		void speak(text).finally(() => setBusy(false));
+		if (active) {
+			stopSpeaking();
+			setLoading(false);
+			return;
+		}
+		if (loading) return;
+		setLoading(true);
+		void speak(text).finally(() => setLoading(false));
 	};
 	// A span with button role: a nested <button> is invalid inside a quiz option and breaks hydration.
 	return (
 		<span
 			role="button"
 			tabIndex={0}
-			onMouseDown={(e) => e.preventDefault()}
-			onClick={(e) => {
-				e.stopPropagation();
+			aria-pressed={active}
+			onMouseDown={(event) => event.preventDefault()}
+			onClick={(event) => {
+				event.stopPropagation();
 				play();
 			}}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault();
-					e.stopPropagation();
+			onKeyDown={(event) => {
+				if (event.key === "Enter" || event.key === " ") {
+					event.preventDefault();
+					event.stopPropagation();
 					play();
 				}
 			}}
-			aria-label={label ?? `Play “${text}”`}
-			title="Play"
+			aria-label={label ?? (active ? `Stop “${text}”` : `Play “${text}”`)}
+			title={active ? "Stop" : "Play"}
 			className={cn(
-				"inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md align-middle text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+				"inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md align-middle transition-colors hover:bg-accent hover:text-foreground",
+				active ? "text-teal-2" : "text-muted-foreground",
 				className,
 			)}
 		>
-			{busy ? <LoaderCircleIcon className="size-3.5 animate-spin" /> : <Volume2Icon className="size-3.5" />}
+			{loading && !active ? (
+				<LoaderCircleIcon className="size-3.5 animate-spin" />
+			) : (
+				<Volume2Icon className="size-3.5" />
+			)}
 		</span>
 	);
 }
