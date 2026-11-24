@@ -1365,9 +1365,31 @@ export function triggerOf(sentence: string, at: number, unit?: UnitId): string |
 	return ALL_PREPS.has(w) ? w : undefined;
 }
 
-/** The first sense of a gloss: "to speak; to talk" → "to speak". */
+function stripUnclosedParens(text: string): string {
+	let depth = 0;
+	let openAt = -1;
+	for (let index = 0; index < text.length; index += 1) {
+		const character = text[index];
+		if (character === "(") {
+			if (depth === 0) openAt = index;
+			depth += 1;
+		} else if (character === ")") {
+			if (depth > 0) {
+				depth -= 1;
+				if (depth === 0) openAt = -1;
+			} else {
+				return text.slice(0, index).trim();
+			}
+		}
+	}
+	return depth > 0 && openAt >= 0 ? text.slice(0, openAt).trim() : text;
+}
+
 export function shortGloss(en: string): string {
-	return (en.split(";")[0] ?? en).replace(/\s*\((im)?perfective\)\s*$/, "").trim();
+	const first = (sensesOf(en)[0] ?? en).replace(/\s*\((im)?perfective\)\s*$/, "").trim();
+	return stripUnclosedParens(first)
+		.replace(/[;,:\s]+$/, "")
+		.trim();
 }
 
 const glossWords = (sense: string) =>

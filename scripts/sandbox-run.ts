@@ -3,16 +3,18 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { explainFailure, freePort, planSandbox } from "./dev-sandbox.ts";
+import { assertSafeDataDir, explainFailure, freePort, planSandbox } from "./dev-sandbox.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LANGUAGE_FILES = ["language.json", "course.json", "lexicon.json"] as const;
+const SNAPSHOT_DIR_NAME = ".seed-snapshot";
 
 export interface SandboxRunOptions {
 	seed: boolean;
 	copyLanguagesFrom?: string;
 	timeoutSeconds: number;
 	keepDir: boolean;
+	resetDir?: string;
 	command: string[];
 }
 
@@ -25,6 +27,7 @@ export function parseSandboxRunArgs(args: readonly string[], root: string = ROOT
 	let copyLanguagesFrom: string | undefined;
 	let timeoutSeconds = 90;
 	let keepDir = false;
+	let resetDir: string | undefined;
 
 	for (let index = 0; index < flagArgs.length; index += 1) {
 		const arg = flagArgs[index]!;
@@ -32,6 +35,11 @@ export function parseSandboxRunArgs(args: readonly string[], root: string = ROOT
 			seed = true;
 		} else if (arg === "--keep-dir") {
 			keepDir = true;
+		} else if (arg === "--reset") {
+			const next = flagArgs[index + 1];
+			if (!next || next.startsWith("--")) throw new Error("--reset requires a sandbox data directory path");
+			resetDir = path.resolve(next);
+			index += 1;
 		} else if (arg === "--timeout") {
 			const next = Number(flagArgs[index + 1]);
 			if (!Number.isFinite(next) || next <= 0) throw new Error("--timeout requires a positive number of seconds");
@@ -50,7 +58,30 @@ export function parseSandboxRunArgs(args: readonly string[], root: string = ROOT
 		}
 	}
 
-	return { seed, copyLanguagesFrom, timeoutSeconds, keepDir, command };
+	return { seed, copyLanguagesFrom, timeoutSeconds, keepDir, resetDir, command };
+}
+
+export function snapshotSandboxProfiles(sandboxDir: string, root: string = ROOT): void {
+	assertSafeDataDir(sandboxDir, root);
+	const snapshotProfiles = path.join(sandboxDir, SNAPSHOT_DIR_NAME, "profiles");
+	fs.rmSync(snapshotProfiles, { recursive: true, force: true });
+	const liveProfiles = path.join(sandboxDir, "profiles");
+	if (fs.existsSync(liveProfiles)) {
+		fs.cpSync(liveProfiles, snapshotProfiles, { recursive: true });
+	} else {
+		fs.mkdirSync(snapshotProfiles, { recursive: true });
+	}
+}
+
+export function resetSandboxProfiles(sandboxDir: string, root: string = ROOT): void {
+	assertSafeDataDir(sandboxDir, root);
+	const snapshotProfiles = path.join(sandboxDir, SNAPSHOT_DIR_NAME, "profiles");
+	if (!fs.existsSync(snapshotProfiles)) {
+		throw new Error(`No seed snapshot found in ${sandboxDir}`);
+	}
+	const liveProfiles = path.join(sandboxDir, "profiles");
+	fs.rmSync(liveProfiles, { recursive: true, force: true });
+	fs.cpSync(snapshotProfiles, liveProfiles, { recursive: true });
 }
 
 export function copyLanguageAssets(sourceDir: string, sandboxDir: string): string[] {
@@ -128,6 +159,11 @@ async function main(): Promise<void> {
 	}
 
 	const options = parseSandboxRunArgs(rawArgs);
+	if (options.resetDir) {
+		resetSandboxProfiles(options.resetDir);
+		console.log(`Reset sandbox profiles in ${options.resetDir}`);
+		return;
+	}
 	if (options.command.length === 0) {
 		console.error("Missing command after `--`");
 		process.exit(1);
@@ -154,6 +190,7 @@ async function main(): Promise<void> {
 				if (result.status !== 0) process.exit(result.status ?? 1);
 			}
 		}
+		snapshotSandboxProfiles(plan.dir);
 
 		const nextBin = createRequire(import.meta.url).resolve("next/dist/bin/next");
 		const nodeRuntime = process.versions.bun ? "node" : process.execPath;
@@ -184,6 +221,7 @@ async function main(): Promise<void> {
 				...process.env,
 				LANNA_SANDBOX_URL: url,
 				LANNA_SANDBOX_DATA_DIR: plan.dir,
+				LANNA_SANDBOX_RESET_CMD: `bun scripts/sandbox-run.ts --reset "${plan.dir}"`,
 			},
 			stdio: "inherit",
 			shell: process.platform === "win32",

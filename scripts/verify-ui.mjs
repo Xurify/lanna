@@ -18,6 +18,7 @@ export function parseVerifyArgs(args) {
 		checkIcons: false,
 		iconLimit: 0.5,
 		ignoreMissingAudio: true,
+		resetBetweenShots: false,
 		asJson: false,
 		settleMs: 500,
 	};
@@ -37,6 +38,7 @@ export function parseVerifyArgs(args) {
 		else if (arg === "--check-icons") options.checkIcons = true;
 		else if (arg === "--icon-limit") options.iconLimit = Number(args[++index]);
 		else if (arg === "--fail-on-missing-audio") options.ignoreMissingAudio = false;
+		else if (arg === "--reset-between-shots") options.resetBetweenShots = true;
 		else if (arg === "--json") options.asJson = true;
 		else positional.push(arg);
 	}
@@ -80,6 +82,16 @@ async function expandCollapsedChapters(page) {
 			if (button instanceof HTMLElement) button.click();
 		}
 	});
+}
+
+function restoreSandboxSnapshotIfPresent() {
+	const sandboxDir = process.env.LANNA_SANDBOX_DATA_DIR;
+	if (!sandboxDir) return;
+	const snapshotProfiles = path.join(sandboxDir, ".seed-snapshot", "profiles");
+	if (!fs.existsSync(snapshotProfiles)) return;
+	const liveProfiles = path.join(sandboxDir, "profiles");
+	fs.rmSync(liveProfiles, { recursive: true, force: true });
+	fs.cpSync(snapshotProfiles, liveProfiles, { recursive: true });
 }
 
 async function main() {
@@ -138,6 +150,7 @@ async function main() {
 	try {
 		for (const language of options.languages) {
 			for (const shot of parsedShots) {
+				if (options.resetBetweenShots) restoreSandboxSnapshotIfPresent();
 				for (const width of options.widths) {
 					const isMobile = width < 600;
 					await page.setViewport({

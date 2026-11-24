@@ -10,9 +10,17 @@ import {
 	parsePrAttachArgs,
 	rewriteAttachedBody,
 } from "../scripts/pr-attach.mjs";
-import { copyLanguageAssets, parseSandboxRunArgs, substituteCommandArgs } from "../scripts/sandbox-run.ts";
+import {
+	copyLanguageAssets,
+	parseSandboxRunArgs,
+	resetSandboxProfiles,
+	snapshotSandboxProfiles,
+	substituteCommandArgs,
+} from "../scripts/sandbox-run.ts";
 import { isIgnoredMissingAudio, parseShotSpec, parseVerifyArgs } from "../scripts/verify-ui.mjs";
 import { parseWorktreeArgs, resolveWorktreePath } from "../scripts/worktree.ts";
+import { shortGloss } from "../src/core/lesson.ts";
+import { wordCardOf } from "../src/core/word-card.ts";
 import type { ShippedStory } from "../src/server/chapter-stories.ts";
 
 const tempDirs: string[] = [];
@@ -36,6 +44,7 @@ describe("audit-content", () => {
 		assert.ok(slovak.storiesChecked >= 12);
 		assert.ok(slovak.mappedPictureWords >= 40);
 		assert.ok(slovak.picturedSentenceChecks > 0);
+		assert.ok(slovak.lessonsChecked >= 50);
 	});
 
 	it("catches unbalanced parentheses, missing word overrides, and out-of-range occurrence overrides", () => {
@@ -72,6 +81,33 @@ describe("audit-content", () => {
 		assert.ok(issues.some((issue) => issue.message.includes("missingword")));
 		assert.ok(issues.some((issue) => issue.message.includes("sentence 99 is out of range")));
 		assert.ok(issues.some((issue) => issue.message.includes("occurrence 2 out of range")));
+	});
+
+	it("shortGloss trims truncated parentheticals and wordCardOf deduplicates punctuation variants", () => {
+		assert.equal(shortGloss("ticket (a document certifying the right to drive, price,…"), "ticket");
+		assert.equal(shortGloss("beer (verbal noun of (pit); drink"), "beer");
+		assert.equal(shortGloss("to speak (imperfective); to talk"), "to speak");
+		assert.equal(shortGloss("beer (drink); lager"), "beer (drink)");
+
+		const card = wordCardOf(
+			{
+				lemma: "sobota",
+				cat: "Nouns",
+				examples: [
+					{ text: "Dnes je sobota!", en: "Today is Saturday!", src: "tatoeba", cloze: { answer: "sobota", at: 8 } },
+					{ text: "Dnes je sobota.", en: "Today is Saturday.", src: "tatoeba", cloze: { answer: "sobota", at: 8 } },
+					{
+						text: "V sobotu idem domov.",
+						en: "On Saturday I go home.",
+						src: "tatoeba",
+						cloze: { answer: "sobotu", at: 2 },
+					},
+				],
+			},
+			0,
+		);
+		assert.equal(card.examples.length, 1);
+		assert.equal(card.examples[0]!.word, "sobotu");
 	});
 });
 
@@ -118,6 +154,24 @@ describe("sandbox-run helpers", () => {
 		assert.equal(fs.existsSync(path.join(target, "profiles")), false);
 		assert.equal(fs.existsSync(path.join(target, "auth.json")), false);
 	});
+
+	it("snapshots and restores sandbox profiles without touching outside folders", () => {
+		const sandbox = makeTempDir("lanna-sbx-snap-");
+		const progressPath = path.join(sandbox, "profiles", "slovak", "progress.json");
+		fs.mkdirSync(path.dirname(progressPath), { recursive: true });
+		fs.writeFileSync(progressPath, '{"stage":"new"}');
+
+		snapshotSandboxProfiles(sandbox);
+		fs.writeFileSync(progressPath, '{"stage":"practiced"}');
+		fs.writeFileSync(path.join(sandbox, "profiles", "slovak", "extra.json"), "{}");
+
+		resetSandboxProfiles(sandbox);
+		assert.equal(fs.readFileSync(progressPath, "utf8"), '{"stage":"new"}');
+		assert.equal(fs.existsSync(path.join(sandbox, "profiles", "slovak", "extra.json")), false);
+
+		const resetParsed = parseSandboxRunArgs(["--reset", sandbox]);
+		assert.equal(resetParsed.resetDir, sandbox);
+	});
 });
 
 describe("verify-ui helpers", () => {
@@ -130,6 +184,7 @@ describe("verify-ui helpers", () => {
 			"slovak,russian,estonian",
 			"--expand-chapters",
 			"--check-icons",
+			"--reset-between-shots",
 			"--wait-for",
 			"main",
 		]);
@@ -139,6 +194,7 @@ describe("verify-ui helpers", () => {
 		assert.deepEqual(options.languages, ["slovak", "russian", "estonian"]);
 		assert.equal(options.expandChapters, true);
 		assert.equal(options.checkIcons, true);
+		assert.equal(options.resetBetweenShots, true);
 		assert.equal(options.waitFor, "main");
 		assert.deepEqual(parseShotSpec("path=/curriculum@.chapter-card"), {
 			name: "path",

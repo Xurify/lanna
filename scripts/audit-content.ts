@@ -5,6 +5,7 @@ import type { Lexicon } from "../src/agent/lexicon.ts";
 import { CHAPTER_STORIES } from "../src/core/chapter-stories.ts";
 import { isCoverMotif } from "../src/core/cover.ts";
 import { foldDiacritics } from "../src/core/language.ts";
+import { allUnits, buildLesson, shortGloss, type UnitId } from "../src/core/lesson.ts";
 import { tokenize } from "../src/core/reading.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
 import { WORD_CLUSTERS } from "../src/core/word-clusters.ts";
@@ -14,6 +15,7 @@ import { assembleStory, type KnownWords } from "../src/server/reading.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const COURSE_LANGUAGES = ["slovak", "russian", "estonian"] as const;
+const LESSON_AUDIT_SEEDS = [1, 2, 3] as const;
 const EMPTY_KNOWN_WORDS: KnownWords = {
 	level: "A1",
 	chapter: "",
@@ -29,7 +31,7 @@ const EMPTY_KNOWN_WORDS: KnownWords = {
 };
 
 export interface AuditIssue {
-	scope: "story" | "picture";
+	scope: "story" | "picture" | "lesson";
 	language: string;
 	target: string;
 	message: string;
@@ -41,6 +43,7 @@ export interface LanguageAuditStats {
 	storiesChecked: number;
 	mappedPictureWords: number;
 	picturedSentenceChecks: number;
+	lessonsChecked: number;
 }
 
 export interface ContentAuditReport {
@@ -289,6 +292,106 @@ export function auditWordPictures(
 	return { issues, mappedPictureWords, picturedSentenceChecks };
 }
 
+function normalizeSentenceKey(sentence: string): string {
+	return sentence
+		.normalize("NFC")
+		.toLocaleLowerCase()
+		.replace(/[^\p{L}\p{N}]+/gu, " ")
+		.trim();
+}
+
+export function auditLessons(
+	language: string,
+	lexicon: Lexicon | null,
+	root: string = ROOT,
+	seeds: readonly number[] = LESSON_AUDIT_SEEDS,
+): { issues: AuditIssue[]; lessonsChecked: number } {
+	if (!lexicon) return { issues: [], lessonsChecked: 0 };
+	const issues: AuditIssue[] = [];
+	let lessonsChecked = 0;
+
+	const globals = globalThis as Record<string, unknown>;
+	const previousCourse = globals.__lhCourse;
+	const coursePath = path.join(root, "curriculum", language, "course.json");
+	if (language !== "slovak" && fs.existsSync(coursePath)) {
+		globals.__lhCourse = JSON.parse(fs.readFileSync(coursePath, "utf-8"));
+	} else {
+		globals.__lhCourse = undefined;
+	}
+
+	try {
+		const playableUnits = allUnits().filter((unit) => unit.kind === "words" || unit.kind === "grammar");
+		for (const unit of playableUnits) {
+			for (const seed of seeds) {
+				const plan = buildLesson(lexicon.entries, unit.id as UnitId, { seed, stage: "new" });
+				if (plan.items.length === 0) continue;
+				lessonsChecked += 1;
+
+				const testedSentenceKeys = new Set(plan.items.map((item) => normalizeSentenceKey(item.sentence)));
+				const seenCardLeak = new Set<string>();
+				for (const item of plan.items) {
+					if (hasUnbalancedParens(item.hint)) {
+						issues.push({
+							scope: "lesson",
+							language,
+							target: `${unit.id}#${seed}`,
+							message: `unbalanced parentheses in hint for "${item.lemma}": "${item.hint}"`,
+						});
+					}
+					const displayedGloss = shortGloss(item.gloss);
+					if (hasUnbalancedParens(displayedGloss)) {
+						issues.push({
+							scope: "lesson",
+							language,
+							target: `${unit.id}#${seed}`,
+							message: `unbalanced parentheses in shortGloss for "${item.lemma}": "${displayedGloss}"`,
+						});
+					}
+					for (const example of item.card?.examples ?? []) {
+						const fullSentence = `${example.before}${example.word}${example.after}`;
+						const key = normalizeSentenceKey(fullSentence);
+						if (testedSentenceKeys.has(key) && !seenCardLeak.has(`${item.slug}:${key}`)) {
+							seenCardLeak.add(`${item.slug}:${key}`);
+							issues.push({
+								scope: "lesson",
+								language,
+								target: `${unit.id}#${seed}`,
+								message: `word card for "${item.lemma}" leaks tested sentence "${fullSentence}"`,
+							});
+						}
+					}
+				}
+
+				const lemmaBySlug = new Map(plan.items.map((item) => [item.slug, item.lemma]));
+				for (const [slug, intro] of Object.entries(plan.introductions ?? {})) {
+					const fullSentence = `${intro.before}${intro.word}${intro.after}`;
+					if (testedSentenceKeys.has(normalizeSentenceKey(fullSentence))) {
+						issues.push({
+							scope: "lesson",
+							language,
+							target: `${unit.id}#${seed}`,
+							message: `intro sentence for "${slug}" duplicates a tested rep: "${fullSentence}"`,
+						});
+					}
+					const lemma = lemmaBySlug.get(slug);
+					if (lemma && pictureFor(unit.id, lemma) && !pictureFor(unit.id, lemma, intro.en)) {
+						issues.push({
+							scope: "lesson",
+							language,
+							target: `${unit.id}#${seed}`,
+							message: `intro sentence for pictured word "${lemma}" does not match its picture: "${intro.en}"`,
+						});
+					}
+				}
+			}
+		}
+	} finally {
+		globals.__lhCourse = previousCourse;
+	}
+
+	return { issues, lessonsChecked };
+}
+
 export function auditAllContent(
 	options: { root?: string; dataDir?: string; languages?: readonly string[] } = {},
 ): ContentAuditReport {
@@ -344,12 +447,16 @@ export function auditAllContent(
 		const pictureAudit = auditWordPictures(language, allUnitsByLanguage.get(language) ?? [], lexicon);
 		issues.push(...pictureAudit.issues);
 
+		const lessonAudit = auditLessons(language, lexicon, root);
+		issues.push(...lessonAudit.issues);
+
 		stats.push({
 			language,
 			lexiconLoaded: lexicon !== null,
 			storiesChecked: stories.length,
 			mappedPictureWords: pictureAudit.mappedPictureWords,
 			picturedSentenceChecks: pictureAudit.picturedSentenceChecks,
+			lessonsChecked: lessonAudit.lessonsChecked,
 		});
 	}
 
@@ -371,7 +478,7 @@ function main(): void {
 		for (const stat of report.languages) {
 			const lexiconNote = stat.lexiconLoaded ? "lexicon ok" : "no lexicon on disk";
 			console.log(
-				`${stat.language.padEnd(10)} stories=${stat.storiesChecked}  pictured_words=${stat.mappedPictureWords}  sentences_checked=${stat.picturedSentenceChecks}  (${lexiconNote})`,
+				`${stat.language.padEnd(10)} stories=${stat.storiesChecked}  pictured_words=${stat.mappedPictureWords}  sentences_checked=${stat.picturedSentenceChecks}  lessons=${stat.lessonsChecked}  (${lexiconNote})`,
 			);
 		}
 		if (report.issues.length > 0) {

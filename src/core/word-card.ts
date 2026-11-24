@@ -103,19 +103,27 @@ function tableFromTags(formTags: Record<string, string[]>): WordCardRow[] | unde
 
 function otherExamples(entry: CardEntry, index: number): WordCardExample[] {
 	const own = exampleText(entry.examples[index] ?? {}).trim();
-	const seen = new Set([own]);
+	const seen = new Set([sentenceKey(own)]);
 	const picked: WordCardExample[] = [];
-	for (const [i, ex] of entry.examples.entries()) {
+	for (const [entryIndex, example] of entry.examples.entries()) {
 		if (picked.length >= MAX_EXAMPLES) break;
-		const text = exampleText(ex).trim();
-		if (i === index || !ex.cloze || !ex.en || seen.has(text) || text.length > MAX_EXAMPLE_LENGTH) continue;
-		seen.add(text);
-		const { answer, at } = ex.cloze;
+		const text = exampleText(example).trim();
+		const normalized = sentenceKey(text);
+		if (
+			entryIndex === index ||
+			!example.cloze ||
+			!example.en ||
+			seen.has(normalized) ||
+			text.length > MAX_EXAMPLE_LENGTH
+		)
+			continue;
+		seen.add(normalized);
+		const { answer, at } = example.cloze;
 		picked.push({
-			before: exampleText(ex).slice(0, at),
+			before: exampleText(example).slice(0, at),
 			word: answer,
-			after: exampleText(ex).slice(at + answer.length),
-			en: ex.en,
+			after: exampleText(example).slice(at + answer.length),
+			en: example.en,
 		});
 	}
 	return picked;
@@ -159,14 +167,14 @@ export function cardsWithoutOtherSentences<T extends { sentence: string; answer:
 	items: readonly T[],
 ): T[] {
 	const keys = items.map((item) => sentenceKey(item.sentence));
-	return items.map((item, i) => {
+	return items.map((item, itemIndex) => {
 		if (!item.card) return item;
-		const elsewhere = new Set(keys.filter((_, j) => j !== i));
+		const elsewhere = new Set(keys.filter((_, otherIndex) => otherIndex !== itemIndex));
 		const otherAnswers = items
-			.filter((other, j) => j !== i && other.answer.trim() !== "")
+			.filter((other, otherIndex) => otherIndex !== itemIndex && other.answer.trim() !== "")
 			.map((other) => wholeWordPattern(other.answer));
-		const examples = item.card.examples.filter((ex) => {
-			const text = ex.before + ex.word + ex.after;
+		const examples = item.card.examples.filter((example) => {
+			const text = example.before + example.word + example.after;
 			return !elsewhere.has(sentenceKey(text)) && !otherAnswers.some((pattern) => pattern.test(text.normalize("NFC")));
 		});
 		return { ...item, card: { ...item.card, examples } };
