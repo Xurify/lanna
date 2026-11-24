@@ -199,7 +199,7 @@ const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
 	rice: /(?<!\p{L})rice(?!\p{L})/iu,
 	apple: /(?<!\p{L})apple/iu,
 	soup: /(?<!\p{L})soup/iu,
-	fish: /(?<!\p{L})fish/iu,
+	fish: /(?<!\p{L})fish(?:es)?(?!\p{L})/iu,
 	cake: /(?<!\p{L})cake/iu,
 	water: /(?<!\p{L})water/iu,
 	coffee: /(?<!\p{L})coffee/iu,

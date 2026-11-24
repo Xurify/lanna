@@ -360,3 +360,10 @@ test("a nature or animal scene shows only when the English names the drawn thing
 	assert.ok(shows("lx-animals", "vták", "The bird flew high."));
 	assert.ok(shows("lx-animals", "ryba", "The fish is fresh."));
 });
+
+test("a picture never stands for a verb or a material that only looks like its word", () => {
+	assert.equal(pictureFor("lx-animals", "ryba", "The weather was fine, so we went fishing."), undefined);
+	assert.equal(pictureFor("lx-animals", "ryba", "Fish swim.")?.kind, "scene");
+	assert.equal(pictureFor("lx-nature", "les", "We took a walk in the wood."), undefined);
+	assert.equal(pictureFor("lx-nature", "les", "We took a walk in the woods.")?.kind, "scene");
+});
