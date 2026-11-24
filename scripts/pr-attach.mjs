@@ -1,9 +1,11 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const IMAGE_LINK_PATTERN = /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+const ASSET_LINE_PATTERN = /^!\[([^\]]+)\]\((https:\/\/github\.com\/user-attachments\/assets\/[^)\s]+)\)\s*$/;
 
 export function findLocalImages(markdown, baseDir) {
 	const found = [];
@@ -14,7 +16,7 @@ export function findLocalImages(markdown, baseDir) {
 		const resolved = path.resolve(baseDir, rawTarget);
 		if (!seen.has(resolved)) {
 			seen.add(resolved);
-			found.push({ rawTarget, resolved });
+			found.push({ rawTarget, resolved, stem: path.basename(resolved, path.extname(resolved)) });
 		}
 	}
 	return found;
@@ -28,6 +30,42 @@ export function findUnresolvedLocalImages(markdown) {
 		unresolved.push(rawTarget);
 	}
 	return unresolved;
+}
+
+// `gh pr create/edit --attach` appends `![stem](https://github.com/user-attachments/assets/...)`
+// lines at the end of the body instead of rewriting relative `./...` links in place.
+export function rewriteAttachedBody(originalMarkdown, liveBody, localImages) {
+	const lines = liveBody.replace(/\r\n/g, "\n").split("\n");
+	const appended = [];
+	let cursor = lines.length - 1;
+	while (cursor >= 0) {
+		const trimmed = lines[cursor].trim();
+		if (trimmed === "") {
+			cursor -= 1;
+			continue;
+		}
+		const match = trimmed.match(ASSET_LINE_PATTERN);
+		if (!match) break;
+		appended.unshift({ stem: match[1], url: match[2] });
+		cursor -= 1;
+	}
+
+	const urlByRawTarget = new Map();
+	const remaining = [...appended];
+	for (const image of localImages) {
+		const byStem = remaining.findIndex((item) => item.stem === image.stem);
+		const pickedIndex = byStem >= 0 ? byStem : 0;
+		const picked = remaining[pickedIndex];
+		if (!picked) continue;
+		remaining.splice(pickedIndex, 1);
+		urlByRawTarget.set(image.rawTarget, picked.url);
+	}
+
+	let rewritten = originalMarkdown;
+	for (const [rawTarget, assetUrl] of urlByRawTarget.entries()) {
+		rewritten = rewritten.replaceAll(`(${rawTarget})`, `(${assetUrl})`);
+	}
+	return rewritten;
 }
 
 export function parsePrAttachArgs(args) {
@@ -73,7 +111,7 @@ function main() {
 			"Usage:\n" +
 				'  node scripts/pr-attach.mjs create --title "..." --body-file pr-body.md [gh pr create flags...]\n' +
 				"  node scripts/pr-attach.mjs edit <pr-number> --body-file pr-body.md [gh pr edit flags...]\n" +
-				"Verifies every local Markdown image exists, attaches them via `gh --attach`, and confirms none remain unresolved.",
+				"Uploads local Markdown images via `gh --attach`, rewrites `./` links to permanent asset URLs, and removes duplicate trailing lines.",
 		);
 		process.exit(rawArgs.length === 0 ? 1 : 0);
 	}
@@ -94,11 +132,26 @@ function main() {
 	console.log(output);
 
 	const targetPr = prNumber || output.match(/\/pull\/(\d+)/)?.[1] || "";
-	if (!targetPr) return;
+	if (!targetPr || images.length === 0) return;
 
 	const viewArgs = ["pr", "view", targetPr, "--json", "body", "--jq", ".body"];
 	if (repo) viewArgs.push("-R", repo);
-	const liveBody = runGh(viewArgs);
+	let liveBody = runGh(viewArgs);
+
+	if (findUnresolvedLocalImages(liveBody).length > 0) {
+		const rewritten = rewriteAttachedBody(markdown, liveBody, images);
+		const tempFile = path.join(os.tmpdir(), `lanna-pr-${targetPr}-${Date.now()}.md`);
+		try {
+			fs.writeFileSync(tempFile, rewritten, "utf8");
+			const editArgs = ["pr", "edit", targetPr, "--body-file", tempFile];
+			if (repo) editArgs.push("-R", repo);
+			runGh(editArgs);
+		} finally {
+			fs.rmSync(tempFile, { force: true });
+		}
+		liveBody = runGh(viewArgs);
+	}
+
 	const unresolved = findUnresolvedLocalImages(liveBody);
 	if (unresolved.length > 0) {
 		throw new Error(`PR #${targetPr} still contains unresolved local image links: ${unresolved.join(", ")}`);

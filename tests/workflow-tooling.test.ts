@@ -4,7 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { after, describe, it } from "node:test";
 import { auditAllContent, auditStoryDraft, hasUnbalancedParens } from "../scripts/audit-content.ts";
-import { findLocalImages, findUnresolvedLocalImages, parsePrAttachArgs } from "../scripts/pr-attach.mjs";
+import {
+	findLocalImages,
+	findUnresolvedLocalImages,
+	parsePrAttachArgs,
+	rewriteAttachedBody,
+} from "../scripts/pr-attach.mjs";
 import { copyLanguageAssets, parseSandboxRunArgs, substituteCommandArgs } from "../scripts/sandbox-run.ts";
 import { isIgnoredMissingAudio, parseShotSpec, parseVerifyArgs } from "../scripts/verify-ui.mjs";
 import { parseWorktreeArgs, resolveWorktreePath } from "../scripts/worktree.ts";
@@ -165,6 +170,21 @@ describe("pr-attach and worktree helpers", () => {
 		assert.equal(parsed.prNumber, "24");
 		assert.equal(parsed.bodyFile, "pr-body.md");
 		assert.equal(parsed.repo, "Xurify/lanna");
+
+		const original = "| ![Day](./shots/a-day-1280.png) | ![Night](./shots/a-night-1280.png) |";
+		const liveWithAppended = [
+			original,
+			"",
+			"![a-day-1280](https://github.com/user-attachments/assets/1111)",
+			"",
+			"![a-night-1280](https://github.com/user-attachments/assets/2222)",
+		].join("\n");
+		const rewritten = rewriteAttachedBody(original, liveWithAppended, findLocalImages(original, "/tmp/pr"));
+		assert.equal(
+			rewritten,
+			"| ![Day](https://github.com/user-attachments/assets/1111) | ![Night](https://github.com/user-attachments/assets/2222) |",
+		);
+		assert.deepEqual(findUnresolvedLocalImages(rewritten), []);
 	});
 
 	it("resolves sibling worktree paths and parses commands", () => {

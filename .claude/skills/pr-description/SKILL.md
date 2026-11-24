@@ -25,12 +25,12 @@ The rule is **W5**; the shape is `.github/pull_request_template.md`. This repo's
      | ![Day Desktop](./shots/page-day-1280.png) | ![Night Desktop](./shots/page-night-1280.png) |
      | ![Day Mobile](./shots/page-day-390.png)   | ![Night Mobile](./shots/page-night-390.png)   |
      ```
-   - Create or edit the PR through `scripts/pr-attach.mjs`, which verifies every local image exists, attaches them via `gh --attach`, and checks the live PR body so no unresolved `./` link survives an edit:
+   - Create or edit the PR through `scripts/pr-attach.mjs`, which verifies every local image exists, uploads them via `gh --attach`, rewrites `./` links in-place using the appended GitHub asset URLs, removes the trailing duplicate lines, and checks the live PR body so no unresolved `./` link survives:
      ```bash
      bun run pr:attach -- create --title "..." --body-file pr-body.md
      bun run pr:attach -- edit <number> --body-file pr-body.md
      ```
-     `gh` uploads each file to GitHub user-attachments and rewrites the local Markdown image paths in the PR description to `https://github.com/user-attachments/assets/<uuid>`. Never run `gh pr edit --body-file` on a file containing `./` image links without passing `--attach` (or using `pr:attach`); doing so leaves broken links in the PR body.
+     Plain `gh pr create/edit --attach` appends uploaded URLs at the bottom of the body instead of rewriting `./` links inside tables; always use `pr:attach` so table screenshots render cleanly.
    - **Always include images and screenshots of the changed thing**: A PR is not ready for review until the screenshots are attached and rendered in the PR body. Never hand back a PR to the user without embedded screenshots.
 4. **Try it**: one checkbox per thing to check: the route in the sandbox, what to do, what to see.
 5. **Where**: one link per part of the diff, `https://github.com/Xurify/lanna/blob/<head SHA>/<path>#L<from>-L<to>`, the part the learner sees first, then the logic, the tests, the docs and skills. Re-pin the SHA and the lines after the last push (`git rev-parse HEAD`).
