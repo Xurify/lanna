@@ -1,0 +1,243 @@
+{
+	"title": "Pracovný pohovor",
+	"topic": "Jana goes to her first job interview, answers questions about school, work and free time, and is too honest about why she wants the job",
+	"cover": "office",
+	"cast": [
+		{
+			"name": "Jana",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Riaditeľ",
+			"gender": "m",
+			"age": "adult"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V pondelok o deviatej má Jana pracovný pohovor.",
+			"en": "On Monday at nine Jana has a job interview."
+		},
+		{
+			"who": "narrator",
+			"sk": "Je veľmi nervózna, lebo ešte nikdy nemala pohovor.",
+			"en": "She is very nervous, because she has never had an interview before."
+		},
+		{
+			"who": "narrator",
+			"sk": "Do firmy príde o pol deviatej a čaká na chodbe.",
+			"en": "She arrives at the company at half past eight and waits in the hallway."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "Dobrý deň, poďte ďalej. Sadnite si.",
+			"en": "Hello, come in. Have a seat."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "Povedzte mi niečo o sebe. Kde ste študovali?",
+			"en": "Tell me something about yourself. Where did you study?"
+		},
+		{
+			"who": "Jana",
+			"sk": "Študovala som jazyky na univerzite v Nitre.",
+			"en": "I studied languages at the university in Nitra."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "A kde pracujete teraz?",
+			"en": "And where do you work now?"
+		},
+		{
+			"who": "Jana",
+			"sk": "Od roku 2020 pracujem v kaviarni na námestí.",
+			"en": "Since 2020 I have worked at a café on the square."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "Meškali ste niekedy do práce?",
+			"en": "Have you ever been late for work?"
+		},
+		{
+			"who": "Jana",
+			"sk": "Nie, nikdy som nemeškala.",
+			"en": "No, I have never been late."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "A čo robíte vo voľnom čase?",
+			"en": "And what do you do in your free time?"
+		},
+		{
+			"who": "Jana",
+			"sk": "Rada čítam a cez víkend hrám futbal s kamarátkami.",
+			"en": "I like reading, and on weekends I play soccer with my friends."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "Futbal? Výborne. Ja ho len pozerám v televízii.",
+			"en": "Soccer? Excellent. I only watch it on TV."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "Prečo chcete pracovať práve u nás?",
+			"en": "Why do you want to work for us in particular?"
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Jana je nervózna a nevie, čo povedať.",
+			"en": "Jana is nervous and doesn't know what to say."
+		},
+		{
+			"who": "Jana",
+			"sk": "Lebo vaša kancelária je blízko môjho bytu.",
+			"en": "Because your office is close to my apartment."
+		},
+		{
+			"who": "narrator",
+			"sk": "Potom sa zľakne. Toto nechcela povedať!",
+			"en": "Then she gets scared. She didn't mean to say that!"
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "To je úprimná odpoveď. Nikto mi to ešte nepovedal.",
+			"en": "That's an honest answer. No one has ever told me that before."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "Máte nejaké otázky?",
+			"en": "Do you have any questions?"
+		},
+		{
+			"who": "Jana",
+			"sk": "Nie, nič. Teda áno. Kedy sa ráno začína práca?",
+			"en": "No, nothing. Well, yes. What time does work start in the morning?"
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "O ôsmej. Ale vy bývate blízko, tak to nebude problém.",
+			"en": "At eight. But you live close by, so that won't be a problem."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V stredu Jane zazvoní telefón.",
+			"en": "On Wednesday Jana's phone rings."
+		},
+		{
+			"who": "Riaditeľ",
+			"sk": "Dobrý deň. Prácu ste dostali! Môžete začať v pondelok?",
+			"en": "Hello. You got the job! Can you start on Monday?"
+		},
+		{
+			"who": "Jana",
+			"sk": "Áno! Budem tam o ôsmej. Nikdy nemeškám.",
+			"en": "Yes! I'll be there at eight. I'm never late."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "pohovor",
+			"en": "job interview"
+		},
+		{
+			"sk": "úprimný",
+			"en": "honest, sincere"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Kedy má Jana pohovor?",
+			"options": [
+				"V pondelok o deviatej",
+				"V stredu o ôsmej",
+				"V piatok o pol deviatej"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Kde pracuje Jana od roku 2020?",
+			"options": [
+				"V škole",
+				"V kaviarni",
+				"V nemocnici"
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Prečo chce Jana pracovať v tejto firme?",
+			"options": [
+				"Majú dobrý plat.",
+				"Riaditeľ hrá futbal.",
+				"Kancelária je blízko jej bytu."
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Nervous at her first job interview, Jana answers questions about her studies, her café job and soccer. Asked why she wants the job, she says the office is close to her apartment, and two days later she gets it.",
+	"glosses": {
+		"jana": {
+			"lemma": "Jana",
+			"gloss": "Jana (a name)"
+		},
+		"jane": {
+			"lemma": "Jana",
+			"gloss": "Jana (a name)"
+		},
+		"deviatej": {
+			"lemma": "deviaty",
+			"gloss": "ninth (o deviatej: at nine; o pol deviatej: at half past eight)"
+		},
+		"pol": {
+			"lemma": "pol",
+			"gloss": "half (o pol deviatej: at half past eight)"
+		},
+		"poďte": {
+			"lemma": "ísť",
+			"gloss": "come (command)"
+		},
+		"sadnite": {
+			"lemma": "sadnúť si",
+			"gloss": "sit down (command)"
+		},
+		"si": {
+			"lemma": "si",
+			"gloss": "for oneself (reflexive)"
+		},
+		"povedzte": {
+			"lemma": "povedať",
+			"gloss": "tell (command)"
+		},
+		"2020": {
+			"lemma": "2020",
+			"gloss": "2020 (dvetisícdvadsať)"
+		},
+		"nemeškala": {
+			"lemma": "meškať",
+			"gloss": "wasn't late"
+		},
+		"nemeškám": {
+			"lemma": "meškať",
+			"gloss": "I'm not late"
+		},
+		"ôsmej": {
+			"lemma": "ôsmy",
+			"gloss": "eighth (o ôsmej: at eight)"
+		},
+		"nebude": {
+			"lemma": "byť",
+			"gloss": "will not be"
+		},
+		"rada": {
+			"lemma": "rád",
+			"gloss": "glad; (rada čítam) I like to"
+		}
+	}
+}

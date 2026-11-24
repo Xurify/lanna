@@ -1,0 +1,293 @@
+{
+	"title": "Modrý kabát",
+	"topic": "Zuzana goes shopping for a blue winter coat, but the coats are too expensive or too big, and her boyfriend Marek leaves with new clothes instead",
+	"cover": "market",
+	"cast": [
+		{
+			"name": "Zuzana",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Predavačka",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Marek",
+			"gender": "m",
+			"age": "young"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V sobotu idú Zuzana a Marek do obchodu s oblečením.",
+			"en": "On Saturday Zuzana and Marek go to a clothing store."
+		},
+		{
+			"who": "narrator",
+			"sk": "Zuzana potrebuje nový kabát, lebo ten starý nosí už desať rokov.",
+			"en": "Zuzana needs a new coat, because she has been wearing the old one for ten years."
+		},
+		{
+			"who": "Predavačka",
+			"sk": "Dobrý deň, môžem vám pomôcť?",
+			"en": "Hello, can I help you?"
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Dobrý deň. Chcela by som zimný kabát, najradšej modrý.",
+			"en": "Hello. I would like a winter coat, blue if possible."
+		},
+		{
+			"who": "Predavačka",
+			"sk": "Máme ich niekoľko. Hneď vám ich prinesiem.",
+			"en": "We have several. I'll bring them right away."
+		},
+		{
+			"who": "narrator",
+			"sk": "Predavačka jej prinesie tri modré kabáty.",
+			"en": "The saleswoman brings her three blue coats."
+		},
+		{
+			"who": "narrator",
+			"sk": "Prvý je príliš krátky, druhý je príliš veľký a tretí stojí dvesto eur.",
+			"en": "The first one is too short, the second is too big, and the third costs two hundred euros."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Dvesto eur? To je veľmi drahé.",
+			"en": "Two hundred euros? That's very expensive."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Mohli by ste mi ukázať niečo lacnejšie?",
+			"en": "Could you show me something cheaper?"
+		},
+		{
+			"who": "Predavačka",
+			"sk": "Ten druhý je v zľave. Stojí len päťdesiat eur.",
+			"en": "The second one is on sale. It costs only fifty euros."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Zuzana si kabát oblečie a pozerá sa do zrkadla.",
+			"en": "Zuzana puts on the coat and looks in the mirror."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Marek, ako vyzerám?",
+			"en": "Marek, how do I look?"
+		},
+		{
+			"who": "Marek",
+			"sk": "Pekne, ale rukávy sú trochu dlhé.",
+			"en": "Nice, but the sleeves are a bit long."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Máte ho aj v menšej veľkosti?",
+			"en": "Do you have it in a smaller size too?"
+		},
+		{
+			"who": "Predavačka",
+			"sk": "Bohužiaľ nie. Máme už len dva kusy, oba veľké.",
+			"en": "Unfortunately not. We only have two left, both large."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Kým Zuzana rozmýšľa, Marek skúša košele.",
+			"en": "While Zuzana is thinking, Marek tries on shirts."
+		},
+		{
+			"who": "Marek",
+			"sk": "Pozri, tieto dve košele by som si kúpil.",
+			"en": "Look, I would buy these two shirts."
+		},
+		{
+			"who": "Marek",
+			"sk": "A tieto čierne nohavice mi tiež sedia.",
+			"en": "And these black pants fit me too."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Prišli sme kúpiť kabát pre mňa, nie oblečenie pre teba!",
+			"en": "We came to buy a coat for me, not clothes for you!"
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Viete čo? Ten starý kabát by som mohla nosiť ešte jednu zimu.",
+			"en": "You know what? I could wear the old coat for one more winter."
+		},
+		{
+			"who": "Predavačka",
+			"sk": "A nechceli by ste aspoň novú čiapku? Je na ňu zľava.",
+			"en": "And wouldn't you like a new hat, at least? It's on sale."
+		},
+		{
+			"who": "Zuzana",
+			"sk": "Dobre, zoberiem si jednu modrú čiapku.",
+			"en": "Okay, I'll take one blue hat."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Pri pokladni platia spolu deväťdesiat eur.",
+			"en": "At the register they pay ninety euros altogether."
+		},
+		{
+			"who": "narrator",
+			"sk": "Domov idú s dvoma košeľami, jedným párom nohavíc a modrou čiapkou.",
+			"en": "They go home with two shirts, one pair of pants and a blue hat."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "zľava",
+			"en": "discount (v zľave: on sale)"
+		},
+		{
+			"sk": "rukáv",
+			"en": "sleeve"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Koľko stojí tretí kabát?",
+			"options": [
+				"Päťdesiat eur",
+				"Deväťdesiat eur",
+				"Dvesto eur"
+			],
+			"answer": 2
+		},
+		{
+			"kind": "recall",
+			"q": "Prečo si Zuzana nekúpi lacný kabát?",
+			"options": [
+				"Je jej veľký.",
+				"Nie je modrý.",
+				"Je príliš drahý."
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Čo si kúpi Marek?",
+			"options": [
+				"Modrý kabát",
+				"Dve košele a nohavice",
+				"Čiapku"
+			],
+			"answer": 1
+		}
+	],
+	"recap": "Zuzana goes shopping for a blue winter coat, but one is too short, one too expensive and the cheap one too big. She decides to keep her old coat and buys only a blue hat, while Marek goes home with two shirts and a pair of pants.",
+	"glosses": {
+		"zuzana": {
+			"lemma": "Zuzana",
+			"gloss": "Zuzana (a name)"
+		},
+		"marek": {
+			"lemma": "Marek",
+			"gloss": "Marek (a name)"
+		},
+		"predavačka": {
+			"lemma": "predavačka",
+			"gloss": "saleswoman"
+		},
+		"najradšej": {
+			"lemma": "rád",
+			"gloss": "most of all; preferably"
+		},
+		"prvý": {
+			"lemma": "prvý",
+			"gloss": "first"
+		},
+		"druhý": {
+			"lemma": "druhý",
+			"gloss": "second; the other"
+		},
+		"tretí": {
+			"lemma": "tretí",
+			"gloss": "third"
+		},
+		"dvesto": {
+			"lemma": "dvesto",
+			"gloss": "two hundred"
+		},
+		"päťdesiat": {
+			"lemma": "päťdesiat",
+			"gloss": "fifty"
+		},
+		"deväťdesiat": {
+			"lemma": "deväťdesiat",
+			"gloss": "ninety"
+		},
+		"lacnejšie": {
+			"lemma": "lacný",
+			"gloss": "cheaper"
+		},
+		"si": {
+			"lemma": "si",
+			"gloss": "for oneself (reflexive)"
+		},
+		"oblečie": {
+			"lemma": "obliecť si",
+			"gloss": "puts on"
+		},
+		"menšej": {
+			"lemma": "malý",
+			"gloss": "smaller"
+		},
+		"bohužiaľ": {
+			"lemma": "bohužiaľ",
+			"gloss": "unfortunately"
+		},
+		"oba": {
+			"lemma": "oba",
+			"gloss": "both"
+		},
+		"kým": {
+			"lemma": "kým",
+			"gloss": "while"
+		},
+		"sedia": {
+			"lemma": "sedieť",
+			"gloss": "to sit; to fit (of clothes)"
+		},
+		"aspoň": {
+			"lemma": "aspoň",
+			"gloss": "at least"
+		},
+		"zľava": {
+			"lemma": "zľava",
+			"gloss": "discount"
+		},
+		"pokladni": {
+			"lemma": "pokladňa",
+			"gloss": "register, checkout"
+		},
+		"dvoma": {
+			"lemma": "dva",
+			"gloss": "two"
+		},
+		"domov": {
+			"lemma": "domov",
+			"gloss": "home (going home)"
+		},
+		"čiapku": {
+			"lemma": "čiapka",
+			"gloss": "hat, cap"
+		},
+		"čiapkou": {
+			"lemma": "čiapka",
+			"gloss": "hat, cap"
+		}
+	}
+}

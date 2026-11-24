@@ -1,0 +1,271 @@
+{
+	"title": "Kto je tá nová?",
+	"topic": "Martin looks for the new colleague Eva described, greets the wrong woman, and finds out who the new girl's parents are",
+	"cover": "friends",
+	"cast": [
+		{
+			"name": "Martin",
+			"gender": "m",
+			"age": "young"
+		},
+		{
+			"name": "Eva",
+			"gender": "f",
+			"age": "young"
+		},
+		{
+			"name": "Hana",
+			"gender": "f",
+			"age": "adult"
+		},
+		{
+			"name": "Simona",
+			"gender": "f",
+			"age": "young"
+		}
+	],
+	"sentences": [
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V pondelok prišla do kancelárie nová kolegyňa.",
+			"en": "On Monday a new colleague started at the office."
+		},
+		{
+			"who": "narrator",
+			"sk": "Martin ju ešte nevidel, ale Eva mu o nej veľa rozprávala.",
+			"en": "Martin hasn't seen her yet, but Eva has told him a lot about her."
+		},
+		{
+			"who": "Martin",
+			"sk": "Eva, povedz mi niečo o novej kolegyni. Aká je?",
+			"en": "Eva, tell me something about the new colleague. What's she like?"
+		},
+		{
+			"who": "Eva",
+			"sk": "Je vysoká, má dlhé tmavé vlasy a nosí okuliare.",
+			"en": "She's tall, she has long dark hair, and she wears glasses."
+		},
+		{
+			"who": "Eva",
+			"sk": "Je veľmi milá a vždy veselá. Páči sa mi.",
+			"en": "She's very nice and always cheerful. I like her."
+		},
+		{
+			"who": "Martin",
+			"sk": "A ako sa volá?",
+			"en": "And what's her name?"
+		},
+		{
+			"who": "Eva",
+			"sk": "Simona. Sedí pri okne vedľa šéfa.",
+			"en": "Simona. She sits by the window, next to the boss."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V utorok ráno vidí Martin pri okne vysokú ženu s dlhými tmavými vlasmi.",
+			"en": "On Tuesday morning Martin sees a tall woman with long dark hair by the window."
+		},
+		{
+			"who": "narrator",
+			"sk": "Rozpráva sa so šéfom a smeje sa.",
+			"en": "She is talking with the boss and laughing."
+		},
+		{
+			"who": "Martin",
+			"sk": "Dobrý deň! Vy ste určite Simona, naša nová kolegyňa.",
+			"en": "Hello! You must be Simona, our new colleague."
+		},
+		{
+			"who": "Hana",
+			"sk": "Nie, ja som Hana, manželka vášho šéfa.",
+			"en": "No, I'm Hana, your boss's wife."
+		},
+		{
+			"who": "narrator",
+			"sk": "Martinovi je hanba a je červený ako paradajka.",
+			"en": "Martin is embarrassed and turns as red as a tomato."
+		},
+		{
+			"who": "Martin",
+			"sk": "Prepáčte, nechcel som vás vyrušiť.",
+			"en": "Sorry, I didn't mean to disturb you."
+		},
+		{
+			"who": "Hana",
+			"sk": "Nevadí. Simonu nájdete v kuchynke, práve si robí kávu.",
+			"en": "Never mind. You'll find Simona in the kitchen; she's making herself coffee."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "V kuchynke stojí vysoké dievča v okuliaroch s veľkou šálkou kávy.",
+			"en": "A tall girl in glasses is standing in the kitchen with a big cup of coffee."
+		},
+		{
+			"who": "Simona",
+			"sk": "Ahoj, ty budeš Martin? Eva mi o tebe hovorila.",
+			"en": "Hi, you must be Martin? Eva told me about you."
+		},
+		{
+			"who": "Martin",
+			"sk": "Áno. A ja som práve hovoril s manželkou nášho šéfa.",
+			"en": "Yes. And I was just talking to our boss's wife."
+		},
+		{
+			"who": "Martin",
+			"sk": "Myslel som, že ona je tá nová.",
+			"en": "I thought she was the new girl."
+		},
+		{
+			"who": "Simona",
+			"sk": "Tá vysoká pani pri okne? To je moja mama!",
+			"en": "That tall lady by the window? That's my mom!"
+		},
+		{
+			"who": "Martin",
+			"sk": "Tvoja mama? Takže náš šéf je tvoj otec?",
+			"en": "Your mom? So our boss is your dad?"
+		},
+		{
+			"who": "Simona",
+			"sk": "Áno, ale nikomu to nehovor, prosím.",
+			"en": "Yes, but please don't tell anyone."
+		},
+		{
+			"who": "narrator",
+			"sk": "Martin sa smeje a Simona s ním.",
+			"en": "Martin laughs, and Simona laughs with him."
+		},
+		{
+			"who": "narrator",
+			"p": true,
+			"sk": "Večer Martin volá Eve.",
+			"en": "In the evening Martin calls Eva."
+		},
+		{
+			"who": "Martin",
+			"sk": "Máš pravdu, Simona je milá. Myslím, že ju mám rád.",
+			"en": "You're right, Simona is nice. I think I like her."
+		},
+		{
+			"who": "Eva",
+			"sk": "Ja viem. A viem aj to, kto je jej otec.",
+			"en": "I know. And I also know who her father is."
+		}
+	],
+	"newWords": [
+		{
+			"sk": "okuliare",
+			"en": "glasses"
+		},
+		{
+			"sk": "kuchynka",
+			"en": "kitchenette, small office kitchen"
+		}
+	],
+	"questions": [
+		{
+			"kind": "recall",
+			"q": "Ako vyzerá nová kolegyňa?",
+			"options": [
+				"Je malá a má krátke vlasy.",
+				"Je vysoká a nosí okuliare.",
+				"Je stará a má biele vlasy."
+			],
+			"answer": 1
+		},
+		{
+			"kind": "recall",
+			"q": "Kto je žena pri okne?",
+			"options": [
+				"Manželka šéfa",
+				"Simona",
+				"Eva"
+			],
+			"answer": 0
+		},
+		{
+			"kind": "recall",
+			"q": "Kto je Simonin otec?",
+			"options": [
+				"Martin",
+				"Evin brat",
+				"Ich šéf"
+			],
+			"answer": 2
+		}
+	],
+	"recap": "Eva describes the new colleague Simona to Martin. He greets a tall woman by the window, but she is the boss's wife, and in the kitchen Simona tells him that woman is her mom, so the boss is her dad.",
+	"glosses": {
+		"martin": {
+			"lemma": "Martin",
+			"gloss": "Martin (a name)"
+		},
+		"martinovi": {
+			"lemma": "Martin",
+			"gloss": "Martin (a name)"
+		},
+		"eva": {
+			"lemma": "Eva",
+			"gloss": "Eva (a name)"
+		},
+		"eve": {
+			"lemma": "Eva",
+			"gloss": "Eva (a name)"
+		},
+		"simona": {
+			"lemma": "Simona",
+			"gloss": "Simona (a name)"
+		},
+		"simonu": {
+			"lemma": "Simona",
+			"gloss": "Simona (a name)"
+		},
+		"hana": {
+			"lemma": "Hana",
+			"gloss": "Hana (a name)"
+		},
+		"povedz": {
+			"lemma": "povedať",
+			"gloss": "tell (command)"
+		},
+		"aká": {
+			"lemma": "aký",
+			"gloss": "what, what kind of"
+		},
+		"paradajka": {
+			"lemma": "paradajka",
+			"gloss": "tomato"
+		},
+		"vyrušiť": {
+			"lemma": "vyrušiť",
+			"gloss": "to disturb"
+		},
+		"kuchynke": {
+			"lemma": "kuchynka",
+			"gloss": "kitchenette"
+		},
+		"takže": {
+			"lemma": "takže",
+			"gloss": "so"
+		},
+		"nikomu": {
+			"lemma": "nikto",
+			"gloss": "(to) no one"
+		},
+		"si": {
+			"lemma": "si",
+			"gloss": "for oneself (reflexive)"
+		},
+		"budeš": {
+			"lemma": "byť",
+			"gloss": "you will be (ty budeš Martin: you must be Martin)"
+		},
+		"vášho": {
+			"lemma": "váš",
+			"gloss": "your (formal or plural)"
+		}
+	}
+}
