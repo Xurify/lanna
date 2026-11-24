@@ -11,27 +11,63 @@ import { availableVoiceIds } from "./voices.ts";
 
 export const SHIPPED_STORY_MODEL = "shipped";
 
-interface ShippedStory extends StoryDraft {
-	glosses?: Record<string, { lemma: string; gloss: string }>;
+export interface StoryGlossOverride {
+	lemma: string;
+	gloss: string;
 }
 
-function withGlosses(sentences: readonly StorySentence[], glosses: ShippedStory["glosses"]): StorySentence[] {
-	if (!glosses) return [...sentences];
-	return sentences.map((s) => ({
-		...s,
-		tokens: s.tokens.map((t) => {
-			const fixed = t.word ? glosses[t.text.toLocaleLowerCase()] : undefined;
-			if (!fixed) return t;
-			const { slug, cat, gender, ...rest } = t;
-			const sameWord = t.lemma === fixed.lemma;
-			return {
-				...rest,
-				lemma: fixed.lemma,
-				gloss: fixed.gloss,
-				...(sameWord ? { ...(slug ? { slug } : {}), ...(cat ? { cat } : {}), ...(gender ? { gender } : {}) } : {}),
-			};
-		}),
-	}));
+export interface StoryOccurrenceOverride extends StoryGlossOverride {
+	sentence: number;
+	token: string;
+	occurrence?: number;
+}
+
+export interface ShippedStory extends StoryDraft {
+	glosses?: Record<string, StoryGlossOverride>;
+	occurrences?: readonly StoryOccurrenceOverride[];
+}
+
+export function applyStoryGlosses(
+	sentences: readonly StorySentence[],
+	glosses: ShippedStory["glosses"],
+	occurrences?: ShippedStory["occurrences"],
+): StorySentence[] {
+	if (!glosses && (!occurrences || occurrences.length === 0)) return [...sentences];
+	const bySentence = new Map<number, StoryOccurrenceOverride[]>();
+	for (const entry of occurrences ?? []) {
+		const bucket = bySentence.get(entry.sentence);
+		if (bucket) bucket.push(entry);
+		else bySentence.set(entry.sentence, [entry]);
+	}
+	return sentences.map((sentence, sentenceIndex) => {
+		const sentenceOverrides = bySentence.get(sentenceIndex);
+		const seenCount = new Map<string, number>();
+		return {
+			...sentence,
+			tokens: sentence.tokens.map((token) => {
+				if (!token.word) return token;
+				const lower = token.text.toLocaleLowerCase();
+				const occurrenceIndex = seenCount.get(lower) ?? 0;
+				seenCount.set(lower, occurrenceIndex + 1);
+				const exact = sentenceOverrides?.find(
+					(entry) => entry.token.toLocaleLowerCase() === lower && entry.occurrence === occurrenceIndex,
+				);
+				const sentenceWide = sentenceOverrides?.find(
+					(entry) => entry.token.toLocaleLowerCase() === lower && entry.occurrence === undefined,
+				);
+				const fixed = exact ?? sentenceWide ?? glosses?.[lower];
+				if (!fixed) return token;
+				const { slug, cat, gender, ...rest } = token;
+				const sameWord = token.lemma === fixed.lemma;
+				return {
+					...rest,
+					lemma: fixed.lemma,
+					gloss: fixed.gloss,
+					...(sameWord ? { ...(slug ? { slug } : {}), ...(cat ? { cat } : {}), ...(gender ? { gender } : {}) } : {}),
+				};
+			}),
+		};
+	});
 }
 
 export function authoredNewWords(found: readonly StoryWord[], authored: ShippedStory["newWords"]): StoryWord[] {
@@ -87,7 +123,7 @@ async function writeChapterStory(id: string, now: Date): Promise<StoryRecord | n
 		now,
 		await availableVoiceIds(),
 	);
-	const sentences = withGlosses(assembled.sentences, draft.glosses);
+	const sentences = applyStoryGlosses(assembled.sentences, draft.glosses, draft.occurrences);
 	const slugs = new Set(sentences.flatMap((s) => s.tokens.map((t) => t.slug)));
 	const story: StoryRecord = {
 		...assembled,

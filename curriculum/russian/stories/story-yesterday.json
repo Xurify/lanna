@@ -311,6 +311,10 @@
 		"него": {
 			"lemma": "он",
 			"gloss": "him (у него: he has)"
+		},
+		"площади": {
+			"lemma": "площадь",
+			"gloss": "square (town square)"
 		}
 	}
 }

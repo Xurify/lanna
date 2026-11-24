@@ -17,10 +17,64 @@ import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TESTS_DIR = path.join(ROOT, "tests");
+
+export function resolveAffectedTests(changedFiles: readonly string[], root: string = ROOT): string[] {
+	const testsDir = path.join(root, "tests");
+	if (!fs.existsSync(testsDir)) return [];
+	const allTestFiles = fs
+		.readdirSync(testsDir)
+		.filter((name) => /\.test\.tsx?$/.test(name))
+		.sort()
+		.map((name) => path.join("tests", name));
+
+	const normalizedChanged = changedFiles.map((file) => file.replace(/\\/g, "/"));
+	const matched = new Set<string>();
+	const stemTokens = new Set<string>();
+
+	for (const changed of normalizedChanged) {
+		if (/^tests\/.*\.test\.tsx?$/.test(changed) && fs.existsSync(path.join(root, changed))) {
+			matched.add(path.normalize(changed));
+			continue;
+		}
+		const baseName = path.basename(changed, path.extname(changed));
+		if (baseName && baseName !== "index") stemTokens.add(baseName);
+		if (changed.startsWith("curriculum/")) stemTokens.add("chapter-stories");
+	}
+
+	if (stemTokens.size === 0) return [...matched].sort();
+
+	for (const testRelPath of allTestFiles) {
+		if (matched.has(testRelPath)) continue;
+		const testBase = path.basename(testRelPath).replace(/\.test\.tsx?$/, "");
+		if (stemTokens.has(testBase)) {
+			matched.add(testRelPath);
+			continue;
+		}
+		const source = fs.readFileSync(path.join(root, testRelPath), "utf-8");
+		for (const stem of stemTokens) {
+			if (source.includes(`/${stem}.`) || source.includes(`/${stem}"`) || source.includes(`/${stem}'`)) {
+				matched.add(testRelPath);
+				break;
+			}
+		}
+	}
+
+	return [...matched].sort();
+}
+
+function listChangedFiles(baseRef: string): string[] {
+	const diff = spawnSync("git", ["diff", "--name-only", baseRef], { cwd: ROOT, encoding: "utf8" });
+	const untracked = spawnSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: ROOT, encoding: "utf8" });
+	const lines = [
+		...(diff.status === 0 ? diff.stdout.split(/\r?\n/) : []),
+		...(untracked.status === 0 ? untracked.stdout.split(/\r?\n/) : []),
+	];
+	return [...new Set(lines.map((line) => line.trim()).filter(Boolean))];
+}
 
 function resolveRunner(): { cmd: string; argsFor: (file: string) => string[] } {
 	if (process.versions.bun) {
@@ -63,8 +117,22 @@ function collectTestFiles(filters: string[]): string[] {
 }
 
 async function main(): Promise<void> {
-	const args = process.argv.slice(2).filter((a) => a !== "--");
-	const files = collectTestFiles(args);
+	const args = process.argv.slice(2).filter((arg) => arg !== "--");
+	const changedIndex = args.indexOf("--changed");
+	let files: string[];
+	if (changedIndex >= 0) {
+		const nextArg = args[changedIndex + 1];
+		const baseRef = nextArg && !nextArg.startsWith("-") ? nextArg : "origin/main";
+		const changed = listChangedFiles(baseRef);
+		files = resolveAffectedTests(changed);
+		if (files.length === 0) {
+			console.log(`No affected test files matched ${changed.length} changed file(s) against ${baseRef}.`);
+			return;
+		}
+		console.log(`Running ${files.length} affected test file(s) for ${changed.length} changed file(s):`);
+	} else {
+		files = collectTestFiles(args);
+	}
 	if (files.length === 0) {
 		console.error(`No test files matched: ${args.join(" ")}`);
 		process.exit(1);
@@ -131,7 +199,9 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+	main().catch((error) => {
+		console.error(error);
+		process.exit(1);
+	});
+}
