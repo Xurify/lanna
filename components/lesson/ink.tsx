@@ -56,6 +56,7 @@ export function Patch({
 	ry,
 	seed,
 	delay = 0,
+	bold = false,
 }: {
 	cx: number;
 	cy: number;
@@ -63,8 +64,15 @@ export function Patch({
 	ry: number;
 	seed: number;
 	delay?: number;
+	bold?: boolean;
 }) {
-	return <path d={patchD(cx, cy, rx, ry, seed)} className="ink-fade fill-teal/20" style={delayed(delay)} />;
+	return (
+		<path
+			d={patchD(cx, cy, rx, ry, seed)}
+			className={bold ? "ink-fade fill-teal/40" : "ink-fade fill-teal/20"}
+			style={delayed(delay)}
+		/>
+	);
 }
 
 export function Dot({

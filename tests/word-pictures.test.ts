@@ -478,11 +478,15 @@ test("a body picture shows only for the part it draws", () => {
 	assert.ok(!shows("lx-body", "ruka", "Tom's arm hurts."));
 	assert.ok(!shows("lx-words-health", "käsi", "Tom held Mary in his arms."));
 	assert.ok(!shows("lx-words-health", "рука", "Use what is at hand."));
+	assert.ok(!shows("lx-body", "ruka", "I wrote it by hand."));
+	assert.ok(!shows("lx-words-health", "käsi", "On the one hand, it is cheap."));
 	assert.ok(!shows("lx-words-health", "рука", "He is very handsome."));
 	assert.ok(shows("lx-words-health", "спина", "My back hurts."));
 	assert.ok(shows("lx-words-health", "спина", "He slept on his back."));
 	assert.ok(shows("lx-words-health", "selg", "She turned her back on Tom."));
 	assert.ok(!shows("lx-words-health", "спина", "Come back soon."));
+	assert.ok(!shows("lx-words-health", "спина", "He's back."));
+	assert.ok(!shows("lx-words-health", "selg", "It's back on the shelf."));
 	assert.ok(!shows("lx-words-health", "спина", "I'll call you back."));
 	assert.ok(!shows("lx-words-health", "selg", "He pushed his hat back on his head."));
 	assert.ok(!shows("lx-words-health", "спина", "Sit in the back seat."));
@@ -494,6 +498,7 @@ test("a body picture shows only for the part it draws", () => {
 	assert.ok(shows("lx-words-health", "лицо", "Go wash your face."));
 	assert.ok(shows("lx-words-health", "nägu", "I'm happy to see so many friendly faces."));
 	assert.ok(!shows("lx-words-health", "лицо", "We must face the facts."));
+	assert.ok(!shows("lx-words-health", "лицо", "She faces many problems."));
 	assert.ok(!shows("lx-words-health", "лицо", "I can't face him today."));
 	assert.ok(shows("lx-body", "zub", "Does your tooth hurt?"));
 	assert.ok(shows("lx-words-health", "зуб", "I brush my teeth."));

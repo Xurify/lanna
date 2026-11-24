@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { Patch, Sheet, Stroke } from "@/components/lesson/ink";
-import { loopD, patchD } from "@/components/lesson/ink-paths";
+import { loopD } from "@/components/lesson/ink-paths";
 import { DETAIL, MAIN, Oval, Outline } from "@/components/lesson/scene-kit";
 import type { BodyScene as Scene } from "@/src/core";
 
@@ -10,16 +10,6 @@ function Dot({ x, y, r = 1.8, delay = 0.6 }: { x: number; y: number; r?: number;
 			d={loopD(x, y, r, r, Math.round(x * 31 + y))}
 			className="ink-fade fill-current text-foreground"
 			style={{ "--ink-delay": `${delay}s` } as CSSProperties}
-		/>
-	);
-}
-
-function BoldPatch({ cx, cy, rx, ry, seed }: { cx: number; cy: number; rx: number; ry: number; seed: number }) {
-	return (
-		<path
-			d={patchD(cx, cy, rx, ry, seed)}
-			className="ink-fade fill-teal/40"
-			style={{ "--ink-delay": "0.5s" } as CSSProperties}
 		/>
 	);
 }
@@ -235,7 +225,7 @@ function Face() {
 function Back() {
 	return (
 		<>
-			<Patch cx={100} cy={76} rx={30} ry={28} seed={691} delay={0.5} />
+			<Patch cx={100} cy={76} rx={30} ry={28} seed={691} delay={0.5} bold />
 			<Oval cx={100} cy={22} rx={14} ry={16} seed={692} delay={0.2} />
 			<Stroke
 				d="M88 14 Q94 22 92 34 M94 8 Q100 20 98 36 M102 7 Q106 20 104 36 M109 10 Q112 22 110 34"
@@ -281,7 +271,7 @@ function Back() {
 function Belly() {
 	return (
 		<>
-			<BoldPatch cx={100} cy={76} rx={27} ry={21} seed={701} />
+			<Patch cx={100} cy={76} rx={27} ry={21} seed={701} delay={0.5} bold />
 			<Oval cx={100} cy={17} rx={10} ry={11} seed={702} delay={0.2} />
 			<Stroke d="M90 14 Q92 5 100 6 Q109 5 110 14" tone="graphite" width={DETAIL} delay={0.3} />
 			<Dot x={96} y={17} r={1.3} />
