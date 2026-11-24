@@ -17,6 +17,7 @@
  */
 
 import { STAGES, type CurriculumState } from "./curriculum.ts";
+import { activeCourse } from "./course.ts";
 
 export type StampKind =
 	| "first"
@@ -38,7 +39,7 @@ export type StampKind =
 interface StampDef {
 	id: string;
 	kind: StampKind;
-	/** The Slovak name pressed on the stamp. */
+	/** The name pressed on the stamp, in the course language. */
 	name: string;
 	/** What it marks, in English. */
 	line: string;
@@ -145,7 +146,106 @@ export const DEED_STAMPS: readonly StampDef[] = DEEDS;
 
 /** Every stamp there is for this learner: the deeds, a stamp per chapter
  *  and a summit stamp per level on the map. */
-export function stampCatalog(curriculum: Pick<CurriculumState, "chapters"> | null): StampDef[] {
+const DEED_NAMES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+	ru: {
+		"first-step": "Первый шаг",
+		"streak-7": "Неделя в пути",
+		"streak-30": "Месяц в пути",
+		"streak-100": "Сто дней",
+		"streak-365": "Год в пути",
+		"words-50": "Первые слова",
+		"words-150": "Сто пятьдесят слов",
+		"words-300": "Триста слов",
+		"words-600": "Шестьсот слов",
+		"words-1000": "Тысяча слов",
+		"words-1500": "Полторы тысячи слов",
+		"words-2000": "Две тысячи слов",
+		"words-3000": "Три тысячи слов",
+		"reviews-100": "Сто повторений",
+		"reviews-500": "Пятьсот повторений",
+		"reviews-1000": "Тысяча повторений",
+		"reviews-5000": "Пять тысяч повторений",
+		"perfect-1": "Без ошибок",
+		"perfect-10": "Десять без ошибок",
+		"perfect-50": "Пятьдесят без ошибок",
+		"comeback-10": "Возвращение",
+		"comeback-50": "Большое возвращение",
+		"comeback-200": "Двести возвращений",
+		"balance-week": "Четыре отметки",
+		"stories-1": "Первый рассказ",
+		"stories-10": "Читатель",
+		"stories-50": "Книжный червь",
+		"scenes-1": "Первые слова вслух",
+		"scenes-10": "Оратор",
+		"listens-10": "Слушатель",
+		"listens-50": "Острый слух",
+		"blitz-20": "Молния",
+		"blitz-30": "Буря",
+		"hours-10": "Десять часов",
+		"hours-50": "Пятьдесят часов",
+		"hours-100": "Сто часов",
+		"hours-200": "Двести часов",
+		"hours-400": "Четыреста часов",
+		"hours-650": "Шестьсот пятьдесят часов",
+		"exams-1": "Первый экзамен",
+		"exams-5": "Пять экзаменов",
+		"exams-10": "Десять экзаменов",
+	},
+	et: {
+		"first-step": "Esimene samm",
+		"streak-7": "Nädal rajal",
+		"streak-30": "Kuu rajal",
+		"streak-100": "Sada päeva",
+		"streak-365": "Aasta rajal",
+		"words-50": "Esimesed sõnad",
+		"words-150": "Sada viiskümmend sõna",
+		"words-300": "Kolmsada sõna",
+		"words-600": "Kuussada sõna",
+		"words-1000": "Tuhat sõna",
+		"words-1500": "Tuhat viissada sõna",
+		"words-2000": "Kaks tuhat sõna",
+		"words-3000": "Kolm tuhat sõna",
+		"reviews-100": "Sada kordamist",
+		"reviews-500": "Viissada kordamist",
+		"reviews-1000": "Tuhat kordamist",
+		"reviews-5000": "Viis tuhat kordamist",
+		"perfect-1": "Vigadeta",
+		"perfect-10": "Kümme vigadeta",
+		"perfect-50": "Viiskümmend vigadeta",
+		"comeback-10": "Tagasitulek",
+		"comeback-50": "Suur tagasitulek",
+		"comeback-200": "Kakssada tagasitulekut",
+		"balance-week": "Neli märki",
+		"stories-1": "Esimene lugu",
+		"stories-10": "Lugeja",
+		"stories-50": "Raamatukoi",
+		"scenes-1": "Esimesed sõnad valjusti",
+		"scenes-10": "Kõneleja",
+		"listens-10": "Kuulaja",
+		"listens-50": "Teravad kõrvad",
+		"blitz-20": "Välk",
+		"blitz-30": "Torm",
+		"hours-10": "Kümme tundi",
+		"hours-50": "Viiskümmend tundi",
+		"hours-100": "Sada tundi",
+		"hours-200": "Kakssada tundi",
+		"hours-400": "Nelisada tundi",
+		"hours-650": "Kuussada viiskümmend tundi",
+		"exams-1": "Esimene eksam",
+		"exams-5": "Viis eksamit",
+		"exams-10": "Kümme eksamit",
+	},
+};
+
+export function deedsIn(language: string | undefined): StampDef[] {
+	const names = language ? DEED_NAMES[language] : undefined;
+	return names ? DEEDS.map((d) => ({ ...d, name: names[d.id] ?? d.name })) : DEEDS;
+}
+
+export function stampCatalog(
+	curriculum: Pick<CurriculumState, "chapters"> | null,
+	language: string | undefined = activeCourse()?.code,
+): StampDef[] {
 	const chapters = curriculum?.chapters ?? [];
 	const stages = STAGES.filter((st) => chapters.some((ch) => ch.stage === st.id));
 	const chapterStamps: StampDef[] = chapters.map((ch) => {
@@ -169,7 +269,7 @@ export function stampCatalog(curriculum: Pick<CurriculumState, "chapters"> | nul
 		level: st.level,
 		stage: st.id,
 	}));
-	return [...summitStamps, ...chapterStamps, ...DEEDS];
+	return [...summitStamps, ...chapterStamps, ...deedsIn(language)];
 }
 
 /** The number on record for a stamp's kind. */

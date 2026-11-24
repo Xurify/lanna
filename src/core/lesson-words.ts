@@ -21,7 +21,7 @@ export function lessonWords(plan: Pick<LessonPlan, "unit" | "items">, max = NEW_
 		words.push({
 			slug: item.slug,
 			lemma: item.lemma,
-			gloss: item.gloss,
+			gloss: item.hint || item.gloss,
 			...(item.gender ? { gender: item.gender } : {}),
 		});
 		if (words.length >= max) break;

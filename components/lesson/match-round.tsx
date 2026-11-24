@@ -60,7 +60,11 @@ export function MatchRound({
 		if (lang) void speak(word.lemma, lang).catch(() => {});
 	};
 	const pickMeaning = (slug: string) => {
-		if (!picked || matched.has(slug)) return;
+		if (matched.has(slug)) return;
+		if (!picked) {
+			setStatus("Pick a word first.");
+			return;
+		}
 		const word = words.find((w) => w.slug === picked)!;
 		if (slug === picked) {
 			sfx.right(matched.size + 1);
@@ -125,7 +129,8 @@ export function MatchRound({
 										<button
 											type="button"
 											onClick={() => pickMeaning(w.slug)}
-											disabled={matched.has(w.slug) || !picked}
+											disabled={matched.has(w.slug)}
+											aria-disabled={!picked || undefined}
 											aria-label={w.gloss}
 											data-testid="match-meaning"
 											className={cn(
@@ -137,11 +142,13 @@ export function MatchRound({
 											)}
 										>
 											{picture ? (
-												<PictureBox
-													picture={picture}
-													label={w.gloss}
-													className="h-full w-full bg-transparent [&_span]:max-w-none [&_span]:p-0"
-												/>
+												<span aria-hidden className="block h-full w-full">
+													<PictureBox
+														picture={picture}
+														label={w.gloss}
+														className="h-full w-full bg-transparent [&_span]:max-w-none [&_span]:p-0"
+													/>
+												</span>
 											) : (
 												w.gloss
 											)}
