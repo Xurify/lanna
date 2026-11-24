@@ -35,12 +35,27 @@ export const ANIMAL_SCENES = ["dog", "cat", "horse", "cow", "bird"] as const;
 
 export type AnimalScene = (typeof ANIMAL_SCENES)[number];
 
+export const BODY_SCENES = ["hand", "eye", "ear", "mouth", "heart", "tooth", "face", "back", "belly"] as const;
+
+export type BodyScene = (typeof BODY_SCENES)[number];
+
+export const TRANSPORT_SCENES = ["car", "bus", "train", "plane", "tram", "bicycle"] as const;
+
+export type TransportScene = (typeof TRANSPORT_SCENES)[number];
+
+export const CLOTHES_SCENES = ["shirt", "trousers", "dress", "coat", "jacket", "cap", "bag"] as const;
+
+export type ClothesScene = (typeof CLOTHES_SCENES)[number];
+
 export type ScenePicture =
 	| { kind: "scene"; set: "weather"; scene: WeatherScene }
 	| { kind: "scene"; set: "food"; scene: FoodScene }
 	| { kind: "scene"; set: "home"; scene: HomeScene }
 	| { kind: "scene"; set: "nature"; scene: NatureScene }
-	| { kind: "scene"; set: "animal"; scene: AnimalScene };
+	| { kind: "scene"; set: "animal"; scene: AnimalScene }
+	| { kind: "scene"; set: "body"; scene: BodyScene }
+	| { kind: "scene"; set: "transport"; scene: TransportScene }
+	| { kind: "scene"; set: "clothes"; scene: ClothesScene };
 
 export type WordPicture = { kind: "paint"; paint: Paint } | ScenePicture;
 
@@ -185,6 +200,75 @@ export const SCENE_SETS: readonly SceneSet[] = [
 		units: ["lx-animals"],
 		of: { ryba: "fish" },
 	},
+	{
+		set: "body",
+		units: ["lx-body", "lx-words-health"],
+		of: {
+			ruka: "hand",
+			oko: "eye",
+			ucho: "ear",
+			ústa: "mouth",
+			srdce: "heart",
+			zub: "tooth",
+			рука: "hand",
+			глаз: "eye",
+			лицо: "face",
+			зуб: "tooth",
+			живот: "belly",
+			спина: "back",
+			сердце: "heart",
+			käsi: "hand",
+			silm: "eye",
+			nägu: "face",
+			selg: "back",
+			kõht: "belly",
+			hammas: "tooth",
+			süda: "heart",
+		},
+	},
+	{
+		set: "transport",
+		units: ["lx-transport", "lx-words-places", "lx-words-travel"],
+		of: {
+			auto: "car",
+			autobus: "bus",
+			vlak: "train",
+			lietadlo: "plane",
+			električka: "tram",
+			bicykel: "bicycle",
+			автобус: "bus",
+			поезд: "train",
+			машина: "car",
+			самолёт: "plane",
+			buss: "bus",
+			rong: "train",
+			lennuk: "plane",
+		},
+	},
+	{
+		set: "clothes",
+		units: ["lx-clothes", "lx-words-clothes"],
+		of: {
+			košeľa: "shirt",
+			nohavice: "trousers",
+			šaty: "dress",
+			kabát: "coat",
+			čiapka: "cap",
+			платье: "dress",
+			рубашка: "shirt",
+			брюки: "trousers",
+			куртка: "jacket",
+			пальто: "coat",
+			сумка: "bag",
+			шапка: "cap",
+			kleit: "dress",
+			särk: "shirt",
+			müts: "cap",
+			kott: "bag",
+			mantel: "coat",
+			jope: "jacket",
+		},
+	},
 ];
 
 const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
@@ -228,6 +312,28 @@ const SCENE_WORDS: Readonly<Record<ScenePicture["scene"], RegExp>> = {
 	horse: /(?<!\p{L})horses?(?!\p{L})/iu,
 	cow: /(?<!\p{L})cows?(?!\p{L})/iu,
 	bird: /(?<!\p{L})birds?(?!\p{L})/iu,
+	hand: /(?<!\p{L})(?<!(?:at|by|on the other|on the one) )hands?(?!\p{L})/iu,
+	eye: /(?<!\p{L})eyes?(?!\p{L})/iu,
+	ear: /(?<!\p{L})ears?(?!\p{L})/iu,
+	mouth: /(?<!\p{L})mouths?(?!\p{L})/iu,
+	heart: /(?<!\p{L})(?<!(?:by|at) )hearts?(?!\p{L})/iu,
+	tooth: /(?<!\p{L})(?:tooth|teeth)(?!\p{L})/iu,
+	face: /(?<!\p{L})(?<!(?:to|I|we|you|he|she|it|they|must|can|will|'ll|n't|let's) )faces?(?!\p{L})/iu,
+	back: /(?<=(?:(?<!\p{L})(?:my|your|his|her|its|our|their|the|a|this|that|lower|upper|bad|sore|whole)) )backs?(?!\p{L})(?! (?:door|seat|yard|garden|row|of|then|home|up|and forth))/iu,
+	belly: /(?<!\p{L})(?:belly|bellies|stomachs?|tumm(?:y|ies))(?!\p{L})/iu,
+	car: /(?<!\p{L})cars?(?!\p{L})/iu,
+	bus: /(?<!\p{L})bus(?:es|ses)?(?!\p{L})/iu,
+	train: /(?<!\p{L})(?<!(?:to|I|we|you|they|must|can|will|'ll|n't) )trains?(?!\p{L})/iu,
+	plane: /(?<!\p{L})(?:air|aero)?planes?(?!\p{L})/iu,
+	tram: /(?<!\p{L})(?:trams?|streetcars?)(?!\p{L})/iu,
+	bicycle: /(?<!\p{L})(?:bicycles?|bikes?)(?!\p{L})/iu,
+	shirt: /(?<!\p{L})shirts?(?!\p{L})/iu,
+	trousers: /(?<!\p{L})(?:trousers|pants|jeans)(?!\p{L})/iu,
+	dress: /(?<!\p{L})(?<!to )dress(?:es)?(?!\p{L})(?! up)/iu,
+	coat: /(?<!\p{L})(?:over)?coats?(?!\p{L})/iu,
+	jacket: /(?<!\p{L})jackets?(?!\p{L})/iu,
+	cap: /(?<!\p{L})(?:caps?|hats?)(?!\p{L})/iu,
+	bag: /(?<!\p{L})bags?(?!\p{L})/iu,
 };
 
 const PAINT_WORDS: Readonly<Record<Paint, RegExp>> = {

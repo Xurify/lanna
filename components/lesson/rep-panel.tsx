@@ -1,9 +1,12 @@
 import { cn } from "@/lib/utils";
 import { PaintSwatch } from "@/components/lesson/paint-swatch";
 import { AnimalScene } from "@/components/lesson/animal-scene";
+import { BodyScene } from "@/components/lesson/body-scene";
+import { ClothesScene } from "@/components/lesson/clothes-scene";
 import { FoodScene } from "@/components/lesson/food-scene";
 import { HomeScene } from "@/components/lesson/home-scene";
 import { NatureScene } from "@/components/lesson/nature-scene";
+import { TransportScene } from "@/components/lesson/transport-scene";
 import { WeatherScene } from "@/components/lesson/weather-scene";
 import {
 	firstLetterOf,
@@ -46,6 +49,12 @@ function ScenePicture({ picture }: { picture: Exclude<WordPicture, { kind: "pain
 			return <NatureScene scene={picture.scene} className={className} />;
 		case "animal":
 			return <AnimalScene scene={picture.scene} className={className} />;
+		case "body":
+			return <BodyScene scene={picture.scene} className={className} />;
+		case "transport":
+			return <TransportScene scene={picture.scene} className={className} />;
+		case "clothes":
+			return <ClothesScene scene={picture.scene} className={className} />;
 	}
 }
 

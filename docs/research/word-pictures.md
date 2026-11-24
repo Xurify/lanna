@@ -101,6 +101,38 @@ Both reviewers noted what could still be misread: river as a stream or path, lak
 
 - A sentence keeps the picture only when its English names the drawn thing. In the lexicon sentences this keeps 52 of 56 Slovak nature sentences (les in "You can't see the wood for the trees", hora in Montenegro), 34 of 35 Russian (дерево in "Wood burns.") and 29 of 31 Estonian (mägi as a hill, and in "Mt. Fuji"), and all 46 Slovak animal sentences.
 
+The 24 body, transport and clothes scenes (2026-11-23) were reviewed in up to three rounds, a new Claude (Opus) and a new Gemini Hydrogen reviewer each round, on unlabeled numbered sheets. A scene was redrawn after a round where either reviewer scored it below 4, and judged again beside its look-alikes. Final round, Claude / Gemini:
+
+| Scene | Words | Final | Result |
+| --- | --- | --- | --- |
+| hand (open palm) | ruka, рука, käsi | 5/5 | shipped |
+| eye | oko, глаз, silm | 5/5 | shipped |
+| ear | ucho | 5/5 | shipped |
+| mouth (lips) | ústa | 4/4 | shipped |
+| heart | srdce, сердце, süda | 4/5 | shipped |
+| tooth | zub, зуб, hammas | 5/5 | shipped |
+| face (front-on, round 3) | лицо, nägu | 5/5 | shipped |
+| back (from behind, round 3) | спина, selg | 4/5 | shipped |
+| belly (front, round 3) | живот, kõht | 4/5 | shipped |
+| car, bicycle, plane, train | auto/машина, bicykel, lietadlo/самолёт/lennuk, vlak/поезд/rong | 5/5 | shipped |
+| tram (wire and pantograph) | električka | 4/5 | shipped |
+| bus | autobus, автобус, buss | 4/5 | shipped |
+| cap (knitted winter cap) | čiapka, шапка, müts | 5/5 | shipped |
+| bag | сумка, kott | 4/5 | shipped |
+| trousers | nohavice, брюки | 4/5 | shipped |
+| dress | šaty, платье, kleit | 5/5 | shipped |
+| shirt | košeľa, рубашка, särk | 5/5 | shipped |
+| coat (long, double-breasted) | kabát, пальто, mantel | 4/5 | shipped |
+| jacket (open, zip, hip length; round 2) | куртка, jope | 4/4 | shipped |
+| head | hlava, голова | 3/5 | dropped |
+| leg | noha, нога, jalg | 2/5 | dropped |
+
+What the rounds changed: the face became a front-on face filling the frame (it read as a head or a person); the back became a figure seen from behind with the patch between shoulders and waist (it read as bottom or hip); the jacket became an open, hip-length zip jacket (it read as a sweater, close to the coat). The teal patch on a part of the body was too faint at card size, so it became twice as strong. The leg failed in three forms (a figure with one leg marked read as foot or person; two legs as trousers; one leg from hip to foot as a sock, boot or scarf), and the head kept reading as face, person or hair.
+
+- Dropped, so they keep the English: head (hlava, голова; Estonian pea has no sentence meaning head) and leg (noha, нога, jalg).
+- Not drawn: telo (body), горло and kurk (throat), the illness words, stanica and letisko (station, airport), oblečenie and одежда (clothes in general).
+- A hand picture shows only when the sentence says hand(s), never arm; back only after a possessive or article (never "come back"); heart never in "by heart" or "at heart"; face never as a verb. In the lexicon sentences this keeps 40 of 47 Slovak body sentences, 31 of 35 Russian and 25 of 32 Estonian (käsi in "Ask Tom." is the verb käskima), all transport sentences but one Russian idiom, and all clothes sentences but two where šaty means clothes.
+
 ## Not verified
 
 - No learning outcome has been measured in Lanna. Whether word pictures help these learners is open.
