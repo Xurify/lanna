@@ -126,7 +126,7 @@ const PRESENT_BLANKS: ReadonlyArray<[number, number]> = [
 ];
 const PAST_BLANKS: ReadonlyArray<[number, number]> = [
 	[0, 1],
-	[3, 0],
+	[4, 0],
 	[5, 0],
 ];
 

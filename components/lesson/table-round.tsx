@@ -85,7 +85,10 @@ export function TableRound({ unit, pattern, onDone }: { unit: UnitId; pattern: V
 										const verdict = at >= 0 ? verdicts?.[at] : undefined;
 										const tail = f.tail && <span className="text-ink-2"> {f.tail}</span>;
 										const shown = (ending: string, testId?: string) => (
-											<span className="whitespace-nowrap" data-testid={testId}>
+											<span
+												className={cn("whitespace-nowrap", at >= 0 && "inline-flex min-h-11 items-center")}
+												data-testid={testId}
+											>
 												{f.stem}
 												<span className="font-semibold text-teal-2">{ending}</span>
 												{tail}
@@ -93,17 +96,22 @@ export function TableRound({ unit, pattern, onDone }: { unit: UnitId; pattern: V
 										);
 										return (
 											<span key={i} className="inline-flex items-center gap-1.5">
-												{i > 0 && <span className="text-ink-4">·</span>}
 												{at < 0 ? (
 													!verdicts && givesAway(pattern, blanks, r, i) ? (
-														shown("…", "table-hidden")
+														<>
+															{shown("…", "table-hidden")}
+															<span className="sr-only">(ending hidden until Check)</span>
+														</>
 													) : (
 														shown(f.ending)
 													)
 												) : verdict === "exact" ? (
 													shown(f.ending, "table-right")
 												) : verdict ? (
-													<span className="whitespace-nowrap" data-testid="table-correction">
+													<span
+														className="inline-flex min-h-11 items-center whitespace-nowrap"
+														data-testid="table-correction"
+													>
 														<s className={verdict === "wrong" ? "text-miss" : "text-ink-3"}>{given[at] || "–"}</s>{" "}
 														<b className="font-semibold text-teal-2">{blanks[at]!.answer}</b>
 														{tail}
@@ -122,9 +130,12 @@ export function TableRound({ unit, pattern, onDone }: { unit: UnitId; pattern: V
 															onChange={(e) => setGiven((g) => g.map((v, j) => (j === at ? e.target.value : v)))}
 															className="h-11 w-28 px-3 font-prose text-[18px] sm:w-36 md:text-[18px]"
 														/>
-														{f.tail && <span className="text-ink-2">{f.tail}</span>}
+														{f.tail && !given[at]!.trim().endsWith(f.tail) && (
+															<span className="text-ink-2">{f.tail}</span>
+														)}
 													</>
 												)}
+												{i < row.forms.length - 1 && <span className="text-ink-4">·</span>}
 											</span>
 										);
 									})}

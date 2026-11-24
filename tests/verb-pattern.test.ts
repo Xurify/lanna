@@ -79,7 +79,7 @@ test("the closing table blanks three forms the lesson drilled", () => {
 	]);
 	assert.deepEqual(blanks("past"), [
 		[0, 1, "robila"],
-		[3, 0, "robila"],
+		[4, 0, "robilo"],
 		[5, 0, "robili"],
 	]);
 });
