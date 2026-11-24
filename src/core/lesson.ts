@@ -21,7 +21,14 @@ import { foldDiacritics, knownVariants } from "./language.ts";
 import { cellsOf, numberByEnding, numberIn, type CaseName, type Declension } from "./form-cells.ts";
 import { genderColumn, type AtlasGender } from "./grammar.ts";
 import { WORD_CLUSTERS, WORD_CLUSTER_IDS, type WordClusterId } from "./word-clusters.ts";
-import { cardsWithoutOtherSentences, wordCardOf, type WordCard } from "./word-card.ts";
+import {
+	cardsWithoutOtherSentences,
+	sentenceKey,
+	wordCardOf,
+	type WordCard,
+	type WordCardExample,
+} from "./word-card.ts";
+import { pictureFor } from "./word-pictures.ts";
 import { verbPatterns, type VerbPattern } from "./verb-pattern.ts";
 import { chapterPairs, pairMembers, pairsWithSentences, type PairDef, type PairSentence } from "./pairs.ts";
 import {
@@ -1624,6 +1631,7 @@ export interface LessonPlan {
 	/** A new word lesson: the words it teaches that the learner has not met
 	 *  yet (slugs), the ones its intro cards show. */
 	unmet?: string[];
+	introductions?: Record<string, WordCardExample>;
 	/** If set, the lesson specifically drills candidates of this gender column. */
 	gender?: AtlasGender;
 	/** A Mix-ups lesson (src/core/mixups.ts) or the personal lesson
@@ -1774,14 +1782,48 @@ export function buildLesson(
 		if (fromMix) item.mixed = true;
 		items.push(item);
 	});
+	const introductions = unmet
+		? introSentences(unit, main.top, unmet, new Set(items.map((i) => sentenceKey(i.sentence))), cost)
+		: {};
 	return {
 		unit,
 		items: cardsWithoutOtherSentences(items),
 		stage,
 		...(unmet ? { unmet } : {}),
+		...(Object.keys(introductions).length ? { introductions } : {}),
 		...(patterns.length ? { patterns } : {}),
 		...(opts.gender ? { gender: opts.gender } : {}),
 	};
+}
+
+function introSentences(
+	unit: UnitId,
+	candidates: readonly Candidate[],
+	slugs: readonly string[],
+	asked: ReadonlySet<string>,
+	cost: (c: Candidate) => number,
+): Record<string, WordCardExample> {
+	const fits = (c: Candidate) => {
+		const en = c.entry.examples[c.index]!.en;
+		const lemma = entryLemma(c.entry);
+		if (pictureFor(unit, lemma) && !pictureFor(unit, lemma, en)) return false;
+		return translationNamesGloss(c.entry.en, en);
+	};
+	const out: Record<string, WordCardExample> = {};
+	for (const slug of slugs) {
+		const own = candidates
+			.filter((c) => c.entry.slug === slug && !asked.has(sentenceKey(exampleText(c.entry.examples[c.index]!))))
+			.filter((c) => exampleText(c.entry.examples[c.index]!).split(/\s+/).length <= 8)
+			.filter(fits)
+			.sort((a, b) => cost(a) - cost(b));
+		const pick = own[0];
+		if (!pick) continue;
+		const ex = pick.entry.examples[pick.index]!;
+		const text = exampleText(ex);
+		const { answer, at } = ex.cloze!;
+		out[slug] = { before: text.slice(0, at), word: answer, after: text.slice(at + answer.length), en: ex.en };
+	}
+	return out;
 }
 
 /** A Dvojičky lesson: twelve choose reps, each a verified sentence that

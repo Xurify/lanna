@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COLUMN, PracticeCard } from "@/components/task-frame";
-import { speak, useActiveLanguage } from "@/components/speech";
+import { speak, stopSpeaking, useActiveLanguage } from "@/components/speech";
 import { IntroDock, StageDots } from "@/components/lesson/lesson-intro";
 import { PictureBox } from "@/components/lesson/rep-panel";
 import { pictureFor, unitInfo, type LessonPlan, type LessonWord } from "@/src/core";
@@ -31,10 +31,23 @@ export function WordIntro({
 	const picture = pictureFor(plan.unit, word.lemma);
 	const meta = word.gender?.replace(/-/g, " ") ?? "";
 
-	useEffect(() => {
+	const intro = word.intro;
+	const sentence = intro ? `${intro.before}${intro.word}${intro.after}` : "";
+	const playing = useRef(0);
+	const say = () => {
 		if (!lang) return;
-		void speak(word.lemma, lang).catch(() => {});
-	}, [lang, word.lemma]);
+		const id = ++playing.current;
+		void speak(word.lemma, lang)
+			.then(() => (sentence && playing.current === id ? speak(sentence, lang) : undefined))
+			.catch(() => {});
+	};
+	useEffect(() => {
+		say();
+		return () => {
+			playing.current++;
+			stopSpeaking();
+		};
+	}, [lang, word.lemma, sentence]);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -81,7 +94,7 @@ export function WordIntro({
 							</p>
 							<button
 								type="button"
-								onClick={() => lang && void speak(word.lemma, lang).catch(() => {})}
+								onClick={say}
 								aria-label={`Play ${word.lemma}`}
 								className="lanna-press inline-flex size-10 items-center justify-center rounded-full bg-well text-ink-2 hover:bg-well-2"
 							>
@@ -93,6 +106,16 @@ export function WordIntro({
 							{picture && meta ? " · " : ""}
 							{meta}
 						</p>
+						{intro && (
+							<div className="mt-5 max-w-md text-center" data-testid="meet-sentence">
+								<p className="font-prose text-[19px] leading-snug text-foreground" lang={lang?.code}>
+									{intro.before}
+									<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2">{intro.word}</b>
+									{intro.after}
+								</p>
+								<p className="mt-1 font-prose text-[15px] text-ink-3">{intro.en}</p>
+							</div>
+						)}
 					</figure>
 					<div className="mt-6 flex justify-center">
 						<StageDots step={step} count={words.length} onPick={setStep} />

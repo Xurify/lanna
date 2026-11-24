@@ -37,6 +37,7 @@ export function MatchRound({
 	const [matched, setMatched] = useState<ReadonlySet<string>>(new Set());
 	const [wrong, setWrong] = useState<string | null>(null);
 	const [status, setStatus] = useState("");
+	const [lastMatched, setLastMatched] = useState<LessonWord | null>(null);
 	const done = matched.size === words.length;
 	const wordButtons = useRef(new Map<string, HTMLButtonElement>());
 	const finishButton = useRef<HTMLButtonElement>(null);
@@ -78,6 +79,9 @@ export function MatchRound({
 			setPicked(null);
 			setWrong(null);
 			setStatus(`${word.lemma}: ${word.gloss}. Matched.`);
+			setLastMatched(word);
+			const ex = word.example;
+			if (lang && ex) void speak(`${ex.before}${ex.word}${ex.after}`, lang).catch(() => {});
 		} else {
 			sfx.wrong();
 			setWrong(slug);
@@ -160,6 +164,24 @@ export function MatchRound({
 					</div>
 					<p className="mt-5 min-h-5 font-ui text-[13px] text-ink-3">
 						{done ? "All matched." : picked ? "Now its meaning." : "Pick a word, then its meaning."}
+					</p>
+					<p
+						aria-live="polite"
+						className="mt-2 min-h-[6rem] font-prose text-[16px] leading-snug text-foreground"
+						data-testid="match-sentence"
+					>
+						{lastMatched?.example && (
+							<>
+								<span lang={lang?.code}>
+									{lastMatched.example.before}
+									<b className="rounded-[4px] bg-[var(--q-teal-wash)] px-0.5 font-semibold text-teal-2">
+										{lastMatched.example.word}
+									</b>
+									{lastMatched.example.after}
+								</span>{" "}
+								<span className="text-ink-3">{lastMatched.example.en}</span>
+							</>
+						)}
 					</p>
 					<p role="status" className="sr-only">
 						{status}

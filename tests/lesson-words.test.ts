@@ -77,3 +77,25 @@ test("no picture when the English word it stands for could not be hidden", () =>
 	assert.equal(pictureFor("lx-weather", "slnko", "We sat in the sunshine."), undefined);
 	assert.equal(pictureFor("lx-weather", "slnko", "The sun is out.")?.kind, "scene");
 });
+
+test("a lesson word comes with a sentence it appears in", () => {
+	const card = { examples: [{ before: "Mám rád ", word: "syr", after: ".", en: "I like cheese." }] };
+	const plan = {
+		unit: "lx-food",
+		items: [
+			item("syr", { card } as unknown as Partial<LessonItem>),
+			item("chlieb", {
+				kind: "meaning",
+				before: "Kúpim ",
+				answer: "chlieb",
+				after: ".",
+				translation: "I'll buy bread.",
+			} as Partial<LessonItem>),
+			item("ryža"),
+		],
+	} as unknown as LessonPlan;
+	const words = lessonWords(plan);
+	assert.deepEqual(words[0]!.example, { before: "Mám rád ", word: "syr", after: ".", en: "I like cheese." });
+	assert.deepEqual(words[1]!.example, { before: "Kúpim ", word: "chlieb", after: ".", en: "I'll buy bread." });
+	assert.equal(words[2]!.example, undefined);
+});

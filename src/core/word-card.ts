@@ -139,7 +139,7 @@ export function wordCardOf(entry: CardEntry, index: number): WordCard {
 	return card;
 }
 
-function sentenceKey(text: string): string {
+export function sentenceKey(text: string): string {
 	return text
 		.normalize("NFC")
 		.toLowerCase()

@@ -29,6 +29,7 @@ import {
 	xpLevel,
 } from "../src/core/lesson.ts";
 import type { LexiconEntry } from "../src/core/review.ts";
+import { pictureFor } from "../src/core/word-pictures.ts";
 
 const lexicon = JSON.parse(fs.readFileSync("curriculum/slovak/lexicon.json", "utf-8")) as { words: LexiconEntry[] };
 const entries = lexicon.words;
@@ -380,4 +381,41 @@ test("a lesson weighted to a weak gender also asks the easy sentences first", ()
 		});
 		assert.equal(hard.length, 0, `${seed}: ${hard.map((i) => i.sentence).join(" | ")}`);
 	}
+});
+
+test("each new word gets an intro sentence the lesson does not ask", () => {
+	for (const seed of [1, 2, 3]) {
+		const plan = buildLesson(entries, "lx-food", { seed });
+		const asked = new Set(plan.items.map((i) => i.sentence));
+		const intro = plan.introductions ?? {};
+		assert.ok(Object.keys(intro).length >= (plan.unmet?.length ?? 0) - 1, JSON.stringify(Object.keys(intro)));
+		for (const [slug, ex] of Object.entries(intro)) {
+			assert.ok(plan.unmet!.includes(slug), slug);
+			assert.ok(!asked.has(`${ex.before}${ex.word}${ex.after}`), `${slug}: ${ex.before}${ex.word}${ex.after}`);
+			assert.ok(ex.word.trim() && ex.en.trim());
+		}
+	}
+});
+
+test("a pictured word's intro sentence names the thing its picture draws", () => {
+	for (const unit of ["lx-home", "lx-food", "lx-weather"] as const)
+		for (const seed of [1, 2]) {
+			const plan = buildLesson(entries, unit, { seed });
+			for (const [slug, ex] of Object.entries(plan.introductions ?? {})) {
+				const lemma = entries.find((e) => e.slug === slug)!;
+				const word = lemma.lemma ?? lemma.sk ?? "";
+				if (pictureFor(unit, word)) assert.ok(pictureFor(unit, word, ex.en), `${unit} ${slug}: ${ex.en}`);
+			}
+		}
+});
+
+test("no intro sentence is one the lesson asks, in any word unit", () => {
+	const key = (t: string) => t.normalize("NFC").toLocaleLowerCase().replace(/\s+/g, " ").trim();
+	for (const unit of allUnits().filter((u) => u.kind === "words" && u.repeat))
+		for (const seed of [1, 4, 7, 11]) {
+			const plan = buildLesson(entries, unit.id, { seed });
+			const asked = new Set(plan.items.map((i) => key(i.sentence)));
+			for (const [slug, ex] of Object.entries(plan.introductions ?? {}))
+				assert.ok(!asked.has(key(`${ex.before}${ex.word}${ex.after}`)), `${unit.id} ${seed} ${slug}`);
+		}
 });
