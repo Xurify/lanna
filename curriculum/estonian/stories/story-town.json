@@ -252,7 +252,7 @@
 		},
 		"küll": {
 			"lemma": "küll",
-			"gloss": "indeed (saad küll: yes, you can)"
+			"gloss": "indeed (saate küll: yes, you can)"
 		},
 		"peatus": {
 			"lemma": "peatus",
@@ -269,6 +269,10 @@
 		"minu": {
 			"lemma": "mina",
 			"gloss": "I (minu: my)"
+		},
+		"võtab": {
+			"lemma": "võtma",
+			"gloss": "to take (aega võtma: to take time)"
 		}
 	}
 }

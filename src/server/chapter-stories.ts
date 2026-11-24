@@ -35,10 +35,9 @@ function withGlosses(sentences: readonly StorySentence[], glosses: ShippedStory[
 }
 
 export function authoredNewWords(found: readonly StoryWord[], authored: ShippedStory["newWords"]): StoryWord[] {
-	return authored.map((own, i) => {
-		const w = found[i];
-		const sameWord = w !== undefined && w.lemma.toLocaleLowerCase() === own.sk.toLocaleLowerCase();
-		return { lemma: own.sk, gloss: own.en, ...(sameWord && w.slug ? { slug: w.slug } : {}) };
+	return authored.map((own) => {
+		const same = found.find((w) => w.lemma.toLocaleLowerCase() === own.sk.toLocaleLowerCase());
+		return { lemma: own.sk, gloss: own.en, ...(same?.slug ? { slug: same.slug } : {}) };
 	});
 }
 
