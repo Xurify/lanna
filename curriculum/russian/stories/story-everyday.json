@@ -280,6 +280,10 @@
 		"днём": {
 			"lemma": "днём",
 			"gloss": "in the afternoon, during the day"
+		},
+		"него": {
+			"lemma": "он",
+			"gloss": "him (у него нет: he has no)"
 		}
 	}
 }

@@ -282,7 +282,7 @@
 		},
 		"его": {
 			"lemma": "он",
-			"gloss": "him; it"
+			"gloss": "his; him"
 		},
 		"ему": {
 			"lemma": "он",
@@ -343,6 +343,10 @@
 		"звонит": {
 			"lemma": "звонить",
 			"gloss": "to ring (звонить в дверь: to ring the doorbell)"
+		},
+		"все": {
+			"lemma": "весь",
+			"gloss": "all; everyone"
 		}
 	}
 }

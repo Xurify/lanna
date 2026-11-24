@@ -262,6 +262,10 @@
 		"lõunale": {
 			"lemma": "lõuna",
 			"gloss": "lunch"
+		},
+		"teise": {
+			"lemma": "teine",
+			"gloss": "second; other"
 		}
 	}
 }

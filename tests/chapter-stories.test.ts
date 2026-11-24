@@ -216,7 +216,7 @@ describe("the A1 chapter stories of the written courses", () => {
 			}
 		});
 
-	it("a story's new words keep the author's meaning, and the dictionary's only when it is the same word", () => {
+	it("a story's new words are the author's, with the dictionary's link only when it is the same word", () => {
 		const words = authoredNewWords(
 			[
 				{ lemma: "naaber", gloss: "neighbour", slug: "naaber" },
@@ -235,7 +235,6 @@ describe("the A1 chapter stories of the written courses", () => {
 		assert.deepEqual(words, [
 			{ lemma: "naaber", gloss: "neighbor", slug: "naaber" },
 			{ lemma: "peatus", gloss: "stop (bus or tram stop)" },
-			{ lemma: "площадь", gloss: "square", slug: "ploshchad" },
 		]);
 	});
 });

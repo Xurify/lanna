@@ -100,8 +100,8 @@
 		},
 		{
 			"who": "Tõnu",
-			"sk": "Oi, see on tore päev!",
-			"en": "Oh, that's a great day!"
+			"sk": "Oi, milline tore päev!",
+			"en": "Oh, what a great day!"
 		},
 		{
 			"who": "Maarja",
@@ -111,8 +111,8 @@
 		{
 			"who": "narrator",
 			"p": true,
-			"sk": "Tõnu istub Maarjaga laua taha.",
-			"en": "Tõnu sits down at the table with Maarja."
+			"sk": "Tõnu istub Maarja kõrvale laua taha.",
+			"en": "Tõnu sits down at the table next to Maarja."
 		},
 		{
 			"who": "narrator",
@@ -207,10 +207,6 @@
 			"lemma": "Maarja",
 			"gloss": "Maarja (a name; Maarjal on õigus: Maarja is right)"
 		},
-		"maarjaga": {
-			"lemma": "Maarja",
-			"gloss": "Maarja (a name; Maarjaga: with Maarja)"
-		},
 		"kõigepealt": {
 			"lemma": "kõigepealt",
 			"gloss": "first, first of all"
@@ -273,7 +269,7 @@
 		},
 		"teeb": {
 			"lemma": "tegema",
-			"gloss": "to do, to make"
+			"gloss": "to do, to make (lahti tegema: to open)"
 		},
 		"aega": {
 			"lemma": "aeg",
@@ -282,6 +278,10 @@
 		"oma": {
 			"lemma": "oma",
 			"gloss": "own (his own)"
+		},
+		"kõrvale": {
+			"lemma": "kõrvale",
+			"gloss": "next to, beside"
 		}
 	}
 }

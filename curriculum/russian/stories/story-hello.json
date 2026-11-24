@@ -33,7 +33,7 @@
 		},
 		{
 			"who": "narrator",
-			"sk": "На улице стоит молодая девушка.",
+			"sk": "На улице стоит девушка.",
 			"en": "A young woman is standing outside."
 		},
 		{
@@ -109,8 +109,8 @@
 		},
 		{
 			"who": "Катя",
-			"sk": "Том, это моя бабушка. Ей нужно говорить «здравствуйте»!",
-			"en": "Tom, this is my grandmother. You should say \"zdravstvuyte\" to her!"
+			"sk": "Том, это моя бабушка. Ей говорят «здравствуйте», а не «привет»!",
+			"en": "Tom, this is my grandmother. To her you say \"zdravstvuyte,\" not \"privet\"!"
 		},
 		{
 			"who": "Том",
@@ -144,7 +144,7 @@
 		},
 		{
 			"who": "Бабушка",
-			"sk": "Хорошо. А вечером приходите ко мне на чай, вы оба!",
+			"sk": "Хорошо. А вечером приходите оба ко мне на чай!",
 			"en": "Good. And come over to my place for tea this evening, both of you!"
 		},
 		{
@@ -334,6 +334,10 @@
 		"девушка": {
 			"lemma": "девушка",
 			"gloss": "girl, young woman"
+		},
+		"дома": {
+			"lemma": "дом",
+			"gloss": "house, home (из дома: out of the house)"
 		}
 	}
 }
