@@ -117,7 +117,7 @@ export function PlaybackSpeedRow() {
 	return (
 		<SettingsRow
 			label="Playback speed"
-			hint="How fast spoken lessons and listening play. Saved on this device."
+			hint="How fast spoken lessons, listening and the tutor's examples play. Saved on this device."
 			testid="row-playback-speed"
 		>
 			<SettingsSegmented
