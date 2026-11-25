@@ -2,18 +2,17 @@
 
 /**
  * The diacritic bar: one-click letters the learner's
- * keyboard may lack (á ä č ď … for Slovak, ё й ъ … for Russian), plus the
- * playback-speed toggle. It types into whichever text field was focused
+ * keyboard may lack (á ä č ď … for Slovak, ё й ъ … for Russian). It types into whichever text field was focused
  * last — the composer, a question's answer or thinking field, the review
  * card — so one bar serves every input above or below it. Shift-click
- * types the capital. The bar can be folded away; the choice is remembered
- * in this browser.
+ * types the capital. The bar starts folded; opening it is remembered in
+ * this browser.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon, KeyboardIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SpeedToggle, useActiveLanguage } from "@/components/speech";
+import { useActiveLanguage } from "@/components/speech";
 import {
 	belongsToLayoutAccent,
 	isSyntheticUnicodeLetter,
@@ -136,14 +135,13 @@ function KeyGrid({
 	);
 }
 
-/** `keys`: the lesson's keycap row — real tap targets, no speed toggle and
- *  no fold (the lesson has its own sound control, and the letters are
- *  needed on every typed rep). */
+/** `keys`: the lesson's keycap row — real tap targets and no fold (the
+ *  letters are needed on every typed rep). */
 export function DiacriticBar({ className, variant = "bar" }: { className?: string; variant?: "bar" | "keys" }) {
 	const lang = useActiveLanguage();
 	const lastField = useRef<Field | null>(null);
 	const grabbed = useRef<{ field: Field; start: number; end: number } | null>(null);
-	const [open, setOpen] = useState(true);
+	const [open, setOpen] = useState(false);
 	const [live, setLive] = useState<string | null>(null);
 	const families = useMemo(() => (lang ? letterFamilies(lang.specialLetters, lang.tag) : []), [lang]);
 	const [menu, setMenuState] = useState<AccentMenu | null>(null);
@@ -296,9 +294,9 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 
 	useEffect(() => {
 		try {
-			if (localStorage.getItem(OPEN_KEY) === "0") setOpen(false);
+			if (localStorage.getItem(OPEN_KEY) === "1") setOpen(true);
 		} catch {
-			// storage blocked — stays open
+			// storage blocked — stays folded
 		}
 		const onFocus = (e: FocusEvent) => {
 			if (isTextField(e.target)) lastField.current = e.target;
@@ -471,7 +469,6 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 						{letter}
 					</button>
 				))}
-			{open && <SpeedToggle className="ml-1" />}
 			<button
 				type="button"
 				onMouseDown={(e) => e.preventDefault()}
