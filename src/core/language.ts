@@ -297,6 +297,12 @@ export function languageByCode(code: string): LanguageInfo | undefined {
 
 /** Strip combining marks after NFD — "mäkčeň" → "makcen". Russian ё → е
  *  and й → и fall out of the same rule (both decompose). */
+/** A language the voice can read even when it is not one the learner studies:
+ *  a studied or added language first, then the catalog (Czech in a Slovak chat). */
+export function voiceLanguage(code: string): LanguageInfo | undefined {
+	return languageByCode(code) ?? LANGUAGE_CATALOG.find((l) => l.code === code);
+}
+
 export function foldDiacritics(text: string): string {
 	return text
 		.normalize("NFD")

@@ -25,7 +25,7 @@ const { LANGUAGE_PROFILES, activeProfile } = await import("../config.ts");
 const { lookupWord, loadLexicon, formatEntry } = await import("../src/agent/lexicon.ts");
 const { listSourceSegments } = await import("../src/agent/prompt-segments.ts");
 const { isValidSegmentPath } = await import("../src/core/prompt-segments.ts");
-const { spokenText } = await import("../components/speech.tsx");
+const { spokenText, spokenInOther } = await import("../components/speech.tsx");
 
 describe("answer comparison", () => {
 	it("separates exact, accents-only and wrong", () => {
@@ -170,6 +170,13 @@ describe("language prompts", () => {
 	it("say: spans are recognized", () => {
 		assert.equal(spokenText("say: Dobrý deň!"), "Dobrý deň!");
 		assert.equal(spokenText("const x = 1"), null);
+	});
+	it("say-cs: spans are read in the Czech voice", () => {
+		const czech = spokenInOther("say-cs: ty vole");
+		assert.equal(czech?.text, "ty vole");
+		assert.equal(czech?.lang.tag, "cs-CZ");
+		assert.equal(spokenText("say-cs: ty vole"), null, "never read by the target-language voice");
+		assert.equal(spokenInOther("say-zz: nic"), null, "a code no voice reads stays plain code");
 	});
 });
 

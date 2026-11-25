@@ -30,7 +30,7 @@ import os from "node:os";
 import path from "node:path";
 import { loadLexicon } from "../agent/lexicon.ts";
 import { processWide } from "../core/process-wide.ts";
-import { languageByCode, LANGUAGES, type LanguageInfo } from "../core/language.ts";
+import { LANGUAGES, voiceLanguage, type LanguageInfo } from "../core/language.ts";
 import { activeLanguage } from "./active-language.ts";
 import { entryLemma, exampleText } from "../core/review.ts";
 import { chatStore } from "../store/chats.ts";
@@ -479,7 +479,7 @@ const TIERS: Array<{
 
 /** Cached clip, or the first tier that succeeds; null = use the browser. */
 export async function synthesize(req: TtsRequest): Promise<TtsClip | null> {
-	const lang = languageByCode(req.lang) ?? [activeLanguage()].find((l) => l.code === req.lang);
+	const lang = voiceLanguage(req.lang) ?? [activeLanguage()].find((l) => l.code === req.lang);
 	if (!lang) throw new Error(`unsupported language "${req.lang}"`);
 	migrateAudioOnce();
 	const key = ttsCacheKey(req);

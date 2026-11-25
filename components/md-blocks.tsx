@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { CodeBlock, extractTableDataFromElement, tableDataToMarkdown, useIsCodeFenceIncomplete } from "streamdown";
 import type { ExtraProps } from "streamdown";
 import { MERMAID_FONT_SIZE, renderMermaid } from "@/components/mermaid-render";
-import { SpokenPhrase, spokenText } from "@/components/speech";
+import { SpokenPhrase, spokenInOther, spokenText } from "@/components/speech";
 import { MermaidError } from "@/components/mermaid-error";
 import { SketchFigure } from "@/components/sketch-figure";
 import { blurAfterPointerClick } from "@/components/focus-hygiene";
@@ -235,6 +235,8 @@ function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 		// Lanna: `say: …` is a target-language phrase with a play button.
 		const spoken = spokenText(codeSource(children));
 		if (spoken) return <SpokenPhrase text={spoken} />;
+		const other = spokenInOther(codeSource(children));
+		if (other) return <SpokenPhrase text={other.text} lang={other.lang} />;
 		return (
 			<code
 				className={cn("rounded bg-muted px-1.5 py-0.5 font-mono text-sm", className)}
