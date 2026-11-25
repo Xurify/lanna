@@ -14,7 +14,7 @@ The default bias in modern AI development is "token-maxing" — chaining expensi
 
 **Token Minimization** inverts this:
 
-1. **Frontier models are software engineers, not runtime engines:** Use large frontier models (e.g. Gemini 1.5 Pro, Claude 3.5 Sonnet) during development to write code, design architectures, construct unit test suites, debug failures, and harden security.
+1. **Frontier models are software engineers, not runtime engines:** Use the current top frontier models (e.g. Claude Opus 5.5, Claude Fable 5.2 or Gemini 4; check what's newest, since this list ages fast) during development to write code, design architectures, construct unit test suites, debug failures, and harden security.
 2. **Production systems run on traditional code:** Runtime business logic, scheduling, validation, scoring, state transitions, and heuristics run as standalone code ($0 runtime cost, sub-millisecond latency, zero hallucinations).
 3. **Tokens only enter at sharp, well-defined boundaries:** Only invoke models when semantic understanding, creative generation, or open-ended dialogue is strictly required. Where models are needed, favor small, task-specific, or fine-tuned models over frontier models.
 
@@ -61,7 +61,7 @@ Never use an LLM for:
 
 ### 2. Small / Task-Specific Models (Minimal Tokens)
 
-Use small models (e.g. Gemini Flash, fine-tuned open-source models, local embeddings) for:
+Use small models (e.g. Claude Haiku 5.5, Gemini Omni 1.2 Flash, fine-tuned open-source models, local embeddings) for:
 
 - Narrow semantic similarity (e.g. _"does this free-text answer mean the same as the target idiom?"_).
 - Entity extraction or intent normalization from unstructured voice transcripts.
