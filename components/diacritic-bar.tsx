@@ -2,7 +2,8 @@
 
 /**
  * The diacritic bar: one-click letters the learner's
- * keyboard may lack (á ä č ď … for Slovak, ё й ъ … for Russian). It types into whichever text field was focused
+ * keyboard may lack (á ä č ď … for Slovak, ё й ъ … for Russian), and the
+ * playback-speed toggle, which stays visible when the letters are folded. It types into whichever text field was focused
  * last — the composer, a question's answer or thinking field, the review
  * card — so one bar serves every input above or below it. Shift-click
  * types the capital. The bar starts folded; opening it is remembered in
@@ -12,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon, KeyboardIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useActiveLanguage } from "@/components/speech";
+import { SpeedToggle, useActiveLanguage } from "@/components/speech";
 import {
 	belongsToLayoutAccent,
 	isSyntheticUnicodeLetter,
@@ -135,8 +136,9 @@ function KeyGrid({
 	);
 }
 
-/** `keys`: the lesson's keycap row — real tap targets and no fold (the
- *  letters are needed on every typed rep). */
+/** `keys`: the lesson's keycap row — real tap targets, no speed toggle and
+ *  no fold (the lesson has its own sound control, and the letters are
+ *  needed on every typed rep). */
 export function DiacriticBar({ className, variant = "bar" }: { className?: string; variant?: "bar" | "keys" }) {
 	const lang = useActiveLanguage();
 	const lastField = useRef<Field | null>(null);
@@ -449,42 +451,47 @@ export function DiacriticBar({ className, variant = "bar" }: { className?: strin
 			data-testid="diacritic-bar"
 			// On a phone the strip is wider than the card: it starts at the left
 			// and scrolls sideways (justify-end would push the first letters off-screen).
-			className={cn(
-				"pointer-events-auto flex items-center justify-start gap-0.5 overflow-x-auto px-1 pb-1 font-ui sm:justify-end",
-				className,
-			)}
-			aria-label={`${lang.english} letters`}
+			className={cn("pointer-events-auto flex items-center justify-start px-1 pb-1 font-ui sm:justify-end", className)}
 		>
-			{open &&
-				lang.specialLetters.map((letter) => (
-					<button
-						key={letter}
-						type="button"
-						// Keep focus (and the caret) in the field being typed into.
-						onMouseDown={(e) => e.preventDefault()}
-						onClick={(e) => type(letter, e.shiftKey)}
-						title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
-						className="min-w-6 shrink-0 rounded-sm px-1 py-0.5 text-sm text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
-					>
-						{letter}
-					</button>
-				))}
-			<button
-				type="button"
-				onMouseDown={(e) => e.preventDefault()}
-				onClick={toggle}
-				aria-label={open ? "Hide letter bar" : "Show letter bar"}
-				title={open ? "Hide letter bar" : `${lang.english} letters`}
-				className="ml-0.5 flex shrink-0 items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
+			<div
+				role="group"
+				aria-label={`${lang.english} letters`}
+				className="flex min-w-0 items-center gap-0.5 overflow-x-auto"
 			>
-				{open ? (
-					<ChevronDownIcon className="size-3" />
-				) : (
-					<>
-						{lang.specialLetters.slice(0, 3).join(" ")} <ChevronUpIcon className="size-3" />
-					</>
-				)}
-			</button>
+				{open &&
+					lang.specialLetters.map((letter) => (
+						<button
+							key={letter}
+							type="button"
+							// Keep focus (and the caret) in the field being typed into.
+							onMouseDown={(e) => e.preventDefault()}
+							onClick={(e) => type(letter, e.shiftKey)}
+							title={`Type ${letter} (Shift for ${letter.toLocaleUpperCase(lang.tag)})`}
+							className="min-w-6 shrink-0 rounded-sm px-1 py-0.5 text-sm text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
+						>
+							{letter}
+						</button>
+					))}
+				<button
+					type="button"
+					onMouseDown={(e) => e.preventDefault()}
+					onClick={toggle}
+					data-testid="letter-bar-toggle"
+					aria-label={open ? "Hide letter bar" : "Show letter bar"}
+					title={open ? "Hide letter bar" : `${lang.english} letters`}
+					className="ml-0.5 flex shrink-0 items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] text-ink-3 transition-colors hover:bg-well hover:text-ink-2"
+				>
+					{open ? (
+						<ChevronDownIcon className="size-3" />
+					) : (
+						<>
+							{lang.specialLetters.slice(0, 3).join(" ")} <ChevronUpIcon className="size-3" />
+						</>
+					)}
+				</button>
+			</div>
+			<span aria-hidden="true" className="mx-1 h-3.5 w-px shrink-0 bg-[var(--q-line-2)]" />
+			<SpeedToggle className="shrink-0" />
 		</div>
 	);
 }
