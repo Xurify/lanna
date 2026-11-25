@@ -11,7 +11,7 @@ import { LoaderCircleIcon, Volume2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sharedJson } from "@/lib/shared-fetch";
 import { soundOn, subscribeSound, volume } from "@/components/lesson/sound";
-import { LANGUAGES, isLanguageId, type LanguageInfo } from "@/src/core";
+import { LANGUAGES, isLanguageId, voiceLanguage, type LanguageInfo } from "@/src/core";
 
 // ─── The active language (fetched once per page load) ──────────────────────────
 
@@ -328,7 +328,17 @@ export function prefetchSpeech(text: string, code: string, options: SpeakOptions
 		.catch(() => {});
 }
 
-export function PlayButton({ text, className, label }: { text: string; className?: string; label?: string }) {
+export function PlayButton({
+	text,
+	className,
+	label,
+	lang,
+}: {
+	text: string;
+	className?: string;
+	label?: string;
+	lang?: LanguageInfo;
+}) {
 	const [loading, setLoading] = useState(false);
 	const active = useVoicing() === text;
 	const play = () => {
@@ -339,7 +349,7 @@ export function PlayButton({ text, className, label }: { text: string; className
 		}
 		if (loading) return;
 		setLoading(true);
-		void speak(text).finally(() => setLoading(false));
+		void speak(text, lang).finally(() => setLoading(false));
 	};
 	// A span with button role: a nested <button> is invalid inside a quiz option and breaks hydration.
 	return (
@@ -376,9 +386,11 @@ export function PlayButton({ text, className, label }: { text: string; className
 	);
 }
 
-/** Renders a `say: …` span: the phrase in the target language, with its play button. */
-export function SpokenPhrase({ text }: { text: string }) {
-	const lang = useActiveLanguage();
+/** Renders a `say: …` span: the phrase in the target language, with its play button.
+ *  `lang` reads it in another language's voice (a Czech word in a Slovak chat). */
+export function SpokenPhrase({ text, lang: other }: { text: string; lang?: LanguageInfo }) {
+	const active = useActiveLanguage();
+	const lang = other ?? active;
 	return (
 		<span
 			className="lanna-spoken inline-flex items-baseline gap-0.5 rounded-md bg-primary/5 pl-1.5 pr-0.5 font-medium text-foreground"
@@ -386,7 +398,7 @@ export function SpokenPhrase({ text }: { text: string }) {
 			lang={lang?.code}
 		>
 			<span>{text}</span>
-			<PlayButton text={text} className="size-5 self-center" />
+			<PlayButton text={text} lang={other} className="size-5 self-center" />
 		</span>
 	);
 }
@@ -395,4 +407,12 @@ export function SpokenPhrase({ text }: { text: string }) {
 export function spokenText(code: string): string | null {
 	const m = /^\s*say:\s*([\s\S]+?)\s*$/i.exec(code);
 	return m?.[1] ?? null;
+}
+
+/** `say-cs: Děkuji` → "Děkuji" in the Czech voice; null for anything else,
+ *  including a code no voice reads. */
+export function spokenInOther(code: string): { text: string; lang: LanguageInfo } | null {
+	const m = /^\s*say-([a-z]{2,3}):\s*([\s\S]+?)\s*$/i.exec(code);
+	const lang = m ? voiceLanguage(m[1]!.toLowerCase()) : undefined;
+	return m && lang ? { text: m[2]!, lang } : null;
 }

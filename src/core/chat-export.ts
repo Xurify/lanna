@@ -51,7 +51,7 @@ function extractMessageText(message: ExportMessage): string {
 	return "";
 }
 
-const SAY_SPAN = /`say:\s*([^`]+?)\s*`/g;
+const SAY_SPAN = /`say(?:-[a-z]{2,3})?:\s*([^`]+?)\s*`/g;
 const APP_LINK = /(?<!!)\[([^\]\n]+)\]\(\/[^)\s]*\)/g;
 const FENCE = /^\s*(?:```|~~~)/;
 const HEADING = /^(#{1,6})(?=\s)/;
