@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { currentGitBranch, validateBranchName } from "./branch-name.mjs";
 
 const IMAGE_LINK_PATTERN = /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 const ASSET_LINE_PATTERN = /^!\[([^\]]+)\]\((https:\/\/github\.com\/user-attachments\/assets\/[^)\s]+)\)\s*$/;
@@ -117,6 +118,12 @@ function main() {
 	}
 
 	const { mode, prNumber, bodyFile, repo, passthrough } = parsePrAttachArgs(rawArgs);
+	if (mode === "create") {
+		const headIndex = passthrough.findIndex((arg) => arg === "--head" || arg === "-H");
+		const branch = headIndex >= 0 ? (passthrough[headIndex + 1] ?? "") : currentGitBranch();
+		const verdict = validateBranchName(branch);
+		if (!verdict.ok) throw new Error(verdict.reason);
+	}
 	if (!bodyFile) throw new Error("--body-file is required");
 	const absoluteBody = path.resolve(bodyFile);
 	const markdown = fs.readFileSync(absoluteBody, "utf8");

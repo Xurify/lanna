@@ -10,6 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Rules in short
 
+- **Branch names**: every branch must match `<type>/<kebab-case-slug>` (`feat|fix|refactor|docs|chore|test|perf|style|ci|build`), never generated prefixes (`t3/`, `freebuff/`, `claude/`, `codex/`). If a worktree starts on a generated name, rename it (`git branch -m <type>/<slug>`) before pushing or opening a PR. Enforced by `bun run branch:check`, `.githooks/pre-push`, `scripts/worktree.ts`, and `scripts/pr-attach.mjs` (W2 in `CLAUDE.md`).
 - **Comments**: Code explains itself; name things until it does. A comment is allowed only for something outside this repo (browser, framework, library, platform, third-party API, spec, or where an external number comes from). Full rule under **Code style → Comments** below.
 - **Pull requests**: every PR description MUST show the changed thing with images/screenshots before asking for a review (Day and Night screenshots attached via `gh pr create/edit --attach`). Include: what changes for the learner, Day and Night screenshots, how to try it, commit-pinned links to the code, what was and was not checked. Template `.github/pull_request_template.md`, rule W5, steps in the `pr-description` skill. Never open or hand back a PR without embedded screenshots of the change.
 

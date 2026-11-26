@@ -63,7 +63,10 @@ describe("mobile language picker sheet", () => {
 		assert.match(html, /aria-modal="true"/);
 		assert.match(html, /Target language/);
 		assert.match(html, /min-h-12/);
-		assert.match(html, /data-testid="profile-russian"[^>]*aria-selected="true"|aria-selected="true"[^>]*data-testid="profile-russian"/);
+		assert.match(
+			html,
+			/data-testid="profile-russian"[^>]*aria-selected="true"|aria-selected="true"[^>]*data-testid="profile-russian"/,
+		);
 		assert.match(html, /data-testid="profile-adding"/);
 		assert.match(html, /data-testid="add-language-open"/);
 		assert.match(html, /cap-center[^>]*>Add a language…/);

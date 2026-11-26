@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -eu
+
+ZERO_SHA="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha _remote_ref _remote_sha; do
+	[ -z "${local_ref:-}" ] && continue
+	[ "$local_sha" = "$ZERO_SHA" ] && continue
+	case "$local_ref" in
+		refs/heads/*)
+			branch="${local_ref#refs/heads/}"
+			node scripts/branch-name.mjs --allow-main "$branch"
+			;;
+	esac
+done
