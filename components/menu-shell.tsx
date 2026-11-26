@@ -110,6 +110,7 @@ export function MenuShell({
 	testid,
 	preferredSide,
 	align = "right",
+	matchAnchorWidth = false,
 	menuClass,
 	children,
 }: {
@@ -121,6 +122,7 @@ export function MenuShell({
 	preferredSide: MenuSide;
 	/** Which anchor edge the menu's horizontal position keys off. */
 	align?: MenuAlign;
+	matchAnchorWidth?: boolean;
 	/** The menu body classes: width, border, bg, padding, text — the
 	 *  shell adds position, z-index, the height cap, and scrolling. */
 	menuClass: string;
@@ -197,17 +199,22 @@ export function MenuShell({
 	useLayoutEffect(() => {
 		let raf = 0;
 		const place = () => {
-			const el = anchor();
-			if (!el || !menuRef.current) return;
-			const p = computeMenuPlacement(
-				el.getBoundingClientRect(),
+			const element = anchor();
+			if (!element || !menuRef.current) return;
+			const rect = element.getBoundingClientRect();
+			const contentWidth = matchAnchorWidth ? Math.max(rect.width, 200) : menuRef.current.offsetWidth;
+			const placement = computeMenuPlacement(
+				rect,
 				{ width: window.innerWidth, height: window.innerHeight },
 				menuRef.current.scrollHeight,
-				menuRef.current.offsetWidth,
+				contentWidth,
 				preferredSide,
 				align,
 			);
-			setPlaced(p);
+			if (matchAnchorWidth) {
+				placement.style.width = contentWidth;
+			}
+			setPlaced(placement);
 		};
 		place();
 		const rePlace = () => {
@@ -221,7 +228,7 @@ export function MenuShell({
 			window.removeEventListener("scroll", rePlace, true);
 			window.removeEventListener("resize", rePlace);
 		};
-	}, [anchorRef, anchorTestid, preferredSide, align]);
+	}, [anchorRef, anchorTestid, preferredSide, align, matchAnchorWidth]);
 
 	// First pass: mounted hidden at the viewport's top-left so the layout
 	// effect can measure the real content height before anything is seen.
