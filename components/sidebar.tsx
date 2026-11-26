@@ -1070,7 +1070,7 @@ function SessionsSidebar() {
 						className="min-h-0 overflow-y-auto pt-1 [scrollbar-gutter:stable]"
 						data-testid="sidebar-nav-scroll"
 					>
-						<LanguageSwitcher />
+						<LanguageSwitcher phone={phone} drawerOpen={drawer} />
 					</div>
 
 					{/* The tutor: two ways to start a chat, then the chats themselves.
