@@ -112,7 +112,11 @@ export function LanguageSheetBody({
 					<XIcon className="size-4" aria-hidden />
 				</button>
 			</div>
-			<div role="listbox" aria-label="Languages" className="flex max-h-[60dvh] flex-col gap-1 overflow-y-auto px-2 pb-2">
+			<div
+				role="listbox"
+				aria-label="Languages"
+				className="flex max-h-[60dvh] flex-col gap-1 overflow-y-auto px-2 pb-2"
+			>
 				{profiles.map((entry) => {
 					const running = entry.id === active;
 					const pending = switching === entry.id;
@@ -403,7 +407,10 @@ export function LanguageSwitcher({ phone = false, drawerOpen = true }: { phone?:
 												<span className="truncate text-[11px] text-muted-foreground">({entry.english})</span>
 											</div>
 											{pending ? (
-												<LoaderCircleIcon className="size-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+												<LoaderCircleIcon
+													className="size-3.5 shrink-0 animate-spin text-muted-foreground"
+													aria-hidden
+												/>
 											) : running ? (
 												<CheckIcon className="size-3.5 shrink-0 text-primary" aria-hidden />
 											) : null}

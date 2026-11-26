@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { validateBranchName } from "./branch-name.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -43,6 +44,8 @@ export function parseWorktreeArgs(args: readonly string[]): WorktreeCommand {
 			else throw new Error(`Unexpected argument: ${arg}`);
 		}
 		if (!branch) throw new Error("create requires <branch>");
+		const verdict = validateBranchName(branch);
+		if (!verdict.ok) throw new Error(verdict.reason);
 		return { action: "create", branch, customDir, base, install, targets: [] };
 	}
 	throw new Error("Usage: bun scripts/worktree.ts <create|clean|list> ...");
