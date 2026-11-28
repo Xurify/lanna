@@ -1,0 +1,364 @@
+/*
+# ValueControl
+
+The base of a control that **holds a value a person sets** — a checkbox, a switch, a
+choice of one, a date, a number — and so can be checked, required, refused by a service,
+and gathered into a `Form`. It is a `Control` (focus, keyboard, `disabled`) with the words
+a field needs, the same words a `TextInput` has:
+
+- `required`, `validate(v)` and `refused` say what can be wrong;
+- `problem` is what is wrong **now**, `valid` that nothing is, and `error` is `problem`
+  once the control has been **judged** — left, `judge()`d, or submitted with its form;
+- `name` is its address in its form: the key a service names it by.
+
+It is also where **editing** is defined, once, for every value control. The person changes
+what the control shows; the control asks `admit` about the change, shows the result, and
+hands it to `commit`, which puts it into your state. While the person is editing, what
+they're doing is theirs: what your `commit` does to your value isn't shown until the
+edit ends. Any other change to your value ends the edit and is shown at once. With no
+edit open, the control shows your value.
+
+A concrete control says what its value is by setting `fieldValue` (a `Checkbox`'s is
+`checked`, a `Combobox`'s its `value`), declares the `commit` that keeps it, and reports
+what the person does with `edit(v)`. It reads `shown` for what to draw. Extend it for a
+value control of your own:
+
+```declare
+class Rating extends ValueControl [ width = 120, height = 24,
+    stars: number = 0,
+    fieldValue = { stars },
+    empty = { stars == 0 },
+    commit(v: number) { stars = v },
+    press() { edit(stars % 5 + 1) },
+    TextLabel [ text = { "★".repeat(classroot.shown) + "☆".repeat(5 - classroot.shown) } ]
+    ]
+
+App [ Rating [ x = 20, y = 20, required = "Rate your stay." ] ]
+```
+
+## commit()
+`commit(v)`: the person's change, to put into your state. Each control's own `commit`
+keeps it in the control's value (a `Checkbox`'s writes `checked`); override it to put
+it where your state lives — `checked = { app.muted }` with `commit(v: boolean) { app.muted = v }`,
+or the shorthand `checked <-> app.muted`. What you do with it is yours: store it, convert
+it, clamp it, or leave your state alone because what's shown isn't a value yet. An override
+that keeps no state of its own and doesn't call `super.commit(v)` leaves the control unable
+to change.
+
+## commitOn
+When `commit` is called: `"each"` (the default) after every change, or `"end"` once,
+when the edit ends — a title saved once, not on every keystroke; a slider drag that is one
+change, and one undo step.
+
+## admit()
+`admit(v)`: asked about every change before it is shown. Return what to show — usually `v`
+itself, sometimes a tidied version (a code in capitals, a pasted sentence reduced to its
+digits) — or `null` to refuse the change. Returning what is already shown also refuses. The
+default admits everything.
+
+## edit()
+`edit(v)`: what a control's own code calls when the person changes what it shows to `v`.
+It asks `admit`, shows the result and calls `commit` as `commitOn` says. Outside a
+`beginEdit()` … `endEdit()` pair the edit begins and ends at once, as a press does.
+
+## beginEdit()
+Opens an edit that takes time — a drag, typing — so the `edit(v)` calls that follow belong
+to one edit, and what the control shows is the person's until it ends.
+
+## endEdit()
+Ends the open edit: with `commitOn = "end"` it commits what is shown, then the control shows
+your value. Leaving the control, Return in a text field, and the control going (`exists`
+turning false) end the edit this way; your own code may too.
+
+## cancelEdit()
+Ends the open edit without committing what isn't committed yet, and shows your value —
+what Escape does.
+
+## editing
+**Read-only.** Whether an edit is open.
+
+## shown
+**Read-only.** What the control shows: the person's edit while one is open, your value
+(`fieldValue`) otherwise. A control draws from it.
+
+A control inside another control is part of it, not a member of a form of its own: the
+entry field of a `Combobox` belongs to the combobox, which is the member.
+
+## name
+The control's address in its form — the key a service names it by when it refuses a value
+(`{ "field": "country", "message": "…" }`). A path is allowed (`"address.country"`). It is
+independent of the control's name in the view tree; leave it empty for a control no
+service names.
+
+## required
+`true`, or **the message to say**, when the control may not be left empty:
+`required = "Choose the country."`. Empty is what `empty` says. With `true` the message is
+"Required"; say a message of your own wherever a person will read it. Screen readers hear
+the control as required either way.
+
+## validate()
+The control's own rule: given the value, return `""` when it is fine, or the sentence that
+says what is wrong. It runs when `required` is met, and it is **reactive** — a rule that
+reads another value (`app.form.country`) judges again when that value changes.
+
+## refused
+**Read-only.** An outside message about the value — usually a service's refusal, laid here by a
+form's `refuse` or the control's own `refuse(message)`, the one way to say it. It is the control's `problem` while the
+value is the one refused, and stops counting when the value changes.
+
+## refuse()
+`refuse(message)` says an outside message about the current value (see `refused`); `""`
+withdraws it.
+
+## problem
+What is wrong with the value **now**, whatever has been judged: the refusal, then
+`required`, then `validate`. Empty when nothing is. The fact any presentation can be built
+on; a `Form` lists its members' problems.
+
+## valid
+Whether `problem` is empty.
+
+## error
+`problem` once the control is judged, else empty — the default display rule, and what a
+`Field` shows under the control and a screen reader hears with it. A control that should
+say what is wrong at every moment is judged from the start: `judged = true`.
+
+## judged
+Whether the control has been judged: left, `judge()`d, or submitted with its form.
+Writable: set it back to false for a fresh try (a security code emptied after a decline).
+
+## judge()
+Judges the control now, as leaving it would.
+
+## form
+The form the control belongs to: the nearest `Form` above it, unless set — set it
+(`form = { app.payment }`) for a control that sits outside its form's views, as in a sheet
+of its own.
+
+## fieldValue
+The value the rules judge: `validate(v)` receives it, `required` asks whether it is
+`empty`, and a refusal is said of it. Each concrete control sets it from its own value, and
+a control of your own does too (`fieldValue = { value }`): it is what `shown` shows while the
+person edits, so without it the control shows nothing of its value.
+
+## empty
+Whether `fieldValue` counts as empty for `required`: `blank(fieldValue)` by default. A
+control whose empty is something else says so (a rating of 0).
+
+## blank()
+`blank(v)`: null, `""`, `false` or an empty list.
+
+## onRetire
+A control that goes ends its open edit, as leaving does, then leaves its form and its
+`Field`. An override calls `super.onRetire()`.
+
+## focusField()
+Puts the focus where a person fixes this control's value — the control itself, or its
+entry field when it has one. A form calls it to take the person to a problem.
+
+## accessibilityLabel
+The caption of the `Field` it is in, so a screen reader names the control by it; empty outside
+one. A control that says its own name sets it.
+
+## accessibilityError
+Follows `error`: the control is invalid to a screen reader while it says something.
+
+## accessibilityRequired
+Follows `required`.
+
+## _refusedValue
+**Internal.** the value `refused` was said of.
+
+## _refusing
+**Internal.** the refusal still counts (the value is the one refused).
+
+## _missing
+**Internal.** required and empty.
+
+## _requiredSays
+**Internal.** the message a missing value says.
+
+## _form
+**Internal.** a control's parts belong to it, not to a form of their own.
+
+## _field
+**Internal.** the same for a `Field` around the control.
+
+## _inField
+**Internal.** the `Field` this control is in, if any.
+
+## _draft
+**Internal.** what the open edit shows.
+
+## _spanning
+**Internal.** an edit is open across several changes (`beginEdit`).
+
+## _answering
+**Internal.** this control's own `commit` has run and its answer is still to be seen: the next
+change of the value is that answer, not a change from outside.
+
+## _take()
+**Internal.** shows an admitted change and commits it as `commitOn` says.
+
+## _commitNow()
+**Internal.** calls `commit`, marking its settle as the control's own.
+*/
+
+include [ "control.declare" ]
+
+class ValueControl extends Control [
+    name: string = "",
+    required: boolean | string = false,
+    judged: boolean = false,
+
+    // what the rules judge, set by each concrete control from its own value
+
+    fieldValue: any = null,
+    empty: boolean = { this.blank(this.shown) },
+    blank(v: any) -> boolean {
+        if (v == null || v === "" || v === false) return true
+        return Array.isArray(v) && v.length == 0
+        },
+
+    // a refusal is said OF a value: it counts while the value is that one
+
+    refused: string = "",
+    _refusedValue: any = null,
+
+    validate(v: any) -> string { return "" },
+
+    // editing: what the person is doing is theirs until the edit ends
+
+    commitOn: "each" | "end" = "each",
+    editing: boolean = false,
+    _draft: any = null,
+    _spanning: boolean = false,
+    _answering: boolean = false,
+    shown: any = { this.editing ? this._draft : this.fieldValue },
+
+    admit(v: any) -> any { return v },
+    commit(v: any) { },
+    edit(v: any) {
+        const a = admit(v)
+        // null refuses a change; a change *to* null (clearing a choice) is not refused by it
+        if ((a === null && v !== null) || (a === shown && v !== shown)) return
+        _take(a)
+        },
+    beginEdit() {
+        if (editing) return
+        _spanning = true
+        _draft = fieldValue
+        editing = true
+        },
+    endEdit() {
+        if (!editing) return
+        const d = _draft
+        _spanning = false
+        editing = false
+        if (commitOn == "end") _commitNow(d)
+        },
+    cancelEdit() {
+        _spanning = false
+        editing = false
+        },
+    _take(v: any) {
+        if (!_spanning) { _commitNow(v); return }
+        _draft = v
+        if (commitOn != "end") _commitNow(v)
+        },
+
+    // the commit's own answer is the change the watcher below sees next, in this
+    // settle's close (after its steps); a commit that changed nothing leaves none,
+    // so the flag is let go here rather than left to swallow an outside change
+
+    _commitNow(v: any) {
+        const before = fieldValue
+        _answering = true
+        commit(v)
+        afterSettle(() => { if (this.fieldValue === before) this._answering = false })
+        },
+
+    _refusing: boolean = { this.refused != "" && this.shown === this._refusedValue },
+    _missing: boolean = { this.required !== false && this.required !== "" && this.empty },
+    _requiredSays: string = { typeof this.required == "string" ? this.required : "Required" },
+    problem: string = { this._refusing ? this.refused : this._missing ? this._requiredSays : this.validate(this.shown) },
+    valid: boolean = { this.problem == "" },
+    error: string = { this.judged ? this.problem : "" },
+
+    // the form above, unless set; what is inside this control is part of it,
+    // so it provides "no form" (and "no field") to its own parts
+
+    form: any = { provided("_form", null) },
+    _form: any = null,
+    _field: any = null,
+    _inField: any = { provided("_field", null) },
+
+    accessibilityLabel = { provided("fieldLabel", "") },
+    accessibilityError = { this.error },
+    accessibilityRequired = { this.required !== false && this.required !== "" },
+
+    refuse(message: string) {
+        _refusedValue = shown
+        refused = message
+        },
+    judge() { judged = true },
+    focusField() { Focus.focus(this) },
+
+    // a control that goes ends its edit and leaves its form and its field (an override calls super.onRetire())
+
+    onRetire() { _member.retire() },
+
+    // Membership and judging on leave are kept by this member, not by the
+    // control's own handlers, so a subclass's `onInit` or `onBlur` cannot
+    // drop them: it joins the form the control is in, reports the control to
+    // the Field around it, and judges the control when the focus leaves it.
+
+    _member: Node [
+        f: any = { classroot.form },
+        fld: any = { classroot._inField },
+        here: boolean = { classroot.focused },
+        v: any = { classroot.fieldValue },
+        _joined: any = null,
+        _held: any = null,
+        trackChanges = ["f", "fld", "here", "v"],
+        sync() {
+            if (_joined !== f) {
+                if (_joined != null) _joined._leave(classroot)
+                _joined = f
+                if (f != null) f._join(classroot)
+                }
+            if (_held !== fld) {
+                if (_held != null) _held._release(classroot)
+                _held = fld
+                if (fld != null) fld._hold(classroot)
+                }
+            },
+        onInit() { sync() },
+        onChange(e: ChangeEvent) {
+            sync()
+            // the value changed from outside while an edit was open: the edit ends,
+            // and the control shows the new value (its own commit's answers wait)
+            if (e.changed.some((c) => c.name == "v")) {
+                if (classroot._answering) classroot._answering = false
+                else if (classroot.editing) classroot.cancelEdit()
+                }
+            // leaving ends the edit and judges — but not for the control's own popup
+            // (a date picker's calendar), which the focus visits while choosing
+            if (e.changed.some((c) => c.name == "here") && !here
+                && classroot.accessibilityExpanded !== true) {
+                classroot.endEdit()
+                classroot.judged = true
+                }
+            },
+        retire() {
+            // a control that goes mid-edit ends the edit as leaving does — what
+            // the person typed is committed, not dropped; a cancelled edit has
+            // already ended, and commits nothing
+            classroot.endEdit()
+            if (_joined != null) _joined._leave(classroot)
+            if (_held != null) _held._release(classroot)
+            _joined = null
+            _held = null
+            }
+        ]
+    ]

@@ -1,0 +1,142 @@
+/*
+# Appearance icons — sun, moon, and the half-disc
+
+The Light / System / Dark triad. Typed as `☀︎ ◐ ☾` it is the worst case for
+glyphs: three marks that must read as **one family** at 14px, drawn by three
+unrelated parts of whatever font the platform happens to have. The sun is a
+heavy sunburst, the moon a thin crescent, the half-disc a geometric shape —
+they never match.
+
+Drawn, they share a circle of the same radius and the same stroke, so they read
+as a set: a disc with rays, a disc bitten by a shadow, a disc half filled.
+*/
+
+include [ "icon.declare" ]
+
+// The three share a disc of one radius; `solid` picks each mark's rendition.
+// The default is a mixed language — outline sun, outline crescent, half-filled
+// disc — because the half-disc is the one of the three whose meaning is its
+// fill; outlining the other two keeps the triad's ink balanced instead of
+// letting the sun and moon carry double the weight. Filling all three is the
+// other reading: at 14–18px a 1.6px ring reads far lighter than a filled
+// crescent, and the difference between the marks becomes what is subtracted
+// from the disc — nothing, half, a bite.
+
+/*
+# SunIcon
+
+"Light" in the appearance triad — a disc with rays, sharing its radius and stroke with
+`MoonIcon` and `AutoIcon` so the three read as one family at 14px.
+
+## rays
+How many rays surround the disc. Eight by default; lowering it reads lighter at small
+sizes.
+
+## solid
+`false` (the default) draws the ring; `true` fills the disc. **The ring is drawn a
+touch smaller than the filled disc on purpose** — a stroke straddles its path, so an
+outline at the filled radius reads as the larger mark.
+
+## draw()
+Renders the disc and its rays.
+*/
+
+class SunIcon extends Icon [
+    rays: number = 8,
+    solid: boolean = false,         // true = the filled disc; false = the ring
+    draw(d: DrawContext) {
+        d.scale(unit, unit)
+        d.fillStyle = ink
+        d.strokeStyle = ink
+        d.lineWidth = weight / unit
+        d.lineCap = "round"
+        // The ring is drawn a touch smaller than the solid disc: a stroke straddles
+        // its path, so an outline at the filled radius reads as the larger mark.
+        d.beginPath()
+        d.arc(8, 8, classroot.solid ? 3.5 : 3.15, 0, Math.PI * 2, false)
+        if (classroot.solid) d.fill()
+        else d.stroke()
+        for (let i = 0; i < classroot.rays; i++) {
+            const a = (i / classroot.rays) * Math.PI * 2
+            const c = Math.cos(a), s = Math.sin(a)
+            d.beginPath()
+            d.moveTo(8 + c * 5.3, 8 + s * 5.3)
+            d.lineTo(8 + c * 6.9, 8 + s * 6.9)
+            d.stroke()
+            }
+        }
+    ]
+
+
+// A crescent built as the region between two equal circles — the outer edge from
+// one, the bite from a second offset by (3, -3). Both arcs meet exactly at the
+// circles' two intersection points, so the horns close to a point instead of
+// leaving the tail an arc pair leaves.
+//
+// One path, two renditions: fill it and you get a solid crescent; stroke the
+// same closed path and the horns taper, because the two arcs meet at a point.
+// Nothing about the geometry changes — only what is done with it.
+
+/*
+# MoonIcon
+
+"Dark" in the appearance triad. The crescent is **the region between two equal
+circles**, the second offset by (3, −3) — so both arcs meet exactly at the circles'
+intersection points and the horns close to a point instead of leaving the ragged tail
+an arc pair leaves.
+
+## solid
+`false` (the default) strokes the closed path — the tapered-horn rendition; `true`
+fills it for a solid crescent. **One path, two renditions** — nothing about the geometry
+changes, only what is done with it.
+
+## draw()
+Renders the crescent.
+*/
+
+class MoonIcon extends Icon [
+    solid: boolean = false,         // true = the filled crescent; false = the stroked horns
+    draw(d: DrawContext) {
+        d.scale(unit, unit)
+        d.beginPath()
+        d.arc(8, 8, 5.5, 0.389, 4.323, false)      // outer edge, the long way round
+        d.arc(11, 5, 5.5, 3.531, 1.181, true)      // the bite, back to the first horn
+        d.closePath()
+        if (classroot.solid) { d.fillStyle = ink; d.fill() }
+        else {
+            d.strokeStyle = ink
+            d.lineWidth = weight / unit
+            d.lineJoin = "round"
+            d.stroke()
+            }
+        }
+    ]
+
+
+/*
+# AutoIcon
+
+"System" in the appearance triad — the same disc, half of it taken away. **The ring
+stays around the empty half** so it reads as part of one object rather than as a gap.
+The one mark of the three whose meaning *is* its fill, which is why a mixed
+outline-and-filled language is right for the triad.
+
+## draw()
+Renders the half-filled disc.
+*/
+
+class AutoIcon extends Icon [
+    draw(d: DrawContext) {
+        d.scale(unit, unit)
+        d.strokeStyle = ink
+        d.fillStyle = ink
+        d.lineWidth = weight / unit
+        d.beginPath()
+        d.arc(8, 8, 5.4, Math.PI * 0.5, Math.PI * 1.5, false)
+        d.closePath()
+        d.fill()
+        d.beginPath()
+        d.arc(8, 8, 5.4, 0, Math.PI * 2, false)
+        d.stroke()
+        }
+    ]

@@ -1,0 +1,202 @@
+/*
+# Accordion
+
+Stacked pane headers with one pane open at a time, each pane sliding open and
+closed on a spring over its height.
+
+The load-bearing mechanic: a pane's content is **present through the whole open
+and close**, revealed and concealed by the pane's own clip as its height
+animates. That is what makes the motion read as a pane opening rather than as
+content appearing — never an instant pop, never a blank gap.
+
+The open pane is **one attribute on the group** — `value`, the open pane's name
+— which is exactly `RadioGroup`'s shape. Panes are
+the group's direct children; each names itself (`name`, defaulting to its
+`label`) and derives `open` from the group. Content is authored as the AccordionPane's
+ordinary children — the AccordionPane stacks its header then the content, and clips.
+
+The pane stacks them **flush**, header against content, because the header is
+edge-to-edge and an inset that reached it would break that. So the breathing
+room around a pane's content is the content's own `padding`:
+
+```declare
+Accordion [ x = 20, y = 20, width = 260,
+    AccordionPane [ label = "Account", initiallyOpen = true,
+        View [ width = 100%, padding = 12,
+            Text [ width = 100%, wrap = true,
+                text = "Panes slide on a spring; the content rides the whole way." ]
+            ]
+        ],
+    AccordionPane [ label = "Privacy",
+        View [ width = 100%, padding = 12,
+            Text [ width = 100%, text = "One pane open at a time." ]
+            ]
+        ]
+    ]
+```
+
+## value
+The **open pane's `name`** — the group's whole value, exactly `RadioGroup`'s shape.
+Assign it to open a pane from code; `""` closes all of them. A `AccordionPane` never stores
+whether it is open, it derives it from here, which is why the one-open-at-a-time
+invariant cannot break.
+
+*/
+
+include [ "control.declare", "icons/core.declare" ]
+
+class Accordion [
+    value: string = "",
+
+    // one open pane at a time, stacked flush — the sliding heights are the
+    // arrangement; the group just stacks whatever heights the springs say
+
+    layout: SimpleLayout [ axis = y, spacing = 2 ]
+    ]
+
+
+/*
+# AccordionPane
+
+One pane of an `Accordion`: a header you press and the content you write as its
+ordinary children. A pane derives `open` from the group's `value` — it never stores
+it — and slides open and closed on a spring over its height, its content present the
+whole way and revealed by the pane's own clip.
+
+```declare
+App [ width = 300, height = 180, fill = white, textColor = black,
+    Accordion [ x = 20, y = 20, width = 260,
+        AccordionPane [ label = "Details", initiallyOpen = true,
+            Text [ width = 100%, padding = 12, text = { "open: " + parent.open } ]
+            ],
+        AccordionPane [ label = "More", Text [ padding = 12, text = "Press a header." ] ]
+        ]
+    ]
+```
+
+## label
+The pane header's text, and — unless you set `name` — its identity in the group.
+
+## name
+This pane's identity, defaulting to its `label`. **Set it when two panes share a label,
+or when the label is user-facing copy you expect to change**, so the group's `value`
+does not move under you when the wording does.
+
+## initiallyOpen
+Seeds the group: the first pane declaring `initiallyOpen = true` opens if nothing else has
+claimed `value` yet. A one-shot at init, not a constraint — **to drive which pane is open
+from state, constrain the group's `value` instead**.
+
+## open
+Whether this pane is the group's current one. Derived; read it to style your content.
+
+## _twist
+**Internal.** The header chevron's angle in radians, sprung between 0 and −π/2 in step with the height.
+
+## tabOrder()
+Contributes the pane's contents to keyboard traversal only while it is open. A closed
+pane is clip-occluded rather than hidden — its content must stay visible for the slide
+to carry it — so **this is what stops Tab from descending into a pane the user cannot
+see**. The header itself remains a stop either way.
+An override keeps that: a closed pane contributes nothing.
+
+## focusShape()
+Rings the header — the part Space and Enter press — rather than the whole pane with its
+open content. The ring is the pane's only focus indicator.
+
+## press()
+Opens this pane by writing its `name` to the group. Called by a click and by
+Space/Enter on the header.
+
+## onInit
+Applies `initiallyOpen`. Fires once per pane.
+An override calls `super.onInit()`, or `initiallyOpen` does nothing.
+
+## width
+A pane is as wide as its accordion; only its height is its own.
+
+## opacity
+Disabled dims the whole pane, header and content alike, rather than recolouring it — to
+the theme's `disabledOpacity`, or 0.45 when the theme states none. A disabled pane
+neither opens nor closes; whatever it shows stays as it is.
+
+## accessibilityLabel
+The header's text, naming the pane; the header itself is the button a screen reader presses to open it.
+*/
+
+class AccordionPane extends Control [ width = 100%, clip = true,
+    label: string = "",
+
+    // what the pane holds goes in its body, which is present only while the pane
+    // is open or still sliding — closed, the content is absent, to a screen
+    // reader as to Tab, not merely clipped out of sight
+
+    defaultPlacement = _body,
+
+    // a pane is its header and its content in one view: to a screen reader, a
+    // group named by its header, the header a button that opens and closes it
+
+    accessibilityRole = group,
+    accessibilityLabel = { label },
+    name:  string = { label },
+    initiallyOpen: boolean = false,               // seed the open pane: the first AccordionPane with initiallyOpen = true
+
+    open: boolean = { (parent as Accordion).value == name && name != "" },
+
+    onInit() { if (initiallyOpen && (parent as Accordion).value == "") (parent as Accordion).value = name },
+
+    // the slide: height springs between the bare header and the content's own
+    // wanted extent; `clip = true` is what carries the content through the
+    // whole motion — concealed by the clip, never removed
+
+    _slide: Spring [ attribute = height, to = { open ? contentHeight : classroot._header.height }, stiffness = 220, damping = 26, epsilon = 0.4 ],
+
+    // a closed pane is clip-occluded, not hidden — its content stays visible
+    // so the slide can carry it, but focus must never descend into it (the
+    // web's inert rule; ARIA's inactive-panel rule). The traversal protocol
+    // handles it: while closed, this AccordionPane contributes no members — the header
+    // stop (the AccordionPane itself) remains.
+
+    tabOrder() { return open ? this.tabDefault() : [] },
+
+    press()   { (parent as Accordion).value = name },
+
+    opacity = { disabled ? (provided("theme").disabledOpacity) : 1 },
+
+    layout: SimpleLayout [ axis = y, spacing = 0 ],
+
+    // headers are filled, edgeless — an edge reads as an input field. Keyboard
+    // focus is the ring's, shaped to the header (focusShape): one indicator.
+
+    focusShape() { return ({ x: 0, y: 0, w: this.width, h: this._header.height, rad: provided("theme").controlCornerRadius }) },
+
+    // The twisty rotates rather than swapping between two marks, and it does it
+    // on a spring — so it turns in step with the pane sliding open instead of
+    // snapping while the height animates. `ChevronIcon` takes an `angle` for
+    // exactly this: `dir` is the sugar for four resting orientations, the angle
+    // underneath is a number, and a number can be sprung.
+
+    _twist: number = 0,
+    Spring [ attribute = _twist, to = { classroot.open ? 0 : -Math.PI / 2 },
+        stiffness = 220, damping = 26, epsilon = 0.004 ],
+
+    _header: View [ width = 100%, height = { provided("theme").accordionHeaderHeight },
+        accessibilityRole = button,
+        accessibilityExpanded = { classroot.open },
+        press() { classroot.press() },
+        cornerRadius = { provided("theme").controlCornerRadius },
+        fill = { classroot.open || classroot.hovered || classroot.pressed ? provided("theme").controlSelected : ((provided("theme").accordionHeaderFill ?? provided("theme").control)) },
+        chev: ChevronIcon [ x = 11, y = center, iconSize = 14,
+            angle = { classroot._twist }, ink = { provided("theme").textMuted } ],
+        t: TextLabel [ x = 32, fontSize = { provided("theme").accordionFontSize }, fontWeight = { classroot.open ? "semibold" : "medium" },
+            textColor = { provided("theme").text }, text = { classroot.label } ]
+        ],
+
+    // `open` here too, so content reads its pane's state as `parent.open`
+
+    _body: View [ width = 100%,
+        layout: SimpleLayout [ axis = y, spacing = 0 ],
+        open: boolean = { classroot.open },
+        visible = { classroot.open || classroot.height > classroot._header.height + 0.5 }
+        ]
+    ]

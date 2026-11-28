@@ -1,0 +1,219 @@
+/*
+# Slider
+
+A bounded number by drag. Same value contract as every control — `value` is the
+attribute, **`commit` owns the destination** (default: itself) — and a drag is one
+edit: the thumb is the person's until they let go, committed at every move by default,
+or once at the release with `commitOn = "end"`. Pressing the track jumps to that position (local
+coordinates); the drag then follows the pointer by its travel since the press, so it survives
+the pointer leaving the control. Arrow keys nudge by `step`.
+
+```declare
+col: View [ x = 20, y = 20,
+    layout: SimpleLayout [ axis = y, spacing = 10 ],
+    vol: Slider [ value = 40 ],
+    Text [ text = { `volume ${Math.round(vol.value)}` } ]
+    ]
+```
+
+## value
+Where the handle sits, in your own units. Standalone the slider owns it; constrained
+(`value = { app.volume }`) it needs a `commit` override with it, or the drag's own
+delivery is refused against the constraint. `value <-> app.volume` is both.
+
+## min
+The value at the left end.
+
+## max
+The value at the right end.
+
+## step
+The quantum every delivered value snaps to, and the distance one arrow key moves.
+`step = 0.01` for a fine continuous control; **it is never zero** — the quantizer
+divides by it.
+
+## commit()
+**Where the value goes.** By default it is called **at every move of a drag**; with
+`commitOn = "end"`, once, at the release — a drag that is one change and one undo step.
+Override it to redirect the value (`commit(v: number) { app.volume = v }`); the default
+writes `value`.
+
+## quant()
+Snaps a raw value to `step` and clamps it into `min`…`max`. Every delivery routes
+through it, so an override changes what the slider can produce — logarithmic scales,
+detents, a magnetic centre.
+
+## frac
+The handle's position as 0…1, derived from what the slider shows (`shown`: the drag
+while one is open, the value otherwise) and the range. What the track,
+fill, and thumb all position from; read it to hang your own decoration off the handle.
+
+## dragging
+True from pointer-down until the captured release. **The `pressed` intrinsic
+deliberately will not do here** — it is hit-chain-based, so it goes false the moment the
+pointer leaves the thumb, while a drag must survive exactly that.
+
+## _v0
+**Internal.** The value at drag start, that the pointer delta is applied to.
+
+## focusShape()
+Rings the circular grabber — the part the arrow keys move — rather than the whole track.
+
+## barStyle()
+True when the theme asks for the Material-3 rendition: a vertical bar handle with the
+track shortened either side of it rather than drawn through. One theme token
+(`provided("theme").sliderHandleStyle`) selects a rendition — **data, not a fork**.
+
+## dotStyle()
+True for the Fluent rendition: a round grabber with an accent dot inside that grows
+under hover and press. The other value of the same token.
+
+## onPointerDown
+Jumps the value to the pressed position, claims focus, and latches the drag.
+An override calls `super.onPointerDown(e)`.
+
+## onDrag
+Tracks the drag by the pointer's travel since the press, so the handle keeps up with a
+pointer that has left the control.
+An override calls `super.onDrag(e)`.
+
+## onPointerUp
+Ends the drag.
+An override calls `super.onPointerUp()`: it is what ends the drag.
+
+## onKeyDown
+Home and End go to `min` and `max`; Page Up and Page Down move a tenth of the range, never
+less than a `step`. The arrows step, as `Control` gives every slider.
+
+## accessibilityIncrement()
+One `step` up, through `quant` and `edit` like any other change — what the Right and Up
+arrows run (Control's keys), and what a screen reader's increment calls.
+
+## accessibilityDecrement()
+One `step` down — what Left and Down run.
+
+## opacity
+Disabled dims the whole control — every part alike, never a recolour — to the theme's `disabledOpacity`, or 0.45 when the theme states none: the one place the number lives.
+
+## accessibilityValue
+Follows `value`, in the slider's own units.
+
+## accessibilityMin
+Follows `min`.
+
+## accessibilityMax
+Follows `max`.
+
+## accessibilityStep
+Follows `step` — what one increment moves. A slider shows no name, so its use site sets `accessibilityLabel`.
+
+## accessibilityLabel
+The caption of a `Field` around it, unless the use site names the slider: its name to a screen
+reader.
+
+## fieldValue
+Follows `value`: what `required` and `validate` judge (see `ValueControl`).
+*/
+
+include [ "valuecontrol.declare" ]
+
+class Slider extends ValueControl [
+
+    // what a screen reader is told: a slider, its value and range in the
+    // slider's own units, named by whatever the use site names it
+
+    accessibilityRole = slider,
+    accessibilityLabel = { provided("fieldLabel", "") },
+    accessibilityValue = { shown },
+    accessibilityMin = { min },
+    accessibilityMax = { max },
+    accessibilityStep = { step },
+
+    // keyboard focus rings the circular grabber — the part the keys move
+
+    focusShape() { return ({ x: this._thumb.x, y: this._thumb.y, w: this._thumb.width, h: this._thumb.height, rad: this._thumb.width / 2 }) },
+    width = 220, height = 28,
+    value: number = 0,
+    fieldValue = { value },
+    min:   number = 0,
+    max:   number = 100,
+    step:  number = 1,
+
+    commit(v: number) { value = v },
+
+    // the fraction the visuals share; drag bookkeeping (the value at the press)
+
+    // (clamped: a value set past the range is drawn at its end, never past the track)
+
+    frac: number = { Math.max(0, Math.min(1, (shown - min) / ((max - min) || 1))) },
+    _v0: number = 0,
+
+    // The drag latch: the pointer is captured for the gesture, so the drag must
+    // survive leaving the thumb's hit chain — the intrinsic `pressed` (chain-based)
+    // deliberately would not. Cleared by the captured release.
+
+    dragging: boolean = false,
+
+    quant(v: number) -> number {
+        const q = Math.round((v - this.min) / this.step) * this.step + this.min
+        return Math.max(this.min, Math.min(this.max, q))
+        },
+
+    onPointerDown(e: PointerEvent) {
+        if (disabled) return
+        dragging = true
+        focusVisible = false                     // a press clears the :focus-visible channel (Control's rule)
+        Focus.focus(this)                        // a click claims focus (Control's rule — this override must keep it)
+        _v0 = quant(min + (max - min) * ((e.x - 9) / (width - 18)))
+        beginEdit()
+        edit(_v0)
+        },
+    onPointerUp()   { if (dragging) { dragging = false; endEdit() } },
+    onDrag(e: PointerEvent) { if (dragging) edit(quant(_v0 + e.deltaX / (width - 18) * (max - min))) },
+    accessibilityIncrement() { if (!disabled) edit(quant(shown + step)) },
+    accessibilityDecrement() { if (!disabled) edit(quant(shown - step)) },
+
+    // Home and End go to the ends; Page Up and Page Down move a tenth of the range
+    // (never less than a step): the slider's keys on every platform
+
+    onKeyDown(e: KeyEvent) {
+        const page = Math.max(step, (max - min) / 10)
+        if (disabled || (e.key != "Home" && e.key != "End" && e.key != "PageUp" && e.key != "PageDown")) { super.onKeyDown(e); return }
+        edit(quant(e.key == "Home" ? min : e.key == "End" ? max : shown + (e.key == "PageUp" ? page : -page)))
+        },
+
+    opacity = { disabled ? (provided("theme").disabledOpacity) : 1 },
+
+    // Mountain View draws the handle as a vertical bar with a gap in the
+    // track around it; every other theme uses the round thumb. One token —
+    // provided("theme").sliderHandleStyle == "bar" — selects the rendition; the gap is the
+    // track being shortened to either side of the handle rather than drawn
+    // through it. Data, not a fork.
+
+    barStyle() { return provided("theme").sliderHandleStyle == "bar" },
+
+    // Redmond's thumb: a 20px round grabber, surface-filled, with an accent
+    // dot inside that grows a touch on hover/press. One more value of the
+    // same token — data, not a fork.
+
+    dotStyle() { return provided("theme").sliderHandleStyle == "dot" },
+
+    _track: View [ height = { provided("theme").sliderTrackHeight }, y = center, cornerRadius = { this.height / 2 }, fill = { provided("theme").trackFill ?? provided("theme").control },
+        x     = { classroot.barStyle() ? classroot._thumb.x + classroot._thumb.width + 5 : 0 },
+        width = { classroot.barStyle() ? Math.max(0, classroot.width - this.x) : classroot.width } ],
+    _bar: View [ height = { classroot._track.height }, y = { classroot._track.y }, cornerRadius = { this.height / 2 }, fill = { provided("theme").accent },
+        width = { classroot.barStyle() ? Math.max(0, classroot._thumb.x - 5) : 9 + (classroot.width - 18) * frac } ],
+    _thumb: View [
+        width  = { classroot.barStyle() ? 5 : classroot.dotStyle() ? 20 : 18 },
+        height = { classroot.barStyle() ? 24 : classroot.dotStyle() ? 20 : 18 },
+        y      = center,
+        cornerRadius = { this.width / 2 },
+        x = { (classroot.width - 18) * frac + (classroot.barStyle() ? 6 : classroot.dotStyle() ? -1 : 0) },
+        fill = { classroot.barStyle() ? provided("theme").accent : (provided("theme").sliderThumbFill ?? provided("theme").surface) },
+        stroke = { classroot.barStyle() ? Stroke(0, provided("theme").accent) : Stroke(1, classroot.hovered || classroot.pressed || classroot.dragging ? provided("theme").accent : provided("theme").line) },
+        dot: View [ visible = { classroot.dotStyle() },
+            width  = { classroot.hovered || classroot.pressed || classroot.dragging ? 14 : 12 },
+            height = { this.width }, cornerRadius = { this.width / 2 },
+            x = center, y = center, fill = { provided("theme").accent } ]
+        ]
+    ]

@@ -1,0 +1,433 @@
+/*
+# FocusRing
+
+The travelling focus indicator: a **shape-hugging** rounded outline that flies to
+the focused control and reshapes to its own silhouette on arrival. The ring springs
+position, size **and** `cornerRadius` together, which is why a Radio's row ring, a
+pill Switch's ring and a text field's ring each differ — the targets do.
+
+The model:
+
+- **The fact** — the ring follows `app.focusedView` and `app.focusGeometry`, and
+  tracks the target's root-space geometry on every change, pointer or
+  keyboard. A pointer focus **parks** the ring there silently (snap, no show) —
+  so the next Tab's flight departs from the control the user just clicked,
+  never from a stale perch.
+- **Roles, theme-elected** — `provided("theme").focusRingStyle`: `"both"` (or `true`, the
+  default) · `"travel"` (flight, then an idle fade) · `"rest"` (no flight —
+  the ring appears in place and stays) · `false` (no ring; the theme's
+  classes carry the at-rest indication — the invariant lives with the
+  theme-and-classes pair). While keyboard modality holds and the role
+  includes rest, the ring rests — no idle fade; a pointer press clears
+  modality and the ring hides (web :focus-visible semantics).
+- **The flight is the flourish** — `provided("theme").focusAnimate = false` snaps every
+  move; the underdamped travel is default-on.
+
+It arrives automatically with any Control-descended class; declare your
+own `FocusRing [ ]` (or subclass) to replace it. Pure chrome: never focusable,
+never a pointer target. The silhouette is the target's `focusShape()` when it
+declares one, else its bounds at its `cornerRadius`.
+
+**You do not instantiate this, and you do not position it.** Tab between the controls
+below and watch it fly; the members exist for a subclass that replaces the rendition,
+and for the theme tokens that elect its behaviour.
+
+```declare
+row: View [ x = 20, y = 20,
+    layout: SimpleLayout [ axis = x, spacing = 12 ],
+    Button [ label = "One" ],
+    Button [ label = "Two" ],
+    Checkbox [ label = "Three" ]
+    ]
+```
+
+## shown
+Whether the ring is visible. **A pointer focus parks it silently** — geometry current,
+ring hidden — so the next Tab departs from the control the user just clicked rather
+than from a stale perch.
+
+## placed
+Whether the ring has ever had a target to park on. **The first appearance never flies**,
+because a flight from nowhere is a streak across the app.
+
+## ringRole()
+The theme's election, from `provided("theme").focusRingStyle`: `"both"` (the default), `"travel"`
+(flight, then fading once it settles), `"rest"` (appears in place and stays, no
+flight), or `"off"`. **`"off"` is legitimate only when the theme's own controls carry
+an at-rest focus indication** — the invariant belongs to the theme-and-classes pair,
+not to the ring alone.
+
+## restRole()
+Whether the elected role includes resting — a resting ring does not idle-fade.
+
+## travelRole()
+Whether the elected role includes the flight.
+
+## snapTo()
+Lands the ring on its target immediately, skipping the flight. What a pointer focus, a
+first appearance, and `provided("theme").focusAnimate = false` all use — **and what a target moving
+under a resting ring uses**, so a dragged slider thumb carries the ring rigidly instead
+of springing after it.
+
+## overlayUp
+True while an overlay owns the keyboard (an open `Menu`). **The ring stands down** —
+the menu's own rover is the focus story, and a page ring poking around a panel reads as
+chrome fighting chrome.
+
+## _focusInOverlay
+**Internal.** Whether focus is inside the overlay that holds the keyboard — a dialog's own
+field or button. Then the ring shows: it stands down only for what lies behind the overlay.
+
+## _noteOverlayFocus()
+**Internal.** Recomputes `_focusInOverlay` when focus moves or a claim comes or goes.
+
+## idle
+True once a travel-role ring has sat still long enough to fade out. A resting ring
+never sets it.
+
+## draw()
+Renders the outline: four corner arcs with arms whose length is a pure function of
+distance from the target, so the physics does the choreography. Override to replace the
+rendition entirely. `provided("theme").focusSights = true` restores the open-bracket "target
+sights" reading; `provided("theme").focusRingInnerWidth` adds the Fluent two-tone band.
+
+## _tx
+**Internal.** The target x the springs chase.
+
+## _ty
+**Internal.** The target y.
+
+## _tw
+**Internal.** The target width.
+
+## _th
+**Internal.** The target height.
+
+## _trad
+**Internal.** The target corner radius — the silhouette reshapes as the ring travels.
+
+## _trot
+**Internal.** The target turn, in degrees — a control in a tilted window is ringed turned.
+
+## _restack()
+**Internal.** Puts the ring in the paint order: beneath the page's pinned chrome over a
+control in the scrolled content, on top for a control in the chrome or an overlay.
+
+## _rad
+**Internal.** The ring's current corner radius, sprung toward `_trad`.
+
+## _gen
+**Internal.** The idle-fade generation counter, so a retarget cancels the pending fade.
+
+## visible
+Visible while its faded opacity still shows anything, and never while an overlay is up — a ring behind a dialog would point at something you cannot reach.
+
+## selectable
+Chrome, never prose: the ring never selects inside a `selectable` region — the same provision every `Control` makes for its label.
+
+## _theme
+**Internal.** The theme in force where the ringed control is, from the focus service.
+
+## ringTheme()
+The theme the ring draws with: the ringed control's, so a ring on a dark panel takes the
+panel's colours, else the App's.
+
+*/
+
+class FocusRing [
+    opacity = 0,
+    ignoreLayout = true,                         // it flies to the focused control; a parent's layout never arranges it
+
+    // an overlay owns the keys (an open menu — Keyboard.navClaim): the ring
+    // stands down while it's up — the menu's rover is the focus story, and
+    // a page ring poking around a panel reads as chrome fighting chrome
+
+    overlayUp: boolean = false,
+    _focusInOverlay: boolean = false,
+    _claims: KeyListener [ onNavClaim(on: boolean) { classroot.overlayUp = on; classroot._noteOverlayFocus() }
+        ],
+
+    // where the ring is headed — written by the subscription; the springs chase
+
+    _tx: number = 0,
+    _ty: number = 0,
+    _tw: number = 0,
+    _th: number = 0,
+    _trad: number = 8,
+    _trot: number = 0,
+    _rad: number = 8,
+    shown: boolean = false,
+    placed: boolean = false,                     // has the ring ever had a target to park on?
+
+    // the theme where the ringed control is: a ring on a dark panel is drawn
+    // in the panel's colours, not the App's
+
+    _theme: any = null,
+    ringTheme() -> any { return this._theme ?? provided("theme") },
+
+    // the idle fade — travel role only; a resting ring does not fade
+
+    idle: boolean = false,
+    _gen:  number = 0,
+
+    // role helpers over the theme election
+
+    ringRole()  { const r = provided("theme").focusRingStyle; return r == false ? "off" : r == true || r == null ? "both" : r },
+    restRole()  { const r = this.ringRole(); return r == "both" || r == "rest" },
+    travelRole() { const r = this.ringRole(); return r == "both" || r == "travel" },
+
+    snapTo() { this.x = _tx; this.y = _ty; this.width = _tw; this.height = _th; _rad = _trad; this.rotation = _trot },
+
+    // Over a page's scrolled content the ring paints beneath the page's pinned
+    // chrome (a bar that ignores the scroll), as the content does: a control
+    // scrolled under the bar takes its ring under with it. On a control in the
+    // chrome or in an overlay, the ring goes on top. Riding a pane, the pane's
+    // own pinned chrome already paints over it.
+
+    _restack(v: View) {
+        if (classroot.paintsIn != null) return
+        let top: View | null = null
+        let pinned = false
+        for (let n = v; n != null && n != app; n = (n.paintsIn != null ? n.paintsIn : n.parent) as View) {
+            if (n.ignoreScroll) pinned = true
+            top = n
+            }
+        let chrome: View | null = null
+        if (!pinned && !overlayUp && top != null) {
+            let after = false
+            for (const k of app.childViews) {
+                if (k == top) { after = true; continue }
+                if (after && k != classroot && k.ignoreScroll && k.visible && k.pointerEvents != "none" && k.height < app.height / 2) { chrome = k; break }
+                }
+            }
+        classroot.raise(chrome)
+        },
+
+    // the target's live silhouette, root-space, from the service's follower —
+    // tracked through the parent chain and focusShape(), so an arrow-keyed
+    // slider thumb (or a reflowing layout) moves the resting ring with it.
+    // The band sits outside the silhouette: inner edge touching the control's
+    // boundary (the Mac halo's hug), displaced by gap + half the stroke.
+
+    _focus: Node [
+        g: object = { app.focusGeometry },
+        trackChanges = ["g"],
+        onChange() {
+            if (this.g == null) return
+            const g = this.g as FocusGeometry
+            if (g.root != app) return
+            // Ride the target's scroller: the ring paints in it (paintsIn) and
+            // positions in its content coordinates — the platform then carries
+            // ring and control together, zero lag, no per-scroll re-derive
+            // (planes.md §14).
+            const prev = (this as any)._lastTarget
+            const prevHome = (this as any)._lastHome
+            const hadHome = (this as any)._hasHome === true
+            const px = classroot.x
+            const py = classroot.y
+            classroot.paintsIn = g.scroller == app ? null : g.scroller
+            const homed = g.scroller != app
+            // the home box: the scroller's content space, the page's when it
+            // rides none — and turned, when the control is (a tilted window)
+            const gx = g.homeX
+            const gy = g.homeY
+            // Crossing scroll homes (the bar's button → a control in the
+            // scrolled page): the flight must still fly. The ring's current
+            // position converts through root space into the destination
+            // home's coordinates — same painted spot, new numbers — and the
+            // springs then travel entirely within the new space (correct
+            // even if that pane scrolls mid-flight).
+            if (hadHome && prevHome != g.scroller) {
+                const toRoot = prevHome == null || prevHome == app
+                    ? ({ x: px, y: py })
+                    : (() => { const o = prevHome.rootOrigin(); return ({ x: o.x + px - prevHome.scrollX, y: o.y + py - prevHome.scrollY }) })()
+                const dst = !homed || g.scroller == app
+                    ? toRoot
+                    : (() => { const o = g.scroller.rootOrigin(); return ({ x: toRoot.x - o.x + g.scroller.scrollX, y: toRoot.y - o.y + g.scroller.scrollY }) })()
+                classroot.x = dst.x
+                classroot.y = dst.y
+                }
+            const gap = provided("theme").focusRingGap
+            const lw = provided("theme").focusRingWidth
+            const iw = provided("theme").focusRingInnerWidth
+            // where the scroller it rides would cut the ring off — across its
+            // scroll direction, where no scroll ever brings the edge in — the
+            // ring is drawn inside the control instead (planes.md §14)
+            const outside = gap + iw + lw / 2
+            const sc = homed && g.scroller != app ? g.scroller : null
+            const gw = g.homeW
+            const gh = g.homeH
+            const turned = g.homeRot != 0
+            const cutY = !turned && sc != null && sc.scrolls != "y" && (gy - outside < 0 || gy + gh + outside > sc.height)
+            const cutX = !turned && sc != null && sc.scrolls != "x" && (gx - outside < 0 || gx + gw + outside > sc.width)
+            const off = cutX || cutY ? -(lw / 2 + 1) : outside
+            // a traveled ring draws the content-space box (homeW/homeH/homeRad):
+            // any ancestor transform above the scroller reaches its surface
+            // through the platform, so frame-space extents would double-apply it
+            // the band's outset runs along the control's own axes, so a turned
+            // ring's origin steps back along them (it turns about that origin)
+            const ca = Math.cos(g.homeRot * Math.PI / 180), sa = Math.sin(g.homeRot * Math.PI / 180)
+            const nx = gx - off * ca + off * sa, ny = gy - off * sa - off * ca
+            const moved = Math.abs(nx - classroot._tx) + Math.abs(ny - classroot._ty) + Math.abs(gw + 2 * off - classroot._tw) + Math.abs(gh + 2 * off - classroot._th) > 0.5
+            classroot._tx = nx; classroot._ty = ny
+            classroot._tw = gw + 2 * off; classroot._th = gh + 2 * off
+            classroot._trad = g.homeRad + off
+            classroot._trot = g.homeRot
+            classroot._theme = g.theme
+            // Only a focus change flies. The same control moving under a resting
+            // ring — a dragged slider thumb, a reflow — takes the ring with it
+            // rigidly: the springs' targets just moved, so land them now. The
+            // discriminator is target identity (a handler-scratch expando — not
+            // reactive state, just the previous event's view for comparison),
+            // and a real move: the same geometry delivered again (the follower
+            // re-runs as the focus change settles) must not cut the flight short.
+            ;(this as any)._lastTarget = g.view
+            ;(this as any)._lastHome = g.scroller
+            ;(this as any)._hasHome = true
+            if (classroot.shown) classroot._restack(g.view)
+            if (prev == g.view && moved) classroot.snapTo()
+            }
+        ],
+
+    // where focus is, in this program: the ring shows, parks or stands down
+
+    _focusMove: Node [
+        at: View? = { app.focusedView },
+
+        // how it came, keyboard or pointer: a press on the control that already
+        // has focus moves nothing, but the ring goes
+
+        byKeys: boolean = { Focus.byKeyboard() },
+        trackChanges = ["at", "byKeys"],
+        onChange() {
+            classroot._noteOverlayFocus()
+            const v = this.at
+            if (v == null) { classroot.shown = false; return }
+            let n = v
+            for (; n != null && n.parent != null; n = n.parent) { }
+            // Another app on the page (an embedded preview) owns this target — its own
+            // ring indicates it; this one stands down rather than chase foreign coordinates.
+            if (n != app) { classroot.shown = false; return }
+            // A quiet view (focusable = quiet) is a place, not a stop: no ring, however
+            // focus came, and the next Tab's ring appears where it lands, as a first
+            // appearance does — a flight from a heading is a streak across the page.
+            if (v.focusable == "quiet") { classroot.shown = false; classroot.placed = false; return }
+            // Pointer focus: park silently — geometry current, ring hidden. The next
+            // keyboard flight departs from here (the just-clicked control).
+            if (!Focus.byKeyboard()) { classroot.shown = false; classroot.snapTo(); classroot.placed = true; return }
+            if (classroot.ringRole() == "off") { classroot.shown = false; return }
+            // No flight when: the ring has never been placed, the theme suppressed
+            // the flourish, or the role is rest-only (appear in place, stay).
+            if (!classroot.placed || provided("theme").focusAnimate == false || !classroot.travelRole()) classroot.snapTo()
+            classroot.placed = true
+            classroot.shown = true
+            classroot._restack(v)  // chrome stays chrome: above whatever raised last (a Dialog, a Menu), under the page's pinned bars
+            // idle fade only for the travel-only role — a resting ring persists
+            if (classroot.restRole()) { classroot.idle = false; return }
+            classroot._gen = classroot._gen + 1
+            const g2 = classroot._gen
+            classroot.idle = false
+            afterDelay(1000, () => { if (classroot._gen == g2) classroot.idle = true })
+            }
+        ],
+
+    // the travel: underdamped springs = motion toward the target + a little
+    // arrival overshoot, by physics. The radius travels too: the terminus
+    // reshapes to the control it surrounds.
+
+    Spring [ attribute = x,      to = { _tx }, stiffness = 220, damping = 16 ],
+    Spring [ attribute = y,      to = { _ty }, stiffness = 220, damping = 16 ],
+    Spring [ attribute = width,  to = { _tw }, stiffness = 220, damping = 18 ],
+    Spring [ attribute = height, to = { _th }, stiffness = 220, damping = 18 ],
+    Spring [ attribute = _rad,    to = { _trad }, stiffness = 220, damping = 20 ],
+    Spring [ attribute = rotation, to = { _trot }, stiffness = 220, damping = 20 ],
+
+    Spring [ attribute = opacity, to = { shown && !idle ? 0.9 : 0 }, stiffness = 90, damping = 20 ],
+
+    visible = { opacity > 0.02 && (!overlayUp || _focusInOverlay) },
+
+    // focus inside the overlay that holds the keys — a dialog's own button —
+    // is shown: the ring stands down only for what lies behind it
+
+    _noteOverlayFocus() {
+        const c = Keyboard._claimant() as View | null
+        const f = Focus.getFocus() as View | null
+        let n = f
+        while (n != null && n != c) n = n.parent as View | null
+        // focus held by the overlay itself (a menu, which marks its own row) is not ringed
+        _focusInOverlay = c != null && n == c && f != c
+        },
+
+    // pure chrome: never a pointer target — and never on the hover chain
+    // either, which is what pointerEvents (unlike a hit-test override) governs
+
+    pointerEvents = "none",
+
+    // chrome, not prose: never selects inside a `selectable` region
+
+    selectable = false,
+
+    // the shape-hugging outline — a rounded rect at the sprung radius, drawn,
+    // so it re-derives as the radius travels between silhouettes
+
+    // the corner brackets and the shape-hugging outline are one rendition at
+    // two coverages: four corner-anchored strokes whose straight arms extend
+    // toward each edge's midpoint by cov ∈ (0..1]. cov = 1 → arms meet, a
+    // closed outline; cov low → open corner brackets ("target sights").
+    // Coverage is a pure function of distance from target, so the physics
+    // does the choreography: a flight breaks the ring open mid-air and the
+    // settle closes the sights around the new silhouette. Small targets skip
+    // the bracket phase (a ring around a radio dot has no arms to open).
+
+    draw(d: DrawContext) {
+        const Q = Math.PI / 2
+        const dist = Math.abs(this.x - _tx) + Math.abs(this.y - _ty) + Math.abs(this.width - _tw) + Math.abs(this.height - _th)
+        const lw = provided("theme").focusRingWidth
+        // The arrival overshoot stays inside the scroller the ring rides: the
+        // outline is held to the scroller's visible frame (or the target, where
+        // the target itself runs past it), so a bounce at a pane's edge flattens
+        // against the edge rather than being cut off by it.
+        let L = 0, T = 0, R = this.width, B = this.height
+        if (Math.abs(this.rotation) < 0.01) {
+            const sc = (classroot.paintsIn != null ? classroot.paintsIn : app) as View
+            const m = lw / 2
+            L = Math.max(0, Math.min(sc.scrollX + m, _tx) - this.x)
+            T = Math.max(0, Math.min(sc.scrollY + m, _ty) - this.y)
+            R = Math.min(this.width, Math.max(sc.scrollX + sc.width - m, _tx + _tw) - this.x)
+            B = Math.min(this.height, Math.max(sc.scrollY + sc.height - m, _ty + _th) - this.y)
+            if (R - L < 1 || B - T < 1) return
+            }
+        const w = R - L, h = B - T
+        const small = Math.min(w, h) < 40
+        // By default the ring travels as a closed outline, source shape to
+        // destination shape — no bracket mode intervening. `provided("theme").focusSights
+        // = true` elects the sights rendition instead (data, not a code path):
+        // fully open in motion, arms sweeping shut inside the last 16px of
+        // settle.
+        const cov = provided("theme").focusSights == true && !small ? Math.max(0.22, 1 - dist / 16) : 1
+        // The indicator is one band or two, by data: `focusRingInnerWidth` > 0
+        // adds an inner stroke between the control and the outer one — the
+        // Redmond two-tone focus rectangle, black over white. Both passes are
+        // the same outline at different insets; the flight, the sights, and
+        // the silhouette machinery are shared, not forked.
+        const iw = provided("theme").focusRingInnerWidth
+        const pass = (ins, lwp, color) => {
+            const r = Math.max(1, Math.min(_rad - ins, Math.min(w, h) / 2 - ins))
+            const ax = Math.max(0, ((w - 2 * ins) / 2 - r) * cov)      // horizontal arm length
+            const ay = Math.max(0, ((h - 2 * ins) / 2 - r) * cov)      // vertical arm length
+            d.strokeStyle = color
+            d.lineWidth = lwp
+            d.beginPath()
+            // each corner: arc + arms, inset symmetrically
+            const x0 = L + ins, y0 = T + ins, x1 = R - ins, y1 = B - ins
+            d.moveTo(x0 + r + ax, y0); d.lineTo(x0 + r, y0); d.arc(x0 + r, y0 + r, r, -Q, Math.PI, true); d.lineTo(x0, y0 + r + ay)
+            d.moveTo(x1 - r - ax, y0); d.lineTo(x1 - r, y0); d.arc(x1 - r, y0 + r, r, -Q, 0); d.lineTo(x1, y0 + r + ay)
+            d.moveTo(x1, y1 - r - ay); d.lineTo(x1, y1 - r); d.arc(x1 - r, y1 - r, r, 0, Q); d.lineTo(x1 - r - ax, y1)
+            d.moveTo(x0 + r + ax, y1); d.lineTo(x0 + r, y1); d.arc(x0 + r, y1 - r, r, Q, Math.PI); d.lineTo(x0, y1 - r - ay)
+            d.stroke()
+            }
+        const t = this.ringTheme()
+        pass(0, lw, (t.focusRingColor ?? t.accent))
+        if (iw > 0) pass((lw + iw) / 2, iw, (t.focusRingInnerColor ?? t.surface))
+        }
+    ]

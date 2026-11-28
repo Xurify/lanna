@@ -1,0 +1,440 @@
+/*
+# Combobox
+
+Filter-as-you-type over a collection: a text field owning a **query** plus a
+dismissable option list owning a **choice** — a derived selection over data.
+Composition, not invention: a `TextInput` for the entry (its `entry`, the one Tab stop, which a
+script clicks and types into: `app.c.entry`), the `Menu` machinery for
+the list (overlay, raise, light-dismiss, Escape closes — the whole dismissal
+discipline rides along), and the matches are a derived collection — a
+constraint over the items array, so the live match count is free and no
+rendered row is ever scanned.
+
+    Combobox [ width = 240, placeholder = "Assignee",
+        items = { app.people }, value <-> app.assignee ]
+
+- **Items are members** (the selection model's currency): records — shown by
+  their `label` (or `id`) — or plain strings. `value` holds the chosen member;
+  `commit(v)` is the delivery seam: the default writes `value`, a use-site
+  override redirects and the attribute stays untouched (`value <-> place` is both).
+- **Typing filters live** (case-insensitive substring); opening without typing
+  shows the full list (the disclosure-button path). Picking echoes the label
+  into the field and closes; editing again re-filters from the new text.
+- **Keyboard**: arrows rove the list (the Menu rover), Enter picks the roved
+  row — or, when none is roved, the first match of what was typed (the
+  type-then-Enter path); over the whole list it keeps the choice already made.
+  With the list down, Enter opens it when nothing is chosen, and otherwise does
+  what Return does in any field: in a form, the form's (submit, or on to the
+  next); outside one, it goes on to what holds the combobox (a row's Save);
+  Escape closes the list (then a second Escape leaves the control — the
+  focus-scope ascent). The list is never a tab stop of its own.
+- The list is a collection like any other — bind 100k options and
+  `virtualize` applies to it the same way (via the Menu it composes).
+
+```declare
+App [ width = 320, height = 160, picked: object = null,
+    people: array = { ["Ada Lovelace", "Grace Hopper", "Alan Turing", "Barbara Liskov"] },
+    Combobox [ x = 20, y = 20, width = 240, placeholder = "Assignee",
+        items = { app.people }, value <-> app.picked ],
+    Text [ x = 20, y = 80, text = { app.picked == null ? "—" : "" + app.picked } ]
+    ]
+```
+
+## items
+The options, as **members**: records — shown by their `label`, else `id` — or plain
+strings. The currency of the selection model, so whatever you put in is what comes back
+out of `commit`.
+
+## value
+The **chosen member**, not the typed text — the whole record when you supplied records.
+`null` until something is picked. Standalone the combobox owns it; constrained, override
+`commit` beside it, or bind it with `value <-> place`.
+
+## commit()
+**Where the choice goes.** Receives the chosen member. The default writes `value`; an
+override redirects it and leaves the attribute untouched.
+
+## creates
+With `true`, text that names no item is offered as a row of its own at the end of the list —
+`Add “Printworks”` — and Return takes it when nothing else matches. Picking it calls
+`createRequested(text)`; the program makes the new item (a contact posted to its service)
+and makes it the choice. The text stays shown until the new choice arrives as `value`.
+
+```declare-fragment
+vendor: Combobox [ creates = true, items = { app.vendors }, value = { app.vendor },
+    commit(v: object) { app.vendor = v },
+    createRequested(text: string) { app.addVendor(text) } ]
+```
+
+## createRequested()
+Asked for a new item, named by what was typed. The default does nothing: say how one is made.
+
+## createLabel()
+The new row's label for what was typed. `Add “…”` by default.
+
+## _offersNew
+**Internal.** The typed text names no item, and `creates` offers it.
+
+## _typedName
+**Internal.** What is typed, trimmed, while a query is being typed.
+
+## _namesAnItem
+**Internal.** What is typed is exactly an item's label.
+
+## _creating
+**Internal.** The text a new item is being made from, shown until it arrives.
+
+## _pickNew()
+**Internal.** The new row was picked.
+
+## _creatingEnds
+**Internal.** Clears `_creating` once a choice arrives.
+
+## placeholder
+The entry's placeholder text while empty.
+
+## purpose
+What the choice is — `country`, `region`, `name` — given to the entry, so autofill and a
+password manager recognise the field, and a phone brings up the keyboard that suits it. Text
+that arrives whole and names exactly one item, as autofill's does, picks that item.
+
+## query
+What the user has typed since the last pick. **Not the value** — the draft that filters
+the list. Leaving the field settles it: a query that names exactly one item picks that item,
+however it was typed, and one that names none clears the choice it no longer says.
+
+## _left()
+**Internal.** Settles the query when the person leaves the field, not into the list, and text
+that arrives in the field while nobody is in it.
+
+## matches
+The filtered options, as a **derived collection**: a constraint over `items`, so the
+live match count is free and **no rendered row is ever scanned**. Case-insensitive
+substring against each member's label.
+
+## matchCount
+How many options currently match — read it straight, rather than counting list rows,
+which is both wrong under virtualization and refused by the compiler.
+
+## filtering
+Whether the user has typed since the last pick. False means a bare disclosure, which
+**shows the whole list** rather than filtering against a stale query — the difference
+between clicking the chevron and typing.
+
+## labelOf()
+How a member is displayed: a record's `label`, else its `id`, else the value itself.
+Override to display members your own way.
+
+## open()
+Opens the full list unfiltered — the disclosure-button path, and a press into the field.
+
+## toggle()
+Opens the list, or closes it if it is already open.
+
+## closeList()
+Closes the list without picking.
+
+## pickIndex()
+Picks the *n*th current match: echoes its label into the entry, closes the list, and
+delivers the member through `edit`, to `commit`. The index is into `matches`, never into `items`.
+
+## list
+The option list — **a `Menu` created at the app layer on first open**, not a child of
+the combobox, so it paints over everything rather than only over later siblings. All the
+overlay behaviour arrives with it: light dismiss, Escape, the arrow rover, the viewport
+flip, the long-list scroll.
+
+## ensureList()
+Creates the shared list on first use and wires its delivery back to `pickIndex`.
+
+## syncList()
+Pushes the current matches into the list — called on every keystroke.
+
+## listShown()
+Whether the list is currently up.
+
+## listRoved()
+Whether the keyboard rover is sitting on a row. **This is what makes Enter mean two
+things**: pick the roved row when there is one, else take the first match of what was
+typed — the type-then-Enter path. With nothing typed, Enter keeps the choice already made.
+
+## height
+From the theme's `comboboxHeight` (30 by default), and at least 44 on a touch-first
+device, a finger's target.
+
+## accessibilityExpanded
+Whether the list is open — what a screen reader hears as the combobox expanded or collapsed.
+
+## accessibilityLabel
+The caption of a `Field` around it, else the `placeholder`, unless the use site names the combobox — its name to a screen reader, carried by
+the field inside, which is what holds the focus. In a page the field is the combobox (ARIA 1.2): one element
+answers to the name, with the list's state on it, and the view around it says nothing.
+
+## fieldValue
+Follows `value`, the chosen member: what `required` and `validate` judge (see `ValueControl`).
+*/
+
+include [ "valuecontrol.declare", "menu.declare", "textinput.declare" ]
+
+use [ Menu ]
+
+class Combobox extends ValueControl [
+    // a field and the list it drops: a combobox, expanded while its list is open;
+    // the field inside is the text field a screen reader edits
+
+    accessibilityRole = combobox,
+    accessibilityLabel = { provided("fieldLabel", "") || placeholder },
+    accessibilityExpanded = { this.listShown() },
+    width = 220,
+
+    // one Tab stop: the entry is the stop, the combobox around it is not
+
+    focusable = false,
+    height = { app.touchFirst ? Math.max(44, provided("theme").comboboxHeight) : provided("theme").comboboxHeight },
+
+    // ── the surface ───────────────────────────────────────────────────────
+
+    items: array = null,        // the option members: records or strings
+    value: object = null,       // the choice — the chosen member, or null
+    fieldValue = { value },
+    placeholder: string = "",
+
+    // what the choice is — `country`, `region` — so autofill and a phone's
+    // keyboard treat the entry as that field; the entry carries it
+
+    purpose: InputPurpose = text,
+
+    // the query — what the user has typed since last pick; `filtering` is
+    // false until they type, so a bare disclosure shows the whole list
+
+    query: string = "",
+    filtering: boolean = false,
+
+    labelOf(m: object) -> string {
+        if (m == null) return ""
+        if (typeof m == "object") return "" + ((m as any).label ?? (m as any).id ?? "")
+        return "" + m
+        },
+
+    // ── the derived collection: filtering is a data derivation — the count
+    //    rides along, nothing scans rendered rows ───────────────────────────
+
+    matches: array = { !filtering || query == ""
+        ? (items ?? [])
+        : (items ?? []).filter((m) => this.labelOf(m).toLowerCase().includes(query.toLowerCase())) },
+    matchCount: number = { (matches ?? []).length },
+
+    // ── the delivery seam ─────────────────────────────────────────────────
+
+    commit(v: object) { value = v },
+
+    // ── what is not in the list yet: with `creates`, text that names no item
+    //    is offered as a row of its own — picking it asks the program to make
+    //    it (`createRequested`), and the text stays shown until the new choice
+    //    arrives as `value` ─────────────────────────────────────────────────
+
+    creates: boolean = false,
+    createLabel(text: string) -> string { return "Add \u201c" + text + "\u201d" },
+    createRequested(text: string) { },
+    _typedName: string = { this.filtering ? this.query.trim() : "" },
+    _namesAnItem: boolean = { (this.items ?? []).some((m) => this.labelOf(m).toLowerCase() == this._typedName.toLowerCase()) },
+    _offersNew: boolean = { this.creates && this._typedName != "" && !this._namesAnItem },
+    _creating: string = "",
+    _pickNew() {
+        const t = query.trim()
+        if (t == "") return
+        _creating = t
+        filtering = false
+        this.closeList()
+        createRequested(t)
+        if (Focus.getFocus() == null) Focus.focus(entry)
+        },
+
+    // the new choice has arrived (or another was made): the text it was made from goes
+
+    _creatingEnds: Node [ v: any = { classroot.value },
+        trackChanges = ["v"],
+        onChange(e: ChangeEvent) { classroot._creating = "" }
+        ],
+
+    // leaving with a query typed (not into the list): what was typed letter by
+    // letter is settled as autofill's whole text is — naming exactly one item
+    // picks it; naming none takes back a choice it no longer says, so the form
+    // never sends a value under other text
+
+    _left() {
+        // focus gone on to another view, not into the list (a field focused from
+        // code): the list closes with it, and the query is settled
+        const f = Focus.getFocus() as View | null
+        if (this.listShown() && f != null && f !== entry && !Focus.holds(this.list as View)) this.closeList()
+        if (!filtering || entry.focused || this.listShown() || _creating != "") return
+        const t = query.trim().toLowerCase()
+        const exact = t == "" ? [] : (items ?? []).filter((m) => this.labelOf(m).toLowerCase() == t)
+        if (exact.length == 1) { filtering = false; edit(exact[0]); return }
+        if (value != null) edit(null)
+        },
+    focusField() { Focus.focus(entry) },
+
+    pickIndex(i: number) {
+        const m = (this.matches ?? [])[i]
+        if (m === undefined) return
+        filtering = false
+        this.closeList()
+        edit(m)
+        // the focus stays in the entry: a row pressed (it takes no focus) left it
+        // on nothing, and the next Tab would start from the top
+        if (Focus.getFocus() == null) Focus.focus(entry)
+        },
+
+    // ── the list is a Menu made beside the combobox, lazily at first open —
+    //    the way Menu makes its own cascade — so it opens in the overlay
+    //    layer of the combobox's context (a window's, in a window) and paints
+    //    over everything there. Its items are pushed on each keystroke, as
+    //    Menu drives its own cascade child ───────────────────────────────────
+
+    //    (View-typed attribute + any-seam driving — Menu members are invisible
+    //    across files, the seam menu.declare itself uses)
+
+    list: View? = null,
+
+    ensureList() {
+        if (list != null) return
+        // a list of choices: a listbox of options, as a combobox's is everywhere
+        list = (this.parent as View).createView("Menu", ({ accessibilityRole: "listbox" }))
+        const m = this.list as any
+        m.takesFocus = false                      // the focus stays in the entry, which names the row
+        m.picked = (id) => { if (id == "new") this._pickNew(); else this.pickIndex(parseInt(id)) }
+        },
+
+    syncList() {
+        this.ensureList()
+        const m = this.list as any
+        m.minWidth = this.width        // at least the field's width; a long label may widen it
+        const rows = (this.matches ?? []).map((o, i) => ({ id: "" + i, label: this.labelOf(o), selected: o === value }))
+        m.items = _offersNew ? [...rows, ({ id: "new", label: this.createLabel(query.trim()) })] : rows
+        },
+
+    closeList() { if (list != null) (this.list as any).close() },
+    listShown() -> boolean { return this.list != null && (this.list as any).shown === true },
+    listRoved() -> boolean { return this.list != null && (this.list as any).activeRow != null },
+
+    open() {
+        filtering = false
+        this.syncList()
+        const m = this.list as any
+        m.showFor(this)
+        },
+    toggle() { if (this.listShown()) this.closeList(); else this.open() },
+
+    // ── the entry: a TextInput owning the draft; each edit re-derives the
+    //    matches and shows the list ─────────────────────────────────────────
+
+    entry: TextInput [ x = 0, y = 0,
+        width = { classroot.width },
+
+        // what it shows derives from the choice — the query while one is typed,
+        // else the chosen member's label — so a value set from outside (a
+        // saved address's country) shows as surely as one picked here
+
+        value = { classroot.filtering ? classroot.query : classroot._creating != "" ? classroot._creating : classroot.labelOf(classroot.value) },
+        height = { classroot.height },
+        placeholder = { classroot.placeholder },
+        purpose = { classroot.purpose },
+
+        // the field is what a screen reader edits, so it carries the combobox's name
+
+        accessibilityLabel = { classroot.accessibilityLabel },
+
+        // and its error and its being required; leaving the field (not for
+        // the list) is leaving the combobox
+
+        accessibilityError = { classroot.error },
+        stroke = { Stroke(1, classroot.error != "" ? provided("theme").error : this.focused ? provided("theme").accent : provided("theme").line) },
+        accessibilityRequired = { classroot.accessibilityRequired },
+        onBlur() {
+            if (!classroot.listShown()) classroot.judged = true
+            afterSettle(() => classroot._left())
+            },
+
+        // a press into the field shows what there is to choose from, as a
+        // select does — on a phone, before a word is typed; Tab arriving stays
+        // quiet, and the list opens on typing or Down
+
+        onClick() { if (!classroot.disabled && !classroot.listShown()) classroot.open() },
+        accessibilityActiveItem = { classroot.list == null ? null : (classroot.list as any).accessibilityActiveItem },
+        focusable = { !classroot.disabled },
+        commit(t: string) {
+            // text that arrives whole (autofill, a paste) and names exactly one
+            // item picks it; typing that passes through an item's name does not,
+            // so "Ann" on the way to "Anna" stays a query
+            const whole = t.length - classroot.query.length > 1
+            const exact = whole ? (classroot.items ?? []).filter((m) => classroot.labelOf(m).toLowerCase() == t.toLowerCase()) : []
+            if (exact.length == 1) {
+                classroot.query = "" + t
+                classroot.filtering = false
+                classroot.closeList()
+                classroot.edit(exact[0])
+                return
+                }
+            classroot.query = "" + t
+            classroot.filtering = true
+            // text that lands in a field nobody is in (autofill filling another
+            // field's form) is settled as leaving settles it; the list is the
+            // person's, opened only for one in the field
+            if (!this.focused) { classroot._left(); return }
+            classroot.syncList()
+            if (!classroot.listShown()) (classroot.list as any).showFor(classroot)
+            },
+
+        // Return answered here (a pick, opening the list, the form's) goes no
+        // further — the field's own rule; one handed on is said as the built-in
+        // onEnter says it
+
+        onEnter() {
+            if (!classroot.listShown()) {
+                // a choice made, the list down: Return is the form's, or goes on
+                // to what holds the combobox, as a field's does; nothing chosen
+                // yet, it opens the list
+                const f = classroot.form as any
+                if (classroot.value == null) classroot.open()
+                else if (f != null) f._enter(classroot)
+                else this._returnGoesOnAt = Date.now()
+                return
+                }
+            // the roved row picks through the Menu's own Enter; unroved, Enter
+            // takes the first match of what was typed — the type-then-Enter
+            // path — and over the whole list keeps the choice already made
+            if (classroot.listRoved()) return
+            if (classroot.filtering) {
+                // nothing named but the new row: Return makes it
+                if ((classroot.matches ?? []).length == 0 && classroot._offersNew) classroot._pickNew()
+                else classroot.pickIndex(0)
+                return
+                }
+            const at = (classroot.matches ?? []).indexOf(classroot.value)
+            if (at >= 0) classroot.pickIndex(at)
+            else classroot.closeList()
+            }
+        ],
+
+    // the disclosure — a drawn chevron over the entry's right edge; tap
+    // opens (the touch path: tap opens, tap picks)
+
+    _disc: View [ width = 22,
+        x = { classroot.width - this.width - 2 },
+        y = center,
+        height = { classroot.height - 4 },
+        onClick() { classroot.toggle() },
+
+        // The disclosure chevron, from the shared set. The wrapper keeps the
+        // 22px tap area (the touch path: tap opens, tap picks) — an icon is a
+        // mark, not a hit target, so the two stay separate objects.
+
+        mark: ChevronIcon [ iconSize = 13, ink = { provided("theme").textMuted }, x = center, y = center ]
+        ]
+
+    // (the Menu machinery arrives whole with the app-level instance above:
+    //  overlay, raise, backdrop light-dismiss, Escape, the arrow rover, the
+    //  viewport flip, the long-list scroll — the id is the match index,
+    //  identity stays the member's)
+    ]

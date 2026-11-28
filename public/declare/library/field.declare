@@ -1,0 +1,147 @@
+/*
+# Field
+
+A labeled form row: the label, then whatever control the use site nests, and under the
+control **what is wrong with it** — its `error`, once it has been judged:
+
+    Field [ label = "Name", TextInput [ width = 220, height = 30, required = "Enter your name." ] ]
+
+The label sits in a column beside the control (`labelWidth` is the shared-column knob), or
+above it with `stacked = true`. The control reports itself to the field it is in, so the
+field shows its message without being told which control it holds; a control of your own
+that extends `ValueControl` does the same. It may sit at any depth inside the field — in a
+row of its own beside a button, say — and a field holds **one** value control: the label
+names it to a screen reader, and the message under it is its error. Two controls under one
+caption are two fields (or a field each, side by side).
+
+```declare
+form: View [ x = 20, y = 20,
+    layout: SimpleLayout [ axis = y, spacing = 10 ],
+    Field [ label = "Name",  TextInput [ width = 200, height = 28 ] ],
+    Field [ label = "Notify", Switch [ ] ]
+    ]
+```
+
+## label
+The caption in the left column. It is a `Text`, not a control's own label — **a `Field`
+labels whatever you nest, so the nested control's own `label` should usually be empty**
+or you will render the words twice.
+
+## baseline
+The baseline a row aligns this field by — its caption's. Two fields side by side under
+`align = baseline` keep their captions on one line whatever their controls' heights.
+
+## labelWidth
+The label column's width, and the knob that aligns a form. **Every row in a form sets
+the same plain number** — one value, repeated or read from a shared attribute
+(`labelWidth = { app.formLabels }`). It is deliberately not measured from the widest
+label: aggregating over sibling rows is exactly what the constraint system refuses, so
+the shared column is a value you state rather than one the form discovers.
+
+## stacked
+The label above the control rather than in a column beside it — the usual arrangement of a
+form read top to bottom, and of one on a phone.
+
+## control
+The control the field holds, as it reported itself: a `TextInput` or `ValueControl` inside.
+Null for anything else.
+
+## message
+What the field shows under its control: the control's `error`, empty when it says nothing.
+
+## fieldLabel
+The caption, provided to what the field holds: every control inside — a `TextInput`,
+`Combobox`, `Segmented`, a slider you drew — takes it as its name to a screen reader unless
+it has a name of its own (`accessibilityLabel`, or words it shows, as a `Button` does).
+
+## _field
+**Internal.** what a control inside reads to report itself to this field.
+
+## _hold()
+**Internal.** A control inside reports itself here.
+
+## _release()
+**Internal.** A control inside that goes takes itself back.
+*/
+
+class Field [
+    baseline: number = { this._cap.y + this._cap.baseline },   // a row aligns the field by its caption
+
+    label:      string = "",
+    labelWidth: number = 96,
+    stacked:    boolean = false,
+
+    // the caption names the control it holds, to a screen reader as to the eye:
+    // provided, and the library's value controls take it as their name
+
+    fieldLabel: string = { label },
+
+    // the control inside reports itself here (it reads `_field`), so the field
+    // can show what is wrong with it
+
+    _field: any = { this },
+    control: any = null,
+    _hold(c: any) { control = c },
+    _release(c: any) { if (control === c) control = null },
+    message: string = { this.control != null ? this.control.error : "" },
+
+    layout: FieldLayout [ ],
+
+    _cap: Text [ wrap = false,
+        textColor = { provided("theme").textMuted }, text = { label } ],
+
+    _msg: Text [ visible = { classroot.message != "" }, wrap = true, fontSize = 13,
+        textColor = { provided("theme").error }, text = { classroot.message } ]
+    ]
+
+
+/*
+# FieldLayout
+
+**Internal.** How a `Field` arranges what it holds: the caption beside the control, or
+above it when `stacked`; the control, or a row of them; and the message under the control.
+*/
+
+class FieldLayout extends Layout [
+    place() {
+        const f = this.view as Field
+        const kids = this.laid()
+        const out = [] as any
+        const cap = kids[0] as Text
+        const x0 = f.stacked ? 0 : f.labelWidth + 12
+        let x = x0
+        let h = 0
+        let first = null as any
+        for (let i = 2; i < kids.length; i++) {
+            const c = kids[i]
+            if (!c.visible) continue
+            if (first == null) first = c
+            x = x + c.width + 12
+            h = Math.max(h, c.height)
+            }
+        // beside the control, the caption sits on its baseline when it declares
+        // one (a field's text), else centred on it (a slider, a bar); whichever
+        // of the two is lower sets the line
+        let capY = f.stacked ? 0 : 6
+        let y0 = f.stacked ? cap.height + 6 : 0
+        if (!f.stacked && first != null) {
+            const b = (first as any).baseline
+            capY = typeof b == "number" ? b - cap.baseline : (first.height - cap.height) / 2
+            if (capY < 0) { y0 = -capY; capY = 0 }
+            }
+        out.push(f.stacked ? ({ x: 0, y: 0 }) : ({ x: 0, y: capY, w: f.labelWidth }))
+        // the message spans the controls, at least 160 so a short one's is not
+        // cramped — but never past the field's own room, when it has one (a
+        // half-width field on a phone ran its message off the screen)
+        const room = this.viewExtent("width") - x0
+        const span = Math.max(160, x - 12 - x0)
+        out.push({ x: x0, y: y0 + h + 4, w: room > 0 ? Math.min(span, room) : span })
+        let cx = x0
+        for (let i = 2; i < kids.length; i++) {
+            const c = kids[i]
+            out.push({ x: cx, y: y0 })
+            if (c.visible) cx = cx + c.width + 12
+            }
+        return out
+        }
+    ]

@@ -1,0 +1,170 @@
+/*
+# Tooltip
+
+The layer system's floor: any view sets `tooltipLabel = "…"` and this singleton renders
+it — hover delay, placement, flip, and theming are nobody's problem at the use
+site. It arrives automatically when any view in the program carries a tip, as
+`FocusRing` does; declare your own `Tooltip [ ]` (or subclass) to replace the
+rendition.
+
+It follows `app.tooltipRequest`, the tooltip a view asks for now. The platform's tip service
+owns the conventions (the show delay — `tooltipDelay`, ~1s in the Cupertino and Redmond
+conventions, ~500ms MountainView — instant retarget while showing, hide on
+press). **Placement is theme data too** (`tooltipPlacement`): "below" (the
+default — under the target, centered, flipping above at the edge), "above"
+(flipping below), or "pointer" (the Cupertino help tag —
+offset below-right of where the cursor rests). Always clamped inside the
+app. Pure chrome — never focusable, never a pointer target, always above
+content (the auto-splice puts it last in the App, and source order stacks).
+
+Theming (the four cities carry the tokens): `tooltipFill` / `tooltipTextColor` /
+`tooltipStrokeColor` (null = no border) / `tooltipFontSize` (11 in Cupertino, 12
+elsewhere). Cupertino and Redmond wear bordered surface chips; San
+Francisco and Mountain View the inverse chip.
+
+**You do not instantiate this.** Set `tooltipLabel` on any view and the singleton appears; the
+members below exist for a subclass that replaces the rendition.
+
+```declare
+View [ x = 20, y = 20, width = 130, height = 38, cornerRadius = 8, fill = steelblue,
+    tooltipLabel = "Saves your changes",
+    Text [ x = center, y = center, textColor = white, text = "Save" ]
+    ]
+```
+
+## label
+The text currently displayed, from the request in `app.tooltipRequest` (the hovered view's
+`tooltipLabel`). **A subclass reads this; nothing writes it from app code.**
+
+## placement
+Where the chip sits, elected by `provided("theme").tooltipPlacement`: `"below"` (the default,
+centred under the target, flipping above at the edge), `"above"` (the Fluent default,
+flipping below), or `"pointer"` (the Cupertino help tag, offset below-right of the resting
+cursor). Always clamped inside the app.
+
+## _ex
+**Internal.** The target's root-space x, for placement.
+
+## _ey
+**Internal.** The target's root-space y.
+
+## _ew
+**Internal.** The target's width.
+
+## _eh
+**Internal.** The target's height.
+
+## _px
+**Internal.** The pointer's x where it came to rest, for `"pointer"` placement.
+
+## _py
+**Internal.** The pointer's y where it came to rest.
+
+## visible
+Shown only when asked and there is text to show — an empty tip never paints a bare box.
+
+## width
+Sized to its text plus padding, so the box fits the words and never the other way round.
+
+## height
+Sized to its text plus padding, one line or several.
+
+## x
+Beside the pointer, or centred under the element, then clamped inside the app with a 4px margin — a tip near an edge slides in rather than clipping.
+
+## y
+Below the pointer, or below or above the element as `placement` says, flipping to the other side when the preferred one would leave the app.
+
+## fill
+The theme's tooltip ground when it names one, else a dark slate — a tip is the one surface that stays dark on a light theme.
+
+## stroke
+A hairline only when the theme names a tooltip line; flat themes get none.
+
+## selectable
+Chrome, never prose: a tip's text does not select, even inside a `selectable` region — the same provision every `Control` makes for its label.
+
+## cornerRadius
+From the theme's `tooltipCornerRadius` (4 by default).
+
+## _pointerY
+**Internal.** Where the chip sits for `"pointer"` placement: below the resting pointer, or above it when
+there is no room below.
+
+## _aboveY
+**Internal.** Where the chip sits for `"above"` placement: over the target, or under it when there is no
+room above.
+
+## _belowY
+**Internal.** Where the chip sits for `"below"` placement: under the target, or over it when there is no
+room below.
+*/
+
+include [ "floating.declare" ]
+
+class Tooltip extends Floating [
+    // a Floating in the floating layer (floating.declare): above everything in
+    // the app, taking no focus and no keys; presses pass through it, and a
+    // scroll aimed past it puts it away. It appears and goes at once.
+
+    pressPolicy = "ignore",
+    scrollPolicy = "dismiss",
+    visible = { shown && label != "" },
+
+    label: string = "",
+    _ex: number = 0,                              // the target's root-space box
+    _ey: number = 0,
+    _ew: number = 0,
+    _eh: number = 0,
+    _px: number = 0,                              // the pointer at show (the "pointer" placement)
+    _py: number = 0,
+
+    _tips: Node [
+        req: object = { app.tooltipRequest },
+        trackChanges = ["req"],
+        onChange() {
+            const e = this.req as TooltipEvent
+            if (e == null || e.root != app) { classroot.close(); return }
+            classroot._ex = e.x; classroot._ey = e.y; classroot._ew = e.w; classroot._eh = e.h
+            classroot._px = app.pointerX; classroot._py = app.pointerY   // the pointer as it rests at show
+            classroot.label = e.text
+            classroot.show()
+            }
+        ],
+
+    // geometry derives from the label's measured size; placement is a theme
+    // election (below | above | pointer), always flipped when it would leave
+    // the app and clamped horizontally
+
+    placement: string = { provided("theme").tooltipPlacement },
+
+    width  = { this._t.width + 16 },
+    height = { this._t.height + 10 },
+    x = { Math.max(4, Math.min(app.width - this.width - 4,
+            placement == "pointer" ? _px + 10 : _ex + (_ew - this.width) / 2)) },
+
+    // where each placement puts it, each flipping when it would leave the window
+
+    _pointerY: number = { _py + 18 + this.height > app.height ? _py - this.height - 8 : _py + 18 },
+    _aboveY: number = { _ey - this.height - 7 < 0 ? _ey + _eh + 7 : _ey - this.height - 7 },
+    _belowY: number = { _ey + _eh + 7 + this.height > app.height ? _ey - this.height - 7 : _ey + _eh + 7 },
+    y = { placement == "pointer" ? this._pointerY : placement == "above" ? this._aboveY : this._belowY },
+
+    cornerRadius = { provided("theme").tooltipCornerRadius },
+    fill   = { provided("theme").tooltipFill },
+    stroke = { provided("theme").tooltipStrokeColor != null ? Stroke(1, provided("theme").tooltipStrokeColor) : null },
+
+    // pure chrome: never a pointer target — and never on the hover chain
+    // either, which is what pointerEvents (unlike a hit-test override) governs;
+    // "none" reaches the label too
+
+    pointerEvents = "none",
+
+    // chrome, not prose: a tip never selects inside a `selectable` region
+
+    selectable = false,
+
+    _t: Text [ x = 8, y = 5, fontSize = { provided("theme").tooltipFontSize },
+        textColor = { provided("theme").tooltipTextColor },
+        text = { classroot.label } ]
+    ]

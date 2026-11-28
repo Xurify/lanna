@@ -1,0 +1,464 @@
+/*
+# Dialog
+
+A modal over its context: everything behind it is held back — presses aimed past it go
+nowhere and do not close it — and Tab stays inside it. It closes by its buttons, or Esc.
+Its content is yours (its children), and an alert is the most common use, so it carries
+the alert verbs too: a title, a message, and buttons as **records** (the records door):
+`{ id, label, default?, cancel? }`, rendered as themed library Buttons in the platform
+arrangement. Open it with a verb — `show()` for a dialog of your own content, `ask`, `notice`,
+`error` or `open` for an alert. Focus is saved on open and restored on close, one turn late,
+deliberately: an immediate restore would hand the in-flight keystroke back to the opener. It
+fades in and out.
+
+Keyboard: Return picks the default button — unless the focused view takes Return
+itself: a focused button or control presses itself (Return on Cancel is Cancel), and a
+multi-line field types a line break. Escape picks the cancel record when one exists,
+else just closes. Every control inside keeps its own keys (Space, the arrows).
+
+The idioms — one verb each, an optional callback receiving the picked id
+(the `picked(id)` override remains the declarative seam):
+
+    dlg.notice("Saved", "Your changes were saved.")
+    dlg.ask("Save changes?", "Unsaved changes will be lost.", (id) => …)
+    dlg.error("Could not connect", "The server refused the connection.")
+
+`ask` is Cancel / No / Yes-default; `error` renders the title in the
+theme's error.
+
+**Platform structure is data**: `dialogWidth`, `dialogButtonLayout` = `"end"` (a
+right-aligned row — San Francisco, Material) | `"stack"` (the stacked alert —
+full-width buttons stacked, default on top) | `"fill"` (WinUI ContentDialog —
+equal-width buttons filling the row), `dialogTextAlign` = `"left"` | `"center"`
+(the Cupertino centered title), `dialogTitleFontSize` / `dialogBodyFontSize`. Plus
+`scrimFill` + `scrimOpacity` (Cupertino barely dims — alerts separate by
+shadow; Material's scrim is 32%; Fluent's smoke 30%), the `menuShadow` family,
+`error`.
+
+**Declare one and call it.** A `Dialog` is not a view you show and hide around your
+content — it is a standing member you open with a verb, so the same instance serves
+every prompt in the program.
+
+```declare
+App [ width = 520, height = 260, said: string = "",
+    dlg: Dialog [ ],
+    Button [ x = 20, y = 20, label = "Delete…",
+        onClick() { app.dlg.ask("Delete this file?", "This cannot be undone.",
+                                (id) => { app.said = id }) }
+        ],
+    Text [ x = 20, y = 80, text = { app.said == "" ? "—" : "you chose: " + app.said } ]
+    ]
+```
+
+A dialog of your own:
+
+```declare
+App [ width = 520, height = 300,
+    rename: Dialog [ title = "Rename", buttons = { [ { id: "cancel", label: "Cancel", cancel: true }, { id: "ok", label: "Rename", default: true } ] },
+        TextInput [ width = 100%, accessibilityLabel = "New name" ]
+        ],
+    Button [ x = 20, y = 20, label = "Rename…", onClick() { app.rename.show() } ]
+    ]
+```
+
+## picked()
+**The declarative delivery seam — override it at the use site.** Receives the picked
+button's `id`. Fires after the dialog has left the screen, and *in addition to* any
+callback passed to the verb, so you may use either or both.
+
+## ask()
+The three-way prompt: Cancel / No / Yes, with Yes as the default. Delivers `"cancel"`,
+`"no"` or `"yes"`.
+
+## notice()
+A single-OK acknowledgement. Delivers `"ok"`.
+
+## error()
+A single-OK acknowledgement with the title in the theme's error colour. Delivers `"ok"`.
+
+## open()
+The general form the three idioms are built on: title, message, your own button
+records, a tone (`"error"` or `""`), and an optional callback. Reach for it when the
+three idioms do not spell your choices — **button records are `{ id, label, default?,
+cancel?, destructive? }`**: the first two flags are what Return and Escape key off, and
+`destructive` marks a step that can't be undone (Delete) in the theme's error ink. Where it
+can't be undone, Cancel is the default: `({ id: "delete", label: "Delete", destructive:
+true })` beside `({ id: "cancel", label: "Cancel", default: true, cancel: true })`.
+
+## pick()
+Delivers a button by id: **dismisses first, then delivers**, one painted frame later —
+the same contract as `Menu.pick`, so a slow action cannot freeze the dialog on screen.
+Guarded against double activation, so a focused default button answering Space *and*
+Return is harmless.
+
+## pickDefault()
+Picks whichever button record carries `default: true` — Return's action, the Cupertino rule.
+
+## _returnTaken()
+**Internal.** Whether the focused view takes Return itself — a control inside the dialog (it presses
+itself) or a multi-line field (a line break) — so Return does not also pick the default. A
+single-line field doesn't: Return in it picks the default.
+
+## pickCancel()
+Picks the `cancel: true` record when there is one, else just closes — Escape's action.
+**A dialog with no cancel record still dismisses on Escape**, it simply delivers
+nothing.
+
+## title
+The heading. Set by the verbs; read it if you are restyling.
+
+## message
+The body text under the title. `""` hides the line entirely rather than leaving a gap.
+
+## buttons
+The button records currently rendered, in authored order. The `"stack"` arrangement
+reorders them for display — default on top, cancel at the bottom — without touching
+this. Each is `{ id, label, default?, cancel?, destructive? }`: `default` is Return's,
+`cancel` is Escape's, and `destructive` marks the one that destroys — a delete — in the
+theme's error colour. Return should not destroy, so a destructive button is rarely the
+default: `[ { id: "cancel", label: "Cancel", cancel: true, default: true },
+{ id: "delete", label: "Delete", destructive: true } ]`.
+
+## tone
+`"error"` tints the title with the theme's error colour; `""` is the ordinary tone.
+
+## arrangement
+How the buttons lay out, elected by `provided("theme").dialogButtonLayout`: `"end"` (a right-aligned
+row), `"stack"` (full-width buttons stacked, Cupertino-style, default on top), or `"fill"`
+(equal-width buttons filling the row). **Platform structure is data, not a fork.** A row too
+wide for the dialog stacks instead, as every platform's alert does.
+
+## _stackData
+**Internal.** The buttons in the stack's order: the default on top, cancel at the bottom.
+
+## _laid
+**Internal.** The arrangement the buttons are laid out in: `arrangement`, or `"stack"` when a
+row would be wider than the dialog.
+
+## centered
+Whether the title and message are centre-aligned, elected by `provided("theme").dialogTextAlign`.
+
+## rotation
+Its program's turn where it opens in a host's layer; none in the full-screen presentation.
+
+## focusDefault()
+Puts keyboard focus on the default button when the dialog opens — or the last button
+when no record is marked default.
+
+## _cb
+**Internal.** The callback handed to the opening verb.
+
+## _callCb()
+**Internal.** Invokes the stored callback.
+
+## _kidsOf()
+**Internal.** The rendered button views of an arrangement, for `focusDefault`.
+
+## presentation
+`"center"` (the default): a panel centered over its context. `"full"`: the whole context,
+for a viewer or a lightbox — your content edge to edge, no title or buttons unless you set
+them. The dialog's own `fill` colours its panel, so a photo viewer's dark ground is
+`fill = black` on the dialog; without one, the panel is the theme's `surface`.
+
+## escape()
+Esc picks the cancel button (`pickCancel`).
+
+## keyBindings
+Return picks the default button when it reaches the dialog: a focused control that takes
+Return (a button presses itself) and a multi-line field (a line break) keep it first; a
+single-line field hands it on to here.
+
+## _keyEnter()
+**Internal.** Return: `pickDefault()`, unless the focused view takes Return itself.
+
+## focusFirst()
+On opening, focus goes to your content's first control when it has one, else to the
+default button.
+
+## _full
+**Internal.** Whether it presents full-screen: `presentation == "full"`, for its own layout.
+
+## width
+The theme's `dialogWidth` (420), inside its context; the whole width full-screen.
+
+## height
+Its column's height; the whole height full-screen.
+
+## x
+Centered in its context.
+
+## y
+A third of the way down its context; the top, full-screen.
+
+## opacity
+Its open blend — it fades in and out.
+
+## cornerRadius
+The theme's `dialogCornerRadius`; square full-screen. Its panel takes it, with its `fill`.
+
+## scale
+It settles from slightly small as it opens — at its program's scale where it opens in a
+host's layer.
+
+## pivotX
+It settles about its middle.
+
+## pivotY
+It settles about its middle.
+
+## accessibilityLabel
+The `title`, so a screen reader names the dialog as it opens.
+
+## accessibilityHint
+The `message`: a screen reader reads it after the title as the dialog opens, so "Delete
+this file?" is followed by "This cannot be undone."
+*/
+
+include [ "control.declare" ]
+
+include [ "button.declare" ]
+
+include [ "floating.declare" ]
+
+// a dialog button, as data
+
+schema DialogButtonRecord [ id: string, label: string, default?: boolean, cancel?: boolean, destructive?: boolean ]
+
+class Dialog extends Floating [
+    pressPolicy = "block",
+    scrollPolicy = "block",
+    takesFocus = true,
+    focusScope = modal,
+    defaultPlacement = content,
+
+    presentation: "center" | "full" = "center",
+    title: string = "",
+    message: string = "",
+    accessibilityRole = dialog,
+    accessibilityLabel = { title },
+    accessibilityHint = { message },
+    tone: string = "",
+    buttons: DialogButtonRecord[]? = null,
+    _cb: (id: string) -> void? = null,
+
+    _full: boolean = { this.presentation == "full" },
+
+    width = { this._full ? this._hostW : Math.min(this._hostW - 32, provided("theme").dialogWidth) },
+    height = { this._full ? this._hostH : this._col.height },
+    x = { (this._hostW - this.width) / 2 },
+    y = { this._full ? 0 : Math.max(40, (this._hostH - this.height) / 3) },
+
+    // motion: it fades in and settles from slightly small; full-screen, it fades
+
+    opacity = { this.openT },
+    scale = { this._full ? 1 : this._baseScale * (0.96 + 0.04 * this.openT) },
+    rotation = { this._full ? 0 : this._baseRotation },
+    pivotX = { this.width / 2 },
+    pivotY = { this.height / 2 },
+
+    // the delivery seam — override declaratively, or pass a callback to a verb
+
+    picked(id: string) { },
+
+    open(t: string, m: string, btns: array, tone_: string, cb_: (id: string) -> void?) {
+        title = "" + (t || "")
+        message = "" + (m || "")
+        tone = "" + (tone_ || "")
+        buttons = btns
+        this._cb = cb_ || null
+        this.show()
+        },
+
+    // ── the idioms ─────────────────────────────────────────────────────────
+
+    notice(t: string, m: string, cb_: (id: string) -> void?) { this.open(t, m, [({ id: "ok", label: "OK", default: true })], "", cb_) },
+
+    error(t: string, m: string, cb_: (id: string) -> void?) { this.open(t, m, [({ id: "ok", label: "OK", default: true })], "error", cb_) },
+
+    ask(t: string, m: string, cb_: (id: string) -> void?) {
+        this.open(t, m, [
+            ({ id: "cancel", label: "Cancel", cancel: true }),
+            ({ id: "no", label: "No" }),
+            ({ id: "yes", label: "Yes", default: true }),
+        ], "", cb_)
+        },
+
+    // Dismiss-then-deliver, the same contract as Menu's pick: transient
+    // chrome leaves the screen (one painted frame) before the action runs,
+    // so a slow verb can never freeze the dialog in place.
+
+    pick(id: string) {
+        if (!shown) return                       // the double-activation guard
+        const f = this._cb
+        this.close()
+        afterDelay(0, () => { this.picked(id); if (f != null) this._callCb(f, id) })
+        },
+
+    _callCb(f: (id: string) -> void, id: string) { f(id) },
+
+    _kidsOf(b: View) -> array { return b.children },
+
+    // the buttons are records until the opening settle closes; the default one
+    // is real, placed and focusable on the far side of it (Floating calls this
+    // after that settle)
+
+    focusFirst() { this.focusDefault() },
+
+    focusDefault() {
+        if (!shown) return
+        if (Focus.focusIn(this._col.content)) return   // your content's first control, when it has one
+        const b = this._col.btns
+        const kids = this._kidsOf(this._laid == "stack" ? b.stackInner : b.rowInner)
+        const d = kids.find((k) => k.primary)
+        if (d != null || kids.length > 0) Focus.focus(d != null ? d : kids[kids.length - 1])
+        else if (!Focus.focusIn(this)) this._holdFocusItself()
+        },
+
+    pickDefault() {
+        const b = (this.buttons || []).find((x) => x.default)
+        if (b != null) this.pick("" + b.id)
+        },
+
+    pickCancel() {
+        const b = (this.buttons || []).find((x) => x.cancel)
+        if (b != null) this.pick("" + b.id)
+        else this.close()
+        },
+
+    escape() { this.pickCancel() },
+
+    // Return picks the default unless the focused view takes Return itself:
+    // a focused control presses itself (Return on Cancel is Cancel), and a
+    // multi-line field types a line break; a single-line field leaves it here
+
+    _returnTaken() -> boolean {
+        const f = Focus.getFocus() as any
+        if (f == null || !Focus.holds(this)) return false
+        if (typeof f.multiline == "boolean") return f.multiline
+        return typeof f.press == "function"
+        },
+
+    keyBindings = { [ ({ key: "Enter", command: "_keyEnter" }) ] },
+
+    _keyEnter(e: KeyEvent) -> boolean {
+        if (!shown || !isTop() || _returnTaken()) return false
+        pickDefault()
+        return true
+        },
+
+    // buttons → Button instances through the internal derived dataset. The
+    // "stack" arrangement reorders: the default on top, cancel at the bottom
+    // (the Cupertino stacked alert); row arrangements keep authored order.
+
+    arrangement: string = { provided("theme").dialogButtonLayout },
+    centered: boolean = { provided("theme").dialogTextAlign == "center" },
+
+    // the row's buttons in authored order; the stack's with the default on top
+    // and cancel at the bottom. A row too wide for the dialog stacks, as every
+    // platform's alert does — so the row is measured even while it is hidden
+
+    _data: Dataset [ contents = { { b: classroot.buttons || [] } } ],
+    _stackData: Dataset [ contents = { { b: [...(classroot.buttons || [])].sort((p, q) => (q.default ? 1 : q.cancel ? -1 : 0) - (p.default ? 1 : p.cancel ? -1 : 0)) } } ],
+    _laid: string = { this.arrangement != "stack" && this._col.btns.rowInner.contentWidth > this._col.btns.width + 0.5 ? "stack" : this.arrangement },
+
+    // the dimming behind the panel — paint only; the dialog's `block` policy is
+    // what stops presses aimed past it
+
+    _scrim: View [ pointerEvents = "none",
+        x = { -classroot.x }, y = { -classroot.y },
+        width = { classroot._hostW }, height = { classroot._hostH },
+
+        // the dimming stops at the dialog's own box, which paints its fill there
+
+        draw(d: DrawContext) {
+            const c = classroot
+            d.fillStyle = provided("theme").scrimFill
+            d.beginPath()
+            d.rect(0, 0, d.w, d.h)
+            const r = c.cornerRadius
+            d.roundRect(c.x, c.y, c.width, c.height, typeof r == "number" ? r : [...r])
+            d.fill("evenodd")
+            },
+        opacity = { (provided("theme").scrimOpacity) * (classroot._full ? 0 : 1) }
+        ],
+
+    // the dialog paints its own fill, as any view does; the panel gives it the
+    // theme's surface when it sets none, and its edge and shadow
+
+    cornerRadius = { this._full ? 0 : provided("theme").dialogCornerRadius ?? provided("theme").menuCornerRadius + 2 },
+
+    _panel: View [ width = 100%, height = 100%,
+        cornerRadius = { classroot.cornerRadius },
+        fill = { classroot.fill == null ? provided("theme").surface : null },
+        stroke = { classroot._full ? null : Stroke(1, provided("theme").line) },
+        shadow = { classroot._full ? null : provided("theme").dialogShadow ?? provided("theme").menuShadow } ],
+
+    // the 20pt margin is the column's own content box; the fill, the edge and
+    // the shadow stay on the panel
+
+    _col: View [ width = 100%, padding = { classroot._full ? 0 : 20 },
+        layout: SimpleLayout [ axis = y, spacing = 12 ],
+
+        ttl: Text [ fontWeight = bold, wrap = true, width = 100%,
+            visible = { classroot.title != "" },
+            fontSize = { provided("theme").dialogTitleFontSize },
+            textAlign = { classroot.centered ? "center" : "start" },
+            textColor = { classroot.tone == "error" ? (provided("theme").error) : provided("theme").text },
+            text = { classroot.title } ],
+
+        msg: Text [ wrap = true, width = 100%,
+            fontSize = { provided("theme").dialogBodyFontSize },
+            textAlign = { classroot.centered ? "center" : "start" },
+            visible = { classroot.message != "" },
+            textColor = { provided("theme").textMuted }, text = { classroot.message } ],
+
+        content: View [ width = 100%,
+            height = { classroot._full ? classroot._hostH : this.contentHeight },
+            layout: SimpleLayout [ axis = y, spacing = 10 ]
+            ],
+
+        btns: View [ width = 100%, visible = { (classroot.buttons || []).length > 0 },
+            height = { classroot._laid == "stack" ? this.stackInner.height : this.rowInner.height },
+
+            // two arrangements, one visible — layout attributes are
+            // literal-only (the surface), so the axes are two containers
+
+            rowInner: View [ visible = { classroot._laid != "stack" },
+                height = { this.contentHeight },
+
+                // "end": the buttons' own width — each its label's, at least 86
+
+                x = { classroot.arrangement == "end" ? parent.width - this.width : 0 },
+                width = { classroot.arrangement == "end" ? this.contentWidth : parent.width },
+                layout: SimpleLayout [ axis = x, spacing = 10 ],
+                datapath = { classroot._data.value },
+                Button [ datapath = :b[], label = { "" + :label },
+                    width = { classroot.arrangement == "fill"
+                            ? (this.parent.width - 10 * (((classroot.buttons || []).length || 1) - 1)) / ((classroot.buttons || []).length || 1)
+                            : Math.max(86, this._run.width + this.padH * 2) },
+                    primary = { !!:default },
+
+                    // a button that destroys says so in the theme's error colour
+
+                    ink = { :destructive == true && !primary ? provided("theme").error : primary ? provided("theme").accentTextColor : provided("theme").text },
+                    onClick() { classroot.pick("" + :id) }
+                    ]
+                ],
+
+            stackInner: View [ visible = { classroot._laid == "stack" },
+                height = { this.contentHeight }, width = 100%,
+                layout: SimpleLayout [ axis = y, spacing = 8 ],
+                datapath = { classroot._stackData.value },
+                Button [ datapath = :b[], label = { "" + :label },
+                    width = 100%,
+                    primary = { !!:default },
+
+                    // a button that destroys says so in the theme's error colour
+
+                    ink = { :destructive == true && !primary ? provided("theme").error : primary ? provided("theme").accentTextColor : provided("theme").text },
+                    onClick() { classroot.pick("" + :id) }
+                    ]
+                ]
+            ]
+        ]
+    ]

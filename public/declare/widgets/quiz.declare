@@ -1,0 +1,122 @@
+// quiz — Lanna's fixed practice widget. The chat's tutor writes only the
+// data (a ```quiz fence: title + rows); this program renders and grades it.
+// The host page (host.html) fetches the data and provides it as "quiz";
+// "night" carries Lanna's Day/Night. Rows:
+//   { sentence, gloss, options[3], answer, full, meaning, hint? }
+
+App [
+    night: boolean = { app.hostProvided("night", app.systemDark) },
+    theme = { app.night
+        ? { ...SanFranciscoDark,
+            accent: 0x4CBDB7, accentHovered: 0x7BD3CE, accentPressed: 0x7BD3CE, accentTextColor: 0x06201F,
+            surface: 0x1C1F22, control: 0x24282C, controlHovered: 0x2D3236, controlPressed: 0x383E43,
+            text: 0xECEDEE, textMuted: 0x9399A0, line: 0x2F3438,
+            controlCornerRadius: 10, buttonHeight: 44, disabledOpacity: 0.45 }
+        : { ...SanFrancisco,
+            accent: 0x0D6764, accentHovered: 0x0A5452, accentPressed: 0x0A5452, accentTextColor: 0xFFFFFF,
+            surface: 0xFFFFFF, control: 0xF5F5F3, controlHovered: 0xEDEDEA, controlPressed: 0xE3E3DF,
+            text: 0x16181B, textMuted: 0x656B72, line: 0xE8E8E5,
+            controlCornerRadius: 10, buttonHeight: 44, disabledOpacity: 0.45 } },
+    fill = { app.night ? 0x101214 : 0xFFFFFF },
+    textColor = { app.night ? 0xECEDEE : 0x16181B },
+
+    data: object = { app.hostProvided("quiz", { title: "", rows: [] }) },
+    failure: string = { app.hostProvided("error", "") },
+
+    layout: SimpleLayout [ axis = y, spacing = 14, align = start ],
+    padding = 20,
+
+    rows: object = { data.rows },
+    total: number = { rows.length },
+    idx: number = 0,
+    picked: number = -1,
+    score: number = 0,
+    finished: boolean = false,
+    cur: object = { rows[idx] ?? {} },
+    right: boolean = { picked >= 0 && picked == cur.answer },
+
+    pick(i: number) {
+        if (picked >= 0) return
+        picked = i
+        if (i == cur.answer) score = score + 1
+    },
+    next() {
+        if (idx + 1 >= total) { finished = true } else { idx = idx + 1, picked = -1 }
+    },
+    again() {
+        idx = 0, picked = -1, score = 0, finished = false
+    },
+
+    head: View [ width = 100%,
+        layout: SimpleLayout [ axis = x, spacing = 8 ],
+        Text [ flexes = true, fontSize = 13, fontWeight = semibold,
+            visible = { data.title != "" }, text = { data.title },
+            textColor = { provided("theme").textMuted } ],
+        Text [ fontSize = 13, text = { finished ? "done" : (idx + 1) + " of " + total },
+            visible = { total > 0 }, textColor = { provided("theme").textMuted } ]
+        ],
+
+    empty: Text [ fontSize = 14, textColor = { provided("theme").textMuted },
+        visible = { total == 0 && failure == "" }, text = "No items in this quiz." ],
+    failed: Text [ width = 100%, wrap = true, fontSize = 14,
+        visible = { failure != "" }, text = { failure },
+        textColor = { app.night ? 0xF0867B : 0xB42318 } ],
+
+    prompt: Text [ width = 100%, wrap = true, fontSize = 21, fontWeight = semibold,
+        visible = { !finished }, text = { cur.sentence } ],
+    gloss: Text [ width = 100%, wrap = true, fontSize = 13,
+        visible = { !finished }, text = { cur.gloss },
+        textColor = { provided("theme").textMuted } ],
+
+    verdict: Text [ width = 100%, wrap = true, fontSize = 14, fontWeight = semibold,
+        visible = { picked >= 0 && !finished },
+        text = { right ? "Correct — " + cur.full + " = “" + cur.meaning + "”"
+                       : "It is " + cur.full + (cur.hint != null ? " — " + cur.hint : ".") },
+        textColor = { right ? (app.night ? 0x7BD3CE : 0x0D6764) : (app.night ? 0xF0867B : 0xB42318) } ],
+
+    options: View [ width = 100%, visible = { !finished },
+        layout: SimpleLayout [ axis = x, spacing = 10 ],
+        Option [ label = { cur.options?.[0] ?? "" }, tag = 0, flexes = true,
+            pickedAt = { picked }, answerAt = { cur.answer }, onClick() { pick(0) } ],
+        Option [ label = { cur.options?.[1] ?? "" }, tag = 1, flexes = true,
+            pickedAt = { picked }, answerAt = { cur.answer }, onClick() { pick(1) } ],
+        Option [ label = { cur.options?.[2] ?? "" }, tag = 2, flexes = true,
+            pickedAt = { picked }, answerAt = { cur.answer }, onClick() { pick(2) } ]
+        ],
+
+    nextBtn: Button [ label = "Next", primary = true,
+        visible = { picked >= 0 && !finished }, onClick() { next() } ],
+
+    done: View [ width = 100%, visible = { finished },
+        layout: SimpleLayout [ axis = y, spacing = 10, align = center ],
+        Text [ fontSize = 24, fontWeight = bold, text = { score + " of " + total } ],
+        Text [ fontSize = 14, wrap = true, width = 100%,
+            textAlign = center,
+            textColor = { provided("theme").textMuted },
+            text = { score == total ? "All of them — nicely done." : "Missed ones come back in review." } ],
+        Button [ label = "Again", primary = true, onClick() { again() } ]
+        ]
+    ]
+
+class Option extends Button [
+    tag: number = 0,
+    pickedAt: number = -1,
+    answerAt: number = -1,
+
+    padH = 8,
+    fontSize = 14,
+
+    isRight: boolean = { pickedAt >= 0 && tag == answerAt },
+    isWrong: boolean = { pickedAt >= 0 && tag != answerAt && tag == pickedAt },
+
+    disabled = { pickedAt >= 0 },
+
+    right: State [ applied = { isRight },
+        fill = { app.night ? 0x143634 : 0xE8F2F1 },
+        stroke = { Stroke(1, app.night ? 0x1F5552 : 0xBCD8D5) },
+        ink = { app.night ? 0x7BD3CE : 0x0A5452 } ],
+    wrong: State [ applied = { isWrong },
+        fill = { app.night ? 0x40231F : 0xFBECEB },
+        stroke = { Stroke(1, app.night ? 0x59332E : 0xF2C6C1) },
+        ink = { app.night ? 0xF0867B : 0xB42318 } ]
+    ]

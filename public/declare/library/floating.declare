@@ -1,0 +1,573 @@
+/*
+# Floating
+
+The base of every overlay in the library — `Popover`, `Sheet`, `Dialog`, `Toast`, and the
+menus — and of a program's own (`class Viewer extends Dialog [ … ]`). It is declared where it
+belongs, in its owner, and paints above everything in its context: in the overlay layer the
+nearest `Window` provides, else in the App's own layers — overlays in the order they open,
+toasts above them.
+It carries, once, what every overlay needs:
+
+- **Opening and closing** — `show()`, `showFor(v)` (for a view: a `Menu` also drops below
+  it; `showAt(v, e)` opens one at the pointer) and `close()`; `shown` says whether it is open
+  now. A closed overlay builds no view of its own until it is first shown.
+- **Motion** — it animates in and out on `openT` (0 closed, 1 open), and stays built until
+  its closing motion lands: closing stops it taking input at once.
+- **Input** — `pressPolicy` and `scrollPolicy` say what a press and a scroll aimed past it do
+  while it is open. An outside press that dismisses closes it.
+- **Keys and focus** — while open it holds the keyboard (a key it uses does not also reach
+  the program's `KeyListener` members, and the page's bindings stand down); Esc closes the open
+  overlay nearest the focus; one that takes focus focuses its first stop on opening and gives
+  focus back on closing.
+- **Anchoring** — `anchorBox(v)` is a view's box in the overlay's frame, for an overlay that
+  opens next to something; `toLayer(v, x, y)` maps a point the same way, through a window
+  turned or scaled; `keepOnApp(x, y, w, h)` moves a box back onto the App.
+- **Its colours are theme tokens** — the panel of a `Dialog`, `Sheet` or `Popover` paints the
+  theme's `surface` (a `Menu`'s, `menuFill` else `surface`; a `Toast`'s, `tooltipFill`), and the
+  backdrop `scrimFill` at `scrimOpacity`. One overlay of its own colour sets its `fill` (a
+  `Dialog`, `Sheet` or `Popover` paints its panel with it), or is given a theme with the token
+  changed, which its contents read too: `theme = { ({ ...provided("theme"), surface: #111111 }) }`.
+- **Forms** — it is a boundary: a field inside belongs to a `Form` inside it, not to one
+  around the place it is declared.
+
+```declare
+App [ width = 420, height = 220,
+    Button [ x = 20, y = 20, label = "Show", onClick() { app.note.show() } ],
+    note: Popover [ anchorTo = { app.children[0] as View },
+        Text [ text = "A popover is a Floating." ]
+        ]
+    ]
+```
+
+## _notice
+**Internal.** A notice (a toast): it paints in the layer above every other overlay. Other
+overlays share one layer and stack in the order they open, so a menu opened from a dialog
+paints above it.
+
+## shown
+Whether it is open now. Open it with `show()` and close it with `close()` — or make it
+state: `shown <-> app.editing`, and it opens and closes as the state does, and its own
+closings (Esc, a press past it) write the state back (SwiftUI's `isPresented`).
+
+## present
+Whether it is built and drawn: open, or closing until its motion lands. Content built
+fresh for each opening reads it, so it stays through the closing motion instead of
+emptying the panel as it goes: `entry: Form [ exists = { app.formSheet.present } ]`.
+
+## _live
+**Internal.** Whether the open work has run (its layer, its keyboard hold, focus) — what
+`_sync()` compares with `shown`, so the work runs once per change, whoever made it.
+
+## openT
+The open blend, 0 closed and 1 open, sprung — what a subclass draws its motion from.
+
+## host
+The view it paints in, chosen when it opens.
+
+## _hostW
+**Internal.** The width of the layer it paints in: its window's, or the browser window's — not the
+App's, which on a page that scrolls is as tall as the page.
+
+## _hostH
+**Internal.** The height of the layer it paints in: its window's, or the browser window's.
+
+## opener
+The view it was opened for, when it was opened for one.
+
+## pressPolicy
+What a press **aimed past** it does while it is open. `dismiss`: it hears `onOutsidePress` and
+the press goes no further (a menu). `dismissAndDeliver`: it hears `onOutsidePress` and the press
+goes on to what was pressed (a popover). `block`: the press goes nowhere and it stays (a
+dialog). `ignore`: the press goes on as if it were not there (a toast). Open overlays are
+walked top first: one that lets the press go on hands it to the next one down.
+
+## scrollPolicy
+What a scroll — wheel or touch — aimed past it does while it is open: `block` (nothing behind
+it scrolls), `allow`, or `dismiss` (it hears `onOutsidePress` and the scroll goes on).
+
+## takesFocus
+Whether opening moves focus into it (its first stop) and closing gives it back — to where
+`restoresFocusTo` says, else to the view that had it, or, when that view is gone or hidden
+by then, to the next Tab stop after its place.
+
+## _sharesProgram
+**Internal.** Whether, open in a host's layer (a program running in a window, say), it is shown at its
+program's scale and turn there — as a menu or a popover is. `false` for what attaches to
+the window itself, edge to edge (a `Sheet`). `true` by default.
+
+## _hostedLayer
+**Internal.** Whether the layer it opened in is a host's — its program runs inside another.
+
+## scale
+Its program's scale where it opens in a host's layer (`_baseScale`) — a subclass multiplies
+its own motion into it.
+
+## rotation
+Its program's turn where it opens in a host's layer (`_baseRotation`), in degrees.
+
+## _baseScale
+**Internal.** Its program's scale relative to the layer, when it opens in a host's; else 1.
+A subclass's own motion multiplies it.
+
+## _baseRotation
+**Internal.** Its program's turn relative to the layer, in degrees, when it opens in a host's;
+else 0.
+
+## _takeProgramTransform()
+**Internal.** Sets `_baseScale` and `_baseRotation` as it opens.
+
+## commit()
+**Where opening and closing go** — the value pattern: as a control's `value` goes through
+its `commit`, so does an overlay's `shown`. The default writes `shown`. To make whether it
+is open your own state, bind it both ways — `shown <-> app.editing` — or constrain `shown`
+and override this to write that state, so its own closings (Esc, a press past it) reach it:
+`shown = { app.editing }, commit(open: boolean) { app.editing = open }`.
+Constraining `shown` with neither is a compile error.
+An override must deliver: write the state `shown` follows, or — with `shown` not
+constrained — call `super.commit(open)`; otherwise `show()`, `close()`, Esc and a press past
+it do nothing. To act on closing, override `closed()` instead.
+
+## _sync()
+**Internal.** Runs the open or close work when `shown` has changed — after `show()`,
+`close()`, or a change of the state `shown` follows.
+
+## _opening()
+**Internal.** The open work: picks its layer, builds it, holds the keyboard, and takes
+focus if it takes focus.
+
+## _closing()
+**Internal.** The close work: lets the keyboard go, gives focus back, calls `closed()`.
+
+## onRetire
+An overlay that goes while it is open leaves the overlays' stack and lets the keyboard
+go, as a close would. An override calls `super.onRetire()`.
+
+## show()
+Opens it, through `commit(true)`: picks its layer, builds it, holds the keyboard, and takes
+focus if it takes focus.
+
+## showFor()
+Opens it for `v` — `opener` becomes `v`. A `Menu` also places itself below `v`.
+
+## _holdFocusItself()
+**Internal.** Focuses the overlay itself when it takes focus and holds nothing focusable,
+so Tab cannot reach what is behind it.
+
+## focusFirst()
+Where the focus goes when an overlay that `takesFocus` opens: the first view inside that
+takes focus, else the overlay holds the focus itself, so Tab has nowhere to go behind it and
+Esc still closes it. An override that may find nothing to focus calls `super.focusFirst()`
+for that case.
+
+## close()
+Closes it at once, through `commit(false)` (it stops taking input); it is torn down when its
+closing motion lands.
+An override calls `super.close()`. Work for every closing belongs in `closed()`: the state
+`shown` follows can close it without coming through here.
+
+## closed()
+Called once it is closed — override to act on closing. It runs before focus is given back,
+so focus moved here (to what the closing created) stays where it was put.
+
+## _sendHold
+**Internal.** What a `Form` inside, while it sends through its source, holds the overlay's
+own ways of closing with — `SendHold`.
+
+## _waitsOnSend()
+**Internal.** Whether a `Form` inside is sending through its source: Escape, a press outside
+and a swipe wait for the answer instead of closing.
+
+## escape()
+What Esc does when this is the open overlay nearest the focus — closes it; a dialog picks its
+cancel button instead.
+
+## keyBindings
+Escape runs `escape()` while it is shown — and, while a `Form` inside is sending through its
+source, waits for the answer instead, as a press outside and a swipe do. The program's own
+`close()` never waits. Focus inside the overlay walks to it before
+anything outside; with focus outside it (a combobox's list), its keys come to it first.
+
+## _keyEscape()
+**Internal.** Escape: `escape()`, while it is shown.
+
+## isTop()
+Whether it is the topmost open overlay — a dialog's Return picks its default only when it is.
+
+## anchorBox()
+A view's box in this overlay's frame: `{ x, y, w, h }`.
+
+## toLayer()
+A point in `v`'s own frame, in the frame of the layer this paints in: `{ x, y }`. Exact
+through a turned or scaled window, and from a program hosted in a window into its host's.
+
+## _screen()
+**Internal.** The App the layer belongs to — the host's, for a program whose overlays open in its host's
+window. An overlay may leave its window, never the screen.
+
+## _toScreen()
+**Internal.** A point in `v`'s own frame, in the screen's frame.
+
+## _through()
+**Internal.** A point `(px, py)` through a `transformTo` similarity.
+
+## keepOnApp()
+Where a box at `(x, y)`, `w` by `h`, in the layer's frame, must be to stay on the screen
+with 4 to spare: `{ x, y }`, moved as little as it can be. An overlay inside a window may
+hang past the window's edge, but not off the screen.
+
+## _layerFor()
+**Internal.** The layer it opens in: the nearest `Window`'s; else, in a program hosted in a
+window whose island provides `overlays`, that window's; else the App's — a toast always the
+App's.
+
+## _strata()
+**Internal.** The App's overlay layers, made the first time an overlay opens.
+
+## onOutsidePress
+An outside press (or, with `scrollPolicy = "dismiss"`, an outside scroll) asked it to close.
+It closes — unless a `Form` inside is sending through its source: then it waits for the
+answer (which would otherwise land nowhere), saying "Still sending" once to a screen reader.
+An override that closes regardless says so by calling `close()`.
+
+## _savedFocus
+**Internal.** The view that had focus when it opened, given focus back when it closes.
+
+## _savedParent
+**Internal.** The parent of `_savedFocus` when it opened: its place, should it be gone by
+the close.
+
+## _savedAt
+**Internal.** The index `_savedFocus` held among `_savedParent`'s children.
+
+## _savedRing
+**Internal.** Whether `_savedFocus` showed its focus ring when it opened: focus given back
+shows it again only then — a dismissal is not navigation.
+
+## visible
+Follows `present`: it is drawn while open, and while its closing motion runs.
+
+## pointerEvents
+Follows `shown`: through its closing motion it takes no presses, and a press there reaches
+what is beneath.
+
+## paintsIn
+Follows `host`: it paints in the layer it opened into.
+
+## outsidePress
+**Internal.** `pressPolicy` while it is open, `none` once it closes — a closing overlay takes no presses.
+
+## scrollBelow
+**Internal.** `scrollPolicy` while it is open, `none` once it closes.
+
+## _form
+**Internal.** an overlay is a form boundary — a control in it belongs to a `Form` inside the
+overlay, not to one around where the overlay is declared.
+
+## _field
+**Internal.** the same boundary for a `Field`.
+*/
+
+include [ "overlaystrata.declare" ]
+
+use [ OverlayStrata ]
+
+class Floating [
+    ignoreLayout = true,
+
+    // the layer it opens in is transparent to the pointer; an overlay is not,
+    // until it closes: through its closing motion a press goes to what is beneath
+
+    pointerEvents = { shown ? "auto" : "none" },
+
+    // an overlay is a boundary for forms: what it holds belongs to a Form
+    // inside it, never to one around the place it is declared
+
+    _form: any = null,
+    _field: any = null,
+
+    // the overlay a Form inside it holds open while it sends: its own ways of
+    // closing — Escape, a press outside, a swipe — wait for the answer, which
+    // would otherwise land nowhere (key-bindings.md; data: DataSource.failure)
+
+    _sendHolder: SendHold [ open = { classroot.shown } ],
+    _sendHold: any = { this._sendHolder },
+    _waitsOnSend() -> boolean { return this._sendHolder.waits() },
+
+    _notice: boolean = false,
+    shown: boolean = false,
+    present: boolean = false,
+    openT: number = 0,
+    host: View? = null,
+    _hostW: number = { this.host != null ? this.host.width : app.hostWidth > 0 ? app.hostWidth : app.width },     // a window's, else the browser window's
+    _hostH: number = { this.host != null ? this.host.height : app.hostHeight > 0 ? app.hostHeight : app.height },
+    opener: View? = null,
+    pressPolicy: "dismiss" | "dismissAndDeliver" | "block" | "ignore" = "dismiss",
+    scrollPolicy: "block" | "allow" | "dismiss" = "block",
+    takesFocus: boolean = false,
+    _savedFocus: View? = null,
+    _savedParent: View? = null,
+    _savedAt: number = -1,
+    _savedRing: boolean = false,
+    _hostedLayer: boolean = false,
+    _sharesProgram: boolean = true,
+    _baseScale: number = 1,
+    _baseRotation: number = 0,
+
+    visible = { present },
+    paintsIn = { host },
+    scale = { _baseScale },
+    rotation = { _baseRotation },
+    outsidePress = { shown ? pressPolicy : "none" },
+    scrollBelow = { shown ? scrollPolicy : "none" },
+
+    // it animates in and out, and is torn down when the closing motion lands
+
+    _motion: Spring [ attribute = openT, to = { classroot.shown ? 1 : 0 }, stiffness = 520, damping = 40, epsilon = 0.01,
+        onStop() { if (!classroot.shown) classroot.present = false }
+        ],
+
+    // the App's layers, made once and kept above everything the App holds
+
+    _strata() -> OverlayStrata {
+        let s: OverlayStrata | null = null
+        for (const c of app.children) { if ((c as any)._isOverlayStrata === true) s = c as any }
+        if (s == null) return app.createView("OverlayStrata", ({ })) as any
+        s.raise()
+        return s
+        },
+
+    // the nearest Window's layer, else the App's; a toast is the program's,
+    // always the App's
+
+    _layerFor(s: OverlayStrata) -> View {
+        if (_notice) return s.notice
+        const own = provided("overlays", null) as View | null
+        _hostedLayer = false
+        if (own != null) return own
+        const hosts = app.hostProvided("overlays", null) as View | null   // the nearest layer up the chain, in a host
+        if (hosts == null) return s.overlays
+        _hostedLayer = true
+        return hosts
+        },
+
+    // in a host's layer it is shown as its program is: the program's scale and
+    // turn relative to the layer (the layer brings the window's own)
+
+    _takeProgramTransform() {
+        if (!_hostedLayer || !_sharesProgram || host == null) { _baseScale = 1; _baseRotation = 0; return }
+        const t = app.transformTo(host)
+        _baseScale = t.scale
+        _baseRotation = t.rotation * 180 / Math.PI
+        },
+
+    // `shown` is state: the verbs below deliver through `commit` (the value
+    // pattern), and a use site may instead constrain it to state of its own —
+    // `shown = { app.editing }` with `commit(open: boolean) { app.editing = open }`
+    // — so Esc and a press past it still close it. Either way the open and
+    // close work runs when `shown` changes (sync), whoever changed it.
+
+    commit(open: boolean) { shown = open },
+
+    _live: boolean = false,
+
+    // The open and close work runs from this member, not from the overlay's own
+    // handlers, so a subclass's or a use site's `trackChanges`, `onChange` or
+    // `onInit` — written for anything of its own — cannot drop it.
+
+    _watch: Node [
+        open: boolean = { classroot.shown },
+        trackChanges = ["open"],
+        onInit() { if (open) afterSettle(() => classroot._sync()) },
+        onChange() { classroot._sync() }
+        ],
+
+    _sync() {
+        if (shown && !_live) { _live = true; this._opening() }
+        else if (!shown && _live) { _live = false; this._closing() }
+        },
+
+    show() {
+        if (!shown) this.commit(true)
+        this._sync()
+        },
+
+    _opening() {
+        const s = this._strata()
+        host = this._layerFor(s)
+        this._takeProgramTransform()
+        present = true
+        s.opened(this)
+        if (pressPolicy != "ignore") Keyboard.navClaim(this, true)
+        if (takesFocus) {
+            _savedFocus = Focus.getFocus()
+            _savedParent = _savedFocus != null ? _savedFocus.parent as View | null : null
+            _savedAt = _savedParent != null ? _savedParent.childViews.indexOf(_savedFocus) : -1
+            _savedRing = _savedFocus != null && Focus.byKeyboard()
+            afterSettle(() => this.focusFirst())
+            }
+        },
+
+    showFor(v: View) {
+        opener = v
+        this.show()
+        },
+
+    // nothing inside to focus (a full-screen picture): the overlay holds focus
+    // itself, so Tab has nowhere to go behind it and Esc still closes it
+
+    focusFirst() { if (!Focus.focusIn(this)) this._holdFocusItself() },
+
+    _holdFocusItself() {
+        focusable = true
+        Focus.focus(this)
+        },
+
+    close() {
+        if (shown) this.commit(false)
+        this._sync()
+        },
+
+    _closing() {
+        this._strata().closedIt(this)
+        Keyboard.navClaim(this, false)
+        // back to where it was, or where restoresFocusTo says — unless the focus has
+        // gone on somewhere since; to the next Tab stop when what had it is gone.
+        // A turn after what the closing delivers (a dialog's picked, a menu's
+        // pick — themselves a turn later): a pick that removes what had the
+        // focus (the row a "Delete?" was about) has removed it by then
+        if (_savedFocus != null || restoresFocusTo != null) afterDelay(0, () => afterDelay(0, () => {
+            const f = Focus.getFocus() as View | null
+            let inside = false
+            for (let p = f; p != null; p = p.parent) if (p == this) inside = true
+            if (f == null || inside || Focus.holds(this)) Focus._giveBack(this)
+            else { _savedFocus = null; _savedParent = null }
+            }))
+        this.closed()
+        },
+
+    closed() { },
+
+    // gone while open (its row rebuilt, its view discarded): off the stack and
+    // the keyboard released, or both would hold the discarded overlay for good
+
+    onRetire() {
+        if (!_live) return
+        _live = false
+        for (const c of app.children) { if ((c as any)._isOverlayStrata === true) (c as any).closedIt(this) }
+        Keyboard.navClaim(this, false)
+        },
+
+    isTop() -> boolean { return this._strata().top() == this },
+
+    anchorBox(v: View?) -> object {
+        if (v == null) return ({ x: 0, y: 0, w: 0, h: 0 })
+        const o = this.toLayer(v, 0, 0)
+        const k = host != null ? v.transformTo(host).scale : 1
+        return ({ x: o.x, y: o.y, w: v.width * k, h: v.height * k })
+        },
+
+    // frames: a view's point mapped into the layer's — exact through a turned
+    // or scaled window, and from a program hosted in a window into the host's
+    // layer (transformTo crosses the island)
+
+    toLayer(v: View, px: number, py: number) -> object {
+        return this._through(v.transformTo(host != null ? host : this._screen()), px, py)
+        },
+
+    // the screen: the App the layer belongs to — the host's, for a program
+    // whose overlays open in its host's window. A menu may leave its window,
+    // never the screen.
+
+    _screen() -> View {
+        if (host == null) return app
+        let n: View = host
+        while (n.parent != null) n = n.parent as View
+        return n
+        },
+
+    _toScreen(v: View, px: number, py: number) -> object { return this._through(v.transformTo(this._screen()), px, py) },
+
+    _through(t: object, px: number, py: number) -> object {
+        const a = t.rotation
+        return ({ x: t.x + t.scale * (px * Math.cos(a) - py * Math.sin(a)), y: t.y + t.scale * (px * Math.sin(a) + py * Math.cos(a)) })
+        },
+
+    // the box's corners on the screen give the shift that keeps it there; the
+    // shift maps back into the layer's frame
+
+    keepOnApp(x: number, y: number, w: number, h: number) -> object {
+        const scr = this._screen()
+        if (host == null) return ({ x: Math.max(4, Math.min(scr.width - w - 4, x)), y: Math.max(4, Math.min(scr.height - h - 4, y)) })
+        const out = host.transformTo(scr)
+        const cs = [this._through(out, x, y), this._through(out, x + w, y), this._through(out, x, y + h), this._through(out, x + w, y + h)]
+        const minX = Math.min(...cs.map((c) => c.x))
+        const maxX = Math.max(...cs.map((c) => c.x))
+        const minY = Math.min(...cs.map((c) => c.y))
+        const maxY = Math.max(...cs.map((c) => c.y))
+        const dx = maxX > scr.width - 4 ? scr.width - 4 - maxX : 0
+        const dy = maxY > scr.height - 4 ? scr.height - 4 - maxY : 0
+        const sx = minX + dx < 4 ? 4 - minX : dx
+        const sy = minY + dy < 4 ? 4 - minY : dy
+        if (sx == 0 && sy == 0) return ({ x: x, y: y })
+        const back = scr.transformTo(host)
+        const p0 = this._through(back, cs[0].x, cs[0].y)
+        const p1 = this._through(back, cs[0].x + sx, cs[0].y + sy)
+        return ({ x: x + p1.x - p0.x, y: y + p1.y - p0.y })
+        },
+
+    onOutsidePress() { if (!this._waitsOnSend()) this.close() },
+
+    escape() { this.close() },
+
+    // Esc closes it: a binding, so the nearest open overlay to the focus takes
+    // it, and one Esc closes one (key-bindings.md)
+
+    keyBindings = { [ ({ key: "Escape", command: "_keyEscape" }) ] },
+
+    _keyEscape(e: KeyEvent) -> boolean {
+        if (!shown) return false
+        if (this._waitsOnSend()) return true
+        escape()
+        return true
+        }
+    ]
+
+
+/*
+# SendHold
+
+**Internal.** What an overlay (a `Floating` — `Sheet`, `Dialog`, `Popover` — or a `Window`)
+holds while a `Form` inside it is sending through its `source`: the overlay's own ways of
+closing — Escape, a press outside, a swipe — wait for the answer, which would otherwise
+land nowhere. The program's own `close()` never waits, and closing lets go.
+
+## hold()
+**Internal.** A form inside starts (`on`) or ends sending.
+
+## waits()
+**Internal.** A dismissal asks: true while held, saying "Still sending" once.
+*/
+
+class SendHold extends Node [
+    open: boolean = false,
+    holds: any[] = [],
+    held: boolean = { this.holds.length > 0 },
+    _told: boolean = false,
+    hold(by: any, on: boolean) {
+        const was = holds.includes(by)
+        if (on && !was) holds = [...holds, by]
+        else if (!on && was) holds = holds.filter((h) => h !== by)
+        if (holds.length == 0) _told = false
+        },
+    waits() -> boolean {
+        if (!held) return false
+        if (!_told) { _told = true; Accessibility.announce("Still sending") }
+        return true
+        },
+
+    // closed (by the program — its own ways wait), what held it lets go: a
+    // form discarded mid-send holds nothing the next time it opens
+
+    trackChanges = ["open"],
+    onChange(e: ChangeEvent) { if (!open) { holds = []; _told = false } }
+    ]

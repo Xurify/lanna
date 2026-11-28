@@ -1,0 +1,328 @@
+/*
+# WrappingLayout — a flow that wraps to new rows
+
+A horizontal flow that **wraps**: children run left to right `spacing` apart,
+and when the next one would overflow the view's width it drops to a new row,
+`rowSpacing` down. With room for
+one row it is a plain row; as the view narrows it stacks — cards that reflow
+on a phone with no media query. It owns both axes of each child (a flow is
+2-D); sizes stay the children's own. `justify`
+sets each finished row along the flow — `start`, `center`, `end`, or `fill`,
+which spreads a row's slack into its gaps the way justified text does;
+`indent` and `hangingIndent` inset the first row and every row after it, the
+two shapes a paragraph takes. A child with `flexes = true` takes the rest of the
+row it lands on: it wraps by its content width, then grows into what the row
+has left, or gives up what the row is short — a strip of filters that fills
+the room its row's other children leave, and scrolls when that is too little.
+A weight (`flexes = 2`) and a range (`minWidth`, `maxWidth`) share a row as they
+share a `SimpleLayout` run, and a child with `shrinks = true` gives up width when
+its row is too long. A flexing child with a `minWidth` is a **cell**: it wraps by
+its minimum, the cells of a row share its room, and on the last row they keep the
+width of the row above, so cells of one minimum are equal columns that reflow
+with the room.
+
+Division of labor: this is the tool for uniform, replicated collections
+that reflow by fitting. Managing named regions per width tier is
+ResponsiveLayout's.
+
+Written in Declare over the Layout kernel — the whole strategy is place().
+
+**Padding is the view's** (`View.padding`), and a flow answers to it on
+both axes: rows **wrap at the content width** — the room between the left and
+right insets, never the view's own width — and a view that sizes itself from
+the flow grows by the vertical pair, so no row runs under the inset.
+
+```declare
+box: View [ x = 20, y = 20, width = 260,
+    layout: WrappingLayout [ spacing = 8, rowSpacing = 8 ],
+    View [ width = 70, height = 26, cornerRadius = 6, fill = steelblue ],
+    View [ width = 110, height = 26, cornerRadius = 6, fill = cadetblue ],
+    View [ width = 90, height = 26, cornerRadius = 6, fill = slategray ],
+    View [ width = 120, height = 26, cornerRadius = 6, fill = darkslateblue ]
+    ]
+```
+
+## spacing
+The horizontal gap between children in a row.
+
+## rowSpacing
+The vertical gap between rows: `spacing` unless said otherwise, so a flow that wraps keeps
+the same gap both ways. Say it when the two differ: a list of words in a sentence wants
+rows closer than its words, and a negative `rowSpacing` pulls rows into each other, which
+is what a large display face wants when it wraps — the row height a big face reports is
+looser than the line wants to sit.
+
+## justify
+How a finished row sits along the flow: `start` (the default, left), `center`, `end`
+(right), or `fill` — the row's slack is spread evenly into the gaps between its
+children, so every full row ends flush at the right edge, as justified text does. As
+in text, the last row is left at `start` under `fill` (a ragged last line), and a row
+of one child has no gap to widen and stays put. A bare literal.
+
+## indent
+The first row's inset from the left, in pixels — a paragraph's first-line indent. The
+first row's usable width shrinks by it; later rows are unaffected (see `hangingIndent`).
+
+## hangingIndent
+The inset of every row after the first — a hanging indent, the shape of a bibliography
+entry or a wrapped signature whose continuation lines step in under the name. The two
+compose: `indent` sets where the first row starts, `hangingIndent` where the rest do.
+
+## columns
+A grid of equal cells (default `0`, off): every row holds this many children, each in a
+cell of the row's room shared out — the content width less `spacing` between them, and the
+row's indent. A child with `flexes = true` takes its cell's width; any other keeps its own
+and sits at its cell's left. With `columns = { narrow ? 5 : 10 }`, ten options are one row
+at desktop width and two rows of five on a phone, every cell the same width.
+
+```declare
+levels: View [ width = 100%, datapath = { app.levels.value },
+    layout: WrappingLayout [ columns = { app.width < 600 ? 5 : 10 }, spacing = 6, rowSpacing = 6 ],
+    View [ datapath = :rows[], flexes = true, height = 44, cornerRadius = 6, fill = gainsboro ]
+    ]
+```
+
+## align
+Where each child sits **within its row**: `start` (the default — the row's top),
+`center`, `end`, or `baseline`, which sits every child in the row on one baseline — a
+`Text` reports its own, a composite **declares** which part carries it
+(`baseline: number = { cap.y + cap.baseline }`), and a child that declares none is
+refused by name and placed at the row's top. A row's height grows to hold the
+baseline-shifted children. When the flow **never wrapped** — one row, which is the whole
+content — `center` and `end` align it in the view's own height instead, so a single row
+in a `height = 90` bar really sits in the middle of it; a view that derives its height
+from this flow keeps the row as the band. A bare literal.
+
+## place()
+Runs the flow, wrapping when the next child would overflow the view's width. **It owns
+both axes of each child** — a flow is 2-D — while sizes stay the children's own. A child
+never wraps when it is first in its row, so one over-wide child overflows rather than
+looping forever. Each finished row starts at its indent, is justified along the flow, and
+has its children aligned across it, in one pass over the row.
+*/
+
+class WrappingLayout extends Layout [
+    spacing: number = 0,
+    rowSpacing: number = { spacing },
+    justify: Justify = start,
+    align: CrossAlign = start,
+    indent: number = 0,
+    hangingIndent: number = 0,
+    columns: number = 0,
+
+    place() {
+        // the room to wrap in — the view's content box, its width less its own padding
+        const w = this.contentExtent("width")
+        const sp = this.spacing
+        const ls = this.rowSpacing
+        const jf = this.justify
+        const al = this.align
+        const ind0 = Math.max(0, this.indent)
+        const indN = Math.max(0, this.hangingIndent)
+        const kids = this.laid()
+        const out = [] as any
+        const heights = [] as any   // per child, for the cross pass over its row
+        const bases = [] as any     // per child: its declared baseline, or null
+        const natural = [] as any   // per child: a flexing child's own content width, else null
+        let cx = ind0
+        let cy = 0
+        let rowH = 0
+        let rowBase = 0
+        let firstInRow = true
+        let rowStart = 0
+        // `columns`: a grid of equal cells — every row holds that many children,
+        // each in a cell of the row's room shared out (its indent left out)
+        const cols = Math.max(0, Math.floor(this.columns))
+        const cellOf = (inset) => cols > 0 ? Math.max(0, (w - inset - (cols - 1) * sp) / cols) : 0
+        // A view whose width comes from these very children has no edge to wrap
+        // at: its flow is one row, as wide as what it holds (the room it has is
+        // only what the last pass left). `columns` divides a width, so it keeps one.
+        const unbounded = cols == 0 && this.viewExtent("width") == 0
+        let inRow = 0
+        // the flow's length with nothing wrapping: every child on one row, from
+        // the first row's indent, each at the width it wraps by
+        let oneRow = ind0
+        let seen = 0
+        // what a run gives its children along the flow (SimpleLayout's model):
+        // a child that flexes (a weight above 0) or shrinks has its width
+        // written here, starting from `natural`; every size stays in the
+        // child's range (minWidth, maxWidth; 0 = no limit)
+        const weight = (c) => {
+            const f = c.flexes
+            return f === true ? 1 : (typeof f == "number" && f > 0 ? f : 0)
+            }
+        const shrinking = (c) => weight(c) == 0 && c.shrinks === true
+        const clamp = (c, v) => {
+            const hi = c.maxWidth
+            return Math.max(hi > 0 ? Math.min(v, hi) : v, c.minWidth, 0)
+            }
+        // per weight, what the last full row's flexing children grew by: cells
+        // that state a minWidth keep it on the last row, so they line up
+        let grewBy = null
+        // a finished row [rowStart, end): justify it along the flow, align its
+        // children across it, and answer the row's final height — which grows
+        // under baseline alignment, since children shift down to the line.
+        // `rowW` is where the row's content ends (its indent included); `last`
+        // says whether it is the flow's final row, which `fill` leaves ragged.
+        const finish = (end, rowW, last) => {
+            const slack = unbounded ? 0 : Math.max(0, w - rowW)
+            // a row too long for the room: its shrinking children give way in
+            // proportion to their size, down to their minimums; then its flexing
+            // children share the slack, or the shortfall still left, by weight,
+            // within their ranges — and what follows each one moves along
+            const given = [] as any
+            const flexers = [] as any
+            const shrinkers = [] as any
+            for (let j = rowStart; j < end; j++) {
+                given.push(natural[j])
+                if (!kids[j].visible || natural[j] == null) continue
+                if (weight(kids[j]) > 0) flexers.push(j)
+                else shrinkers.push(j)
+            }
+            let over = unbounded ? 0 : rowW - w
+            if (over > 0 && shrinkers.length > 0) {
+                const held = shrinkers.map((j) => false)
+                for (let round = 0; round <= shrinkers.length && over > 0; round = round + 1) {
+                    let basis = 0
+                    shrinkers.forEach((j, k) => { if (!held[k]) basis = basis + given[j - rowStart] })
+                    if (basis <= 0) break
+                    let again = false
+                    shrinkers.forEach((j, k) => {
+                        if (held[k]) return
+                        const n = given[j - rowStart]
+                        const lo = kids[j].minWidth
+                        if (n - over * n / basis < lo) { over = over - (n - lo); given[j - rowStart] = lo; held[k] = true; again = true }
+                        })
+                    if (!again) {
+                        shrinkers.forEach((j, k) => { if (!held[k]) { const n = given[j - rowStart]; given[j - rowStart] = n - over * n / basis } })
+                        over = 0
+                        }
+                }
+            }
+            if (flexers.length > 0) {
+                const carry = last && rowStart > 0 && grewBy != null && flexers.every((j) => kids[j].minWidth > 0)
+                let free = -over
+                const held = flexers.map((j) => false)
+                for (let round = 0; round <= flexers.length; round = round + 1) {
+                    let total = 0
+                    flexers.forEach((j, k) => { if (!held[k]) total = total + weight(kids[j]) })
+                    if (total <= 0) break
+                    const per = carry ? grewBy : free / total
+                    if (!last) grewBy = per
+                    let off = 0
+                    flexers.forEach((j, k) => {
+                        if (held[k]) return
+                        const want = natural[j] + per * weight(kids[j])
+                        given[j - rowStart] = clamp(kids[j], want)
+                        off = off + given[j - rowStart] - want
+                        })
+                    if (carry || Math.abs(off) < 0.001) break
+                    flexers.forEach((j, k) => {
+                        if (held[k]) return
+                        const want = natural[j] + per * weight(kids[j])
+                        if ((off > 0 && given[j - rowStart] > want) || (off < 0 && given[j - rowStart] < want)) { held[k] = true; free = free - (given[j - rowStart] - natural[j]) }
+                        })
+                }
+            }
+            if (flexers.length + shrinkers.length > 0) {
+                let shift = 0
+                for (let j = rowStart; j < end; j++) {
+                    if (!kids[j].visible) continue
+                    out[j].x = out[j].x + shift
+                    if (natural[j] != null) {
+                        out[j].w = given[j - rowStart]
+                        shift = shift + given[j - rowStart] - natural[j]
+                    }
+                }
+            }
+            // a row its flexing children fill has no slack left to justify
+            if (flexers.length == 0 && slack > 0 && (jf == "center" || jf == "end")) {
+                const off = jf == "center" ? slack / 2 : slack
+                for (let j = rowStart; j < end; j++) out[j].x = out[j].x + off
+            } else if (flexers.length == 0 && slack > 0 && jf == "fill" && !last) {
+                // spread the slack into the gaps: the k-th visible child after
+                // the row's first moves by k shares
+                let n = 0
+                for (let j = rowStart; j < end; j++) if (kids[j].visible) n = n + 1
+                if (n > 1) {
+                    const share = slack / (n - 1)
+                    let k = 0
+                    for (let j = rowStart; j < end; j++) { if (!kids[j].visible) continue; out[j].x = out[j].x + share * k; k = k + 1 }
+                }
+            }
+            let lineH = rowH
+            if (al == "baseline") {
+                lineH = 0
+                for (let j = rowStart; j < end; j++) {
+                    if (!kids[j].visible) continue
+                    const top = bases[j] == null ? 0 : rowBase - bases[j]
+                    lineH = Math.max(lineH, top + heights[j])
+                }
+            }
+            // A flow that never wrapped is not a row inside a stack of rows —
+            // it IS the view's content, so center/end align it in the view's
+            // own cross extent (`viewExtent` answers 0 when that extent is
+            // measured from these children, and the row height stands). With
+            // two or more rows the band is the row, as a wrapped flow's must
+            // be: there is no `align-content` here to spread the leftover.
+            if (rowStart == 0 && last && (al == "center" || al == "end")) lineH = Math.max(lineH, this.viewExtent("height"))
+            for (let j = rowStart; j < end; j++) {
+                if (!kids[j].visible) continue
+                let off = 0
+                // a child's own center, where it says one (a TextLabel's capitals)
+                if (al == "center") off = (lineH - heights[j]) / 2 - (kids[j].centerY - kids[j].height / 2)
+                else if (al == "end") off = lineH - heights[j]
+                else if (al == "baseline") {
+                    if (bases[j] != null) off = rowBase - bases[j]
+                    else this.refuseBaseline(kids[j])
+                }
+                out[j].y = out[j].y + off
+            }
+            return lineH
+        }
+        for (let i = 0; i < kids.length; i++) {
+            const c = kids[i]
+            if (!c.visible) { out.push({ x: cx, y: cy }); heights.push(0); bases.push(null); natural.push(null); continue }   // skipped: reclaim its slot
+            // the child's footprint (scale/rotation composed, position-free —
+            // place() must not read the x/y it writes), and the transform's own
+            // lead offset, compensated so the visible box lands on the flow.
+            // A flexing child's width is this flow's to write, so it is fitted
+            // by its content width and its footprint is never read.
+            const flex = weight(c) > 0 || shrinking(c)
+            const f = flex ? ({ x: 0, y: 0, width: 0, height: c.height }) : c.footprint()
+            const ch = f.height
+            const leadX = f.x
+            const leadY = f.y
+            // under `columns` a child takes a cell: a flexing one is the cell's
+            // width, a shrinking one its own up to the cell's, and the next row
+            // starts after the last column, whatever fits. Outside a grid a
+            // flexing child wraps by its minWidth when it states one (a cell),
+            // else by its content's width, as a shrinking one does
+            const own = flex ? clamp(c, weight(c) > 0 && c.minWidth > 0 ? c.minWidth : c.contentWidth) : 0
+            let cw = cols > 0 ? 0 : flex ? own : f.width
+            natural.push(flex && cols == 0 ? cw : null)
+            oneRow = oneRow + (seen > 0 ? sp : 0) + cw
+            seen = seen + 1
+            // wrap when this child (with its leading gap) would overflow — never
+            // on a row's first child, so one over-wide child just overflows
+            if (!firstInRow && (cols > 0 ? inRow >= cols : !unbounded && cx + sp + cw > w)) { const lh = finish(i, cx, false); cx = indN; cy = cy + lh + ls; rowH = 0; rowBase = 0; firstInRow = true; rowStart = i; inRow = 0 }
+            const cell = cols > 0 ? cellOf(rowStart == 0 ? ind0 : indN) : 0
+            if (cols > 0) cw = cell
+            if (!firstInRow) cx = cx + sp
+            out.push(cols > 0 && flex ? { x: cx, y: cy, w: clamp(c, weight(c) > 0 ? cell : Math.min(own, cell)) } : { x: cx - leadX, y: cy - leadY })
+            inRow = inRow + 1
+            heights.push(ch)
+            const b = (c as any).baseline
+            bases.push(typeof b == "number" ? b : null)
+            if (al == "baseline" && typeof b == "number") rowBase = Math.max(rowBase, b)
+            cx = cx + cw
+            rowH = Math.max(rowH, ch)
+            firstInRow = false
+        }
+        finish(kids.length, cx, true)   // the last (or only) row — ragged under fill
+        // the view's content width is its children on one row, whatever the room
+        // made of them; a grid's columns are cut from the width it is given, so a
+        // grid has none
+        return ({ boxes: out, contentWidth: cols > 0 ? null : oneRow })
+        }
+    ]

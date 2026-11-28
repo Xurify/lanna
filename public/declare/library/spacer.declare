@@ -1,0 +1,26 @@
+/*
+# Spacer — an empty view that absorbs a run's slack
+
+When a row (or stack) does not fill its container, the leftover room has to
+go somewhere. A Spacer says where, structurally: put one between two groups
+and they push apart ("logo left, actions right"); put one on each side of a
+run and it centers; put one first and the run right-aligns. Several spacers
+split the slack evenly. When there is no slack — a plan whose shares fill the
+width, an auto-sized container — a Spacer is simply zero and invisible in
+effect.
+
+It is nothing but an empty view that flexes: `Spacer [ ]` is
+`View [ flexes = true ]`, named for what it is for. Any view can flex the same
+way (`View.flexes`); a Spacer is the one with nothing in it. It paints nothing
+and has no size of its own; it declares a baseline of 0, so a baseline row
+takes it like any other child. For a minimum height (a strut), use an empty view:
+`View [ width = 0, height = 44 ]`.
+
+## baseline
+0 — the top of an empty box. Declared so that a row aligned on its baselines takes a
+Spacer as it takes any child: it sits at the line and, having no height, moves nothing.
+*/
+
+class Spacer [ flexes = true, width = 0, height = 0,
+    baseline: number = 0
+    ]

@@ -1,0 +1,179 @@
+/*
+# Popover
+
+A bubble anchored to a view, holding your own content — a picker, a few settings, an info
+card. It opens next to its anchor (below, else above where there is no room), follows it as
+it moves, and closes when you press anywhere outside it, the press going on to what you
+pressed. On a phone-width screen it presents as a sheet rising from the bottom instead.
+
+```declare
+App [ width = 420, height = 240,
+    b: Button [ x = 20, y = 20, label = "Font…", onClick() { app.pick.showFor(this) } ],
+    pick: Popover [
+        Text [ text = "Size" ],
+        Slider [ width = 180 ]
+        ]
+    ]
+```
+
+It is a `Floating`: it takes focus on opening (its first control) and gives it back on
+closing; Esc closes it. It is never modal, on any screen: a press outside closes it and goes
+on to what was pressed, the page stays where a screen reader reaches it, and in the Tab order
+it sits right after what opened it — Tab past its last control closes it and goes on past the
+opener, Shift-Tab past its first gives the focus back to the opener. What must be finished
+before anything else is a `Sheet` or a `Dialog`.
+
+## anchorTo
+What it opens next to when shown without one — `showFor(v)` names it per opening instead.
+
+## placement
+Which side it prefers: `"below"` (the default) or `"above"`; it takes the other side when
+the preferred one has no room.
+
+## gap
+The space between the anchor and the bubble.
+
+## _asSheet
+**Internal.** Whether it presents as a bottom sheet — by default when the screen is narrower than 560.
+Only the look changes: as a sheet it is still not modal.
+
+## keyBindings
+Tab and Shift-Tab: through its controls, and out of it in the opener's place (`_tabStep`);
+Esc closes it (`Floating`'s).
+
+## _tabStep()
+**Internal.** Tab or Shift-Tab: to the next control inside, else out — closing it — past the
+opener, or back to it.
+
+## _anchorView
+**Internal.** The view it is anchored to now: the opener, else `anchorTo`.
+
+## _ab
+**Internal.** The anchor's box in the popover's frame.
+
+## _below
+**Internal.** Whether it sits below its anchor now.
+
+## _roomBelow
+**Internal.** Whether it fits below its anchor.
+
+## _roomAbove
+**Internal.** Whether it fits above its anchor.
+
+## pressPolicy
+`dismissAndDeliver` — a press outside closes it and goes on; `dismiss` as a sheet.
+
+## width
+Its content's width, unless it is given one — then its content has that room, and a child at
+`width = 100%` fills it. The whole width as a sheet.
+
+## height
+Its content's height.
+
+## x
+Centered on its anchor, kept inside its layer.
+
+## y
+Below its anchor, or above it; risen from the bottom as a sheet.
+
+## opacity
+Its open blend, as a bubble.
+
+## cornerRadius
+The theme's `popoverCornerRadius`; as a sheet, its top corners only. Its panel takes it,
+with its `fill`.
+
+## scale
+It grows from slightly small as it opens, as a bubble — at its program's scale where it opens
+in a host's layer.
+
+## rotation
+Its program's turn where it opens in a host's layer; none as a sheet.
+
+## pivotX
+It grows from its middle.
+
+## pivotY
+It grows from its anchor's side.
+
+## accessibilityRole
+A dialog: it takes the focus and holds it while it is open, as a dialog does.
+
+## accessibilityLabel
+The name of what opened it, so a popover opened from "Text size" is the "Text size" dialog.
+*/
+
+include [ "floating.declare" ]
+
+class Popover extends Floating [
+    accessibilityRole = dialog,
+    accessibilityLabel = { this.opener == null ? "" : "" + ((this.opener as any).accessibilityLabel || (this.opener as any).label || "") },
+
+    // never modal, on any screen: a press outside closes it and goes on to what
+    // was pressed, the page stays where a screen reader reaches it, and Tab
+    // walks through it as through what opened it. A modal is a Sheet or a Dialog.
+
+    pressPolicy = "dismissAndDeliver",
+    scrollPolicy = "allow",
+    takesFocus = true,
+    focusScope = capture,
+
+    // it sits in the Tab order right after what opened it: Tab past its last
+    // stop closes it and goes on past the opener, Shift-Tab past its first
+    // closes it and gives the focus back to the opener
+
+    keyBindings = { [ ({ key: "Tab", command: "_tabStep", args: [1] }), ({ key: "Shift+Tab", command: "_tabStep", args: [-1] }) ] },
+    _tabStep(d: number) {
+        if (d > 0) Focus.next(); else Focus.prev()
+        if (Focus.holds(this)) return
+        const back = (_savedFocus ?? opener) as View | null
+        this.close()
+        if (back != null) {
+            Focus.focus(back)
+            // past the opener — and past this popover, closing, wherever it is declared
+            if (d > 0) Focus.next(this)
+            }
+        },
+    defaultPlacement = _body,
+
+    anchorTo: View? = null,
+    placement: string = "below",
+    gap: number = 8,
+    _asSheet: boolean = { app.width < 560 },
+
+    _anchorView: View? = { this.opener != null ? this.opener : this.anchorTo },
+    _ab: object = { this.anchorBox(this._anchorView) },
+    _roomBelow: boolean = { this._ab.y + this._ab.h + this.gap + this.height <= this._hostH - 8 },
+    _roomAbove: boolean = { this._ab.y - this.gap - this.height >= 8 },
+    _below: boolean = { this.placement == "above" ? !this._roomAbove && this._roomBelow : this._roomBelow || !this._roomAbove },
+
+    width = { this._asSheet ? this._hostW : this._body.contentWidth },
+    height = { this._body.height },
+    x = { this._asSheet ? 0 : Math.max(8, Math.min(this._hostW - this.width - 8, this._ab.x + this._ab.w / 2 - this.width / 2)) },
+    y = { this._asSheet ? this._hostH - this.height * this.openT
+        : this._below ? this._ab.y + this._ab.h + this.gap : this._ab.y - this.gap - this.height },
+
+    // motion: a bubble grows from its anchor's side; a sheet rises
+
+    opacity = { this._asSheet ? 1 : this.openT },
+    scale = { this._asSheet ? 1 : this._baseScale * (0.92 + 0.08 * this.openT) },
+    rotation = { this._asSheet ? 0 : this._baseRotation },
+    pivotX = { this.width / 2 },
+    pivotY = { this._asSheet || this._below ? 0 : this.height },
+
+    // the popover paints its own fill, as any view does; the panel gives it the
+    // theme's surface when it sets none, and its edge and shadow
+
+    cornerRadius = { this._asSheet ? [(provided("theme").sheetCornerRadius) - 2, (provided("theme").sheetCornerRadius) - 2, 0, 0] : (provided("theme").popoverCornerRadius) },
+
+    _panel: View [ width = 100%, height = 100%,
+        cornerRadius = { classroot.cornerRadius },
+        fill = { classroot.fill == null ? provided("theme").surface : null },
+        stroke = { classroot._asSheet ? null : Stroke(1, provided("theme").line) },
+        shadow = { provided("theme").popoverShadow } ],
+
+    _body: View [ padding = { classroot._asSheet ? [18, 18, 28, 18] : 14 },
+        width = { classroot._asSheet ? classroot._hostW : parent.width },
+        layout: SimpleLayout [ axis = y, spacing = 10 ]
+        ]
+    ]

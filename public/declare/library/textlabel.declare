@@ -1,0 +1,36 @@
+/*
+# TextLabel
+
+A `Text` that centers its ink in its parent's height — the vertical placement a
+*label* wants, as opposed to a paragraph. Use it for the text inside a control
+or any centered caption; use plain `Text` for flowing copy.
+
+Why it exists. A plain `Text` is centered by its box, like every other view. But a label
+sitting in a box wants its **letterforms** optically centered, not the font's box with its
+asymmetric ascent/descent leading — otherwise the text reads a hair low. So a `TextLabel`
+says where its center is — the middle of its capitals:
+
+    centerY = { baseline - capHeight / 2 }
+
+and anything that centers it centers that: its own `y = center`, a row's `align = center`.
+It is a plain constraint over the Text's own live metric facts (`baseline`, `capHeight`,
+measured from the effective font), so it follows the font and the size. A label placed by
+hand (`y = 4`) is placed as written.
+
+The centre is the cap band because that is what the platform control themes
+(Cupertino, Mountain View, Redmond) are matched against.
+
+## y
+`center`: the label centers itself in its parent — by its capitals (`centerY`). Give it
+any other `y` to place it yourself.
+
+## centerY
+The middle of its capitals — baseline and cap height — rather than of its line box, which
+is what a label beside a control wants and a paragraph does not. Whatever centers the label,
+its own `y = center` or a row's `align = center`, centers this.
+*/
+
+class TextLabel extends Text [
+    y = center,
+    centerY = { baseline - capHeight / 2 }
+    ]

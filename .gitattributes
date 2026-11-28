@@ -2,3 +2,5 @@
 *.bat text eol=crlf
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
+# The vendored Declare runtime ships byte-for-byte; no line-ending rewriting.
+public/declare/** -text
