@@ -1,0 +1,105 @@
+/*
+# RadioGroup
+
+One of several, said as radios: a `ChoiceControl` whose items are `Radio`s, stacked in a
+column. Radios are written as the group's direct children — the group's layout arranges
+them, and each radio reaches its group as `parent`. A radio replicated from data
+(`Radio [ datapath = :plans[], choice = { :id }, label = { :name } ]`) is one too: each copy
+is a direct child of the group. The group is one Tab stop, and the arrows move and check.
+Choices drawn as your own — a card, a tile, a row with a picture — are `ChoiceItem`s in a
+`ChoiceControl`.
+
+    RadioGroup [ value = "m", commit(v: string) { app.size = v },
+        Radio [ choice = "s", label = "Small" ],
+        Radio [ choice = "m", label = "Medium" ],
+        Radio [ choice = "l", label = "Large" ],
+        ]
+
+```declare
+size: RadioGroup [ x = 20, y = 20, value = "m",
+    Radio [ choice = "s", label = "Small" ],
+    Radio [ choice = "m", label = "Medium" ],
+    Radio [ choice = "l", label = "Large" ]
+    ]
+```
+
+## accessibilityRole
+`radioGroup`: a screen reader hears the radios as one choice, "2 of 3".
+
+## layout
+A column, the radios 10 apart. Give the group a layout of its own to set them in a row.
+*/
+
+include [ "choicecontrol.declare" ]
+
+// a ChoiceControl of one, said as radios
+
+class RadioGroup extends ChoiceControl [
+    accessibilityRole = radioGroup,
+    layout: SimpleLayout [ axis = y, spacing = 10 ]
+    ]
+
+
+/*
+# Radio
+
+One choice in a `RadioGroup`: a `ChoiceItem` with a dot and a label, a direct child of the
+group, naming itself with `choice`. A radio stores nothing — it derives `on` from the
+group's `value` and delivers its `choice` to the group when pressed, so turning one on can
+never leave another stale.
+
+```declare
+App [ width = 300, height = 120, fill = white, textColor = black,
+    size: string = "m",
+    RadioGroup [ x = 20, y = 20, value = { app.size }, commit(v: string) { app.size = v },
+        Radio [ choice = "s", label = "Small" ],
+        Radio [ choice = "m", label = "Medium" ]
+        ],
+    Text [ x = 160, y = 20, text = { "size: " + app.size } ]
+    ]
+```
+
+## label
+The text beside the dot. `""` renders the dot alone.
+
+## baseline
+The baseline a row aligns this radio by — its caption's, so a row of mixed controls and
+text under `align = baseline` reads as one line.
+
+## focusShape()
+Rings the round dot rather than the dot-plus-label row.
+
+## width
+Content-sized: the dot, then a gap and the label when there is one. A label-less radio is exactly its dot.
+
+## opacity
+Disabled dims the whole choice, dot and label alike — to the theme's `disabledOpacity`,
+or 0.45 when the theme states none.
+
+## height
+Tall enough for the dot and a 2px margin either side: the theme's `radioSize` (18 by default) plus 4 —
+and on a touch-first device at least 44, a finger's target, the dot unchanged.
+
+## accessibilityChecked
+Follows `on`: whether this choice is the group's `value`.
+*/
+
+class Radio extends ChoiceItem [ height = { Math.max(this._dot.width + 4, app.touchFirst ? 44 : 0) },
+    baseline: number = { this._cap.y + this._cap.baseline },   // a row aligns the control by its label
+
+    // keyboard focus rings the round dot itself, not the dot-plus-label row
+
+    focusShape() { return ({ x: this._dot.x, y: this._dot.y, w: this._dot.width, h: this._dot.height, rad: this._dot.width / 2 }) },
+    label:  string = "",
+    accessibilityRole = radio,
+    accessibilityChecked = { on },
+
+    width   = { this._dot.width + (label == "" ? 0 : 8 + this._cap.width) },
+    opacity = { disabled ? (provided("theme").disabledOpacity) : 1 },
+
+    _dot: View [ width = { provided("theme").radioSize }, height = { this.width }, cornerRadius = { this.width / 2 }, y = { (parent.height - this.width) / 2 },
+        fill   = { provided("theme").surface },
+        stroke = { Stroke(on ? 5 : 1, on ? provided("theme").accent : hovered || pressed ? provided("theme").textMuted : provided("theme").line) } ],
+    _cap: TextLabel [ x = 26, wrap = false, textColor = { provided("theme").text },
+        visible = { label != "" }, text = { label } ]
+    ]

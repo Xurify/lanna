@@ -16,5 +16,15 @@
 		"react/static-components": "off",
 		"react-hooks/exhaustive-deps": "off"
 	},
-	"ignorePatterns": [".next/**", "node_modules/**", "data/**", "dist/**", "build/**", "next-env.d.ts", "_backup-*/**"]
+	"ignorePatterns": [
+		".next/**",
+		"node_modules/**",
+		"data/**",
+		"dist/**",
+		"build/**",
+		"next-env.d.ts",
+		"_backup-*/**",
+		"public/declare/bundles/**",
+		"public/declare/library/**"
+	]
 }

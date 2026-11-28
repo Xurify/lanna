@@ -424,6 +424,11 @@ export type ModelRole = "prober" | "teacher" | "researcher" | "pdfReader";
  */
 export const SETTINGS_FILE = path.join(BASE_DATA_ROOT, "settings.json");
 
+/** Declare widgets the chat's tutor has authored (src/core): each message's
+ * ```declare fence is stored once under its content hash and served to the
+ * widget sandbox at /api/declare-widget/<hash>. */
+export const DECLARE_WIDGETS_DIR = path.join(BASE_DATA_ROOT, "declare-widgets");
+
 /**
  * User prompt-override files (settings-storage wave, 2026-09-19): the
  * per-segment system-prompt overrides mirroring the SOURCE layout

@@ -1,0 +1,483 @@
+/*
+# ResponsiveLayout — arrange children differently at different widths.
+
+A view's children often want one arrangement when there is room and another
+when there isn't: three panels side by side on a wide screen, the same panels
+stacked on a phone; an optional control that appears only when space allows.
+ResponsiveLayout states those alternatives directly. You give it a list of
+**plans** — each one says *"from this width up, arrange the children like
+this"* — and it keeps the right plan applied as the view's width changes.
+Hiding, showing, and dividing the width are all part of a plan, not separate
+wiring.
+
+    bar: View [
+        layout: ResponsiveLayout [ plan = { [
+            { from: 900, flow: "row",  share: { logo: 15, nav: 55, actions: 30 } },
+            { from: 600, flow: "row",  share: { logo: 20, nav: 80, actions: 0 } },
+            { from: 0,   flow: "stack" },
+        ] } ],
+        logo:    Logo    [ ],
+        nav:     Nav     [ ],
+        actions: Actions [ ],
+    ]
+
+Each entry's `from` means *use this plan when the view is at least this wide*
+— the entry with the largest `from` that fits wins, wherever it sits in the
+list, and an entry with `from: 0` is the fallback for anything narrower.
+`flow` is the arrangement: `"row"` places children left to right; `"stack"`
+places them top to bottom. **`share` divides width in either flow** — in a
+row it apportions the run; in a stack it sets how wide each band is, as a
+plain percentage of the view. The names are the view's own child names,
+checked when the layout first arranges (a name with no child is a loud
+error). `logo: 15` gives logo 15% of it; **a share of `0` drops that child
+while the plan is active** — so "the actions disappear on small screens" is
+just a number in the narrow plan, and they reappear by themselves when the
+view widens. `gap` sets the space between children (an entry may carry its
+own `gap` to override the layout's). Heights are never touched: children keep
+their own heights, and the view's height falls out of its content, as always.
+
+So the example reads as a storyboard: at 900 and up, a three-across row split
+15/55/30; between 600 and 900, the actions drop and the nav takes their room;
+below 600, everything stacks.
+
+**A plan need not name every child, and 20% means 20% of what is left.** A
+child the plan leaves out keeps its natural width and the flow just places
+it — and the run a row's shares divide is what remains **after the gaps and
+after those naturals**. So a fixed-width logo beside two proportional regions
+composes without the author computing a percentage for the logo:
+
+    layout: ResponsiveLayout [ gap = 10, plan = { [
+        { from: 0, flow: "row", share: { nav: 60, actions: 40 } },
+    ] } ],
+    logo:    View [ width = 200 ],          // not named: keeps its 200
+    nav:     Nav  [ ],                      // 60% of what is left
+    actions: Actions [ ],                   // 40% of what is left
+
+In an 880-wide bar that is 200 for the logo and 396 / 264 for the two
+regions — the row fills, exactly. Change the logo's width and the regions
+answer; they were never told about it.
+
+**`share: { logo: "auto" }` says that out loud.** The word means precisely
+what leaving the child out means — keep its natural size, divide the rest —
+so it buys no new geometry, only legibility: the plan reads as a complete
+statement of the row, and a name in a plan is checked against the tree, where
+an omission is mentioned nowhere. It is **not** `share: 0`, which is the
+opposite: `0` drops the child and reclaims its room, `"auto"` keeps the
+child at the size it chose for itself. In a stack `"auto"` is accepted and
+changes nothing — the flow axis there is height, which a share never touches.
+
+**Two shares are refused, where the plan is read** — both of them mistakes
+with no arrangement they could mean. A row's shares
+divide one run, so a row whose shares add to more than 100 is an error naming
+the plan and the total, rather than a row that runs its children off the end.
+And a share that is neither a number from 0 to 100 nor the word `"auto"` is
+an error naming the child, rather than a `NaN` width on it and a `NaN`
+position on its neighbours.
+
+**The two things authors miss.** `share` is not row-only: a `"stack"` entry
+may carry shares too, and they set each band's width — the narrow plan above
+could say `{ from: 0, flow: "stack", share: { logo: 100, nav: 100 } }` to make
+both bands full-bleed. (A stack's shares are independent percentages of the
+view, not slices of one run, which is why two hundreds are fine there and a
+row's total is held to 100.) And `share: 0` is the whole of "hide it when
+it's tight": a child dropped this way leaves the flow entirely and its room
+is reclaimed, so there is no reason to branch a tree on a width
+(`narrow ? … : …`) — appearing and disappearing is one number in one plan,
+and the plan is the only place the breakpoint is written down.
+
+**Slack and alignment.** When a row's children keep natural widths, the run
+may not fill the view — and where the run sits is said with structure, not a
+knob: a `Spacer [ ]` child absorbs the slack. Between two groups it pushes
+them apart; one on each side centers the run; one first right-aligns it.
+Shares are cut from what the naturals leave, so shares adding to 100 leave no
+slack at all and a `Spacer` beside them collapses — *shares fill; naturals
+align.* The flexing children share the slack as they do in a `SimpleLayout`
+run: by weight, within their ranges, after any child with `shrinks = true` has
+given way to a run too long for the room.
+
+**Across the flow, the layout places every child** — `y` in a row, `x` in a
+stack, in every plan. Where each one sits there is the layout's `align`:
+`start` unless it says otherwise, and a plan entry may say otherwise for its
+own tier. A plan entry's `offset` shifts one named child from where `align`
+put it — a nudge that belongs to that arrangement, so it goes away with the
+tier, which is exactly when it stops meaning anything:
+
+    actions: View [ width = 100%,
+        layout: ResponsiveLayout [ plan = { [
+            { from: 420, flow: "row",   gap: 18, align: "center", offset: { source: 1 } },
+            { from: 0,   flow: "stack", gap: 14 },
+        ] } ],
+        run:    Button [ width = 240, height = 46 ],   // the row centres the pair on it
+        source: Text   [ text = "View & edit source →" ],
+    ]
+
+So a child under a ResponsiveLayout declares neither `x` nor `y` — the
+checker says so at the line, and says which of these to use instead. A child
+that needs a finer arrangement of its own contents is the next case down:
+give it a layout of its own.
+
+**Nesting — who decides what.** A ResponsiveLayout watches its own view's
+width — not the window's. The parent's plan decides how much room each child
+gets; each child decides what to do with the room it got — if the child has
+its own ResponsiveLayout, its plans answer to its own width, automatically.
+Room flows down; each level responds locally. (A plan can only name direct
+children — managing a grandchild is the child's own plan's business.)
+
+This is the answer to most things a plan cannot say by itself, and it wants no
+class: an **ordinary inline child** carries its own `layout:` like any other
+view. A class nested this way answers to **its allocation, not the
+window** — the same child reads correctly in a sidebar, a dialog, or a
+full-bleed row, and picks its own flow in each. One thing to get right: the
+view must actually **be given** a width, in every tier. A tier that allocates
+it nothing leaves it at its content width, and a view sized by its content is
+measuring what it is trying to arrange — so name it in the stack tier's shares
+(`share: { acts: 100 }`), give it `width = 100%`, or let it flex
+(`flexes = true` takes the room its row has left). `shrinks` sizes it from its
+content too, and is refused; verify says when nothing gives it a width.
+
+**Division of labor.** ResponsiveLayout manages **named regions**. A collection
+of uniform, replicated cards that should reflow to fit is the other tool:
+`WrappingLayout` (it wraps by fitting, no plan needed) with a width
+constraint on the card.
+
+**Padding, and what `from` then means.** The inset is the view's
+(`View.padding`), and a plan is selected against the **content** width, with
+the shares dividing it — so a padded bar's tiers answer to the room its
+children actually get, and `from: 600` means 600 of usable room, not 600 of
+outer width.
+
+**When the rules aren't enough.** A plan speaks width, flow, share, and gap.
+Reach for **nesting** first, and most of the time last: give the part that
+needs its own mind a `layout:` of its own and let it arrange itself inside the
+room this plan hands it (above). A child that decides for itself is almost
+always the answer to "this plan cannot say what I need", and it composes — the
+same child then reads correctly wherever it is put.
+
+Past that: whole alternate configurations beyond geometry are a `State`
+applied on a width condition; fully custom geometry is a subclass overriding
+`place()` — the same seam every layout in the library is built on.
+
+## plan
+The storyboard: a list of `{ from, flow, share?, gap?, align?, offset? }` entries. **`from` means "use
+this plan when the view is at least this wide"** — the largest `from` that fits wins,
+wherever it sits in the list, and `from: 0` is the fallback. `flow` is `"row"` or
+`"stack"`. **`share` divides width in either flow** — not row-only: a `"stack"` entry may
+carry shares, and they set each band's width. It names the children by their **own child
+names**, checked when the layout first arranges — a name with no child is a loud error.
+**A share of `0` drops that child while the plan is active** — out of the flow, its room
+reclaimed — so "the actions disappear on small screens" is one number rather than a
+`narrow ? … : …` branch, and they return by themselves when the view widens.
+
+**A child a plan does not name keeps its natural width, and a row's shares divide what
+is left after it** — the gaps and the naturals both come out before the percentages are
+cut, so `60` means 60% of the remainder and a fixed-width logo composes beside two
+proportional regions with no arithmetic by hand. `"auto"` is the word for that said out
+loud (`share: { logo: "auto", nav: 60, actions: 40 }`): identical geometry to leaving the
+child out, and the opposite of `0` — `0` drops the child, `"auto"` keeps it at the size
+it chose for itself. In a stack `"auto"` is accepted and changes nothing, since a stack's
+shares are widths and its flow axis is height.
+
+**`align` and `offset` are per tier.** A plan entry's `align` — a string, `"start"`,
+`"center"`, `"end"` or `"baseline"` — overrides the layout's own for that tier, as
+its `gap` does. Its `offset` names children the way `share` does and shifts each one
+**across the flow** — down in a row, right in a stack — by a signed number of pixels
+from where `align` placed it. A name with no child, or an offset that is not a number,
+is an error naming it.
+
+**Two values are refused where the plan is read.** A row whose shares add to more than
+100 is an error naming the plan and the total — a row's shares divide one run and cannot
+claim more of it than there is. (A stack's do not compete: each is an independent percent
+of the view, so `{ logo: 100, nav: 100 }` is the full-bleed idiom, not an overflow — but a
+single share above 100 is refused in either flow.) And a share that is neither a number
+from 0 to 100 nor `"auto"` is an error naming the child, instead of a `NaN` width.
+
+## gap
+The default space between children, overridable per plan entry.
+
+## align
+Where children sit **across the flow** — `y` in a row, `x` in a stack: `start` (the
+default), `center`, `end`, `baseline`, or `stretch`, which makes every child its content
+sizes fill the band, as `SimpleLayout`'s does — a row of panels as tall as the row, or as
+the tallest on a row sized by them; in a stack every band as wide (a band a share sizes
+keeps it). A bare literal here; a plan entry overrides it with a string (`align:
+"center"`). `center`, `end` and `stretch` work in the **band**: the view's own cross
+content extent, or the tallest (widest) laid child on a view that sizes itself from these
+very children — the same band as `SimpleLayout`'s `align`.
+`baseline` sits every child of a row on one text line, each child declaring its own
+(a `Text` does; a composite says which part carries it), and is refused on a stack
+tier, which has no line. **There is no `none`**: this layout places the cross axis in
+every tier, so it always says where.
+
+## place()
+Selects the active plan from the **view's own width — never the window's** — and
+arranges accordingly: both axes of every child, along the flow by the plan and across
+it by `align` and `offset`. That is what makes nesting work: the parent's plan decides how much
+room a child gets, and the child's own plan answers to the room it got, automatically. A
+plan can only name direct children; managing a grandchild is the child's plan's business.
+*/
+
+class ResponsiveLayout extends Layout [
+    plan: array = { [] },
+    gap: number = 10,
+    align: CrossAlign = start,
+
+    place() {
+        const view = this.view as any
+        // the room the plan divides — the view's content box, its width less
+        // its own padding (contentExtent); a plan's `from` therefore reads the room,
+        // which is the number its shares are cut from
+        const W = this.contentExtent("width")
+        const kids = this.laid()
+        const plans = (Array.isArray(this.plan) ? this.plan : []) as any
+
+        // The active plan: the largest `from` that fits, wherever it sits in
+        // the list; nothing fits → the smallest `from` (the nearest regime).
+        let tier = null as any
+        for (const t of plans) { const f = t.from ?? 0; if (W >= f && (tier == null || f > (tier.from ?? 0))) tier = t }
+        if (tier == null) for (const t of plans) { if (tier == null || (t.from ?? 0) < (tier.from ?? 0)) tier = t }
+        if (tier == null) tier = ({ flow: "row" })
+
+        const stack = tier.flow == "stack"
+        const gap = typeof tier.gap == "number" ? tier.gap : this.gap
+        const share = tier.share != null && typeof tier.share == "object" ? tier.share : ({})
+        const where = " (the plan from " + (tier.from ?? 0) + ", on " + view.constructor.name + ")"
+
+        // Across the flow this layout places every child, in every tier — a
+        // row writes `y`, a stack `x` — so there is always an answer to where
+        // a child sits there, and it is `align`: the tier's, else the layout's.
+        const al = tier.align != null ? tier.align : this.align
+        if (al != "start" && al != "center" && al != "end" && al != "baseline" && al != "stretch") {
+            throw new Error("align is " + JSON.stringify(al) + where + " — a ResponsiveLayout places both axes of its children, so it always says where they sit across the flow: \"start\", \"center\", \"end\", \"baseline\" or \"stretch\"")
+        }
+
+        // Resolve the share names against the view's own children — loudly —
+        // and admit exactly two kinds of value: a percentage, and the word
+        // "auto" ("keep this child at its natural size, divide the rest"),
+        // which is carried by the plan and then means precisely what leaving
+        // the child out means. Anything else is a mistake and is refused
+        // here, because unrefused it would reach the arithmetic and come out
+        // the other side as a NaN width on that child and a NaN x on its
+        // neighbours, silently.
+        const shares = new Map()
+        let total = 0
+        for (const name of Object.keys(share)) {
+            const c = view[name]
+            if (c == null || kids.indexOf(c) < 0) {
+                throw new Error("the plan names '" + name + "', but " + view.constructor.name + " has no laid child named '" + name + "'")
+            }
+            const v = share[name]
+            if (v === "auto") continue
+            if (typeof v != "number" || !isFinite(v) || v < 0 || v > 100) {
+                throw new Error("the share for '" + name + "' is " + JSON.stringify(v) + where + " — a share is a number from 0 to 100 (and 0 drops the child), or the word \"auto\" to keep the child at its natural size")
+            }
+            shares.set(c, v)
+            total = total + v
+        }
+        // A ROW's shares divide one run, so together they cannot claim more
+        // than it — the sum is checked. A STACK's do not compete: each is an
+        // independent band width, a plain percent of the view, and `100, 100`
+        // (both bands full-bleed) is the documented idiom. Only the row is a
+        // budget, so only the row has a total.
+        if (!stack && total > 100 + 1e-6) {
+            throw new Error("the row's shares add up to " + (Math.round(total * 100) / 100) + "%" + where + " — the shares of a row divide one run and cannot claim more than 100% of it; a child that should keep its natural size is named \"auto\" or left out of the share")
+        }
+
+        // An offset names a child the same way a share does, and shifts it
+        // across the flow from where `align` put it — a nudge that belongs to
+        // this tier's arrangement, so it leaves with the tier.
+        const offsets = new Map()
+        const offset = tier.offset != null && typeof tier.offset == "object" ? tier.offset : ({})
+        for (const name of Object.keys(offset)) {
+            const c = view[name]
+            if (c == null || kids.indexOf(c) < 0) {
+                throw new Error("the plan's offset names '" + name + "', but " + view.constructor.name + " has no laid child named '" + name + "'")
+            }
+            const v = offset[name]
+            if (typeof v != "number" || !isFinite(v)) {
+                throw new Error("the offset for '" + name + "' is " + JSON.stringify(v) + where + " — an offset is a number of pixels across the flow, from where align places the child")
+            }
+            offsets.set(c, v)
+        }
+
+        const hidden = (c) => shares.get(c) === 0
+        // the run sizes a child along the flow when it flexes (a weight above
+        // 0) or shrinks (and no share sizes it): SimpleLayout's model
+        const weight = (c) => {
+            const f = c.flexes
+            return hidden(c) ? 0 : f === true ? 1 : (typeof f == "number" && f > 0 ? f : 0)
+            }
+        const shrinking = (c) => weight(c) == 0 && !hidden(c) && c.shrinks === true && !(shares.has(c) && !stack)
+        const flexing = (c) => weight(c) > 0 || shrinking(c)
+        const flowSize = stack ? "Height" : "Width"
+        const clamp = (c, v) => {
+            const hi = c["max" + flowSize]
+            return Math.max(hi > 0 ? Math.min(v, hi) : v, c["min" + flowSize], 0)
+            }
+
+        // What the shares divide, in a row: the width left after the gaps
+        // between the visible children AND after the children the plan does
+        // not allocate — one left out of the share, or named "auto", keeps
+        // its natural width, and the shares are cut from what remains. That
+        // is what makes "20%" mean 20% of what is left, so a fixed-width logo
+        // composes beside two proportional regions with no arithmetic by
+        // hand. (In a stack the flow axis is height, which a share never
+        // touches, and a share is simply a percent of the view's width — so
+        // naturals never compete for it and the base is the whole width.)
+        let visN = 0
+        for (const c of kids) if (c.visible && !hidden(c)) visN = visN + 1
+        const avail = W - gap * Math.max(0, visN - 1)
+        // a shrinking child's natural size is its content's, within its range
+        const given = kids.map((c) => c.visible && shrinking(c) ? clamp(c, stack ? c.contentHeight : c.contentWidth) : 0)
+        let naturalRun = 0
+        if (!stack) {
+            kids.forEach((c, i) => {
+                if (!c.visible || hidden(c) || weight(c) > 0 || shares.has(c)) return
+                naturalRun = naturalRun + (shrinking(c) ? given[i] : c.footprint().width)
+                })
+        }
+        const base = Math.max(0, avail - naturalRun)
+        const shareW = (c) => (stack ? W : base) * (shares.get(c) as number) / 100
+
+        // Rigid content along the flow axis, to size the spacers: widths in a
+        // row (a share is a width), the children's own heights in a stack.
+        let rigid = 0
+        let flexN = 0
+        let shrinkN = 0
+        kids.forEach((c, i) => {
+            if (!c.visible || hidden(c)) return
+            if (weight(c) > 0) { flexN = flexN + 1; given[i] = clamp(c, 0); return }
+            if (shrinking(c)) { shrinkN = shrinkN + 1; return }
+            // natural sizes are the footprint (scale/rotation composed,
+            // position-free); a share or flex allocation stays the raw attribute it
+            // claims — the strategy never reads an attribute it writes
+            rigid = rigid + (stack ? c.footprint().height : (shares.has(c) ? shareW(c) : c.footprint().width))
+            })
+        // the sizes the run gives, in the model's order: if the rest do not fit,
+        // the shrinking children give way in proportion to their size, down to
+        // their minimums; if room is left, the flexing ones share it by weight,
+        // within their ranges (a stack that only shrinks needs a height of its own)
+        if (flexN + shrinkN > 0) {
+            const tall = !stack ? 0 : flexN > 0 ? this.contentExtent("height") : this.viewExtent("height")
+            const room = !stack ? avail : flexN == 0 && tall <= 0 ? Infinity : tall - gap * Math.max(0, visN - 1)
+            let used = rigid
+            kids.forEach((c, i) => { if (c.visible) used = used + given[i] })
+            const held = kids.map((c) => false)
+            if (used > room) {
+                let over = used - room
+                for (let round = 0; round <= kids.length; round = round + 1) {
+                    let basis = 0
+                    kids.forEach((c, i) => { if (c.visible && shrinking(c) && !held[i]) basis = basis + given[i] })
+                    if (basis <= 0) break
+                    let again = false
+                    kids.forEach((c, i) => {
+                        if (!c.visible || !shrinking(c) || held[i]) return
+                        const lo = c["min" + flowSize]
+                        if (given[i] - over * given[i] / basis < lo) { over = over - (given[i] - lo); given[i] = lo; held[i] = true; again = true }
+                        })
+                    if (!again) {
+                        kids.forEach((c, i) => { if (c.visible && shrinking(c) && !held[i]) given[i] = given[i] - over * given[i] / basis })
+                        break
+                        }
+                }
+            } else if (flexN > 0) {
+                let free = room - rigid
+                kids.forEach((c, i) => { if (c.visible && shrinking(c)) free = free - given[i] })
+                for (let round = 0; round <= kids.length; round = round + 1) {
+                    let total = 0
+                    kids.forEach((c, i) => { if (c.visible && weight(c) > 0 && !held[i]) total = total + weight(c) })
+                    if (total <= 0) break
+                    const each = Math.max(0, free) / total
+                    let off = 0
+                    kids.forEach((c, i) => {
+                        if (!c.visible || weight(c) == 0 || held[i]) return
+                        given[i] = clamp(c, each * weight(c))
+                        off = off + given[i] - each * weight(c)
+                        })
+                    if (Math.abs(off) < 0.001) break
+                    kids.forEach((c, i) => {
+                        if (!c.visible || weight(c) == 0 || held[i]) return
+                        const want = each * weight(c)
+                        if ((off > 0 && given[i] > want) || (off < 0 && given[i] < want)) { held[i] = true; free = free - given[i] }
+                        })
+                }
+            }
+        }
+
+        // THE CROSS AXIS. Each child's extent across the flow — its footprint,
+        // unless this pass allocates the child a size (a share writes its
+        // width, a spacer its flow size), in which case the footprint would
+        // read an attribute this pass writes: then the raw cross attribute, or in a stack
+        // the share width itself. The LINE is the largest of them; `center`
+        // and `end` widen it to the BAND — the view's own cross content
+        // extent, or the line itself on a view that sizes itself from these
+        // very children (viewExtent answers 0 there). A baseline line is the
+        // deepest declared baseline, and only a row has one.
+        const cross = stack ? "x" : "y"
+        const crossSize = stack ? "width" : "height"
+        const allocated = (c) => flexing(c) || shares.has(c)
+        const crossExt = (c) => !allocated(c) ? c.footprint()[crossSize]
+                              : stack ? (shares.has(c) ? shareW(c) : c.width) : c.height
+        const crossLead = (c) => allocated(c) ? 0 : (stack ? c.footprint().x : c.footprint().y)
+        if (al == "baseline" && stack) this.refuseStackBaseline()
+        const onBaseline = al == "baseline" && !stack
+        let line = 0
+        let lineBase = 0
+        // stretch: a child its content sizes counts by that content, never by the
+        // size a stretch gave it (that would hold the line up once it shrank)
+        const naturalCross = stack ? "contentWidth" : "contentHeight"
+        const stretches = (c) => al == "stretch" && !(stack && shares.has(c)) && this.sizedByContent(c, crossSize)
+        // a stretch into a view with a cross size of its own fills that size,
+        // so the children's line is not measured for it
+        const banded = al == "stretch" && !this.sizedByChildren(crossSize)
+        for (const c of kids) {
+            if (!c.visible || hidden(c)) continue
+            if (!banded) line = Math.max(line, stretches(c) ? c[naturalCross] : crossExt(c))
+            const b = (c as any).baseline
+            if (onBaseline && typeof b == "number") lineBase = Math.max(lineBase, b)
+        }
+        if (al == "center" || al == "end") line = Math.max(line, this.viewExtent(crossSize))
+        else if (al == "stretch" && !this.sizedByChildren(crossSize)) line = this.viewExtent(crossSize)
+        const across = (c) => {
+            let o = 0
+            if (al == "center") o = (line - crossExt(c)) / 2
+            else if (al == "end") o = line - crossExt(c)
+            else if (onBaseline) {
+                const b = (c as any).baseline
+                if (typeof b == "number") o = lineBase - b
+                else if (c.visible) this.refuseBaseline(c)
+            }
+            return o - (onBaseline ? 0 : crossLead(c)) + (offsets.has(c) ? offsets.get(c) : 0)
+        }
+
+        let pos = 0
+        const boxes = kids.map((c, i) => {
+            if (hidden(c)) {
+                // excluded from the flow entirely: hidden, space reclaimed — and the
+                // plan has nothing new to say about its width, so it keeps the one it
+                // has where its content would size it (one it states, it keeps anyway)
+                return stack ? ({ x: 0, y: pos, vis: false, stretch: ({ w: c.width }) }) : ({ x: pos, y: 0, vis: false, stretch: ({ w: c.width }) })
+            }
+            // allocated children (share, flex) take their attribute raw; natural
+            // ones are placed by footprint, lead-compensated
+            const natural = !flexing(c) && !(stack ? false : shares.has(c))
+            const f = natural ? c.footprint() : null
+            const lead = f == null ? 0 : (stack ? f.y : f.x)
+            const box = (stack ? ({ y: pos - lead }) : ({ x: pos - lead })) as any
+            box[cross] = across(c)
+            if (shares.has(c)) box.w = shareW(c)                       // a share allocates width, both flows
+            // a spacer flexes along the flow axis; hidden, it keeps the size it has
+            if (flexing(c)) box[stack ? "h" : "w"] = c.visible ? given[i] : (stack ? c.height : c.width)
+            // every child its content sizes is made as large as the line; one
+            // that states its size keeps it (the runtime skips it)
+            if (al == "stretch") box.stretch = stack ? ({ w: line }) : ({ h: line })
+            const adv = flexing(c) ? given[i]
+                      : stack      ? (f as any).height
+                      : shares.has(c) ? shareW(c) : (f as any).width
+            if (c.visible) pos = pos + adv + gap
+            return box
+            })
+        // the plan is chosen by the width the view is given and its shares are
+        // cut from it, so the view has no content width of its own to report
+        return ({ boxes: boxes, contentWidth: null })
+        }
+    ]

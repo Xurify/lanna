@@ -1,0 +1,544 @@
+/*
+# Table
+
+The list collection, componentized: the selection-bearing, scroll-owning frame around a replicated (or
+written) collection, carrying the selection model so no app hand-rolls it again:
+
+- **Selection is the Table's value** — `selectedItem` (the primary item) and
+  `selection` (all of them, presented order), holding **items**: the record
+  for a replicated row, the row view itself for a written one. App-ownable:
+  derive `selection` down, take each change in `commit`; identity by the usual ladder (a record's `id` by convention, else
+  the object itself — the reconciler's own rule).
+- **The three facts**: selection, the anchor (where ranges extend from), and
+  the keyboard position `activeItem` — moved by arrows, extended by shift,
+  walked alone by ⌘ with Space toggling (discontiguous keyboard selection).
+- **`selects` declares the mode**: `none | single | multi` (default single).
+- Rows are TableRow instances — the RadioGroup discipline: direct children
+  reaching their table as `parent`, replicated over data or written by hand.
+  The row template stays free of any selection wiring.
+- Windowing composes: put `virtualize` on the row template and selection,
+  ranges, and keyboard travel keep working — items are read from the data
+  through any row's cursor, never from instances, so an unmaterialized row
+  can be range-selected and arrow travel scrolls it into existence (rows are
+  assumed uniform in height).
+
+    Table [ width = 300, height = 400, datapath = { app.d.value },
+        selects = "multi",
+        selection = { app.chosen }, commit(sel: object) { app.chosen = sel },
+        TableRow [ datapath = :rows[], height = 30,
+            t: TextLabel [ x = 8, text = :label ] ] ]
+
+```declare
+App [ width = 320, height = 200,
+    d: Dataset { { "rows": [ { "id": 1, "label": "Ada" },
+                             { "id": 2, "label": "Grace" },
+                             { "id": 3, "label": "Alan" } ] } },
+    t: Table [ x = 20, y = 20, width = 200, height = 100, datapath = { d.value },
+        selects = "multi",
+        TableRow [ datapath = :rows[], height = 26,
+            Text [ x = 8, y = center, text = :label ]
+            ]
+        ],
+    Text [ x = 20, y = 140, text = { (t.selection ?? []).length + " selected" } ]
+    ]
+```
+
+## _topInset
+**Internal.** The height of what is pinned over the rows' top (a `DataGrid`'s header), which `showRow` keeps a row clear of.
+
+## selectedItem
+The primary selected *item* — the record most recently selected, or `null`.
+Items, not views: **selection survives sorts, filters, and windowing** because it was
+never a set of instances.
+
+## selection
+Every selected item, in presented order — `null` when nothing is selected. Records
+for a replicated table, the row views themselves for a written one. To own it, derive it
+down from your state (`selection = { app.chosen }`) and take each change in `commit`.
+**Never assign it from a handler; select through `commit`.**
+
+## activeItem
+The item the keyboard stands on — moved by arrows, and distinct from the selection,
+which is what makes ⌘-walk-then-Space possible.
+
+## selects
+The mode: `"none"`, `"single"` (the default), or `"multi"`. Multi is what enables
+shift-ranges, ⌘-toggles, and the ⌘-walk.
+
+## commit()
+**Where the selection goes.** `commit(sel)` receives the new selection: an array of items
+in presented order (records for a replicated table, the row views for a written one), or
+`null` when nothing is selected. The default writes `selectedItem` (the last of them) and
+`selection`; override it to own the value, and derive `selection` from that value so the
+table shows it — `selection = { app.chosen }, commit(sel: object) { app.chosen = sel }`.
+Every gesture — click, range, keyboard — routes through your override, because they all
+land here; `selectedItem` is then yours to read from your value (the last of it). A program selects the same way: `list.commit([item])` selects one item,
+`list.commit(null)` none.
+
+## clearSelection()
+Delivers an empty selection through `commit`.
+
+## selectAll()
+Delivers every item that can be selected through `commit`, in a `"multi"` table: what ⌘A
+(Ctrl+A off the Mac) does while the table has the focus, and what a Select All button calls.
+The items are the ones the table holds; selecting everything a service would match, beyond
+what is loaded, is the program's (a selection that stands for a query).
+
+## deleteRequested()
+**Delivery seam — the app declares what deleting is.** Fires on Delete or Backspace
+while there is a selection *and the table itself holds focus*, so a text field's
+Backspace is never mistaken for it. Does nothing by default: refusal by inertness.
+
+## activateRequested()
+**Delivery seam — the app declares what opening is.** Fires on Enter on the walked row,
+under the same focus condition. The list idiom's other half.
+
+## rowClick()
+The click protocol: plain click selects exactly one item, ⌘/Ctrl toggles, Shift
+extends from the anchor. Called by a `TableRow`; override to change what a click means.
+
+## step()
+Arrow-key travel: plain moves and selects, Shift extends the range, ⌘ moves the
+position alone so Space can toggle it. Scrolls the destination into view.
+
+## showRow()
+Scrolls a row into view by index — **using its instance when one exists, and arithmetic
+when it does not**, so arrow travel into unmaterialized rows works and materializes on
+arrival.
+
+## itemArray()
+The full item universe, read from the **data** through any row's cursor — never from
+instances. This is the windowing contract: a table over a virtualized collection can
+range-select rows that have never been built.
+
+## itemAt()
+The item at a logical index.
+
+## itemCount()
+How many items there are — the full logical count, not what is materialized.
+
+## selectable()
+Whether an item can be selected and stood on — `true` for every item by default. Clicks,
+ranges, arrows, Home and End pass over an item it refuses, so a heading between rows is
+never selected. Override it to say which items are rows a person picks:
+`selectable(m: object) -> boolean { return m.heading == null }`.
+
+## isSelected()
+Whether a item is in the selection, by identity.
+
+## isActive()
+Whether a item is the keyboard position, by identity.
+
+## idOf()
+A item's identity: its scalar `id` field by convention, else the object itself — the
+same ladder the reconciler uses, so **nothing needs declaring for selection to survive
+a re-sort**.
+
+## same()
+Whether two items are the same one, by `idOf`.
+
+## _anchorIndex
+**Internal.** Where a shift-range extends from.
+
+## activeIndex
+The keyboard position as a logical index. A program that moves the keyboard itself sets
+it together with `activeItem`, the record at that position.
+
+## _activeView
+**Internal.** The row view at the keyboard position, reported by the row itself (in a `DataGrid`, the cell).
+
+## accessibilityActiveItem
+The row view at the keyboard position: a screen reader hears the row the arrows land on while the table keeps
+the focus.
+
+## accessibilityMultiselectable
+True when `selects` is `"multi"`, so a screen reader says more than one row can be chosen.
+
+## onKeyDown
+Arrows, Home/End, Space (multi), ⌘A or Ctrl+A (multi: `selectAll`), Delete/Backspace and
+Enter. Every other key goes on
+through the walk, so Escape bound on the table, a container or the App is heard while the
+table has the focus. An override should call through or the table loses its keyboard.
+
+## focusScope
+`stop`: the table is one Tab stop, holding focus itself while the arrows move the
+active row; a row's own controls are not stops in the walk past it. Enter opens the
+active row (`activateRequested`); a program that opens a row into controls focuses the
+first of them, and Tab then walks that row's controls; Esc returns focus to the table.
+
+## _isTable
+**Internal.** The marker rows guard on, so a bare `TableRow` under a plain parent boots
+rather than crashing into a missing protocol — not API.
+*/
+
+include [ "control.declare" ]
+
+class Table extends Control [
+    // the marker rows guard on: a bare TableRow under a plain parent must
+    // boot, not crash into a missing protocol
+
+    _isTable: boolean = true,
+
+    // one Tab stop that keeps focus and moves an active row (planes.md §13.6)
+
+    focusScope = stop,
+
+    // ── the value ─────────────────────────────────────────────────────────
+
+    selectedItem: object = null,   // the primary selected item, or null
+
+    // a list whose rows are picked, one or several: to a screen reader a list box
+    // of options (DataGrid, whose rows hold cells, is a grid)
+
+    accessibilityRole = listbox,
+    selection: array? = null,   // every selected item, presented order (null = none)
+
+    // the keyboard position — the item the keyboard stands on
+
+    activeItem: object = null,
+
+    // the mode: "none" | "single" | "multi"
+
+    selects: string = "single",
+
+    // ── internals: the anchor and the active index (logical, data order) ──
+
+    _anchorIndex: number = -1,
+    activeIndex: number = -1,
+
+    // the row (in a grid, the cell) the keyboard is on, as a view: the row
+    // reports it, since only a row knows it is the one shown for that index,
+    // and a screen reader is told of it while the table keeps the focus
+
+    _activeView: View? = null,
+    accessibilityActiveItem = { _activeView },
+    accessibilityMultiselectable = { selects == "multi" },
+
+    // ── identity — the ladder's keyless rungs, shared with the reconciler
+    //    by convention: a record's scalar `id` is its identity; anything
+    //    else compares as itself ───────────────────────────────────────────
+
+    idOf(m: object) -> object { return m != null && typeof m == "object" && !Array.isArray(m) && m.id !== undefined && typeof m.id != "object" ? m.id : m },
+    same(a: object, b: object) -> boolean { return this.idOf(a) === this.idOf(b) },
+    isSelected(m: object) -> boolean { return (this.selection ?? []).some(s => this.same(s, m)) },
+    isActive(m: object)   -> boolean { return this.activeItem != null && this.same(this.activeItem, m) },
+
+    // which items are picked and stood on: all of them, unless a subclass or a
+    // use site says otherwise (a heading between rows is not one)
+
+    selectable(m: object) -> boolean { return true },
+
+    // ── the delivery seam: every gesture lands here; the default writes
+    //    the value attributes, a use-site override redirects ───────────────────
+
+    commit(sel: object) {
+        selection = sel
+        selectedItem = sel != null && sel.length > 0 ? sel[sel.length - 1] : null
+        },
+
+    clearSelection() { commit(null) },
+
+    // every item that can be selected (⌘A, Ctrl+A); the anchor stays where it was
+
+    selectAll() {
+        if (selects != "multi" || disabled) return
+        commit((this.itemArray() ?? []).filter((m) => this.selectable(m)))
+        },
+
+    // ── the item universe, read from data (never instances — the
+    //    windowing contract). A replicated table reaches its array through
+    //    any row's cursor; a written table's items are its TableRow
+    //    children. Handlers only — presentation code derives from the value.
+
+    itemAt(i: number) -> object {
+        const arr = this.itemArray()
+        return arr != null ? arr[i] : null
+        },
+    itemArray() -> array {
+        // the probe must be a row (a subclass may hold other cursor-bearing
+        // children — DataGrid's header island rides a different dataset)
+        const probe = this.children.find(c => (c as TableRow)._isTableRow === true && c.datapath != null && (c.datapath as DataCursor).data != null) as any
+        if (probe != null) return probe.datapath.data.read(probe.datapath.path.slice(0, -1))
+        return this.children.filter(c => (c as TableRow)._isTableRow === true)
+        },
+    itemCount() -> number {
+        const arr = this.itemArray()
+        return arr != null ? arr.length : 0
+        },
+
+    // ── the click protocol ────────────────────────────────────────────────
+
+    rowClick(i: number, m: object, toggle: boolean, range: boolean) {
+        if (selects == "none" || disabled || !this.selectable(m)) return
+        activeIndex = i
+        activeItem = m
+        if (selects == "multi" && range && _anchorIndex >= 0) {
+            const arr = this.itemArray() ?? []
+            const lo = Math.min(_anchorIndex, i), hi = Math.max(_anchorIndex, i)
+            commit(arr.slice(lo, hi + 1).filter((m) => this.selectable(m)))
+            return
+            }
+        _anchorIndex = i
+        if (selects == "multi" && toggle) {
+            const cur = selection ?? []
+            commit(this.isSelected(m) ? cur.filter(s => !this.same(s, m)) : cur.concat([m]))
+            return
+            }
+        // plain click: exactly this item (⌘-click on single deselects)
+        commit(toggle && this.isSelected(m) ? null : [m])
+        },
+
+    // arrows move active; plain = select-and-move, shift = extend the range,
+    // ⌘ = move alone (Space toggles) — keyboard parity for discontiguous
+    // selection. Home/End jump, same modifiers.
+
+    // `dir` is the way to look for an item that can be stood on, when the one
+    // at `to` cannot (a heading): on past it, and nowhere if there is none
+
+    step(to: number, e: KeyEvent, dir: number) {
+        const n = this.itemCount()
+        if (n == 0) return
+        let i = Math.max(0, Math.min(n - 1, to))
+        while (i >= 0 && i < n && !this.selectable(this.itemAt(i))) i = i + dir
+        if (i < 0 || i >= n) return
+        activeIndex = i
+        activeItem = this.itemAt(i)
+        this.showRow(i)
+        if (e.meta || e.ctrl) return                       // the ⌘-walk: position only
+        if (selects == "none") return
+        if (selects == "multi" && e.shift && _anchorIndex >= 0) {
+            const arr = this.itemArray() ?? []
+            const lo = Math.min(_anchorIndex, i), hi = Math.max(_anchorIndex, i)
+            commit(arr.slice(lo, hi + 1).filter((m) => this.selectable(m)))
+            return
+            }
+        _anchorIndex = i
+        commit([this.activeItem])
+        },
+
+    // ensure the active row is on screen: use its instance when one exists;
+    // an unmaterialized target scrolls by arithmetic (rows are assumed
+    // uniform in height) and materializes on arrival.
+
+    showRow(i: number) {
+        const inst = this.children.find(c => (c as TableRow)._isTableRow === true && (c as TableRow).tableIndex() == i)
+        if (inst != null && _topInset == 0) { inst.scrollIntoView("nearest"); return }
+        const some = this.children.find(c => (c as TableRow)._isTableRow === true)
+        const unit = some != null && some.height > 0 ? some.height : 24
+        const top = inst != null ? inst.y : _topInset + i * unit
+        const h = inst != null ? inst.height : unit
+        // what stands pinned over the top of the rows (a grid's header) is not
+        // room to show a row in
+        if (top - _topInset < this.scrollY) this.scrollTo(top - _topInset)
+        else if (top + h > this.scrollY + this.height) this.scrollTo(top + h - this.height)
+        },
+    _topInset: number = 0,
+
+    onKeyDown(e: KeyEvent) {
+        // the table's own keys; every other — Tab, Escape, a key a binding
+        // further out answers — goes on through the walk (key-bindings.md)
+        if (!disabled) {
+            if (e.repeat && e.key == " ") return
+            if (e.key == "ArrowDown")    { step(activeIndex + 1, e, 1); return }
+            if (e.key == "ArrowUp")      { step(activeIndex - 1, e, -1); return }
+            if (e.key == "Home")         { step(0, e, 1); return }
+            if (e.key == "End")          { step(this.itemCount() - 1, e, -1); return }
+            if (e.key == " " && selects == "multi" && activeIndex >= 0 && this.selectable(this.itemAt(activeIndex))) {
+                // toggle at the position — the ⌘-walk's other half
+                const m = this.itemAt(activeIndex)
+                const cur = selection ?? []
+                _anchorIndex = activeIndex
+                commit(this.isSelected(m) ? cur.filter(s => !this.same(s, m)) : cur.concat([m]))
+                return
+                }
+            if (selects == "multi" && (e.meta || e.ctrl) && !e.alt && !e.shift && (e.key == "a" || e.key == "A")) {
+                this.selectAll()
+                return
+                }
+            if ((e.key == "Delete" || e.key == "Backspace") && (selection ?? []).length > 0) {
+                this.deleteRequested()                     // the list idiom: Delete acts on the selection
+                return
+                }
+            if (e.key == "Enter" && !e.repeat && activeIndex >= 0) {
+                this.activateRequested()                   // …and Enter opens what the walk landed on
+                return
+                }
+            }
+        super.onKeyDown(e)
+        },
+
+    // Delete/Backspace with a selection, delivered only while the table is the
+    // focus (target-only keys) — so a field's Backspace is never confused for
+    // it. A delivery seam like Menu's `picked`: the app declares the verb;
+    // the default is refusal-by-inertness.
+
+    deleteRequested() { },
+
+    // Enter on the walked row — the list's "open this" verb, delivered only
+    // while the table itself holds focus, so a field's Enter is never it.
+    // Same seam shape as `deleteRequested`: the app declares what opening is.
+
+    activateRequested() { },
+
+    // rows stack — a vertical SimpleLayout, which the windowing kernel
+    // composes with (full mode stacks written or short lists; a windowed
+    // row template suspends the pass and folds the spacing into its unit)
+
+    layout: SimpleLayout [ axis = y ],
+
+    // one tab stop (the browse focus policy); rows are never stops
+
+    scrolls = y,
+    clip = true
+    ]
+
+
+/*
+# TableRow
+
+One row of a `Table`: a direct child of it, replicated over data (`datapath = :rows[]`)
+or written by hand. A row carries no selection wiring of its own — it reads whether it
+is selected or active from its table, and hands clicks to the table's `rowClick`. It is
+never a tab stop: the table holds focus, so the arrow keys land on the container.
+
+```declare
+App [ width = 320, height = 170,
+    d: Dataset { { "rows": [ { "id": 1, "label": "Ada" }, { "id": 2, "label": "Grace" } ] } },
+    t: Table [ x = 20, y = 20, width = 220, height = 60, datapath = { d.value },
+        TableRow [ datapath = :rows[], height = 28,
+            Text [ x = 8, y = center, text = { :label + (parent.selected ? "  ✓" : "") } ]
+            ]
+        ],
+    Text [ x = 20, y = 110, text = "Click a row: its own selected fact follows." ]
+    ]
+```
+
+## selected
+Whether this row's item is in its table's selection — derived from the table, never
+stored.
+
+## active
+Whether this row is its table's keyboard position.
+
+## _reportsActive
+**Internal.** Whether the row reports itself as its table's keyboard position; off for a
+grid's rows, whose cells report themselves.
+
+## _reportActive()
+**Internal.** The row that becomes its table's keyboard position records itself as the
+table's `_activeView`; one that stops being it, a recycled row handed another record, takes
+itself back.
+
+## item()
+The item this row presents: its **record** when replicated, the row view itself when
+written by hand.
+
+## tableIndex()
+This row's logical index in data order — its `rowIndex` when replicated, so it is true
+under windowing; -1 for a row windowing has parked, which presents no record. A method
+rather than an attribute because its consumers are gestures, and the
+written-row fallback walks children, which no constraint may do.
+
+## onPointerDown
+Focuses the **table**, not the row — rows are never tab stops, so the arrow keys must
+land on the container.
+An override calls `super.onPointerDown()`, or the arrow keys have nowhere to land.
+
+## onClick
+Delivers the click to the table's `rowClick` with the modifier state. Override
+`rowClick` on the table rather than this, unless a particular row needs to opt out.
+
+## _isTableRow
+**Internal.** The marker the table's walks key on — not API.
+
+## width
+As wide as its table; a row never sizes itself.
+
+## fill
+Selected takes the selected tint, hovered the hover tint, otherwise none — a row is transparent so the table's own ground shows through.
+
+## stroke
+The active row shows an accent ring only while the table's focus is visible (keyboard, not pointer) — the rule every control's focus ring follows.
+
+## accessibilitySelected
+Follows `selected`.
+*/
+
+class TableRow extends Control [
+    // the marker Table's walks key on (a plain fact, minifier-safe)
+
+    _isTableRow: boolean = true,
+
+    // The item this row presents: its record when replicated (the whole
+    // region at its cursor), the row view itself when written.
+
+    item() -> object { return this.datapath != null ? :@ : this },
+
+    // the row's logical index — its rowIndex when replicated (true data
+    // order, windowing included); a written row asks its position among its
+    // table's row children. A method, not a derived
+    // attribute: its consumers are gestures (handlers), and the written-item
+    // fallback walks children, which no constraint may aggregate.
+
+    tableIndex() -> number {
+        if (rowIndex >= 0) return rowIndex
+        if (this.datapath != null) return -1   // replicated, presenting no record (a parked row)
+        if ((parent as Table)._isTable !== true) return -1
+        return (parent as Table).children.filter(c => (c as TableRow)._isTableRow === true).indexOf(this as any)
+        },
+
+    // the selection facts, derived from the table's value — a row presents
+    // membership, it never stores it
+
+    selected: boolean = { (parent as Table)._isTable === true && (parent as Table).isSelected(this.item()) },
+    accessibilityRole = option,
+    accessibilitySelected = { selected },
+    active:   boolean = { (parent as Table)._isTable === true && (parent as Table).isActive(this.item()) },
+
+    // a row that becomes the active one says so to its table, and one that stops
+    // being it (a recycled row handed another record) takes itself back
+
+    // Heard by this member, not by the row's own handlers, so a use site's
+    // `trackChanges` and `onChange` are its own.
+
+    _reportsActive: boolean = true,
+    _watch: Node [
+        on: boolean = { classroot._reportsActive && classroot.active },
+        trackChanges = ["on"],
+        onChange() { classroot._reportActive() }
+        ],
+    _reportActive() {
+        const t = parent as Table
+        if (t._isTable !== true) return
+        if (_reportsActive && active) t._activeView = this
+        else if (t._activeView == this) t._activeView = null
+        },
+
+    // rows are never tab stops (the one-stop policy): the table is the stop
+    // and the keyboard position moves inside it. A pointer press on a row
+    // therefore focuses the table (Control's default would claim focus for
+    // the row itself, stranding the arrow keys).
+
+    focusable = false,
+
+    onPointerDown() {
+        if (!disabled && (parent as Table)._isTable === true) Focus.focus(parent as any)
+        },
+
+    // a press with no pointer behind it (a screen reader's, a program's) holds no keys
+
+    onClick(e?: PointerEvent) {
+        if (disabled || (parent as Table)._isTable !== true) return
+        (parent as Table).rowClick(this.tableIndex(), this.item(), e != null && (e.meta || e.ctrl), e != null && e.shift)
+        },
+
+    // quiet defaults, styled against the theme; use sites override freely
+
+    width = { (parent as Table).width },
+
+    // on the shared ladder, so a selected row and a selected segment mean the
+    // same tokens
+
+    fill = { selected ? provided("theme").controlSelected : hovered ? provided("theme").controlHovered : null },
+    stroke = { active && (parent as Table).focusVisible ? Stroke(1, provided("theme").accent) : null }
+    ]

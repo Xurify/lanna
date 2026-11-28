@@ -1,0 +1,157 @@
+/*
+# Breadcrumb
+
+The path to where you are — Home › Guide › Layout — each step a way back up. The steps are
+**records**, outermost first; the last is where you are, shown in the stronger ink and not
+pressable. A step with a `location` is a real link (⌘-click, copy link, the crawler); one
+without is a button that hands its `id` to `commit`:
+
+```declare
+App [ width = 400, height = 80, at: string = "layout",
+    Breadcrumb [ x = 20, y = 20,
+        items = { [ ({ id: "home", label: "Home" }),
+                    ({ id: "guide", label: "Guide" }),
+                    ({ id: "layout", label: "Layout" }) ] },
+        commit(id: string) { app.at = id } ]
+    ]
+```
+
+To a screen reader it is a navigation landmark named "Breadcrumb", its steps links or
+buttons, the last one the current page. Each step is a Tab stop, as links are.
+
+## items
+The steps, as **records**: `{ id, label }`, with a `location` to make a step a link.
+
+## commit()
+**Where a step goes** when it has no `location`, receiving its `id`. Does nothing by default;
+override it.
+
+## accessibilityLabel
+"Breadcrumb", the landmark's name; set your own where a page has more than one.
+
+## datapath
+Roots the row on its own records, so the steps replicate without a datapath of yours.
+
+## height
+The theme's `segmentedHeight`, so a breadcrumb lines up with the controls beside it.
+*/
+
+include [ "control.declare", "icons/core.declare" ]
+
+class Breadcrumb [
+    accessibilityRole = navigation,
+    accessibilityLabel = "Breadcrumb",
+    items: array = [],
+    commit(id: string) { },
+
+    height = { provided("theme").segmentedHeight },
+    layout: SimpleLayout [ axis = x, spacing = 4, align = center ],
+
+    _rows: Dataset [ contents = { { steps: ((classroot.items ?? []) as any).map((c, i, all) => ({ ...c, i: i, last: i == all.length - 1 })) } } ],
+    datapath = { this._rows.value },
+    BreadcrumbStep [ datapath = :steps[], classFor = { :last == true ? BreadcrumbCurrent : :location != null ? BreadcrumbLink : BreadcrumbStep } ]
+    ]
+
+
+/*
+# BreadcrumbStep
+
+**Internal.** One step of a `Breadcrumb`, built from its records, with its separator before it (the first has none).
+
+## label
+The step's text.
+
+## current
+Whether this is the last step — where you are.
+
+## location
+The step's place, when its record names one: the step is then a link to it.
+
+## link
+`"#"` + the `location`, or empty — a step is a link exactly when its record names a place,
+and never when it is the current one.
+
+## press()
+Hands the step's `id` to the breadcrumb's `commit`, for a step that is not a link.
+
+## onClick
+Presses.
+
+## accessibilityRole
+A button: a step with no place hands its `id` to the breadcrumb. (A step with a place is a
+`BreadcrumbLink`, the current one a `BreadcrumbCurrent`.)
+
+## accessibilityLabel
+The step's text, so the separator is not read as part of it.
+
+## focusable
+Every step but the current one.
+
+## width
+The separator and the label, side by side.
+
+## height
+As tall as the breadcrumb.
+
+## focusShape()
+Rings the label, not the separator before it.
+*/
+
+class BreadcrumbStep extends Control [
+    label: string = { "" + (:label ?? "") },
+    current: boolean = { :last == true },
+    location: string = { "" + (:location ?? "") },
+    link = { !current && location != "" ? "#" + location : "" },
+    press() { if (!current && location == "") ((this.parent as any) as Breadcrumb).commit("" + :id) },
+    onClick() { press() },
+
+    accessibilityRole = button,
+    accessibilityLabel = { label },
+    focusable = { !current && !disabled },
+
+    height = 100%,
+    width = { this._sep.width + this._t.width + 8 },
+
+    _sep: ChevronIcon [ y = center, iconSize = 12, dir = "right", visible = { :i > 0 },
+        width = { :i > 0 ? 14 : 0 }, ink = { provided("theme").textMuted } ],
+    _t: TextLabel [ x = { parent._sep.width + 4 }, wrap = false, fontSize = { provided("theme").segmentedFontSize },
+        fontWeight = { classroot.current ? "semibold" : "medium" },
+        textColor = { classroot.current || classroot.hovered ? provided("theme").text : provided("theme").textMuted },
+        text = { classroot.label } ],
+    _under: View [ x = { parent._t.x }, y = { parent._t.y + parent._t.height }, height = 1, width = { parent._t.width },
+        visible = { classroot.hovered && !classroot.current }, fill = { provided("theme").text } ],
+
+    focusShape() { return { x: this._t.x - 4, y: 2, w: this._t.width + 8, h: this.height - 4, rad: provided("theme").controlCornerRadius } }
+    ]
+
+
+/*
+# BreadcrumbLink
+
+**Internal.** A step of a `Breadcrumb` whose record names a `location`: a link to it, built in place of a `BreadcrumbStep`.
+
+## accessibilityRole
+A link.
+*/
+
+class BreadcrumbLink extends BreadcrumbStep [
+    accessibilityRole = link
+    ]
+
+
+/*
+# BreadcrumbCurrent
+
+**Internal.** The last step of a `Breadcrumb`, where you are: its text in the stronger ink, not pressable.
+
+## accessibilityRole
+None of its own: its text is read as it stands.
+
+## focusable
+Never: there is nowhere to go from where you are.
+*/
+
+class BreadcrumbCurrent extends BreadcrumbStep [
+    accessibilityRole = none,
+    focusable = false
+    ]

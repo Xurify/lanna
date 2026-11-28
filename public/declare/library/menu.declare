@@ -1,0 +1,814 @@
+/*
+# Menu
+
+The record-driven menu: **items are data** — the class arranges; the
+author never composes rows. The standard record covers real OS menus:
+
+    { id, label, key?, command?, icon?, enabled?, checked?, group?, divider?, submenu?, kind?, props?, minWidth? }
+
+- `key` renders right-aligned, as the person's keyboard spells it (`Ctrl+X` shows `⌘X` on a Mac — `Keyboard.keyLabel`) — display only; the menu registers no shortcut.
+- `command: "copy"` names a command the row runs instead of reaching `picked()`: it walks
+  from the view a context menu was opened on, else from where the person was working
+  (`Commands.run`), and the first view whose `keyBindings` bind it runs it. As the menu
+  opens, a row whose command no view answers, or answers disabled, is greyed.
+- `icon: "ClassName"` names an icon class for the leading column, and the label
+  shifts right to make room — the same vocabulary `Segmented`'s items use.
+  One field covers every mark, including the ones no font gives you; a computed
+  name needs its class kept with `use [ Name ]`, since no static reference
+  reaches it.
+- `checked: true` or `false` gives the row a check column, checked when true.
+  `group: "sort"` beside it makes the row one of a set — every row with that group is
+  one choice among them, as in a pop-up chooser or a sort order — and a screen reader
+  reads it so; a checked row with no group is a setting of its own.
+- `enabled: false` dims the row (provided("theme").disabledOpacity) and refuses pick.
+- `{ divider: true }` is a separator line.
+- `submenu: [ …records… ]` marks a cascade (the ▸ arrow).
+- `kind: "ClassName"` renders the row's content with a named author class
+  (app.createView — keep data-only classes with `use [ Name ]`), passed
+  `props` as its datapath context. Behavior stays the row's: highlight,
+  pick, keyboard are the menu's, always.
+- `minWidth` is the room a row needs when it has no label to measure — a
+  `kind:` row's own content. The panel is at least this wide; a longer label
+  elsewhere still wins. Only a custom row needs it.
+
+Declared once, opened by many: rows carry
+`onContextMenu(e) { app.rowMenu.showAt(this, e) }`; the menu's `items`
+constraint derives from `opener` — per-row variation with zero per-row
+instances, live while open. `showAt` point-positions (the context-menu
+rule); `showFor` drops below a control (the attached-menu rule); both
+place it in the overlay layer of its context — above everything opened before it — and clamp
+it inside the app. A menu is a `Floating` (floating.declare).
+
+Dismissal: a press outside closes the whole chain **and** is swallowed, the Mac rule (a
+submenu lets a press on its parent menu through); Escape closes the chain; pick closes
+after delivery.
+
+```declare
+App [ width = 320, height = 130,
+    chose: string = "",
+    edit: Menu [ items = { [ ({ id: "cut", label: "Cut", key: "⌘X" }),
+                            ({ id: "copy", label: "Copy", key: "⌘C", checked: true }),
+                            ({ divider: true }),
+                            ({ id: "paste", label: "Paste", enabled: false }) ] },
+        picked(id: string) { app.chose = id }
+        ],
+    Button [ x = 20, y = 20, label = "Edit", menu = { app.edit } ],
+    Text [ x = 20, y = 74, text = { app.chose == "" ? "nothing picked" : "picked: " + app.chose } ]
+    ]
+```
+
+## items
+The rows, as **records — never children**. A menu arranges its own rows, so handing it
+views is not merely discouraged, there is nowhere to put them. The record is
+`{ id, label, key?, command?, icon?, enabled?, checked?, group?, selected?, divider?, submenu?, kind?, props?, minWidth? }`
+(`selected` is read only in a list of choices, a menu whose role is `listbox`).
+**A row that does what a key binding does names its `command`** (`command: "undo"`): choosing
+it runs the binding's method — no switch on `id` in `picked()` — and the row greys while
+nothing answers it. Its `key` is written once, platform-neutral (`key: "Ctrl+Z"`), and shows
+as the person's keyboard spells it (⌘Z on a Mac);
+a plain array is fine (no `Dataset` required). Because it is an ordinary attribute it
+can be a constraint — **derive it from `opener` and one menu serves every row of a
+table**, live while it is open.
+
+## onOutsidePress
+A press outside closed it: the root closes the whole chain; a submenu closes itself and
+lets the press go on to its parent menu.
+
+## escape()
+Esc closes the whole chain.
+
+## picked()
+**The delivery seam — override it at the use site.** Receives the picked row's `id`,
+and the id is the whole message. Called *after* the menu has left the screen, so a slow
+action can never freeze an open menu; `opener` is still what it was opened for, so one menu
+serving every row knows which row was picked.
+
+## showFor()
+Opens the menu for `v` **anchored below it**, flipping above it when there is not room
+below and more room above — the native select discipline. The attached-menu rule; what
+`Control.menu` uses.
+
+## showAt()
+Opens the menu **at the pointer**, given the serving view and the pointer event — the
+context-menu rule. Clamped inside the app like any placement. A `ContextMenu` is a menu
+opened this way.
+
+## close()
+Takes the menu down, closes any cascade under it, and releases the keyboard claim.
+An override calls `super.close()`.
+
+## pick()
+Delivers a row: **dismisses first, then delivers**, one painted frame later — the
+native menu contract, and the reason a long-running action cannot leave a menu stranded
+on screen. A submenu routes to the root so the whole chain closes as one.
+
+## activeRow
+The row the keyboard rover currently highlights, or null when the pointer is driving.
+Read-only in practice.
+
+## takesFocus
+True: an open menu holds the focus, so a screen reader follows it, and hands it back to
+what had it when the menu closes. A `Combobox` turns it off for its list, whose field keeps
+the focus.
+
+## onKeyDown
+Takes nothing itself but Escape, which it hands on to its bindings (it closes): a menu's
+other keys are its rover's, which hears them however the focus lies. Declared so that a
+menu holding the focus inside a group (a menu bar's) is not walked by the group's arrows.
+
+## focusFirst()
+Holds the focus on the menu itself, never on a view inside it: the menu names the row
+the keys are on.
+
+## accessibilityActiveItem
+The highlighted row's item: a screen reader hears each row as the arrows reach it.
+
+## _asList
+**Internal.** A list of choices rather than commands — the menu's role is `listbox`, as a
+`Combobox` makes its list: each row is an `option`, not a `menuItem`, selected when its
+record says `selected: true`.
+
+## accessibilityLabel
+The opener's name, so a menu opened from "Styling" is the "Styling" menu.
+
+## hasIcons
+Whether any row carries an `icon` — which is what decides the icon gutter exists at
+all. **A menu with no icons has no gutter**, and the text edge moves accordingly.
+
+## hasChecks
+Whether any row *can* be checked — a record carrying `checked`, true or false — which
+is what decides the check column exists, exactly as AppKit reserves its state column
+for any item with a state image to draw. A menu of plain
+commands leads its text 17 in; one with a checkable row, 24.
+
+## _checkWidth
+**Internal.** What the check column adds to the leading air when it exists (7 — the Mac's 25.5 vs
+17.5, measured), else 0: the amount every column to its right shifts by.
+
+## _textEdge
+**Internal.** The x every row's label starts at — one line for the whole menu, icons or not, and
+where a `kind` row's content region begins.
+
+## width
+Follows the rows: the text edge, the widest label, then the key column or the trailing
+air — the metrics of a real macOS menu, measured (the longest label trails the edge by
+18; a key column sits 26 clear of the longest label and ends 16 from the edge; menu bar
+menus and popups measure the same). A use site's own `width` overrides; `minWidth`
+floors it.
+
+## minWidth
+The narrowest a menu gets, whatever its rows measure — a two-item menu of short words
+still reads as a menu.
+
+## _widestLabel
+**Internal.** The widest row label, measured — the content the panel's width is built from.
+
+## widestKey
+The widest key equivalent, measured; zero when no row carries one, which is what
+decides whether the key column exists.
+
+## hasSubs
+Whether any row opens a submenu — a cascade arrow needs its own trailing room.
+
+## widestCustom
+The widest `minWidth` any row asks for. A `kind:` row renders its own content and has no
+label to measure, so it states the room it needs in its record and the panel is at least
+that wide; a longer label elsewhere still wins.
+
+## expectedHeight()
+The panel's height *before it has been laid out*, measured when it exists and estimated
+from the record count when it does not. The flip-above decision cannot wait for a
+settle, which is why this exists.
+
+## place()
+Positions the panel at a point in the frame of the layer it paints in, moved as little as
+it must be to stay on the App — a menu opened in a window may hang past the window's edge,
+not off the App. The place is taken at open: menu chrome does not move while a menu is up.
+
+## isRoot
+False on a cascade child. The root owns the backdrop, the deferred delivery, and the
+Escape-closes-everything behaviour; a submenu delegates all three upward.
+
+## rootMenu
+The root of this menu's cascade chain — null on the root itself.
+
+## child
+The one lazily-created submenu instance, reused across every row that cascades. **A
+`Menu` cannot declare a `Menu` child** (it would recurse), so the cascade is built by
+name at first use.
+
+## openSub()
+Opens a row's `submenu`, creating the shared child menu on first use and placing it
+alongside the row.
+
+## closeSub()
+Closes the cascade under this menu, if any.
+
+## rootClose()
+Closes the entire chain from wherever it is called — what Escape and an outside press
+both do.
+
+## step()
+Moves the keyboard rover by ±1 over the pickable rows, skipping dividers, disabled rows
+and custom-content rows, and scrolls the landing row into view.
+
+## _typed
+**Internal.** The letters typed so far, while typing continues.
+
+## _typedAt
+**Internal.** When the last letter was typed; after a second's pause the next letter starts
+over.
+
+## _typeTo()
+**Internal.** Moves the highlight to the first enabled row whose label starts with what has been typed:
+the prefix grows while typing continues and starts over after a pause, and the same
+letter again goes on to the next row that starts with it.
+
+## pickActive()
+Picks the roved row — Enter's action. On a row with a `submenu` it enters the cascade
+instead.
+
+## sideways()
+**Where Right and Left go past the menu's own levels**: Right on a row with no submenu, Left
+in the top menu. Nothing by default; a `MenuBar` answers it by opening the menu beside
+this one, as every desktop menu bar does.
+
+## enterSub()
+Enters the roved row's submenu and puts the rover on its first row — ArrowRight's action.
+
+## _driveSub()
+**Internal.** Pushes items, placement and delivery into the shared child menu.
+
+## _closeIt()
+**Internal.** Null-safe close, the untyped seam across files.
+
+## _subShown()
+**Internal.** Whether a cascade child is currently up, so the deeper menu takes the keys.
+
+## _rowsOf()
+**Internal.** The row views of a panel body, for the rover's walk.
+
+## _revealRow()
+**Internal.** Scrolls a roved row into view in a menu long enough to scroll.
+
+## _pickRow()
+**Internal.** Picks or enters a specific row view.
+
+## _pickItem()
+**Internal.** A picked row: runs its `command` from where commands start, closing the chain
+first; a row without one goes to `pick()`.
+
+## _commandOn()
+**Internal.** Whether a row's command is there to run, as the menu opens: its greying.
+
+## _commandFrom()
+**Internal.** Where this menu's commands start: the view a context menu was opened on, else
+nowhere named (the last focus outside command chrome).
+
+## _menuRoot()
+**Internal.** The chain's root menu.
+
+## _context
+**Internal.** Opened at a point on a view (`showAt`): a context menu, whose commands act on
+that view.
+
+## _commandChrome
+**Internal.** A menu is command chrome: its focus is never where a command starts.
+
+## _enterRow()
+**Internal.** Enters a specific row's submenu.
+
+## _stepIn()
+**Internal.** Puts the rover on a freshly opened cascade's first row.
+
+## visible
+Derived from `shown`, the menu's own open fact. Visibility is never set from outside — `showAt` and `showFor` set the fact, and dismissal clears it.
+
+## selectable
+Chrome, never prose: a menu's rows do not select, even inside a `selectable` region — the same provision every `Control` makes for its label.
+
+## height
+As tall as its panel, which is as tall as its rows — capped just inside the app's
+height, past which the panel scrolls its rows and the rover keeps the landing row in
+view.
+
+## pressPolicy
+`dismiss` for the root — an outside press closes the chain and goes no further; `dismissAndDeliver` for a submenu, so a press on its parent menu goes on to it, and for a `listbox` (a combobox's suggestions, beside a field), so a press elsewhere goes on to what was pressed.
+*/
+
+include [ "control.declare" ]
+
+include [ "floating.declare" ]
+
+// a menu row, as data — the checker holds an `items` record to it, so a
+// misspelled field is a compile error, not a row that silently lacks it
+
+schema MenuItemRecord [ id?: string, label?: string, key?: string, command?: string, icon?: string, enabled?: boolean,
+    checked?: boolean, group?: string, selected?: boolean, divider?: boolean, submenu?: any, kind?: string, props?: any,
+    minWidth?: number ]
+
+class Menu extends Floating [
+    accessibilityRole = menu,
+
+    // the menu holds the focus while it is open, and names the row the keys are
+    // on, so a screen reader follows the highlight; it hands the focus back on close
+
+    takesFocus = true,
+    accessibilityActiveItem = { this.activeRow == null ? null : this._asList ? (this.activeRow as any).opt : (this.activeRow as any).item },
+
+    // a list of choices rather than commands — a combobox's list, made with the
+    // listbox role: its rows are options
+
+    _asList: boolean = { accessibilityRole == "listbox" },
+    focusFirst() { this._holdFocusItself() },        // the menu itself, never a view inside it
+
+    // its keys are its rover's (the _keys member below): a menu holding the focus
+    // inside a group, as a menu bar's does, is not walked as one of its members
+
+    onKeyDown(e: KeyEvent) { if (e.key == "Escape") super.onKeyDown(e) },
+    accessibilityLabel = { this.opener == null ? "" : "" + ((this.opener as any).accessibilityLabel || (this.opener as any).label || "") },   // named for what opened it
+
+    // a Floating in the floating layer (floating.declare): it paints above
+    // everything in its context and places itself where it opens. A menu
+    // appears and goes at once — no motion. An outside press closes the chain
+    // and goes no further; a submenu lets a press on its parent menu through.
+
+    pressPolicy = { this.isRoot && accessibilityRole != "listbox" ? "dismiss" : "dismissAndDeliver" },
+    scrollPolicy = "block",
+    visible = { shown },
+    height = { this._panel.height },
+
+    // A menu is chrome, not prose: its rows never select, even inside a
+    // `selectable` region — the same provision `Control` makes for a label.
+
+    selectable = false,
+
+    // Width follows the rows, at a native menu's metrics: with a check column
+    // the text leads the panel edge by 25.5 (_textEdge, below) and the longest
+    // label trails it by 17.5; with key equivalents the longest label sits 26
+    // clear of the key column, which ends 16 from the edge. The widest label
+    // and key are measured from the records, which is what the rows are built
+    // from — a fold over data, not an aggregate over live children (which the
+    // checker rightly refuses). A use site's own `width` overrides. Measured in
+    // the face the rows are actually drawn in: a row's `TextLabel` sets only
+    // its `fontSize` and inherits the rest, and `providedTextStyle` is that
+    // inherited face, so the measurement and the run cannot disagree.
+
+    _widestLabel: number = { Math.max(0, ...(this.items || []).map((r) =>
+        r.label == null ? 0 : measureText("" + r.label, providedTextStyle(({ fontSize: 13 }))).width)) },
+    widestKey:   number = { Math.max(0, ...(this.items || []).map((r) =>
+        r.key == null ? 0 : measureText("" + r.key, providedTextStyle(({ fontSize: 12 }))).width)) },
+    hasSubs:     boolean = { (this.items || []).some((r) => r.submenu != null) },
+
+    // A `kind:` row carries its own content and so has no label to measure — the
+    // runs above see an empty string for it. Such a row states the room it needs
+    // as `minWidth` in its record (a Help menu's search field: a capsule with a
+    // placeholder is not a label), and the panel is at least that wide. Read off
+    // the items (data), not the built rows, so it stays a plain fold.
+
+    widestCustom: number = { Math.max(0, ...(this.items || []).map((r) => r.minWidth || 0)) },
+
+    // The house floor: a menu narrower than this reads as a mistake rather
+    // than as a tight fit.
+
+    minWidth = 120,
+    width = { Math.max(minWidth, widestCustom, _textEdge + _widestLabel + (widestKey > 0 ? 26 + widestKey + 16 : hasSubs ? 34 : 18)) },
+
+    items: MenuItemRecord[]? = null,
+
+    // The column model: a check column exists when some row in this menu can be
+    // checked — a record carrying `checked`, true or false — the way a native
+    // menu reserves its state column for any item with a state image to draw;
+    // a menu whose rows carry no `checked` leads its text 17 in. An icon column
+    // exists only when some row carries an icon (no icons → no gutter at all);
+    // and the text's left edge is one line for every row, icons or not. Custom
+    // (kind) rows align their content to the same text edge.
+    //   check col (iff hasChecks): x 7..24   ·   icon col (iff hasIcons): x 24..44 (17..37 without checks)
+    //   text edge: 50 with icons, 24 without — 43 and 17 when no check column (the
+    //   column's own increment is 7: a native menu's 25.5 against its 17.5)
+    //
+    // The 6px between the icon column and the text edge matches a native
+    // menu's average air between icon and label, not its minimum: native
+    // symbols carry side bearing, so only the widest glyph comes close to the
+    // label while most sit well clear. Ours are drawn to fill their 16px box,
+    // so matching the minimum would land every row at that tight extreme at
+    // once, which reads as crowding.
+
+    hasIcons:  boolean = { (this.items || []).some((r) => r.icon != null) },
+    hasChecks: boolean = { (this.items || []).some((r) => r.checked != null) },
+    _checkWidth: number = { hasChecks ? 7 : 0 },
+    _textEdge: number   = { (hasIcons ? 43 : 17) + _checkWidth },
+
+    // the cascade: one lazily-created Menu made beside this one (createView —
+    // a Menu cannot declare a Menu child without recursing), reused across rows;
+    // rootMenu threads to the chain's root (null on the root). activeRow is
+    // the keyboard rover's highlight. View-typed attributes can't see Menu
+    // members, so all child-driving goes through any-typed method params —
+    // the untyped seam, used deliberately.
+
+    isRoot: boolean = true,
+    rootMenu: Menu? = null,
+    child: Menu? = null,
+    activeRow: View? = null,
+
+    // typeahead: letters typed while the menu has the keys move the rover to the
+    // first row whose label starts with them — the prefix grows while typing
+    // continues and starts over after a pause; one letter again goes on to the
+    // next row with it. It moves the highlight only; Return still picks. Not
+    // while a text field has the focus (a combobox's entry): its letters are its own.
+
+    _typed: string = "",
+    _typedAt: number = 0,
+
+    // the delivery seam — the app overrides; the id is the whole message
+
+    picked(id: string) { },
+
+    // the panel's height before first paint: measured when it exists, else
+    // estimated from the records (the flip decision can't wait a settle)
+
+    expectedHeight() -> number {
+        const est = (this.items ?? []).length * (provided("theme").menuRowHeight) + 10
+        return Math.max(this.height, est)
+        },
+
+    showAt(v: View, e: PointerEvent) {
+        opener = v
+        _context = true
+        this.show()
+        const p = this.toLayer(v, e.x, e.y)
+        this.place(p.x, p.y)
+        },
+
+    // viewport-aware: the list drops below the control; when it wouldn't fit
+    // and there's more room above, it emerges above instead (the native
+    // select discipline). place() still clamps whatever remains.
+
+    showFor(v: View) {
+        opener = v
+        _context = false
+        this.show()
+        const h = this.expectedHeight()
+        const k = (host != null ? host.transformTo(this._screen()).scale : 1) * _baseScale
+        const up = this._toScreen(v, 0, v.height + 4).y + h * k > this._screen().height - 4 && this._toScreen(v, 0, -4).y - h * k >= 4
+        const p = up ? this.toLayer(v, 0, -4) : this.toLayer(v, 0, v.height + 4)
+        this.place(p.x, up ? p.y - h * _baseScale : p.y)
+        },
+
+    // place() takes a point in the layer's frame (showAt/showFor map the
+    // serving view's point there through root space — scroll-aware, and exact
+    // through a turned or scaled window) and keeps the panel on the App. It is
+    // taken at open: menu chrome doesn't move while a menu is up.
+
+    place(x: number, y: number) {
+        const p = this.keepOnApp(x, y, this.width * _baseScale, this.expectedHeight() * _baseScale)   // the rows are built as it opens: estimated until then; at its shown scale
+        this.x = p.x
+        this.y = p.y
+        },
+
+    close() {
+        this.closeSub()
+        activeRow = null
+        super.close()
+        opener = null
+        },
+
+    // an outside press closes the whole chain from the root; one that reaches a
+    // submenu from its parent menu closes only the submenu (and goes on)
+
+    onOutsidePress() { if (isRoot) this.rootClose(); else this.close() },
+
+    // Esc closes the whole chain (the desktop rule)
+
+    escape() { this.rootClose() },
+
+    // A pick dismisses first, then delivers — the native menu contract: the
+    // takedown is part of the gesture, so a long action can never freeze an
+    // open menu on screen. Delivery waits for the next frame — afterDelay(0, …)
+    // runs once the frame without the menu has been shown. Submenus route
+    // synchronously to the root: the chain closes as one, and only the root
+    // defers the app-facing delivery.
+
+    // `opener` outlives the close until the pick is delivered: a menu one instance
+    // serves for every row reads which row in `picked()`
+
+    pick(id: string) {
+        if (!isRoot) { this.picked(id); this.close(); return }
+        const o = opener
+        this.close()
+        opener = o
+        afterDelay(0, () => {
+            this.picked(id)
+            if (!shown && opener == o) opener = null
+            })
+        },
+
+    // ── the cascade ────────────────────────────────────────────────────────
+
+    // `row`/`r` below are typed `object` — a row is an anonymous replicated
+    // template (the `datapath = :rows[]` view), whose type has no name to
+    // write.
+
+    // the cascade is made beside this menu, in its owner, so it opens in the
+    // same layer — a window's, when the menu belongs to one
+
+    openSub(row: object, subItems: array) {
+        const o = this.toLayer(row as View, this.width - 6, -5)
+        if (child == null) child = (this.parent as View).createView("Menu", ({ isRoot: false, rootMenu: this.rootMenu != null ? this.rootMenu : this }))
+        this._driveSub(child, subItems, o.x, o.y)
+        },
+
+    _driveSub(c: Menu, subItems: array, x: number, y: number) {
+        c.items = subItems
+        c.picked = (id) => this.pick(id)         // delivery + close route through the chain to the root
+        c.show()
+        c.place(x, y)
+        },
+
+    closeSub() { if (child != null) this._closeIt(child) },
+    _closeIt(c: Menu?) { if (c != null) c.close() },
+    _subShown(c: Menu?) -> boolean { return c != null && c.shown },
+    rootClose() { this._closeIt(this.rootMenu != null ? this.rootMenu : this) },
+
+    // ── keyboard roving (the deepest shown menu handles the keys) ──────────
+
+    _rowsOf(b: View) -> array { return b.children },
+
+    step(d: number) {
+        const rows = this._rowsOf(this._panel.body).filter((r) => !r.divider && r.enabled && r.custom == "")
+        // opened in this same moment (a submenu entered by ArrowRight): its rows
+        // are built as this settle closes, so the step waits for them
+        if (rows.length == 0) {
+            if (shown && this._rowsOf(this._panel.body).length == 0 && (this.items ?? []).length > 0) afterSettle(() => this.step(d))
+            return
+            }
+        const i = rows.indexOf(this.activeRow)
+        activeRow = rows[i < 0 ? (d > 0 ? 0 : rows.length - 1) : (i + d + rows.length) % rows.length]
+        this._revealRow(this.activeRow)
+        },
+
+    _revealRow(r: View?) { if (r != null) r.scrollIntoView("nearest") },
+
+    _typeTo(ch: string) {
+        const now = Date.now()
+        const t = (now - _typedAt < 1000 ? _typed : "") + ch.toLowerCase()
+        _typed = t
+        _typedAt = now
+        const rows = this._rowsOf(this._panel.body).filter((r) => !r.divider && r.enabled && r.custom == "")
+        if (rows.length == 0) return
+        // the same letter again cycles through the rows it starts; a longer
+        // prefix keeps the current row while it still matches
+        const cycling = t.split("").every((c) => c == t[0])
+        const query = cycling ? t[0] : t
+        const i = rows.indexOf(this.activeRow)
+        const from = cycling ? i + 1 : Math.max(0, i)
+        for (let k = 0; k < rows.length; k++) {
+            const r = rows[(from + k) % rows.length]
+            if (("" + r.label).toLowerCase().startsWith(query)) {
+                activeRow = r
+                this._revealRow(r)
+                return
+                }
+            }
+        },
+
+    pickActive() { this._pickRow(this.activeRow) },
+
+    // a row that names a command runs it (key-bindings.md): from the view a
+    // context menu was opened on, else from the last focus outside command
+    // chrome — so a menu's Copy reaches what ⌘C does. A row without one is
+    // delivered to picked(id), as ever.
+
+    _commandChrome: boolean = true,
+    _context: boolean = false,
+
+    _menuRoot() -> Menu { return (isRoot || this.rootMenu == null) ? this : this.rootMenu as Menu },
+
+    _commandFrom() -> View? {
+        const r = this._menuRoot()
+        return r._context ? r.opener : null
+        },
+
+    _commandOn(c: any) -> boolean {
+        if (typeof c != "string" || c == "") return true
+        return Commands.state("" + c, this._commandFrom()) == "on"
+        },
+
+    _pickItem(id: string, c: any) {
+        if (typeof c != "string" || c == "") { this.pick(id); return }
+        const from = this._commandFrom()
+        this._menuRoot().close()
+        Commands.run("" + c, from)
+        },
+
+    _pickRow(r: object) {
+        if (r == null) return
+        if (r.sub) { this.enterSub(); return }
+        r.pickSelf()
+        },
+
+    enterSub() { this._enterRow(this.activeRow) },
+
+    _enterRow(r: object) {
+        if (r == null || !r.sub) return
+        r.openSelf()
+        if (child != null) this._stepIn(child)
+        },
+
+    _stepIn(c: Menu?) { if (c != null) c.step(1) },
+
+    // Right past the last level, or Left at the top: the menu beside this one, in
+    // a menu bar; nothing for a menu that stands alone
+
+    sideways(d: number) { },
+
+    _keys: KeyListener [
+        onKeyDown(e: KeyEvent) {
+            if (!classroot.shown) return
+            if (classroot._subShown(classroot.child)) return   // the deeper menu handles
+            if (e.key == "ArrowDown") classroot.step(1)
+            else if (e.key == "ArrowUp") classroot.step(-1)
+            else if (e.key == "Enter") classroot.pickActive()
+            else if (e.key == "ArrowRight") {
+                if (classroot.activeRow != null && (classroot.activeRow as any).sub == true) classroot.enterSub()
+                else if (classroot.isRoot || classroot.rootMenu == null) classroot.sideways(1)
+                else classroot.rootMenu.sideways(1)
+                }
+            else if (e.key == "ArrowLeft") { if (!classroot.isRoot) classroot.close(); else classroot.sideways(-1) }
+            // a printable letter moves the rover (not while a text field is
+            // typing into the menu's opener — a combobox's own entry)
+            else if (e.key.length == 1 && e.key != " " && !e.meta && !e.ctrl && !e.alt
+                     && (Focus.getFocus() as any)?.placeholder === undefined) classroot._typeTo(e.key)
+            }
+        ],
+
+    // items → rows through an internal derived dataset: the author passes a
+    // plain array, and the wrap is the menu's own. The rows exist only while
+    // the menu is shown: a closed menu builds nothing, however long its list
+    // and however often the data under it changes.
+
+    _data: Dataset [ contents = { { rows: classroot.shown ? (classroot.items || []) : [] } } ],
+
+    // the panel
+
+    // the panel caps at the viewport; past that the body scrolls (the long
+    // list — a thousand bound options stay usable, the rover reveals as it
+    // roves)
+
+    _panel: View [ width = { classroot.width },
+        height = { Math.min(this.body.contentHeight + 10, app.height - 8) },
+        cornerRadius = { provided("theme").menuCornerRadius },
+
+        // a frosted material when the theme names one (the frosted vibrancy
+        // read), else the solid surface: `menuFill` is the translucent
+        // wash, and a theme that also elects `menuBackdrop` gets true frost —
+        // the panel samples and blurs what lies beneath it, wash over blur.
+
+        fill = { provided("theme").menuFill ?? provided("theme").surface },
+        backdrop = { provided("theme").menuBackdrop ?? null },
+        stroke = { Stroke(1, provided("theme").line) },
+        shadow = { provided("theme").menuShadow },
+
+        body: View [ x = 0, y = 5, width = 100%,
+            height = { parent.height - 10 },
+            scrolls = y, clip = true,
+            layout: SimpleLayout [ axis = y, spacing = 0 ],
+            datapath = { classroot._data.value },
+
+            View [ datapath = :rows[], width = 100%,
+                divider:  boolean = { !!:divider },
+                enabled:  boolean = { :enabled != false && classroot._commandOn(:command) },
+                sub:      boolean = { !!:submenu },
+                custom:   string  = { typeof :kind == "string" ? "" + :kind : "" },
+                oneOf:    boolean = { :group != null && :checked != null },
+                label:    string  = { "" + (:label || "") },
+
+                // the row's highlight gate: the hover intrinsic under menu policy
+
+                hot:      boolean = { this.hovered && this.enabled && !this.divider },
+                height = { divider ? 11 : custom != "" ? Math.max(26, this.host.height + 8) : (provided("theme").menuRowHeight) },
+                opacity = { enabled ? 1 : (provided("theme").disabledOpacity) },
+
+                onPointerOver() {
+                    if (!enabled || divider) return
+                    classroot.activeRow = null           // the mouse takes over from the rover
+                    if (sub) classroot.openSub(this, :submenu)
+                    else classroot.closeSub()
+                    },
+
+                // the rover's verbs — written on the row so :id / :submenu
+                // resolve against this row's record
+
+                pickSelf() { classroot._pickItem("" + :id, :command) },
+                openSelf() { classroot.openSub(this, :submenu) },
+                pressSelf() {
+                    if (!enabled) return
+                    if (sub) this.openSelf()
+                    else if (custom == "") this.pickSelf()
+                    },
+
+                // a `kind` row owns its own interior interactivity (the Finder
+                // tag-dots idiom): no row-level pick, no row highlight — the
+                // content's elements claim their own clicks (deepest sink wins)
+
+                onClick() { if (enabled && !divider && !sub && custom == "") classroot._pickItem("" + :id, :command) },
+
+                onInit() {
+                    if (custom != "") this.host.createView(custom, ({ datapath: :props }))
+                    if (typeof :icon == "string") this.icoHost.createView("" + :icon, ({ datapath: :props }))
+                    },
+
+                // the hover highlight — inset, rounded, accent (the Mac read)
+
+                // What a screen reader reads of the row: an item, named by its label,
+                // checked when its record says so, pressed to pick it or open its
+                // submenu. A divider row is not an item, so this is shown only on
+                // the rows that are — one template serves both.
+
+                item: View [ width = 100%, height = 100%, visible = { !parent.divider && !classroot._asList && !parent.oneOf },
+                    accessibilityRole = menuItem,
+                    accessibilityLabel = { parent.label },
+                    accessibilityChecked = { :checked == null ? null : !!:checked },
+                    press() { parent.pressSelf() }
+                    ],
+
+                // a row of a set (its record names a `group`): one choice among them
+
+                choice: View [ width = 100%, height = 100%, visible = { !parent.divider && !classroot._asList && parent.oneOf },
+                    accessibilityRole = menuItemRadio,
+                    accessibilityLabel = { parent.label },
+                    accessibilityChecked = { !!:checked },
+                    press() { parent.pressSelf() }
+                    ],
+
+                // the same row, in a list of choices (a combobox's): an option,
+                // selected when its record says so
+
+                opt: View [ width = 100%, height = 100%, visible = { !parent.divider && classroot._asList },
+                    accessibilityRole = option,
+                    accessibilityLabel = { parent.label },
+                    accessibilitySelected = { :selected == true },
+                    press() { if (parent.enabled) parent.pickSelf() }
+                    ],
+
+                hl: View [ x = 5, y = 1, width = { parent.width - 10 }, height = { parent.height - 2 },
+                    cornerRadius = { provided("theme").menuHighlightCornerRadius }, visible = { (parent.hot || classroot.activeRow == parent) && parent.custom == "" },
+                    fill = { provided("theme").menuHighlightFill ?? provided("theme").accent } ],
+
+                rule: View [ x = 10, y = 5, width = { parent.width - 20 }, height = 1,
+                    visible = { parent.divider }, fill = { provided("theme").line },
+                    accessibilityRole = separator ],
+
+                // The check, from the shared set — the same tick `Checkbox`
+                // draws. The ink stays local: a checked row inverts on the hot
+                // row, which is the row's business, not the icon's.
+
+                check: CheckIcon [ x = 7, y = center, iconSize = 12,
+                    visible = { !parent.divider && !!:checked },
+                    ink = { parent.hot || classroot.activeRow == parent
+                          ? ((provided("theme").menuHighlightTextColor ?? provided("theme").accentTextColor))
+                          : provided("theme").text } ],
+
+                // an authored icon-column cell (`icon`): the class renders
+                // the icon; the row stays standard — check, text edge, pick
+
+                // the row's ink reaches the created icon through the provided
+                // text colour — the same channel IconHost publishes
+
+                icoHost: View [ x = { 18 + classroot._checkWidth }, y = center, width = 16, height = 16,
+                    textColor = { parent.hot || classroot.activeRow == parent
+                                ? ((provided("theme").menuHighlightTextColor ?? provided("theme").accentTextColor))
+                                : provided("theme").text },
+                    visible = { !parent.divider && :icon != null } ],
+
+                lbl: TextLabel [ fontSize = { provided("theme").menuFontSize }, visible = { !parent.divider && parent.custom == "" },
+                    x = { classroot._textEdge },
+                    textColor = { (parent.hot || classroot.activeRow == parent) ? ((provided("theme").menuHighlightTextColor ?? provided("theme").accentTextColor)) : provided("theme").text },
+                    text = { "" + (:label || "") } ],
+
+                key: TextLabel [ fontSize = { provided("theme").menuKeyFontSize },
+                    x = { parent.width - this.width - 16 },        // the key column ends 16pt from the edge (measured)
+                    visible = { !parent.divider && !parent.sub && :key != null },
+                    textColor = { (parent.hot || classroot.activeRow == parent) ? ((provided("theme").menuHighlightTextColor ?? provided("theme").accentTextColor)) : provided("theme").textMuted },
+                    text = { :key ? Keyboard.keyLabel("" + :key) : "" } ],
+
+                // The cascade arrow, from the shared set — a chevron turned
+                // right, so it agrees with every other disclosure mark in the
+                // chrome.
+
+                arrow: ChevronIcon [ iconSize = 12, dir = "right", visible = { parent.sub },
+                    x = { parent.width - 17 }, y = center,
+                    ink = { this.parent.hot || classroot.activeRow == this.parent
+                          ? ((provided("theme").menuHighlightTextColor ?? provided("theme").accentTextColor))
+                          : provided("theme").textMuted } ],
+
+                // a `kind` row's author-rendered content region
+
+                host: View [ y = 4, height = { this.contentHeight },
+                    x = { classroot._textEdge },
+                    width = { parent.width - this.x - 10 },
+                    visible = { parent.custom != "" } ]
+                ]
+            ]
+        ]
+    ]

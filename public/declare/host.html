@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Declare widget</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				height: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="host" data-declare-embed style="width: 100%; height: 100%"></div>
+		<script>
+			// The chat's iframe is sandboxed (allow-scripts only, opaque origin), so every
+			// request back to this origin is cross-origin: next.config answers the CORS
+			// and CORP headers for /declare/* and the widget-source route.
+			// `w` is a full Declare program to boot; `d` is quiz data for the fixed
+			// widget (widgets/quiz.declare), fetched here and provided as "quiz".
+			// Lanna's Day/Night goes in as "night", before first paint, through
+			// data-declare-provide; the widget reads both with hostProvided(...).
+			const params = new URLSearchParams(location.search);
+			const night = params.get("night") === "1";
+			const host = document.getElementById("host");
+			host.setAttribute("data-declare-provide", JSON.stringify({ night }));
+			document.body.style.background = night ? "#101214" : "#ffffff";
+		</script>
+		<script type="module">
+			// Boot resolves when the program is up (or null, after it showed why it
+			// could not) — the one "ready" signal the parent can wait on.
+			const dataUrl = new URLSearchParams(location.search).get("d");
+			const main = dataUrl ? "/declare/widgets/quiz.declare" : params.get("w");
+			if (dataUrl) {
+				try {
+					const res = await fetch(dataUrl);
+					if (!res.ok) throw new Error(res.status);
+					host.setAttribute("data-declare-provide", JSON.stringify({ night, quiz: await res.json() }));
+				} catch (e) {
+					host.setAttribute(
+						"data-declare-provide",
+						JSON.stringify({ night, error: "The widget's data did not load." }),
+					);
+					console.error("[declare] widget data:", e);
+				}
+			}
+			if (main) {
+				const boot = (await import("/declare/bundles/declare-boot.js")).default;
+				const tenant = await boot({ main, host });
+				// The app fills the frame whatever its content needs, so the chat
+				// would show blank room under a short drill: measure the content
+				// rows and keep reporting as they change (an answer adds a line).
+				let sent = 0;
+				const report = () => {
+					const root = host.firstElementChild;
+					if (!root) return;
+					let bottom = 0;
+					for (const child of root.children) bottom = Math.max(bottom, child.getBoundingClientRect().bottom);
+					const h = Math.ceil(bottom - root.getBoundingClientRect().top);
+					if (h > 0 && h !== sent) {
+						sent = h;
+						parent.postMessage({ type: "declare-size", h }, "*");
+					}
+				};
+				const repaint = () => requestAnimationFrame(report);
+				new MutationObserver(repaint).observe(host, { childList: true, subtree: true, attributes: true });
+				document.fonts?.ready.then(repaint);
+				report();
+				parent.postMessage({ type: "declare-ready", ok: tenant != null }, "*");
+			}
+		</script>
+	</body>
+</html>

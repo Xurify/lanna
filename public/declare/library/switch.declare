@@ -1,0 +1,204 @@
+/*
+# Switch
+
+A boolean control with a sliding thumb — same value contract as Checkbox (`checked`,
+`commit` owns the destination), different body language: the thumb **springs**
+between its two rest points, so toggling moves rather than jumps.
+
+Its `label` comes first and the switch after it, as on every platform's settings; given a
+width wider than both, the switch keeps to the trailing edge, so a full-width switch is a
+settings row:
+
+```declare
+App [ width = 320, height = 120,
+    View [ x = 20, y = 20, width = 280, layout: SimpleLayout [ axis = y, spacing = 12 ],
+        wifi: Switch [ label = "Wi-Fi", checked = true, width = 100% ],
+        Switch [ label = "Bluetooth", width = 100% ] ] ]
+```
+
+## label
+The words before the switch: what it turns on, shown, part of what a press reaches, and its
+name to a screen reader. `""` (the default) is the switch alone, named at its use site with
+`accessibilityLabel`, or by a `Field` around it.
+
+## baseline
+The baseline a row aligns this control by — the label's, so its words sit on the line of
+their neighbors'.
+
+## focusShape()
+Rings the switch alone, not the switch and its label — as a Checkbox rings its box.
+
+## checked
+Whether the switch is on. Constrain it (`checked = { app.muted }`) and override `commit`
+to own the destination — or write `checked <-> app.muted` — or leave it and read it back:
+a `Switch` works standalone with no wiring.
+
+## commit()
+Where the value goes. The default writes `checked`; override it and the switch
+becomes a delivery mechanism for state you own. `press()` never writes `checked`
+directly, so a constrained switch never fights its constraint.
+
+## press()
+Toggles, by reporting the flipped value with `edit`. Called by a click and by
+Space/Enter.
+
+## claim
+`x`: a finger drags the thumb sideways, while a vertical drag that starts on the switch
+still scrolls the page.
+
+## dragging
+True from pointer-down until the release.
+
+## _dragged
+**Internal.** True once the press has become a drag, so its end settles on the nearer side and does not toggle.
+
+## _dx
+**Internal.** The pointer's travel since the press, while a drag is under way.
+
+## _grab
+**Internal.** The thumb's rest x at pointer-down, that the travel is applied to.
+
+## _restX()
+**Internal.** The thumb's x at rest for a value.
+
+## _dragX()
+**Internal.** The thumb's x under the pointer, held to the track.
+
+## onPointerDown
+Latches the drag, and keeps Control's focus rule.
+An override calls `super.onPointerDown(e)`.
+
+## onPointerUp
+Ends the press.
+An override calls `super.onPointerUp()`.
+
+## onDragStart
+Marks the press a drag: the thumb now follows the pointer.
+An override calls `super.onDragStart(e)`.
+
+## onDrag
+Follows the pointer's travel since the press.
+An override calls `super.onDrag(e)`.
+
+## onDragEnd
+Ends a drag on the nearer side, reporting it with `edit` when that changes the value; a
+canceled drag puts the thumb back.
+An override calls `super.onDragEnd(e)`: it is what ends the drag.
+
+## width
+Content-sized: the label, a gap and the switch, or the switch alone. The switch's own size is
+the theme's (`provided("theme").switchWidth` and `switchHeight`), 44 by 24 otherwise. Given a
+wider width, the switch keeps to the trailing edge.
+
+## height
+The switch's height: a theme with a native switch size says so (`provided("theme").switchHeight`); otherwise 24.
+
+## opacity
+Disabled dims the whole control — every part alike, never a recolour — to the theme's `disabledOpacity`, or 0.45 when the theme states none: the one place the number lives.
+
+## _track
+**Internal.** The pill the thumb slides in, a pill whatever its height: checked, it takes the
+accent; unchecked, the selected tint while hovered or pressed and the quiet control tint at
+rest, so it answers the pointer before the value flips. A hairline in the accent or the
+theme's line keeps its edge on light and dark surfaces alike.
+
+## _cap
+**Internal.** The label's words.
+
+## accessibilityChecked
+Follows `checked`.
+
+## accessibilityLabel
+The caption of a `Field` around it, unless the use site names the switch; with neither, its
+`label` is its name. A switch with no `label` is named at its use site
+(`accessibilityLabel = "Wi-Fi"`) — unnamed, the compiler warns.
+
+## fieldValue
+Follows `checked`: what `required` and `validate` judge (see `ValueControl`).
+*/
+
+include [ "valuecontrol.declare" ]
+
+class Switch extends ValueControl [
+    // a switch, named by its label, telling a screen reader whether it is on
+
+    accessibilityRole = switch,
+    accessibilityChecked = { checked },
+    accessibilityLabel = { provided("fieldLabel", "") },
+    label: string = "",
+    baseline: number = { this._cap.y + this._cap.baseline },   // a row aligns the control by its label
+
+    // keyboard focus rings the switch alone, not switch+label (the Checkbox rule)
+
+    focusShape() { return ({ x: this._track.x, y: this._track.y, w: this._track.width, h: this._track.height, rad: this._track.cornerRadius }) },
+
+    // the label, then the switch; wider than that, the switch keeps to the trailing edge
+
+    width  = { (label == "" ? 0 : this._cap.width + 12) + this._track.width },
+    height = { provided("theme").switchHeight },
+    checked: boolean = false,
+    fieldValue = { checked },
+
+    commit(v: boolean) { checked = v },
+
+    press()   { edit(!checked) },
+
+    // a finger can also slide the thumb across, as on a phone: the thumb
+    // follows the pointer and the release settles on the nearer side; a tap
+    // still toggles through press()
+
+    claim = x,
+    dragging: boolean = false,
+    _dragged: boolean = false,
+    _dx: number = 0,
+    _grab: number = 0,
+    _restX(on: boolean) -> number { return on ? _track.width - _track._thumb.width - 2 : 2 },
+    _dragX() -> number { return Math.max(2, Math.min(_track.width - _track._thumb.width - 2, _grab + _dx)) },
+
+    onPointerDown(e: PointerEvent) {
+        if (disabled) return
+        focusVisible = false
+        Focus.focus(this)
+        dragging = true
+        _dragged = false
+        _dx = 0
+        _grab = _restX(checked)
+        },
+    onPointerUp() { dragging = false },
+    onDragStart(e: PointerEvent) { if (!disabled) { _dragged = true; _dx = e.deltaX } },
+    onDrag(e: PointerEvent) { _dx = e.deltaX },
+    onDragEnd(e: DragEndEvent) {
+        if (_dragged && !e.canceled) {
+            const on = _dragX() + _track._thumb.width / 2 > _track.width / 2
+            if (on != checked) edit(on)
+            }
+        dragging = false
+        _dragged = false
+        },
+
+    opacity = { disabled ? (provided("theme").disabledOpacity) : 1 },
+
+    // No explicit textColor: the label follows the provided text style, and a use
+    // site restyles it with ordinary attributes, as a Checkbox's
+
+    _cap: TextLabel [ y = center, wrap = false, visible = { label != "" }, text = { label } ],
+
+    _track: View [ x = { classroot.width - this.width }, y = center,
+        width  = { provided("theme").switchWidth },
+        height = { classroot.height },
+        cornerRadius = { this.height / 2 },
+        fill   = { classroot.checked ? provided("theme").accent : classroot.hovered || classroot.pressed ? provided("theme").controlSelected : ((provided("theme").trackFill ?? provided("theme").control)) },
+        stroke = { Stroke(1, classroot.checked ? provided("theme").accent : provided("theme").line) },
+
+        // the thumb derives from the track: inset 2 normally; a theme may say the
+        // unchecked thumb is smaller (Mountain View's 16→24 grow-on-check)
+
+        _thumb: View [ cornerRadius = { this.width / 2 },
+            width  = { classroot.checked || provided("theme").switchThumbOffSize == null ? parent.height - 4 : provided("theme").switchThumbOffSize },
+            height = { this.width },
+            y = center,
+            fill = { provided("theme").switchThumbFill ?? provided("theme").surface },
+            slide: Spring [ attribute = x, to = { classroot._dragged ? classroot._dragX() : classroot._restX(classroot.checked) }, stiffness = 300, damping = 26 ]
+            ]
+        ]
+    ]

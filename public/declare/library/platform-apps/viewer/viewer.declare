@@ -1,0 +1,1042 @@
+// Declare Viewer — a live, syntax-highlighted view of a Declare source file.
+//
+// It renders nothing on its own: the server runs the compiler's highlighter
+// over a `.declare` file and hands the resulting segments to this app through
+// the host→app seed channel (app.demoSources), so the Viewer is a plain
+// consumer. Each segment is either prose — the Markdown carried in a block
+// comment, rendered by the Markdown class — or code — a run of
+// syntax-highlighted <pre> HTML whose per-token <span> classes this app's
+// `textStyles` map colors (theme-aware, so the same segments render light or
+// dark).
+//
+// Reach it with a request type: a bare `foo.declare?viewer` opens the default
+// Reader tab (the program URL is the address — a directory carries no
+// behavior). The Reader / Source / Edit / Sizes tabs (?viewer=reader | source |
+// edit | sizes) switch between the rendered view, the verbatim source, an editing
+// workbench (the source in an editor, the running program below it, compile
+// errors sandwiched between), and what the program's production build weighs;
+// the text-size switch zooms every text size; the sun / half-disc / moon switch picks
+// Light / System / Dark.
+//
+// The code is linked: an `include [ "…" ]` path opens that file; a class the
+// program declares opens where it is declared, at that line; a platform class
+// opens its reference page. The reader follows a file link in place (the
+// location names the file, and the host's Back walks it), and an include's
+// Edit tab — classes, no App, nothing to run — says which program to edit
+// instead.
+
+include [ "reference.declare" ]
+
+// what a production build weighs: the dev server's ?sizes report (declarec
+// --sizes --json), the fields this app reads of it
+
+schema SizePart [ raw: number, gzip: number ]
+schema SizePiece [ kind: string, name: string, gzip: number ]
+schema SizeFile [ file: string, how: string, by?: string, name?: string, gzip: number, pieces[]: SizePiece ]
+schema SizeModule [ module: string, gzip: number, status: string, capability?: string, reason?: string ]
+schema SizeReport [ program: string,
+    settings: [ render: string, kernel: string, accessibility: boolean ],
+    total: SizePart,
+    parts: [ program: SizePart, runtime: SizePart, kernel: SizePart, page: SizePart ],
+    files[]: SizeFile,
+    modules[]: SizeModule,
+    capabilities: [ left[]: [ id: string, describe: string ] ],
+    beside[]: [ file: string, what: string, gzip: number ] ]
+
+// one line of it, as the Sizes tab shows it: `part` names the bar's color
+
+schema SizeLine [ label: string, href: string, note: string, gzip: number, share: number, detail: string, part: string ]
+
+// the appearance switch names its icons in data, so the build keeps the classes
+
+// one segment: prose (Markdown) or code (colored, monospace <pre>). Exactly one
+// child is visible, so the segment's auto-height is that child's height. Prose is
+// inset (a narrower reading column); code spans the full width, so the two read as
+// distinct — commentary vs. program — and code gets the room.
+
+class Block [ kind: string = "",
+    md: string = "",
+    html: string = "",
+    lines: number = 1,                           // the code's line count, for its declarations' markers
+    nested: boolean = false,                     // born inside a declaration's body: an aside, not a section break
+    joinBelow: boolean = false,                  // the next segment is a nested aside: this card's bottom-left squares
+
+    width = 100%,
+
+    // prose reads like a book: left-aligned to the shared spine, capped at the
+    // reading measure, with space above it that becomes the section break.
+    // A nested aside — a block comment inside a class or instance body — keeps
+    // the code's teal spine running through it and sits inset to the code's own
+    // text gutter, so the declaration it interrupts still reads as one
+    // specimen: header card, threaded aside, body card.
+
+    prose: Markdown [ visible = { classroot.kind == "prose" }, x = { classroot.nested ? 20 : 0 },
+        y = { classroot.nested ? 8 : app.proseTopPad },
+        width = { Math.min(parent.width - (classroot.nested ? 20 : 0), app.proseMeasure * app.fontScale) },
+        text = { classroot.md }, fontScale = { app.fontScale }, lineHeight = 1.6,
+        bodyColor = { provided("theme").text }, selectable = true ],
+
+    // the thread: the code spine, continued through the aside — unbroken and at
+    // the spine's own weight. It reaches up across the column's 12px gap to
+    // meet the card above, and runs a hair past the prose so a resuming code
+    // card's bridge (below) meets it across the next gap.
+
+    thread: View [ visible = { classroot.kind == "prose" && classroot.nested }, x = 0, y = -12, width = 2,
+        height = { classroot.prose.y + classroot.prose.height + 20 },
+        fill = { provided("theme").accentSecondary } ],
+
+    // a resuming code card's half of the same continuity: cover the gap above
+    // it so its interior spine connects to the aside's thread
+
+    bridge: View [ visible = { classroot.kind == "code" && classroot.nested }, x = 0, y = -12, width = 2,
+        height = 12, fill = { provided("theme").accentSecondary } ],
+
+    // code is the specimen: borderless, on a quiet tint, bonded to the comment
+    // above it, running the full width with a teal spine on the shared left edge.
+    // The <pre> never wraps — long constraint lines scroll horizontally.
+
+    code: View [ visible = { classroot.kind == "code" }, width = 100%,
+        height = { this.body.height + 32 },
+        clip = true,                             // the card contains its code: long lines clip at the box (the DOM's pre scrolls natively; the sealed surface must say so)
+
+        // the card's text gutter is the card's own content box. The spine is
+        // the card's own left border, not a child, so nothing here has to opt
+        // out of the inset.
+
+        padding = [16, 20, 16, 20],
+
+        // the card's own shape, stated exactly: rounded everywhere except the
+        // corner an aside joins — the card above an aside squares its
+        // bottom-left, the card below its top-left. Per-corner radii say it
+        // directly, and the spine is the left side of the stroke, following the
+        // same arcs, so the thread meets the gap connectors dead-on.
+
+        fill = { provided("theme").codeBg },
+        cornerRadius = { [classroot.nested ? 0 : 8, 8, 8, classroot.joinBelow ? 0 : 8] },
+        stroke = { [null, null, null, Stroke(2, provided("theme").accentSecondary)] },
+        body: View [ width = 100%, scrolls = x, height = { this.contentHeight },
+            HTMLText [ x = 0, y = 0, width = 100%,
+                html = { classroot.html }, fontScale = { app.fontScale },
+                textStyles = { app.codeTextStyles() }, bodyColor = { app.codeFg() }, selectable = true,
+
+                // file links read as links: the conventional blue, underlined
+
+                linkColor = { app.isDark ? 0x58A6FF : 0x0969DA }, linkUnderline = true ]
+            ],
+
+        // the declarations this card holds: a marker at each one's line, named
+        // for it, so a link to `@Name` lands there — the platform's reveal waits
+        // for the file, then scrolls the marker to the top. A marker is shown
+        // only once its card's code has a height (the browser measures it a
+        // frame after it renders), and the reveal does not land on what is not
+        // shown. Named only while the reader shows, so the source view's
+        // markers can take the same names.
+
+        View [ datapath = :marks[], width = 1, height = 1,
+            anchor = { app.mode == "reader" ? :name : "" },
+            visible = { parent.body.height > 0 },
+            y = { :line * parent.body.height / Math.max(1, classroot.lines) } ]
+        ]
+    ]
+
+
+// one line of the Sizes tab: what it is (a link, when it is a file the reader
+// can open), what brought it aboard, its compressed size, a bar of its share
+// of its list, and what it holds
+
+class SizeRow [ width = 100%,
+    label: string = "",
+    href: string = "",
+    note: string = "",
+    gzip: number = 0,
+    share: number = 0,
+    detail: string = "",
+    part: string = "program",
+
+    layout: SimpleLayout [ axis = y, spacing = 4 ],
+
+    top: View [ width = 100%, fontSize = { 13 * app.fontScale },
+        name: Text [ wrap = false, fontWeight = medium, text = { classroot.label }, link = { classroot.href },
+            textColor = { classroot.href != "" ? provided("theme").linkColor : provided("theme").text } ],
+        size: Text [ x = end, wrap = false, textColor = { provided("theme").text }, text = { app.kb(classroot.gzip) } ],
+        note: Text [ x = { parent.name.width + 10 }, width = { Math.max(0, parent.width - this.x - parent.size.width - 16) },
+            maxLines = 1, textColor = { provided("theme").textMuted }, text = { classroot.note } ]
+        ],
+    bar: View [ height = 4, cornerRadius = 2, width = { Math.max(2, parent.width * classroot.share) },
+        fill = { app.partTint(classroot.part) } ],
+    more: Text [ visible = { classroot.detail != "" }, width = 100%, wrap = true,
+        fontSize = { 12 * app.fontScale }, textColor = { provided("theme").textMuted }, text = { classroot.detail } ]
+    ]
+
+
+// a fold of the Sizes tab — the program's files, the library's, the runtime —
+// whose line names it and sums it, open or shut: a step above its rows, on a
+// band of its own
+
+class SizeGroup extends Disclosure [ width = 100%,
+    theme = { { ...provided("theme"), accordionFontSize: 15 * app.fontScale, accordionHeaderHeight: 40 * app.fontScale } },
+
+    // the band under the line, drawn beneath it: the page's backdrop, so it
+    // recedes in either appearance as a recess, not a raised card
+
+    draw(d: DrawContext) {
+        const h = this._line.height, r = 8
+        d.fillStyle = provided("theme").background
+        d.beginPath()
+        d.moveTo(r, 0); d.lineTo(this.width - r, 0); d.arcTo(this.width, 0, this.width, r, r)
+        d.lineTo(this.width, h - r); d.arcTo(this.width, h, this.width - r, h, r)
+        d.lineTo(r, h); d.arcTo(0, h, 0, h - r, r)
+        d.lineTo(0, r); d.arcTo(0, 0, r, 0, r)
+        d.fill()
+        }
+    ]
+
+
+// one part in the key under the total's bar: its swatch, its name, its size
+
+class PartKey [ part: string = "program",
+    gzip: number = 0,
+    layout: SimpleLayout [ axis = x, spacing = 6, align = center ],
+    View [ width = 10, height = 10, cornerRadius = 3, fill = { app.partTint(classroot.part) } ],
+    Text [ wrap = false, fontSize = { 13 * app.fontScale }, textColor = { provided("theme").text }, text = { classroot.part } ],
+    Text [ wrap = false, fontSize = { 13 * app.fontScale }, textColor = { provided("theme").textMuted }, text = { app.kb(classroot.gzip) } ]
+    ]
+
+
+// a section of the Sizes tab: a heading, a line on what its figures mean, its rows
+
+class SizeSection [ width = 100%,
+    title: string = "",
+    blurb: string = "",
+    layout: SimpleLayout [ axis = y, spacing = 10 ],
+    head: View [ width = 100%,
+        layout: SimpleLayout [ axis = y, spacing = 2 ],
+        Text [ fontSize = { 16 * app.fontScale }, fontWeight = semibold, textColor = { provided("theme").text }, text = { classroot.title } ],
+        Text [ visible = { classroot.blurb != "" }, width = 100%, wrap = true, fontSize = { 12 * app.fontScale },
+            textColor = { provided("theme").textMuted }, text = { classroot.blurb } ]
+        ]
+    ]
+
+
+App [ fill = { provided("theme").background },
+
+    // a declaration a link lands on sits a little below the top of the page
+
+    revealInset = 24,
+
+    // the page title is the viewed file itself ("calendar.declare") — the seeds
+    // land after boot, so the served title stands until the path arrives
+
+    appName = { app.baseName() },
+
+    // Embedded self-loading: a host (the desktop) passes `env.program` — a
+    // program path valid in the host's transport base — and this app fetches
+    // its own reader artifacts from that program URL's ?segments and ?file
+    // requests: the same bytes the serve wrapper seeds via demoSources,
+    // pulled by the app itself, on either hosting mode. A seeded
+    // demoSources still wins wherever both exist.
+    //
+    // Following an include is the same self-loading, aimed elsewhere: the
+    // location names a file by its served path (`reader/apps/weather/
+    // weather-art.declare` — the address bar's own spelling, minus the leading
+    // slash, so the fragment is honest shareable coordinates), and these two
+    // sources fetch it — the seeds keep serving only the file the page was
+    // opened on.
+
+    segSrc: DataSource [ format = "text", autoFetch = true, url = { app.srcUrl("?segments") },
+        // the program's class index comes with the file it was opened on, and
+        // stays while the reader follows links to other files
+
+        onLoad() { if (app.fileRel == "") app.openedDefs = app.defsOf(this.value) }
+        ],
+
+    // when the raw file lands (the env-driven embedded case has no seeds),
+    // publish it on the live channel: the edit pane's island then runs the
+    // viewed program as soon as the tab opens — no first keystroke needed
+
+    rawSrc: DataSource [ format = "text", autoFetch = true, url = { app.srcUrl("?file") },
+        onLoad() { if (app.liveCard == "" && app.fileRel == "") { app.liveCard = "__raw__"; app.liveSource = "" + (this.value || "") } }
+        ],
+
+    // the url the two sources fetch: the followed file when the location names
+    // one, else the host's program when embedded, nothing when the seeds serve.
+    // With a host's program, a followed file is spelled the way the program
+    // is — relative to the same base, or a whole URL — so it is fetched as
+    // written. Standalone, it is named by its path from the deploy root, and
+    // the sources resolve against the opened program's own directory, so the
+    // path climbs from there to the root: the same request on a host serving
+    // at its origin and on one serving under a subpath (a project's GitHub
+    // Pages).
+
+    srcUrl(q: string) -> string {
+        if (app.fileRel == "") return app.hostProgram == "" ? "" : app.hostProgram + q
+        if (app.hostProgram != "") return app.fileRel + q
+        const depth = app.seededPath().replace(/^\/+/, "").split("/").length - 1
+        return "../".repeat(depth) + app.fileRel + q
+        },
+
+    // the program a host names as the subject (the desktop's viewer window); "" standalone
+
+    hostProgram: string = { app.hostProvided("subject", "") },
+
+    // where the docs app is, for a platform class's reference page — "" on a
+    // host that has none (the Mac app provides "")
+
+    docsBase: string = { app.hostProvided("docs", "apps/docs/") },
+
+    barH: number = 52,
+    topM: number = 40,    // reader top margin (foot matches it at the bottom)
+    headH: number = { Math.max(46 * app.fontScale, app.content.head.height + 10 * app.fontScale) },    // filename title + rule, above the body
+
+    // "reader" = highlighted + Markdown, "source" = verbatim, "edit" = live
+    // workbench, "sizes" = what the build weighs — the viewer's location. The `?viewer=` request seeds the
+    // opening tab (the host translates the query into the initial location);
+    // a tab click writes `app.location` and this derives back from it, so the
+    // tab is a single source of truth that back/forward walk for free.
+
+    // The location's grammar: `<mode>` alone views the file the page was
+    // opened on; `<mode>/<served path>` views another — an include or a
+    // library file the reader followed, named exactly as the host serves it
+    // (`reader/apps/weather/weather-art.declare`). One spelling for every
+    // file, and the fragment names the file to anyone it is handed to.
+
+    // A trailing `@Name` lands on a declaration in that file (`reader/apps/
+    // asteroids/game.declare@Game`); `place` is the location without it.
+
+    place: string = { (app.location || "").split("@")[0] },
+    mode: string = { (app.place || "reader").split("/")[0] || "reader" },
+    fileRel: string = { app.place.indexOf("/") < 0 ? "" : app.place.slice(app.place.indexOf("/") + 1) },
+
+    // the tabs, each with the location it opens: the viewed file kept across them
+
+    tabs() -> object[] {
+        const at = app.fileRel == "" ? "" : "/" + app.fileRel
+        return [["reader", "Reader"], ["source", "Source"], ["edit", "Edit"], ["sizes", "Sizes"]].map(([id, label]) => ({ id: id, label: label, location: id + at }))
+        },
+
+    // on a phone the tab switch is a menu, opened from a button that names the tab
+
+    tabMenu: Menu [ items = { app.tabs().map((t: any) => ({ id: t.location, label: t.label, group: "tab", checked: t.id == app.mode })) },
+        picked(id: string) { app.followLink("#" + id, true) }
+        ],
+
+    // The history walk is the host's — the browser's Back/Forward, the mac
+    // titlebar's ‹ › — because a followed file is one location entry and a tab
+    // switch replaces its entry (the Segmented's `replace`), so Back walks
+    // files, never tabs. The viewer draws no chrome of its own for it.
+
+    fontScale: number = 0.9,    // reader font zoom (0.9 = the comfortable default; the text-size switch drives it)
+    proseMeasure: number = 560,    // prose reading measure (matches the docs); code runs wider off the same left edge
+    proseTopPad: number = 22,    // space above a prose block — reads as the section break
+    themeMode: string = "auto",
+    liveCard: string = "",      // the edit tab republishes each keystroke on this pair …
+    liveSource: string = "",    // … and the host recompiles it, feeding app.liveReport back
+
+    // auto follows the HOST's appearance when a host provides one, else the
+    // system preference. The bar's AppearanceSwitch sets "light" or "dark",
+    // and from then on that holds.
+
+    isDark: boolean = { app.themeMode == "auto"
+        ? app.hostProvided("dark", app.systemDark)
+        : app.themeMode == "dark" },
+
+    // The house preset, plus this app's two domain names — and no private
+    // values for the standard tokens, so the same markdown reads one color
+    // here and in the desktop's reader window. A reader's page is a sheet, so
+    // it paints `surface` — the token the desktop's window paints — and the
+    // chrome around it recedes to `background`.
+
+    theme = { { ...(app.isDark ? SanFranciscoDark : SanFrancisco), ...app.domainTheme() } },
+
+    // The highlight() segments, seeded by the server as a JSON string on the
+    // host→app channel; parse + normalise so every record has kind/md/html.
+
+    doc: Dataset [ contents = { app.parseDoc() } ],
+
+    // THE SIZES TAB — the program's production build, weighed by the dev server
+    // (?sizes). Fetched only while the tab shows, since each is a build; a file
+    // with no App is no program and has no build. The report names its files from
+    // the program's folder, and the library's from the library.
+
+    sizes: DataSource [ autoFetch = true, schema = SizeReport, url = { app.sizesUrl() } ],
+    sizesUrl() -> string {
+        if (app.mode != "sizes" || app.isInclude) return ""
+        if (app.fileRel != "") return app.srcUrl("?sizes")
+        if (app.hostProgram != "") return app.hostProgram + "?sizes"
+        // standalone, the file is named by the seeds, which land after boot
+        return app.demoSources && app.demoSources["__path__"] ? app.baseName() + "?sizes" : ""
+        },
+    sizeView: Dataset [ schema = [ parts[]: SizeLine, program[]: SizeLine, library[]: SizeLine, modules[]: SizeLine, beside[]: SizeLine,
+            heads: [ program: string, library: string, runtime: string ] ],
+        contents = { app.sizeLines() } ],
+
+    kb(n: number) -> string { return (n / 1024).toFixed(1) + " KB" },
+    partTint(part: string) -> Color {
+        const t = provided("theme")
+        return part == "program" ? t.accent : part == "runtime" ? t.accentSecondary : part == "kernel" ? t.textMuted : t.textFaint
+        },
+    sizesSettings: string = { app.sizes.value == null ? "" : app.sizes.value.settings.render + " · " + app.sizes.value.settings.kernel + " kernel · accessibility "
+        + (app.sizes.value.settings.accessibility ? "on" : "off") },
+    sizesLeftOut: string = { app.sizes.value == null ? "" : app.sizes.value.capabilities.left.map((c) => c.id).join(", ") },
+
+    // where the reader opens a file the report names: the program's own files from
+    // the viewed file's folder, the library's from where the library is served
+
+    sizeHref(f: SizeFile) -> string {
+        if (f.how == "program") return "#reader" + (app.fileRel == "" ? "" : "/" + app.fileRel)
+        if (f.file.startsWith("library/")) {
+            const base = app.libraryBase()
+            return base == "" ? "" : "#reader/" + base + f.file.slice("library/".length)
+            }
+        return "#reader/" + app.resolveRel(app.viewedDir(), f.file)
+        },
+    libraryBase() -> string {
+        try { const s = app.demoSources && app.demoSources["__library__"]; if (s) return ("" + JSON.parse(s).base).replace(/^[a-z]+:\/\/[^/]+/i, "").replace(/^\/+/, "") } catch (e) { }
+        return ""
+        },
+    howOf(f: SizeFile) -> string {
+        if (f.how == "program") return "the program"
+        if (f.how == "provided") return "provided by the library"
+        if (f.how == "auto") return "for " + (f.name ?? "") + (f.by != null ? ", named in " + f.by : "")
+        return "included by " + (f.by ?? "the program")
+        },
+    sizeLines() {
+        const r = app.sizes.value
+        if (r == null) return ({ parts: [], program: [], library: [], modules: [], beside: [], heads: ({ program: "", library: "", runtime: "" }) })
+        const line = (label: string, gzip: number, share: number, part: string, note: string, href: string, detail: string) =>
+            ({ label: label, gzip: gzip, share: share, part: part, note: note, href: href, detail: detail })
+        const total = Math.max(1, r.total.gzip)
+        const parts = [["program", "its declarations, its tree and its bodies"], ["runtime", r.modules.length + " modules"], ["kernel", "the reactive kernel"], ["page", "index.html"]]
+            .map(([k, note]) => line(k, r.parts[k].gzip, r.parts[k].gzip / total, k, note, "", ""))
+        const files = [...r.files].sort((a, b) => b.gzip - a.gzip)
+        const fileMax = Math.max(1, ...files.map((f) => f.gzip))
+        const fromLibrary = (f: SizeFile) => f.file.startsWith("library/")
+        const fileLine = (f: SizeFile) => line(f.file, f.gzip, f.gzip / fileMax, "program", app.howOf(f), app.sizeHref(f),
+            f.pieces.filter((q) => q.gzip >= 52).map((q) => q.name + " " + (q.gzip / 1024).toFixed(1)).join(" · "))
+        const head = (n: number, one: string, many: string, bytes: number) => n + " " + (n == 1 ? one : many) + " · " + app.kb(bytes)
+        const sum = (fs: SizeFile[]) => fs.reduce((s, f) => s + f.gzip, 0)
+        const own = files.filter((f) => !fromLibrary(f)), lib = files.filter(fromLibrary)
+        const modules = r.modules.filter((m) => m.status != "stand-in")
+        const standIns = r.modules.filter((m) => m.status == "stand-in")
+        const modMax = Math.max(1, ...modules.map((m) => m.gzip))
+        const why = (m: SizeModule) => m.status == "core" ? "core" : m.status == "cut" ? m.capability + ": cut to what the program names" : m.capability + ": " + (m.reason ?? "")
+        return ({
+            parts: parts,
+            program: own.map(fileLine),
+            library: lib.map(fileLine),
+            heads: ({ program: head(own.length, "file", "files", sum(own)), library: head(lib.length, "file", "files", sum(lib)),
+                runtime: head(r.modules.length - standIns.length, "module", "modules", r.parts.runtime.gzip) }),
+            modules: [...modules.map((m) => line(m.module, m.gzip, m.gzip / modMax, "runtime", why(m), "", "")),
+                ...(standIns.length == 0 ? [] : [line(standIns.length + " stand-ins", standIns.reduce((t, m) => t + m.gzip, 0),
+                    standIns.reduce((t, m) => t + m.gzip, 0) / modMax, "runtime", "in place of what was left out", "", "")])],
+            beside: r.beside.map((b) => line(b.file, b.gzip, 0, "page", b.what, "", ""))
+            })
+        },
+    plainMarks: Dataset [ contents = { { marks: app.marksIn(app.plainHtml()) } } ],
+
+    parseDoc() {
+        const raw = app.fileRel == "" ? ((app.demoSources && app.demoSources["__source__"]) || app.segSrc.value || "[]") : (app.segSrc.value || "[]")
+        let segs = []
+        // two shapes for one material: the seeded channel is the bare array; the
+        // ?segments request wraps it ({ path, segments }) — accept either
+        try { const p = JSON.parse(raw); segs = Array.isArray(p) ? p : (p && p.segments) || [] } catch (e) { segs = [] }
+        // graceful floor: a host with no highlighter (a static host answers no
+        // ?segments) still reads — the raw file as one code block. It waits for
+        // segSrc to SETTLE (loaded or failed), not merely to be empty: `?file`
+        // is a plain passthrough and `?segments` runs highlight() over the same
+        // bytes, so on a real host `?file` always lands first, and flooring on
+        // "empty so far" would show one plain code block and then replace it
+        // with the prose/code segments a moment later. (Standalone, the server
+        // seeds __source__ synchronously, so this branch does not run.)
+        if (segs.length == 0 && (app.rawSrc.value || "") != ""
+            && (app.segSrc.loaded || app.segSrc.failed)) {
+            const e = ("" + app.rawSrc.value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            segs = [({ kind: "code", html: "<pre>" + e + "</pre>" })]
+            }
+        return ({ segments: segs.map((s, i) => ({ kind: s.kind, md: s.md || "", html: s.kind == "code" ? app.linkFiles(s.html || "") : "", nested: s.nested == true,
+            joinBelow: segs[i + 1] != null && segs[i + 1].nested == true,
+            lines: s.kind == "code" ? app.lineCount(s.html || "") : 1, marks: s.kind == "code" ? app.marksIn(s.html || "") : [] })) })
+        },
+
+    // a code block's lines, and the classes and schemas declared on them —
+    // read off the html with its tags taken out (the highlighter keeps the text
+    // verbatim inside its spans)
+
+    lineCount(html: string) -> number { return html.replace(/<[^>]*>/g, "").split("\n").length },
+    marksIn(html: string) -> object[] {
+        const out = []
+        const lines = html.replace(/<[^>]*>/g, "").split("\n")
+        for (let i = 0; i < lines.length; i++) {
+            const m = /^\s*(class|schema)\s+([A-Z]\w*)/.exec(lines[i])
+            if (m != null) out.push({ name: m[2], line: i })
+            }
+        return out
+        },
+
+    // LINKS in code. A code segment's html is the highlighter's <pre> of
+    // <span class=…> tokens, and three shapes become links — each an <a href>
+    // the reader follows through app.follow, so it works on every renderer and
+    // the history walks it:
+    //   (1) a path inside an `include [ … ]` or `script [ … ]` directive — that
+    //       file, resolved against the viewed file's folder;
+    //   (2) a class or schema the program declares (`Game [`, `extends Game`,
+    //       `: Task`) — where it is declared, at that line (`@Game`);
+    //   (3) a platform class (`Button [`) — its reference page, where the host
+    //       has the docs (`docsBase`).
+    // A name at its own declaration (`class Game`) is not a link.
+
+    linkFiles(html: string) -> string {
+        const dir = app.viewedDir()
+        const base = app.mode
+        const q = String.fromCharCode(34)                     // the double quote, kept out of this body's regexes
+        const inc = new RegExp('<span class=' + q + 'k' + q + '>(include|script)<\\/span>\\s*\\[([\\s\\S]*?)\\]', 'g')
+        const str = new RegExp('<span class=' + q + 's' + q + '>' + q + '([^' + q + ']+)' + q + '<\\/span>', 'g')
+        const tag = new RegExp('(<span class=' + q + 'k' + q + '>class<\\/span> |schema )?<span class=' + q + 't' + q + '>([A-Z]\\w*)<\\/span>', 'g')
+        // the anchor's text is bare (no accent span inside): the accent would
+        // compose over the link color, and a link should read as a link —
+        // linkColor + linkUnderline on the HTMLText style it. The quote marks
+        // stay outside the anchor, in the string accent: the file is the link,
+        // its quoting is syntax.
+        const quote = '<span class=' + q + 's' + q + '>' + q + '</span>'
+        const out = html.replace(inc, (m, kw, body) =>
+            '<span class=' + q + 'k' + q + '>' + kw + '</span> [' + body.replace(str, (m2, p) =>
+                quote + '<a href=' + q + '#' + base + '/' + app.resolveRel(dir, p) + q + '>' + p + '</a>' + quote) + ']')
+        return out.replace(tag, (m, decl, t) => {
+            if (decl) return m
+            const at = app.declaredAt(t)
+            if (at != "") return '<a href=' + q + '#' + at + q + '>' + t + '</a>'
+            if (app.docsBase != "" && REFERENCE_CLASSES.includes(t)) return '<a href=' + q + app.docsBase + '#reference/' + t + q + '>' + t + '</a>'
+            return m
+            })
+        },
+
+    // THE CLASS INDEX — name → the declaring file's path from a file's folder
+    // ("" for that file itself), worked out by the host (the compiler's
+    // programIndex) and handed over with the file: seeded as __defs__, or in
+    // the ?segments payload. The program's index comes with the file the page
+    // opened on; a followed file brings its own declarations.
+
+    openedDefs: Record<string, string> = { {} },
+    defsOf(payload: string) -> Record<string, string> {
+        try { const p = JSON.parse(payload || "null"); return (p && p.defs) || {} } catch (e) { return {} }
+        },
+    programDefs() -> Record<string, string> {
+        try { const s = app.demoSources && app.demoSources["__defs__"]; if (s) return JSON.parse(s) } catch (e) { }
+        return app.openedDefs
+        },
+    openingDir() -> string { const p = app.seededPath(); const i = p.lastIndexOf("/"); return i < 0 ? "" : p.slice(0, i + 1) },
+
+    // where `t` is declared, as a location in the current tab — "" when the
+    // program declares no such name. The file shown now answers first.
+
+    declaredAt(t: string) -> string {
+        const here = app.fileRel == "" ? app.programDefs() : app.defsOf(app.segSrc.value || "")
+        if (here[t] === "") return app.mode + (app.fileRel == "" ? "" : "/" + app.fileRel) + "@" + t
+        const p = app.programDefs()[t]
+        if (typeof p != "string") return ""
+        return app.mode + (p == "" ? "" : "/" + app.resolveRel(app.openingDir(), p)) + "@" + t
+        },
+
+    // a path relative to `dir`, normalised: `rooms/../art.declare` → `art.declare`.
+    // A climb past the start is kept (`../calendar/` + `x.declare` →
+    // `../calendar/x.declare`: the host's program may sit beside this one), and
+    // a whole URL resolves as a URL (`file:///…/apps/sampler/`).
+
+    resolveRel(dir: string, p: string) -> string {
+        if (/^[a-z][a-z0-9+.-]*:\/\//i.test(dir)) return new URL(p, dir).href
+        const parts = (dir + p).split("/")
+        const stack: string[] = []
+        for (const s of parts) {
+            if (s == "..") { if (stack.length == 0 || stack[stack.length - 1] == "..") stack.push(s); else stack.pop() }
+            else if (s != "." && s != "") stack.push(s)
+            }
+        return stack.join("/")
+        },
+
+    // the verbatim file as one escaped, monospace <pre> — the plain-text view
+
+    plainHtml() {
+        const e = app.rawText().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        return "<pre>" + e + "</pre>"
+        },
+
+    // the verbatim text of the viewed file — the seeds' for the opened file,
+    // the fetched one for a followed include
+
+    rawText() -> string {
+        return app.fileRel == "" ? ((app.demoSources && app.demoSources["__raw__"]) || app.rawSrc.value || "") : ("" + (app.rawSrc.value || ""))
+        },
+
+    // an include declares classes and no App — it cannot run on its own, so
+    // the Edit tab shows where to edit instead (the program that includes it)
+
+    // (the comment-stripping regex is built from a string: a literal `/*` inside
+    // a { } body reads as a block comment to the body scanner)
+
+    hasApp(src: string) -> boolean { return src != "" && /^\s*App\s*\[/m.test(src.replace(new RegExp('\\/\\*[\\s\\S]*?\\*\\/', 'g'), "")) },
+    isInclude: boolean = { app.rawText() != "" && !app.hasApp(app.rawText()) },
+
+    // is the file this page opened on a runnable program? False when the page
+    // was opened directly on an include — then there is no program to point at.
+
+    seededRunnable: boolean = { app.hasApp((app.demoSources && app.demoSources["__raw__"]) || (app.fileRel == "" ? app.rawText() : "")) },
+
+    // the file's tree-relative path, split so the header can bold the filename:
+    // the opened program's, or the followed file's resolved against it
+
+    seededPath() -> string { return (app.demoSources && app.demoSources["__path__"]) || (app.hostProgram != "" ? app.hostProgram : "source") },
+
+    // the viewed file's served path: the followed file's own, else the opened program's
+
+    filePath() { return app.fileRel == "" ? app.seededPath() : app.fileRel },
+
+    // the viewed file's directory (served), the base an include path in it resolves against
+
+    viewedDir() -> string { const p = app.filePath(); const i = p.lastIndexOf("/"); return i < 0 ? "" : p.slice(0, i + 1) },
+
+    // the compiler's line count, as the host hands it over (programMetrics():
+    // total / code / comment / blank, and `app` — the same plus `files` — when
+    // the file declares the App: the file and everything it includes, the
+    // library's left out). Seeded as __metrics__, or carried by the ?segments
+    // payload when the viewer loads the file itself. Lines are counted with
+    // their comments and without; blank lines are neither.
+
+    metrics() {
+        let m = null
+        if (app.fileRel == "") { try { m = JSON.parse((app.demoSources && app.demoSources["__metrics__"]) || "null") } catch (e) { m = null } }
+        if (m == null && app.segSrc.value) {
+            try { const p = JSON.parse(app.segSrc.value); m = (p && p.metrics) || null } catch (e) { m = null }
+            }
+        return m
+        },
+    hasMetrics: boolean = { app.metrics() != null },
+    hasWhole: boolean = { app.hasMetrics && app.metrics().app != null && app.metrics().app.files > 1 },
+
+    // the counts as phrases, so a narrow window wraps them between phrases
+    // rather than running them off its edge
+
+    counts(c: { code: number; comment: number }, last: string) -> object[] {
+        return [({ text: (c.code + c.comment).toLocaleString("en-US") + " lines with comments,", bold: false }),
+            ({ text: c.code.toLocaleString("en-US") + " without" + last, bold: false })]
+        },
+    countPhrases: Dataset [ schema = [ phrases[]: [ text: string, bold: boolean ] ],
+        contents = { { phrases: !app.hasMetrics ? [] : [({ text: "This file:", bold: true }), ...app.counts(app.metrics(), app.hasWhole ? " ·" : ""),
+            ...(!app.hasWhole ? [] : [({ text: "Whole app", bold: true }), ({ text: "(" + app.metrics().app.files + " files):", bold: false }),
+                ...app.counts(app.metrics().app, "")])] } } ],
+    dirName() { const p = app.filePath(); const i = p.lastIndexOf("/"); return i < 0 ? "" : p.slice(0, i + 1) },
+    baseName() { const p = app.filePath(); const i = p.lastIndexOf("/"); return i < 0 ? p : p.slice(i + 1) },
+
+    // the editor foreground (plain text / punctuation) behind the accent spans
+
+    codeFg() { return app.isDark ? 0xABB2BF : 0x24292F },
+
+    // role → color, theme-aware. Keys match the <span class> names highlight()
+    // emits: k t a s n h p o b c. Dark = One Dark; light = a cool, light-native
+    // set (gold-on-white reads as a dark-mode leftover, so types go purple/blue).
+
+    codeTextStyles() {
+        const c = app.isDark
+            ? ({ k: 0xC678DD, t: 0xE5C07B, a: 0xE06C75, s: 0x98C379, n: 0xD19A66, h: 0x56B6C2, p: 0x61AFEF, o: 0x56B6C2, b: 0x9DA5B4, c: 0x6A737D })
+            : ({ k: 0xCF222E, t: 0x8250DF, a: 0xB5452B, s: 0x1A7F37, n: 0x9A6700, h: 0x0E7490, p: 0x0550AE, o: 0xCF222E, b: 0x6B7280, c: 0x8A919C })
+        return Object.fromEntries(Object.entries(c).map(([k, v]) => [k, { textColor: v }]))
+        },
+
+    // What this app adds to the house palette, and nothing more.
+    //
+    // `codeBg` is the house backdrop showing through the page — a code well is
+    // recessed, which is the same relationship in both modes and needs no value
+    // of its own. `accentSecondary` is the far end of the brand gradient (the
+    // wordmark, a card's spine, the live grip); the house has one accent, and a
+    // second hue is this app's, not the platform's.
+
+    domainTheme() {
+        return ({ codeBg: (app.isDark ? SanFranciscoDark : SanFrancisco).background,
+            accentSecondary: app.isDark ? 0x37E0C8 : 0x12A594 })
+        },
+
+    // scrolling reader; the column fills the window between fixed 48px gutters, so
+    // code grows with the window while prose stays capped at its reading measure.
+    // `foot` sits just below the active view for a bottom margin matching `topM`.
+
+    content: View [ x = 0, y = { app.barH }, width = { app.hostWidth }, height = { app.hostHeight - app.barH },
+        visible = { app.mode != "edit" },
+        scrolls = y, selectable = true, fill = { provided("theme").surface },
+
+        // the filename as a page title — the directory muted, the file bold — with
+        // a rule under it; the body starts below (headH)
+
+        head: View [ y = { app.topM }, width = { app.hostWidth - 96 },
+            x = { Math.max(24, (parent.width - this.width) / 2) },
+
+            // one flow on one baseline: the path, then the counts, which wrap
+            // beneath it, phrase by phrase, when the window is too narrow
+
+            title: View [ width = 100%, datapath = { app.countPhrases.value },
+                layout: WrappingLayout [ spacing = 4, rowSpacing = 4, align = baseline ],
+                path: View [ baseline: number = { this.n.y + this.n.baseline },
+                    layout: SimpleLayout [ axis = x, spacing = 0 ],
+                    d: Text [ fontSize = { 21 * app.fontScale }, wrap = false, textColor = { provided("theme").textMuted }, text = { app.dirName() } ],
+                    n: Text [ fontSize = { 21 * app.fontScale }, fontWeight = bold, wrap = false, textColor = { provided("theme").text }, text = { app.baseName() } ]
+                    ],
+
+                // the size of the thing, quietly: the compiler's own count
+
+                gapm: View [ width = 6, height = 1,
+                    baseline: number = 0
+                    ],
+                Text [ datapath = :phrases[], wrap = false, fontSize = { 13 * app.fontScale }, textColor = { provided("theme").textMuted },
+                    fontWeight = { :bold ? "bold" : "normal" }, text = :text ]
+                ],
+
+            // a blue→teal thread of the brand accent, the origin of the code spine
+
+            rule: View [ y = { Math.max(34 * app.fontScale, parent.title.height + 8 * app.fontScale) }, width = 100%, height = 2, cornerRadius = 1,
+                opacity = { app.isDark ? 0.72 : 1 },
+                fill = { Gradient.linear("90deg", provided("theme").accent, provided("theme").accentSecondary) } ]
+            ],
+
+        // highlighted view: prose + colored code segments
+
+        col: View [ visible = { app.mode == "reader" }, y = { app.topM + app.headH }, width = { app.hostWidth - 96 },
+            x = { Math.max(24, (parent.width - this.width) / 2) },
+            datapath = { app.doc.value },
+            layout: SimpleLayout [ axis = y, spacing = 12 ],
+            Block [ datapath = :segments[], kind = :kind, md = :md, html = :html, nested = { :nested == true }, joinBelow = { :joinBelow == true }, lines = { :lines } ]
+            ],
+
+        // plain view: the verbatim source as one monospace flow (same size/theme)
+
+        plain: View [ visible = { app.mode == "source" }, y = { app.topM + app.headH }, width = { app.hostWidth - 96 },
+            x = { Math.max(24, (parent.width - this.width) / 2) },
+            fill = { provided("theme").codeBg }, cornerRadius = 8, clip = true,
+            height = { this.body.height + 32 },
+            spine: View [ x = 0, y = 0, width = 2, height = 100%, fill = { provided("theme").accentSecondary } ],
+
+            // verbatim source at the house code rendition — the same face and size
+            // as the reader's highlighted code, so the two views read identically.
+
+            body: View [ x = 20, y = 16, width = { parent.width - 40 }, scrolls = x, height = { this.contentHeight },
+                HTMLText [ x = 0, y = 0, width = 100%, html = { app.plainHtml() },
+                    fontScale = { app.fontScale }, bodyColor = { app.codeFg() }, selectable = true ]
+                ],
+
+            // the declarations' markers, as on the reader's cards — named only
+            // while this view shows
+
+            marks: View [ y = 16, width = 1, height = 1, datapath = { app.plainMarks.value },
+                View [ datapath = :marks[], width = 1, height = 1,
+                    anchor = { app.mode == "source" ? :name : "" },
+                    visible = { parent.parent.body.height > 0 },
+                    y = { :line * parent.parent.body.height / Math.max(1, app.lineCount(app.plainHtml())) } ]
+                ]
+            ],
+
+        // what the build weighs: the total, its four parts as one bar, then the
+        // program's files, the library's and the runtime's modules, each with
+        // what brought it aboard
+
+        weigh: View [ visible = { app.mode == "sizes" }, y = { app.topM + app.headH + 8 }, width = { app.hostWidth - 96 },
+            x = { Math.max(24, (parent.width - this.width) / 2) },
+            layout: SimpleLayout [ axis = y, spacing = 28 ],
+
+            status: Text [ visible = { !app.sizes.loaded || app.isInclude }, width = 100%, wrap = true,
+                fontSize = { 14 * app.fontScale }, textColor = { provided("theme").textMuted },
+                text = { app.isInclude ? "This file declares classes — there is no App, so no build to weigh."
+                    : app.sizes.failed ? "No sizes: they come from the program's production build, which the dev server makes. This host cannot build it, or the program does not compile."
+                    : "Building the program to weigh it …" } ],
+
+            summary: View [ visible = { app.sizes.loaded && !app.isInclude }, width = 100%,
+                layout: SimpleLayout [ axis = y, spacing = 10 ],
+                Text [ fontSize = { 30 * app.fontScale }, fontWeight = semibold, wrap = false, textColor = { provided("theme").text },
+                    text = { app.sizes.value == null ? "" : app.kb(app.sizes.value.total.gzip) } ],
+                Text [ width = 100%, wrap = true, fontSize = { 13 * app.fontScale }, textColor = { provided("theme").textMuted },
+                    text = { "over the wire, compressed · " + app.sizesSettings } ],
+
+                // the four parts, end to end in one bar, and a key to it
+
+                whole: View [ width = 100%, height = 10, cornerRadius = 5, clip = true, datapath = { app.sizeView.value },
+                    layout: SimpleLayout [ axis = x, spacing = 0 ],
+                    View [ datapath = :parts[], height = 100%, flexes = { :share }, fill = { app.partTint(:part) } ]
+                    ],
+                key: View [ width = 100%, datapath = { app.sizeView.value },
+                    layout: WrappingLayout [ spacing = 18, rowSpacing = 6 ],
+                    PartKey [ datapath = :parts[], part = :part, gzip = :gzip ]
+                    ],
+                Text [ width = 100%, wrap = true, fontSize = { 12 * app.fontScale }, textColor = { provided("theme").textMuted },
+                    text = "A file's figure is what removing it would save, and a module's its share of the runtime's bytes: estimates, since gzip compresses each piece against the others." ]
+                ],
+
+            // the program's own files, the library's, and the runtime: each a
+            // section whose line sums it, open or shut
+
+            program: SizeGroup [ visible = { app.sizes.loaded && !app.isInclude }, label = "Program", open = true,
+                detail = { app.sizeView.value.heads.program },
+                View [ width = 100%, datapath = { app.sizeView.value },
+                    layout: SimpleLayout [ axis = y, spacing = 14 ],
+                    SizeRow [ datapath = :program[], label = :label, href = :href, gzip = :gzip, share = :share, part = :part, note = :note, detail = :detail ]
+                    ]
+                ],
+            library: SizeGroup [ visible = { app.sizes.loaded && !app.isInclude }, label = "Library", open = true,
+                detail = { app.sizeView.value.heads.library },
+                View [ width = 100%, datapath = { app.sizeView.value },
+                    layout: SimpleLayout [ axis = y, spacing = 14 ],
+                    SizeRow [ datapath = :library[], label = :label, href = :href, gzip = :gzip, share = :share, part = :part, note = :note, detail = :detail ]
+                    ]
+                ],
+            runtime: SizeGroup [ visible = { app.sizes.loaded && !app.isInclude }, label = "Runtime",
+                detail = { app.sizeView.value.heads.runtime },
+                View [ width = 100%, datapath = { app.sizeView.value },
+                    layout: SimpleLayout [ axis = y, spacing = 10 ],
+                    SizeRow [ datapath = :modules[], label = :label, gzip = :gzip, share = :share, part = :part, note = :note ]
+                    ],
+                Text [ width = 100%, wrap = true, fontSize = { 12 * app.fontScale }, textColor = { provided("theme").textMuted },
+                    text = { "Left out: " + app.sizesLeftOut } ]
+                ],
+
+            beside: SizeSection [ hasRows: boolean = { (app.sizes.value?.beside.length ?? 0) > 0 },
+                visible = { app.sizes.loaded && !app.isInclude && this.hasRows },
+                title = "Beside the bundle", blurb = "Fetched when needed, and not in the total.",
+                View [ width = 100%, datapath = { app.sizeView.value },
+                    layout: SimpleLayout [ axis = y, spacing = 10 ],
+                    SizeRow [ datapath = :beside[], label = :label, gzip = :gzip, share = :share, part = :part, note = :note ]
+                    ]
+                ]
+            ],
+
+        // bottom margin: a spacer just past the active view's bottom edge
+
+        foot: View [ width = 8, height = 48,
+            y = { app.topM + app.headH + (app.mode == "reader" ? parent.col.height : app.mode == "sizes" ? parent.weigh.height + 8 : parent.plain.height) } ]
+        ],
+
+    // Live-edit workbench — a fixed stack filling the window below the bar: the
+    // source in an editor on top, the running program below, compile errors
+    // sandwiched between. The pieces are the host's generic live loop: the island
+    // is named "run:__raw__" (its seed IS the viewed file), the editor publishes
+    // every keystroke on liveCard/liveSource, and app.liveReport carries the last
+    // recompile's rendered report ("" = clean; the island keeps the last good
+    // render while it shows). A file with no App declaration reports instead of
+    // running — honest, if unglamorous.
+
+    // An include on the Edit tab: it declares classes and no App, so there
+    // is nothing to run — one centered line points at the one program this
+    // page actually knows, the one it opened on. (Which programs include a
+    // file is unknowable in general — any program may — so the message claims
+    // nothing about inclusion.)
+
+    noRun: View [ visible = { app.mode == "edit" && app.isInclude }, x = 0, y = { app.barH },
+        width = { app.hostWidth }, height = { app.hostHeight - app.barH }, fill = { provided("theme").surface },
+
+        // two centered lines with a blank line between; the second names the
+        // page's own program when it has one, and claims nothing otherwise
+
+        l1: Text [ x = center, y = { parent.height / 2 - 44 * app.fontScale }, wrap = false,
+            fontSize = { 15 * app.fontScale }, textColor = { provided("theme").textMuted },
+            text = "This file declares classes — there is no App to run." ],
+
+        row: View [ visible = { app.seededRunnable }, x = center, y = { parent.l1.y + 44 * app.fontScale },
+            layout: SimpleLayout [ axis = x, spacing = 0 ],
+            Text [ wrap = false, fontSize = { 15 * app.fontScale }, textColor = { provided("theme").textMuted }, text = "Edit " ],
+            name: Text [ wrap = false, fontSize = { 15 * app.fontScale }, fontWeight = semibold,
+                textColor = { app.isDark ? 0x58A6FF : 0x0969DA },
+
+                // "edit" is the viewer's own location grammar, not a `shows`
+                // destination, so the registry refuses it as a literal: the link
+                // is built from the location it names, as a Segmented's segment's
+                // is, and the crawl checks it
+
+                location: string = "edit",
+                link = { "#" + location },
+                text = { app.seededPath().split("/").pop() || "" }
+                ],
+            Text [ wrap = false, fontSize = { 15 * app.fontScale }, textColor = { provided("theme").textMuted }, text = ", the program this page opened on." ]
+            ],
+
+        alt: Text [ visible = { !app.seededRunnable }, x = center, y = { parent.l1.y + 44 * app.fontScale }, wrap = false,
+            fontSize = { 15 * app.fontScale }, textColor = { provided("theme").textMuted },
+            text = "Open a program that includes it to edit live." ]
+        ],
+
+    live: View [ visible = { app.mode == "edit" && !app.isInclude }, x = 0, y = { app.barH },
+        width = { app.hostWidth }, height = { app.hostHeight - app.barH },
+        fill = { provided("theme").surface },
+
+        // the divider y: 0 = not dragged yet (a 42% default); the grip writes it
+
+        split: number = 0,
+        editorH: number = { split > 0 ? split : Math.floor(height * 0.42) },
+        edited: boolean = false,    // an edit exists (arms Revert; onInput sets it)
+
+        editor: TextInput [ x = 0, y = 0, width = 100%, height = { parent.editorH },
+            multiline = true, spellcheck = false, wrap = false, padding = 14,
+
+            // the text-size switch drives every pane, this one included
+
+            fontFamily = ["ui-monospace", "monospace"], fontSize = { 12 * app.fontScale },
+            textColor = { app.codeFg() },
+            fill = { provided("theme").codeBg },
+
+            // the file's text until the person edits it; then their edit (a declared
+            // default gives way to a write, where a binding of `value` would refuse it)
+
+            draft: string = { app.demoSources["__raw__"] || app.rawSrc.value || "" },
+            value = { draft },
+            commit(t: string) { draft = t; parent.edited = true; app.liveCard = "__raw__"; app.liveSource = t }
+            ],
+
+        // Revert — restores the file's pristine text and recompiles it; armed
+        // only once an edit exists, quiet (and inert) until then
+
+        revert: View [ y = 10, height = 24, cornerRadius = 6,
+            x = { parent.width - this.width - 14 },
+            width = { this.lbl.width + 18 },
+            opacity = { parent.edited ? 1 : 0.35 },
+            stroke = { Stroke(1, provided("theme").line) },
+            fill = { hovered && parent.edited ? provided("theme").controlHovered : provided("theme").control },
+            onClick() {
+                if (!parent.edited) return
+                const raw = app.demoSources["__raw__"] || app.rawSrc.value || ""
+                parent.editor.draft = raw
+                parent.edited = false
+                app.liveCard = "__raw__"; app.liveSource = raw
+                },
+            lbl: TextLabel [ fontSize = 11, fontWeight = semibold, wrap = false, x = center,
+                textColor = { provided("theme").textMuted }, text = "Revert" ]
+            ],
+
+        // the divider: the press captures the pointer to this view (the router's
+        // capture model — the calendar's drag uses the same), so its move/up fire
+        // for the whole drag wherever the pointer goes. The move reads the
+        // pointer's app-space y (its own event coords are grip-local and the
+        // grip is what's moving); the shield (the last child) merely blocks
+        // the browser's native text selection in the editor beneath.
+
+        grip: View [ x = 0, y = { parent.editorH }, width = 100%, height = 6,
+            dragging: boolean = false,
+            fill = { dragging || hovered ? provided("theme").accentSecondary : provided("theme").line },
+            drag(y: number) { parent.split = Math.max(120, Math.min(parent.height - 160, y)) },
+            onDragStart()    { dragging = true },
+            onDrag()         { if (dragging) drag(app.pointerY - app.barH) },
+            onDragEnd()      { dragging = false }
+            ],
+
+        // the error sandwich: the last recompile's report in full, only while one
+        // stands — wrapped multi-line text, the docs/homepage treatment, so the
+        // report reads past its "1 error" summary line
+
+        report: View [ visible = { app.liveReport != "" }, x = 0, y = { parent.editorH + 6 },
+            width = 100%, clip = true,
+            height = { Math.min(200, this.msg.height + 20) },
+            fill = { app.isDark ? 0x2A1517 : 0xFDECEC },
+            bar: View [ x = 0, y = 0, width = 3, height = 100%, fill = { app.isDark ? 0xE0525E : 0xC93B47 } ],
+            msg: Text [ x = 14, y = 10, width = { parent.width - 28 }, wrap = true,
+                fontFamily = ["ui-monospace", "monospace"], fontSize = 11,
+                textColor = { app.isDark ? 0xFF8B8B : 0xB42318 }, text = { app.liveReport } ]
+            ],
+
+        // the running program — an embedded child app in a host island, swapped
+        // to each clean recompile (renderChild); a floor-declaring app pans here
+
+        run: AppIsland [ x = 0, y = { parent.editorH + 6 + (app.liveReport != "" ? parent.report.height : 0) },
+            width = 100%,
+            height = { parent.height - this.y },
+            program = { app.mode == "edit" ? "__raw__" : "" },
+            focusable = true,
+            onPointerDown() { Focus.focus(this) }   // a press hands the running program the keyboard
+            ],
+
+        // the drag shield — last child, so it sits over everything while a
+        // divider drag is on. The router already captures the drag to the grip;
+        // this view's whole job is to be the browser's native hit target, so the
+        // editor's textarea underneath cannot rubber-band a text selection.
+
+        shield: View [ visible = { parent.grip.dragging }, x = 0, y = 0,
+            width = 100%, height = 100% ]
+        ],
+
+    // top bar: the brand (left) · Reader / Source / Edit (centre) · type-size
+    // stepper + theme (right). The brand is the house rendition — gradient
+    // "Declare", solid app name — sized and placed as in Calendar and Docs.
+
+    bar: View [ x = 0, y = 0, width = { app.hostWidth }, height = { app.barH }, fill = { provided("theme").background },
+
+        hair: View [ x = 0, y = { app.barH - 1 }, width = 100%, height = 1, fill = { provided("theme").line } ],
+
+        brand: View [ x = 20, y = { (app.barH - 22) / 2 }, height = 22,
+            layout: SimpleLayout [ axis = x, spacing = 5 ],
+
+            // "Declare" is the way home — openURL() resolves against the distro
+            // root, so this works on either host at any mount point
+
+            Text [ fontSize = 18, fontWeight = semibold, letterSpacing = { -0.02 * fontSize }, wrap = false,
+                textColor = { provided("theme").accent }, text = "Declare",
+                onClick() { app.openURL("apps/homepage/homepage.declare") }
+                ],
+            Text [ fontSize = 18, fontWeight = semibold, letterSpacing = { -0.02 * fontSize }, wrap = false,
+                textColor = { provided("theme").text }, text = "Viewer" ]
+            ],
+
+        // Reader / Source / Edit / Sizes. The tab writes `app.location`, and `app.mode`
+        // derives back from it — so the switch stays a single source of truth
+        // that back/forward walk for free. `Segmented` keeps that seam intact:
+        // `value` reads the derived mode, `commit` writes the location.
+
+        // the room between the brand and the controls on the right: the switch is
+        // centered in the window while it fits, and narrows when it does not
+
+        left: number = { this.brand.x + this.brand.width + 16 },
+        right: number = { (this.size.visible ? this.size.x : this.themeSwitch.x) - 12 },
+
+        // the four tabs need about 280 between the brand and the size switch: from 660 wide
+
+        modeSwitch: Segmented [ visible = { app.hostWidth >= 660 }, y = { (app.barH - 30) / 2 }, height = 30,
+            width = { Math.min(320, parent.right - parent.left) },
+            x = { Math.min(parent.right - this.width, Math.max(parent.left, (app.hostWidth - this.width) / 2)) },
+            replace = true,        // a tab switch never buries Back — the walk is between files
+            value = { app.mode },
+
+            // Keep the viewed file across tabs: a bare `location = v` here would
+            // drop the followed include (the choice's own location carries the
+            // suffix, but this write runs after it and wins the settle). The
+            // keyboard path (Enter on a segment) arrives only here, so this must
+            // build the full location itself — and replace, like the click
+            // path, so no tab switch ever buries Back.
+
+            commit(v: object) { app.followLink("#" + ("" + v) + (app.fileRel == "" ? "" : "/" + app.fileRel), true) },
+
+            // each tab states its location, which is what makes the switch a link
+            // the crawler can follow — without it this app emits one document
+            // (the default) and Source and Edit are unreachable to extraction
+
+            // …and keeps the viewed file: switching tabs on a followed include
+            // stays on that include
+
+            items = { app.tabs() }
+            ],
+
+        // a phone's tabs: the tab it is on, and a chevron that says there are more
+
+        tabBtn: Control [ visible = { app.hostWidth < 660 }, menu = { app.tabMenu },
+            x = { parent.left }, y = { (app.barH - 30) / 2 }, height = 30, cornerRadius = 8, padding = [0, 8, 0, 12],
+            accessibilityLabel = { "View: " + this.t.text },
+            fill = { pressed ? provided("theme").controlPressed : hovered ? provided("theme").controlHovered : provided("theme").control },
+            layout: SimpleLayout [ axis = x, spacing = 6 ],     // the label and the chevron centre themselves
+            t: TextLabel [ fontSize = 13, fontWeight = medium, wrap = false, textColor = { provided("theme").text },
+                text = { (app.tabs().find((c: any) => c.id == app.mode) as any)?.label ?? "Reader" } ],
+            ChevronIcon [ y = center, iconSize = 11, ink = { provided("theme").textMuted } ]
+            ],
+
+        // the text-size switch steps aside on a phone, where the tabs need the room
+
+        size: TextSizeSwitch [ visible = { app.hostWidth >= 520 }, y = { (app.barH - 30) / 2 }, x = { parent.themeSwitch.x - this.width - 8 }, height = 30,
+            sizes = [0.8, 0.9, 1.1],
+            value = { app.fontScale },
+            commit(v: object) { app.fontScale = v as number }
+            ],
+
+        themeSwitch: AppearanceSwitch [ y = { (app.barH - this.height) / 2 }, x = { app.hostWidth - this.width - 16 },
+            dark = { app.isDark },
+            commit(v: boolean) { app.themeMode = v ? "dark" : "light" }
+            ]
+        ]
+    ]

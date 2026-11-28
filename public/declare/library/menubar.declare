@@ -1,0 +1,253 @@
+/*
+# MenuBar
+
+The record-driven menu bar: **whole menus are data** —
+
+    menus = { [ ({ id, label, bold?, items: [ …menu records… ] }), … ] }
+
+— and the class arranges. One internal Menu serves every title; its
+`items` constraint derives from the open title's record, so item state
+(enabled, checked, labels) stays live while the menu is up. An item's
+`key:` is a keyboard shortcut for the whole program (`Shortcuts`): the menu
+bar is the program's shortcut table, and nothing is declared twice.
+
+Tracking is the classic desktop behavior: titles do not highlight on mere hover;
+a click opens (and highlights) a title; while any menu is open, moving
+across another title switches to it; clicking the open title closes.
+
+Delivery is the one seam: `picked(id)` — override at the use site. An item that names a
+`command` runs it instead, on what the person was working in (`Commands.run`): Edit › Copy
+and ⌘C reach the same view.
+
+A dropped menu paints over the bar's later siblings: the bar raises itself when a menu
+opens (stacking is source order, and `raise()` is the runtime verb for it). A bar nested
+inside a container that sits under other content wants that container declared last,
+or a menu hosted at the app layer as `Combobox` does.
+
+```declare
+App [ width = 380, height = 190, chose: string = "",
+    bar: MenuBar [ x = 12, y = 8,
+        menus = { [ ({ id: "file", label: "File", items: [ ({ id: "new", label: "New", key: "⌘N" }),
+                                                          ({ id: "open", label: "Open…" }) ] }),
+                    ({ id: "edit", label: "Edit", items: [ ({ id: "undo", label: "Undo" }),
+                                                           ({ divider: true }),
+                                                           ({ id: "cut", label: "Cut" }) ] }) ] },
+        picked(id: string) { app.chose = id }
+        ],
+    Text [ x = 20, y = 70, text = { app.chose == "" ? "nothing picked" : "picked: " + app.chose } ]
+    ]
+```
+
+## menus
+The whole bar as **data**: `[ { id, label, bold?, kind?, items: [ …menu records… ] } ]`,
+where `items` is exactly `Menu`'s record shape. **One internal `Menu` serves every
+title**, deriving its rows from the open one — so item state stays live while a menu is
+up, and there is nothing to keep in step. An item's `key:` (`"⌘S"`) is its keyboard
+shortcut, live for the whole program while the bar shows it, and arrives at `picked()`
+like a click.
+
+## picked()
+**The delivery seam — override it at the use site.** Receives the picked item's `id`
+from any menu in the bar; the id is the whole message.
+
+## ink
+Overrides the *titles'* colour, for a bar drawn straight over a wallpaper where the
+platform text turns light. `null` uses the theme's text colour. **The dropdown menus
+stay themed either way** — this is the bar's own ink, not the menu's.
+
+## openId
+Which title's menu is open, by id — `""` when none is.
+
+## shown
+Whether any menu in the bar is currently open. The bar opens one `Menu`, its `menu`, under
+whichever title is open; a view outside the bar closes the chain with `menu.rootClose()`.
+
+## openMenu()
+Opens a title's menu and keeps the bar itself above the menu's backdrop, which is what
+lets tracking continue while a menu is up.
+
+## trackMenu()
+Switches to another title while a menu is already open — **bar tracking**: titles do
+not highlight on mere hover, but once a menu is open, crossing another title opens that
+one.
+
+## focusScope
+`stop`: the bar is one Tab stop. Tab lands on the title last used (the first, at first);
+Left and Right move among the titles; Enter, Space or Down opens the focused title's menu.
+
+## stepMenu()
+Moves to the adjacent title's menu — Left/Right while a menu is open, yielding to the
+open menu when a submenu is up or the rover sits on one.
+
+## _hasSub()
+**Internal.** Whether a roved row cascades, so ArrowRight enters it rather than walking
+the bar.
+
+## _rowsOf()
+**Internal.** The bar's title views.
+
+## width
+Content-sized to its `row` of titles (a script presses one by its place: `app.bar.row.0`), so it sits in a chrome bar without a stated width.
+
+## selectable
+Chrome, never prose: the titles do not select, even inside a `selectable` region — the same provision every `Control` makes for its label.
+
+## height
+From the theme's `menuBarHeight` (25 by default); the titles' size is `menuBarFontSize` (14) and their highlight's corners `menuBarTitleCornerRadius` (6).
+## _commandChrome
+**Internal.** A menu bar is command chrome: its focus is never where a command starts.
+
+*/
+
+include [ "menu.declare", "shortcuts.declare" ]
+
+// one menu of the bar, as data
+
+schema MenuBarMenuRecord [ id: string, label: string, bold?: boolean, kind?: string, items: MenuItemRecord[] ]
+
+class MenuBar [
+    accessibilityRole = menuBar,
+    height = { provided("theme").menuBarHeight },
+
+    // chrome, not prose: the titles never select inside a `selectable` region
+
+    selectable = false,
+
+    // menu records: { id, label, bold?, kind?, items } — `kind` names an
+    // author class rendered as the title (a brand mark in the leading
+    // slot); behavior stays the title's (open, track). Keep kind-only
+    // classes with `use [ Name ]`, exactly as Menu's kind rows do.
+
+    menus: MenuBarMenuRecord[]? = null,
+
+    // optional title-ink override: when set, the menu titles render in this
+    // color instead of `provided("theme").text` — for a bar drawn straight over a
+    // wallpaper (no background), where the platform text turns light. Null =
+    // the theme's text color. The dropdown menus stay themed.
+
+    ink: Color = null,
+
+    // a menu bar is command chrome: Tab to a title and pick, and the command
+    // still reaches what the person was working in (key-bindings.md)
+
+    _commandChrome: boolean = true,
+
+    // every item's key: is a shortcut for the whole program (planes.md §9)
+
+    _shortcuts: Shortcuts [ on = { app }, title = "",
+        items = { (classroot.menus ?? []).flatMap((m) => ((m as any).items ?? []).filter((r) => r.key != null && r.key != "").map((r) => ({ menu: "" + (m as any).label, ...r }))) },
+        picked(id: string) { classroot.picked(id) }
+        ],
+
+    // the delivery seam — the id is the whole message
+
+    picked(id: string) { },
+
+    openId: string = "",
+    shown: boolean = { this.menu.shown },
+
+    width = { this.row.contentWidth },
+
+    // `t`/`r` below are typed `object` — a title is an anonymous replicated
+    // template (the `datapath = :m[]` view); see menu.declare's same seam.
+
+    openMenu(t: object) {
+        openId = "" + t.mid
+        this.menu.showFor(t)
+        },
+
+    // while open, crossing another title switches to it (menu tracking)
+
+    trackMenu(t: object) { if (this.menu.shown && "" + t.mid != openId) this.openMenu(t) },
+
+    // ── arrows walk the bar while a menu is open (the desktop rule): Left/Right move to
+    // the adjacent title's menu. The open Menu keeps the keys when a submenu
+    // is up (Left backs out of it) or when the rover sits on a submenu row
+    // (Right enters it) — the guards below yield exactly those cases.
+
+    _rowsOf() { return this.row.children },
+
+    _hasSub(r: object) -> boolean { return r != null && r.sub == true },
+
+    // the bar is one Tab stop; its titles are its members (planes.md §13.6):
+    // Left/Right walk them, Enter, Space or Down open the focused one's menu
+
+    focusScope = stop,
+
+    stepMenu(d: number) {
+        const ms = menus || []
+        const i = ms.findIndex((m) => "" + m.id == this.openId)
+        if (i < 0 || ms.length < 2) return
+        const nid = "" + ms[(i + d + ms.length) % ms.length].id
+        const t = this._rowsOf().find((r) => "" + r.mid == nid)
+        if (t != null) this.openMenu(t)
+        },
+
+    _keys: KeyListener [
+        onKeyDown(e: KeyEvent) {
+            if (!classroot.menu.shown) return
+            if (classroot.menu._subShown(classroot.menu.child)) return
+            if (e.key == "ArrowLeft") classroot.stepMenu(-1)
+            else if (e.key == "ArrowRight") { if (!classroot._hasSub(classroot.menu.activeRow)) classroot.stepMenu(1) }
+            }
+        ],
+
+    // a bar's menu paints in the floating layer like any menu; a press outside
+    // it closes it and goes on, so a press on another title opens that title's
+    // menu (menu tracking by click)
+
+    menu: Menu [ pressPolicy = "dismissAndDeliver",
+        sideways(d: number) { classroot.stepMenu(d) },
+        items = { ((classroot.menus || []).find((m) => "" + m.id == classroot.openId) || ({ })).items || [] },
+        picked(id: string) { classroot.picked(id) }
+        ],
+
+    _data: Dataset [ contents = { { m: classroot.menus || [] } } ],
+
+    row: View [ height = 100%,
+        layout: SimpleLayout [ axis = x, spacing = 2 ],
+        datapath = { classroot._data.value },
+
+        // the title highlight is the Mac's: inset above and below (the bar is
+        // taller than the capsule), radius between rounded-rect and pill
+
+        View [ datapath = :m[], height = { parent.height - 8 }, y = 4,
+            mid: string = { "" + :id },
+            kd: string = { typeof :kind == "string" ? "" + :kind : "" },
+            open: boolean = { classroot.menu.shown && classroot.openId == this.mid },
+            width = { (this.kd != "" ? this.host.contentWidth : this.t.width) + 20 },
+            cornerRadius = { provided("theme").menuBarTitleCornerRadius },
+
+            // the open/arrow-nav title highlight — a translucent frosted capsule
+            // when the theme names one (Cupertino), else the solid controlSelected
+
+            fill = { this.open ? ((provided("theme").menuTitleHighlightFill ?? provided("theme").controlSelected)) : null },
+            focusable = true,
+
+            // a menu title: named by its label, pressed to open its menu
+
+            accessibilityRole = menuItem,
+            accessibilityExpanded = { this.open },
+            accessibilityLabel = { this.kd != "" ? "" + (:label ?? "") : "" },
+            press() { if (this.open) classroot.menu.close(); else classroot.openMenu(this) },
+            onKeyDown(e: KeyEvent) {
+                if (e.key == "Enter" || e.key == " " || e.key == "ArrowDown") classroot.openMenu(this)
+                else super.onKeyDown(e)
+                },
+            onPointerOver() { classroot.trackMenu(this) },
+            onClick() { if (this.open) classroot.menu.close(); else classroot.openMenu(this) },
+            onInit() { if (this.kd != "") this.host.createView(this.kd, ({ })) },
+            t: TextLabel [ x = 10, fontSize = { provided("theme").menuBarFontSize },
+                visible = { parent.kd == "" },
+
+                // medium, not regular: the browser's grayscale antialiasing
+                // renders 400 a shade thinner than platform menu text
+
+                fontWeight = { :bold ? "bold" : "medium" },
+                textColor = { classroot.ink != null ? classroot.ink : provided("theme").text }, text = { "" + :label } ],
+            host: View [ x = 10, y = center,
+                visible = { parent.kd != "" },
+                width = { this.contentWidth }, height = { this.contentHeight } ]
+            ]
+        ]
+    ]

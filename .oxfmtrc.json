@@ -17,6 +17,8 @@
 		"curriculum/**",
 		"tests/fixtures/**",
 		"*.jsonl",
-		"**/*.md"
+		"**/*.md",
+		"public/declare/bundles/**",
+		"public/declare/library/**"
 	]
 }

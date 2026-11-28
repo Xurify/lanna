@@ -219,6 +219,139 @@ function MermaidInline({ chart }: { chart: string }) {
 	);
 }
 
+// ─── Declare widgets (the ```declare and ```quiz fences) ─────────────────────
+
+/** A tutor-authored interactive widget, compiled and run by the Declare
+ *  runtime (public/declare/) inside a sandboxed iframe: `allow-scripts`
+ *  only, so the widget's origin is opaque and it can reach neither this
+ *  app's DOM nor its storage. The fence's content is stored once under its
+ *  hash by /api/declare-widget; the iframe boots it from there. A `quiz`
+ *  fence carries only the drill's data for the fixed widget
+ *  (public/declare/widgets/quiz.declare); a `declare` fence is a full
+ *  program. While the fence streams, a quiet skeleton instead of a doomed
+ *  compile. */
+function DeclareInline({
+	source,
+	mode,
+	incomplete,
+}: {
+	source: string;
+	mode: "quiz" | "declare";
+	incomplete: boolean;
+}) {
+	const [url, setUrl] = useState<string | null>(null);
+	const [error, setError] = useState<string | null>(null);
+	const [attempt, setAttempt] = useState(0);
+	const [night, setNight] = useState(false);
+	const [ready, setReady] = useState(false);
+	const [contentH, setContentH] = useState<number | null>(null);
+	const frameRef = useRef<HTMLIFrameElement>(null);
+
+	useEffect(() => {
+		const root = document.documentElement;
+		const read = () => setNight(root.classList.contains("dark"));
+		read();
+		const observer = new MutationObserver(read);
+		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+		return () => observer.disconnect();
+	}, []);
+
+	// The widget posts one message when boot() has resolved — the sandbox keeps
+	// its document unreachable, so the source window is the whole handshake.
+	useEffect(() => {
+		const onMessage = (e: MessageEvent) => {
+			if (e.source !== frameRef.current?.contentWindow) return;
+			const data = e.data as { type?: string; h?: number } | null;
+			if (data?.type === "declare-ready") setReady(true);
+			if (data?.type === "declare-size" && typeof data.h === "number" && data.h > 0) {
+				setContentH(Math.min(Math.max(Math.ceil(data.h) + 2, 200), 560));
+			}
+		};
+		window.addEventListener("message", onMessage);
+		return () => window.removeEventListener("message", onMessage);
+	}, []);
+
+	useEffect(() => {
+		if (incomplete) return;
+		let cancelled = false;
+		setUrl(null);
+		setError(null);
+		fetch("/api/declare-widget", {
+			method: "POST",
+			headers: { "content-type": "text/plain" },
+			body: source,
+		})
+			.then(async (res) => {
+				if (!res.ok) throw new Error(`the widget store answered ${res.status}`);
+				const body = (await res.json()) as { url?: string };
+				if (!body.url) throw new Error("the widget store returned no url");
+				if (!cancelled) setUrl(body.url);
+			})
+			.catch((e) => {
+				if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [source, incomplete, attempt]);
+
+	if (incomplete || (url === null && error === null)) {
+		return (
+			<div data-testid="md-declare" className="my-4 flex justify-center p-4" aria-busy="true">
+				<span className="inline-block size-4 animate-spin rounded-full border border-current border-b-2 text-muted-foreground" />
+			</div>
+		);
+	}
+	if (error !== null) {
+		return (
+			<div className="my-4 rounded-xl border border-destructive/40 bg-destructive/5 p-4" data-testid="md-declare-error">
+				<p className="text-sm font-medium text-destructive">Widget failed to load</p>
+				<p className="mt-1 font-mono text-xs break-words text-muted-foreground">{error}</p>
+				<details className="mt-3">
+					<summary className="cursor-pointer text-xs text-muted-foreground">Show widget source</summary>
+					<pre className="mt-2 overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs text-foreground">{source}</pre>
+				</details>
+				<button
+					type="button"
+					className="mt-3 rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-accent"
+					onClick={() => setAttempt((a) => a + 1)}
+				>
+					Retry
+				</button>
+			</div>
+		);
+	}
+	return (
+		<div
+			data-testid="md-declare"
+			data-declare-ready={ready ? "true" : undefined}
+			data-no-word-lookup="true"
+			className="group/md relative my-4 select-none"
+		>
+			<div className="absolute top-1.5 right-2 z-10 opacity-0 transition-opacity group-hover/md:opacity-100">
+				<CopyCorner getText={() => source} label="Copy widget source" />
+			</div>
+			<iframe
+				ref={frameRef}
+				title="Interactive practice"
+				src={`/declare/host.html?${mode === "quiz" ? "d" : "w"}=${encodeURIComponent(url!)}&night=${night ? 1 : 0}`}
+				sandbox="allow-scripts"
+				loading="lazy"
+				style={{ height: contentH ?? 328 }}
+				className="w-full rounded-xl border border-border"
+			/>
+			{!ready && (
+				<div
+					className="absolute inset-0 flex items-center justify-center rounded-xl border border-border bg-background"
+					aria-busy="true"
+				>
+					<span className="inline-block size-4 animate-spin rounded-full border border-current border-b-2 text-muted-foreground" />
+				</div>
+			)}
+		</div>
+	);
+}
+
 /** The Streamdown `code` override: inline code passes through with the
  *  house inline classes; block fences split — mermaid renders as the bare
  *  chart above, everything else delegates to streamdown's exported
@@ -254,6 +387,8 @@ function MarkdownCode(props: ComponentProps<"code"> & ExtraProps) {
 
 	if (language === "mermaid") return <MermaidInline chart={source} />;
 	if (language === "svg") return <SketchFigure source={source} incomplete={incomplete} />;
+	if (language === "declare") return <DeclareInline source={source} mode="declare" incomplete={incomplete} />;
+	if (language === "quiz") return <DeclareInline source={source} mode="quiz" incomplete={incomplete} />;
 
 	const startMatch = /startLine=(\d+)/.exec(meta);
 	const startLine = startMatch ? Number.parseInt(startMatch[1]!, 10) : undefined;

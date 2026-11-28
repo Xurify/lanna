@@ -1,0 +1,113 @@
+/*
+# AppIsland — a whole Declare program running inside a box
+
+`AppIsland` embeds a live Declare application: give it a `program` and it mounts
+that program as its own child app — its own reactive graph, input router, and
+stage — sized to this view's box. There is no coordinate sync: the tenant fills
+the box, so your width/height constraints size it like any view.
+
+It composes `DOMIsland` (the sanctioned foreign-content leaf) and builds the
+host's mount key from structured inputs, so callers never hand-splice the
+`run:…` wire. The page host (`browser/host-client.js`) sees the key on the box,
+resolves the program on its boot ladder — prewarm → cache → in-browser compile,
+identical on the dev server and a static host — and renders the child.
+
+`childName` (inherited from `DOMIsland`) is the reverse channel: the running child's
+`appName` reflected back up, so a host can title itself by what it shows.
+
+### The boundary
+
+What crosses an island says its direction (the guide's Embedding chapter). DOWN: list names in
+`provides = ["dark", "base"]`, and the tenant reads each with
+`app.hostProvided("dark", false)` — a value resolves at the island as `provided()`
+does, the island's own attribute first, then its ancestors' provisions. UP: the
+tenant lists names in its App's `exposes = ["docH"]`, and the host reads them
+with `island.exposed("docH", 0)`. Both are reactive, per settle, with no
+handshake to write. `post(topic, payload)` / `onPost(m: IslandMessage)` carry the
+verbs.
+
+For a host that runs a program the person browses — a documentation reader in a
+window — two more cross on their own, with nothing named on either side. **Where it
+is**: `location` is the tenant's location, both ways — set it to start the program
+at a place or send it to one, and read it to follow where the program has gone;
+`departedPlace` and `place` carry where the person had scrolled, for back and
+forward. **Where it wants to go**: the program's `openURL(to)` and `openWindow(to)`
+come to the island as `onNavigate(n: IslandNavigation)` when the island declares it,
+so the host decides what a link leading out of it means — a desktop opens a window.
+Without it, the page navigates. A host that only shows a program uses none of this.
+
+**Its overlays.** The program's menus, popovers and dialogs open in the nearest overlay layer
+up the chain — the `Window` the island sits in, or any view above it that provides
+`overlays`, in this program or a host further up — so they hang past the island's edge and
+turn and scale with the program as it is shown. With no such layer above, they stay inside
+the box. `containOverlays = true` keeps them inside the box always.
+
+The window frame, activation, and titling belong to the caller — a desktop window
+adds an `onPointerDown` that raises itself and reads `childName` for its title; the
+homepage and the viewer just size the box. This primitive is only the embedding.
+
+**The keyboard goes where focus is.** The program inside hears keys while focus is on the
+island or on one of its own views, and the host hears none then. Make the island
+`focusable` and focus it on a press (`onPointerDown() { Focus.focus(this) }`) to hand the
+program the keyboard; focusing an island whose program already holds focus leaves that
+focus where it is.
+
+## program
+What to run: the program's path without its `.declare`, relative to the program that
+names it like any address in a program (`"player"` is `player.declare` beside it, and
+`"../calendar/calendar"` reaches the real app — **no copy of the source, ever**), or the reserved `"__raw__"` live-edit
+channel, where the running program is the host app's `liveSource` and recompiles as it
+changes. **`""` detaches the island** and nothing mounts, which is how a closed panel
+stops paying for its tenant — and what bounds the recursion when a program embeds a
+view of itself.
+
+## containOverlays
+Keeps the program's overlays — its menus, popovers, dialogs — inside the island's box, where
+they would otherwise open in the nearest overlay layer above it (its window's) and hang past
+the box. For a host that shows programs as self-contained tiles. `false` by default.
+
+The tenant runs in the host page's runtime, as its own app. Where its compiled program
+comes from is the host's arrangement: on the distro, a prewarmed artifact or
+a compile; in a **production build**, an artifact `declarec` made ahead of time — for
+every island whose `program` is a literal, and for every name the program declares in its
+`ship [ islands = [ "name", … ] ]` when the value is computed. A build carries no compiler
+unless the program declares `ship [ compiler = true ]`, so an island naming a program the
+build did not produce reports that, with the fix, rather than mounting nothing.
+
+## location
+Where the program is: its own `location`, carried both ways. Set it before the program
+mounts and the program starts there, as a page starts at its URL's fragment; set it
+later and the program follows it (its `onFollowLink` applies). The program's own
+navigation is reflected back here, so a host can show where it is, keep it, or walk
+it back — Back and Forward across an island are the host's to give. Assign it from a
+handler or `onInit`: a constraint here would own a value the program also writes.
+
+## departedPlace
+Where in the program the person was when it last left a location — how far its
+scrolling panes, and the island's own box, were scrolled — as an opaque value. A
+host that keeps a history of where the program has been (back and forward on a
+window) stores it with the location being left, and hands it back as `place`.
+Written by the platform; nothing to set.
+
+## place
+Set it, together with `location`, to return the program to a place it left: once
+the move has settled and the content can hold it, each pane and the island's box
+scroll back to where `departedPlace` said they were. The user's first scroll
+cancels a landing still in progress. Read back, it is `""` again once taken.
+
+## slot
+The host's slot marker, derived from `program` — `run:<program>` — which is what the island host wires. Nothing to set by hand.
+*/
+
+class AppIsland extends DOMIsland [
+    program: string = "",
+    containOverlays: boolean = false,
+    location: string = "",
+    place: string = "",
+    departedPlace: string = "",
+
+    // the host mount key: `run:<program>`. No program → empty slot → the
+    // island stays detached (DOMIsland unmounts it).
+
+    slot = { program == "" ? "" : "run:" + program }
+    ]

@@ -1,0 +1,52 @@
+/*
+# ContextMenu
+
+The right-click / long-press menu: `Menu`'s machinery whole — overlay, raise,
+pointer-anchored placement with viewport clamping, the Mac light-dismiss rule
+(an outside press closes **and** is swallowed), Escape closes the chain — with
+a gesture-opened entry. It has no overlay machinery of its own; whatever it
+does, `Menu` does.
+
+Declared once, opened by many. **The serving view declares the gesture** — that
+declaration is what routes it (the claim model: `contextMenu` engages the
+right-click/two-finger path, `hold` is the touch long-press gate, and each
+engages only where a handler is declared). The whole wiring is two lines on
+the view the menu serves:
+
+    rowMenu: ContextMenu [ items = { … }, picked(id: string) { … } ],
+    …
+    Row [ …,
+        onContextMenu(e: PointerEvent) { app.rowMenu.showAt(this, e) },
+        onHold(e: PointerEvent) { app.rowMenu.showAt(this, e) } ]
+
+`showAt(v, e)` — `Menu`'s own, the verb every overlay opens with (`show()`, `showFor(v)`,
+`showAt(v, e)`) — anchors at the pointer (view-relative event coordinates walked to root
+space) and clamps inside the app. Items are the standard Menu records — written lists or
+derived from the opener (`items = { … opener … }` for per-row menus with zero per-row
+instances); picking delivers through `picked(id)` and closes.
+
+Everything — `showAt`, `items`, `opener`, `picked`, the rover, the cascade, dismissal — is
+`Menu`'s, documented there. Neither gesture engages anywhere a handler is not declared, so
+a context menu costs nothing on views that do not offer one.
+
+```declare
+App [ width = 320, height = 130, chose: string = "",
+    rowMenu: ContextMenu [ items = { [ ({ id: "open", label: "Open" }),
+                                      ({ id: "rename", label: "Rename" }),
+                                      ({ divider: true }),
+                                      ({ id: "delete", label: "Delete" }) ] },
+        picked(id: string) { app.chose = id }
+        ],
+    card: View [ x = 20, y = 20, width = 200, height = 44, cornerRadius = 8, fill = darkslategray,
+        onContextMenu(e: PointerEvent) { app.rowMenu.showAt(this, e) },
+        onHold(e: PointerEvent) { app.rowMenu.showAt(this, e) },
+        Text [ x = 12, y = center, text = "Right-click or hold me" ]
+        ],
+    Text [ x = 20, y = 80, text = { app.chose == "" ? "—" : app.chose } ]
+    ]
+```
+*/
+
+include [ "menu.declare" ]
+
+class ContextMenu extends Menu [ ]

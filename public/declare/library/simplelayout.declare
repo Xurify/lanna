@@ -1,0 +1,299 @@
+/*
+# SimpleLayout — stack children along an axis
+
+The stacking idiom: siblings placed one after another along
+`axis`, in child order, `spacing` apart (negative overlaps). The cross axis
+and all sizes stay the children's own — a child centers itself across a row
+with the ordinary `y = center`. Invisible children are skipped and their
+space reclaimed; a skipped child still gets the place it would occupy, so
+re-showing it needs no special case. A child with `flexes = true` takes a
+share of the run's slack along the axis: a list that fills the room between a
+header and a footer, or an empty `Spacer` (between two groups it pushes them
+apart; one on each side centers the run).
+
+**How a run shares its room.** Every child keeps its own size along the axis,
+except the ones that flex or shrink. If the run is too long for the view, the
+children with `shrinks = true` give way, in proportion to their size, down to
+their `minWidth` (`minHeight` in a column). If room is left, the children that
+flex share it by weight (`flexes = 2` takes twice what `true` takes), each
+within its range. A run that only shrinks needs a view with a size of its own;
+sized from these children, it is never short.
+
+Written in Declare over the Layout kernel: the whole strategy is this one
+pure place() — one box per laid child, aligned by index.
+
+**Padding is the view's** (`View.padding`), and this stack obeys it without
+knowing it exists: it arranges inside the room the view gives it, so a run
+placed at `0` starts at the content origin, the cross-axis band `align` works
+in is the room *between* the insets, and a view that sizes itself from the
+stack grows by both. The inset reaches **every** child, on both axes,
+`align = none` included — a child placing its own `x = 0` sits on the content
+edge, not the view's, because the content box is the parent's and not this
+arrangement's.
+
+```declare
+col: View [ x = 20, y = 20,
+    layout: SimpleLayout [ axis = y, spacing = 8 ],
+    View [ width = 160, height = 24, cornerRadius = 6, fill = steelblue ],
+    View [ width = 120, height = 24, cornerRadius = 6, fill = cadetblue ],
+    View [ width = 190, height = 24, cornerRadius = 6, fill = slategray ]
+    ]
+```
+
+## axis
+Which way children stack: `y` (the default) or `x`. **A bare literal, not a string** —
+`axis = x`, and note that `x` here is the axis token, not the position attribute.
+
+## spacing
+The gap between adjacent children. **Negative overlaps them**, which is how a stack of
+cards or avatars is built.
+
+## align
+The **cross axis** — `y` on a row, `x` on a stack. `none` (the default) leaves it to the
+children, who place themselves with the ordinary `y = center`. `start | center | end`
+aligns every child within the **band**: the view's own cross **content** extent — so a
+column `width = 260` centres a `width = { parent.width - 32 }` child at 16, with the slack
+split evenly — falling back to the **line**, the tallest (widest) laid child's extent, on a view
+that derives its own cross size from these very children (reading an extent this
+arrangement feeds would be a cycle, and on such a view the line *is* that extent). A
+child wider than the band keeps the line, so it never hangs out both sides.
+`stretch` makes every child its content sizes fill the band across the flow, within
+each child's range: on a view with a cross size of its own, that size — a row of panes
+as tall as the row, a scrolling pane held to the page whatever it holds; on a view sized
+by these children, the line — the row as tall as its tallest child, a menu's items as
+wide as its widest. A child that states its own size keeps it (an avatar of 32 beside
+bubbles that stretch). The line is counted from each child's content, so it shrinks
+again when the tallest one does.
+`baseline` — a row only — sits every child on one
+baseline: a `Text` reports its own, and a composite **declares** which part carries it
+(`baseline: number = { cap.y + cap.baseline }`); a laid child that declares none is
+refused by name, at the child, and the checker says so before anything runs. A
+flexing child is aligned like any other (a `Spacer` declares a baseline of 0, so a
+baseline row takes it as it is). A row of figures and words that must wrap when the view
+is narrow is a `WrappingLayout [ align = baseline ]`, which keeps each line on its own
+baseline. A bare literal.
+
+## place()
+The whole strategy: one box per laid child, positioned along the axis in child order.
+**Every size stays the children's own, except along the axis for a child that flexes
+or shrinks, and the cross axis stays theirs unless `align` says otherwise** — then the
+boxes carry that attribute too, and own it; under `stretch` a box carries a `stretch`
+size, which fills only a child its content sizes. Override it in a subclass
+for custom geometry; a `Layout`'s `place()` **may** aggregate over children, which is the
+one place that is allowed.
+*/
+
+class SimpleLayout extends Layout [
+    axis: LayoutAxis = y,
+    spacing: number = 0,
+    align: CrossAlign = none,
+
+    place() {
+        const axis = this.axis
+        const size = axis == "x" ? "width" : "height"
+        const kids = this.laid()
+        // a child the run sizes along the flow — it flexes (a weight above 0)
+        // or shrinks — has its flow-axis size written here, so its box is never
+        // read as a footprint (that reads both sizes): across the flow it is its
+        // own raw extent, untransformed, and it aligns like any child
+        const weight = (c) => {
+            const f = c.flexes
+            return f === true ? 1 : (typeof f == "number" && f > 0 ? f : 0)
+            }
+        const shrinking = (c) => weight(c) == 0 && c.shrinks === true
+        const flexing = (c) => weight(c) > 0 || shrinking(c)
+        const minKey = axis == "x" ? "minWidth" : "minHeight"
+        const maxKey = axis == "x" ? "maxWidth" : "maxHeight"
+        const clamp = (c, v) => {
+            const hi = c[maxKey]
+            const lo = c[minKey]
+            const capped = hi > 0 ? Math.min(v, hi) : v
+            return Math.max(capped, lo)
+            }
+
+        // the sizes the run gives, in the model's order: every other child keeps
+        // its own; if they do not fit, the shrinking children give way in
+        // proportion to their size, down to their minimums; if room is left, the
+        // flexing ones share it by weight, within their ranges. A child's slot is
+        // its footprint (the scale/rotation-composed box), so a scale = 0.5 child
+        // occupies half the run and a rotated card reserves what it visibly
+        // covers; the box's lead compensates the transform's own offset so the
+        // visible edge lands on the slot
+        const given = kids.map((c) => 0)
+        let flexN = 0
+        let shrinkN = 0
+        let visN = 0
+        let fixed = 0
+        kids.forEach((c, i) => {
+            if (!c.visible) return
+            visN = visN + 1
+            if (weight(c) > 0) { flexN = flexN + 1; given[i] = clamp(c, 0) }
+            else if (shrinking(c)) { shrinkN = shrinkN + 1; given[i] = clamp(c, c[axis == "x" ? "contentWidth" : "contentHeight"]) }
+            else fixed = fixed + c.footprint()[size]
+            })
+        // the run's length with nothing in it giving way: a child the run sizes
+        // at what it brings (its content, or its minimum if it flexes), the rest
+        // at their own, laid end to end as below. Reported with the boxes, it is
+        // the view's content size along the flow: never the run as the room has
+        // just made it, which would make the view's size a function of itself.
+        let runLength = 0
+        if (flexN + shrinkN > 0) {
+            let at = 0
+            kids.forEach((c, i) => {
+                if (!c.visible) return
+                const n = flexing(c) ? given[i] : c.footprint()[size]
+                runLength = Math.max(runLength, at + n)
+                at = at + n + this.spacing
+                })
+            }
+        if (flexN + shrinkN > 0) {
+            fixed = fixed + this.spacing * Math.max(0, visN - 1)
+            // the room: a run that flexes divides the view's own; one that only
+            // shrinks needs a view with a size of its own (on a view sized from
+            // these children there is no shortage, and reading it is a cycle)
+            const own = flexN > 0 ? this.contentExtent(size) : this.viewExtent(size)
+            const room = flexN == 0 && own <= 0 ? Infinity : own
+            let used = fixed
+            kids.forEach((c, i) => { used = used + given[i] })
+            const held = kids.map((c) => false)
+            if (used > room) {
+                // proportional to each size, down to the minimum: one that would
+                // go below it holds there, and the rest share what is still over
+                let over = used - room
+                for (let round = 0; round <= kids.length; round = round + 1) {
+                    let basis = 0
+                    kids.forEach((c, i) => { if (c.visible && shrinking(c) && !held[i]) basis = basis + given[i] })
+                    if (basis <= 0) break
+                    let again = false
+                    kids.forEach((c, i) => {
+                        if (!c.visible || !shrinking(c) || held[i]) return
+                        const lo = c[minKey]
+                        if (given[i] - over * given[i] / basis < lo) {
+                            over = over - (given[i] - lo)
+                            given[i] = lo
+                            held[i] = true
+                            again = true
+                            }
+                        })
+                    if (!again) {
+                        kids.forEach((c, i) => { if (c.visible && shrinking(c) && !held[i]) given[i] = given[i] - over * given[i] / basis })
+                        break
+                        }
+                    }
+            } else if (flexN > 0) {
+                // by weight, within each range: a share outside its range holds at
+                // the bound, and the rest share again what is left
+                let free = room - fixed
+                kids.forEach((c, i) => { if (c.visible && shrinking(c)) free = free - given[i] })
+                for (let round = 0; round <= kids.length; round = round + 1) {
+                    let total = 0
+                    kids.forEach((c, i) => { if (c.visible && weight(c) > 0 && !held[i]) total = total + weight(c) })
+                    if (total <= 0) break
+                    const each = Math.max(0, free) / total
+                    let off = 0
+                    kids.forEach((c, i) => {
+                        if (!c.visible || weight(c) == 0 || held[i]) return
+                        const want = each * weight(c)
+                        given[i] = clamp(c, want)
+                        off = off + given[i] - want
+                        })
+                    if (Math.abs(off) < 0.001) break
+                    kids.forEach((c, i) => {
+                        if (!c.visible || weight(c) == 0 || held[i]) return
+                        const want = each * weight(c)
+                        if ((off > 0 && given[i] > want) || (off < 0 && given[i] < want)) {
+                            held[i] = true
+                            free = free - given[i]
+                            }
+                        })
+                    }
+                }
+            }
+
+        // the cross axis, when `align` claims it: children align within the
+        // BAND — the view's own cross extent, or the largest laid cross extent
+        // when the view measures these very children (viewExtent answers 0 on
+        // that view: reading an extent this pass feeds is the cycle the
+        // one-pass discipline forbids, and there the two agree anyway).
+        // Math.max keeps an over-wide child from hanging out both sides.
+        // A baseline line is the deepest declared one.
+        const al = this.align
+        const cross = axis == "x" ? "y" : "x"
+        const crossSize = axis == "x" ? "height" : "width"
+        // how far a child's own center (centerY in a row, centerX in a column)
+        // sits from its box's middle: 0 unless it says otherwise (a TextLabel)
+        const centerShift = (c) => c[axis == "x" ? "centerY" : "centerX"] - c[crossSize] / 2
+        const crossOf = (c) => {
+            if (flexing(c)) return ({ lead: 0, extent: c[crossSize] })
+            const fc = c.footprint()
+            return ({ lead: axis == "x" ? fc.y : fc.x, extent: fc[crossSize] })
+            }
+        let line = 0
+        let lineBase = 0
+        // stretch: a child its content sizes counts by that content, never by the
+        // size a stretch gave it (that would hold the line up once it shrank)
+        const natural = axis == "x" ? "contentHeight" : "contentWidth"
+        const extentOf = (c) => al == "stretch" && this.sizedByContent(c, crossSize) ? c[natural] : crossOf(c).extent
+        if (al != "none") {
+            if (al == "baseline" && axis != "x") this.refuseStackBaseline()
+            // a stretch into a view with a cross size of its own fills that size,
+            // so the children's line is not measured for it
+            const banded = al == "stretch" && !this.sizedByChildren(crossSize)
+            for (const c of kids) {
+                if (!c.visible) continue
+                if (!banded) line = Math.max(line, extentOf(c))
+                const b = (c as any).baseline
+                if (al == "baseline" && typeof b == "number") lineBase = Math.max(lineBase, b)
+            }
+            // `start` places at the band's origin and `baseline` on the shared
+            // line — neither reads the band, so only center/end ask for it
+            // a view with a cross size of its own: center and end work in it, and
+            // stretch fills it — a scroller held to the page, not grown to its content
+            if (al == "center" || al == "end") line = Math.max(line, this.viewExtent(crossSize))
+            else if (al == "stretch" && !this.sizedByChildren(crossSize)) line = this.viewExtent(crossSize)
+        }
+
+        let pos = 0
+        const boxes = kids.map((c, i) => {
+            const flex = c.visible && flexing(c)
+            // hidden, a flexing child takes no room, and the run has nothing new to
+            // say about its size: it keeps the one it has (handed back to its content,
+            // a screen sized from itself never settled)
+            const held = !c.visible && flexing(c)
+            // footprint, never bounds: the strategy must not read the attribute it
+            // writes (one-pass discipline). A flexing child's size is allocated
+            // (box.w/h), so its footprint is never consulted — lead 0, raw attribute.
+            const f = flex ? null : c.footprint()
+            const lead = f == null ? 0 : (axis == "x" ? f.x : f.y)
+            const box = (axis == "x" ? ({ x: pos - lead }) : ({ y: pos - lead })) as any
+            if (flex) box[axis == "x" ? "w" : "h"] = given[i]
+            else if (held) box[axis == "x" ? "w" : "h"] = axis == "x" ? c.width : c.height
+            if (al != "none") {
+                // start = the line's origin; center/end offset the child's
+                // extent within the line; baseline sits the child's declared
+                // baseline on the line's — a child with none is refused, once,
+                // and placed at start (the arrangement never breaks)
+                const co = crossOf(c)
+                const leadC = co.lead
+                let off = 0
+                if (al == "center") off = (line - co.extent) / 2 - centerShift(c)
+                else if (al == "end") off = line - co.extent
+                else if (al == "baseline" && axis == "x") {
+                    const b = (c as any).baseline
+                    if (typeof b == "number") off = lineBase - b
+                    else if (c.visible) this.refuseBaseline(c)
+                }
+                box[cross] = off - (al == "baseline" ? 0 : leadC)
+                // every child its content sizes is made as large as the line;
+                // one that states its size keeps it (the runtime skips it)
+                if (al == "stretch") box.stretch = axis == "x" ? ({ h: line }) : ({ w: line })
+            }
+            if (c.visible) pos = pos + (flex ? given[i] : (f as any)[size]) + this.spacing
+            return box
+            })
+        // a run that sizes a child along its flow says how long it is unshrunk;
+        // one that sizes none is as long as what it draws, and says nothing
+        if (flexN + shrinkN == 0) return boxes
+        return axis == "x" ? ({ boxes: boxes, contentWidth: runLength }) : ({ boxes: boxes, contentHeight: runLength })
+        }
+    ]

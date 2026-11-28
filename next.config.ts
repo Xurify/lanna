@@ -34,7 +34,7 @@ const CONTENT_SECURITY_POLICY = [
 	"media-src 'self' blob: data:",
 	"font-src 'self' data:",
 	"connect-src 'self' wss://api.deepgram.com",
-	"frame-src https://www.youtube-nocookie.com https://www.youtube.com",
+	"frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
 	"worker-src 'self' blob:",
 	"manifest-src 'self'",
 	"object-src 'none'",
@@ -60,13 +60,46 @@ const SECURITY_HEADERS = [
 		: []),
 ];
 
+// The Declare widget host (public/declare/host.html) is framed by the chat page,
+// and the sandboxed iframe it boots compiles widgets with `new Function`, so its
+// document carries a CSP of its own: framed only by this app, eval allowed only
+// inside the sandbox (no allow-same-origin — the widget never reaches this
+// origin's storage or DOM).
+const WIDGET_HOST_HEADERS = [
+	{ key: "X-Frame-Options", value: "SAMEORIGIN" },
+	...(production
+		? [
+				{
+					key: "Content-Security-Policy",
+					value: CONTENT_SECURITY_POLICY.replace("frame-ancestors 'none'", "frame-ancestors 'self'").replace(
+						"script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com",
+						"script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+					),
+				},
+			]
+		: []),
+];
+
+// The sandboxed widget's origin is opaque, so every request it makes back here
+// is cross-origin: CORS for the fetch, CORP released for the subresource load.
+const WIDGET_ASSET_HEADERS = [
+	{ key: "Access-Control-Allow-Origin", value: "*" },
+	{ key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+];
+
 const nextConfig: NextConfig = {
 	// Old links and bookmarks keep working: the Progress page was /plan.
 	async redirects() {
 		return [{ source: "/plan", destination: "/progress", permanent: false }];
 	},
 	async headers() {
-		return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+		return [
+			{ source: "/:path*", headers: SECURITY_HEADERS },
+			// After the catch-all: for these paths the later rules' values win.
+			{ source: "/declare/host.html", headers: WIDGET_HOST_HEADERS },
+			{ source: "/declare/:path*", headers: WIDGET_ASSET_HEADERS },
+			{ source: "/api/declare-widget/:path*", headers: WIDGET_ASSET_HEADERS },
+		];
 	},
 	experimental: {
 		// Next buffers a request body for the proxy up to this size and silently cuts off the rest.

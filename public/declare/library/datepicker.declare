@@ -1,0 +1,594 @@
+/*
+# MonthCalendar
+
+A month of days to pick one from: the month and year with buttons to the months either
+side, a row of weekday initials, and six weeks of days. Days of the months either side
+fill the first and last weeks, in muted ink, and pressing one picks it and shows its
+month. Today wears a ring; the chosen day is filled.
+
+Its value is a date as an ISO string, `"YYYY-MM-DD"`, or `""` for none — the value
+pattern, as every control has it: standalone it keeps its own, constrained it delivers
+through `commit`.
+
+```declare
+App [ width = 300, height = 340, day: string = "2026-10-18",
+    MonthCalendar [ x = 20, y = 20, value = { app.day }, min = "2026-10-05",
+        commit(v: string) { app.day = v } ],
+    Text [ x = 20, y = 310, text = { app.day } ]
+    ]
+```
+
+The days are one Tab stop, as a screen reader's grid: Tab lands on the chosen day, else
+today, else the 1st. The arrows move a day left and right and a week up and down, into
+the next or previous month when they cross its edge; Page Up and Page Down move a month
+(with Shift, a year); Home and End go to the start and end of the week; Enter or Space
+picks. The month buttons are Tab stops of their own, before the days.
+
+Names come from the program's language (`app.language`): the month, the weekday
+initials, and each day's full date, which is what a screen reader says on it.
+
+## value
+The chosen day, `"YYYY-MM-DD"`, or `""` for none. Constrain it to your own state and
+override `commit` beside it, or leave it and read it back.
+
+## commit()
+**Where a pick goes**, receiving the day. The default writes `value`.
+
+## min
+The first day that can be picked, `"YYYY-MM-DD"`; days before it are disabled. `""`
+for no limit.
+
+## max
+The last day that can be picked; days after it are disabled. `""` for no limit.
+
+## weekStart
+The day a week starts on: `0` Sunday (the default), `1` Monday, and so on.
+
+## daySize
+The width and height of a day, 32 by default.
+
+## today
+Today, `"YYYY-MM-DD"`, from the calendar's own clock, so it turns over at midnight.
+
+## shownMonth
+The month on screen, `"YYYY-MM"`: the value's month, else today's, until the month
+buttons, the keys or a pick move it. Set it to show another month.
+
+## title
+The shown month and year as the language writes them, "October 2026" — the header's
+text and the name of the grid.
+
+## _gridW
+**Internal.** The width of seven days, which the header and the weekday row share.
+
+## _pad2()
+**Internal.** A number as two digits.
+
+## _isoOf()
+**Internal.** The ISO date of a year, a month (1–12) and a day.
+
+## _dateOf()
+**Internal.** The local date an ISO date names, at midnight, never parsed as UTC; today for a string that names no day.
+
+## _isoOfDate()
+**Internal.** The ISO date of a local date.
+
+## _addDays()
+**Internal.** The ISO date *n* days on (or back, when *n* is negative).
+
+## _addMonths()
+**Internal.** The ISO date *n* months on, kept inside the month it lands in.
+
+## _clamp()
+**Internal.** A day moved inside `min` and `max`.
+
+## _weeks()
+**Internal.** The six weeks on screen, as the day records the grid replicates.
+
+## _weekdayNames()
+**Internal.** The seven weekday initials, from `weekStart`.
+
+## _step()
+**Internal.** Shows the month *n* months on.
+
+## pick()
+Picks a day: shows its month and delivers it through `commit`.
+
+## _entryDay()
+**Internal.** The day Tab lands on in the shown month: the chosen day, else today, else the 1st.
+
+## _cellFor()
+**Internal.** The day view showing a date, or null when it is not on screen.
+
+## _go()
+**Internal.** Answers a key on a day, moving to the day it names; false for a key it does not move by.
+
+## _moveTo()
+**Internal.** Shows a day's month and moves the focus to the day.
+
+## width
+The width of seven days.
+*/
+
+/*
+# MonthCalendarDay
+
+**Internal.** One day of a `MonthCalendar`, made from the calendar's week records: a
+`Control` a screen reader says by its full date, picked by a press or Enter or Space.
+
+## iso
+The date it shows, `"YYYY-MM-DD"`.
+
+## picked()
+What a pick does — the calendar that places a day says.
+
+## navigate()
+What a key does on it before the control's own keys — the calendar that places a day
+moves the focus with it. True when the key was used.
+
+## press()
+Picks the day.
+
+## onKeyDown
+The calendar's keys first; then Enter and Space pick.
+
+## ink
+The day's number colour: on the accent when chosen, muted outside the shown month.
+
+## accessibilityRole
+`cell`, one of the grid's.
+
+## accessibilityLabel
+The full date, "Sunday, October 18, 2026", as the language writes it.
+
+## accessibilitySelected
+Whether it is the chosen day.
+
+## disabled
+Outside `min` and `max`: not focusable, not pickable, dimmed.
+
+## width
+32 — the calendar sets its `daySize`.
+
+## height
+As wide as it is tall.
+
+## cornerRadius
+Round.
+
+## fill
+The accent when chosen; the theme's hover and pressed fills otherwise; nothing at rest.
+
+## stroke
+A ring in the accent on today.
+
+## opacity
+Dimmed to the theme's `disabledOpacity` when disabled.
+
+## accentFill
+The chosen day's ground: the theme's accent, or its hovered or pressed shade.
+
+## plainFill
+Any other day's ground: the control's hovered or pressed shade, or none at rest.
+*/
+
+/*
+# MonthCalendarArrow
+
+**Internal.** A month button of a `MonthCalendar`: a quiet control with a chevron, whose
+press the calendar that places it says.
+
+## dir
+Which way it points: `-1` back, `1` on.
+
+## accessibilityRole
+A button.
+
+## accessibilityLabel
+"Previous month" or "Next month".
+
+## width
+28.
+
+## height
+28.
+
+## cornerRadius
+The theme's `controlCornerRadius`.
+
+## fill
+The theme's hover and pressed fills; nothing at rest.
+
+## opacity
+Dimmed to the theme's `disabledOpacity` when disabled.
+*/
+
+/*
+# DatePicker
+
+A field that shows a date and opens a month to pick one from. Press it — or Enter,
+Space or Down on it — and a `Popover` opens below it holding a `MonthCalendar`, with the
+focus on the chosen day; picking a day sets it and closes, and the focus goes back to
+the field. Esc, or a press past it, closes without picking.
+
+```declare
+App [ width = 340, height = 380, due: string = "",
+    DatePicker [ x = 20, y = 20, value = { app.due },
+        commit(v: string) { app.due = v } ],
+    Text [ x = 20, y = 70, text = { app.due == "" ? "no date" : "due " + app.due } ]
+    ]
+```
+
+It looks like a `Combobox`'s field: the theme's field fill and line, its height and
+corners, a chevron at the end. The date shows in the program's language
+(`app.language`) at medium length, "Oct 18, 2026".
+
+## value
+The chosen day, `"YYYY-MM-DD"`, or `""` for none. Constrain it to your own state and
+override `commit` beside it, or leave it and read it back.
+
+## commit()
+**Where a pick goes**, receiving the day. The default writes `value`.
+
+## min
+The first day that can be picked; `""` for no limit.
+
+## max
+The last day that can be picked; `""` for no limit.
+
+## weekStart
+The day the calendar's weeks start on: `0` Sunday, `1` Monday.
+
+## placeholder
+What the field shows with no date, "Select a date" by default.
+
+## display
+The date as the field shows it, or `""` with none.
+
+## _formatted()
+**Internal.** A date as the language writes it at medium length; `""` for none.
+
+## open()
+Opens the calendar on the chosen day's month (else today's), unless it is open.
+
+## _choose()
+**Internal.** Closes the calendar and reports the day with `edit`, to `commit`.
+
+## press()
+Opens the calendar, or closes it if it is open.
+
+## onKeyDown
+Down opens the calendar too; Enter and Space press.
+
+## accessibilityRole
+A button: pressing it opens the calendar.
+
+## accessibilityExpanded
+Whether the calendar is open.
+
+## accessibilityLabel
+The caption of a `Field` around it, with the date after it; with no caption, the field's
+own text names it.
+
+## width
+180.
+
+## height
+The theme's `comboboxHeight`.
+
+## fill
+The theme's `surface`, as a field.
+
+## stroke
+The theme's `line`, and the `accent` while the calendar is open.
+
+## cornerRadius
+The theme's `fieldCornerRadius`, else `controlCornerRadius`.
+
+## opacity
+Dimmed to the theme's `disabledOpacity` when disabled.
+
+## fieldValue
+Follows `value`: what `required` and `validate` judge (see `ValueControl`).
+
+## _edge
+**Internal.** The picker's edge colour: `error` while it says what is wrong, the accent while open, else the line.
+*/
+
+include [ "valuecontrol.declare", "popover.declare", "spacer.declare", "textlabel.declare", "icons/core.declare" ]
+
+class MonthCalendar [
+    value: string = "",
+    min: string = "",
+    max: string = "",
+    weekStart: number = 0,
+    daySize: number = 32,
+
+    commit(v: string) { value = v },
+
+    _clock: Time [ tick = day ],
+    today: string = { this._isoOf(this._clock.year, this._clock.month, this._clock.day) },
+    shownMonth: string = { (value != "" ? value : today).slice(0, 7) },
+    title: string = { this._dateOf(shownMonth).toLocaleDateString(app.language, ({ month: "long", year: "numeric" })) },
+    _gridW: number = { 7 * daySize + 12 },
+    width = { this._gridW },
+
+    // ── dates: local days built from year, month and day, never parsed as UTC ──
+
+    _pad2(n: number) -> string { return (n < 10 ? "0" : "") + n },
+    _isoOf(y: number, m: number, d: number) -> string { return y + "-" + this._pad2(m) + "-" + this._pad2(d) },
+    _dateOf(iso: string) -> Date {
+        const p = iso.split("-").map((s) => parseInt(s, 10))
+        const d = new Date(p[0], (p[1] ?? 1) - 1, p[2] ?? 1)
+        // a value that names no day shows today's month, as no value does
+        return isNaN(d.getTime()) ? new Date(this._clock.year, this._clock.month - 1, this._clock.day) : d
+        },
+    _isoOfDate(d: Date) -> string { return this._isoOf(d.getFullYear(), d.getMonth() + 1, d.getDate()) },
+    _addDays(iso: string, n: number) -> string {
+        const d = this._dateOf(iso)
+        return this._isoOfDate(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n))
+        },
+    _addMonths(iso: string, n: number) -> string {
+        const d = this._dateOf(iso)
+        const last = new Date(d.getFullYear(), d.getMonth() + n + 1, 0).getDate()
+        return this._isoOfDate(new Date(d.getFullYear(), d.getMonth() + n, Math.min(d.getDate(), last)))
+        },
+    _clamp(iso: string) -> string {
+        if (min != "" && iso < min) return min
+        if (max != "" && iso > max) return max
+        return iso
+        },
+
+    // ── the six weeks on screen, as data ──────────────────────────────────
+
+    _weeks() -> array {
+        const first = this._dateOf(shownMonth + "-01")
+        const lead = (first.getDay() - weekStart + 7) % 7
+        const named = new Intl.DateTimeFormat(app.language, ({ weekday: "long", year: "numeric", month: "long", day: "numeric" }))
+        const out = []
+        for (let w = 0; w < 6; w++) {
+            const days = []
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(first.getFullYear(), first.getMonth(), 1 - lead + w * 7 + i)
+                const iso = this._isoOfDate(d)
+                days.push(({ id: "d" + i, iso: iso, day: d.getDate(),
+                    inMonth: d.getMonth() == first.getMonth(), today: iso == today, selected: iso == value,
+                    disabled: (min != "" && iso < min) || (max != "" && iso > max), name: named.format(d) }))
+                }
+            out.push(({ id: "w" + w, days: days }))
+            }
+        return out
+        },
+
+    _weekdayNames() -> array {
+        const f = new Intl.DateTimeFormat(app.language, ({ weekday: "narrow" }))
+        return [0, 1, 2, 3, 4, 5, 6].map((i) => ({ id: "k" + i, label: f.format(new Date(2023, 0, 1 + (weekStart + i) % 7)) }))
+        },
+
+    _model: Dataset [ contents = { { weeks: classroot._weeks() } } ],
+    _initials: Dataset [ contents = { { days: classroot._weekdayNames() } } ],
+
+    // ── what the buttons and keys do ──────────────────────────────────────
+
+    _step(n: number) { shownMonth = this._addMonths(shownMonth + "-01", n).slice(0, 7) },
+
+    pick(iso: string) {
+        const moved = iso.slice(0, 7) != shownMonth
+        shownMonth = iso.slice(0, 7)
+        if (moved && Focus.holds(this._grid)) afterSettle(() => { const c = this._cellFor(iso); if (c != null) Focus.focus(c) })
+        commit(iso)
+        },
+
+    _entryDay() -> string {
+        const d = value.startsWith(shownMonth) ? value : today.startsWith(shownMonth) ? today : shownMonth + "-01"
+        return this._clamp(d)
+        },
+
+    _cellFor(iso: string) -> View? {
+        for (const r of this._grid.children) {
+            for (const c of (r as View).children ?? []) if ((c as MonthCalendarDay).iso === iso) return c as View
+            }
+        return null
+        },
+
+    _go(from: string, e: KeyEvent) -> boolean {
+        const d = this._dateOf(from)
+        const back = (d.getDay() - weekStart + 7) % 7
+        let to = ""
+        if (e.key == "ArrowLeft") to = this._addDays(from, -1)
+        else if (e.key == "ArrowRight") to = this._addDays(from, 1)
+        else if (e.key == "ArrowUp") to = this._addDays(from, -7)
+        else if (e.key == "ArrowDown") to = this._addDays(from, 7)
+        else if (e.key == "Home") to = this._addDays(from, -back)
+        else if (e.key == "End") to = this._addDays(from, 6 - back)
+        else if (e.key == "PageUp") to = this._addMonths(from, e.shift ? -12 : -1)
+        else if (e.key == "PageDown") to = this._addMonths(from, e.shift ? 12 : 1)
+        else return false
+        this._moveTo(this._clamp(to))
+        return true
+        },
+
+    _moveTo(iso: string) {
+        shownMonth = iso.slice(0, 7)
+        afterSettle(() => { const c = this._cellFor(iso); if (c != null) Focus.focus(c) })
+        },
+
+    layout: SimpleLayout [ axis = y, spacing = 6 ],
+
+    // the month and year, and the buttons to the months either side
+
+    _header: View [ width = { classroot._gridW }, height = 30,
+        layout: SimpleLayout [ axis = x, spacing = 2 ],
+        heading: View [ y = center, padding = [0, 0, 0, 6], accessibilityRole = heading, accessibilityLive = polite,
+            Text [ fontSize = 14, fontWeight = semibold, wrap = false, textColor = { provided("theme").text }, text = { classroot.title } ]
+            ],
+        Spacer [ ],
+        prev: MonthCalendarArrow [ dir = -1, y = center,
+            disabled = { classroot.min != "" && classroot.shownMonth <= classroot.min.slice(0, 7) },
+            press() { if (!disabled) classroot._step(-1) }
+            ],
+        next: MonthCalendarArrow [ dir = 1, y = center,
+            disabled = { classroot.max != "" && classroot.shownMonth >= classroot.max.slice(0, 7) },
+            press() { if (!disabled) classroot._step(1) }
+            ]
+        ],
+
+    // the weekday initials are read in each day's name, so to a screen reader
+    // the row is decoration: a picture with no name
+
+    _weekdays: View [ height = 20, accessibilityRole = image, datapath = { classroot._initials.value },
+        layout: SimpleLayout [ axis = x, spacing = 2 ],
+        View [ datapath = :days[], width = { classroot.daySize }, height = 20,
+            TextLabel [ x = center, fontSize = 11, fontWeight = medium, wrap = false,
+                textColor = { provided("theme").textMuted }, text = { "" + :label } ]
+            ]
+        ],
+
+    // one Tab stop, landing on the chosen day; the days take their own keys
+
+    _grid: View [ accessibilityRole = grid, accessibilityLabel = { classroot.title }, focusScope = stop,
+        focusEntry() -> View? { return classroot._cellFor(classroot._entryDay()) },
+        datapath = { classroot._model.value },
+        layout: SimpleLayout [ axis = y, spacing = 2 ],
+        View [ datapath = :weeks[], accessibilityRole = row,
+            layout: SimpleLayout [ axis = x, spacing = 2 ],
+            MonthCalendarDay [ datapath = :days[], width = { classroot.daySize },
+                picked() { classroot.pick(this.iso) },
+                navigate(e: KeyEvent) -> boolean { return classroot._go(this.iso, e) }
+                ]
+            ]
+        ]
+    ]
+
+
+class MonthCalendarDay extends Control [
+    accessibilityRole = cell,
+    accessibilityLabel = { "" + (:name ?? "") },
+    accessibilitySelected = { :selected == true },
+    disabled = { :disabled == true },
+
+    iso: string = { "" + (:iso ?? "") },
+
+    width = 32,
+    height = { this.width },
+    cornerRadius = { this.width / 2 },
+    accentFill: Color = { pressed ? provided("theme").accentPressed : hovered ? provided("theme").accentHovered : provided("theme").accent },
+    plainFill: Color? = { pressed ? provided("theme").controlPressed : hovered ? provided("theme").controlHovered : null },
+    fill = { :selected == true ? this.accentFill : this.plainFill },
+    stroke = { :today == true && :selected != true ? Stroke(1.5, provided("theme").accent) : null },
+    opacity = { disabled ? (provided("theme").disabledOpacity) : 1 },
+
+    ink: Color = { :selected == true ? provided("theme").accentTextColor
+        : :inMonth == true ? provided("theme").text : provided("theme").textMuted },
+
+    // the number is what the eye reads; a screen reader hears the full date,
+    // so to it the number is decoration — a picture with no name
+
+    _num: View [ width = 100%, height = 100%, accessibilityRole = image,
+        t: TextLabel [ x = center, fontSize = 13, wrap = false,
+            fontWeight = { :selected == true || :today == true ? "semibold" : "regular" },
+            textColor = { classroot.ink }, text = { "" + (:day ?? "") } ]
+        ],
+
+    picked() { },
+    navigate(e: KeyEvent) -> boolean { return false },
+    press() { if (!disabled) picked() },
+    onKeyDown(e: KeyEvent) {
+        if (navigate(e)) return
+        super.onKeyDown(e)
+        }
+    ]
+
+
+class MonthCalendarArrow extends Control [
+    dir: number = 1,
+    accessibilityRole = button,
+    accessibilityLabel = { dir < 0 ? "Previous month" : "Next month" },
+    width = 28,
+    height = 28,
+    cornerRadius = { provided("theme").controlCornerRadius },
+    fill = { pressed ? provided("theme").controlPressed : hovered ? provided("theme").controlHovered : null },
+    opacity = { disabled ? (provided("theme").disabledOpacity) : 1 },
+    _g: ChevronIcon [ iconSize = 14, x = center, y = center,
+        dir = { classroot.dir < 0 ? "left" : "right" },
+        ink = { classroot.hovered || classroot.pressed ? provided("theme").text : provided("theme").textMuted } ]
+    ]
+
+
+class DatePicker extends ValueControl [
+    accessibilityRole = button,
+    accessibilityExpanded = { this._pop.shown },
+    accessibilityLabel = { provided("fieldLabel", "") != "" ? provided("fieldLabel", "") + (display != "" ? ", " + display : "") : "" },
+
+    value: string = "",
+    min: string = "",
+    max: string = "",
+    weekStart: number = 0,
+    placeholder: string = "Select a date",
+    fieldValue = { value },
+
+    commit(v: string) { value = v },
+
+    display: string = { this._formatted(value, app.language) },
+
+    width = 180,
+    height = { provided("theme").comboboxHeight },
+    fill = { provided("theme").surface },
+    _edge: Color = { this.error != "" ? provided("theme").error : this._pop.shown ? provided("theme").accent : provided("theme").line },
+    stroke = { Stroke(1, this._edge) },
+    cornerRadius = { provided("theme").fieldCornerRadius ?? provided("theme").controlCornerRadius },
+    opacity = { disabled ? (provided("theme").disabledOpacity) : 1 },
+
+    _formatted(iso: string, lang: string) -> string {
+        if (iso == "") return ""
+        const p = iso.split("-").map((s) => parseInt(s, 10))
+        const d = new Date(p[0], (p[1] ?? 1) - 1, p[2] ?? 1)
+        return isNaN(d.getTime()) ? iso : d.toLocaleDateString(lang, ({ dateStyle: "medium" }))
+        },
+
+    open() {
+        if (this._pop.shown || disabled) return
+        const c = this._pop.cal
+        if (c != null) c.shownMonth = (value != "" ? value : c.today).slice(0, 7)
+        this._pop.showFor(this)
+        },
+
+    _choose(v: string) {
+        this._pop.close()
+        edit(v)
+        },
+
+    // a press on the field while the calendar is open closes it as a press
+    // past it; the click that follows must not open it again
+
+    press() {
+        if (this._pop.shown) this._pop.close()
+        else if (!this._pop.present) this.open()
+        },
+
+    onKeyDown(e: KeyEvent) {
+        if (!disabled && !e.repeat && e.key == "ArrowDown") { this.open(); return }
+        super.onKeyDown(e)
+        },
+
+    _label: TextLabel [ x = { provided("theme").fieldPadding ?? 10 }, wrap = false,
+        width = { classroot.width - this.x - 26 }, clip = true,
+        textColor = { classroot.display == "" ? provided("theme").textMuted : provided("theme").text },
+        text = { classroot.display == "" ? classroot.placeholder : classroot.display } ],
+
+    _mark: ChevronIcon [ iconSize = 13, ink = { provided("theme").textMuted }, y = center,
+        x = { classroot.width - 13 - 6 - 4 } ],
+
+    _pop: Popover [ accessibilityLabel = { provided("fieldLabel", "") || classroot.placeholder },
+        focusFirst() {
+            const c = this.cal
+            const v = c._cellFor(c._entryDay())
+            if (v != null) Focus.focus(v)
+            else Focus.focusIn(this)
+            },
+        cal: MonthCalendar [ value = { classroot.value }, min = { classroot.min }, max = { classroot.max },
+            weekStart = { classroot.weekStart },
+            commit(v: string) { classroot._choose(v) }
+            ]
+        ]
+    ]

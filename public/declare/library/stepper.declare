@@ -1,0 +1,173 @@
+/*
+# Stepper
+
+A number you change a step at a time — a quantity, a font size, a count of copies. It
+shows the value between a − and a + on the same rounded track a `Segmented` sits on, and
+is one Tab stop:
+
+```declare
+App [ width = 300, height = 100, copies: number = 2,
+    Stepper [ x = 20, y = 20, value = { app.copies }, min = 1, max = 99,
+        accessibilityLabel = "Copies",
+        commit(v: number) { app.copies = v } ],
+    Text [ x = 160, y = 26, text = { app.copies + " copies" } ]
+    ]
+```
+
+From the keyboard, Up and Down step it, Page Up and Page Down move ten steps, Home and End
+go to `min` and `max`, and typing a number sets it. To a screen reader it is a spin button, named at its use site, saying
+its value and range; its adjust gesture steps it the same way. − and + are for the pointer,
+and dim at the ends of the range.
+
+## value
+The number. Bind it to your own state (`value <-> app.copies`), or constrain it and override
+`commit` to own the destination, or leave it alone and read it back.
+
+## min
+The least value; − dims there.
+
+## max
+The greatest value; + dims there.
+
+## step
+How far one press, or one Up or Down, moves it.
+
+## commit()
+**Where a change goes**, receiving the new value, already within `min` and `max` and on a
+step. The default writes `value`; override it to own the destination.
+
+## setTo()
+Moves to a value, held to the range, reporting it with `edit` so it reaches `commit`. What every key and press calls.
+
+## format()
+The value as the stepper shows it and a screen reader says it — the number itself unless you
+override it (`format(v: number) -> string { return v + " pt" }`).
+
+## accessibilityIncrement()
+One step up — what Up, + and a screen reader's adjust gesture do.
+
+## accessibilityDecrement()
+One step down.
+
+## onKeyDown
+Up and Down step (Control's own keys for a spin button); Page Up and Page Down move ten steps;
+Home and End go to the ends. Digits set the value — typed close together they are one number,
+`1` then `2` twelve — held to `min` and `max`.
+
+## _typed
+**Internal.** The digits typed so far, while they come close together.
+
+## _typedAt
+**Internal.** When the last digit was typed.
+
+## accessibilityValue
+The value.
+
+## accessibilityMin
+`min`.
+
+## accessibilityMax
+`max`.
+
+## accessibilityStep
+`step`.
+
+## accessibilityValueText
+`format(value)`, when you have made it say more than the number.
+
+## width
+120 by default: room for a few digits between − and +.
+
+## height
+The theme's `segmentedHeight`, as a `Segmented` is.
+
+## cornerRadius
+The theme's `segmentedCornerRadius`.
+
+## fill
+The track: the theme's `trackFill`, else `control`.
+
+## opacity
+Disabled dims the whole stepper, to the theme's `disabledOpacity`.
+
+## fieldValue
+Follows `value`: what `required` and `validate` judge (see `ValueControl`).
+*/
+
+include [ "valuecontrol.declare", "icons/core.declare" ]
+
+class Stepper extends ValueControl [
+    accessibilityRole = spinButton,
+    value: number = 0,
+    fieldValue = { value },
+    min: number = 0,
+    max: number = 100,
+    step: number = 1,
+
+    commit(v: number) { value = v },
+    setTo(v: number) {
+        const n = Math.min(max, Math.max(min, Math.round((v - min) / step) * step + min))
+        if (n != value) edit(n)
+        },
+    format(v: number) -> string { return "" + v },
+
+    accessibilityValue = { value },
+    accessibilityMin = { min },
+    accessibilityMax = { max },
+    accessibilityStep = { step },
+    accessibilityValueText = { format(value) == "" + value ? "" : format(value) },
+    accessibilityIncrement() { setTo(value + step) },
+    accessibilityDecrement() { setTo(value - step) },
+
+    onKeyDown(e: KeyEvent) {
+        if (disabled) return
+        if (e.key == "PageUp") setTo(value + 10 * step)
+        else if (e.key == "PageDown") setTo(value - 10 * step)
+        else if (e.key == "Home") setTo(min)
+        else if (e.key == "End") setTo(max)
+        else if (e.key.length == 1 && e.key >= "0" && e.key <= "9" && !e.ctrl && !e.meta && !e.alt) {
+            // digits typed close together are one number — "12" is twelve —
+            // held to the range, as a spin button that is typed into
+            const now = Date.now()
+            _typed = (now - _typedAt < 1000 ? _typed : "") + e.key
+            _typedAt = now
+            setTo(Number(_typed))
+            }
+        else super.onKeyDown(e)
+        },
+    _typed: string = "",
+    _typedAt: number = 0,
+
+    width = 120,
+    height = { provided("theme").segmentedHeight },
+    cornerRadius = { provided("theme").segmentedCornerRadius },
+    fill = { provided("theme").trackFill ?? provided("theme").control },
+    opacity = { disabled ? provided("theme").disabledOpacity : 1 },
+
+    // the value, set like a segment's label
+
+    _shown: TextLabel [ x = center, wrap = false, fontSize = { provided("theme").segmentedFontSize }, fontWeight = medium,
+        textColor = { provided("theme").text }, text = { classroot.format(classroot.value) } ],
+
+    // − and +: for the pointer (the keys and a screen reader step the stepper
+    // itself), each a hover and press inside the track, dim at its end
+
+    _less: View [ x = 2, y = 2, width = { parent.height - 4 }, height = { parent.height - 4 },
+        cornerRadius = { Math.max(0, provided("theme").segmentedCornerRadius - 2) },
+        opacity = { classroot.value <= classroot.min ? 0.35 : 1 },
+        idle: boolean = { classroot.disabled || classroot.value <= classroot.min },
+        stateFill: Color? = { pressed ? provided("theme").controlPressed : hovered ? provided("theme").controlHovered : null },
+        fill = { this.idle ? null : this.stateFill },
+        onClick() { if (!classroot.disabled) classroot.accessibilityDecrement() },
+        MinusIcon [ x = center, y = center, iconSize = 12, ink = { provided("theme").text } ]
+        ],
+    _more: View [ x = { parent.width - this.width - 2 }, y = 2, width = { parent.height - 4 }, height = { parent.height - 4 },
+        cornerRadius = { Math.max(0, provided("theme").segmentedCornerRadius - 2) },
+        opacity = { classroot.value >= classroot.max ? 0.35 : 1 },
+        idle: boolean = { classroot.disabled || classroot.value >= classroot.max },
+        stateFill: Color? = { pressed ? provided("theme").controlPressed : hovered ? provided("theme").controlHovered : null },
+        fill = { this.idle ? null : this.stateFill },
+        onClick() { if (!classroot.disabled) classroot.accessibilityIncrement() },
+        PlusIcon [ x = center, y = center, iconSize = 12, ink = { provided("theme").text } ]
+        ]
+    ]

@@ -1,0 +1,178 @@
+/*
+# Toast
+
+A short message that appears at the bottom of its context and goes away by itself — "Saved",
+"Copied", "Message deleted · Undo". It takes no focus and blocks nothing: presses beside it,
+and on its message, go where they were aimed, and it stays above an open dialog or sheet,
+its action still clickable. An optional
+action record (`{ id, label }`) adds one button; its id arrives at `picked`.
+
+```declare
+App [ width = 520, height = 260,
+    toast: Toast [ ],
+    Button [ x = 20, y = 20, label = "Save", onClick() { app.toast.say("Saved") } ]
+    ]
+```
+
+## message
+The text it shows: one line while it fits, and wrapped when it is longer, at most 480 wide
+and always within the screen.
+
+## action
+The optional action record, `{ id, label }`, or null.
+
+## duration
+How long it stays, in milliseconds.
+
+## accessibilityRole
+A group, named by its `message`: what it says is announced once as it appears (`say`),
+and its action is a control inside it.
+
+## accessibilityLabel
+The `message`.
+
+## _held
+**Internal.** Whether the toast is held open: the pointer is over it, or its action has the focus. A
+toast whose time runs out while held stays, and goes a moment after it is let go, so a
+person reaching for "Undo" is never cut off.
+
+## _expired
+**Internal.** Its time ran out while it was held.
+
+## _letGo()
+**Internal.** A toast let go after its time ran out goes a moment later.
+
+## say()
+Shows a message, with an action record when it offers one: `toast.say("Saved")`,
+`toast.say("Message deleted", ({ id: "undo", label: "Undo" }))`.
+A toast already showing takes the new message and starts its time again.
+
+## picked()
+Receives the action's id when its button is pressed, while the toast is still open; it closes
+after, unless `picked` itself showed a new message with `say()`. Override it at the use site. The button
+takes no focus, so a press on it leaves focus where it was; a program that offers the same
+action from the keyboard gives it a shortcut of its own.
+
+## _round
+**Internal.** Which showing is current, so an earlier one's timer does not close a later.
+
+## x
+Centered in its layer.
+
+## y
+Near the bottom of its layer — `clearance` above it — rising a little as it appears.
+
+## clearance
+How far above the bottom of its layer the toast sits: 24 by default. A program with a bar
+of its own along the foot (a phone's tab bar, a player) raises it clear of the bar:
+`clearance = { app.wide ? 24 : 100 + app.safeBottom }`.
+
+## opacity
+Its open blend.
+
+## fill
+The theme's tooltip fill — a toast reads as the same kind of passing note.
+
+## shadow
+A soft shadow that lifts it off whatever is beneath.
+
+## cornerRadius
+From the theme's `toastCornerRadius` (12 by default); its shadow is `toastShadow` and its text size `toastFontSize` (13).
+
+## stroke
+The tooltip's edge, `tooltipStrokeColor`, where the theme gives one: the toast wears the tooltip's colours.
+*/
+
+include [ "floating.declare" ]
+
+include [ "button.declare" ]
+
+class Toast extends Floating [
+    _notice = true,
+    pressPolicy = "ignore",
+    scrollPolicy = "allow",
+
+    message: string = "",
+
+    // a notice: what it says is announced once (say), without taking the focus;
+    // its action is a Tab stop while it shows
+
+    accessibilityRole = group,
+    accessibilityLabel = { message },
+    action: object = null,
+    duration: number = 4000,
+    clearance: number = 24,
+    _round: number = 0,
+
+    x = { (this._hostW - this.width) / 2 },
+    y = { this._hostH - this.height - this.clearance + 16 * (1 - this.openT) },
+    opacity = { this.openT },
+    cornerRadius = { provided("theme").toastCornerRadius },
+    fill = { provided("theme").tooltipFill },
+    stroke = { provided("theme").tooltipStrokeColor != null ? Stroke(1, provided("theme").tooltipStrokeColor) : null },
+    shadow = { provided("theme").toastShadow },
+
+    say(m: string, a?: object) {
+        message = m
+        action = a ?? null
+        _round = _round + 1
+        const mine = _round
+        this.show()
+        // a status line that appears with its words in it is not reliably
+        // heard as it arrives, so the notice is also said, without the focus moving
+        Accessibility.announce(m)
+        _expired = false
+        afterDelay(duration, () => { if (this._round == mine) { if (_held) _expired = true; else this.close() } })
+        },
+
+    // held open while the pointer is over it or its action has the focus
+
+    _held: boolean = { hovered || this._row.act.focused },
+    _expired: boolean = false,
+
+    // a toast let go after its time ran out goes a moment later — heard by this
+    // member, so a use site's `trackChanges` and `onChange` are its own
+
+    _holdWatch: Node [
+        h: boolean = { classroot._held },
+        trackChanges = ["h"],
+        onChange() { classroot._letGo() }
+        ],
+    _letGo() {
+        if (_held || !_expired) return
+        const mine = _round
+        afterDelay(1500, () => { if (this._round == mine && !_held) this.close() })
+        },
+
+    picked(id: string) { },
+
+    _row: View [ padding = [10, 12, 10, 16],
+        layout: SimpleLayout [ axis = x, spacing = 14, align = center ],
+
+        // one line while it fits; a longer message wraps rather than leave the
+        // screen — at most 480 wide, and within the screen's margins beside
+        // its action
+
+        Text [ fontSize = { provided("theme").toastFontSize },
+            wrapWidth = { Math.max(120, Math.min(480, classroot._hostW - 48 - 28 - (classroot._row.act.visible ? classroot._row.act.width + 14 : 0))) },
+            textColor = { provided("theme").tooltipTextColor },
+            text = { classroot.message } ],
+
+        // a toast never takes the focus on its own; its action is reachable
+        // from the keyboard, as any control is
+
+        act: Button [ visible = { classroot.action != null },
+            label = { classroot.action != null ? "" + classroot.action.label : "" },
+
+            // the action is told while its toast is still open, as a menu's pick
+            // is, and the toast closes after, unless the action said something new
+
+            onClick() {
+                if (classroot.action == null) return
+                const mine = classroot._round
+                classroot.picked("" + classroot.action.id)
+                if (classroot._round == mine) classroot.close()
+                }
+            ]
+        ]
+    ]
